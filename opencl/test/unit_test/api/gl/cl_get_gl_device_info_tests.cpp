@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,10 +20,10 @@ namespace ULT {
 struct GetDeviceInfoP : public ApiFixture<>, public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
     void SetUp() override {
         param = GetParam();
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
     }
 
-    void TearDown() override { ApiFixture::TearDown(); }
+    void TearDown() override { ApiFixture::tearDown(); }
 
     cl_device_info param;
 };

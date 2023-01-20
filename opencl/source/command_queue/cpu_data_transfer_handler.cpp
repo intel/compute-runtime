@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,9 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/utilities/logger.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
@@ -53,10 +55,10 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
     }
 
     TakeOwnershipWrapper<CommandQueue> queueOwnership(*this);
-    auto commandStreamReceieverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
+    auto commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
 
     auto blockQueue = false;
-    auto taskLevel = 0u;
+    TaskCountType taskLevel = 0u;
     obtainTaskLevelAndBlockedStatus(taskLevel, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, blockQueue, transferProperties.cmdType);
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "taskLevel", taskLevel);
@@ -80,7 +82,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
                                         eventBuilder);
     }
 
-    commandStreamReceieverOwnership.unlock();
+    commandStreamReceiverOwnership.unlock();
     queueOwnership.unlock();
 
     // read/write buffers are always blocking
@@ -91,7 +93,7 @@ void *CommandQueue::cpuDataTransferHandler(TransferProperties &transferPropertie
         if (outEventObj) {
             outEventObj->setSubmitTimeStamp();
         }
-        //wait for the completness of previous commands
+        // wait for the completness of previous commands
         if (transferProperties.cmdType != CL_COMMAND_UNMAP_MEM_OBJECT) {
             if (!transferProperties.memObj->isMemObjZeroCopy() || transferProperties.blocking) {
                 finish();

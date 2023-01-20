@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include <level_zero/zes_api.h>
 
 #include <map>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -51,6 +52,7 @@ struct SchedulerHandleContext : NEO::NonCopyableOrMovableClass {
 
   private:
     void createHandle(zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines, ze_device_handle_t deviceHandle);
+    std::once_flag initSchedulerOnce;
 };
 
 } // namespace L0

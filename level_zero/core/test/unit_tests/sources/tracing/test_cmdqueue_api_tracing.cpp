@@ -11,7 +11,7 @@ namespace L0 {
 namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandQueue.pfnCreate =
         [](ze_context_handle_t hContext,
            ze_device_handle_t hDevice,
@@ -31,7 +31,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueCreateTracingWrapperWith
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandQueue.pfnDestroy =
         [](ze_command_queue_handle_t hCommandQueue) { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandQueue.pfnDestroyCb = genericPrologCallbackPtr;
@@ -45,7 +45,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueDestroyTracingWrapperWit
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueExecuteCommandListsTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     uint32_t numCommandList = 0;
     ze_command_list_handle_t phCommandLists = {};
@@ -66,7 +66,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueExecuteCommandListsTraci
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandQueueSynchronizeTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandQueue.pfnSynchronize =
         [](ze_command_queue_handle_t hCommandQueue, uint64_t timeout) { return ZE_RESULT_SUCCESS; };
     uint64_t timeout = 100;

@@ -223,9 +223,10 @@ TEST(YamlConsumeNameIdentifier, GivenInvalidNameIdentifierBeginningCharacterThen
 
 TEST(YamlConsumeNameIdentifier, GivenNameIdentifierBeginningCharacterThenConsumeWholeNameIdentifier) {
     for (int c = std::numeric_limits<char>::min(); c <= std::numeric_limits<char>::max(); ++c) {
-        bool isNameIndentifierChar = NEO::Yaml::isNameIdentifierCharacter(static_cast<char>(c));
+        bool isNameOrSeparationWhitespaceIndentifierChar = NEO::Yaml::isNameIdentifierCharacter(static_cast<char>(c));
+        isNameOrSeparationWhitespaceIndentifierChar |= NEO::Yaml::isSeparationWhitespace(static_cast<char>(c));
         char nameIdentifierStr[] = {'A', static_cast<char>(c)};
-        auto expected = nameIdentifierStr + (isNameIndentifierChar ? 2 : 1);
+        auto expected = nameIdentifierStr + (isNameOrSeparationWhitespaceIndentifierChar ? 2 : 1);
         EXPECT_EQ(expected, NEO::Yaml::consumeNameIdentifier(ConstStringRef::fromArray(nameIdentifierStr), nameIdentifierStr)) << c;
     }
 }
@@ -1026,6 +1027,34 @@ TEST(YamlTokenize, GivenInvalidNumericLiteralThenReturnError) {
     EXPECT_FALSE(success);
     EXPECT_STREQ("NEO::Yaml : Could not parse line : [0] : [@] <-- parser position on error. Reason : Invalid numeric literal\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
+}
+
+TEST(YamlTokenize, GivenSpaceSeparatedStringAsValueThenReadItCorrectly) {
+    ConstStringRef yaml = "\nbanana: space separated string\napple: space separated with spaces at the end   \n";
+
+    NEO::Yaml::Token expectedTokens[] = {
+        Token{"\n", NEO::Yaml::Token::SingleCharacter},
+        Token{"banana", NEO::Yaml::Token::Identifier},
+        Token{":", NEO::Yaml::Token::SingleCharacter},
+        Token{"space separated string", NEO::Yaml::Token::LiteralString},
+        Token{"\n", NEO::Yaml::Token::SingleCharacter},
+        Token{"apple", NEO::Yaml::Token::Identifier},
+        Token{":", NEO::Yaml::Token::SingleCharacter},
+        Token{"space separated with spaces at the end", NEO::Yaml::Token::LiteralString},
+        Token{"\n", NEO::Yaml::Token::SingleCharacter}};
+    NEO::Yaml::LinesCache lines;
+    NEO::Yaml::TokensCache tokens;
+    std::string warnings;
+    std::string errors;
+    bool success = NEO::Yaml::tokenize(yaml, lines, tokens, errors, warnings);
+    EXPECT_TRUE(success);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+
+    ASSERT_EQ(sizeof(expectedTokens) / sizeof(expectedTokens[0]), tokens.size());
+    for (size_t i = 0; i < tokens.size(); ++i) {
+        EXPECT_EQ(expectedTokens[i], tokens[i]) << i;
+    }
 }
 
 TEST(YamlNode, WhenConstructedThenSetsUpProperDefaults) {
@@ -2721,7 +2750,6 @@ TEST(YamlParser, GivenSimpleZebinThenParsesItCorrectly) {
 kernels:         
   - name:            k
     execution_env:   
-      actual_kernel_start_offset: 0
       grf_count:       128
       has_no_stateless_write: true
       simd_size:       32
@@ -2786,27 +2814,22 @@ kernels:
     ASSERT_NE(nullptr, ndBtis);
     EXPECT_STREQ("k", parser.readValue(*ndName).str().c_str());
     { // exec env
-        auto ndActualKernelStartOffset = parser.getChild(*ndExecutionEnv, "actual_kernel_start_offset");
         auto ndGrfCount = parser.getChild(*ndExecutionEnv, "grf_count");
         auto ndHasNoStatelessWrite = parser.getChild(*ndExecutionEnv, "has_no_stateless_write");
         auto ndSimdSize = parser.getChild(*ndExecutionEnv, "simd_size");
         auto ndSubgroupIfp = parser.getChild(*ndExecutionEnv, "subgroup_independent_forward_progress");
-        ASSERT_NE(nullptr, ndActualKernelStartOffset);
         ASSERT_NE(nullptr, ndGrfCount);
         ASSERT_NE(nullptr, ndHasNoStatelessWrite);
         ASSERT_NE(nullptr, ndSimdSize);
         ASSERT_NE(nullptr, ndSubgroupIfp);
-        uint32_t actualKernelStartOffset;
         uint32_t grfCount;
         bool hasNoStatelessWrite;
         uint32_t simdSize;
         bool subgroupIfp;
-        EXPECT_TRUE(parser.readValueChecked(*ndActualKernelStartOffset, actualKernelStartOffset));
         EXPECT_TRUE(parser.readValueChecked(*ndGrfCount, grfCount));
         EXPECT_TRUE(parser.readValueChecked(*ndHasNoStatelessWrite, hasNoStatelessWrite));
         EXPECT_TRUE(parser.readValueChecked(*ndSimdSize, simdSize));
         EXPECT_TRUE(parser.readValueChecked(*ndSubgroupIfp, subgroupIfp));
-        EXPECT_EQ(0U, actualKernelStartOffset);
         EXPECT_EQ(128U, grfCount);
         EXPECT_TRUE(hasNoStatelessWrite);
         EXPECT_EQ(32U, simdSize);

@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -45,7 +45,8 @@ TEST(KernelInfoTest, givenKernelInfoWhenCreateKernelAllocationThenCopyWholeKerne
     EXPECT_TRUE(retVal);
     auto allocation = kernelInfo.kernelAllocation;
     EXPECT_EQ(0, memcmp(allocation->getUnderlyingBuffer(), heap, heapSize));
-    size_t isaPadding = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getPaddingForISAAllocation();
+    auto &helper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(allocation->getUnderlyingBufferSize(), heapSize + isaPadding);
     device->getMemoryManager()->checkGpuUsageAndDestroyGraphicsAllocations(allocation);
 }
@@ -161,7 +162,5 @@ TEST(KernelInfo, givenNumbersOfSamplerWhenCheckSamplerStateCountAndSamplerStateA
     KernelInfo kernel = {};
     uint8_t numSamplers = 5u;
     kernel.kernelDescriptor.payloadMappings.samplerTable.numSamplers = numSamplers;
-    auto samplerSize = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getSamplerStateSize();
     EXPECT_EQ(kernel.getSamplerStateArrayCount(), numSamplers);
-    EXPECT_EQ(kernel.getSamplerStateArraySize(*defaultHwInfo), static_cast<size_t>(numSamplers * samplerSize));
 }

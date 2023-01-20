@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,13 +8,17 @@
 #include "opencl/source/event/event.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/range.h"
-#include "shared/source/utilities/stackvec.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
@@ -25,18 +29,18 @@
 #include "opencl/source/event/event_tracker.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
-#include "opencl/source/mem_obj/mem_obj.h"
+#include "opencl/source/helpers/task_information.h"
 
 #include <algorithm>
+#include <iostream>
 
 namespace NEO {
-
 Event::Event(
     Context *ctx,
     CommandQueue *cmdQueue,
     cl_command_type cmdType,
-    uint32_t taskLevel,
-    uint32_t taskCount)
+    TaskCountType taskLevel,
+    TaskCountType taskCount)
     : taskLevel(taskLevel),
       currentCmdQVirtualEvent(false),
       cmdToSubmit(nullptr),
@@ -90,8 +94,8 @@ Event::Event(
 Event::Event(
     CommandQueue *cmdQueue,
     cl_command_type cmdType,
-    uint32_t taskLevel,
-    uint32_t taskCount)
+    TaskCountType taskLevel,
+    TaskCountType taskCount)
     : Event(nullptr, cmdQueue, cmdType, taskLevel, taskCount) {
 }
 
@@ -224,7 +228,7 @@ void Event::setupBcs(aub_stream::EngineType bcsEngineType) {
     this->bcsState.engineType = bcsEngineType;
 }
 
-uint32_t Event::peekBcsTaskCountFromCommandQueue() {
+TaskCountType Event::peekBcsTaskCountFromCommandQueue() {
     if (bcsState.isValid()) {
         return this->cmdQueue->peekBcsTaskCount(bcsState.engineType);
     } else {
@@ -232,11 +236,11 @@ uint32_t Event::peekBcsTaskCountFromCommandQueue() {
     }
 }
 
-uint32_t Event::getCompletionStamp() const {
+TaskCountType Event::getCompletionStamp() const {
     return this->taskCount;
 }
 
-void Event::updateCompletionStamp(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount, uint32_t tasklevel, FlushStamp flushStamp) {
+void Event::updateCompletionStamp(TaskCountType gpgpuTaskCount, TaskCountType bcsTaskCount, TaskCountType tasklevel, FlushStamp flushStamp) {
     this->taskCount = gpgpuTaskCount;
     this->bcsState.taskCount = bcsTaskCount;
     this->taskLevel = tasklevel;
@@ -267,10 +271,10 @@ cl_ulong Event::getDelta(cl_ulong startTime,
 void Event::calculateSubmitTimestampData() {
     if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
         auto &device = cmdQueue->getDevice();
-        auto &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
         double resolution = device.getDeviceInfo().profilingTimerResolution;
 
-        int64_t timerDiff = queueTimeStamp.CPUTimeinNS - hwHelper.getGpuTimeStampInNS(queueTimeStamp.GPUTimeStamp, resolution);
+        int64_t timerDiff = queueTimeStamp.CPUTimeinNS - gfxCoreHelper.getGpuTimeStampInNS(queueTimeStamp.GPUTimeStamp, resolution);
         submitTimeStamp.GPUTimeStamp = static_cast<uint64_t>((submitTimeStamp.CPUTimeinNS - timerDiff) / resolution);
     }
 }
@@ -286,10 +290,10 @@ uint64_t Event::getTimeInNSFromTimestampData(const TimeStampData &timestamp) con
 
     if (cmdQueue && DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
         auto &device = cmdQueue->getDevice();
-        auto &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
         double resolution = device.getDeviceInfo().profilingTimerResolution;
 
-        return hwHelper.getGpuTimeStampInNS(timestamp.GPUTimeStamp, resolution);
+        return gfxCoreHelper.getGpuTimeStampInNS(timestamp.GPUTimeStamp, resolution);
     }
 
     return timestamp.CPUTimeinNS;
@@ -324,7 +328,7 @@ bool Event::calcProfilingData() {
             calculateProfilingDataInternal(globalStartTS, globalEndTS, &globalEndTS, globalStartTS);
 
         } else if (timeStampNode) {
-            if (HwHelper::get(this->cmdQueue->getDevice().getHardwareInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps()) {
+            if (this->cmdQueue->getDevice().getGfxCoreHelper().useOnlyGlobalTimestamps()) {
                 calculateProfilingDataInternal(
                     timeStampNode->getGlobalStartValue(0),
                     timeStampNode->getGlobalEndValue(0),
@@ -350,20 +354,20 @@ void Event::calculateProfilingDataInternal(uint64_t contextStartTS, uint64_t con
     uint64_t cpuCompleteDuration = 0;
 
     auto &device = this->cmdQueue->getDevice();
-    auto &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto frequency = device.getDeviceInfo().profilingTimerResolution;
-    auto gpuQueueTimeStamp = hwHelper.getGpuTimeStampInNS(queueTimeStamp.GPUTimeStamp, frequency);
+    auto gpuQueueTimeStamp = gfxCoreHelper.getGpuTimeStampInNS(queueTimeStamp.GPUTimeStamp, frequency);
 
     if (DebugManager.flags.EnableDeviceBasedTimestamps.get()) {
         startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency);
         if (startTimeStamp < gpuQueueTimeStamp) {
-            startTimeStamp += static_cast<uint64_t>((1ULL << hwHelper.getGlobalTimeStampBits()) * frequency);
+            startTimeStamp += static_cast<uint64_t>((1ULL << gfxCoreHelper.getGlobalTimeStampBits()) * frequency);
         }
     } else {
         int64_t c0 = queueTimeStamp.CPUTimeinNS - gpuQueueTimeStamp;
         startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
         if (startTimeStamp < queueTimeStamp.CPUTimeinNS) {
-            c0 += static_cast<uint64_t>((1ULL << (hwHelper.getGlobalTimeStampBits())) * frequency);
+            c0 += static_cast<uint64_t>((1ULL << (gfxCoreHelper.getGlobalTimeStampBits())) * frequency);
             startTimeStamp = static_cast<uint64_t>(globalStartTS * frequency) + c0;
         }
     }
@@ -427,7 +431,9 @@ inline WaitStatus Event::wait(bool blocking, bool useQuickKmdSleep) {
     }
 
     Range<CopyEngineState> states{&bcsState, bcsState.isValid() ? 1u : 0u};
-    const auto waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep);
+    auto waitStatus = WaitStatus::NotReady;
+    auto waitedOnTimestamps = cmdQueue->waitForTimestamps(states, taskCount.load(), waitStatus, this->timestampPacketContainer.get(), nullptr);
+    waitStatus = cmdQueue->waitUntilComplete(taskCount.load(), states, flushStamp->peekStamp(), useQuickKmdSleep, true, waitedOnTimestamps);
     if (waitStatus == WaitStatus::GpuHang) {
         return WaitStatus::GpuHang;
     }
@@ -498,7 +504,7 @@ void Event::unblockEventsBlockedByThis(int32_t transitionStatus) {
     (void)status;
     DEBUG_BREAK_IF(!(isStatusCompleted(status) || (peekIsSubmitted(status))));
 
-    uint32_t taskLevelToPropagate = CompletionStamp::notReady;
+    TaskCountType taskLevelToPropagate = CompletionStamp::notReady;
 
     if (isStatusCompletedByTermination(transitionStatus) == false) {
         // if we are event on top of the tree , obtain taskLevel from CSR
@@ -560,7 +566,9 @@ void Event::transitionExecutionStatus(int32_t newExecutionStatus) const {
     DBG_LOG(EventsDebugEnable, "transitionExecutionStatus event", this, " new status", newExecutionStatus, "previousStatus", prevStatus);
 
     while (prevStatus > newExecutionStatus) {
-        executionStatus.compare_exchange_weak(prevStatus, newExecutionStatus);
+        if (NEO::MultiThreadHelpers::atomicCompareExchangeWeakSpin(executionStatus, prevStatus, newExecutionStatus)) {
+            break;
+        }
     }
     if (NEO::DebugManager.flags.EventsTrackerEnable.get()) {
         EventsTracker::getEventsTracker().notifyTransitionedExecutionStatus();
@@ -594,7 +602,7 @@ void Event::submitCommand(bool abortTasks) {
             setEndTimeStamp();
         }
 
-        if (complStamp.taskCount == CompletionStamp::gpuHang) {
+        if (complStamp.taskCount > CompletionStamp::notReady) {
             abortExecutionDueToGpuHang();
             return;
         }
@@ -670,6 +678,12 @@ cl_int Event::waitForEvents(cl_uint numEvents,
     return CL_SUCCESS;
 }
 
+void Event::setCommand(std::unique_ptr<Command> newCmd) {
+    UNRECOVERABLE_IF(cmdToSubmit.load());
+    cmdToSubmit.exchange(newCmd.release());
+    eventWithoutCommand = false;
+}
+
 inline void Event::setExecutionStatusToAbortedDueToGpuHang(cl_event *first, cl_event *last) {
     std::for_each(first, last, [](cl_event &e) {
         Event *event = castToObjectOrAbort<Event>(e);
@@ -682,10 +696,9 @@ bool Event::isCompleted() {
 }
 
 bool Event::isWaitForTimestampsEnabled() const {
-    const auto &hwInfo = cmdQueue->getDevice().getHardwareInfo();
-    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &productHelper = cmdQueue->getDevice().getRootDeviceEnvironment().getHelper<ProductHelper>();
     auto enabled = cmdQueue->isTimestampWaitEnabled();
-    enabled &= hwHelper.isTimestampWaitSupportedForEvents(hwInfo);
+    enabled &= productHelper.isTimestampWaitSupportedForEvents();
 
     switch (DebugManager.flags.EnableTimestampWaitForEvents.get()) {
     case 0:
@@ -725,11 +738,11 @@ bool Event::areTimestampsCompleted() {
     return false;
 }
 
-uint32_t Event::getTaskLevel() {
+TaskCountType Event::getTaskLevel() {
     return taskLevel;
 }
 
-inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus) {
+inline void Event::unblockEventBy(Event &event, TaskCountType taskLevel, int32_t transitionStatus) {
     int32_t numEventsBlockingThis = --parentCount;
     DEBUG_BREAK_IF(numEventsBlockingThis < 0);
 
@@ -898,7 +911,7 @@ bool Event::checkUserEventDependencies(cl_uint numEventsInWaitList, const cl_eve
     return userEventsDependencies;
 }
 
-uint32_t Event::peekTaskLevel() const {
+TaskCountType Event::peekTaskLevel() const {
     return taskLevel;
 }
 

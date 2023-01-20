@@ -1,14 +1,21 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/external_functions.h"
+
+#include "opencl/source/helpers/base_object.h"
 #include "opencl/source/kernel/kernel.h"
 
 namespace NEO {
+class ClDeviceVector;
+class MultiGraphicsAllocation;
+
 template <>
 struct OpenCLObjectMapper<_cl_kernel> {
     typedef class MultiDeviceKernel DerivedType;
@@ -66,7 +73,6 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
     void clearUnifiedMemoryExecInfo();
     int setKernelThreadArbitrationPolicy(uint32_t propertyValue);
     cl_int setKernelExecutionType(cl_execution_info_kernel_type_intel executionType);
-    int32_t setAdditionalKernelExecInfoWithParam(uint32_t paramName, size_t paramValueSize, const void *paramValue);
     void storeKernelArgAllocIdMemoryManagerCounter(uint32_t argIndex, uint32_t allocIdMemoryManagerCounter);
     Program *getProgram() const { return program; }
     const KernelInfoContainer &getKernelInfos() const { return kernelInfos; }

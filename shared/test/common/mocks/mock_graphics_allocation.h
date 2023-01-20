@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,19 +7,21 @@
 
 #pragma once
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/memory_manager/memory_allocation.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 
 namespace NEO {
 
-constexpr uint32_t mockRootDeviceIndex = 0u;
-constexpr DeviceBitfield mockDeviceBitfield(0b1);
+inline constexpr uint32_t mockRootDeviceIndex = 0u;
+inline constexpr DeviceBitfield mockDeviceBitfield(0b1);
 
 class MockGraphicsAllocation : public MemoryAllocation {
   public:
     using MemoryAllocation::allocationOffset;
     using MemoryAllocation::allocationType;
     using MemoryAllocation::aubInfo;
+    using MemoryAllocation::cpuPtr;
     using MemoryAllocation::gpuAddress;
     using MemoryAllocation::MemoryAllocation;
     using MemoryAllocation::memoryPool;
@@ -53,11 +55,11 @@ class MockGraphicsAllocation : public MemoryAllocation {
 
 class MockGraphicsAllocationTaskCount : public MockGraphicsAllocation {
   public:
-    uint32_t getTaskCount(uint32_t contextId) const override {
+    TaskCountType getTaskCount(uint32_t contextId) const override {
         getTaskCountCalleedTimes++;
         return MockGraphicsAllocation::getTaskCount(contextId);
     }
-    void updateTaskCount(uint32_t newTaskCount, uint32_t contextId) override {
+    void updateTaskCount(TaskCountType newTaskCount, uint32_t contextId) override {
         updateTaskCountCalleedTimes++;
         MockGraphicsAllocation::updateTaskCount(newTaskCount, contextId);
     }

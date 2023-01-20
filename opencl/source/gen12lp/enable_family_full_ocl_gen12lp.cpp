@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/gen12lp/hw_cmds.h"
 #include "shared/source/helpers/populate_factory.h"
 
@@ -16,12 +17,12 @@
 
 namespace NEO {
 
-using Family = TGLLPFamily;
+using Family = Gen12LpFamily;
 
 struct EnableOCLGen12LP {
     EnableOCLGen12LP() {
         populateFactoryTable<BufferHw<Family>>();
-        populateFactoryTable<ClHwHelperHw<Family>>();
+        populateFactoryTable<ClGfxCoreHelperHw<Family>>();
         populateFactoryTable<CommandQueueHw<Family>>();
         populateFactoryTable<ImageHw<Family>>();
         populateFactoryTable<SamplerHw<Family>>();

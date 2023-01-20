@@ -16,7 +16,7 @@ class Device;
 struct HardwareInfo;
 
 struct DeviceInstrumentationFixture {
-    void SetUp(bool instrumentation); // NOLINT(readability-identifier-naming)
+    void setUp(bool instrumentation);
 
     std::unique_ptr<ClDevice> device = nullptr;
     HardwareInfo *hwInfo = nullptr;

@@ -7,9 +7,10 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/platform/platform.h"
@@ -26,10 +27,14 @@ using namespace ::testing;
 namespace NEO {
 
 TEST(DeviceOsTest, GivenDefaultClDeviceWhenCheckingForOsSpecificExtensionsThenCorrectExtensionsAreSet) {
+    VariableBackup<UltHwConfig> backup(&ultHwConfig);
+    DebugManagerStateRestore stateRestore;
+    ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
+
     auto hwInfo = defaultHwInfo.get();
     auto pDevice = MockDevice::createWithNewExecutionEnvironment<Device>(hwInfo);
+    DeviceFactory::prepareDeviceEnvironments(*pDevice->getExecutionEnvironment());
     auto pClDevice = new ClDevice{*pDevice, platform()};
-
     std::string extensionString(pClDevice->getDeviceInfo().deviceExtensions);
 
     EXPECT_FALSE(hasSubstr(extensionString, std::string("cl_intel_dx9_media_sharing ")));

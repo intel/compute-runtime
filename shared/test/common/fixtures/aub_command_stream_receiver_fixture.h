@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,18 +8,19 @@
 #pragma once
 
 #include "shared/test/common/fixtures/device_fixture.h"
-#include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
+#include "shared/test/common/fixtures/mock_aub_center_fixture.h"
+#include "shared/test/common/mocks/mock_device.h"
 
 namespace NEO {
 struct AubCommandStreamReceiverFixture : public DeviceFixture, MockAubCenterFixture {
-    void SetUp() {
-        DeviceFixture::SetUp();
-        MockAubCenterFixture::SetUp();
+    void setUp() {
+        DeviceFixture::setUp();
+        MockAubCenterFixture::setUp();
         setMockAubCenter(*pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     }
-    void TearDown() {
-        MockAubCenterFixture::TearDown();
-        DeviceFixture::TearDown();
+    void tearDown() {
+        MockAubCenterFixture::tearDown();
+        DeviceFixture::tearDown();
     }
 };
 } // namespace NEO

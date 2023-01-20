@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,13 @@
 #include "opencl/source/mem_obj/mem_obj.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -22,6 +24,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
+#include "opencl/source/helpers/mipmap.h"
 
 #include <algorithm>
 
@@ -79,6 +82,7 @@ MemObj::~MemObj() {
             peekSharingHandler()->releaseReusedGraphicsAllocation();
         }
 
+        needWait |= multiGraphicsAllocation.getGraphicsAllocations().size() > 1u;
         for (auto graphicsAllocation : multiGraphicsAllocation.getGraphicsAllocations()) {
             auto rootDeviceIndex = graphicsAllocation ? graphicsAllocation->getRootDeviceIndex() : 0;
             bool doAsyncDestructions = DebugManager.flags.EnableAsyncDestroyAllocations.get();
@@ -92,6 +96,8 @@ MemObj::~MemObj() {
                 }
                 destroyGraphicsAllocation(graphicsAllocation, doAsyncDestructions);
                 graphicsAllocation = nullptr;
+            } else if (graphicsAllocation && context->getBufferPoolAllocator().isPoolBuffer(associatedMemObject)) {
+                memoryManager->waitForEnginesCompletion(*graphicsAllocation);
             }
             if (!associatedMemObject) {
                 releaseMapAllocation(rootDeviceIndex, doAsyncDestructions);
@@ -102,6 +108,7 @@ MemObj::~MemObj() {
         }
         if (associatedMemObject) {
             associatedMemObject->decRefInternal();
+            context->getBufferPoolAllocator().tryFreeFromPoolBuffer(associatedMemObject, this->offset, this->sizeInPoolAllocator);
         }
         if (!associatedMemObject) {
             releaseAllocatedMapPtr();
@@ -110,7 +117,10 @@ MemObj::~MemObj() {
 
     destructorCallbacks.invoke(this);
 
-    context->decRefInternal();
+    const bool needDecrementContextRefCount = !context->getBufferPoolAllocator().isPoolBuffer(this);
+    if (needDecrementContextRefCount) {
+        context->decRefInternal();
+    }
 }
 
 cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
@@ -163,11 +173,21 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_OFFSET:
+        if (nullptr != this->associatedMemObject) {
+            if (this->getContext()->getBufferPoolAllocator().isPoolBuffer(this->associatedMemObject)) {
+                offset = 0;
+            } else {
+                offset -= this->associatedMemObject->getOffset();
+            }
+        }
         srcParamSize = sizeof(offset);
         srcParam = &offset;
         break;
 
     case CL_MEM_ASSOCIATED_MEMOBJECT:
+        if (this->getContext()->getBufferPoolAllocator().isPoolBuffer(this->associatedMemObject)) {
+            clAssociatedMemObject = nullptr;
+        }
         srcParamSize = sizeof(clAssociatedMemObject);
         srcParam = &clAssociatedMemObject;
         break;
@@ -185,7 +205,7 @@ cl_int MemObj::getMemObjectInfo(cl_mem_info paramName,
         break;
 
     case CL_MEM_ALLOCATION_HANDLE_INTEL:
-        internalHandle = multiGraphicsAllocation.getDefaultGraphicsAllocation()->peekInternalHandle(this->memoryManager);
+        multiGraphicsAllocation.getDefaultGraphicsAllocation()->peekInternalHandle(this->memoryManager, internalHandle);
         srcParamSize = sizeof(internalHandle);
         srcParam = &internalHandle;
         break;
@@ -369,7 +389,7 @@ void *MemObj::getBasePtrForMap(uint32_t rootDeviceIndex) {
             AllocationProperties properties{rootDeviceIndex,
                                             false, // allocateMemory
                                             getSize(), AllocationType::MAP_ALLOCATION,
-                                            false, //isMultiStorageAllocation
+                                            false, // isMultiStorageAllocation
                                             context->getDeviceBitfieldForAllocation(rootDeviceIndex)};
 
             auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties, memory);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,14 +11,14 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
 class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
   public:
     void SetUp() override {
-        WddmFixtureWithMockGdiDll::SetUp();
+        WddmFixtureWithMockGdiDll::setUp();
         const HardwareInfo hwInfo = *defaultHwInfo;
         memcpy(&hwInfoTest, &hwInfo, sizeof(hwInfoTest));
         dbgRestorer = new DebugManagerStateRestore();
@@ -27,7 +27,7 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
 
     void TearDown() override {
         delete dbgRestorer;
-        WddmFixtureWithMockGdiDll::TearDown();
+        WddmFixtureWithMockGdiDll::tearDown();
     }
 
     void createAndInitWddm(unsigned int forceReturnPreemptionRegKeyValue) {
@@ -41,8 +41,9 @@ class WddmPreemptionTests : public Test<WddmFixtureWithMockGdiDll> {
         wddm->init();
         hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
         ASSERT_NE(nullptr, hwInfo);
-        auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
-        osContext = std::make_unique<OsContextWin>(*wddm, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
+        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        auto engine = gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0];
+        osContext = std::make_unique<OsContextWin>(*wddm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
         osContext->ensureContextInitialized();
     }
 

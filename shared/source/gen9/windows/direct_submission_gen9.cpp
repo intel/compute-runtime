@@ -16,7 +16,7 @@
 #include "shared/source/gen9/hw_cmds_base.h"
 
 namespace NEO {
-using GfxFamily = SKLFamily;
+using GfxFamily = Gen9Family;
 
 template class Dispatcher<GfxFamily>;
 template class BlitterDispatcher<GfxFamily>;

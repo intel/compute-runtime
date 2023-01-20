@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/source/compiler_interface/compiler_options/compiler_options_base.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/utilities/const_stringref.h"
 
 #include <cstdint>
@@ -29,13 +29,13 @@ enum AccessQualifier : uint8_t {
 };
 
 namespace AccessQualifierStrings {
-constexpr ConstStringRef none = "NONE";
-constexpr ConstStringRef readOnly = "read_only";
-constexpr ConstStringRef writeOnly = "write_only";
-constexpr ConstStringRef readWrite = "read_write";
-constexpr ConstStringRef underscoreReadOnly = "__read_only";
-constexpr ConstStringRef underscoreWriteOnly = "__write_only";
-constexpr ConstStringRef underscoreReadWrite = "__read_write";
+inline constexpr ConstStringRef none = "NONE";
+inline constexpr ConstStringRef readOnly = "read_only";
+inline constexpr ConstStringRef writeOnly = "write_only";
+inline constexpr ConstStringRef readWrite = "read_write";
+inline constexpr ConstStringRef underscoreReadOnly = "__read_only";
+inline constexpr ConstStringRef underscoreWriteOnly = "__write_only";
+inline constexpr ConstStringRef underscoreReadWrite = "__read_write";
 } // namespace AccessQualifierStrings
 
 enum AddressSpaceQualifier : uint8_t {
@@ -47,11 +47,11 @@ enum AddressSpaceQualifier : uint8_t {
 };
 
 namespace AddressSpaceQualifierStrings {
-constexpr ConstStringRef addrGlobal = "__global";
-constexpr ConstStringRef addrLocal = "__local";
-constexpr ConstStringRef addrPrivate = "__private";
-constexpr ConstStringRef addrConstant = "__constant";
-constexpr ConstStringRef addrNotSpecified = "not_specified";
+inline constexpr ConstStringRef addrGlobal = "__global";
+inline constexpr ConstStringRef addrLocal = "__local";
+inline constexpr ConstStringRef addrPrivate = "__private";
+inline constexpr ConstStringRef addrConstant = "__constant";
+inline constexpr ConstStringRef addrNotSpecified = "not_specified";
 } // namespace AddressSpaceQualifierStrings
 
 constexpr AccessQualifier parseAccessQualifier(ConstStringRef str) {
@@ -119,10 +119,10 @@ union TypeQualifiers {
 };
 
 namespace TypeQualifierStrings {
-constexpr ConstStringRef qualConst = "const";
-constexpr ConstStringRef qualVolatile = "volatile";
-constexpr ConstStringRef qualRestrict = "restrict";
-constexpr ConstStringRef qualPipe = "pipe";
+inline constexpr ConstStringRef qualConst = "const";
+inline constexpr ConstStringRef qualVolatile = "volatile";
+inline constexpr ConstStringRef qualRestrict = "restrict";
+inline constexpr ConstStringRef qualPipe = "pipe";
 } // namespace TypeQualifierStrings
 
 inline TypeQualifiers parseTypeQualifiers(ConstStringRef str) {
@@ -188,7 +188,7 @@ struct ArgTypeTraits {
 };
 
 namespace {
-static constexpr auto ArgTypeMetadataSize = sizeof(ArgTypeTraits);
+inline constexpr auto ArgTypeMetadataSize = sizeof(ArgTypeTraits);
 static_assert(ArgTypeMetadataSize <= 4, "Keep it small");
 } // namespace
 

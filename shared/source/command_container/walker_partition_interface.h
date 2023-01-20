@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,19 +29,22 @@ struct WalkerPartitionArgs {
     bool emitPipeControlStall = false;
     bool preferredStaticPartitioning = false;
     bool usePostSync = false;
+    bool pipeControlBeforeCleanupCrossTileSync = false;
+    bool dcFlushEnable = false;
+    bool forceExecutionOnSingleTile = false;
 };
 
-constexpr uint32_t wparidCCSOffset = 0x221C;
-constexpr uint32_t addressOffsetCCSOffset = 0x23B4;
-constexpr uint32_t predicationMaskCCSOffset = 0x21FC;
+inline constexpr uint32_t wparidCCSOffset = 0x221C;
+inline constexpr uint32_t addressOffsetCCSOffset = 0x23B4;
+inline constexpr uint32_t predicationMaskCCSOffset = 0x21FC;
 
-constexpr uint32_t generalPurposeRegister0 = 0x2600;
-constexpr uint32_t generalPurposeRegister1 = 0x2608;
-constexpr uint32_t generalPurposeRegister2 = 0x2610;
-constexpr uint32_t generalPurposeRegister3 = 0x2618;
-constexpr uint32_t generalPurposeRegister4 = 0x2620;
-constexpr uint32_t generalPurposeRegister5 = 0x2628;
-constexpr uint32_t generalPurposeRegister6 = 0x2630;
+inline constexpr uint32_t generalPurposeRegister0 = 0x2600;
+inline constexpr uint32_t generalPurposeRegister1 = 0x2608;
+inline constexpr uint32_t generalPurposeRegister2 = 0x2610;
+inline constexpr uint32_t generalPurposeRegister3 = 0x2618;
+inline constexpr uint32_t generalPurposeRegister4 = 0x2620;
+inline constexpr uint32_t generalPurposeRegister5 = 0x2628;
+inline constexpr uint32_t generalPurposeRegister6 = 0x2630;
 
 struct BatchBufferControlData {
     uint32_t partitionCount = 0u;
@@ -49,18 +52,18 @@ struct BatchBufferControlData {
     uint32_t inTileCount = 0u;
     uint32_t finalSyncTileCount = 0u;
 };
-constexpr size_t dynamicPartitioningFieldsForCleanupCount = sizeof(BatchBufferControlData) / sizeof(uint32_t) - 1;
+inline constexpr size_t dynamicPartitioningFieldsForCleanupCount = sizeof(BatchBufferControlData) / sizeof(uint32_t) - 1;
 
 struct StaticPartitioningControlSection {
     uint32_t synchronizeBeforeWalkerCounter = 0;
     uint32_t synchronizeAfterWalkerCounter = 0;
     uint32_t finalSyncTileCounter = 0;
 };
-constexpr size_t staticPartitioningFieldsForCleanupCount = sizeof(StaticPartitioningControlSection) / sizeof(uint32_t) - 1;
+inline constexpr size_t staticPartitioningFieldsForCleanupCount = sizeof(StaticPartitioningControlSection) / sizeof(uint32_t) - 1;
 
 struct BarrierControlSection {
     uint32_t crossTileSyncCount = 0u;
     uint32_t finalSyncTileCount = 0;
 };
-constexpr size_t barrierControlSectionFieldsForCleanupCount = sizeof(BarrierControlSection) / sizeof(uint32_t) - 1;
+inline constexpr size_t barrierControlSectionFieldsForCleanupCount = sizeof(BarrierControlSection) / sizeof(uint32_t) - 1;
 } // namespace WalkerPartition

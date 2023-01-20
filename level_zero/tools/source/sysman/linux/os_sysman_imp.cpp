@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,10 @@
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/sleep.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
 
 #include "level_zero/core/source/device/device_imp.h"
@@ -86,8 +90,11 @@ FirmwareUtil *LinuxSysmanImp::getFwUtilInterface() {
     return pFwUtilInterface;
 }
 
-PRODUCT_FAMILY LinuxSysmanImp::getProductFamily() {
-    return pDevice->getNEODevice()->getHardwareInfo().platform.eProductFamily;
+L0::UdevLib *LinuxSysmanImp::getUdevLibHandle() {
+    if (pUdevLib == nullptr) {
+        pUdevLib = UdevLib::create();
+    }
+    return pUdevLib;
 }
 
 FsAccess &LinuxSysmanImp::getFsAccess() {
@@ -149,7 +156,7 @@ static std::string modifyPathOnLevel(std::string realPciPath, uint8_t nLevel) {
     }
     return realPciPath;
 }
-std::string getPciRootPortDirectoryPath(std::string realPciPath) {
+std::string LinuxSysmanImp::getPciRootPortDirectoryPath(std::string realPciPath) {
     // the rootport is always the first pci folder after the pcie slot.
     //    +-[0000:89]-+-00.0
     // |           +-00.1
@@ -226,6 +233,10 @@ LinuxSysmanImp::~LinuxSysmanImp() {
         delete pPmuInterface;
         pPmuInterface = nullptr;
     }
+    if (nullptr != pUdevLib) {
+        delete pUdevLib;
+        pUdevLib = nullptr;
+    }
     releaseFwUtilInterface();
     releasePmtObject();
 }
@@ -248,6 +259,43 @@ void LinuxSysmanImp::getPidFdsForOpenDevice(ProcfsAccess *pProcfsAccess, SysfsAc
             deviceFds.push_back(fd);
         }
     }
+}
+
+ze_result_t LinuxSysmanImp::gpuProcessCleanup() {
+    ::pid_t myPid = pProcfsAccess->myProcessId();
+    std::vector<::pid_t> processes;
+    std::vector<int> myPidFds;
+    ze_result_t result = pProcfsAccess->listProcesses(processes);
+    if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                              "gpuProcessCleanup: listProcesses() failed with error code: %ld\n", result);
+        return result;
+    }
+
+    for (auto &&pid : processes) {
+        std::vector<int> fds;
+        getPidFdsForOpenDevice(pProcfsAccess, pSysfsAccess, pid, fds);
+        if (pid == myPid) {
+            // L0 is expected to have this file open.
+            // Keep list of fds. Close before unbind.
+            myPidFds = fds;
+            continue;
+        }
+        if (!fds.empty()) {
+            pProcfsAccess->kill(pid);
+        }
+    }
+
+    for (auto &&fd : myPidFds) {
+        // Close open filedescriptors to the device
+        // before unbinding device.
+        // From this point forward, there is no
+        // graceful way to fail the reset call.
+        // All future ze calls by this process for this
+        // device will fail.
+        NEO::SysCalls::close(fd);
+    }
+    return ZE_RESULT_SUCCESS;
 }
 
 void LinuxSysmanImp::releaseSysmanDeviceResources() {
@@ -282,14 +330,24 @@ void LinuxSysmanImp::releaseDeviceResources() {
 void LinuxSysmanImp::reInitSysmanDeviceResources() {
     getSysmanDeviceImp()->updateSubDeviceHandlesLocally();
     createPmtHandles();
-    createFwUtilInterface();
-    getSysmanDeviceImp()->pRasHandleContext->init(getSysmanDeviceImp()->deviceHandles);
-    getSysmanDeviceImp()->pEngineHandleContext->init();
     if (!diagnosticsReset) {
-        getSysmanDeviceImp()->pDiagnosticsHandleContext->init();
+        createFwUtilInterface();
+    }
+    if (getSysmanDeviceImp()->pRasHandleContext->isRasInitDone()) {
+        getSysmanDeviceImp()->pRasHandleContext->init(getSysmanDeviceImp()->deviceHandles);
+    }
+    if (getSysmanDeviceImp()->pEngineHandleContext->isEngineInitDone()) {
+        getSysmanDeviceImp()->pEngineHandleContext->init(getSysmanDeviceImp()->deviceHandles);
+    }
+    if (!diagnosticsReset) {
+        if (getSysmanDeviceImp()->pDiagnosticsHandleContext->isDiagnosticsInitDone()) {
+            getSysmanDeviceImp()->pDiagnosticsHandleContext->init();
+        }
     }
     this->diagnosticsReset = false;
-    getSysmanDeviceImp()->pFirmwareHandleContext->init();
+    if (getSysmanDeviceImp()->pFirmwareHandleContext->isFirmwareInitDone()) {
+        getSysmanDeviceImp()->pFirmwareHandleContext->init();
+    }
 }
 
 ze_result_t LinuxSysmanImp::initDevice() {
@@ -308,6 +366,23 @@ ze_result_t LinuxSysmanImp::initDevice() {
     return ZE_RESULT_SUCCESS;
 }
 
+// function to clear Hot-Plug interrupt enable bit in the slot control register
+// this is required to prevent interrupts from being raised in the warm reset path.
+void LinuxSysmanImp::clearHPIE(int fd) {
+    uint8_t value = 0x00;
+    uint8_t resetValue = 0x00;
+    uint8_t offset = 0x0;
+    this->preadFunction(fd, &offset, 0x01, PCI_CAPABILITY_LIST);
+    // Bottom two bits of capability pointer register are reserved and
+    // software should mask these bits to get pointer to capability list.
+    // PCI_EXP_SLTCTL - offset for slot control register.
+    offset = (offset & 0xfc) + PCI_EXP_SLTCTL;
+    this->preadFunction(fd, &value, 0x01, offset);
+    resetValue = value & (~PCI_EXP_SLTCTL_HPIE);
+    this->pwriteFunction(fd, &resetValue, 0x01, offset);
+    NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds just to make sure the change is propagated.
+}
+
 // A 'warm reset' is a conventional reset that is triggered across a PCI express link.
 // A warm reset is triggered either when a link is forced into electrical idle or
 // by sending TS1 and TS2 ordered sets with the hot reset bit set.
@@ -315,40 +390,54 @@ ze_result_t LinuxSysmanImp::initDevice() {
 // in the bridge control register in the PCI configuration space of the bridge port upstream of the device.
 ze_result_t LinuxSysmanImp::osWarmReset() {
     std::string rootPortPath;
-    std::string cardBusPath = getPciCardBusDirectoryPath(gtDevicePath);
-    ze_result_t result = pFsAccess->write(cardBusPath + '/' + "remove", "1");
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-
-    this->pSleepFunctionSecs(10); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly
     rootPortPath = getPciRootPortDirectoryPath(gtDevicePath);
 
-    int fd, ret = 0;
-    unsigned int offset = PCI_BRIDGE_CONTROL; // Bridge control offset in Header of PCI config space
-    unsigned int value = 0x00;
-    unsigned int resetValue = 0x00;
+    int fd = 0;
     std::string configFilePath = rootPortPath + '/' + "config";
     fd = this->openFunction(configFilePath.c_str(), O_RDWR);
     if (fd < 0) {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
+
+    std::string cardBusPath = getPciCardBusDirectoryPath(gtDevicePath);
+    ze_result_t result = pFsAccess->write(cardBusPath + '/' + "remove", "1");
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+    if (diagnosticsReset) {
+        NEO::sleep(std::chrono::seconds(30)); // Sleep for 30seconds to make sure that the config spaces of all devices are saved correctly after IFR
+    } else {
+        NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly
+    }
+
+    clearHPIE(fd);
+
+    uint8_t offset = PCI_BRIDGE_CONTROL; // Bridge control offset in Header of PCI config space
+    uint8_t value = 0x00;
+    uint8_t resetValue = 0x00;
+
     this->preadFunction(fd, &value, 0x01, offset);
     resetValue = value | PCI_BRIDGE_CTL_BUS_RESET;
     this->pwriteFunction(fd, &resetValue, 0x01, offset);
-    this->pSleepFunctionSecs(10); // Sleep for 10seconds just to make sure the change is propagated.
+    NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds just to make sure the change is propagated.
     this->pwriteFunction(fd, &value, 0x01, offset);
-    this->pSleepFunctionSecs(10); // Sleep for 10seconds to make sure the change is propagated. before rescan is done.
-    ret = this->closeFunction(fd);
-    if (ret < 0) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
+    NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds to make sure the change is propagated. before rescan is done.
 
     result = pFsAccess->write(rootPortPath + '/' + "rescan", "1");
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
-    this->pSleepFunctionSecs(10); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
+    if (diagnosticsReset) {
+        NEO::sleep(std::chrono::seconds(30)); // Sleep for 30seconds to make sure that the config spaces of all devices are saved correctly after IFR
+    } else {
+        NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
+    }
+
+    int ret = this->closeFunction(fd);
+    if (ret < 0) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     return result;
 }
 
@@ -381,7 +470,7 @@ ze_result_t LinuxSysmanImp::osColdReset() {
             if (ZE_RESULT_SUCCESS != result) {
                 return result;
             }
-            std::this_thread::sleep_for(std::chrono::milliseconds(100));  // Sleep for 100 milliseconds just to make sure, 1 ms is defined as part of spec
+            NEO::sleep(std::chrono::milliseconds(100));                   // Sleep for 100 milliseconds just to make sure, 1 ms is defined as part of spec
             result = pFsAccess->write((slotPath + slot + "/power"), "1"); // turn on power
             if (ZE_RESULT_SUCCESS != result) {
                 return result;
@@ -396,4 +485,11 @@ OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {
     LinuxSysmanImp *pLinuxSysmanImp = new LinuxSysmanImp(pParentSysmanDeviceImp);
     return static_cast<OsSysman *>(pLinuxSysmanImp);
 }
+std::vector<ze_device_handle_t> &LinuxSysmanImp::getDeviceHandles() {
+    return pParentSysmanDeviceImp->deviceHandles;
+}
+ze_device_handle_t LinuxSysmanImp::getCoreDeviceHandle() {
+    return pParentSysmanDeviceImp->hCoreDevice;
+}
+
 } // namespace L0

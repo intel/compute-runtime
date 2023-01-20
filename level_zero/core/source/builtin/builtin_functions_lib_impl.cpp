@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/kernel/kernel.h"
@@ -77,6 +78,14 @@ void BuiltinFunctionsLibImpl::initBuiltinKernel(Builtin func) {
         break;
     case Builtin::FillBufferImmediateStateless:
         builtinName = "FillBufferImmediate";
+        builtin = NEO::EBuiltInOps::FillBufferStateless;
+        break;
+    case Builtin::FillBufferImmediateLeftOver:
+        builtinName = "FillBufferImmediateLeftOver";
+        builtin = NEO::EBuiltInOps::FillBuffer;
+        break;
+    case Builtin::FillBufferImmediateLeftOverStateless:
+        builtinName = "FillBufferImmediateLeftOver";
         builtin = NEO::EBuiltInOps::FillBufferStateless;
         break;
     case Builtin::FillBufferSSHOffset:

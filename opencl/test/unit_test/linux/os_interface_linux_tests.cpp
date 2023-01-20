@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,13 +45,13 @@ TEST(OsInterfaceTest, whenOsInterfaceSetupsGmmInputArgsThenFileDescriptorIsSetWi
 }
 
 TEST(GmmHelperTest, whenCreateGmmHelperWithoutOsInterfaceThenPassedFileDescriptorIsZeroed) {
-    std::unique_ptr<GmmHelper> gmmHelper;
+    MockExecutionEnvironment executionEnvironment{};
     VariableBackup<decltype(passedInputArgs)> passedInputArgsBackup(&passedInputArgs);
     VariableBackup<decltype(copyInputArgs)> copyInputArgsBackup(&copyInputArgs, true);
 
     uint32_t expectedFileDescriptor = 0u;
 
-    gmmHelper.reset(new GmmHelper(nullptr, defaultHwInfo.get()));
+    auto gmmHelper = std::make_unique<GmmHelper>(*executionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_EQ(expectedFileDescriptor, passedInputArgs.FileDescriptor);
     EXPECT_EQ(GMM_CLIENT::GMM_OCL_VISTA, passedInputArgs.ClientType);
 }

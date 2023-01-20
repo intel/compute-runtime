@@ -1,18 +1,15 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/debug_helpers.h"
 
 #include "opencl/source/api/dispatch.h"
 #include "opencl/source/sharings/sharing.h"
-
-#include "DXGI1_2.h"
 
 #include <map>
 #include <vector>

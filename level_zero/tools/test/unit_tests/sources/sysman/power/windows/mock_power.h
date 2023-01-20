@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ struct Mock<PowerKmdSysManager> : public PowerKmdSysManager {
     uint32_t mockEnergyCounter = 3231121;
     uint32_t mockTimeStamp = 1123412412;
     uint32_t mockEnergyUnit = 14;
-
+    uint64_t mockEnergyCounter64Bit = 32323232323232;
     uint32_t mockFrequencyTimeStamp = 38400000;
 
     void getActivityProperty(KmdSysman::GfxSysmanReqHeaderIn *pRequest, KmdSysman::GfxSysmanReqHeaderOut *pResponse) {
@@ -144,6 +144,14 @@ struct Mock<PowerKmdSysManager> : public PowerKmdSysManager {
             *pValue = mockEnergyUnit;
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
             pResponse->outDataSize = sizeof(uint32_t);
+        } break;
+        case KmdSysman::Requests::Power::CurrentEnergyCounter64Bit: {
+            uint64_t *pValueCounter = reinterpret_cast<uint64_t *>(pBuffer);
+            uint64_t *pValueTS = reinterpret_cast<uint64_t *>(pBuffer + sizeof(uint64_t));
+            *pValueCounter = mockEnergyCounter64Bit;
+            *pValueTS = mockTimeStamp;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            pResponse->outDataSize = sizeof(uint64_t) + sizeof(uint64_t);
         } break;
         default: {
             pResponse->outDataSize = 0;

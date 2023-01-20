@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/os_library.h"
 
 #define UMDF_USING_NTSTATUS
-#include <Windows.h>
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 
 namespace NEO {
 namespace Windows {

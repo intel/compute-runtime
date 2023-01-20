@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ class WddmResidentAllocationsContainer {
     MOCKABLE_VIRTUAL void removeResource(const D3DKMT_HANDLE &handle);
 
   protected:
-    MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock) {
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock) {
         return std::unique_lock<SpinLock>{lock};
     }
 

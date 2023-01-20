@@ -7,17 +7,23 @@
 
 #include "level_zero/tools/source/sysman/events/linux/os_events_imp_prelim.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/utilities/directory.h"
+
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp_prelim.h"
 
 #include "sysman/events/events_imp.h"
 #include "sysman/linux/os_sysman_imp.h"
 
+#include <sys/stat.h>
+
 namespace L0 {
 
-const std::string LinuxEventsImp::deviceMemoryHealth("device_memory_health");
-const std::string LinuxEventsImp::varFs("/var/lib/libze_intel_gpu/");
-const std::string LinuxEventsImp::detachEvent("remove");
-const std::string LinuxEventsImp::attachEvent("add");
+const std::string LinuxEventsImp::add("add");
+const std::string LinuxEventsImp::remove("remove");
+const std::string LinuxEventsImp::change("change");
+const std::string LinuxEventsImp::unbind("unbind");
+const std::string LinuxEventsImp::bind("bind");
 
 static bool checkRasEventOccured(Ras *rasHandle) {
     zes_ras_config_t config = {};
@@ -58,28 +64,24 @@ bool LinuxEventsImp::checkRasEvent(zes_event_type_flags_t &pEvent) {
     return false;
 }
 
-bool LinuxEventsImp::isResetRequired(zes_event_type_flags_t &pEvent) {
-    zes_device_state_t pState = {};
-    pLinuxSysmanImp->getSysmanDeviceImp()->deviceGetState(&pState);
-    if (pState.reset) {
+bool LinuxEventsImp::isResetRequired(void *dev, zes_event_type_flags_t &pEvent) {
+    if (action.compare(change) != 0) {
+        return false;
+    }
+    const char *str;
+    str = pUdevLib->getEventPropertyValue(dev, "RESET_FAILED");
+    if (str && atoi(str) == 1) {
         pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED;
         return true;
     }
+
+    // ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED event could also be received when, reset Reason is
+    // ZES_RESET_REASON_FLAG_REPAIR.
     return false;
 }
 
 bool LinuxEventsImp::checkDeviceDetachEvent(zes_event_type_flags_t &pEvent) {
-    // When device detach uevent is generated, then L0 udev rules will create a file:
-    // /var/lib/libze_intel_gpu/remove-<ID_PATH_TAG>
-    // For <ID_PATH_TAG>, check comment in LinuxEventsImp::init()
-    const std::string deviceDetachFile = detachEvent + "-" + pciIdPathTag;
-    const std::string deviceDetachFileAbsolutePath = varFs + deviceDetachFile;
-    uint32_t val = 0;
-    auto result = pFsAccess->read(deviceDetachFileAbsolutePath, val);
-    if (result != ZE_RESULT_SUCCESS) {
-        return false;
-    }
-    if (val == 1) {
+    if (action.compare(remove) == 0) {
         pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_DETACH;
         return true;
     }
@@ -87,68 +89,192 @@ bool LinuxEventsImp::checkDeviceDetachEvent(zes_event_type_flags_t &pEvent) {
 }
 
 bool LinuxEventsImp::checkDeviceAttachEvent(zes_event_type_flags_t &pEvent) {
-    // When device detach uevent is generated, then L0 udev rules will create a file:
-    // /var/lib/libze_intel_gpu/add-<ID_PATH_TAG>
-    // For <ID_PATH_TAG>, check comment in LinuxEventsImp::init()
-    const std::string deviceAttachFile = attachEvent + "-" + pciIdPathTag;
-    const std::string deviceAttachFileAbsolutePath = varFs + deviceAttachFile;
-    uint32_t val = 0;
-    auto result = pFsAccess->read(deviceAttachFileAbsolutePath, val);
-    if (result != ZE_RESULT_SUCCESS) {
-        return false;
-    }
-    if (val == 1) {
+    if (action.compare(add) == 0) {
         pEvent |= ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH;
         return true;
     }
     return false;
 }
 
-bool LinuxEventsImp::checkIfMemHealthChanged(zes_event_type_flags_t &pEvent) {
-    if (currentMemHealth() != memHealthAtEventRegister) {
-        pEvent |= ZES_EVENT_TYPE_FLAG_MEM_HEALTH;
-        return true;
+bool LinuxEventsImp::checkIfMemHealthChanged(void *dev, zes_event_type_flags_t &pEvent) {
+    if (action.compare(change) != 0) {
+        return false;
+    }
+    std::vector<std::string> properties{"MEM_HEALTH_ALARM", "REBOOT_ALARM", "EC_PENDING", "DEGRADED", "EC_FAILED", "SPARING_STATUS_UNKNOWN"};
+    for (auto &property : properties) {
+        const char *propVal = nullptr;
+        propVal = pUdevLib->getEventPropertyValue(dev, property.c_str());
+        if (propVal && atoi(propVal) == 1) {
+            pEvent |= ZES_EVENT_TYPE_FLAG_MEM_HEALTH;
+            return true;
+        }
     }
     return false;
 }
 
-bool LinuxEventsImp::checkIfFabricPortStatusChanged(zes_event_type_flags_t &pEvent) {
-    uint32_t currentFabricEventStatusVal = 0;
-    if (currentFabricEventStatus(currentFabricEventStatusVal) != ZE_RESULT_SUCCESS) {
+bool LinuxEventsImp::checkIfFabricPortStatusChanged(void *dev, zes_event_type_flags_t &pEvent) {
+    if (action.compare(change) != 0) {
         return false;
     }
-    if (currentFabricEventStatusVal != fabricEventTrackAtRegister) {
+
+    const char *str = pUdevLib->getEventPropertyValue(dev, "TYPE");
+    if (str == nullptr) {
+        return false;
+    }
+    const char *expectedStr = "PORT_CHANGE";
+    const size_t expectedStrLen = 11; // length of "PORT_CHANGE" is 11
+    if (strlen(str) != strlen(expectedStr)) {
+        return false;
+    }
+    if (strncmp(str, expectedStr, expectedStrLen) == 0) {
         pEvent |= ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH;
         return true;
     }
     return false;
 }
 
+ze_result_t LinuxEventsImp::readFabricDeviceStats(const std::string &devicePciPath, struct stat &iafStat) {
+    const std::string iafDirectoryLegacy = "iaf.";
+    const std::string iafDirectory = "i915.iaf.";
+    const std::string fabricIdFile = "/iaf_fabric_id";
+    int fd = -1;
+    std::string path;
+    path.clear();
+    std::vector<std::string> list = NEO::Directory::getFiles(devicePciPath);
+    for (auto entry : list) {
+        if ((entry.find(iafDirectory) != std::string::npos) ||
+            (entry.find(iafDirectoryLegacy) != std::string::npos)) {
+            path = entry + fabricIdFile;
+            break;
+        }
+    }
+    if (path.empty()) {
+        // This device does not have a fabric
+        return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    }
+    fd = NEO::SysCalls::open(path.c_str(), O_RDONLY);
+    if (fd < 0) {
+        return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    }
+    NEO::SysCalls::fstat(fd, &iafStat);
+    NEO::SysCalls::close(fd);
+    return ZE_RESULT_SUCCESS;
+}
+
+bool LinuxEventsImp::listenSystemEvents(zes_event_type_flags_t &pEvent, uint64_t timeout) {
+    bool retval = false;
+    struct pollfd pfd;
+    struct stat iafStat;
+    std::vector<std::string> subsystemList;
+
+    if (pUdevLib == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                              "%s", "libudev library instantiation failed\n");
+        return retval;
+    }
+
+    // Get fabric device stats
+    const std::string iafPath = "device/";
+    std::string iafRealPath = {};
+    pLinuxSysmanImp->getSysfsAccess().getRealPath(iafPath, iafRealPath);
+    auto result = readFabricDeviceStats(iafRealPath, iafStat);
+    if (result == ZE_RESULT_SUCCESS) {
+        subsystemList.push_back("platform");
+    }
+
+    subsystemList.push_back("drm");
+    pfd.fd = pUdevLib->registerEventsFromSubsystemAndGetFd(subsystemList);
+    pfd.events = POLLIN;
+
+    auto pDrm = &pLinuxSysmanImp->getDrm();
+    struct stat drmStat;
+    NEO::SysCalls::fstat(pDrm->getFileDescriptor(), &drmStat);
+
+    auto start = std::chrono::steady_clock::now();
+    std::chrono::duration<double, std::milli> timeElapsed;
+    while (NEO::SysCalls::poll(&pfd, 1, static_cast<int>(timeout)) > 0) {
+        // Check again for registered events. Its possible while we are looping for events, registered events are cleared
+        if (!registeredEvents) {
+            return true;
+        }
+
+        dev_t devnum;
+        void *dev = nullptr;
+        dev = pUdevLib->allocateDeviceToReceiveData();
+        if (dev == nullptr) {
+            timeElapsed = std::chrono::steady_clock::now() - start;
+            if (timeout > timeElapsed.count()) {
+                timeout = timeout - timeElapsed.count();
+                continue;
+            } else {
+                break;
+            }
+        }
+
+        devnum = pUdevLib->getEventGenerationSourceDevice(dev);
+
+        if ((memcmp(&drmStat.st_rdev, &devnum, sizeof(dev_t)) == 0) ||
+            (memcmp(&iafStat.st_rdev, &devnum, sizeof(dev_t)) == 0)) {
+            auto eventTypePtr = pUdevLib->getEventType(dev);
+
+            if (eventTypePtr != nullptr) {
+                action = std::string(eventTypePtr);
+                if (registeredEvents & ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH) {
+                    if (checkIfFabricPortStatusChanged(dev, pEvent)) {
+                        registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
+                        retval = true;
+                    }
+                }
+                if (registeredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) {
+                    if (checkDeviceDetachEvent(pEvent)) {
+                        registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH); // After receiving event unregister it
+                        retval = true;
+                    }
+                }
+                if (registeredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH) {
+                    if (checkDeviceAttachEvent(pEvent)) {
+                        registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH);
+                        retval = true;
+                    }
+                }
+                if (registeredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
+                    if (isResetRequired(dev, pEvent)) {
+                        registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED);
+                        retval = true;
+                    }
+                }
+                if (registeredEvents & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
+                    if (checkIfMemHealthChanged(dev, pEvent)) {
+                        registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_MEM_HEALTH);
+                        retval = true;
+                    }
+                }
+            }
+        }
+
+        pUdevLib->dropDeviceReference(dev);
+        if (retval) {
+            break;
+        }
+        timeElapsed = std::chrono::steady_clock::now() - start;
+        if (timeout > timeElapsed.count()) {
+            timeout = timeout - timeElapsed.count();
+            continue;
+        } else {
+            break;
+        }
+    }
+
+    return retval;
+}
+
 bool LinuxEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) {
-    if (registeredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
-        if (isResetRequired(pEvent)) {
-            registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED); //After receiving event unregister it
-            return true;
-        }
+    bool retval = false;
+    if (!registeredEvents) {
+        return retval;
     }
-    if (registeredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) {
-        if (checkDeviceDetachEvent(pEvent)) {
-            registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_DEVICE_DETACH);
-            return true;
-        }
-    }
-    if (registeredEvents & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH) {
-        if (checkDeviceAttachEvent(pEvent)) {
-            registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH);
-            return true;
-        }
-    }
-    if (registeredEvents & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
-        if (checkIfMemHealthChanged(pEvent)) {
-            registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_MEM_HEALTH);
-            return true;
-        }
-    }
+
+    pEvent = 0;
     if ((registeredEvents & ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS) || (registeredEvents & ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS)) {
         if (checkRasEvent(pEvent)) {
             if (pEvent & ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS) {
@@ -159,74 +285,33 @@ bool LinuxEventsImp::eventListen(zes_event_type_flags_t &pEvent, uint64_t timeou
             return true;
         }
     }
-    if (registeredEvents & ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH) {
-        if (checkIfFabricPortStatusChanged(pEvent)) {
-            registeredEvents &= ~(ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH);
-            return true;
-        }
-    }
-    return false;
+
+    return listenSystemEvents(pEvent, timeout);
 }
 
 ze_result_t LinuxEventsImp::eventRegister(zes_event_type_flags_t events) {
     if (0x7fff < events) {
         return ZE_RESULT_ERROR_INVALID_ENUMERATION;
     }
-    registeredEvents |= events;
-    if (registeredEvents & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
-        memHealthAtEventRegister = currentMemHealth();
-    }
-    if (registeredEvents & ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH) {
-        currentFabricEventStatus(fabricEventTrackAtRegister);
+    if (!events) {
+        // If user is trying to register events with empty events argument, then clear all the registered events
+        registeredEvents = events;
+    } else {
+        // supportedEventMask --> this mask checks for events that supported currently
+        zes_event_type_flags_t supportedEventMask = ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH |
+                                                    ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH | ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED |
+                                                    ZES_EVENT_TYPE_FLAG_MEM_HEALTH | ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS |
+                                                    ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS;
+        registeredEvents |= (events & supportedEventMask);
     }
     return ZE_RESULT_SUCCESS;
-}
-
-ze_result_t LinuxEventsImp::currentFabricEventStatus(uint32_t &val) {
-    // When Fabric port status change uevent is generated, then L0 udev rules will create a file:
-    // /var/lib/libze_intel_gpu/fabric-<ID_PATH_TAG>
-    // For <ID_PATH_TAG>, check comment in LinuxEventsImp::init()
-    const std::string fabric = "fabric";
-    const std::string fabricEventFile = fabric + "-" + pciIdPathTag;
-    const std::string fabricEventFileAbsolutePath = varFs + fabricEventFile;
-    return pFsAccess->read(fabricEventFileAbsolutePath, val);
-}
-
-zes_mem_health_t LinuxEventsImp::currentMemHealth() {
-    std::string memHealth;
-    ze_result_t result = pSysfsAccess->read(deviceMemoryHealth, memHealth);
-    if (ZE_RESULT_SUCCESS != result) {
-        return ZES_MEM_HEALTH_UNKNOWN;
-    }
-
-    auto health = i915ToL0MemHealth.find(memHealth);
-    if (health != i915ToL0MemHealth.end()) {
-        return i915ToL0MemHealth.at(memHealth);
-    }
-    return ZES_MEM_HEALTH_UNKNOWN;
-}
-
-void LinuxEventsImp::getPciIdPathTag() {
-    std::string bdfDir;
-    ze_result_t result = pSysfsAccess->readSymLink("device", bdfDir);
-    if (ZE_RESULT_SUCCESS != result) {
-        return;
-    }
-    const auto loc = bdfDir.find_last_of('/');
-    auto bdf = bdfDir.substr(loc + 1);
-    std::replace(bdf.begin(), bdf.end(), ':', '_');
-    std::replace(bdf.begin(), bdf.end(), '.', '_');
-    // ID_PATH_TAG key is received when uevent related to device add/remove is generated.
-    // Example of ID_PATH_TAG is:
-    // ID_PATH_TAG=pci-0000_8c_00_0
-    pciIdPathTag = "pci-" + bdf;
 }
 
 LinuxEventsImp::LinuxEventsImp(OsSysman *pOsSysman) {
     pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
     pFsAccess = &pLinuxSysmanImp->getFsAccess();
-    getPciIdPathTag();
+    pUdevLib = pLinuxSysmanImp->getUdevLibHandle();
 }
 
 OsEvents *OsEvents::create(OsSysman *pOsSysman) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,16 +8,14 @@
 #include "shared/source/built_ins/built_ins.h"
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
-#include "shared/source/device_binary_format/device_binary_formats.h"
-#include "shared/source/helpers/basic_math.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
-#include "compiler_options.h"
-
 #include <cstdint>
-#include <sstream>
 
 namespace NEO {
 
@@ -51,10 +49,10 @@ const SipKernel &BuiltIns::getSipKernel(SipKernelType type, Device &device) {
         auto sipAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 
         auto &hwInfo = device.getHardwareInfo();
-        auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = device.getProductHelper();
 
         if (sipAllocation) {
-            MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
+            MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
                                                              device, sipAllocation, 0, sipBinary.data(),
                                                              sipBinary.size());
         }

@@ -44,7 +44,7 @@ struct EnqueueCopyBufferTest : public CommandEnqueueFixture,
                                public ::testing::Test {
 
     void SetUp(void) override {
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
 
         BufferDefaults::context = new MockContext;
 
@@ -56,7 +56,7 @@ struct EnqueueCopyBufferTest : public CommandEnqueueFixture,
         delete srcBuffer;
         delete dstBuffer;
         delete BufferDefaults::context;
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
   protected:

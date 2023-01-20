@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -17,56 +16,57 @@
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 namespace NEO {
 
 struct CommandDeviceFixture : public ClDeviceFixture,
                               public CommandQueueHwFixture {
-    using CommandQueueHwFixture::SetUp;
-    void SetUp(cl_command_queue_properties cmdQueueProperties = 0) {
-        ClDeviceFixture::SetUp();
-        CommandQueueHwFixture::SetUp(pClDevice, cmdQueueProperties);
+    using CommandQueueHwFixture::setUp;
+    void setUp(cl_command_queue_properties cmdQueueProperties = 0) {
+        ClDeviceFixture::setUp();
+        CommandQueueHwFixture::setUp(pClDevice, cmdQueueProperties);
     }
 
-    void TearDown() override {
-        CommandQueueHwFixture::TearDown();
-        ClDeviceFixture::TearDown();
+    void tearDown() {
+        CommandQueueHwFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 };
 
 struct CommandEnqueueBaseFixture : CommandDeviceFixture,
                                    public IndirectHeapFixture,
                                    public ClHardwareParse {
-    using IndirectHeapFixture::SetUp;
-    void SetUp(cl_command_queue_properties cmdQueueProperties = 0) {
-        CommandDeviceFixture::SetUp(cmdQueueProperties);
-        IndirectHeapFixture::SetUp(pCmdQ);
-        ClHardwareParse::SetUp();
+    using IndirectHeapFixture::setUp;
+    void setUp(cl_command_queue_properties cmdQueueProperties = 0) {
+        CommandDeviceFixture::setUp(cmdQueueProperties);
+        IndirectHeapFixture::setUp(pCmdQ);
+        ClHardwareParse::setUp();
     }
 
-    void TearDown() override {
-        ClHardwareParse::TearDown();
-        IndirectHeapFixture::TearDown();
-        CommandDeviceFixture::TearDown();
+    void tearDown() {
+        ClHardwareParse::tearDown();
+        IndirectHeapFixture::tearDown();
+        CommandDeviceFixture::tearDown();
     }
 };
 
 struct CommandEnqueueFixture : public CommandEnqueueBaseFixture,
                                public CommandStreamFixture {
-    void SetUp(cl_command_queue_properties cmdQueueProperties = 0) {
-        CommandEnqueueBaseFixture::SetUp(cmdQueueProperties);
-        CommandStreamFixture::SetUp(pCmdQ);
+    void setUp(cl_command_queue_properties cmdQueueProperties = 0) {
+        CommandEnqueueBaseFixture::setUp(cmdQueueProperties);
+        CommandStreamFixture::setUp(pCmdQ);
     }
 
-    void TearDown() override {
-        CommandEnqueueBaseFixture::TearDown();
-        CommandStreamFixture::TearDown();
+    void tearDown() {
+        CommandEnqueueBaseFixture::tearDown();
+        CommandStreamFixture::tearDown();
     }
 };
 
 struct NegativeFailAllocationCommandEnqueueBaseFixture : public CommandEnqueueBaseFixture {
-    void SetUp() override {
-        CommandEnqueueBaseFixture::SetUp();
+    void setUp() {
+        CommandEnqueueBaseFixture::setUp();
         failMemManager.reset(new FailMemoryManager(*pDevice->getExecutionEnvironment()));
 
         BufferDefaults::context = context;
@@ -78,13 +78,13 @@ struct NegativeFailAllocationCommandEnqueueBaseFixture : public CommandEnqueueBa
         pDevice->injectMemoryManager(failMemManager.release());
     }
 
-    void TearDown() override {
+    void tearDown() {
         pDevice->injectMemoryManager(oldMemManager);
         buffer.reset(nullptr);
         image.reset(nullptr);
         BufferDefaults::context = nullptr;
         Image2dDefaults::context = nullptr;
-        CommandEnqueueBaseFixture::TearDown();
+        CommandEnqueueBaseFixture::tearDown();
     }
 
     std::unique_ptr<Buffer> buffer;
@@ -106,7 +106,18 @@ struct CommandQueueStateless : public CommandQueueHw<FamilyType> {
         if (kernel->getKernelInfo().getArgDescriptorAt(0).is<ArgDescriptor::ArgTPointer>()) {
             EXPECT_FALSE(kernel->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().isPureStateful());
         }
+
+        if (validateKernelSystemMemory) {
+            if (expectedKernelSystemMemory) {
+                EXPECT_TRUE(kernel->getDestinationAllocationInSystemMemory());
+            } else {
+                EXPECT_FALSE(kernel->getDestinationAllocationInSystemMemory());
+            }
+        }
     }
+
+    bool validateKernelSystemMemory = false;
+    bool expectedKernelSystemMemory = false;
 };
 
 template <typename FamilyType>
@@ -117,10 +128,22 @@ struct CommandQueueStateful : public CommandQueueHw<FamilyType> {
         auto kernel = dispatchInfo.begin()->getKernel();
         EXPECT_FALSE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.supportsBuffersBiggerThan4Gb());
 
-        if (HwHelperHw<FamilyType>::get().isStatelesToStatefullWithOffsetSupported()) {
+        auto &gfxCoreHelper = kernel->getContext().getDevice(0)->getGfxCoreHelper();
+        if (gfxCoreHelper.isStatelessToStatefulWithOffsetSupported()) {
             EXPECT_TRUE(kernel->allBufferArgsStateful);
         }
+
+        if (validateKernelSystemMemory) {
+            if (expectedKernelSystemMemory) {
+                EXPECT_TRUE(kernel->getDestinationAllocationInSystemMemory());
+            } else {
+                EXPECT_FALSE(kernel->getDestinationAllocationInSystemMemory());
+            }
+        }
     }
+
+    bool validateKernelSystemMemory = false;
+    bool expectedKernelSystemMemory = false;
 };
 
 } // namespace NEO

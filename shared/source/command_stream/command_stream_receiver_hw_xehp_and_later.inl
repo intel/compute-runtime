@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,11 +30,11 @@ template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const Device &device) const {
     size_t size = sizeof(typename GfxFamily::STATE_BASE_ADDRESS);
     size += sizeof(typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC);
-    size += sizeof(PIPE_CONTROL);
+    size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
 
     auto &hwInfo = *device.getRootDeviceEnvironment().getHardwareInfo();
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+    auto &productHelper = getProductHelper();
+    if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
         size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS);
     }
 
@@ -46,10 +46,12 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForL3Config() const { retur
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &commandStream, PipelineSelectArgs &pipelineSelectArgs) {
-    if (csrSizeRequestFlags.mediaSamplerConfigChanged || csrSizeRequestFlags.specialPipelineSelectModeChanged || !isPreambleSent) {
-        PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, peekHwInfo());
+    if (csrSizeRequestFlags.mediaSamplerConfigChanged || csrSizeRequestFlags.systolicPipelineSelectMode || !isPreambleSent) {
+        auto &hwInfo = peekHwInfo();
+        PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, hwInfo);
         this->lastMediaSamplerConfig = pipelineSelectArgs.mediaSamplerRequired;
-        this->lastSpecialPipelineSelectMode = pipelineSelectArgs.specialPipelineSelectMode;
+        this->lastSystolicPipelineSelectMode = pipelineSelectArgs.systolicPipelineSelectMode;
+        this->streamProperties.pipelineSelect.setProperties(true, this->lastMediaSamplerConfig, this->lastSystolicPipelineSelectMode, hwInfo);
     }
 }
 
@@ -137,16 +139,16 @@ inline void CommandStreamReceiverHw<GfxFamily>::programActivePartitionConfig(Lin
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device) {
     auto &hwInfo = peekHwInfo();
-    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &gfxCoreHelper = getGfxCoreHelper();
+    auto &productHelper = getProductHelper();
     bool debuggingEnabled = device.getDebugger() != nullptr;
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    args.dcFlushEnable = this->dcFlushSupport;
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
     std::ignore = isExtendedWARequired;
 
-    if (isBasicWARequired && debuggingEnabled && !hwHelper.isSipWANeeded(hwInfo)) {
-        NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, hwInfo, isRcs());
+    if (isBasicWARequired && debuggingEnabled && !gfxCoreHelper.isSipWANeeded(hwInfo)) {
+        NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, this->peekRootDeviceEnvironment(), isRcs());
     }
 }
 
@@ -157,7 +159,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyn
                                                                   false,
                                                                   false);
     } else {
-        return sizeof(typename GfxFamily::PIPE_CONTROL);
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
     }
 }
 
@@ -168,7 +170,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncC
                                                                   false,
                                                                   true);
     } else {
-        return MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(peekHwInfo());
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekHwInfo(), false);
     }
 }
 
@@ -186,7 +188,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommand
                                                                     false,
                                                                     false);
     } else {
-        MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdStream, args);
+        MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdStream, args);
     }
 }
 
@@ -195,7 +197,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
     auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(tagNode);
     const auto &hwInfo = peekHwInfo();
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+    args.dcFlushEnable = this->dcFlushSupport;
     if (isMultiTileOperationEnabled()) {
         args.workloadPartitionOffset = true;
         ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,
@@ -208,9 +210,9 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
                                                                     false);
         tagNode.setPacketsUsed(this->activePartitions);
     } else {
-        MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+        MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             cmdStream,
-            PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            PostSyncMode::ImmediateData,
             barrierTimestampPacketGpuAddress,
             0,
             hwInfo,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,15 +12,14 @@
 #include "shared/source/memory_manager/address_mapper.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
 
-#include "third_party/aub_stream/headers/aub_manager.h"
+#include "aubstream/aub_manager.h"
 
 namespace NEO {
-struct HardwareInfo;
-class GmmHelper;
+struct RootDeviceEnvironment;
 
 class AubCenter {
   public:
-    AubCenter(const HardwareInfo *pHwInfo, const GmmHelper &gmmHelper, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
+    AubCenter(const RootDeviceEnvironment &rootDeviceEnvironment, bool localMemoryEnabled, const std::string &aubFileName, CommandStreamReceiverType csrType);
 
     AubCenter();
     virtual ~AubCenter() = default;

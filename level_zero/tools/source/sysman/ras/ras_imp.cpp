@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,9 @@
 
 #include "level_zero/tools/source/sysman/ras/ras_imp.h"
 
-#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
+
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <cstring>
 
@@ -37,9 +38,10 @@ void RasImp::init() {
 }
 
 RasImp::RasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_device_handle_t handle) : deviceHandle(handle) {
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-    pOsRas = OsRas::create(pOsSysman, type, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
+    uint32_t subdeviceId = 0;
+    ze_bool_t onSubdevice = false;
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice, true);
+    pOsRas = OsRas::create(pOsSysman, type, onSubdevice, subdeviceId);
     init();
 }
 

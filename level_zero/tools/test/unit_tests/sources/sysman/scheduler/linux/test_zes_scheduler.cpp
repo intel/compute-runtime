@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,6 @@
 #include "mock_sysfs_scheduler.h"
 
 extern bool sysmanUltsEnable;
-
-using ::testing::DoDefault;
-using ::testing::Return;
 
 namespace L0 {
 namespace ult {
@@ -34,7 +31,7 @@ constexpr uint64_t expectedTimesliceMicroSecs = timesliceMilliSecs * convertMill
 class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
 
   protected:
-    std::unique_ptr<Mock<SchedulerSysfsAccess>> pSysfsAccess;
+    std::unique_ptr<MockSchedulerSysfsAccess> pSysfsAccess;
     SysfsAccess *pSysfsAccessOld = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
 
@@ -44,7 +41,7 @@ class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
         }
         SysmanDeviceFixture::SetUp();
         pSysfsAccessOld = pLinuxSysmanImp->pSysfsAccess;
-        pSysfsAccess = std::make_unique<NiceMock<Mock<SchedulerSysfsAccess>>>();
+        pSysfsAccess = std::make_unique<MockSchedulerSysfsAccess>();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         for_each(listOfMockedEngines.begin(), listOfMockedEngines.end(),
                  [=](std::string engineName) {
@@ -55,19 +52,13 @@ class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
                      pSysfsAccess->setFileProperties(engineName, timesliceDurationMilliSecs, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
                      pSysfsAccess->setFileProperties(engineName, heartbeatIntervalMilliSecs, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
 
-                     pSysfsAccess->setVal(engineDir + "/" + engineName + "/" + defaultPreemptTimeoutMilliSecs, defaultTimeoutMilliSecs);
-                     pSysfsAccess->setVal(engineDir + "/" + engineName + "/" + defaultTimesliceDurationMilliSecs, defaultTimesliceMilliSecs);
-                     pSysfsAccess->setVal(engineDir + "/" + engineName + "/" + defaultHeartbeatIntervalMilliSecs, defaultHeartbeatMilliSecs);
-                     pSysfsAccess->setVal(engineDir + "/" + engineName + "/" + preemptTimeoutMilliSecs, timeoutMilliSecs);
-                     pSysfsAccess->setVal(engineDir + "/" + engineName + "/" + timesliceDurationMilliSecs, timesliceMilliSecs);
-                     pSysfsAccess->setVal(engineDir + "/" + engineName + "/" + heartbeatIntervalMilliSecs, heartbeatMilliSecs);
+                     pSysfsAccess->write(engineDir + "/" + engineName + "/" + defaultPreemptTimeoutMilliSecs, defaultTimeoutMilliSecs);
+                     pSysfsAccess->write(engineDir + "/" + engineName + "/" + defaultTimesliceDurationMilliSecs, defaultTimesliceMilliSecs);
+                     pSysfsAccess->write(engineDir + "/" + engineName + "/" + defaultHeartbeatIntervalMilliSecs, defaultHeartbeatMilliSecs);
+                     pSysfsAccess->write(engineDir + "/" + engineName + "/" + preemptTimeoutMilliSecs, timeoutMilliSecs);
+                     pSysfsAccess->write(engineDir + "/" + engineName + "/" + timesliceDurationMilliSecs, timesliceMilliSecs);
+                     pSysfsAccess->write(engineDir + "/" + engineName + "/" + heartbeatIntervalMilliSecs, heartbeatMilliSecs);
                  });
-        ON_CALL(*pSysfsAccess.get(), read(_, _))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<SchedulerSysfsAccess>::getVal));
-        ON_CALL(*pSysfsAccess.get(), write(_, _))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<SchedulerSysfsAccess>::setVal));
-        ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<SchedulerSysfsAccess>::getscanDirEntries));
 
         // delete handles created in initial SysmanDeviceHandleContext::init() call
         for (auto handle : pSysmanDeviceImp->pSchedulerHandleContext->handleList) {
@@ -84,7 +75,7 @@ class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pSchedulerHandleContext->init(deviceHandles);
+        getSchedHandles(0);
     }
 
     void TearDown() override {
@@ -125,8 +116,7 @@ class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
 };
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumSchedulersAndSysfsCanReadReturnsErrorThenZeroCountIsReturned) {
-    ON_CALL(*pSysfsAccess.get(), scanDirEntries(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<SchedulerSysfsAccess>::getscanDirEntriesStatusReturnError));
+    pSysfsAccess->mockGetScanDirEntryError = ZE_RESULT_ERROR_NOT_AVAILABLE;
 
     auto pSchedulerHandleContextTest = std::make_unique<SchedulerHandleContext>(pOsSysman);
     pSchedulerHandleContextTest->init(deviceHandles);
@@ -173,7 +163,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerGetTimeoutModePropertiesThenVerifyzesSchedulerGetTimeoutModePropertiesForDifferingValues) {
     auto handles = getSchedHandles(handleComponentCount);
-    pSysfsAccess->setVal(engineDir + "/" + "vcs1" + "/" + heartbeatIntervalMilliSecs, (heartbeatMilliSecs + 5));
+    pSysfsAccess->write(engineDir + "/" + "vcs1" + "/" + heartbeatIntervalMilliSecs, (heartbeatMilliSecs + 5));
 
     for (auto handle : handles) {
         zes_sched_properties_t properties = {};
@@ -206,7 +196,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerGetTimescliceModePropertiesThenVerifyzesSchedulerGetTimescliceModePropertiesForDifferingPreemptTimeoutValues) {
     auto handles = getSchedHandles(handleComponentCount);
-    pSysfsAccess->setVal(engineDir + "/" + "vcs1" + "/" + preemptTimeoutMilliSecs, (timeoutMilliSecs + 5));
+    pSysfsAccess->write(engineDir + "/" + "vcs1" + "/" + preemptTimeoutMilliSecs, (timeoutMilliSecs + 5));
 
     for (auto handle : handles) {
         zes_sched_properties_t properties = {};
@@ -222,7 +212,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerGetTimescliceModePropertiesThenVerifyzesSchedulerGetTimescliceModePropertiesForDifferingTimesliceDurationValues) {
     auto handles = getSchedHandles(handleComponentCount);
-    pSysfsAccess->setVal(engineDir + "/" + "vcs1" + "/" + timesliceDurationMilliSecs, (timesliceMilliSecs + 5));
+    pSysfsAccess->write(engineDir + "/" + "vcs1" + "/" + timesliceDurationMilliSecs, (timesliceMilliSecs + 5));
 
     for (auto handle : handles) {
         zes_sched_properties_t properties = {};
@@ -245,9 +235,9 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
         ze_result_t result = zesSchedulerGetProperties(handle, &properties);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         if (properties.engines == ZES_ENGINE_TYPE_FLAG_MEDIA) {
-            EXPECT_CALL(*pSysfsAccess.get(), read(_, _))
-                .WillOnce(Return(ZE_RESULT_ERROR_NOT_AVAILABLE))
-                .WillRepeatedly(DoDefault());
+
+            pSysfsAccess->mockReadFileFailureError = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
             ze_result_t result = zesSchedulerGetTimeoutModeProperties(handle, false, &config);
             EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
         }
@@ -263,9 +253,9 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
         ze_result_t result = zesSchedulerGetProperties(handle, &properties);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         if (properties.engines == ZES_ENGINE_TYPE_FLAG_MEDIA) {
-            EXPECT_CALL(*pSysfsAccess.get(), read(_, _))
-                .WillOnce(Return(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS))
-                .WillRepeatedly(DoDefault());
+
+            pSysfsAccess->mockReadFileFailureError = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+
             ze_result_t result = zesSchedulerGetTimeoutModeProperties(handle, false, &config);
             EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
         }
@@ -280,12 +270,14 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
         ze_result_t result = zesSchedulerGetProperties(handle, &properties);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         if (properties.engines == ZES_ENGINE_TYPE_FLAG_MEDIA) {
-            EXPECT_CALL(*pSysfsAccess.get(), read(_, _))
-                .WillOnce(Return(ZE_RESULT_SUCCESS))
-                .WillOnce(Return(ZE_RESULT_SUCCESS))
-                .WillOnce(Return(ZE_RESULT_SUCCESS))             //3 reads to satisfy Prempt timeout reads
-                .WillOnce(Return(ZE_RESULT_ERROR_NOT_AVAILABLE)) // failure in timesclice read.
-                .WillRepeatedly(DoDefault());
+
+            /* The flag mockReadReturnStatus enables the call to read call where
+             * the read call returns ZE_RESULT_SUCCESS for the first 3 invocations
+             * and the 4th invocation returns the ZE_RESULT_ERROR_NOT_AVAILABLE
+             */
+
+            pSysfsAccess->mockReadReturnStatus = true;
+
             result = zesSchedulerGetTimesliceModeProperties(handle, false, &config);
             EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
         }
@@ -300,9 +292,9 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
         ze_result_t result = zesSchedulerGetProperties(handle, &properties);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         if (properties.engines == ZES_ENGINE_TYPE_FLAG_MEDIA) {
-            EXPECT_CALL(*pSysfsAccess.get(), read(_, _))
-                .WillOnce(Return(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS))
-                .WillRepeatedly(DoDefault());
+
+            pSysfsAccess->mockReadFileFailureError = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
+
             result = zesSchedulerGetTimesliceModeProperties(handle, false, &config);
             EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
         }
@@ -572,6 +564,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetComputeUnitDebugModeThenUnsupportedFeatureIsReturned) {
+    pSysfsAccess->mockWriteFileStatus = ZE_RESULT_ERROR_NOT_AVAILABLE;
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReload;
@@ -581,8 +574,8 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerGetTimeoutModePropertiesWithDefaultsWhenSysfsNodeIsAbsentThenFailureIsReturned) {
-    ON_CALL(*pSysfsAccess.get(), read(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<SchedulerSysfsAccess>::getValForError));
+    pSysfsAccess->mockReadFileFailureError = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         zes_sched_timeout_properties_t config;
@@ -592,8 +585,8 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerGetTimesliceModePropertiesWithDefaultsWhenSysfsNodeIsAbsentThenFailureIsReturned) {
-    ON_CALL(*pSysfsAccess.get(), read(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<SchedulerSysfsAccess>::getValForError));
+    pSysfsAccess->mockReadFileFailureError = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         zes_sched_timeslice_properties_t config;
@@ -603,8 +596,8 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimesliceModeWhenSysfsNodeIsAbsentThenFailureIsReturned) {
-    ON_CALL(*pSysfsAccess.get(), write(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<SchedulerSysfsAccess>::getValForErrorWhileWrite));
+    pSysfsAccess->mockWriteFileStatus = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReboot;
@@ -617,17 +610,16 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 }
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedulerSetTimesliceModeWhenSysfsNodeWithoutPermissionsThenFailureIsReturned) {
-    ON_CALL(*pSysfsAccess.get(), write(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<SchedulerSysfsAccess>::getValForErrorWhileWrite));
+    pSysfsAccess->mockWriteFileStatus = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
     auto handles = getSchedHandles(handleComponentCount);
     for (auto handle : handles) {
         ze_bool_t needReboot;
         zes_sched_timeslice_properties_t setConfig;
         setConfig.interval = 1000u;
         setConfig.yieldTimeout = 1000u;
-        EXPECT_CALL(*pSysfsAccess.get(), write(_, _))
-            .WillOnce(Return(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS))
-            .WillRepeatedly(DoDefault());
+
+        pSysfsAccess->mockWriteFileStatus = ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;
         ze_result_t result = zesSchedulerSetTimesliceMode(handle, &setConfig, &needReboot);
         EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
     }

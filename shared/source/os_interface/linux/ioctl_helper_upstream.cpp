@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,17 +9,24 @@
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/i915_upstream.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
-
-#include "third_party/uapi/drm/i915_drm.h"
 
 namespace NEO {
 
-bool IoctlHelperUpstream::isVmBindAvailable(Drm *drm) {
+bool IoctlHelperUpstream::initialize() {
+    return true;
+}
+
+bool IoctlHelperUpstream::isSetPairAvailable() {
     return false;
 }
 
-uint32_t IoctlHelperUpstream::createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) {
+bool IoctlHelperUpstream::isVmBindAvailable() {
+    return false;
+}
+
+int IoctlHelperUpstream::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
     std::vector<drm_i915_gem_memory_class_instance> regions(regionsSize);
     for (uint32_t i = 0; i < regionsSize; i++) {
@@ -47,26 +54,26 @@ uint32_t IoctlHelperUpstream::createGemExt(Drm *drm, const MemRegionsVec &memCla
         printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "%s", " }\n");
     }
 
-    auto ret = ioctl(drm, DrmIoctl::GemCreateExt, &createExt);
+    auto ret = ioctl(DrmIoctl::GemCreateExt, &createExt);
 
     printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "GEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: %d BO-%u with size: %lu\n", ret, createExt.handle, createExt.size);
     handle = createExt.handle;
     return ret;
 }
 
-CacheRegion IoctlHelperUpstream::closAlloc(Drm *drm) {
+CacheRegion IoctlHelperUpstream::closAlloc() {
     return CacheRegion::None;
 }
 
-uint16_t IoctlHelperUpstream::closAllocWays(Drm *drm, CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) {
+uint16_t IoctlHelperUpstream::closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) {
     return 0;
 }
 
-CacheRegion IoctlHelperUpstream::closFree(Drm *drm, CacheRegion closIndex) {
+CacheRegion IoctlHelperUpstream::closFree(CacheRegion closIndex) {
     return CacheRegion::None;
 }
 
-int IoctlHelperUpstream::waitUserFence(Drm *drm, uint32_t ctxId, uint64_t address,
+int IoctlHelperUpstream::waitUserFence(uint32_t ctxId, uint64_t address,
                                        uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) {
     return 0;
 }
@@ -79,11 +86,11 @@ uint32_t IoctlHelperUpstream::getPreferredLocationAdvise() {
     return 0;
 }
 
-bool IoctlHelperUpstream::setVmBoAdvise(Drm *drm, int32_t handle, uint32_t attribute, void *region) {
+bool IoctlHelperUpstream::setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) {
     return true;
 }
 
-bool IoctlHelperUpstream::setVmPrefetch(Drm *drm, uint64_t start, uint64_t length, uint32_t region) {
+bool IoctlHelperUpstream::setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) {
     return true;
 }
 
@@ -99,7 +106,7 @@ uint64_t IoctlHelperUpstream::getFlagsForVmBind(bool bindCapture, bool bindImmed
     return 0u;
 }
 
-uint32_t IoctlHelperUpstream::queryDistances(Drm *drm, std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
+int IoctlHelperUpstream::queryDistances(std::vector<QueryItem> &queryItems, std::vector<DistanceInfo> &distanceInfos) {
     for (auto &query : queryItems) {
         query.length = -EINVAL;
     }
@@ -110,8 +117,8 @@ uint16_t IoctlHelperUpstream::getWaitUserFenceSoftFlag() {
     return 0;
 }
 
-int IoctlHelperUpstream::execBuffer(Drm *drm, ExecBuffer *execBuffer, uint64_t completionGpuAddress, uint32_t counterValue) {
-    return ioctl(drm, DrmIoctl::GemExecbuffer2, execBuffer);
+int IoctlHelperUpstream::execBuffer(ExecBuffer *execBuffer, uint64_t completionGpuAddress, TaskCountType counterValue) {
+    return ioctl(DrmIoctl::GemExecbuffer2, execBuffer);
 }
 
 bool IoctlHelperUpstream::completionFenceExtensionSupported(const bool isVmBindAvailable) {
@@ -140,11 +147,11 @@ uint32_t IoctlHelperUpstream::getFlagsForVmCreate(bool disableScratch, bool enab
     return 0u;
 }
 
-uint32_t IoctlHelperUpstream::createContextWithAccessCounters(Drm *drm, GemContextCreateExt &gcc) {
+uint32_t IoctlHelperUpstream::createContextWithAccessCounters(GemContextCreateExt &gcc) {
     return EINVAL;
 }
 
-uint32_t IoctlHelperUpstream::createCooperativeContext(Drm *drm, GemContextCreateExt &gcc) {
+uint32_t IoctlHelperUpstream::createCooperativeContext(GemContextCreateExt &gcc) {
     return EINVAL;
 }
 
@@ -164,31 +171,31 @@ uint32_t IoctlHelperUpstream::getVmAdviseAtomicAttribute() {
     return 0;
 }
 
-int IoctlHelperUpstream::vmBind(Drm *drm, const VmBindParams &vmBindParams) {
+int IoctlHelperUpstream::vmBind(const VmBindParams &vmBindParams) {
     return 0;
 }
 
-int IoctlHelperUpstream::vmUnbind(Drm *drm, const VmBindParams &vmBindParams) {
+int IoctlHelperUpstream::vmUnbind(const VmBindParams &vmBindParams) {
     return 0;
 }
 
-UuidRegisterResult IoctlHelperUpstream::registerUuid(Drm *drm, const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) {
+UuidRegisterResult IoctlHelperUpstream::registerUuid(const std::string &uuid, uint32_t uuidClass, uint64_t ptr, uint64_t size) {
     return {0, 0};
 }
 
-UuidRegisterResult IoctlHelperUpstream::registerStringClassUuid(Drm *drm, const std::string &uuid, uint64_t ptr, uint64_t size) {
+UuidRegisterResult IoctlHelperUpstream::registerStringClassUuid(const std::string &uuid, uint64_t ptr, uint64_t size) {
     return {0, 0};
 }
 
-int IoctlHelperUpstream::unregisterUuid(Drm *drm, uint32_t handle) {
+int IoctlHelperUpstream::unregisterUuid(uint32_t handle) {
     return 0;
 }
 
-bool IoctlHelperUpstream::isContextDebugSupported(Drm *drm) {
+bool IoctlHelperUpstream::isContextDebugSupported() {
     return false;
 }
 
-int IoctlHelperUpstream::setContextDebugFlag(Drm *drm, uint32_t drmContextId) {
+int IoctlHelperUpstream::setContextDebugFlag(uint32_t drmContextId) {
     return 0;
 }
 
@@ -216,5 +223,20 @@ int IoctlHelperUpstream::getDrmParamValue(DrmParam drmParam) const {
     default:
         return getDrmParamValueBase(drmParam);
     }
+}
+std::string IoctlHelperUpstream::getDrmParamString(DrmParam param) const {
+    return getDrmParamStringBase(param);
+}
+std::string IoctlHelperUpstream::getIoctlString(DrmIoctl ioctlRequest) const {
+    switch (ioctlRequest) {
+    case DrmIoctl::GemCreateExt:
+        return "DRM_IOCTL_I915_GEM_CREATE_EXT";
+    default:
+        return getIoctlStringBase(ioctlRequest);
+    }
+}
+
+bool IoctlHelperUpstream::getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) {
+    return false;
 }
 } // namespace NEO

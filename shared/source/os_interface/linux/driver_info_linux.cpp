@@ -7,7 +7,6 @@
 
 #include "shared/source/os_interface/linux/driver_info_linux.h"
 
-#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -27,10 +26,10 @@ DriverInfo *DriverInfo::create(const HardwareInfo *hwInfo, const OSInterface *os
 };
 
 DriverInfoLinux::DriverInfoLinux(bool imageSupport, const PhysicalDevicePciBusInfo &pciBusInfo)
-    : imageSupport(imageSupport) {
+    : DriverInfo(DriverInfoType::LINUX), imageSupport(imageSupport) {
     this->pciBusInfo = pciBusInfo;
 }
 
-bool DriverInfoLinux::getImageSupport() { return imageSupport; }
+bool DriverInfoLinux::getMediaSharingSupport() { return imageSupport; }
 
 } // namespace NEO

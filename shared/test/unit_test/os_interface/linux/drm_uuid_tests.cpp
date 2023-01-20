@@ -7,14 +7,14 @@
 
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
 
 TEST(DrmUuidTest, GivenDrmWhenGeneratingUUIDThenCorrectStringsAreReturned) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     auto uuid1 = drm.generateUUID();
     auto uuid2 = drm.generateUUID();
@@ -30,8 +30,7 @@ TEST(DrmUuidTest, GivenDrmWhenGeneratingUUIDThenCorrectStringsAreReturned) {
 }
 
 TEST(DrmUuidTest, GivenDrmWhenGeneratingElfUUIDThenCorrectStringsAreReturned) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     std::string elfClassUuid = classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::Elf)].second;

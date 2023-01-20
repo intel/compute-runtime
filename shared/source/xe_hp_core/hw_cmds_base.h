@@ -10,11 +10,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/xe_hp_core/hw_info.h"
 
-#include "igfxfmid.h"
-
-#include <cstddef>
-#include <type_traits>
-
 template <class T>
 struct CmdParse;
 
@@ -33,6 +28,43 @@ struct XeHpCore {
     static constexpr bool supportsSampler = true;
     static constexpr bool isUsingGenericMediaStateClear = true;
     static constexpr bool isUsingMiMemFence = false;
+    static constexpr bool isUsingMiSetPredicate = true;
+
+    struct FrontEndStateSupport {
+        static constexpr bool scratchSize = true;
+        static constexpr bool privateScratchSize = true;
+        static constexpr bool computeDispatchAllWalker = false;
+        static constexpr bool disableEuFusion = false;
+        static constexpr bool disableOverdispatch = true;
+        static constexpr bool singleSliceDispatchCcsMode = true;
+    };
+
+    struct StateComputeModeStateSupport {
+        static constexpr bool threadArbitrationPolicy = false;
+        static constexpr bool coherencyRequired = true;
+        static constexpr bool largeGrfMode = true;
+        static constexpr bool zPassAsyncComputeThreadLimit = false;
+        static constexpr bool pixelAsyncComputeThreadLimit = false;
+        static constexpr bool devicePreemptionMode = false;
+    };
+
+    struct StateBaseAddressStateSupport {
+        static constexpr bool globalAtomics = true;
+        static constexpr bool statelessMocs = true;
+        static constexpr bool bindingTablePoolBaseAddress = true;
+    };
+
+    struct PipelineSelectStateSupport {
+        static constexpr bool modeSelected = true;
+        static constexpr bool mediaSamplerDopClockGate = true;
+        static constexpr bool systolicMode = true;
+    };
+
+    struct PreemptionDebugSupport {
+        static constexpr bool preemptionMode = true;
+        static constexpr bool stateSip = true;
+        static constexpr bool csrSurface = false;
+    };
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {

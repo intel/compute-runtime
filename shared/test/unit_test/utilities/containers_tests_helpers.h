@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,16 +8,6 @@
 #pragma once
 
 #include <stddef.h>
-
-template <typename Arg1>
-size_t countArgs(const Arg1 &arg1) {
-    return 1;
-}
-
-template <typename Arg1, typename... Rest>
-size_t countArgs(const Arg1 &arg1, const Rest &...rest) {
-    return 1 + countArgs(rest...);
-}
 
 template <typename NodeObjectType, typename... Args>
 int verifySequence(const NodeObjectType *base, int nodeNum, const NodeObjectType *last) {
@@ -58,7 +48,7 @@ int verifyFListOrder(const NodeObjectType *base, const NodeObjectType *first, co
     if (sequenceRet < 0) {
         return sequenceRet;
     }
-    int totalReferenceNodes = (int)countArgs(first, rest...);
+    int totalReferenceNodes = static_cast<int>(1 + sizeof...(rest));
     if (sequenceRet >= totalReferenceNodes) {
         // base defines longer sequence than expected
         return totalReferenceNodes - 1;

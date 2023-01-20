@@ -10,9 +10,39 @@
 
 using namespace NEO::Elf;
 
-TEST(ElfFormat, WhenAccessingFieldsFromElfSymbolEntryThenAdequateValueIsSetOrReturned) {
-    // fields info and other have same size in both 32bit and 64bit elf
+TEST(ElfFormat, WhenAccessingFieldsFrom64BitElfSymbolEntryThenAdequateValueIsSetOrReturned) {
     ElfSymbolEntry<EI_CLASS_64> elfSym{0};
+
+    uint8_t binding = 1U;
+    elfSym.info = 0U;
+    elfSym.info = (elfSym.info & 0xFU) | (binding << 4U);
+    EXPECT_EQ(binding, elfSym.getBinding());
+
+    elfSym.info = 0U;
+    elfSym.setBinding(binding);
+    EXPECT_EQ(binding, elfSym.info >> 4);
+
+    uint8_t type = 2U;
+    elfSym.info = 0U;
+    elfSym.info = (elfSym.info & (~0xFU)) | type;
+    EXPECT_EQ(type, elfSym.getType());
+
+    elfSym.info = 0U;
+    elfSym.setType(type);
+    EXPECT_EQ(type, elfSym.info & 0xF);
+
+    uint8_t visibility = 3U;
+    elfSym.other = 0U;
+    elfSym.other = (elfSym.other & (~0x3)) | visibility;
+    EXPECT_EQ(visibility, elfSym.getVisibility());
+
+    elfSym.other = 0U;
+    elfSym.setVisibility(visibility);
+    EXPECT_EQ(visibility, elfSym.other & 0x3);
+}
+
+TEST(ElfFormat, WhenAccessingFieldsFrom32BitElfSymbolEntryThenAdequateValueIsSetOrReturned) {
+    ElfSymbolEntry<EI_CLASS_32> elfSym{0};
 
     uint8_t binding = 1U;
     elfSym.info = 0U;
@@ -45,11 +75,11 @@ TEST(ElfFormat, WhenAccessingFieldsFromElfSymbolEntryThenAdequateValueIsSetOrRet
 TEST(ElfFormat, Elf32SymbolsAreReadCorrectly) {
     uint8_t elfSymbolData32b[0x10] = {0};
     auto &name = *reinterpret_cast<uint32_t *>(elfSymbolData32b);
-    auto &info = *reinterpret_cast<uint8_t *>(elfSymbolData32b + 4);
-    auto &other = *reinterpret_cast<uint8_t *>(elfSymbolData32b + 5);
-    auto &shndx = *reinterpret_cast<uint16_t *>(elfSymbolData32b + 6);
-    auto &value = *reinterpret_cast<uint32_t *>(elfSymbolData32b + 8);
-    auto &size = *reinterpret_cast<uint32_t *>(elfSymbolData32b + 0xC);
+    auto &value = *reinterpret_cast<uint32_t *>(elfSymbolData32b + 4);
+    auto &size = *reinterpret_cast<uint32_t *>(elfSymbolData32b + 8);
+    auto &info = *reinterpret_cast<uint8_t *>(elfSymbolData32b + 12);
+    auto &other = *reinterpret_cast<uint8_t *>(elfSymbolData32b + 13);
+    auto &shndx = *reinterpret_cast<uint16_t *>(elfSymbolData32b + 14);
 
     uint8_t type = 1U;
     uint8_t bind = 2U;

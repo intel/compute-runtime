@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,23 +14,23 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 
-#include "drm/i915_drm.h"
-
+#include <fcntl.h>
 #include <sstream>
 
 namespace NEO {
 
-uint32_t IoctlHelper::ioctl(Drm *drm, DrmIoctl request, void *arg) {
-    return drm->ioctl(request, arg);
+int IoctlHelper::ioctl(DrmIoctl request, void *arg) {
+    return drm.ioctl(request, arg);
 }
 
 void IoctlHelper::fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture) {
 
     auto &drmExecObject = *reinterpret_cast<drm_i915_gem_exec_object2 *>(execObject.data);
     drmExecObject.handle = handle;
-    drmExecObject.relocation_count = 0; //No relocations, we are SoftPinning
+    drmExecObject.relocation_count = 0; // No relocations, we are SoftPinning
     drmExecObject.relocs_ptr = 0ul;
     drmExecObject.alignment = 0;
     drmExecObject.offset = gpuAddress;
@@ -92,9 +92,7 @@ uint32_t IoctlHelper::createDrmContext(Drm &drm, OsContextLinux &osContext, uint
         drm.setNonPersistentContext(drmContextId);
     }
 
-    if (drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
-        drm.setUnrecoverableContext(drmContextId);
-    }
+    drm.setUnrecoverableContext(drmContextId);
 
     if (debuggableContext) {
         drm.setContextDebugFlag(drmContextId);
@@ -132,6 +130,18 @@ std::vector<MemoryRegion> IoctlHelper::translateToMemoryRegions(const std::vecto
         memRegions[i].region.memoryInstance = data->regions[i].region.memory_instance;
     }
     return memRegions;
+}
+
+bool IoctlHelper::setDomainCpu(uint32_t handle, bool writeEnable) {
+    drm_i915_gem_set_domain setDomain{};
+    setDomain.handle = handle;
+    setDomain.read_domains = I915_GEM_DOMAIN_CPU;
+    setDomain.write_domain = writeEnable ? I915_GEM_DOMAIN_CPU : 0;
+    return this->ioctl(DrmIoctl::GemSetDomain, &setDomain) == 0;
+}
+
+uint32_t IoctlHelper::getFlagsForPrimeHandleToFd() const {
+    return DRM_CLOEXEC | DRM_RDWR;
 }
 
 unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const {
@@ -186,16 +196,36 @@ unsigned int IoctlHelper::getIoctlRequestValueBase(DrmIoctl ioctlRequest) const 
 
 int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
     switch (drmParam) {
+    case DrmParam::ContextCreateExtSetparam:
+        return I915_CONTEXT_CREATE_EXT_SETPARAM;
+    case DrmParam::ContextCreateFlagsUseExtensions:
+        return I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS;
+    case DrmParam::ContextEnginesExtLoadBalance:
+        return I915_CONTEXT_ENGINES_EXT_LOAD_BALANCE;
+    case DrmParam::ContextParamEngines:
+        return I915_CONTEXT_PARAM_ENGINES;
+    case DrmParam::ContextParamGttSize:
+        return I915_CONTEXT_PARAM_GTT_SIZE;
+    case DrmParam::ContextParamPersistence:
+        return I915_CONTEXT_PARAM_PERSISTENCE;
+    case DrmParam::ContextParamPriority:
+        return I915_CONTEXT_PARAM_PRIORITY;
+    case DrmParam::ContextParamRecoverable:
+        return I915_CONTEXT_PARAM_RECOVERABLE;
+    case DrmParam::ContextParamSseu:
+        return I915_CONTEXT_PARAM_SSEU;
+    case DrmParam::ContextParamVm:
+        return I915_CONTEXT_PARAM_VM;
     case DrmParam::EngineClassRender:
-        return I915_ENGINE_CLASS_RENDER;
+        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER;
     case DrmParam::EngineClassCopy:
-        return I915_ENGINE_CLASS_COPY;
+        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY;
     case DrmParam::EngineClassVideo:
-        return I915_ENGINE_CLASS_VIDEO;
+        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO;
     case DrmParam::EngineClassVideoEnhance:
-        return I915_ENGINE_CLASS_VIDEO_ENHANCE;
+        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE;
     case DrmParam::EngineClassInvalid:
-        return I915_ENGINE_CLASS_INVALID;
+        return drm_i915_gem_engine_class::I915_ENGINE_CLASS_INVALID;
     case DrmParam::EngineClassInvalidNone:
         return I915_ENGINE_CLASS_INVALID_NONE;
     case DrmParam::ExecBlt:
@@ -207,9 +237,13 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
     case DrmParam::ExecRender:
         return I915_EXEC_RENDER;
     case DrmParam::MemoryClassDevice:
-        return I915_MEMORY_CLASS_DEVICE;
+        return drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE;
     case DrmParam::MemoryClassSystem:
-        return I915_MEMORY_CLASS_SYSTEM;
+        return drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM;
+    case DrmParam::MmapOffsetWb:
+        return I915_MMAP_OFFSET_WB;
+    case DrmParam::MmapOffsetWc:
+        return I915_MMAP_OFFSET_WC;
     case DrmParam::ParamChipsetId:
         return I915_PARAM_CHIPSET_ID;
     case DrmParam::ParamRevision:
@@ -232,6 +266,10 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
         return DRM_I915_QUERY_ENGINE_INFO;
     case DrmParam::QueryMemoryRegions:
         return DRM_I915_QUERY_MEMORY_REGIONS;
+    case DrmParam::QueryTopologyInfo:
+        return DRM_I915_QUERY_TOPOLOGY_INFO;
+    case DrmParam::SchedulerCapPreemption:
+        return I915_SCHEDULER_CAP_PREEMPTION;
     case DrmParam::TilingNone:
         return I915_TILING_NONE;
     case DrmParam::TilingY:
@@ -242,7 +280,7 @@ int IoctlHelper::getDrmParamValueBase(DrmParam drmParam) const {
     }
 }
 
-std::string getDrmParamString(DrmParam drmParam) {
+std::string IoctlHelper::getDrmParamStringBase(DrmParam drmParam) const {
     switch (drmParam) {
     case DrmParam::ParamChipsetId:
         return "I915_PARAM_CHIPSET_ID";
@@ -262,17 +300,13 @@ std::string getDrmParamString(DrmParam drmParam) {
         return "I915_PARAM_MIN_EU_IN_POOL";
     case DrmParam::ParamCsTimestampFrequency:
         return "I915_PARAM_CS_TIMESTAMP_FREQUENCY";
-    case DrmParam::ParamHasVmBind:
-        return "PRELIM_I915_PARAM_HAS_VM_BIND";
-    case DrmParam::ParamHasPageFault:
-        return "PRELIM_I915_PARAM_HAS_PAGE_FAULT";
     default:
         UNRECOVERABLE_IF(true);
         return "";
     }
 }
 
-std::string getIoctlString(DrmIoctl ioctlRequest) {
+std::string IoctlHelper::getIoctlStringBase(DrmIoctl ioctlRequest) const {
     switch (ioctlRequest) {
     case DrmIoctl::GemExecbuffer2:
         return "DRM_IOCTL_I915_GEM_EXECBUFFER2";
@@ -310,41 +344,32 @@ std::string getIoctlString(DrmIoctl ioctlRequest) {
         return "DRM_IOCTL_PRIME_FD_TO_HANDLE";
     case DrmIoctl::PrimeHandleToFd:
         return "DRM_IOCTL_PRIME_HANDLE_TO_FD";
-    case DrmIoctl::GemVmBind:
-        return "PRELIM_DRM_IOCTL_I915_GEM_VM_BIND";
-    case DrmIoctl::GemVmUnbind:
-        return "PRELIM_DRM_IOCTL_I915_GEM_VM_UNBIND";
-    case DrmIoctl::GemWaitUserFence:
-        return "PRELIM_DRM_IOCTL_I915_GEM_WAIT_USER_FENCE";
-    case DrmIoctl::GemCreateExt:
-        return "DRM_IOCTL_I915_GEM_CREATE_EXT";
-    case DrmIoctl::DG1GemCreateExt:
-        return "DG1_DRM_IOCTL_I915_GEM_CREATE_EXT";
-    case DrmIoctl::GemVmAdvise:
-        return "PRELIM_DRM_IOCTL_I915_GEM_VM_ADVISE";
-    case DrmIoctl::GemVmPrefetch:
-        return "PRELIM_DRM_IOCTL_I915_GEM_VM_PREFETCH";
-    case DrmIoctl::UuidRegister:
-        return "PRELIM_DRM_IOCTL_I915_UUID_REGISTER";
-    case DrmIoctl::UuidUnregister:
-        return "PRELIM_DRM_IOCTL_I915_UUID_UNREGISTER";
-    case DrmIoctl::DebuggerOpen:
-        return "PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN";
-    case DrmIoctl::GemClosReserve:
-        return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_RESERVE";
-    case DrmIoctl::GemClosFree:
-        return "PRELIM_DRM_IOCTL_I915_GEM_CLOS_FREE";
-    case DrmIoctl::GemCacheReserve:
-        return "PRELIM_DRM_IOCTL_I915_GEM_CACHE_RESERVE";
     case DrmIoctl::GemMmapOffset:
         return "DRM_IOCTL_I915_GEM_MMAP_OFFSET";
     case DrmIoctl::GemVmCreate:
         return "DRM_IOCTL_I915_GEM_VM_CREATE";
     case DrmIoctl::GemVmDestroy:
         return "DRM_IOCTL_I915_GEM_VM_DESTROY";
+    default:
+        UNRECOVERABLE_IF(true);
+        return "";
     }
-    UNRECOVERABLE_IF(true);
-    return "";
+}
+
+std::string IoctlHelper::getFileForMaxGpuFrequency() const {
+    return "/gt_max_freq_mhz";
+}
+
+std::string IoctlHelper::getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const {
+    return "/gt/gt" + std::to_string(subDeviceId) + "/rps_max_freq_mhz";
+}
+
+std::string IoctlHelper::getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const {
+    return "/gt/gt" + std::to_string(subDeviceId) + "/mem_RP0_freq_mhz";
+}
+
+bool IoctlHelper::checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const {
+    return (error == EINTR || error == EAGAIN || error == EBUSY || error == -EBUSY);
 }
 
 } // namespace NEO

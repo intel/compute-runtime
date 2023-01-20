@@ -1,10 +1,13 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/built_ins/built_ins.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -19,7 +22,7 @@
 using namespace NEO;
 
 struct RawBinarySipFixture : public DeviceFixture {
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.LoadBinarySipFromFile.set("dummy_file.bin");
 
         backupSipInitType = std::make_unique<VariableBackup<bool>>(&MockSipData::useMockSip, false);
@@ -37,11 +40,11 @@ struct RawBinarySipFixture : public DeviceFixture {
         backupFcloseCalled = std::make_unique<VariableBackup<uint32_t>>(&IoFunctions::mockFcloseCalled, 0u);
         backupFailAfterNFopenCount = std::make_unique<VariableBackup<uint32_t>>(&IoFunctions::failAfterNFopenCount, 0u);
 
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
     }
 
-    void TearDown() {
-        DeviceFixture::TearDown();
+    void tearDown() {
+        DeviceFixture::tearDown();
     }
 
     DebugManagerStateRestore dbgRestorer;
@@ -336,19 +339,20 @@ TEST_F(HexadecimalHeaderSipTest, whenInitHexadecimalArraySipKernelIsCalledTwiceT
 using StateSaveAreaSipTest = Test<RawBinarySipFixture>;
 
 TEST_F(StateSaveAreaSipTest, givenEmptyStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
+
     MockSipData::useMockSip = true;
     MockSipData::mockSipKernel->mockStateSaveAreaHeader.clear();
     auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    EXPECT_EQ(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
+    auto &gfxCoreHelper = this->pDevice->getGfxCoreHelper();
+    EXPECT_EQ(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
 }
 
 TEST_F(StateSaveAreaSipTest, givenCorruptedStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenMaxDbgSurfaceSizeIsReturned) {
     MockSipData::useMockSip = true;
     MockSipData::mockSipKernel->mockStateSaveAreaHeader = {'g', 'a', 'r', 'b', 'a', 'g', 'e'};
     auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    EXPECT_EQ(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
+    auto &gfxCoreHelper = this->pDevice->getGfxCoreHelper();
+    EXPECT_EQ(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo), SipKernel::getSipKernel(*pDevice).getStateSaveAreaSize(pDevice));
 }
 
 TEST_F(StateSaveAreaSipTest, givenCorrectStateSaveAreaHeaderWhenGetStateSaveAreaSizeCalledThenCorrectDbgSurfaceSizeIsReturned) {
@@ -370,4 +374,58 @@ TEST(DebugBindlessSip, givenActiveDebuggerAndUseBindlessDebugSipWhenGettingSipTy
     auto sipType = NEO::SipKernel::getSipKernelType(*mockDevice);
 
     EXPECT_EQ(SipKernelType::DbgBindless, sipType);
+}
+TEST(Sip, WhenGettingTypeThenCorrectTypeIsReturned) {
+    std::vector<char> ssaHeader;
+    SipKernel csr{SipKernelType::Csr, nullptr, ssaHeader};
+    EXPECT_EQ(SipKernelType::Csr, csr.getType());
+
+    SipKernel dbgCsr{SipKernelType::DbgCsr, nullptr, ssaHeader};
+    EXPECT_EQ(SipKernelType::DbgCsr, dbgCsr.getType());
+
+    SipKernel dbgCsrLocal{SipKernelType::DbgCsrLocal, nullptr, ssaHeader};
+    EXPECT_EQ(SipKernelType::DbgCsrLocal, dbgCsrLocal.getType());
+
+    SipKernel undefined{SipKernelType::COUNT, nullptr, ssaHeader};
+    EXPECT_EQ(SipKernelType::COUNT, undefined.getType());
+}
+
+TEST(Sip, givenDebuggingInactiveWhenSipTypeIsQueriedThenCsrSipTypeIsReturned) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto sipType = SipKernel::getSipKernelType(*mockDevice);
+    EXPECT_EQ(SipKernelType::Csr, sipType);
+}
+
+TEST(DebugSip, givenDebuggingActiveWhenSipTypeIsQueriedThenDbgCsrSipTypeIsReturned) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+    mockDevice->setDebuggerActive(true);
+
+    auto sipType = SipKernel::getSipKernelType(*mockDevice);
+    EXPECT_LE(SipKernelType::DbgCsr, sipType);
+}
+
+TEST(DebugSip, givenBuiltInsWhenDbgCsrSipIsRequestedThenCorrectSipKernelIsReturned) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto &builtins = *mockDevice->getBuiltIns();
+    auto &sipKernel = builtins.getSipKernel(SipKernelType::DbgCsr, *mockDevice);
+
+    EXPECT_NE(nullptr, &sipKernel);
+    EXPECT_EQ(SipKernelType::DbgCsr, sipKernel.getType());
+}
+
+TEST(DebugBindlessSip, givenBindlessDebugSipIsRequestedThenCorrectSipKernelIsReturned) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto &sipKernel = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice);
+
+    EXPECT_NE(nullptr, &sipKernel);
+    EXPECT_EQ(SipKernelType::DbgBindless, sipKernel.getType());
+
+    EXPECT_FALSE(sipKernel.getStateSaveAreaHeader().empty());
 }

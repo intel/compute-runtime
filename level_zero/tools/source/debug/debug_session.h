@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/helpers/topology_map.h"
 #include "shared/source/os_interface/os_thread.h"
 
 #include "level_zero/tools/source/debug/eu_thread.h"
@@ -25,7 +26,7 @@ struct DebugSession : _zet_debug_session_handle_t {
     virtual ~DebugSession() = default;
     DebugSession() = delete;
 
-    static DebugSession *create(const zet_debug_config_t &config, Device *device, ze_result_t &result);
+    static DebugSession *create(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach);
 
     static DebugSession *fromHandle(zet_debug_session_handle_t handle) { return static_cast<DebugSession *>(handle); }
     inline zet_debug_session_handle_t toHandle() { return this; }
@@ -45,6 +46,7 @@ struct DebugSession : _zet_debug_session_handle_t {
     MOCKABLE_VIRTUAL bool areRequestedThreadsStopped(ze_device_thread_t thread);
 
     Device *getConnectedDevice() { return connectedDevice; }
+    zet_debug_config_t getDebugConfig() { return config; }
 
     static bool isThreadAll(ze_device_thread_t thread) {
         return thread.slice == UINT32_MAX && thread.subslice == UINT32_MAX && thread.eu == UINT32_MAX && thread.thread == UINT32_MAX;
@@ -73,6 +75,8 @@ struct DebugSession : _zet_debug_session_handle_t {
 
     static void printBitmask(uint8_t *bitmask, size_t bitmaskSize);
 
+    MOCKABLE_VIRTUAL const NEO::TopologyMap &getTopologyMap();
+
     virtual uint32_t getDeviceIndexFromApiThread(ze_device_thread_t thread);
     virtual ze_device_thread_t convertToPhysicalWithinDevice(ze_device_thread_t thread, uint32_t deviceIndex);
     virtual EuThread::ThreadId convertToThreadId(ze_device_thread_t thread);
@@ -80,26 +84,32 @@ struct DebugSession : _zet_debug_session_handle_t {
 
     ze_result_t sanityMemAccessThreadCheck(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc);
 
+    virtual DebugSession *attachTileDebugSession(Device *device) = 0;
+    virtual void detachTileDebugSession(DebugSession *tileSession) = 0;
+    virtual bool areAllTileDebugSessionDetached() = 0;
+
+    virtual void setAttachMode(bool isRootAttach) = 0;
+    void setAttached() { attached = true; }
+    void setDetached() { attached = false; }
+    bool isAttached() { return attached; }
+
     struct ThreadHelper {
         void close() {
             threadActive.store(false);
 
             if (thread) {
-                while (!threadFinished.load()) {
-                    thread->yield();
-                }
-
                 thread->join();
                 thread.reset();
             }
         }
         std::unique_ptr<NEO::Thread> thread;
         std::atomic<bool> threadActive{true};
-        std::atomic<bool> threadFinished{false};
     };
 
   protected:
     DebugSession(const zet_debug_config_t &config, Device *device);
+    void createEuThreads();
+
     virtual void startAsyncThread() = 0;
 
     virtual bool isBindlessSystemRoutine();
@@ -115,7 +125,9 @@ struct DebugSession : _zet_debug_session_handle_t {
     NEO::DebugAreaHeader debugArea;
 
     Device *connectedDevice = nullptr;
+    const zet_debug_config_t config;
     std::map<uint64_t, std::unique_ptr<EuThread>> allThreads;
+    bool attached = false;
 };
 
 } // namespace L0

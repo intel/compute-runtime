@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,10 @@
 
 #include "opencl/source/kernel/image_transformer.h"
 
+#include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/mem_obj/image.h"

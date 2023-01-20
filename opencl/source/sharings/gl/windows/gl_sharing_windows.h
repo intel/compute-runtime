@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include <GL/gl.h>
 
 namespace NEO {
-//OpenGL API names
+// OpenGL API names
 typedef GLboolean(OSAPI *PFNOGLSetSharedOCLContextStateINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLboolean state, GLvoid *pContextInfo);
 typedef GLboolean(OSAPI *PFNOGLAcquireSharedBufferINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pBufferInfo);
 typedef GLboolean(OSAPI *PFNOGLAcquireSharedRenderBufferINTEL)(GLDisplay hdcHandle, GLContext contextHandle, GLContext backupContextHandle, GLvoid *pResourceInfo);
@@ -33,7 +33,7 @@ typedef const GLubyte *(OSAPI *PFNglGetStringi)(GLenum name, GLuint index);
 typedef void(OSAPI *PFNglGetIntegerv)(GLenum pname, GLint *params);
 typedef void(OSAPI *PFNglBindTexture)(GLenum target, GLuint texture);
 
-//wgl
+// wgl
 typedef BOOL(OSAPI *PFNwglMakeCurrent)(HDC, HGLRC);
 typedef GLContext(OSAPI *PFNwglCreateContext)(GLDisplay hdcHandle);
 typedef int(OSAPI *PFNwglShareLists)(GLContext contextHandle, GLContext backupContextHandle);

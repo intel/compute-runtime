@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,9 +14,9 @@
 
 namespace NEO {
 #if defined(_RELEASE_INTERNAL) || (_DEBUG)
-constexpr bool directSubmissionDiagnosticAvailable = true;
+inline constexpr bool directSubmissionDiagnosticAvailable = true;
 #else
-constexpr bool directSubmissionDiagnosticAvailable = false;
+inline constexpr bool directSubmissionDiagnosticAvailable = false;
 #endif
 
 struct DirectSubmissionSingleDelta {

@@ -8,6 +8,7 @@
 #pragma once
 #include "level_zero/tools/source/sysman/events/os_events.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/udev/udev_lib.h"
 
 namespace L0 {
 
@@ -21,27 +22,27 @@ class LinuxEventsImp : public OsEvents, NEO::NonCopyableOrMovableClass {
 
   protected:
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
-    void getPciIdPathTag();
-    zes_mem_health_t currentMemHealth();
-    ze_result_t currentFabricEventStatus(uint32_t &val);
-    bool isResetRequired(zes_event_type_flags_t &pEvent);
+    bool isResetRequired(void *dev, zes_event_type_flags_t &pEvent);
     bool checkDeviceDetachEvent(zes_event_type_flags_t &pEvent);
     bool checkDeviceAttachEvent(zes_event_type_flags_t &pEvent);
-    bool checkIfMemHealthChanged(zes_event_type_flags_t &pEvent);
-    bool checkIfFabricPortStatusChanged(zes_event_type_flags_t &pEvent);
+    bool checkIfMemHealthChanged(void *dev, zes_event_type_flags_t &pEvent);
+    bool checkIfFabricPortStatusChanged(void *dev, zes_event_type_flags_t &pEvent);
     bool checkRasEvent(zes_event_type_flags_t &pEvent);
-    std::string pciIdPathTag;
-    zes_mem_health_t memHealthAtEventRegister = ZES_MEM_HEALTH_UNKNOWN;
+    ze_result_t readFabricDeviceStats(const std::string &devicePciPath, struct stat &iafStat);
+    bool listenSystemEvents(zes_event_type_flags_t &pEvent, uint64_t timeout);
     uint32_t fabricEventTrackAtRegister = 0;
+    L0::UdevLib *pUdevLib = nullptr;
+    zes_event_type_flags_t registeredEvents = 0;
 
   private:
     FsAccess *pFsAccess = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
-    static const std::string varFs;
-    static const std::string detachEvent;
-    static const std::string attachEvent;
-    static const std::string deviceMemoryHealth;
-    zes_event_type_flags_t registeredEvents = 0;
+    std::string action;
+    static const std::string add;
+    static const std::string remove;
+    static const std::string change;
+    static const std::string unbind;
+    static const std::string bind;
 };
 
 } // namespace L0

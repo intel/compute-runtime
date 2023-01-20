@@ -1,17 +1,28 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/memory_manager/host_ptr_defines.h"
-
 #include <map>
 #include <mutex>
 
 namespace NEO {
+struct AllocationRequirements;
+struct AllocationStorageData;
+struct OsHandleStorage;
+struct FragmentStorage;
+enum class RequirementsStatus;
+
+enum OverlapStatus {
+    FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER = 0,
+    FRAGMENT_WITHIN_STORED_FRAGMENT,
+    FRAGMENT_WITH_EXACT_SIZE_AS_STORED_FRAGMENT,
+    FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT,
+    FRAGMENT_NOT_CHECKED
+};
 
 struct HostPtrEntryKey {
     const void *ptr = nullptr;
@@ -33,7 +44,7 @@ class HostPtrManager {
     bool releaseHostPtr(uint32_t rootDeviceIndex, const void *ptr);
     void storeFragment(uint32_t rootDeviceIndex, AllocationStorageData &storageData);
     void storeFragment(uint32_t rootDeviceIndex, FragmentStorage &fragment);
-    std::unique_lock<std::recursive_mutex> obtainOwnership();
+    [[nodiscard]] std::unique_lock<std::recursive_mutex> obtainOwnership();
 
   protected:
     static AllocationRequirements getAllocationRequirements(uint32_t rootDeviceIndex, const void *inputPtr, size_t size);

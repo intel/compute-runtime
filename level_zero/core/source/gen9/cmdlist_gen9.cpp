@@ -25,11 +25,9 @@ template <>
 void CommandListCoreFamily<IGFX_GEN9_CORE>::applyMemoryRangesBarrier(uint32_t numRanges,
                                                                      const size_t *pRangeSizes,
                                                                      const void **pRanges) {
-    const auto &hwInfo = this->device->getHwInfo();
     NEO::PipeControlArgs args;
-    args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(),
-                                                                  args);
+    args.dcFlushEnable = this->dcFlushSupport;
+    NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
 }
 
 template <>

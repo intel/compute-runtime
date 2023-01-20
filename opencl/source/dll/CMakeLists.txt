@@ -16,6 +16,7 @@ set(RUNTIME_SRCS_DLL_BASE
     ${NEO_SHARED_DIRECTORY}/dll/create_deferred_deleter.cpp
     ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_${DRIVER_MODEL}.cpp
     ${NEO_SHARED_DIRECTORY}/dll/create_tbx_sockets.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/device_dll.cpp
     ${NEO_SHARED_DIRECTORY}/dll/direct_submission_controller_enabled.cpp
     ${NEO_SHARED_DIRECTORY}/dll/source_level_debugger_dll.cpp
     ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp
@@ -46,6 +47,7 @@ append_sources_from_properties(RUNTIME_SRCS_DLL_BASE
 )
 
 set(RUNTIME_SRCS_DLL_LINUX
+    ${NEO_SHARED_DIRECTORY}/dll/linux/debugger_l0_dll_linux.cpp
     ${NEO_SHARED_DIRECTORY}/dll/linux/drm_neo_create.cpp
     ${NEO_SHARED_DIRECTORY}/dll/linux/options_linux.cpp
     ${NEO_SHARED_DIRECTORY}/dll/linux/os_interface.cpp
@@ -57,6 +59,7 @@ set(RUNTIME_SRCS_DLL_LINUX
 )
 
 set(RUNTIME_SRCS_DLL_WINDOWS
+    ${NEO_SHARED_DIRECTORY}/dll/windows/debugger_l0_windows.cpp
     ${NEO_SHARED_DIRECTORY}/dll/windows/options_windows.cpp
     ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp
     ${NEO_SHARED_DIRECTORY}/dll/windows/environment_variables.cpp
@@ -64,14 +67,16 @@ set(RUNTIME_SRCS_DLL_WINDOWS
     ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_memory_virtual_alloc.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_calls.cpp
-    ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
     ${NEO_SOURCE_DIR}/opencl/source/os_interface/windows/platform_teardown_win.cpp
+    ${NEO_SHARED_DIRECTORY}/dll/wddm/create_gdi.cpp
 )
 
 if(NOT DISABLE_WDDM_LINUX)
   list(APPEND RUNTIME_SRCS_DLL_LINUX
        ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
-       ${NEO_SHARED_DIRECTORY}/os_interface/windows/wddm/wddm_create.cpp
+       ${NEO_SHARED_DIRECTORY}/dll/wddm/wddm_create.cpp
+       ${NEO_SHARED_DIRECTORY}/dll/wddm/create_gdi.cpp
   )
 endif()
 

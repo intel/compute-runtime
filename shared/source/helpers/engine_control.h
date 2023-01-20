@@ -1,16 +1,19 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/os_interface/os_context.h"
+#include "shared/source/helpers/engine_node_helper.h"
 
-#include "engine_node.h"
+namespace aub_stream {
+enum EngineType : uint32_t;
+}
 
 namespace NEO {
+class OsContext;
 class CommandStreamReceiver;
 
 struct EngineControl {
@@ -22,7 +25,7 @@ struct EngineControl {
     CommandStreamReceiver *commandStreamReceiver = nullptr;
     OsContext *osContext = nullptr;
 
-    const aub_stream::EngineType &getEngineType() const { return osContext->getEngineType(); }
-    EngineUsage getEngineUsage() const { return osContext->getEngineUsage(); }
+    const aub_stream::EngineType &getEngineType() const;
+    EngineUsage getEngineUsage() const;
 };
 } // namespace NEO

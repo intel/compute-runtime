@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,23 +7,29 @@
 
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
+#include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include "level_zero/core/source/event/event.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_image.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 namespace L0 {
 namespace ult {
 
-using ContextCommandListCreate = Test<ContextFixture>;
+using ContextCommandListCreate = Test<DeviceFixture>;
 
 TEST_F(ContextCommandListCreate, whenCreatingCommandListFromContextThenSuccessIsReturned) {
     ze_command_list_desc_t desc = {};
@@ -31,9 +37,20 @@ TEST_F(ContextCommandListCreate, whenCreatingCommandListFromContextThenSuccessIs
 
     ze_result_t result = context->createCommandList(device, &desc, &hCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(Context::fromHandle(CommandList::fromHandle(hCommandList)->hContext), context);
 
     L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);
     commandList->destroy();
+}
+
+TEST_F(ContextCommandListCreate, givenInvalidDescWhenCreatingCommandListFromContextThenErrorIsReturned) {
+    ze_command_list_desc_t desc = {};
+    desc.commandQueueGroupOrdinal = 0xffff;
+    ze_command_list_handle_t hCommandList = {};
+
+    ze_result_t result = context->createCommandList(device, &desc, &hCommandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(CommandList::fromHandle(hCommandList), nullptr);
 }
 
 TEST_F(ContextCommandListCreate, whenCreatingCommandListImmediateFromContextThenSuccessIsReturned) {
@@ -42,8 +59,33 @@ TEST_F(ContextCommandListCreate, whenCreatingCommandListImmediateFromContextThen
 
     ze_result_t result = context->createCommandListImmediate(device, &desc, &hCommandList);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(Context::fromHandle(CommandList::fromHandle(hCommandList)->hContext), context);
 
     L0::CommandList *commandList = L0::CommandList::fromHandle(hCommandList);
+    commandList->destroy();
+}
+
+TEST_F(ContextCommandListCreate, givenInvalidDescWhenCreatingCommandListImmediateFromContextThenErrorIsReturned) {
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = 0xffff;
+    ze_command_list_handle_t hCommandList = {};
+
+    ze_result_t result = context->createCommandListImmediate(device, &desc, &hCommandList);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+    EXPECT_EQ(CommandList::fromHandle(hCommandList), nullptr);
+}
+
+HWTEST2_F(ContextCommandListCreate, givenImmediateCmdListWhenGettingLogicalStateHelperThenReturnFromCsr, MatchAny) {
+    ze_command_queue_desc_t desc = {};
+    ze_command_list_handle_t hCommandList = {};
+
+    ze_result_t result = context->createCommandListImmediate(device, &desc, &hCommandList);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandList = static_cast<CommandListCoreFamily<gfxCoreFamily> *>(L0::CommandList::fromHandle(hCommandList));
+
+    EXPECT_EQ(commandList->csr->getLogicalStateHelper(), commandList->getLogicalStateHelper());
+
     commandList->destroy();
 }
 
@@ -222,11 +264,11 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemAdviseSetAndClearReadMostlyT
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>((L0::Device::fromHandle(device)));
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.read_only);
+    EXPECT_EQ(1, flags.readOnly);
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.read_only);
+    EXPECT_EQ(0, flags.readOnly);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
@@ -254,11 +296,11 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemAdviseSetAndClearPreferredLo
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>((L0::Device::fromHandle(device)));
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.device_preferred_location);
+    EXPECT_EQ(1, flags.devicePreferredLocation);
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.device_preferred_location);
+    EXPECT_EQ(0, flags.devicePreferredLocation);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
@@ -286,11 +328,11 @@ TEST_F(CommandListCreate, givenValidPtrWhenAppendMemAdviseSetAndClearNonAtomicMo
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>((L0::Device::fromHandle(device)));
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.non_atomic);
+    EXPECT_EQ(0, flags.nonAtomic);
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_NON_ATOMIC_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.non_atomic);
+    EXPECT_EQ(0, flags.nonAtomic);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
@@ -318,14 +360,14 @@ TEST_F(CommandListCreate, givenValidPtrThenAppendMemAdviseSetAndClearCachingThen
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>((L0::Device::fromHandle(device)));
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.cached_memory);
+    EXPECT_EQ(1, flags.cachedMemory);
     auto memoryManager = static_cast<MockMemoryManager *>(device->getDriverHandle()->getMemoryManager());
-    EXPECT_EQ(1, memoryManager->memAdviseFlags.cached_memory);
+    EXPECT_EQ(1, memoryManager->memAdviseFlags.cachedMemory);
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_BIAS_UNCACHED);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.cached_memory);
-    EXPECT_EQ(0, memoryManager->memAdviseFlags.cached_memory);
+    EXPECT_EQ(0, flags.cachedMemory);
+    EXPECT_EQ(0, memoryManager->memAdviseFlags.cachedMemory);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
@@ -354,18 +396,18 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerThenAppend
 
     auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    flags.cpu_migration_blocked = 1;
+    flags.cpuMigrationBlocked = 1;
     deviceImp->memAdviseSharedAllocations[allocData] = flags;
 
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.read_only);
+    EXPECT_EQ(1, flags.readOnly);
 
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.device_preferred_location);
+    EXPECT_EQ(1, flags.devicePreferredLocation);
 
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
@@ -373,9 +415,9 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerThenAppend
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.read_only);
-    EXPECT_EQ(0, flags.device_preferred_location);
-    EXPECT_EQ(0, flags.cpu_migration_blocked);
+    EXPECT_EQ(0, flags.readOnly);
+    EXPECT_EQ(0, flags.devicePreferredLocation);
+    EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
@@ -407,14 +449,14 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerThenGpuDom
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.read_only);
+    EXPECT_EQ(1, flags.readOnly);
 
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.device_preferred_location);
+    EXPECT_EQ(1, flags.devicePreferredLocation);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
@@ -446,14 +488,14 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.read_only);
+    EXPECT_EQ(1, flags.readOnly);
 
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.device_preferred_location);
+    EXPECT_EQ(1, flags.devicePreferredLocation);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
@@ -462,7 +504,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     pageData.domain = NEO::PageFaultManager::AllocationDomain::Gpu;
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.cpu_migration_blocked);
+    EXPECT_EQ(1, flags.cpuMigrationBlocked);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
@@ -492,9 +534,9 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.read_only);
+    EXPECT_EQ(1, flags.readOnly);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
@@ -503,30 +545,30 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     pageData.domain = NEO::PageFaultManager::AllocationDomain::Gpu;
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.cpu_migration_blocked);
+    EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.read_only);
+    EXPECT_EQ(0, flags.readOnly);
 
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.device_preferred_location);
+    EXPECT_EQ(1, flags.devicePreferredLocation);
 
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.cpu_migration_blocked);
+    EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_CLEAR_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.device_preferred_location);
+    EXPECT_EQ(0, flags.devicePreferredLocation);
 
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.cpu_migration_blocked);
+    EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
@@ -561,9 +603,9 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.read_only);
+    EXPECT_EQ(1, flags.readOnly);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
@@ -574,11 +616,11 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     pageData.domain = NEO::PageFaultManager::AllocationDomain::Gpu;
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.cpu_migration_blocked);
+    EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     std::string output = testing::internal::GetCapturedStdout(); // stop capturing
 
-    std::string expectedString = "UMD transferring shared allocation";
+    std::string expectedString = "UMD transferred shared allocation";
     uint32_t occurrences = 0u;
     uint32_t expectedOccurrences = 1u;
     size_t idx = output.find(expectedString);
@@ -616,9 +658,9 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_BIAS_CACHED);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.cached_memory);
+    EXPECT_EQ(1, flags.cachedMemory);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
@@ -627,7 +669,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     pageData.domain = NEO::PageFaultManager::AllocationDomain::Gpu;
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.cpu_migration_blocked);
+    EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
@@ -657,14 +699,14 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.read_only);
+    EXPECT_EQ(1, flags.readOnly);
 
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.device_preferred_location);
+    EXPECT_EQ(1, flags.devicePreferredLocation);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
@@ -673,7 +715,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     pageData.domain = NEO::PageFaultManager::AllocationDomain::Cpu;
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.cpu_migration_blocked);
+    EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
@@ -703,14 +745,14 @@ TEST_F(CommandListMemAdvisePageFault, givenInvalidPtrAndPageFaultHandlerAndGpuDo
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_READ_MOSTLY);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.read_only);
+    EXPECT_EQ(1, flags.readOnly);
 
     res = commandList->appendMemAdvise(device, ptr, size, ZE_MEMORY_ADVICE_SET_PREFERRED_LOCATION);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(1, flags.device_preferred_location);
+    EXPECT_EQ(1, flags.devicePreferredLocation);
 
-    auto handlerWithHints = L0::handleGpuDomainTransferForHwWithHints;
+    auto handlerWithHints = L0::transferAndUnprotectMemoryWithHints;
 
     EXPECT_EQ(handlerWithHints, reinterpret_cast<void *>(mockPageFaultManager->gpuDomainHandler));
 
@@ -720,7 +762,7 @@ TEST_F(CommandListMemAdvisePageFault, givenInvalidPtrAndPageFaultHandlerAndGpuDo
     void *alloc = reinterpret_cast<void *>(0x1);
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, alloc, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
-    EXPECT_EQ(0, flags.cpu_migration_blocked);
+    EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
     res = context->freeMem(ptr);
     ASSERT_EQ(res, ZE_RESULT_SUCCESS);
@@ -935,6 +977,211 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendBarrierThen
     commandList->appendBarrier(nullptr, 0, nullptr);
 }
 
+HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassStallingCmdsInfo, IsAtLeastXeHpcCore) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+
+    Mock<::L0::Kernel> kernel;
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    uint8_t srcPtr[64] = {};
+    uint8_t dstPtr[64] = {};
+    const ze_copy_region_t region = {0U, 0U, 0U, 1, 1, 0U};
+
+    driverHandle->importExternalPointer(dstPtr, MemoryConstants::pageSize);
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->csr);
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    auto verifyFlags = [&ultCsr](ze_result_t result, bool dispatchFlag, bool bbFlag) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(ultCsr->recordedDispatchFlags.hasStallingCmds, dispatchFlag);
+        EXPECT_EQ(ultCsr->latestFlushedBatchBuffer.hasStallingCmds, bbFlag);
+    };
+    // non-pipelined state
+    verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams), false, true);
+
+    // non-pipelined state already programmed
+    verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams), false, false);
+
+    verifyFlags(commandList->appendLaunchKernelIndirect(kernel.toHandle(), &groupCount, nullptr, 0, nullptr), false, false);
+
+    verifyFlags(commandList->appendBarrier(nullptr, 0, nullptr), true, true);
+
+    verifyFlags(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr), false, false);
+
+    verifyFlags(commandList->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, 0, nullptr), false, false);
+
+    verifyFlags(commandList->appendMemoryFill(dstPtr, srcPtr, 8, 1, nullptr, 0, nullptr), false, false);
+
+    verifyFlags(commandList->appendEventReset(event), true, true);
+
+    verifyFlags(commandList->appendSignalEvent(event), true, true);
+
+    verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false), false, false);
+
+    verifyFlags(commandList->appendWaitOnEvents(1, &event, false), true, true);
+
+    verifyFlags(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, 0, nullptr), true, true);
+
+    if constexpr (FamilyType::supportsSampler) {
+        auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
+        auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+        mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+        auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+        ze_image_region_t imgRegion = {1, 1, 1, 1, 1, 1};
+        ze_image_desc_t zeDesc = {};
+        zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+        image->initialize(device, &zeDesc);
+
+        verifyFlags(commandList->appendImageCopyRegion(image->toHandle(), image->toHandle(), &imgRegion, &imgRegion, nullptr, 0, nullptr), false, false);
+
+        verifyFlags(commandList->appendImageCopyFromMemory(image->toHandle(), dstPtr, &imgRegion, nullptr, 0, nullptr), false, false);
+
+        verifyFlags(commandList->appendImageCopyToMemory(dstPtr, image->toHandle(), &imgRegion, nullptr, 0, nullptr), false, false);
+    }
+
+    size_t rangeSizes = 1;
+    const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
+    verifyFlags(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, 0, nullptr), true, true);
+
+    verifyFlags(commandList->appendLaunchCooperativeKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr), false, false);
+
+    driverHandle->releaseImportedPointer(dstPtr);
+}
+
+HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassRelaxedOrderingDependenciesInfo, IsAtLeastXeHpcCore) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE | ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, eventPool->createEvent(&eventDesc, &event));
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+
+    Mock<::L0::Kernel> kernel;
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    uint8_t srcPtr[64] = {};
+    uint8_t dstPtr[64] = {};
+    const ze_copy_region_t region = {0U, 0U, 0U, 1, 1, 0U};
+
+    driverHandle->importExternalPointer(dstPtr, MemoryConstants::pageSize);
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->csr);
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    auto verifyFlags = [&ultCsr](ze_result_t result, bool dispatchFlag, bool bbFlag) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(ultCsr->recordedDispatchFlags.hasRelaxedOrderingDependencies, dispatchFlag);
+        EXPECT_EQ(ultCsr->latestFlushedBatchBuffer.hasRelaxedOrderingDependencies, bbFlag);
+    };
+
+    for (bool hasEventDependencies : {true, false}) {
+        ze_event_handle_t *waitlist = hasEventDependencies ? &event : nullptr;
+        uint32_t numWaitlistEvents = hasEventDependencies ? 1 : 0;
+
+        verifyFlags(commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, numWaitlistEvents, waitlist, launchParams),
+                    hasEventDependencies, hasEventDependencies);
+
+        verifyFlags(commandList->appendLaunchKernelIndirect(kernel.toHandle(), &groupCount, nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+
+        verifyFlags(commandList->appendBarrier(nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+
+        verifyFlags(commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+
+        verifyFlags(commandList->appendMemoryCopyRegion(dstPtr, &region, 0, 0, srcPtr, &region, 0, 0, nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+
+        verifyFlags(commandList->appendMemoryFill(dstPtr, srcPtr, 8, 1, nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+
+        verifyFlags(commandList->appendEventReset(event), false, false);
+
+        verifyFlags(commandList->appendSignalEvent(event), false, false);
+
+        verifyFlags(commandList->appendPageFaultCopy(kernel.getIsaAllocation(), kernel.getIsaAllocation(), 1, false),
+                    false, false);
+
+        verifyFlags(commandList->appendWaitOnEvents(1, &event, false), true, true);
+
+        verifyFlags(commandList->appendWriteGlobalTimestamp(reinterpret_cast<uint64_t *>(dstPtr), nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+
+        if constexpr (FamilyType::supportsSampler) {
+            auto kernel = device->getBuiltinFunctionsLib()->getImageFunction(ImageBuiltin::CopyImageRegion);
+            auto mockBuiltinKernel = static_cast<Mock<::L0::Kernel> *>(kernel);
+            mockBuiltinKernel->setArgRedescribedImageCallBase = false;
+
+            auto image = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+            ze_image_region_t imgRegion = {1, 1, 1, 1, 1, 1};
+            ze_image_desc_t zeDesc = {};
+            zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+            image->initialize(device, &zeDesc);
+
+            verifyFlags(commandList->appendImageCopyRegion(image->toHandle(), image->toHandle(), &imgRegion, &imgRegion, nullptr, numWaitlistEvents, waitlist),
+                        hasEventDependencies, hasEventDependencies);
+
+            verifyFlags(commandList->appendImageCopyFromMemory(image->toHandle(), dstPtr, &imgRegion, nullptr, numWaitlistEvents, waitlist),
+                        hasEventDependencies, hasEventDependencies);
+
+            verifyFlags(commandList->appendImageCopyToMemory(dstPtr, image->toHandle(), &imgRegion, nullptr, numWaitlistEvents, waitlist),
+                        hasEventDependencies, hasEventDependencies);
+        }
+
+        size_t rangeSizes = 1;
+        const void **ranges = reinterpret_cast<const void **>(&dstPtr[0]);
+        verifyFlags(commandList->appendMemoryRangesBarrier(1, &rangeSizes, ranges, nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+    }
+
+    for (bool hasEventDependencies : {true, false}) {
+        ze_event_handle_t *waitlist = hasEventDependencies ? &event : nullptr;
+        uint32_t numWaitlistEvents = hasEventDependencies ? 1 : 0;
+        verifyFlags(commandList->appendLaunchCooperativeKernel(kernel.toHandle(), &groupCount, nullptr, numWaitlistEvents, waitlist),
+                    hasEventDependencies, hasEventDependencies);
+    }
+
+    driverHandle->releaseImportedPointer(dstPtr);
+}
+
 TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppendBarrierThenAppendBarrierReturnsDeviceLost) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableFlushTaskSubmission.set(1);
@@ -957,11 +1204,13 @@ TEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmCmdListWithSyncModeAndAppen
 
     const auto oldCsr = commandList->csr;
     commandList->csr = &mockCommandStreamReceiver;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
     const auto appendBarrierResult = commandList->appendBarrier(nullptr, 0, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, appendBarrierResult);
 
     commandList->csr = oldCsr;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = oldCsr;
 }
 
 HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppendingSignalEventsThenDeviceLostIsReturned) {
@@ -1002,7 +1251,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     ASSERT_NE(nullptr, eventObject->csr);
     ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
-    returnValue = commandList->appendWaitOnEvents(1, &event);
+    returnValue = commandList->appendWaitOnEvents(1, &event, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     returnValue = commandList->appendBarrier(nullptr, 1, &event);
@@ -1013,11 +1262,13 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
 
     const auto oldCsr = commandList->csr;
     commandList->csr = &mockCommandStreamReceiver;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
     returnValue = commandList->appendSignalEvent(event);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
     commandList->csr = oldCsr;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = oldCsr;
 }
 
 HWTEST2_F(CommandListCreate, GivenGpuHangOnExecutingCommandListsWhenCreatingImmediateCommandListAndWaitingOnEventsThenDeviceLostIsReturned, IsSKL) {
@@ -1056,19 +1307,147 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnExecutingCommandListsWhenCreatingImme
     ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
-    Mock<CommandQueue> mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
-    mockCommandQueue.executeCommandListsResult = ZE_RESULT_ERROR_DEVICE_LOST;
+    mockCommandStreamReceiver.waitForCompletionWithTimeoutReturnValue = WaitStatus::GpuHang;
 
-    auto oldCommandQueue = commandList->cmdQImmediate;
-    commandList->cmdQImmediate = &mockCommandQueue;
+    const auto oldCsr = commandList->csr;
+    commandList->csr = &mockCommandStreamReceiver;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
-    returnValue = commandList->appendWaitOnEvents(1, &event);
+    returnValue = commandList->appendWaitOnEvents(1, &event, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
-    commandList->cmdQImmediate = oldCommandQueue;
+    commandList->csr = oldCsr;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = oldCsr;
+}
+
+TEST_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceForImmediateCommandThenNextCommandBufferIsUsed) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    commandList->isFlushTaskSubmissionEnabled = true;
+
+    EXPECT_EQ(device, commandList->device);
+    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->cmdListType);
+    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    // reduce available cmd buffer size, so next command can't fit in 1st and we need to use 2nd cmd buffer
+    size_t useSize = commandList->commandContainer.getCommandStream()->getMaxAvailableSpace() - maxImmediateCommandSize + 1;
+    commandList->commandContainer.getCommandStream()->getSpace(useSize);
+    EXPECT_EQ(1U, commandList->commandContainer.getCmdBufferAllocations().size());
+
+    auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1U, commandList->commandContainer.getCmdBufferAllocations().size());
 }
 
 HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCommandListAndWaitingOnEventsThenDeviceLostIsReturned, IsSKL) {
+    DebugManagerStateRestore restorer;
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(device, commandList->device);
+    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->cmdListType);
+    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, eventPool);
+
+    eventPool->createEvent(&eventDesc, &event);
+
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
+
+    MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    mockCommandStreamReceiver.waitForCompletionWithTimeoutReturnValue = WaitStatus::GpuHang;
+    const auto oldCsr = commandList->csr;
+    commandList->csr = &mockCommandStreamReceiver;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
+
+    returnValue = commandList->appendWaitOnEvents(1, &event, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
+    commandList->csr = oldCsr;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = oldCsr;
+}
+
+HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCommandListWithoutFlushTaskAndWaitingOnEventsThenDeviceLostIsReturnedFromExecute, IsSKL) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableFlushTaskSubmission.set(0);
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(device, commandList->device);
+    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->cmdListType);
+    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+    eventDesc.wait = ZE_EVENT_SCOPE_FLAG_HOST;
+
+    ze_event_handle_t event = nullptr;
+
+    std::unique_ptr<L0::EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, eventPool);
+
+    eventPool->createEvent(&eventDesc, &event);
+
+    std::unique_ptr<L0::Event> eventObject(L0::Event::fromHandle(event));
+    ASSERT_NE(nullptr, eventObject->csr);
+    ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
+
+    MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
+    Mock<CommandQueue> mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
+    mockCommandQueue.executeCommandListsResult = ZE_RESULT_ERROR_DEVICE_LOST;
+    auto oldCommandQueue = commandList->cmdQImmediate;
+    commandList->cmdQImmediate = &mockCommandQueue;
+
+    returnValue = commandList->appendWaitOnEvents(1, &event, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
+    commandList->cmdQImmediate = oldCommandQueue;
+}
+
+HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCommandListWithoutFlushTaskAndWaitingOnEventsThenDeviceLostIsReturnedFromSynchronize, IsSKL) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableFlushTaskSubmission.set(0);
+
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
@@ -1106,13 +1485,11 @@ HWTEST2_F(CommandListCreate, GivenGpuHangOnSynchronizingWhenCreatingImmediateCom
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     Mock<CommandQueue> mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
     mockCommandQueue.synchronizeResult = ZE_RESULT_ERROR_DEVICE_LOST;
-
     auto oldCommandQueue = commandList->cmdQImmediate;
     commandList->cmdQImmediate = &mockCommandQueue;
 
-    returnValue = commandList->appendWaitOnEvents(1, &event);
+    returnValue = commandList->appendWaitOnEvents(1, &event, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
-
     commandList->cmdQImmediate = oldCommandQueue;
 }
 
@@ -1154,7 +1531,7 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
     ASSERT_NE(nullptr, eventObject->csr);
     ASSERT_EQ(static_cast<DeviceImp *>(device)->getNEODevice()->getDefaultEngine().commandStreamReceiver, eventObject->csr);
 
-    returnValue = commandList->appendWaitOnEvents(1, &event);
+    returnValue = commandList->appendWaitOnEvents(1, &event, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     returnValue = commandList->appendBarrier(nullptr, 1, &event);
@@ -1172,11 +1549,35 @@ HWTEST_F(CommandListCreate, GivenGpuHangWhenCreatingImmediateCommandListAndAppen
 
     const auto oldCsr = commandList->csr;
     commandList->csr = &mockCommandStreamReceiver;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
     returnValue = commandList->appendEventReset(event);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
     commandList->csr = oldCsr;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = oldCsr;
+}
+
+HWTEST_F(CommandListCreate, GivenImmediateCommandListWithFlushTaskCreatedThenNumIddPerBlockIsOne) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableFlushTaskSubmission.set(1);
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(device, commandList->device);
+    EXPECT_EQ(CommandList::CommandListType::TYPE_IMMEDIATE, commandList->cmdListType);
+    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+
+    auto &commandContainer = commandList->commandContainer;
+
+    EXPECT_EQ(1u, commandContainer.getNumIddPerBlock());
 }
 
 HWTEST_F(CommandListCreate, GivenGpuHangAndEnabledFlushTaskSubmissionFlagWhenCreatingImmediateCommandListAndAppendingWaitOnEventsThenDeviceLostIsReturned) {
@@ -1221,11 +1622,13 @@ HWTEST_F(CommandListCreate, GivenGpuHangAndEnabledFlushTaskSubmissionFlagWhenCre
 
     const auto oldCsr = commandList->csr;
     commandList->csr = &mockCommandStreamReceiver;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = &mockCommandStreamReceiver;
 
-    returnValue = commandList->appendWaitOnEvents(1, &event);
+    returnValue = commandList->appendWaitOnEvents(1, &event, false);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
 
     commandList->csr = oldCsr;
+    static_cast<WhiteBox<::L0::CommandQueue> *>(commandList->cmdQImmediate)->csr = oldCsr;
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithSyncModeAndAppendResetEventThenUpdateTaskCountNeededFlagIsDisabled) {
@@ -1934,9 +2337,26 @@ HWTEST2_F(CommandListCreate, givenNullEventWhenAppendEventAfterWalkerThenNothing
 
     auto usedBefore = commandList->commandContainer.getCommandStream()->getUsed();
 
-    commandList->appendSignalEventPostWalker(nullptr, false);
+    commandList->appendSignalEventPostWalker(nullptr);
 
     EXPECT_EQ(commandList->commandContainer.getCommandStream()->getUsed(), usedBefore);
+}
+
+TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDefaultValuseIsHwSupported) {
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::ult::CommandList> commandList(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+    ASSERT_NE(nullptr, commandList.get());
+
+    bool expectedStateComputeModeTracking = l0GfxCoreHelper.platformSupportsStateComputeModeTracking();
+    EXPECT_EQ(expectedStateComputeModeTracking, commandList->stateComputeModeTracking);
+
+    bool expectedPipelineSelectTracking = l0GfxCoreHelper.platformSupportsPipelineSelectTracking();
+    EXPECT_EQ(expectedPipelineSelectTracking, commandList->pipelineSelectStateTracking);
+
+    bool expectedFrontEndTracking = l0GfxCoreHelper.platformSupportsFrontEndTracking();
+    EXPECT_EQ(expectedFrontEndTracking, commandList->frontEndStateTracking);
 }
 
 } // namespace ult

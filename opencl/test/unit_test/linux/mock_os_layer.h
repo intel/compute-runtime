@@ -7,11 +7,9 @@
 
 #pragma once
 
-#include "shared/source/os_interface/linux/drm_neo.h"
-
-#include "drm/i915_drm.h"
-
 #include <array>
+#include <cstdint>
+#include <cstdlib>
 #include <cstring>
 #include <dlfcn.h>
 #include <fcntl.h>

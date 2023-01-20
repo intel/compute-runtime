@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,15 +7,17 @@
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/mock_timestamp_packet.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include <memory>
 
@@ -203,12 +205,12 @@ struct DeviceTimestampPacketTests : public ::testing::Test, DeviceFixture {
 
     void SetUp() override {
         DebugManager.flags.EnableTimestampPacket.set(1);
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         executionEnvironment = pDevice->executionEnvironment;
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     };
 };
 
@@ -276,15 +278,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTimestampPacketTests, givenInvalidDebugFlagSe
 HWTEST_F(DeviceTimestampPacketTests, givenTagAlignmentWhenCreatingAllocatorThenGpuAddressIsAligned) {
     auto csr = executionEnvironment->memoryManager->getRegisteredEngines()[0].commandStreamReceiver;
 
-    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
 
     auto allocator = csr->getTimestampPacketAllocator();
 
     auto tag1 = allocator->getTag();
     auto tag2 = allocator->getTag();
 
-    EXPECT_TRUE(isAligned(tag1->getGpuAddress(), hwHelper.getTimestampPacketAllocatorAlignment()));
-    EXPECT_TRUE(isAligned(tag2->getGpuAddress(), hwHelper.getTimestampPacketAllocatorAlignment()));
+    EXPECT_TRUE(isAligned(tag1->getGpuAddress(), gfxCoreHelper.getTimestampPacketAllocatorAlignment()));
+    EXPECT_TRUE(isAligned(tag2->getGpuAddress(), gfxCoreHelper.getTimestampPacketAllocatorAlignment()));
 }
 
 HWTEST_F(DeviceTimestampPacketTests, givenDebugFlagSetWhenCreatingTimestampPacketAllocatorThenDisableReusingAndLimitPoolSize) {

@@ -48,22 +48,12 @@ static constexpr COMMAND_BUFFER_HEADER initCommandBufferHeader(uint32_t umdConte
 
 #else
 struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM {
-    bool FtrDesktop : 1;
-    bool FtrChannelSwizzlingXOREnabled : 1;
-
-    bool FtrIVBM0M1Platform : 1;
-    bool FtrSGTPVSKUStrapPresent : 1;
-    bool Ftr5Slice : 1;
-
     bool FtrGpGpuMidBatchPreempt : 1;
     bool FtrGpGpuThreadGroupLevelPreempt : 1;
     bool FtrGpGpuMidThreadLevelPreempt : 1;
 
-    bool FtrIoMmuPageFaulting : 1;
     bool FtrWddm2Svm : 1;
     bool FtrPooledEuEnabled : 1;
-
-    bool FtrResourceStreamer : 1;
 
     bool FtrPPGTT : 1;
     bool FtrSVM : 1;
@@ -71,32 +61,21 @@ struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM {
     bool FtrL3IACoherency : 1;
     bool FtrIA32eGfxPTEs : 1;
 
-    bool Ftr3dMidBatchPreempt : 1;
-    bool Ftr3dObjectLevelPreempt : 1;
-    bool FtrPerCtxtPreemptionGranularityControl : 1;
-
     bool FtrTileY : 1;
     bool FtrDisplayYTiling : 1;
     bool FtrTranslationTable : 1;
     bool FtrUserModeTranslationTable : 1;
 
-    bool FtrEnableGuC : 1;
-
     bool FtrFbc : 1;
-    bool FtrFbc2AddressTranslation : 1;
-    bool FtrFbcBlitterTracking : 1;
-    bool FtrFbcCpuTracking : 1;
 
     bool FtrULT : 1;
     bool FtrLCIA : 1;
-    bool FtrGttCacheInvalidation : 1;
     bool FtrTileMappedResource : 1;
     bool FtrAstcHdr2D : 1;
     bool FtrAstcLdr2D : 1;
 
     bool FtrStandardMipTailFormat : 1;
     bool FtrFrameBufferLLC : 1;
-    bool FtrCrystalwell : 1;
     bool FtrLLCBypass : 1;
     bool FtrDisplayEngineS3d : 1;
     bool FtrWddm2GpuMmu : 1;
@@ -105,7 +84,6 @@ struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM {
     bool FtrMemTypeMocsDeferPAT : 1;
 
     bool FtrKmdDaf : 1;
-    bool FtrSimulationMode : 1;
 
     bool FtrE2ECompression : 1;
     bool FtrLinearCCS : 1;
@@ -117,11 +95,8 @@ struct SKU_FEATURE_TABLE_KMD : SKU_FEATURE_TABLE_GMM {
 };
 
 struct WA_TABLE_KMD : WA_TABLE_GMM {
-    bool WaDoNotUseMIReportPerfCount = false;
 
-    bool WaEnablePreemptionGranularityControlByUMD = false;
     bool WaSendMIFLUSHBeforeVFE = false;
-    bool WaReportPerfCountUseGlobalContextID = false;
     bool WaDisableLSQCROPERFforOCL = false;
     bool WaMsaa8xTileYDepthPitchAlignment = false;
     bool WaLosslessCompressionSurfaceStride = false;
@@ -129,7 +104,6 @@ struct WA_TABLE_KMD : WA_TABLE_GMM {
     bool Wa4kAlignUVOffsetNV12LinearSurface = false;
     bool WaEncryptedEdramOnlyPartials = false;
     bool WaDisableEdramForDisplayRT = false;
-    bool WaForcePcBbFullCfgRestore = false;
     bool WaCompressedResourceRequiresConstVA21 = false;
     bool WaDisablePerCtxtPreemptionGranularityControl = false;
     bool WaLLCCachingUnsupported = false;
@@ -171,7 +145,7 @@ typedef struct __GMM_GFX_PARTITIONING {
         Reserved0,
         Reserved1,
         SVM,
-        Reserved2,
+        TR,
         Heap32[4];
 } GMM_GFX_PARTITIONING;
 

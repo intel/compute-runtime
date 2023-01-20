@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/utilities/hw_timestamps.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -17,13 +18,13 @@ using namespace NEO;
 struct ProfilingTestsGen12LP : public CommandEnqueueFixture,
                                public ::testing::Test {
     void SetUp() override {
-        CommandEnqueueFixture::SetUp(CL_QUEUE_PROFILING_ENABLE);
+        CommandEnqueueFixture::setUp(CL_QUEUE_PROFILING_ENABLE);
         mockKernelWithInternals = std::make_unique<MockKernelWithInternals>(*pClDevice, nullptr);
     }
 
     void TearDown() override {
         mockKernelWithInternals.reset();
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
     std::unique_ptr<MockKernelWithInternals> mockKernelWithInternals;
@@ -55,7 +56,7 @@ GEN12LPTEST_F(ProfilingTestsGen12LP, GivenCommandQueueWithProflingWhenWalkerIsDi
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorPC);
 
-    //auto itorPC = find<PIPE_CONTROL *>(itorGPGPUWalkerCmd, cmdList.end());
+    // auto itorPC = find<PIPE_CONTROL *>(itorGPGPUWalkerCmd, cmdList.end());
 
     while (itorPC != cmdList.end()) {
         auto pPipeControl = genCmdCast<PIPE_CONTROL *>(*itorPC);

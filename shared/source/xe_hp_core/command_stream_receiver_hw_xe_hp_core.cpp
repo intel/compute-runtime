@@ -13,6 +13,7 @@ using Family = NEO::XeHpFamily;
 #include "shared/source/command_stream/command_stream_receiver_hw_xehp_and_later.inl"
 #include "shared/source/helpers/blit_commands_helper_xehp_and_later.inl"
 #include "shared/source/helpers/populate_factory.h"
+#include "shared/source/helpers/state_base_address_xehp_and_later.inl"
 
 namespace NEO {
 
@@ -33,8 +34,8 @@ void populateFactoryTable<CommandStreamReceiverHw<Family>>() {
 template <>
 MemoryCompressionState CommandStreamReceiverHw<Family>::getMemoryCompressionState(bool auxTranslationRequired, const HardwareInfo &hwInfo) const {
     auto memoryCompressionState = MemoryCompressionState::NotApplicable;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.allowStatelessCompression(hwInfo)) {
+    const auto &productHelper = getProductHelper();
+    if (productHelper.allowStatelessCompression(hwInfo)) {
         memoryCompressionState = auxTranslationRequired ? MemoryCompressionState::Disabled : MemoryCompressionState::Enabled;
     }
     return memoryCompressionState;
@@ -96,11 +97,10 @@ void BlitCommandsHelper<Family>::appendExtraMemoryProperties(typename Family::XY
     using XY_BLOCK_COPY_BLT = typename Family::XY_BLOCK_COPY_BLT;
 
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    auto &hwHelper = HwHelperHw<Family>::get();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
-    if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo) &&
-        hwInfoConfig.getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
+    if (GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo, productHelper) &&
+        productHelper.getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
         blitCmd.setSourceTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
         blitCmd.setDestinationTargetMemory(XY_BLOCK_COPY_BLT::TARGET_MEMORY::TARGET_MEMORY_SYSTEM_MEM);
     }
@@ -111,11 +111,10 @@ void BlitCommandsHelper<Family>::appendExtraMemoryProperties(typename Family::XY
     using XY_COLOR_BLT = typename Family::XY_COLOR_BLT;
 
     auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-    auto &hwHelper = HwHelperHw<Family>::get();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
-    if (hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo) &&
-        hwInfoConfig.getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
+    if (GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, *hwInfo, productHelper) &&
+        productHelper.getLocalMemoryAccessMode(*hwInfo) == LocalMemoryAccessMode::CpuAccessAllowed) {
         blitCmd.setDestinationTargetMemory(XY_COLOR_BLT::DESTINATION_TARGET_MEMORY::DESTINATION_TARGET_MEMORY_SYSTEM_MEM);
     }
 }

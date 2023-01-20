@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 using namespace NEO;
 
@@ -37,22 +38,19 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
                                    public HelloWorldKernelFixture,
                                    public ::testing::TestWithParam<OOMSetting> {
 
-    using CommandQueueFixture::SetUp;
-    using HelloWorldKernelFixture::SetUp;
-    using SimpleArgKernelFixture::SetUp;
-
-    OOMCommandQueueBufferTest() {
-    }
+    using CommandQueueFixture::setUp;
+    using HelloWorldKernelFixture::setUp;
+    using SimpleArgKernelFixture::setUp;
 
     void SetUp() override {
         MemoryManagement::breakOnAllocationEvent = 77;
-        MemoryManagementFixture::SetUp();
-        ClDeviceFixture::SetUp();
+        MemoryManagementFixture::setUp();
+        ClDeviceFixture::setUp();
         context = new MockContext(pClDevice);
         BufferDefaults::context = context;
-        CommandQueueFixture::SetUp(context, pClDevice, 0);
-        SimpleArgKernelFixture::SetUp(pClDevice);
-        HelloWorldKernelFixture::SetUp(pClDevice, "CopyBuffer_simd", "CopyBuffer");
+        CommandQueueFixture::setUp(context, pClDevice, 0);
+        SimpleArgKernelFixture::setUp(pClDevice);
+        HelloWorldKernelFixture::setUp(pClDevice, "CopyBuffer_simd", "CopyBuffer");
 
         srcBuffer = BufferHelper<>::create();
         dstBuffer = BufferHelper<>::create();
@@ -80,14 +78,14 @@ struct OOMCommandQueueBufferTest : public MemoryManagementFixture,
         delete dstBuffer;
         delete srcBuffer;
         context->release();
-        HelloWorldKernelFixture::TearDown();
-        SimpleArgKernelFixture::TearDown();
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
-        MemoryManagementFixture::TearDown();
+        HelloWorldKernelFixture::tearDown();
+        SimpleArgKernelFixture::tearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
+        MemoryManagementFixture::tearDown();
     }
 
-    MockContext *context;
+    MockContext *context = nullptr;
     Buffer *srcBuffer = nullptr;
     Buffer *dstBuffer = nullptr;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,8 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
+#include "shared/source/kernel/implicit_args.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
@@ -113,6 +115,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     size_t bindingTablePointer,
     [[maybe_unused]] size_t offsetSamplerState,
     uint32_t numSamplers,
+    const uint32_t threadGroupCount,
     uint32_t threadsPerThreadGroup,
     const Kernel &kernel,
     uint32_t bindingTablePrefetchSize,
@@ -141,23 +144,26 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
 
     EncodeDispatchKernel<GfxFamily>::setGrfInfo(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
                                                 sizeCrossThreadData, sizePerThreadData, hardwareInfo);
-    auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hwInfoConfig.updateIddCommand(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
-                                  kernel.getThreadArbitrationPolicy());
+    auto &productHelper = device.getProductHelper();
+    productHelper.updateIddCommand(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
+                                   kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
 
-    EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, hardwareInfo, threadsPerThreadGroup,
+    EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, device.getRootDeviceEnvironment(), threadsPerThreadGroup,
                                                                slmTotalSize, SlmPolicy::SlmPolicyNone);
 
     interfaceDescriptor.setBindingTablePointer(static_cast<uint32_t>(bindingTablePointer));
 
     if constexpr (GfxFamily::supportsSampler) {
-        interfaceDescriptor.setSamplerStatePointer(static_cast<uint32_t>(offsetSamplerState));
+        if (device.getDeviceInfo().imageSupport) {
+            interfaceDescriptor.setSamplerStatePointer(static_cast<uint32_t>(offsetSamplerState));
+        }
     }
 
     EncodeDispatchKernel<GfxFamily>::adjustBindingTablePrefetch(interfaceDescriptor, numSamplers, bindingTablePrefetchSize);
 
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
     auto programmableIDSLMSize =
-        static_cast<SHARED_LOCAL_MEMORY_SIZE>(HwHelperHw<GfxFamily>::get().computeSlmValues(hardwareInfo, slmTotalSize));
+        static_cast<SHARED_LOCAL_MEMORY_SIZE>(gfxCoreHelper.computeSlmValues(hardwareInfo, slmTotalSize));
 
     if (DebugManager.flags.OverrideSlmAllocationSize.get() != -1) {
         programmableIDSLMSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(DebugManager.flags.OverrideSlmAllocationSize.get());
@@ -169,10 +175,30 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
                                                           hardwareInfo);
 
     PreemptionHelper::programInterfaceDescriptorDataPreemption<GfxFamily>(&interfaceDescriptor, preemptionMode);
-    EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorData(interfaceDescriptor, hardwareInfo);
+
+    EncodeDispatchKernel<GfxFamily>::adjustInterfaceDescriptorData(interfaceDescriptor, device, hardwareInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired);
 
     *pInterfaceDescriptor = interfaceDescriptor;
     return (size_t)offsetInterfaceDescriptor;
+}
+
+template <typename GfxFamily>
+void HardwareCommandsHelper<GfxFamily>::programPerThreadData(
+    bool localIdsGenerationByRuntime,
+    size_t &sizePerThreadData,
+    size_t &sizePerThreadDataTotal,
+    LinearStream &ioh,
+    const Kernel &kernel,
+    const size_t localWorkSize[3]) {
+    if (localIdsGenerationByRuntime) {
+        Vec3<uint16_t> group = {static_cast<uint16_t>(localWorkSize[0]),
+                                static_cast<uint16_t>(localWorkSize[1]),
+                                static_cast<uint16_t>(localWorkSize[2])};
+        sizePerThreadData = kernel.getLocalIdsSizePerThread();
+        sizePerThreadDataTotal = kernel.getLocalIdsSizeForGroup(group);
+        auto dest = ioh.getSpace(sizePerThreadDataTotal);
+        kernel.setLocalIdsForGroup(group, dest);
+    }
 }
 
 template <typename GfxFamily>
@@ -185,6 +211,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     uint64_t kernelStartOffset,
     uint32_t simd,
     const size_t localWorkSize[3],
+    const uint32_t threadGroupCount,
     const uint64_t offsetInterfaceDescriptorTable,
     uint32_t &interfaceDescriptorIndex,
     PreemptionMode preemptionMode,
@@ -194,8 +221,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     const Device &device) {
 
     using SAMPLER_STATE = typename GfxFamily::SAMPLER_STATE;
-
-    auto rootDeviceIndex = device.getRootDeviceIndex();
 
     DEBUG_BREAK_IF(simd != 1 && simd != 8 && simd != 16 && simd != 32);
     auto inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
@@ -218,12 +243,11 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         samplerStateOffset = EncodeStates<GfxFamily>::copySamplerState(&dsh, samplerTable.tableOffset,
                                                                        samplerCount, samplerTable.borderColor,
                                                                        kernel.getDynamicStateHeap(), device.getBindlessHeapsHelper(),
-                                                                       device.getHardwareInfo());
+                                                                       device.getRootDeviceEnvironment());
     }
 
     auto localWorkItems = localWorkSize[0] * localWorkSize[1] * localWorkSize[2];
     auto threadsPerThreadGroup = static_cast<uint32_t>(getThreadsPerWG(simd, localWorkItems));
-    auto numChannels = static_cast<uint32_t>(kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels);
 
     uint32_t sizeCrossThreadData = kernel.getCrossThreadDataSize();
 
@@ -235,22 +259,18 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     size_t sizePerThreadData = 0;
 
     HardwareCommandsHelper<GfxFamily>::programPerThreadData(
-        sizePerThreadData,
         localIdsGenerationByRuntime,
-        ioh,
-        simd,
-        numChannels,
-        localWorkSize,
-        kernel,
+        sizePerThreadData,
         sizePerThreadDataTotal,
-        localWorkItems,
-        rootDeviceIndex);
+        ioh,
+        kernel,
+        localWorkSize);
 
     uint64_t offsetInterfaceDescriptor = offsetInterfaceDescriptorTable + interfaceDescriptorIndex * sizeof(INTERFACE_DESCRIPTOR_DATA);
 
-    auto bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates()));
-    if (resetBindingTablePrefetch()) {
-        bindingTablePrefetchSize = 0;
+    auto bindingTablePrefetchSize = 0;
+    if (EncodeSurfaceState<GfxFamily>::doBindingTablePrefetch()) {
+        bindingTablePrefetchSize = std::min(31u, static_cast<uint32_t>(kernel.getNumberOfBindingTableStates()));
     }
 
     HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
@@ -262,6 +282,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         dstBindingTablePointer,
         samplerStateOffset,
         samplerCount,
+        threadGroupCount,
         threadsPerThreadGroup,
         kernel,
         bindingTablePrefetchSize,
@@ -288,23 +309,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
     walkerCmd->setIndirectDataLength(indirectDataLength);
 
     return offsetCrossThreadData;
-}
-
-template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::updatePerThreadDataTotal(
-    size_t &sizePerThreadData,
-    uint32_t &simd,
-    uint32_t &numChannels,
-    size_t &sizePerThreadDataTotal,
-    size_t &localWorkItems) {
-    uint32_t grfSize = sizeof(typename GfxFamily::GRF);
-    sizePerThreadData = getPerThreadSizeLocalIDs(simd, grfSize, numChannels);
-
-    uint32_t localIdSizePerThread = PerThreadDataHelper::getLocalIdSizePerThread(simd, grfSize, numChannels);
-    localIdSizePerThread = std::max(localIdSizePerThread, grfSize);
-
-    sizePerThreadDataTotal = getThreadsPerWG(simd, localWorkItems) * localIdSizePerThread;
-    DEBUG_BREAK_IF(sizePerThreadDataTotal == 0); // Hardware requires at least 1 GRF of perThreadData for each thread in thread group
 }
 
 template <typename GfxFamily>

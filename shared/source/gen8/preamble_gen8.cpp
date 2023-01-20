@@ -1,21 +1,24 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gen8/hw_cmds_base.h"
+#include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/preamble_bdw_and_later.inl"
 
 namespace NEO {
 
-using Family = BDWFamily;
+using Family = Gen8Family;
 
 template <>
 void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType) {
     PipeControlArgs args = {};
     args.dcFlushEnable = true;
-    MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
+    MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
 }
 
 template <>
@@ -30,11 +33,6 @@ uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool us
         l3Config = getL3ConfigHelper<IGFX_BROADWELL>(true);
     }
     return l3Config;
-}
-
-template <>
-bool PreambleHelper<Family>::isL3Configurable(const HardwareInfo &hwInfo) {
-    return getL3Config(hwInfo, true) != getL3Config(hwInfo, false);
 }
 
 template <>

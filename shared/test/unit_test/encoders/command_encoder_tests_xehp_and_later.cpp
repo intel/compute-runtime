@@ -6,10 +6,16 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/helpers/state_base_address_tests.h"
+
+#include "encode_surface_state_args.h"
+#include "test_traits_common.h"
 
 using namespace NEO;
 
@@ -32,21 +38,21 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, GivenXeHPAndLater
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterHardwareCommandsTest, givenXeHPAndLaterPlatformWhenGetAdditionalPipelineSelectSizeIsCalledThenZeroIsReturned) {
     MockDevice device;
-    EXPECT_EQ(0u, EncodeWA<FamilyType>::getAdditionalPipelineSelectSize(device));
+    EXPECT_EQ(0u, EncodeWA<FamilyType>::getAdditionalPipelineSelectSize(device, false));
 }
 
 using XeHPAndLaterCommandEncoderTest = Test<DeviceFixture>;
 
 HWTEST2_F(XeHPAndLaterCommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsAtLeastXeHpCore) {
     auto container = CommandContainer();
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container);
+    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
     EXPECT_EQ(size, 104ul);
 }
 
 HWTEST2_F(XeHPAndLaterCommandEncoderTest, givenCommandContainerWithDirtyHeapWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsAtLeastXeHpCore) {
     auto container = CommandContainer();
     container.setHeapDirty(HeapType::SURFACE_STATE);
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container);
+    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
     EXPECT_EQ(size, 104ul);
 }
 
@@ -167,17 +173,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenOffsetAndValue
 
     auto itor = find<MI_LOAD_REGISTER_REG *>(commands.begin(), commands.end());
 
-    // load regOffset to R0
+    // load regOffset to R13
     ASSERT_NE(commands.end(), itor);
     auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
     EXPECT_EQ(regOffset, cmdLoadReg->getSourceRegisterAddress());
-    EXPECT_EQ(CS_GPR_R0, cmdLoadReg->getDestinationRegisterAddress());
+    EXPECT_EQ(CS_GPR_R13, cmdLoadReg->getDestinationRegisterAddress());
 
-    // load immVal to R1
+    // load immVal to R14
     itor++;
     ASSERT_NE(commands.end(), itor);
     auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-    EXPECT_EQ(CS_GPR_R1, cmdLoadImm->getRegisterOffset());
+    EXPECT_EQ(CS_GPR_R14, cmdLoadImm->getRegisterOffset());
     EXPECT_EQ(immVal, cmdLoadImm->getDataDword());
 
     // encodeAluAnd should have its own unit tests, so we only check
@@ -187,11 +193,87 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterCommandEncoderTest, givenOffsetAndValue
     auto cmdMath = genCmdCast<MI_MATH *>(*itor);
     EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
 
-    // store R2 to address
+    // store R15 to address
     itor++;
     ASSERT_NE(commands.end(), itor);
     auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(CS_GPR_R2, cmdMem->getRegisterAddress());
+    EXPECT_EQ(CS_GPR_R15, cmdMem->getRegisterAddress());
     EXPECT_EQ(dstAddress, cmdMem->getMemoryAddress());
     EXPECT_TRUE(cmdMem->getWorkloadPartitionIdOffsetEnable());
+}
+
+struct CompressionParamsSupportedMatcher {
+    template <PRODUCT_FAMILY productFamily>
+    static constexpr bool isMatched() {
+        if constexpr (HwMapper<productFamily>::GfxProduct::supportsCmdSet(IGFX_XE_HP_CORE)) {
+            return TestTraits<NEO::ToGfxCoreFamily<productFamily>::get()>::surfaceStateCompressionParamsSupported;
+        }
+        return false;
+    }
+};
+
+using XeHpAndLaterSbaTest = SbaTest;
+
+HWTEST2_F(XeHpAndLaterSbaTest, givenMemoryCompressionEnabledWhenAppendingSbaThenEnableStatelessCompressionForAllStatelessAccesses, CompressionParamsSupportedMatcher) {
+    for (auto memoryCompressionState : {MemoryCompressionState::NotApplicable, MemoryCompressionState::Disabled, MemoryCompressionState::Enabled}) {
+        auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
+        StateBaseAddressHelperArgs<FamilyType> args = {
+            0,                                                  // generalStateBase
+            0,                                                  // indirectObjectHeapBaseAddress
+            0,                                                  // instructionHeapBaseAddress
+            0,                                                  // globalHeapsBaseAddress
+            0,                                                  // surfaceStateBaseAddress
+            &sbaCmd,                                            // stateBaseAddressCmd
+            nullptr,                                            // dsh
+            nullptr,                                            // ioh
+            &ssh,                                               // ssh
+            pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+            nullptr,                                            // hwInfo
+            0,                                                  // statelessMocsIndex
+            memoryCompressionState,                             // memoryCompressionState
+            false,                                              // setInstructionStateBaseAddress
+            true,                                               // setGeneralStateBaseAddress
+            false,                                              // useGlobalHeapsBaseAddress
+            false,                                              // isMultiOsContextCapable
+            false,                                              // useGlobalAtomics
+            false,                                              // areMultipleSubDevicesInContext
+            false                                               // overrideSurfaceStateBaseAddress
+        };
+        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+        if (memoryCompressionState == MemoryCompressionState::Enabled) {
+            EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_ENABLED, sbaCmd.getEnableMemoryCompressionForAllStatelessAccesses());
+        } else {
+            EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_DISABLED, sbaCmd.getEnableMemoryCompressionForAllStatelessAccesses());
+        }
+    }
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpAndLaterSbaTest, givenNonZeroInternalHeapBaseAddressWhenSettingIsDisabledThenExpectCommandValueZero) {
+    constexpr uint64_t ihba = 0x80010000ull;
+
+    auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                                  // generalStateBase
+        ihba,                                               // indirectObjectHeapBaseAddress
+        0,                                                  // instructionHeapBaseAddress
+        0,                                                  // globalHeapsBaseAddress
+        0,                                                  // surfaceStateBaseAddress
+        &sbaCmd,                                            // stateBaseAddressCmd
+        nullptr,                                            // dsh
+        nullptr,                                            // ioh
+        &ssh,                                               // ssh
+        pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
+        nullptr,                                            // hwInfo
+        0,                                                  // statelessMocsIndex
+        MemoryCompressionState::NotApplicable,              // memoryCompressionState
+        false,                                              // setInstructionStateBaseAddress
+        false,                                              // setGeneralStateBaseAddress
+        false,                                              // useGlobalHeapsBaseAddress
+        false,                                              // isMultiOsContextCapable
+        false,                                              // useGlobalAtomics
+        false,                                              // areMultipleSubDevicesInContext
+        false                                               // overrideSurfaceStateBaseAddress
+    };
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    EXPECT_EQ(0ull, sbaCmd.getGeneralStateBaseAddress());
 }

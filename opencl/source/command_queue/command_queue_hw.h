@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,12 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/engine_control.h"
-#include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/command_queue/csr_selection_args.h"
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/queue_helpers.h"
@@ -27,6 +27,7 @@ namespace NEO {
 
 class EventBuilder;
 struct EnqueueProperties;
+struct KernelOperation;
 
 template <typename GfxFamily>
 class CommandQueueHw : public CommandQueue {
@@ -37,8 +38,6 @@ class CommandQueueHw : public CommandQueue {
                    ClDevice *device,
                    const cl_queue_properties *properties,
                    bool internalUsage) : BaseClass(context, device, properties, internalUsage) {
-
-        logicalStateHelper.reset(LogicalStateHelper::create<GfxFamily>(true));
 
         auto clPriority = getCmdQueueProperties<cl_queue_priority_khr>(properties, CL_QUEUE_PRIORITY_KHR);
 
@@ -361,6 +360,12 @@ class CommandQueueHw : public CommandQueue {
     template <uint32_t cmdType>
     cl_int enqueueBlit(const MultiDispatchInfo &multiDispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &bcsCsr);
 
+    bool isSplitEnqueueBlitNeeded(TransferDirection transferDirection, size_t transferSize, CommandStreamReceiver &csr);
+    size_t getTotalSizeFromRectRegion(const size_t *region);
+
+    template <uint32_t cmdType>
+    cl_int enqueueBlitSplit(MultiDispatchInfo &dispatchInfo, cl_uint numEventsInWaitList, const cl_event *eventWaitList, cl_event *event, bool blocking, CommandStreamReceiver &csr);
+
     template <uint32_t commandType>
     CompletionStamp enqueueNonBlocked(Surface **surfacesForResidency,
                                       size_t surfaceCount,
@@ -373,7 +378,7 @@ class CommandQueueHw : public CommandQueue {
                                       TimestampPacketDependencies &timestampPacketDependencies,
                                       EventsRequest &eventsRequest,
                                       EventBuilder &eventBuilder,
-                                      uint32_t taskLevel,
+                                      TaskCountType taskLevel,
                                       PrintfHandler *printfHandler);
 
     void enqueueBlocked(uint32_t commandType,
@@ -397,7 +402,7 @@ class CommandQueueHw : public CommandQueue {
                                                 TimestampPacketDependencies &timestampPacketDependencies,
                                                 EventsRequest &eventsRequest,
                                                 EventBuilder &eventBuilder,
-                                                uint32_t taskLevel,
+                                                TaskCountType taskLevel,
                                                 CsrDependencies &csrDeps,
                                                 CommandStreamReceiver *bcsCsr);
     void processDispatchForCacheFlush(Surface **surfaces,
@@ -425,7 +430,7 @@ class CommandQueueHw : public CommandQueue {
 
     bool isCacheFlushCommand(uint32_t commandType) const override;
 
-    bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, uint32_t taskCount) override;
+    bool waitForTimestamps(Range<CopyEngineState> copyEnginesToWait, TaskCountType taskCount, WaitStatus &status, TimestampPacketContainer *mainContainer, TimestampPacketContainer *deferredContainer) override;
 
     MOCKABLE_VIRTUAL bool isCacheFlushForBcsRequired() const;
 
@@ -479,8 +484,8 @@ class CommandQueueHw : public CommandQueue {
 
     bool obtainTimestampPacketForCacheFlush(bool isCacheFlushRequired) const override;
 
-    bool isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
-    void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) override;
+    bool isTaskLevelUpdateRequired(const TaskCountType &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
+    void obtainTaskLevelAndBlockedStatus(TaskCountType &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) override;
     static void computeOffsetsValueForRectCommands(size_t *bufferOffset,
                                                    size_t *hostOffset,
                                                    const size_t *bufferOrigin,
@@ -501,11 +506,9 @@ class CommandQueueHw : public CommandQueue {
                                    KernelOperation *blockedCommandsData,
                                    TimestampPacketDependencies &timestampPacketDependencies);
 
-    bool isGpgpuSubmissionForBcsRequired(bool queueBlocked, TimestampPacketDependencies &timestampPacketDependencies) const;
+    MOCKABLE_VIRTUAL bool isGpgpuSubmissionForBcsRequired(bool queueBlocked, TimestampPacketDependencies &timestampPacketDependencies) const;
     void setupEvent(EventBuilder &eventBuilder, cl_event *outEvent, uint32_t cmdType);
 
     bool isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo);
-
-    std::unique_ptr<LogicalStateHelper> logicalStateHelper;
 };
 } // namespace NEO

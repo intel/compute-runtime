@@ -1,29 +1,25 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/built_ins/built_ins.h"
-#include "shared/source/built_ins/builtinops/built_in_ops.h"
+#include "shared/source/built_ins/built_in_ops_base.h"
 #include "shared/source/helpers/vec.h"
 
 #include "opencl/source/kernel/multi_device_kernel.h"
+#include "opencl/source/program/program.h"
 
 #include "CL/cl.h"
 
-#include <array>
 #include <cstdint>
-#include <fstream>
 #include <memory>
-#include <mutex>
-#include <string>
-#include <tuple>
 #include <vector>
 
 namespace NEO {
+struct BuiltinCode;
 typedef std::vector<char> BuiltinResourceT;
 
 class ClDeviceVector;
@@ -40,7 +36,7 @@ struct BuiltinOpParams {
     MemObj *dstMemObj = nullptr;
     GraphicsAllocation *srcSvmAlloc = nullptr;
     GraphicsAllocation *dstSvmAlloc = nullptr;
-    GraphicsAllocation *transferAllocation = nullptr; //mapAllocation or hostPtrAllocation
+    GraphicsAllocation *transferAllocation = nullptr; // mapAllocation or hostPtrAllocation
     AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
     bool unifiedMemoryArgsRequireMemSync = true;
     Vec3<size_t> srcOffset = {0, 0, 0};
@@ -53,6 +49,7 @@ struct BuiltinOpParams {
     uint32_t srcMipLevel = 0;
     uint32_t dstMipLevel = 0;
     void *userPtrForPostOperationCpuCopy = nullptr;
+    bool bcsSplit = false;
 };
 
 class BuiltinDispatchInfoBuilder {

@@ -1,35 +1,32 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/xe_hpg_core/hw_cmds.h"
+#include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 namespace NEO {
 
 const char *HwMapper<IGFX_DG2>::abbreviation = "dg2";
-
-bool isSimulationDG2(unsigned short deviceId) {
-    return false;
-};
 
 const PLATFORM DG2::platform = {
     IGFX_DG2,
     PCH_UNKNOWN,
     IGFX_XE_HPG_CORE,
     IGFX_XE_HPG_CORE,
-    PLATFORM_NONE, // default init
-    0,             // usDeviceID
-    0,             // usRevId. 0 sets the stepping to A0
-    0,             // usDeviceID_PCH
-    0,             // usRevId_PCH
+    PLATFORM_NONE,      // default init
+    dg2G10DeviceIds[0], // usDeviceID
+    0,                  // usRevId. 0 sets the stepping to A0
+    0,                  // usDeviceID_PCH
+    0,                  // usRevId_PCH
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable DG2::capabilityTable{
@@ -44,8 +41,6 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     0,                                                         // sharedSystemMemCapabilities
     83.333,                                                    // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                                 // requiredPreemptionSurfaceSize
-    &isSimulationDG2,                                          // isSimulation
-    "dg2",                                                     // platformType
     "",                                                        // deviceName
     PreemptionMode::ThreadGroup,                               // defaultPreemptionMode
     aub_stream::ENGINE_CCS,                                    // defaultEngineType
@@ -104,17 +99,12 @@ void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrTranslationTable = true;
     featureTable->flags.ftrUserModeTranslationTable = true;
     featureTable->flags.ftrTileMappedResource = true;
-    featureTable->flags.ftrEnableGuC = true;
     featureTable->flags.ftrFbc = true;
-    featureTable->flags.ftrFbc2AddressTranslation = true;
-    featureTable->flags.ftrFbcBlitterTracking = true;
     featureTable->flags.ftrAstcHdr2D = true;
     featureTable->flags.ftrAstcLdr2D = true;
 
-    featureTable->flags.ftr3dMidBatchPreempt = true;
     featureTable->flags.ftrGpGpuMidBatchPreempt = true;
     featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
-    featureTable->flags.ftrPerCtxtPreemptionGranularityControl = true;
 
     featureTable->flags.ftrTileY = false;
     featureTable->flags.ftrLocalMemory = true;
@@ -122,12 +112,10 @@ void DG2::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrE2ECompression = true;
     featureTable->flags.ftrCCSNode = true;
     featureTable->flags.ftrCCSRing = true;
-    featureTable->flags.ftrCCSMultiInstance = true;
 
     featureTable->flags.ftrUnified3DMediaCompressionFormats = true;
 
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
-    workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
 };
 
 void DG2::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
@@ -183,7 +171,7 @@ void Dg2HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
         gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
 
         hwInfo->featureTable.ftrBcsInfo = 1;
-
+        gtSysInfo->IsDynamicallyPopulated = true;
         for (uint32_t slice = 0; slice < gtSysInfo->SliceCount; slice++) {
             gtSysInfo->SliceInfo[slice].Enabled = true;
         }

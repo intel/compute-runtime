@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,15 +17,15 @@ namespace NEO {
 ///////////////////////////////////////////////////////
 // MockPerformanceCountersWin::MockPerformanceCountersWin
 ///////////////////////////////////////////////////////
-MockPerformanceCountersWin::MockPerformanceCountersWin(Device *device)
+MockPerformanceCountersWin::MockPerformanceCountersWin()
     : PerformanceCountersWin() {
 }
 
 ///////////////////////////////////////////////////////
 // MockPerformanceCounters::create
 ///////////////////////////////////////////////////////
-std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create(Device *device) {
-    auto performanceCounters = std::unique_ptr<PerformanceCounters>(new MockPerformanceCountersWin(device));
+std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create() {
+    auto performanceCounters = std::unique_ptr<PerformanceCounters>(new MockPerformanceCountersWin());
     auto metricsLibrary = std::make_unique<MockMetricsLibrary>();
     auto metricsLibraryDll = std::make_unique<MockMetricsLibraryDll>();
 
@@ -37,16 +37,9 @@ std::unique_ptr<PerformanceCounters> MockPerformanceCounters::create(Device *dev
 }
 
 //////////////////////////////////////////////////////
-// PerformanceCountersFixture::createPerfCounters
+// PerformanceCountersFixture::setUp
 //////////////////////////////////////////////////////
-void PerformanceCountersFixture::createPerfCounters() {
-    performanceCountersBase = MockPerformanceCounters::create(&device->getDevice());
-}
-
-//////////////////////////////////////////////////////
-// PerformanceCountersFixture::SetUp
-//////////////////////////////////////////////////////
-void PerformanceCountersFixture::SetUp() {
+void PerformanceCountersFixture::setUp() {
     device = std::make_unique<MockClDevice>(new MockDevice());
     context = std::make_unique<MockContext>(device.get());
     queue = std::make_unique<MockCommandQueue>(context.get(), device.get(), &queueProperties, false);
@@ -56,9 +49,9 @@ void PerformanceCountersFixture::SetUp() {
 }
 
 //////////////////////////////////////////////////////
-// PerformanceCountersFixture::TearDown
+// PerformanceCountersFixture::tearDown
 //////////////////////////////////////////////////////
-void PerformanceCountersFixture::TearDown() {
+void PerformanceCountersFixture::tearDown() {
 }
 
 } // namespace NEO

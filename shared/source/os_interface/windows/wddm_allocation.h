@@ -15,6 +15,7 @@
 namespace NEO {
 
 struct OsHandleWin : OsHandle {
+    ~OsHandleWin() override = default;
     D3DKMT_HANDLE handle = 0;
     D3DGPU_VIRTUAL_ADDRESS gpuPtr = 0;
     Gmm *gmm = nullptr;
@@ -71,8 +72,9 @@ class WddmAllocation : public GraphicsAllocation {
         handles[handleIndex] = handle;
     }
 
-    uint64_t peekInternalHandle(MemoryManager *memoryManager) override {
-        return ntSecureHandle;
+    int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) override {
+        handle = ntSecureHandle;
+        return handle == 0;
     }
 
     uint64_t *getSharedHandleToModify() {

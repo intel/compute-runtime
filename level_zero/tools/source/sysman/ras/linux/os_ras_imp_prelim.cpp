@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp_prelim.h"
 
+#include "shared/source/helpers/string.h"
+
 #include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
@@ -25,14 +27,14 @@ void OsRas::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType,
 
 ze_result_t LinuxRasImp::osRasGetConfig(zes_ras_config_t *config) {
     config->totalThreshold = totalThreshold;
-    memcpy(config->detailedThresholds.category, categoryThreshold, sizeof(config->detailedThresholds.category));
+    memcpy_s(config->detailedThresholds.category, sizeof(config->detailedThresholds.category), categoryThreshold, sizeof(config->detailedThresholds.category));
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t LinuxRasImp::osRasSetConfig(const zes_ras_config_t *config) {
     if (pFsAccess->isRootUser() == true) {
         totalThreshold = config->totalThreshold;
-        memcpy(categoryThreshold, config->detailedThresholds.category, sizeof(config->detailedThresholds.category));
+        memcpy_s(categoryThreshold, sizeof(config->detailedThresholds.category), config->detailedThresholds.category, sizeof(config->detailedThresholds.category));
         return ZE_RESULT_SUCCESS;
     }
     return ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS;

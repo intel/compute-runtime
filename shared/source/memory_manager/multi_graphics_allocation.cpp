@@ -8,6 +8,7 @@
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 
 namespace NEO {

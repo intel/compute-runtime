@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -16,6 +17,7 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/sharings/d3d/d3d_buffer.h"
@@ -166,6 +168,8 @@ cl_int CL_API_CALL clEnqueueAcquireDX9ObjectsINTEL(cl_command_queue commandQueue
     }
     retVal = cmdQ->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                eventWaitList, event, CL_COMMAND_ACQUIRE_DX9_OBJECTS_INTEL);
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -184,6 +188,11 @@ cl_int CL_API_CALL clEnqueueReleaseDX9ObjectsINTEL(cl_command_queue commandQueue
         return retVal;
     }
 
+    retVal = validateObjects(MemObjList(numObjects, memObjects));
+    if (retVal != CL_SUCCESS) {
+        return retVal;
+    }
+
     for (unsigned int object = 0; object < numObjects; object++) {
         auto memObject = castToObject<MemObj>(memObjects[object]);
         if (!static_cast<D3DSharing<D3DTypesHelper::D3D9> *>(memObject->peekSharingHandler())->isSharedResource()) {
@@ -197,6 +206,8 @@ cl_int CL_API_CALL clEnqueueReleaseDX9ObjectsINTEL(cl_command_queue commandQueue
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
         cmdQ->finish();
     }
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -258,6 +269,8 @@ cl_int CL_API_CALL clEnqueueAcquireDX9MediaSurfacesKHR(cl_command_queue commandQ
     }
     retVal = cmdQ->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                eventWaitList, event, CL_COMMAND_ACQUIRE_DX9_MEDIA_SURFACES_KHR);
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -296,6 +309,8 @@ cl_int CL_API_CALL clEnqueueReleaseDX9MediaSurfacesKHR(cl_command_queue commandQ
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
         cmdQ->finish();
     }
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -467,6 +482,8 @@ cl_int CL_API_CALL clEnqueueAcquireD3D10ObjectsKHR(cl_command_queue commandQueue
     }
     retVal = cmdQ->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                eventWaitList, event, CL_COMMAND_ACQUIRE_D3D10_OBJECTS_KHR);
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -508,6 +525,8 @@ cl_int CL_API_CALL clEnqueueReleaseD3D10ObjectsKHR(cl_command_queue commandQueue
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
         cmdQ->finish();
     }
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -676,6 +695,8 @@ cl_int CL_API_CALL clEnqueueAcquireD3D11ObjectsKHR(cl_command_queue commandQueue
     }
     retVal = cmdQ->enqueueAcquireSharedObjects(numObjects, memObjects, numEventsInWaitList,
                                                eventWaitList, event, CL_COMMAND_ACQUIRE_D3D11_OBJECTS_KHR);
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 
@@ -717,6 +738,8 @@ cl_int CL_API_CALL clEnqueueReleaseD3D11ObjectsKHR(cl_command_queue commandQueue
     if (!cmdQ->getContext().getInteropUserSyncEnabled()) {
         cmdQ->finish();
     }
+
+    DBG_LOG_INPUTS("event", getClFileLogger().getEvents(reinterpret_cast<const uintptr_t *>(event), 1u));
     return retVal;
 }
 

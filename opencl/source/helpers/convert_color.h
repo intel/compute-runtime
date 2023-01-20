@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,7 +88,7 @@ inline void convertFillColor(const void *fillColor,
                 iFillColor[i] = static_cast<int32_t>(normalizingFactor * fFillColor[i]);
             }
         } else if (oldImageFormat.image_channel_data_type == CL_HALF_FLOAT) {
-            //float to half convert.
+            // float to half convert.
             for (auto i = 0; i < 4; i++) {
                 uint16_t temp = Math::float2Half(fFillColor[i]);
                 iFillColor[i] = temp;

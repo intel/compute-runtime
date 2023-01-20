@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
@@ -46,7 +47,7 @@ GraphicsAllocation *UnifiedSharing::createGraphicsAllocation(Context *context, U
                                               allocationType,
                                               false, // isMultiStorageAllocation
                                               context->getDeviceBitfieldForAllocation(context->getDevice(0)->getRootDeviceIndex())};
-        return memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(description.handle), properties, false, false);
+        return memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(description.handle), properties, false, false, true);
     }
     default:
         return nullptr;

@@ -5,9 +5,11 @@
  *
  */
 
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
+
 namespace NEO {
-struct XE_HPC_COREFamily;
-using Family = XE_HPC_COREFamily;
+struct XeHpcCoreFamily;
+using Family = XeHpcCoreFamily;
 } // namespace NEO
 
 #include "shared/source/command_stream/stream_properties.h"
@@ -18,19 +20,14 @@ namespace NEO {
 
 using CFE_STATE = typename Family::CFE_STATE;
 template <>
-void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd) {
+void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd) {
     auto command = static_cast<CFE_STATE *>(cmd);
 
     command->setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
     command->setSingleSliceDispatchCcsMode(streamProperties.frontEndState.singleSliceDispatchCcsMode.value == 1);
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-
-    if (hwInfoConfig.getSteppingFromHwRevId(hwInfo) >= REVISION_B) {
-        const auto programComputeDispatchAllWalkerEnableInCfeState = hwInfoConfig.isComputeDispatchAllWalkerEnableInCfeStateRequired(hwInfo);
-        if (programComputeDispatchAllWalkerEnableInCfeState && streamProperties.frontEndState.computeDispatchAllWalkerEnable.value > 0) {
-            command->setComputeDispatchAllWalkerEnable(true);
-        }
+    if (streamProperties.frontEndState.computeDispatchAllWalkerEnable.value > 0) {
+        command->setComputeDispatchAllWalkerEnable(true);
     }
 
     if (DebugManager.flags.CFEComputeDispatchAllWalkerEnable.get() != -1) {
@@ -48,20 +45,6 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
     if (DebugManager.flags.CFENumberOfWalkers.get() != -1) {
         command->setNumberOfWalkers(DebugManager.flags.CFENumberOfWalkers.get());
     }
-}
-
-template <>
-bool PreambleHelper<Family>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) {
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    return hwInfoConfig.isSystolicModeConfigurable(hwInfo);
-}
-
-template <>
-bool PreambleHelper<Family>::isSpecialPipelineSelectModeChanged(bool lastSpecialPipelineSelectMode, bool newSpecialPipelineSelectMode,
-                                                                const HardwareInfo &hwInfo) {
-
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    return (lastSpecialPipelineSelectMode != newSpecialPipelineSelectMode) && hwInfoConfig.isSpecialPipelineSelectModeChanged(hwInfo);
 }
 
 template struct PreambleHelper<Family>;

@@ -11,7 +11,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void EncodeEnableRayTracing<GfxFamily>::programEnableRayTracing(LinearStream &commandStream, GraphicsAllocation &backBuffer) {
+void EncodeEnableRayTracing<GfxFamily>::programEnableRayTracing(LinearStream &commandStream, uint64_t backBuffer) {
 }
 
 } // namespace NEO

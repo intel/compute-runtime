@@ -11,57 +11,53 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void HwHelperHw<GfxFamily>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
+void GfxCoreHelperHw<GfxFamily>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
-    return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice *
-           pHwInfo->gtSystemInfo.ThreadCount / pHwInfo->gtSystemInfo.EUCount;
+uint32_t GfxCoreHelperHw<GfxFamily>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    return hwInfo->gtSystemInfo.MaxSubSlicesSupported * hwInfo->gtSystemInfo.MaxEuPerSubSlice *
+           hwInfo->gtSystemInfo.ThreadCount / hwInfo->gtSystemInfo.EUCount;
 }
 
 template <typename GfxFamily>
-inline uint32_t HwHelperHw<GfxFamily>::getGlobalTimeStampBits() const {
+inline uint32_t GfxCoreHelperHw<GfxFamily>::getGlobalTimeStampBits() const {
     return 36;
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<GfxFamily>::isLocalMemoryEnabled(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::hvAlign4Required() const {
+bool GfxCoreHelperHw<GfxFamily>::hvAlign4Required() const {
     return true;
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
+bool GfxCoreHelperHw<GfxFamily>::timestampPacketWriteSupported() const {
     return false;
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isTimestampWaitSupportedForQueues() const {
+bool GfxCoreHelperHw<GfxFamily>::isTimestampWaitSupportedForQueues() const {
     return false;
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isTimestampWaitSupportedForEvents(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<GfxFamily>::isUpdateTaskCountFromWaitSupported() const {
     return false;
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isUpdateTaskCountFromWaitSupported() const {
+bool GfxCoreHelperHw<GfxFamily>::isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename GfxFamily>
-const EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
+const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     return {
         {aub_stream::ENGINE_RCS, EngineUsage::Regular},
         {aub_stream::ENGINE_RCS, EngineUsage::LowPriority},
@@ -70,7 +66,7 @@ const EngineInstancesContainer HwHelperHw<GfxFamily>::getGpgpuEngineInstances(co
 }
 
 template <typename GfxFamily>
-EngineGroupType HwHelperHw<GfxFamily>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
+EngineGroupType GfxCoreHelperHw<GfxFamily>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
     switch (engineType) {
     case aub_stream::ENGINE_RCS:
         return EngineGroupType::RenderCompute;
@@ -80,12 +76,12 @@ EngineGroupType HwHelperHw<GfxFamily>::getEngineGroupType(aub_stream::EngineType
 }
 
 template <typename GfxFamily>
-std::string HwHelperHw<GfxFamily>::getExtensions(const HardwareInfo &hwInfo) const {
+std::string GfxCoreHelperHw<GfxFamily>::getExtensions(const HardwareInfo &hwInfo) const {
     return "";
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
+uint32_t GfxCoreHelperHw<GfxFamily>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
         return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
     }
@@ -93,30 +89,29 @@ uint32_t HwHelperHw<GfxFamily>::getMocsIndex(const GmmHelper &gmmHelper, bool l3
 }
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount,
-                                                              uint32_t threadsPerEu) {
-    return threadsPerEu * euCount;
+uint32_t GfxCoreHelperHw<GfxFamily>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const {
+    return hwInfo.gtSystemInfo.ThreadCount;
 }
 
 template <typename GfxFamily>
-uint64_t HwHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const {
+uint64_t GfxCoreHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const {
     return static_cast<uint64_t>(timeStamp * frequency);
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const {
+inline bool GfxCoreHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const {
     return false;
 }
 
 constexpr uint32_t planarYuvMaxHeight = 16352;
 
 template <typename GfxFamily>
-uint32_t HwHelperHw<GfxFamily>::getPlanarYuvMaxHeight() const {
+uint32_t GfxCoreHelperHw<GfxFamily>::getPlanarYuvMaxHeight() const {
     return planarYuvMaxHeight;
 }
 
 template <typename GfxFamily>
-aub_stream::MMIOList HwHelperHw<GfxFamily>::getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const {
+aub_stream::MMIOList GfxCoreHelperHw<GfxFamily>::getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const {
     return {};
 }
 
@@ -129,35 +124,44 @@ inline void MemorySynchronizationCommands<GfxFamily>::setCacheFlushExtraProperti
 }
 
 template <typename GfxFamily>
-inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlExtraProperties(typename GfxFamily::PIPE_CONTROL &pipeControl, PipeControlArgs &args) {
+inline void MemorySynchronizationCommands<GfxFamily>::setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args) {
 }
 
 template <typename GfxFamily>
-bool MemorySynchronizationCommands<GfxFamily>::isPipeControlWArequired(const HardwareInfo &hwInfo) { return false; }
+bool MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(const HardwareInfo &hwInfo) { return false; }
 
 template <typename GfxFamily>
-inline void MemorySynchronizationCommands<GfxFamily>::setPipeControlWAFlags(PIPE_CONTROL &pipeControl) {
-    pipeControl.setCommandStreamerStallEnable(true);
+inline void MemorySynchronizationCommands<GfxFamily>::setBarrierWaFlags(void *barrierCmd) {
+    reinterpret_cast<typename GfxFamily::PIPE_CONTROL *>(barrierCmd)->setCommandStreamerStallEnable(true);
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::unTypedDataPortCacheFlushRequired() const {
+bool GfxCoreHelperHw<GfxFamily>::unTypedDataPortCacheFlushRequired() const {
     return false;
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::isScratchSpaceSurfaceStateAccessible() const {
+bool GfxCoreHelperHw<GfxFamily>::isScratchSpaceSurfaceStateAccessible() const {
     return false;
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const {
+uint32_t GfxCoreHelperHw<GfxFamily>::getMaxScratchSize() const {
+    return 2 * MB;
+}
+
+template <typename GfxFamily>
+inline bool GfxCoreHelperHw<GfxFamily>::platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const {
     return false;
 }
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::preferInternalBcsEngine() const {
+inline bool GfxCoreHelperHw<GfxFamily>::preferInternalBcsEngine() const {
     return false;
 }
 
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalScratchSpaceSize() const {
+    return 1024U;
+}
 } // namespace NEO

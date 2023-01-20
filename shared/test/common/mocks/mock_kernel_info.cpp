@@ -63,10 +63,6 @@ void MockKernelInfo::addArgImmediate(uint32_t index, uint16_t size, CrossThreadD
 
     ArgDescValue::Element element{offset, size, sourceOffset};
     argAt(index).as<ArgDescValue>(true).elements.push_back(element);
-
-    if (isDataParameterKernelArgument) {
-        kernelDescriptor.kernelMetadata.allByValueKernelArguments.push_back({element, static_cast<uint16_t>(index)});
-    }
 }
 
 void MockKernelInfo::addArgLocal(uint32_t index, CrossThreadDataOffset slmOffset, uint8_t requiredSlmAlignment) {
@@ -111,20 +107,6 @@ void MockKernelInfo::addExtendedMetadata(uint32_t index, const std::string &argN
     }
 
     extendedMetadata[index] = {argName, type, accessQualifier, addressQualifier, typeQualifiers};
-}
-
-void MockKernelInfo::addExtendedDeviceSideEnqueueDescriptor(uint32_t index, uint32_t objectId) {
-    auto &explicitArgsExtendedDescriptors = kernelDescriptor.payloadMappings.explicitArgsExtendedDescriptors;
-    auto &explicitArgs = kernelDescriptor.payloadMappings.explicitArgs;
-    if (index >= explicitArgsExtendedDescriptors.size()) {
-        explicitArgsExtendedDescriptors.resize(index + 1);
-    }
-
-    auto deviceSideEnqueueDescriptor = std::make_unique<ArgDescriptorDeviceSideEnqueue>();
-    deviceSideEnqueueDescriptor->objectId = objectId;
-    explicitArgsExtendedDescriptors[index] = std::move(deviceSideEnqueueDescriptor);
-
-    explicitArgs[index].getExtendedTypeInfo().hasDeviceSideEnqueueExtendedDescriptor = true;
 }
 
 void MockKernelInfo::addExtendedVmeDescriptor(uint32_t index, CrossThreadDataOffset mbBlockType, CrossThreadDataOffset sadAdjustMode, CrossThreadDataOffset searchPathType, CrossThreadDataOffset subpixelMode) {

@@ -14,32 +14,33 @@
 #include "shared/source/helpers/logical_state_helper.inl"
 
 namespace NEO {
-typedef ICLFamily Family;
+typedef Gen11Family Family;
 
 template <>
-uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
-    return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice * 8;
+uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    return hwInfo->gtSystemInfo.MaxSubSlicesSupported * hwInfo->gtSystemInfo.MaxEuPerSubSlice * 8;
 }
 
 template <>
-std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
+std::string GfxCoreHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
     return "cl_intel_subgroup_local_block_io ";
 }
 
 template <>
-int32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
+int32_t GfxCoreHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
     return ThreadArbitrationPolicy::RoundRobinAfterDependency;
 }
 
 template <>
-bool HwHelperHw<Family>::packedFormatsSupported() const {
+bool GfxCoreHelperHw<Family>::packedFormatsSupported() const {
     return true;
 }
 
-template class HwHelperHw<Family>;
+template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;
 
-template LogicalStateHelper *LogicalStateHelper::create<Family>(bool pipelinedState);
+template LogicalStateHelper *LogicalStateHelper::create<Family>();
 } // namespace NEO

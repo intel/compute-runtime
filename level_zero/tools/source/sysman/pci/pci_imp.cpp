@@ -7,12 +7,10 @@
 
 #include "pci_imp.h"
 
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/utilities/directory.h"
 
-#include <cstring>
 namespace L0 {
 
 //
@@ -83,11 +81,13 @@ int32_t convertLinkSpeedToPciGen(double speed) {
 }
 
 ze_result_t PciImp::pciStaticProperties(zes_pci_properties_t *pProperties) {
+    initPci();
     *pProperties = pciProperties;
     return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t PciImp::pciGetInitializedBars(uint32_t *pCount, zes_pci_bar_properties_t *pProperties) {
+    initPci();
     uint32_t pciBarPropertiesSize = static_cast<uint32_t>(pciBarProperties.size());
     uint32_t numToCopy = std::min(*pCount, pciBarPropertiesSize);
     if (0 == *pCount || *pCount > pciBarPropertiesSize) {
@@ -118,6 +118,7 @@ ze_result_t PciImp::pciGetInitializedBars(uint32_t *pCount, zes_pci_bar_properti
 }
 
 ze_result_t PciImp::pciGetState(zes_pci_state_t *pState) {
+    initPci();
     return pOsPci->getState(pState);
 }
 
@@ -140,7 +141,11 @@ void PciImp::pciGetStaticFields() {
     pciProperties.maxSpeed.gen = convertLinkSpeedToPciGen(maxLinkSpeed);
     pOsPci->initializeBarProperties(pciBarProperties);
 }
-
+void PciImp::initPci() {
+    std::call_once(initPciOnce, [this]() {
+        this->init();
+    });
+}
 void PciImp::init() {
     if (pOsPci == nullptr) {
         pOsPci = OsPci::create(pOsSysman);

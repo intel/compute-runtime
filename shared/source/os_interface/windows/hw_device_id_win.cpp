@@ -18,11 +18,13 @@ HwDeviceIdWddm::~HwDeviceIdWddm() {
     status = static_cast<OsEnvironmentWin *>(osEnvironment)->gdi->closeAdapter(&closeAdapter);
     DEBUG_BREAK_IF(status != STATUS_SUCCESS);
 }
-HwDeviceIdWddm::HwDeviceIdWddm(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn,
+HwDeviceIdWddm::HwDeviceIdWddm(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn, uint32_t adapterNodeMaskIn,
                                OsEnvironment *osEnvironmentIn, std::unique_ptr<UmKmDataTranslator> umKmDataTranslator)
     : HwDeviceId(DriverModelType::WDDM),
-      adapter(adapterIn), adapterLuid(adapterLuidIn), osEnvironment(osEnvironmentIn),
-      umKmDataTranslator(std::move(umKmDataTranslator)) {}
+      adapterLuid(adapterLuidIn), adapterNodeMask(adapterNodeMaskIn), umKmDataTranslator(std::move(umKmDataTranslator)),
+      osEnvironment(osEnvironmentIn), adapter(adapterIn) {
+}
+
 Gdi *HwDeviceIdWddm::getGdi() const {
     return static_cast<OsEnvironmentWin *>(osEnvironment)->gdi.get();
 };

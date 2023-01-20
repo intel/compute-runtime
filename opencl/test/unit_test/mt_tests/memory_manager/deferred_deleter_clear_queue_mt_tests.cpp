@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ struct ClearQueueTest : public ::testing::Test,
     static void threadMethod(MockDeferredDeleter *deleter) {
         while (!startClear)
             ;
-        deleter->clearQueue();
+        deleter->clearQueue(false);
         threadStopped++;
     }
     MockDeferrableDeletion *createDeletion() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/debug_registry_reader.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
@@ -177,29 +176,11 @@ TEST_F(DriverInfoWindowsTest, GivenDriverInfoWhenThenReturnNonNullptr) {
     EXPECT_TRUE(registryReaderMock->properVersionKey);
 };
 
-TEST(DriverInfo, givenDriverInfoWhenGetStringReturnNotMeaningEmptyStringThenEnableSharingSupport) {
+TEST(DriverInfo, givenDriverInfoWhenGetMediaSharingSupportThenTrueIsReturned) {
     MockDriverInfoWindows driverInfo("", PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue));
-    MockRegistryReader *registryReaderMock = new MockRegistryReader();
-
-    driverInfo.registryReader.reset(registryReaderMock);
     auto enable = driverInfo.getMediaSharingSupport();
 
     EXPECT_TRUE(enable);
-    EXPECT_EQ(is64bit, registryReaderMock->using64bit);
-    EXPECT_TRUE(registryReaderMock->properMediaSharingExtensions);
-};
-
-TEST(DriverInfo, givenDriverInfoWhenGetStringReturnMeaningEmptyStringThenDisableSharingSupport) {
-    MockDriverInfoWindows driverInfo("", PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue));
-    MockRegistryReader *registryReaderMock = new MockRegistryReader();
-    registryReaderMock->returnString = "<>";
-    driverInfo.registryReader.reset(registryReaderMock);
-
-    auto enable = driverInfo.getMediaSharingSupport();
-
-    EXPECT_FALSE(enable);
-    EXPECT_EQ(is64bit, registryReaderMock->using64bit);
-    EXPECT_TRUE(registryReaderMock->properMediaSharingExtensions);
 };
 
 TEST(DriverInfo, givenFullPathToRegistryWhenCreatingDriverInfoWindowsThenTheRegistryPathIsTrimmed) {
@@ -260,18 +241,6 @@ TEST_F(DriverInfoWindowsTest, whenCurrentLibraryIsLoadedFromDifferentDriverStore
     currentLibraryPathBackup = L"driverStore\\different_driverStore\\myLib.dll";
 
     EXPECT_FALSE(driverInfo->isCompatibleDriverStore());
-}
-
-TEST_F(DriverInfoWindowsTest, givenDriverInfoWindowsWhenGetImageSupportIsCalledThenReturnTrue) {
-    MockExecutionEnvironment executionEnvironment;
-    RootDeviceEnvironment rootDeviceEnvironment(executionEnvironment);
-    std::unique_ptr<OSInterface> osInterface(new OSInterface());
-    osInterface->setDriverModel(std::unique_ptr<DriverModel>(Wddm::createWddm(nullptr, rootDeviceEnvironment)));
-    EXPECT_NE(nullptr, osInterface->getDriverModel()->as<Wddm>());
-
-    std::unique_ptr<DriverInfo> driverInfo(DriverInfo::create(nullptr, osInterface.get()));
-
-    EXPECT_TRUE(driverInfo->getImageSupport());
 }
 
 } // namespace NEO

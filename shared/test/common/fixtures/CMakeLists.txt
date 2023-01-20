@@ -4,18 +4,13 @@
 # SPDX-License-Identifier: MIT
 #
 
-target_sources(${TARGET_NAME} PRIVATE
+target_sources(neo_libult_common PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-               ${CMAKE_CURRENT_SOURCE_DIR}/command_container_fixture.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_fixture.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/front_window_fixture.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/front_window_fixture.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling_fixture.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/implicit_scaling_fixture.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/cpu_page_fault_manager_tests_fixture.h
                ${CMAKE_CURRENT_SOURCE_DIR}/linear_stream_fixture.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/preemption_fixture.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/preemption_fixture.h
-               ${CMAKE_CURRENT_SOURCE_DIR}/product_config_fixture.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_center_fixture.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/mock_aub_center_fixture.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/preamble_fixture.h
 )
 
 add_subdirectories()

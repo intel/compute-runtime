@@ -1,21 +1,20 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/kernel/kernel.h"
 
-#include "hw_cmds.h"
-
 namespace NEO {
 
 template <typename GfxFamily>
-bool GTPinHwHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) {
+bool GTPinGfxCoreHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
@@ -45,7 +44,7 @@ bool GTPinHwHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) {
 }
 
 template <typename GfxFamily>
-void *GTPinHwHelperHw<GfxFamily>::getSurfaceState(Kernel *pKernel, size_t bti) {
+void *GTPinGfxCoreHelperHw<GfxFamily>::getSurfaceState(Kernel *pKernel, size_t bti) {
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
     if ((nullptr == pKernel->getSurfaceStateHeap()) || (bti >= pKernel->getNumberOfBindingTableStates())) {

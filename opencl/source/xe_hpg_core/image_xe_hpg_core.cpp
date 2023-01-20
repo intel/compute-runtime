@@ -5,13 +5,13 @@
  *
  */
 
-#include "shared/source/xe_hpg_core/hw_cmds_base.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 #include "opencl/source/mem_obj/image.inl"
 
 namespace NEO {
 
-using Family = XE_HPG_COREFamily;
+using Family = XeHpgCoreFamily;
 static auto gfxCore = IGFX_XE_HPG_CORE;
 } // namespace NEO
 #include "opencl/source/mem_obj/image_tgllp_and_later.inl"

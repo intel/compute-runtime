@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
 #include <cstdint>
@@ -28,7 +29,7 @@ inline bool featureEnabled(int32_t debugFlagValue) {
     return (debugFlagValue != DebugFlagValues::Disabled);
 }
 
-inline bool pauseModeAllowed(int32_t debugFlagValue, uint32_t taskCount, PauseMode pauseMode) {
+inline bool pauseModeAllowed(int32_t debugFlagValue, TaskCountType taskCount, PauseMode pauseMode) {
     if (!featureEnabled(debugFlagValue)) {
         // feature disabled
         return false;
@@ -44,16 +45,16 @@ inline bool pauseModeAllowed(int32_t debugFlagValue, uint32_t taskCount, PauseMo
         return true;
     }
 
-    return (debugFlagValue == static_cast<int32_t>(taskCount));
+    return (debugFlagValue == static_cast<int64_t>(taskCount));
 }
 
-inline bool gpuScratchRegWriteAllowed(int32_t debugFlagValue, uint32_t taskCount) {
+inline bool gpuScratchRegWriteAllowed(int32_t debugFlagValue, TaskCountType taskCount) {
     if (!featureEnabled(debugFlagValue)) {
         // feature disabled
         return false;
     }
 
-    return (debugFlagValue == static_cast<int32_t>(taskCount));
+    return (debugFlagValue == static_cast<int64_t>(taskCount));
 }
 } // namespace PauseOnGpuProperties
 } // namespace NEO

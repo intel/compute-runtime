@@ -1,28 +1,20 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
-#include "shared/source/gen9/hw_cmds.h"
+#include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/gen9/hw_cmds_bxt.h"
 #include "shared/source/helpers/constants.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 namespace NEO {
 
 const char *HwMapper<IGFX_BROXTON>::abbreviation = "bxt";
-
-bool isSimulationBXT(unsigned short deviceId) {
-    switch (deviceId) {
-    case IBXT_A_DEVICE_F0_ID:
-    case IBXT_C_DEVICE_F0_ID:
-        return true;
-    }
-    return false;
-};
 
 const PLATFORM BXT::platform = {
     IGFX_BROXTON,
@@ -44,8 +36,6 @@ const RuntimeCapabilityTable BXT::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     52.083,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    &isSimulationBXT,                              // isSimulation
-    "lp",                                          // platformType
     "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                        // defaultEngineType
@@ -92,7 +82,6 @@ WorkaroundTable BXT::workaroundTable = {};
 FeatureTable BXT::featureTable = {};
 
 void BXT::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
-    PLATFORM *platform = &hwInfo->platform;
     FeatureTable *featureTable = &hwInfo->featureTable;
     WorkaroundTable *workaroundTable = &hwInfo->workaroundTable;
 
@@ -101,34 +90,20 @@ void BXT::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrL3IACoherency = true;
     featureTable->flags.ftrULT = true;
     featureTable->flags.ftrGpGpuMidThreadLevelPreempt = true;
-    featureTable->flags.ftr3dMidBatchPreempt = true;
-    featureTable->flags.ftr3dObjectLevelPreempt = true;
-    featureTable->flags.ftrPerCtxtPreemptionGranularityControl = true;
     featureTable->flags.ftrLCIA = true;
     featureTable->flags.ftrPPGTT = true;
     featureTable->flags.ftrIA32eGfxPTEs = true;
     featureTable->flags.ftrDisplayYTiling = true;
     featureTable->flags.ftrTranslationTable = true;
     featureTable->flags.ftrUserModeTranslationTable = true;
-    featureTable->flags.ftrEnableGuC = true;
     featureTable->flags.ftrFbc = true;
-    featureTable->flags.ftrFbc2AddressTranslation = true;
-    featureTable->flags.ftrFbcBlitterTracking = true;
-    featureTable->flags.ftrFbcCpuTracking = true;
     featureTable->flags.ftrTileY = true;
-
-    if (platform->usRevId >= 3) {
-        featureTable->flags.ftrGttCacheInvalidation = true;
-    }
 
     workaroundTable->flags.waLLCCachingUnsupported = true;
     workaroundTable->flags.waMsaa8xTileYDepthPitchAlignment = true;
     workaroundTable->flags.waFbcLinearSurfaceStride = true;
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
-    workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
     workaroundTable->flags.waSendMIFLUSHBeforeVFE = true;
-    workaroundTable->flags.waForcePcBbFullCfgRestore = true;
-    workaroundTable->flags.waReportPerfCountUseGlobalContextID = true;
     workaroundTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,14 +15,12 @@
 
 #include "gmock/gmock.h"
 
-using ::testing::_;
 using namespace NEO;
 
 namespace L0 {
 namespace ult {
 
-class FwUtilInterface : public FirmwareUtil {};
-struct MockFwUtilInterface : public FwUtilInterface {
+struct MockFwUtilInterface : public FirmwareUtil {
 
     MockFwUtilInterface() = default;
 
@@ -39,15 +37,18 @@ struct MockFwUtilInterface : public FwUtilInterface {
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
 };
 
-class OsLibraryUtil : public OsLibrary {};
-struct MockOsLibrary : public OsLibraryUtil {
+struct MockFwUtilOsLibrary : public OsLibrary {
   public:
     static bool mockLoad;
-    MockOsLibrary(const std::string &name, std::string *errorValue) {
+    static bool getNonNullProcAddr;
+    MockFwUtilOsLibrary(const std::string &name, std::string *errorValue) {
     }
-    MockOsLibrary() {}
-    ~MockOsLibrary() override = default;
+    MockFwUtilOsLibrary() {}
+    ~MockFwUtilOsLibrary() override = default;
     void *getProcAddress(const std::string &procName) override {
+        if (getNonNullProcAddr) {
+            return reinterpret_cast<void *>(&mockDeviceIteratorCreate);
+        }
         return nullptr;
     }
     bool isLoaded() override {
@@ -55,12 +56,17 @@ struct MockOsLibrary : public OsLibraryUtil {
     }
     static OsLibrary *load(const std::string &name) {
         if (mockLoad == true) {
-            auto ptr = new (std::nothrow) MockOsLibrary();
+            auto ptr = new (std::nothrow) MockFwUtilOsLibrary();
             return ptr;
         } else {
             return nullptr;
         }
     }
+
+    static inline int mockDeviceIteratorCreate(struct igsc_device_iterator **iter) {
+        return -1;
+    }
+
     std::map<std::string, void *> funcMap;
 };
 

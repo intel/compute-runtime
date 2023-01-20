@@ -6,7 +6,8 @@
  */
 
 #pragma once
-#include "shared/source/xe_hpg_core/hw_cmds_base.h"
+#include "shared/source/xe_hpg_core/dg2/definitions/device_ids_configs_dg2_base.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 #include "device_ids_configs_dg2.h"
 
@@ -14,7 +15,7 @@
 
 namespace NEO {
 
-struct DG2 : public XE_HPG_COREFamily {
+struct DG2 : public XeHpgCoreFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
     static const uint64_t defaultHardwareInfoConfig;
@@ -33,13 +34,18 @@ struct DG2 : public XE_HPG_COREFamily {
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 
     static bool isG10(const HardwareInfo &hwInfo) {
-        auto it = std::find(DG2_G10_IDS.begin(), DG2_G10_IDS.end(), hwInfo.platform.usDeviceID);
-        return it != DG2_G10_IDS.end();
+        auto it = std::find(dg2G10DeviceIds.begin(), dg2G10DeviceIds.end(), hwInfo.platform.usDeviceID);
+        return it != dg2G10DeviceIds.end();
     }
 
     static bool isG11(const HardwareInfo &hwInfo) {
-        auto it = std::find(DG2_G11_IDS.begin(), DG2_G11_IDS.end(), hwInfo.platform.usDeviceID);
-        return it != DG2_G11_IDS.end();
+        auto it = std::find(dg2G11DeviceIds.begin(), dg2G11DeviceIds.end(), hwInfo.platform.usDeviceID);
+        return it != dg2G11DeviceIds.end();
+    }
+
+    static bool isG12(const HardwareInfo &hwInfo) {
+        auto it = std::find(dg2G12DeviceIds.begin(), dg2G12DeviceIds.end(), hwInfo.platform.usDeviceID);
+        return it != dg2G12DeviceIds.end();
     }
 };
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,10 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/device_command_stream.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
@@ -36,12 +39,12 @@ template <>
 size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const HardwareInfo &hwInfo) {
     size_t size = sizeof(_3DSTATE_BTD);
 
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    auto &productHelper = getProductHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
     std::ignore = isBasicWARequired;
 
     if (isExtendedWARequired) {
-        size += sizeof(typename Family::PIPE_CONTROL);
+        size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
     }
 
     return size;
@@ -49,18 +52,25 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const Ha
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags) {
+    if (!dispatchFlags.usePerDssBackedBuffer) {
+        return;
+    }
+
+    if (isPerDssBackedBufferSent) {
+        return;
+    }
+
     auto &hwInfo = peekHwInfo();
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    auto &productHelper = getProductHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
     std::ignore = isBasicWARequired;
 
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+    args.dcFlushEnable = this->dcFlushSupport;
 
-    if (isExtendedWARequired && dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) {
+    if (isExtendedWARequired) {
         DEBUG_BREAK_IF(perDssBackedBuffer == nullptr);
-
-        NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, hwInfo, isRcs());
+        NEO::EncodeWA<GfxFamily>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, this->peekRootDeviceEnvironment(), isRcs());
     }
 }
 

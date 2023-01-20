@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/gen11/hw_cmds_base.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/preamble_bdw_and_later.inl"
 
@@ -13,7 +15,7 @@
 
 namespace NEO {
 
-using Family = ICLFamily;
+using Family = Gen11Family;
 
 template <>
 uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
@@ -59,7 +61,7 @@ void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandSt
         args.depthCacheFlushEnable = true;
         args.dcFlushEnable = true;
     }
-    MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
+    MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
 }
 
 template <>

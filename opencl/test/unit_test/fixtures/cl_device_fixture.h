@@ -1,32 +1,41 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/test/common/mocks/mock_device.h"
-
-#include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
-struct HardwareInfo;
+class MockClDevice;
+class MockClExecutionEnvironment;
+class MockDevice;
+class OsContext;
+struct RootDeviceEnvironment;
 
 struct ClDeviceFixture {
-    void SetUp(); // NOLINT(readability-identifier-naming)
+    void setUp();
     void setUpImpl(const NEO::HardwareInfo *hardwareInfo);
-    void TearDown(); // NOLINT(readability-identifier-naming)
+    void tearDown();
 
     MockDevice *createWithUsDeviceId(unsigned short usDeviceId);
 
+    template <typename HelperType>
+    HelperType &getHelper() const;
+
     MockDevice *pDevice = nullptr;
     MockClDevice *pClDevice = nullptr;
-    volatile uint32_t *pTagMemory = nullptr;
+    volatile TagAddressType *pTagMemory = nullptr;
     HardwareInfo hardwareInfo = {};
     PLATFORM platformHelper = {};
     OsContext *osContext = nullptr;
     const uint32_t rootDeviceIndex = 0u;
     MockClExecutionEnvironment *pClExecutionEnvironment = nullptr;
+
+    const RootDeviceEnvironment &getRootDeviceEnvironment() const;
 };
+
 } // namespace NEO

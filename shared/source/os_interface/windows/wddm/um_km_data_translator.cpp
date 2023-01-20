@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ size_t UmKmDataTranslator::getSizeForAdapterInfoInternalRepresentation() {
 }
 
 bool UmKmDataTranslator::translateAdapterInfoFromInternalRepresentation(ADAPTER_INFO_KMD &dst, const void *src, size_t srcSize) {
-    return (0 == memcpy_s(&dst, sizeof(ADAPTER_INFO), src, srcSize));
+    return (0 == memcpy_s(&dst, sizeof(ADAPTER_INFO_KMD), src, srcSize));
 }
 
 size_t UmKmDataTranslator::getSizeForCreateContextDataInternalRepresentation() {

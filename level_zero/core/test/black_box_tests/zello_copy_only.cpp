@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,6 @@
 #include <limits>
 #include <memory>
 
-bool verbose = false;
-
 void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 4096 + 7; // +7 to brake alignment and make it harder
     char *heapBuffer = new char[allocSize];
@@ -28,8 +26,8 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
-    if (copyQueueGroup < 0) {
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         validRet = true;
         return;
@@ -81,7 +79,7 @@ void testCopyBetweenHeapDeviceAndStack(ze_context_handle_t &context, ze_device_h
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
     // Validate stack and xe buffers have the original data from heapBuffer
     validRet = (0 == memcmp(heapBuffer, stackBuffer, allocSize));
 
@@ -103,8 +101,8 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
-    if (copyQueueGroup < 0) {
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         validRet = true;
         return;
@@ -155,12 +153,10 @@ void testCopyBetweenHostMemAndDeviceMem(ze_context_handle_t &context, ze_device_
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Validate stack and xe deviceBuffers have the original data from hostBuffer
     validRet = (0 == memcmp(hostBuffer, stackBuffer, allocSize));
-
-    //delete[] heapBuffer;
 
     delete[] stackBuffer;
     SUCCESS_OR_TERMINATE(zeMemFree(context, hostBuffer));
@@ -176,8 +172,8 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
-    if (copyQueueGroup < 0) {
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n";
         validRet = true;
         return;
@@ -253,12 +249,12 @@ void testRegionCopyOf2DSharedMem(ze_context_handle_t &context, ze_device_handle_
 
     // Perform the copy
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopyRegion(cmdList, dstBuffer, &dstRegion, dstWidth, 0,
-                                                             const_cast<const void *>(srcBuffer), &srcRegion, srcWidth, 0,
+                                                             srcBuffer, &srcRegion, srcWidth, 0,
                                                              nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     uint8_t *dstBufferChar = reinterpret_cast<uint8_t *>(dstBuffer);
     if (verbose) {
@@ -308,8 +304,8 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
-    if (copyQueueGroup < 0) {
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n"; // NOLINT(clang-analyzer-cplusplus.NewDeleteLeaks)
         validRet = true;
         return;
@@ -367,7 +363,7 @@ void testSharedMemDataAccessWithoutCopy(ze_context_handle_t &context, ze_device_
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     validRet = true;
     uint8_t *bufferChar0 = reinterpret_cast<uint8_t *>(buffer0);
@@ -418,8 +414,8 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
     ze_command_list_handle_t cmdList;
 
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    int32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
-    if (copyQueueGroup < 0) {
+    uint32_t copyQueueGroup = getCopyOnlyCommandQueueOrdinal(device);
+    if (copyQueueGroup == std::numeric_limits<uint32_t>::max()) {
         std::cout << "No Copy queue group found. Skipping test run\n";
         validRet = true;
         return;
@@ -503,12 +499,12 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
 
     // Perform the copy
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopyRegion(cmdList, dstBuffer, &dstRegion, dstWidth, (dstWidth * dstHeight),
-                                                             const_cast<const void *>(srcBuffer), &srcRegion, srcWidth, (srcWidth * srcHeight),
+                                                             srcBuffer, &srcRegion, srcWidth, (srcWidth * srcHeight),
                                                              nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     uint8_t *dstBufferChar = reinterpret_cast<uint8_t *>(dstBuffer);
     if (verbose) {
@@ -558,7 +554,10 @@ void testRegionCopyOf3DSharedMem(ze_context_handle_t &context, ze_device_handle_
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Copy Only";
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
+
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
     auto devices = zelloInitContextAndGetDevices(context, driverHandle);
@@ -566,23 +565,26 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     bool outputValidationSuccessful = true;
-    if (outputValidationSuccessful)
-        testCopyBetweenHeapDeviceAndStack(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    testCopyBetweenHeapDeviceAndStack(context, device, outputValidationSuccessful);
+    if (outputValidationSuccessful || aubMode) {
         testCopyBetweenHostMemAndDeviceMem(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testRegionCopyOf2DSharedMem(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testSharedMemDataAccessWithoutCopy(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testRegionCopyOf3DSharedMem(context, device, outputValidationSuccessful);
+    }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-    std::cout << "\nZello Copy Only Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
+
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);
 }

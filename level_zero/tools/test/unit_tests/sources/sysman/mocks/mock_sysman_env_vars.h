@@ -10,6 +10,8 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 
+#include "gtest/gtest.h"
+
 extern bool sysmanUltsEnable;
 
 using namespace NEO;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-using Family = SKLFamily;
+using Family = Gen9Family;
 static auto gfxCore = IGFX_GEN9_CORE;
 } // namespace NEO
 

@@ -29,14 +29,14 @@ TEST_F(OclocArgHelperTests, givenProductOrAotConfigWhenParseMajorMinorRevisionVa
     }
 
     for (const auto &device : enabledDeviceConfigs) {
-        auto productConfig = static_cast<AOT::PRODUCT_CONFIG>(device.aotConfig.ProductConfig);
+        auto productConfig = static_cast<AOT::PRODUCT_CONFIG>(device.aotConfig.value);
         auto configStr0 = ProductConfigHelper::parseMajorMinorRevisionValue(productConfig);
         auto configStr1 = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
         EXPECT_STREQ(configStr0.c_str(), configStr1.c_str());
 
-        auto gotCofig = argHelper->getMajorMinorRevision(configStr0);
+        auto gotCofig = argHelper->getProductConfigForVersionValue(configStr0);
 
-        EXPECT_EQ(gotCofig.ProductConfig, productConfig);
+        EXPECT_EQ(gotCofig, productConfig);
     }
 }
 
@@ -56,7 +56,7 @@ TEST_F(OclocArgHelperTests, givenProductConfigAcronymWhenCheckAllEnabledThenCorr
             EXPECT_TRUE(acronymFound);
 
             device.acronyms.clear();
-            device.aotConfig.ProductConfig = AOT::UNKNOWN_ISA;
+            device.aotConfig.value = AOT::UNKNOWN_ISA;
 
             enabledAcronyms = argHelper->getEnabledProductAcronyms();
             acronymFound = std::any_of(enabledAcronyms.begin(), enabledAcronyms.end(), findAcronym(acronym));
@@ -135,7 +135,7 @@ TEST_F(OclocArgHelperTests, givenFamilyAcronymWhenCheckAllEnabledThenCorrectValu
 
 TEST_F(OclocArgHelperTests, givenHwInfoForProductConfigWhenUnknownIsaIsPassedThenFalseIsReturned) {
     NEO::HardwareInfo hwInfo;
-    EXPECT_FALSE(argHelper->getHwInfoForProductConfig(AOT::UNKNOWN_ISA, hwInfo));
+    EXPECT_FALSE(argHelper->getHwInfoForProductConfig(AOT::UNKNOWN_ISA, hwInfo, 0u));
 }
 
 TEST_F(OclocArgHelperTests, givenEnabledFamilyAcronymsWhenCheckIfIsFamilyThenTrueIsReturned) {
@@ -150,6 +150,24 @@ TEST_F(OclocArgHelperTests, givenEnabledReleaseAcronymsWhenCheckIfIsReleaseThenT
     for (const auto &acronym : enabledReleasesAcronyms) {
         EXPECT_TRUE(argHelper->isRelease(acronym.str()));
     }
+}
+
+TEST_F(OclocArgHelperTests, givenEnabledProductsAcronymsAndVersionsWhenCheckIfProductConfigThenTrueIsReturned) {
+    auto enabledProducts = argHelper->getAllSupportedDeviceConfigs();
+    for (const auto &product : enabledProducts) {
+        auto configStr = ProductConfigHelper::parseMajorMinorRevisionValue(product.aotConfig);
+        EXPECT_FALSE(configStr.empty());
+        EXPECT_TRUE(argHelper->isProductConfig(configStr));
+
+        for (const auto &acronym : product.acronyms) {
+            EXPECT_TRUE(argHelper->isProductConfig(acronym.str()));
+        }
+    }
+}
+
+TEST_F(OclocArgHelperTests, givenUnknownIsaVersionWhenCheckIfProductConfigThenFalseIsReturned) {
+    auto configStr = ProductConfigHelper::parseMajorMinorRevisionValue(AOT::UNKNOWN_ISA);
+    EXPECT_FALSE(argHelper->isProductConfig(configStr));
 }
 
 TEST_F(OclocArgHelperTests, givenDisabledFamilyOrReleaseNameThenReturnsEmptyList) {

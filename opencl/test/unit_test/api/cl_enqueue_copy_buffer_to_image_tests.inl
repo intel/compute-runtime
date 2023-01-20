@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ namespace ULT {
 struct clEnqueueCopyBufferToImageTests : public ApiFixture<>,
                                          public ::testing::Test {
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
 
         // clang-format off
         imageFormat.image_channel_order     = CL_YUYV_INTEL;
@@ -41,7 +41,7 @@ struct clEnqueueCopyBufferToImageTests : public ApiFixture<>,
     }
 
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_image_format imageFormat;
@@ -53,13 +53,13 @@ TEST_F(clEnqueueCopyBufferToImageTests, GivenInvalidCmdQueueWhenCopyingBufferToI
     size_t region[] = {10, 10, 0};
 
     auto retVal = clEnqueueCopyBufferToImage(
-        nullptr, //commandQueue
-        nullptr, //srcBuffer
-        nullptr, //dstBuffer
-        0u,      //src_offset
+        nullptr, // commandQueue
+        nullptr, // srcBuffer
+        nullptr, // dstBuffer
+        0u,      // src_offset
         dstOrigin,
         region,
-        0, //numEventsInWaitList
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -72,12 +72,12 @@ TEST_F(clEnqueueCopyBufferToImageTests, GivenInvalidSrcBufferWhenCopyingBufferTo
 
     auto retVal = clEnqueueCopyBufferToImage(
         pCommandQueue,
-        nullptr, //srcBuffer
-        nullptr, //dstBuffer
-        0u,      //src_offset
+        nullptr, // srcBuffer
+        nullptr, // dstBuffer
+        0u,      // src_offset
         dstOrigin,
         region,
-        0, //numEventsInWaitList
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -99,10 +99,10 @@ TEST_F(clEnqueueCopyBufferToImageTests, GivenValidParametersWhenCopyingBufferToI
         pCommandQueue,
         srcBuffer.get(),
         dstImage,
-        0u, //src_offset
+        0u, // src_offset
         dstOrigin,
         region,
-        0, //numEventsInWaitList
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -127,10 +127,10 @@ TEST_F(clEnqueueCopyBufferToImageTests, GivenQueueIncapableWhenCopyingBufferToIm
         pCommandQueue,
         srcBuffer.get(),
         dstImage,
-        0u, //src_offset
+        0u, // src_offset
         dstOrigin,
         region,
-        0, //numEventsInWaitList
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 

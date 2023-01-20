@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/surface_format_info.h"
 
 #include <level_zero/ze_api.h>
@@ -71,6 +70,7 @@ struct StructuresLookupTable {
     bool relaxedSizeAllowed;
     bool compressedHint;
     bool uncompressedHint;
+    bool rayTracingMemory;
 };
 
 inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupTable, const void *desc) {
@@ -132,6 +132,8 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             } else {
                 return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
             }
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC) {
+            lookupTable.rayTracingMemory = true;
         } else {
             return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         }

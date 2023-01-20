@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/metrics/metric_oa_query_imp.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -205,7 +206,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
     ClientOptionsData_1_0 &subDeviceCount,
     ClientOptionsData_1_0 &workloadPartition) {
 
-    const auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
+    auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
 
     if (!deviceImp.isSubdevice) {
 
@@ -214,7 +215,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
         subDevice.SubDevice.Enabled = false;
 
         subDeviceIndex.Type = ClientOptionsType::SubDeviceIndex;
-        subDeviceIndex.SubDeviceIndex.Index = 0;
+        subDeviceIndex.SubDeviceIndex.Index = static_cast<uint8_t>(deviceImp.getPhysicalSubDeviceId());
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
         subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.getNEODevice()->getRootDevice()->getNumSubDevices(), 1u);
@@ -229,7 +230,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
         subDevice.SubDevice.Enabled = true;
 
         subDeviceIndex.Type = ClientOptionsType::SubDeviceIndex;
-        subDeviceIndex.SubDeviceIndex.Index = static_cast<NEO::SubDevice *>(deviceImp.getNEODevice())->getSubDeviceIndex();
+        subDeviceIndex.SubDeviceIndex.Index = static_cast<uint8_t>(deviceImp.getPhysicalSubDeviceId());
 
         subDeviceCount.Type = ClientOptionsType::SubDeviceCount;
         subDeviceCount.SubDeviceCount.Count = std::max(deviceImp.getNEODevice()->getRootDevice()->getNumSubDevices(), 1u);
@@ -241,8 +242,8 @@ void MetricsLibrary::getSubDeviceClientOptions(
 
 bool MetricsLibrary::createContext() {
     auto &device = metricSource.getDevice();
-    const auto &hwHelper = device.getHwHelper();
-    const auto &asyncComputeEngines = hwHelper.getGpgpuEngineInstances(device.getHwInfo());
+    const auto &gfxCoreHelper = device.getGfxCoreHelper();
+    const auto &asyncComputeEngines = gfxCoreHelper.getGpgpuEngineInstances(device.getHwInfo());
     ContextCreateData_1_0 createData = {};
     ClientOptionsData_1_0 clientOptions[6] = {};
     ClientData_1_0 clientData = {};
@@ -264,7 +265,7 @@ bool MetricsLibrary::createContext() {
     // Create metrics library context.
     DEBUG_BREAK_IF(!contextCreateFunction);
     clientType.Api = ClientApi::OneApi;
-    clientType.Gen = getGenType(device.getPlatformInfo());
+    clientType.Gen = getGenType(device.getGfxCoreHelper());
 
     clientOptions[0].Type = ClientOptionsType::Compute;
     clientOptions[0].Compute.Asynchronous = asyncComputeEngine != asyncComputeEngines.end();
@@ -291,9 +292,8 @@ bool MetricsLibrary::createContext() {
     return result;
 }
 
-ClientGen MetricsLibrary::getGenType(const uint32_t gen) const {
-    auto &hwHelper = NEO::HwHelper::get(static_cast<GFXCORE_FAMILY>(gen));
-    return static_cast<MetricsLibraryApi::ClientGen>(hwHelper.getMetricsLibraryGenId());
+ClientGen MetricsLibrary::getGenType(const NEO::GfxCoreHelper &gfxCoreHelper) const {
+    return static_cast<MetricsLibraryApi::ClientGen>(gfxCoreHelper.getMetricsLibraryGenId());
 }
 
 uint32_t MetricsLibrary::getGpuCommandsSize(CommandBufferData_1_0 &commandBuffer) {
@@ -348,7 +348,7 @@ bool MetricsLibrary::getGpuCommands(CommandList &commandList,
 
 ConfigurationHandle_1_0
 MetricsLibrary::createConfiguration(const zet_metric_group_handle_t metricGroupHandle,
-                                    const zet_metric_group_properties_t properties) {
+                                    const zet_metric_group_properties_t &properties) {
     // Metric group internal data.
     auto metricGroup = static_cast<OaMetricGroupImp *>(MetricGroup::fromHandle(metricGroupHandle));
     auto metricGroupDummy = ConfigurationHandle_1_0{};
@@ -795,7 +795,7 @@ ze_result_t OaMetricQueryImp::writeMetricQuery(CommandList &commandList, ze_even
     commandList.commandContainer.addToResidencyContainer(pool.pAllocation);
 
     // Wait for events before executing query.
-    commandList.appendWaitOnEvents(numWaitEvents, phWaitEvents);
+    commandList.appendWaitOnEvents(numWaitEvents, phWaitEvents, false);
 
     if (metricQueriesSize) {
 

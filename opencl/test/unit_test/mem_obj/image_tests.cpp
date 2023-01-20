@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/image/image_surface_state.h"
@@ -21,6 +22,7 @@
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/helpers/mipmap.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
@@ -36,7 +38,7 @@ using namespace NEO;
 static const unsigned int testImageDimensions = 45;
 auto channelType = CL_UNORM_INT8;
 auto channelOrder = CL_RGBA;
-auto const elementSize = 4; //sizeof CL_RGBA * CL_UNORM_INT8
+auto const elementSize = 4; // sizeof CL_RGBA * CL_UNORM_INT8
 
 class CreateImageTest : public ClDeviceFixture,
                         public testing::TestWithParam<uint64_t /*cl_mem_flags*/>,
@@ -58,9 +60,9 @@ class CreateImageTest : public ClDeviceFixture,
 
   protected:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
 
-        CommandQueueFixture::SetUp(pClDevice, 0);
+        CommandQueueFixture::setUp(pClDevice, 0);
         flags = GetParam();
 
         // clang-format off
@@ -81,8 +83,8 @@ class CreateImageTest : public ClDeviceFixture,
     }
 
     void TearDown() override {
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_image_format imageFormat;
@@ -579,7 +581,7 @@ TEST(TestCreateImageUseHostPtr, GivenDifferenHostPtrAlignmentsWhenCheckingMemory
     imageDesc.image_height = height;
     imageDesc.image_depth = 0;
     imageDesc.image_array_size = 0;
-    imageDesc.image_row_pitch = alignUp(alignUp(width, 4) * 4, 0x80); //row pitch for tiled img
+    imageDesc.image_row_pitch = alignUp(alignUp(width, 4) * 4, 0x80); // row pitch for tiled img
     imageDesc.image_slice_pitch = 0;
 
     void *pageAlignedPointer = alignedMalloc(imageDesc.image_row_pitch * height * 1 * 4 + 256, 4096);
@@ -715,7 +717,7 @@ struct CreateImageHostPtr
     }
 
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
         BaseClass::SetUp();
     }
 
@@ -723,7 +725,7 @@ struct CreateImageHostPtr
         delete image;
         BaseClass::TearDown();
         platformsImpl->clear();
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
     }
 
     Image *createImage(cl_int &retVal) {
@@ -765,7 +767,7 @@ TEST_P(CreateImageHostPtr, WhenCheckingAddressThenAlllocationDependsOnSizeRelati
     }
 
     if (flags & CL_MEM_USE_HOST_PTR) {
-        //if size fits within a page then zero copy can be applied, if not RT needs to do a copy of image
+        // if size fits within a page then zero copy can be applied, if not RT needs to do a copy of image
         auto computedSize = imageDesc.image_width * elementSize * alignUp(imageDesc.image_height, 4) * imageDesc.image_array_size;
         auto ptrSize = imageDesc.image_width * elementSize * imageDesc.image_height * imageDesc.image_array_size;
         auto alignedRequiredSize = alignSizeWholePage(static_cast<void *>(pHostPtr), computedSize);

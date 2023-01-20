@@ -11,7 +11,7 @@ namespace L0 {
 namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandList.pfnCreate =
         [](ze_context_handle_t hContext,
            ze_device_handle_t hDevice,
@@ -31,7 +31,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCreateTracingWrapperWithO
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCreateImmediateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandList.pfnCreateImmediate =
         [](ze_context_handle_t hContext,
            ze_device_handle_t hDevice,
@@ -51,7 +51,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCreateImmediateTracingWra
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandList.pfnDestroy =
         [](ze_command_list_handle_t hCommandList) { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnDestroyCb = genericPrologCallbackPtr;
@@ -65,7 +65,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListDestroyTracingWrapperWith
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListResetTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandList.pfnReset =
         [](ze_command_list_handle_t hCommandList) { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnResetCb = genericPrologCallbackPtr;
@@ -79,7 +79,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListResetTracingWrapperWithOn
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryPrefetchTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryPrefetch =
         [](ze_command_list_handle_t hCommandList, const void *ptr, size_t size) { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnAppendMemoryPrefetchCb = genericPrologCallbackPtr;
@@ -93,7 +93,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryPrefetchTraci
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCloseTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandList.pfnClose =
         [](ze_command_list_handle_t hCommandList) { return ZE_RESULT_SUCCESS; };
     prologCbs.CommandList.pfnCloseCb = genericPrologCallbackPtr;
@@ -107,7 +107,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListCloseTracingWrapperWithOn
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendQueryKernelTimestampsTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendQueryKernelTimestamps =
         [](ze_command_list_handle_t hCommandList,
@@ -130,7 +130,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendQueryKernelTimestam
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendWriteGlobalTimestampTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendWriteGlobalTimestamp =
         [](ze_command_list_handle_t hCommandList,
            uint64_t *dstptr,

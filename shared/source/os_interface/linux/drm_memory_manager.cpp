@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,23 +15,30 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/heap_assigner.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/memory_pool.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
+#include "shared/source/os_interface/linux/drm_allocation.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
+#include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
-
-#include "drm/i915_drm.h"
 
 #include <cstring>
 #include <iostream>
@@ -147,6 +154,7 @@ void DrmMemoryManager::releaseBufferObject(uint32_t rootDeviceIndex) {
 }
 
 void DrmMemoryManager::commonCleanup() {
+    MemoryManager::commonCleanup();
     if (gemCloseWorker) {
         gemCloseWorker->close(true);
     }
@@ -207,6 +215,12 @@ uint64_t DrmMemoryManager::acquireGpuRange(size_t &size, uint32_t rootDeviceInde
     return gmmHelper->canonize(gfxPartition->heapAllocate(heapIndex, size));
 }
 
+uint64_t DrmMemoryManager::acquireGpuRangeWithCustomAlignment(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, size_t alignment) {
+    auto gfxPartition = getGfxPartition(rootDeviceIndex);
+    auto gmmHelper = getGmmHelper(rootDeviceIndex);
+    return gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignment(heapIndex, size, alignment));
+}
+
 void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, uint32_t rootDeviceIndex) {
     uint64_t graphicsAddress = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(address));
     auto gmmHelper = getGmmHelper(rootDeviceIndex);
@@ -217,9 +231,9 @@ void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, uint32_t
 
 bool DrmMemoryManager::isKmdMigrationAvailable(uint32_t rootDeviceIndex) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    auto &hwHelper = NEO::HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
 
-    auto useKmdMigration = hwHelper.isKmdMigrationSupported(*hwInfo);
+    auto useKmdMigration = gfxCoreHelper.isKmdMigrationSupported(*hwInfo);
 
     if (DebugManager.flags.UseKmdMigration.get() != -1) {
         useKmdMigration = DebugManager.flags.UseKmdMigration.get();
@@ -234,10 +248,20 @@ bool DrmMemoryManager::setMemAdvise(GraphicsAllocation *gfxAllocation, MemAdvise
     return drmAllocation->setMemAdvise(&this->getDrm(rootDeviceIndex), flags);
 }
 
-bool DrmMemoryManager::setMemPrefetch(GraphicsAllocation *gfxAllocation, uint32_t subDeviceId, uint32_t rootDeviceIndex) {
+bool DrmMemoryManager::setMemPrefetch(GraphicsAllocation *gfxAllocation, SubDeviceIdsVec &subDeviceIds, uint32_t rootDeviceIndex) {
     auto drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
+    auto osContextLinux = static_cast<OsContextLinux *>(registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext);
 
-    return drmAllocation->setMemPrefetch(&this->getDrm(rootDeviceIndex), subDeviceId);
+    for (auto subDeviceId : subDeviceIds) {
+        auto vmHandleId = subDeviceId;
+        auto retVal = drmAllocation->bindBOs(osContextLinux, vmHandleId, nullptr, true);
+        if (retVal != 0) {
+            DEBUG_BREAK_IF(true);
+            return false;
+        }
+    }
+
+    return drmAllocation->setMemPrefetch(&this->getDrm(rootDeviceIndex), subDeviceIds);
 }
 
 NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size, uint32_t rootDeviceIndex) {
@@ -248,7 +272,7 @@ NEO::BufferObject *DrmMemoryManager::allocUserptr(uintptr_t address, size_t size
     auto &drm = this->getDrm(rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
 
-    if (ioctlHelper->ioctl(&drm, DrmIoctl::GemUserptr, &userptr) != 0) {
+    if (ioctlHelper->ioctl(DrmIoctl::GemUserptr, &userptr) != 0) {
         return nullptr;
     }
 
@@ -273,7 +297,7 @@ void DrmMemoryManager::emitPinningRequest(BufferObject *bo, const AllocationData
     }
 }
 
-DrmAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) {
+GraphicsAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) {
     auto hostPtr = const_cast<void *>(allocationData.hostPtr);
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(hostPtr));
@@ -285,10 +309,9 @@ DrmAllocation *DrmMemoryManager::createGraphicsAllocation(OsHandleStorage &handl
     return allocation.release();
 }
 
-DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
-    if (allocationData.type == NEO::AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
-        (allocationData.type == NEO::AllocationType::DEBUG_SBA_TRACKING_BUFFER &&
-         allocationData.storageInfo.subDeviceBitfield.count() > 1)) {
+GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignment(const AllocationData &allocationData) {
+    if (GraphicsAllocation::isDebugSurfaceAllocationType(allocationData.type) &&
+        allocationData.storageInfo.subDeviceBitfield.count() > 1) {
         return createMultiHostAllocation(allocationData);
     }
 
@@ -305,17 +328,17 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     uint64_t gpuReservationAddress = 0;
     uint64_t alignedGpuAddress = 0;
     size_t alignedStorageSize = cSize;
-    size_t alignedVirtualAdressRangeSize = cSize;
+    size_t alignedVirtualAddressRangeSize = cSize;
     auto svmCpuAllocation = allocationData.type == AllocationType::SVM_CPU;
     if (svmCpuAllocation) {
         // add padding in case reserved addr is not aligned
         alignedStorageSize = alignUp(cSize, cAlignment);
-        alignedVirtualAdressRangeSize = alignedStorageSize + cAlignment;
+        alignedVirtualAddressRangeSize = alignedStorageSize + cAlignment;
     }
 
     // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
     if ((isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) && !allocationData.flags.isUSMHostAllocation) {
-        gpuReservationAddress = acquireGpuRange(alignedVirtualAdressRangeSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+        gpuReservationAddress = acquireGpuRange(alignedVirtualAddressRangeSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
         if (!gpuReservationAddress) {
             return nullptr;
         }
@@ -326,9 +349,14 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
         }
     }
 
-    auto drmAllocation = createAllocWithAlignment(allocationData, cSize, cAlignment, alignedStorageSize, alignedGpuAddress);
+    auto mmapAlignment = cAlignment;
+    if (alignedStorageSize >= 2 * MemoryConstants::megaByte) {
+        mmapAlignment = MemoryConstants::pageSize2Mb;
+    }
+
+    auto drmAllocation = createAllocWithAlignment(allocationData, cSize, mmapAlignment, alignedStorageSize, alignedGpuAddress);
     if (drmAllocation != nullptr) {
-        drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuReservationAddress), alignedVirtualAdressRangeSize);
+        drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuReservationAddress), alignedVirtualAddressRangeSize);
     }
 
     return drmAllocation;
@@ -372,7 +400,7 @@ void DrmMemoryManager::obtainGpuAddress(const AllocationData &allocationData, Bu
     }
 }
 
-DrmAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const AllocationData &allocationData) {
+GraphicsAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const AllocationData &allocationData) {
     const size_t minAlignment = getUserptrAlignment();
     // When size == 0 allocate allocationAlignment
     // It's needed to prevent overlapping pages with user pointers
@@ -390,7 +418,8 @@ DrmAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const AllocationD
 
     // if limitedRangeAlloction is enabled, memory allocation for bo in the limited Range heap is required
     uint64_t gpuAddress = 0;
-    if (isLimitedRange(allocationData.rootDeviceIndex)) {
+    auto svmCpuAllocation = allocationData.type == AllocationType::SVM_CPU;
+    if (isLimitedRange(allocationData.rootDeviceIndex) || svmCpuAllocation) {
         gpuAddress = acquireGpuRange(cSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD);
         if (!gpuAddress) {
             return nullptr;
@@ -414,7 +443,7 @@ DrmAllocation *DrmMemoryManager::allocateUSMHostGraphicsMemory(const AllocationD
     return allocation;
 }
 
-DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
+GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithHostPtr(const AllocationData &allocationData) {
     auto res = static_cast<DrmAllocation *>(MemoryManager::allocateGraphicsMemoryWithHostPtr(allocationData));
 
     if (res != nullptr && !validateHostPtrMemory) {
@@ -461,7 +490,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithGpuVa(const Allo
     return allocation;
 }
 
-DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) {
+GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const AllocationData &allocationData) {
     if (allocationData.size == 0 || !allocationData.hostPtr)
         return nullptr;
 
@@ -471,7 +500,8 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
     auto rootDeviceIndex = allocationData.rootDeviceIndex;
 
-    auto gpuVirtualAddress = acquireGpuRange(alignedSize, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+    alignedSize = alignUp(alignedSize, MemoryConstants::pageSize2Mb);
+    auto gpuVirtualAddress = acquireGpuRangeWithCustomAlignment(alignedSize, rootDeviceIndex, HeapIndex::HEAP_STANDARD, MemoryConstants::pageSize2Mb);
     if (!gpuVirtualAddress) {
         return nullptr;
     }
@@ -487,7 +517,9 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
     if (validateHostPtrMemory) {
         auto boPtr = bo.get();
         auto vmHandleId = Math::getMinLsbSet(static_cast<uint32_t>(allocationData.storageInfo.subDeviceBitfield.to_ulong()));
-        int result = pinBBs.at(rootDeviceIndex)->validateHostPtr(&boPtr, 1, registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext, vmHandleId, getDefaultDrmContextId(rootDeviceIndex));
+        auto defaultContext = getDefaultEngineContext(rootDeviceIndex, allocationData.storageInfo.subDeviceBitfield);
+
+        int result = pinBBs.at(rootDeviceIndex)->validateHostPtr(&boPtr, 1, defaultContext, vmHandleId, static_cast<OsContextLinux *>(defaultContext)->getDrmContextIds()[0]);
         if (result != 0) {
             unreference(bo.release(), true);
             releaseGpuRange(reinterpret_cast<void *>(gpuVirtualAddress), alignedSize, rootDeviceIndex);
@@ -504,7 +536,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(const Al
     return allocation;
 }
 
-DrmAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
+GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
     return nullptr;
 }
 
@@ -523,7 +555,7 @@ GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &
     auto &drm = getDrm(allocationData.rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
 
-    [[maybe_unused]] auto ret = ioctlHelper->ioctl(&drm, DrmIoctl::GemCreate, &create);
+    [[maybe_unused]] auto ret = ioctlHelper->ioctl(DrmIoctl::GemCreate, &create);
     DEBUG_BREAK_IF(ret != 0);
 
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
@@ -557,7 +589,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     auto &drm = this->getDrm(allocationData.rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
 
-    [[maybe_unused]] auto ret = ioctlHelper->ioctl(&drm, DrmIoctl::GemCreate, &create);
+    [[maybe_unused]] auto ret = ioctlHelper->ioctl(DrmIoctl::GemCreate, &create);
     DEBUG_BREAK_IF(ret != 0);
 
     auto patIndex = drm.getPatIndex(gmm.get(), allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
@@ -579,7 +611,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryForImageImpl(const A
     return allocation;
 }
 
-DrmAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) {
+GraphicsAllocation *DrmMemoryManager::allocate32BitGraphicsMemoryImpl(const AllocationData &allocationData, bool useLocalMemory) {
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
     auto allocatorToUse = heapAssigner.get32BitHeapIndex(allocationData.type, useLocalMemory, *hwInfo, allocationData.flags.use32BitFrontWindow);
 
@@ -668,7 +700,11 @@ BufferObject *DrmMemoryManager::findAndReferenceSharedBufferObject(int boHandle,
     return bo;
 }
 
-GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleSharedHandles(std::vector<osHandle> handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) {
+GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles,
+                                                                                        AllocationProperties &properties,
+                                                                                        bool requireSpecificBitness,
+                                                                                        bool isHostIpcAllocation,
+                                                                                        bool reuseSharedAllocation) {
     BufferObjects bos;
     std::vector<size_t> sizes;
     size_t totalSize = 0;
@@ -690,7 +726,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         PrimeHandle openFd = {0, 0, 0};
         openFd.fileDescriptor = handle;
 
-        auto ret = ioctlHelper->ioctl(&drm, DrmIoctl::PrimeFdToHandle, &openFd);
+        auto ret = ioctlHelper->ioctl(DrmIoctl::PrimeFdToHandle, &openFd);
 
         if (ret != 0) {
             [[maybe_unused]] int err = errno;
@@ -700,7 +736,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         }
 
         auto boHandle = openFd.handle;
-        auto bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
+        BufferObject *bo = nullptr;
+        if (reuseSharedAllocation) {
+            bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
+        }
 
         if (bo == nullptr) {
             areBosSharedObjects = false;
@@ -718,7 +757,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         sizes.push_back(bo->peekSize());
     }
 
-    auto heapIndex = HeapIndex::HEAP_STANDARD2MB;
+    auto gfxPartition = getGfxPartition(properties.rootDeviceIndex);
+    auto prefer57bitAddressing = (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0);
+    auto heapIndex = prefer57bitAddressing ? HeapIndex::HEAP_EXTENDED : HeapIndex::HEAP_STANDARD2MB;
     auto gpuRange = acquireGpuRange(totalSize, properties.rootDeviceIndex, heapIndex);
 
     lock.unlock();
@@ -764,9 +805,13 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
     return drmAllocation;
 }
 
-GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) {
+GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle,
+                                                                               const AllocationProperties &properties,
+                                                                               bool requireSpecificBitness,
+                                                                               bool isHostIpcAllocation,
+                                                                               bool reuseSharedAllocation) {
     if (isHostIpcAllocation) {
-        return createUSMHostAllocationFromSharedHandle(handle, properties, false);
+        return createUSMHostAllocationFromSharedHandle(handle, properties, false, reuseSharedAllocation);
     }
 
     std::unique_lock<std::mutex> lock(mtx);
@@ -777,7 +822,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     auto &drm = this->getDrm(properties.rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
 
-    auto ret = ioctlHelper->ioctl(&drm, DrmIoctl::PrimeFdToHandle, &openFd);
+    auto ret = ioctlHelper->ioctl(DrmIoctl::PrimeFdToHandle, &openFd);
 
     if (ret != 0) {
         [[maybe_unused]] int err = errno;
@@ -787,7 +832,10 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     }
 
     auto boHandle = openFd.handle;
-    auto bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
+    BufferObject *bo = nullptr;
+    if (reuseSharedAllocation) {
+        bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
+    }
 
     if (bo == nullptr) {
         size_t size = lseekFunction(handle, 0, SEEK_END);
@@ -800,15 +848,37 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
             return nullptr;
         }
 
-        auto heapIndex = isLocalMemorySupported(properties.rootDeviceIndex) ? HeapIndex::HEAP_STANDARD2MB : HeapIndex::HEAP_STANDARD;
-        if (requireSpecificBitness && this->force32bitAllocations) {
-            heapIndex = HeapIndex::HEAP_EXTERNAL;
-        }
+        auto getHeapIndex = [&] {
+            if (requireSpecificBitness && this->force32bitAllocations) {
+                return HeapIndex::HEAP_EXTERNAL;
+            }
+
+            auto gfxPartition = getGfxPartition(properties.rootDeviceIndex);
+            auto prefer57bitAddressing = (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0);
+            if (prefer57bitAddressing) {
+                return HeapIndex::HEAP_EXTENDED;
+            }
+
+            if (isLocalMemorySupported(properties.rootDeviceIndex)) {
+                return HeapIndex::HEAP_STANDARD2MB;
+            }
+
+            return HeapIndex::HEAP_STANDARD;
+        };
+
+        auto heapIndex = getHeapIndex();
         auto gpuRange = acquireGpuRange(size, properties.rootDeviceIndex, heapIndex);
 
         bo->setAddress(gpuRange);
         bo->setUnmapSize(size);
         bo->setRootDeviceIndex(properties.rootDeviceIndex);
+
+        printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout,
+                         "Created BO-%d range: %llx - %llx, size: %lld from PRIME_FD_TO_HANDLE\n",
+                         bo->peekHandle(),
+                         bo->peekAddress(),
+                         ptrOffset(bo->peekAddress(), bo->peekSize()),
+                         bo->peekSize());
 
         pushSharedBufferObject(bo);
     }
@@ -830,7 +900,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         GemGetTiling getTiling{};
         getTiling.handle = boHandle;
         auto ioctlHelper = drm.getIoctlHelper();
-        ret = ioctlHelper->ioctl(&drm, DrmIoctl::GemGetTiling, &getTiling);
+        ret = ioctlHelper->ioctl(DrmIoctl::GemGetTiling, &getTiling);
 
         if (ret == 0) {
             auto ioctlHelper = drm.getIoctlHelper();
@@ -949,8 +1019,12 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromExistingStorag
         properties.size = defaultAlloc->getUnderlyingBufferSize();
         properties.gpuAddress = castToUint64(ptr);
 
-        auto internalHandle = defaultAlloc->peekInternalHandle(this);
-        return createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties, true);
+        uint64_t internalHandle = 0;
+        int ret = defaultAlloc->peekInternalHandle(this, internalHandle);
+        if (ret < 0) {
+            return nullptr;
+        }
+        return createUSMHostAllocationFromSharedHandle(static_cast<osHandle>(internalHandle), properties, true, true);
     } else {
         return allocateGraphicsMemoryWithProperties(properties, ptr);
     }
@@ -1044,15 +1118,9 @@ bool DrmMemoryManager::setDomainCpu(GraphicsAllocation &graphicsAllocation, bool
     if (bo == nullptr)
         return false;
 
-    // move a buffer object to the CPU read, and possibly write domain, including waiting on flushes to occur
-    GemSetDomain setDomain = {};
-    setDomain.handle = bo->peekHandle();
-    setDomain.readDomains = I915_GEM_DOMAIN_CPU;
-    setDomain.writeDomain = writeEnable ? I915_GEM_DOMAIN_CPU : 0;
-
     auto &drm = this->getDrm(graphicsAllocation.getRootDeviceIndex());
     auto ioctlHelper = drm.getIoctlHelper();
-    return ioctlHelper->ioctl(&drm, DrmIoctl::GemSetDomain, &setDomain) == 0;
+    return ioctlHelper->setDomainCpu(bo->peekHandle(), writeEnable);
 }
 
 void *DrmMemoryManager::lockResourceImpl(GraphicsAllocation &graphicsAllocation) {
@@ -1084,14 +1152,17 @@ void DrmMemoryManager::unlockResourceImpl(GraphicsAllocation &graphicsAllocation
 }
 
 int DrmMemoryManager::obtainFdFromHandle(int boHandle, uint32_t rootDeviceIndex) {
-    PrimeHandle openFd{};
-
-    openFd.flags = DRM_CLOEXEC | DRM_RDWR;
-    openFd.handle = boHandle;
-
     auto &drm = this->getDrm(rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
-    ioctlHelper->ioctl(&drm, DrmIoctl::PrimeHandleToFd, &openFd);
+    PrimeHandle openFd{};
+
+    openFd.flags = ioctlHelper->getFlagsForPrimeHandleToFd();
+    openFd.handle = boHandle;
+
+    int ret = ioctlHelper->ioctl(DrmIoctl::PrimeHandleToFd, &openFd);
+    if (ret < 0) {
+        return -1;
+    }
 
     return openFd.fileDescriptor;
 }
@@ -1126,8 +1197,19 @@ uint32_t DrmMemoryManager::getRootDeviceIndex(const Drm *drm) {
     return CommonConstants::unspecifiedDeviceIndex;
 }
 
-AddressRange DrmMemoryManager::reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) {
-    auto gpuVa = acquireGpuRange(size, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+AddressRange DrmMemoryManager::reserveGpuAddress(const void *requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
+    uint64_t gpuVa = 0u;
+    *reservedOnRootDeviceIndex = 0;
+    if (requiredStartAddress) {
+        return AddressRange{0, 0};
+    }
+    for (auto rootDeviceIndex : rootDeviceIndices) {
+        gpuVa = acquireGpuRange(size, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+        if (gpuVa != 0u) {
+            *reservedOnRootDeviceIndex = rootDeviceIndex;
+            break;
+        }
+    }
     return AddressRange{gpuVa, size};
 }
 
@@ -1147,26 +1229,35 @@ std::vector<GraphicsAllocation *> &DrmMemoryManager::getLocalMemAllocs(uint32_t 
     return this->localMemAllocs[rootDeviceIndex];
 }
 
-void DrmMemoryManager::makeAllocationResident(GraphicsAllocation *allocation) {
+bool DrmMemoryManager::makeAllocationResident(GraphicsAllocation *allocation) {
     if (DebugManager.flags.MakeEachAllocationResident.get() == 1) {
         auto drmAllocation = static_cast<DrmAllocation *>(allocation);
         for (uint32_t i = 0; getDrm(allocation->getRootDeviceIndex()).getVirtualMemoryAddressSpace(i) > 0u; i++) {
-            drmAllocation->makeBOsResident(registeredEngines[defaultEngineIndex[allocation->getRootDeviceIndex()]].osContext, i, nullptr, true);
+            if (drmAllocation->makeBOsResident(registeredEngines[defaultEngineIndex[allocation->getRootDeviceIndex()]].osContext, i, nullptr, true)) {
+                return false;
+            }
             getDrm(allocation->getRootDeviceIndex()).waitForBind(i);
         }
     }
+    return true;
 }
 
-void DrmMemoryManager::registerSysMemAlloc(GraphicsAllocation *allocation) {
-    makeAllocationResident(allocation);
+MemoryManager::AllocationStatus DrmMemoryManager::registerSysMemAlloc(GraphicsAllocation *allocation) {
+    if (!makeAllocationResident(allocation)) {
+        return AllocationStatus::Error;
+    }
     std::lock_guard<std::mutex> lock(this->allocMutex);
     this->sysMemAllocs.push_back(allocation);
+    return AllocationStatus::Success;
 }
 
-void DrmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) {
-    makeAllocationResident(allocation);
+MemoryManager::AllocationStatus DrmMemoryManager::registerLocalMemAlloc(GraphicsAllocation *allocation, uint32_t rootDeviceIndex) {
+    if (!makeAllocationResident(allocation)) {
+        return AllocationStatus::Error;
+    }
     std::lock_guard<std::mutex> lock(this->allocMutex);
     this->localMemAllocs[rootDeviceIndex].push_back(allocation);
+    return AllocationStatus::Success;
 }
 
 void DrmMemoryManager::unregisterAllocation(GraphicsAllocation *allocation) {
@@ -1210,7 +1301,7 @@ uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t
     }
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    uint32_t subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
+    uint32_t subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
     size_t size = 0;
 
     for (uint32_t i = 0; i < subDevicesCount; i++) {
@@ -1225,11 +1316,12 @@ uint64_t DrmMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, uint32_t
 }
 
 bool DrmMemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy) {
-    if (graphicsAllocation->getUnderlyingBuffer() || !isLocalMemorySupported(graphicsAllocation->getRootDeviceIndex())) {
+    if (graphicsAllocation->getUnderlyingBuffer() && (graphicsAllocation->storageInfo.getNumBanks() == 1 || GraphicsAllocation::isDebugSurfaceAllocationType(graphicsAllocation->getAllocationType()))) {
         return MemoryManager::copyMemoryToAllocation(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy);
     }
     return copyMemoryToAllocationBanks(graphicsAllocation, destinationOffset, memoryToCopy, sizeToCopy, maxNBitValue(graphicsAllocation->storageInfo.getNumBanks()));
 }
+
 bool DrmMemoryManager::copyMemoryToAllocationBanks(GraphicsAllocation *graphicsAllocation, size_t destinationOffset, const void *memoryToCopy, size_t sizeToCopy, DeviceBitfield handleMask) {
     if (MemoryPoolHelper::isSystemMemoryPool(graphicsAllocation->getMemoryPool())) {
         return false;
@@ -1327,7 +1419,13 @@ uint64_t getGpuAddress(const AlignmentSelector &alignmentSelector, HeapAssigner 
     case AllocationType::INTERNAL_HEAP:
     case AllocationType::DEBUG_MODULE_AREA: {
         auto heap = heapAssigner.get32BitHeapIndex(allocType, true, hwInfo, useFrontWindow);
-        gpuAddress = gmmHelper.canonize(gfxPartition->heapAllocate(heap, sizeAllocated));
+        size_t alignment = 0;
+
+        if (DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get() != -1) {
+            alignment = static_cast<size_t>(DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
+        }
+
+        gpuAddress = gmmHelper.canonize(gfxPartition->heapAllocateWithCustomAlignment(heap, sizeAllocated, alignment));
     } break;
     case AllocationType::WRITE_COMBINED:
         sizeAllocated = 0;
@@ -1335,6 +1433,15 @@ uint64_t getGpuAddress(const AlignmentSelector &alignmentSelector, HeapAssigner 
     default:
         AlignmentSelector::CandidateAlignment alignment = alignmentSelector.selectAlignment(sizeAllocated);
         if (gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0 && !resource48Bit) {
+            auto alignSize = sizeAllocated >= 8 * MemoryConstants::gigaByte && Math::isPow2(sizeAllocated);
+            if (DebugManager.flags.UseHighAlignmentForHeapExtended.get() != -1) {
+                alignSize = !!DebugManager.flags.UseHighAlignmentForHeapExtended.get();
+            }
+
+            if (alignSize) {
+                alignment.alignment = Math::prevPowerOfTwo(sizeAllocated);
+            }
+
             alignment.heap = HeapIndex::HEAP_EXTENDED;
         }
         gpuAddress = gmmHelper.canonize(gfxPartition->heapAllocateWithCustomAlignment(alignment.heap, sizeAllocated, alignment.alignment));
@@ -1476,20 +1583,20 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
 }
 
 BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(Drm *drm, Gmm *gmm, AllocationType allocationType, uint64_t gpuAddress,
-                                                                 size_t size, uint32_t memoryBanks, size_t maxOsContextCount) {
+                                                                 size_t size, uint32_t memoryBanks, size_t maxOsContextCount, int32_t pairHandle) {
     auto memoryInfo = drm->getMemoryInfo();
     if (!memoryInfo) {
         return nullptr;
     }
 
     uint32_t handle = 0;
-    uint32_t ret = 0;
+    int ret = 0;
 
-    auto banks = std::bitset<32>(memoryBanks);
+    auto banks = std::bitset<4>(memoryBanks);
     if (banks.count() > 1) {
-        ret = memoryInfo->createGemExtWithMultipleRegions(drm, memoryBanks, size, handle);
+        ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, size, handle);
     } else {
-        ret = memoryInfo->createGemExtWithSingleRegion(drm, memoryBanks, size, handle);
+        ret = memoryInfo->createGemExtWithSingleRegion(memoryBanks, size, handle, pairHandle);
     }
 
     if (ret != 0) {
@@ -1525,6 +1632,8 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
     }
     allocation->setNumHandles(handles);
 
+    int32_t pairHandle = -1;
+
     for (auto handleId = 0u; handleId < handles; handleId++, currentBank++) {
         if (currentBank == banksCnt) {
             currentBank = 0;
@@ -1543,13 +1652,19 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
         }
         auto gmm = allocation->getGmm(handleId);
         auto boSize = alignUp(gmm->gmmResourceInfo->getSizeAllocation(), MemoryConstants::pageSize64k);
-        bos[handleId] = createBufferObjectInMemoryRegion(drm, gmm, allocation->getAllocationType(), boAddress, boSize, memoryBanks, maxOsContextCount);
+        bos[handleId] = createBufferObjectInMemoryRegion(drm, gmm, allocation->getAllocationType(), boAddress, boSize, memoryBanks, maxOsContextCount, pairHandle);
         if (nullptr == bos[handleId]) {
             return false;
         }
         allocation->getBufferObjectToModify(currentBank + iterationOffset) = bos[handleId];
         if (storageInfo.multiStorage) {
             boAddress += boSize;
+        }
+
+        // only support pairing of handles with PRELIM_I915_PARAM_SET_PAIR for implicit scaling scenarios, which
+        // have 2 handles
+        if (AllocationType::BUFFER == allocation->getAllocationType() && handles == 2 && drm->getSetPairAvailable()) {
+            pairHandle = bos[handleId]->peekHandle();
         }
     }
 
@@ -1589,10 +1704,10 @@ bool DrmMemoryManager::retrieveMmapOffsetForBufferObject(uint32_t rootDeviceInde
     mmapOffset.flags = isLocalMemorySupported(rootDeviceIndex) ? mmapOffsetFixed : flags;
     auto &drm = this->getDrm(rootDeviceIndex);
     auto ioctlHelper = drm.getIoctlHelper();
-    auto ret = ioctlHelper->ioctl(&drm, DrmIoctl::GemMmapOffset, &mmapOffset);
+    auto ret = ioctlHelper->ioctl(DrmIoctl::GemMmapOffset, &mmapOffset);
     if (ret != 0 && isLocalMemorySupported(rootDeviceIndex)) {
         mmapOffset.flags = flags;
-        ret = ioctlHelper->ioctl(&drm, DrmIoctl::GemMmapOffset, &mmapOffset);
+        ret = ioctlHelper->ioctl(DrmIoctl::GemMmapOffset, &mmapOffset);
     }
     if (ret != 0) {
         int err = drm.getErrno();
@@ -1612,6 +1727,7 @@ bool DrmMemoryManager::allocationTypeForCompletionFence(AllocationType allocatio
         return true;
     }
     if (allocationType == AllocationType::COMMAND_BUFFER ||
+        allocationType == AllocationType::DEFERRED_TASKS_LIST ||
         allocationType == AllocationType::RING_BUFFER ||
         allocationType == AllocationType::SEMAPHORE_BUFFER ||
         allocationType == AllocationType::TAG_BUFFER) {
@@ -1645,7 +1761,8 @@ void DrmMemoryManager::waitOnCompletionFence(GraphicsAllocation *allocation) {
 }
 
 DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &allocationData, size_t size, size_t alignment, size_t alignedSize, uint64_t gpuAddress) {
-    bool useBooMmap = this->getDrm(allocationData.rootDeviceIndex).getMemoryInfo() && allocationData.useMmapObject;
+    auto &drm = this->getDrm(allocationData.rootDeviceIndex);
+    bool useBooMmap = drm.getMemoryInfo() && allocationData.useMmapObject;
 
     if (DebugManager.flags.EnableBOMmapCreate.get() != -1) {
         useBooMmap = DebugManager.flags.EnableBOMmapCreate.get();
@@ -1659,8 +1776,8 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         cpuPointer = alignUp(cpuPointer, alignment);
 
         auto pointerDiff = ptrDiff(cpuPointer, cpuBasePointer);
-        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(&this->getDrm(allocationData.rootDeviceIndex), nullptr, allocationData.type,
-                                                                                                       reinterpret_cast<uintptr_t>(cpuPointer), alignedSize, 0u, maxOsContextCount));
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(this->createBufferObjectInMemoryRegion(&drm, nullptr, allocationData.type,
+                                                                                                       reinterpret_cast<uintptr_t>(cpuPointer), alignedSize, 0u, maxOsContextCount, -1));
 
         if (!bo) {
             this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
@@ -1668,12 +1785,14 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         }
 
         uint64_t offset = 0;
-        if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, I915_MMAP_OFFSET_WB, offset)) {
+        auto ioctlHelper = drm.getIoctlHelper();
+        uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::MmapOffsetWb);
+        if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, mmapOffsetWb, offset)) {
             this->munmapFunction(cpuPointer, size);
             return nullptr;
         }
 
-        [[maybe_unused]] auto retPtr = this->mmapFunction(cpuPointer, alignedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, getDrm(allocationData.rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(offset));
+        [[maybe_unused]] auto retPtr = this->mmapFunction(cpuPointer, alignedSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
         DEBUG_BREAK_IF(retPtr != cpuPointer);
 
         obtainGpuAddress(allocationData, bo.get(), gpuAddress);
@@ -1690,7 +1809,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         [[maybe_unused]] int retCode = this->munmapFunction(ptrOffset(cpuPointer, alignedSize), alignment - pointerDiff);
         DEBUG_BREAK_IF(retCode != 0);
         allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSize);
-        if (!allocation->setCacheRegion(&this->getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
+        if (!allocation->setCacheRegion(&drm, static_cast<CacheRegion>(allocationData.cacheRegion))) {
             if (pointerDiff == 0) {
                 allocation->registerMemoryToUnmap(cpuBasePointer, totalSizeToAlloc, this->munmapFunction);
             }
@@ -1698,7 +1817,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         }
 
         bo.release();
-
+        allocation->isShareableHostMemory = true;
         return allocation.release();
     } else {
         return createAllocWithAlignmentFromUserptr(allocationData, size, alignment, alignedSize, gpuAddress);
@@ -1710,14 +1829,17 @@ void *DrmMemoryManager::lockBufferObject(BufferObject *bo) {
         return nullptr;
     }
 
-    auto rootDeviceIndex = this->getRootDeviceIndex(bo->peekDrm());
+    auto drm = bo->peekDrm();
+    auto rootDeviceIndex = this->getRootDeviceIndex(drm);
 
+    auto ioctlHelper = drm->getIoctlHelper();
+    uint64_t mmapOffsetWc = ioctlHelper->getDrmParamValue(DrmParam::MmapOffsetWc);
     uint64_t offset = 0;
-    if (!retrieveMmapOffsetForBufferObject(rootDeviceIndex, *bo, I915_MMAP_OFFSET_WC, offset)) {
+    if (!retrieveMmapOffsetForBufferObject(rootDeviceIndex, *bo, mmapOffsetWc, offset)) {
         return nullptr;
     }
 
-    auto addr = mmapFunction(nullptr, bo->peekSize(), PROT_WRITE | PROT_READ, MAP_SHARED, getDrm(rootDeviceIndex).getFileDescriptor(), static_cast<off_t>(offset));
+    auto addr = mmapFunction(nullptr, bo->peekSize(), PROT_WRITE | PROT_READ, MAP_SHARED, drm->getFileDescriptor(), static_cast<off_t>(offset));
     DEBUG_BREAK_IF(addr == MAP_FAILED);
 
     if (addr == MAP_FAILED) {
@@ -1730,16 +1852,16 @@ void *DrmMemoryManager::lockBufferObject(BufferObject *bo) {
     return bo->peekLockedAddress();
 }
 
-void createMemoryRegionsForSharedAllocation(const HardwareInfo &hwInfo, MemoryInfo &memoryInfo, const AllocationData &allocationData, MemRegionsVec &memRegions) {
-    auto memoryBanks = allocationData.storageInfo.memoryBanks;
+MemRegionsVec createMemoryRegionsForSharedAllocation(const HardwareInfo &hwInfo, MemoryInfo &memoryInfo, const AllocationData &allocationData, DeviceBitfield memoryBanks) {
+    MemRegionsVec memRegions;
 
     if (allocationData.usmInitialPlacement == GraphicsAllocation::UsmInitialPlacement::CPU) {
-        //System memory region
+        // System memory region
         auto regionClassAndInstance = memoryInfo.getMemoryRegionClassAndInstance(0u, hwInfo);
         memRegions.push_back(regionClassAndInstance);
     }
 
-    //All local memory regions
+    // All local memory regions
     size_t currentBank = 0;
     size_t i = 0;
 
@@ -1753,16 +1875,19 @@ void createMemoryRegionsForSharedAllocation(const HardwareInfo &hwInfo, MemoryIn
     }
 
     if (allocationData.usmInitialPlacement == GraphicsAllocation::UsmInitialPlacement::GPU) {
-        //System memory region
+        // System memory region
         auto regionClassAndInstance = memoryInfo.getMemoryRegionClassAndInstance(0u, hwInfo);
         memRegions.push_back(regionClassAndInstance);
     }
+
+    return memRegions;
 }
 
 GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const AllocationData &allocationData) {
     auto &drm = this->getDrm(allocationData.rootDeviceIndex);
+    auto ioctlHelper = drm.getIoctlHelper();
 
-    const auto vmAdviseAttribute = drm.getIoctlHelper()->getVmAdviseAtomicAttribute();
+    const auto vmAdviseAttribute = ioctlHelper->getVmAdviseAtomicAttribute();
     if (vmAdviseAttribute == 0) {
         return nullptr;
     }
@@ -1777,31 +1902,6 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     auto size = allocationData.size;
     auto alignment = allocationData.alignment;
 
-    auto pHwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
-
-    MemRegionsVec memRegions;
-    createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memRegions);
-
-    uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExt(&drm, memRegions, size, handle, {});
-
-    if (ret) {
-        return nullptr;
-    }
-
-    auto patIndex = drm.getPatIndex(nullptr, allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
-
-    std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(&drm, patIndex, handle, size, maxOsContextCount));
-
-    if (!drm.getIoctlHelper()->setVmBoAdvise(&drm, bo->peekHandle(), vmAdviseAttribute, nullptr)) {
-        return nullptr;
-    }
-
-    uint64_t offset = 0;
-    if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, I915_MMAP_OFFSET_WB, offset)) {
-        return nullptr;
-    }
-
     auto totalSizeToAlloc = size + alignment;
     auto cpuPointer = this->mmapFunction(0, totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
 
@@ -1813,26 +1913,80 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     auto cpuBasePointer = cpuPointer;
     cpuPointer = alignUp(cpuPointer, alignment);
 
-    this->mmapFunction(cpuPointer, size, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
+    auto pHwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
 
-    bo->setAddress(reinterpret_cast<uintptr_t>(cpuPointer));
+    BufferObjects bos{};
+    auto currentAddress = cpuPointer;
+    auto remainingSize = size;
+    auto numHandles = GraphicsAllocation::getNumHandlesForKmdSharedAllocation(allocationData.storageInfo.getNumBanks());
 
-    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
-    auto canonizedGpuAddress = gmmHelper->canonize(bo->peekAddress());
-    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, bo.get(), cpuPointer, canonizedGpuAddress, size, MemoryPool::System4KBPages);
-    allocation->setMmapPtr(cpuBasePointer);
-    allocation->setMmapSize(totalSizeToAlloc);
-    if (!allocation->setCacheRegion(&this->getDrm(allocationData.rootDeviceIndex), static_cast<CacheRegion>(allocationData.cacheRegion))) {
-        this->munmapFunction(cpuPointer, totalSizeToAlloc);
-        return nullptr;
+    for (auto handleId = 0u; handleId < numHandles; handleId++) {
+        uint32_t handle = 0;
+
+        auto currentSize = alignUp(remainingSize / (numHandles - handleId), MemoryConstants::pageSize64k);
+        if (currentSize == 0) {
+            break;
+        }
+
+        auto memoryBanks = DebugManager.flags.CreateContextWithAccessCounters.get() > 0 ? allocationData.storageInfo.memoryBanks : DeviceBitfield(1 << handleId);
+        auto memRegions = createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memoryBanks);
+
+        auto ret = memoryInfo->createGemExt(memRegions, currentSize, handle, {}, -1);
+
+        if (ret) {
+            this->munmapFunction(cpuPointer, totalSizeToAlloc);
+            return nullptr;
+        }
+
+        auto patIndex = drm.getPatIndex(nullptr, allocationData.type, CacheRegion::Default, CachePolicy::WriteBack, false);
+
+        std::unique_ptr<BufferObject, BufferObject::Deleter> bo(new BufferObject(&drm, patIndex, handle, currentSize, maxOsContextCount));
+
+        if (!ioctlHelper->setVmBoAdvise(bo->peekHandle(), vmAdviseAttribute, nullptr)) {
+            this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
+            return nullptr;
+        }
+
+        uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::MmapOffsetWb);
+        uint64_t offset = 0;
+        if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, mmapOffsetWb, offset)) {
+            this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
+            return nullptr;
+        }
+
+        this->mmapFunction(currentAddress, currentSize, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, drm.getFileDescriptor(), static_cast<off_t>(offset));
+
+        bo->setAddress(castToUint64(currentAddress));
+
+        bos.push_back(bo.release());
+
+        currentAddress = reinterpret_cast<void *>(castToUint64(currentAddress) + currentSize);
+        remainingSize -= currentSize;
     }
 
-    bo.release();
+    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
+    auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uintptr_t>(cpuPointer));
+    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, bos, cpuPointer, canonizedGpuAddress, size, MemoryPool::System4KBPages);
+    allocation->setMmapPtr(cpuBasePointer);
+    allocation->setMmapSize(totalSizeToAlloc);
+    if (!allocation->setCacheRegion(&drm, static_cast<CacheRegion>(allocationData.cacheRegion))) {
+        this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
+        for (auto bo : bos) {
+            delete bo;
+        }
+        return nullptr;
+    }
+    if (numHandles > 1) {
+        allocation->storageInfo = allocationData.storageInfo;
+    }
 
     return allocation.release();
 }
 
-DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool hasMappedPtr) {
+DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandle handle,
+                                                                         const AllocationProperties &properties,
+                                                                         bool hasMappedPtr,
+                                                                         bool reuseSharedAllocation) {
     PrimeHandle openFd{};
     openFd.fileDescriptor = handle;
 
@@ -1840,7 +1994,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::Default, CachePolicy::WriteBack, false);
     auto ioctlHelper = drm.getIoctlHelper();
 
-    auto ret = ioctlHelper->ioctl(&drm, DrmIoctl::PrimeFdToHandle, &openFd);
+    auto ret = ioctlHelper->ioctl(DrmIoctl::PrimeFdToHandle, &openFd);
     if (ret != 0) {
         int err = drm.getErrno();
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRIME_FD_TO_HANDLE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
@@ -1870,14 +2024,28 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     }
 
     auto boHandle = openFd.handle;
-    auto bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
+    BufferObject *bo = nullptr;
+    if (reuseSharedAllocation) {
+        bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
+    }
 
     if (bo == nullptr) {
         void *cpuPointer = nullptr;
         size_t size = lseekFunction(handle, 0, SEEK_END);
 
         bo = new BufferObject(&drm, patIndex, boHandle, size, maxOsContextCount);
-        cpuPointer = this->mmapFunction(0, size, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+
+        if (properties.allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER) {
+            cpuPointer = this->mmapFunction(0, size + MemoryConstants::pageSize64k, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+            auto alignedAddr = alignUp(cpuPointer, MemoryConstants::pageSize64k);
+            auto notUsedSize = ptrDiff(alignedAddr, cpuPointer);
+            // call unmap to free the unaligned pages preceding the system allocation and
+            // adjust the pointer to the correct aligned Address.
+            munmapFunction(cpuPointer, notUsedSize);
+            cpuPointer = alignedAddr;
+        } else {
+            cpuPointer = this->mmapFunction(0, size, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        }
 
         if (cpuPointer == MAP_FAILED) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "mmap return of MAP_FAILED\n");
@@ -1887,8 +2055,9 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
 
         bo->setAddress(reinterpret_cast<uintptr_t>(cpuPointer));
 
+        uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::MmapOffsetWb);
         uint64_t offset = 0;
-        if (!retrieveMmapOffsetForBufferObject(properties.rootDeviceIndex, *bo, I915_MMAP_OFFSET_WB, offset)) {
+        if (!retrieveMmapOffsetForBufferObject(properties.rootDeviceIndex, *bo, mmapOffsetWb, offset)) {
             this->munmapFunction(cpuPointer, size);
             delete bo;
             return nullptr;
@@ -1905,6 +2074,13 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         bo->setUnmapSize(size);
         bo->setRootDeviceIndex(properties.rootDeviceIndex);
 
+        printDebugString(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout,
+                         "Created BO-%d range: %llx - %llx, size: %lld from PRIME_FD_TO_HANDLE\n",
+                         bo->peekHandle(),
+                         bo->peekAddress(),
+                         ptrOffset(bo->peekAddress(), bo->peekSize()),
+                         bo->peekSize());
+
         pushSharedBufferObject(bo);
 
         DrmAllocation *drmAllocation = nullptr;
@@ -1912,7 +2088,7 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
         drmAllocation->setMmapPtr(cpuPointer);
         drmAllocation->setMmapSize(size);
         drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(cpuPointer), size);
-        drmAllocation->setCacheRegion(&this->getDrm(properties.rootDeviceIndex), static_cast<CacheRegion>(properties.cacheRegion));
+        drmAllocation->setCacheRegion(&drm, static_cast<CacheRegion>(properties.cacheRegion));
 
         return drmAllocation;
     }
@@ -1921,6 +2097,9 @@ DrmAllocation *DrmMemoryManager::createUSMHostAllocationFromSharedHandle(osHandl
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
     return new DrmAllocation(properties.rootDeviceIndex, properties.allocationType, bo, reinterpret_cast<void *>(bo->peekAddress()), bo->peekSize(),
                              handle, MemoryPool::SystemCpuInaccessible, canonizedGpuAddress);
+}
+bool DrmMemoryManager::allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) {
+    return this->getDrm(rootDeviceIndex).isVmBindAvailable();
 }
 
 } // namespace NEO

@@ -12,8 +12,8 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw_base.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.inl"
+#include "level_zero/core/source/gen12lp/definitions/cache_flush_gen12lp.inl"
 
-#include "cache_flush_gen12lp.inl"
 #include "cmdlist_extended.inl"
 
 namespace L0 {

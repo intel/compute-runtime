@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -28,13 +28,17 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_hw_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_extended${BRANCH_DIR_SUFFIX}cmdqueue_extended.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/context/context_imp_${DRIVER_MODEL}/context_imp.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/context/context_imp_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/context/context_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/context/context_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/context/context.h
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_manager/debug_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device${BRANCH_DIR_SUFFIX}device_imp_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/device/bcs_split.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/device/bcs_split.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/device/device.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp_${DRIVER_MODEL}/device_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver/driver_handle.h
@@ -50,14 +54,7 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/event/event.h
     ${CMAKE_CURRENT_SOURCE_DIR}/fence/fence.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fence/fence.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/helpers/allocation_extensions.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/helpers/allocation_extensions.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/helpers/api_specific_config_l0.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/helpers/implicit_scaling_l0.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/helpers/l0_populate_factory.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/helpers/properties_parser.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_skl_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel.cpp
@@ -81,7 +78,6 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module.h
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_build_log.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_build_log.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/module${BRANCH_DIR_SUFFIX}module_extra_options.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/module/module_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/printf_handler/printf_handler.cpp
@@ -93,10 +89,45 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/sampler/sampler_imp.h
 )
 
+if(UNIX AND NEO_ENABLE_i915_PRELIM_DETECTION)
+  list(APPEND L0_RUNTIME_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp_drm/device_imp_peer.cpp
+  )
+else()
+  list(APPEND L0_RUNTIME_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/device/device_imp_peer_stub.cpp
+  )
+endif()
+
+if(SUPPORT_GEN9 OR SUPPORT_GEN11)
+  list(APPEND L0_RUNTIME_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_skl_to_icllp.inl
+  )
+endif()
+
+if(SUPPORT_GEN9 OR SUPPORT_GEN11 OR SUPPORT_GEN12LP)
+  list(APPEND L0_RUNTIME_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_skl_to_tgllp.inl
+  )
+endif()
+
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND L0_RUNTIME_SOURCES
        ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_xe_hp_core_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_xehp_and_later.inl
+  )
+endif()
+
+if(SUPPORT_GEN12LP OR SUPPORT_XE_HP_CORE OR SUPPORT_XE_HPG_CORE)
+  list(APPEND L0_RUNTIME_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_tgllp_to_dg2.inl
+  )
+endif()
+
+if(SUPPORT_PVC_AND_LATER)
+  list(APPEND L0_RUNTIME_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_hw_helper_pvc_and_later.inl
   )
 endif()
 

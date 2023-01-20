@@ -1,25 +1,23 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-
 #include "shared/source/helpers/registered_method_dispatcher.h"
 #include "shared/source/helpers/vec.h"
-#include "shared/source/memory_manager/surface.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
-#include "opencl/source/mem_obj/mem_obj.h"
 
 #include <algorithm>
 #include <memory>
 
 namespace NEO {
+class LinearStream;
 
 class Kernel;
 class ClDevice;
@@ -66,8 +64,8 @@ class DispatchInfo {
     bool peekCanBePartitioned() const { return canBePartitioned; }
     void setCanBePartitioned(bool canBePartitioned) { this->canBePartitioned = canBePartitioned; }
 
-    RegisteredMethodDispatcher<DispatchCommandMethodT, EstimateCommandsMethodT> dispatchInitCommands;
-    RegisteredMethodDispatcher<DispatchCommandMethodT, EstimateCommandsMethodT> dispatchEpilogueCommands;
+    RegisteredMethodDispatcher<DispatchCommandMethodT, EstimateCommandsMethodT> dispatchInitCommands{};
+    RegisteredMethodDispatcher<DispatchCommandMethodT, EstimateCommandsMethodT> dispatchEpilogueCommands{};
 
   protected:
     ClDevice *pClDevice = nullptr;
@@ -75,22 +73,18 @@ class DispatchInfo {
     Kernel *kernel = nullptr;
     uint32_t dim = 0;
 
-    Vec3<size_t> gws{0, 0, 0};    //global work size
-    Vec3<size_t> elws{0, 0, 0};   //enqueued local work size
-    Vec3<size_t> offset{0, 0, 0}; //global offset
-    Vec3<size_t> agws{0, 0, 0};   //actual global work size
-    Vec3<size_t> lws{0, 0, 0};    //local work size
-    Vec3<size_t> twgs{0, 0, 0};   //total number of work groups
-    Vec3<size_t> nwgs{0, 0, 0};   //number of work groups
-    Vec3<size_t> swgs{0, 0, 0};   //start of work groups
+    Vec3<size_t> gws{0, 0, 0};    // global work size
+    Vec3<size_t> elws{0, 0, 0};   // enqueued local work size
+    Vec3<size_t> offset{0, 0, 0}; // global offset
+    Vec3<size_t> agws{0, 0, 0};   // actual global work size
+    Vec3<size_t> lws{0, 0, 0};    // local work size
+    Vec3<size_t> twgs{0, 0, 0};   // total number of work groups
+    Vec3<size_t> nwgs{0, 0, 0};   // number of work groups
+    Vec3<size_t> swgs{0, 0, 0};   // start of work groups
 };
 
 struct MultiDispatchInfo {
-    ~MultiDispatchInfo() {
-        for (MemObj *redescribedSurface : redescribedSurfaces) {
-            redescribedSurface->release();
-        }
-    }
+    ~MultiDispatchInfo();
 
     explicit MultiDispatchInfo(Kernel *mainKernel) : mainKernel(mainKernel) {}
     explicit MultiDispatchInfo(const BuiltinOpParams &operationParams) : builtinOpParams(operationParams) {}
@@ -183,9 +177,7 @@ struct MultiDispatchInfo {
         return redescribedSurfaces;
     }
 
-    void pushRedescribedMemObj(std::unique_ptr<MemObj> memObj) {
-        redescribedSurfaces.push_back(memObj.release());
-    }
+    void pushRedescribedMemObj(std::unique_ptr<MemObj> memObj);
 
     Kernel *peekMainKernel() const;
 

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
@@ -56,6 +57,7 @@ HWTEST2_F(ComputeModeRequirements, GivenProgramExtendedPipeControlPriorToNonPipe
     EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getDcFlushEnable());
 
     auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));
@@ -103,6 +105,7 @@ HWTEST2_F(ComputeModeRequirements, GivenMultipleCCSEnabledSetupThenCorrectComman
     EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
     EXPECT_TRUE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_TRUE(pipeControlCmd->getStateCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getDcFlushEnable());
 
     auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));
@@ -155,6 +158,7 @@ HWTEST2_F(ComputeModeRequirements, GivenSingleCCSEnabledSetupThenCorrectCommands
     EXPECT_FALSE(pipeControlCmd->getTextureCacheInvalidationEnable());
     EXPECT_FALSE(pipeControlCmd->getConstantCacheInvalidationEnable());
     EXPECT_FALSE(pipeControlCmd->getStateCacheInvalidationEnable());
+    EXPECT_FALSE(pipeControlCmd->getDcFlushEnable());
 
     auto stateComputeModeCmd = reinterpret_cast<STATE_COMPUTE_MODE *>(ptrOffset(stream.getCpuBase(), sizeof(PIPE_CONTROL)));
     EXPECT_TRUE(isValueSet(stateComputeModeCmd->getMaskBits(), expectedBitsMask));

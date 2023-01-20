@@ -27,7 +27,7 @@ struct OneMipLevelImageFixture {
         }
     };
 
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
         cl_image_desc imageDesc = Image3dDefaults::imageDesc;
@@ -38,7 +38,7 @@ struct OneMipLevelImageFixture {
         this->image.reset(createImage());
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
     }
 
     Image *createImage() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,47 +7,46 @@
 
 #include "shared/test/common/helpers/hw_helper_tests.h"
 
-using HwHelperTestsXeHP = HwHelperTest;
+using GfxCoreHelperTestsXeHP = GfxCoreHelperTest;
 
-HWTEST_EXCLUDE_PRODUCT(HwHelperTest, WhenIsBankOverrideRequiredIsCalledThenFalseIsReturned, IGFX_XE_HP_SDV);
-
-XEHPTEST_F(HwHelperTestsXeHP, givenXEHPWhenIsBankOverrideRequiredIsCalledThenCorrectValueIsReturned) {
+XEHPTEST_F(GfxCoreHelperTestsXeHP, givenXEHPWhenIsBankOverrideRequiredIsCalledThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore;
-    auto &helper = HwHelper::get(renderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(productFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto &productHelper = getHelper<ProductHelper>();
+
     auto hwInfo = *defaultHwInfo;
     hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
 
     {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 4;
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EXPECT_TRUE(helper.isBankOverrideRequired(hwInfo));
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        EXPECT_TRUE(gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper));
     }
     {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 4;
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-        EXPECT_FALSE(helper.isBankOverrideRequired(hwInfo));
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
+        EXPECT_FALSE(gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper));
     }
     {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 2;
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EXPECT_FALSE(helper.isBankOverrideRequired(hwInfo));
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        EXPECT_FALSE(gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper));
     }
     {
         DebugManager.flags.ForceMemoryBankIndexOverride.set(1);
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 1;
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EXPECT_TRUE(helper.isBankOverrideRequired(hwInfo));
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        EXPECT_TRUE(gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper));
     }
     {
         DebugManager.flags.ForceMemoryBankIndexOverride.set(0);
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = 4;
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EXPECT_FALSE(helper.isBankOverrideRequired(hwInfo));
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
+        EXPECT_FALSE(gfxCoreHelper.isBankOverrideRequired(hwInfo, productHelper));
     }
 }
 
-XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontSetRcs) {
+XEHPTEST_F(GfxCoreHelperTestsXeHP, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontSetRcs) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
@@ -59,7 +58,7 @@ XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontS
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(8u, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(8u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
@@ -72,7 +71,7 @@ XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledWhenGetGpgpuEnginesCalledThenDontS
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[7].first);
 }
 
-XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledButDebugVariableSetWhenGetGpgpuEnginesCalledThenSetRcs) {
+XEHPTEST_F(GfxCoreHelperTestsXeHP, givenRcsDisabledButDebugVariableSetWhenGetGpgpuEnginesCalledThenSetRcs) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     hwInfo.featureTable.ftrBcsInfo = 1;
@@ -87,7 +86,7 @@ XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledButDebugVariableSetWhenGetGpgpuEng
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
 
     EXPECT_EQ(9u, device->allEngines.size());
-    auto &engines = HwHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
+    auto &engines = GfxCoreHelperHw<FamilyType>::get().getGpgpuEngineInstances(hwInfo);
     EXPECT_EQ(9u, engines.size());
 
     EXPECT_EQ(aub_stream::ENGINE_CCS, engines[0].first);
@@ -101,10 +100,10 @@ XEHPTEST_F(HwHelperTestsXeHP, givenRcsDisabledButDebugVariableSetWhenGetGpgpuEng
     EXPECT_EQ(aub_stream::ENGINE_BCS, engines[8].first);
 }
 
-XEHPTEST_F(HwHelperTestsXeHP, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
+XEHPTEST_F(GfxCoreHelperTestsXeHP, GivenVariousValuesWhenComputeSlmSizeIsCalledThenCorrectValueIsReturned) {
     auto &hwInfo = pDevice->getHardwareInfo();
 
     for (auto &testInput : computeSlmValuesXeHPAndLaterTestsInput) {
-        EXPECT_EQ(testInput.expected, HwHelperHw<FamilyType>::get().computeSlmValues(hwInfo, testInput.slmSize));
+        EXPECT_EQ(testInput.expected, GfxCoreHelperHw<FamilyType>::get().computeSlmValues(hwInfo, testInput.slmSize));
     }
 }

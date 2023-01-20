@@ -5,22 +5,32 @@
  *
  */
 
+#include "aubstream/product_family.h"
+
+namespace NEO {
 template <>
-bool HwInfoConfigHw<gfxProduct>::isAdditionalMediaSamplerProgrammingRequired() const {
+bool ProductHelperHw<gfxProduct>::isAdditionalMediaSamplerProgrammingRequired() const {
     return true;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isInitialFlagsProgrammingRequired() const {
+bool ProductHelperHw<gfxProduct>::isInitialFlagsProgrammingRequired() const {
     return true;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const {
+bool ProductHelperHw<gfxProduct>::isReturnedCmdSizeForMediaSamplerAdjustmentRequired() const {
     return true;
 }
 
 template <>
-AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+AOT::PRODUCT_CONFIG ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     return AOT::ICL;
 }
+
+template <>
+std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
+    return aub_stream::ProductFamily::Icllp;
+};
+
+} // namespace NEO

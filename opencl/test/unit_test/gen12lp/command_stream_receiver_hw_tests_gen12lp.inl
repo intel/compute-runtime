@@ -27,7 +27,7 @@ using namespace NEO;
 
 #include "opencl/test/unit_test/command_stream/command_stream_receiver_hw_tests.inl"
 
-using CommandStreamReceiverHwTestGen12lp = CommandStreamReceiverHwTest<TGLLPFamily>;
+using CommandStreamReceiverHwTestGen12lp = CommandStreamReceiverHwTest<Gen12LpFamily>;
 
 GEN12LPTEST_F(CommandStreamReceiverHwTestGen12lp, givenPreambleSentWhenL3ConfigRequestChangedThenDontProgramL3Register) {
     size_t gws = 1;
@@ -84,7 +84,7 @@ GEN12LPTEST_F(UltCommandStreamReceiverTestGen12Lp, givenDebugEnablingCacheFlushW
     LinearStream stream(buff, sizeof(PIPE_CONTROL) * 3);
 
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
 
     parseCommands<FamilyType>(stream, 0);
 
@@ -111,7 +111,7 @@ GEN12LPTEST_F(UltCommandStreamReceiverTestGen12Lp, givenDebugDisablingCacheFlush
     PipeControlArgs args;
     args.dcFlushEnable = true;
     args.hdcPipelineFlush = true;
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
 
     parseCommands<FamilyType>(stream, 0);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,9 @@
 #include "opencl/test/unit_test/fixtures/kernel_data_fixture.h"
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/program/program_info_from_patchtokens.h"
@@ -117,8 +119,8 @@ void KernelDataTest::buildAndDecode() {
         auto kernelAllocation = pKernelInfo->getGraphicsAllocation();
         UNRECOVERABLE_IF(kernelAllocation == nullptr);
         auto &device = pContext->getDevice(0)->getDevice();
-        auto &hwHelper = NEO::HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
-        size_t isaPadding = hwHelper.getPaddingForISAAllocation();
+        auto &helper = device.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+        size_t isaPadding = helper.getPaddingForISAAllocation();
         EXPECT_EQ(kernelAllocation->getUnderlyingBufferSize(), kernelHeapSize + isaPadding);
         auto kernelIsa = kernelAllocation->getUnderlyingBuffer();
         EXPECT_EQ(0, memcmp(kernelIsa, pKernelInfo->heapInfo.pKernelHeap, kernelHeapSize));

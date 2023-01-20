@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,13 @@
 
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
@@ -21,7 +22,7 @@ using namespace NEO;
 struct KernelSLMAndBarrierTest : public ClDeviceFixture,
                                  public ::testing::TestWithParam<uint32_t> {
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
 
         kernelInfo.setCrossThreadDataSize(sizeof(crossThreadData));
@@ -34,7 +35,7 @@ struct KernelSLMAndBarrierTest : public ClDeviceFixture,
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
     }
     void TearDown() override {
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     uint32_t simd;
@@ -67,6 +68,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
     // After creating Mock Kernel now create Indirect Heap
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
 
+    const uint32_t threadGroupCount = 1u;
     uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
 
     size_t offsetInterfaceDescriptorData = HardwareCommandsHelper<FamilyType>::sendInterfaceDescriptorData(
@@ -78,6 +80,7 @@ HWCMDTEST_P(IGFX_GEN8_CORE, KernelSLMAndBarrierTest, GivenStaticSlmSizeWhenProgr
         0,
         0,
         0,
+        threadGroupCount,
         1,
         kernel,
         4u,
@@ -154,6 +157,7 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
     auto &indirectHeap = cmdQ.getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 8192);
 
+    const uint32_t threadGroupCount = 1u;
     uint64_t interfaceDescriptorOffset = indirectHeap.getUsed();
     INTERFACE_DESCRIPTOR_DATA interfaceDescriptorData;
 
@@ -166,6 +170,7 @@ HWTEST_F(KernelSLMAndBarrierTest, GivenInterfaceDescriptorProgrammedWhenOverride
         0,
         0,
         0,
+        threadGroupCount,
         1,
         kernel,
         4u,

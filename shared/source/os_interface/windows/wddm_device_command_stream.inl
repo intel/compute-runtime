@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,9 +22,9 @@
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_device_command_stream.h"
 
-#include "hw_cmds.h"
 #pragma warning(pop)
 
+#include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
@@ -77,16 +77,20 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
     allocationsForResidency.push_back(batchBuffer.commandBufferAllocation);
     batchBuffer.commandBufferAllocation->updateResidencyTaskCount(this->taskCount, this->osContext->getContextId());
     perfLogResidencyVariadicLog(wddm->getResidencyLogger(), "Wddm CSR processing residency set: %zu\n", allocationsForResidency.size());
-    this->processResidency(allocationsForResidency, 0u);
+
+    auto submissionStatus = this->processResidency(allocationsForResidency, 0u);
+    if (submissionStatus != SubmissionStatus::SUCCESS) {
+        return submissionStatus;
+    }
     if (this->directSubmission.get()) {
-        bool ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
+        auto ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
         if (ret == false) {
             return SubmissionStatus::FAILED;
         }
         return SubmissionStatus::SUCCESS;
     }
     if (this->blitterDirectSubmission.get()) {
-        bool ret = this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
+        auto ret = this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *(this->flushStamp.get()));
         if (ret == false) {
             return SubmissionStatus::FAILED;
         }
@@ -130,9 +134,8 @@ SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchB
 }
 
 template <typename GfxFamily>
-void WddmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
-    [[maybe_unused]] bool success = static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency);
-    DEBUG_BREAK_IF(!success);
+SubmissionStatus WddmCommandStreamReceiver<GfxFamily>::processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) {
+    return static_cast<OsContextWin *>(this->osContext)->getResidencyController().makeResidentResidencyAllocations(allocationsForResidency) ? SubmissionStatus::SUCCESS : SubmissionStatus::OUT_OF_MEMORY;
 }
 
 template <typename GfxFamily>

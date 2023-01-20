@@ -7,8 +7,7 @@
 
 #pragma once
 
-#include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/constants.h"
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_type.h"
@@ -18,15 +17,6 @@
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/utilities/idlist.h"
-#include "shared/source/utilities/stackvec.h"
-
-#include <array>
-#include <atomic>
-#include <cstddef>
-#include <cstdint>
-#include <limits>
-#include <mutex>
-#include <vector>
 
 namespace NEO {
 
@@ -157,28 +147,28 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool isUsed() const { return registeredContextsNum > 0; }
     bool isUsedByManyOsContexts() const { return registeredContextsNum > 1u; }
     bool isUsedByOsContext(uint32_t contextId) const { return objectNotUsed != getTaskCount(contextId); }
-    MOCKABLE_VIRTUAL void updateTaskCount(uint32_t newTaskCount, uint32_t contextId);
-    MOCKABLE_VIRTUAL uint32_t getTaskCount(uint32_t contextId) const { return usageInfos[contextId].taskCount; }
+    MOCKABLE_VIRTUAL void updateTaskCount(TaskCountType newTaskCount, uint32_t contextId);
+    MOCKABLE_VIRTUAL TaskCountType getTaskCount(uint32_t contextId) const { return usageInfos[contextId].taskCount; }
     void releaseUsageInOsContext(uint32_t contextId) { updateTaskCount(objectNotUsed, contextId); }
     uint32_t getInspectionId(uint32_t contextId) const { return usageInfos[contextId].inspectionId; }
     void setInspectionId(uint32_t newInspectionId, uint32_t contextId) { usageInfos[contextId].inspectionId = newInspectionId; }
 
     MOCKABLE_VIRTUAL bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }
     bool isAlwaysResident(uint32_t contextId) const { return GraphicsAllocation::objectAlwaysResident == getResidencyTaskCount(contextId); }
-    void updateResidencyTaskCount(uint32_t newTaskCount, uint32_t contextId) {
+    void updateResidencyTaskCount(TaskCountType newTaskCount, uint32_t contextId) {
         if (usageInfos[contextId].residencyTaskCount != GraphicsAllocation::objectAlwaysResident || newTaskCount == GraphicsAllocation::objectNotResident) {
             usageInfos[contextId].residencyTaskCount = newTaskCount;
         }
     }
-    uint32_t getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
+    TaskCountType getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
     void releaseResidencyInOsContext(uint32_t contextId) { updateResidencyTaskCount(objectNotResident, contextId); }
-    bool isResidencyTaskCountBelow(uint32_t taskCount, uint32_t contextId) const { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
+    bool isResidencyTaskCountBelow(TaskCountType taskCount, uint32_t contextId) const { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
 
     virtual std::string getAllocationInfoString() const;
-    virtual uint64_t peekInternalHandle(MemoryManager *memoryManager) { return 0llu; }
+    virtual int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) { return 0; }
 
-    virtual uint64_t peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId) {
-        return 0u;
+    virtual int peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) {
+        return 0;
     }
 
     virtual uint32_t getNumHandles() {
@@ -216,6 +206,13 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                type == AllocationType::KERNEL_ISA_INTERNAL ||
                type == AllocationType::DEBUG_MODULE_AREA;
     }
+
+    static bool isDebugSurfaceAllocationType(AllocationType type) {
+        return type == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
+               type == AllocationType::DEBUG_SBA_TRACKING_BUFFER;
+    }
+
+    static uint32_t getNumHandlesForKmdSharedAllocation(uint32_t numBanks);
 
     void *getReservedAddressPtr() const {
         return this->reservedAddressRangeInfo.addressPtr;
@@ -268,15 +265,16 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
 
     static constexpr uint32_t defaultBank = 0b1u;
     static constexpr uint32_t allBanks = 0xffffffff;
-    constexpr static uint32_t objectNotResident = std::numeric_limits<uint32_t>::max();
-    constexpr static uint32_t objectNotUsed = std::numeric_limits<uint32_t>::max();
-    constexpr static uint32_t objectAlwaysResident = std::numeric_limits<uint32_t>::max() - 1;
+    constexpr static TaskCountType objectNotResident = std::numeric_limits<TaskCountType>::max();
+    constexpr static TaskCountType objectNotUsed = std::numeric_limits<TaskCountType>::max();
+    constexpr static TaskCountType objectAlwaysResident = std::numeric_limits<TaskCountType>::max() - 1;
     std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
+    bool isShareableHostMemory = false;
 
   protected:
     struct UsageInfo {
-        uint32_t taskCount = objectNotUsed;
-        uint32_t residencyTaskCount = objectNotResident;
+        TaskCountType taskCount = objectNotUsed;
+        TaskCountType residencyTaskCount = objectNotResident;
         uint32_t inspectionId = 0u;
     };
 

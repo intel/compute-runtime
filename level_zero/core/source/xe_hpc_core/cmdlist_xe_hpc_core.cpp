@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/xe_hpc_core/hw_cmds_base.h"
+#include "shared/source/memory_manager/prefetch_manager.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw.inl"
@@ -14,6 +14,7 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw_xehp_and_later.inl"
 
 #include "cmdlist_extended.inl"
+#include "hw_cmds_xe_hpc_core_base.h"
 
 namespace L0 {
 template <>
@@ -26,24 +27,18 @@ NEO::PipeControlArgs CommandListCoreFamily<IGFX_XE_HPC_CORE>::createBarrierFlags
 
 template <>
 ze_result_t CommandListCoreFamily<IGFX_XE_HPC_CORE>::appendMemoryPrefetch(const void *ptr, size_t size) {
-    auto allocData = device->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(ptr);
+    auto svmAllocMgr = device->getDriverHandle()->getSvmAllocsManager();
+    auto allocData = svmAllocMgr->getSVMAlloc(ptr);
 
     if (!allocData) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    auto allowPrefetchingKmdMigratedSharedAllocation = false;
-    if (NEO::DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() != -1) {
-        allowPrefetchingKmdMigratedSharedAllocation = !!NEO::DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get();
-    }
-
-    if (allowPrefetchingKmdMigratedSharedAllocation) {
-        auto memoryManager = device->getDriverHandle()->getMemoryManager();
-        if (memoryManager->isKmdMigrationAvailable(device->getRootDeviceIndex()) &&
-            (allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY)) {
-            auto alloc = allocData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
-            auto subDeviceId = static_cast<DeviceImp *>(device)->getPhysicalSubDeviceId();
-            memoryManager->setMemPrefetch(alloc, subDeviceId, device->getRootDeviceIndex());
+    if (NEO::DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() > 0) {
+        this->performMemoryPrefetch = true;
+        auto prefetchManager = device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
+        if (prefetchManager) {
+            prefetchManager->insertAllocation(this->prefetchContext, *allocData);
         }
     }
 
@@ -72,7 +67,7 @@ void CommandListCoreFamily<IGFX_XE_HPC_CORE>::applyMemoryRangesBarrier(uint32_t 
     NEO::PipeControlArgs args;
     args.hdcPipelineFlush = true;
     args.unTypedDataPortCacheFlush = true;
-    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+    NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
 }
 
 template struct CommandListCoreFamily<IGFX_XE_HPC_CORE>;

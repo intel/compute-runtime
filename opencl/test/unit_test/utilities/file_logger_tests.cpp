@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,13 +8,14 @@
 #include "opencl/test/unit_test/utilities/file_logger_tests.h"
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
-#include "shared/test/unit_test/utilities/logger_tests.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/utilities/base_object_utils.h"
+#include "shared/test/common/utilities/logger_tests.h"
 
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"

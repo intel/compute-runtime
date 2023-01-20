@@ -1,78 +1,22 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "zello_common.h"
+#include "zello_ipc_common.h"
 
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
-
-extern bool verbose;
-bool verbose = false;
 
 uint8_t uinitializedPattern = 1;
 uint8_t expectedPattern = 7;
 size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
 uint32_t serverDevice = 0;
 uint32_t clientDevice = 1;
-
-static int sendmsg_fd(int socket, int fd, char *payload, size_t payloadLen) {
-    char sendBuf[sizeof(ze_ipc_mem_handle_t)] = {};
-    char cmsgBuf[CMSG_SPACE(sizeof(ze_ipc_mem_handle_t))];
-
-    struct iovec msgBuffer;
-    msgBuffer.iov_base = payload;
-    msgBuffer.iov_len = payloadLen;
-
-    struct msghdr msgHeader = {};
-    msgHeader.msg_iov = &msgBuffer;
-    msgHeader.msg_iovlen = 1;
-    msgHeader.msg_control = cmsgBuf;
-    msgHeader.msg_controllen = CMSG_LEN(sizeof(fd));
-
-    struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
-    controlHeader->cmsg_type = SCM_RIGHTS;
-    controlHeader->cmsg_level = SOL_SOCKET;
-    controlHeader->cmsg_len = CMSG_LEN(sizeof(fd));
-
-    *(int *)CMSG_DATA(controlHeader) = fd;
-    ssize_t bytesSent = sendmsg(socket, &msgHeader, 0);
-    if (bytesSent < 0) {
-        return -1;
-    }
-
-    return 0;
-}
-
-static int recvmsg_fd(int socket, char *payload, size_t payloadLen) {
-    int fd = -1;
-    char recvBuf[sizeof(ze_ipc_mem_handle_t)] = {};
-    char cmsgBuf[CMSG_SPACE(sizeof(ze_ipc_mem_handle_t))];
-
-    struct iovec msgBuffer;
-    msgBuffer.iov_base = payload;
-    msgBuffer.iov_len = payloadLen;
-
-    struct msghdr msgHeader = {};
-    msgHeader.msg_iov = &msgBuffer;
-    msgHeader.msg_iovlen = 1;
-    msgHeader.msg_control = cmsgBuf;
-    msgHeader.msg_controllen = CMSG_LEN(sizeof(fd));
-
-    ssize_t bytesSent = recvmsg(socket, &msgHeader, 0);
-    if (bytesSent < 0) {
-        return -1;
-    }
-
-    struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
-    memmove(&fd, CMSG_DATA(controlHeader), sizeof(int));
-    return fd;
-}
 
 inline void initializeProcess(ze_context_handle_t &context,
                               ze_device_handle_t &device,
@@ -81,25 +25,9 @@ inline void initializeProcess(ze_context_handle_t &context,
                               ze_command_queue_handle_t &cmdQueueCopy,
                               ze_command_list_handle_t &cmdListCopy,
                               bool isServer) {
-    SUCCESS_OR_TERMINATE(zeInit(ZE_INIT_FLAG_GPU_ONLY));
-
-    // Retrieve driver
-    uint32_t driverCount = 0;
-    SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, nullptr));
-
-    ze_driver_handle_t driverHandle;
-    SUCCESS_OR_TERMINATE(zeDriverGet(&driverCount, &driverHandle));
-
-    ze_context_desc_t contextDesc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC};
-    SUCCESS_OR_TERMINATE(zeContextCreate(driverHandle, &contextDesc, &context));
-
-    // Retrieve device
-    uint32_t deviceCount = 0;
-    SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, nullptr));
+    auto devices = zelloInitContextAndGetDevices(context);
+    size_t deviceCount = devices.size();
     std::cout << "Number of devices found: " << deviceCount << "\n";
-
-    std::vector<ze_device_handle_t> devices(deviceCount);
-    SUCCESS_OR_TERMINATE(zeDeviceGet(driverHandle, &deviceCount, devices.data()));
 
     // Make the server use device0 and the client device1 if available
     if (deviceCount > 1) {
@@ -128,10 +56,7 @@ inline void initializeProcess(ze_context_handle_t &context,
     // Print some properties
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     // Create command queue
     uint32_t numQueueGroups = 0;
@@ -176,7 +101,7 @@ inline void initializeProcess(ze_context_handle_t &context,
     SUCCESS_OR_TERMINATE(zeCommandListCreate(context, device, &cmdListDescCopy, &cmdListCopy));
 }
 
-void run_client(int commSocket) {
+void runClient(int commSocket) {
     std::cout << "Client process " << std::dec << getpid() << "\n";
 
     ze_context_handle_t context;
@@ -189,8 +114,8 @@ void run_client(int commSocket) {
 
     // receieve the IPC handle for the event pool from the other process
     ze_ipc_event_pool_handle_t pIpcEventPoolHandle = {};
-    int dma_buf_fd = recvmsg_fd(commSocket, pIpcEventPoolHandle.data, ZE_MAX_IPC_HANDLE_SIZE);
-    if (dma_buf_fd < 0) {
+    int dmaBufFd = recvmsgForIpcHandle(commSocket, pIpcEventPoolHandle.data);
+    if (dmaBufFd < 0) {
         std::cerr << "Failing to get IPC event pool handle from server\n";
         std::terminate();
     }
@@ -232,12 +157,12 @@ void run_client(int commSocket) {
 
     // get the dma_buf from the other process
     ze_ipc_mem_handle_t pIpcHandle;
-    dma_buf_fd = recvmsg_fd(commSocket, pIpcHandle.data, ZE_MAX_IPC_HANDLE_SIZE);
-    if (dma_buf_fd < 0) {
+    dmaBufFd = recvmsgForIpcHandle(commSocket, pIpcHandle.data);
+    if (dmaBufFd < 0) {
         std::cerr << "Failing to get dma_buf fd from server\n";
         std::terminate();
     }
-    memcpy(&pIpcHandle, static_cast<void *>(&dma_buf_fd), sizeof(dma_buf_fd));
+    memcpy(&pIpcHandle, static_cast<void *>(&dmaBufFd), sizeof(dmaBufFd));
 
     // get a memory pointer to the BO associated with the dma_buf
     void *zeIpcBuffer;
@@ -260,7 +185,7 @@ void run_client(int commSocket) {
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 }
 
-void run_server(int commSocket, bool &validRet) {
+void runServer(int commSocket, bool &validRet) {
     std::cout << "Server process " << std::dec << getpid() << "\n";
 
     ze_context_handle_t context;
@@ -300,9 +225,9 @@ void run_server(int commSocket, bool &validRet) {
     SUCCESS_OR_TERMINATE(zeEventPoolGetIpcHandle(eventPool, &pIpcEventPoolHandle));
 
     // Pass the IPC handle to the other process
-    int dma_buf_fd;
-    memcpy(static_cast<void *>(&dma_buf_fd), &pIpcEventPoolHandle, sizeof(dma_buf_fd));
-    if (sendmsg_fd(commSocket, static_cast<int>(dma_buf_fd), pIpcEventPoolHandle.data, ZE_MAX_IPC_HANDLE_SIZE) < 0) {
+    int dmaBufFd;
+    memcpy(static_cast<void *>(&dmaBufFd), &pIpcEventPoolHandle, sizeof(dmaBufFd));
+    if (sendmsgForIpcHandle(commSocket, static_cast<int>(dmaBufFd), pIpcEventPoolHandle.data) < 0) {
         std::cerr << "Failing to send IPC event pool handle to client\n";
         std::terminate();
     }
@@ -325,8 +250,8 @@ void run_server(int commSocket, bool &validRet) {
     SUCCESS_OR_TERMINATE(zeMemGetIpcHandle(context, zeBuffer, &pIpcHandle));
 
     // Pass the dma_buf to the other process
-    memcpy(static_cast<void *>(&dma_buf_fd), &pIpcHandle, sizeof(dma_buf_fd));
-    if (sendmsg_fd(commSocket, static_cast<int>(dma_buf_fd), pIpcHandle.data, ZE_MAX_IPC_HANDLE_SIZE) < 0) {
+    memcpy(static_cast<void *>(&dmaBufFd), &pIpcHandle, sizeof(dmaBufFd));
+    if (sendmsgForIpcHandle(commSocket, static_cast<int>(dmaBufFd), pIpcHandle.data) < 0) {
         std::cerr << "Failing to send dma_buf fd to client\n";
         std::terminate();
     }
@@ -356,7 +281,6 @@ void run_server(int commSocket, bool &validRet) {
     // Copy from device-allocated memory
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, validateBuffer, zeBuffer, allocSize,
                                                        nullptr, 1, &events[0]));
-    //nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
@@ -376,11 +300,12 @@ void run_server(int commSocket, bool &validRet) {
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello IPC P2P With Event";
     verbose = isVerbose(argc, argv);
-    bool outputValidationSuccessful;
+    bool outputValidationSuccessful = false;
 
-    serverDevice = getParamValue(argc, argv, "-s", "--serverdevice", 1);
-    clientDevice = getParamValue(argc, argv, "-c", "--clientdevice", 0);
+    serverDevice = getParamValue(argc, argv, "-s", "--serverdevice", serverDevice);
+    clientDevice = getParamValue(argc, argv, "-c", "--clientdevice", clientDevice);
 
     int sv[2];
     if (socketpair(PF_UNIX, SOCK_STREAM, 0, sv) < 0) {
@@ -394,18 +319,15 @@ int main(int argc, char *argv[]) {
         exit(1);
     } else if (0 == child) {
         close(sv[0]);
-        run_client(sv[1]);
+        runClient(sv[1]);
         close(sv[1]);
         exit(0);
     } else {
         close(sv[1]);
-        run_server(sv[0], outputValidationSuccessful);
+        runServer(sv[0], outputValidationSuccessful);
         close(sv[0]);
     }
 
-    std::cout << "\nZello IPC P2P With Event Results validation "
-              << (outputValidationSuccessful ? "PASSED" : "FAILED")
-              << std::endl;
-
-    return 0;
+    printResult(false, outputValidationSuccessful, blackBoxName);
+    return (outputValidationSuccessful ? 0 : 1);
 }

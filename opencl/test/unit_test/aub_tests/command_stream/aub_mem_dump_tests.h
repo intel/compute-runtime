@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,14 @@
 
 #pragma once
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "aub_mapper.h"
 
@@ -44,8 +45,8 @@ void setupAUB(const NEO::Device *pDevice, aub_stream::EngineType engineType) {
     // Header
     auto &hwInfo = pDevice->getHardwareInfo();
     auto deviceId = hwInfo.capabilityTable.aubDeviceId;
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    aubFile.init(hwInfoConfig.getAubStreamSteppingFromHwRevId(hwInfo), deviceId);
+    const auto &productHelper = pDevice->getProductHelper();
+    aubFile.init(productHelper.getAubStreamSteppingFromHwRevId(hwInfo), deviceId);
 
     aubFile.writeMMIO(mmioBase + 0x229c, 0xffff8280);
 

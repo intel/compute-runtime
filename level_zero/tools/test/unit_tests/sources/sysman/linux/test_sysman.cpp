@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,9 @@
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "level_zero/tools/source/sysman/diagnostics/linux/os_diagnostics_imp.h"
+#include "level_zero/tools/source/sysman/firmware/linux/os_firmware_imp.h"
+#include "level_zero/tools/source/sysman/ras/ras_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
 namespace L0 {
@@ -160,7 +163,7 @@ TEST_F(SysmanDeviceFixture, GivenSetValidDrmHandleForDeviceWhenDoingOsSysmanDevi
 
 TEST_F(SysmanDeviceFixture, GivenCreateFsAccessHandleWhenCallinggetFsAccessThenCreatedFsAccessHandleWillBeRetrieved) {
     if (pLinuxSysmanImp->pFsAccess != nullptr) {
-        //delete previously allocated pFsAccess
+        // delete previously allocated pFsAccess
         delete pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = nullptr;
     }
@@ -257,7 +260,7 @@ TEST_F(SysmanDeviceFixture, GivenInvalidPathnameWhenCallingFsAccessExistsThenErr
 
 TEST_F(SysmanDeviceFixture, GivenCreateSysfsAccessHandleWhenCallinggetSysfsAccessThenCreatedSysfsAccessHandleHandleWillBeRetrieved) {
     if (pLinuxSysmanImp->pSysfsAccess != nullptr) {
-        //delete previously allocated pSysfsAccess
+        // delete previously allocated pSysfsAccess
         delete pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = nullptr;
     }
@@ -267,7 +270,7 @@ TEST_F(SysmanDeviceFixture, GivenCreateSysfsAccessHandleWhenCallinggetSysfsAcces
 
 TEST_F(SysmanDeviceFixture, GivenCreateProcfsAccessHandleWhenCallinggetProcfsAccessThenCreatedProcfsAccessHandleWillBeRetrieved) {
     if (pLinuxSysmanImp->pProcfsAccess != nullptr) {
-        //delete previously allocated pProcfsAccess
+        // delete previously allocated pProcfsAccess
         delete pLinuxSysmanImp->pProcfsAccess;
         pLinuxSysmanImp->pProcfsAccess = nullptr;
     }
@@ -293,7 +296,7 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleThenSameHandleIsRetrievedFromO
 
 TEST_F(SysmanDeviceFixture, GivenPmuInterfaceHandleWhenCallinggetPmuInterfaceThenCreatedPmuInterfaceHandleWillBeRetrieved) {
     if (pLinuxSysmanImp->pPmuInterface != nullptr) {
-        //delete previously allocated pPmuInterface
+        // delete previously allocated pPmuInterface
         delete pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pPmuInterface = nullptr;
     }
@@ -318,11 +321,6 @@ TEST_F(SysmanDeviceFixture, GivenNullDrmHandleWhenGettingDrmHandleThenValidDrmHa
     EXPECT_NO_THROW(pLinuxSysmanImp->getDrm());
 }
 
-TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenProductFamilyFromDeviceThenValidCorrectProductFamilyIsReturned) {
-    auto productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
-    EXPECT_EQ(productFamily, pLinuxSysmanImp->getProductFamily());
-}
-
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenGettingFwUtilInterfaceAndGetPciBdfFailsThenFailureIsReturned) {
     auto deviceImp = static_cast<L0::DeviceImp *>(pLinuxSysmanImp->getDeviceHandle());
 
@@ -332,6 +330,51 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenGettingFwUtilInterfaceAndG
 
     EXPECT_EQ(pLinuxSysmanImp->getFwUtilInterface(), nullptr);
     pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidEnumeratedHandlesWhenReleaseIsCalledThenHandleCountZeroIsReturned) {
+    uint32_t count = 0;
+
+    const std::vector<std::string> mockSupportedDiagTypes = {"MOCKSUITE1", "MOCKSUITE2"};
+    std::vector<std::string> mockSupportedFirmwareTypes = {"GSC", "OptionROM", "PSC"};
+
+    FirmwareImp *ptestFirmwareImp = new FirmwareImp(pSysmanDeviceImp->pFirmwareHandleContext->pOsSysman, mockSupportedFirmwareTypes[0]);
+    pSysmanDeviceImp->pFirmwareHandleContext->handleList.push_back(ptestFirmwareImp);
+    count = 0;
+    ze_result_t result = zesDeviceEnumFirmwares(device->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 1u);
+
+    count = 0;
+    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 1u);
+
+    count = 0;
+    RasImp *pRas = new RasImp(pSysmanDeviceImp->pRasHandleContext->pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
+    pSysmanDeviceImp->pRasHandleContext->handleList.push_back(pRas);
+    result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 3u);
+
+    pLinuxSysmanImp->releaseSysmanDeviceResources();
+
+    count = 0;
+    result = zesDeviceEnumFirmwares(device->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 0u);
+
+    count = 0;
+    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 0u);
+
+    count = 0;
+    result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 0u);
 }
 
 TEST_F(SysmanMultiDeviceFixture, GivenValidDeviceHandleHavingSubdevicesWhenValidatingSysmanHandlesForSubdevicesThenSysmanHandleForSubdeviceWillBeSameAsSysmanHandleForDevice) {
@@ -390,7 +433,7 @@ class UnknownDriverModel : public DriverModel {
         PhysicalDevicePciBusInfo pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue);
         return pciBusInfo;
     }
-    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override { return {}; }
+    PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override { return {}; }
 
     bool isGpuHangDetected(OsContext &osContext) override {
         return false;

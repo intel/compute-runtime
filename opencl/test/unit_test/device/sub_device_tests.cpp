@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -158,11 +158,11 @@ TEST(SubDevicesTest, givenClDeviceWithSubDevicesWhenSubDeviceInternalRefCountsAr
 
 TEST(SubDevicesTest, givenDeviceWithSubDevicesWhenSubDeviceCreationFailThenWholeDeviceIsDestroyed) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(10);
+    DebugManager.flags.CreateMultipleSubDevices.set(4);
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
     executionEnvironment.incRefInternal();
-    executionEnvironment.memoryManager.reset(new FailMemoryManager(10, executionEnvironment));
+    executionEnvironment.memoryManager.reset(new FailMemoryManager(4, executionEnvironment));
     auto device = Device::create<RootDevice>(&executionEnvironment, 0u);
     EXPECT_EQ(nullptr, device);
 }
@@ -235,12 +235,14 @@ TEST(SubDevicesTest, givenSubDevicesWhenGettingDeviceByIdZeroThenGetThisSubDevic
 TEST(RootDevicesTest, givenRootDeviceWithoutSubdevicesWhenCreateEnginesThenDeviceCreatesCorrectNumberOfEngines) {
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    auto &gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
 
     auto executionEnvironment = new MockExecutionEnvironment;
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     MockDevice device(executionEnvironment, 0);
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
+    auto &gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
+
     EXPECT_EQ(0u, device.allEngines.size());
     device.createEngines();
     EXPECT_EQ(gpgpuEngines.size(), device.allEngines.size());
@@ -307,9 +309,7 @@ TEST(SubDevicesTest, whenCreatingEngineInstancedSubDeviceThenSetCorrectSubdevice
         using RootDevice::RootDevice;
     };
 
-    auto executionEnvironment = new ExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    auto executionEnvironment = new MockExecutionEnvironment();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     DeviceFactory::createMemoryManagerFunc(*executionEnvironment);
 
@@ -326,18 +326,18 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
     bool createDevices(uint32_t numGenericSubDevices, uint32_t numCcs) {
         DebugManager.flags.CreateMultipleSubDevices.set(numGenericSubDevices);
 
-        auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
-        auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
+        auto &rootDeviceEnvironment = *executionEnvironment->rootDeviceEnvironments[0].get();
+        auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
         hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled = numCcs;
         hwInfo->featureTable.flags.ftrCCSNode = (numCcs > 0);
         hwInfo->capabilityTable.blitterOperationsSupported = true;
-        HwHelper::get(hwInfo->platform.eRenderCoreFamily).adjustDefaultEngineType(hwInfo);
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        gfxCoreHelper.adjustDefaultEngineType(hwInfo);
 
-        if (!multiCcsDevice(*hwInfo, numCcs)) {
+        if (!multiCcsDevice(rootDeviceEnvironment, numCcs)) {
             return false;
         }
         executionEnvironment->parseAffinityMask();
@@ -369,7 +369,8 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
     template <typename MockDeviceT>
     bool hasAllEngines(MockDeviceT *device) {
         auto &hwInfo = device->getHardwareInfo();
-        auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
+        auto &gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
 
         for (size_t i = 0; i < gpgpuEngines.size(); i++) {
             if (device->allEngines[i].getEngineType() != gpgpuEngines[i].first) {
@@ -380,8 +381,10 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
         return true;
     }
 
-    bool multiCcsDevice(const HardwareInfo &hwInfo, uint32_t expectedNumCcs) {
-        auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+    bool multiCcsDevice(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t expectedNumCcs) {
+        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
 
         uint32_t numCcs = 0;
 
@@ -586,7 +589,8 @@ TEST_F(EngineInstancedDeviceTests, givenEngineInstancedSubDeviceWhenEngineCreati
     auto subDevice = static_cast<MockSubDevice *>(rootDevice->getSubDevice(0));
 
     auto &hwInfo = rootDevice->getHardwareInfo();
-    auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+    auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
+    auto &gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
 
     subDevice->engineInstanced = true;
     subDevice->failOnCreateEngine = true;
@@ -992,9 +996,9 @@ HWTEST_F(EngineInstancedDeviceTests, whenCreateMultipleCommandQueuesThenEnginesA
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
-    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
 
-    if (!hwHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
+    if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
     }
 
@@ -1011,7 +1015,7 @@ HWTEST_F(EngineInstancedDeviceTests, whenCreateMultipleCommandQueuesThenEnginesA
     }
 
     const auto &defaultEngine = clRootDevice->getDefaultEngine();
-    const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
+    const auto engineGroupType = gfxCoreHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
 
     auto defaultEngineGroupIndex = clRootDevice->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
     auto engines = clRootDevice->getDevice().getRegularEngineGroups()[defaultEngineGroupIndex].engines;
@@ -1038,9 +1042,9 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignBitfieldwWe
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
-    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
 
-    if (!hwHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
+    if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
     }
 
@@ -1057,7 +1061,7 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignBitfieldwWe
     }
 
     const auto &defaultEngine = clRootDevice->getDefaultEngine();
-    const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
+    const auto engineGroupType = gfxCoreHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
 
     auto defaultEngineGroupIndex = clRootDevice->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
     auto engines = clRootDevice->getDevice().getRegularEngineGroups()[defaultEngineGroupIndex].engines;
@@ -1087,9 +1091,9 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1wWenCre
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
-    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
 
-    if (!hwHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
+    if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
     }
 
@@ -1106,7 +1110,7 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1wWenCre
     }
 
     const auto &defaultEngine = clRootDevice->getDefaultEngine();
-    const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
+    const auto engineGroupType = gfxCoreHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
 
     auto defaultEngineGroupIndex = clRootDevice->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
     auto engines = clRootDevice->getDevice().getRegularEngineGroups()[defaultEngineGroupIndex].engines;
@@ -1134,9 +1138,9 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1AndCmdQ
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
-    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
 
-    if (!hwHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
+    if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
     }
 
@@ -1153,7 +1157,7 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1AndCmdQ
     }
 
     const auto &defaultEngine = clRootDevice->getDefaultEngine();
-    const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
+    const auto engineGroupType = gfxCoreHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hwInfo);
 
     auto defaultEngineGroupIndex = clRootDevice->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
     auto engines = clRootDevice->getDevice().getRegularEngineGroups()[defaultEngineGroupIndex].engines;
@@ -1182,9 +1186,9 @@ HWTEST_F(EngineInstancedDeviceTests, givenEnableCmdQRoundRobindEngineAssignDisab
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
-    const auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
 
-    if (!hwHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
+    if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
         GTEST_SKIP();
     }
 

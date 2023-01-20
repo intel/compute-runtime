@@ -7,7 +7,6 @@
 set(IGDRCL_SRCS_tests_os_interface_linux
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     ${CMAKE_CURRENT_SOURCE_DIR}/device_os_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests_1.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests_2.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_gem_close_worker_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_drm_memory_manager_tests.cpp

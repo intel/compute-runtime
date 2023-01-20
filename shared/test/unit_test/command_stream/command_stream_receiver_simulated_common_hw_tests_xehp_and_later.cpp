@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,10 @@
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_aub_stream.h"
-#include "shared/test/common/mocks/mock_csr_simulated_common_hw.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/mocks/mock_aub_stream.h"
+#include "shared/test/unit_test/mocks/mock_csr_simulated_common_hw.h"
 
 using XeHPAndLaterMockSimulatedCsrHwTests = Test<DeviceFixture>;
 
@@ -202,7 +203,7 @@ class XeHPAndLaterTileRangeRegisterTest : public DeviceFixture, public ::testing
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     void checkMMIOs(MMIOList &list, uint32_t tilesNumber, uint32_t localMemorySizeTotalInGB) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,7 +112,7 @@ int MultiCommand::initialize(const std::vector<std::string> &args) {
         }
     }
 
-    //save file with builds arguments to vector of strings, line by line
+    // save file with builds arguments to vector of strings, line by line
     if (argHelper->fileExists(pathToCommandFile)) {
         argHelper->readFileToVectorOfStrings(pathToCommandFile, lines);
         if (lines.empty()) {

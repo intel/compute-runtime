@@ -9,11 +9,26 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
+#include "level_zero/tools/source/sysman/sysman_imp.h"
+
 namespace L0 {
 
 ze_result_t PowerImp::powerGetProperties(zes_power_properties_t *pProperties) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    void *pNext = pProperties->pNext;
     *pProperties = powerProperties;
-    return ZE_RESULT_SUCCESS;
+    pProperties->pNext = pNext;
+    while (pNext) {
+        zes_power_ext_properties_t *pExtProps = reinterpret_cast<zes_power_ext_properties_t *>(pNext);
+        if (pExtProps->stype == ZES_STRUCTURE_TYPE_POWER_EXT_PROPERTIES) {
+            result = pOsPower->getPropertiesExt(pExtProps);
+            if (result != ZE_RESULT_SUCCESS) {
+                return result;
+            }
+        }
+        pNext = pExtProps->pNext;
+    }
+    return result;
 }
 
 ze_result_t PowerImp::powerGetEnergyCounter(zes_power_energy_counter_t *pEnergy) {
@@ -27,6 +42,15 @@ ze_result_t PowerImp::powerGetLimits(zes_power_sustained_limit_t *pSustained, ze
 ze_result_t PowerImp::powerSetLimits(const zes_power_sustained_limit_t *pSustained, const zes_power_burst_limit_t *pBurst, const zes_power_peak_limit_t *pPeak) {
     return pOsPower->setLimits(pSustained, pBurst, pPeak);
 }
+
+ze_result_t PowerImp::powerGetLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    return pOsPower->getLimitsExt(pCount, pSustained);
+}
+
+ze_result_t PowerImp::powerSetLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    return pOsPower->setLimitsExt(pCount, pSustained);
+}
+
 ze_result_t PowerImp::powerGetEnergyThreshold(zes_energy_threshold_t *pThreshold) {
     return pOsPower->getEnergyThreshold(pThreshold);
 }
@@ -36,10 +60,13 @@ ze_result_t PowerImp::powerSetEnergyThreshold(double threshold) {
 }
 
 PowerImp::PowerImp(OsSysman *pOsSysman, ze_device_handle_t handle) : deviceHandle(handle) {
-    ze_device_properties_t deviceProperties = {};
-    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-    pOsPower = OsPower::create(pOsSysman, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE, deviceProperties.subdeviceId);
+
+    uint32_t subdeviceId = std::numeric_limits<uint32_t>::max();
+    ze_bool_t onSubdevice = false;
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice, false);
+    pOsPower = OsPower::create(pOsSysman, onSubdevice, subdeviceId);
     UNRECOVERABLE_IF(nullptr == pOsPower);
+
     init();
 }
 

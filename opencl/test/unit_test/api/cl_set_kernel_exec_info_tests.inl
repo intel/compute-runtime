@@ -17,8 +17,8 @@ using namespace NEO;
 
 class KernelExecInfoFixture : public ApiFixture<> {
   protected:
-    void SetUp() override {
-        ApiFixture::SetUp();
+    void setUp() {
+        ApiFixture::setUp();
 
         pKernelInfo = std::make_unique<KernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
@@ -33,7 +33,7 @@ class KernelExecInfoFixture : public ApiFixture<> {
         }
     }
 
-    void TearDown() override {
+    void tearDown() {
         if (svmCapabilities != 0) {
             clSVMFree(pContext, ptrSvm);
         }
@@ -42,7 +42,7 @@ class KernelExecInfoFixture : public ApiFixture<> {
             delete pMockMultiDeviceKernel;
         }
 
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -53,7 +53,7 @@ class KernelExecInfoFixture : public ApiFixture<> {
     cl_device_svm_capabilities svmCapabilities = 0;
 };
 
-typedef Test<KernelExecInfoFixture> clSetKernelExecInfoTests;
+using clSetKernelExecInfoTests = Test<KernelExecInfoFixture>;
 
 namespace ULT {
 
@@ -68,8 +68,8 @@ TEST_F(clSetKernelExecInfoTests, GivenNullKernelWhenSettingAdditionalKernelInfoT
 }
 
 TEST_F(clSetKernelExecInfoTests, GivenDeviceNotSupportingSvmWhenSettingKernelExecInfoThenErrorIsReturnedOnSvmRelatedParams) {
-    auto &hwHelper = NEO::ClHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (!hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clGfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    if (!clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[ApiFixture::testedRootDeviceIndex]->getMutableHardwareInfo();
@@ -304,55 +304,51 @@ TEST_F(clSetKernelExecInfoTests, givenNonExistingParamNameWithValuesWhenSettingA
 }
 
 HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhenSettingAdditionalKernelInfoThenSuccessIsReturned) {
-    auto &hwHelper = NEO::ClHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (!hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clGfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    if (!clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     uint32_t newThreadArbitrationPolicy = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
     size_t ptrSizeInBytes = sizeof(uint32_t *);
 
     retVal = clSetKernelExecInfo(
-        pMockMultiDeviceKernel,                              // cl_kernel kernel
-        CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL, // cl_kernel_exec_info param_name
-        ptrSizeInBytes,                                      // size_t param_value_size
-        &newThreadArbitrationPolicy                          // const void *param_value
-    );
+        pMockMultiDeviceKernel,
+        CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL,
+        ptrSizeInBytes,
+        &newThreadArbitrationPolicy);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(getNewKernelArbitrationPolicy(newThreadArbitrationPolicy), pMockKernel->threadArbitrationPolicy);
-    EXPECT_EQ(getNewKernelArbitrationPolicy(newThreadArbitrationPolicy), pMockKernel->getThreadArbitrationPolicy());
+    EXPECT_EQ(getNewKernelArbitrationPolicy(newThreadArbitrationPolicy), pMockKernel->getDescriptor().kernelAttributes.threadArbitrationPolicy);
 }
 
 HWTEST_F(clSetKernelExecInfoTests, givenKernelExecInfoThreadArbitrationPolicyWhenNotSupportedAndSettingAdditionalKernelInfoThenClInvalidDeviceIsReturned) {
-    auto &hwHelper = NEO::ClHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clGfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    if (clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     uint32_t newThreadArbitrationPolicy = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
     size_t ptrSizeInBytes = sizeof(uint32_t *);
 
     retVal = clSetKernelExecInfo(
-        pMockMultiDeviceKernel,                              // cl_kernel kernel
-        CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL, // cl_kernel_exec_info param_name
-        ptrSizeInBytes,                                      // size_t param_value_size
-        &newThreadArbitrationPolicy                          // const void *param_value
-    );
+        pMockMultiDeviceKernel,
+        CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL,
+        ptrSizeInBytes,
+        &newThreadArbitrationPolicy);
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
 HWTEST_F(clSetKernelExecInfoTests, givenInvalidThreadArbitrationPolicyWhenSettingAdditionalKernelInfoThenClInvalidValueIsReturned) {
-    auto &hwHelper = NEO::ClHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (!hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clGfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    if (!clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     uint32_t invalidThreadArbitrationPolicy = 0;
     size_t ptrSizeInBytes = 1 * sizeof(uint32_t *);
 
     retVal = clSetKernelExecInfo(
-        pMockMultiDeviceKernel,                              // cl_kernel kernel
-        CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL, // cl_kernel_exec_info param_name
-        ptrSizeInBytes,                                      // size_t param_value_size
-        &invalidThreadArbitrationPolicy                      // const void *param_value
-    );
+        pMockMultiDeviceKernel,
+        CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_INTEL,
+        ptrSizeInBytes,
+        &invalidThreadArbitrationPolicy);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
 }
 

@@ -18,21 +18,21 @@ extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX
 
 namespace L0 {
 namespace ult {
-struct AubCsrFixture : public ContextFixture {
+struct AubCsrFixture : public DeviceFixture {
     template <typename T>
     void setUpT() {
         auto csrCreateFcn = &commandStreamReceiverFactory[IGFX_MAX_CORE + NEO::defaultHwInfo->platform.eRenderCoreFamily];
         variableBackup = std::make_unique<VariableBackup<CommandStreamReceiverCreateFunc>>(csrCreateFcn);
         *csrCreateFcn = UltAubCommandStreamReceiver<T>::create;
-        ContextFixture::SetUp();
+        DeviceFixture::setUp();
     }
     template <typename T>
     void tearDownT() {
-        ContextFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
-    void SetUp() {}
-    void TearDown() {}
+    void setUp() {}
+    void tearDown() {}
     std::unique_ptr<VariableBackup<CommandStreamReceiverCreateFunc>> variableBackup;
 };
 

@@ -12,17 +12,18 @@
 
 namespace NEO {
 
-inline const std::string getGdiName() {
-    if (DebugManager.flags.OverrideGdiPath.get() != "unk") {
-        return DebugManager.flags.OverrideGdiPath.get();
-    } else {
-        return Os::gdiDllName;
+Gdi::Gdi() : gdiDll(createGdiDLL()) {
+    if (gdiDll) {
+        initialized = Gdi::getAllProcAddresses();
+    }
+    if constexpr (GdiLogging::gdiLoggingSupport) {
+        GdiLogging::init();
     }
 }
 
-Gdi::Gdi() : gdiDll(NEO::OsLibrary::load(getGdiName(), nullptr)) {
-    if (gdiDll) {
-        initialized = Gdi::getAllProcAddresses();
+Gdi::~Gdi() {
+    if constexpr (GdiLogging::gdiLoggingSupport) {
+        GdiLogging::close();
     }
 }
 

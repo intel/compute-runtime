@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/completion_stamp.h"
-#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/map_operation_type.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/utilities/iflist.h"
@@ -31,11 +31,6 @@ class HwTimeStamps;
 class TimestampPacketContainer;
 template <class T>
 class TagNode;
-
-enum MapOperationType {
-    MAP,
-    UNMAP
-};
 
 struct KernelOperation {
   protected:
@@ -86,7 +81,7 @@ class Command : public IFNode<Command> {
   public:
     // returns command's taskCount obtained from completion stamp
     //   as acquired from command stream receiver
-    virtual CompletionStamp &submit(uint32_t taskLevel, bool terminated) = 0;
+    virtual CompletionStamp &submit(TaskCountType taskLevel, bool terminated) = 0;
 
     Command() = delete;
     Command(CommandQueue &commandQueue);
@@ -118,7 +113,7 @@ class CommandMapUnmap : public Command {
     CommandMapUnmap(MapOperationType operationType, MemObj &memObj, MemObjSizeArray &copySize, MemObjOffsetArray &copyOffset, bool readOnly,
                     CommandQueue &commandQueue);
     ~CommandMapUnmap() override = default;
-    CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
+    CompletionStamp &submit(TaskCountType taskLevel, bool terminated) override;
 
   private:
     MemObj &memObj;
@@ -136,7 +131,7 @@ class CommandComputeKernel : public Command {
 
     ~CommandComputeKernel() override;
 
-    CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
+    CompletionStamp &submit(TaskCountType taskLevel, bool terminated) override;
 
     LinearStream *getCommandStream() override { return kernelOperation->commandStream.get(); }
     Kernel *peekKernel() const { return kernel; }
@@ -156,7 +151,7 @@ class CommandComputeKernel : public Command {
 class CommandWithoutKernel : public Command {
   public:
     using Command::Command;
-    CompletionStamp &submit(uint32_t taskLevel, bool terminated) override;
-    bool dispatchBlitOperation();
+    CompletionStamp &submit(TaskCountType taskLevel, bool terminated) override;
+    TaskCountType dispatchBlitOperation();
 };
 } // namespace NEO

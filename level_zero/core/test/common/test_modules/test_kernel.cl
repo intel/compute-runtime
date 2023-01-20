@@ -35,6 +35,12 @@ kernel void test(const global float *a, const global float *b,
     printf("local_id = %d, global_id = %d \n", local_id, global_id);
 }
 
+__kernel void test_pointer_by_value(long address) {
+    if (address) {
+        ((__global int *)address)[get_global_id(0)] += 1;
+    }
+}
+
 __kernel void test_get_global_sizes(__global uint *outGlobalSize) {
     outGlobalSize[0] = get_global_size(0);
     outGlobalSize[1] = get_global_size(1);
@@ -51,11 +57,6 @@ __kernel void test_get_group_count(__global uint *outGroupCount) {
 }
 
 kernel void memcpy_bytes(__global char *dst, const __global char *src) {
-    unsigned int gid = get_global_id(0);
-    dst[gid] = src[gid];
-}
-
-kernel __attribute__((work_group_size_hint(1, 1, 1))) void memcpy_bytes_attr(__global char *dst, const __global char *src) {
     unsigned int gid = get_global_id(0);
     dst[gid] = src[gid];
 }

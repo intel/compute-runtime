@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "offline_linker_tests.h"
 
 #include "shared/offline_compiler/source/ocloc_error_code.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/string.h"
@@ -519,6 +520,37 @@ TEST_F(OfflineLinkerTest, GivenValidInputFileContentsWhenLlvmBcOutputIsRequested
 TEST_F(OfflineLinkerTest, GivenValidInputFileContentsAndFailingIGCWhenLlvmBcOutputIsRequestedThenErrorIsReturned) {
     MockCompilerDebugVars igcDebugVars{gEnvironment->igcDebugVars};
     igcDebugVars.forceBuildFailure = true;
+    setIgcDebugVars(igcDebugVars);
+
+    auto spirvFileContent = createFileContent(getEmptySpirvFile(), IGC::CodeType::spirV);
+    auto llvmbcFileContent = createFileContent(getEmptyLlvmBcFile(), IGC::CodeType::llvmBc);
+
+    mockArgHelper.interceptOutput = true;
+
+    HardwareInfo hwInfo{};
+    const auto igcInitializationResult{mockOclocIgcFacade->initialize(hwInfo)};
+    ASSERT_EQ(OclocErrorCode::SUCCESS, igcInitializationResult);
+
+    MockOfflineLinker mockOfflineLinker{&mockArgHelper, std::move(mockOclocIgcFacade)};
+    mockOfflineLinker.inputFilesContent.emplace_back(std::move(spirvFileContent.bytes), spirvFileContent.size, spirvFileContent.codeType);
+    mockOfflineLinker.inputFilesContent.emplace_back(std::move(llvmbcFileContent.bytes), llvmbcFileContent.size, llvmbcFileContent.codeType);
+    mockOfflineLinker.outputFormat = IGC::CodeType::llvmBc;
+    mockOfflineLinker.operationMode = OperationMode::LINK_FILES;
+
+    ::testing::internal::CaptureStdout();
+    const auto linkingResult{mockOfflineLinker.execute()};
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    ASSERT_EQ(OclocErrorCode::BUILD_PROGRAM_FAILURE, linkingResult);
+    EXPECT_EQ(0u, mockArgHelper.interceptedFiles.count("linker_output"));
+
+    const std::string expectedErrorMessage{"Error: Translation has failed! IGC returned empty output.\n"};
+    EXPECT_EQ(expectedErrorMessage, output);
+}
+
+TEST_F(OfflineLinkerTest, GivenValidInputFileContentsAndIGCSignalingSuccessButReturningEmptyOutputWhenLlvmBcOutputIsRequestedThenErrorIsReturned) {
+    MockCompilerDebugVars igcDebugVars{gEnvironment->igcDebugVars};
+    igcDebugVars.forceSuccessWithEmptyOutput = true;
     setIgcDebugVars(igcDebugVars);
 
     auto spirvFileContent = createFileContent(getEmptySpirvFile(), IGC::CodeType::spirV);

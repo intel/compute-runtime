@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 
 namespace NEO {
 class FailMemoryManager;
@@ -44,12 +43,13 @@ class MockClDevice : public ClDevice {
 
     explicit MockClDevice(MockDevice *pMockDevice);
 
+    void setPciUuid(std::array<uint8_t, ProductHelper::uuidSize> &id);
     bool createEngines() { return device.createEngines(); }
     void setOSTime(OSTime *osTime) { device.setOSTime(osTime); }
     bool getCpuTime(uint64_t *timeStamp) { return device.getCpuTime(timeStamp); }
     void setPreemptionMode(PreemptionMode mode) { device.setPreemptionMode(mode); }
     void injectMemoryManager(MemoryManager *pMemoryManager) { device.injectMemoryManager(pMemoryManager); }
-    void setPerfCounters(PerformanceCounters *perfCounters) { device.setPerfCounters(perfCounters); }
+    void setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters) { device.setPerfCounters(std::move(perfCounters)); }
     const char *getProductAbbrev() const { return device.getProductAbbrev(); }
     template <typename T>
     UltCommandStreamReceiver<T> &getUltCommandStreamReceiver() { return device.getUltCommandStreamReceiver<T>(); }
@@ -68,18 +68,9 @@ class MockClDevice : public ClDevice {
         auto executionEnvironment = prepareExecutionEnvironment(pHwInfo, rootDeviceIndex);
         return MockDevice::createWithExecutionEnvironment<T>(pHwInfo, executionEnvironment, rootDeviceIndex);
     }
-    static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
-        auto executionEnvironment = new MockClExecutionEnvironment();
-        auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : rootDeviceIndex + 1;
-        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
-        pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
-        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(pHwInfo);
-            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
-        }
-        executionEnvironment->calculateMaxOsContextCount();
-        return executionEnvironment;
-    }
+
+    static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex);
+
     SubDevice *createSubDevice(uint32_t subDeviceIndex) { return device.createSubDevice(subDeviceIndex); }
     std::unique_ptr<CommandStreamReceiver> createCommandStreamReceiver() const { return device.createCommandStreamReceiver(); }
     BuiltIns *getBuiltIns() const { return getDevice().getBuiltIns(); }

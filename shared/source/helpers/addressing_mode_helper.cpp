@@ -19,8 +19,8 @@ bool failBuildProgramWithStatefulAccess(const HardwareInfo &hwInfo) {
         failBuildProgram = static_cast<bool>(NEO::DebugManager.flags.FailBuildProgramWithStatefulAccess.get());
     }
 
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto forceToStatelessRequired = compilerHwInfoConfig.isForceToStatelessRequired();
+    const auto &compilerProductHelper = *CompilerProductHelper::get(hwInfo.platform.eProductFamily);
+    auto forceToStatelessRequired = compilerProductHelper.isForceToStatelessRequired();
 
     return failBuildProgram && forceToStatelessRequired;
 }

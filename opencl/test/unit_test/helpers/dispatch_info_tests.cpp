@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "gtest/gtest.h"
@@ -20,16 +21,16 @@
 using namespace NEO;
 
 class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
   public:
     DispatchInfoFixture() {}
 
   protected:
-    void SetUp() {
-        ClDeviceFixture::SetUp();
+    void setUp() {
+        ClDeviceFixture::setUp();
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
+        ContextFixture::setUp(1, &device);
         pKernelInfo = std::make_unique<MockKernelInfo>();
 
         pKernelInfo->setPerThreadScratchSize(1024, 0);
@@ -40,12 +41,12 @@ class DispatchInfoFixture : public ContextFixture, public ClDeviceFixture {
         pKernel = new MockKernel(pProgram, *pKernelInfo, *pClDevice);
         pKernel->slmTotalSize = 128;
     }
-    void TearDown() {
+    void tearDown() {
         delete pKernel;
         delete pProgram;
 
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        ContextFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     std::unique_ptr<MockKernelInfo> pKernelInfo;

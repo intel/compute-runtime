@@ -1,80 +1,23 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "zello_common.h"
+#include "zello_ipc_common.h"
 
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
 
-extern bool verbose;
-bool verbose = false;
 bool useCopyEngine = false;
 
 uint8_t uinitializedPattern = 1;
 uint8_t expectedPattern = 7;
 size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
-
-static int sendmsgFd(int socket, int fd) {
-    char sendBuf[sizeof(ze_ipc_mem_handle_t)] = {};
-    char cmsgBuf[CMSG_SPACE(sizeof(ze_ipc_mem_handle_t))];
-
-    struct iovec msgBuffer;
-    msgBuffer.iov_base = sendBuf;
-    msgBuffer.iov_len = sizeof(*sendBuf);
-
-    struct msghdr msgHeader = {};
-    msgHeader.msg_iov = &msgBuffer;
-    msgHeader.msg_iovlen = 1;
-    msgHeader.msg_control = cmsgBuf;
-    msgHeader.msg_controllen = CMSG_LEN(sizeof(fd));
-
-    struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
-    controlHeader->cmsg_type = SCM_RIGHTS;
-    controlHeader->cmsg_level = SOL_SOCKET;
-    controlHeader->cmsg_len = CMSG_LEN(sizeof(fd));
-
-    *(int *)CMSG_DATA(controlHeader) = fd;
-    ssize_t bytesSent = sendmsg(socket, &msgHeader, 0);
-    if (bytesSent < 0) {
-        return -1;
-    }
-
-    return 0;
-}
-
-static int recvmsgFd(int socket) {
-    int fd = -1;
-    char recvBuf[sizeof(ze_ipc_mem_handle_t)] = {};
-    char cmsgBuf[CMSG_SPACE(sizeof(ze_ipc_mem_handle_t))];
-
-    struct iovec msgBuffer;
-    msgBuffer.iov_base = recvBuf;
-    msgBuffer.iov_len = sizeof(recvBuf);
-
-    struct msghdr msgHeader = {};
-    msgHeader.msg_iov = &msgBuffer;
-    msgHeader.msg_iovlen = 1;
-    msgHeader.msg_control = cmsgBuf;
-    msgHeader.msg_controllen = CMSG_LEN(sizeof(fd));
-
-    ssize_t bytesSent = recvmsg(socket, &msgHeader, 0);
-    if (bytesSent < 0) {
-        return -1;
-    }
-
-    struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
-    if (!CMSG_DATA(controlHeader)) {
-        return -1;
-    }
-    memmove(&fd, CMSG_DATA(controlHeader), sizeof(int));
-    return fd;
-}
 
 inline void initializeProcess(ze_context_handle_t &context,
                               ze_device_handle_t &device,
@@ -220,13 +163,13 @@ void runClient(int commSocket) {
     SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // get the dma_buf from the other process
-    int dmaBufFd = recvmsgFd(commSocket);
+    ze_ipc_mem_handle_t pIpcHandle = {};
+    int dmaBufFd = recvmsgForIpcHandle(commSocket, pIpcHandle.data);
     if (dmaBufFd < 0) {
-        std::cerr << "Failing to get dma_buf fd from server\n";
+        std::cerr << "Failing to get IPC memory handle from server\n";
         std::terminate();
     }
-    ze_ipc_mem_handle_t pIpcHandle;
-    memcpy(&pIpcHandle, static_cast<void *>(&dmaBufFd), sizeof(dmaBufFd));
+    memcpy(pIpcHandle.data, &dmaBufFd, sizeof(dmaBufFd));
 
     // get a memory pointer to the BO associated with the dma_buf
     void *zeIpcBuffer;
@@ -279,9 +222,9 @@ void runServer(int commSocket, bool &validRet) {
 
     // Pass the dma_buf to the other process
     int dmaBufFd;
-    memcpy(static_cast<void *>(&dmaBufFd), &pIpcHandle, sizeof(dmaBufFd));
-    if (sendmsgFd(commSocket, static_cast<int>(dmaBufFd)) < 0) {
-        std::cerr << "Failing to send dma_buf fd to client\n";
+    memcpy(static_cast<void *>(&dmaBufFd), pIpcHandle.data, sizeof(dmaBufFd));
+    if (sendmsgForIpcHandle(commSocket, dmaBufFd, pIpcHandle.data) < 0) {
+        std::cerr << "Failing to send IPC handle to client\n";
         std::terminate();
     }
 
@@ -329,6 +272,7 @@ void runServer(int commSocket, bool &validRet) {
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello IPC P2P";
     verbose = isVerbose(argc, argv);
     bool outputValidationSuccessful;
 
@@ -355,9 +299,6 @@ int main(int argc, char *argv[]) {
         close(sv[0]);
     }
 
-    std::cout << "\nZello IPC P2P Results validation "
-              << (outputValidationSuccessful ? "PASSED" : "FAILED")
-              << std::endl;
-
-    return 0;
+    printResult(false, outputValidationSuccessful, blackBoxName);
+    return outputValidationSuccessful ? 0 : 1;
 }

@@ -489,5 +489,27 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenMetricQueryPoolIsDestroyedWhenMetric
     EXPECT_EQ(workloadPartition.WorkloadPartition.Enabled, true);
 }
 
+TEST_F(MultiDeviceMetricQueryPoolAffinityMaskTest, givenAffinityMaskEnabledWhenGetSubDeviceClientOptionsIsCalledThenReturnCorrectSubDeviceNumber) {
+
+    auto subDevice = ClientOptionsData_1_0{};
+    auto subDeviceIndex = ClientOptionsData_1_0{};
+    auto subDeviceCount = ClientOptionsData_1_0{};
+    auto workloadPartition = ClientOptionsData_1_0{};
+
+    // Root Device is used with Affinity Mask 0.1
+    auto &metricSource = devices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &metricsLibrary = metricSource.getMetricsLibrary();
+
+    metricsLibrary.getSubDeviceClientOptions(subDevice, subDeviceIndex, subDeviceCount, workloadPartition);
+
+    EXPECT_EQ(subDevice.Type, MetricsLibraryApi::ClientOptionsType::SubDevice);
+    // Still Root device
+    EXPECT_EQ(subDevice.SubDevice.Enabled, false);
+
+    EXPECT_EQ(subDeviceIndex.Type, MetricsLibraryApi::ClientOptionsType::SubDeviceIndex);
+    // Enabled Sub Device index is used
+    EXPECT_EQ(subDeviceIndex.SubDeviceIndex.Index, 1);
+}
+
 } // namespace ult
 } // namespace L0

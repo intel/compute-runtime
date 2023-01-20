@@ -14,18 +14,11 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/utilities/directory.h"
 
 #include <cstring>
 #include <fstream>
 #include <sstream>
-
-#ifdef _WIN32
-#include <direct.h>
-#define MakeDirectory _mkdir
-#else
-#include <sys/stat.h>
-#define MakeDirectory(dir) mkdir(dir, 0777)
-#endif
 
 template <typename T>
 T readUnaligned(const void *ptr) {
@@ -99,7 +92,7 @@ const void *BinaryDecoder::getDevBinary() {
     std::string decoderWarnings;
     auto input = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size());
     auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(input, decoderErrors, decoderWarnings);
-    for (const auto &sectionHeader : elf.sectionHeaders) { //Finding right section
+    for (const auto &sectionHeader : elf.sectionHeaders) { // Finding right section
         auto sectionData = ArrayRef<const char>(reinterpret_cast<const char *>(sectionHeader.data.begin()), sectionHeader.data.size());
         switch (sectionHeader.header->type) {
         case NEO::Elf::SHT_OPENCL_LLVM_BINARY: {
@@ -146,7 +139,7 @@ std::vector<std::string> BinaryDecoder::loadPatchList() {
     } else {
         std::vector<std::string> patchList;
         if (pathToPatch.empty()) {
-            argHelper->printf("Path to patch list not provided - using defaults, skipping patchokens as undefined.\n");
+            argHelper->printf("Path to patch list not provided - using defaults, skipping patchtokens as undefined.\n");
             patchList = {
                 "struct SProgramBinaryHeader",
                 "{",
@@ -210,7 +203,7 @@ std::vector<std::string> BinaryDecoder::loadPatchList() {
 }
 
 void BinaryDecoder::parseTokens() {
-    //Creating patchlist definitions
+    // Creating patchlist definitions
     auto patchList = loadPatchList();
 
     size_t pos = findPos(patchList, "struct SProgramBinaryHeader");
@@ -274,11 +267,11 @@ void BinaryDecoder::parseTokens() {
         patchTokens[static_cast<uint8_t>(patchNo)] = std::move(patchTokenPtr);
     }
 
-    //Finding and reading Program Binary Header
+    // Finding and reading Program Binary Header
     size_t structPos = findPos(patchList, "struct SProgramBinaryHeader") + 1;
     programHeader.size = readStructFields(patchList, structPos, programHeader.fields);
 
-    //Finding and reading Kernel Binary Header
+    // Finding and reading Kernel Binary Header
     structPos = findPos(patchList, "struct SKernelBinaryHeader") + 1;
     kernelHeader.size = readStructFields(patchList, structPos, kernelHeader.fields);
 
@@ -336,7 +329,7 @@ Examples:
   Disassemble Intel Compute GPU device binary
     ocloc disasm -file source_file_Gen9core.bin
 )===",
-                      argHelper->getAllSupportedAcronyms().c_str());
+                      argHelper->createStringForArgs(argHelper->productConfigHelper->getDeviceAcronyms()).c_str());
 }
 
 int BinaryDecoder::processBinary(const void *&ptr, std::ostream &ptmFile) {
@@ -359,7 +352,7 @@ int BinaryDecoder::processBinary(const void *&ptr, std::ostream &ptmFile) {
     readPatchTokens(ptr, patchListSize, ptmFile);
     iga->setGfxCore(static_cast<GFXCORE_FAMILY>(device));
 
-    //Reading Kernels
+    // Reading Kernels
     for (uint32_t i = 0; i < numberOfKernels; ++i) {
         ptmFile << "Kernel #" << i << '\n';
         processKernel(ptr, ptmFile);
@@ -520,7 +513,7 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
         if ("-file" == currArg && hasMoreArgs) {
             binaryFile = args[++argIndex];
         } else if ("-device" == currArg && hasMoreArgs) {
-            iga->setProductFamily(getProductFamilyFromDeviceName(args[++argIndex]));
+            setProductFamilyForIga(args[++argIndex], iga.get(), argHelper);
         } else if ("-patch" == currArg && hasMoreArgs) {
             pathToPatch = args[++argIndex];
             addSlash(pathToPatch);
@@ -541,14 +534,14 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
         }
     }
     if (false == iga->isKnownPlatform()) {
-        argHelper->printf("Warning : missing or invalid -device parameter - results may be inacurate\n");
+        argHelper->printf("Warning : missing or invalid -device parameter - results may be inaccurate\n");
     }
     if (!argHelper->outputEnabled()) {
         if (pathToDump.empty()) {
             argHelper->printf("Warning : Path to dump folder not specificed - using ./dump as default.\n");
             pathToDump = std::string("dump/");
         }
-        MakeDirectory(pathToDump.c_str());
+        NEO::Directory::createDirectory(pathToDump);
     }
     return 0;
 }

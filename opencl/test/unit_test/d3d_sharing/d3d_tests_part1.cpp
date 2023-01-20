@@ -1,15 +1,14 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
-#include "shared/source/os_interface/driver_info.h"
+#include "shared/source/os_interface/windows/driver_info_windows.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/image.h"
@@ -850,10 +849,23 @@ TEST(D3D10, givenD3D10BuilderWhenGettingExtensionsThenCorrectExtensionsListIsRet
     EXPECT_TRUE(hasSubstr(builderFactory->getExtensions(nullptr), std::string("cl_khr_d3d10_sharing")));
 }
 
+TEST(D3D10, givenD3D10BuilderAndExtensionEnableFalseWhenGettingExtensionsThenCorrectExtensionsListIsReturned) {
+    auto builderFactory = std::make_unique<D3DSharingBuilderFactory<D3DTypesHelper::D3D10>>();
+    builderFactory->extensionEnabled = false;
+    EXPECT_FALSE(hasSubstr(builderFactory->getExtensions(nullptr), std::string("cl_khr_d3d10_sharing")));
+}
+
 TEST(D3D11, givenD3D11BuilderWhenGettingExtensionsThenCorrectExtensionsListIsReturned) {
     auto builderFactory = std::make_unique<D3DSharingBuilderFactory<D3DTypesHelper::D3D11>>();
     EXPECT_TRUE(hasSubstr(builderFactory->getExtensions(nullptr), std::string("cl_khr_d3d11_sharing")));
     EXPECT_TRUE(hasSubstr(builderFactory->getExtensions(nullptr), std::string("cl_intel_d3d11_nv12_media_sharing")));
+}
+
+TEST(D3D11, givenD3D11BuilderAndExtensionEnableFalseWhenGettingExtensionsThenCorrectExtensionsListIsReturned) {
+    auto builderFactory = std::make_unique<D3DSharingBuilderFactory<D3DTypesHelper::D3D11>>();
+    builderFactory->extensionEnabled = false;
+    EXPECT_FALSE(hasSubstr(builderFactory->getExtensions(nullptr), std::string("cl_khr_d3d11_sharing")));
+    EXPECT_FALSE(hasSubstr(builderFactory->getExtensions(nullptr), std::string("cl_intel_d3d11_nv12_media_sharing")));
 }
 
 TEST(D3DSharingFactory, givenEnabledFormatQueryAndFactoryWithD3DSharingsWhenGettingExtensionFunctionAddressThenFormatQueryFunctionsAreReturned) {
@@ -872,8 +884,9 @@ TEST(D3DSharingFactory, givenEnabledFormatQueryAndFactoryWithD3DSharingsWhenGett
 }
 
 TEST(D3D9SharingFactory, givenDriverInfoWhenVerifyExtensionSupportThenExtensionEnableIsSetCorrect) {
-    class MockDriverInfo : public DriverInfo {
+    class MockDriverInfo : public DriverInfoWindows {
       public:
+        MockDriverInfo() : DriverInfoWindows("", PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue)) {}
         bool getMediaSharingSupport() override { return support; };
         bool support = true;
     };
@@ -910,5 +923,44 @@ TEST(D3D9SharingFactory, givenDriverInfoWhenVerifyExtensionSupportThenExtensionE
     driverInfo->support = false;
     mockSharingFactory->verifyExtensionSupport(driverInfo.get());
     EXPECT_FALSE(mockSharingFactory->d3d9SharingBuilderFactory->extensionEnabled);
+}
+
+TEST(D3D9SharingFactory, givenDriverInfoWhenSetExtensionEnabledThenCorrectValueIsSet) {
+    class MockDriverInfo : public DriverInfoWindows {
+      public:
+        MockDriverInfo() : DriverInfoWindows("", PhysicalDevicePciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue)) {}
+        bool getMediaSharingSupport() override { return support; };
+        bool containsSetting(const char *setting) override {
+            if (failingContainsSetting) {
+                return false;
+            }
+            if (memcmp(setting, "UserModeDriverName", sizeof("UserModeDriverName")) == 0) {
+                return true;
+            } else if (memcmp(setting, "UserModeDriverNameWOW", sizeof("UserModeDriverNameWOW")) == 0) {
+                return true;
+            } else {
+                return false;
+            }
+        }
+        bool support = true;
+        bool failingContainsSetting = false;
+    };
+
+    class SharingD3D9BuilderMock : public D3DSharingBuilderFactory<D3DTypesHelper::D3D9> {
+      public:
+    };
+
+    auto driverInfo = std::make_unique<MockDriverInfo>();
+    auto mockSharingFactory = std::make_unique<SharingD3D9BuilderMock>();
+
+    driverInfo->support = true;
+    mockSharingFactory->extensionEnabled = false;
+    mockSharingFactory->setExtensionEnabled(driverInfo.get());
+    EXPECT_TRUE(mockSharingFactory->extensionEnabled);
+
+    driverInfo->failingContainsSetting = true;
+    mockSharingFactory->extensionEnabled = false;
+    mockSharingFactory->setExtensionEnabled(driverInfo.get());
+    EXPECT_FALSE(mockSharingFactory->extensionEnabled);
 }
 } // namespace NEO

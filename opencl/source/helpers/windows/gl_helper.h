@@ -16,9 +16,9 @@ extern const char *openglDllName;
 }
 
 namespace NEO {
-class glFunctionHelper {
+class GlFunctionHelper {
   public:
-    glFunctionHelper::glFunctionHelper(OsLibrary *glLibrary, const std::string &functionName) {
+    GlFunctionHelper::GlFunctionHelper(OsLibrary *glLibrary, const std::string &functionName) {
         glFunctionPtr = (*glLibrary)[functionName];
     }
 
@@ -28,7 +28,7 @@ class glFunctionHelper {
 
   protected:
     // clang-format off
-    PROC(__stdcall *glFunctionPtr)(LPCSTR Arg1) = nullptr;
+    PROC(__stdcall *glFunctionPtr)(LPCSTR arg1) = nullptr;
     // clang-format on
 };
 }; // namespace NEO

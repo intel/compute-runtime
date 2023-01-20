@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,6 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/os_interface/windows/wddm_device_command_stream.h"
 
-#include "hw_cmds.h"
 #pragma warning(pop)
 
 namespace NEO {

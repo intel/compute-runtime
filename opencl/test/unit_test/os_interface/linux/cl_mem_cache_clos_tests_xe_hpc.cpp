@@ -6,10 +6,13 @@
  */
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/linux/drm_allocation.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_prelim_fixtures.h"
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
 #include "shared/test/common/os_interface/linux/drm_mock_memory_info.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
@@ -18,6 +21,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
+#include "hw_cmds_xe_hpc_core_base.h"
 
 namespace NEO {
 
@@ -25,7 +29,7 @@ struct BuffersWithClMemCacheClosTests : public DrmMemoryManagerLocalMemoryPrelim
     void SetUp() override {
         DrmMemoryManagerLocalMemoryPrelimTest::SetUp();
 
-        auto memoryInfo = new MockExtendedMemoryInfo();
+        auto memoryInfo = new MockExtendedMemoryInfo(*mock);
 
         mock->memoryInfo.reset(memoryInfo);
         mock->cacheInfo.reset(new MockCacheInfo(*mock, 1024, 2, 32));
@@ -92,8 +96,8 @@ XE_HPC_CORETEST_F(BuffersWithClMemCacheClosTests, givenDrmBuffersWhenTheyAreCrea
     cl_mem_alloc_flags_intel allocflags = 0;
     MemoryProperties memoryProperties = ClMemoryPropertiesHelper::createMemoryProperties(flags, flagsIntel, allocflags, device.get());
 
-    auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
-    auto numCacheRegions = hwHelper.getNumCacheRegions();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto numCacheRegions = gfxCoreHelper.getNumCacheRegions();
     EXPECT_EQ(3u, numCacheRegions);
 
     for (uint32_t cacheRegion = 0; cacheRegion < numCacheRegions; cacheRegion++) {

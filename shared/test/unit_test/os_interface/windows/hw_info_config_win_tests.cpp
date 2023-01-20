@@ -14,19 +14,19 @@
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
 
-HwInfoConfigTestWindows::HwInfoConfigTestWindows() {
+ProductHelperTestWindows::ProductHelperTestWindows() {
     this->executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     this->rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
 }
 
-HwInfoConfigTestWindows::~HwInfoConfigTestWindows() = default;
+ProductHelperTestWindows::~ProductHelperTestWindows() = default;
 
-void HwInfoConfigTestWindows::SetUp() {
-    HwInfoConfigTest::SetUp();
+void ProductHelperTestWindows::SetUp() {
+    ProductHelperTest::SetUp();
 
     osInterface.reset(new OSInterface());
 
@@ -35,51 +35,62 @@ void HwInfoConfigTestWindows::SetUp() {
     outHwInfo = *rootDeviceEnvironment->getHardwareInfo();
 }
 
-void HwInfoConfigTestWindows::TearDown() {
-    HwInfoConfigTest::TearDown();
+void ProductHelperTestWindows::TearDown() {
+    ProductHelperTest::TearDown();
 }
 
-TEST_F(HwInfoConfigTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenReturnSuccess) {
-    int ret = hwConfig.configureHwInfoWddm(&pInHwInfo, &outHwInfo, osInterface.get());
+template <typename HelperType>
+HelperType &ProductHelperTestWindows::getHelper() const {
+    auto &helper = rootDeviceEnvironment->getHelper<HelperType>();
+    return helper;
+}
+
+template ProductHelper &ProductHelperTestWindows::getHelper() const;
+template GfxCoreHelper &ProductHelperTestWindows::getHelper() const;
+
+using ProductHelperTestWindows = ProductHelperTestWindows;
+
+TEST_F(ProductHelperTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenReturnSuccess) {
+
+    int ret = productHelper->configureHwInfoWddm(&pInHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     EXPECT_EQ(0, ret);
 }
 
-TEST_F(HwInfoConfigTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenSetFtrSvmCorrectly) {
+TEST_F(ProductHelperTestWindows, givenCorrectParametersWhenConfiguringHwInfoThenSetFtrSvmCorrectly) {
     auto ftrSvm = outHwInfo.featureTable.flags.ftrSVM;
 
-    int ret = hwConfig.configureHwInfoWddm(&pInHwInfo, &outHwInfo, osInterface.get());
+    int ret = productHelper->configureHwInfoWddm(&pInHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     ASSERT_EQ(0, ret);
 
     EXPECT_EQ(outHwInfo.capabilityTable.ftrSvm, ftrSvm);
 }
 
-TEST_F(HwInfoConfigTestWindows, givenInstrumentationForHardwareIsEnabledOrDisabledWhenConfiguringHwInfoThenOverrideItUsingHaveInstrumentation) {
+TEST_F(ProductHelperTestWindows, givenInstrumentationForHardwareIsEnabledOrDisabledWhenConfiguringHwInfoThenOverrideItUsingHaveInstrumentation) {
     int ret;
 
     outHwInfo.capabilityTable.instrumentationEnabled = false;
-    ret = hwConfig.configureHwInfoWddm(&pInHwInfo, &outHwInfo, osInterface.get());
+    ret = productHelper->configureHwInfoWddm(&pInHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     ASSERT_EQ(0, ret);
     EXPECT_FALSE(outHwInfo.capabilityTable.instrumentationEnabled);
 
     outHwInfo.capabilityTable.instrumentationEnabled = true;
-    ret = hwConfig.configureHwInfoWddm(&pInHwInfo, &outHwInfo, osInterface.get());
+    ret = productHelper->configureHwInfoWddm(&pInHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     ASSERT_EQ(0, ret);
     EXPECT_TRUE(outHwInfo.capabilityTable.instrumentationEnabled);
 }
 
-HWTEST_F(HwInfoConfigTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoThenSetCoherencySupportCorrectly) {
+HWTEST_F(ProductHelperTestWindows, givenFtrIaCoherencyFlagWhenConfiguringHwInfoThenSetCoherencySupportCorrectly) {
     HardwareInfo initialHwInfo = *defaultHwInfo;
-    auto hwInfoConfig = HwInfoConfig::get(initialHwInfo.platform.eProductFamily);
 
     bool initialCoherencyStatus = false;
-    hwInfoConfig->setCapabilityCoherencyFlag(outHwInfo, initialCoherencyStatus);
+    productHelper->setCapabilityCoherencyFlag(outHwInfo, initialCoherencyStatus);
 
     initialHwInfo.featureTable.flags.ftrL3IACoherency = false;
-    hwInfoConfig->configureHwInfoWddm(&initialHwInfo, &outHwInfo, osInterface.get());
+    productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     EXPECT_FALSE(outHwInfo.capabilityTable.ftrSupportsCoherency);
 
     initialHwInfo.featureTable.flags.ftrL3IACoherency = true;
-    hwInfoConfig->configureHwInfoWddm(&initialHwInfo, &outHwInfo, osInterface.get());
+    productHelper->configureHwInfoWddm(&initialHwInfo, &outHwInfo, *rootDeviceEnvironment.get());
     EXPECT_EQ(initialCoherencyStatus, outHwInfo.capabilityTable.ftrSupportsCoherency);
 }
 

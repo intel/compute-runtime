@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,22 +18,21 @@ bool AILConfiguration::initProcessExecutableName() {
     auto status = SysCalls::getModuleFileName(nullptr, processFilenameW, MAX_PATH);
 
     if (status != 0) {
-        std::wcstombs(processFilename, processFilenameW, MAX_PATH);
+        std::wstring_view pathView(processFilenameW);
+
+        auto lastPosition = pathView.find_last_of(L"\\");
+
+        pathView.remove_prefix(lastPosition + 1u);
+
+        lastPosition = pathView.find(L".exe");
+
+        if (lastPosition != std::wstring_view::npos) {
+            pathView.remove_suffix(pathView.size() - lastPosition);
+        }
+
+        std::wcstombs(processFilename, pathView.data(), pathView.size());
+        processName = processFilename;
     }
-
-    std::string_view pathView(processFilename);
-
-    auto lastPosition = pathView.find_last_of("\\");
-
-    pathView.remove_prefix(lastPosition + 1u);
-
-    lastPosition = pathView.find(".exe");
-
-    if (lastPosition != std::string_view::npos) {
-        pathView.remove_suffix(pathView.size() - lastPosition);
-    }
-
-    processName = pathView;
 
     return status;
 }

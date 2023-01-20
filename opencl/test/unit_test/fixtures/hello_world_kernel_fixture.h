@@ -27,13 +27,13 @@ class Kernel;
 class Program;
 
 struct HelloWorldKernelFixture : public ProgramFixture {
-    using ProgramFixture::SetUp;
+    using ProgramFixture::setUp;
 
-    void SetUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr) {
-        SetUp(pDevice, kernelFilenameStr, kernelNameStr, nullptr);
+    void setUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr) {
+        setUp(pDevice, kernelFilenameStr, kernelNameStr, nullptr);
     }
-    void SetUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr, const char *options) {
-        ProgramFixture::SetUp();
+    void setUp(ClDevice *pDevice, const char *kernelFilenameStr, const char *kernelNameStr, const char *options) {
+        ProgramFixture::setUp();
 
         pTestFilename = new std::string(kernelFilenameStr);
         pKernelName = new std::string(kernelNameStr);
@@ -50,13 +50,13 @@ struct HelloWorldKernelFixture : public ProgramFixture {
         if (options) {
             std::string optionsToProgram(options);
 
-            CreateProgramFromBinary(
+            createProgramFromBinary(
                 pContext,
                 deviceVector,
                 *pTestFilename,
                 optionsToProgram);
         } else {
-            CreateProgramFromBinary(
+            createProgramFromBinary(
                 pContext,
                 deviceVector,
                 *pTestFilename);
@@ -81,13 +81,13 @@ struct HelloWorldKernelFixture : public ProgramFixture {
         EXPECT_EQ(CL_SUCCESS, retVal);
     }
 
-    void TearDown() override {
+    void tearDown() {
         delete pKernelName;
         delete pTestFilename;
         pMultiDeviceKernel->release();
 
         pContext->release();
-        ProgramFixture::TearDown();
+        ProgramFixture::tearDown();
     }
 
     std::string *pTestFilename = nullptr;

@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/helpers/cache_flush.inl"
 #include "shared/source/helpers/l3_range.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/gen12lp/cmdlist_gen12lp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -23,7 +24,6 @@ using CacheFlushTests = Test<DeviceFixture>;
 HWTEST2_F(CacheFlushTests, GivenCommandStreamWithSingleL3RangeAndNonZeroPostSyncAddressWhenFlushGpuCacheIsCalledThenPostSyncOperationIsSetForL3Control, IsDG1) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
-    auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
     LinearStream *cmdStream = commandList->commandContainer.getCommandStream();
@@ -44,7 +44,7 @@ HWTEST2_F(CacheFlushTests, GivenCommandStreamWithSingleL3RangeAndNonZeroPostSync
         GfxFamily::L3_FLUSH_ADDRESS_RANGE::
             L3_FLUSH_EVICTION_POLICY_FLUSH_L3_WITH_EVICTION));
     NEO::flushGpuCache<GfxFamily>(cmdStream, ranges, postSyncAddress,
-                                  hardwareInfo);
+                                  neoDevice->getRootDeviceEnvironment());
 
     GenCmdList cmdList;
     EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(

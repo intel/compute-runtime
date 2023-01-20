@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,10 +17,10 @@ struct PerformanceCountersWinTest : public PerformanceCountersFixture,
                                     public ::testing::Test {
   public:
     void SetUp() override {
-        PerformanceCountersFixture::SetUp();
+        PerformanceCountersFixture::setUp();
     }
 
     void TearDown() override {
-        PerformanceCountersFixture::TearDown();
+        PerformanceCountersFixture::tearDown();
     }
 };

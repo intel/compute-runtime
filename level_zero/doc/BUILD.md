@@ -10,7 +10,14 @@ SPDX-License-Identifier: MIT
 
 These instructions have been tested on Ubuntu* and complement those existing for NEO in the top-level BUILD.md file.
 
-1. Install/build Level Zero loader and Level Zero headers
+1. Install/build Level Zero dependencies
+
+To use Fabric related APIs, please build and/or install [libnl-3.7.0](https://www.linuxfromscratch.org/blfs/view/svn/basicnet/libnl.html).
+If installing to a local folder, `-DLIBGENL_INCLUDE_DIR=<local install folder path>/libnl/include/libnl3/` could be passed to the cmake line of NEO build(Please refer top-level BUILD.md).
+
+To use Sysman events API, please build and/or install libudev-dev 
+
+2. Install/build Level Zero loader and Level Zero headers
 
 Install Level Zero loader and headers from [https://github.com/oneapi-src/level-zero/releases](https://github.com/oneapi-src/level-zero/releases).
 
@@ -20,7 +27,7 @@ Alternatively, build Level Zero loader from source, as indicated in [https://git
 
 Build will generate ze_loader library and symlinks, as well as those for ze_validation_layer.
 
-2. Install/build Level Zero driver
+3. Install/build Level Zero driver
 
 Install Level Zero package from [https://github.com/intel/compute-runtime/releases](https://github.com/intel/compute-runtime/releases).
 
@@ -28,7 +35,7 @@ Alternatively, follow instructions in top-level BUILD.md file to build NEO. Leve
 
 When built, ze_intel_gpu library and symlinks are generated.
 
-3. Build your application
+4. Build your application
 
 Compilation needs to include the Level Zero headers and to link against the loader library:
 
@@ -42,7 +49,7 @@ If libraries not installed in system paths, include Level Zero headers and path 
 g++ -I<path_to_Level_Zero_headers> zello_world_gpu.cpp -o zello_world_gpu -L<path_to_libze_loader.so> -lze_loader
 ```
 
-4. Execute your application
+5. Execute your application
 
 If Level Zero loader packages have been built and installed in the system, then they will be present in system paths:
 

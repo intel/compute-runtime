@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,11 +20,12 @@
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;
 
-const int maxHintCounter = 6;
+inline constexpr int maxHintCounter = 6;
 
 bool containsHint(const char *providedHint, char *userData);
 
@@ -32,14 +33,14 @@ void CL_CALLBACK callbackFunction(const char *providedHint, const void *flags, s
 
 struct DriverDiagnosticsTest : public PlatformFixture,
                                public ::testing::Test {
-    using PlatformFixture::SetUp;
+    using PlatformFixture::setUp;
     void SetUp() override {
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
         memset(userData, 0, maxHintCounter * DriverDiagnostics::maxHintStringSize);
     }
 
     void TearDown() override {
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -78,17 +79,17 @@ struct PerformanceHintTest : public DriverDiagnosticsTest,
     }
 
     void TearDown() override {
-        CommandQueueHwFixture::TearDown();
+        CommandQueueHwFixture::tearDown();
         DriverDiagnosticsTest::TearDown();
     }
 };
 
 struct PerformanceHintBufferTest : public PerformanceHintTest,
-                                   public ::testing::WithParamInterface<std::tuple<bool /*address aligned*/, bool /*size aligned*/>> {
+                                   public ::testing::WithParamInterface<std::tuple<bool /*address aligned*/, bool /*size aligned*/, bool /*provide performance hint*/>> {
 
     void SetUp() override {
         PerformanceHintTest::SetUp();
-        std::tie(alignedAddress, alignedSize) = GetParam();
+        std::tie(alignedAddress, alignedSize, providePerformanceHint) = GetParam();
         address = alignedMalloc(2 * MemoryConstants::cacheLineSize, MemoryConstants::cacheLineSize);
     }
 
@@ -99,6 +100,7 @@ struct PerformanceHintBufferTest : public PerformanceHintTest,
     }
     bool alignedSize = false;
     bool alignedAddress = false;
+    bool providePerformanceHint = false;
     void *address = nullptr;
     Buffer *buffer = nullptr;
 };
@@ -225,7 +227,7 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
 
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
-        CreateProgramFromBinary(context, context->getDevices(), "CopyBuffer_simd32");
+        createProgramFromBinary(context, context->getDevices(), "CopyBuffer_simd32");
         retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
         kernel = Kernel::create<MockKernel>(pProgram, pProgram->getKernelInfoForKernel("CopyBuffer"), *context->getDevice(0), &retVal);
@@ -236,7 +238,7 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
 
     void TearDown() override {
         delete kernel;
-        ProgramFixture::TearDown();
+        ProgramFixture::tearDown();
         PerformanceHintEnqueueTest::TearDown();
     }
     MockKernel *kernel = nullptr;
@@ -259,23 +261,28 @@ struct PerformanceHintEnqueueKernelBadSizeTest : public PerformanceHintEnqueueKe
 
 struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTest,
                                                 public ProgramFixture {
+    class KernelWhitebox : public Kernel {
+      public:
+        using Kernel::initializeLocalIdsCache;
+    };
 
     void SetUp() override {
         PerformanceHintEnqueueTest::SetUp();
-        CreateProgramFromBinary(context, context->getDevices(), "printf");
+        createProgramFromBinary(context, context->getDevices(), "printf");
         retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
-        kernel = Kernel::create(pProgram, pProgram->getKernelInfoForKernel("test"), *context->getDevice(0), &retVal);
+        kernel = static_cast<KernelWhitebox *>(Kernel::create(pProgram, pProgram->getKernelInfoForKernel("test"), *context->getDevice(0), &retVal));
+        kernel->initializeLocalIdsCache();
 
         globalWorkGroupSize[0] = globalWorkGroupSize[1] = globalWorkGroupSize[2] = 1;
     }
 
     void TearDown() override {
         delete kernel;
-        ProgramFixture::TearDown();
+        ProgramFixture::tearDown();
         PerformanceHintEnqueueTest::TearDown();
     }
-    Kernel *kernel = nullptr;
+    KernelWhitebox *kernel = nullptr;
     size_t globalWorkGroupSize[3]{};
 };
 

@@ -11,11 +11,14 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include "igfxfmid.h"
@@ -24,10 +27,17 @@
 
 namespace L0 {
 
+CommandList::CommandList(uint32_t numIddsPerBlock) : commandContainer(numIddsPerBlock) {
+}
+
 CommandListAllocatorFn commandListFactory[IGFX_MAX_PRODUCT] = {};
 CommandListAllocatorFn commandListFactoryImmediate[IGFX_MAX_PRODUCT] = {};
 
 ze_result_t CommandListImp::destroy() {
+    if (this->isBcsSplitNeeded) {
+        static_cast<DeviceImp *>(this->device)->bcsSplit.releaseResources();
+    }
+
     if (this->cmdListType == CommandListType::TYPE_IMMEDIATE && this->isFlushTaskSubmissionEnabled && !this->isSyncModeQueue) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
         this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, this->csr->peekTaskCount());
@@ -47,6 +57,10 @@ ze_result_t CommandListImp::appendMetricStreamerMarker(zet_metric_streamer_handl
 }
 
 ze_result_t CommandListImp::appendMetricQueryBegin(zet_metric_query_handle_t hMetricQuery) {
+    if (cmdListType == CommandListType::TYPE_IMMEDIATE && isFlushTaskSubmissionEnabled) {
+        this->device->activateMetricGroups();
+    }
+
     return MetricQuery::fromHandle(hMetricQuery)->appendBegin(*this);
 }
 
@@ -90,17 +104,20 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     CommandListImp *commandList = nullptr;
     returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
 
-    NEO::EngineGroupType engineType = engineGroupType;
-
     if (allocator) {
         NEO::CommandStreamReceiver *csr = nullptr;
         auto deviceImp = static_cast<DeviceImp *>(device);
+        const auto &hwInfo = device->getHwInfo();
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
         if (internalUsage) {
-            if (NEO::EngineGroupType::Copy == engineType && deviceImp->getActiveDevice()->getInternalCopyEngine()) {
+            if (NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) && deviceImp->getActiveDevice()->getInternalCopyEngine()) {
                 csr = deviceImp->getActiveDevice()->getInternalCopyEngine()->commandStreamReceiver;
             } else {
-                csr = deviceImp->getActiveDevice()->getInternalEngine().commandStreamReceiver;
-                engineType = NEO::EngineGroupType::RenderCompute;
+                auto internalEngine = deviceImp->getActiveDevice()->getInternalEngine();
+                csr = internalEngine.commandStreamReceiver;
+                auto internalEngineType = internalEngine.getEngineType();
+                auto internalEngineUsage = internalEngine.getEngineUsage();
+                engineGroupType = gfxCoreHelper.getEngineGroupType(internalEngineType, internalEngineUsage, hwInfo);
             }
         } else {
             returnValue = device->getCsrForOrdinalAndIndex(&csr, desc->ordinal, desc->index);
@@ -112,24 +129,28 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         UNRECOVERABLE_IF(nullptr == csr);
 
         commandList = static_cast<CommandListImp *>((*allocator)(CommandList::commandListimmediateIddsPerBlock));
+        commandList->csr = csr;
         commandList->internalUsage = internalUsage;
         commandList->cmdListType = CommandListType::TYPE_IMMEDIATE;
         commandList->isSyncModeQueue = (desc->mode == ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS);
-        if (!(NEO::EngineGroupType::Copy == engineType) && !internalUsage) {
-            const auto &hwInfo = device->getHwInfo();
-            commandList->isFlushTaskSubmissionEnabled = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily).isPlatformFlushTaskEnabled(hwInfo);
+        if (!internalUsage) {
+            commandList->isFlushTaskSubmissionEnabled = gfxCoreHelper.isPlatformFlushTaskEnabled(hwInfo);
             if (NEO::DebugManager.flags.EnableFlushTaskSubmission.get() != -1) {
                 commandList->isFlushTaskSubmissionEnabled = !!NEO::DebugManager.flags.EnableFlushTaskSubmission.get();
             }
+            PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Flush Task for Immediate command list : %s\n", commandList->isFlushTaskSubmissionEnabled ? "Enabled" : "Disabled");
+
+            auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+            commandList->immediateCmdListHeapSharing = L0GfxCoreHelper::enableImmediateCmdListHeapSharing(rootDeviceEnvironment, commandList->isFlushTaskSubmissionEnabled);
         }
-        returnValue = commandList->initialize(device, engineType, desc->flags);
+        returnValue = commandList->initialize(device, engineGroupType, desc->flags);
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
             commandList = nullptr;
             return commandList;
         }
 
-        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, NEO::EngineGroupType::Copy == engineType, internalUsage, returnValue);
+        auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, commandList->isCopyOnly(), internalUsage, returnValue);
         if (!commandQueue) {
             commandList->destroy();
             commandList = nullptr;
@@ -137,9 +158,17 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
         }
 
         commandList->cmdQImmediate = commandQueue;
-        commandList->csr = csr;
-        commandList->isTbxMode = (csr->getType() == NEO::CommandStreamReceiverType::CSR_TBX) || (csr->getType() == NEO::CommandStreamReceiverType::CSR_TBX_WITH_AUB);
+        commandList->isTbxMode = csr->isTbxMode();
         commandList->commandListPreemptionMode = device->getDevicePreemptionMode();
+
+        commandList->isBcsSplitNeeded = deviceImp->bcsSplit.setupDevice(productFamily, internalUsage, desc, csr);
+        commandList->commandContainer.setImmediateCmdListCsr(csr);
+        commandList->commandContainer.fillReusableAllocationLists();
+
+        if (commandList->isWaitForEventsFromHostEnabled()) {
+            commandList->numThreads = NEO::SysCalls::getNumThreads();
+        }
+
         return commandList;
     }
 

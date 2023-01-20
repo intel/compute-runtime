@@ -10,6 +10,6 @@
 #include "shared/source/helpers/windows/gmm_callbacks.inl"
 
 namespace NEO {
-template struct DeviceCallbacks<SKLFamily>;
-template struct TTCallbacks<SKLFamily>;
+template struct DeviceCallbacks<Gen9Family>;
+template struct TTCallbacks<Gen9Family>;
 } // namespace NEO

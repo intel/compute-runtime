@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/hw_info.h"
@@ -12,6 +13,7 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/source/utilities/logger.h"
+#include "shared/test/common/base_ult_config_listener.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/memory_leak_listener.h"
@@ -21,8 +23,8 @@
 #include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
-#include "shared/test/unit_test/base_ult_config_listener.h"
-#include "shared/test/unit_test/test_stats.h"
+#include "shared/test/common/test_stats.h"
+#include "shared/test/common/tests_configuration.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
@@ -127,16 +129,16 @@ void applyWorkarounds() {
         mockObj.method(2);
     }
 
-    //intialize rand
+    // intialize rand
     srand(static_cast<unsigned int>(time(nullptr)));
 
-    //Create at least on thread to prevent false memory leaks in tests using threads
+    // Create at least on thread to prevent false memory leaks in tests using threads
     std::thread t([&]() {
     });
     tempThreadID = t.get_id();
     t.join();
 
-    //Create FileLogger to prevent false memory leaks
+    // Create FileLogger to prevent false memory leaks
     {
         NEO::fileLoggerInstance();
     }
@@ -174,14 +176,6 @@ int main(int argc, char **argv) {
     }
 
     applyWorkarounds();
-
-    {
-        std::string envVar = std::string("NEO_") + executionName + "_DISABLE_TEST_ALARM";
-        char *envValue = getenv(envVar.c_str());
-        if (envValue != nullptr) {
-            enableAlarm = false;
-        }
-    }
 
     testing::InitGoogleMock(&argc, argv);
 
@@ -278,7 +272,7 @@ int main(int argc, char **argv) {
 
     productFamily = hwInfoForTests.platform.eProductFamily;
     renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
-    uint32_t threadsPerEu = hwInfoConfigFactory[productFamily]->threadsPerEu;
+    uint32_t threadsPerEu = productHelperFactory[productFamily]->threadsPerEu;
     PLATFORM &platform = hwInfoForTests.platform;
     if (revId != -1) {
         platform.usRevId = revId;
@@ -304,7 +298,6 @@ int main(int argc, char **argv) {
     gtSystemInfo.MaxEuPerSubSlice       = std::max(gtSystemInfo.MaxEuPerSubSlice, euPerSubSlice);
     gtSystemInfo.MaxSlicesSupported     = std::max(gtSystemInfo.MaxSlicesSupported, gtSystemInfo.SliceCount);
     gtSystemInfo.MaxSubSlicesSupported  = std::max(gtSystemInfo.MaxSubSlicesSupported, gtSystemInfo.SubSliceCount);
-    gtSystemInfo.IsDynamicallyPopulated = false;
     // clang-format on
 
     // Platforms with uninitialized factory are not supported
@@ -327,8 +320,7 @@ int main(int argc, char **argv) {
     listeners.Append(new NEO::MemoryLeakListener);
     listeners.Append(new NEO::BaseUltConfigListener);
 
-    binaryNameSuffix.append(NEO::familyName[hwInfoForTests.platform.eRenderCoreFamily]);
-    binaryNameSuffix.append(hwInfoForTests.capabilityTable.platformType);
+    binaryNameSuffix.append(NEO::hardwarePrefix[hwInfoForTests.platform.eProductFamily]);
 
     std::string testBinaryFiles = getRunPath(argv[0]);
     std::string testBinaryFilesApiSpecific = testBinaryFiles;

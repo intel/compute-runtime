@@ -17,7 +17,7 @@ namespace NEO {
 
 class AffinityMaskHelper {
   public:
-    using AffinityMaskContainer = std::vector<std::bitset<32>>;
+    using AffinityMaskContainer = std::vector<std::bitset<4>>;
 
     AffinityMaskHelper(bool allSubdevicesActive) {
         if (!allSubdevicesActive) {

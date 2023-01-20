@@ -33,20 +33,8 @@ std::string getCurrentLibraryPath() {
 }
 
 namespace NEO {
-
-DriverInfo *DriverInfo::create(const HardwareInfo *hwInfo, const OSInterface *osInterface) {
-    if (osInterface == nullptr) {
-        return nullptr;
-    }
-
-    auto wddm = osInterface->getDriverModel()->as<Wddm>();
-    UNRECOVERABLE_IF(wddm == nullptr);
-
-    return new DriverInfoWindows(wddm->getDeviceRegistryPath(), wddm->getPciBusInfo());
-};
-
 DriverInfoWindows::DriverInfoWindows(const std::string &fullPath, const PhysicalDevicePciBusInfo &pciBusInfo)
-    : path(DriverInfoWindows::trimRegistryKey(fullPath)), registryReader(createRegistryReaderFunc(path)) {
+    : DriverInfo(DriverInfoType::WINDOWS), path(DriverInfoWindows::trimRegistryKey(fullPath)), registryReader(createRegistryReaderFunc(path)) {
     this->pciBusInfo = pciBusInfo;
 }
 
@@ -93,11 +81,11 @@ bool isCompatibleDriverStore(std::string &&deviceRegistryPath) {
     return driverInfo.isCompatibleDriverStore();
 }
 
+bool DriverInfoWindows::containsSetting(const char *setting) {
+    return registryReader->getSetting(setting, std::string("")) != "<>";
+}
+
 decltype(DriverInfoWindows::createRegistryReaderFunc) DriverInfoWindows::createRegistryReaderFunc = [](const std::string &registryPath) -> std::unique_ptr<SettingsReader> {
     return std::make_unique<RegistryReader>(false, registryPath);
 };
-
-bool DriverInfoWindows::getMediaSharingSupport() {
-    return registryReader->getSetting(is64bit ? "UserModeDriverName" : "UserModeDriverNameWOW", std::string("")) != "<>";
-}
 } // namespace NEO

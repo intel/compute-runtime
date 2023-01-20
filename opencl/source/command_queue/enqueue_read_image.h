@@ -16,14 +16,9 @@
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/event/event.h"
-#include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/helpers/mipmap.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/memory_manager/mem_obj_surface.h"
-
-#include <algorithm>
-#include <new>
 
 namespace NEO {
 
@@ -68,11 +63,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     GeneralSurface mapSurface;
     Surface *surfaces[] = {&srcImgSurf, nullptr};
 
+    auto bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, getTotalSizeFromRectRegion(region), csr);
+
     bool tempAllocFallback = false;
     if (mapAllocation) {
         surfaces[1] = &mapSurface;
         mapSurface.setGraphicsAllocation(mapAllocation);
-        //get offset between base cpu ptr of map allocation and dst ptr
+        // get offset between base cpu ptr of map allocation and dst ptr
         size_t dstOffset = ptrDiff(dstPtr, mapAllocation->getUnderlyingBuffer());
         dstPtr = reinterpret_cast<void *>(mapAllocation->getGpuAddress() + dstOffset);
     } else {
@@ -80,11 +77,11 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
         if (region[0] != 0 &&
             region[1] != 0 &&
             region[2] != 0) {
-            bool status = csr.createAllocationForHostSurface(hostPtrSurf, true);
+            bool status = selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(hostPtrSurf, true);
             if (!status) {
                 if (CL_TRUE == blockingRead) {
                     hostPtrSurf.setIsPtrCopyAllowed(true);
-                    status = csr.createAllocationForHostSurface(hostPtrSurf, true);
+                    status = selectCsrForHostPtrAllocation(bcsSplit, csr).createAllocationForHostSurface(hostPtrSurf, true);
                     if (!status) {
                         return CL_OUT_OF_RESOURCES;
                     }
@@ -94,6 +91,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
                 }
             }
             dstPtr = reinterpret_cast<void *>(hostPtrSurf.getAllocation()->getGpuAddress());
+            this->prepareHostPtrSurfaceForSplit(bcsSplit, *hostPtrSurf.getAllocation());
         }
     }
 
@@ -115,6 +113,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueReadImage(
     if (tempAllocFallback) {
         dc.userPtrForPostOperationCpuCopy = ptr;
     }
+    dc.bcsSplit = bcsSplit;
 
     auto eBuiltInOps = EBuiltInOps::CopyImage3dToBuffer;
     MultiDispatchInfo dispatchInfo(dc);

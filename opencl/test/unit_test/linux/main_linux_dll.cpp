@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
@@ -12,18 +13,19 @@
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/signal_utils.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
-#include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/platform/platform.h"
@@ -41,6 +43,7 @@ extern const char *dxcoreDllName;
 }
 
 namespace NEO {
+class OsLibrary;
 void __attribute__((destructor)) platformsDestructor();
 extern const DeviceDescriptor deviceDescriptorTable[];
 } // namespace NEO
@@ -48,12 +51,13 @@ extern const DeviceDescriptor deviceDescriptorTable[];
 NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
     return nullptr;
 }
+void setupExternalDependencies() {}
 
 using namespace NEO;
 
 class DrmTestsFixture {
   public:
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         if (deviceDescriptorTable[0].deviceId == 0) {
             GTEST_SKIP();
         }
@@ -62,7 +66,7 @@ class DrmTestsFixture {
         rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
     }
     ExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
@@ -112,29 +116,6 @@ TEST_F(DrmSimpleTests, GivenTwoOpenableDevicesWhenDiscoverDevicesThenCreateTwoHw
     ExecutionEnvironment executionEnvironment;
     auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_EQ(2u, hwDeviceIds.size());
-}
-
-TEST_F(DrmSimpleTests, GivenSelectedNotExistingDeviceUsingForceDeviceIdFlagWhenGetDeviceFdThenFail) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ForceDeviceId.set("invalid");
-    openFull = nullptr; // open shouldn't be called
-    ExecutionEnvironment executionEnvironment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    EXPECT_TRUE(hwDeviceIds.empty());
-}
-
-TEST_F(DrmSimpleTests, GivenSelectedExistingDeviceUsingForceDeviceIdFlagWhenGetDeviceFdThenReturnFd) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ForceDeviceId.set("0000:00:02.0");
-    VariableBackup<decltype(openFull)> backupOpenFull(&openFull);
-    openFull = openWithCounter;
-    openCounter = 10;
-    ExecutionEnvironment executionEnvironment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    EXPECT_EQ(1u, hwDeviceIds.size());
-    EXPECT_NE(nullptr, hwDeviceIds[0].get());
-    EXPECT_STREQ("/dev/dri/by-path/platform-4010000000.pcie-pci-0000:00:02.0-render", lastOpenedPath.c_str());
-    EXPECT_EQ(9, openCounter); // only one opened file
 }
 
 TEST_F(DrmSimpleTests, GivenSelectedNotExistingDeviceUsingFilterBdfWhenGetDeviceFdThenFail) {
@@ -259,7 +240,7 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
 
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    auto drm = DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]).release();
+    auto drm = DrmWrap::createDrm(*executionEnvironment->rootDeviceEnvironments[0]);
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.PrintIoctlTimes.set(true);
@@ -342,7 +323,7 @@ TEST_F(DrmSimpleTests, givenPrintIoctlTimesWhenCallIoctlThenStatisticsAreGathere
 
     ::testing::internal::CaptureStdout();
 
-    delete drm;
+    drm.reset();
 
     std::string output = ::testing::internal::GetCapturedStdout();
     EXPECT_STRNE("", output.c_str());
@@ -550,7 +531,7 @@ TEST_F(DrmTests, GivenUnknownDeviceWhenCreatingDrmThenNullIsReturned) {
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_EQ(drm, nullptr);
     std::string errStr = ::testing::internal::GetCapturedStderr();
-    EXPECT_TRUE(hasSubstr(errStr, std::string("FATAL: Unknown device: deviceId: ffffffff, revisionId: ffff")));
+    EXPECT_TRUE(hasSubstr(errStr, std::string("FATAL: Unknown device: deviceId: ffff, revisionId: ffff")));
     ::testing::internal::GetCapturedStdout();
 }
 
@@ -619,7 +600,7 @@ TEST_F(DrmTests, GivenFailOnParamBoostWhenCreatingDrmThenDrmIsCreated) {
     failOnParamBoost = -1;
 
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
-    //non-fatal error - issue warning only
+    // non-fatal error - issue warning only
     EXPECT_NE(drm, nullptr);
 }
 
@@ -688,7 +669,7 @@ TEST(DrmMemoryManagerCreate, whenCallCreateMemoryManagerThenDrmMemoryManagerIsCr
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
-    auto drmMemoryManager = MemoryManager::createMemoryManager(executionEnvironment);
+    auto drmMemoryManager = MemoryManager::createMemoryManager(executionEnvironment, DriverModelType::UNKNOWN);
     EXPECT_NE(nullptr, drmMemoryManager.get());
     executionEnvironment.memoryManager = std::move(drmMemoryManager);
 }
@@ -709,7 +690,7 @@ TEST(DrmMemoryManagerCreate, givenEnableHostPtrValidationSetToZeroWhenCreateDrmM
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
     executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
-    auto drmMemoryManager = MemoryManager::createMemoryManager(executionEnvironment);
+    auto drmMemoryManager = MemoryManager::createMemoryManager(executionEnvironment, DriverModelType::UNKNOWN);
     EXPECT_NE(nullptr, drmMemoryManager.get());
     EXPECT_FALSE(static_cast<DrmMemoryManager *>(drmMemoryManager.get())->isValidateHostMemoryEnabled());
     executionEnvironment.memoryManager = std::move(drmMemoryManager);
@@ -730,7 +711,7 @@ TEST_F(DrmTests, whenDrmIsCreatedWithMultipleSubDevicesThenCreateMultipleVirtual
         GTEST_SKIP();
     }
 
-    auto numSubDevices = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+    auto numSubDevices = GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
     for (auto id = 0u; id < numSubDevices; id++) {
         EXPECT_EQ(id + 1, drm->getVirtualMemoryAddressSpace(id));
     }
@@ -748,7 +729,7 @@ TEST_F(DrmTests, givenDebuggingEnabledWhenDrmIsCreatedThenPerContextVMIsTrueGetV
     if (drm->isVmBindAvailable()) {
         EXPECT_TRUE(drm->isPerContextVMRequired());
 
-        auto numSubDevices = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+        auto numSubDevices = GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
         for (auto id = 0u; id < numSubDevices; id++) {
             EXPECT_EQ(0u, drm->getVirtualMemoryAddressSpace(id));
         }
@@ -777,7 +758,7 @@ TEST_F(DrmTests, givenEnabledDebuggingAndVmBindNotAvailableWhenDrmIsCreatedThenP
         GTEST_SKIP();
     }
 
-    auto numSubDevices = HwHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
+    auto numSubDevices = GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment->getHardwareInfo());
     for (auto id = 0u; id < numSubDevices; id++) {
         EXPECT_NE(0u, drm->getVirtualMemoryAddressSpace(id));
     }
@@ -826,6 +807,11 @@ TEST(SysCalls, WhenSysCallsFstatCalledThenCallIsRedirectedToOs) {
     struct stat st = {};
     auto result = NEO::SysCalls::fstat(0, &st);
     EXPECT_EQ(0, result);
+}
+
+TEST(SysCalls, WhenSysCallsGetNumThreadsCalledThenCallIsRedirectedToOs) {
+    auto result = NEO::SysCalls::getNumThreads();
+    EXPECT_GT(result, 0u);
 }
 
 int main(int argc, char **argv) {
@@ -892,6 +878,14 @@ TEST(CommandQueueTest, whenCheckEngineRoundRobinAssignThenReturnsTrue) {
 
 TEST(CommandQueueTest, whenCheckEngineTimestampWaitEnabledThenReturnsTrue) {
     EXPECT_TRUE(CommandQueue::isTimestampWaitEnabled());
+}
+
+TEST(DeviceTest, whenCheckBlitSplitEnabledThenReturnsTrue) {
+    EXPECT_TRUE(Device::isBlitSplitEnabled());
+}
+
+TEST(DeviceTest, whenCheckIsInitDeviceWithFirstSubmissionEnabledThenReturnsTrue) {
+    EXPECT_TRUE(Device::isInitDeviceWithFirstSubmissionEnabled());
 }
 
 TEST(PlatformsDestructor, whenGlobalPlatformsDestructorIsCalledThenGlobalPlatformsAreDestroyed) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -50,7 +50,7 @@ WddmDirectSubmission<GfxFamily, Dispatcher>::~WddmDirectSubmission() {
 
 template <typename GfxFamily, typename Dispatcher>
 bool WddmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
-    //for now only WDDM2.0
+    // for now only WDDM2.0
     UNRECOVERABLE_IF(wddm->getWddmVersion() != WddmVersion::WDDM_2_0);
 
     bool ret = wddm->getWddmInterface()->createMonitoredFence(ringFence);

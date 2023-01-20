@@ -15,7 +15,7 @@
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/unit_test/tests_configuration.h"
+#include "shared/test/common/tests_configuration.h"
 
 #include "opencl/test/unit_test/command_stream/command_stream_fixture.h"
 
@@ -26,8 +26,8 @@ class CommandStreamReceiver;
 
 class AUBCommandStreamFixture : public CommandStreamFixture {
   public:
-    virtual void SetUp(CommandQueue *pCommandQueue);
-    void TearDown() override;
+    void setUp(CommandQueue *pCommandQueue);
+    void tearDown();
 
     template <typename FamilyType>
     AUBCommandStreamReceiverHw<FamilyType> *getAubCsr() const {
@@ -99,7 +99,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
         return graphicsAllocation;
     }
     CommandStreamReceiver *pCommandStreamReceiver = nullptr;
-    volatile uint32_t *pTagMemory = nullptr;
+    volatile TagAddressType *pTagMemory = nullptr;
 
   private:
     CommandQueue *commandQueue = nullptr;

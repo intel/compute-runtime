@@ -13,10 +13,10 @@
 #include "shared/source/direct_submission/dispatchers/dispatcher.inl"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.inl"
 #include "shared/source/direct_submission/linux/drm_direct_submission.inl"
-#include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 namespace NEO {
-using GfxFamily = XE_HPC_COREFamily;
+using GfxFamily = XeHpcCoreFamily;
 
 template class Dispatcher<GfxFamily>;
 template class BlitterDispatcher<GfxFamily>;

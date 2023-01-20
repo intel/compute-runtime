@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,11 @@
 #pragma once
 
 #include "shared/test/unit_test/os_interface/linux/drm_mock_impl.h"
+
+using NEO::I915::drm_drawable_t;
+using NEO::I915::drm_handle_t;
+using NEO::I915::drm_tex_region;
+using NEO::I915::drm_vblank_seq_type;
 
 namespace PROD_DG1 {
 #undef DRM_IOCTL_I915_GEM_CREATE_EXT
@@ -21,7 +26,7 @@ class DrmMockProdDg1 : public DrmTipMock {
   public:
     DrmMockProdDg1(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMockProdDg1(rootDeviceEnvironment, defaultHwInfo.get()) {}
     DrmMockProdDg1(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmTipMock(rootDeviceEnvironment) {
-        rootDeviceEnvironment.setHwInfo(inputHwInfo);
+        rootDeviceEnvironment.setHwInfoAndInitHelpers(inputHwInfo);
     }
 
     void handleQueryItem(QueryItem *queryItem) override {
@@ -41,10 +46,10 @@ class DrmMockProdDg1 : public DrmTipMock {
                     auto queryMemoryRegionInfo = reinterpret_cast<PROD_DG1::drm_i915_query_memory_regions *>(queryItem->dataPtr);
                     EXPECT_EQ(0u, queryMemoryRegionInfo->num_regions);
                     queryMemoryRegionInfo->num_regions = numberOfRegions;
-                    queryMemoryRegionInfo->regions[0].region.memory_class = I915_MEMORY_CLASS_SYSTEM;
+                    queryMemoryRegionInfo->regions[0].region.memory_class = drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM;
                     queryMemoryRegionInfo->regions[0].region.memory_instance = 1;
                     queryMemoryRegionInfo->regions[0].probed_size = 2 * MemoryConstants::gigaByte;
-                    queryMemoryRegionInfo->regions[1].region.memory_class = I915_MEMORY_CLASS_DEVICE;
+                    queryMemoryRegionInfo->regions[1].region.memory_class = drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE;
                     queryMemoryRegionInfo->regions[1].region.memory_instance = 1;
                     queryMemoryRegionInfo->regions[1].probed_size = 2 * MemoryConstants::gigaByte;
                 }

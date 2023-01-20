@@ -16,20 +16,20 @@ using namespace NEO;
 OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace);
 
 struct GdiDllFixture {
-    virtual void SetUp() {
+    void setUp() {
         const HardwareInfo *hwInfo = defaultHwInfo.get();
         mockGdiDll.reset(setAdapterInfo(&hwInfo->platform, &hwInfo->gtSystemInfo, hwInfo->capabilityTable.gpuAddressSpace));
 
-        setSizesFcn = reinterpret_cast<decltype(&MockSetSizes)>(mockGdiDll->getProcAddress("MockSetSizes"));
-        getSizesFcn = reinterpret_cast<decltype(&GetMockSizes)>(mockGdiDll->getProcAddress("GetMockSizes"));
+        setSizesFcn = reinterpret_cast<decltype(&setMockSizes)>(mockGdiDll->getProcAddress("setMockSizes"));
+        getSizesFcn = reinterpret_cast<decltype(&getMockSizes)>(mockGdiDll->getProcAddress("getMockSizes"));
         getMockLastDestroyedResHandleFcn =
-            reinterpret_cast<decltype(&GetMockLastDestroyedResHandle)>(mockGdiDll->getProcAddress("GetMockLastDestroyedResHandle"));
+            reinterpret_cast<decltype(&getMockLastDestroyedResHandle)>(mockGdiDll->getProcAddress("getMockLastDestroyedResHandle"));
         setMockLastDestroyedResHandleFcn =
-            reinterpret_cast<decltype(&SetMockLastDestroyedResHandle)>(mockGdiDll->getProcAddress("SetMockLastDestroyedResHandle"));
+            reinterpret_cast<decltype(&setMockLastDestroyedResHandle)>(mockGdiDll->getProcAddress("setMockLastDestroyedResHandle"));
         getMockCreateDeviceParamsFcn =
-            reinterpret_cast<decltype(&GetMockCreateDeviceParams)>(mockGdiDll->getProcAddress("GetMockCreateDeviceParams"));
+            reinterpret_cast<decltype(&getMockCreateDeviceParams)>(mockGdiDll->getProcAddress("getMockCreateDeviceParams"));
         setMockCreateDeviceParamsFcn =
-            reinterpret_cast<decltype(&SetMockCreateDeviceParams)>(mockGdiDll->getProcAddress("SetMockCreateDeviceParams"));
+            reinterpret_cast<decltype(&setMockCreateDeviceParams)>(mockGdiDll->getProcAddress("setMockCreateDeviceParams"));
         getMockAllocationFcn = reinterpret_cast<decltype(&getMockAllocation)>(mockGdiDll->getProcAddress("getMockAllocation"));
         getAdapterInfoAddressFcn = reinterpret_cast<decltype(&getAdapterInfoAddress)>(mockGdiDll->getProcAddress("getAdapterInfoAddress"));
         getLastCallMapGpuVaArgFcn = reinterpret_cast<decltype(&getLastCallMapGpuVaArg)>(mockGdiDll->getProcAddress("getLastCallMapGpuVaArg"));
@@ -65,7 +65,7 @@ struct GdiDllFixture {
         *getRegisterTrimNotificationFailCallFcn() = false;
     }
 
-    virtual void TearDown() {
+    void tearDown() {
         *getCreateHwQueueDataFcn() = {};
         *getDestroyHwQueueDataFcn() = {};
         *getSubmitCommandToHwQueueDataFcn() = {};
@@ -79,12 +79,12 @@ struct GdiDllFixture {
 
     std::unique_ptr<OsLibrary> mockGdiDll;
 
-    decltype(&MockSetSizes) setSizesFcn = nullptr;
-    decltype(&GetMockSizes) getSizesFcn = nullptr;
-    decltype(&GetMockLastDestroyedResHandle) getMockLastDestroyedResHandleFcn = nullptr;
-    decltype(&SetMockLastDestroyedResHandle) setMockLastDestroyedResHandleFcn = nullptr;
-    decltype(&GetMockCreateDeviceParams) getMockCreateDeviceParamsFcn = nullptr;
-    decltype(&SetMockCreateDeviceParams) setMockCreateDeviceParamsFcn = nullptr;
+    decltype(&setMockSizes) setSizesFcn = nullptr;
+    decltype(&getMockSizes) getSizesFcn = nullptr;
+    decltype(&getMockLastDestroyedResHandle) getMockLastDestroyedResHandleFcn = nullptr;
+    decltype(&setMockLastDestroyedResHandle) setMockLastDestroyedResHandleFcn = nullptr;
+    decltype(&getMockCreateDeviceParams) getMockCreateDeviceParamsFcn = nullptr;
+    decltype(&setMockCreateDeviceParams) setMockCreateDeviceParamsFcn = nullptr;
     decltype(&getMockAllocation) getMockAllocationFcn = nullptr;
     decltype(&getAdapterInfoAddress) getAdapterInfoAddressFcn = nullptr;
     decltype(&getLastCallMapGpuVaArg) getLastCallMapGpuVaArgFcn = nullptr;

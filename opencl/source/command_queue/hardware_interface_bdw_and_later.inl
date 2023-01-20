@@ -51,19 +51,11 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     LinearStream &commandStream,
     Kernel &kernel,
     CommandQueue &commandQueue,
-    TimestampPacketContainer *currentTimestampPacketNodes,
     IndirectHeap &dsh,
     IndirectHeap &ioh,
     IndirectHeap &ssh,
-    size_t globalWorkSizes[3],
-    size_t localWorkSizes[3],
-    PreemptionMode preemptionMode,
-    size_t currentDispatchIndex,
-    uint32_t &interfaceDescriptorIndex,
     const DispatchInfo &dispatchInfo,
-    size_t offsetInterfaceDescriptorTable,
-    const Vec3<size_t> &numberOfWorkgroups,
-    const Vec3<size_t> &startOfWorkgroups) {
+    HardwareInterfaceWalkerArgs &walkerArgs) {
 
     auto walkerCmdBuf = allocateWalkerSpace(commandStream, kernel);
     WALKER_TYPE walkerCmd = GfxFamily::cmdInitGpgpuWalker;
@@ -71,11 +63,12 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     uint32_t simd = kernel.getKernelInfo().getMaxSimdSize();
 
     size_t globalOffsets[3] = {dispatchInfo.getOffset().x, dispatchInfo.getOffset().y, dispatchInfo.getOffset().z};
-    size_t startWorkGroups[3] = {startOfWorkgroups.x, startOfWorkgroups.y, startOfWorkgroups.z};
-    size_t numWorkGroups[3] = {numberOfWorkgroups.x, numberOfWorkgroups.y, numberOfWorkgroups.z};
+    size_t startWorkGroups[3] = {walkerArgs.startOfWorkgroups->x, walkerArgs.startOfWorkgroups->y, walkerArgs.startOfWorkgroups->z};
+    size_t numWorkGroups[3] = {walkerArgs.numberOfWorkgroups->x, walkerArgs.numberOfWorkgroups->y, walkerArgs.numberOfWorkgroups->z};
+    auto threadGroupCount = static_cast<uint32_t>(walkerArgs.numberOfWorkgroups->x * walkerArgs.numberOfWorkgroups->y * walkerArgs.numberOfWorkgroups->z);
 
-    if (currentTimestampPacketNodes && commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        auto timestampPacketNode = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
+    if (walkerArgs.currentTimestampPacketNodes && commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
+        auto timestampPacketNode = walkerArgs.currentTimestampPacketNodes->peekNodes().at(walkerArgs.currentDispatchIndex);
         GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacketNode, commandQueue.getDevice().getRootDeviceEnvironment());
     }
 
@@ -88,24 +81,25 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         ioh,
         ssh,
         kernel,
-        kernel.getKernelStartOffset(true, kernelUsesLocalIds, isCcsUsed),
+        kernel.getKernelStartAddress(true, kernelUsesLocalIds, isCcsUsed, false),
         simd,
-        localWorkSizes,
-        offsetInterfaceDescriptorTable,
-        interfaceDescriptorIndex,
-        preemptionMode,
+        walkerArgs.localWorkSizes,
+        threadGroupCount,
+        walkerArgs.offsetInterfaceDescriptorTable,
+        walkerArgs.interfaceDescriptorIndex,
+        walkerArgs.preemptionMode,
         &walkerCmd,
         nullptr,
-        true,
+        kernelUsesLocalIds,
         commandQueue.getDevice());
 
     GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, kernel.getKernelInfo().kernelDescriptor,
                                                            globalOffsets, startWorkGroups,
-                                                           numWorkGroups, localWorkSizes, simd, dim,
+                                                           numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
                                                            false, false, 0u);
 
-    EncodeWalkerArgs walkerArgs{kernel.getExecutionType(), false};
-    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), walkerCmd, walkerArgs);
+    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), false, kernel.getKernelInfo().kernelDescriptor};
+    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), walkerCmd, encodeWalkerArgs);
     *walkerCmdBuf = walkerCmd;
 }
 } // namespace NEO

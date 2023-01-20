@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,17 +7,17 @@
 
 #pragma once
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/os_interface/driver_info.h"
+#include "shared/source/helpers/topology_map.h"
 
-#include <cstdint>
 #include <limits>
 #include <memory>
-#include <type_traits>
-#include <vector>
+#include <string>
 
 namespace NEO {
+struct PhysicalDevicePciBusInfo;
+struct PhysicalDevicePciSpeedInfo;
+enum class DriverModelType;
 class ExecutionEnvironment;
 class MemoryManager;
 class OsContext;
@@ -78,13 +78,13 @@ class DriverModel : public NonCopyableClass {
     }
 
     virtual PhysicalDevicePciBusInfo getPciBusInfo() const = 0;
-    virtual PhyicalDevicePciSpeedInfo getPciSpeedInfo() const = 0;
+    virtual PhysicalDevicePciSpeedInfo getPciSpeedInfo() const = 0;
 
     virtual size_t getMaxMemAllocSize() const {
         return std::numeric_limits<size_t>::max();
     }
 
-    virtual bool isDriverAvaliable() {
+    virtual bool isDriverAvailable() {
         return true;
     }
 
@@ -92,30 +92,31 @@ class DriverModel : public NonCopyableClass {
         return skipResourceCleanupVar;
     }
 
+    virtual void cleanup() {}
+
     virtual bool isGpuHangDetected(OsContext &osContext) = 0;
+    const TopologyMap &getTopologyMap() {
+        return topologyMap;
+    };
 
   protected:
     DriverModelType driverModelType;
+    TopologyMap topologyMap;
     bool skipResourceCleanupVar = false;
 };
 
 class OSInterface : public NonCopyableClass {
   public:
-    virtual ~OSInterface() = default;
-    DriverModel *getDriverModel() const {
-        return driverModel.get();
-    };
+    virtual ~OSInterface();
+    DriverModel *getDriverModel() const;
 
-    void setDriverModel(std::unique_ptr<DriverModel> driverModel) {
-        this->driverModel = std::move(driverModel);
-    };
+    void setDriverModel(std::unique_ptr<DriverModel> driverModel);
 
     MOCKABLE_VIRTUAL bool isDebugAttachAvailable() const;
+    MOCKABLE_VIRTUAL bool isLockablePointer(bool isLockable) const;
     static bool osEnabled64kbPages;
     static bool osEnableLocalMemory;
-    static bool are64kbPagesEnabled() {
-        return osEnabled64kbPages;
-    }
+    static bool are64kbPagesEnabled();
     static bool newResourceImplicitFlush;
     static bool gpuIdleImplicitFlush;
     static bool requiresSupportForWddmTrimNotification;
@@ -125,10 +126,5 @@ class OSInterface : public NonCopyableClass {
   protected:
     std::unique_ptr<DriverModel> driverModel = nullptr;
 };
-
-static_assert(!std::is_move_constructible_v<NEO::OSInterface>);
-static_assert(!std::is_copy_constructible_v<NEO::OSInterface>);
-static_assert(!std::is_move_assignable_v<NEO::OSInterface>);
-static_assert(!std::is_copy_assignable_v<NEO::OSInterface>);
 
 } // namespace NEO

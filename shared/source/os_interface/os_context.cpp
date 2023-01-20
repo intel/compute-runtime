@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,8 +14,9 @@
 #include "shared/source/helpers/hw_info.h"
 
 namespace NEO {
-OsContext::OsContext(uint32_t contextId, const EngineDescriptor &engineDescriptor)
-    : contextId(contextId),
+OsContext::OsContext(uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
+    : rootDeviceIndex(rootDeviceIndex),
+      contextId(contextId),
       deviceBitfield(engineDescriptor.deviceBitfield),
       preemptionMode(engineDescriptor.preemptionMode),
       numSupportedDevices(static_cast<uint32_t>(engineDescriptor.deviceBitfield.count())),
@@ -120,7 +121,7 @@ bool OsContext::checkDirectSubmissionSupportsEngine(const DirectSubmissionProper
             startOnInit = renderOverrideKey == 1 ? true : false;
         }
     } else {
-        //assume else is CCS
+        // assume else is CCS
         int32_t computeOverrideKey = DebugManager.flags.DirectSubmissionOverrideComputeSupport.get();
         if (computeOverrideKey != -1) {
             supported = computeOverrideKey == 0 ? false : true;
@@ -128,7 +129,7 @@ bool OsContext::checkDirectSubmissionSupportsEngine(const DirectSubmissionProper
         }
     }
 
-    //enable start in context only when default support is overridden and enabled
+    // enable start in context only when default support is overridden and enabled
     if (supported && !directSubmissionProperty.engineSupported) {
         startInContext = true;
     }

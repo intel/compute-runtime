@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,14 +17,14 @@
 
 class Environment : public ::testing::Environment {
   public:
-    Environment(const std::string &devicePrefix, const std::string &familyNameWithType)
-        : devicePrefix(devicePrefix), familyNameWithType(familyNameWithType) {
+    Environment(const std::string &devicePrefix, const std::string productConfig)
+        : devicePrefix(devicePrefix), productConfig(productConfig) {
     }
 
     void SetInputFileName( // NOLINT(readability-identifier-naming)
         const std::string filename) {
 
-        retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".gen");
+        retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".bin");
         retrieveBinaryKernelFilename(fclDebugVars.fileName, filename + "_", ".bc");
 
         NEO::setIgcDebugVars(igcDebugVars);
@@ -52,5 +52,5 @@ class Environment : public ::testing::Environment {
     NEO::MockIgaDllGuard mockIgaDllGuard;
 
     const std::string devicePrefix;
-    const std::string familyNameWithType;
+    const std::string productConfig;
 };

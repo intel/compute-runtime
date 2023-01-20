@@ -19,6 +19,7 @@ File to cover guidelines for NEO project.
 * use of exceptions in driver code needs strong justification
 * prefer static create methods returning std::unique_ptr instead of throwing from constructor
 * inside methods, use an explicit `this->` pointer for refering to non-static class members
+* avoid defining global constants with internal-linkage in header files; use inline variables from C++17 instead
 
 # Naming conventions
 
@@ -64,3 +65,11 @@ a general rule test shouldn't be longer then 1ms in Debug driver.
 * Use `UNRECOVERABLE_IF` and `DEBUG_BREAK_IF` instead of `asserts`:
   * Use `UNRECOVERABLE_IF` when a failure is found and driver cannot proceed with normal execution. `UNRECOVERABLE_IF` is implemented in Release and Debug builds.
   * Use `DEBUG_BREAK_IF` when a failure can be handled gracefully by the driver and it can continue with normal execution. `DEBUG_BREAK_IF` is only implemented in Debug builds.
+
+## UNRECOVERABLE_IF macro
+
+The NEO code uses the UNRECOVERABLE macro to abort execution in the following cases:
+* Driver is in an undefined state from which it cannot recover nor easily return error code
+* Execution entered an unexpected path that is not supported 
+
+The abort mechanism guarantees that the error is caught as early as possible, which makes debug and fixing easier. 

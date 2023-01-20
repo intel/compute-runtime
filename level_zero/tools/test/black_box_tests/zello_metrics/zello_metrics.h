@@ -8,6 +8,7 @@
 #pragma once
 
 #include <level_zero/ze_api.h>
+#include <level_zero/zes_api.h>
 #include <level_zero/zet_api.h>
 
 #include <iostream>
@@ -32,6 +33,17 @@
         }                                                                      \
     } while (0);
 
+class SystemParameter {
+
+  public:
+    SystemParameter(ze_device_handle_t device) : device(device) {}
+    virtual void capture(std::string s) = 0;
+    virtual void showAll(double minDiff) = 0;
+
+  protected:
+    ze_device_handle_t device = nullptr;
+};
+
 class ExecutionContext {
 
   public:
@@ -50,8 +62,13 @@ class ExecutionContext {
     virtual bool activateMetricGroups();
     virtual bool deactivateMetricGroups();
 
+    void addSystemParameterCapture(SystemParameter *sysParameter) {
+        systemParameterList.push_back(sysParameter);
+    }
+
   protected:
     std::vector<zet_metric_group_handle_t> activeMetricGroups = {};
+    std::vector<SystemParameter *> systemParameterList = {};
 };
 
 class Workload {
@@ -107,6 +124,28 @@ class SingleDeviceSingleQueueExecutionCtxt : public ExecutionContext {
     uint32_t executionTimeInMilliSeconds = 0;
 };
 
+class SingleDeviceImmediateCommandListCtxt : public ExecutionContext {
+  public:
+    SingleDeviceImmediateCommandListCtxt(uint32_t deviceIndex, int32_t subDeviceIndex = -1) { initialize(deviceIndex, subDeviceIndex); }
+    ~SingleDeviceImmediateCommandListCtxt() override { finalize(); }
+    bool run() override { return true; }
+
+    ze_driver_handle_t getDriverHandle(uint32_t index) override { return driverHandle; }
+    ze_context_handle_t getContextHandle(uint32_t index) override { return contextHandle; }
+    ze_device_handle_t getDeviceHandle(uint32_t index) override { return deviceHandle; }
+    ze_command_queue_handle_t getCommandQueue(uint32_t index) override { return commandQueue; }
+    ze_command_list_handle_t getCommandList(uint32_t index) override { return commandList; }
+
+  private:
+    ze_driver_handle_t driverHandle = {};
+    ze_context_handle_t contextHandle = {};
+    ze_device_handle_t deviceHandle = {};
+    ze_command_queue_handle_t commandQueue = {};
+    ze_command_list_handle_t commandList = {};
+    bool initialize(uint32_t deviceIndex, int32_t subDeviceIndex);
+    bool finalize();
+};
+
 class AppendMemoryCopyFromHeapToDeviceAndBackToHost : public Workload {
   public:
     AppendMemoryCopyFromHeapToDeviceAndBackToHost(ExecutionContext *execCtxt) : Workload(execCtxt) { initialize(); }
@@ -135,8 +174,6 @@ class CopyBufferToBuffer : public Workload {
   private:
     void initialize();
     void finalize();
-
-  private:
     const uint32_t allocationSize = 4096;
     void *sourceBuffer = nullptr;
     void *destinationBuffer = nullptr;
@@ -242,4 +279,30 @@ class SingleDeviceTestRunner {
     std::vector<Workload *> workloadList = {};
     ExecutionContext *executionCtxt = nullptr;
     bool disableCommandListExecution = false;
+};
+
+class Power : public SystemParameter {
+  public:
+    Power(ze_device_handle_t device);
+    virtual ~Power() = default;
+    void capture(std::string s) override;
+    void showAll(double minDiff) override;
+    void getMinMax(double &min, double &max);
+
+  private:
+    std::vector<std::pair<zes_power_energy_counter_t, std::string>> energyCounters = {};
+    zes_pwr_handle_t handle = nullptr;
+};
+
+class Frequency : public SystemParameter {
+  public:
+    Frequency(ze_device_handle_t device);
+    virtual ~Frequency() = default;
+    void capture(std::string s) override;
+    void showAll(double minDiff) override;
+    void getMinMax(double &min, double &max);
+
+  private:
+    zes_freq_handle_t handle = nullptr;
+    std::vector<std::pair<double, std::string>> frequencies = {};
 };

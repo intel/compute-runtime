@@ -1,22 +1,25 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/engine_node_helper.h"
-#include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/raii_hw_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -28,8 +31,8 @@
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
-#include "shared/test/unit_test/helpers/raii_hw_helper.h"
 
+#include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/event/user_event.h"
@@ -59,15 +62,15 @@ struct CommandQueueMemoryDevice
     : public MemoryManagementFixture,
       public ClDeviceFixture {
 
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
-        ClDeviceFixture::SetUp();
+    void setUp() {
+        MemoryManagementFixture::setUp();
+        ClDeviceFixture::setUp();
     }
 
-    void TearDown() override {
-        ClDeviceFixture::TearDown();
+    void tearDown() {
+        ClDeviceFixture::tearDown();
         platformsImpl->clear();
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
     }
 };
 
@@ -77,25 +80,25 @@ struct CommandQueueTest
       public CommandQueueFixture,
       ::testing::TestWithParam<uint64_t /*cl_command_queue_properties*/> {
 
-    using CommandQueueFixture::SetUp;
-    using ContextFixture::SetUp;
+    using CommandQueueFixture::setUp;
+    using ContextFixture::setUp;
 
     CommandQueueTest() {
     }
 
     void SetUp() override {
-        CommandQueueMemoryDevice::SetUp();
+        CommandQueueMemoryDevice::setUp();
         properties = GetParam();
 
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
-        CommandQueueFixture::SetUp(pContext, pClDevice, properties);
+        ContextFixture::setUp(1, &device);
+        CommandQueueFixture::setUp(pContext, pClDevice, properties);
     }
 
     void TearDown() override {
-        CommandQueueFixture::TearDown();
-        ContextFixture::TearDown();
-        CommandQueueMemoryDevice::TearDown();
+        CommandQueueFixture::tearDown();
+        ContextFixture::tearDown();
+        CommandQueueMemoryDevice::tearDown();
     }
 
     cl_command_queue_properties properties;
@@ -128,6 +131,13 @@ INSTANTIATE_TEST_CASE_P(CommandQueue,
                         CommandQueueTest,
                         ::testing::ValuesIn(AllCommandQueueProperties));
 
+TEST(CommandQueue, WhenGettingErrorCodeFromTaskCountThenProperValueIsReturned) {
+    EXPECT_EQ(CL_SUCCESS, CommandQueue::getErrorCodeFromTaskCount(0));
+    EXPECT_EQ(CL_OUT_OF_HOST_MEMORY, CommandQueue::getErrorCodeFromTaskCount(CompletionStamp::outOfHostMemory));
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, CommandQueue::getErrorCodeFromTaskCount(CompletionStamp::outOfDeviceMemory));
+    EXPECT_EQ(CL_OUT_OF_RESOURCES, CommandQueue::getErrorCodeFromTaskCount(CompletionStamp::gpuHang));
+}
+
 TEST(CommandQueue, WhenConstructingCommandQueueThenTaskLevelAndTaskCountAreZero) {
     MockCommandQueue cmdQ(nullptr, nullptr, 0, false);
     EXPECT_EQ(0u, cmdQ.taskLevel);
@@ -148,9 +158,9 @@ TEST(CommandQueue, givenEnableTimestampWaitWhenCheckIsTimestampWaitEnabledThenRe
 
     {
         DebugManager.flags.EnableTimestampWaitForQueues.set(-1);
-        const auto &hwHelper = HwHelper::get(mockDevice->getHardwareInfo().platform.eRenderCoreFamily);
-        const auto &hwInfoConfig = *HwInfoConfig::get(mockDevice->getHardwareInfo().platform.eProductFamily);
-        EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), hwHelper.isTimestampWaitSupportedForQueues() && !hwInfoConfig.isDcFlushAllowed());
+        const auto &gfxCoreHelper = mockDevice->getGfxCoreHelper();
+        const auto &productHelper = mockDevice->getProductHelper();
+        EXPECT_EQ(cmdQ.isWaitForTimestampsEnabled(), gfxCoreHelper.isTimestampWaitSupportedForQueues() && !productHelper.isDcFlushAllowed());
     }
 
     {
@@ -184,18 +194,18 @@ struct GetTagTest : public ClDeviceFixture,
                     public CommandStreamFixture,
                     public ::testing::Test {
 
-    using CommandQueueFixture::SetUp;
+    using CommandQueueFixture::setUp;
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(nullptr, pClDevice, 0);
-        CommandStreamFixture::SetUp(pCmdQ);
+        ClDeviceFixture::setUp();
+        CommandQueueFixture::setUp(nullptr, pClDevice, 0);
+        CommandStreamFixture::setUp(pCmdQ);
     }
 
     void TearDown() override {
-        CommandStreamFixture::TearDown();
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandStreamFixture::tearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 };
 
@@ -291,9 +301,9 @@ TEST(CommandQueue, givenDeviceWithSubDevicesSupportingBlitOperationsWhenQueueIsC
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
     EXPECT_EQ(2u, device->getNumGenericSubDevices());
     std::unique_ptr<OsContext> bcsOsContext;
 
@@ -312,18 +322,19 @@ TEST(CommandQueue, whenCommandQueueWithInternalUsageIsCreatedThenInternalBcsEngi
     DebugManager.flags.DeferCmdQBcsInitialization.set(0);
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
 
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto internalUsage = true;
-    auto expectedEngineType = EngineHelpers::linkCopyEnginesSupported(hwInfo, device->getDeviceBitfield())
+    auto expectedEngineType = EngineHelpers::linkCopyEnginesSupported(device->getRootDeviceEnvironment(), device->getDeviceBitfield())
                                   ? aub_stream::EngineType::ENGINE_BCS2
                                   : aub_stream::EngineType::ENGINE_BCS;
 
     for (auto preferInternalBcsEngine : {0, 1}) {
         DebugManager.flags.PreferInternalBcsEngine.set(preferInternalBcsEngine);
-        auto engineUsage = hwHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
+        auto engineUsage = gfxCoreHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
         MockCommandQueue cmdQ(nullptr, device.get(), 0, internalUsage);
         auto &bcsEngine = device->getEngine(expectedEngineType, engineUsage);
 
@@ -387,13 +398,13 @@ TEST(CommandQueue, givenCmdQueueBlockedByAbortedVirtualEventWhenUnblockingThenUp
 struct CommandQueueCommandStreamTest : public CommandQueueMemoryDevice,
                                        public ::testing::Test {
     void SetUp() override {
-        CommandQueueMemoryDevice::SetUp();
+        CommandQueueMemoryDevice::setUp();
         context.reset(new MockContext(pClDevice));
     }
 
     void TearDown() override {
         context.reset();
-        CommandQueueMemoryDevice::TearDown();
+        CommandQueueMemoryDevice::tearDown();
     }
     std::unique_ptr<MockContext> context;
 };
@@ -413,15 +424,6 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCommandQueueThatWaitsOnAbortedUserE
 
     EXPECT_FALSE(cmdQ.isQueueBlocked());
     EXPECT_EQ(100u, cmdQ.taskLevel);
-}
-
-HWTEST_F(CommandQueueCommandStreamTest, whenCreatingThenDontCreateLogicalStateHelper) {
-    MockContext context;
-    auto mockDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
-    MockCommandQueueHw<FamilyType> cmdQ(&context, mockDevice.get(), nullptr);
-
-    EXPECT_EQ(nullptr, cmdQ.logicalStateHelper.get());
 }
 
 HWTEST_F(CommandQueueCommandStreamTest, WhenCheckIsTextureCacheFlushNeededThenReturnProperValue) {
@@ -594,13 +596,13 @@ HWTEST_F(CommandQueueCommandStreamTest, givenMultiDispatchInfoWithSingleKernelWi
 struct CommandQueueIndirectHeapTest : public CommandQueueMemoryDevice,
                                       public ::testing::TestWithParam<IndirectHeap::Type> {
     void SetUp() override {
-        CommandQueueMemoryDevice::SetUp();
+        CommandQueueMemoryDevice::setUp();
         context.reset(new MockContext(pClDevice));
     }
 
     void TearDown() override {
         context.reset();
-        CommandQueueMemoryDevice::TearDown();
+        CommandQueueMemoryDevice::tearDown();
     }
     std::unique_ptr<MockContext> context;
 };
@@ -944,7 +946,8 @@ HWTEST_F(CommandQueueTests, givenEngineUsageHintSetWithInvalidValueWhenCreatingC
 
 HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithRenderEngineWhenCreatingCommandQueueWithPropertiesWhereComputeEngineSetThenProperEngineUsed) {
     DebugManagerStateRestore restore;
-    auto forcedEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *defaultHwInfo);
+    MockExecutionEnvironment executionEnvironment{};
+    auto forcedEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *executionEnvironment.rootDeviceEnvironments[0]);
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(forcedEngine));
 
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
@@ -958,8 +961,8 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithRenderEngineWhenCreatingComma
 
     cl_queue_properties propertiesCooperativeQueue[] = {CL_QUEUE_FAMILY_INTEL, userPropertiesEngineGroupType, CL_QUEUE_INDEX_INTEL, userPropertiesEngineIndex, 0};
 
-    const HwHelper &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    EXPECT_NE(hwHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(forcedEngine), EngineUsage::Regular, *defaultHwInfo),
+    const auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    EXPECT_NE(gfxCoreHelper.getEngineGroupType(static_cast<aub_stream::EngineType>(forcedEngine), EngineUsage::Regular, *defaultHwInfo),
               static_cast<EngineGroupType>(userPropertiesEngineGroupType));
     EXPECT_NE(expectedEngineIndex, userPropertiesEngineIndex);
 
@@ -977,7 +980,8 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithRenderEngineWhenCreatingComma
 
 HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithCcsEngineWhenCreatingCommandQueueWithPropertiesAndRegularCcsEngineNotExistThenEngineNotForced) {
     DebugManagerStateRestore restore;
-    auto defaultEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *defaultHwInfo);
+    MockExecutionEnvironment executionEnvironment{};
+    auto defaultEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, *executionEnvironment.rootDeviceEnvironments[0]);
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(defaultEngine));
 
     auto pDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
@@ -987,14 +991,14 @@ HWTEST_F(CommandQueueTests, givenNodeOrdinalSetWithCcsEngineWhenCreatingCommandQ
 
     cl_queue_properties propertiesCooperativeQueue[] = {CL_QUEUE_FAMILY_INTEL, 0, CL_QUEUE_INDEX_INTEL, 0, 0};
 
-    struct FakeHwHelper : HwHelperHw<FamilyType> {
+    struct FakeGfxCoreHelper : GfxCoreHelperHw<FamilyType> {
         EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
             return EngineGroupType::RenderCompute;
         }
     };
-    RAIIHwHelperFactory<FakeHwHelper> overrideHwHelper{defaultHwInfo->platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<FakeGfxCoreHelper> overrideGfxCoreHelper{defaultHwInfo->platform.eRenderCoreFamily};
 
-    auto forcedEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS, *defaultHwInfo);
+    auto forcedEngine = EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_CCS, pDevice->getRootDeviceEnvironment());
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(forcedEngine));
 
     auto pCmdQ = CommandQueue::create(
@@ -1014,7 +1018,7 @@ struct WaitForQueueCompletionTests : public ::testing::Test {
     template <typename Family>
     struct MyCmdQueue : public CommandQueueHw<Family> {
         MyCmdQueue(Context *context, ClDevice *device) : CommandQueueHw<Family>(context, device, nullptr, false){};
-        WaitStatus waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
+        WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool cleanTemporaryAllocationList, bool skipWait) override {
             requestedUseQuickKmdSleep = useQuickKmdSleep;
             waitUntilCompleteCounter++;
 
@@ -1071,17 +1075,17 @@ class CommandStreamReceiverHwMock : public CommandStreamReceiverHw<GfxFamily> {
                                 const DeviceBitfield deviceBitfield)
         : CommandStreamReceiverHw<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield) {}
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) override {
         waitForTaskCountWithKmdNotifyFallbackCounter++;
         return waitForTaskCountWithKmdNotifyFallbackReturnValue;
     }
 
-    WaitStatus waitForTaskCount(uint32_t requiredTaskCount) override {
+    WaitStatus waitForTaskCount(TaskCountType requiredTaskCount) override {
         waitForTaskCountCalledCounter++;
         return waitForTaskCountReturnValue;
     }
 
-    WaitStatus waitForTaskCountAndCleanTemporaryAllocationList(uint32_t requiredTaskCount) override {
+    WaitStatus waitForTaskCountAndCleanTemporaryAllocationList(TaskCountType requiredTaskCount) override {
         waitForTaskCountAndCleanTemporaryAllocationListCalledCounter++;
         return waitForTaskCountAndCleanTemporaryAllocationListReturnValue;
     }
@@ -1128,7 +1132,7 @@ HWTEST_F(WaitUntilCompletionTests, givenCleanTemporaryAllocationListEqualsFalseW
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool cleanTemporaryAllocationList = false;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
 
@@ -1148,7 +1152,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangAndCleanTemporaryAllocationListEq
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool cleanTemporaryAllocationList = true;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
 
@@ -1167,7 +1171,7 @@ HWTEST_F(WaitUntilCompletionTests, givenEmptyBcsStatesAndSkipWaitEqualsTrueWhenW
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool skipWait = true;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
 
@@ -1186,7 +1190,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangAndSkipWaitEqualsFalseWhenWaiting
     CommandStreamReceiver *oldCommandStreamReceiver = &cmdQ->getGpgpuCommandStreamReceiver();
     cmdQ->gpgpuEngine->commandStreamReceiver = cmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool skipWait = false;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{};
 
@@ -1214,7 +1218,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangOnBcsCsrWhenWaitingUntilCompleteT
     cmdQ->gpgpuEngine->commandStreamReceiver = gpgpuCmdStream.get();
     cmdQ->bcsCsrToReturn = bcsCmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool skipWait = false;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{CopyEngineState{}};
 
@@ -1247,7 +1251,7 @@ HWTEST_F(WaitUntilCompletionTests, givenGpuHangOnBcsCsrWhenWaitingUntilCompleteT
     cmdQ->gpgpuEngine->commandStreamReceiver = gpgpuCmdStream.get();
     cmdQ->bcsCsrToReturn = bcsCmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool skipWait = false;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{CopyEngineState{}};
 
@@ -1281,7 +1285,7 @@ HWTEST_F(WaitUntilCompletionTests, givenSuccessOnBcsCsrWhenWaitingUntilCompleteT
     cmdQ->gpgpuEngine->commandStreamReceiver = gpgpuCmdStream.get();
     cmdQ->bcsCsrToReturn = bcsCmdStream.get();
 
-    constexpr uint32_t taskCount = 0u;
+    constexpr TaskCountType taskCount = 0u;
     constexpr bool skipWait = false;
     StackVec<CopyEngineState, bcsInfoMaskSize> activeBcsStates{CopyEngineState{}};
 
@@ -1489,8 +1493,8 @@ HWTEST_F(CommandQueueCommandStreamTest, givenDebugKernelWhenSetupDebugSurfaceIsC
     auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
 
     auto &hwInfo = *NEO::defaultHwInfo.get();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    cmdQ.getGpgpuCommandStreamReceiver().allocateDebugSurface(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo));
+    auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
+    cmdQ.getGpgpuCommandStreamReceiver().allocateDebugSurface(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo));
     cmdQ.setupDebugSurface(kernel.get());
 
     auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
@@ -1510,8 +1514,8 @@ HWTEST_F(CommandQueueCommandStreamTest, givenCsrWithDebugSurfaceAllocatedWhenSet
     kernel->setSshLocal(nullptr, sizeof(RENDER_SURFACE_STATE) + systemThreadSurfaceAddress);
     auto &commandStreamReceiver = cmdQ.getGpgpuCommandStreamReceiver();
     auto hwInfo = *NEO::defaultHwInfo.get();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    commandStreamReceiver.allocateDebugSurface(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo));
+    auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
+    commandStreamReceiver.allocateDebugSurface(gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo));
     auto debugSurface = commandStreamReceiver.getDebugSurfaceAllocation();
     ASSERT_NE(nullptr, debugSurface);
 
@@ -1574,7 +1578,7 @@ TEST(CommandQueue, givenBlitterOperationsSupportedWhenCreatingQueueThenTimestamp
 
     MockContext context{};
     HardwareInfo *hwInfo = context.getDevice(0)->getRootDeviceEnvironment().getMutableHardwareInfo();
-    if (!HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isBlitterFullySupported(*defaultHwInfo.get())) {
+    if (!ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isBlitterFullySupported(*defaultHwInfo.get())) {
         GTEST_SKIP();
     }
 
@@ -1691,16 +1695,108 @@ TEST(CommandQueue, givenImageToBufferClCommandWhenCallingBlitEnqueueAllowedThenR
     EXPECT_FALSE(queue.blitEnqueueAllowed(args));
 }
 
+TEST(CommandQueue, whenDontAllocateBuffersInLocalMemoryForMultiRootDeviceContextsThenMultiGraphicsAllocationsDontRequireMigrations) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(0);
+
+    MockDefaultContext context{true};
+    MockCommandQueue queue(&context, context.getDevice(1), 0, false);
+    MockCommandStreamReceiver csr(*context.getDevice(1)->getExecutionEnvironment(), context.getDevice(1)->getRootDeviceIndex(), 1);
+
+    ASSERT_TRUE(context.getRootDeviceIndices().size() > 1);
+
+    std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create(&context));
+    size_t size = MemoryConstants::kiloByte;
+    auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
+
+    BuiltinOpParams operationParams;
+    operationParams.srcMemObj = srcBuffer.get();
+    operationParams.dstPtr = dstPtr;
+    operationParams.size = {size, 0, 0};
+
+    EXPECT_FALSE(srcBuffer->getMultiGraphicsAllocation().requiresMigrations());
+
+    queue.migrateMultiGraphicsAllocationsIfRequired(operationParams, csr);
+
+    alignedFree(dstPtr);
+}
+
+TEST(CommandQueue, givenAllocateBuffersInLocalMemoryForMultiRootDeviceContextsWhenMultiStorageIsNotSetThenDontRequireMigrations) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(1);
+
+    MockDefaultContext context{true};
+    MockCommandQueue queue(&context, context.getDevice(1), 0, false);
+    MockCommandStreamReceiver csr(*context.getDevice(1)->getExecutionEnvironment(), context.getDevice(1)->getRootDeviceIndex(), 1);
+
+    ASSERT_TRUE(context.getRootDeviceIndices().size() > 1);
+
+    std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create(&context));
+    const_cast<MultiGraphicsAllocation &>(srcBuffer->getMultiGraphicsAllocation()).setMultiStorage(false);
+    size_t size = MemoryConstants::kiloByte;
+    auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
+
+    BuiltinOpParams operationParams;
+    operationParams.srcMemObj = srcBuffer.get();
+    operationParams.dstPtr = dstPtr;
+    operationParams.size = {size, 0, 0};
+
+    EXPECT_FALSE(srcBuffer->getMultiGraphicsAllocation().requiresMigrations());
+
+    queue.migrateMultiGraphicsAllocationsIfRequired(operationParams, csr);
+
+    alignedFree(dstPtr);
+}
+
+TEST(CommandQueue, givenAllocateBuffersInLocalMemoryForMultiRootDeviceContextsWhenMultiGraphicsAllocationsRequireMigrationsThenMigrateTheAllocations) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(1);
+
+    MockDefaultContext context{true};
+    ASSERT_TRUE(context.getNumDevices() > 1);
+    ASSERT_TRUE(context.getRootDeviceIndices().size() > 1);
+
+    auto sourceRootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
+    EXPECT_EQ(0u, sourceRootDeviceIndex);
+
+    auto targetRootDeviceIndex = context.getDevice(1)->getRootDeviceIndex();
+    EXPECT_EQ(1u, targetRootDeviceIndex);
+
+    MockCommandQueue queue(&context, context.getDevice(1), 0, false);
+    MockCommandStreamReceiver csr(*context.getDevice(1)->getExecutionEnvironment(), targetRootDeviceIndex, 1);
+
+    std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create(&context));
+    size_t size = MemoryConstants::kiloByte;
+    auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
+
+    BuiltinOpParams operationParams;
+    operationParams.srcMemObj = srcBuffer.get();
+    operationParams.dstPtr = dstPtr;
+    operationParams.size = {size, 0, 0};
+
+    EXPECT_TRUE(srcBuffer->getMultiGraphicsAllocation().requiresMigrations());
+    ASSERT_NE(nullptr, srcBuffer->getMultiGraphicsAllocation().getMigrationSyncData());
+
+    srcBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->setCurrentLocation(sourceRootDeviceIndex);
+    EXPECT_EQ(sourceRootDeviceIndex, srcBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+
+    queue.migrateMultiGraphicsAllocationsIfRequired(operationParams, csr);
+
+    EXPECT_EQ(targetRootDeviceIndex, srcBuffer->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+
+    alignedFree(dstPtr);
+}
+
 template <bool blitter, bool selectBlitterWithQueueFamilies>
 struct CsrSelectionCommandQueueTests : ::testing::Test {
     void SetUp() override {
         HardwareInfo hwInfo = *::defaultHwInfo;
         hwInfo.capabilityTable.blitterOperationsSupported = blitter;
-        if (blitter) {
-            REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
-        }
 
         device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo);
+        if (blitter) {
+            REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+        }
         clDevice = std::make_unique<MockClDevice>(device);
         context = std::make_unique<MockContext>(clDevice.get());
 
@@ -1805,7 +1901,8 @@ TEST_F(CsrSelectionCommandQueueWithBlitterTests, givenBlitterPresentAndLocalToLo
     DebugManagerStateRestore restore{};
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
 
-    const bool hwPreference = ClHwHelper::get(::defaultHwInfo->platform.eRenderCoreFamily).preferBlitterForLocalToLocalTransfers();
+    auto &clGfxCoreHelper = clDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    const bool hwPreference = clGfxCoreHelper.preferBlitterForLocalToLocalTransfers();
     const auto &hwPreferenceCsr = hwPreference ? *queue->getBcsCommandStreamReceiver(aub_stream::ENGINE_BCS) : queue->getGpgpuCommandStreamReceiver();
 
     BuiltinOpParams builtinOpParams{};
@@ -2030,7 +2127,7 @@ TEST(CommandQueue, given64KBTileWith3DImageTypeWhenCallingBlitEnqueueImageAllowe
     MockContext context{};
     MockCommandQueue queue(&context, context.getDevice(0), 0, false);
     const auto &hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
 
     size_t correctRegion[3] = {10u, 10u, 0};
     size_t correctOrigin[3] = {1u, 1u, 0};
@@ -2051,7 +2148,7 @@ TEST(CommandQueue, given64KBTileWith3DImageTypeWhenCallingBlitEnqueueImageAllowe
                 mockGmmResourceInfo->getResourceFlags()->Info.Tile64 = isTile64;
 
                 if (isTile64 && (imageType == CL_MEM_OBJECT_IMAGE3D)) {
-                    auto supportExpected = hwInfoConfig->isTile64With3DSurfaceOnBCSSupported(hwInfo) && blitterEnabled;
+                    auto supportExpected = productHelper->isTile64With3DSurfaceOnBCSSupported(hwInfo) && blitterEnabled;
                     EXPECT_EQ(supportExpected, queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, *image));
                 } else {
                     EXPECT_EQ(blitterEnabled, queue.blitEnqueueImageAllowed(correctOrigin, correctRegion, *image));
@@ -2428,6 +2525,8 @@ HWTEST_F(KernelExecutionTypesTests, givenKernelWithDifferentExecutionTypeWhileDo
     size_t gws[3] = {63, 0, 0};
     auto &mockCsr = device->getUltCommandStreamReceiver<FamilyType>();
 
+    mockCsr.feSupportFlags.computeDispatchAllWalker = true;
+
     pKernel->setKernelExecutionType(CL_KERNEL_EXEC_INFO_CONCURRENT_TYPE_INTEL);
     mockCmdQ->enqueueKernel(pKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(mockCsr.lastKernelExecutionType, KernelExecutionType::Concurrent);
@@ -2471,7 +2570,7 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
     }
 
     template <typename GfxFamily, int rcsCount, int ccsCount, int bcsCount>
-    class MockHwHelper : public HwHelperHw<GfxFamily> {
+    class MockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
       public:
         const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
             EngineInstancesContainer result{};
@@ -2505,14 +2604,14 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
         }
     };
 
-    template <typename GfxFamily, typename HwHelperType>
-    auto overrideHwHelper() {
-        return RAIIHwHelperFactory<HwHelperType>{::defaultHwInfo->platform.eRenderCoreFamily};
+    template <typename GfxFamily, typename GfxCoreHelperType>
+    auto overrideGfxCoreHelper() {
+        return RAIIGfxCoreHelperFactory<GfxCoreHelperType>{::defaultHwInfo->platform.eRenderCoreFamily};
     }
 };
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseCorrectEngine) {
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1, 1>>();
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>();
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
@@ -2543,7 +2642,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenMultipleFamiliesWhenCreatingQue
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1, 1>>();
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>();
     UltClDeviceFactory deviceFactory{1, 2};
     MockContext context{deviceFactory.rootDevices[0]};
     cl_command_queue_properties properties[5] = {};
@@ -2559,7 +2658,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenRootDeviceAndMultipleFamiliesWh
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhenCreatingQueueOnSpecificEngineThenUseDefaultEngine) {
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 1, 1>>();
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 1, 1>>();
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -2588,7 +2687,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenSubDeviceAndMultipleFamiliesWhe
 }
 
 HWTEST_F(CommandQueueOnSpecificEngineTests, givenBcsFamilySelectedWhenCreatingQueueOnSpecificEngineThenInitializeBcsProperly) {
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 0, 0, 1>>();
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 0, 0, 1>>();
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -2613,7 +2712,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedRcsOsContextWhenC
     DebugManager.flags.DeferOsContextInitialization.set(1);
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
 
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1, 1>>();
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 1, 1, 1>>();
     MockContext context{};
     cl_command_queue_properties properties[5] = {};
 
@@ -2635,7 +2734,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_RCS));
     DebugManager.flags.DeferOsContextInitialization.set(1);
 
-    auto raiiHwHelper = overrideHwHelper<FamilyType, MockHwHelper<FamilyType, 1, 1, 1>>();
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MockGfxCoreHelper<FamilyType, 1, 1, 1>>();
     MockContext context{};
     cl_command_queue_properties properties[5] = {};
 
@@ -2648,6 +2747,82 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), properties);
     ASSERT_EQ(&osContext, queue.gpgpuEngine->osContext);
     EXPECT_TRUE(osContext.isInitialized());
+}
+
+HWTEST_F(CommandQueueOnSpecificEngineTests, givenDebugFlagSetWhenCreatingCmdQueueThenAssignNextRegularContext) {
+    DebugManagerStateRestore restore{};
+    DebugManager.flags.NumberOfRegularContextsPerEngine.set(4);
+    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::ENGINE_CCS));
+
+    class MyMockGfxCoreHelper : public GfxCoreHelperHw<FamilyType> {
+      public:
+        const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
+            EngineInstancesContainer result{};
+
+            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
+            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
+            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
+            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Internal});
+
+            return result;
+        }
+
+        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
+            return EngineGroupType::Compute;
+        }
+    };
+
+    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MyMockGfxCoreHelper>();
+
+    MockContext context{};
+    auto &device = static_cast<MockDevice &>(context.getDevice(0)->getDevice());
+    EXPECT_EQ(0u, device.defaultEngineIndex);
+
+    uint32_t expectedIndex = 0;
+
+    for (uint32_t i = 0; i < 8; i++) {
+        MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), nullptr);
+        queue.initializeGpgpu();
+
+        EXPECT_EQ(queue.gpgpuEngine, &device.allEngines[expectedIndex]);
+
+        expectedIndex++;
+        if (expectedIndex == 3) {
+            expectedIndex = 0;
+        }
+    }
+}
+
+TEST_F(MultiTileFixture, givenMultiSubDeviceAndCommandQueueUsingMainCopyEngineWhenReleaseMainCopyEngineThenDeviceAndSubdeviceSelectorReset) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    REQUIRE_BLITTER_OR_SKIP(rootDeviceEnvironment);
+
+    auto device = platform()->getClDevice(0);
+    auto subDevice = device->getSubDevice(0);
+
+    const cl_device_id deviceId = device;
+    auto returnStatus = CL_SUCCESS;
+    auto context = clCreateContext(nullptr, 1, &deviceId, nullptr, nullptr, &returnStatus);
+    EXPECT_EQ(CL_SUCCESS, returnStatus);
+    EXPECT_NE(nullptr, context);
+
+    auto commandQueue = clCreateCommandQueueWithProperties(context, device, nullptr, &returnStatus);
+    EXPECT_EQ(CL_SUCCESS, returnStatus);
+    EXPECT_NE(nullptr, commandQueue);
+
+    auto neoQueue = castToObject<CommandQueue>(commandQueue);
+
+    device->getSelectorCopyEngine().isMainUsed.store(true);
+    subDevice->getSelectorCopyEngine().isMainUsed.store(true);
+
+    neoQueue->releaseMainCopyEngine();
+
+    EXPECT_FALSE(device->getSelectorCopyEngine().isMainUsed.load());
+    EXPECT_FALSE(subDevice->getSelectorCopyEngine().isMainUsed.load());
+
+    clReleaseCommandQueue(commandQueue);
+    clReleaseContext(context);
 }
 
 TEST_F(MultiTileFixture, givenSubDeviceWhenQueueIsCreatedThenItContainsProperDevice) {
@@ -2694,9 +2869,9 @@ TEST_F(MultiTileFixture, givenTile1WhenQueueIsCreatedThenItContainsTile1Device) 
 
 struct CopyOnlyQueueTests : ::testing::Test {
     void SetUp() override {
-        typeUsageRcs.first = EngineHelpers::remapEngineTypeToHwSpecific(typeUsageRcs.first, *defaultHwInfo);
-
         auto device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get());
+        typeUsageRcs.first = EngineHelpers::remapEngineTypeToHwSpecific(typeUsageRcs.first, device->getRootDeviceEnvironment());
+
         auto copyEngineGroup = std::find_if(device->regularEngineGroups.begin(), device->regularEngineGroups.end(), [](const auto &engineGroup) {
             return engineGroup.engineGroupType == EngineGroupType::Copy;
         });
@@ -2809,7 +2984,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiEngineQueueHwTests, givenQueueFamilyPropertyWh
     auto retVal = CL_SUCCESS;
     const auto &ccsInstances = localHwInfo.gtSystemInfo.CCSInfo.Instances.Bits;
     std::vector<CommandQueueTestValues> commandQueueTestValues;
-    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::RenderCompute, 0, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, device->getHardwareInfo()), true);
+    addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::RenderCompute, 0, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, device->getRootDeviceEnvironment()), true);
     addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 0, aub_stream::ENGINE_CCS, ccsFound);
     addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 1, aub_stream::ENGINE_CCS1, ccsInstances.CCS1Enabled);
     addTestValueIfAvailable(commandQueueTestValues, EngineGroupType::Compute, 2, aub_stream::ENGINE_CCS2, ccsInstances.CCS2Enabled);

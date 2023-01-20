@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/test/common/libult/global_environment.h"
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_inc_base.h"
 
@@ -22,6 +23,7 @@ void TestEnvironment::SetUp() {
     fclPushDebugVars(fclDefaultDebugVars);
     igcPushDebugVars(igcDefaultDebugVars);
     if (libraryOS == nullptr) {
+        setupExternalDependencies();
         libraryOS = setAdapterInfo(&hwInfoDefaultDebugVars.platform,
                                    &hwInfoDefaultDebugVars.gtSystemInfo,
                                    hwInfoDefaultDebugVars.capabilityTable.gpuAddressSpace);

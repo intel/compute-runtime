@@ -7,7 +7,7 @@
 
 #include "shared/source/program/sync_buffer_handler.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
@@ -16,7 +16,7 @@
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 using namespace NEO;
 
@@ -32,8 +32,8 @@ class SyncBufferEnqueueHandlerTest : public EnqueueHandlerTest {
     void SetUp() override {
         hardwareInfo = *defaultHwInfo;
         hardwareInfo.capabilityTable.blitterOperationsSupported = true;
-        uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
-        hardwareInfoSetup[productFamily](&hardwareInfo, true, hwInfoConfig);
+        uint64_t productHelper = defaultHardwareInfoConfigTable[productFamily];
+        hardwareInfoSetup[productFamily](&hardwareInfo, true, productHelper);
         setUpImpl(&hardwareInfo);
     }
 
@@ -52,7 +52,7 @@ class SyncBufferEnqueueHandlerTest : public EnqueueHandlerTest {
 
         auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
         pTagMemory = commandStreamReceiver.getTagAddress();
-        ASSERT_NE(nullptr, const_cast<uint32_t *>(pTagMemory));
+        ASSERT_NE(nullptr, const_cast<TagAddressType *>(pTagMemory));
 
         context = new NEO::MockContext(pClDevice);
     }
@@ -72,8 +72,8 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
         kernel->executionType = KernelExecutionType::Concurrent;
         commandQueue = reinterpret_cast<MockCommandQueue *>(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
         auto &hwInfo = pClDevice->getHardwareInfo();
-        auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-        if (hwInfoConfig.isCooperativeEngineSupported(hwInfo)) {
+        auto &productHelper = pClDevice->getProductHelper();
+        if (productHelper.isCooperativeEngineSupported(hwInfo)) {
             commandQueue->gpgpuEngine = &pClDevice->getEngine(aub_stream::EngineType::ENGINE_CCS, EngineUsage::Cooperative);
         }
     }
@@ -98,10 +98,10 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
     }
 
     bool isCooperativeDispatchSupported() {
-        auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-        auto engineGroupType = hwHelper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
-                                                           commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-        return hwHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getHardwareInfo());
+        auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+        auto engineGroupType = gfxCoreHelper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
+                                                                commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
+        return gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getHardwareInfo());
     }
 
     const cl_uint workDim = 1;

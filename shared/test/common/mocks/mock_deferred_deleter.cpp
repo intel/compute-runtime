@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/memory_manager/deferrable_deletion.h"
 #include "shared/source/os_interface/os_thread.h"
+#include "shared/test/common/mocks/mock_deferrable_deletion.h"
 
 #include "gtest/gtest.h"
 
@@ -17,6 +18,7 @@ namespace NEO {
 MockDeferredDeleter::MockDeferredDeleter() {
     shouldStopCalled = 0;
     clearCalled = 0;
+    clearCalledWithBreakTillFailure = 0;
 }
 
 void MockDeferredDeleter::deferDeletion(DeferrableDeletion *deletion) {
@@ -41,6 +43,11 @@ void MockDeferredDeleter::drain(bool blocking) {
     drainCalled++;
 }
 
+void MockDeferredDeleter::clearQueueTillFirstFailure() {
+    DeferredDeleter::clearQueueTillFirstFailure();
+    clearQueueTillFirstFailureCalled++;
+}
+
 void MockDeferredDeleter::drain() {
     return drain(true);
 }
@@ -51,13 +58,25 @@ bool MockDeferredDeleter::areElementsReleased() {
 }
 
 bool MockDeferredDeleter::shouldStop() {
+
     shouldStopCalled++;
+    if (stopAfter3loopsInRun && shouldStopCalled < 3) {
+        auto deletion = new MockDeferrableDeletion();
+        elementsToRelease++;
+        queue.pushTailOne(*deletion);
+        condition.notify_one();
+
+        return false;
+    }
     return shouldStopCalled > 1;
 }
 
-void MockDeferredDeleter::clearQueue() {
-    DeferredDeleter::clearQueue();
+void MockDeferredDeleter::clearQueue(bool breakOnFailure) {
+    DeferredDeleter::clearQueue(breakOnFailure);
     clearCalled++;
+    if (breakOnFailure) {
+        clearCalledWithBreakTillFailure++;
+    }
 }
 
 int MockDeferredDeleter::getClientsNum() {
@@ -123,10 +142,17 @@ MockDeferredDeleter::~MockDeferredDeleter() {
     if (expectDrainCalled) {
         EXPECT_NE(0, drainCalled);
     }
+    if (expectClearQueueTillFirstFailureCalled) {
+        EXPECT_NE(0, clearQueueTillFirstFailureCalled);
+    }
 }
 
 void MockDeferredDeleter::expectDrainBlockingValue(bool value) {
     expectedDrainValue = value;
     expectDrainCalled = true;
+}
+
+void MockDeferredDeleter::expectClearQueueTillFirstFailure() {
+    expectClearQueueTillFirstFailureCalled = true;
 }
 } // namespace NEO

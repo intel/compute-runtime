@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/test/common/mocks/mock_device.h"
 
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 using namespace NEO;
@@ -22,6 +23,24 @@ MockClDevice::MockClDevice(MockDevice *pMockDevice)
       executionEnvironment(pMockDevice->executionEnvironment), allEngines(pMockDevice->allEngines) {
 }
 
+ExecutionEnvironment *MockClDevice::prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
+    auto executionEnvironment = new MockClExecutionEnvironment();
+    auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : rootDeviceIndex + 1;
+    executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+    pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(pHwInfo);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+    executionEnvironment->calculateMaxOsContextCount();
+    return executionEnvironment;
+}
+
 bool MockClDevice::areOcl21FeaturesSupported() const {
     return device.getHardwareInfo().capabilityTable.supportsOcl21Features;
+}
+
+void MockClDevice::setPciUuid(std::array<uint8_t, ProductHelper::uuidSize> &id) {
+    memcpy_s(device.uuid.id.data(), ProductHelper::uuidSize, id.data(), ProductHelper::uuidSize);
+    device.uuid.isValid = true;
 }

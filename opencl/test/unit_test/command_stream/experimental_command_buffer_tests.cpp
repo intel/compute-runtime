@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_experimental_command_buffer.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
@@ -93,8 +93,8 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     it = hwParserExCmdBuffer.cmdList.begin();
     GenCmdList::iterator end = hwParserExCmdBuffer.cmdList.end();
 
-    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
-        //1st PIPE_CONTROL with CS Stall
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getHardwareInfo())) {
+        // 1st PIPE_CONTROL with CS Stall
         ASSERT_NE(end, it);
         pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
         ASSERT_NE(nullptr, pipeControl);
@@ -105,7 +105,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
         }
     }
 
-    //2nd PIPE_CONTROL with ts addr
+    // 2nd PIPE_CONTROL with ts addr
     uint64_t timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress();
     ASSERT_NE(end, it);
     pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
@@ -118,7 +118,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
         it++;
     }
 
-    //MI_SEMAPHORE_WAIT
+    // MI_SEMAPHORE_WAIT
     it++;
     ASSERT_NE(end, it);
     semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*it);
@@ -127,8 +127,8 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_EQ(exAllocationGpuAddr, semaphoreCmd->getSemaphoreGraphicsAddress());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
-    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
-        //3rd PIPE_CONTROL with CS stall
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getHardwareInfo())) {
+        // 3rd PIPE_CONTROL with CS stall
         it++;
         ASSERT_NE(end, it);
         pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
@@ -139,7 +139,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
         }
     }
 
-    //4th PIPE_CONTROL with ts addr
+    // 4th PIPE_CONTROL with ts addr
     timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress() + sizeof(uint64_t);
     it++;
     ASSERT_NE(end, it);
@@ -153,7 +153,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
         it++;
     }
 
-    //BB_END
+    // BB_END
     it++;
     ASSERT_NE(end, it);
     bbEnd = genCmdCast<MI_BATCH_BUFFER_END *>(*it);
@@ -205,7 +205,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
 
     flushTask(commandStreamReceiver);
 
-    //two pairs of TS
+    // two pairs of TS
     constexpr uint32_t expectedTsOffset = 4 * sizeof(uint64_t);
     EXPECT_EQ(expectedTsOffset, mockExCmdBuffer->timestampsOffset);
     constexpr uint32_t expectedExOffset = 0;
@@ -229,14 +229,14 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     hwParserExCmdBuffer.parseCommands<FamilyType>(*mockExCmdBuffer->currentStream, cmbBufferOffset);
     it = hwParserExCmdBuffer.cmdList.begin();
     GenCmdList::iterator end = hwParserExCmdBuffer.cmdList.end();
-    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getHardwareInfo())) {
         it++;
         if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
             it++;
         }
     }
 
-    //2nd PIPE_CONTROL
+    // 2nd PIPE_CONTROL
     uint64_t timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress() + 2 * sizeof(uint64_t);
     ASSERT_NE(end, it);
     pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
@@ -244,8 +244,8 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_EQ(1u, pipeControl->getCommandStreamerStallEnable());
     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pipeControl->getPostSyncOperation());
     EXPECT_EQ(timeStampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
-    //omit SEMAPHORE_WAIT and 3rd PIPE_CONTROL
-    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(pDevice->getHardwareInfo())) {
+    // omit SEMAPHORE_WAIT and 3rd PIPE_CONTROL
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getHardwareInfo())) {
         it++;
         if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
             it++;
@@ -253,7 +253,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     }
 
     it++;
-    //get 4th PIPE_CONTROL
+    // get 4th PIPE_CONTROL
     timeStampAddress = mockExCmdBuffer->timestamps->getGpuAddress() + 3 * sizeof(uint64_t);
     it++;
     if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
@@ -273,7 +273,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     commandStreamReceiver.storeMakeResidentAllocations = true;
     MemoryManager *memoryManager = commandStreamReceiver.getMemoryManager();
 
-    //Make two allocations, since CSR will try to reuse it also
+    // Make two allocations, since CSR will try to reuse it also
     auto rootDeviceIndex = pDevice->getRootDeviceIndex();
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties({rootDeviceIndex, 3 * MemoryConstants::pageSize64k, AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()});
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation), REUSABLE_ALLOCATION);
@@ -306,7 +306,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     ASSERT_NE(nullptr, mockExCmdBuffer->currentStream->getGraphicsAllocation());
     uintptr_t oldCmdBufferAddress = reinterpret_cast<uintptr_t>(mockExCmdBuffer->currentStream->getGraphicsAllocation());
     uint64_t oldExCmdBufferGpuAddr = mockExCmdBuffer->currentStream->getGraphicsAllocation()->getGpuAddress();
-    //leave space for single DWORD
+    // leave space for single DWORD
     mockExCmdBuffer->currentStream->getSpace(mockExCmdBuffer->currentStream->getAvailableSpace() - sizeof(uint32_t));
 
     HardwareParse hwParserCsr;
@@ -331,7 +331,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_NE(oldCmdBufferAddress, newCmdBufferAddress);
     EXPECT_NE(oldExCmdBufferGpuAddr, newExCmdBufferGpuAddr);
 
-    hwParserCsr.TearDown();
+    hwParserCsr.tearDown();
     hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, csrCmdBufferOffset);
     bbList = hwParserCsr.getCommandsList<MI_BATCH_BUFFER_START>();
     bbStart = nullptr;
@@ -352,7 +352,7 @@ HWTEST_F(ExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhenCom
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     flushTask(commandStreamReceiver);
 
-    //forced dtor to get printed timestamps
+    // forced dtor to get printed timestamps
     testing::internal::CaptureStdout();
     commandStreamReceiver.setExperimentalCmdBuffer(std::move(std::unique_ptr<ExperimentalCommandBuffer>(nullptr)));
     std::string output = testing::internal::GetCapturedStdout();
@@ -362,7 +362,7 @@ HWTEST_F(ExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhenCom
 HWTEST_F(ExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhenCommandStreamReceiverIsNotFlushedThenExpectNoPrintAfterDtor) {
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    //forced dtor to try to get printed timestamps
+    // forced dtor to try to get printed timestamps
     testing::internal::CaptureStdout();
     commandStreamReceiver.setExperimentalCmdBuffer(std::move(std::unique_ptr<ExperimentalCommandBuffer>(nullptr)));
     std::string output = testing::internal::GetCapturedStdout();

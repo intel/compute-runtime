@@ -7,7 +7,7 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/device_binary_format/patchtokens_validator.h"
-#include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
+#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 
 #include "gtest/gtest.h"
 
@@ -342,7 +342,6 @@ TEST(PatchtokensValidator, GivenValidProgramWithKernelUsingSlmThenValidationSucc
     PatchTokensTestData::ValidProgramWithKernelUsingSlm prog;
     std::string error, warning;
 
-    //size_t slmSizeAvailable = 1 + prog.kernels[0].tokens.allocateLocalSurface->TotalInlineLocalMemorySize;
     EXPECT_EQ(NEO::DecodeError::Success, NEO::PatchTokenBinary::validate(prog, error, warning));
     EXPECT_TRUE(error.empty());
     EXPECT_TRUE(warning.empty());

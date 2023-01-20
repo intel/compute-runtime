@@ -1,24 +1,21 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/direct_submission/direct_submission_properties.h"
+#include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/helpers/kmd_notify_properties.h"
 
-#include "engine_node.h"
 #include "gtsysinfo.h"
 #include "igfxfmid.h"
 #include "sku_info.h"
 
-#include <cstddef>
-#include <string>
-
 namespace NEO {
+enum PreemptionMode : uint32_t;
 
 struct RuntimeCapabilityTable {
     DirectSubmissionProperyEngines directSubmissionEngines;
@@ -27,8 +24,6 @@ struct RuntimeCapabilityTable {
     uint64_t sharedSystemMemCapabilities;
     double defaultProfilingTimerResolution;
     size_t requiredPreemptionSurfaceSize;
-    bool (*isSimulation)(unsigned short);
-    const char *platformType;
     const char *deviceName;
     PreemptionMode defaultPreemptionMode;
     aub_stream::EngineType defaultEngineType;
@@ -95,7 +90,6 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     result &= (lhs.sharedSystemMemCapabilities == rhs.sharedSystemMemCapabilities);
     result &= (lhs.defaultProfilingTimerResolution == rhs.defaultProfilingTimerResolution);
     result &= (lhs.requiredPreemptionSurfaceSize == rhs.requiredPreemptionSurfaceSize);
-    result &= (lhs.isSimulation == rhs.isSimulation);
     result &= (lhs.defaultPreemptionMode == rhs.defaultPreemptionMode);
     result &= (lhs.defaultEngineType == rhs.defaultEngineType);
     result &= (lhs.maxRenderFrequency == rhs.maxRenderFrequency);
@@ -118,7 +112,6 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
     result &= (lhs.ftrRenderCompressedImages == rhs.ftrRenderCompressedImages);
     result &= (lhs.ftr64KBpages == rhs.ftr64KBpages);
     result &= (lhs.instrumentationEnabled == rhs.instrumentationEnabled);
-    result &= (lhs.platformType == rhs.platformType);
     result &= (lhs.deviceName == rhs.deviceName);
     result &= (lhs.debuggerSupported == rhs.debuggerSupported);
     result &= (lhs.supportsVme == rhs.supportsVme);
@@ -144,12 +137,13 @@ struct HardwareInfo {
     HardwareInfo(const PLATFORM *platform, const FeatureTable *featureTable, const WorkaroundTable *workaroundTable,
                  const GT_SYSTEM_INFO *gtSystemInfo, const RuntimeCapabilityTable &capabilityTable);
 
-    PLATFORM platform = {};
-    FeatureTable featureTable = {};
-    WorkaroundTable workaroundTable = {};
-    alignas(4) GT_SYSTEM_INFO gtSystemInfo = {};
-
-    alignas(8) RuntimeCapabilityTable capabilityTable = {};
+    PLATFORM platform{};
+    FeatureTable featureTable{};
+    WorkaroundTable workaroundTable{};
+    alignas(4) GT_SYSTEM_INFO gtSystemInfo{};
+    alignas(8) RuntimeCapabilityTable capabilityTable{};
+    alignas(8) HardwareIpVersion ipVersion{};
+    uint8_t reserved[4]{}; // to keep optimal alignment
 };
 
 template <PRODUCT_FAMILY product>
@@ -160,7 +154,6 @@ struct GfxFamilyMapper {};
 
 // Global table of hardware prefixes
 extern bool familyEnabled[IGFX_MAX_CORE];
-extern const char *familyName[IGFX_MAX_CORE];
 extern const char *hardwarePrefix[IGFX_MAX_PRODUCT];
 extern uint64_t defaultHardwareInfoConfigTable[IGFX_MAX_PRODUCT];
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
@@ -171,16 +164,13 @@ template <GFXCORE_FAMILY gfxFamily>
 struct EnableGfxFamilyHw {
     EnableGfxFamilyHw() {
         familyEnabled[gfxFamily] = true;
-        familyName[gfxFamily] = GfxFamilyMapper<gfxFamily>::name;
     }
 };
 
 bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwInfoIn);
 void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfoIn);
 bool parseHwInfoConfigString(const std::string &hwInfoConfigStr, uint64_t &hwInfoConfig);
-void overridePlatformName(std::string &name);
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo);
-const std::string getFamilyNameWithType(const HardwareInfo &hwInfo);
 
 // Utility conversion
 template <PRODUCT_FAMILY productFamily>

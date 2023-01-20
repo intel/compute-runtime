@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,9 +14,10 @@
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -25,7 +26,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_operations_handler.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/utilities/destructor_counted.h"
+#include "shared/test/common/utilities/destructor_counted.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
@@ -119,7 +120,7 @@ TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillA
 
 TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsReceivesCorrectInputParams) {
     MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
     rootDeviceEnvironment->initAubCenter(true, "test.aub", CommandStreamReceiverType::CSR_AUB);
     EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
@@ -158,7 +159,8 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerI
     const HardwareInfo *hwInfo = defaultHwInfo.get();
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
     auto executionEnvironment = device->getExecutionEnvironment();
-    auto enableLocalMemory = HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto enableLocalMemory = gfxCoreHelper.getEnableLocalMemory(*hwInfo);
     executionEnvironment->initializeMemoryManager();
     EXPECT_EQ(enableLocalMemory, executionEnvironment->memoryManager->isLocalMemorySupported(device->getRootDeviceIndex()));
 }
@@ -190,6 +192,71 @@ TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetZeroWhenIniti
     EXPECT_EQ(controller, nullptr);
 }
 
+TEST(ExecutionEnvironment, givenNeoCalEnabledWhenCreateExecutionEnvironmentThenSetDebugVariables) {
+    const std::unordered_map<std::string, int32_t> config = {
+        {"UseDrmVirtualEnginesForBcs", 0},
+        {"EnableCmdQRoundRobindBcsEngineAssignLimit", 6},
+        {"EnableCmdQRoundRobindBcsEngineAssign", 1},
+        {"ForceBCSForInternalCopyEngine", 7},
+        {"AssignBCSAtEnqueue", 0},
+        {"EnableCopyEngineSelector", 1},
+        {"SplitBcsCopy", 0},
+    };
+
+#undef DECLARE_DEBUG_VARIABLE
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description) \
+    EXPECT_EQ(defaultValue, DebugManager.flags.variableName.getRef());
+
+#include "shared/source/debug_settings/release_variables.inl"
+
+#include "debug_variables.inl"
+
+#undef DECLARE_DEBUG_VARIABLE
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.NEO_CAL_ENABLED.set(1);
+    ExecutionEnvironment exeEnv;
+
+#undef DECLARE_DEBUG_VARIABLE
+#define DECLARE_DEBUG_VARIABLE(dataType, variableName, defaultValue, description)      \
+    {                                                                                  \
+        if constexpr (std::is_same_v<bool, dataType>) {                                \
+            if (strcmp(#variableName, "NEO_CAL_ENABLED") == 0) {                       \
+                EXPECT_TRUE(DebugManager.flags.variableName.getRef());                 \
+            } else {                                                                   \
+                EXPECT_EQ(defaultValue, DebugManager.flags.variableName.getRef());     \
+            }                                                                          \
+        } else {                                                                       \
+            if constexpr (std::is_same_v<int32_t, dataType>) {                         \
+                auto it = config.find(#variableName);                                  \
+                if (it != config.end()) {                                              \
+                    EXPECT_EQ(it->second, DebugManager.flags.variableName.getRef());   \
+                } else {                                                               \
+                    EXPECT_EQ(defaultValue, DebugManager.flags.variableName.getRef()); \
+                }                                                                      \
+            } else {                                                                   \
+                EXPECT_EQ(defaultValue, DebugManager.flags.variableName.getRef());     \
+            }                                                                          \
+        }                                                                              \
+    }
+
+#include "shared/source/debug_settings/release_variables.inl"
+
+#include "debug_variables.inl"
+
+#undef DECLARE_DEBUG_VARIABLE
+}
+
+TEST(ExecutionEnvironment, givenEnvVarUsedInCalConfigAlsoSetByAppWhenCreateExecutionEnvironmentThenRespectAppSetting) {
+    constexpr int32_t appCommandBufferAlignment = 12345;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.NEO_CAL_ENABLED.set(1);
+    DebugManager.flags.ForceCommandBufferAlignment.set(appCommandBufferAlignment);
+    ExecutionEnvironment exeEnv;
+
+    EXPECT_EQ(DebugManager.flags.ForceCommandBufferAlignment.get(), appCommandBufferAlignment);
+}
+
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->initializeMemoryManager();
@@ -199,6 +266,7 @@ static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<HardwareInf
                                                   sizeof(std::vector<RootDeviceEnvironment>) +
                                                   sizeof(std::unique_ptr<OsEnvironment>) +
                                                   sizeof(std::unique_ptr<DirectSubmissionController>) +
+                                                  sizeof(std::unordered_map<uint32_t, uint32_t>) +
                                                   sizeof(bool) +
                                                   (is64bit ? 23 : 15),
               "New members detected in ExecutionEnvironment, please ensure that destruction sequence of objects is correct");
@@ -216,7 +284,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         DirectSubmissionControllerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct GmmHelperMock : public DestructorCounted<GmmHelper, 6> {
-        GmmHelperMock(uint32_t &destructorId, const HardwareInfo *hwInfo) : DestructorCounted(destructorId, nullptr, hwInfo) {}
+        GmmHelperMock(uint32_t &destructorId, const RootDeviceEnvironment &rootDeviceEnvironment) : DestructorCounted(destructorId, rootDeviceEnvironment) {}
     };
     struct OsInterfaceMock : public DestructorCounted<OSInterface, 5> {
         OsInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
@@ -225,7 +293,7 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         MemoryOperationsHandlerMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
     };
     struct AubCenterMock : public DestructorCounted<AubCenter, 3> {
-        AubCenterMock(uint32_t &destructorId, const GmmHelper &gmmHelper) : DestructorCounted(destructorId, defaultHwInfo.get(), gmmHelper, false, "", CommandStreamReceiverType::CSR_AUB) {}
+        AubCenterMock(uint32_t &destructorId, const RootDeviceEnvironment &rootDeviceEnvironment) : DestructorCounted(destructorId, rootDeviceEnvironment, false, "", CommandStreamReceiverType::CSR_AUB) {}
     };
     struct CompilerInterfaceMock : public DestructorCounted<CompilerInterface, 2> {
         CompilerInterfaceMock(uint32_t &destructorId) : DestructorCounted(destructorId) {}
@@ -237,16 +305,12 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
         SourceLevelDebuggerMock(uint32_t &destructorId) : DestructorCounted(destructorId, nullptr) {}
     };
 
-    auto gmmHelper = new GmmHelperMock(destructorId, defaultHwInfo.get());
-
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
-    executionEnvironment->rootDeviceEnvironments[0]->gmmHelper = std::unique_ptr<GmmHelperMock>(gmmHelper);
+    executionEnvironment->rootDeviceEnvironments[0]->gmmHelper = std::make_unique<GmmHelperMock>(destructorId, *executionEnvironment->rootDeviceEnvironments[0]);
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OsInterfaceMock>(destructorId);
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = std::make_unique<MemoryOperationsHandlerMock>(destructorId);
     executionEnvironment->memoryManager = std::make_unique<MemoryMangerMock>(destructorId, *executionEnvironment);
-    executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::make_unique<AubCenterMock>(destructorId, *gmmHelper);
+    executionEnvironment->rootDeviceEnvironments[0]->aubCenter = std::make_unique<AubCenterMock>(destructorId, *executionEnvironment->rootDeviceEnvironments[0]);
     executionEnvironment->rootDeviceEnvironments[0]->builtins = std::make_unique<BuiltinsMock>(destructorId);
     executionEnvironment->rootDeviceEnvironments[0]->compilerInterface = std::make_unique<CompilerInterfaceMock>(destructorId);
     executionEnvironment->rootDeviceEnvironments[0]->debugger = std::make_unique<SourceLevelDebuggerMock>(destructorId);
@@ -260,7 +324,7 @@ TEST(ExecutionEnvironment, givenMultipleRootDevicesWhenTheyAreCreatedThenReuseMe
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(2);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 0u));
@@ -272,15 +336,15 @@ TEST(ExecutionEnvironment, givenMultipleRootDevicesWhenTheyAreCreatedThenReuseMe
     EXPECT_EQ(memoryManager, device2->getMemoryManager());
 }
 
-uint64_t isDriverAvaliableCounter = 0u;
+uint64_t isDriverAvailableCounter = 0u;
 
 class DriverModelMock : public DriverModel {
   public:
     DriverModelMock(DriverModelType driverModelType) : DriverModel(driverModelType) {
     }
 
-    bool isDriverAvaliable() override {
-        isDriverAvaliableCounter++;
+    bool isDriverAvailable() override {
+        isDriverAvailableCounter++;
         return true;
     }
     void setGmmInputArgs(void *args) override {
@@ -293,7 +357,7 @@ class DriverModelMock : public DriverModel {
     PhysicalDevicePciBusInfo getPciBusInfo() const override {
         return {};
     }
-    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override {
+    PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override {
         return {};
     }
 
@@ -306,8 +370,39 @@ class DriverModelMock : public DriverModel {
     }
 };
 
-TEST(ExecutionEnvironment, givenRootDeviceWhenPrepareForCleanupThenIsDriverAvaliableIsCalled) {
-    VariableBackup<uint64_t> varBackup = &isDriverAvaliableCounter;
+class DefaultDriverModelMock : public DriverModel {
+  public:
+    DefaultDriverModelMock(DriverModelType driverModelType) : DriverModel(driverModelType) {
+    }
+
+    bool isDriverAvailable() override {
+        return true;
+    }
+    void setGmmInputArgs(void *args) override {
+    }
+
+    uint32_t getDeviceHandle() const override {
+        return 0;
+    }
+
+    PhysicalDevicePciBusInfo getPciBusInfo() const override {
+        return {};
+    }
+    PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override {
+        return {};
+    }
+
+    bool skipResourceCleanup() const {
+        return skipResourceCleanupVar;
+    }
+
+    bool isGpuHangDetected(OsContext &osContext) override {
+        return false;
+    }
+};
+
+TEST(ExecutionEnvironment, givenRootDeviceWhenPrepareForCleanupThenIsDriverAvailableIsCalled) {
+    VariableBackup<uint64_t> varBackup = &isDriverAvailableCounter;
     ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
 
     std::unique_ptr<OSInterface> osInterface = std::make_unique<OSInterface>();
@@ -318,7 +413,9 @@ TEST(ExecutionEnvironment, givenRootDeviceWhenPrepareForCleanupThenIsDriverAvali
 
     executionEnvironment->prepareForCleanup();
 
-    EXPECT_EQ(1u, isDriverAvaliableCounter);
+    EXPECT_EQ(1u, isDriverAvailableCounter);
+
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<DefaultDriverModelMock>(DriverModelType::UNKNOWN));
 }
 
 TEST(ExecutionEnvironment, givenUnproperSetCsrFlagValueWhenInitializingMemoryManagerThenCreateDefaultMemoryManager) {
@@ -343,9 +440,9 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
 
         for (const auto &rootDeviceEnvironment : executionEnvironment.rootDeviceEnvironments) {
             auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-            auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-            auto osContextCount = hwHelper.getGpgpuEngineInstances(*hwInfo).size();
-            auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
+            auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+            auto osContextCount = gfxCoreHelper.getGpgpuEngineInstances(*hwInfo).size();
+            auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
             bool hasRootCsr = subDevicesCount > 1;
             auto ccsCount = hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
 

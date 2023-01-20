@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,15 +19,15 @@
 
 namespace NEO {
 
-OsContext *OsContextLinux::create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
+OsContext *OsContextLinux::create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
     if (osInterface) {
-        return new OsContextLinux(*osInterface->getDriverModel()->as<Drm>(), contextId, engineDescriptor);
+        return new OsContextLinux(*osInterface->getDriverModel()->as<Drm>(), rootDeviceIndex, contextId, engineDescriptor);
     }
-    return new OsContext(contextId, engineDescriptor);
+    return new OsContext(rootDeviceIndex, contextId, engineDescriptor);
 }
 
-OsContextLinux::OsContextLinux(Drm &drm, uint32_t contextId, const EngineDescriptor &engineDescriptor)
-    : OsContext(contextId, engineDescriptor),
+OsContextLinux::OsContextLinux(Drm &drm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
+    : OsContext(rootDeviceIndex, contextId, engineDescriptor),
       drm(drm) {}
 
 void OsContextLinux::initializeContext() {
@@ -65,8 +65,9 @@ void OsContextLinux::initializeContext() {
 }
 
 bool OsContextLinux::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    return this->getDrm().isVmBindAvailable() && hwInfoConfig->isDirectSubmissionSupported(hwInfo);
+    auto &productHelper = this->getDrm().getRootDeviceEnvironment().getHelper<ProductHelper>();
+
+    return this->getDrm().isVmBindAvailable() && productHelper.isDirectSubmissionSupported(hwInfo);
 }
 
 Drm &OsContextLinux::getDrm() const {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,9 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/preamble.h"
 
-using Family = NEO::TGLLPFamily;
+#include "encode_surface_state_args.h"
+
+using Family = NEO::Gen12LpFamily;
 
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_bdw_and_later.inl"
@@ -25,16 +27,17 @@ using Family = NEO::TGLLPFamily;
 namespace NEO {
 
 template <>
-size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device) {
+size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device, bool isRcs) {
     size_t size = 0;
-    if (device.getDefaultEngine().commandStreamReceiver->isRcs()) {
+    const auto &productHelper = device.getProductHelper();
+    if (isRcs && productHelper.is3DPipelineSelectWARequired()) {
         size += 2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(device.getHardwareInfo());
     }
     return size;
 }
 
 template <>
-void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const HardwareInfo &hwInfo, LogicalStateHelper *logicalStateHelper) {
+void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment, LogicalStateHelper *logicalStateHelper) {
     using STATE_COMPUTE_MODE = typename Family::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
@@ -55,8 +58,8 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 template <>
 void EncodeWA<Family>::encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args,
                                                       bool is3DPipeline, const HardwareInfo &hwInfo, bool isRcs) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.is3DPipelineSelectWARequired() && isRcs) {
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.is3DPipelineSelectWARequired() && isRcs) {
         PipelineSelectArgs pipelineSelectArgs = args;
         pipelineSelectArgs.is3DPipelineRequired = is3DPipeline;
         PreambleHelper<Family>::programPipelineSelect(&stream, pipelineSelectArgs, hwInfo);
@@ -82,7 +85,7 @@ void EncodeSurfaceState<Family>::encodeExtraBufferParams(EncodeSurfaceStateArgs 
 }
 
 template <>
-bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
+bool EncodeSurfaceState<Family>::isBindingTablePrefetchPreferred() {
     return false;
 }
 
@@ -93,6 +96,19 @@ void EncodeL3State<Family>::encode(CommandContainer &container, bool enableSLM) 
 template <>
 void EncodeStoreMMIO<Family>::appendFlags(MI_STORE_REGISTER_MEM *storeRegMem, bool workloadPartition) {
     storeRegMem->setMmioRemapEnable(true);
+}
+
+template <>
+void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {
+    auto &hwInfo = container.getDevice()->getHardwareInfo();
+
+    PipelineSelectArgs pipelineSelectArgs;
+    pipelineSelectArgs.systolicPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
+    pipelineSelectArgs.systolicPipelineSelectSupport = container.systolicModeSupport;
+
+    PreambleHelper<Family>::programPipelineSelect(container.getCommandStream(),
+                                                  pipelineSelectArgs,
+                                                  hwInfo);
 }
 
 template struct EncodeDispatchKernel<Family>;
@@ -110,6 +126,7 @@ template struct EncodeAtomic<Family>;
 template struct EncodeSempahore<Family>;
 template struct EncodeBatchBufferStartOrEnd<Family>;
 template struct EncodeMiFlushDW<Family>;
+template struct EncodeMiPredicate<Family>;
 template struct EncodeWA<Family>;
 template struct EncodeMemoryPrefetch<Family>;
 template struct EncodeMiArbCheck<Family>;
@@ -118,4 +135,5 @@ template struct EncodeEnableRayTracing<Family>;
 template struct EncodeNoop<Family>;
 template struct EncodeStoreMemory<Family>;
 template struct EncodeMemoryFence<Family>;
+template struct EncodeKernelArgsBuffer<Family>;
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,13 @@
 
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
+#include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device/device_info.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -31,11 +36,11 @@ bool TestChecks::supportsOcl21(const std::unique_ptr<HardwareInfo> &pHardwareInf
             pHardwareInfo->capabilityTable.supportsIndependentForwardProgress);
 }
 
-bool TestChecks::supportsAuxResolves() {
+bool TestChecks::supportsAuxResolves(const RootDeviceEnvironment &rootDeviceEnvironment) {
     KernelInfo kernelInfo{};
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
     kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = true;
 
-    auto &clHwHelper = ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    return clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo);
+    auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
+    return clGfxCoreHelper.requiresAuxResolves(kernelInfo);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,16 +10,23 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/device/sub_device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
+#include "shared/source/program/sync_buffer_handler.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
@@ -33,6 +40,10 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex)
     : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {
     this->executionEnvironment->incRefInternal();
+
+    if (DebugManager.flags.NumberOfRegularContextsPerEngine.get() > 1) {
+        this->numberOfRegularContextsPerEngine = static_cast<uint32_t>(DebugManager.flags.NumberOfRegularContextsPerEngine.get());
+    }
 }
 
 Device::~Device() {
@@ -73,7 +84,7 @@ SubDevice *Device::createEngineInstancedSubDevice(uint32_t subDeviceIndex, aub_s
 
 bool Device::genericSubDevicesAllowed() {
     auto deviceMask = executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->deviceAffinityMask.getGenericSubDevicesMask();
-    uint32_t subDeviceCount = HwHelper::getSubDevicesCount(&getHardwareInfo());
+    uint32_t subDeviceCount = GfxCoreHelper::getSubDevicesCount(&getHardwareInfo());
     deviceBitfield = maxNBitValue(subDeviceCount);
     deviceBitfield &= deviceMask;
     numSubDevices = static_cast<uint32_t>(deviceBitfield.count());
@@ -88,7 +99,7 @@ bool Device::engineInstancedSubDevicesAllowed() {
     bool notAllowed = !DebugManager.flags.EngineInstancedSubDevices.get();
     notAllowed |= engineInstanced;
     notAllowed |= (getHardwareInfo().gtSystemInfo.CCSInfo.NumberOfCCSEnabled < 2);
-    notAllowed |= ((HwHelper::getSubDevicesCount(&getHardwareInfo()) < 2) && (!DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.get()));
+    notAllowed |= ((GfxCoreHelper::getSubDevicesCount(&getHardwareInfo()) < 2) && (!DebugManager.flags.AllowSingleTileEngineInstancedSubDevices.get()));
 
     if (notAllowed) {
         return false;
@@ -136,7 +147,7 @@ bool Device::createEngineInstancedSubDevices() {
 
 bool Device::createGenericSubDevices() {
     UNRECOVERABLE_IF(!subdevices.empty());
-    uint32_t subDeviceCount = HwHelper::getSubDevicesCount(&getHardwareInfo());
+    uint32_t subDeviceCount = GfxCoreHelper::getSubDevicesCount(&getHardwareInfo());
 
     subdevices.resize(subDeviceCount, nullptr);
 
@@ -210,8 +221,9 @@ bool Device::createDeviceImpl() {
         this->executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->initDebugger();
     }
 
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (getDebugger() && hwHelper.disableL3CacheForDebug(hwInfo)) {
+    auto &gfxCoreHelper = getGfxCoreHelper();
+    auto &productHelper = getProductHelper();
+    if (getDebugger() && gfxCoreHelper.disableL3CacheForDebug(hwInfo, productHelper)) {
         getGmmHelper()->forceAllResourcesUncached();
     }
 
@@ -261,11 +273,13 @@ bool Device::createDeviceImpl() {
 
     createBindlessHeapsHelper();
     if (!isEngineInstanced()) {
-        auto hardwareInfo = getRootDeviceEnvironment().getMutableHardwareInfo();
         uuid.isValid = false;
 
-        if (DebugManager.flags.EnableChipsetUniqueUUID.get() == 1) {
-            uuid.isValid = HwInfoConfig::get(hardwareInfo->platform.eProductFamily)->getUuid(this, uuid.id);
+        if (DebugManager.flags.EnableChipsetUniqueUUID.get() != 0) {
+            if (gfxCoreHelper.isChipsetUniqueUUIDSupported()) {
+
+                uuid.isValid = productHelper.getUuid(this, uuid.id);
+            }
         }
 
         if (!uuid.isValid && getRootDeviceEnvironment().osInterface != nullptr) {
@@ -283,7 +297,8 @@ bool Device::createEngines() {
     }
 
     auto &hwInfo = getHardwareInfo();
-    auto gpgpuEngines = HwHelper::get(hwInfo.platform.eRenderCoreFamily).getGpgpuEngineInstances(hwInfo);
+    auto &gfxCoreHelper = getGfxCoreHelper();
+    auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
 
     uint32_t deviceCsrIndex = 0;
     for (auto &engine : gpgpuEngines) {
@@ -296,10 +311,10 @@ bool Device::createEngines() {
 
 void Device::addEngineToEngineGroup(EngineControl &engine) {
     const HardwareInfo &hardwareInfo = this->getHardwareInfo();
-    const HwHelper &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const EngineGroupType engineGroupType = hwHelper.getEngineGroupType(engine.getEngineType(), engine.getEngineUsage(), hardwareInfo);
+    auto &gfxCoreHelper = getGfxCoreHelper();
+    const EngineGroupType engineGroupType = gfxCoreHelper.getEngineGroupType(engine.getEngineType(), engine.getEngineUsage(), hardwareInfo);
 
-    if (!hwHelper.isSubDeviceEngineSupported(hardwareInfo, getDeviceBitfield(), engine.getEngineType())) {
+    if (!gfxCoreHelper.isSubDeviceEngineSupported(hardwareInfo, getDeviceBitfield(), engine.getEngineType())) {
         return;
     }
 
@@ -311,7 +326,14 @@ void Device::addEngineToEngineGroup(EngineControl &engine) {
         this->regularEngineGroups.push_back(EngineGroupT{});
         this->regularEngineGroups.back().engineGroupType = engineGroupType;
     }
-    this->regularEngineGroups.back().engines.push_back(engine);
+
+    auto &engines = this->regularEngineGroups.back().engines;
+
+    if (engines.size() > 0 && engines.back().getEngineType() == engine.getEngineType()) {
+        return; // Type already added. Exposing multiple contexts for the same engine is disabled.
+    }
+
+    engines.push_back(engine);
 }
 
 std::unique_ptr<CommandStreamReceiver> Device::createCommandStreamReceiver() const {
@@ -345,10 +367,10 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     EngineDescriptor engineDescriptor(engineTypeUsage, getDeviceBitfield(), preemptionMode, false, createAsEngineInstanced);
 
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineDescriptor);
-    if (osContext->isImmediateContextInitializationEnabled(isDefaultEngine)) {
-        osContext->ensureContextInitialized();
-    }
     commandStreamReceiver->setupContext(*osContext);
+    if (osContext->isImmediateContextInitializationEnabled(isDefaultEngine)) {
+        commandStreamReceiver->initializeResources();
+    }
 
     if (!commandStreamReceiver->initializeTagAllocation()) {
         return false;
@@ -358,8 +380,20 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         return false;
     }
 
+    commandStreamReceiver->createKernelArgsBufferAllocation();
+
     if (isDefaultEngine) {
-        defaultEngineIndex = deviceCsrIndex;
+        bool defaultEngineAlreadySet = (allEngines.size() > defaultEngineIndex) && (allEngines[defaultEngineIndex].getEngineType() == engineType);
+
+        if (!defaultEngineAlreadySet) {
+            defaultEngineIndex = deviceCsrIndex;
+
+            if (Device::isInitDeviceWithFirstSubmissionEnabled()) {
+                if (SubmissionStatus::SUCCESS != commandStreamReceiver->initializeDeviceWithFirstSubmission()) {
+                    return false;
+                }
+            }
+        }
     }
 
     if (preemptionMode == PreemptionMode::MidThread && !commandStreamReceiver->createPreemptionAllocation()) {
@@ -391,20 +425,17 @@ uint64_t Device::getProfilingTimerClock() {
     return getOSTime()->getDynamicDeviceTimerClock(getHardwareInfo());
 }
 
-bool Device::isSimulation() const {
-    auto &hwInfo = getHardwareInfo();
+bool Device::isBcsSplitSupported() {
+    auto &productHelper = getProductHelper();
+    auto bcsSplit = productHelper.isBlitSplitEnqueueWARequired(getHardwareInfo()) &&
+                    ApiSpecificConfig::isBcsSplitWaSupported() &&
+                    Device::isBlitSplitEnabled();
 
-    bool simulation = hwInfo.capabilityTable.isSimulation(hwInfo.platform.usDeviceID);
-    for (const auto &engine : allEngines) {
-        if (engine.commandStreamReceiver->getType() != CommandStreamReceiverType::CSR_HW) {
-            simulation = true;
-        }
+    if (DebugManager.flags.SplitBcsCopy.get() != -1) {
+        bcsSplit = DebugManager.flags.SplitBcsCopy.get();
     }
 
-    if (hwInfo.featureTable.flags.ftrSimulationMode) {
-        simulation = true;
-    }
-    return simulation;
+    return bcsSplit;
 }
 
 double Device::getPlatformHostTimerResolution() const {
@@ -421,6 +452,10 @@ GFXCORE_FAMILY Device::getRenderCoreFamily() const {
 
 bool Device::isDebuggerActive() const {
     return deviceInfo.debuggerActive;
+}
+
+Debugger *Device::getDebugger() const {
+    return getRootDeviceEnvironment().debugger.get();
 }
 
 bool Device::areSharedSystemAllocationsAllowed() const {
@@ -495,17 +530,17 @@ Device *Device::getSubDevice(uint32_t deviceId) const {
 
 Device *Device::getNearestGenericSubDevice(uint32_t deviceId) {
     /*
-    * EngineInstanced: Upper level
-    * Generic SubDevice: 'this'
-    * RootCsr Device: Next level SubDevice (generic)
-    */
+     * EngineInstanced: Upper level
+     * Generic SubDevice: 'this'
+     * RootCsr Device: Next level SubDevice (generic)
+     */
 
     if (engineInstanced) {
         return getRootDevice()->getNearestGenericSubDevice(Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong())));
     }
 
     if (subdevices.empty() || !hasRootCsr()) {
-        return const_cast<Device *>(this);
+        return this;
     }
     UNRECOVERABLE_IF(deviceId >= subdevices.size());
     return subdevices[deviceId];
@@ -554,8 +589,28 @@ NEO::SourceLevelDebugger *Device::getSourceLevelDebugger() {
     return nullptr;
 }
 
+NEO::DebuggerL0 *Device::getL0Debugger() {
+    auto debugger = getDebugger();
+    if (debugger) {
+        return !debugger->isLegacy() ? static_cast<NEO::DebuggerL0 *>(debugger) : nullptr;
+    }
+    return nullptr;
+}
+
 const std::vector<EngineControl> &Device::getAllEngines() const {
     return this->allEngines;
+}
+
+const RootDeviceEnvironment &Device::getRootDeviceEnvironment() const {
+    return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()];
+}
+
+RootDeviceEnvironment &Device::getRootDeviceEnvironmentRef() const {
+    return *executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()];
+}
+
+bool Device::isFullRangeSvm() const {
+    return getRootDeviceEnvironment().isFullRangeSvm();
 }
 
 EngineControl &Device::getInternalEngine() {
@@ -574,8 +629,8 @@ EngineControl &Device::getNextEngineForCommandQueue() {
     const auto &defaultEngine = this->getDefaultEngine();
 
     const auto &hardwareInfo = this->getHardwareInfo();
-    const auto &hwHelper = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const auto engineGroupType = hwHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hardwareInfo);
+    const auto &gfxCoreHelper = getGfxCoreHelper();
+    const auto engineGroupType = gfxCoreHelper.getEngineGroupType(defaultEngine.getEngineType(), defaultEngine.getEngineUsage(), hardwareInfo);
 
     const auto defaultEngineGroupIndex = this->getEngineGroupIndexFromEngineGroupType(engineGroupType);
     auto &engineGroup = this->getRegularEngineGroups()[defaultEngineGroupIndex];
@@ -600,19 +655,19 @@ EngineControl *Device::getInternalCopyEngine() {
     return nullptr;
 }
 
-GraphicsAllocation *Device::getRTDispatchGlobals(uint32_t maxBvhLevels) {
-    if (rtDispatchGlobals.size() == 0) {
+RTDispatchGlobalsInfo *Device::getRTDispatchGlobals(uint32_t maxBvhLevels) {
+    if (rtDispatchGlobalsInfos.size() == 0) {
         return nullptr;
     }
 
-    size_t last = rtDispatchGlobals.size() - 1;
+    size_t last = rtDispatchGlobalsInfos.size() - 1;
     if (maxBvhLevels > last) {
         return nullptr;
     }
 
     for (size_t i = last; i >= maxBvhLevels; i--) {
-        if (rtDispatchGlobals[i] != nullptr) {
-            return rtDispatchGlobals[i];
+        if (rtDispatchGlobalsInfos[i] != nullptr) {
+            return rtDispatchGlobalsInfos[i];
         }
 
         if (i == 0) {
@@ -621,17 +676,22 @@ GraphicsAllocation *Device::getRTDispatchGlobals(uint32_t maxBvhLevels) {
     }
 
     allocateRTDispatchGlobals(maxBvhLevels);
-    return rtDispatchGlobals[maxBvhLevels];
+    return rtDispatchGlobalsInfos[maxBvhLevels];
 }
 
 void Device::initializeRayTracing(uint32_t maxBvhLevels) {
     if (rtMemoryBackedBuffer == nullptr) {
         auto size = RayTracingHelper::getTotalMemoryBackedFifoSize(*this);
-        rtMemoryBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties({getRootDeviceIndex(), size, AllocationType::BUFFER, getDeviceBitfield()});
+
+        AllocationProperties allocProps(getRootDeviceIndex(), true, size, AllocationType::BUFFER, true, getDeviceBitfield());
+        allocProps.flags.resource48Bit = true;
+        allocProps.flags.isUSMDeviceAllocation = true;
+
+        rtMemoryBackedBuffer = getMemoryManager()->allocateGraphicsMemoryWithProperties(allocProps);
     }
 
-    while (rtDispatchGlobals.size() <= maxBvhLevels) {
-        rtDispatchGlobals.push_back(nullptr);
+    while (rtDispatchGlobalsInfos.size() <= maxBvhLevels) {
+        rtDispatchGlobalsInfos.push_back(nullptr);
     }
 }
 
@@ -639,9 +699,21 @@ void Device::finalizeRayTracing() {
     getMemoryManager()->freeGraphicsMemory(rtMemoryBackedBuffer);
     rtMemoryBackedBuffer = nullptr;
 
-    for (size_t i = 0; i < rtDispatchGlobals.size(); i++) {
-        getMemoryManager()->freeGraphicsMemory(rtDispatchGlobals[i]);
-        rtDispatchGlobals[i] = nullptr;
+    for (size_t i = 0; i < rtDispatchGlobalsInfos.size(); i++) {
+        auto rtDispatchGlobalsInfo = rtDispatchGlobalsInfos[i];
+        if (rtDispatchGlobalsInfo == nullptr) {
+            continue;
+        }
+        for (size_t j = 0; j < rtDispatchGlobalsInfo->rtStacks.size(); j++) {
+            getMemoryManager()->freeGraphicsMemory(rtDispatchGlobalsInfo->rtStacks[j]);
+            rtDispatchGlobalsInfo->rtStacks[j] = nullptr;
+        }
+
+        getMemoryManager()->freeGraphicsMemory(rtDispatchGlobalsInfo->rtDispatchGlobalsArray);
+        rtDispatchGlobalsInfo->rtDispatchGlobalsArray = nullptr;
+
+        delete rtDispatchGlobalsInfos[i];
+        rtDispatchGlobalsInfos[i] = nullptr;
     }
 }
 
@@ -669,34 +741,68 @@ void Device::initializeEngineRoundRobinControls() {
 
 OSTime *Device::getOSTime() const { return getRootDeviceEnvironment().osTime.get(); };
 
-bool Device::getUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
+bool Device::getUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
     if (this->uuid.isValid) {
         uuid = this->uuid.id;
 
         if (!isSubDevice() && deviceBitfield.count() == 1) {
             // In case of no sub devices created (bits set in affinity mask == 1), return the UUID of enabled sub-device.
             uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
-            uuid[HwInfoConfig::uuidSize - 1] = subDeviceIndex + 1;
+            uuid[ProductHelper::uuidSize - 1] = subDeviceIndex + 1;
         }
     }
     return this->uuid.isValid;
 }
 
-bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
+bool Device::generateUuidFromPciBusInfo(const PhysicalDevicePciBusInfo &pciBusInfo, std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
     if (pciBusInfo.pciDomain != PhysicalDevicePciBusInfo::invalidValue) {
-
         uuid.fill(0);
-        memcpy_s(&uuid[0], 2, &pciBusInfo.pciDomain, 2);
-        memcpy_s(&uuid[2], 1, &pciBusInfo.pciBus, 1);
-        memcpy_s(&uuid[3], 1, &pciBusInfo.pciDevice, 1);
-        memcpy_s(&uuid[4], 1, &pciBusInfo.pciFunction, 1);
-        uuid[HwInfoConfig::uuidSize - 1] = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
+
+        /* Device UUID uniquely identifies a device within a system.
+         * We generate it based on device information along with PCI information
+         * This guarantees uniqueness of UUIDs on a system even when multiple
+         * identical Intel GPUs are present.
+         */
+
+        /* We want to have UUID matching between different GPU APIs (including outside
+         * of compute_runtime project - i.e. other than L0 or OCL). This structure definition
+         * has been agreed upon by various Intel driver teams.
+         *
+         * Consult other driver teams before changing this.
+         */
+
+        struct device_uuid {
+            uint16_t vendor_id;
+            uint16_t device_id;
+            uint16_t revision_id;
+            uint16_t pci_domain;
+            uint8_t pci_bus;
+            uint8_t pci_dev;
+            uint8_t pci_func;
+            uint8_t reserved[4];
+            uint8_t sub_device_id;
+        };
+
+        device_uuid deviceUUID = {};
+        deviceUUID.vendor_id = 0x8086; // Intel
+        deviceUUID.device_id = getHardwareInfo().platform.usDeviceID;
+        deviceUUID.revision_id = getHardwareInfo().platform.usRevId;
+        deviceUUID.pci_domain = static_cast<uint16_t>(pciBusInfo.pciDomain);
+        deviceUUID.pci_bus = static_cast<uint8_t>(pciBusInfo.pciBus);
+        deviceUUID.pci_dev = static_cast<uint8_t>(pciBusInfo.pciDevice);
+        deviceUUID.pci_func = static_cast<uint8_t>(pciBusInfo.pciFunction);
+        deviceUUID.sub_device_id = isSubDevice() ? static_cast<SubDevice *>(this)->getSubDeviceIndex() + 1 : 0;
+
+        static_assert(sizeof(device_uuid) == ProductHelper::uuidSize);
+
+        memcpy_s(uuid.data(), ProductHelper::uuidSize, &deviceUUID, sizeof(device_uuid));
+
         return true;
     }
     return false;
 }
 
-void Device::generateUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
+void Device::generateUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
     const auto &deviceInfo = getDeviceInfo();
     const auto &hardwareInfo = getHardwareInfo();
     uint32_t rootDeviceIndex = getRootDeviceIndex();
@@ -706,40 +812,128 @@ void Device::generateUuid(std::array<uint8_t, HwInfoConfig::uuidSize> &uuid) {
     memcpy_s(&uuid[8], sizeof(uint32_t), &rootDeviceIndex, sizeof(rootDeviceIndex));
 }
 
+void Device::getAdapterMask(uint32_t &nodeMask) {
+    if (verifyAdapterLuid()) {
+        nodeMask = 1;
+    }
+}
+
+const GfxCoreHelper &Device::getGfxCoreHelper() const {
+    return getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+}
+
+const ProductHelper &Device::getProductHelper() const {
+    return getRootDeviceEnvironment().getHelper<ProductHelper>();
+}
+
 void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
-    DEBUG_BREAK_IF(rtDispatchGlobals.size() < maxBvhLevels + 1);
-    DEBUG_BREAK_IF(rtDispatchGlobals[maxBvhLevels] != nullptr);
+    UNRECOVERABLE_IF(rtDispatchGlobalsInfos.size() < maxBvhLevels + 1);
+    UNRECOVERABLE_IF(rtDispatchGlobalsInfos[maxBvhLevels] != nullptr);
+
     uint32_t extraBytesLocal = 0;
     uint32_t extraBytesGlobal = 0;
-    auto size = RayTracingHelper::getDispatchGlobalSize(*this, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
-    auto dispatchGlobalsAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties({getRootDeviceIndex(), size, AllocationType::BUFFER, getDeviceBitfield()});
+    uint32_t dispatchGlobalsStride = MemoryConstants::pageSize64k;
+    UNRECOVERABLE_IF(RayTracingHelper::getDispatchGlobalSize() > dispatchGlobalsStride);
 
-    if (nullptr == dispatchGlobalsAllocation) {
+    bool allocFailed = false;
+
+    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getHardwareInfo());
+    auto dispatchGlobalsSize = deviceCount * dispatchGlobalsStride;
+    auto rtStackSize = RayTracingHelper::getRTStackSizePerTile(*this, deviceCount, maxBvhLevels, extraBytesLocal, extraBytesGlobal);
+
+    std::unique_ptr<RTDispatchGlobalsInfo> dispatchGlobalsInfo = std::make_unique<RTDispatchGlobalsInfo>();
+    if (dispatchGlobalsInfo == nullptr) {
         return;
     }
 
-    struct RTDispatchGlobals dispatchGlobals = {0};
+    auto &productHelper = getProductHelper();
 
-    auto numRtStacks = RayTracingHelper::getNumRtStacks(*this);
-    auto stackSizePerRay = RayTracingHelper::getStackSizePerRay(maxBvhLevels, 0);
-    size_t rtMemOffset = alignUp(stackSizePerRay * numRtStacks, MemoryConstants::cacheLineSize);
+    GraphicsAllocation *dispatchGlobalsArrayAllocation = nullptr;
 
-    auto &hwInfo = getHardwareInfo();
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    AllocationProperties arrayAllocProps(getRootDeviceIndex(), true, dispatchGlobalsSize,
+                                         AllocationType::BUFFER, true, getDeviceBitfield());
+    arrayAllocProps.flags.resource48Bit = true;
+    arrayAllocProps.flags.isUSMDeviceAllocation = true;
+    dispatchGlobalsArrayAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(arrayAllocProps);
 
-    dispatchGlobals.rtMemBasePtr = rtMemOffset;
-    dispatchGlobals.callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr);
-    dispatchGlobals.stackSizePerRay = stackSizePerRay / 64;
-    dispatchGlobals.numDSSRTStacks = RayTracingHelper::stackDssMultiplier;
-    dispatchGlobals.maxBVHLevels = maxBvhLevels;
+    if (dispatchGlobalsArrayAllocation == nullptr) {
+        return;
+    }
 
-    MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *dispatchGlobalsAllocation),
-                                                     *this,
-                                                     dispatchGlobalsAllocation,
-                                                     0,
-                                                     &dispatchGlobals,
-                                                     sizeof(RTDispatchGlobals));
+    for (unsigned int tile = 0; tile < deviceCount; tile++) {
+        DeviceBitfield deviceBitfield =
+            (deviceCount == 1)
+                ? this->getDeviceBitfield()
+                : subdevices[tile]->getDeviceBitfield();
 
-    rtDispatchGlobals[maxBvhLevels] = dispatchGlobalsAllocation;
+        AllocationProperties allocProps(getRootDeviceIndex(), true, rtStackSize, AllocationType::BUFFER, true, deviceBitfield);
+        allocProps.flags.resource48Bit = true;
+        allocProps.flags.isUSMDeviceAllocation = true;
+
+        auto rtStackAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(allocProps);
+
+        if (rtStackAllocation == nullptr) {
+            allocFailed = true;
+            break;
+        }
+
+        struct RTDispatchGlobals dispatchGlobals = {0};
+
+        dispatchGlobals.rtMemBasePtr = rtStackAllocation->getGpuAddress() + rtStackSize;
+        dispatchGlobals.callStackHandlerKSP = reinterpret_cast<uint64_t>(nullptr);
+        dispatchGlobals.stackSizePerRay = 0;
+        dispatchGlobals.numDSSRTStacks = RayTracingHelper::stackDssMultiplier;
+        dispatchGlobals.maxBVHLevels = maxBvhLevels;
+
+        uint32_t *dispatchGlobalsAsArray = reinterpret_cast<uint32_t *>(&dispatchGlobals);
+        dispatchGlobalsAsArray[7] = 1;
+
+        MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(this->getHardwareInfo(), *dispatchGlobalsArrayAllocation),
+                                                         *this,
+                                                         dispatchGlobalsArrayAllocation,
+                                                         tile * dispatchGlobalsStride,
+                                                         &dispatchGlobals,
+                                                         sizeof(RTDispatchGlobals));
+
+        dispatchGlobalsInfo->rtStacks.push_back(rtStackAllocation);
+    }
+
+    if (allocFailed) {
+        for (auto allocation : dispatchGlobalsInfo->rtStacks) {
+            getMemoryManager()->freeGraphicsMemory(allocation);
+        }
+
+        getMemoryManager()->freeGraphicsMemory(dispatchGlobalsArrayAllocation);
+        return;
+    }
+
+    dispatchGlobalsInfo->rtDispatchGlobalsArray = dispatchGlobalsArrayAllocation;
+    rtDispatchGlobalsInfos[maxBvhLevels] = dispatchGlobalsInfo.release();
+}
+
+MemoryManager *Device::getMemoryManager() const {
+    return executionEnvironment->memoryManager.get();
+}
+
+GmmHelper *Device::getGmmHelper() const {
+    return getRootDeviceEnvironment().getGmmHelper();
+}
+
+CompilerInterface *Device::getCompilerInterface() const {
+    return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getCompilerInterface();
+}
+
+BuiltIns *Device::getBuiltIns() const {
+    return executionEnvironment->rootDeviceEnvironments[getRootDeviceIndex()]->getBuiltIns();
+}
+
+EngineControl &Device::getNextEngineForMultiRegularContextMode() {
+    UNRECOVERABLE_IF(defaultEngineIndex != 0);
+
+    auto maxIndex = numberOfRegularContextsPerEngine - 1; // 1 for internal engine
+
+    auto indexToAssign = regularContextPerEngineAssignmentHelper.fetch_add(1) % maxIndex;
+
+    return allEngines[indexToAssign];
 }
 } // namespace NEO

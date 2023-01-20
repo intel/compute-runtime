@@ -16,7 +16,7 @@
 #include "shared/source/gen12lp/hw_cmds.h"
 
 namespace NEO {
-using GfxFamily = TGLLPFamily;
+using GfxFamily = Gen12LpFamily;
 
 template class Dispatcher<GfxFamily>;
 template class BlitterDispatcher<GfxFamily>;

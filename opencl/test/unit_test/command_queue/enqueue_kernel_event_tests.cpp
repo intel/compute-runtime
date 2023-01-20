@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -82,8 +82,8 @@ TEST_F(EventTests, WhenWaitingForEventThenPipeControlIsNotInserted) {
 
     retVal = Event::waitForEvents(1, &event);
     EXPECT_EQ(CL_SUCCESS, retVal);
-    //we expect event is completed
-    uint32_t taskCountOfEvent = pEvent->peekTaskCount();
+    // we expect event is completed
+    TaskCountType taskCountOfEvent = pEvent->peekTaskCount();
     EXPECT_LE(taskCountOfEvent, pCmdQ->getHwTag());
     // no more tasks after WFE, no need to write PC
     EXPECT_EQ(pEvent->taskLevel + 1, csr.peekTaskLevel());

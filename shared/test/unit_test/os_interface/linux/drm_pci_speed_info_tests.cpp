@@ -100,15 +100,27 @@ TEST_F(DrmPciSpeedInfoTest, givenIntegratedDeviceWhenCorrectInputsAreGivenThenCo
         return -1;
     });
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(true)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(true)->getPciSpeedInfo();
     EXPECT_EQ(4, pciSpeedInfo.genVersion);
     EXPECT_EQ(64, pciSpeedInfo.width);
     EXPECT_EQ(126030769230, pciSpeedInfo.maxBandwidth);
 }
 
+TEST_F(DrmPciSpeedInfoTest, givenIntegratedDeviceWhenSysfsFileCouldNotBeOpenedThenUnknownPciSpeedIsReturned) {
+
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpenIntegrated(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return -1;
+    });
+
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(true)->getPciSpeedInfo();
+    EXPECT_EQ(-1, pciSpeedInfo.genVersion);
+    EXPECT_EQ(-1, pciSpeedInfo.width);
+    EXPECT_EQ(-1, pciSpeedInfo.maxBandwidth);
+}
+
 TEST_F(DrmPciSpeedInfoTest, givenDiscreteDeviceWhenCorrectInputsAreGivenThenCorrectPciSpeedIsReturned) {
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
     EXPECT_EQ(5, pciSpeedInfo.genVersion);
     EXPECT_EQ(64, pciSpeedInfo.width);
     EXPECT_EQ(252061538461, pciSpeedInfo.maxBandwidth);
@@ -120,7 +132,7 @@ TEST_F(DrmPciSpeedInfoTest, givenIntegratedDeviceWhenPciLinkPathFailsThenUnknown
         return -1;
     });
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(true)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(true)->getPciSpeedInfo();
     EXPECT_EQ(-1, pciSpeedInfo.genVersion);
     EXPECT_EQ(-1, pciSpeedInfo.width);
     EXPECT_EQ(-1, pciSpeedInfo.maxBandwidth);
@@ -132,7 +144,7 @@ TEST_F(DrmPciSpeedInfoTest, givenDiscreteDeviceWhenPciRootPathFailsThenUnknownPc
         return -1;
     });
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
     EXPECT_EQ(-1, pciSpeedInfo.genVersion);
     EXPECT_EQ(-1, pciSpeedInfo.width);
     EXPECT_EQ(-1, pciSpeedInfo.maxBandwidth);
@@ -146,7 +158,7 @@ TEST_F(DrmPciSpeedInfoTest, givenDiscreteDeviceWhenPciRootPathFailsDueToMissingP
         return static_cast<int>(linkString.size());
     });
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
     EXPECT_EQ(-1, pciSpeedInfo.genVersion);
     EXPECT_EQ(-1, pciSpeedInfo.width);
     EXPECT_EQ(-1, pciSpeedInfo.maxBandwidth);
@@ -160,7 +172,7 @@ TEST_F(DrmPciSpeedInfoTest, givenDiscreteDeviceWhenPciRootPathFailsDueToUnavaila
         return static_cast<int>(linkString.size());
     });
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
     EXPECT_EQ(-1, pciSpeedInfo.genVersion);
     EXPECT_EQ(-1, pciSpeedInfo.width);
     EXPECT_EQ(-1, pciSpeedInfo.maxBandwidth);
@@ -172,7 +184,7 @@ TEST_F(DrmPciSpeedInfoTest, givenDiscreteDeviceWhenPreadReturnsNegativeValueWhen
         return -1;
     });
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
     EXPECT_EQ(-1, pciSpeedInfo.genVersion);
     EXPECT_EQ(-1, pciSpeedInfo.width);
     EXPECT_EQ(-1, pciSpeedInfo.maxBandwidth);
@@ -184,7 +196,7 @@ TEST_F(DrmPciSpeedInfoTest, givenDiscreteDeviceWhenPreadReturnsZeroWhenAccessing
         return 0;
     });
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
     EXPECT_EQ(-1, pciSpeedInfo.genVersion);
     EXPECT_EQ(-1, pciSpeedInfo.width);
     EXPECT_EQ(-1, pciSpeedInfo.maxBandwidth);
@@ -205,7 +217,7 @@ TEST_F(DrmPciSpeedInfoTest, givenDiscreteDeviceWhenReadingLinkWidthStrtoulFailsW
         return -1;
     });
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
     EXPECT_EQ(-1, pciSpeedInfo.genVersion);
     EXPECT_EQ(-1, pciSpeedInfo.width);
     EXPECT_EQ(-1, pciSpeedInfo.maxBandwidth);
@@ -227,7 +239,7 @@ TEST_F(DrmPciSpeedInfoTest, givenDiscreteDeviceWhenReadingLinkWidthStrtoulFailsW
         return -1;
     });
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
     EXPECT_EQ(-1, pciSpeedInfo.genVersion);
     EXPECT_EQ(-1, pciSpeedInfo.width);
     EXPECT_EQ(-1, pciSpeedInfo.maxBandwidth);
@@ -247,7 +259,7 @@ TEST_F(DrmPciSpeedInfoTest, givenDiscreteDeviceWhenReadingMaxLinkSpeedFailsThenU
         return -1;
     });
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
     EXPECT_EQ(-1, pciSpeedInfo.genVersion);
     EXPECT_EQ(64, pciSpeedInfo.width);
     EXPECT_EQ(-1, pciSpeedInfo.maxBandwidth);
@@ -268,7 +280,7 @@ TEST_F(DrmPciSpeedInfoTest, givenDiscreteDeviceWhenReadingLinkSpeedStrtoulFailsW
         return -1;
     });
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
     EXPECT_EQ(-1, pciSpeedInfo.genVersion);
     EXPECT_EQ(64, pciSpeedInfo.width);
     EXPECT_EQ(-1, pciSpeedInfo.maxBandwidth);
@@ -292,7 +304,7 @@ TEST_F(DrmPciSpeedInfoTest, givenDiscreteDeviceWhenReadingLinkSpeedStrtodFailsWi
         return -1;
     });
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
     EXPECT_EQ(-1, pciSpeedInfo.genVersion);
     EXPECT_EQ(64, pciSpeedInfo.width);
     EXPECT_EQ(-1, pciSpeedInfo.maxBandwidth);
@@ -313,7 +325,7 @@ TEST_F(DrmPciSpeedInfoTest, givenDiscreteDeviceWhenUnSupportedLinkSpeedIsReadThe
         return -1;
     });
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
+    PhysicalDevicePciSpeedInfo pciSpeedInfo = getDrm(false)->getPciSpeedInfo();
     EXPECT_EQ(-1, pciSpeedInfo.genVersion);
     EXPECT_EQ(64, pciSpeedInfo.width);
     EXPECT_EQ(-1, pciSpeedInfo.maxBandwidth);

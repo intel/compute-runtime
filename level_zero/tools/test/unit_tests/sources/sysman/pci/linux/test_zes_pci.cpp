@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,6 @@
 #include <string>
 
 extern bool sysmanUltsEnable;
-
-using ::testing::_;
-using ::testing::Invoke;
-using ::testing::Matcher;
-using ::testing::NiceMock;
 
 namespace L0 {
 namespace ult {
@@ -227,7 +222,7 @@ struct MockMemoryManagerPci : public MemoryManagerMock {
 class ZesPciFixture : public SysmanDeviceFixture {
 
   protected:
-    std::unique_ptr<Mock<PciSysfsAccess>> pSysfsAccess;
+    std::unique_ptr<MockPciSysfsAccess> pSysfsAccess;
     MockMemoryManagerPci *memoryManager = nullptr;
     SysfsAccess *pOriginalSysfsAccess = nullptr;
     FsAccess *pOriginalFsAccess = nullptr;
@@ -243,22 +238,13 @@ class ZesPciFixture : public SysmanDeviceFixture {
         SysmanDeviceFixture::SetUp();
 
         pMemoryManagerOld = device->getDriverHandle()->getMemoryManager();
-        memoryManager = new ::testing::NiceMock<MockMemoryManagerPci>(*neoDevice->getExecutionEnvironment());
+        memoryManager = new MockMemoryManagerPci(*neoDevice->getExecutionEnvironment());
         memoryManager->localMemorySupported[0] = false;
         device->getDriverHandle()->setMemoryManager(memoryManager);
 
-        pSysfsAccess = std::make_unique<NiceMock<Mock<PciSysfsAccess>>>();
+        pSysfsAccess = std::make_unique<MockPciSysfsAccess>();
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
-
-        ON_CALL(*pSysfsAccess.get(), read(_, Matcher<std::vector<std::string> &>(_)))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PciSysfsAccess>::getValVector));
-        ON_CALL(*pSysfsAccess.get(), readSymLink(_, _))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PciSysfsAccess>::getValStringSymLink));
-        ON_CALL(*pSysfsAccess.get(), getRealPath(_, _))
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PciSysfsAccess>::getValStringRealPath));
-        ON_CALL(*pSysfsAccess.get(), isRootUser())
-            .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PciSysfsAccess>::checkRootUser));
 
         pPciImp = static_cast<L0::PciImp *>(pSysmanDeviceImp->pPci);
         pOsPciPrev = pPciImp->pOsPci;
@@ -369,9 +355,8 @@ TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenSettingLmemSupportAndCallingzetS
 
 TEST_F(ZesPciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropertiesAndBdfStringIsEmptyThenVerifyApiCallSucceeds) {
     zes_pci_properties_t properties;
-    ON_CALL(*pSysfsAccess.get(), readSymLink(_, _))
-        .WillByDefault(::testing::Invoke(pSysfsAccess.get(), &Mock<PciSysfsAccess>::getValStringSymLinkEmpty));
-    pPciImp->init();
+
+    pSysfsAccess->isStringSymLinkEmpty = true;
 
     ze_result_t result = zesDevicePciGetProperties(device, &properties);
 
@@ -696,6 +681,10 @@ TEST_F(ZesPciFixture, WhenConvertingLinkSpeedFromGigatransfersPerSecondToBytesPe
     int64_t speedPci25 = convertPcieSpeedFromGTsToBs(PciLinkSpeeds::Pci2_5GigatransfersPerSecond);
     EXPECT_EQ(speedPci25, static_cast<int64_t>(PciLinkSpeeds::Pci2_5GigatransfersPerSecond * convertMegabitsPerSecondToBytesPerSecond * convertGigabitToMegabit * encodingGen1Gen2));
     EXPECT_EQ(0, convertPcieSpeedFromGTsToBs(0.0));
+}
+TEST_F(SysmanDeviceFixture, GivenValidSysmanHandleWhenCallingzesSysmanPciGetStateThenVerifyzetSysmanPciGetStatsCallReturnNotSupported) {
+    zes_pci_state_t state;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDevicePciGetState(device, &state));
 }
 
 } // namespace ult

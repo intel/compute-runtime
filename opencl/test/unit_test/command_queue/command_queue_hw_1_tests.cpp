@@ -1,19 +1,20 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/mocks/mock_timestamp_container.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
@@ -49,10 +50,34 @@ HWTEST_F(CommandQueueHwTest, givenNoTimestampPacketsWhenWaitForTimestampsThenNoW
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
     MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
     auto taskCount = device->getUltCommandStreamReceiver<FamilyType>().peekLatestFlushedTaskCount();
+    auto status = WaitStatus::NotReady;
 
-    cmdQ.waitForTimestamps({}, 101u);
+    cmdQ.waitForTimestamps({}, 101u, status, cmdQ.timestampPacketContainer.get(), cmdQ.deferredTimestampPackets.get());
 
     EXPECT_EQ(device->getUltCommandStreamReceiver<FamilyType>().peekLatestFlushedTaskCount(), taskCount);
+}
+
+HWTEST_F(CommandQueueHwTest, givenEnableTimestampWaitForQueuesWhenGpuHangDetectedWhileWaitingForAllEnginesThenReturnCorrectStatus) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableTimestampWaitForQueues.set(4);
+
+    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    auto device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0u));
+    MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
+    auto status = WaitStatus::NotReady;
+
+    auto mockCSR = new MockCommandStreamReceiver(*executionEnvironment, 0, device->getDeviceBitfield());
+    mockCSR->isGpuHangDetectedReturnValue = true;
+    device->resetCommandStreamReceiver(mockCSR);
+
+    auto mockTagAllocator = new MockTagAllocator<>(0, device->getMemoryManager());
+    mockCSR->timestampPacketAllocator.reset(mockTagAllocator);
+    cmdQ.timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
+    cmdQ.timestampPacketContainer->add(mockTagAllocator->getTag());
+
+    status = cmdQ.waitForAllEngines(false, nullptr, false);
+
+    EXPECT_EQ(WaitStatus::GpuHang, status);
 }
 
 HWTEST_F(CommandQueueHwTest, WhenDebugSurfaceIsAllocatedThenBufferIsZeroed) {
@@ -1160,59 +1185,4 @@ HWTEST_F(CommandQueueHwTest, givenNoGpuHangWhenFinishingCommandQueueHwThenWaitFo
     const auto finishResult = mockCmdQueueHw.finish();
     EXPECT_EQ(1, mockCmdQueueHw.waitForAllEnginesCalledCount);
     EXPECT_EQ(CL_SUCCESS, finishResult);
-}
-
-HWTEST2_F(CommandQueueHwTest, givenDirectSubmissionEnabledAndUpdateTagFromWaitEnabledWhenEnqueueSvmMapThenOperationTypeIsExplicitCacheFlush, IsAtLeastXeHpCore) {
-    DebugManagerStateRestore restorer;
-    RootDeviceIndicesContainer rootDeviceIndices = {rootDeviceIndex, rootDeviceIndex};
-    std::map<uint32_t, DeviceBitfield> deviceBitfields{{rootDeviceIndex, pDevice->getDeviceBitfield()}};
-
-    MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
-    auto allocation = context->getSVMAllocsManager()->createSVMAlloc(1, SVMAllocsManager::SvmAllocationProperties{}, rootDeviceIndices, deviceBitfields);
-
-    {
-        mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = false;
-        ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
-        DebugManager.flags.UpdateTaskCountFromWait.set(0);
-        ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
-
-        auto status = mockCmdQueueHw.enqueueSVMMap(true, 0, allocation, 1, 0, nullptr, nullptr, false);
-        ASSERT_EQ(status, CL_SUCCESS);
-        EXPECT_EQ(mockCmdQueueHw.latestSentEnqueueType, EnqueueProperties::Operation::EnqueueWithoutSubmission);
-    }
-
-    {
-        mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = true;
-        ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
-        DebugManager.flags.UpdateTaskCountFromWait.set(0);
-        ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
-
-        auto status = mockCmdQueueHw.enqueueSVMMap(true, 0, allocation, 1, 0, nullptr, nullptr, false);
-        ASSERT_EQ(status, CL_SUCCESS);
-        EXPECT_EQ(mockCmdQueueHw.latestSentEnqueueType, EnqueueProperties::Operation::EnqueueWithoutSubmission);
-    }
-
-    {
-        mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = false;
-        ASSERT_FALSE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
-        DebugManager.flags.UpdateTaskCountFromWait.set(3);
-        ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
-
-        auto status = mockCmdQueueHw.enqueueSVMMap(true, 0, allocation, 1, 0, nullptr, nullptr, false);
-        ASSERT_EQ(status, CL_SUCCESS);
-        EXPECT_EQ(mockCmdQueueHw.latestSentEnqueueType, EnqueueProperties::Operation::EnqueueWithoutSubmission);
-    }
-
-    {
-        mockCmdQueueHw.getUltCommandStreamReceiver().directSubmissionAvailable = true;
-        ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isDirectSubmissionEnabled());
-        DebugManager.flags.UpdateTaskCountFromWait.set(3);
-        ASSERT_TRUE(mockCmdQueueHw.getUltCommandStreamReceiver().isUpdateTagFromWaitEnabled());
-
-        auto status = mockCmdQueueHw.enqueueSVMMap(true, 0, allocation, 1, 0, nullptr, nullptr, false);
-        ASSERT_EQ(status, CL_SUCCESS);
-        EXPECT_EQ(mockCmdQueueHw.latestSentEnqueueType, EnqueueProperties::Operation::ExplicitCacheFlush);
-    }
-
-    context->getSVMAllocsManager()->freeSVMAlloc(allocation);
 }

@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
@@ -20,25 +21,25 @@ struct GetCommandQueueInfoTest : public ClDeviceFixture,
                                  public ContextFixture,
                                  public CommandQueueFixture,
                                  ::testing::TestWithParam<uint64_t /*cl_command_queue_properties*/> {
-    using CommandQueueFixture::SetUp;
-    using ContextFixture::SetUp;
+    using CommandQueueFixture::setUp;
+    using ContextFixture::setUp;
 
     GetCommandQueueInfoTest() {
     }
 
     void SetUp() override {
         properties = GetParam();
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
 
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
-        CommandQueueFixture::SetUp(pContext, pClDevice, properties);
+        ContextFixture::setUp(1, &device);
+        CommandQueueFixture::setUp(pContext, pClDevice, properties);
     }
 
     void TearDown() override {
-        CommandQueueFixture::TearDown();
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ContextFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     const HardwareInfo *pHwInfo = nullptr;
@@ -133,9 +134,9 @@ TEST_F(GetCommandQueueFamilyInfoTests, givenQueueFamilyNotSelectedWhenGettingFam
     cl_int retVal{};
 
     const auto &hwInfo = context.getDevice(0)->getHardwareInfo();
-    const auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    const auto engineGroupType = hwHelper.getEngineGroupType(context.getDevice(0)->getDefaultEngine().getEngineType(),
-                                                             context.getDevice(0)->getDefaultEngine().getEngineUsage(), hwInfo);
+    const auto &gfxCoreHelper = context.getDevice(0)->getGfxCoreHelper();
+    const auto engineGroupType = gfxCoreHelper.getEngineGroupType(context.getDevice(0)->getDefaultEngine().getEngineType(),
+                                                                  context.getDevice(0)->getDefaultEngine().getEngineUsage(), hwInfo);
     const auto expectedFamilyIndex = context.getDevice(0)->getDevice().getEngineGroupIndexFromEngineGroupType(engineGroupType);
 
     cl_uint familyIndex{};

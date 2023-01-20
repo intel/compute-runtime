@@ -9,7 +9,7 @@
 #include "platforms.h"
 
 namespace AOT_PVC {
-constexpr AOT::PRODUCT_CONFIG productConfigs[] = {
+inline constexpr AOT::PRODUCT_CONFIG productConfigs[] = {
     AOT::PVC_XL_A0,
     AOT::PVC_XL_A0P,
     AOT::PVC_XT_A0,

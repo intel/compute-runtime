@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,24 +16,31 @@
 
 using namespace NEO;
 
-typedef Test<ClDeviceFixture> XeHPSamplerTest;
+using XeHPSamplerTest = Test<ClDeviceFixture>;
 
 XEHPTEST_F(XeHPSamplerTest, givenXeHPSamplerWhenUsingDefaultFilteringAndAppendSamplerStateParamsThenDisableLowQualityFilter) {
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+
     EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());
-    typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
+
     auto state = FamilyType::cmdInitSamplerState;
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
-    HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&state, *defaultHwInfo);
+
+    auto &helper = getHelper<ProductHelper>();
+    helper.adjustSamplerState(&state, *defaultHwInfo);
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
 }
 
 XEHPTEST_F(XeHPSamplerTest, givenXeHPSamplerWhenForcingLowQualityFilteringAndAppendSamplerStateParamsThenEnableLowQualityFilter) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ForceSamplerLowFilteringPrecision.set(true);
-    EXPECT_TRUE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());
-    typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
+
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+
     auto state = FamilyType::cmdInitSamplerState;
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
-    HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&state, *defaultHwInfo);
+
+    auto &helper = getHelper<ProductHelper>();
+    helper.adjustSamplerState(&state, *defaultHwInfo);
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, state.getLowQualityFilter());
 }

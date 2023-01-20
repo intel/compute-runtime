@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,21 +9,13 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device_binary_format/debug_zebin.h"
-#include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/program/program_info.h"
-#include "shared/source/utilities/const_stringref.h"
 
-#include "opencl/source/api/cl_types.h"
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/helpers/base_object.h"
 
-#include "cif/builtins/memory/buffer/buffer.h"
-#include "patch_list.h"
-
-#include <list>
-#include <string>
-#include <vector>
+#include <functional>
 
 namespace NEO {
 namespace PatchTokenBinary {
@@ -140,6 +132,7 @@ class Program : public BaseObject<_cl_program> {
     cl_int build(const ClDeviceVector &deviceVector, const char *buildOptions, bool enableCaching,
                  std::unordered_map<std::string, BuiltinDispatchInfoBuilder *> &builtinsMap);
 
+    cl_int processGenBinaries(const ClDeviceVector &clDevices, std::unordered_map<uint32_t, BuildPhase> &phaseReached);
     MOCKABLE_VIRTUAL cl_int processGenBinary(const ClDevice &clDevice);
     MOCKABLE_VIRTUAL cl_int processProgramInfo(ProgramInfo &dst, const ClDevice &clDevice);
 
@@ -289,14 +282,17 @@ class Program : public BaseObject<_cl_program> {
     void notifyDebuggerWithDebugData(ClDevice *clDevice);
     MOCKABLE_VIRTUAL void createDebugZebin(uint32_t rootDeviceIndex);
     Debug::Segments getZebinSegments(uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL void callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
+    MOCKABLE_VIRTUAL void callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
 
   protected:
     MOCKABLE_VIRTUAL cl_int createProgramFromBinary(const void *pBinary, size_t binarySize, ClDevice &clDevice);
 
     cl_int packDeviceBinary(ClDevice &clDevice);
 
-    MOCKABLE_VIRTUAL cl_int linkBinary(Device *pDevice, const void *constantsInitData, const void *variablesInitData,
-                                       const ProgramInfo::GlobalSurfaceInfo &stringInfo, std::vector<NEO::ExternalFunctionInfo> &extFuncInfos);
+    MOCKABLE_VIRTUAL cl_int linkBinary(Device *pDevice, const void *constantsInitData, size_t constantsInitDataSize, const void *variablesInitData,
+                                       size_t variablesInitDataSize, const ProgramInfo::GlobalSurfaceInfo &stringInfo,
+                                       std::vector<NEO::ExternalFunctionInfo> &extFuncInfos);
 
     void updateNonUniformFlag();
     void updateNonUniformFlag(const Program **inputProgram, size_t numInputPrograms);
@@ -304,7 +300,6 @@ class Program : public BaseObject<_cl_program> {
     void extractInternalOptions(const std::string &options, std::string &internalOptions);
     MOCKABLE_VIRTUAL bool isFlagOption(ConstStringRef option);
     MOCKABLE_VIRTUAL bool isOptionValueValid(ConstStringRef option, ConstStringRef value);
-    MOCKABLE_VIRTUAL void applyAdditionalOptions(std::string &internalOptions);
 
     MOCKABLE_VIRTUAL bool appendKernelDebugOptions(ClDevice &clDevice, std::string &internalOptions);
     void notifyDebuggerWithSourceCode(ClDevice &clDevice, std::string &filename);
@@ -312,6 +307,9 @@ class Program : public BaseObject<_cl_program> {
 
     void setBuildStatus(cl_build_status status);
     void setBuildStatusSuccess(const ClDeviceVector &deviceVector, cl_program_binary_type binaryType);
+
+    bool containsVmeUsage(const std::vector<KernelInfo *> &kernelInfos) const;
+    void disableZebinIfVmeEnabled(std::string &options, std::string &internalOptions, const std::string &sourceCode);
 
     bool isSpirV = false;
 
@@ -356,6 +354,7 @@ class Program : public BaseObject<_cl_program> {
 
         std::unique_ptr<char[]> debugData;
         size_t debugDataSize = 0U;
+        size_t kernelMiscInfoPos = std::string::npos;
     };
 
     std::vector<BuildInfo> buildInfos;
@@ -372,9 +371,15 @@ class Program : public BaseObject<_cl_program> {
 
     bool isBuiltIn = false;
     bool kernelDebugEnabled = false;
+    bool enforceFallbackToPatchtokens = false;
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     std::mutex lockMutex;
     uint32_t exposedKernels = 0;
+
+    size_t exportedFunctionsKernelId = std::numeric_limits<size_t>::max();
+
+    std::once_flag extractAndDecodeMetadataOnce;
+    std::once_flag generateDefaultMetadataOnce;
 };
 
 } // namespace NEO

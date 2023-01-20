@@ -1,14 +1,16 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/scratch_space_controller_base.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
@@ -22,7 +24,7 @@ class MockScratchSpaceControllerBase : public ScratchSpaceControllerBase {
                       uint32_t offset,
                       uint32_t requiredPerThreadScratchSize,
                       uint32_t requiredPerThreadPrivateScratchSize,
-                      uint32_t currentTaskCount,
+                      TaskCountType currentTaskCount,
                       OsContext &osContext,
                       bool &stateBaseAddressDirty,
                       bool &vfeStateDirty) override {
@@ -32,7 +34,7 @@ class MockScratchSpaceControllerBase : public ScratchSpaceControllerBase {
     void programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                uint32_t requiredPerThreadScratchSize,
                                                uint32_t requiredPerThreadPrivateScratchSize,
-                                               uint32_t currentTaskCount,
+                                               TaskCountType currentTaskCount,
                                                OsContext &osContext,
                                                bool &stateBaseAddressDirty,
                                                bool &vfeStateDirty,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,21 +7,15 @@
 
 #pragma once
 #include "shared/source/aub/aub_helper.h"
-#include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
-#include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/memory_manager/memory_banks.h"
-#include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
 #include "shared/source/os_interface/os_context.h"
 
-#include "third_party/aub_stream/headers/allocation_params.h"
-#include "third_party/aub_stream/headers/aub_manager.h"
-#include "third_party/aub_stream/headers/hardware_context.h"
+#include "aubstream/allocation_params.h"
 
 namespace NEO {
 class GraphicsAllocation;
@@ -93,7 +87,7 @@ class CommandStreamReceiverSimulatedHw : public CommandStreamReceiverSimulatedCo
     }
     PhysicalAddressAllocator *createPhysicalAddressAllocator(const HardwareInfo *hwInfo) {
         const auto bankSize = AubHelper::getPerTileLocalMemorySize(hwInfo);
-        const auto devicesCount = HwHelper::getSubDevicesCount(hwInfo);
+        const auto devicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         return new PhysicalAddressAllocatorHw<GfxFamily>(bankSize, devicesCount);
     }
     void writeMemoryWithAubManager(GraphicsAllocation &graphicsAllocation) override {

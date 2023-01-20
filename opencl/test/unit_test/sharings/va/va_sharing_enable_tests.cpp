@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,8 +25,8 @@ extern "C" int vaDisplayIsValid(VADisplay vaDisplay) {
 
 class MockDriverInfo : public DriverInfo {
   public:
-    MockDriverInfo(bool imageSupport) : imageSupport(imageSupport) {}
-    bool getImageSupport() override { return imageSupport; };
+    MockDriverInfo(bool imageSupport) : DriverInfo(DriverInfoType::UNKNOWN), imageSupport(imageSupport) {}
+    bool getMediaSharingSupport() override { return imageSupport; };
     bool imageSupport = true;
 };
 
@@ -34,14 +34,14 @@ class VaSharingEnablerTests : public MemoryManagementFixture,
                               public ::testing::Test {
   public:
     void SetUp() override {
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
         factory.reset(new VaSharingBuilderFactory());
         ASSERT_NE(nullptr, factory.get());
     }
 
     void TearDown() override {
         factory.reset(nullptr);
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
     }
     std::unique_ptr<VaSharingBuilderFactory> factory;
 };
@@ -130,7 +130,7 @@ TEST_F(VaSharingEnablerTests, givenVaBuilderWhenValidPropertyThenTrueIsReturned)
     auto res = builder->processProperties(property, value);
     EXPECT_TRUE(res);
 
-    //repeat to check if we don't allocate twice
+    // repeat to check if we don't allocate twice
     auto prevAllocations = MemoryManagement::numAllocations.load();
     res = builder->processProperties(property, value);
     EXPECT_TRUE(res);

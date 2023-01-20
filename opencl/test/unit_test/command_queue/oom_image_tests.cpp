@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 using namespace NEO;
 
@@ -31,16 +32,16 @@ struct OOMCommandQueueImageTest : public ClDeviceFixture,
                                   public CommandQueueFixture,
                                   public ::testing::TestWithParam<OOMSetting> {
 
-    using CommandQueueFixture::SetUp;
+    using CommandQueueFixture::setUp;
 
     OOMCommandQueueImageTest() {
     }
 
     void SetUp() override {
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         context = new MockContext(pClDevice);
-        CommandQueueFixture::SetUp(context, pClDevice, 0);
+        CommandQueueFixture::setUp(context, pClDevice, 0);
 
         srcImage = Image2dHelper<>::create(context);
         dstImage = Image2dHelper<>::create(context);
@@ -72,8 +73,8 @@ struct OOMCommandQueueImageTest : public ClDeviceFixture,
         delete srcImage;
         context->release();
 
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     MockContext *context;

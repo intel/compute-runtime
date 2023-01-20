@@ -1,9 +1,14 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/kernel/implicit_args.h"
 
 #include "opencl/source/gtpin/gtpin_hw_helper.h"
 #include "opencl/source/gtpin/gtpin_hw_helper.inl"
@@ -13,21 +18,21 @@
 
 namespace NEO {
 
-extern GTPinHwHelper *gtpinHwHelperFactory[IGFX_MAX_CORE];
+extern GTPinGfxCoreHelper *gtpinGfxCoreHelperFactory[IGFX_MAX_CORE];
 
-typedef TGLLPFamily Family;
+typedef Gen12LpFamily Family;
 static const auto gfxFamily = IGFX_GEN12LP_CORE;
 
 template <>
-uint32_t GTPinHwHelperHw<Family>::getGenVersion() {
+uint32_t GTPinGfxCoreHelperHw<Family>::getGenVersion() {
     return gtpin::GTPIN_GEN_12_1;
 }
 
-template class GTPinHwHelperHw<Family>;
+template class GTPinGfxCoreHelperHw<Family>;
 
 struct GTPinEnableGen12LP {
     GTPinEnableGen12LP() {
-        gtpinHwHelperFactory[gfxFamily] = &GTPinHwHelperHw<Family>::get();
+        gtpinGfxCoreHelperFactory[gfxFamily] = &GTPinGfxCoreHelperHw<Family>::get();
     }
 };
 

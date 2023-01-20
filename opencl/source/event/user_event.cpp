@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "user_event.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/device/device.h"
 
 #include "opencl/source/command_queue/command_queue.h"
@@ -33,7 +34,7 @@ WaitStatus UserEvent::wait(bool blocking, bool useQuickKmdSleep) {
     return WaitStatus::Ready;
 }
 
-uint32_t UserEvent::getTaskLevel() {
+TaskCountType UserEvent::getTaskLevel() {
     if (peekExecutionStatus() == CL_COMPLETE) {
         return 0;
     }
@@ -64,8 +65,8 @@ WaitStatus VirtualEvent::wait(bool blocking, bool useQuickKmdSleep) {
     return WaitStatus::Ready;
 }
 
-uint32_t VirtualEvent::getTaskLevel() {
-    uint32_t taskLevel = 0;
+TaskCountType VirtualEvent::getTaskLevel() {
+    TaskCountType taskLevel = 0;
     if (cmdQueue != nullptr) {
         auto &csr = cmdQueue->getGpgpuCommandStreamReceiver();
         taskLevel = csr.peekTaskLevel();

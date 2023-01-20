@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/gen12lp/hw_cmds_rkl.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.inl"
@@ -13,12 +13,9 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_ROCKETLAKE;
 
 #include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
 #include "shared/source/gen12lp/rkl/os_agnostic_hw_info_config_rkl.inl"
 
-template class HwInfoConfigHw<gfxProduct>;
-
-} // namespace NEO
+template class NEO::ProductHelperHw<gfxProduct>;

@@ -13,8 +13,6 @@
 #include <memory>
 #include <vector>
 
-bool verbose = false;
-
 const char *clProgram = R"==(
 __kernel void local_barrier_arg(__local int *local_dst1, __global int *dst, __local int *local_dst2,
         __local ulong *local_dst3, __local int *local_dst4) {
@@ -68,19 +66,19 @@ void createModule(ze_module_handle_t &module, ze_context_handle_t &context, ze_d
     SUCCESS_OR_TERMINATE(zeModuleCreate(context, device, &moduleDesc, &module, nullptr));
 }
 
-void createKernel(ze_module_handle_t &module, ze_kernel_handle_t &function, size_t numThreads, uint32_t groupSizeX, uint32_t groupSizeY, uint32_t groupSizeZ) {
-    ze_kernel_desc_t functionDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
-    functionDesc.pKernelName = "local_barrier_arg";
-    SUCCESS_OR_TERMINATE(zeKernelCreate(module, &functionDesc, &function));
+void createKernel(ze_module_handle_t &module, ze_kernel_handle_t &kernel, size_t numThreads, uint32_t groupSizeX, uint32_t groupSizeY, uint32_t groupSizeZ) {
+    ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    kernelDesc.pKernelName = "local_barrier_arg";
+    SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
 
     // Set group sizes
-    SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(function, static_cast<uint32_t>(numThreads), 1U, 1U, &groupSizeX,
+    SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, static_cast<uint32_t>(numThreads), 1U, 1U, &groupSizeX,
                                                   &groupSizeY, &groupSizeZ));
     if (verbose) {
         std::cout << "Group size : (" << groupSizeX << ", " << groupSizeY << ", " << groupSizeZ
                   << ")" << std::endl;
     }
-    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(function, groupSizeX, groupSizeY, groupSizeZ));
+    SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
 }
 
 void createCmdQueueAndCmdList(ze_context_handle_t &context, ze_device_handle_t &device,
@@ -99,7 +97,7 @@ void createCmdQueueAndCmdList(ze_context_handle_t &context, ze_device_handle_t &
 bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) {
     constexpr size_t allocSize = sizeof(int);
     ze_module_handle_t module;
-    ze_kernel_handle_t function;
+    ze_kernel_handle_t kernel;
     ze_command_queue_handle_t cmdQueue;
     ze_command_list_handle_t cmdList;
     int *realResult = nullptr;
@@ -120,9 +118,9 @@ bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) 
     ze_command_list_desc_t cmdListDesc = {ZE_STRUCTURE_TYPE_COMMAND_LIST_DESC};
     createCmdQueueAndCmdList(context, device, cmdQueue, cmdList, &cmdQueueDesc, &cmdListDesc);
 
-    // Create module and function
+    // Create module and kernel
     createModule(module, context, device);
-    createKernel(module, function, numThreadsPerGroup, groupSizeX, groupSizeY, groupSizeZ);
+    createKernel(module, kernel, numThreadsPerGroup, groupSizeX, groupSizeY, groupSizeZ);
 
     // Alloc buffers
     dstBuffer = nullptr;
@@ -140,17 +138,17 @@ bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) 
                                                        allocSize, nullptr, 0, nullptr));
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
 
-    realResult = (int *)dstBuffer;
+    realResult = reinterpret_cast<int *>(dstBuffer);
     if (verbose) {
         std::cerr << "Inital Gobal Memory Value " << *realResult << std::endl;
     }
 
-    // Set function args and get ready to dispatch
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(function, 0, sizeof(int), nullptr));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(function, 1, sizeof(dstBuffer), &dstBuffer));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(function, 2, sizeof(int), nullptr));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(function, 3, sizeof(unsigned long), nullptr));
-    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(function, 4, sizeof(int), nullptr));
+    // Set kernel args and get ready to dispatch
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 0, sizeof(int), nullptr));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 1, sizeof(dstBuffer), &dstBuffer));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 2, sizeof(int), nullptr));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 3, sizeof(unsigned long), nullptr));
+    SUCCESS_OR_TERMINATE(zeKernelSetArgumentValue(kernel, 4, sizeof(int), nullptr));
     ze_group_count_t dispatchTraits;
     dispatchTraits.groupCountX = 3u;
     dispatchTraits.groupCountY = 1u;
@@ -162,13 +160,13 @@ bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) 
     }
 
     SUCCESS_OR_TERMINATE(
-        zeCommandListAppendLaunchKernel(cmdList, function, &dispatchTraits, nullptr, 0, nullptr));
+        zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits, nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
-    realResult = (int *)dstBuffer;
+    realResult = reinterpret_cast<int *>(dstBuffer);
     if (verbose) {
         std::cerr << "Final Gobal Memory Value " << *realResult << std::endl;
     }
@@ -181,16 +179,18 @@ bool testLocalBarrier(ze_context_handle_t &context, ze_device_handle_t &device) 
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
-    SUCCESS_OR_TERMINATE(zeKernelDestroy(function));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
     SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 
     return outputValidationSuccess;
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Dyn Local Arg";
     bool outputValidationSuccessful;
 
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
@@ -199,15 +199,13 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << deviceProperties.name << std::endl;
+    printDeviceProperties(deviceProperties);
 
     outputValidationSuccessful = testLocalBarrier(context, device);
 
-    bool aubMode = isAubMode(argc, argv);
-    if (aubMode == false) {
-        std::cout << "\nZello Dyn Local Arg Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED")
-                  << std::endl;
-    }
+    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
+
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
 
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;

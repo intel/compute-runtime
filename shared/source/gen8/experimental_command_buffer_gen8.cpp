@@ -11,7 +11,7 @@
 #include "shared/source/helpers/hw_helper.h"
 
 namespace NEO {
-typedef BDWFamily GfxFamily;
+typedef Gen8Family GfxFamily;
 
 template void ExperimentalCommandBuffer::injectBufferStart<GfxFamily>(LinearStream &parentStream, size_t cmdBufferOffset);
 template size_t ExperimentalCommandBuffer::getRequiredInjectionSize<GfxFamily>() noexcept;

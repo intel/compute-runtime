@@ -97,4 +97,14 @@ void UnitTestHelper<GfxFamily>::validateSbaMocs(uint32_t expectedMocs, CommandSt
     EXPECT_EQ(expectedMocs, mocs);
 }
 
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::getDisableFusionStateFromFrontEndCommand(const typename GfxFamily::VFE_STATE_TYPE &feCmd) {
+    return false;
+}
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::getComputeDispatchAllWalkerFromFrontEndCommand(const typename GfxFamily::VFE_STATE_TYPE &feCmd) {
+    return false;
+}
+
 } // namespace NEO

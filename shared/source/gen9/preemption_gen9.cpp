@@ -16,7 +16,7 @@
 
 namespace NEO {
 
-using GfxFamily = SKLFamily;
+using GfxFamily = Gen9Family;
 
 template <>
 size_t PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(const Device &device) {
@@ -76,6 +76,6 @@ template void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambl
 template void PreemptionHelper::programStateSipCmd<GfxFamily>(LinearStream &preambleCmdStream, GraphicsAllocation *sipAllocation, LogicalStateHelper *logicalStateHelper);
 template size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, bool isRcs);
 template size_t PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode);
-template void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, Device &device);
+template void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, const RootDeviceEnvironment &rootDeviceEnvironment);
 
 } // namespace NEO

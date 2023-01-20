@@ -8,9 +8,8 @@
 #include "level_zero/core/source/fence/fence.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/string.h"
-#include "shared/source/memory_manager/memory_manager.h"
+
+#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 
 namespace L0 {
 
@@ -46,7 +45,6 @@ ze_result_t Fence::reset(bool signaled) {
 }
 
 ze_result_t Fence::hostSynchronize(uint64_t timeout) {
-    std::chrono::microseconds elapsedTimeSinceGpuHangCheck{0};
     std::chrono::high_resolution_clock::time_point waitStartTime, lastHangCheckTime, currentTime;
     uint64_t timeDiff = 0;
     ze_result_t ret = ZE_RESULT_NOT_READY;
@@ -73,13 +71,8 @@ ze_result_t Fence::hostSynchronize(uint64_t timeout) {
         }
 
         currentTime = std::chrono::high_resolution_clock::now();
-        elapsedTimeSinceGpuHangCheck = std::chrono::duration_cast<std::chrono::microseconds>(currentTime - lastHangCheckTime);
-
-        if (elapsedTimeSinceGpuHangCheck.count() >= gpuHangCheckPeriod.count()) {
-            lastHangCheckTime = currentTime;
-            if (csr->isGpuHangDetected()) {
-                return ZE_RESULT_ERROR_DEVICE_LOST;
-            }
+        if (csr->checkGpuHangDetected(currentTime, lastHangCheckTime)) {
+            return ZE_RESULT_ERROR_DEVICE_LOST;
         }
 
         if (timeout == std::numeric_limits<uint64_t>::max()) {

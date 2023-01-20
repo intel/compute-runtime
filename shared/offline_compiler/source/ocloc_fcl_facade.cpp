@@ -9,6 +9,7 @@
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
+#include "shared/source/compiler_interface/igc_platform_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_inc_base.h"
@@ -69,7 +70,7 @@ int OclocFclFacade::initialize(const HardwareInfo &hwInfo) {
             return OclocErrorCode::OUT_OF_HOST_MEMORY;
         }
 
-        populateFclInterface(*platform, hwInfo.platform);
+        populateFclInterface(*platform, hwInfo);
     }
 
     initialized = true;
@@ -108,8 +109,8 @@ CIF::RAII::UPtr_t<IGC::PlatformTagOCL> OclocFclFacade::getPlatformHandle() const
     return fclDeviceCtx->GetPlatformHandle();
 }
 
-void OclocFclFacade::populateFclInterface(IGC::PlatformTagOCL &handle, const PLATFORM &platform) {
-    IGC::PlatformHelper::PopulateInterfaceWith(handle, platform);
+void OclocFclFacade::populateFclInterface(IGC::PlatformTagOCL &handle, const HardwareInfo &hwInfo) {
+    populateIgcPlatform(handle, hwInfo);
 }
 
 IGC::CodeType::CodeType_t OclocFclFacade::getPreferredIntermediateRepresentation() const {

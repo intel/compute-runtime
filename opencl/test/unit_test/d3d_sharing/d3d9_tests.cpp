@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/test.h"
@@ -33,8 +32,8 @@ IDXGIAdapter *MockD3DSharingFunctions<D3DTypesHelper::D3D9>::getDxgiDescAdapterR
 class MockMM : public OsAgnosticMemoryManager {
   public:
     MockMM(const ExecutionEnvironment &executionEnvironment) : OsAgnosticMemoryManager(const_cast<ExecutionEnvironment &>(executionEnvironment)){};
-    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
-        auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation);
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) override {
+        auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation);
         alloc->setDefaultGmm(forceGmm);
         gmmOwnershipPassed = true;
         return alloc;
@@ -42,7 +41,7 @@ class MockMM : public OsAgnosticMemoryManager {
     GraphicsAllocation *allocateGraphicsMemoryForImage(const AllocationData &allocationData) override {
         auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), *allocationData.imgInfo, StorageInfo{}, false);
         AllocationProperties properties(allocationData.rootDeviceIndex, nullptr, false, AllocationType::SHARED_IMAGE, false, {});
-        auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, properties, false, false);
+        auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(1, properties, false, false, true);
         alloc->setDefaultGmm(forceGmm);
         gmmOwnershipPassed = true;
         return alloc;
@@ -90,7 +89,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
     }
 
     void SetUp() override {
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
         memoryManager = std::make_unique<MockMM>(*pPlatform->peekExecutionEnvironment());
         context = new MockContext(pPlatform->getClDevice(0));
         context->preferD3dSharedResources = true;
@@ -116,7 +115,7 @@ class D3D9Tests : public PlatformFixture, public ::testing::Test {
         if (!memoryManager->gmmOwnershipPassed) {
             delete gmm;
         }
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 
     MockD3DSharingFunctions<D3D9> *mockSharingFcns;
@@ -1004,6 +1003,12 @@ TEST_F(D3D9Tests, GivenNonSharedResourceSurfaceAndNonLockableWhenReleasingThenRe
 TEST_F(D3D9Tests, givenInvalidClMemObjectPassedOnReleaseListWhenCallIsMadeThenFailureIsReturned) {
     auto fakeObject = reinterpret_cast<cl_mem>(cmdQ);
     auto retVal = clEnqueueReleaseDX9MediaSurfacesKHR(cmdQ, 1, &fakeObject, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
+}
+
+TEST_F(D3D9Tests, givenInvalidClMemObjectPassedOnReleaseDX9ObjectsWhenCallIsMadeThenFailureIsReturned) {
+    auto fakeObject = reinterpret_cast<cl_mem>(cmdQ);
+    auto retVal = clEnqueueReleaseDX9ObjectsINTEL(cmdQ, 1, &fakeObject, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_MEM_OBJECT, retVal);
 }
 

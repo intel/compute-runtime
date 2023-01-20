@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,6 @@
 #include "shared/source/helpers/get_info_status.h"
 
 #include <CL/cl.h>
-
-#include <cassert>
 
 static inline cl_int changeGetInfoStatusToCLResultType(GetInfoStatus status) {
     switch (status) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ extern uint32_t mockFreadCalled;
 extern size_t mockFreadReturn;
 extern uint32_t mockFwriteCalled;
 extern size_t mockFwriteReturn;
+extern bool mockVfptrinfUseStdioFunction;
 
 extern std::unordered_map<std::string, std::string> *mockableEnvValues;
 
@@ -41,6 +42,9 @@ inline FILE *mockFopen(const char *filename, const char *mode) {
 
 inline int mockVfptrinf(FILE *stream, const char *format, va_list arg) {
     mockVfptrinfCalled++;
+    if (mockVfptrinfUseStdioFunction) {
+        return vfprintf(stream, format, arg);
+    }
     return 0x10;
 }
 

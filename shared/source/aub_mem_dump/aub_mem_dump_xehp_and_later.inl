@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -152,7 +152,7 @@ const MMIOList AUBFamilyMapper<Family>::globalMMIO = {
     MMIOPair(0x0000B098, 0x00300010),
     MMIOPair(0x0000B09C, 0x00300010),
 
-    //PAT_INDEX
+    // PAT_INDEX
     MMIOPair(0x00004100, 0x0000000),
     MMIOPair(0x00004104, 0x0000000),
     MMIOPair(0x00004108, 0x0000000),
@@ -162,42 +162,42 @@ const MMIOList AUBFamilyMapper<Family>::globalMMIO = {
     MMIOPair(0x00004118, 0x0000000),
     MMIOPair(0x0000411c, 0x0000000),
 
-    MMIOPair(0x00004b80, 0xffff1001), //GACB_PERF_CTRL_REG
-    MMIOPair(0x00007000, 0xffff0000), //CACHE_MODE_0
-    MMIOPair(0x00007004, 0xffff0000), //CACHE_MODE_1
-    MMIOPair(0x000043F8, 0x00000000), //Gen12 (A-step) chicken bit for AuxT granularity
-    MMIOPair(0x00009008, 0x00000200), //IDICR
-    MMIOPair(0x0000900c, 0x00001b40), //SNPCR
-    MMIOPair(0x0000b120, 0x14000002), //LTCDREG
-    MMIOPair(0x00042080, 0x00000000), //CHICKEN_MISC_1
-    MMIOPair(0x000020D4, 0xFFFF0000), //Chicken bit for CSFE
-    MMIOPair(0x0000B0A0, 0x00000000), //SCRATCH 2 for LNCF unit
-    MMIOPair(0x000094D4, 0x00000000), //Slice unit Level Clock Gating Control
+    MMIOPair(0x00004b80, 0xffff1001), // GACB_PERF_CTRL_REG
+    MMIOPair(0x00007000, 0xffff0000), // CACHE_MODE_0
+    MMIOPair(0x00007004, 0xffff0000), // CACHE_MODE_1
+    MMIOPair(0x000043F8, 0x00000000), // Gen12 (A-step) chicken bit for AuxT granularity
+    MMIOPair(0x00009008, 0x00000200), // IDICR
+    MMIOPair(0x0000900c, 0x00001b40), // SNPCR
+    MMIOPair(0x0000b120, 0x14000002), // LTCDREG
+    MMIOPair(0x00042080, 0x00000000), // CHICKEN_MISC_1
+    MMIOPair(0x000020D4, 0xFFFF0000), // Chicken bit for CSFE
+    MMIOPair(0x0000B0A0, 0x00000000), // SCRATCH 2 for LNCF unit
+    MMIOPair(0x000094D4, 0x00000000), // Slice unit Level Clock Gating Control
 
     // Capture Perf MMIO register programming
-    MMIOPair(0x0000B004, 0x2FC0100B), //KM_ARBITER_CTRL_REG
-    MMIOPair(0x0000B404, 0x00000160), //KM_GLOBAL_INVALIDATION_REG
-    MMIOPair(0x00008708, 0x00000000), //KM_GEN12_IDI_CONTROL_REGISTER
+    MMIOPair(0x0000B004, 0x2FC0100B), // KM_ARBITER_CTRL_REG
+    MMIOPair(0x0000B404, 0x00000160), // KM_GLOBAL_INVALIDATION_REG
+    MMIOPair(0x00008708, 0x00000000), // KM_GEN12_IDI_CONTROL_REGISTER
 
     // Tiled Resources VA Translation Table L3 Pointer
-    MMIOPair(0x00004410, 0xffffffff), //GEN12_TRTT_NULL_TILE_REG
-    MMIOPair(0x00004414, 0xfffffffe), //GEN12_TRTT_INVD_TILE_REG
-    MMIOPair(0x00004404, 0x000000ff), //GEN12_TRTT_VA_MASKDATA_REG
-    MMIOPair(0x00004408, 0x00000000), //LDWORD GMM_GEN12_TRTT_L3_POINTER
-    MMIOPair(0x0000440C, 0x00000000), //UDWORD GMM_GEN12_TRTT_L3_POINTER
-    MMIOPair(0x00004400, 0x00000001), //GEN12_TRTT_TABLE_CONTROL
-    MMIOPair(0x00004DFC, 0x00000000), //GEN9_TR_CHICKEN_BIT_VECTOR
+    MMIOPair(0x00004410, 0xffffffff), // GEN12_TRTT_NULL_TILE_REG
+    MMIOPair(0x00004414, 0xfffffffe), // GEN12_TRTT_INVD_TILE_REG
+    MMIOPair(0x00004404, 0x000000ff), // GEN12_TRTT_VA_MASKDATA_REG
+    MMIOPair(0x00004408, 0x00000000), // LDWORD GMM_GEN12_TRTT_L3_POINTER
+    MMIOPair(0x0000440C, 0x00000000), // UDWORD GMM_GEN12_TRTT_L3_POINTER
+    MMIOPair(0x00004400, 0x00000001), // GEN12_TRTT_TABLE_CONTROL
+    MMIOPair(0x00004DFC, 0x00000000), // GEN9_TR_CHICKEN_BIT_VECTOR
 };
 
 static const MMIOList mmioListRCS = {
-    MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x00002058), 0x00000000), //CTX_WA_PTR_RCSUNIT
-    MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x000020a8), 0x00000000), //IMR
-    MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x0000229c), 0xffff8280), //GFX_MODE
+    MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x00002058), 0x00000000), // CTX_WA_PTR_RCSUNIT
+    MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x000020a8), 0x00000000), // IMR
+    MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x0000229c), 0xffff8280), // GFX_MODE
 
-    MMIOPair(0x00002090, 0xffff0000), //CHICKEN_PWR_CTX_RASTER_1
-    MMIOPair(0x000020e0, 0xffff4000), //FF_SLICE_CS_CHICKEN1_RCSUNIT
-    MMIOPair(0x000020e4, 0xffff0000), //FF_SLICE_CS_CHICKEN2_RCSUNIT
-    MMIOPair(0x000020ec, 0xffff0051), //CS_DEBUG_MODE1
+    MMIOPair(0x00002090, 0xffff0000), // CHICKEN_PWR_CTX_RASTER_1
+    MMIOPair(0x000020e0, 0xffff4000), // FF_SLICE_CS_CHICKEN1_RCSUNIT
+    MMIOPair(0x000020e4, 0xffff0000), // FF_SLICE_CS_CHICKEN2_RCSUNIT
+    MMIOPair(0x000020ec, 0xffff0051), // CS_DEBUG_MODE1
 
     // FORCE_TO_NONPRIV
     MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x000024d0), 0x00007014),
@@ -213,31 +213,31 @@ static const MMIOList mmioListRCS = {
     MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x000024f8), 0x0000e000),
     MMIOPair(AubMemDump::computeRegisterOffset(rcs.mmioBase, 0x000024fc), 0x0000e000),
 
-    MMIOPair(0x00002580, 0xffff0005), //CS_CHICKEN1
-    MMIOPair(0x0000e194, 0xffff0002), //CHICKEN_SAMPLER_2
+    MMIOPair(0x00002580, 0xffff0005), // CS_CHICKEN1
+    MMIOPair(0x0000e194, 0xffff0002), // CHICKEN_SAMPLER_2
 
-    MMIOPair(0x0000B134, 0xA0000000) //L3ALLOCREG
+    MMIOPair(0x0000B134, 0xA0000000) // L3ALLOCREG
 };
 
 static const MMIOList mmioListBCS = {
-    MMIOPair(AubMemDump::computeRegisterOffset(bcs.mmioBase, 0x0000229c), 0xffff8280), //GFX_MODE
+    MMIOPair(AubMemDump::computeRegisterOffset(bcs.mmioBase, 0x0000229c), 0xffff8280), // GFX_MODE
 };
 
 static const MMIOList mmioListVCS = {
-    MMIOPair(AubMemDump::computeRegisterOffset(vcs.mmioBase, 0x0000229c), 0xffff8280), //GFX_MODE
+    MMIOPair(AubMemDump::computeRegisterOffset(vcs.mmioBase, 0x0000229c), 0xffff8280), // GFX_MODE
 };
 
 static const MMIOList mmioListVECS = {
-    MMIOPair(AubMemDump::computeRegisterOffset(vecs.mmioBase, 0x0000229c), 0xffff8280), //GFX_MODE
+    MMIOPair(AubMemDump::computeRegisterOffset(vecs.mmioBase, 0x0000229c), 0xffff8280), // GFX_MODE
 };
 
 static MMIOList mmioListCCSInstance(uint32_t mmioBase) {
     MMIOList mmioList;
 
-    mmioList.push_back(MMIOPair(0x0000ce90, 0x00030003));                                              //GFX_MULT_CTXT_CTL - enable multi-context with 4CCS
-    mmioList.push_back(MMIOPair(0x0000b170, 0x00030003));                                              //MULT_CTXT_CTL - enable multi-context with 4CCS
-    mmioList.push_back(MMIOPair(0x00014800, 0xFFFF0001));                                              //RCU_MODE
-    mmioList.push_back(MMIOPair(AubMemDump::computeRegisterOffset(mmioBase, 0x0000229c), 0xffff8280)); //GFX_MODE
+    mmioList.push_back(MMIOPair(0x0000ce90, 0x00030003));                                              // GFX_MULT_CTXT_CTL - enable multi-context with 4CCS
+    mmioList.push_back(MMIOPair(0x0000b170, 0x00030003));                                              // MULT_CTXT_CTL - enable multi-context with 4CCS
+    mmioList.push_back(MMIOPair(0x00014800, 0xFFFF0001));                                              // RCU_MODE
+    mmioList.push_back(MMIOPair(AubMemDump::computeRegisterOffset(mmioBase, 0x0000229c), 0xffff8280)); // GFX_MODE
 
     // FORCE_TO_NONPRIV
     mmioList.push_back(MMIOPair(AubMemDump::computeRegisterOffset(mmioBase, 0x000024d0), 0x0000e000));
@@ -253,7 +253,7 @@ static MMIOList mmioListCCSInstance(uint32_t mmioBase) {
     mmioList.push_back(MMIOPair(AubMemDump::computeRegisterOffset(mmioBase, 0x000024f8), 0x0000e000));
     mmioList.push_back(MMIOPair(AubMemDump::computeRegisterOffset(mmioBase, 0x000024fc), 0x0000e000));
 
-    mmioList.push_back(MMIOPair(0x0000B234, 0xA0000000)); //L3ALLOCREG_CCS0
+    mmioList.push_back(MMIOPair(0x0000B234, 0xA0000000)); // L3ALLOCREG_CCS0
 
     return mmioList;
 };

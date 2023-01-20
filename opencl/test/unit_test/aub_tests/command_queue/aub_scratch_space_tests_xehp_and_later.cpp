@@ -8,15 +8,13 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_scratch_space_controller_xehp_and_later.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
@@ -24,12 +22,12 @@
 using namespace NEO;
 
 struct Gen12AubScratchSpaceForPrivateFixture : public KernelAUBFixture<SimpleKernelFixture> {
-    void SetUp() override {
+    void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
 
         kernelIdx = 6;
         kernelIds |= (1 << kernelIdx);
-        KernelAUBFixture<SimpleKernelFixture>::SetUp();
+        KernelAUBFixture<SimpleKernelFixture>::setUp();
 
         arraySize = 32;
         vectorSize = 2;
@@ -88,7 +86,7 @@ struct Gen12AubScratchSpaceForPrivateFixture : public KernelAUBFixture<SimpleKer
         kernels[kernelIdx]->setArg(4, sizeof(uint32_t), &maxIterations2);
     }
 
-    void TearDown() override {
+    void tearDown() {
         pCmdQ->flush();
 
         if (expectedMemory) {
@@ -104,7 +102,7 @@ struct Gen12AubScratchSpaceForPrivateFixture : public KernelAUBFixture<SimpleKer
             dstBuffer = nullptr;
         }
 
-        KernelAUBFixture<SimpleKernelFixture>::TearDown();
+        KernelAUBFixture<SimpleKernelFixture>::tearDown();
     }
 
     std::unique_ptr<DebugManagerStateRestore> debugRestorer;
@@ -158,14 +156,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, Gen12AubScratchSpaceForPrivateTest, WhenKernelUsesS
 
 class DefaultGrfKernelFixture : public ProgramFixture {
   public:
-    using ProgramFixture::SetUp;
+    using ProgramFixture::setUp;
 
   protected:
-    void SetUp(ClDevice *device, Context *context) {
-        ProgramFixture::SetUp();
+    void setUp(ClDevice *device, Context *context) {
+        ProgramFixture::setUp();
 
         std::string programName("simple_spill_fill_kernel");
-        CreateProgramFromBinary(
+        createProgramFromBinary(
             context,
             context->getDevices(),
             programName);
@@ -184,12 +182,12 @@ class DefaultGrfKernelFixture : public ProgramFixture {
             &retVal));
     }
 
-    void TearDown() override {
+    void tearDown() {
         if (kernel) {
             kernel.reset(nullptr);
         }
 
-        ProgramFixture::TearDown();
+        ProgramFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -197,10 +195,10 @@ class DefaultGrfKernelFixture : public ProgramFixture {
 };
 
 struct Gen12AubScratchSpaceForSpillFillFixture : public KernelAUBFixture<DefaultGrfKernelFixture> {
-    void SetUp() override {
+    void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
 
-        KernelAUBFixture<DefaultGrfKernelFixture>::SetUp();
+        KernelAUBFixture<DefaultGrfKernelFixture>::setUp();
 
         arraySize = 32;
         typeSize = sizeof(cl_int);
@@ -254,7 +252,7 @@ struct Gen12AubScratchSpaceForSpillFillFixture : public KernelAUBFixture<Default
         offsetAllocation = createHostPtrAllocationFromSvmPtr(offsetBuffer, offsetMemorySize);
     }
 
-    void TearDown() override {
+    void tearDown() {
         pCmdQ->flush();
 
         if (expectedMemory) {
@@ -274,7 +272,7 @@ struct Gen12AubScratchSpaceForSpillFillFixture : public KernelAUBFixture<Default
             offsetBuffer = nullptr;
         }
 
-        KernelAUBFixture<DefaultGrfKernelFixture>::TearDown();
+        KernelAUBFixture<DefaultGrfKernelFixture>::tearDown();
     }
 
     std::unique_ptr<DebugManagerStateRestore> debugRestorer;

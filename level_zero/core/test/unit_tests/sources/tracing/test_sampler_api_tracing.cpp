@@ -11,7 +11,7 @@ namespace L0 {
 namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingSamplerCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Sampler.pfnCreate = [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_sampler_desc_t *pDesc, ze_sampler_handle_t *phSampler) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Sampler.pfnCreateCb = genericPrologCallbackPtr;
@@ -25,7 +25,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingSamplerCreateTracingWrapperWithOneSe
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingSamplerDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Sampler.pfnDestroy = [](ze_sampler_handle_t hSampler) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Sampler.pfnDestroyCb = genericPrologCallbackPtr;
@@ -54,7 +54,7 @@ struct {
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
        WhenCallingSamplerCreateTracingWrapperWithTwoSetsOfPrologEpilogsCheckArgumentsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     sampler_create_args.hContext0 = generateRandomHandle<ze_context_handle_t>();
@@ -301,7 +301,7 @@ struct {
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests,
        WhenCallingSamplerDestroyTracingWrapperWithTwoSetsOfPrologEpilogsCheckArgumentsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     sampler_destroy_args.hSampler0 = generateRandomHandle<ze_sampler_handle_t>();

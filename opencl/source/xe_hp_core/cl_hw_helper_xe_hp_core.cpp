@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hp_core/hw_cmds.h"
@@ -20,14 +21,17 @@ using Family = XeHpFamily;
 static auto gfxCore = IGFX_XE_HP_CORE;
 
 template <>
-void populateFactoryTable<ClHwHelperHw<Family>>() {
-    extern ClHwHelper *clHwHelperFactory[IGFX_MAX_CORE];
-    clHwHelperFactory[gfxCore] = &ClHwHelperHw<Family>::get();
+void populateFactoryTable<ClGfxCoreHelperHw<Family>>() {
+    extern ClGfxCoreHelper *clGfxCoreHelperFactory[IGFX_MAX_CORE];
+    clGfxCoreHelperFactory[gfxCore] = &ClGfxCoreHelperHw<Family>::get();
 }
 
 template <>
-bool ClHwHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, const HardwareInfo &hwInfo) const {
-    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->allowStatelessCompression(hwInfo)) {
+bool ClGfxCoreHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+
+    if (productHelper.allowStatelessCompression(hwInfo)) {
         return false;
     } else {
         return !argAsPtr.isPureStateful();
@@ -35,8 +39,11 @@ bool ClHwHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr, co
 }
 
 template <>
-bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, const HardwareInfo &hwInfo) const {
-    if (HwInfoConfig::get(hwInfo.platform.eProductFamily)->allowStatelessCompression(hwInfo)) {
+bool ClGfxCoreHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+
+    if (productHelper.allowStatelessCompression(hwInfo)) {
         return false;
     } else {
         return hasStatelessAccessToBuffer(kernelInfo);
@@ -44,28 +51,29 @@ bool ClHwHelperHw<Family>::requiresAuxResolves(const KernelInfo &kernelInfo, con
 }
 
 template <>
-inline bool ClHwHelperHw<Family>::allowCompressionForContext(const ClDevice &clDevice, const Context &context) const {
+inline bool ClGfxCoreHelperHw<Family>::allowCompressionForContext(const ClDevice &clDevice, const Context &context) const {
     auto rootDeviceIndex = clDevice.getRootDeviceIndex();
     auto &hwInfo = clDevice.getHardwareInfo();
-    if (context.containsMultipleSubDevices(rootDeviceIndex) && HwHelperHw<Family>::get().isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo)) {
+    auto &productHelper = clDevice.getDevice().getProductHelper();
+    if (context.containsMultipleSubDevices(rootDeviceIndex) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo, productHelper)) {
         return false;
     }
     return true;
 }
 
 template <>
-bool ClHwHelperHw<Family>::isSupportedKernelThreadArbitrationPolicy() const { return false; }
+bool ClGfxCoreHelperHw<Family>::isSupportedKernelThreadArbitrationPolicy() const { return false; }
 
 template <>
-std::vector<uint32_t> ClHwHelperHw<Family>::getSupportedThreadArbitrationPolicies() const {
+std::vector<uint32_t> ClGfxCoreHelperHw<Family>::getSupportedThreadArbitrationPolicies() const {
     return {};
 }
 
 template <>
-cl_version ClHwHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
+cl_version ClGfxCoreHelperHw<Family>::getDeviceIpVersion(const HardwareInfo &hwInfo) const {
     return makeDeviceIpVersion(12, 5, makeDeviceRevision(hwInfo));
 }
 
-template class ClHwHelperHw<Family>;
+template class ClGfxCoreHelperHw<Family>;
 
 } // namespace NEO

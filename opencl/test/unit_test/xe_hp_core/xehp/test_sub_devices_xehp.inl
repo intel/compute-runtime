@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,8 +31,8 @@ XEHPTEST_F(XeHPUsDeviceIdTest, givenRevisionAWhenCreatingEngineWithSubdevicesThe
     EXPECT_EQ(2u, device.getNumGenericSubDevices());
 
     auto hwInfo = device.getRootDeviceEnvironment().getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, *hwInfo);
     device.createEngines();
     auto engines = device.getAllEngines();
     for (auto engine : engines) {
@@ -52,8 +52,8 @@ XEHPTEST_F(XeHPUsDeviceIdTest, givenRevisionBWhenCreatingEngineWithSubdevicesThe
     EXPECT_EQ(2u, device.getNumGenericSubDevices());
 
     auto hwInfo = device.getRootDeviceEnvironment().getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, *hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
     device.createEngines();
     auto engines = device.getAllEngines();
     for (auto engine : engines) {

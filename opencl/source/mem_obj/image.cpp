@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "opencl/source/mem_obj/image.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
@@ -25,6 +27,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
+#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/gmm_types_converter.h"
 #include "opencl/source/helpers/mipmap.h"
@@ -148,9 +151,9 @@ Image *Image::create(Context *context,
                                                             : imageWidth * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
     const auto hostPtrSlicePitch = getHostPtrSlicePitch(*imageDesc, hostPtrRowPitch, imageHeight);
 
-    auto &defaultHwHelper = HwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
-    imgInfo.linearStorage = defaultHwHelper.isLinearStoragePreferred(context->isSharedContext, Image::isImage1d(*imageDesc),
-                                                                     memoryProperties.flags.forceLinearStorage);
+    auto &defaultGfxCoreHelper = context->getDevice(0)->getGfxCoreHelper();
+    imgInfo.linearStorage = defaultGfxCoreHelper.isLinearStoragePreferred(context->isSharedContext, Image::isImage1d(*imageDesc),
+                                                                          memoryProperties.flags.forceLinearStorage);
 
     // if device doesn't support images, it can create only linear images
     if (!context->getDevice(0)->getSharedDeviceInfo().imageSupport && !imgInfo.linearStorage) {
@@ -158,11 +161,11 @@ Image *Image::create(Context *context,
         return nullptr;
     }
 
-    auto &defaultClHwHelper = ClHwHelper::get(context->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &clGfxCoreHelper = context->getDevice(0)->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     bool preferCompression = MemObjHelper::isSuitableForCompression(!imgInfo.linearStorage, memoryProperties,
                                                                     *context, true);
-    preferCompression &= defaultClHwHelper.allowImageCompression(surfaceFormat->OCLImageFormat);
-    preferCompression &= !defaultClHwHelper.isFormatRedescribable(surfaceFormat->OCLImageFormat);
+    preferCompression &= clGfxCoreHelper.allowImageCompression(surfaceFormat->OCLImageFormat);
+    preferCompression &= !clGfxCoreHelper.isFormatRedescribable(surfaceFormat->OCLImageFormat);
 
     MemoryManager *memoryManager = context->getMemoryManager();
     size_t hostPtrMinSize = getHostPtrMinSize(imageDesc->image_type, surfaceFormat->OCLImageFormat,
@@ -183,13 +186,14 @@ Image *Image::create(Context *context,
         auto &allocationInfo = allocationInfos[rootDeviceIndex];
         allocationInfo.zeroCopyAllowed = false;
 
-        auto &hwInfo = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &rootDeviceEnvironment = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex];
+        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
         if (imageFromBuffer) {
             // Image from buffer - we never allocate memory, we use what buffer provides
             setAllocationInfoFromParentBuffer(allocationInfo, hostPtr, hostPtrToSet, parentBuffer, imgInfo, rootDeviceIndex);
-            if (!hwHelper.checkResourceCompatibility(*allocationInfo.memory)) {
+            if (!gfxCoreHelper.checkResourceCompatibility(*allocationInfo.memory)) {
                 cleanAllGraphicsAllocations(*context, *memoryManager, allocationInfos, isParentObject);
                 errcodeRet = CL_INVALID_MEM_OBJECT;
                 return nullptr;
@@ -270,7 +274,7 @@ Image *Image::create(Context *context,
             }
 
             auto allocationInSystemMemory = MemoryPoolHelper::isSystemMemoryPool(allocationInfo.memory->getMemoryPool());
-            bool isCpuTransferPreferred = imgInfo.linearStorage && defaultHwHelper.isCpuImageTransferPreferred(hwInfo);
+            bool isCpuTransferPreferred = imgInfo.linearStorage && defaultGfxCoreHelper.isCpuImageTransferPreferred(hwInfo);
             bool isCpuTransferPreferredInSystemMemory = imgInfo.linearStorage && allocationInSystemMemory;
 
             if (isCpuTransferPreferredInSystemMemory) {
@@ -1208,7 +1212,7 @@ void Image::setAllocationInfoFromImageInfo(CreateMemObj::AllocationInfo &allocat
 }
 
 void Image::providePerformanceHintForCreateImage(Image *image, const HardwareInfo &hwInfo, CreateMemObj::AllocationInfo &allocationInfo, Context *context) {
-    if (HwHelper::compressedImagesSupported(hwInfo)) {
+    if (GfxCoreHelper::compressedImagesSupported(hwInfo)) {
         if (allocationInfo.memory->isCompressionEnabled()) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, IMAGE_IS_COMPRESSED, image);
         } else {
@@ -1255,7 +1259,7 @@ cl_mem Image::validateAndCreateImage(cl_context context,
     cl_mem_flags_intel emptyFlagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     if ((false == ClMemoryPropertiesHelper::parseMemoryProperties(nullptr, memoryProperties, flags, emptyFlagsIntel, allocflags,
-                                                                  MemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
+                                                                  ClMemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
         (false == MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, emptyFlagsIntel, imageDesc->mem_object,
                                                                  *pContext))) {
         errcodeRet = CL_INVALID_VALUE;
@@ -1263,7 +1267,7 @@ cl_mem Image::validateAndCreateImage(cl_context context,
     }
 
     if ((false == ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                                  MemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
+                                                                  ClMemoryPropertiesHelper::ObjType::IMAGE, *pContext)) ||
         (false == MemObjHelper::validateMemoryPropertiesForImage(memoryProperties, flags, flagsIntel, imageDesc->mem_object,
                                                                  *pContext))) {
         errcodeRet = CL_INVALID_PROPERTY;

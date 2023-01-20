@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 
 #include "shared/source/built_ins/built_ins.h"
-#include "shared/source/built_ins/sip.h"
-#include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 
@@ -24,10 +24,7 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/program/program.h"
 
-#include "compiler_options.h"
-
 #include <cstdint>
-#include <sstream>
 
 namespace NEO {
 template <>
@@ -61,14 +58,16 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBui
 
         auto middleSizeEls = middleSizeBytes / middleElSize; // num work items in middle walker
 
+        uint32_t rootDeviceIndex = clDevice.getRootDeviceIndex();
+
         // Set-up ISA
-        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Left, kernLeftLeftover->getKernel(clDevice.getRootDeviceIndex()));
+        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Left, kernLeftLeftover->getKernel(rootDeviceIndex));
         if (isSrcMisaligned) {
-            kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddleMisaligned->getKernel(clDevice.getRootDeviceIndex()));
+            kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddleMisaligned->getKernel(rootDeviceIndex));
         } else {
-            kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddle->getKernel(clDevice.getRootDeviceIndex()));
+            kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddle->getKernel(rootDeviceIndex));
         }
-        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Right, kernRightLeftover->getKernel(clDevice.getRootDeviceIndex()));
+        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Right, kernRightLeftover->getKernel(rootDeviceIndex));
 
         // Set-up common kernel args
         if (operationParams.srcSvmAlloc) {
@@ -78,13 +77,19 @@ class BuiltInOp<EBuiltInOps::CopyBufferToBuffer> : public BuiltinDispatchInfoBui
         } else {
             kernelSplit1DBuilder.setArgSvm(0, operationParams.size.x + operationParams.srcOffset.x, operationParams.srcPtr, nullptr, CL_MEM_READ_ONLY);
         }
+
+        bool isDestinationInSystem = false;
         if (operationParams.dstSvmAlloc) {
             kernelSplit1DBuilder.setArgSvmAlloc(1, operationParams.dstPtr, operationParams.dstSvmAlloc);
+            isDestinationInSystem = Kernel::graphicsAllocationTypeUseSystemMemory(operationParams.dstSvmAlloc->getAllocationType());
         } else if (operationParams.dstMemObj) {
             kernelSplit1DBuilder.setArg(1, operationParams.dstMemObj);
+            isDestinationInSystem = Kernel::graphicsAllocationTypeUseSystemMemory(operationParams.dstMemObj->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
         } else {
             kernelSplit1DBuilder.setArgSvm(1, operationParams.size.x + operationParams.dstOffset.x, operationParams.dstPtr, nullptr, 0u);
+            isDestinationInSystem = operationParams.dstPtr != nullptr;
         }
+        kernelSplit1DBuilder.setKernelDestinationArgumentInSystem(isDestinationInSystem);
 
         kernelSplit1DBuilder.setUnifiedMemorySyncRequirement(operationParams.unifiedMemoryArgsRequireMemSync);
 
@@ -185,9 +190,11 @@ class BuiltInOp<EBuiltInOps::CopyBufferRect> : public BuiltinDispatchInfoBuilder
             }
         }
 
+        uint32_t rootDeviceIndex = clDevice.getRootDeviceIndex();
+
         // Set-up ISA
         int dimensions = is3D ? 3 : 2;
-        kernelNoSplit3DBuilder.setKernel(kernelBytes[dimensions - 1]->getKernel(clDevice.getRootDeviceIndex()));
+        kernelNoSplit3DBuilder.setKernel(kernelBytes[dimensions - 1]->getKernel(rootDeviceIndex));
 
         size_t srcOffsetFromAlignedPtr = 0;
         size_t dstOffsetFromAlignedPtr = 0;
@@ -205,9 +212,11 @@ class BuiltInOp<EBuiltInOps::CopyBufferRect> : public BuiltinDispatchInfoBuilder
             kernelNoSplit3DBuilder.setArgSvm(0, hostPtrSize, srcPtrToSet, nullptr, CL_MEM_READ_ONLY);
         }
 
+        bool isDestinationInSystem = false;
         // arg1 = dst
         if (operationParams.dstMemObj) {
             kernelNoSplit3DBuilder.setArg(1, operationParams.dstMemObj);
+            isDestinationInSystem = Kernel::graphicsAllocationTypeUseSystemMemory(operationParams.dstMemObj->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
         } else {
             void *dstPtrToSet = operationParams.dstPtr;
             if (!is3D) {
@@ -216,7 +225,9 @@ class BuiltInOp<EBuiltInOps::CopyBufferRect> : public BuiltinDispatchInfoBuilder
                 dstOffsetFromAlignedPtr = ptrDiff(dstPtr, dstPtrToSet);
             }
             kernelNoSplit3DBuilder.setArgSvm(1, hostPtrSize, dstPtrToSet, nullptr, 0u);
+            isDestinationInSystem = operationParams.dstPtr != nullptr;
         }
+        kernelNoSplit3DBuilder.setKernelDestinationArgumentInSystem(isDestinationInSystem);
 
         // arg2 = srcOrigin
         OffsetType kSrcOrigin[4] = {static_cast<OffsetType>(operationParams.srcOffset.x + srcOffsetFromAlignedPtr), static_cast<OffsetType>(operationParams.srcOffset.y), static_cast<OffsetType>(operationParams.srcOffset.z), 0};
@@ -302,20 +313,26 @@ class BuiltInOp<EBuiltInOps::FillBuffer> : public BuiltinDispatchInfoBuilder {
 
         auto middleSizeEls = middleSizeBytes / middleElSize; // num work items in middle walker
 
+        uint32_t rootDeviceIndex = clDevice.getRootDeviceIndex();
+
         // Set-up ISA
-        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Left, kernLeftLeftover->getKernel(clDevice.getRootDeviceIndex()));
-        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddle->getKernel(clDevice.getRootDeviceIndex()));
-        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Right, kernRightLeftover->getKernel(clDevice.getRootDeviceIndex()));
+        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Left, kernLeftLeftover->getKernel(rootDeviceIndex));
+        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Middle, kernMiddle->getKernel(rootDeviceIndex));
+        kernelSplit1DBuilder.setKernel(SplitDispatch::RegionCoordX::Right, kernRightLeftover->getKernel(rootDeviceIndex));
 
         DEBUG_BREAK_IF((operationParams.srcMemObj == nullptr) || (operationParams.srcOffset != 0));
         DEBUG_BREAK_IF((operationParams.dstMemObj == nullptr) && (operationParams.dstSvmAlloc == nullptr));
 
+        bool isDestinationInSystem = false;
         // Set-up dstMemObj with buffer
         if (operationParams.dstSvmAlloc) {
             kernelSplit1DBuilder.setArgSvmAlloc(0, operationParams.dstPtr, operationParams.dstSvmAlloc);
+            isDestinationInSystem = Kernel::graphicsAllocationTypeUseSystemMemory(operationParams.dstSvmAlloc->getAllocationType());
         } else {
             kernelSplit1DBuilder.setArg(0, operationParams.dstMemObj);
+            isDestinationInSystem = Kernel::graphicsAllocationTypeUseSystemMemory(operationParams.dstMemObj->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
         }
+        kernelSplit1DBuilder.setKernelDestinationArgumentInSystem(isDestinationInSystem);
 
         // Set-up dstOffset
         kernelSplit1DBuilder.setArg(SplitDispatch::RegionCoordX::Left, 1, static_cast<OffsetType>(operationParams.dstOffset.x));
@@ -545,20 +562,26 @@ class BuiltInOp<EBuiltInOps::CopyImage3dToBuffer> : public BuiltinDispatchInfoBu
         size_t hostPtrSize = operationParams.dstPtr ? Image::calculateHostPtrSize(region, dstRowPitch, dstSlicePitch, bytesPerPixel, srcImage->getImageDesc().image_type) : 0;
         hostPtrSize += operationParams.dstOffset.x;
 
+        uint32_t rootDeviceIndex = clDevice.getRootDeviceIndex();
+
         // Set-up ISA
         auto bytesExponent = Math::log2(bytesPerPixel);
         DEBUG_BREAK_IF(bytesExponent >= 5);
-        kernelNoSplit3DBuilder.setKernel(kernelBytes[bytesExponent]->getKernel(clDevice.getRootDeviceIndex()));
+        kernelNoSplit3DBuilder.setKernel(kernelBytes[bytesExponent]->getKernel(rootDeviceIndex));
 
         // Set-up source image
         kernelNoSplit3DBuilder.setArg(0, srcImageRedescribed, operationParams.srcMipLevel);
 
+        bool isDestinationInSystem = false;
         // Set-up destination host ptr / buffer
         if (operationParams.dstPtr) {
             kernelNoSplit3DBuilder.setArgSvm(1, hostPtrSize, operationParams.dstPtr, nullptr, 0u);
+            isDestinationInSystem = operationParams.dstPtr != nullptr;
         } else {
             kernelNoSplit3DBuilder.setArg(1, operationParams.dstMemObj);
+            isDestinationInSystem = Kernel::graphicsAllocationTypeUseSystemMemory(operationParams.dstMemObj->getGraphicsAllocation(rootDeviceIndex)->getAllocationType());
         }
+        kernelNoSplit3DBuilder.setKernelDestinationArgumentInSystem(isDestinationInSystem);
 
         // Set-up srcOrigin
         {

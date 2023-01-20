@@ -15,9 +15,19 @@ TEST_F(SysmanMultiDeviceInfoFixture, GivenDeviceWithMultipleTilesWhenOnlyTileOne
     neoDevice->deviceBitfield.set(1);
     uint32_t subdeviceId = 0;
     ze_bool_t onSubdevice = false;
-    SysmanDeviceImp::getSysmanDeviceInfo(device->toHandle(), subdeviceId, onSubdevice);
+    SysmanDeviceImp::getSysmanDeviceInfo(device->toHandle(), subdeviceId, onSubdevice, true);
     EXPECT_EQ(subdeviceId, 1u);
     EXPECT_TRUE(onSubdevice);
+}
+
+TEST_F(SysmanMultiDeviceInfoFixture, GivenDeviceWithMultipleTilesWhenOnlyTileOneIsEnabledAndMultiArchIsDisabledThenGetSysmanDeviceInfoReturnsExpectedValues) {
+    neoDevice->deviceBitfield.reset();
+    neoDevice->deviceBitfield.set(1);
+    uint32_t subdeviceId = 0;
+    ze_bool_t onSubdevice = false;
+    SysmanDeviceImp::getSysmanDeviceInfo(device->toHandle(), subdeviceId, onSubdevice, false);
+    EXPECT_EQ(subdeviceId, 1u);
+    EXPECT_FALSE(onSubdevice);
 }
 
 TEST_F(SysmanMultiDeviceInfoFixture, GivenDeviceWithMultipleTilesEnabledThenGetSysmanDeviceInfoReturnsExpectedValues) {
@@ -34,7 +44,7 @@ TEST_F(SysmanMultiDeviceInfoFixture, GivenDeviceWithMultipleTilesEnabledThenGetS
         NEO::Device *neoDevice = Device::fromHandle(device)->getNEODevice();
         uint32_t subdeviceId = 0;
         ze_bool_t onSubdevice = false;
-        SysmanDeviceImp::getSysmanDeviceInfo(device, subdeviceId, onSubdevice);
+        SysmanDeviceImp::getSysmanDeviceInfo(device, subdeviceId, onSubdevice, false);
         EXPECT_EQ(subdeviceId, static_cast<NEO::SubDevice *>(neoDevice)->getSubDeviceIndex());
         EXPECT_TRUE(onSubdevice);
     }

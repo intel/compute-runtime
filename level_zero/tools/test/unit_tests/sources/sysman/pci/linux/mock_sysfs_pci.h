@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,16 +39,11 @@ const std::vector<std::string> mockReadBytes =
         "0x0000000000000000 0x0000000000000000 0x0000000000000000",
 };
 
-class PciSysfsAccess : public SysfsAccess {};
+struct MockPciSysfsAccess : public SysfsAccess {
 
-template <>
-struct Mock<PciSysfsAccess> : public PciSysfsAccess {
-    MOCK_METHOD(ze_result_t, read, (const std::string file, std::vector<std::string> &val), (override));
-    MOCK_METHOD(ze_result_t, readSymLink, (const std::string file, std::string &buf), (override));
-    MOCK_METHOD(ze_result_t, getRealPath, (const std::string file, std::string &buf), (override));
-    MOCK_METHOD(bool, isRootUser, (), (override));
+    bool isStringSymLinkEmpty = false;
 
-    bool checkRootUser() {
+    bool isRootUser() override {
         return true;
     }
 
@@ -60,15 +55,21 @@ struct Mock<PciSysfsAccess> : public PciSysfsAccess {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    ze_result_t getValStringSymLink(const std::string file, std::string &val) {
+    ze_result_t readSymLink(const std::string file, std::string &val) override {
         if (file.compare(deviceDir) == 0) {
+
+            if (isStringSymLinkEmpty == true) {
+                return getValStringSymLinkEmpty(file, val);
+            }
+
             val = mockBdf;
             return ZE_RESULT_SUCCESS;
         }
+
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    ze_result_t getValStringRealPath(const std::string file, std::string &val) {
+    ze_result_t getRealPath(const std::string file, std::string &val) override {
         if (file.compare(deviceDir) == 0) {
             val = mockRealPath;
             return ZE_RESULT_SUCCESS;
@@ -80,7 +81,7 @@ struct Mock<PciSysfsAccess> : public PciSysfsAccess {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    ze_result_t getValVector(const std::string file, std::vector<std::string> &val) {
+    ze_result_t read(const std::string file, std::vector<std::string> &val) override {
         if (file.compare(resourceFile) == 0) {
             val = mockReadBytes;
             return ZE_RESULT_SUCCESS;
@@ -88,7 +89,7 @@ struct Mock<PciSysfsAccess> : public PciSysfsAccess {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    Mock<PciSysfsAccess>() = default;
+    MockPciSysfsAccess() = default;
 };
 
 class PublicLinuxPciImp : public L0::LinuxPciImp {

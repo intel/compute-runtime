@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 
 #include <cstddef>
 

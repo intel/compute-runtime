@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,18 +8,21 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
 namespace L0 {
 namespace ult {
 
 using CommandListAppendEventReset = Test<CommandListFixture>;
+using CommandListAppendUsedPacketSignalEvent = Test<CommandListEventUsedPacketSignalFixture>;
 
 HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventAppendedThenStoreDataImmIsGenerated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -39,10 +42,7 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventAppendedThenStor
                                                       ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
                                                       usedSpaceAfter));
 
-    auto gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    auto gpuAddress = event->getCompletionFieldGpuAddress(device);
     auto itorSdi = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
     uint32_t sdiFound = 0;
     ASSERT_NE(0u, itorSdi.size());
@@ -85,21 +85,31 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventWithTimeStampIsA
 
     auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, itorPC.size());
-    auto gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
+    auto gpuAddress = event->getCompletionFieldGpuAddress(device);
+
+    auto &hwInfo = device->getHwInfo();
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+    uint32_t maxPackets = EventPacketsCount::eventPackets;
+    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
     }
 
     auto itorSdi = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-    uint32_t sdiFound = 0;
-    ASSERT_NE(0u, itorSdi.size());
-    for (auto it : itorSdi) {
-        auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*it);
-        EXPECT_EQ(gpuAddress, cmd->getAddress());
-        gpuAddress += event->getSinglePacketSize();
-        sdiFound++;
+
+    if (maxPackets == 1) {
+        EXPECT_EQ(0u, itorSdi.size());
+    } else {
+        uint32_t sdiFound = 0;
+        ASSERT_NE(0u, itorSdi.size());
+        for (auto it : itorSdi) {
+            auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*it);
+            EXPECT_EQ(gpuAddress, cmd->getAddress());
+            gpuAddress += event->getSinglePacketSize();
+            sdiFound++;
+        }
+        EXPECT_EQ(maxPackets - 1, sdiFound);
     }
-    EXPECT_EQ(EventPacketsCount::eventPackets - 1, sdiFound);
 
     uint32_t postSyncFound = 0;
     for (auto it : itorPC) {
@@ -155,10 +165,7 @@ HWTEST_F(CommandListAppendEventReset, givenCopyOnlyCmdlistWhenResetEventAppended
     ASSERT_NE(0u, itorPC.size());
     bool postSyncFound = false;
 
-    auto gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    auto gpuAddress = event->getCompletionFieldGpuAddress(device);
 
     for (auto it : itorPC) {
         auto cmd = genCmdCast<MI_FLUSH_DW *>(*it);
@@ -184,6 +191,61 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenAppendingEventResetThenEve
     }
 }
 
+HWTEST_F(CommandListAppendEventReset, givenRegularCmdlistWhenAppendingEventResetThenHostBufferCachingDisabledPermanently) {
+    MockEvent event;
+    event.isCompleted = MockEvent::STATE_SIGNALED;
+    auto result = commandList->appendEventReset(event.toHandle());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(MockEvent::HOST_CACHING_DISABLED_PERMANENT, event.isCompleted);
+}
+
+HWTEST_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventResetThenHostBufferCachingDisabled) {
+    MockEvent event;
+    event.isCompleted = MockEvent::STATE_SIGNALED;
+
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    auto result = commandList->appendEventReset(event.toHandle());
+    commandList->cmdListType = CommandList::CommandListType::TYPE_REGULAR;
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_EQ(MockEvent::HOST_CACHING_DISABLED, event.isCompleted);
+}
+
+HWTEST_F(CommandListAppendEventReset, WhenIsCompletedClearedThenSetStateSignaledWhenSignalAgain) {
+    event->reset();
+    EXPECT_FALSE(event->isAlreadyCompleted());
+    event->hostSignal();
+    EXPECT_TRUE(event->isAlreadyCompleted());
+}
+
+HWTEST_F(CommandListAppendEventReset, WhenIsCompletedDisabledThenDontSetStateSignaledWhenSignalAgain) {
+    auto result = commandList->appendEventReset(event->toHandle());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(event->isAlreadyCompleted());
+    event->hostSignal();
+    EXPECT_FALSE(event->isAlreadyCompleted());
+}
+
+HWTEST_F(CommandListAppendEventReset, givenRegularCommandListWhenHostCachingDisabledThenDisablePermanently) {
+    auto result = commandList->appendEventReset(event->toHandle());
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(event->isAlreadyCompleted());
+    event->reset();
+    event->hostSignal();
+    EXPECT_FALSE(event->isAlreadyCompleted());
+}
+
+HWTEST_F(CommandListAppendEventReset, givenRegulatCommandListWhenHostCachingDisabledThenEnableAfterCpuReset) {
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->appendEventReset(event->toHandle());
+    commandList->cmdListType = CommandList::CommandListType::TYPE_REGULAR;
+
+    EXPECT_FALSE(event->isAlreadyCompleted());
+    event->reset();
+    event->hostSignal();
+    EXPECT_TRUE(event->isAlreadyCompleted());
+}
+
 HWTEST2_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventResetThenCommandsAreExecuted, IsAtLeastSkl) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
@@ -201,11 +263,14 @@ HWTEST2_F(CommandListAppendEventReset, givenImmediateCmdlistWhenAppendingEventRe
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
-HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeControlAppendedCorrectly, IsAtLeastSkl) {
+HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenTimestampEventUsedInResetThenPipeControlAppendedCorrectly, IsAtLeastSkl) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     auto &commandContainer = commandList->commandContainer;
+
+    auto &hwInfo = device->getHwInfo();
+    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -218,14 +283,19 @@ HWTEST2_F(CommandListAppendEventReset, givenTimestampEventUsedInResetThenPipeCon
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
-    event->setPacketsInUse(16u);
+    event->setPacketsInUse(3u);
     commandList->appendEventReset(event->toHandle());
-    ASSERT_EQ(1u, event->getPacketsInUse());
+    ASSERT_EQ(3u, event->getPacketsInUse());
 
     auto contextOffset = event->getContextEndOffset();
     auto baseAddr = event->getGpuAddress(device);
     auto gpuAddress = ptrOffset(baseAddr, contextOffset);
-    gpuAddress += ((EventPacketsCount::eventPackets - 1) * event->getSinglePacketSize());
+
+    uint32_t maxPackets = EventPacketsCount::eventPackets;
+    if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
+        maxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
+    }
+    gpuAddress += ((maxPackets - 1) * event->getSinglePacketSize());
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -267,10 +337,7 @@ HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPip
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
 
     commandList->appendEventReset(event->toHandle());
-    auto gpuAddress = event->getGpuAddress(device);
-    if (event->isUsingContextEndOffset()) {
-        gpuAddress += event->getContextEndOffset();
-    }
+    auto gpuAddress = event->getCompletionFieldGpuAddress(device);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -292,7 +359,7 @@ HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPip
     ASSERT_TRUE(postSyncFound);
 }
 
-HWTEST2_F(CommandListAppendEventReset,
+HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
           givenMultiTileCommandListWhenAppendingMultiPacketEventThenExpectCorrectNumberOfStoreDataImmAndResetPostSyncAndMultiBarrierCommands, IsAtLeastXeHpCore) {
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -322,13 +389,12 @@ HWTEST2_F(CommandListAppendEventReset,
     commandList->partitionCount = packets;
     returnValue = commandList->appendEventReset(event->toHandle());
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    EXPECT_EQ(1u, event->getPacketsInUse());
+    EXPECT_EQ(2u, event->getPacketsInUse());
 
     auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
     auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
-    size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo) +
-                          ((packets - 1) * sizeof(MI_STORE_DATA_IMM)) +
+    size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, false) +
                           commandList->estimateBufferSizeMultiTileBarrier(hwInfo);
     size_t usedSize = cmdStream->getUsed();
     EXPECT_EQ(expectedSize, usedSize);
@@ -339,10 +405,9 @@ HWTEST2_F(CommandListAppendEventReset,
         cmdStream->getCpuBase(),
         usedSize));
 
-    auto itorSdi = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
-    auto cmd = genCmdCast<MI_STORE_DATA_IMM *>(*itorSdi);
-    EXPECT_EQ(gpuAddress, cmd->getAddress());
-    gpuAddress += event->getSinglePacketSize();
+    auto itorSdi = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
+    // multi tile barrier self-cleanup commands
+    ASSERT_EQ(2u, itorSdi.size());
 
     auto pipeControlList = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, pipeControlList.size());
@@ -355,8 +420,9 @@ HWTEST2_F(CommandListAppendEventReset,
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
             EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd->getDcFlushEnable());
+            EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
             postSyncFound++;
-            gpuAddress += event->getSinglePacketSize();
+            gpuAddress += event->getSinglePacketSize() * commandList->partitionCount;
             postSyncPipeControlItor = it;
         }
     }
@@ -364,7 +430,7 @@ HWTEST2_F(CommandListAppendEventReset,
     postSyncPipeControlItor++;
     ASSERT_NE(cmdList.end(), postSyncPipeControlItor);
 
-    //find multi tile barrier section: pipe control + atomic/semaphore
+    // find multi tile barrier section: pipe control + atomic/semaphore
     auto itorPipeControl = find<PIPE_CONTROL *>(postSyncPipeControlItor, cmdList.end());
     ASSERT_NE(cmdList.end(), itorPipeControl);
 
@@ -373,6 +439,60 @@ HWTEST2_F(CommandListAppendEventReset,
 
     auto itorSemaphore = find<MI_SEMAPHORE_WAIT *>(itorAtomic, cmdList.end());
     ASSERT_NE(cmdList.end(), itorSemaphore);
+}
+
+HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
+          givenCopyCommandListWhenAppendingMultiPacketEventThenExpectCorrectNumberOfMiFlushResetPostSyncCommands, IsAtLeastXeHpCore) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    ASSERT_NE(nullptr, commandList);
+    ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+
+    constexpr uint32_t packets = 2u;
+    event->setPacketsInUse(packets);
+    event->setUsingContextEndOffset(true);
+
+    size_t usedBeforeSize = cmdStream->getUsed();
+    returnValue = commandList->appendEventReset(event->toHandle());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(2u, event->getPacketsInUse());
+    size_t usedAfterSize = cmdStream->getUsed();
+
+    size_t expectedSize = NEO::EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite() * packets;
+    EXPECT_EQ(expectedSize, (usedAfterSize - usedBeforeSize));
+
+    auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream->getCpuBase(), usedBeforeSize),
+        expectedSize));
+
+    uint32_t miFlushCountFactor = 1;
+    if (EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize() > 0) {
+        miFlushCountFactor = 2;
+    }
+    auto expectedMiFlushCount = packets * miFlushCountFactor;
+
+    auto itorMiFlush = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedMiFlushCount, static_cast<uint32_t>(itorMiFlush.size()));
+
+    for (uint32_t i = 0; i < expectedMiFlushCount; i++) {
+        if ((miFlushCountFactor == 2) && (i % 2 == 0)) {
+            continue;
+        }
+        auto cmd = genCmdCast<MI_FLUSH_DW *>(*itorMiFlush[i]);
+        EXPECT_EQ(gpuAddress, cmd->getDestinationAddress());
+        EXPECT_EQ(Event::STATE_CLEARED, cmd->getImmediateData());
+        EXPECT_EQ(MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD, cmd->getPostSyncOperation());
+
+        gpuAddress += event->getSinglePacketSize();
+    }
 }
 
 } // namespace ult

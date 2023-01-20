@@ -7,11 +7,12 @@
 
 #include "shared/source/debugger/debugger_l0.inl"
 #include "shared/source/debugger/debugger_l0_base.inl"
+#include "shared/source/gen11/hw_cmds_base.h"
 #include "shared/source/helpers/populate_factory.h"
 
 namespace NEO {
-struct ICLFamily;
-using GfxFamily = ICLFamily;
+struct Gen11Family;
+using GfxFamily = Gen11Family;
 static auto coreFamily = IGFX_GEN11_CORE;
 
 template <>

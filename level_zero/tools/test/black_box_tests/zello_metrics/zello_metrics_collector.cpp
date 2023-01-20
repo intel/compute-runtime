@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ SingleMetricCollector::SingleMetricCollector(ExecutionContext *executionCtxt,
 
     metricGroup = zmu::findMetricGroup(metricGroupName, samplingType, executionCtxt->getDeviceHandle(0));
 
-    if (zmu::TestSettings::get()->verboseLevel >= zmu::LogLevel::DEBUG) {
+    if (zmu::TestSettings::get()->verboseLevel.get() >= zmu::LogLevel::DEBUG) {
         zet_metric_group_properties_t metricGroupProperties = {};
         // Obtain metric group properties to check the group name and sampling type.
         VALIDATECALL(zetMetricGroupGetProperties(metricGroup, &metricGroupProperties));
@@ -76,7 +76,7 @@ bool SingleMetricStreamerCollector::start() {
                                        &streamerProperties,
                                        notificationEvent,
                                        &metricStreamer));
-    //Initial pause
+    // Initial pause
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     return true;
 }
@@ -98,7 +98,9 @@ bool SingleMetricStreamerCollector::suffixCommands() {
 }
 
 bool SingleMetricStreamerCollector::isDataAvailable() {
-    return zeEventQueryStatus(notificationEvent) == ZE_RESULT_SUCCESS;
+    auto eventStatus = zeEventQueryStatus(notificationEvent);
+    zeEventHostReset(notificationEvent);
+    return eventStatus == ZE_RESULT_SUCCESS;
 }
 
 void SingleMetricStreamerCollector::showResults() {

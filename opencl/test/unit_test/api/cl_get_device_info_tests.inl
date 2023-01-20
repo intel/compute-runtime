@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
@@ -255,6 +254,7 @@ TEST_F(clGetDeviceInfoTests, GivenClDeviceExtensionsParamWhenGettingDeviceInfoTh
     std::string extensionString(paramValue.get());
     static const char *const supportedExtensions[] = {
         "cl_khr_byte_addressable_store ",
+        "cl_khr_device_uuid ",
         "cl_khr_fp16 ",
         "cl_khr_global_int32_base_atomics ",
         "cl_khr_global_int32_extended_atomics ",
@@ -337,8 +337,8 @@ HWTEST2_F(clGetDeviceInfoTests, givenClDeviceSupportedThreadArbitrationPolicyInt
 }
 
 HWTEST_F(clGetDeviceInfoTests, givenClDeviceSupportedThreadArbitrationPolicyIntelWhenThreadArbitrationPolicyChangeNotSupportedAndCallClGetDeviceInfoThenParamRetSizeIsZero) {
-    auto &hwHelper = NEO::ClHwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    if (hwHelper.isSupportedKernelThreadArbitrationPolicy()) {
+    auto &clGfxCoreHelper = this->pDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    if (clGfxCoreHelper.isSupportedKernelThreadArbitrationPolicy()) {
         GTEST_SKIP();
     }
     cl_device_info paramName = 0;
@@ -364,11 +364,11 @@ struct GetDeviceInfoP : public ApiFixture<>,
                         public ::testing::TestWithParam<uint32_t /*cl_device_info*/> {
     void SetUp() override {
         param = GetParam();
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
     }
 
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_device_info param;

@@ -1,22 +1,22 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/hw_timestamps.h"
+#include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/enqueue_common.h"
-#include "opencl/source/command_queue/enqueue_kernel.h"
 #include "opencl/source/command_queue/enqueue_marker.h"
-#include "opencl/source/command_queue/enqueue_migrate_mem_objects.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/command_queue/command_enqueue_fixture.h"
 #include "opencl/test/unit_test/event/event_fixture.h"
@@ -32,7 +32,7 @@ namespace NEO {
 struct ProfilingTests : public CommandEnqueueFixture,
                         public ::testing::Test {
     void SetUp() override {
-        CommandEnqueueFixture::SetUp(CL_QUEUE_PROFILING_ENABLE);
+        CommandEnqueueFixture::setUp(CL_QUEUE_PROFILING_ENABLE);
 
         program = ReleaseableObjectPtr<MockProgram>(new MockProgram(toClDeviceVector(*pClDevice)));
         program->setContext(&ctx);
@@ -47,7 +47,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
     }
 
     void TearDown() override {
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
     ReleaseableObjectPtr<MockProgram> program;
@@ -290,7 +290,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingTests, GivenCommandQueueBlockedWithProfilin
         &ue, // user event not signaled
         &event);
 
-    //rseCommands<FamilyType>(*pCmdQ);
+    // rseCommands<FamilyType>(*pCmdQ);
     ASSERT_NE(nullptr, pCmdQ->virtualEvent);
     ASSERT_NE(nullptr, pCmdQ->virtualEvent->peekCommand());
     NEO::LinearStream *eventCommandStream = pCmdQ->virtualEvent->peekCommand()->getCommandStream();
@@ -668,12 +668,11 @@ HWCMDTEST_F(IGFX_GEN8_CORE, EventProfilingTest, givenRawTimestampsDebugModeWhenS
 
 struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::testing::Test {
     void SetUp() override {
-        SetUp(defaultHwInfo.get());
+        setUp(defaultHwInfo.get());
     }
 
-    void SetUp(const NEO::HardwareInfo *hardwareInfo) {
-        PerformanceCountersFixture::SetUp();
-        createPerfCounters();
+    void setUp(const NEO::HardwareInfo *hardwareInfo) {
+        PerformanceCountersFixture::setUp();
 
         HardwareInfo hwInfo = *hardwareInfo;
         if (hwInfo.capabilityTable.defaultEngineType == aub_stream::EngineType::ENGINE_CCS) {
@@ -683,7 +682,7 @@ struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::tes
         pDevice = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
         pClDevice = std::make_unique<ClDevice>(*pDevice, nullptr);
 
-        pDevice->setPerfCounters(performanceCountersBase.release());
+        pDevice->setPerfCounters(MockPerformanceCounters::create());
 
         context = std::make_unique<MockContext>(pClDevice.get());
 
@@ -695,7 +694,7 @@ struct ProfilingWithPerfCountersTests : public PerformanceCountersFixture, ::tes
     }
 
     void TearDown() override {
-        PerformanceCountersFixture::TearDown();
+        PerformanceCountersFixture::tearDown();
     }
 
     template <typename GfxFamily>
@@ -722,7 +721,7 @@ struct ProfilingWithPerfCountersOnCCSTests : ProfilingWithPerfCountersTests {
     void SetUp() override {
         auto hwInfo = *defaultHwInfo;
         hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
-        ProfilingWithPerfCountersTests::SetUp(&hwInfo);
+        ProfilingWithPerfCountersTests::setUp(&hwInfo);
     }
 
     void TearDown() override {
@@ -873,7 +872,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingWithPerfCountersTests, GivenCommandQueueBlo
                                                                           &ue, // user event not signaled
                                                                           &event);
 
-    //rseCommands<FamilyType>(*pCmdQ);
+    // rseCommands<FamilyType>(*pCmdQ);
     ASSERT_NE(nullptr, pCmdQ->virtualEvent);
     ASSERT_NE(nullptr, pCmdQ->virtualEvent->peekCommand());
     NEO::LinearStream *eventCommandStream = pCmdQ->virtualEvent->peekCommand()->getCommandStream();

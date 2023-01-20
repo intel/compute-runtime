@@ -10,6 +10,9 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
@@ -19,37 +22,48 @@
 
 namespace NEO {
 
-DrmMemoryOperationsHandlerBind::DrmMemoryOperationsHandlerBind(RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex)
-    : rootDeviceEnvironment(rootDeviceEnvironment),
-      rootDeviceIndex(rootDeviceIndex){};
+DrmMemoryOperationsHandlerBind::DrmMemoryOperationsHandlerBind(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t rootDeviceIndex)
+    : DrmMemoryOperationsHandler(rootDeviceIndex), rootDeviceEnvironment(rootDeviceEnvironment){};
 
 DrmMemoryOperationsHandlerBind::~DrmMemoryOperationsHandlerBind() = default;
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) {
     auto &engines = device->getAllEngines();
     for (const auto &engine : engines) {
-        engine.osContext->ensureContextInitialized();
+        engine.commandStreamReceiver->initializeResources();
         this->makeResidentWithinOsContext(engine.osContext, gfxAllocations, false);
     }
     return MemoryOperationsStatus::SUCCESS;
 }
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {
+    auto deviceBitfield = osContext->getDeviceBitfield();
+
     std::lock_guard<std::mutex> lock(mutex);
-    for (auto gfxAllocation = gfxAllocations.begin(); gfxAllocation != gfxAllocations.end(); gfxAllocation++) {
-        auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
-        for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
-            if (osContext->getDeviceBitfield().test(drmIterator)) {
+    auto devicesDone = 0u;
+    for (auto drmIterator = 0u; devicesDone < deviceBitfield.count(); drmIterator++) {
+        if (!deviceBitfield.test(drmIterator)) {
+            continue;
+        }
+        devicesDone++;
+
+        for (auto gfxAllocation = gfxAllocations.begin(); gfxAllocation != gfxAllocations.end(); gfxAllocation++) {
+            auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
+            auto bo = drmAllocation->storageInfo.getNumBanks() > 1 ? drmAllocation->getBOs()[drmIterator] : drmAllocation->getBO();
+
+            if (!bo->bindInfo[bo->getOsContextId(osContext)][drmIterator]) {
                 int result = drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true);
                 if (result) {
                     return MemoryOperationsStatus::OUT_OF_MEMORY;
                 }
             }
-        }
-        if (!evictable) {
-            drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
+
+            if (!evictable) {
+                drmAllocation->updateResidencyTaskCount(GraphicsAllocation::objectAlwaysResident, osContext->getContextId());
+            }
         }
     }
+
     return MemoryOperationsStatus::SUCCESS;
 }
 
@@ -150,7 +164,7 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::evictUnusedAllocationsImp
     const auto &engines = this->rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines();
     std::vector<GraphicsAllocation *> evictCandidates;
 
-    for (auto subdeviceIndex = 0u; subdeviceIndex < HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()); subdeviceIndex++) {
+    for (auto subdeviceIndex = 0u; subdeviceIndex < GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()); subdeviceIndex++) {
         for (auto &allocation : allocationsForEviction) {
             bool evict = true;
 

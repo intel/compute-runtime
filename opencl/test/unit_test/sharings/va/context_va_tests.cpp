@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,13 +19,13 @@ using namespace NEO;
 struct VAContextTest : public PlatformFixture,
                        public ::testing::Test {
 
-    using PlatformFixture::SetUp;
+    using PlatformFixture::setUp;
 
     VAContextTest() {
     }
 
     void SetUp() override {
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
 
         cl_platform_id platform = pPlatform;
         properties = new cl_context_properties[3];
@@ -40,7 +40,7 @@ struct VAContextTest : public PlatformFixture,
     void TearDown() override {
         delete[] properties;
         delete context;
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

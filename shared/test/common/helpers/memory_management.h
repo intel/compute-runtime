@@ -51,8 +51,8 @@ struct AllocationEvent { // NOLINT(clang-analyzer-optin.performance.Padding)
     bool fastLeakDetectionEnabled = false;
 };
 
-constexpr auto maxEvents = 1024 * 1024;
-constexpr auto fastEvents = 1024 * 1024;
+inline constexpr auto maxEvents = 1024 * 1024;
+inline constexpr auto fastEvents = 1024 * 1024;
 
 extern AllocationEvent eventsAllocated[maxEvents];
 extern AllocationEvent eventsDeallocated[maxEvents];
@@ -75,11 +75,11 @@ extern bool detailedAllocationLoggingActive;
 extern bool fastLeakDetectionEnabled;
 extern void (*deleteCallback)(void *);
 
-constexpr auto nonfailingAllocation = static_cast<size_t>(-1);
-constexpr auto invalidLeakIndex = static_cast<size_t>(-1);
+inline constexpr auto nonfailingAllocation = static_cast<size_t>(-1);
+inline constexpr auto invalidLeakIndex = static_cast<size_t>(-1);
 
 // capture allocations call stacks to print them during memory leak in ULTs
-constexpr bool captureCallStacks = false;
+inline constexpr bool captureCallStacks = false;
 
 int detectLeaks();
 std::string printCallStack(const MemoryManagement::AllocationEvent &event);

@@ -77,4 +77,24 @@ inline bool UnitTestHelper<GfxFamily>::getWorkloadPartitionForStoreRegisterMemCm
     return false;
 }
 
+template <typename GfxFamily>
+GenCmdList::iterator UnitTestHelper<GfxFamily>::findMidThreadPreemptionAllocationCommand(GenCmdList::iterator begin, GenCmdList::iterator end) {
+    return find<typename GfxFamily::GPGPU_CSR_BASE_ADDRESS *>(begin, end);
+}
+
+template <typename GfxFamily>
+std::vector<GenCmdList::iterator> UnitTestHelper<GfxFamily>::findAllMidThreadPreemptionAllocationCommand(GenCmdList::iterator begin, GenCmdList::iterator end) {
+    return findAll<typename GfxFamily::GPGPU_CSR_BASE_ADDRESS *>(begin, end);
+}
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::getSystolicFlagValueFromPipelineSelectCommand(const typename GfxFamily::PIPELINE_SELECT &pipelineSelectCmd) {
+    return false;
+}
+
+template <typename GfxFamily>
+size_t UnitTestHelper<GfxFamily>::getAdditionalDshSize() {
+    return sizeof(typename GfxFamily::INTERFACE_DESCRIPTOR_DATA);
+}
+
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/global_environment.h"
+#include "shared/test/common/mocks/mock_compiler_cache.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/test_macros/test.h"
@@ -27,25 +28,6 @@
 
 using namespace NEO;
 
-class CompilerCacheMock : public CompilerCache {
-  public:
-    CompilerCacheMock() : CompilerCache(CompilerCacheConfig{}) {
-    }
-
-    bool cacheBinary(const std::string kernelFileHash, const char *pBinary, uint32_t binarySize) override {
-        cacheInvoked++;
-        return cacheResult;
-    }
-
-    std::unique_ptr<char[]> loadCachedBinary(const std::string kernelFileHash, size_t &cachedBinarySize) override {
-        return loadResult ? std::unique_ptr<char[]>{new char[1]} : nullptr;
-    }
-
-    bool cacheResult = false;
-    uint32_t cacheInvoked = 0u;
-    bool loadResult = false;
-};
-
 TEST(HashGeneration, givenMisalignedBufferWhenPassedToUpdateFunctionThenProperPtrDataIsUsed) {
     Hash hash;
     auto originalPtr = alignedMalloc(1024, MemoryConstants::pageSize);
@@ -54,13 +36,13 @@ TEST(HashGeneration, givenMisalignedBufferWhenPassedToUpdateFunctionThenProperPt
     char *misalignedPtr = (char *)originalPtr;
     misalignedPtr++;
 
-    //values really used
+    // values really used
     misalignedPtr[0] = 1;
     misalignedPtr[1] = 2;
     misalignedPtr[2] = 3;
     misalignedPtr[3] = 4;
     misalignedPtr[4] = 5;
-    //values not used should be ommitted
+    // values not used should be ommitted
     misalignedPtr[5] = 6;
     misalignedPtr[6] = 7;
 
@@ -100,9 +82,9 @@ TEST(HashGeneration, givenMisalignedBufferWithSizeOneWhenPassedToUpdateFunctionT
     char *misalignedPtr = (char *)originalPtr;
     misalignedPtr++;
 
-    //values really used
+    // values really used
     misalignedPtr[0] = 1;
-    //values not used should be ommitted
+    // values not used should be ommitted
     misalignedPtr[1] = 2;
     misalignedPtr[2] = 3;
     misalignedPtr[3] = 4;
@@ -158,8 +140,8 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
     const FeatureTable *skus[] = {&s1, &s2};
     WorkaroundTable w1;
     WorkaroundTable w2;
-    w1.flags.waDoNotUseMIReportPerfCount = true;
-    w2.flags.waDoNotUseMIReportPerfCount = false;
+    w1.flags.wa4kAlignUVOffsetNV12LinearSurface = true;
+    w2.flags.wa4kAlignUVOffsetNV12LinearSurface = false;
     const WorkaroundTable *was[] = {&w1, &w2};
 
     std::array<std::string, 4> inputArray = {{std::string(""),

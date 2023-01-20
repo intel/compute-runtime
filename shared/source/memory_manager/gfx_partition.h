@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,12 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/os_interface/os_memory.h"
-#include "shared/source/utilities/heap_allocator.h"
 
 #include <array>
-#include <map>
 
 namespace NEO {
+class HeapAllocator;
 
 enum class HeapIndex : uint32_t {
     HEAP_INTERNAL_DEVICE_MEMORY = 0u,
@@ -69,7 +67,7 @@ class GfxPartition {
         return getHeap(heapIndex).allocate(size);
     }
 
-    uint64_t heapAllocateWithCustomAlignment(HeapIndex heapIndex, size_t &size, size_t alignment) {
+    MOCKABLE_VIRTUAL uint64_t heapAllocateWithCustomAlignment(HeapIndex heapIndex, size_t &size, size_t alignment) {
         return getHeap(heapIndex).allocateWithCustomAlignment(size, alignment);
     }
 
@@ -87,27 +85,7 @@ class GfxPartition {
         return getHeap(heapIndex).getLimit();
     }
 
-    uint64_t getHeapMinimalAddress(HeapIndex heapIndex) {
-        if (heapIndex == HeapIndex::HEAP_SVM ||
-            heapIndex == HeapIndex::HEAP_EXTERNAL_DEVICE_FRONT_WINDOW ||
-            heapIndex == HeapIndex::HEAP_EXTERNAL_FRONT_WINDOW ||
-            heapIndex == HeapIndex::HEAP_INTERNAL_DEVICE_FRONT_WINDOW ||
-            heapIndex == HeapIndex::HEAP_INTERNAL_FRONT_WINDOW) {
-            return getHeapBase(heapIndex);
-        } else {
-            if ((heapIndex == HeapIndex::HEAP_EXTERNAL ||
-                 heapIndex == HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY) &&
-                (getHeapLimit(HeapAssigner::mapExternalWindowIndex(heapIndex)) != 0)) {
-                return getHeapBase(heapIndex) + GfxPartition::externalFrontWindowPoolSize;
-            } else if (heapIndex == HeapIndex::HEAP_INTERNAL ||
-                       heapIndex == HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY) {
-                return getHeapBase(heapIndex) + GfxPartition::internalFrontWindowPoolSize;
-            } else if (heapIndex == HeapIndex::HEAP_STANDARD2MB) {
-                return getHeapBase(heapIndex) + GfxPartition::heapGranularity2MB;
-            }
-            return getHeapBase(heapIndex) + GfxPartition::heapGranularity;
-        }
-    }
+    uint64_t getHeapMinimalAddress(HeapIndex heapIndex);
 
     bool isLimitedRange() { return getHeap(HeapIndex::HEAP_SVM).getSize() == 0ull; }
 
@@ -132,9 +110,9 @@ class GfxPartition {
         uint64_t getBase() const { return base; }
         uint64_t getSize() const { return size; }
         uint64_t getLimit() const { return size ? base + size - 1 : 0; }
-        uint64_t allocate(size_t &size) { return alloc->allocate(size); }
-        uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment) { return alloc->allocateWithCustomAlignment(sizeToAllocate, alignment); }
-        void free(uint64_t ptr, size_t size) { alloc->free(ptr, size); }
+        uint64_t allocate(size_t &size);
+        uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment);
+        void free(uint64_t ptr, size_t size);
 
       protected:
         uint64_t base = 0, size = 0;

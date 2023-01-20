@@ -49,7 +49,7 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     get_opencl_version  # NEO_OCL_VERSION_MAJOR.NEO_OCL_VERSION_MINOR.NEO_OCL_VERSION_BUILD
     get_api_version     # API_VERSION-API_VERSION_SRC and API_RPM_MODEL_LINK
 
-    VERSION="${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_OCL_VERSION_BUILD}.${API_VERSION}"
+    VERSION="${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_OCL_VERSION_BUILD}${API_VERSION}"
     RELEASE="${NEO_OCL_VERSION_HOTFIX}${API_VERSION_SRC}${API_RPM_MODEL_LINK}"
 
     RELEASE_WITH_REGKEYS="${RELEASE_WITH_REGKEYS:-FALSE}"
@@ -57,24 +57,30 @@ if [ "${BUILD_SRPM}" == "1" ]; then
     #setup rpm build tree
     rm -rf $BUILD_DIR
     mkdir -p $BUILD_DIR/{BUILD,BUILDROOT,RPMS,SOURCES,SPECS,SRPMS}
-    tar -c -I 'xz -6 -T0' -f $BUILD_DIR/SOURCES/compute-runtime-$VERSION.tar.xz -C $REPO_DIR --transform "s,${REPO_DIR:1},compute-runtime-$VERSION," --exclude=.git\* $REPO_DIR
+    tar -c -I 'xz -6 -T0' -f $BUILD_DIR/SOURCES/compute-runtime.tar.xz -C $REPO_DIR --transform "s,${REPO_DIR:1},compute-runtime," --exclude=.git\* $REPO_DIR
     cp $COPYRIGHT $BUILD_DIR/SOURCES/
     cp $SPEC_SRC $BUILD_DIR/SPECS/
+
+    if [ -d "$I915_HEADERS_DIR" ]; then
+        tar -c -I 'xz -6 -T0' -f $BUILD_DIR/SOURCES/uapi.tar.xz -C $REPO_DIR --transform "s,${I915_HEADERS_DIR:1},uapi," $I915_HEADERS_DIR
+        perl -pi -e "s;^%global I915_HEADERS_DIR .*;%global I915_HEADERS_DIR %{_builddir}/uapi;" $SPEC
+    fi
 
     PATCH_SPEC="${REPO_DIR}/scripts/packaging/${BRANCH_SUFFIX}/patch_spec.sh"
 
     if [ -f "$PATCH_SPEC" ]; then
         source "$PATCH_SPEC"
     fi
+
     if [ -z "${BRANCH_SUFFIX}" ]; then
         sed -i '/^Epoch: /d' ${SPEC}
     fi
 
     # Update spec file with new version
-    perl -pi -e "s/^%global NEO_OCL_VERSION_MAJOR .*/%global NEO_OCL_VERSION_MAJOR ${NEO_OCL_VERSION_MAJOR}/" $BUILD_DIR/SPECS/opencl.spec
-    perl -pi -e "s/^%global NEO_OCL_VERSION_MINOR .*/%global NEO_OCL_VERSION_MINOR ${NEO_OCL_VERSION_MINOR}/" $BUILD_DIR/SPECS/opencl.spec
-    perl -pi -e "s/^%global NEO_OCL_VERSION_BUILD .*/%global NEO_OCL_VERSION_BUILD ${NEO_OCL_VERSION_BUILD}/" $BUILD_DIR/SPECS/opencl.spec
-    perl -pi -e "s/^%global NEO_RELEASE_WITH_REGKEYS .*/%global NEO_RELEASE_WITH_REGKEYS ${RELEASE_WITH_REGKEYS}/" $BUILD_DIR/SPECS/opencl.spec
+    perl -pi -e "s/^%global NEO_OCL_VERSION_MAJOR .*/%global NEO_OCL_VERSION_MAJOR ${NEO_OCL_VERSION_MAJOR}/" $SPEC
+    perl -pi -e "s/^%global NEO_OCL_VERSION_MINOR .*/%global NEO_OCL_VERSION_MINOR ${NEO_OCL_VERSION_MINOR}/" $SPEC
+    perl -pi -e "s/^%global NEO_OCL_VERSION_BUILD .*/%global NEO_OCL_VERSION_BUILD ${NEO_OCL_VERSION_BUILD}/" $SPEC
+    perl -pi -e "s/^%global NEO_RELEASE_WITH_REGKEYS .*/%global NEO_RELEASE_WITH_REGKEYS ${RELEASE_WITH_REGKEYS}/" $SPEC
     perl -pi -e "s/^%global rel .*/%global rel ${RELEASE}/" $SPEC
     perl -pi -e "s/^%global ver .*/%global ver ${VERSION}/" $SPEC
 
@@ -98,6 +104,7 @@ if [ "${BUILD_RPM}" == "1" ]; then
   if [ "${LOG_CCACHE_STATS}" == "1" ]; then
     ccache -z
   fi
+  export CCACHE_BASEDIR=$(readlink -m $BUILD_DIR/BUILD/compute-runtime/)
   rpmbuild --rebuild ${REPO_DIR}/../output/SRPMS/intel-opencl-${VERSION}*.src.rpm "${build_args[@]}"
   if [ "${LOG_CCACHE_STATS}" == "1" ]; then
     ccache -s

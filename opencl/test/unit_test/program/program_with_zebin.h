@@ -1,13 +1,18 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/program/program_tests.h"
+
+namespace NEO {
+struct KernelInfo;
+class MockGraphicsAllocation;
+class MockProgram;
+} // namespace NEO
 
 using namespace NEO;
 
@@ -24,5 +29,6 @@ class ProgramWithZebinFixture : public ProgramTests {
     void TearDown() override;
     void addEmptyZebin(MockProgram *program);
     void populateProgramWithSegments(MockProgram *program);
-    ~ProgramWithZebinFixture() override = default;
+    ~ProgramWithZebinFixture() override;
+    ProgramWithZebinFixture();
 };

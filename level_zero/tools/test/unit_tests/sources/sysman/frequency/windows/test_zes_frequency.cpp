@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,27 +22,20 @@ constexpr double step = 50.0 / 3;
 constexpr uint32_t numClocks = static_cast<uint32_t>((maxFreq - minFreq) / step) + 1;
 class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
   protected:
-    Mock<FrequencyKmdSysManager> *pKmdSysManager = nullptr;
+    std::unique_ptr<Mock<FrequencyKmdSysManager>> pKmdSysManager;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
     void SetUp() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
         SysmanDeviceFixture::SetUp();
-    }
+        pKmdSysManager.reset(new Mock<FrequencyKmdSysManager>);
 
-    void init(bool allowSetCalls) {
-        pKmdSysManager = new Mock<FrequencyKmdSysManager>;
-
-        pKmdSysManager->allowSetCalls = allowSetCalls;
-
-        EXPECT_CALL(*pKmdSysManager, escape(_, _, _, _, _))
-            .WillRepeatedly(::testing::Invoke(pKmdSysManager, &Mock<FrequencyKmdSysManager>::mock_escape));
+        pKmdSysManager->allowSetCalls = true;
 
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
-        pWddmSysmanImp->pKmdSysManager = pKmdSysManager;
+        pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
-        // delete handles created in initial SysmanDeviceHandleContext::init() call
         for (auto handle : pSysmanDeviceImp->pFrequencyHandleContext->handleList) {
             delete handle;
         }
@@ -57,19 +50,14 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pFrequencyHandleContext->init(deviceHandles);
     }
 
     void TearDown() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        SysmanDeviceFixture::TearDown();
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;
-        if (pKmdSysManager != nullptr) {
-            delete pKmdSysManager;
-            pKmdSysManager = nullptr;
-        }
+        SysmanDeviceFixture::TearDown();
     }
 
     double clockValue(const double calculatedClock) {
@@ -89,16 +77,12 @@ class SysmanDeviceFrequencyFixture : public SysmanDeviceFixture {
 };
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyDomainsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
-    init(true);
-
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, frequencyHandleComponentCount);
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenInvalidComponentCountWhenEnumeratingFrequencyDomainsThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
-    init(true);
-
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, frequencyHandleComponentCount);
@@ -108,9 +92,15 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenInvalidComponentCountWhenEnumeratingFr
     EXPECT_EQ(count, frequencyHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyDomainsThenValidPowerHandlesIsReturned) {
-    init(true);
+TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyDomainsAndRequestSingleFailsThenZeroHandlesAreCreated) {
+    pKmdSysManager->mockRequestSingle = true;
+    pKmdSysManager->mockRequestSingleResult = ZE_RESULT_ERROR_UNKNOWN;
+    uint32_t count = 0;
+    EXPECT_EQ(zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(count, 0);
+}
 
+TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequencyDomainsThenValidPowerHandlesIsReturned) {
     uint32_t count = 0;
     EXPECT_EQ(zesDeviceEnumFrequencyDomains(device->toHandle(), &count, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(count, frequencyHandleComponentCount);
@@ -123,8 +113,6 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenComponentCountZeroWhenEnumeratingFrequ
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetPropertiesThenSuccessIsReturned) {
-    init(true);
-
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     uint32_t domainIndex = 0;
     for (auto handle : handles) {
@@ -146,8 +134,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesAllowSetCallsToFalseFrequencyGetPropertiesThenSuccessIsReturned) {
-    init(false);
-
+    pKmdSysManager->allowSetCalls = false;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     uint32_t domainIndex = 0;
     for (auto handle : handles) {
@@ -168,9 +155,33 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesAllo
     }
 }
 
-TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndZeroCountWhenCallingzesFrequencyGetAvailableClocksThenCallSucceeds) {
-    init(true);
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhileGettingFrequencyPropertiesAndRequestMultipleFailsThenInvalidPropertiesAreReturned) {
+    pKmdSysManager->mockRequestMultiple = true;
+    pKmdSysManager->requestMultipleSizeDiff = false;
+    pKmdSysManager->mockRequestMultipleResult = ZE_RESULT_ERROR_INVALID_SIZE;
+    auto handles = get_frequency_handles(frequencyHandleComponentCount);
+    for (auto handle : handles) {
+        zes_freq_properties_t properties;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetProperties(handle, &properties));
+        EXPECT_EQ(-1.0, properties.min);
+        EXPECT_EQ(-1.0, properties.max);
+    }
+}
 
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhileGettingFrequencyPropertiesAndRequestMultipleReturnsInvalidSizeThenInvalidpropertiesAreReturned) {
+    pKmdSysManager->mockRequestMultiple = true;
+    pKmdSysManager->requestMultipleSizeDiff = true;
+    pKmdSysManager->mockRequestMultipleResult = ZE_RESULT_SUCCESS;
+    auto handles = get_frequency_handles(frequencyHandleComponentCount);
+    for (auto handle : handles) {
+        zes_freq_properties_t properties;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyGetProperties(handle, &properties));
+        EXPECT_EQ(-1.0, properties.min);
+        EXPECT_EQ(-1.0, properties.max);
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndZeroCountWhenCallingzesFrequencyGetAvailableClocksThenCallSucceeds) {
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     uint32_t domainIndex = 0;
 
@@ -190,8 +201,6 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndZeroCountWhenCa
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndCorrectCountWhenCallingzesFrequencyGetAvailableClocksThenCallSucceeds) {
-    init(true);
-
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     uint32_t domainIndex = 0;
 
@@ -215,8 +224,6 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAndCorrectCountWhe
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetRangeThenVerifyzesFrequencyGetRangeTestCallSucceeds) {
-    init(true);
-
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     uint32_t domainIndex = 0;
 
@@ -235,8 +242,6 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest1CallSucceeds) {
-    init(true);
-
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     uint32_t domainIndex = 0;
 
@@ -263,8 +268,6 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencySetRangeThenVerifyzesFrequencySetRangeTest2CallSucceeds) {
-    init(true);
-
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     uint32_t domainIndex = 0;
 
@@ -292,8 +295,6 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetStateThenVerifyCallSucceeds) {
-    init(true);
-
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     uint32_t domainIndex = 0;
 
@@ -321,8 +322,28 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhileGettingFrequencyStateAndRequestMultipleFailsThenFailureIsReturned) {
+    pKmdSysManager->mockRequestMultiple = true;
+    pKmdSysManager->mockRequestMultipleResult = ZE_RESULT_ERROR_INVALID_SIZE;
+    auto handles = get_frequency_handles(frequencyHandleComponentCount);
+    for (auto handle : handles) {
+        zes_freq_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, zesFrequencyGetState(handle, &state));
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhileGettingFrequencyStateAndRequestMultipleReturnsInvalidSizeThenFailureIsReturned) {
+    pKmdSysManager->mockRequestMultiple = true;
+    pKmdSysManager->requestMultipleSizeDiff = true;
+    pKmdSysManager->mockRequestMultipleResult = ZE_RESULT_ERROR_INVALID_SIZE;
+    auto handles = get_frequency_handles(frequencyHandleComponentCount);
+    for (auto handle : handles) {
+        zes_freq_state_t state = {};
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, zesFrequencyGetState(handle, &state));
+    }
+}
+
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyGetThrottleTimeThenVerifyCallFails) {
-    init(true);
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
         zes_freq_throttle_time_t throttletime = {};
@@ -331,7 +352,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetCapabilitiesThenVerifyCallSucceeds) {
-    init(false);
+    pKmdSysManager->allowSetCalls = false;
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
@@ -355,7 +376,6 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetFrequencyTargetThenVerifyCallSucceeds) {
-    init(false);
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
@@ -366,8 +386,17 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetFrequencyTargetAndRequestSingleFailsThenFailureIsReturned) {
+    auto handles = get_frequency_handles(frequencyHandleComponentCount);
+    for (auto handle : handles) {
+        pKmdSysManager->mockRequestSingle = true;
+        pKmdSysManager->mockRequestSingleResult = ZE_RESULT_ERROR_UNKNOWN;
+        double freqTarget = 0.0;
+        EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zesFrequencyOcGetFrequencyTarget(handle, &freqTarget));
+    }
+}
+
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetVoltageTargetThenVerifyCallSucceeds) {
-    init(false);
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
@@ -379,8 +408,19 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
     }
 }
 
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetVoltageTargetAndRequestMultipleFailsThenFailureIsReturned) {
+    pKmdSysManager->mockRequestMultiple = true;
+    pKmdSysManager->requestMultipleSizeDiff = false;
+    pKmdSysManager->mockRequestMultipleResult = ZE_RESULT_ERROR_INVALID_SIZE;
+    auto handles = get_frequency_handles(frequencyHandleComponentCount);
+    for (auto handle : handles) {
+        double voltageTarget = 0.0, voltageOffset = 0.0;
+        EXPECT_EQ(ZE_RESULT_ERROR_INVALID_SIZE, zesFrequencyOcGetVoltageTarget(handle, &voltageTarget, &voltageOffset));
+    }
+}
+
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFrequencyOcGetModeThenVerifyCallSucceeds) {
-    init(false);
+    pKmdSysManager->allowSetCalls = false;
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
@@ -392,7 +432,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFalseWhenCallingzesFrequencyOcSetFrequencyTargetThenVerifyCallFails) {
-    init(false);
+    pKmdSysManager->allowSetCalls = false;
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
@@ -403,7 +443,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFal
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFalseWhenCallingzesFrequencyOcSetVoltageTargetThenVerifyCallFails) {
-    init(false);
+    pKmdSysManager->allowSetCalls = false;
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
@@ -414,7 +454,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFal
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFalseWhenCallingzesFrequencyOcSetModeThenVerifyCallFails) {
-    init(false);
+    pKmdSysManager->allowSetCalls = false;
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
@@ -425,7 +465,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToFal
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetFrequencyTargetThenVerifyCallSucceed) {
-    init(true);
+    pKmdSysManager->allowSetCalls = true;
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
@@ -439,7 +479,7 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTru
 }
 
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetVoltageTargetThenVerifyCallSucceed) {
-    init(true);
+    pKmdSysManager->allowSetCalls = true;
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {
@@ -453,8 +493,32 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTru
     }
 }
 
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetIccMaxTargetThenVerifyCallSucceed) {
+    pKmdSysManager->allowSetCalls = true;
+    auto handles = get_frequency_handles(frequencyHandleComponentCount);
+    for (auto handle : handles) {
+        double setIccMax = 1050.0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetIccMax(handle, setIccMax));
+        double newSetIccMax = 0.0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetIccMax(handle, &newSetIccMax));
+        EXPECT_DOUBLE_EQ(setIccMax, newSetIccMax);
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetTjMaxTargetThenVerifyCallSucceed) {
+    pKmdSysManager->allowSetCalls = true;
+    auto handles = get_frequency_handles(frequencyHandleComponentCount);
+    for (auto handle : handles) {
+        double setTjMax = 1050.0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcSetTjMax(handle, setTjMax));
+        double newSetTjMax = 0.0;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFrequencyOcGetTjMax(handle, &newSetTjMax));
+        EXPECT_DOUBLE_EQ(newSetTjMax, setTjMax);
+    }
+}
+
 TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleAllowSetCallsToTrueWhenCallingzesFrequencyOcSetModeThenVerifyCallSucceed) {
-    init(true);
+    pKmdSysManager->allowSetCalls = true;
     uint32_t domainIndex = 0;
     auto handles = get_frequency_handles(frequencyHandleComponentCount);
     for (auto handle : handles) {

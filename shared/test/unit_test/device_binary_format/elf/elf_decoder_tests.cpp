@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,9 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "gtest/gtest.h"
 
@@ -120,7 +120,7 @@ class TestElf {
 
         auto symTabSectionHeader = elfEncoder.getSectionHeader(symTabSectionIndex);
         symTabSectionHeader->info = 4;                                          // one greater than last LOCAL symbol
-        symTabSectionHeader->link = elfEncoder.getLastSectionHeaderIndex() + 1; //strtab section added as last
+        symTabSectionHeader->link = elfEncoder.getLastSectionHeaderIndex() + 1; // strtab section added as last
         return elfEncoder.encode();
     }
     const int64_t relaAddend = 16;
@@ -477,7 +477,7 @@ TEST(ElfDecoder, WhenElfContainsInvalidSymbolSectionHeaderThenDecodingFailsAndEr
     sectionHeader0.type = SECTION_HEADER_TYPE::SHT_SYMTAB;
     sectionHeader0.size = sizeof(sectionHeader0);
     sectionHeader0.offset = header.shOff;
-    sectionHeader0.entsize = sizeof(ElfSymbolEntry<EI_CLASS_64>) + 4; //invalid entSize
+    sectionHeader0.entsize = sizeof(ElfSymbolEntry<EI_CLASS_64>) + 4; // invalid entSize
 
     storage.insert(storage.end(), reinterpret_cast<const uint8_t *>(&sectionHeader0), reinterpret_cast<const uint8_t *>(&sectionHeader0 + 1));
 

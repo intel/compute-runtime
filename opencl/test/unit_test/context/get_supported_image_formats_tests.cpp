@@ -24,20 +24,20 @@ struct GetSupportedImageFormatsTest : public PlatformFixture,
                                       public ContextFixture,
                                       public ::testing::TestWithParam<std::tuple<uint64_t, uint32_t>> {
 
-    using ContextFixture::SetUp;
-    using PlatformFixture::SetUp;
+    using ContextFixture::setUp;
+    using PlatformFixture::setUp;
 
     GetSupportedImageFormatsTest() {
     }
 
     void SetUp() override {
-        PlatformFixture::SetUp();
-        ContextFixture::SetUp(num_devices, devices);
+        PlatformFixture::setUp();
+        ContextFixture::setUp(num_devices, devices);
     }
 
     void TearDown() override {
-        ContextFixture::TearDown();
-        PlatformFixture::TearDown();
+        ContextFixture::tearDown();
+        PlatformFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

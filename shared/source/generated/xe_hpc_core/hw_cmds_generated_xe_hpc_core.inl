@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -4794,8 +4794,8 @@ struct MI_FLUSH_DW {
 
             /// DWORD 1..2
             uint64_t Reserved_32 : BITFIELD_RANGE(0, 1);
-            uint64_t DestinationAddress : BITFIELD_RANGE(2, 47);
-            uint64_t Reserved_80 : BITFIELD_RANGE(48, 63);
+            uint64_t DestinationAddressType : BITFIELD_RANGE(2, 2);
+            uint64_t DestinationAddress : BITFIELD_RANGE(3, 63);
 
             /// DWORD 3..4
             uint64_t ImmediateData;
@@ -4888,7 +4888,7 @@ struct MI_FLUSH_DW {
     }
 
     typedef enum tagDESTINATIONADDRESS {
-        DESTINATIONADDRESS_BIT_SHIFT = 2,
+        DESTINATIONADDRESS_BIT_SHIFT = 3,
         DESTINATIONADDRESS_ALIGN_SIZE = 4,
     } DESTINATIONADDRESS;
 
@@ -6011,7 +6011,7 @@ typedef struct tagMI_ARB_CHECK {
     }
     inline void setPreParserDisable(const bool value) {
         TheStructure.Common.PreParserDisable = value;
-        TheStructure.Common.MaskBits = 1 << 0; //PreParserDisable is at bit0, so set bit0 of mask to 1
+        TheStructure.Common.MaskBits = 1 << 0; // PreParserDisable is at bit0, so set bit0 of mask to 1
     }
     inline bool getPreParserDisable() const {
         return TheStructure.Common.PreParserDisable;
@@ -6035,7 +6035,8 @@ typedef struct tagMI_BATCH_BUFFER_START {
             uint32_t Reserved_9 : BITFIELD_RANGE(9, 9);
             uint32_t Reserved_10 : BITFIELD_RANGE(10, 14);
             uint32_t PredicationEnable : BITFIELD_RANGE(15, 15);
-            uint32_t Reserved_16 : BITFIELD_RANGE(16, 18);
+            uint32_t Reserved_16 : BITFIELD_RANGE(16, 17);
+            uint32_t IndirectAddressEnable : BITFIELD_RANGE(18, 18);
             uint32_t EnableCommandCache : BITFIELD_RANGE(19, 19);
             uint32_t PoshEnable : BITFIELD_RANGE(20, 20);
             uint32_t PoshStart : BITFIELD_RANGE(21, 21);
@@ -6143,6 +6144,12 @@ typedef struct tagMI_BATCH_BUFFER_START {
     }
     inline uint32_t getEnableCommandCache() const {
         return TheStructure.Common.EnableCommandCache;
+    }
+    inline void setIndirectAddressEnable(const uint32_t value) {
+        TheStructure.Common.IndirectAddressEnable = value;
+    }
+    inline uint32_t getIndirectAddressEnable() const {
+        return TheStructure.Common.IndirectAddressEnable;
     }
     inline void setPoshEnable(const uint32_t value) {
         TheStructure.Common.PoshEnable = value;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,11 @@
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/direct_submission_hw_diagnostic_mode.h"
+#include "shared/source/direct_submission/relaxed_ordering_helper.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/memory_manager/allocation_properties.h"
@@ -39,7 +43,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     hwInfo = inputParams.rootDeviceEnvironment.getHardwareInfo();
     memoryOperationHandler = inputParams.rootDeviceEnvironment.memoryOperationsInterface.get();
 
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo->platform.eProductFamily);
+    auto &productHelper = inputParams.rootDeviceEnvironment.getHelper<ProductHelper>();
 
     disableCacheFlush = UllsDefaults::defaultDisableCacheFlush;
     disableMonitorFence = UllsDefaults::defaultDisableMonitorFence;
@@ -52,7 +56,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         disableCacheFlush = !!DebugManager.flags.DirectSubmissionDisableCacheFlush.get();
     }
 
-    miMemFenceRequired = hwInfoConfig->isGlobalFenceInCommandStreamRequired(*hwInfo);
+    miMemFenceRequired = productHelper.isGlobalFenceInDirectSubmissionRequired(*hwInfo);
     if (DebugManager.flags.DirectSubmissionInsertExtraMiMemFenceCommands.get() == 0) {
         miMemFenceRequired = false;
     }
@@ -65,10 +69,219 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
         disableCpuCacheFlush = disableCacheFlushKey == 1 ? true : false;
     }
 
+    isDisablePrefetcherRequired = productHelper.isPrefetcherDisablingInDirectSubmissionRequired();
+    if (DebugManager.flags.DirectSubmissionDisablePrefetcher.get() != -1) {
+        isDisablePrefetcherRequired = !!DebugManager.flags.DirectSubmissionDisablePrefetcher.get();
+    }
+
     UNRECOVERABLE_IF(!CpuInfo::getInstance().isFeatureSupported(CpuInfo::featureClflush) && !disableCpuCacheFlush);
 
     createDiagnostic();
     setPostSyncOffset();
+
+    dcFlushRequired = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, *hwInfo);
+    auto &gfxCoreHelper = inputParams.rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    relaxedOrderingEnabled = gfxCoreHelper.isRelaxedOrderingSupported();
+
+    if (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() != -1) {
+        relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1);
+    }
+
+    if (EngineHelpers::isBcs(this->osContext.getEngineType()) && relaxedOrderingEnabled) {
+        relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() != 0);
+    }
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingScheduler() {
+    LinearStream schedulerCmdStream(this->relaxedOrderingSchedulerAllocation);
+    uint64_t schedulerStartAddress = schedulerCmdStream.getGpuBase();
+    uint64_t deferredTasksListGpuVa = deferredTasksListAllocation->getGpuAddress();
+
+    uint64_t loopSectionStartAddress = schedulerStartAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::loopStartSectionStart;
+
+    // 1. Init section
+    {
+        EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::Disable);
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(
+            schedulerCmdStream,
+            schedulerStartAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::semaphoreSectionJumpStart,
+            CS_GPR_R1, 0, CompareOperation::Equal, false);
+
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R2, 0, true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R2 + 4, 0, true);
+
+        uint64_t removeTaskVa = schedulerStartAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::removeTaskSectionStart;
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R3, static_cast<uint32_t>(removeTaskVa & 0xFFFF'FFFFULL), true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R3 + 4, static_cast<uint32_t>(removeTaskVa >> 32), true);
+
+        uint64_t walkersLoopConditionCheckVa = schedulerStartAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::tasksListLoopCheckSectionStart;
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R4, static_cast<uint32_t>(walkersLoopConditionCheckVa & 0xFFFF'FFFFULL), true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R4 + 4, static_cast<uint32_t>(walkersLoopConditionCheckVa >> 32), true);
+    }
+
+    // 2. Dispatch task section (loop start)
+    {
+        EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::Disable);
+
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R6, 8, true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R6 + 4, 0, true);
+
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R8, static_cast<uint32_t>(deferredTasksListGpuVa & 0xFFFF'FFFFULL), true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R8 + 4, static_cast<uint32_t>(deferredTasksListGpuVa >> 32), true);
+
+        EncodeAluHelper<GfxFamily, 10> aluHelper;
+        aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_2);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_6);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_SHL);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ACCU);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_7);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_8);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_ADD);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_6, AluRegisters::R_ACCU);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_LOADIND, AluRegisters::R_0, AluRegisters::R_ACCU);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_FENCE_RD);
+
+        aluHelper.copyToCmdStream(schedulerCmdStream);
+
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&schedulerCmdStream, 0, false, true, false);
+    }
+
+    // 3. Remove task section
+    {
+        EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::Disable);
+
+        EncodeMathMMIO<GfxFamily>::encodeDecrement(schedulerCmdStream, AluRegisters::R_1);
+        EncodeMathMMIO<GfxFamily>::encodeDecrement(schedulerCmdStream, AluRegisters::R_2);
+
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(
+            schedulerCmdStream,
+            schedulerStartAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::semaphoreSectionJumpStart,
+            CS_GPR_R1, 0, CompareOperation::Equal, false);
+
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R7, 8, true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R7 + 4, 0, true);
+
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R8, static_cast<uint32_t>(deferredTasksListGpuVa & 0xFFFF'FFFFULL), true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R8 + 4, static_cast<uint32_t>(deferredTasksListGpuVa >> 32), true);
+
+        EncodeAluHelper<GfxFamily, 14> aluHelper;
+        aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_1);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_7);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_SHL);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ACCU);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_7);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_8);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_ADD);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_LOADIND, AluRegisters::R_7, AluRegisters::R_ACCU);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_FENCE_RD);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_6);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD0, AluRegisters::R_SRCB, AluRegisters::OPCODE_NONE);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_ADD);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_STOREIND, AluRegisters::R_ACCU, AluRegisters::R_7);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_FENCE_WR);
+
+        aluHelper.copyToCmdStream(schedulerCmdStream);
+    }
+
+    // 4. List loop check section
+    {
+        EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::Disable);
+
+        EncodeMathMMIO<GfxFamily>::encodeIncrement(schedulerCmdStream, AluRegisters::R_2);
+
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalRegRegBatchBufferStart(
+            schedulerCmdStream,
+            loopSectionStartAddress,
+            AluRegisters::R_1, AluRegisters::R_2, CompareOperation::NotEqual, false);
+
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R2, 0, true);
+        LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R2 + 4, 0, true);
+    }
+
+    // 5. Drain request section
+    {
+        *schedulerCmdStream.getSpaceForCmd<typename GfxFamily::MI_ARB_CHECK>() = GfxFamily::cmdInitArbCheck;
+
+        uint32_t queueSizeLimit = 2;
+        if (DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() != -1) {
+            queueSizeLimit = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get());
+        }
+
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(
+            schedulerCmdStream,
+            loopSectionStartAddress,
+            CS_GPR_R1, queueSizeLimit, CompareOperation::GreaterOrEqual, false);
+
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(
+            schedulerCmdStream,
+            loopSectionStartAddress,
+            CS_GPR_R5, 1, CompareOperation::Equal, false);
+    }
+
+    // Exit Static scheduler
+
+    // 6. Jump to scheduler loop check section (dynamic scheduler)
+    EncodeSetMMIO<GfxFamily>::encodeREG(schedulerCmdStream, CS_GPR_R0, CS_GPR_R9);
+    EncodeSetMMIO<GfxFamily>::encodeREG(schedulerCmdStream, CS_GPR_R0 + 4, CS_GPR_R9 + 4);
+    EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&schedulerCmdStream, 0, false, true, false);
+
+    // 7. Jump to Semaphore section (dynamic scheduler)
+    EncodeMiPredicate<GfxFamily>::encode(schedulerCmdStream, MiPredicateType::Disable);
+    LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::schedulerLoopCheckSectionSize), true);
+
+    LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R10 + 4, 0, true);
+
+    EncodeAluHelper<GfxFamily, 4> aluHelper;
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_9);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_10);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_ADD);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_0, AluRegisters::R_ACCU);
+    aluHelper.copyToCmdStream(schedulerCmdStream);
+
+    EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&schedulerCmdStream, 0, false, true, false);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingSchedulerSection(uint32_t value) {
+    LinearStream schedulerCmdStream(this->preinitializedRelaxedOrderingScheduler.get(), RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize);
+
+    // 1. Init section
+
+    uint64_t schedulerStartVa = ringCommandStream.getCurrentGpuAddressPosition();
+
+    uint64_t schedulerLoopCheckVa = schedulerStartVa + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::schedulerLoopCheckSectionStart;
+
+    LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R9, static_cast<uint32_t>(schedulerLoopCheckVa & 0xFFFF'FFFFULL), true);
+    LriHelper<GfxFamily>::program(&schedulerCmdStream, CS_GPR_R9 + 4, static_cast<uint32_t>(schedulerLoopCheckVa >> 32), true);
+
+    schedulerCmdStream.getSpace(sizeof(typename GfxFamily::MI_BATCH_BUFFER_START)); // skip patching
+
+    // 2. Scheduler loop check section
+    {
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(
+            schedulerCmdStream, schedulerStartVa + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::endSectionStart,
+            semaphoreGpuVa, value, CompareOperation::GreaterOrEqual, false);
+
+        schedulerCmdStream.getSpace(sizeof(typename GfxFamily::MI_BATCH_BUFFER_START)); // skip patching
+    }
+
+    // 3. Semaphore section
+    {
+        using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+        using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+        schedulerCmdStream.getSpace(EncodeMiPredicate<GfxFamily>::getCmdSize()); // skip patching
+
+        EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(schedulerCmdStream, semaphoreGpuVa, value,
+                                                              COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+    }
+
+    // skip patching End section
+
+    auto dst = ringCommandStream.getSpace(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize);
+    memcpy_s(dst, RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize,
+             this->preinitializedRelaxedOrderingScheduler.get(), RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize);
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -109,6 +322,28 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::allocateResources() {
 
     if (completionFenceAllocation != nullptr) {
         allocations.push_back(completionFenceAllocation);
+    }
+
+    if (this->relaxedOrderingEnabled) {
+        const AllocationProperties allocationProperties(rootDeviceIndex,
+                                                        true, MemoryConstants::pageSize64k,
+                                                        AllocationType::DEFERRED_TASKS_LIST,
+                                                        isMultiOsContextCapable, false, osContext.getDeviceBitfield());
+
+        deferredTasksListAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
+        UNRECOVERABLE_IF(deferredTasksListAllocation == nullptr);
+
+        allocations.push_back(deferredTasksListAllocation);
+
+        const AllocationProperties relaxedOrderingSchedulerAllocationProperties(rootDeviceIndex,
+                                                                                true, MemoryConstants::pageSize64k,
+                                                                                AllocationType::COMMAND_BUFFER,
+                                                                                isMultiOsContextCapable, false, osContext.getDeviceBitfield());
+
+        relaxedOrderingSchedulerAllocation = memoryManager->allocateGraphicsMemoryWithProperties(relaxedOrderingSchedulerAllocationProperties);
+        UNRECOVERABLE_IF(relaxedOrderingSchedulerAllocation == nullptr);
+
+        allocations.push_back(relaxedOrderingSchedulerAllocation);
     }
 
     if (DebugManager.flags.DirectSubmissionPrintBuffers.get()) {
@@ -153,6 +388,19 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::makeResourcesResident(DirectSubm
 }
 
 template <typename GfxFamily, typename Dispatcher>
+inline void DirectSubmissionHw<GfxFamily, Dispatcher>::unblockGpu() {
+    if (sfenceMode >= DirectSubmissionSfenceMode::BeforeSemaphoreOnly) {
+        CpuIntrinsics::sfence();
+    }
+
+    semaphoreData->QueueWorkCount = currentQueueWorkCount;
+
+    if (sfenceMode == DirectSubmissionSfenceMode::BeforeAndAfterSemaphore) {
+        CpuIntrinsics::sfence();
+    }
+}
+
+template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::cpuCachelineFlush(void *ptr, size_t size) {
     if (disableCpuCacheFlush) {
         return;
@@ -179,7 +427,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit, bo
     initDiagnostic(submitOnInit);
     if (ret && submitOnInit) {
         size_t startBufferSize = Dispatcher::getSizePreemption() +
-                                 getSizeSemaphoreSection();
+                                 getSizeSemaphoreSection(false);
 
         Dispatcher::dispatchPreemption(ringCommandStream);
         if (this->partitionedMode) {
@@ -193,6 +441,15 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::initialize(bool submitOnInit, bo
             dispatchSystemMemoryFenceAddress();
 
             this->systemMemoryFenceAddressSet = true;
+        }
+        if (this->relaxedOrderingEnabled) {
+            preinitializeRelaxedOrderingSections();
+
+            initRelaxedOrderingRegisters();
+            dispatchStaticRelaxedOrderingScheduler();
+            startBufferSize += RelaxedOrderingHelper::getSizeRegistersInit<GfxFamily>();
+
+            this->relaxedOrderingInitialized = true;
         }
         if (workloadMode == 1) {
             dispatchDiagnosticModeSection();
@@ -213,19 +470,22 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
         return true;
     }
 
-    size_t startSize = getSizeSemaphoreSection();
+    size_t startSize = getSizeSemaphoreSection(false);
     if (!this->partitionConfigSet) {
         startSize += getSizePartitionRegisterConfigurationSection();
     }
     if (this->miMemFenceRequired && !this->systemMemoryFenceAddressSet) {
         startSize += getSizeSystemMemoryFenceAddress();
     }
+    if (this->relaxedOrderingEnabled && !this->relaxedOrderingInitialized) {
+        startSize += RelaxedOrderingHelper::getSizeRegistersInit<GfxFamily>();
+    }
 
-    size_t requiredSize = startSize + getSizeDispatch() + getSizeEnd();
+    size_t requiredSize = startSize + getSizeDispatch(false, false) + getSizeEnd(false);
     if (ringCommandStream.getAvailableSpace() < requiredSize) {
         switchRingBuffers();
     }
-    uint64_t gpuStartVa = getCommandBufferPositionGpuAddress(ringCommandStream.getSpace(0));
+    uint64_t gpuStartVa = ringCommandStream.getCurrentGpuAddressPosition();
 
     if (!this->partitionConfigSet) {
         dispatchPartitionRegisterConfiguration();
@@ -235,6 +495,14 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::startRingBuffer() {
     if (this->miMemFenceRequired && !this->systemMemoryFenceAddressSet) {
         dispatchSystemMemoryFenceAddress();
         this->systemMemoryFenceAddressSet = true;
+    }
+
+    if (this->relaxedOrderingEnabled && !this->relaxedOrderingInitialized) {
+        preinitializeRelaxedOrderingSections();
+        dispatchStaticRelaxedOrderingScheduler();
+        initRelaxedOrderingRegisters();
+
+        this->relaxedOrderingInitialized = true;
     }
 
     currentQueueWorkCount++;
@@ -251,12 +519,18 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
         return true;
     }
 
+    bool relaxedOrderingSchedulerWasRequired = this->relaxedOrderingSchedulerRequired;
+    if (this->relaxedOrderingEnabled && this->relaxedOrderingSchedulerRequired) {
+        dispatchRelaxedOrderingQueueStall();
+    }
+
     void *flushPtr = ringCommandStream.getSpace(0);
     Dispatcher::dispatchCacheFlush(ringCommandStream, *hwInfo, gpuVaForMiFlush);
     if (disableMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
-        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo, this->useNotifyForPostSync, this->partitionedMode);
+        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo,
+                                         this->useNotifyForPostSync, this->partitionedMode, this->dcFlushRequired);
     }
     Dispatcher::dispatchStopCommandBuffer(ringCommandStream);
 
@@ -264,9 +538,8 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
     EncodeNoop<GfxFamily>::emitNoop(ringCommandStream, bytesToPad);
     EncodeNoop<GfxFamily>::alignToCacheLine(ringCommandStream);
 
-    cpuCachelineFlush(flushPtr, getSizeEnd());
-
-    semaphoreData->QueueWorkCount = currentQueueWorkCount;
+    cpuCachelineFlush(flushPtr, getSizeEnd(relaxedOrderingSchedulerWasRequired));
+    this->unblockGpu();
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
 
     this->handleStopRingBuffer();
@@ -281,13 +554,18 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 
     dispatchDisablePrefetcher(true);
-    EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(ringCommandStream,
-                                                          semaphoreGpuVa,
-                                                          value,
-                                                          COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+
+    if (this->relaxedOrderingEnabled && this->relaxedOrderingSchedulerRequired) {
+        dispatchRelaxedOrderingSchedulerSection(value);
+    } else {
+        EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(ringCommandStream,
+                                                              semaphoreGpuVa,
+                                                              value,
+                                                              COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+    }
 
     if (miMemFenceRequired) {
-        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(ringCommandStream, 0, true, *hwInfo);
+        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronizationForDirectSubmission(ringCommandStream, this->gpuVaForAdditionalSynchronizationWA, true, *hwInfo);
     }
 
     dispatchPrefetchMitigation();
@@ -295,13 +573,17 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreSection() {
-    size_t semaphoreSize = EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
+inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreSection(bool relaxedOrderingSchedulerRequired) {
+    size_t semaphoreSize = (this->relaxedOrderingEnabled && relaxedOrderingSchedulerRequired) ? RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize
+                                                                                              : EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
     semaphoreSize += getSizePrefetchMitigation();
-    semaphoreSize += 2 * getSizeDisablePrefetcher();
+
+    if (isDisablePrefetcherRequired) {
+        semaphoreSize += 2 * getSizeDisablePrefetcher();
+    }
 
     if (miMemFenceRequired) {
-        semaphoreSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(*hwInfo);
+        semaphoreSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(*hwInfo);
     }
 
     return semaphoreSize;
@@ -322,7 +604,8 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSwitchRingBufferS
     if (disableMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
-        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo, this->useNotifyForPostSync, this->partitionedMode);
+        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo,
+                                         this->useNotifyForPostSync, this->partitionedMode, this->dcFlushRequired);
     }
     Dispatcher::dispatchStartCommandBuffer(ringCommandStream, nextBufferGpuAddress);
 }
@@ -337,7 +620,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSwitchRingBuffer
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd() {
+inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd(bool relaxedOrderingSchedulerRequired) {
     size_t size = Dispatcher::getSizeStopCommandBuffer() +
                   Dispatcher::getSizeCacheFlush(*hwInfo) +
                   (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
@@ -345,26 +628,24 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd() {
     if (disableMonitorFence) {
         size += Dispatcher::getSizeMonitorFence(*hwInfo);
     }
+    if (this->relaxedOrderingEnabled && relaxedOrderingSchedulerRequired) {
+        size += getSizeDispatchRelaxedOrderingQueueStall();
+    }
     return size;
 }
 
 template <typename GfxFamily, typename Dispatcher>
-inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::getCommandBufferPositionGpuAddress(void *position) {
-    void *currentBase = ringCommandStream.getCpuBase();
-
-    size_t offset = ptrDiff(position, currentBase);
-    return ringCommandStream.getGraphicsAllocation()->getGpuAddress() + static_cast<uint64_t>(offset);
-}
-
-template <typename GfxFamily, typename Dispatcher>
-inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch() {
-    size_t size = getSizeSemaphoreSection();
+inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch(bool relaxedOrderingSchedulerRequired, bool returnPtrsRequired) {
+    size_t size = getSizeSemaphoreSection(relaxedOrderingSchedulerRequired);
     if (workloadMode == 0) {
         size += getSizeStartSection();
+        if (this->relaxedOrderingEnabled && returnPtrsRequired) {
+            size += RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>();
+        }
     } else if (workloadMode == 1) {
         size += getDiagnosticModeSection();
     }
-    //mode 2 does not dispatch any commands
+    // mode 2 does not dispatch any commands
 
     if (!disableCacheFlush) {
         size += Dispatcher::getSizeCacheFlush(*hwInfo);
@@ -403,15 +684,31 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
         auto commandStreamAddress = ptrOffset(batchBuffer.commandBufferAllocation->getGpuAddress(), batchBuffer.startOffset);
         void *returnCmd = batchBuffer.endCmdPtr;
 
-        dispatchStartSection(commandStreamAddress);
-        void *returnPosition = ringCommandStream.getSpace(0);
+        LinearStream relaxedOrderingReturnPtrCmdStream;
+        if (this->relaxedOrderingEnabled && batchBuffer.hasRelaxedOrderingDependencies) {
+            // preallocate and patch after start section
+            auto relaxedOrderingReturnPtrCmds = ringCommandStream.getSpace(RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>());
+            relaxedOrderingReturnPtrCmdStream.replaceBuffer(relaxedOrderingReturnPtrCmds, RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>());
+        }
 
-        setReturnAddress(returnCmd, getCommandBufferPositionGpuAddress(returnPosition));
+        dispatchStartSection(commandStreamAddress);
+
+        uint64_t returnGpuPointer = ringCommandStream.getCurrentGpuAddressPosition();
+
+        if (this->relaxedOrderingEnabled && batchBuffer.hasRelaxedOrderingDependencies) {
+            dispatchRelaxedOrderingReturnPtrRegs(relaxedOrderingReturnPtrCmdStream, returnGpuPointer);
+        } else {
+            setReturnAddress(returnCmd, returnGpuPointer);
+        }
     } else if (workloadMode == 1) {
         DirectSubmissionDiagnostics::diagnosticModeOneDispatch(diagnostic.get());
         dispatchDiagnosticModeSection();
     }
-    //mode 2 does not dispatch any commands
+    // mode 2 does not dispatch any commands
+
+    if (this->relaxedOrderingEnabled && batchBuffer.hasRelaxedOrderingDependencies) {
+        dispatchTaskStoreSection(batchBuffer.taskStartAddress);
+    }
 
     if (!disableCacheFlush) {
         Dispatcher::dispatchCacheFlush(ringCommandStream, *hwInfo, gpuVaForMiFlush);
@@ -420,7 +717,8 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
     if (!disableMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
-        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo, this->useNotifyForPostSync, this->partitionedMode);
+        Dispatcher::dispatchMonitorFence(ringCommandStream, currentTagData.tagAddress, currentTagData.tagValue, *hwInfo,
+                                         this->useNotifyForPostSync, this->partitionedMode, this->dcFlushRequired);
     }
 
     dispatchSemaphoreSection(currentQueueWorkCount + 1);
@@ -428,8 +726,145 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
 }
 
 template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingQueueStall() {
+    LinearStream bbStartStream(ringCommandStream.getSpace(EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart()),
+                               EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart());
+
+    LriHelper<GfxFamily>::program(&ringCommandStream, CS_GPR_R5, 1, true);
+    dispatchSemaphoreSection(currentQueueWorkCount);
+
+    // patch conditional bb_start with current GPU address
+    EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(bbStartStream, ringCommandStream.getCurrentGpuAddressPosition(),
+                                                                                      CS_GPR_R1, 0, CompareOperation::Equal, false);
+
+    relaxedOrderingSchedulerRequired = false;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatchRelaxedOrderingQueueStall() {
+    return getSizeSemaphoreSection(true) + sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) +
+           EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataRegBatchBufferStart();
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr) {
+    LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL), true);
+    LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R4 + 4, static_cast<uint32_t>(returnPtr >> 32), true);
+
+    uint64_t returnPtrAfterTaskStoreSection = returnPtr;
+
+    returnPtrAfterTaskStoreSection += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>();
+
+    LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R3, static_cast<uint32_t>(returnPtrAfterTaskStoreSection & 0xFFFF'FFFFULL), true);
+    LriHelper<GfxFamily>::program(&cmdStream, CS_GPR_R3 + 4, static_cast<uint32_t>(returnPtrAfterTaskStoreSection >> 32), true);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::initRelaxedOrderingRegisters() {
+    LriHelper<GfxFamily>::program(&ringCommandStream, CS_GPR_R1, 0, true);
+    LriHelper<GfxFamily>::program(&ringCommandStream, CS_GPR_R1 + 4, 0, true);
+    LriHelper<GfxFamily>::program(&ringCommandStream, CS_GPR_R5, 0, true);
+    LriHelper<GfxFamily>::program(&ringCommandStream, CS_GPR_R5 + 4, 0, true);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::preinitializeRelaxedOrderingSections() {
+    // Task store section
+    preinitializedTaskStoreSection = std::make_unique<uint8_t[]>(RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>());
+
+    LinearStream stream(preinitializedTaskStoreSection.get(), RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>());
+
+    EncodeMiPredicate<GfxFamily>::encode(stream, MiPredicateType::Disable);
+
+    uint64_t deferredTasksListGpuVa = deferredTasksListAllocation->getGpuAddress();
+    LriHelper<GfxFamily>::program(&stream, CS_GPR_R6, static_cast<uint32_t>(deferredTasksListGpuVa & 0xFFFF'FFFFULL), true);
+    LriHelper<GfxFamily>::program(&stream, CS_GPR_R6 + 4, static_cast<uint32_t>(deferredTasksListGpuVa >> 32), true);
+
+    // Task start VA
+    LriHelper<GfxFamily>::program(&stream, CS_GPR_R7, 0, true);
+    LriHelper<GfxFamily>::program(&stream, CS_GPR_R7 + 4, 0, true);
+
+    // Shift by 8 = multiply by 256. Address must by 64b aligned (shift by 6), but SHL accepts only 1, 2, 4, 8, 16 and 32
+    LriHelper<GfxFamily>::program(&stream, CS_GPR_R8, 8, true);
+    LriHelper<GfxFamily>::program(&stream, CS_GPR_R8 + 4, 0, true);
+
+    EncodeAluHelper<GfxFamily, 9> aluHelper;
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_1);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_8);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_SHL);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_8, AluRegisters::R_ACCU);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_8);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_6);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_ADD);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_STOREIND, AluRegisters::R_ACCU, AluRegisters::R_7);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_FENCE_WR);
+
+    aluHelper.copyToCmdStream(stream);
+
+    EncodeMathMMIO<GfxFamily>::encodeIncrement(stream, AluRegisters::R_1);
+
+    UNRECOVERABLE_IF(stream.getUsed() != RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>());
+
+    // Scheduler section
+    preinitializedRelaxedOrderingScheduler = std::make_unique<uint8_t[]>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize);
+    LinearStream schedulerStream(preinitializedRelaxedOrderingScheduler.get(), RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize);
+
+    uint64_t schedulerStartAddress = relaxedOrderingSchedulerAllocation->getGpuAddress();
+
+    // 1. Init section
+    LriHelper<GfxFamily>::program(&schedulerStream, CS_GPR_R9, 0, true);
+    LriHelper<GfxFamily>::program(&schedulerStream, CS_GPR_R9 + 4, 0, true);
+    EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&schedulerStream, schedulerStartAddress, false, false, false);
+
+    // 2. Scheduler loop check section
+    {
+
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(schedulerStream, 0, 0, 0, CompareOperation::GreaterOrEqual, false);
+
+        EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&schedulerStream,
+                                                                        schedulerStartAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<GfxFamily>::loopStartSectionStart,
+                                                                        false, false, false);
+    }
+
+    // 3. Semaphore section
+    {
+        using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+        using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
+
+        EncodeMiPredicate<GfxFamily>::encode(schedulerStream, MiPredicateType::Disable);
+
+        EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(schedulerStream, 0, 0, COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
+    }
+
+    // 4. End section
+    {
+        EncodeMiPredicate<GfxFamily>::encode(schedulerStream, MiPredicateType::Disable);
+
+        LriHelper<GfxFamily>::program(&schedulerStream, CS_GPR_R5, 0, true);
+    }
+
+    UNRECOVERABLE_IF(schedulerStream.getUsed() != RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<GfxFamily>::totalSize);
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchTaskStoreSection(uint64_t taskStartSectionVa) {
+    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+
+    constexpr size_t patchOffset = EncodeMiPredicate<GfxFamily>::getCmdSize() + (2 * sizeof(MI_LOAD_REGISTER_IMM));
+
+    auto lri = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(preinitializedTaskStoreSection.get(), patchOffset));
+
+    lri->setDataDword(static_cast<uint32_t>(taskStartSectionVa & 0xFFFF'FFFFULL));
+    lri++;
+    lri->setDataDword(static_cast<uint32_t>(taskStartSectionVa >> 32));
+
+    auto dst = ringCommandStream.getSpace(RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>());
+    memcpy_s(dst, RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>(), preinitializedTaskStoreSection.get(), RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>());
+}
+
+template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp) {
-    //for now workloads requiring cache coherency are not supported
+    // for now workloads requiring cache coherency are not supported
     UNRECOVERABLE_IF(batchBuffer.requiresCoherency);
 
     if (batchBuffer.ringBufferRestartRequest) {
@@ -438,15 +873,31 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
 
     this->startRingBuffer();
 
-    size_t dispatchSize = getSizeDispatch();
-    size_t cycleSize = getSizeSwitchRingBufferSection();
-    size_t requiredMinimalSize = dispatchSize + cycleSize + getSizeEnd();
+    bool relaxedOrderingSchedulerWillBeNeeded = (this->relaxedOrderingSchedulerRequired || batchBuffer.hasRelaxedOrderingDependencies);
 
-    getCommandBufferPositionGpuAddress(ringCommandStream.getSpace(0));
+    size_t dispatchSize = getSizeDispatch(relaxedOrderingSchedulerWillBeNeeded, batchBuffer.hasRelaxedOrderingDependencies);
+    size_t cycleSize = getSizeSwitchRingBufferSection();
+    size_t requiredMinimalSize = dispatchSize + cycleSize + getSizeEnd(relaxedOrderingSchedulerWillBeNeeded);
+    if (this->relaxedOrderingEnabled) {
+        requiredMinimalSize += +RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>();
+
+        if (batchBuffer.hasStallingCmds && this->relaxedOrderingSchedulerRequired) {
+            requiredMinimalSize += getSizeDispatchRelaxedOrderingQueueStall();
+        }
+        if (batchBuffer.hasRelaxedOrderingDependencies) {
+            requiredMinimalSize += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>();
+        }
+    }
 
     if (ringCommandStream.getAvailableSpace() < requiredMinimalSize) {
         switchRingBuffers();
     }
+
+    if (this->relaxedOrderingEnabled && batchBuffer.hasStallingCmds && this->relaxedOrderingSchedulerRequired) {
+        dispatchRelaxedOrderingQueueStall();
+    }
+
+    this->relaxedOrderingSchedulerRequired |= batchBuffer.hasRelaxedOrderingDependencies;
 
     handleNewResourcesSubmission();
 
@@ -465,16 +916,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
         reserved = *ringBufferStart;
     }
 
-    if (sfenceMode >= DirectSubmissionSfenceMode::BeforeSemaphoreOnly) {
-        CpuIntrinsics::sfence();
-    }
-
-    //unblock GPU
-    semaphoreData->QueueWorkCount = currentQueueWorkCount;
-
-    if (sfenceMode == DirectSubmissionSfenceMode::BeforeAndAfterSemaphore) {
-        CpuIntrinsics::sfence();
-    }
+    this->unblockGpu();
 
     cpuCachelineFlush(semaphorePtr, MemoryConstants::cacheLineSize);
     currentQueueWorkCount++;
@@ -511,7 +953,7 @@ template <typename GfxFamily, typename Dispatcher>
 inline uint64_t DirectSubmissionHw<GfxFamily, Dispatcher>::switchRingBuffers() {
     GraphicsAllocation *nextRingBuffer = switchRingBuffersAllocations();
     void *flushPtr = ringCommandStream.getSpace(0);
-    uint64_t currentBufferGpuVa = getCommandBufferPositionGpuAddress(flushPtr);
+    uint64_t currentBufferGpuVa = ringCommandStream.getCurrentGpuAddressPosition();
 
     if (ringStart) {
         dispatchSwitchRingBufferSection(nextRingBuffer->getGpuAddress());
@@ -572,6 +1014,9 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::deallocateResources() {
         memoryManager->freeGraphicsMemory(semaphores);
         semaphores = nullptr;
     }
+
+    memoryManager->freeGraphicsMemory(deferredTasksListAllocation);
+    memoryManager->freeGraphicsMemory(relaxedOrderingSchedulerAllocation);
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -643,11 +1088,10 @@ size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getDiagnosticModeSection() {
 
 template <typename GfxFamily, typename Dispatcher>
 void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSystemMemoryFenceAddress() {
-    UNRECOVERABLE_IF(!this->globalFenceAllocation);
     EncodeMemoryFence<GfxFamily>::encodeSystemMemoryFence(ringCommandStream, this->globalFenceAllocation, this->logicalStateHelper);
 
     if (logicalStateHelper) {
-        logicalStateHelper->writeStreamInline(ringCommandStream);
+        logicalStateHelper->writeStreamInline(ringCommandStream, false);
     }
 }
 

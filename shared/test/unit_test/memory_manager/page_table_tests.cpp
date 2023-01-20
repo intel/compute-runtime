@@ -10,8 +10,8 @@
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/page_table.h"
 #include "shared/source/memory_manager/page_table.inl"
-#include "shared/test/common/mocks/mock_physical_address_allocator.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/mocks/mock_physical_address_allocator.h"
 
 #include "gtest/gtest.h"
 
@@ -107,11 +107,11 @@ class PageTableFixture {
     uint64_t startAddress = 0x1000;
 
   public:
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         startAddress = 0x1000;
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
     }
 };
 
@@ -136,9 +136,9 @@ void PageTableEntryChecker::testEntry<MockPDPE>(MockPDPE *pageTable, uint32_t pt
     EXPECT_EQ(reinterpret_cast<void *>(expectedValue), pageTable->entries[0]->entries[0]->entries[pteIndex]);
 }
 
-typedef Test<PageTableFixture> PageTableTests32;
-typedef Test<PageTableFixture> PageTableTests48;
-typedef Test<PageTableFixture> PageTableTestsGPU;
+using PageTableTests32 = Test<PageTableFixture>;
+using PageTableTests48 = Test<PageTableFixture>;
+using PageTableTestsGPU = Test<PageTableFixture>;
 
 TEST_F(PageTableTests48, WhenPageTableIsCreatedThenWalkerIsDummy) {
     PageTable<void, 0, 9> pt(&allocator);

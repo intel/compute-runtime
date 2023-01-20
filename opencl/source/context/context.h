@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,10 @@
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/unified_memory/unified_memory.h"
 
+#include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/cl_device/cl_device_vector.h"
 #include "opencl/source/context/context_type.h"
 #include "opencl/source/context/driver_diagnostics.h"
@@ -21,7 +22,11 @@
 
 #include <map>
 
+enum InternalMemoryType : uint32_t;
+
 namespace NEO {
+struct MemoryProperties;
+class HeapAllocator;
 
 class AsyncEventsHandler;
 class CommandQueue;
@@ -40,6 +45,40 @@ struct OpenCLObjectMapper<_cl_context> {
 
 class Context : public BaseObject<_cl_context> {
   public:
+    class BufferPoolAllocator {
+      public:
+        static constexpr auto aggregatedSmallBuffersPoolSize = 64 * KB;
+        static constexpr auto smallBufferThreshold = 4 * KB;
+        static constexpr auto chunkAlignment = 512u;
+        static constexpr auto startingOffset = chunkAlignment;
+
+        static_assert(aggregatedSmallBuffersPoolSize > smallBufferThreshold, "Largest allowed buffer needs to fit in pool");
+
+        Buffer *allocateBufferFromPool(const MemoryProperties &memoryProperties,
+                                       cl_mem_flags flags,
+                                       cl_mem_flags_intel flagsIntel,
+                                       size_t size,
+                                       void *hostPtr,
+                                       cl_int &errcodeRet);
+        void tryFreeFromPoolBuffer(MemObj *possiblePoolBuffer, size_t offset, size_t size);
+        void releaseSmallBufferPool();
+
+        bool isAggregatedSmallBuffersEnabled(Context *context) const;
+
+        void initAggregatedSmallBuffers(Context *context);
+
+        bool isPoolBuffer(const MemObj *buffer) const;
+
+        bool flagsAllowBufferFromPool(const cl_mem_flags &flags, const cl_mem_flags_intel &flagsIntel) const;
+
+      protected:
+        inline bool isSizeWithinThreshold(size_t size) const {
+            return BufferPoolAllocator::smallBufferThreshold >= size;
+        }
+        Buffer *mainStorage{nullptr};
+        std::unique_ptr<HeapAllocator> chunkAllocator;
+        std::mutex mutex;
+    };
     static const cl_ulong objectMagic = 0xA4234321DC002130LL;
 
     bool createImpl(const cl_context_properties *properties,
@@ -58,6 +97,11 @@ class Context : public BaseObject<_cl_context> {
         if (!pContext->createImpl(properties, devices, funcNotify, data, errcodeRet)) {
             delete pContext;
             pContext = nullptr;
+        } else {
+            auto &bufferPoolAllocator = pContext->getBufferPoolAllocator();
+            if (bufferPoolAllocator.isAggregatedSmallBuffersEnabled(pContext)) {
+                bufferPoolAllocator.initAggregatedSmallBuffers(pContext);
+            }
         }
         gtpinNotifyContextCreate(pContext);
         return pContext;
@@ -176,6 +220,9 @@ class Context : public BaseObject<_cl_context> {
     const std::map<uint32_t, DeviceBitfield> &getDeviceBitfields() const { return deviceBitfields; };
 
     static Platform *getPlatformFromProperties(const cl_context_properties *properties, cl_int &errcode);
+    BufferPoolAllocator &getBufferPoolAllocator() {
+        return this->smallBufferPoolAllocator;
+    }
 
   protected:
     struct BuiltInKernel {
@@ -211,6 +258,7 @@ class Context : public BaseObject<_cl_context> {
     MapOperationsStorage mapOperationsStorage = {};
     StackVec<CommandQueue *, 1> specialQueues;
     DriverDiagnostics *driverDiagnostics = nullptr;
+    BufferPoolAllocator smallBufferPoolAllocator;
 
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     cl_bool preferD3dSharedResources = 0u;

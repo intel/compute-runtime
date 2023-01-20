@@ -1,22 +1,21 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/page_fault_manager/cpu_page_fault_manager_tests_fixture.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
@@ -32,34 +31,7 @@
 
 using namespace NEO;
 
-template <bool enableLocalMemory>
-struct SVMMemoryAllocatorFixture {
-    SVMMemoryAllocatorFixture() : executionEnvironment(defaultHwInfo.get()) {}
-
-    virtual void SetUp() { // NOLINT(readability-identifier-naming)
-        bool svmSupported = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo()->capabilityTable.ftrSvm;
-        if (!svmSupported) {
-            GTEST_SKIP();
-        }
-        executionEnvironment.initGmm();
-        memoryManager = std::make_unique<MockMemoryManager>(false, enableLocalMemory, executionEnvironment);
-        svmManager = std::make_unique<MockSVMAllocsManager>(memoryManager.get(), false);
-        if (enableLocalMemory) {
-            memoryManager->pageFaultManager.reset(new MockPageFaultManager);
-        }
-    }
-    virtual void TearDown() { // NOLINT(readability-identifier-naming)
-    }
-
-    MockExecutionEnvironment executionEnvironment;
-    std::unique_ptr<MockMemoryManager> memoryManager;
-    std::unique_ptr<MockSVMAllocsManager> svmManager;
-    RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
-    std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
-};
-
 using SVMMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<false>>;
-
 using SVMLocalMemoryAllocatorTest = Test<SVMMemoryAllocatorFixture<true>>;
 
 TEST_F(SVMMemoryAllocatorTest, whenCreateZeroSizedSVMAllocationThenReturnNullptr) {
@@ -355,8 +327,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithDebugFlagSe
     EXPECT_EQ(allocationSize, allocation->size);
     EXPECT_EQ(mockContext.getDevice(0u), allocation->device->getSpecializedDevice<ClDevice>());
 
-    EXPECT_EQ(alignUp(allocationSize, 64 * KB), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize2Mb), allocation->cpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->cpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(AllocationType::SVM_GPU, gpuAllocation->getAllocationType());
     EXPECT_EQ(AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());
@@ -384,8 +356,8 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenSharedAllocationIsCreatedWithLocalMemory
     EXPECT_EQ(InternalMemoryType::SHARED_UNIFIED_MEMORY, allocation->memoryType);
     EXPECT_EQ(allocationSize, allocation->size);
 
-    EXPECT_EQ(alignUp(allocationSize, 64 * KB), gpuAllocation->getUnderlyingBufferSize());
-    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize2Mb), allocation->cpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), gpuAllocation->getUnderlyingBufferSize());
+    EXPECT_EQ(alignUp(allocationSize, MemoryConstants::pageSize64k), allocation->cpuAllocation->getUnderlyingBufferSize());
 
     EXPECT_EQ(AllocationType::SVM_GPU, gpuAllocation->getAllocationType());
     EXPECT_EQ(AllocationType::SVM_CPU, allocation->cpuAllocation->getAllocationType());

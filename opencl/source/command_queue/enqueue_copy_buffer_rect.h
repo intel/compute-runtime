@@ -56,6 +56,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyBufferRect(
     dc.srcSlicePitch = srcSlicePitch;
     dc.dstRowPitch = dstRowPitch;
     dc.dstSlicePitch = dstSlicePitch;
+    dc.bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, getTotalSizeFromRectRegion(region), csr);
 
     MultiDispatchInfo dispatchInfo(dc);
     return dispatchBcsOrGpgpuEnqueue<CL_COMMAND_COPY_BUFFER_RECT>(dispatchInfo, surfaces, eBuiltInOps, numEventsInWaitList, eventWaitList, event, false, csr);

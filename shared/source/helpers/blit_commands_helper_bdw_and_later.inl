@@ -15,7 +15,7 @@ uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitWidthOverride(const RootDevice
 }
 
 template <typename GfxFamily>
-uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment) {
+uint64_t BlitCommandsHelper<GfxFamily>::getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
     return 0;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -108,9 +108,9 @@ SDispatchTable icdGlobalDispatchTable =
         clEnqueueCopyBufferRect,
 
         /* cl_ext_device_fission */
-        nullptr, //clCreateSubDevicesEXT,
-        nullptr, //clRetainDeviceEXT,
-        nullptr, //clReleaseDeviceEXT,
+        nullptr, // clCreateSubDevicesEXT,
+        nullptr, // clRetainDeviceEXT,
+        nullptr, // clReleaseDeviceEXT,
 
         /* cl_khr_gl_event */
         nullptr,
@@ -148,12 +148,12 @@ SDispatchTable icdGlobalDispatchTable =
         nullptr, // clEnqueueReleaseDX9MediaSurfacesKHR,
 
         /* cl_khr_egl_image */
-        nullptr, //clCreateFromEGLImageKHR,
-        nullptr, //clEnqueueAcquireEGLObjectsKHR,
-        nullptr, //clEnqueueReleaseEGLObjectsKHR,
+        nullptr, // clCreateFromEGLImageKHR,
+        nullptr, // clEnqueueAcquireEGLObjectsKHR,
+        nullptr, // clEnqueueReleaseEGLObjectsKHR,
 
         /* cl_khr_egl_event */
-        nullptr, //clCreateEventFromEGLSyncKHR,
+        nullptr, // clCreateEventFromEGLSyncKHR,
 
         /* OpenCL 2.0 */
         clCreateCommandQueueWithProperties,

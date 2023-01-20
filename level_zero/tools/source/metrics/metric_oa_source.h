@@ -48,7 +48,6 @@ class OaMetricSourceImp : public MetricSource {
     uint32_t getSubDeviceIndex();
     bool isImplicitScalingCapable() const;
     const MetricDeviceContext &getMetricDeviceContext() const { return metricDeviceContext; }
-    static bool checkDependencies();
     static std::unique_ptr<OaMetricSourceImp> create(const MetricDeviceContext &metricDeviceContext);
     using OsLibraryLoadPtr = std::add_pointer<NEO::OsLibrary *(const std::string &)>::type;
     static OsLibraryLoadPtr osLibraryLoadFunction;

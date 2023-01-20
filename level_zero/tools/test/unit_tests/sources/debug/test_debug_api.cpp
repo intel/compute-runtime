@@ -5,9 +5,13 @@
  *
  */
 
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_sip.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
@@ -19,22 +23,23 @@ namespace L0 {
 namespace ult {
 
 struct DebugApiFixture : public DeviceFixture {
-    void SetUp() {
-        DeviceFixture::SetUp();
+    void setUp() {
+        DeviceFixture::setUp();
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
         mockBuiltins = new MockBuiltins();
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
         neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltins);
     }
 
-    void TearDown() {
-        DeviceFixture::TearDown();
+    void tearDown() {
+        DeviceFixture::tearDown();
     }
 
     MockBuiltins *mockBuiltins = nullptr;
 };
 
 using DebugApiTest = Test<DebugApiFixture>;
+using MultiTileDebugApiTest = Test<MultipleDevicesWithCustomHwInfo>;
 
 TEST_F(DebugApiTest, givenDeviceWhenGettingDebugPropertiesThenNoFlagIsSet) {
     zet_device_debug_properties_t debugProperties = {};
@@ -55,6 +60,85 @@ TEST_F(DebugApiTest, givenDeviceWhenCallingDebugAttachThenErrorIsReturned) {
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
     EXPECT_EQ(nullptr, debugSession);
+}
+
+TEST_F(DebugApiTest, givenDebugAttachSupportedInOsWhenCallingDebugAttachThenSuccessIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
+
+    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    auto sessionMock = new MockDebugSession(config, device, true);
+    sessionMock->initialize();
+    deviceImp->setDebugSession(sessionMock);
+
+    zet_debug_session_handle_t debugSession = nullptr;
+    auto result = zetDebugAttach(device->toHandle(), &config, &debugSession);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, debugSession);
+
+    zet_debug_session_handle_t debugSession2 = nullptr;
+    result = zetDebugAttach(device->toHandle(), &config, &debugSession2);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(debugSession, debugSession2);
+}
+
+TEST_F(DebugApiTest, givenDebugSessionWithPidWhenCallingDebugAttachForOtherPidThenErrorUnsupportedIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OsInterfaceWithDebugAttach);
+
+    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    auto sessionMock = new MockDebugSession(config, device, true);
+    sessionMock->initialize();
+    deviceImp->setDebugSession(sessionMock);
+
+    zet_debug_session_handle_t debugSession = nullptr;
+    auto result = zetDebugAttach(device->toHandle(), &config, &debugSession);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, debugSession);
+
+    zet_debug_session_handle_t debugSession2 = nullptr;
+    config.pid = 0x1111;
+    result = zetDebugAttach(device->toHandle(), &config, &debugSession2);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(nullptr, debugSession2);
+}
+
+TEST_F(MultiTileDebugApiTest, givenDebugSessionWithPidWhenCallingDebugAttachForOtherPidThenErrorUnsupportedIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    L0::Device *device = driverHandle->devices[0];
+    L0::DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    auto neoDevice = device->getNEODevice();
+    auto osInterface = new OsInterfaceWithDebugAttach;
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    auto subDevice0 = neoDevice->getSubDevice(0)->getSpecializedDevice<Device>();
+    auto subDevice1 = neoDevice->getSubDevice(1)->getSpecializedDevice<Device>();
+
+    auto sessionMock = new MockDebugSession(config, device, false);
+    sessionMock->initialize();
+    deviceImp->setDebugSession(sessionMock);
+
+    zet_debug_session_handle_t debugSession = nullptr;
+    auto result = zetDebugAttach(subDevice0->toHandle(), &config, &debugSession);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, debugSession);
+
+    zet_debug_session_handle_t debugSession2 = nullptr;
+    config.pid = 0x1111;
+    result = zetDebugAttach(subDevice1->toHandle(), &config, &debugSession2);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(nullptr, debugSession2);
 }
 
 TEST_F(DebugApiTest, givenSubDeviceWhenCallingDebugAttachThenErrorIsReturned) {
@@ -110,7 +194,10 @@ TEST_F(DebugApiTest, givenStateSaveAreaHeaderUnavailableWhenGettingDebugProperti
     EXPECT_EQ(0u, debugProperties.flags);
 }
 
-TEST_F(DebugApiTest, givenSubDeviceWhenDebugAttachIsAvaialbleThenGetPropertiesReturnsNoFlag) {
+TEST_F(DebugApiTest, givenTileAttachedDisabledAndSubDeviceWhenDebugAttachIsAvaialbleThenGetPropertiesReturnsNoFlag) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(0);
+
     zet_device_debug_properties_t debugProperties = {};
     debugProperties.flags = ZET_DEVICE_DEBUG_PROPERTY_FLAG_FORCE_UINT32;
 
@@ -206,14 +293,14 @@ TEST_F(DebugApiTest, givenNullCountPointerWhenGetRegisterSetPropertiesCalledThen
 TEST_F(DebugApiTest, givenZeroCountWhenGetRegisterSetPropertiesCalledThenCorrectCountIsSet) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
-    EXPECT_EQ(11u, count);
+    EXPECT_EQ(12u, count);
 }
 
 TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledAndExtraSpaceIsProvidedThenCorrectPropertiesReturned) {
     uint32_t count = 100;
     std::vector<zet_debug_regset_properties_t> regsetProps(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, regsetProps.data()));
-    EXPECT_EQ(11u, count);
+    EXPECT_EQ(12u, count);
 }
 
 TEST_F(DebugApiTest, givenNoStateSaveHeaderWhenGettingRegSetPropertiesThenZeroCountIsReturned) {
@@ -234,12 +321,12 @@ TEST_F(DebugApiTest, givenNonZeroCountAndNullRegsetPointerWhenGetRegisterSetProp
 TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledCorrectPropertiesReturned) {
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, nullptr));
-    EXPECT_EQ(11u, count);
+    EXPECT_EQ(12u, count);
 
     std::vector<zet_debug_regset_properties_t> regsetProps(count);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugGetRegisterSetProperties(device->toHandle(), &count, regsetProps.data()));
 
-    EXPECT_EQ(11u, count);
+    EXPECT_EQ(12u, count);
 
     auto validateRegsetProps = [](const zet_debug_regset_properties_t &regsetProps,
                                   zet_debug_regset_type_intel_gpu_t type, zet_debug_regset_flags_t flags,
@@ -265,8 +352,8 @@ TEST_F(DebugApiTest, givenGetRegisterSetPropertiesCalledCorrectPropertiesReturne
     // MME is not present
     validateRegsetProps(regsetProps[8], ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 128, 16);
     validateRegsetProps(regsetProps[9], ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE, ZET_DEBUG_SBA_COUNT_INTEL_GPU, 64, 8);
-    // FC is not present
     validateRegsetProps(regsetProps[10], ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 32, 4);
+    validateRegsetProps(regsetProps[11], ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU, ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE, 1, 32, 4);
 }
 
 TEST(DebugSessionTest, givenDebugSessionWhenConvertingToAndFromHandleCorrectHandleAndPointerIsReturned) {
@@ -313,7 +400,10 @@ TEST(DebugSessionTest, givenDeviceWithDebugSessionWhenRemoveCalledThenSessionIsN
     EXPECT_EQ(nullptr, deviceImp.debugSession.get());
 }
 
-TEST(DebugSessionTest, givenSubDeviceWhenCreateingSessionThenNullptrReturned) {
+TEST(DebugSessionTest, givenTileAttachDisabledAndSubDeviceWhenCreatingSessionThenNullptrReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(0);
+
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -322,13 +412,35 @@ TEST(DebugSessionTest, givenSubDeviceWhenCreateingSessionThenNullptrReturned) {
     deviceImp.isSubdevice = true;
 
     ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
-    auto session = deviceImp.createDebugSession(config, result);
+    auto session = deviceImp.createDebugSession(config, result, false);
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 }
 
-TEST(DebugSessionTest, givenRootDeviceWhenCreateingSessionThenResultReturnedIsCorrect) {
+TEST(DebugSessionTest, givenTileAttachDisabledAndSubDeviceWhenDebugAttachCalledThenErrorReturned) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(0);
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto neoDevice = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    neoDevice->incRefInternal();
+    auto neoSubdevice = std::unique_ptr<NEO::SubDevice>(neoDevice->createSubDevice(0));
+
+    auto deviceImp = std::make_unique<Mock<L0::DeviceImp>>(neoSubdevice.get(), neoSubdevice->getExecutionEnvironment());
+    deviceImp->isSubdevice = true;
+
+    ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
+    zet_debug_session_handle_t debugSession = nullptr;
+    result = zetDebugAttach(deviceImp->toHandle(), &config, &debugSession);
+
+    EXPECT_EQ(nullptr, debugSession);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+TEST(DebugSessionTest, givenRootDeviceWhenCreatingSessionThenResultReturnedIsCorrect) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -342,10 +454,32 @@ TEST(DebugSessionTest, givenRootDeviceWhenCreateingSessionThenResultReturnedIsCo
     deviceImp.isSubdevice = false;
 
     ze_result_t result = ZE_RESULT_ERROR_DEVICE_LOST;
-    auto session = deviceImp.createDebugSession(config, result);
+    auto session = deviceImp.createDebugSession(config, result, true);
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+}
+
+TEST_F(DebugApiTest, givenZeAffinityMaskAndEnabledDebugMessagesWhenDebugAttachCalledThenMessageIsPrinted) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.PrintDebugMessages.set(1);
+
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZE_AFFINITY_MASK", "0.1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    deviceImp.debugSession.reset(new DebugSessionMock(config, &deviceImp));
+
+    testing::internal::CaptureStdout();
+    zet_debug_session_handle_t debugSession = nullptr;
+    zetDebugAttach(deviceImp.toHandle(), &config, &debugSession);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(std::string("ZE_AFFINITY_MASK is not recommended while using program debug API\n"), output);
 }
 
 } // namespace ult

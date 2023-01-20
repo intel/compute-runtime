@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_builtin_dispatch_info_builder.h"
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 using namespace NEO;
@@ -27,8 +28,8 @@ struct EnqueueSvmMemFillTest : public ClDeviceFixture,
     }
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(pClDevice, 0);
+        ClDeviceFixture::setUp();
+        CommandQueueFixture::setUp(pClDevice, 0);
         REQUIRE_SVM_OR_SKIP(pDevice);
         patternSize = (size_t)GetParam();
         ASSERT_TRUE((0 < patternSize) && (patternSize <= 128));
@@ -46,8 +47,8 @@ struct EnqueueSvmMemFillTest : public ClDeviceFixture,
         if (svmPtr) {
             context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
         }
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     const uint64_t pattern[16] = {0x0011223344556677, 0x8899AABBCCDDEEFF, 0xFFEEDDCCBBAA9988, 0x7766554433221100,
@@ -179,10 +180,14 @@ struct EnqueueSvmMemFillHw : public ::testing::Test {
 
 using EnqueueSvmMemFillHwTest = EnqueueSvmMemFillHw;
 
-HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToBufferStatelessBuilderThenSuccessIsReturned) {
+HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToSystemBufferStatelessBuilderThenSuccessIsReturned) {
     auto cmdQ = std::make_unique<CommandQueueStateless<FamilyType>>(context.get(), device.get());
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
     svmData->size = static_cast<size_t>(bigSize);
+    svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(AllocationType::SVM_ZERO_COPY);
+
+    cmdQ->validateKernelSystemMemory = true;
+    cmdQ->expectedKernelSystemMemory = true;
 
     auto retVal = cmdQ->enqueueSVMMemFill(
         svmPtr,                       // void *svm_ptr
@@ -196,8 +201,14 @@ HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToBuf
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToBufferStatefulBuilderThenSuccessIsReturned) {
+HWTEST_F(EnqueueSvmMemFillHwTest, givenEnqueueSVMMemFillWhenUsingCopyBufferToLocalBufferStatefulBuilderThenSuccessIsReturned) {
     auto cmdQ = std::make_unique<CommandQueueStateful<FamilyType>>(context.get(), device.get());
+    auto svmData = context->getSVMAllocsManager()->getSVMAlloc(svmPtr);
+    svmData->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex())->setAllocationType(AllocationType::SVM_GPU);
+
+    cmdQ->validateKernelSystemMemory = true;
+    cmdQ->expectedKernelSystemMemory = false;
+
     auto retVal = cmdQ->enqueueSVMMemFill(
         svmPtr,                         // void *svm_ptr
         pattern,                        // const void *pattern

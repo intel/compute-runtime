@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/csr_deps.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -17,7 +16,6 @@
 #include "shared/source/utilities/tag_allocator.h"
 
 #include <cstdint>
-#include <vector>
 
 namespace NEO {
 class CommandStreamReceiver;
@@ -155,7 +153,7 @@ struct TimestampPacketHelper {
 
             EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream,
                                                                   static_cast<uint64_t>(tagAddressPreviousRootDevice),
-                                                                  taskCountPreviousRootDevice,
+                                                                  static_cast<uint32_t>(taskCountPreviousRootDevice),
                                                                   COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD);
         }
     }
@@ -175,8 +173,8 @@ struct TimestampPacketHelper {
 
             PipeControlArgs args;
             args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-            MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
-                cmdStream, GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+            MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
+                cmdStream, PostSyncMode::ImmediateData,
                 cacheFlushTimestampPacketGpuAddress, 0, hwInfo, args);
         }
 
@@ -190,7 +188,7 @@ struct TimestampPacketHelper {
         size_t size = count * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
 
         if (auxTranslationDirection == AuxTranslationDirection::NonAuxToAux && cacheFlushForBcsRequired) {
-            size += MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
+            size += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
         }
 
         return size;

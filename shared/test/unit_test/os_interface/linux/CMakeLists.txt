@@ -16,6 +16,7 @@ set(NEO_CORE_OS_INTERFACE_TESTS_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_buffer_object_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_mm_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_tests_1.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_engine_info_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_mapper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_tests.cpp
@@ -87,8 +88,7 @@ endif()
 set_property(GLOBAL PROPERTY NEO_CORE_OS_INTERFACE_TESTS_LINUX ${NEO_CORE_OS_INTERFACE_TESTS_LINUX})
 
 if(UNIX)
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${NEO_CORE_OS_INTERFACE_TESTS_LINUX}
-  )
+  target_sources(neo_shared_tests PRIVATE ${NEO_CORE_OS_INTERFACE_TESTS_LINUX})
 endif()
+
 add_subdirectories()

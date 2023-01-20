@@ -9,14 +9,14 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-
-#include "hw_cmds.h"
+#include "shared/source/helpers/hw_helper.h"
 
 namespace NEO {
 
 template <typename GfxFamily>
-void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(NEO::LinearStream &cmdStream, const SbaAddresses &sba) {
+void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStream, SbaAddresses sba, bool useFirstLevelBB) {
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
@@ -43,7 +43,7 @@ void DebuggerL0Hw<GfxFamily>::programSbaTrackingCommands(NEO::LinearStream &cmdS
                             sbaCanonized.IndirectObjectBaseAddress, sbaCanonized.InstructionBaseAddress, sbaCanonized.BindlessSurfaceStateBaseAddress);
 
     if (singleAddressSpaceSbaTracking) {
-        programSbaTrackingCommandsSingleAddressSpace(cmdStream, sba);
+        programSbaTrackingCommandsSingleAddressSpace(cmdStream, sbaCanonized, useFirstLevelBB);
     } else {
         if (sbaCanonized.GeneralStateBaseAddress) {
             auto generalStateBaseAddress = sbaCanonized.GeneralStateBaseAddress;

@@ -26,11 +26,11 @@ namespace ClCreateBufferTests {
 class ClCreateBufferTemplateTests : public ApiFixture<>,
                                     public testing::TestWithParam<uint64_t> {
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
     }
 
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 };
 

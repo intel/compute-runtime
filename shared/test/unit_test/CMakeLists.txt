@@ -1,88 +1,79 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-set(SHARED_TEST_PROJECTS_FOLDER "neo shared")
-if(NOT NEO_SKIP_UNIT_TESTS)
+function(ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION)
+  set(NEO_SUPPORTED_PRODUCT_FAMILIES ${ALL_TESTED_PRODUCT_FAMILY})
+  string(REPLACE ";" "," NEO_SUPPORTED_PRODUCT_FAMILIES "${NEO_SUPPORTED_PRODUCT_FAMILIES}")
+  add_definitions(-DSUPPORTED_TEST_PRODUCT_FAMILIES=${NEO_SUPPORTED_PRODUCT_FAMILIES})
+endfunction()
 
-  add_custom_target(unit_tests)
+ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
+link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
 
-  set(TARGET_NAME neo_shared_tests)
+add_executable(neo_shared_tests
+               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/ult_specific_config.cpp
+               ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
+               ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
+               ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_checks_shared.cpp
+               $<TARGET_OBJECTS:mock_gmm>
+               $<TARGET_OBJECTS:neo_libult_common>
+               $<TARGET_OBJECTS:neo_libult_cs>
+               $<TARGET_OBJECTS:neo_libult>
+               $<TARGET_OBJECTS:neo_shared_mocks>
+)
 
-  include(${NEO_SOURCE_DIR}/cmake/setup_ult_global_flags.cmake)
+add_dependencies(neo_shared_tests test_dynamic_lib)
 
-  function(ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION)
-    set(NEO_SUPPORTED_PRODUCT_FAMILIES ${ALL_TESTED_PRODUCT_FAMILY})
-    string(REPLACE ";" "," NEO_SUPPORTED_PRODUCT_FAMILIES "${NEO_SUPPORTED_PRODUCT_FAMILIES}")
-    add_definitions(-DSUPPORTED_TEST_PRODUCT_FAMILIES=${NEO_SUPPORTED_PRODUCT_FAMILIES})
-  endfunction()
+set_property(TARGET neo_shared_tests APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
+set_target_properties(neo_shared_tests PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}")
 
-  ADD_SUPPORTED_TEST_PRODUCT_FAMILIES_DEFINITION()
-  link_libraries(${ASAN_LIBS} ${TSAN_LIBS})
+target_include_directories(neo_shared_tests PRIVATE
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
+                           ${ENGINE_NODE_DIR}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
+                           ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
+)
 
-  add_executable(${TARGET_NAME}
-                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-                 ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/tests_configuration.h
-                 ${CMAKE_CURRENT_SOURCE_DIR}/ult_specific_config.cpp
-                 ${NEO_SHARED_DIRECTORY}/helpers/allow_deferred_deleter.cpp
-                 ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/api_specific_config_shared_tests.cpp
-                 ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_checks_shared.cpp
-                 $<TARGET_OBJECTS:mock_gmm>
-                 $<TARGET_OBJECTS:neo_libult_common>
-                 $<TARGET_OBJECTS:neo_libult_cs>
-                 $<TARGET_OBJECTS:neo_libult>
-                 $<TARGET_OBJECTS:neo_shared_mocks>
-  )
-
-  add_dependencies(${TARGET_NAME} test_dynamic_lib)
-
-  set_property(TARGET ${TARGET_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
-  set_target_properties(${TARGET_NAME} PROPERTIES FOLDER "${SHARED_TEST_PROJECTS_FOLDER}")
-
-  target_include_directories(${TARGET_NAME} PRIVATE
-                             ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
-                             ${ENGINE_NODE_DIR}
-                             ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
-                             ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
-  )
-
-
-  if (UNIX)
-    target_link_libraries(${TARGET_NAME} pthread rt execinfo)
-  elseif(WIN32)
-    target_link_libraries(${TARGET_NAME} dbghelp)
-  endif()
-
-  target_link_libraries(${TARGET_NAME}
-                        gmock-gtest
-                        ${NEO_SHARED_MOCKABLE_LIB_NAME}
-                        ${NEO_EXTRA_LIBS}
-  )
-
-  if(MSVC)
-    set_target_properties(${TARGET_NAME} PROPERTIES
-                          VS_DEBUGGER_COMMAND_ARGUMENTS "--gtest_filter=* --gtest_catch_exceptions=0 --enable_default_listener --disable_pagefaulting_tests"
-                          VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
-    )
-  endif()
-
-  if(COMPILER_SUPPORTS_SSE42)
-    set_source_files_properties(helpers/uint16_sse4_tests.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
-  endif()
-
-  add_subdirectory(${NEO_SHARED_TEST_DIRECTORY}/common "${NEO_BUILD_DIR}/shared/test/common")
-  add_subdirectory_unique(mocks)
-
-  if(NOT NEO_SKIP_SHARED_UNIT_TESTS)
-    add_subdirectories()
-  endif()
-
-  target_sources(${TARGET_NAME} PRIVATE $<TARGET_OBJECTS:neo_unit_tests_config>)
-  add_dependencies(unit_tests prepare_test_kernels_for_shared)
-  add_dependencies(unit_tests ${TARGET_NAME})
-
-  create_project_source_tree(${TARGET_NAME})
+if(UNIX AND NOT DISABLE_WDDM_LINUX)
+  target_include_directories(neo_shared_tests PUBLIC ${WDK_INCLUDE_PATHS})
 endif()
+
+if(WIN32)
+  target_link_libraries(neo_shared_tests dbghelp)
+endif()
+
+target_link_libraries(neo_shared_tests
+                      gmock-gtest
+                      ${NEO_SHARED_MOCKABLE_LIB_NAME}
+                      ${NEO_EXTRA_LIBS}
+)
+
+if(MSVC)
+  set_target_properties(neo_shared_tests PROPERTIES
+                        VS_DEBUGGER_COMMAND_ARGUMENTS "--gtest_filter=* --gtest_catch_exceptions=0 --enable_default_listener --disable_pagefaulting_tests"
+                        VS_DEBUGGER_WORKING_DIRECTORY "$(OutDir)"
+  )
+endif()
+
+if(COMPILER_SUPPORTS_SSE42)
+  set_source_files_properties(helpers/uint16_sse4_tests.cpp PROPERTIES COMPILE_FLAGS -msse4.2)
+endif()
+
+add_subdirectory_unique(mocks)
+add_subdirectories()
+
+target_sources(neo_shared_tests PRIVATE
+               $<TARGET_OBJECTS:neo_unit_tests_config>
+               $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_LIB_NAME}>
+               $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
+               $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
+)
+add_dependencies(unit_tests prepare_test_kernels_for_shared)
+add_dependencies(unit_tests neo_shared_tests)
+
+create_project_source_tree(neo_shared_tests)

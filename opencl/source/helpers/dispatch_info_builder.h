@@ -293,6 +293,12 @@ class DispatchInfoBuilder {
         }
     }
 
+    void setKernelDestinationArgumentInSystem(bool value) {
+        for (auto &dispatchInfo : dispatchInfos) {
+            dispatchInfo.getKernel()->setDestinationAllocationInSystemMemory(value);
+        }
+    }
+
     DispatchInfo &getDispatchInfo(size_t index) { return dispatchInfos[index]; }
     static constexpr size_t getMaxNumDispatches() { return numDispatches; }
 

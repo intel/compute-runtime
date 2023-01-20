@@ -204,11 +204,6 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
     case DATA_PARAMETER_LOCAL_MEMORY_STATELESS_WINDOW_START_ADDRESS:
         crossthread.localMemoryStatelessWindowStartAddress = token;
         break;
-
-    case DATA_PARAMETER_OBJECT_ID:
-        getKernelArg(out, argNum, ArgObjectType::None).objectId = token;
-        break;
-
     case DATA_PARAMETER_SUM_OF_LOCAL_MEMORY_OBJECT_ARGUMENT_SIZES: {
         auto &kernelArg = getKernelArg(out, argNum, ArgObjectType::Slm);
         kernelArg.byValMap.push_back(token);
@@ -302,6 +297,7 @@ inline void decodeKernelDataParameterToken(const SPatchDataParameterBuffer *toke
     case DATA_PARAMETER_VME_IMAGE_TYPE:
     case DATA_PARAMETER_VME_MB_SKIP_BLOCK_TYPE:
     case DATA_PARAMETER_CHILD_BLOCK_SIMD_SIZE:
+    case DATA_PARAMETER_OBJECT_ID:
         // ignored intentionally
         break;
     }
@@ -415,6 +411,10 @@ inline bool decodeToken(const SPatchItemHeader *token, KernelFromPatchtokens &ou
     case PATCH_TOKEN_ALLOCATE_SYNC_BUFFER: {
         assignToken(out.tokens.allocateSyncBuffer, token);
     } break;
+
+    case PATCH_TOKEN_ALLOCATE_RT_GLOBAL_BUFFER:
+        assignToken(out.tokens.allocateRTGlobalBuffer, token);
+        break;
     }
 
     return out.decodeStatus != DecodeError::InvalidBinary;

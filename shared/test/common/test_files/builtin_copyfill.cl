@@ -157,12 +157,21 @@ __kernel void FillBufferRightLeftover(
 
 __kernel void FillBufferImmediate(
     __global uchar* ptr,
+    ulong dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
+    const uint value)
+{
+    uint gid = get_global_id(0);
+    __global uint4* dstPtr = (__global uint4*)(ptr + dstSshOffset);
+    dstPtr[gid] = value;
+}
+
+__kernel void FillBufferImmediateLeftOver(
+    __global uchar* ptr,
     uint dstSshOffset, // Offset needed in case ptr has been adjusted for SSH alignment
     const uint value)
 {
-    uint dstIndex = get_global_id(0);
-    __global uchar* pDst = (__global uchar*)ptr + dstSshOffset;
-    pDst[dstIndex] = value;
+    uint gid = get_global_id(0);
+    (ptr + dstSshOffset)[gid] = value;
 }
 
 __kernel void FillBufferSSHOffset(

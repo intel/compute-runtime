@@ -8,8 +8,8 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/api/api.h"
@@ -19,6 +19,8 @@
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+
+#include "hw_cmds_xe_hpg_core_base.h"
 
 using namespace NEO;
 
@@ -32,14 +34,14 @@ struct XeHpgCoreStatelessCompressionInSBA : public KernelAUBFixture<StatelessCop
         DebugManager.flags.EnableLocalMemory.set(true);
         DebugManager.flags.NodeOrdinal.set(GetParam());
         DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
-        KernelAUBFixture<StatelessCopyKernelFixture>::SetUp();
+        KernelAUBFixture<StatelessCopyKernelFixture>::setUp();
         if (!device->getHardwareInfo().featureTable.flags.ftrLocalMemory) {
             GTEST_SKIP();
         }
     }
 
     void TearDown() override {
-        KernelAUBFixture<StatelessCopyKernelFixture>::TearDown();
+        KernelAUBFixture<StatelessCopyKernelFixture>::tearDown();
     }
 
     DebugManagerStateRestore debugRestorer;
@@ -265,15 +267,15 @@ struct XeHpgCoreUmStatelessCompressionInSBA : public KernelAUBFixture<StatelessK
         DebugManager.flags.EnableLocalMemory.set(true);
         DebugManager.flags.NodeOrdinal.set(GetParam());
         DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Builtin));
-        KernelAUBFixture<StatelessKernelWithIndirectAccessFixture>::SetUp();
+        KernelAUBFixture<StatelessKernelWithIndirectAccessFixture>::setUp();
         if (!device->getHardwareInfo().featureTable.flags.ftrLocalMemory) {
             GTEST_SKIP();
         }
-        EXPECT_TRUE(multiDeviceKernel->getKernel(rootDeviceIndex)->getKernelInfo().hasIndirectStatelessAccess);
+        EXPECT_TRUE(multiDeviceKernel->getKernel(rootDeviceIndex)->getKernelInfo().kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess);
     }
 
     void TearDown() override {
-        KernelAUBFixture<StatelessKernelWithIndirectAccessFixture>::TearDown();
+        KernelAUBFixture<StatelessKernelWithIndirectAccessFixture>::tearDown();
     }
 
     DebugManagerStateRestore debugRestorer;
@@ -488,16 +490,16 @@ struct XeHpgCoreStatelessCompressionInSBAWithBCS : public MulticontextAubFixture
         DebugManager.flags.EnableStatelessCompression.set(1);
         DebugManager.flags.ForceAuxTranslationMode.set(static_cast<int32_t>(AuxTranslationMode::Blit));
         DebugManager.flags.EnableBlitterOperationsSupport.set(true);
-        MulticontextAubFixture::SetUp(1, EnabledCommandStreamers::Single, true);
-        StatelessCopyKernelFixture::SetUp(tileDevices[0], context.get());
+        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);
+        StatelessCopyKernelFixture::setUp(tileDevices[0], context.get());
         if (!tileDevices[0]->getHardwareInfo().featureTable.flags.ftrLocalMemory) {
             GTEST_SKIP();
         }
     }
 
     void TearDown() override {
-        MulticontextAubFixture::TearDown();
-        StatelessCopyKernelFixture::TearDown();
+        MulticontextAubFixture::tearDown();
+        StatelessCopyKernelFixture::tearDown();
     }
 
     DebugManagerStateRestore debugRestorer;
@@ -535,9 +537,9 @@ XE_HPG_CORETEST_F(XeHpgCoreStatelessCompressionInSBAWithBCS, GENERATEONLY_givenC
 
     commandQueues[0][0]->finish();
 
-    expectMemoryNotEqual<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation), writePattern, bufferSize, 0, 0);
+    expectMemoryNotEqual<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation, compressedBuffer->getOffset()), writePattern, bufferSize, 0, 0);
 
-    expectMemory<FamilyType>(AUBFixture::getGpuPointer(unCompressedAllocation), writePattern, bufferSize, 0, 0);
+    expectMemory<FamilyType>(AUBFixture::getGpuPointer(unCompressedAllocation, unCompressedBuffer->getOffset()), writePattern, bufferSize, 0, 0);
 }
 
 XE_HPG_CORETEST_F(XeHpgCoreStatelessCompressionInSBAWithBCS, givenUncompressibleBufferInHostMemoryWhenAccessedStatelesslyThenDisableCompressionInSBA) {
@@ -571,7 +573,7 @@ XE_HPG_CORETEST_F(XeHpgCoreStatelessCompressionInSBAWithBCS, givenUncompressible
 
     commandQueues[0][0]->finish();
 
-    expectMemoryNotEqual<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation), writePattern, bufferSize, 0, 0);
+    expectMemoryNotEqual<FamilyType>(AUBFixture::getGpuPointer(compressedAllocation, compressedBuffer->getOffset()), writePattern, bufferSize, 0, 0);
 
-    expectMemory<FamilyType>(AUBFixture::getGpuPointer(uncompressibleAllocationInHostMemory), writePattern, bufferSize, 0, 0);
+    expectMemory<FamilyType>(AUBFixture::getGpuPointer(uncompressibleAllocationInHostMemory, uncompressibleBufferInHostMemory->getOffset()), writePattern, bufferSize, 0, 0);
 }

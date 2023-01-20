@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -309,7 +309,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenMiAtomicWhenItIsProgramm
     EXPECT_FALSE(miAtomic->getWorkloadPartitionIdOffsetEnable());
     auto memoryAddress = UnitTestHelper<FamilyType>::getAtomicMemoryAddress(*miAtomic);
 
-    //bits 48-63 are zeroed
+    // bits 48-63 are zeroed
     EXPECT_EQ((gpuAddress & 0xFFFFFFFFFFFF), memoryAddress);
 }
 
@@ -381,7 +381,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramBatchBufferStartC
     ASSERT_NE(nullptr, batchBufferStart);
     EXPECT_EQ(expectedUsedSize, totalBytesProgrammed);
 
-    //bits 48-63 are zeroed
+    // bits 48-63 are zeroed
     EXPECT_EQ((gpuAddress & 0xFFFFFFFFFFFF), batchBufferStart->getBatchBufferStartAddress());
 
     EXPECT_TRUE(batchBufferStart->getPredicationEnable());
@@ -400,7 +400,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhen
 
     walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X);
     void *walkerCommandAddress = cmdBufferAddress;
-    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u);
+    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, false);
     auto walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
@@ -411,7 +411,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhen
 
     walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Y);
     walkerCommandAddress = cmdBufferAddress;
-    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u);
+    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, false);
     walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
@@ -420,17 +420,17 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenProgramComputeWalkerWhen
 
     walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Z);
     walkerCommandAddress = cmdBufferAddress;
-    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u);
+    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, false);
     walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
     EXPECT_EQ(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_Z, walkerCommand->getPartitionType());
     EXPECT_EQ(6u, walkerCommand->getPartitionSize());
 
-    //if we program with partition Count == 1 then do not trigger partition stuff
+    // if we program with partition Count == 1 then do not trigger partition stuff
     walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_DISABLED);
     walkerCommandAddress = cmdBufferAddress;
-    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 1u);
+    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 1u, false);
     walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
 
     ASSERT_NE(nullptr, walkerCommand);
@@ -506,7 +506,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerWithDifferentWorkg
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_Z, walker.getPartitionType());
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDisalbedMinimalPartitionSizeWhenCoomputePartitionSizeThenProperValueIsReturned) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDisabledMinimalPartitionSizeWhenComputePartitionSizeThenProperValueIsReturned) {
     WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(64u);
@@ -839,6 +839,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitioningWhenZD
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDebugForceDisableCrossTileSyncThenSelfCleanupOverridesDebugAndAddsOwnCleanupSection) {
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.partitionCount = 16u;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     checkForProperCmdBufferAddressOffset = false;
     testArgs.emitSelfCleanup = true;
     uint64_t gpuVirtualAddress = 0x8000123000;
@@ -917,7 +919,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDe
     auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, batchBufferStart);
     EXPECT_TRUE(batchBufferStart->getPredicationEnable());
-    //address routes to WALKER section which is before control section
+    // address routes to WALKER section which is before control section
     auto address = batchBufferStart->getBatchBufferStartAddress();
     EXPECT_EQ(address, gpuVirtualAddress + expectedCommandUsedSize - walkerSectionCommands);
     parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
@@ -959,7 +961,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupSectionWhenDe
 
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
-    //final batch buffer start that routes at the end of the batch buffer
+    // final batch buffer start that routes at the end of the batch buffer
     auto batchBufferStartFinal = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, batchBufferStartFinal);
     EXPECT_EQ(batchBufferStartFinal->getBatchBufferStartAddress(), gpuVirtualAddress + cleanupSectionOffset);
@@ -1043,6 +1045,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
     checkForProperCmdBufferAddressOffset = false;
     testArgs.emitSelfCleanup = true;
     testArgs.useAtomicsForSelfCleanup = true;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
     WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
@@ -1119,7 +1123,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
     auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, batchBufferStart);
     EXPECT_TRUE(batchBufferStart->getPredicationEnable());
-    //address routes to WALKER section which is before control section
+    // address routes to WALKER section which is before control section
     auto address = batchBufferStart->getBatchBufferStartAddress();
     EXPECT_EQ(address, gpuVirtualAddress + expectedCommandUsedSize - walkerSectionCommands);
     parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
@@ -1162,7 +1166,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenSelfCleanupAndAtomicsUse
 
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
-    //final batch buffer start that routes at the end of the batch buffer
+    // final batch buffer start that routes at the end of the batch buffer
     auto batchBufferStartFinal = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, batchBufferStartFinal);
     EXPECT_EQ(batchBufferStartFinal->getBatchBufferStartAddress(), gpuVirtualAddress + cleanupSectionOffset);
@@ -1325,7 +1329,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDynamicPartitioningWhenP
     auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, batchBufferStart);
     EXPECT_TRUE(batchBufferStart->getPredicationEnable());
-    //address routes to WALKER section which is before control section
+    // address routes to WALKER section which is before control section
     auto address = batchBufferStart->getBatchBufferStartAddress();
     EXPECT_EQ(address, gpuVirtualAddress + expectedCommandUsedSize - walkerSectionCommands);
     parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
@@ -1336,7 +1340,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDynamicPartitioningWhenP
     EXPECT_EQ(miSetPredicate->getPredicateEnable(), MI_SET_PREDICATE<FamilyType>::PREDICATE_ENABLE::PREDICATE_ENABLE_PREDICATE_DISABLE);
     parsedOffset += sizeof(WalkerPartition::MI_SET_PREDICATE<FamilyType>);
 
-    //final batch buffer start that routes at the end of the batch buffer
+    // final batch buffer start that routes at the end of the batch buffer
     auto batchBufferStartFinal = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, batchBufferStartFinal);
     EXPECT_EQ(batchBufferStartFinal->getBatchBufferStartAddress(), gpuVirtualAddress + cleanupSectionOffset);
@@ -1667,4 +1671,33 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
     EXPECT_EQ(parsedOffset, expectedCommandUsedSize);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenForceExecutionOnSingleTileWhenProgramComputeWalkerThenWalkerIsProperlyProgrammed) {
+    WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
+    walker = FamilyType::cmdInitGpgpuWalker;
+    walker.setThreadGroupIdXDimension(32u);
+    walker.setThreadGroupIdYDimension(1u);
+    walker.setThreadGroupIdZDimension(1u);
+
+    bool forceExecutionOnSingleTile = false;
+    walker.setPartitionType(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X);
+    void *walkerCommandAddress = cmdBufferAddress;
+    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, forceExecutionOnSingleTile);
+    auto walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
+
+    ASSERT_NE(nullptr, walkerCommand);
+    EXPECT_TRUE(walkerCommand->getWorkloadPartitionEnable());
+    EXPECT_EQ(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X, walkerCommand->getPartitionType());
+    EXPECT_EQ(16u, walkerCommand->getPartitionSize());
+
+    forceExecutionOnSingleTile = true;
+    walkerCommandAddress = cmdBufferAddress;
+    programPartitionedWalker<FamilyType>(cmdBufferAddress, totalBytesProgrammed, &walker, 2u, forceExecutionOnSingleTile);
+    walkerCommand = genCmdCast<COMPUTE_WALKER<FamilyType> *>(walkerCommandAddress);
+
+    ASSERT_NE(nullptr, walkerCommand);
+    EXPECT_TRUE(walkerCommand->getWorkloadPartitionEnable());
+    EXPECT_EQ(COMPUTE_WALKER<FamilyType>::PARTITION_TYPE::PARTITION_TYPE_X, walkerCommand->getPartitionType());
+    EXPECT_EQ(32u, walkerCommand->getPartitionSize());
 }

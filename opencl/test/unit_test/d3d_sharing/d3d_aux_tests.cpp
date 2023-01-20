@@ -1,11 +1,10 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/arrayref.h"
 
@@ -40,8 +39,8 @@ TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithUnifiedAuxFlagsWhenCreatingT
     ASSERT_NE(nullptr, image.get());
 
     const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    uint32_t expectedMapAuxGpuVaCalls = hwInfoConfig.isPageTableManagerSupported(hwInfo) ? 1 : 0;
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    uint32_t expectedMapAuxGpuVaCalls = productHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
     EXPECT_TRUE(gmm->isCompressionEnabled);
@@ -64,11 +63,11 @@ TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithUnifiedAuxFlagsWhenFailOnAux
     ASSERT_NE(nullptr, image.get());
 
     const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    uint32_t expectedMapAuxGpuVaCalls = hwInfoConfig.isPageTableManagerSupported(hwInfo) ? 1 : 0;
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    uint32_t expectedMapAuxGpuVaCalls = productHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
-    EXPECT_EQ(!hwInfoConfig.isPageTableManagerSupported(hwInfo), gmm->isCompressionEnabled);
+    EXPECT_EQ(!productHelper.isPageTableManagerSupported(hwInfo), gmm->isCompressionEnabled);
 
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture2dDescCalled);
 }
@@ -103,8 +102,8 @@ TYPED_TEST_P(D3DAuxTests, given2dNonSharableTextureWithUnifiedAuxFlagsWhenCreati
     ASSERT_NE(nullptr, image.get());
 
     const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    uint32_t expectedMapAuxGpuVaCalls = hwInfoConfig.isPageTableManagerSupported(hwInfo) ? 1 : 0;
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    uint32_t expectedMapAuxGpuVaCalls = productHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
     EXPECT_TRUE(gmm->isCompressionEnabled);
@@ -124,8 +123,8 @@ TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenCreatingT
     ASSERT_NE(nullptr, image.get());
 
     const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    uint32_t expectedMapAuxGpuVaCalls = hwInfoConfig.isPageTableManagerSupported(hwInfo) ? 1 : 0;
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    uint32_t expectedMapAuxGpuVaCalls = productHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
     EXPECT_TRUE(gmm->isCompressionEnabled);
@@ -145,11 +144,11 @@ TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenFailOnAux
     ASSERT_NE(nullptr, image.get());
 
     const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    uint32_t expectedMapAuxGpuVaCalls = hwInfoConfig.isPageTableManagerSupported(hwInfo) ? 1 : 0;
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    uint32_t expectedMapAuxGpuVaCalls = productHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
-    EXPECT_EQ(!hwInfoConfig.isPageTableManagerSupported(hwInfo), gmm->isCompressionEnabled);
+    EXPECT_EQ(!productHelper.isPageTableManagerSupported(hwInfo), gmm->isCompressionEnabled);
     EXPECT_EQ(1u, this->mockSharingFcns->getTexture3dDescCalled);
 }
 
@@ -180,8 +179,8 @@ TYPED_TEST_P(D3DAuxTests, given3dNonSharableTextureWithUnifiedAuxFlagsWhenCreati
     ASSERT_NE(nullptr, image.get());
 
     const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    uint32_t expectedMapAuxGpuVaCalls = hwInfoConfig.isPageTableManagerSupported(hwInfo) ? 1 : 0;
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    uint32_t expectedMapAuxGpuVaCalls = productHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
     EXPECT_TRUE(gmm->isCompressionEnabled);

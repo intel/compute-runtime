@@ -23,7 +23,6 @@ class SkuInfoTransfer {
         TRANSFER_FTR_TO_GMM(ULT);
         TRANSFER_FTR_TO_GMM(EDram);
         TRANSFER_FTR_TO_GMM(FrameBufferLLC);
-        TRANSFER_FTR_TO_GMM(Crystalwell);
         TRANSFER_FTR_TO_GMM(DisplayEngineS3d);
         TRANSFER_FTR_TO_GMM(TileY);
         TRANSFER_FTR_TO_GMM(DisplayYTiling);
@@ -46,7 +45,6 @@ class SkuInfoTransfer {
         TRANSFER_FTR_TO_GMM(SVM);
         TRANSFER_FTR_TO_GMM(FlatPhysCCS);
         TRANSFER_FTR_TO_GMM(MultiTileArch);
-        TRANSFER_FTR_TO_GMM(CCSMultiInstance);
         TRANSFER_FTR_TO_GMM(Ppgtt64KBWalkOptimization);
         TRANSFER_FTR_TO_GMM(Unified3DMediaCompressionFormats);
         TRANSFER_FTR_TO_GMM(57bGPUAddressing);

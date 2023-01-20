@@ -1,15 +1,16 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
@@ -22,11 +23,10 @@ class WddmSharedAllocationsMock : public WddmMock {
     }
 };
 
-class WddmSharedTestsFixture : public GdiDllFixture, public MockExecutionEnvironmentGmmFixture {
+class WddmSharedTestsFixture : public MockExecutionEnvironmentGmmFixture {
   public:
-    void SetUp() override {
-        MockExecutionEnvironmentGmmFixture::SetUp();
-        GdiDllFixture::SetUp();
+    void setUp() {
+        MockExecutionEnvironmentGmmFixture::setUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         wddm = new WddmSharedAllocationsMock(*rootDeviceEnvironment);
         wddmMockInterface = new WddmMockInterface20(*wddm);
@@ -43,14 +43,13 @@ class WddmSharedTestsFixture : public GdiDllFixture, public MockExecutionEnviron
         wddm->init();
         wddm->wddmInterface.reset(wddmMockInterface);
 
-        auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
-        osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
+        auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        auto engine = gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0];
+        osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode));
         osContext->ensureContextInitialized();
     }
 
-    void TearDown() override {
-        GdiDllFixture::TearDown();
+    void tearDown() {
     }
 
     WddmSharedAllocationsMock *wddm = nullptr;

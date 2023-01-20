@@ -1,10 +1,12 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -212,4 +214,43 @@ TEST_F(MigrationControllerTests, whenHandleMigrationThenProperTagAddressAndTaskC
 
     EXPECT_EQ(pCsr0->getTagAddress(), migrationSyncData->tagAddress);
     EXPECT_EQ(pCsr0->peekTaskCount() + 1, migrationSyncData->latestTaskCountUsed);
+}
+
+TEST_F(MigrationControllerTests, givenWaitForTimestampsEnabledWhenHandleMigrationIsCalledThenDontSignalTaskCountBasedUsage) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableTimestampWaitForQueues.set(4);
+
+    VariableBackup<decltype(MultiGraphicsAllocation::createMigrationSyncDataFunc)> createFuncBackup{&MultiGraphicsAllocation::createMigrationSyncDataFunc};
+    MultiGraphicsAllocation::createMigrationSyncDataFunc = [](size_t size) -> MigrationSyncData * {
+        return new MockMigrationSyncData(size);
+    };
+
+    std::unique_ptr<Buffer> pBuffer(BufferHelper<>::create(&context));
+    const_cast<MultiGraphicsAllocation &>(pBuffer->getMultiGraphicsAllocation()).setMultiStorage(true);
+
+    ASSERT_TRUE(pBuffer->getMultiGraphicsAllocation().requiresMigrations());
+
+    auto migrationSyncData = static_cast<MockMigrationSyncData *>(pBuffer->getMultiGraphicsAllocation().getMigrationSyncData());
+
+    MigrationController::handleMigration(context, *pCsr0, pBuffer.get());
+
+    EXPECT_EQ(0u, migrationSyncData->signalUsageCalled);
+}
+
+TEST_F(MigrationControllerTests, whenMemoryMigrationForMemoryObjectIsAlreadyInProgressThenDoEarlyReturn) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(1);
+
+    std::unique_ptr<Buffer> pBuffer(BufferHelper<>::create(&context));
+
+    ASSERT_TRUE(pBuffer->getMultiGraphicsAllocation().requiresMigrations());
+
+    auto migrationSyncData = static_cast<MockMigrationSyncData *>(pBuffer->getMultiGraphicsAllocation().getMigrationSyncData());
+
+    migrationSyncData->startMigration();
+    EXPECT_TRUE(migrationSyncData->isMigrationInProgress());
+
+    MigrationController::migrateMemory(context, *memoryManager, pBuffer.get(), pCsr1->getRootDeviceIndex());
+
+    EXPECT_TRUE(migrationSyncData->isMigrationInProgress());
 }

@@ -22,11 +22,11 @@ template <typename T>
 class EventFixture : public ApiFixture<>, public T {
   public:
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
     }
 
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 };
 
@@ -274,8 +274,8 @@ class ClEventProfilingWithPerfCountersTests : public DeviceInstrumentationFixtur
                                               public ::testing::Test {
   public:
     void SetUp() override {
-        PerformanceCountersDeviceFixture::SetUp();
-        DeviceInstrumentationFixture::SetUp(true);
+        PerformanceCountersDeviceFixture::setUp();
+        DeviceInstrumentationFixture::setUp(true);
 
         cl_device_id deviceId = device.get();
         cl_int retVal = CL_SUCCESS;
@@ -291,7 +291,7 @@ class ClEventProfilingWithPerfCountersTests : public DeviceInstrumentationFixtur
     }
 
     void TearDown() override {
-        PerformanceCountersDeviceFixture::TearDown();
+        PerformanceCountersDeviceFixture::tearDown();
     }
 
     std::unique_ptr<Context> context;

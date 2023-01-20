@@ -33,5 +33,15 @@ class MultiDeviceMetricQueryPoolTest : public MetricMultiDeviceFixture,
     std::unique_ptr<L0::DriverHandle> driverHandle;
 };
 
+class MultiDeviceMetricQueryPoolAffinityMaskTest : public MultiDeviceMetricQueryPoolTest {
+
+    void SetUp() override {
+        DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
+        MultiDeviceMetricQueryPoolTest::SetUp();
+    }
+
+    DebugManagerStateRestore restorer;
+};
+
 } // namespace ult
 } // namespace L0

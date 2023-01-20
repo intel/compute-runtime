@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@
 #include "shared/test/common/mocks/mock_host_ptr_manager.h"
 #include "shared/test/common/mocks/mock_internal_allocation_storage.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
@@ -433,7 +433,7 @@ TEST_F(HostPtrManagerTest, GivenHostPtrFilledWith3TripleFragmentsWhenAskedForPop
     ASSERT_EQ(3u, reqs.requiredFragmentsCount);
 
     FragmentStorage fragments[maxFragmentsCount];
-    //check all fragments
+    // check all fragments
     for (int i = 0; i < maxFragmentsCount; i++) {
         fragments[i].fragmentCpuPointer = const_cast<void *>(reqs.allocationFragments[i].allocationPtr);
         fragments[i].fragmentSize = reqs.allocationFragments[i].allocationSize;
@@ -574,14 +574,8 @@ TEST_F(HostPtrManagerTest, GivenFragmentSizeNonZeroWhenGettingFragmentThenCorrec
     auto ptr3 = (void *)0x040000;
     auto size3 = MemoryConstants::pageSize * 2;
     requiredAllocations = hostPtrManager.getAllocationRequirements(rootDeviceIndex, ptr3, size3);
-    auto catchme = false;
-    try {
-        OsHandleStorage st = hostPtrManager.populateAlreadyAllocatedFragments(requiredAllocations);
-        EXPECT_EQ(st.fragmentCount, 0u);
-    } catch (...) {
-        catchme = true;
-    }
-    EXPECT_TRUE(catchme);
+
+    EXPECT_ANY_THROW(hostPtrManager.populateAlreadyAllocatedFragments(requiredAllocations));
 }
 
 TEST_F(HostPtrManagerTest, WhenCheckingForOverlapsThenCorrectStatusIsReturned) {
@@ -707,7 +701,7 @@ TEST_F(HostPtrManagerTest, GivenHostPtrManagerFilledWithBigFragmentWhenAskedForF
     EXPECT_EQ(OverlapStatus::FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER, overlapStatus);
     EXPECT_EQ(nullptr, oustideFragment);
 
-    //partialOverlap
+    // partialOverlap
     auto ptrPartial = (void *)(((uintptr_t)bigPtr + bigSize) - 100);
     auto partialBigSize = MemoryConstants::pageSize * 100;
 
@@ -882,7 +876,7 @@ TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredF
     auto fragment2 = hostPtrManager->getFragment({alignUp(cpuPtr1, MemoryConstants::pageSize), csr->getRootDeviceIndex()});
     EXPECT_NE(nullptr, fragment2);
 
-    uint32_t taskCountReady = 2;
+    TaskCountType taskCountReady = 2;
     auto storage = new MockInternalAllocationStorage(*csr);
     csr->internalAllocationStorage.reset(storage);
     storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation1), TEMPORARY_ALLOCATION, taskCountReady);
@@ -907,16 +901,16 @@ TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredF
 }
 
 HWTEST_F(HostPtrAllocationTest, givenOverlappingFragmentsWhenCheckIsCalledThenWaitAndCleanOnAllEngines) {
-    uint32_t taskCountReady = 2;
-    uint32_t taskCountNotReady = 1;
+    TaskCountType taskCountReady = 2;
+    TaskCountType taskCountNotReady = 1;
 
     auto &engines = memoryManager->getRegisteredEngines();
     EXPECT_EQ(1u, engines.size());
 
     auto csr0 = static_cast<MockCommandStreamReceiver *>(engines[0].commandStreamReceiver);
     auto csr1 = std::make_unique<MockCommandStreamReceiver>(executionEnvironment, 0, 1);
-    uint32_t csr0GpuTag = taskCountNotReady;
-    uint32_t csr1GpuTag = taskCountNotReady;
+    TaskCountType csr0GpuTag = taskCountNotReady;
+    TaskCountType csr1GpuTag = taskCountNotReady;
     csr0->tagAddress = &csr0GpuTag;
     csr1->tagAddress = &csr1GpuTag;
     auto osContext = memoryManager->createAndRegisterOsContext(csr1.get(), EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::LowPriority}));
@@ -975,7 +969,7 @@ TEST_F(HostPtrAllocationTest, whenOverlappedFragmentIsBiggerThenStoredAndStoredF
     auto fragment2 = hostPtrManager->getFragment({alignUp(cpuPtr1, MemoryConstants::pageSize), csr->getRootDeviceIndex()});
     EXPECT_NE(nullptr, fragment2);
 
-    uint32_t taskCountReady = 2;
+    TaskCountType taskCountReady = 2;
     auto storage = csr->getInternalAllocationStorage();
     storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation1), TEMPORARY_ALLOCATION, taskCountReady);
 
@@ -1058,7 +1052,7 @@ TEST_F(HostPtrAllocationTest, GivenAllocationsWithBiggerOverlapWhenChckingForOve
     auto fragment2 = hostPtrManager->getFragment({alignUp(cpuPtr1, MemoryConstants::pageSize), csr->getRootDeviceIndex()});
     EXPECT_NE(nullptr, fragment2);
 
-    uint32_t taskCountReady = 1;
+    TaskCountType taskCountReady = 1;
     auto storage = csr->getInternalAllocationStorage();
     storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation1), TEMPORARY_ALLOCATION, taskCountReady);
 

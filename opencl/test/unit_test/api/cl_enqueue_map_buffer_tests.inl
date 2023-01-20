@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -140,7 +140,7 @@ class EnqueueMapBufferFlagsTest : public ApiFixture<>,
 
   protected:
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
         buffer_flags = GetParam();
 
         unsigned int bufferSize = 16;
@@ -161,7 +161,7 @@ class EnqueueMapBufferFlagsTest : public ApiFixture<>,
         retVal = clReleaseMemObject(buffer);
         EXPECT_EQ(CL_SUCCESS, retVal);
         delete[] pHostMem;
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,16 @@ constexpr bool isWhitespace(char c) {
     case '\t':
     case '\r':
     case '\n':
+        return true;
+    }
+}
+
+constexpr bool isSeparationWhitespace(char c) {
+    switch (c) {
+    default:
+        return false;
+    case ' ':
+    case '\t':
         return true;
     }
 }
@@ -103,7 +113,9 @@ constexpr const char *consumeNameIdentifier(ConstStringRef wholeText, const char
         auto it = parsePos + 1;
         while (it < parseEnd) {
             if (false == isNameIdentifierCharacter(*it)) {
-                break;
+                if (false == isSeparationWhitespace(*it)) {
+                    break;
+                }
             }
             ++it;
         }
@@ -140,7 +152,7 @@ constexpr const char *consumeStringLiteral(ConstStringRef wholeText, const char 
 
 using TokenId = uint32_t;
 
-static constexpr TokenId invalidTokenId = std::numeric_limits<TokenId>::max();
+constexpr TokenId invalidTokenId = std::numeric_limits<TokenId>::max();
 
 struct Token {
     enum Type : uint8_t { Identifier,
@@ -280,7 +292,7 @@ constexpr ConstStringRef inlineCollectionYamlErrorMsg = "NEO::Yaml : Inline coll
 bool tokenize(ConstStringRef text, LinesCache &outLines, TokensCache &outTokens, std::string &outErrReason, std::string &outWarning);
 
 using NodeId = uint32_t;
-static constexpr NodeId invalidNodeID = std::numeric_limits<NodeId>::max();
+constexpr NodeId invalidNodeID = std::numeric_limits<NodeId>::max();
 
 struct alignas(32) Node {
     TokenId key = invalidTokenId;
@@ -461,7 +473,7 @@ struct YamlParser {
         return (0U == nodes.size());
     }
 
-    const Node *getRoot() {
+    const Node *getRoot() const {
         return &nodes[0];
     }
 

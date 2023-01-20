@@ -7,6 +7,7 @@
 %global NEO_OCL_VERSION_MINOR xxx
 %global NEO_OCL_VERSION_BUILD xxx
 %global NEO_RELEASE_WITH_REGKEYS FALSE
+%global I915_HEADERS_DIR %{nil}
 
 %define gmmlib_sover 12
 %define igc_sover 1
@@ -26,14 +27,17 @@ Summary:        Intel(R) Graphics Compute Runtime for OpenCL(TM)
 License:        MIT
 Group:          System Environment/Libraries
 Url:            https://github.com/intel/compute-runtime
-Source0:        %{url}/archive/%{version}/compute-runtime-%{version}.tar.xz
+Source0:        %{url}/archive/%{version}/compute-runtime.tar.xz
 Source1:        copyright
+%if "%{I915_HEADERS_DIR}" != ""
+Source2:        uapi.tar.xz
+%endif
 
 ExclusiveArch:  x86_64
-BuildRequires:  cmake make gcc-c++
-#BuildRequires: libva-devel
-BuildRequires: libigdgmm%{?name_suffix}-devel
-BuildRequires: libigdfcl%{?name_suffix}-devel
+BuildRequires:  cmake gcc-c++ ninja make
+# BuildRequires:  libva-devel
+BuildRequires:  libigdgmm%{?name_suffix}-devel
+BuildRequires:  libigdfcl%{?name_suffix}-devel
 Requires:       libigc%{igc_sover}%{?name_suffix}
 Requires:       libigdfcl%{igc_sover}%{?name_suffix}
 Requires:       libigdgmm%{gmmlib_sover}%{?name_suffix}
@@ -47,38 +51,45 @@ the GEN graphics hardware architecture.
 Summary:        ocloc package for opencl
 %description -n intel-ocloc%{?name_suffix}
 
-%debug_package
+%debug_package %{nil}
 
 %prep
-%autosetup -p1 -n compute-runtime-%{version}
+%if "%{I915_HEADERS_DIR}" == ""
+%autosetup -p1 -n compute-runtime
+%else
+%autosetup -p1 -n compute-runtime -b 2
+%endif
 
 %build
 %cmake .. \
+   -GNinja ${NEO_BUILD_EXTRA_OPTS} \
    -DNEO_OCL_VERSION_MAJOR=%{NEO_OCL_VERSION_MAJOR} \
    -DNEO_OCL_VERSION_MINOR=%{NEO_OCL_VERSION_MINOR} \
    -DNEO_VERSION_BUILD=%{NEO_OCL_VERSION_BUILD} \
    -DCMAKE_BUILD_TYPE=%{build_type} \
    -DBUILD_WITH_L0=FALSE \
-   -DCMAKE_INSTALL_PREFIX=/usr \
    -DNEO_SKIP_UNIT_TESTS=TRUE \
    -DNEO_ENABLE_i915_PRELIM_DETECTION=TRUE \
+   -DNEO_ENABLE_XE_DRM_DETECTION=TRUE \
    -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS} \
-   -Wno-dev
-%make_build
+   -DCMAKE_VERBOSE_MAKEFILE=FALSE \
+   -DI915_HEADERS_DIR=$(realpath %{I915_HEADERS_DIR})
+%ninja_build
 
 %install
 cd build
-%make_install
+%ninja_install
+
 chmod +x %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so
-rm -f %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
-rm -f %{buildroot}/%{_libdir}/libocloc.so.debug
-rm -rf %{buildroot}/usr/lib/debug/
+rm -vf %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
+rm -vf %{buildroot}/%{_libdir}/libocloc.so.debug
+rm -rvf %{buildroot}/usr/lib/debug/
 
 #insert license into package
 mkdir -p %{buildroot}/usr/share/doc/intel-opencl%{?name_suffix}/
-cp -pR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-opencl%{?name_suffix}/.
+cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-opencl%{?name_suffix}/.
 mkdir -p %{buildroot}/usr/share/doc/intel-ocloc%{?name_suffix}/
-cp -pR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-ocloc%{?name_suffix}/.
+cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-ocloc%{?name_suffix}/.
 
 %files -n intel-opencl%{?name_suffix}
 %defattr(-,root,root)

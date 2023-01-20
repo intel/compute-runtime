@@ -1,24 +1,24 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/command_stream/preemption_mode.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/hw_info_config.h"
-
-#include "sku_info.h"
+#include <cstddef>
+#include <cstdint>
 
 namespace NEO {
+class LinearStream;
+enum PreemptionMode : uint32_t;
+struct HardwareInfo;
+struct RootDeviceEnvironment;
 class Device;
 class GraphicsAllocation;
 struct KernelDescriptor;
 class LogicalStateHelper;
+struct RuntimeCapabilityTable;
 
 struct PreemptionFlags {
     PreemptionFlags() {
@@ -61,7 +61,7 @@ class PreemptionHelper {
     static void programStateSip(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper);
 
     template <typename GfxFamily>
-    static void programStateSipEndWa(LinearStream &cmdStream, Device &device);
+    static void programStateSipEndWa(LinearStream &cmdStream, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSize(PreemptionMode newPreemptionMode, PreemptionMode oldPreemptionMode);

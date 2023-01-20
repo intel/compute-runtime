@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,11 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "CL/cl.h"
+#include "gtest/gtest.h"
 
 namespace NEO {
 class Device;
@@ -39,10 +41,10 @@ struct CommandQueueHwFixture {
 
     static void forceMapBufferOnGpu(Buffer &buffer);
 
-    virtual void SetUp();                                                          // NOLINT(readability-identifier-naming)
-    virtual void SetUp(ClDevice *pDevice, cl_command_queue_properties properties); // NOLINT(readability-identifier-naming)
+    void setUp();
+    void setUp(ClDevice *pDevice, cl_command_queue_properties properties);
 
-    virtual void TearDown(); // NOLINT(readability-identifier-naming)
+    void tearDown();
 
     CommandQueue *pCmdQ = nullptr;
     MockClDevice *device = nullptr;
@@ -53,15 +55,15 @@ struct CommandQueueHwFixture {
 struct OOQueueFixture : public CommandQueueHwFixture {
     typedef CommandQueueHwFixture BaseClass;
 
-    void SetUp(ClDevice *pDevice, cl_command_queue_properties properties) override;
+    void setUp(ClDevice *pDevice, cl_command_queue_properties properties);
 };
 
 struct CommandQueueFixture {
-    virtual void SetUp( // NOLINT(readability-identifier-naming)
+    void setUp(
         Context *context,
         ClDevice *device,
         cl_command_queue_properties properties);
-    virtual void TearDown(); // NOLINT(readability-identifier-naming)
+    void tearDown();
 
     CommandQueue *createCommandQueue(
         Context *context,
@@ -88,27 +90,28 @@ static const cl_command_queue_properties DefaultCommandQueueProperties[] = {
 
 template <bool ooq>
 struct CommandQueueHwBlitTest : ClDeviceFixture, ContextFixture, CommandQueueHwFixture, ::testing::Test {
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
     void SetUp() override {
         hwInfo = *::defaultHwInfo;
         hwInfo.capabilityTable.blitterOperationsSupported = true;
-        REQUIRE_FULL_BLITTER_OR_SKIP(&hwInfo);
 
         DebugManager.flags.EnableBlitterOperationsSupport.set(1);
         DebugManager.flags.EnableTimestampPacket.set(1);
         DebugManager.flags.PreferCopyEngineForCopyBufferToBuffer.set(1);
         ClDeviceFixture::setUpImpl(&hwInfo);
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
+        REQUIRE_FULL_BLITTER_OR_SKIP(pClDevice->getRootDeviceEnvironment());
+
+        ContextFixture::setUp(1, &device);
         cl_command_queue_properties queueProperties = ooq ? CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE : 0;
-        CommandQueueHwFixture::SetUp(pClDevice, queueProperties);
+        CommandQueueHwFixture::setUp(pClDevice, queueProperties);
     }
 
     void TearDown() override {
-        CommandQueueHwFixture::TearDown();
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueHwFixture::tearDown();
+        ContextFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     HardwareInfo hwInfo{};
@@ -124,7 +127,7 @@ struct CommandQueueHwTest
       public CommandQueueHwFixture,
       ::testing::Test {
 
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
     void SetUp() override;
 
@@ -138,14 +141,14 @@ struct OOQueueHwTest : public ClDeviceFixture,
                        public ContextFixture,
                        public OOQueueFixture,
                        ::testing::Test {
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
     OOQueueHwTest() {
     }
 
     void SetUp() override;
 
-    void SetUp(ClDevice *pDevice, cl_command_queue_properties properties) override {
+    void setUp(ClDevice *pDevice, cl_command_queue_properties properties) {
     }
 
     void TearDown() override;

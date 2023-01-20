@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/gen12lp/hw_cmds_base.h"
 namespace NEO {
-struct RKL : public TGLLPFamily {
+struct RKL : public Gen12LpFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
     static const uint64_t defaultHardwareInfoConfig;

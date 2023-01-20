@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,15 +7,40 @@
 
 #include "shared/test/common/libult/linux/drm_mock.h"
 
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/linux/i915.h"
 
 #include "gtest/gtest.h"
 
+#include <cmath>
 #include <cstring>
 
 const int DrmMock::mockFd;
 const uint32_t DrmMockResources::registerResourceReturnHandle = 3;
+
+DrmMock::DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(fd, ""), rootDeviceEnvironment) {
+    sliceCountChangeSupported = true;
+
+    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
+        setPerContextVMRequired(true);
+    }
+
+    setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
+    if (!isPerContextVMRequired()) {
+        createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+    }
+    storedPreemptionSupport =
+        I915_SCHEDULER_CAP_ENABLED |
+        I915_SCHEDULER_CAP_PRIORITY |
+        I915_SCHEDULER_CAP_PREEMPTION;
+}
+
+int DrmMock::handleRemainingRequests(DrmIoctl request, void *arg) {
+    ioctlCallsCount--;
+    return -1;
+};
 
 int DrmMock::ioctl(DrmIoctl request, void *arg) {
     ioctlCallsCount++;
@@ -87,6 +112,8 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
             receivedContextParamRequestCount++;
             receivedContextParamRequest = *reinterpret_cast<GemContextParam *>(&receivedContextCreateSetParam.param);
             if (receivedContextCreateSetParam.param.param == I915_CONTEXT_PARAM_VM) {
+                this->requestSetVmId = receivedContextParamRequest.value;
+
                 return this->storedRetVal;
             }
         }
@@ -98,6 +125,12 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         receivedGemVmControl = *gemVmControl;
         gemVmControl->vmId = ++latestCreatedVmId;
         return storedRetValForVmCreate;
+    }
+
+    if ((request == DrmIoctl::GemVmDestroy) && (arg != nullptr)) {
+        ioctlCount.gemVmDestroy++;
+
+        return 0;
     }
 
     if ((request == DrmIoctl::GemContextDestroy) && (arg != nullptr)) {
@@ -114,7 +147,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_PRIORITY) {
             return this->storedRetVal;
         }
-        if ((receivedContextParamRequest.param == I915_CONTEXT_PRIVATE_PARAM_BOOST) && (receivedContextParamRequest.value == 1)) {
+        if ((receivedContextParamRequest.param == contextPrivateParamBoost) && (receivedContextParamRequest.value == 1)) {
             return this->storedRetVal;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_SSEU) {
@@ -127,10 +160,12 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
             return this->storedRetValForPersistant;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_VM) {
+            this->requestSetVmId = receivedContextParamRequest.value;
             return this->storedRetVal;
         }
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_RECOVERABLE) {
             receivedRecoverableContextValue = receivedContextParamRequest.value;
+            unrecoverableContextSet = true;
             return this->storedRetVal;
         }
     }
@@ -156,6 +191,9 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
 
         if (receivedContextParamRequest.param == I915_CONTEXT_PARAM_VM) {
             static_cast<GemContextParam *>(arg)->value = this->storedRetValForVmId;
+            if (incrementVmId) {
+                this->storedRetValForVmId++;
+            }
             return 0u;
         }
     }
@@ -168,7 +206,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
         for (uint32_t i = 0; i < execbuf->getBufferCount(); i++) {
             this->receivedBos.push_back(execObjects[i]);
         }
-        return 0;
+        return execBufferResult;
     }
     if (request == DrmIoctl::GemUserptr) {
         ioctlCount.gemUserptr++;
@@ -198,7 +236,7 @@ int DrmMock::ioctl(DrmIoctl request, void *arg) {
     if (request == DrmIoctl::PrimeFdToHandle) {
         ioctlCount.primeFdToHandle++;
         auto primeToHandleParams = static_cast<PrimeHandle *>(arg);
-        //return BO
+        // return BO
         primeToHandleParams->handle = outputHandle;
         inputFd = primeToHandleParams->fileDescriptor;
         return fdToHandleRetVal;
@@ -288,4 +326,9 @@ int DrmMockEngine::handleRemainingRequests(DrmIoctl request, void *arg) {
         return 0;
     }
     return -1;
+}
+DrmMock::~DrmMock() {
+    if (expectIoctlCallsOnDestruction) {
+        EXPECT_EQ(expectedIoctlCallsOnDestruction, ioctlCallsCount);
+    }
 }

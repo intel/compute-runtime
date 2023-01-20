@@ -5,9 +5,11 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_options/compiler_options.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gen9/hw_cmds_skl.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_offline_compiler.h"
@@ -17,7 +19,7 @@ namespace NEO {
 
 using MockOfflineCompilerSklTests = ::testing::Test;
 
-SKLTEST_F(MockOfflineCompilerSklTests, GivenSklWhenParseDebugSettingsThenStatelessToStatefullOptimizationIsEnabled) {
+SKLTEST_F(MockOfflineCompilerSklTests, GivenSklWhenParseDebugSettingsThenStatelessToStatefulOptimizationIsEnabled) {
     MockOfflineCompiler mockOfflineCompiler;
     mockOfflineCompiler.deviceName = "skl";
     mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
@@ -27,13 +29,13 @@ SKLTEST_F(MockOfflineCompilerSklTests, GivenSklWhenParseDebugSettingsThenStatele
     EXPECT_NE(std::string::npos, found);
 }
 
-SKLTEST_F(MockOfflineCompilerSklTests, GivenSklAndDisabledViaDebugThenStatelessToStatefullOptimizationDisabled) {
+SKLTEST_F(MockOfflineCompilerSklTests, GivenSklAndDisabledViaDebugThenStatelessToStatefulOptimizationDisabled) {
     DebugManagerStateRestore stateRestore;
     MockOfflineCompiler mockOfflineCompiler;
     mockOfflineCompiler.deviceName = "skl";
     DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.set(0);
     mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
-    mockOfflineCompiler.setStatelessToStatefullBufferOffsetFlag();
+    mockOfflineCompiler.setStatelessToStatefulBufferOffsetFlag();
     std::string internalOptions = mockOfflineCompiler.internalOptions;
     size_t found = internalOptions.find(NEO::CompilerOptions::hasBufferOffsetArg.data());
     EXPECT_EQ(std::string::npos, found);

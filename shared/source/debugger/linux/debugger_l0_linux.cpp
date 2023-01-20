@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/debugger/debugger_l0.h"
-#include "shared/source/device/device.h"
+#include "shared/source/device/sub_device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
@@ -28,15 +30,25 @@ void DebuggerL0::initSbaTrackingMode() {
     singleAddressSpaceSbaTracking = false;
 }
 
-void DebuggerL0::registerElf(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) {
-    if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
-        auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
-        auto handle = drm->registerResource(NEO::DrmResourceClass::Elf, debugData->vIsa, debugData->vIsaSize);
+void DebuggerL0::registerAllocationType(GraphicsAllocation *allocation) {}
+
+void DebuggerL0::registerElfAndLinkWithAllocation(NEO::DebugData *debugData, NEO::GraphicsAllocation *isaAllocation) {
+    auto handle = registerElf(debugData);
+    if (handle != 0) {
         static_cast<NEO::DrmAllocation *>(isaAllocation)->linkWithRegisteredHandle(handle);
     }
 }
 
-bool DebuggerL0::attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &allocs, uint32_t &moduleHandle) {
+uint32_t DebuggerL0::registerElf(NEO::DebugData *debugData) {
+    uint32_t handle = 0;
+    if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
+        auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+        handle = drm->registerResource(NEO::DrmResourceClass::Elf, debugData->vIsa, debugData->vIsaSize);
+    }
+    return handle;
+}
+
+bool DebuggerL0::attachZebinModuleToSegmentAllocations(const StackVec<NEO::GraphicsAllocation *, 32> &allocs, uint32_t &moduleHandle, uint32_t elfHandle) {
     if (device->getRootDeviceEnvironment().osInterface == nullptr) {
         return false;
     }
@@ -46,6 +58,9 @@ bool DebuggerL0::attachZebinModuleToSegmentAllocations(const StackVec<NEO::Graph
 
     for (auto &allocation : allocs) {
         auto drmAllocation = static_cast<NEO::DrmAllocation *>(allocation);
+
+        DEBUG_BREAK_IF(allocation->getAllocationType() == AllocationType::KERNEL_ISA_INTERNAL);
+        drmAllocation->linkWithRegisteredHandle(elfHandle);
         drmAllocation->linkWithRegisteredHandle(moduleHandle);
     }
 
@@ -62,22 +77,76 @@ bool DebuggerL0::removeZebinModule(uint32_t moduleHandle) {
     return true;
 }
 
-void DebuggerL0::notifyCommandQueueCreated() {
-    if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
-        if (++commandQueueCount == 1) {
-            auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
-            uuidL0CommandQueueHandle = drm->notifyFirstCommandQueueCreated();
+void DebuggerL0::notifyModuleDestroy(uint64_t moduleLoadAddress) {}
+
+void DebuggerL0::notifyCommandQueueCreated(NEO::Device *device) {
+    if (this->device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
+        std::unique_lock<std::mutex> commandQueueCountLock(debuggerL0Mutex);
+
+        if (!device->isSubDevice() && device->getDeviceBitfield().count() > 1) {
+            UNRECOVERABLE_IF(this->device->getNumSubDevices() != device->getDeviceBitfield().count());
+
+            for (size_t i = 0; i < device->getDeviceBitfield().size(); i++) {
+                if (device->getDeviceBitfield().test(i)) {
+                    if (++commandQueueCount[i] == 1) {
+                        auto drm = this->device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+
+                        CommandQueueNotification notification = {static_cast<uint32_t>(i), this->device->getNumSubDevices()};
+                        uuidL0CommandQueueHandle[i] = drm->notifyFirstCommandQueueCreated(&notification, sizeof(CommandQueueNotification));
+                    }
+                }
+            }
+            return;
+        }
+
+        auto index = 0u;
+        auto deviceIndex = 0u;
+
+        if (device->isSubDevice()) {
+            index = static_cast<NEO::SubDevice *>(device)->getSubDeviceIndex();
+            deviceIndex = index;
+        } else if (device->getDeviceBitfield().count() == 1) {
+            deviceIndex = Math::log2(static_cast<uint32_t>(device->getDeviceBitfield().to_ulong()));
+        }
+
+        if (++commandQueueCount[index] == 1) {
+            auto drm = this->device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+
+            CommandQueueNotification notification = {deviceIndex, this->device->getNumSubDevices()};
+            uuidL0CommandQueueHandle[index] = drm->notifyFirstCommandQueueCreated(&notification, sizeof(CommandQueueNotification));
         }
     }
 }
 
-void DebuggerL0::notifyCommandQueueDestroyed() {
-    if (device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
-        if (--commandQueueCount == 0) {
-            auto drm = device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
-            drm->notifyLastCommandQueueDestroyed(uuidL0CommandQueueHandle);
+void DebuggerL0::notifyCommandQueueDestroyed(NEO::Device *device) {
+    if (this->device->getRootDeviceEnvironment().osInterface.get() != nullptr) {
+        std::unique_lock<std::mutex> commandQueueCountLock(debuggerL0Mutex);
+
+        if (!device->isSubDevice() && device->getDeviceBitfield().count() > 1) {
+            UNRECOVERABLE_IF(this->device->getNumSubDevices() != device->getDeviceBitfield().count());
+
+            for (size_t i = 0; i < device->getDeviceBitfield().size(); i++) {
+                if (device->getDeviceBitfield().test(i)) {
+                    if (--commandQueueCount[i] == 0) {
+                        auto drm = this->device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+                        drm->notifyLastCommandQueueDestroyed(uuidL0CommandQueueHandle[i]);
+                        uuidL0CommandQueueHandle[i] = 0;
+                    }
+                }
+            }
+            return;
+        }
+
+        auto index = device->isSubDevice() ? static_cast<NEO::SubDevice *>(device)->getSubDeviceIndex() : 0;
+
+        if (--commandQueueCount[index] == 0) {
+            auto drm = this->device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<NEO::Drm>();
+            drm->notifyLastCommandQueueDestroyed(uuidL0CommandQueueHandle[index]);
+            uuidL0CommandQueueHandle[index] = 0;
         }
     }
 }
+
+void DebuggerL0::notifyModuleCreate(void *module, uint32_t moduleSize, uint64_t moduleLoadAddress) {}
 
 } // namespace NEO

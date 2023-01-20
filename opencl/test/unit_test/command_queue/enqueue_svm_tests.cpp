@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,11 +15,11 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
@@ -43,8 +43,8 @@ struct EnqueueSvmTest : public ClDeviceFixture,
 
     void SetUp() override {
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
-        ClDeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(pClDevice, 0);
+        ClDeviceFixture::setUp();
+        CommandQueueFixture::setUp(pClDevice, 0);
         ptrSVM = context->getSVMAllocsManager()->createSVMAlloc(256, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
     }
 
@@ -53,8 +53,8 @@ struct EnqueueSvmTest : public ClDeviceFixture,
             return;
         }
         context->getSVMAllocsManager()->freeSVMAlloc(ptrSVM);
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     std::pair<ReleaseableObjectPtr<Buffer>, void *> createBufferAndMapItOnGpu() {
@@ -888,14 +888,14 @@ TEST_F(EnqueueSvmTest, givenEnqueueSVMMemFillWhenPatternAllocationIsObtainedThen
 TEST_F(EnqueueSvmTest, GivenSvmAllocationWhenEnqueingKernelThenSuccessIsReturned) {
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
     ASSERT_NE(nullptr, svmData);
-    GraphicsAllocation *pSvmAlloc = svmData->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+    GraphicsAllocation *svmAllocation = svmData->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     EXPECT_NE(nullptr, ptrSVM);
 
     std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context, context->getDevices(), &retVal));
     program->build(program->getDevices(), nullptr, false);
     std::unique_ptr<MockKernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel("FillBufferBytes"), *context->getDevice(0), &retVal));
 
-    kernel->setSvmKernelExecInfo(pSvmAlloc);
+    kernel->setSvmKernelExecInfo(svmAllocation);
 
     size_t offset = 0;
     size_t size = 1;
@@ -916,7 +916,7 @@ TEST_F(EnqueueSvmTest, GivenSvmAllocationWhenEnqueingKernelThenSuccessIsReturned
 TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSurfacesAreMadeResident) {
     auto svmData = context->getSVMAllocsManager()->getSVMAlloc(ptrSVM);
     ASSERT_NE(nullptr, svmData);
-    GraphicsAllocation *pSvmAlloc = svmData->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
+    GraphicsAllocation *svmAllocation = svmData->gpuAllocations.getGraphicsAllocation(context->getDevice(0)->getRootDeviceIndex());
     EXPECT_NE(nullptr, ptrSVM);
 
     auto program = clUniquePtr(Program::createBuiltInFromSource<MockProgram>("FillBufferBytes", context, context->getDevices(), &retVal));
@@ -927,7 +927,7 @@ TEST_F(EnqueueSvmTest, givenEnqueueTaskBlockedOnUserEventWhenItIsEnqueuedThenSur
     kernel->getResidency(allSurfaces);
     EXPECT_EQ(1u, allSurfaces.size());
 
-    kernel->setSvmKernelExecInfo(pSvmAlloc);
+    kernel->setSvmKernelExecInfo(svmAllocation);
 
     auto uEvent = makeReleaseable<UserEvent>();
     cl_event eventWaitList[] = {uEvent.get()};
@@ -1094,7 +1094,7 @@ struct EnqueueSvmTestLocalMemory : public ClDeviceFixture,
         dbgRestore = std::make_unique<DebugManagerStateRestore>();
         DebugManager.flags.EnableLocalMemory.set(1);
 
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         context = std::make_unique<MockContext>(pClDevice, true);
         size = 256;
         svmPtr = context->getSVMAllocsManager()->createSVMAlloc(size, {}, context->getRootDeviceIndices(), context->getDeviceBitfields());
@@ -1108,7 +1108,7 @@ struct EnqueueSvmTestLocalMemory : public ClDeviceFixture,
         }
         context->getSVMAllocsManager()->freeSVMAlloc(svmPtr);
         context.reset(nullptr);
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -1436,7 +1436,7 @@ HWTEST_F(EnqueueSvmTestLocalMemory, givenEnabledLocalMemoryWhenMappedSvmRegionIs
     hwParse.parseCommands<FamilyType>(stream);
     auto walkerCount = hwParse.getCommandCount<WALKER_TYPE>();
     EXPECT_EQ(1u, walkerCount);
-    hwParse.TearDown();
+    hwParse.tearDown();
 
     cl_event event = nullptr;
     retVal = queue.enqueueSVMUnmap(
@@ -1679,7 +1679,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreMadeResidentThenOnlyNonSvmAll
 
     svmManager->makeInternalAllocationsResident(commandStreamReceiver, InternalMemoryType::DEVICE_UNIFIED_MEMORY);
 
-    //only unified memory allocation is made resident
+    // only unified memory allocation is made resident
     EXPECT_EQ(1u, residentAllocations.size());
     EXPECT_EQ(residentAllocations[0]->getGpuAddress(), castToUint64(unifiedMemoryPtr));
 
@@ -1703,7 +1703,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationsAreAddedToResidencyContainerThen
                                                            residencyContainer,
                                                            InternalMemoryType::DEVICE_UNIFIED_MEMORY);
 
-    //only unified memory allocation is added to residency container
+    // only unified memory allocation is added to residency container
     EXPECT_EQ(1u, residencyContainer.size());
     EXPECT_EQ(residencyContainer[0]->getGpuAddress(), castToUint64(unifiedMemoryPtr));
 
@@ -1727,7 +1727,7 @@ HWTEST_F(EnqueueSvmTest, whenInternalAllocationIsTriedToBeAddedTwiceToResidencyC
                                                            residencyContainer,
                                                            InternalMemoryType::DEVICE_UNIFIED_MEMORY);
 
-    //only unified memory allocation is added to residency container
+    // only unified memory allocation is added to residency container
     EXPECT_EQ(1u, residencyContainer.size());
     EXPECT_EQ(residencyContainer[0]->getGpuAddress(), castToUint64(unifiedMemoryPtr));
 

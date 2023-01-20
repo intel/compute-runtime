@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@
 #include "shared/test/common/libult/source_level_debugger_library.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -664,7 +664,7 @@ TEST(SourceLevelDebugger, givenTwoRootDevicesWhenSecondIsCreatedThenCreatingNewS
         ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(2);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
         auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
@@ -688,7 +688,7 @@ TEST(SourceLevelDebugger, givenMultipleRootDevicesWhenCreatedThenUseDedicatedSou
         ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(2);
         for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
             executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         }
         auto device1 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
@@ -707,7 +707,7 @@ TEST(SourceLevelDebugger, whenCaptureSBACalledThenNoCommandsAreAddedToStream) {
     container.initialize(device.get(), nullptr, true);
 
     NEO::Debugger::SbaAddresses sbaAddresses = {};
-    debugger.captureStateBaseAddress(*container.getCommandStream(), sbaAddresses);
+    debugger.captureStateBaseAddress(*container.getCommandStream(), sbaAddresses, false);
     EXPECT_EQ(0u, container.getCommandStream()->getUsed());
 }
 
@@ -879,16 +879,18 @@ TEST(SourceLevelDebugger, givenDebuggerLibraryAvailableAndExperimentalEnableSour
 
     DebugManager.flags.ExperimentalEnableSourceLevelDebugger.set(1);
 
-    auto hwInfo = *defaultHwInfo;
-    auto debugger = std::unique_ptr<Debugger>(Debugger::create(&hwInfo));
+    auto executionEnvironment = new ExecutionEnvironment();
+    MockPlatform platform(*executionEnvironment);
+    platform.initializeWithNewDevices();
+
+    auto debugger = std::unique_ptr<Debugger>(Debugger::create(*executionEnvironment->rootDeviceEnvironments[0].get()));
     ASSERT_NE(nullptr, debugger.get());
     EXPECT_TRUE(debugger->isLegacy());
 }
 
 using LegacyDebuggerTest = ::testing::Test;
 
-using NotXeHPOrDG2 = AreNotGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
-HWTEST2_F(LegacyDebuggerTest, givenNotAtsOrDg2AndDebugIsActiveThenDisableL3CacheInGmmHelperIsNotSet, NotXeHPOrDG2) {
+HWTEST2_F(LegacyDebuggerTest, givenNotXeHpOrXeHpgCoreAndDebugIsActiveThenDisableL3CacheInGmmHelperIsNotSet, IsNotXeHpOrXeHpgCore) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
     auto executionEnvironment = new ExecutionEnvironment();
@@ -898,8 +900,7 @@ HWTEST2_F(LegacyDebuggerTest, givenNotAtsOrDg2AndDebugIsActiveThenDisableL3Cache
     EXPECT_FALSE(static_cast<MockGmmHelper *>(platform.getClDevice(0)->getDevice().getGmmHelper())->allResourcesUncached);
 }
 
-using ATSOrDG2 = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
-HWTEST2_F(LegacyDebuggerTest, givenAtsOrDg2AndDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, ATSOrDG2) {
+HWTEST2_F(LegacyDebuggerTest, givenXeHpOrXeHpgCoreAndDebugIsActiveThenDisableL3CacheInGmmHelperIsSet, IsXeHpOrXeHpgCore) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
     auto executionEnvironment = new ExecutionEnvironment();

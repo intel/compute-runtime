@@ -15,7 +15,7 @@
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
@@ -30,7 +30,7 @@ class WddmWithKmDafMock : public Wddm {
     using Wddm::mapGpuVirtualAddress;
 
     WddmWithKmDafMock(RootDeviceEnvironment &rootDeviceEnvironment)
-        : Wddm(std::make_unique<HwDeviceIdWddm>(ADAPTER_HANDLE, LUID{}, rootDeviceEnvironment.executionEnvironment.osEnvironment.get(), std::make_unique<UmKmDataTranslator>()),
+        : Wddm(std::make_unique<HwDeviceIdWddm>(ADAPTER_HANDLE, LUID{}, 1u, rootDeviceEnvironment.executionEnvironment.osEnvironment.get(), std::make_unique<UmKmDataTranslator>()),
                rootDeviceEnvironment) {
         kmDafListener.reset(new KmDafListenerMock);
     }
@@ -128,7 +128,7 @@ TEST_F(WddmKmDafListenerTest, givenWddmWhenEvictIsCalledThenKmDafListenerNotifyE
     MockWddmAllocation allocation(rootDeviceEnvironment->getGmmHelper());
     uint64_t sizeToTrim;
 
-    wddmWithKmDafMock->evict(&allocation.handle, 1, sizeToTrim);
+    wddmWithKmDafMock->evict(&allocation.handle, 1, sizeToTrim, true);
 
     EXPECT_EQ(wddmWithKmDafMock->featureTable->flags.ftrKmdDaf, wddmWithKmDafMock->getKmDafListenerMock().notifyEvictParametrization.ftrKmdDaf);
     EXPECT_EQ(wddmWithKmDafMock->getAdapter(), wddmWithKmDafMock->getKmDafListenerMock().notifyEvictParametrization.hAdapter);

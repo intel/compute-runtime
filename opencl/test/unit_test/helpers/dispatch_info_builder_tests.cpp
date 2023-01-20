@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 namespace NEO {
@@ -18,7 +19,7 @@ namespace NEO {
 using namespace SplitDispatch;
 
 class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture {
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
   public:
     DispatchInfoBuilderFixture() {}
@@ -27,10 +28,10 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
     }
 
   protected:
-    void SetUp() {
-        ClDeviceFixture::SetUp();
+    void setUp() {
+        ClDeviceFixture::setUp();
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
+        ContextFixture::setUp(1, &device);
         pKernelInfo = std::make_unique<MockKernelInfo>();
 
         pKernelInfo->kernelDescriptor.kernelAttributes.bufferAddressingMode = KernelDescriptor::Stateless;
@@ -55,12 +56,12 @@ class DispatchInfoBuilderFixture : public ContextFixture, public ClDeviceFixture
         pKernel->isBuiltIn = true;
     }
 
-    void TearDown() {
+    void tearDown() {
         delete pKernel;
         delete pProgram;
 
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        ContextFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     std::unique_ptr<MockKernelInfo> pKernelInfo;
@@ -297,7 +298,7 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenCheckingIfBuiltinThenReturnTrue) {
         EXPECT_TRUE(dispatchInfo.getKernel()->isBuiltIn);
     }
 
-    //2D
+    // 2D
     diBuilder2D->setKernel(RegionCoordX::Left, RegionCoordY::Bottom, pKernel);
     diBuilder2D->setDispatchGeometry(RegionCoordX::Left, RegionCoordY::Bottom, Vec3<size_t>(256, 256, 0), Vec3<size_t>(16, 16, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi2D;
@@ -307,7 +308,7 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenCheckingIfBuiltinThenReturnTrue) {
         EXPECT_TRUE(dispatchInfo.getKernel()->isBuiltIn);
     }
 
-    //3D
+    // 3D
     diBuilder3D->setKernel(RegionCoordX::Right, RegionCoordY::Bottom, RegionCoordZ::Back, pKernel);
     diBuilder3D->setDispatchGeometry(RegionCoordX::Right, RegionCoordY::Bottom, RegionCoordZ::Back, Vec3<size_t>(256, 256, 256), Vec3<size_t>(16, 16, 16), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi3D;
@@ -499,7 +500,7 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenGettingWalkerInfoThenCorrectValues
         dispatchId++;
     }
 
-    //2D
+    // 2D
     diBuilder2D->setKernel(pKernel);
     diBuilder2D->setDispatchGeometry(Vec3<size_t>(256, 256, 0), Vec3<size_t>(15, 15, 0), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi2D;
@@ -582,7 +583,7 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenGettingWalkerInfoThenCorrectValues
         dispatchId++;
     }
 
-    //3D
+    // 3D
     diBuilder3D->setKernel(pKernel);
     diBuilder3D->setDispatchGeometry(Vec3<size_t>(256, 256, 256), Vec3<size_t>(15, 15, 15), Vec3<size_t>(0, 0, 0));
     MultiDispatchInfo mdi3D;
@@ -832,6 +833,10 @@ TEST_F(DispatchInfoBuilderTest, GivenSplit3dWhenSettingDispatchGeometryThenMdiSi
 }
 
 TEST_F(DispatchInfoBuilderTest, WhenSettingKernelArgThenAddressesAreCorrect) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
 
     Buffer *buffer = new MockBuffer();
     auto val = (cl_mem)buffer;
@@ -898,7 +903,7 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenSettingKernelArgThenAddressesAreCo
     builder1D.bake(mdi2D);
     builder1D.bake(mdi3D);
 
-    //Set arg
+    // Set arg
     clearCrossThreadData();
     builder1D.setArg(SplitDispatch::RegionCoordX::Left, static_cast<uint32_t>(0), sizeof(cl_mem *), pVal);
     for (auto &dispatchInfo : mdi1D) {
@@ -915,7 +920,7 @@ TEST_F(DispatchInfoBuilderTest, GivenSplitWhenSettingKernelArgThenAddressesAreCo
         EXPECT_EQ(buffer->getCpuAddress(), *reinterpret_cast<void **>((dispatchInfo.getKernel()->getCrossThreadData() + 0x10)));
     }
 
-    //Set arg SVM
+    // Set arg SVM
     clearCrossThreadData();
     builder1D.setArgSvm(SplitDispatch::RegionCoordX::Left, 1, sizeof(svmPtr), svmPtr, nullptr, 0u);
     for (auto &dispatchInfo : mdi1D) {
@@ -957,6 +962,11 @@ TEST_F(DispatchInfoBuilderTest, GivenInvalidInputWhenSettingKernelArgThenInvalid
 }
 
 TEST_F(DispatchInfoBuilderTest, GivenNullKernelWhenSettingKernelArgThenSuccessIsReturned) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
     Buffer *buffer = new MockBuffer();
     auto val = (cl_mem)buffer;
     auto pVal = &val;

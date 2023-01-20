@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -42,23 +43,30 @@ void PageFaultManager::transferToGpu(void *ptr, void *device) {
 } // namespace NEO
 
 namespace L0 {
-void handleGpuDomainTransferForHwWithHints(NEO::PageFaultManager *pageFaultHandler, void *allocPtr, NEO::PageFaultManager::PageFaultData &pageFaultData) {
+void transferAndUnprotectMemoryWithHints(NEO::PageFaultManager *pageFaultHandler, void *allocPtr, NEO::PageFaultManager::PageFaultData &pageFaultData) {
     bool migration = true;
     if (pageFaultData.domain == NEO::PageFaultManager::AllocationDomain::Gpu) {
         L0::DeviceImp *deviceImp = static_cast<L0::DeviceImp *>(pageFaultData.cmdQ);
         NEO::SvmAllocationData *allocData = deviceImp->getDriverHandle()->getSvmAllocsManager()->getSVMAlloc(allocPtr);
 
         if (deviceImp->memAdviseSharedAllocations.find(allocData) != deviceImp->memAdviseSharedAllocations.end()) {
-            if (deviceImp->memAdviseSharedAllocations[allocData].read_only && deviceImp->memAdviseSharedAllocations[allocData].device_preferred_location) {
+            if (deviceImp->memAdviseSharedAllocations[allocData].readOnly && deviceImp->memAdviseSharedAllocations[allocData].devicePreferredLocation) {
                 migration = false;
-                deviceImp->memAdviseSharedAllocations[allocData].cpu_migration_blocked = 1;
+                deviceImp->memAdviseSharedAllocations[allocData].cpuMigrationBlocked = 1;
             }
         }
         if (migration) {
-            if (NEO::DebugManager.flags.PrintUmdSharedMigration.get()) {
-                printf("UMD transferring shared allocation %llx from GPU to CPU\n", reinterpret_cast<unsigned long long int>(allocPtr));
-            }
+            std::chrono::steady_clock::time_point start;
+            std::chrono::steady_clock::time_point end;
+
+            start = std::chrono::steady_clock::now();
             pageFaultHandler->transferToCpu(allocPtr, pageFaultData.size, pageFaultData.cmdQ);
+            end = std::chrono::steady_clock::now();
+            long long elapsedTime = std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count();
+
+            if (NEO::DebugManager.flags.PrintUmdSharedMigration.get()) {
+                printf("UMD transferred shared allocation 0x%llx (%zu B) from GPU to CPU (%f us)\n", reinterpret_cast<unsigned long long int>(allocPtr), pageFaultData.size, elapsedTime / 1e3);
+            }
         }
     }
     if (migration) {

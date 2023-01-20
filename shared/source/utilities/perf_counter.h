@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/metrics_library.h"
 
 namespace NEO {

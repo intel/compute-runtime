@@ -7,10 +7,12 @@
 
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
+#include "shared/source/xe_hp_core/hw_cmds.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -28,8 +30,8 @@ XEHPTEST_F(CommandStreamReceiverWithActiveDebuggerXehpTest, GivenASteppingAndAct
     using MI_NOOP = typename FamilyType::MI_NOOP;
 
     hwInfo = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-    hwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_A0, *hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVID::REVISION_A0, *hwInfo);
 
     auto mockCsr = createCSR<FamilyType>();
     mockCsr->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);

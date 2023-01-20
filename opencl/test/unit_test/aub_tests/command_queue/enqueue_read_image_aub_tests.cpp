@@ -9,7 +9,6 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/image.h"
@@ -35,13 +34,13 @@ struct AUBReadImage
       public ::testing::WithParamInterface<std::tuple<uint32_t /*cl_channel_type*/, uint32_t /*cl_channel_order*/, ReadImageParams>>,
       public ::testing::Test {
     void SetUp() override {
-        ImageAubFixture::SetUp(enableBlitter);
+        ImageAubFixture::setUp(enableBlitter);
     }
 
     void TearDown() override {
         srcImage.reset();
 
-        ImageAubFixture::TearDown();
+        ImageAubFixture::tearDown();
     }
 
     template <typename FamilyType>
@@ -338,7 +337,7 @@ HWTEST2_F(AUBReadImageBCS, GivenMisalignedHostPtrWhenReadingImageWithBlitterEnab
 
 HWTEST2_P(AUBReadImageBCS, GivenUnalignedMemoryWhenReadingImageWithBlitterEnabledThenExpectationsAreMet, ImagesSupportedMatcher) {
     if (std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D &&
-        !(HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {
+        !(ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {
         GTEST_SKIP();
     }
 

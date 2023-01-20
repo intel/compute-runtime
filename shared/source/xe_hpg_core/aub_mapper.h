@@ -10,13 +10,13 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/xe_hpg_core/hw_cmds.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 namespace NEO {
-struct XE_HPG_COREFamily;
+struct XeHpgCoreFamily;
 
 template <>
-struct AUBFamilyMapper<XE_HPG_COREFamily> {
+struct AUBFamilyMapper<XeHpgCoreFamily> {
     enum { device = AubMemDump::DeviceValues::Dg2 };
 
     using AubTraits = AubMemDump::Traits<device, MemoryConstants::GfxAddressBits>;

@@ -5,20 +5,21 @@
  *
  */
 
-#include "shared/test/unit_test/utilities/logger_tests.h"
+#include "shared/test/common/utilities/logger_tests.h"
 
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "gtest/gtest.h"
 
 #include <array>
 #include <cstdio>
+#include <fstream>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -351,7 +352,7 @@ struct DummyEvaluator {
         wasCalled = true;
     }
 
-    operator const char *() {
+    operator const char *() const {
         return "";
     }
 };
@@ -392,6 +393,24 @@ TEST(FileLogger, whenFullyEnabledThenAllDebugFunctionalityIsAvailableAtCompileTi
     FileLogger<DebugFunctionalityLevel::Full> fileLogger(testFile, flags);
 
     static_assert(true == fileLogger.enabled(), "");
+}
+
+TEST(FileLogger, givenEnabledLogWhenLogDebugStringCalledThenStringIsWrittenToFile) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    FullyEnabledFileLogger fileLogger(testFile, flags);
+
+    fileLogger.logDebugString(true, "test log");
+    EXPECT_EQ(std::string("test log"), fileLogger.getFileString(testFile));
+}
+
+TEST(FileLogger, givenDisabledLogWhenLogDebugStringCalledThenStringIsNotWrittenToFile) {
+    std::string testFile = "testfile";
+    DebugVariables flags;
+    FullyEnabledFileLogger fileLogger(testFile, flags);
+
+    fileLogger.logDebugString(false, "test log");
+    EXPECT_EQ(0u, fileLogger.getFileString(testFile).size());
 }
 
 TEST(AllocationTypeLogging, givenGraphicsAllocationTypeWhenConvertingToStringThenCorrectStringIsReturned) {

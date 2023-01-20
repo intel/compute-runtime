@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,12 @@
 
 #pragma once
 #include "shared/source/utilities/metrics_library.h"
-#include "shared/source/utilities/perf_counter.h"
-
-#include "engine_node.h"
 
 #include <mutex>
+
+namespace aub_stream {
+enum EngineType : uint32_t;
+}
 
 namespace NEO {
 

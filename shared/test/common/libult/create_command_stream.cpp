@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,13 +8,13 @@
 #include "shared/test/common/libult/create_command_stream.h"
 
 #include "shared/source/command_stream/create_command_stream_impl.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-
-#include <cassert>
 
 namespace NEO {
 
@@ -43,7 +43,7 @@ bool prepareDeviceEnvironments(ExecutionEnvironment &executionEnvironment) {
     }
     auto currentHwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
     if (currentHwInfo->platform.eProductFamily == IGFX_UNKNOWN && currentHwInfo->platform.eRenderCoreFamily == IGFX_UNKNOWN_CORE) {
-        executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     }
 
     if (ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc) {
@@ -66,7 +66,7 @@ bool prepareDeviceEnvironment(ExecutionEnvironment &executionEnvironment, std::s
     executionEnvironment.prepareRootDeviceEnvironment(rootDeviceIndex);
     auto currentHwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
     if (currentHwInfo->platform.eProductFamily == IGFX_UNKNOWN && currentHwInfo->platform.eRenderCoreFamily == IGFX_UNKNOWN_CORE) {
-        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     }
     if (ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc) {
         uint32_t numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() != 0 ? DebugManager.flags.CreateMultipleRootDevices.get() : 1u;

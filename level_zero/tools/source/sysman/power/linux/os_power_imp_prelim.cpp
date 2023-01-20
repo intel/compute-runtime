@@ -17,9 +17,9 @@ namespace L0 {
 const std::string LinuxPowerImp::hwmonDir("device/hwmon");
 const std::string LinuxPowerImp::i915("i915");
 const std::string LinuxPowerImp::sustainedPowerLimit("power1_max");
-const std::string LinuxPowerImp::criticalPowerLimit("power1_crit");
+const std::string LinuxPowerImp::sustainedPowerLimitInterval("power1_max_interval");
 const std::string LinuxPowerImp::energyCounterNode("energy1_input");
-const std::string LinuxPowerImp::defaultPowerLimit("power1_max_default");
+const std::string LinuxPowerImp::defaultPowerLimit("power1_rated_max");
 
 void powerGetTimestamp(uint64_t &timestamp) {
     std::chrono::time_point<std::chrono::steady_clock> ts = std::chrono::steady_clock::now();
@@ -34,12 +34,29 @@ ze_result_t LinuxPowerImp::getProperties(zes_power_properties_t *pProperties) {
     pProperties->defaultLimit = -1;
     pProperties->minLimit = -1;
     pProperties->maxLimit = -1;
-    if (!isSubdevice) {
-        uint32_t val = 0;
-        auto result = pSysfsAccess->read(i915HwmonDir + "/" + defaultPowerLimit, val);
-        if (ZE_RESULT_SUCCESS == result) {
-            pProperties->defaultLimit = static_cast<int32_t>(val / milliFactor); // need to convert from microwatt to milliwatt
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t LinuxPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoperties) {
+    pExtPoperties->domain = isSubdevice ? ZES_POWER_DOMAIN_PACKAGE : ZES_POWER_DOMAIN_CARD;
+    if (pExtPoperties->defaultLimit) {
+        if (!isSubdevice) {
+            uint32_t val = 0;
+            ze_result_t result = pSysfsAccess->read(i915HwmonDir + "/" + defaultPowerLimit, val);
+            if (result == ZE_RESULT_SUCCESS) {
+                pExtPoperties->defaultLimit->limit = static_cast<int32_t>(val / milliFactor); // need to convert from microwatt to milliwatt
+            } else {
+                return getErrorCode(result);
+            }
+        } else {
+            pExtPoperties->defaultLimit->limit = -1;
         }
+        pExtPoperties->defaultLimit->limitUnit = ZES_LIMIT_UNIT_POWER;
+        pExtPoperties->defaultLimit->enabledStateLocked = true;
+        pExtPoperties->defaultLimit->intervalValueLocked = true;
+        pExtPoperties->defaultLimit->limitValueLocked = true;
+        pExtPoperties->defaultLimit->source = ZES_POWER_SOURCE_ANY;
+        pExtPoperties->defaultLimit->level = ZES_POWER_LEVEL_UNKNOWN;
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -77,7 +94,7 @@ ze_result_t LinuxPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, ze
             if (ZE_RESULT_SUCCESS != result) {
                 return getErrorCode(result);
             }
-            val /= milliFactor; // Convert microWatts to milliwatts
+            val /= milliFactor; // Convert microwatts to milliwatts
             pSustained->power = static_cast<int32_t>(val);
             pSustained->enabled = true;
             pSustained->interval = -1;
@@ -91,7 +108,7 @@ ze_result_t LinuxPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, ze
             if (ZE_RESULT_SUCCESS != result) {
                 return getErrorCode(result);
             }
-            val /= milliFactor; // Convert microWatts to milliwatts
+            val /= milliFactor; // Convert microwatts to milliwatts
             pPeak->powerAC = static_cast<int32_t>(val);
             pPeak->powerDC = -1;
         }
@@ -105,17 +122,109 @@ ze_result_t LinuxPowerImp::setLimits(const zes_power_sustained_limit_t *pSustain
     if (!isSubdevice) {
         int32_t val = 0;
         if (pSustained != nullptr) {
-            val = static_cast<uint32_t>(pSustained->power) * milliFactor; // Convert milliWatts to microwatts
+            val = static_cast<uint32_t>(pSustained->power) * milliFactor; // Convert milliwatts to microwatts
             result = pSysfsAccess->write(i915HwmonDir + "/" + sustainedPowerLimit, val);
             if (ZE_RESULT_SUCCESS != result) {
                 return getErrorCode(result);
             }
         }
         if (pPeak != nullptr) {
-            val = static_cast<uint32_t>(pPeak->powerAC) * milliFactor; // Convert milliWatts to microwatts
+            val = static_cast<uint32_t>(pPeak->powerAC) * milliFactor; // Convert milliwatts to microwatts
             result = pSysfsAccess->write(i915HwmonDir + "/" + criticalPowerLimit, val);
             if (ZE_RESULT_SUCCESS != result) {
                 return getErrorCode(result);
+            }
+        }
+        result = ZE_RESULT_SUCCESS;
+    }
+    return result;
+}
+
+ze_result_t LinuxPowerImp::getLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    if ((*pCount == 0) || (powerLimitCount < *pCount)) {
+        *pCount = powerLimitCount;
+    }
+
+    if (pSustained != nullptr) {
+        uint64_t val = 0;
+        uint8_t count = 0;
+        if (count < *pCount) {
+            result = pSysfsAccess->read(i915HwmonDir + "/" + sustainedPowerLimit, val);
+            if (ZE_RESULT_SUCCESS != result) {
+                return getErrorCode(result);
+            }
+
+            int32_t interval = 0;
+            result = pSysfsAccess->read(i915HwmonDir + "/" + sustainedPowerLimitInterval, interval);
+            if (ZE_RESULT_SUCCESS != result) {
+                return getErrorCode(result);
+            }
+
+            val /= milliFactor; // Convert microwatts to milliwatts
+            pSustained[count].limit = static_cast<int32_t>(val);
+            pSustained[count].enabledStateLocked = true;
+            pSustained[count].intervalValueLocked = false;
+            pSustained[count].limitValueLocked = false;
+            pSustained[count].source = ZES_POWER_SOURCE_ANY;
+            pSustained[count].level = ZES_POWER_LEVEL_SUSTAINED;
+            pSustained[count].limitUnit = ZES_LIMIT_UNIT_POWER;
+            pSustained[count].interval = interval;
+            count++;
+        }
+
+        if (count < *pCount) {
+            result = pSysfsAccess->read(i915HwmonDir + "/" + criticalPowerLimit, val);
+            if (result != ZE_RESULT_SUCCESS) {
+                return getErrorCode(result);
+            }
+            pSustained[count].enabledStateLocked = true;
+            pSustained[count].intervalValueLocked = true;
+            pSustained[count].limitValueLocked = false;
+            pSustained[count].source = ZES_POWER_SOURCE_ANY;
+            pSustained[count].level = ZES_POWER_LEVEL_PEAK;
+            pSustained[count].interval = 0; // Hardcode to 100 micro seconds i.e 0.1 milli seconds
+            if ((productFamily == IGFX_PVC) || (productFamily == IGFX_XE_HP_SDV)) {
+                pSustained[count].limit = static_cast<int32_t>(val);
+                pSustained[count].limitUnit = ZES_LIMIT_UNIT_CURRENT;
+            } else {
+                val /= milliFactor; // Convert microwatts to milliwatts
+                pSustained[count].limit = static_cast<int32_t>(val);
+                pSustained[count].limitUnit = ZES_LIMIT_UNIT_POWER;
+            }
+        }
+    }
+    return result;
+}
+
+ze_result_t LinuxPowerImp::setLimitsExt(uint32_t *pCount, zes_power_limit_ext_desc_t *pSustained) {
+    ze_result_t result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    if (!isSubdevice) {
+        uint64_t val = 0;
+        for (uint32_t i = 0; i < *pCount; i++) {
+            if (pSustained[i].level == ZES_POWER_LEVEL_SUSTAINED) {
+                val = pSustained[i].limit * milliFactor; // Convert milliwatts to microwatts
+                result = pSysfsAccess->write(i915HwmonDir + "/" + sustainedPowerLimit, val);
+                if (ZE_RESULT_SUCCESS != result) {
+                    return getErrorCode(result);
+                }
+
+                result = pSysfsAccess->write(i915HwmonDir + "/" + sustainedPowerLimitInterval, pSustained[i].interval);
+                if (ZE_RESULT_SUCCESS != result) {
+                    return getErrorCode(result);
+                }
+            } else if (pSustained[i].level == ZES_POWER_LEVEL_PEAK) {
+                if ((productFamily == IGFX_PVC) || (productFamily == IGFX_XE_HP_SDV)) {
+                    val = pSustained[i].limit;
+                } else {
+                    val = pSustained[i].limit * milliFactor; // Convert milliwatts to microwatts
+                }
+                result = pSysfsAccess->write(i915HwmonDir + "/" + criticalPowerLimit, val);
+                if (ZE_RESULT_SUCCESS != result) {
+                    return getErrorCode(result);
+                }
+            } else {
+                return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
             }
         }
         result = ZE_RESULT_SUCCESS;
@@ -166,6 +275,18 @@ bool LinuxPowerImp::isPowerModuleSupported() {
             canControl = isSubdevice ? false : true;
         }
     }
+
+    if (!isSubdevice) {
+        uint64_t val = 0;
+        if (ZE_RESULT_SUCCESS == pSysfsAccess->read(i915HwmonDir + "/" + sustainedPowerLimit, val)) {
+            powerLimitCount++;
+        }
+
+        if (ZE_RESULT_SUCCESS == pSysfsAccess->read(i915HwmonDir + "/" + criticalPowerLimit, val)) {
+            powerLimitCount++;
+        }
+    }
+
     if (hwmonDirExists == false) {
         return (pPmt != nullptr);
     }
@@ -176,6 +297,12 @@ LinuxPowerImp::LinuxPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_
     LinuxSysmanImp *pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
     pPmt = pLinuxSysmanImp->getPlatformMonitoringTechAccess(subdeviceId);
     pSysfsAccess = &pLinuxSysmanImp->getSysfsAccess();
+    productFamily = SysmanDeviceImp::getProductFamily(pLinuxSysmanImp->getDeviceHandle());
+    if ((productFamily == IGFX_PVC) || (productFamily == IGFX_XE_HP_SDV)) {
+        criticalPowerLimit = "curr1_crit";
+    } else {
+        criticalPowerLimit = "power1_crit";
+    }
 }
 
 OsPower *OsPower::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {

@@ -21,12 +21,16 @@ template <>
 struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass = ::L0::ModuleImp;
     using BaseClass::BaseClass;
+    using BaseClass::builtFromSPIRv;
     using BaseClass::copyPatchedSegments;
     using BaseClass::device;
     using BaseClass::exportedFunctionsSurface;
     using BaseClass::importedSymbolAllocations;
     using BaseClass::isFullyLinked;
+    using BaseClass::isFunctionSymbolExportEnabled;
+    using BaseClass::isGlobalSymbolExportEnabled;
     using BaseClass::kernelImmDatas;
+    using BaseClass::maxGroupSize;
     using BaseClass::symbols;
     using BaseClass::translationUnit;
     using BaseClass::type;
@@ -41,11 +45,11 @@ struct Mock<Module> : public Module {
     Mock(::L0::Device *device, ModuleBuildLog *moduleBuildLog, ModuleType type) : WhiteBox(device, moduleBuildLog, type) {}
     Mock(::L0::Device *device, ModuleBuildLog *moduleBuildLog) : Mock(device, moduleBuildLog, ModuleType::User){};
 
-    ADDMETHOD_NOBASE(createKernel, ze_result_t, ZE_RESULT_SUCCESS, (const ze_kernel_desc_t *desc, ze_kernel_handle_t *phFunction));
+    ADDMETHOD_NOBASE(createKernel, ze_result_t, ZE_RESULT_SUCCESS, (const ze_kernel_desc_t *desc, ze_kernel_handle_t *kernelHandle));
     ADDMETHOD_NOBASE(destroy, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(getFunctionPointer, ze_result_t, ZE_RESULT_SUCCESS, (const char *pKernelName, void **pfnFunction));
     ADDMETHOD_NOBASE(getNativeBinary, ze_result_t, ZE_RESULT_SUCCESS, (size_t * pSize, uint8_t *pModuleNativeBinary));
-    ADDMETHOD_CONST_NOBASE(getKernelImmutableData, const L0::KernelImmutableData *, nullptr, (const char *functionName));
+    ADDMETHOD_CONST_NOBASE(getKernelImmutableData, const L0::KernelImmutableData *, nullptr, (const char *kernelName));
     ADDMETHOD_CONST_NOBASE(getMaxGroupSize, uint32_t, 256, ());
     ADDMETHOD_NOBASE(getKernelNames, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * pCount, const char **pNames));
     ADDMETHOD_NOBASE(performDynamicLink, ze_result_t, ZE_RESULT_SUCCESS,
@@ -59,13 +63,13 @@ struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
     MockModuleTranslationUnit(L0::Device *device) : L0::ModuleTranslationUnit(device) {
     }
 
-    bool processUnpackedBinary() override {
-        return true;
+    ze_result_t processUnpackedBinary() override {
+        return ZE_RESULT_SUCCESS;
     }
 
-    bool compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) override {
+    ze_result_t compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) override {
         if (unpackedDeviceBinarySize && unpackedDeviceBinary) {
-            return true;
+            return ZE_RESULT_SUCCESS;
         } else {
             return ModuleTranslationUnit::compileGenBinary(inputArgs, staticLink);
         }
@@ -76,6 +80,8 @@ struct MockModule : public L0::ModuleImp {
     using ModuleImp::debugEnabled;
     using ModuleImp::debugModuleHandle;
     using ModuleImp::getModuleAllocations;
+    using ModuleImp::isFunctionSymbolExportEnabled;
+    using ModuleImp::isGlobalSymbolExportEnabled;
     using ModuleImp::kernelImmDatas;
     using ModuleImp::populateHostGlobalSymbolsMap;
     using ModuleImp::symbols;
@@ -89,7 +95,7 @@ struct MockModule : public L0::ModuleImp {
 
     ~MockModule() override = default;
 
-    const KernelImmutableData *getKernelImmutableData(const char *functionName) const override {
+    const KernelImmutableData *getKernelImmutableData(const char *kernelName) const override {
         return kernelImmData;
     }
 
@@ -103,6 +109,8 @@ struct MockCompilerInterface : public NEO::CompilerInterface {
 
         receivedApiOptions = input.apiOptions.begin();
         inputInternalOptions = input.internalOptions.begin();
+
+        cachingPassed = input.allowCaching;
 
         if (failBuild) {
             return NEO::TranslationOutput::ErrorCode::BuildFailure;
@@ -122,6 +130,7 @@ struct MockCompilerInterface : public NEO::CompilerInterface {
     std::string receivedApiOptions;
     std::string inputInternalOptions;
     bool failBuild = false;
+    bool cachingPassed = false;
 };
 template <typename T1, typename T2>
 struct MockCompilerInterfaceWithSpecConstants : public NEO::CompilerInterface {

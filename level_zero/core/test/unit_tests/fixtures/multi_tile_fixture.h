@@ -6,6 +6,7 @@
  */
 
 #pragma once
+
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -18,24 +19,26 @@ struct Device;
 
 namespace ult {
 
-struct MultiTileCommandListAppendLaunchFunctionFixture : public MultiDeviceModuleFixture {
-    void SetUp();
-    void TearDown();
+struct MultiTileCommandListAppendLaunchKernelFixture : public MultiDeviceModuleFixture {
+    MultiTileCommandListAppendLaunchKernelFixture();
+    void setUp();
+    void tearDown();
 
     ContextImp *contextImp = nullptr;
     WhiteBox<::L0::CommandList> *commandList = nullptr;
     L0::Device *device = nullptr;
-    VariableBackup<bool> backup{&NEO::ImplicitScaling::apiSupport, true};
+    VariableBackup<bool> backup;
 };
 
-struct MultiTileImmediateCommandListAppendLaunchFunctionFixture : public MultiDeviceModuleFixture {
-    void SetUp();
-    void TearDown();
+struct MultiTileImmediateCommandListAppendLaunchKernelFixture : public MultiDeviceModuleFixture {
+    MultiTileImmediateCommandListAppendLaunchKernelFixture();
+    void setUp();
+    void tearDown();
 
     ContextImp *contextImp = nullptr;
     L0::Device *device = nullptr;
-    VariableBackup<bool> backupApiSupport{&NEO::ImplicitScaling::apiSupport, true};
-    VariableBackup<bool> backupLocalMemory{&NEO::OSInterface::osEnableLocalMemory, true};
+    VariableBackup<bool> backupApiSupport;
+    VariableBackup<bool> backupLocalMemory;
 };
 
 } // namespace ult

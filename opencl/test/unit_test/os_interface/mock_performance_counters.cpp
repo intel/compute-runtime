@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,11 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/perf_counter.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+
+#include "gtest/gtest.h"
+
 using namespace MetricsLibraryApi;
 
 namespace NEO {
@@ -112,11 +116,11 @@ bool MockMetricsLibrary::commandBufferGetSize(const CommandBufferData_1_0 &comma
 void *MockMetricsLibraryDll::getProcAddress(const std::string &procName) {
     if (procName == METRICS_LIBRARY_CONTEXT_CREATE_1_0) {
         return validContextCreate
-                   ? reinterpret_cast<void *>(&MockMetricsLibraryValidInterface::ContextCreate)
+                   ? reinterpret_cast<void *>(&MockMetricsLibraryValidInterface::contextCreate)
                    : nullptr;
     } else if (procName == METRICS_LIBRARY_CONTEXT_DELETE_1_0) {
         return validContextDelete
-                   ? reinterpret_cast<void *>(&MockMetricsLibraryValidInterface::ContextDelete)
+                   ? reinterpret_cast<void *>(&MockMetricsLibraryValidInterface::contextDelete)
                    : nullptr;
     } else {
         return nullptr;
@@ -133,7 +137,7 @@ bool MockMetricsLibraryDll::isLoaded() {
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::ContextCreate
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::ContextCreate(ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle) {
+StatusCode MockMetricsLibraryValidInterface::contextCreate(ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle) {
 
     // Validate input.
     EXPECT_EQ(clientType.Api, ClientApi::OpenCL);
@@ -155,7 +159,7 @@ StatusCode MockMetricsLibraryValidInterface::ContextCreate(ClientType_1_0 client
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::ContextDelete
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::ContextDelete(const ContextHandle_1_0 handle) {
+StatusCode MockMetricsLibraryValidInterface::contextDelete(const ContextHandle_1_0 handle) {
 
     auto validHandle = handle.IsValid();
     auto library = static_cast<MockMetricsLibraryValidInterface *>(handle.data);
@@ -176,7 +180,7 @@ StatusCode MockMetricsLibraryValidInterface::ContextDelete(const ContextHandle_1
 //////////////////////////////////////////////////////
 // MockMetricsLibraryInterface::QueryCreate
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::QueryCreate(const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle) {
+StatusCode MockMetricsLibraryValidInterface::queryCreate(const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle) {
 
     EXPECT_NE(handle, nullptr);
     EXPECT_NE(createData, nullptr);
@@ -191,7 +195,7 @@ StatusCode MockMetricsLibraryValidInterface::QueryCreate(const QueryCreateData_1
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::QueryDelete
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::QueryDelete(const QueryHandle_1_0 handle) {
+StatusCode MockMetricsLibraryValidInterface::queryDelete(const QueryHandle_1_0 handle) {
 
     if (handle.IsValid()) {
         delete (uint32_t *)handle.data;
@@ -203,7 +207,7 @@ StatusCode MockMetricsLibraryValidInterface::QueryDelete(const QueryHandle_1_0 h
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::CommandBufferGetSize
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::CommandBufferGetSize(const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size) {
+StatusCode MockMetricsLibraryValidInterface::commandBufferGetSize(const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size) {
     auto library = static_cast<MockMetricsLibraryValidInterface *>(data->HandleContext.data);
     EXPECT_NE(data, nullptr);
     EXPECT_TRUE(data->HandleContext.IsValid());
@@ -223,7 +227,7 @@ StatusCode MockMetricsLibraryValidInterface::CommandBufferGetSize(const CommandB
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::CommandBufferGet
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::CommandBufferGet(const CommandBufferData_1_0 *data) {
+StatusCode MockMetricsLibraryValidInterface::commandBufferGet(const CommandBufferData_1_0 *data) {
     EXPECT_NE(data, nullptr);
     EXPECT_TRUE(data->HandleContext.IsValid());
     EXPECT_TRUE(data->QueryHwCounters.Handle.IsValid());
@@ -237,7 +241,7 @@ StatusCode MockMetricsLibraryValidInterface::CommandBufferGet(const CommandBuffe
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::CommandBufferGet
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::GetParameter(const ParameterType parameter, ValueType *type, TypedValue_1_0 *value) {
+StatusCode MockMetricsLibraryValidInterface::getParameter(const ParameterType parameter, ValueType *type, TypedValue_1_0 *value) {
     EXPECT_NE(type, nullptr);
     EXPECT_NE(value, nullptr);
     switch (parameter) {
@@ -259,7 +263,7 @@ StatusCode MockMetricsLibraryValidInterface::GetParameter(const ParameterType pa
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::ConfigurationCreate
 //////////////////////////////////////////////////////
-StatusCode ML_STDCALL MockMetricsLibraryValidInterface::ConfigurationCreate(const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle) {
+StatusCode ML_STDCALL MockMetricsLibraryValidInterface::configurationCreate(const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle) {
     EXPECT_NE(createData, nullptr);
     EXPECT_NE(handle, nullptr);
     EXPECT_TRUE(createData->HandleContext.IsValid());
@@ -286,7 +290,7 @@ StatusCode ML_STDCALL MockMetricsLibraryValidInterface::ConfigurationCreate(cons
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::ConfigurationActivate
 //////////////////////////////////////////////////////
-StatusCode ML_STDCALL MockMetricsLibraryValidInterface::ConfigurationActivate(const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData) {
+StatusCode ML_STDCALL MockMetricsLibraryValidInterface::configurationActivate(const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData) {
     auto api = static_cast<MockMetricsLibraryValidInterface *>(handle.data);
     return api->validActivateConfigurationOa
                ? StatusCode::Success
@@ -296,7 +300,7 @@ StatusCode ML_STDCALL MockMetricsLibraryValidInterface::ConfigurationActivate(co
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::ConfigurationDelete
 //////////////////////////////////////////////////////
-StatusCode ML_STDCALL MockMetricsLibraryValidInterface::ConfigurationDelete(const ConfigurationHandle_1_0 handle) {
+StatusCode ML_STDCALL MockMetricsLibraryValidInterface::configurationDelete(const ConfigurationHandle_1_0 handle) {
     EXPECT_TRUE(handle.IsValid());
 
     return StatusCode::Success;
@@ -305,7 +309,7 @@ StatusCode ML_STDCALL MockMetricsLibraryValidInterface::ConfigurationDelete(cons
 //////////////////////////////////////////////////////
 // MockMetricsLibraryValidInterface::GetData
 //////////////////////////////////////////////////////
-StatusCode MockMetricsLibraryValidInterface::GetData(GetReportData_1_0 *data) {
+StatusCode MockMetricsLibraryValidInterface::getData(GetReportData_1_0 *data) {
     EXPECT_NE(data, nullptr);
     EXPECT_EQ(data->Type, ObjectType::QueryHwCounters);
     EXPECT_TRUE(data->Query.Handle.IsValid());
@@ -317,33 +321,32 @@ StatusCode MockMetricsLibraryValidInterface::GetData(GetReportData_1_0 *data) {
 }
 
 //////////////////////////////////////////////////////
-// PerformanceCountersDeviceFixture::SetUp
+// PerformanceCountersDeviceFixture::setUp
 //////////////////////////////////////////////////////
-void PerformanceCountersDeviceFixture::SetUp() {
+void PerformanceCountersDeviceFixture::setUp() {
     createFunc = Device::createPerformanceCountersFunc;
-    Device::createPerformanceCountersFunc = MockPerformanceCounters::create;
+    Device::createPerformanceCountersFunc = [](Device *) { return MockPerformanceCounters::create(); };
 }
 
 //////////////////////////////////////////////////////
-// PerformanceCountersDeviceFixture::TearDown
+// PerformanceCountersDeviceFixture::tearDown
 //////////////////////////////////////////////////////
-void PerformanceCountersDeviceFixture::TearDown() {
+void PerformanceCountersDeviceFixture::tearDown() {
     Device::createPerformanceCountersFunc = createFunc;
 }
 
 //////////////////////////////////////////////////////
 // PerformanceCountersMetricsLibraryFixture::SetUp
 //////////////////////////////////////////////////////
-void PerformanceCountersMetricsLibraryFixture::SetUp() {
-    PerformanceCountersFixture::SetUp();
+void PerformanceCountersMetricsLibraryFixture::setUp() {
+    PerformanceCountersFixture::setUp();
 }
 
 //////////////////////////////////////////////////////
 // PerformanceCountersMetricsLibraryFixture::TearDown
 //////////////////////////////////////////////////////
-void PerformanceCountersMetricsLibraryFixture::TearDown() {
-    device->setPerfCounters(nullptr);
-    PerformanceCountersFixture::TearDown();
+void PerformanceCountersMetricsLibraryFixture::tearDown() {
+    PerformanceCountersFixture::tearDown();
 }
 
 //////////////////////////////////////////////////////
@@ -352,7 +355,7 @@ void PerformanceCountersMetricsLibraryFixture::TearDown() {
 PerformanceCountersFixture::PerformanceCountersFixture() {
     executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     rootDeviceEnvironment = std::make_unique<RootDeviceEnvironment>(*executionEnvironment);
-    rootDeviceEnvironment->setHwInfo(defaultHwInfo.get());
+    rootDeviceEnvironment->setHwInfoAndInitHelpers(defaultHwInfo.get());
 }
 
 //////////////////////////////////////////////////////
@@ -362,24 +365,23 @@ PerformanceCountersFixture::~PerformanceCountersFixture() {
 }
 
 //////////////////////////////////////////////////////
-// PerformanceCountersMetricsLibraryFixture::createPerformanceCounters
+// PerformanceCountersMetricsLibraryFixture::initDeviceWithPerformanceCounters
 //////////////////////////////////////////////////////
-void PerformanceCountersMetricsLibraryFixture::createPerformanceCounters(const bool validMetricsLibraryApi, const bool mockMetricsLibrary) {
-    performanceCountersBase = MockPerformanceCounters::create(&device->getDevice());
-    auto metricsLibraryInterface = performanceCountersBase->getMetricsLibraryInterface();
-    auto metricsLibraryDll = std::make_unique<MockMetricsLibraryDll>();
-    EXPECT_NE(performanceCountersBase, nullptr);
-    EXPECT_NE(metricsLibraryInterface, nullptr);
+PerformanceCounters *PerformanceCountersMetricsLibraryFixture::initDeviceWithPerformanceCounters(const bool validMetricsLibraryApi, const bool mockMetricsLibrary) {
+    auto performanceCounters = MockPerformanceCounters::create();
+    EXPECT_NE(performanceCounters, nullptr);
 
-    device->setPerfCounters(performanceCountersBase.get());
+    auto metricsLibraryInterface = performanceCounters->getMetricsLibraryInterface();
+    auto metricsLibraryDll = std::make_unique<MockMetricsLibraryDll>();
+    EXPECT_NE(metricsLibraryInterface, nullptr);
 
     // Attached mock version of metrics library interface.
     if (mockMetricsLibrary) {
-        performanceCountersBase->setMetricsLibraryInterface(std::make_unique<MockMetricsLibrary>());
-        metricsLibraryInterface = performanceCountersBase->getMetricsLibraryInterface();
+        performanceCounters->setMetricsLibraryInterface(std::make_unique<MockMetricsLibrary>());
+        metricsLibraryInterface = performanceCounters->getMetricsLibraryInterface();
     } else {
-        performanceCountersBase->setMetricsLibraryInterface(std::make_unique<MetricsLibrary>());
-        metricsLibraryInterface = performanceCountersBase->getMetricsLibraryInterface();
+        performanceCounters->setMetricsLibraryInterface(std::make_unique<MetricsLibrary>());
+        metricsLibraryInterface = performanceCounters->getMetricsLibraryInterface();
     }
 
     if (validMetricsLibraryApi) {
@@ -394,5 +396,9 @@ void PerformanceCountersMetricsLibraryFixture::createPerformanceCounters(const b
     }
 
     EXPECT_NE(metricsLibraryInterface->api, nullptr);
+
+    auto rawPerformanceCounters = performanceCounters.get();
+    device->setPerfCounters(std::move(performanceCounters));
+    return rawPerformanceCounters;
 }
 } // namespace NEO

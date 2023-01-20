@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,9 @@ void DriverImp::initialize(ze_result_t *result) {
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
 
     if (envVariables.programDebugging) {
-        executionEnvironment->setDebuggingEnabled();
+        if (!NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
+            executionEnvironment->setDebuggingEnabled();
+        }
     }
 
     executionEnvironment->incRefInternal();

@@ -12,6 +12,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
@@ -120,17 +121,17 @@ ClDevice *ClDevice::getSubDevice(uint32_t deviceId) const {
 
 ClDevice *ClDevice::getNearestGenericSubDevice(uint32_t deviceId) {
     /*
-    * EngineInstanced: Upper level
-    * Generic SubDevice: 'this'
-    * RootCsr Device: Next level SubDevice (generic)
-    */
+     * EngineInstanced: Upper level
+     * Generic SubDevice: 'this'
+     * RootCsr Device: Next level SubDevice (generic)
+     */
 
     if (getDevice().isEngineInstanced()) {
         return rootClDevice.getNearestGenericSubDevice(Math::log2(static_cast<uint32_t>(getDeviceBitfield().to_ulong())));
     }
 
     if (subDevices.empty() || !getDevice().hasRootCsr()) {
-        return const_cast<ClDevice *>(this);
+        return this;
     }
     UNRECOVERABLE_IF(deviceId >= subDevices.size());
     return subDevices[deviceId].get();
@@ -215,7 +216,7 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilitiesAll() {
 }
 
 cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineGroupType type) {
-    auto &clHwHelper = NEO::ClHwHelper::get(getHardwareInfo().platform.eRenderCoreFamily);
+    auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
 
     cl_command_queue_capabilities_intel disabledProperties = 0u;
     if (EngineHelper::isCopyOnlyEngineType(type)) {
@@ -226,7 +227,7 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineG
         disabledProperties |= static_cast<cl_command_queue_capabilities_intel>(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_IMAGE_INTEL); // clEnqueueCopyBufferToImage
         disabledProperties |= static_cast<cl_command_queue_capabilities_intel>(CL_QUEUE_CAPABILITY_TRANSFER_IMAGE_BUFFER_INTEL); // clEnqueueCopyImageToBuffer
     }
-    disabledProperties |= clHwHelper.getAdditionalDisabledQueueFamilyCapabilities(type);
+    disabledProperties |= clGfxCoreHelper.getAdditionalDisabledQueueFamilyCapabilities(type);
 
     if (disabledProperties != 0) {
         return getQueueFamilyCapabilitiesAll() & ~disabledProperties;
@@ -237,8 +238,8 @@ cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilities(EngineG
 void ClDevice::getQueueFamilyName(char *outputName, EngineGroupType type) {
     std::string name{};
 
-    const auto &clHwHelper = ClHwHelper::get(getHardwareInfo().platform.eRenderCoreFamily);
-    const bool hasHwSpecificName = clHwHelper.getQueueFamilyName(name, type);
+    const auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    const bool hasHwSpecificName = clGfxCoreHelper.getQueueFamilyName(name, type);
 
     if (!hasHwSpecificName) {
         switch (type) {
@@ -266,6 +267,13 @@ Platform *ClDevice::getPlatform() const {
 bool ClDevice::isPciBusInfoValid() const {
     return deviceInfo.pciBusInfo.pci_domain != PhysicalDevicePciBusInfo::invalidValue && deviceInfo.pciBusInfo.pci_bus != PhysicalDevicePciBusInfo::invalidValue &&
            deviceInfo.pciBusInfo.pci_device != PhysicalDevicePciBusInfo::invalidValue && deviceInfo.pciBusInfo.pci_function != PhysicalDevicePciBusInfo::invalidValue;
+}
+const GfxCoreHelper &ClDevice::getGfxCoreHelper() const {
+    return device.getGfxCoreHelper();
+}
+
+const ProductHelper &ClDevice::getProductHelper() const {
+    return device.getProductHelper();
 }
 
 } // namespace NEO

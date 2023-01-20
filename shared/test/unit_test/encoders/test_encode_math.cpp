@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,8 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
@@ -188,17 +189,17 @@ HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCal
 
     auto itor = find<MI_LOAD_REGISTER_REG *>(commands.begin(), commands.end());
 
-    // load regOffset to R0
+    // load regOffset to R13
     EXPECT_NE(commands.end(), itor);
     auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
     EXPECT_EQ(cmdLoadReg->getSourceRegisterAddress(), regOffset);
-    EXPECT_EQ(cmdLoadReg->getDestinationRegisterAddress(), CS_GPR_R0);
+    EXPECT_EQ(cmdLoadReg->getDestinationRegisterAddress(), CS_GPR_R13);
 
-    // load immVal to R1
+    // load immVal to R14
     itor++;
     EXPECT_NE(commands.end(), itor);
     auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-    EXPECT_EQ(cmdLoadImm->getRegisterOffset(), CS_GPR_R1);
+    EXPECT_EQ(cmdLoadImm->getRegisterOffset(), CS_GPR_R14);
     EXPECT_EQ(cmdLoadImm->getDataDword(), immVal);
 
     // encodeAluAnd should have its own unit tests, so we only check
@@ -208,11 +209,11 @@ HWTEST_F(CommandEncoderMathTest, givenOffsetAndValueWhenEncodeBitwiseAndValIsCal
     auto cmdMath = genCmdCast<MI_MATH *>(*itor);
     EXPECT_EQ(cmdMath->DW0.BitField.DwordLength, 3u);
 
-    // store R2 to address
+    // store R15 to address
     itor++;
     EXPECT_NE(commands.end(), itor);
     auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-    EXPECT_EQ(cmdMem->getRegisterAddress(), CS_GPR_R2);
+    EXPECT_EQ(cmdMem->getRegisterAddress(), CS_GPR_R15);
     EXPECT_EQ(cmdMem->getMemoryAddress(), dstAddress);
 }
 
@@ -225,10 +226,10 @@ HWTEST_F(CommandEncoderMathTest, WhenSettingGroupSizeIndirectThenCommandsAreCorr
     cmdContainer.initialize(pDevice, nullptr, true);
 
     CrossThreadDataOffset offsets[3] = {0, sizeof(uint32_t), 2 * sizeof(uint32_t)};
-    uint32_t crossThreadAdress[3] = {};
+    uint32_t crossThreadAddress[3] = {};
     uint32_t lws[3] = {2, 1, 1};
 
-    EncodeIndirectParams<FamilyType>::setGlobalWorkSizeIndirect(cmdContainer, offsets, reinterpret_cast<uint64_t>(crossThreadAdress), lws);
+    EncodeIndirectParams<FamilyType>::setGlobalWorkSizeIndirect(cmdContainer, offsets, reinterpret_cast<uint64_t>(crossThreadAddress), lws);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());
@@ -251,9 +252,9 @@ HWTEST_F(CommandEncoderMathTest, WhenSettingGroupCountIndirectThenCommandsAreCor
     cmdContainer.initialize(pDevice, nullptr, true);
 
     CrossThreadDataOffset offsets[3] = {0, sizeof(uint32_t), 2 * sizeof(uint32_t)};
-    uint32_t crossThreadAdress[3] = {};
+    uint32_t crossThreadAddress[3] = {};
 
-    EncodeIndirectParams<FamilyType>::setGroupCountIndirect(cmdContainer, offsets, reinterpret_cast<uint64_t>(crossThreadAdress));
+    EncodeIndirectParams<FamilyType>::setGroupCountIndirect(cmdContainer, offsets, reinterpret_cast<uint64_t>(crossThreadAddress));
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());
@@ -271,4 +272,106 @@ HWTEST_F(CommandEncoderMathTest, WhenSettingGroupCountIndirectThenCommandsAreCor
 
     itor = find<MI_STORE_REGISTER_MEM *>(++itor, commands.end());
     ASSERT_EQ(itor, commands.end());
+}
+
+using CommandEncodeAluTests = ::testing::Test;
+
+HWTEST_F(CommandEncodeAluTests, whenAskingForIncrementOrDecrementCmdsSizeThenReturnCorrectValue) {
+    constexpr size_t expectedSize = (2 * sizeof(typename FamilyType::MI_LOAD_REGISTER_IMM)) + sizeof(typename FamilyType::MI_MATH) + (4 * sizeof(typename FamilyType::MI_MATH_ALU_INST_INLINE));
+
+    EXPECT_EQ(EncodeMathMMIO<FamilyType>::getCmdSizeForIncrementOrDecrement(), expectedSize);
+}
+
+HWTEST_F(CommandEncodeAluTests, whenProgrammingIncrementOperationThenUseCorrectAluCommands) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
+    using MI_MATH = typename FamilyType::MI_MATH;
+
+    constexpr size_t bufferSize = EncodeMathMMIO<FamilyType>::getCmdSizeForIncrementOrDecrement();
+    constexpr AluRegisters incRegister = AluRegisters::R_1;
+
+    uint8_t buffer[bufferSize] = {};
+    LinearStream cmdStream(buffer, bufferSize);
+
+    EncodeMathMMIO<FamilyType>::encodeIncrement(cmdStream, incRegister);
+
+    EXPECT_EQ(bufferSize, cmdStream.getUsed());
+
+    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(buffer);
+    EXPECT_EQ(lriCmd->getRegisterOffset(), CS_GPR_R7);
+    EXPECT_EQ(lriCmd->getDataDword(), 1u);
+
+    lriCmd++;
+    EXPECT_EQ(CS_GPR_R7 + 4, lriCmd->getRegisterOffset());
+    EXPECT_EQ(0u, lriCmd->getDataDword());
+
+    auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
+    EXPECT_EQ(3u, miMathCmd->DW0.BitField.DwordLength);
+
+    auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCA), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(incRegister), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCB), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_7), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_ADD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_STORE), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(incRegister), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_ACCU), miAluCmd->DW0.BitField.Operand2);
+}
+
+HWTEST_F(CommandEncodeAluTests, whenProgrammingDecrementOperationThenUseCorrectAluCommands) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
+    using MI_MATH = typename FamilyType::MI_MATH;
+
+    constexpr size_t bufferSize = EncodeMathMMIO<FamilyType>::getCmdSizeForIncrementOrDecrement();
+    constexpr AluRegisters decRegister = AluRegisters::R_1;
+
+    uint8_t buffer[bufferSize] = {};
+    LinearStream cmdStream(buffer, bufferSize);
+
+    EncodeMathMMIO<FamilyType>::encodeDecrement(cmdStream, decRegister);
+
+    EXPECT_EQ(bufferSize, cmdStream.getUsed());
+
+    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(buffer);
+    EXPECT_EQ(lriCmd->getRegisterOffset(), CS_GPR_R7);
+    EXPECT_EQ(lriCmd->getDataDword(), 1u);
+
+    lriCmd++;
+    EXPECT_EQ(CS_GPR_R7 + 4, lriCmd->getRegisterOffset());
+    EXPECT_EQ(0u, lriCmd->getDataDword());
+
+    auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
+    EXPECT_EQ(3u, miMathCmd->DW0.BitField.DwordLength);
+
+    auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCA), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(decRegister), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_LOAD), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_SRCB), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_7), miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_SUB), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(0u, miAluCmd->DW0.BitField.Operand2);
+
+    miAluCmd++;
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::OPCODE_STORE), miAluCmd->DW0.BitField.ALUOpcode);
+    EXPECT_EQ(static_cast<uint32_t>(decRegister), miAluCmd->DW0.BitField.Operand1);
+    EXPECT_EQ(static_cast<uint32_t>(AluRegisters::R_ACCU), miAluCmd->DW0.BitField.Operand2);
 }

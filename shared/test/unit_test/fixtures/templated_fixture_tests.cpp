@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
 struct TemplatedFixtureTests : public ::testing::Test {
@@ -77,7 +77,7 @@ HWTEST_TEMPLATED_F(DerivedTemplatedFixtureTests, whenExecutingTemplatedTestThenC
 struct TemplatedFixtureBaseTests : public ::testing::Test {
     template <typename T>
     void setUpT() {
-        capturedPipeControlWaRequiredInSetUp = MemorySynchronizationCommands<T>::isPipeControlWArequired(*defaultHwInfo);
+        capturedPipeControlWaRequiredInSetUp = MemorySynchronizationCommands<T>::isBarrierWaRequired(*defaultHwInfo);
     }
 
     template <typename T>
@@ -87,7 +87,7 @@ struct TemplatedFixtureBaseTests : public ::testing::Test {
 };
 
 HWTEST_TEMPLATED_F(TemplatedFixtureBaseTests, whenExecutingTemplatedSetupThenTemplateTargetsCorrectPlatform) {
-    bool capturedPipeControlWaRequiredInTestBody = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(*defaultHwInfo);
+    bool capturedPipeControlWaRequiredInTestBody = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(*defaultHwInfo);
 
     EXPECT_EQ(capturedPipeControlWaRequiredInTestBody, capturedPipeControlWaRequiredInSetUp);
 }

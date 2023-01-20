@@ -5,16 +5,22 @@
  *
  */
 
+#include "shared/source/gen12lp/hw_cmds_dg1.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
+
+#include "aubstream/product_family.h"
+#include "platforms.h"
 
 using namespace NEO;
 
-using Dg1HwInfoConfig = ::testing::Test;
+using Dg1HwInfo = ::testing::Test;
 
-DG1TEST_F(Dg1HwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
+DG1TEST_F(Dg1HwInfo, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
@@ -26,36 +32,6 @@ DG1TEST_F(Dg1HwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpe
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
-
-DG1TEST_F(Dg1HwInfoConfig, givenA0SteppingAndDg1PlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    std::array<std::pair<uint32_t, bool>, 2> revisions = {
-        {{REVISION_A0, true},
-         {REVISION_B, false}}};
-
-    for (const auto &[revision, paramBool] : revisions) {
-        auto hwInfo = *defaultHwInfo;
-        hwInfo.platform.usRevId = hwInfoConfig->getHwRevIdFromStepping(revision, hwInfo);
-
-        hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
-
-        EXPECT_EQ(paramBool, hwInfoConfig->pipeControlWARequired(hwInfo));
-        EXPECT_EQ(paramBool, hwInfoConfig->imagePitchAlignmentWARequired(hwInfo));
-        EXPECT_EQ(paramBool, hwInfoConfig->isForceEmuInt32DivRemSPWARequired(hwInfo));
-    }
-}
-
-DG1TEST_F(Dg1HwInfoConfig, givenHwInfoConfigWhenAskedIfStorageInfoAdjustmentIsRequiredThenTrueIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.isStorageInfoAdjustmentRequired());
-}
-
-DG1TEST_F(Dg1HwInfoConfig, givenHwInfoConfigWhenAskedIf3DPipelineSelectWAIsRequiredThenTrueIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig.is3DPipelineSelectWARequired());
-}
-
-using Dg1HwInfo = ::testing::Test;
 
 DG1TEST_F(Dg1HwInfo, givenBoolWhenCallDg1HardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     bool boolValue[]{
@@ -82,29 +58,15 @@ DG1TEST_F(Dg1HwInfo, givenBoolWhenCallDg1HardwareInfoSetupThenFeatureTableAndWor
         EXPECT_EQ(setParamBool, featureTable.flags.ftrTranslationTable);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrUserModeTranslationTable);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrTileMappedResource);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftrEnableGuC);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc2AddressTranslation);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcBlitterTracking);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcCpuTracking);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrTileY);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcLdr2D);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcHdr2D);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftr3dMidBatchPreempt);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
 
         EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-        EXPECT_EQ(setParamBool, workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
     }
-}
-
-DG1TEST_F(Dg1HwInfo, givenDg1WhenObtainingBlitterPreferenceThenReturnTrue) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    const auto &hardwareInfo = DG1::hwInfo;
-
-    EXPECT_TRUE(hwInfoConfig.obtainBlitterPreference(hardwareInfo));
 }
 
 DG1TEST_F(Dg1HwInfo, whenPlatformIsDg1ThenExpectSvmIsSet) {
@@ -112,24 +74,94 @@ DG1TEST_F(Dg1HwInfo, whenPlatformIsDg1ThenExpectSvmIsSet) {
     EXPECT_TRUE(hardwareInfo.capabilityTable.ftrSvm);
 }
 
-DG1TEST_F(Dg1HwInfo, whenConfigureHwInfoThenBlitterSupportIsEnabled) {
-    auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    auto hardwareInfo = *defaultHwInfo;
+using Dg1ProductHelper = ProductHelperTest;
 
+DG1TEST_F(Dg1ProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {
+    EXPECT_EQ(aub_stream::ProductFamily::Dg1, productHelper->getAubStreamProductFamily());
+}
+
+DG1TEST_F(Dg1ProductHelper, givenA0SteppingAndDg1PlatformWhenAskingIfWAIsRequiredThenReturnTrue) {
+
+    std::array<std::pair<uint32_t, bool>, 2> revisions = {
+        {{REVISION_A0, true},
+         {REVISION_B, false}}};
+
+    for (const auto &[revision, paramBool] : revisions) {
+        auto hwInfo = *defaultHwInfo;
+        hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(revision, hwInfo);
+
+        productHelper->configureHardwareCustom(&hwInfo, nullptr);
+
+        EXPECT_EQ(paramBool, productHelper->pipeControlWARequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper->imagePitchAlignmentWARequired(hwInfo));
+        EXPECT_EQ(paramBool, productHelper->isForceEmuInt32DivRemSPWARequired(hwInfo));
+    }
+}
+
+DG1TEST_F(Dg1ProductHelper, givenProductHelperWhenAskedIfStorageInfoAdjustmentIsRequiredThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->isStorageInfoAdjustmentRequired());
+}
+
+DG1TEST_F(Dg1ProductHelper, givenProductHelperWhenAskedIf3DPipelineSelectWAIsRequiredThenTrueIsReturned) {
+    EXPECT_TRUE(productHelper->is3DPipelineSelectWARequired());
+}
+
+DG1TEST_F(Dg1ProductHelper, givenDg1WhenObtainingBlitterPreferenceThenReturnTrue) {
+    const auto &hardwareInfo = DG1::hwInfo;
+    EXPECT_TRUE(productHelper->obtainBlitterPreference(hardwareInfo));
+}
+
+DG1TEST_F(Dg1ProductHelper, whenConfigureHwInfoThenBlitterSupportIsEnabled) {
+    auto hardwareInfo = *defaultHwInfo;
     hardwareInfo.capabilityTable.blitterOperationsSupported = false;
-    hwInfoConfig.configureHardwareCustom(&hardwareInfo, nullptr);
+    productHelper->configureHardwareCustom(&hardwareInfo, nullptr);
 
     EXPECT_TRUE(hardwareInfo.capabilityTable.blitterOperationsSupported);
 }
 
-DG1TEST_F(Dg1HwInfo, givenDg1WhenObtainingFullBlitterSupportThenReturnFalse) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
+DG1TEST_F(Dg1ProductHelper, givenDg1WhenObtainingFullBlitterSupportThenReturnFalse) {
     const auto &hardwareInfo = DG1::hwInfo;
 
-    EXPECT_FALSE(hwInfoConfig.isBlitterFullySupported(hardwareInfo));
+    EXPECT_FALSE(productHelper->isBlitterFullySupported(hardwareInfo));
 }
 
-DG1TEST_F(Dg1HwInfo, whenOverrideGfxPartitionLayoutForWslThenReturnTrue) {
-    auto hwInfoConfig = HwInfoConfig::get(defaultHwInfo->platform.eProductFamily);
-    EXPECT_TRUE(hwInfoConfig->overrideGfxPartitionLayoutForWsl());
+DG1TEST_F(Dg1ProductHelper, whenOverrideGfxPartitionLayoutForWslThenReturnTrue) {
+    EXPECT_TRUE(productHelper->overrideGfxPartitionLayoutForWsl());
+}
+
+DG1TEST_F(Dg1ProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(*defaultHwInfo), AOT::DG1);
+}
+
+DG1TEST_F(Dg1ProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
+    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
+}
+
+DG1TEST_F(Dg1ProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
+    EXPECT_FALSE(productHelper->getScmPropertyThreadArbitrationPolicySupport());
+    EXPECT_TRUE(productHelper->getScmPropertyCoherencyRequiredSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyZPassAsyncComputeThreadLimitSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyPixelAsyncComputeThreadLimitSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyLargeGrfModeSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyDevicePreemptionModeSupport());
+
+    EXPECT_FALSE(productHelper->getStateBaseAddressPropertyGlobalAtomicsSupport());
+    EXPECT_TRUE(productHelper->getStateBaseAddressPropertyStatelessMocsSupport());
+    EXPECT_FALSE(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
+
+    EXPECT_TRUE(productHelper->getFrontEndPropertyScratchSizeSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyPrivateScratchSizeSupport());
+
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyPreemptionModeSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyStateSipSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyCsrSurfaceSupport());
+
+    EXPECT_FALSE(productHelper->getFrontEndPropertyComputeDispatchAllWalkerSupport());
+    EXPECT_TRUE(productHelper->getFrontEndPropertyDisableEuFusionSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
+
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertyModeSelectedSupport());
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
+    EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }

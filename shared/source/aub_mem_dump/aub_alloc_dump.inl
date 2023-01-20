@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 
-#include "third_party/aub_stream/headers/aubstream.h"
+#include "aubstream/aubstream.h"
 
 using namespace NEO;
 using namespace aub_stream;
@@ -168,7 +168,7 @@ void dumpImageInTreFormat(GraphicsAllocation &gfxAllocation, AubMemDump::AubFile
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     auto gmm = gfxAllocation.getDefaultGmm();
     if ((gmm->gmmResourceInfo->getNumSamples() > 1) || (gfxAllocation.isCompressionEnabled())) {
-        DEBUG_BREAK_IF(true); //unsupported
+        DEBUG_BREAK_IF(true); // unsupported
         return;
     }
 

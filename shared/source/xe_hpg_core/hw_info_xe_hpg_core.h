@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,11 +10,11 @@
 
 namespace NEO {
 
-struct XE_HPG_COREFamily;
+struct XeHpgCoreFamily;
 
 template <>
 struct GfxFamilyMapper<IGFX_XE_HPG_CORE> {
-    typedef XE_HPG_COREFamily GfxFamily;
+    typedef XeHpgCoreFamily GfxFamily;
     static const char *name;
 };
 } // namespace NEO

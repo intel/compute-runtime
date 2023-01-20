@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,17 +15,13 @@
 #include <memory>
 #include <vector>
 
-extern bool verbose;
-bool verbose = false;
-
 #define imageIndex(buf, x, y, z, chan) \
     (buf)[(chan) +                     \
           (x)*channels +               \
           (y)*channels * hostWidth +   \
           (z)*channels * hostWidth * hostHeight]
 
-void testAppendImageFunction(ze_driver_handle_t driver,
-                             ze_context_handle_t &context,
+void testAppendImageFunction(ze_context_handle_t &context,
                              ze_device_handle_t &device,
                              ze_command_queue_handle_t &cmdQueue,
                              uint32_t cmdQueueOrdinal,
@@ -88,7 +84,7 @@ void testAppendImageFunction(ze_driver_handle_t driver,
     ze_image_region_t srcRegion = {inOffsetX, inOffsetY, inOffsetZ, hostWidth, hostHeight, hostDepth};
 
     SUCCESS_OR_TERMINATE(
-        zeImageCreate(context, device, const_cast<const ze_image_desc_t *>(&srcImgDesc), &srcImg));
+        zeImageCreate(context, device, &srcImgDesc, &srcImg));
 
     ze_image_desc_t dstImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
                                   nullptr,
@@ -106,7 +102,7 @@ void testAppendImageFunction(ze_driver_handle_t driver,
     ze_image_region_t dstRegion = {outOffsetX, outOffsetY, outOffsetZ, hostWidth, hostHeight, hostDepth};
 
     SUCCESS_OR_TERMINATE(
-        zeImageCreate(context, device, const_cast<const ze_image_desc_t *>(&dstImgDesc), &dstImg));
+        zeImageCreate(context, device, &dstImgDesc, &dstImg));
 
     uint32_t *srcBuffer = new uint32_t[hostSize];
     uint32_t *dstBuffer = new uint32_t[hostSize];
@@ -127,7 +123,7 @@ void testAppendImageFunction(ze_driver_handle_t driver,
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     if (verbose) {
         size_t pixelWidth = channels;
@@ -162,7 +158,7 @@ void testAppendImageFunction(ze_driver_handle_t driver,
         std::cout << std::endl;
     }
 
-    validRet = 1;
+    validRet = true;
 
     int errorPrintLimit = 30;
     for (uint32_t xi = 0; xi < hostWidth; xi++) {
@@ -181,7 +177,7 @@ void testAppendImageFunction(ze_driver_handle_t driver,
                         auto input = imageIndex(srcBuffer, xi, yi, zi, chan);
                         auto output = imageIndex(dstBuffer, xo, yo, zo, chan);
                         if (input != output) {
-                            validRet = 0;
+                            validRet = false;
                             if (errorPrintLimit > 0) {
                                 std::cout << "error: " << xi << "," << yi << "," << zi
                                           << " (" << input << ") does not match "
@@ -204,7 +200,9 @@ void testAppendImageFunction(ze_driver_handle_t driver,
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Image";
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
 
     bool do1D = isParamEnabled(argc, argv, "-1", "--1D");
     bool do2D = isParamEnabled(argc, argv, "-2", "--2D");
@@ -226,29 +224,25 @@ int main(int argc, char *argv[]) {
     bool success2D = false;
     bool success3D = false;
 
-    if (do1D)
-        testAppendImageFunction(driver, context, device, cmdQueue, cmdQueueOrdinal, success1D, ZE_IMAGE_TYPE_1D);
-    if (do2D)
-        testAppendImageFunction(driver, context, device, cmdQueue, cmdQueueOrdinal, success2D, ZE_IMAGE_TYPE_2D);
-    if (do3D)
-        testAppendImageFunction(driver, context, device, cmdQueue, cmdQueueOrdinal, success3D, ZE_IMAGE_TYPE_3D);
-
-    if (do1D)
-        std::cout << "\nZello Image 1D Results validation "
-                  << (success1D ? "PASSED" : "FAILED")
-                  << std::endl;
-    if (do2D)
-        std::cout << "\nZello Image 2D Results validation "
-                  << (success2D ? "PASSED" : "FAILED")
-                  << std::endl;
-    if (do3D)
-        std::cout << "\nZello Image 3D Results validation "
-                  << (success3D ? "PASSED" : "FAILED")
-                  << std::endl;
-
+    std::string caseName;
+    if (do1D) {
+        caseName = "1D";
+        testAppendImageFunction(context, device, cmdQueue, cmdQueueOrdinal, success1D, ZE_IMAGE_TYPE_1D);
+        printResult(aubMode, success1D, blackBoxName, caseName);
+    }
+    if (do2D) {
+        caseName = "2D";
+        testAppendImageFunction(context, device, cmdQueue, cmdQueueOrdinal, success2D, ZE_IMAGE_TYPE_2D);
+        printResult(aubMode, success1D, blackBoxName, caseName);
+    }
+    if (do3D) {
+        caseName = "3D";
+        testAppendImageFunction(context, device, cmdQueue, cmdQueueOrdinal, success3D, ZE_IMAGE_TYPE_3D);
+        printResult(aubMode, success1D, blackBoxName, caseName);
+    }
     teardown(context, cmdQueue);
 
-    return ((do1D && !success1D) || (do2D && !success2D) || (do3D && !success3D))
-               ? 1
-               : 0;
+    bool outputValidationSuccessful = !((do1D && !success1D) || (do2D && !success2D) || (do3D && !success3D));
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
+    return outputValidationSuccessful ? 0 : 1;
 }

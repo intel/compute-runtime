@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,9 @@
 #include "shared/offline_compiler/source/ocloc_validator.h"
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
-#include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/compiler_interface/linker.h"
+#include "shared/source/device_binary_format/zebin_decoder.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 
@@ -23,12 +25,13 @@ ProgramInfo::~ProgramInfo() {
 KernelInfo::~KernelInfo() {
     delete[] crossThreadData;
 }
+} // namespace NEO
 
 namespace Ocloc {
+using namespace NEO;
 
 int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
     NEO::ProgramInfo programInfo;
-    NEO::SingleDeviceBinary deviceBinary;
     std::string errors;
     std::string warnings;
     UNRECOVERABLE_IF(nullptr == argHelper)
@@ -49,14 +52,23 @@ int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
     }
 
     auto fileData = argHelper->readBinaryFile(fileName);
-    argHelper->printf("Validating : %s (%d bytes).\n", fileName.c_str(), fileData.size());
+    argHelper->printf("Validating : %s (%zd bytes).\n", fileName.c_str(), fileData.size());
 
-    deviceBinary.deviceBinary = deviceBinary.deviceBinary.fromAny(fileData.data(), fileData.size());
-    if (false == NEO::isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(deviceBinary.deviceBinary)) {
-        argHelper->printf("Input is not a Zebin file (not elf or wrong elf object file type)\n", errors.c_str());
+    auto deviceBinary = ArrayRef<const uint8_t>::fromAny(fileData.data(), fileData.size());
+    if (false == NEO::isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(deviceBinary)) {
+        argHelper->printf("Input is not a Zebin file (not elf or wrong elf object file type)\n");
         return -2;
     }
-    auto decodeResult = NEO::decodeSingleDeviceBinary<DeviceBinaryFormat::Zebin>(programInfo, deviceBinary, errors, warnings);
+
+    NEO::DecodeError decodeResult;
+    if (NEO::Elf::isElf<NEO::Elf::EI_CLASS_32>(deviceBinary)) {
+        auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_32>(deviceBinary, errors, warnings);
+        decodeResult = NEO::decodeZebin(programInfo, elf, errors, warnings);
+    } else {
+        auto elf = NEO::Elf::decodeElf<NEO::Elf::EI_CLASS_64>(deviceBinary, errors, warnings);
+        decodeResult = NEO::decodeZebin(programInfo, elf, errors, warnings);
+    }
+
     if (false == warnings.empty()) {
         argHelper->printf("Validator detected potential problems :\n%s\n", warnings.c_str());
     }
@@ -68,12 +80,12 @@ int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
     if (NEO::DecodeError::Success == decodeResult) {
         argHelper->printf("Statistics : \n");
         if (0 != programInfo.globalVariables.size) {
-            argHelper->printf("Binary contains global variables section of size :  %d.\n", programInfo.globalVariables.size);
+            argHelper->printf("Binary contains global variables section of size :  %zd.\n", programInfo.globalVariables.size);
         }
         if (0 != programInfo.globalConstants.size) {
-            argHelper->printf("Binary contains global constants section of size :  %d.\n", programInfo.globalConstants.size);
+            argHelper->printf("Binary contains global constants section of size :  %zd.\n", programInfo.globalConstants.size);
         }
-        argHelper->printf("Binary contains %d kernels.\n", programInfo.kernelInfos.size());
+        argHelper->printf("Binary contains %zd kernels.\n", programInfo.kernelInfos.size());
         for (size_t i = 0U; i < programInfo.kernelInfos.size(); ++i) {
             const auto &kernelDescriptor = programInfo.kernelInfos[i]->kernelDescriptor;
             argHelper->printf("\nKernel #%d named %s:\n", static_cast<int>(i), kernelDescriptor.kernelMetadata.kernelName.c_str());
@@ -87,5 +99,3 @@ int validate(const std::vector<std::string> &args, OclocArgHelper *argHelper) {
 }
 
 } // namespace Ocloc
-
-} // namespace NEO

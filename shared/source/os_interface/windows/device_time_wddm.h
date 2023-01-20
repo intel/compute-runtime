@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 
 namespace NEO {
 class Wddm;
+class GfxCoreHelper;
 struct TimeStampDataHeader;
 
 class DeviceTimeWddm : public DeviceTime {
@@ -24,6 +25,7 @@ class DeviceTimeWddm : public DeviceTime {
 
   protected:
     MOCKABLE_VIRTUAL bool runEscape(Wddm *wddm, TimeStampDataHeader &escapeInfo);
+    void convertTimestampsFromOaToCsDomain(const GfxCoreHelper &gfxCoreHelper, uint64_t &timestampData, uint64_t freqOA, uint64_t freqCS);
     Wddm *wddm = nullptr;
 };
 

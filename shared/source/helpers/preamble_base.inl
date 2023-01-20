@@ -13,7 +13,6 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/register_offsets.h"
 
-#include "hw_cmds.h"
 #include "reg_configs_common.h"
 
 #include <cstddef>
@@ -58,7 +57,7 @@ size_t PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(const HardwareInfo
     size_t size = 0;
     using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
     size += sizeof(PIPELINE_SELECT);
-    if (MemorySynchronizationCommands<GfxFamily>::isPipeControlPriorToPipelineSelectWArequired(hwInfo)) {
+    if (MemorySynchronizationCommands<GfxFamily>::isBarrierlPriorToPipelineSelectWaRequired(hwInfo)) {
         size += sizeof(PIPE_CONTROL);
     }
     return size;
@@ -103,16 +102,7 @@ size_t PreambleHelper<GfxFamily>::getKernelDebuggingCommandsSize(bool debuggingA
 }
 
 template <typename GfxFamily>
-bool PreambleHelper<GfxFamily>::isL3Configurable(const HardwareInfo &hwInfo) {
-    return false;
-}
-
-template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo, bool disableEUFusion) {
-}
-
-template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd) {}
+void PreambleHelper<GfxFamily>::appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd) {}
 
 template <typename GfxFamily>
 uint32_t PreambleHelper<GfxFamily>::getScratchSizeValueToProgramMediaVfeState(uint32_t scratchSize) {
@@ -122,6 +112,12 @@ uint32_t PreambleHelper<GfxFamily>::getScratchSizeValueToProgramMediaVfeState(ui
         valueToProgram++;
     }
     return valueToProgram;
+}
+
+template <typename GfxFamily>
+bool PreambleHelper<GfxFamily>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) {
+    const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+    return productHelper.isSystolicModeConfigurable(hwInfo);
 }
 
 } // namespace NEO

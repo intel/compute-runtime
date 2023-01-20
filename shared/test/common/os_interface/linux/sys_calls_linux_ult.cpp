@@ -5,11 +5,13 @@
  *
  */
 
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
-#include "drm/i915_drm.h"
 #include "test_files_setup.h"
 
 #include <algorithm>
@@ -17,6 +19,7 @@
 #include <cstdio>
 #include <cstring>
 #include <dlfcn.h>
+#include <fcntl.h>
 #include <iostream>
 #include <poll.h>
 #include <stdio.h>
@@ -31,7 +34,7 @@ int closeFuncArgPassed = 0;
 int closeFuncRetVal = 0;
 int dlOpenFlags = 0;
 bool dlOpenCalled = 0;
-constexpr int fakeFileDescriptor = 123;
+bool getNumThreadsCalled = false;
 bool makeFakeDevicePath = false;
 bool allowFakeDevicePath = false;
 constexpr unsigned long int invalidIoctl = static_cast<unsigned long int>(-1);
@@ -43,7 +46,9 @@ uint32_t mmapFuncCalled = 0u;
 uint32_t munmapFuncCalled = 0u;
 bool isInvalidAILTest = false;
 const char *drmVersion = "i915";
-uint32_t ioctlVmDestroyCalled = 0u;
+int passedFileDescriptorFlagsToSet = 0;
+int getFileDescriptorFlagsCalled = 0;
+int setFileDescriptorFlagsCalled = 0;
 
 int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
 ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset) = nullptr;
@@ -51,6 +56,7 @@ int (*sysCallsReadlink)(const char *path, char *buf, size_t bufsize) = nullptr;
 int (*sysCallsIoctl)(int fileDescriptor, unsigned long int request, void *arg) = nullptr;
 int (*sysCallsPoll)(struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) = nullptr;
 ssize_t (*sysCallsRead)(int fd, void *buf, size_t count) = nullptr;
+int (*sysCallsFstat)(int fd, struct stat *buf) = nullptr;
 
 int close(int fileDescriptor) {
     closeFuncCalled++;
@@ -92,11 +98,6 @@ int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
             memcpy_s(pVersion->name, pVersion->nameLen, drmVersion, std::min(pVersion->nameLen, strlen(drmVersion) + 1));
         }
     }
-    if (request == DRM_IOCTL_I915_GEM_VM_DESTROY) {
-        ioctlVmDestroyCalled++;
-        auto control = static_cast<GemVmControl *>(arg);
-        return (control->vmId > 0) ? 0 : -1;
-    }
     if (request == invalidIoctl) {
         errno = 0;
         if (setErrno != 0) {
@@ -110,6 +111,11 @@ int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
 
 unsigned int getProcessId() {
     return 0xABCEDF;
+}
+
+unsigned long getNumThreads() {
+    getNumThreadsCalled = true;
+    return 1;
 }
 
 int access(const char *pathName, int mode) {
@@ -164,6 +170,9 @@ int poll(struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) {
 }
 
 int fstat(int fd, struct stat *buf) {
+    if (sysCallsFstat != nullptr) {
+        return sysCallsFstat(fd, buf);
+    }
     return fstatFuncRetVal;
 }
 
@@ -194,6 +203,22 @@ ssize_t read(int fd, void *buf, size_t count) {
     if (sysCallsRead != nullptr) {
         return sysCallsRead(fd, buf, count);
     }
+    return 0;
+}
+
+int fcntl(int fd, int cmd) {
+    if (cmd == F_GETFL) {
+        getFileDescriptorFlagsCalled++;
+        return O_RDWR;
+    }
+    return 0;
+}
+int fcntl(int fd, int cmd, int arg) {
+    if (cmd == F_SETFL) {
+        setFileDescriptorFlagsCalled++;
+        passedFileDescriptorFlagsToSet = arg;
+    }
+
     return 0;
 }
 

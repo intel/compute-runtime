@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -128,6 +128,7 @@ enum Power {
     CurrentEnergyThreshold,
     DisableEnergyThreshold,
     CurrentEnergyCounter,
+    CurrentEnergyCounter64Bit,
 
     MaxPowerRequests,
 };

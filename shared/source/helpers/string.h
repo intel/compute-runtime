@@ -31,28 +31,6 @@ inline int strcpy_s(char *dst, size_t dstSize, const char *src) { // NOLINT(read
     return 0;
 }
 
-inline int strncpy_s(char *dst, size_t numberOfElements, const char *src, size_t count) { // NOLINT(readability-identifier-naming)
-    if ((dst == nullptr) || (src == nullptr)) {
-        return -EINVAL;
-    }
-    if (numberOfElements < count) {
-        return -ERANGE;
-    }
-
-    size_t length = strlen(src);
-    if (length > count) {
-        length = count;
-    }
-    memcpy(dst, src, length);
-
-    if (length < numberOfElements) {
-        numberOfElements = length;
-    }
-    dst[numberOfElements] = '\0';
-
-    return 0;
-}
-
 inline size_t strnlen_s(const char *str, size_t count) { // NOLINT(readability-identifier-naming)
     if (str == nullptr) {
         return 0;
@@ -64,6 +42,22 @@ inline size_t strnlen_s(const char *str, size_t count) { // NOLINT(readability-i
     }
 
     return count;
+}
+
+inline int strncpy_s(char *dst, size_t numberOfElements, const char *src, size_t count) { // NOLINT(readability-identifier-naming)
+    if ((dst == nullptr) || (src == nullptr)) {
+        return -EINVAL;
+    }
+
+    size_t length = strnlen_s(src, count);
+    if (numberOfElements <= count && numberOfElements <= length) {
+        return -ERANGE;
+    }
+
+    memcpy(dst, src, length);
+    dst[length] = '\0';
+
+    return 0;
 }
 
 inline int memcpy_s(void *dst, size_t destSize, const void *src, size_t count) { // NOLINT(readability-identifier-naming)
@@ -121,8 +115,11 @@ inline std::unique_ptr<T[]> makeCopy(const void *src, size_t size) {
     if (size == 0) {
         return nullptr;
     }
-    using ElT = typename std::remove_all_extents<T>::type;
-    std::unique_ptr<T[]> copiedData(new ElT[size]);
+
+    static_assert(sizeof(T) == 1u && std::is_trivially_copyable_v<T>);
+
+    auto copiedData = std::make_unique<T[]>(size);
     memcpy_s(copiedData.get(), size, src, size);
+
     return copiedData;
 }

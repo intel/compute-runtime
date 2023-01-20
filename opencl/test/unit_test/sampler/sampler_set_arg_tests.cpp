@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "opencl/source/sampler/sampler.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -33,8 +34,8 @@ class SamplerSetArgFixture : public ClDeviceFixture {
     }
 
   protected:
-    void SetUp() {
-        ClDeviceFixture::SetUp();
+    void setUp() {
+        ClDeviceFixture::setUp();
         pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
@@ -43,7 +44,6 @@ class SamplerSetArgFixture : public ClDeviceFixture {
 
         // setup kernel arg offsets
         pKernelInfo->addArgSampler(0, 0x40, 0x8, 0x10, 0x4);
-        pKernelInfo->addExtendedDeviceSideEnqueueDescriptor(0, 0x0);
 
         pKernelInfo->addArgSampler(1, 0x40);
 
@@ -63,12 +63,12 @@ class SamplerSetArgFixture : public ClDeviceFixture {
         retVal = CL_INVALID_VALUE;
     }
 
-    void TearDown() {
+    void tearDown() {
         delete pMultiDeviceKernel;
 
         delete sampler;
         delete context;
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     bool crossThreadDataUnchanged() {
@@ -311,10 +311,8 @@ HWTEST_F(SamplerSetArgTest, GivenFilteringNearestAndAddressingClampWhenSettingKe
     auto snapWaCrossThreadData = ptrOffset(crossThreadData, 0x4);
 
     unsigned int snapWaValue = 0xffffffff;
-    unsigned int objectId = SAMPLER_OBJECT_ID_SHIFT + pKernelInfo->argAsSmp(0).bindful;
 
     EXPECT_EQ(snapWaValue, *snapWaCrossThreadData);
-    EXPECT_EQ(objectId, *crossThreadData);
 }
 
 HWTEST_F(SamplerSetArgTest, GivenKernelWithoutObjIdOffsetWhenSettingArgThenObjIdNotPatched) {
@@ -393,10 +391,10 @@ struct NormalizedTest
     : public SamplerSetArgFixture,
       public ::testing::TestWithParam<uint32_t /*cl_bool*/> {
     void SetUp() override {
-        SamplerSetArgFixture::SetUp();
+        SamplerSetArgFixture::setUp();
     }
     void TearDown() override {
-        SamplerSetArgFixture::TearDown();
+        SamplerSetArgFixture::tearDown();
     }
 };
 
@@ -444,10 +442,10 @@ struct AddressingModeTest
     : public SamplerSetArgFixture,
       public ::testing::TestWithParam<uint32_t /*cl_addressing_mode*/> {
     void SetUp() override {
-        SamplerSetArgFixture::SetUp();
+        SamplerSetArgFixture::setUp();
     }
     void TearDown() override {
-        SamplerSetArgFixture::TearDown();
+        SamplerSetArgFixture::tearDown();
     }
 };
 
@@ -563,10 +561,10 @@ struct FilterModeTest
     : public SamplerSetArgFixture,
       public ::testing::TestWithParam<uint32_t /*cl_filter_mode*/> {
     void SetUp() override {
-        SamplerSetArgFixture::SetUp();
+        SamplerSetArgFixture::setUp();
     }
     void TearDown() override {
-        SamplerSetArgFixture::TearDown();
+        SamplerSetArgFixture::tearDown();
     }
 };
 
@@ -584,7 +582,7 @@ HWTEST_P(FilterModeTest, WhenSettingKernelArgSamplerThenFiltersAreCorrect) {
         ptrOffset(pKernel->getDynamicStateHeap(),
                   pKernelInfo->argAsSmp(0).bindful));
 
-    sampler->setArg(const_cast<SAMPLER_STATE *>(samplerState), *defaultHwInfo);
+    sampler->setArg(const_cast<SAMPLER_STATE *>(samplerState), pClDevice->getRootDeviceEnvironment());
 
     if (CL_FILTER_NEAREST == filterMode) {
         EXPECT_EQ(SAMPLER_STATE::MIN_MODE_FILTER_NEAREST, samplerState->getMinModeFilter());

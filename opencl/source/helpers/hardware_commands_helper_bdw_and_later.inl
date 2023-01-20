@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 
@@ -75,35 +76,6 @@ void HardwareCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
 }
 
 template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::programPerThreadData(
-    size_t &sizePerThreadData,
-    const bool &localIdsGenerationByRuntime,
-    LinearStream &ioh,
-    uint32_t &simd,
-    uint32_t &numChannels,
-    const size_t localWorkSize[3],
-    Kernel &kernel,
-    size_t &sizePerThreadDataTotal,
-    size_t &localWorkItems,
-    uint32_t rootDeviceIndex) {
-
-    uint32_t grfSize = sizeof(typename GfxFamily::GRF);
-
-    sendPerThreadData(
-        ioh,
-        simd,
-        grfSize,
-        numChannels,
-        std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSize[0]), static_cast<uint16_t>(localWorkSize[1]), static_cast<uint16_t>(localWorkSize[2])}},
-        std::array<uint8_t, 3>{{kernel.getKernelInfo().kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[0],
-                                kernel.getKernelInfo().kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[1],
-                                kernel.getKernelInfo().kernelDescriptor.kernelAttributes.workgroupDimensionsOrder[2]}},
-        kernel.usesOnlyImages());
-
-    updatePerThreadDataTotal(sizePerThreadData, simd, numChannels, sizePerThreadDataTotal, localWorkItems);
-}
-
-template <typename GfxFamily>
 size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
     IndirectHeap &indirectHeap,
     Kernel &kernel,
@@ -139,11 +111,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
 }
 
 template <typename GfxFamily>
-bool HardwareCommandsHelper<GfxFamily>::resetBindingTablePrefetch() {
-    return !EncodeSurfaceState<GfxFamily>::doBindingTablePrefetch();
-}
-
-template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
     WALKER_TYPE *walkerCmd,
     uint32_t &interfaceDescriptorIndex) {
@@ -156,7 +123,7 @@ void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(Line
     const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     PipeControlArgs args;
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-    MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandStream, args);
+    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandStream, args);
 }
 
 } // namespace NEO

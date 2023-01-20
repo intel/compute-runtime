@@ -7,14 +7,17 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/definitions/mi_flush_args.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 using CommandEncoderTests = ::testing::Test;
@@ -49,6 +52,22 @@ HWTEST_F(CommandEncoderTests, givenImmDataWriteWhenProgrammingMiFlushDwThenSetAl
     EXPECT_EQ(gpuAddress, miFlushDwCmd->getDestinationAddress());
     EXPECT_EQ(immData, miFlushDwCmd->getImmediateData());
     EXPECT_EQ(0u, static_cast<uint32_t>(miFlushDwCmd->getNotifyEnable()));
+}
+
+HWTEST2_F(CommandEncoderTests, given57bitVaForDestinationAddressWhenProgrammingMiFlushDwThenVerifyAll57bitsAreUsed, IsPVC) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
+    LinearStream linearStream(buffer, sizeof(buffer));
+
+    const uint64_t setGpuAddress = 0xffffffffffffffff;
+    const uint64_t verifyGpuAddress = 0xfffffffffffffff8;
+
+    MiFlushArgs args;
+    args.commandWithPostSync = true;
+    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, setGpuAddress, 0, args, *defaultHwInfo);
+    auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
+
+    EXPECT_EQ(verifyGpuAddress, miFlushDwCmd->getDestinationAddress());
 }
 
 HWTEST_F(CommandEncoderTests, whenEncodeMemoryPrefetchCalledThenDoNothing) {
@@ -143,7 +162,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, givenPreXeHpPlatformWhenSetupPo
 
     WALKER_TYPE walkerCmd{};
     MockExecutionEnvironment executionEnvironment{};
-    EXPECT_NO_THROW(EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, *executionEnvironment.rootDeviceEnvironments[0]));
+    EXPECT_NO_THROW(EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, *executionEnvironment.rootDeviceEnvironments[0], false));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSetupPostSyncMocsThenCorrect) {
@@ -152,13 +171,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     rootDeviceEnvironment.initGmm();
+    bool dcFlush = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
 
     {
         WALKER_TYPE walkerCmd{};
-        EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment);
+        EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, dcFlush);
 
         auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
-        auto expectedMocs = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo) ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
+        auto expectedMocs = dcFlush ? gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) : gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
 
         EXPECT_EQ(expectedMocs, walkerCmd.getPostSync().getMocs());
     }
@@ -167,7 +187,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
         auto expectedMocs = 9u;
         DebugManager.flags.OverridePostSyncMocs.set(expectedMocs);
         WALKER_TYPE walkerCmd{};
-        EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment);
+        EncodeDispatchKernel<FamilyType>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, dcFlush);
         EXPECT_EQ(expectedMocs, walkerCmd.getPostSync().getMocs());
     }
 }
@@ -189,4 +209,10 @@ HWTEST2_F(CommandEncoderTests, givenRequiredWorkGroupOrderWhenCallAdjustWalkOrde
     uint32_t fakeOrder = 5u;
     EncodeDispatchKernel<FamilyType>::adjustWalkOrder(walkerCmd, fakeOrder, *defaultHwInfo);
     EXPECT_EQ(0, memcmp(&walkerOnStart, &walkerCmd, sizeof(WALKER_TYPE))); // no change
+}
+
+HWTEST_F(CommandEncoderTests, givenDcFlushNotRequiredWhenGettingDcFlushValueThenReturnValueIsFalse) {
+    constexpr bool requiredFlag = false;
+    bool helperValue = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(requiredFlag, *defaultHwInfo);
+    EXPECT_FALSE(helperValue);
 }

@@ -8,13 +8,14 @@
 #pragma once
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
 
 #include <level_zero/ze_api.h>
 
 #include <atomic>
 #include <limits>
 #include <sstream>
-#include <string>
+
 namespace L0 {
 
 class EuThread {

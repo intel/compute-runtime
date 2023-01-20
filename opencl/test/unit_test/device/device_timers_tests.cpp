@@ -1,16 +1,20 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_ostime.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 #include "gtest/gtest.h"
+#include <CL/cl_platform.h>
+
+#include <thread>
 
 using namespace NEO;
 
@@ -69,6 +73,7 @@ TEST(MockOSTime, WhenGettingTimersThenDiffBetweenQueriesWithinAllowedError) {
     hostOnlyDiff = hostOnlyTimestamp[1] - hostOnlyTimestamp[0];
 
     EXPECT_LT(deviceTimestamp[0], deviceTimestamp[1]);
+
     EXPECT_LT(hostTimestamp[0], hostOnlyTimestamp[0]);
     EXPECT_LT(hostTimestamp[1], hostOnlyTimestamp[1]);
 
@@ -115,27 +120,26 @@ TEST(MockOSTime, GivenNullWhenSettingOsTimeThenResolutionIsZero) {
 }
 
 TEST(MockOSTime, givenDeviceTimestampBaseNotEnabledWhenGetDeviceAndHostTimerThenCpuTimestampIsReturned) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.EnableDeviceBasedTimestamps.set(0);
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setOSTime(new MockOSTimeWithConstTimestamp());
 
     uint64_t deviceTS = 0u, hostTS = 0u;
     mockDevice->getDeviceAndHostTimer(&deviceTS, &hostTS);
 
-    EXPECT_EQ(deviceTS, MockDeviceTimeWithConstTimestamp::CPU_TIME_IN_NS);
+    EXPECT_EQ(deviceTS, MockDeviceTimeWithConstTimestamp::cpuTimeInNs);
     EXPECT_EQ(deviceTS, hostTS);
 }
 
 TEST(MockOSTime, givenDeviceTimestampBaseEnabledWhenGetDeviceAndHostTimerThenGpuTimestampIsReturned) {
-    DebugManagerStateRestore dbgRestorer;
-    DebugManager.flags.EnableDeviceBasedTimestamps.set(true);
-
     auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     mockDevice->setOSTime(new MockOSTimeWithConstTimestamp());
 
     uint64_t deviceTS = 0u, hostTS = 0u;
     mockDevice->getDeviceAndHostTimer(&deviceTS, &hostTS);
 
-    EXPECT_EQ(deviceTS, MockDeviceTimeWithConstTimestamp::GPU_TIMESTAMP);
+    EXPECT_EQ(deviceTS, MockDeviceTimeWithConstTimestamp::gpuTimestamp);
     EXPECT_NE(deviceTS, hostTS);
 }
 

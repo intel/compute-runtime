@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_interface.inl"
 #include "shared/source/helpers/compiler_hw_info_config.h"
@@ -18,7 +19,8 @@
 #include "shared/test/common/mocks/mock_cif.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/mocks/mock_compilers.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 
@@ -38,7 +40,7 @@ class CompilerInterfaceTest : public DeviceFixture,
                               public ::testing::Test {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
 
         // create the compiler interface
         this->pCompilerInterface = new MockCompilerInterface();
@@ -64,7 +66,7 @@ class CompilerInterfaceTest : public DeviceFixture,
     void TearDown() override {
         pSource.reset();
 
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     MockCompilerInterface *pCompilerInterface;
@@ -617,7 +619,6 @@ TEST(TranslateTest, whenAnyArgIsNullThenNullptrIsReturnedAndTranslatorIsNotInvok
 }
 
 TEST(LoadCompilerTest, whenEverythingIsOkThenReturnsTrueAndValidOutputs) {
-    MockCompilerEnableGuard mock;
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
@@ -627,7 +628,6 @@ TEST(LoadCompilerTest, whenEverythingIsOkThenReturnsTrueAndValidOutputs) {
 }
 
 TEST(LoadCompilerTest, whenCouldNotLoadLibraryThenReturnFalseAndNullOutputs) {
-    MockCompilerEnableGuard mock;
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("_falseName.notRealLib", retLib, retMain);
@@ -639,7 +639,6 @@ TEST(LoadCompilerTest, whenCouldNotLoadLibraryThenReturnFalseAndNullOutputs) {
 TEST(LoadCompilerTest, whenCreateMainFailsThenReturnFalseAndNullOutputs) {
     NEO::failCreateCifMain = true;
 
-    MockCompilerEnableGuard mock;
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
@@ -651,7 +650,7 @@ TEST(LoadCompilerTest, whenCreateMainFailsThenReturnFalseAndNullOutputs) {
 }
 
 TEST(LoadCompilerTest, whenEntrypointInterfaceIsNotCompatibleThenReturnFalseAndNullOutputs) {
-    MockCompilerEnableGuard mock;
+
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::GTSystemInfo>("", retLib, retMain);
@@ -664,7 +663,6 @@ TEST(LoadCompilerTest, GivenZebinIgnoreIcbeVersionDebugFlagThenIgnoreIgcsIcbeVer
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.ZebinIgnoreIcbeVersion.set(true);
 
-    MockCompilerEnableGuard mock;
     std::unique_ptr<NEO::OsLibrary> retLib;
     CIF::RAII::UPtr_t<CIF::CIFMain> retMain;
     bool retVal = loadCompiler<IGC::IgcOclDeviceCtx>("", retLib, retMain);
@@ -881,11 +879,8 @@ HWTEST_F(CompilerInterfaceTest, givenNoDbgKeyForceUseDifferentPlatformWhenReques
     auto igcPlatform = devCtx->GetPlatformHandle();
     auto igcSysInfo = devCtx->GetGTSystemInfoHandle();
 
-    HardwareInfo copyHwInfo = device->getHardwareInfo();
-    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
-
-    EXPECT_EQ(copyHwInfo.platform.eProductFamily, igcPlatform->GetProductFamily());
-    EXPECT_EQ(copyHwInfo.platform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
+    EXPECT_EQ(device->getHardwareInfo().platform.eProductFamily, igcPlatform->GetProductFamily());
+    EXPECT_EQ(device->getHardwareInfo().platform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
     EXPECT_EQ(device->getHardwareInfo().gtSystemInfo.SliceCount, igcSysInfo->GetSliceCount());
     EXPECT_EQ(device->getHardwareInfo().gtSystemInfo.SubSliceCount, igcSysInfo->GetSubSliceCount());
     EXPECT_EQ(device->getHardwareInfo().gtSystemInfo.EUCount, igcSysInfo->GetEUCount());
@@ -906,11 +901,8 @@ HWTEST_F(CompilerInterfaceTest, givenDbgKeyForceUseDifferentPlatformWhenRequestF
     auto igcPlatform = devCtx->GetPlatformHandle();
     auto igcSysInfo = devCtx->GetGTSystemInfoHandle();
 
-    HardwareInfo copyHwInfo = *hardwareInfoTable[dbgProdFamily];
-    NEO::CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
-
-    EXPECT_EQ(copyHwInfo.platform.eProductFamily, igcPlatform->GetProductFamily());
-    EXPECT_EQ(copyHwInfo.platform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
+    EXPECT_EQ(hardwareInfoTable[dbgProdFamily]->platform.eProductFamily, igcPlatform->GetProductFamily());
+    EXPECT_EQ(hardwareInfoTable[dbgProdFamily]->platform.eRenderCoreFamily, igcPlatform->GetRenderCoreFamily());
     EXPECT_EQ(dbgSystemInfo.SliceCount, igcSysInfo->GetSliceCount());
     EXPECT_EQ(dbgSystemInfo.SubSliceCount, igcSysInfo->GetSubSliceCount());
     EXPECT_EQ(dbgSystemInfo.DualSubSliceCount, igcSysInfo->GetSubSliceCount());

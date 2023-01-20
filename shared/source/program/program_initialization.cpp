@@ -12,6 +12,7 @@
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/program/program_info.h"
@@ -30,23 +31,20 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
     }
 
     if (globalsAreExported && (svmAllocManager != nullptr)) {
-        NEO::SVMAllocsManager::SvmAllocationProperties svmProps = {};
-        svmProps.coherent = false;
-        svmProps.readOnly = constant;
-        svmProps.hostPtrReadOnly = constant;
-
         RootDeviceIndicesContainer rootDeviceIndices;
         rootDeviceIndices.push_back(rootDeviceIndex);
         std::map<uint32_t, DeviceBitfield> subDeviceBitfields;
         subDeviceBitfields.insert({rootDeviceIndex, deviceBitfield});
-        auto ptr = svmAllocManager->createSVMAlloc(size, svmProps, rootDeviceIndices, subDeviceBitfields);
+        NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, subDeviceBitfields);
+        unifiedMemoryProperties.device = &device;
+        auto ptr = svmAllocManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
         DEBUG_BREAK_IF(ptr == nullptr);
         if (ptr == nullptr) {
             return nullptr;
         }
-        auto svmAlloc = svmAllocManager->getSVMAlloc(ptr);
-        UNRECOVERABLE_IF(svmAlloc == nullptr);
-        gpuAllocation = svmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+        auto usmAlloc = svmAllocManager->getSVMAlloc(ptr);
+        UNRECOVERABLE_IF(usmAlloc == nullptr);
+        gpuAllocation = usmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
     } else {
         auto allocationType = constant ? AllocationType::CONSTANT_SURFACE : AllocationType::GLOBAL_SURFACE;
         gpuAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex,
@@ -61,9 +59,9 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
     }
 
     auto &hwInfo = device.getHardwareInfo();
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device.getProductHelper();
 
-    auto success = MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *gpuAllocation),
+    auto success = MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *gpuAllocation),
                                                                     device, gpuAllocation, 0, initData, size);
 
     UNRECOVERABLE_IF(!success);

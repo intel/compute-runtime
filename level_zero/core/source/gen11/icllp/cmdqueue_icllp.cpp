@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/gen11/hw_cmds.h"
+#include "shared/source/gen11/hw_cmds_icllp.h"
 #include "shared/source/gen11/hw_info.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.inl"

@@ -9,7 +9,7 @@
 
 using namespace NEO;
 
-TEST_F(DeviceIdTests, GivenPvcSupportedDeviceIdThenConfigIsCorrect) {
+PVCTEST_F(DeviceIdTests, GivenPvcSupportedDeviceIdThenConfigIsCorrect) {
     std::array<DeviceDescriptor, 8> expectedDescriptors = {{
         {0x0BD0, &PvcHwConfig::hwInfo, &PvcHwConfig::setupHardwareInfo},
         {0x0BD5, &PvcHwConfig::hwInfo, &PvcHwConfig::setupHardwareInfo},

@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "performance.h"
+
+#include "level_zero/tools/source/sysman/os_sysman.h"
 
 #include "performance_imp.h"
 
@@ -40,6 +42,9 @@ ze_result_t PerformanceHandleContext::init(std::vector<ze_device_handle_t> &devi
 }
 
 ze_result_t PerformanceHandleContext::performanceGet(uint32_t *pCount, zes_perf_handle_t *phPerformance) {
+    std::call_once(initPerformanceOnce, [this]() {
+        this->init(pOsSysman->getDeviceHandles(), pOsSysman->getCoreDeviceHandle());
+    });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
     if (0 == *pCount || *pCount > handleListSize) {

@@ -6,14 +6,15 @@
  */
 
 #include "shared/source/command_stream/csr_definitions.h"
-#include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/preamble_bdw_and_later.inl"
-#include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
 
-using Family = TGLLPFamily;
+using Family = Gen12LpFamily;
 
 template <>
 uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool useSLM) {
@@ -36,25 +37,29 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
     using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
 
-    if (MemorySynchronizationCommands<Family>::isPipeControlPriorToPipelineSelectWArequired(hwInfo)) {
+    if (MemorySynchronizationCommands<Family>::isBarrierlPriorToPipelineSelectWaRequired(hwInfo)) {
         PipeControlArgs args;
         args.renderTargetCacheFlushEnable = true;
-        MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
+        MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
     }
 
-    auto pCmd = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
-    PIPELINE_SELECT cmd = Family::cmdInitPipelineSelect;
+    auto cmdSpace = pCommandStream->getSpaceForCmd<PIPELINE_SELECT>();
+    PIPELINE_SELECT pipelineSelectCmd = Family::cmdInitPipelineSelect;
 
     auto mask = pipelineSelectEnablePipelineSelectMaskBits | pipelineSelectMediaSamplerDopClockGateMaskBits;
     auto pipeline = pipelineSelectArgs.is3DPipelineRequired ? PIPELINE_SELECT::PIPELINE_SELECTION_3D : PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
 
-    cmd.setMaskBits(mask);
-    cmd.setPipelineSelection(pipeline);
-    cmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
+    pipelineSelectCmd.setPipelineSelection(pipeline);
+    pipelineSelectCmd.setMediaSamplerDopClockGateEnable(!pipelineSelectArgs.mediaSamplerRequired);
 
-    HwInfoConfig::get(hwInfo.platform.eProductFamily)->setAdditionalPipelineSelectFields(&cmd, pipelineSelectArgs, hwInfo);
+    if (pipelineSelectArgs.systolicPipelineSelectSupport) {
+        mask |= pipelineSelectSystolicModeEnableMaskBits;
+        pipelineSelectCmd.setSpecialModeEnable(pipelineSelectArgs.systolicPipelineSelectMode);
+    }
 
-    *pCmd = cmd;
+    pipelineSelectCmd.setMaskBits(mask);
+
+    *cmdSpace = pipelineSelectCmd;
 }
 
 template <>
@@ -69,7 +74,7 @@ void PreambleHelper<Family>::addPipeControlBeforeVfeCmd(LinearStream *pCommandSt
         args.dcFlushEnable = true;
     }
 
-    MemorySynchronizationCommands<Family>::addPipeControl(*pCommandStream, args);
+    MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);
 }
 
 template <>
@@ -82,9 +87,12 @@ uint32_t PreambleHelper<Family>::getUrbEntryAllocationSize() {
 }
 
 template <>
-void PreambleHelper<Family>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *mediaVfeState, const HardwareInfo &hwInfo, bool disableEUFusion) {
-    auto &hwHelper = HwHelperHw<Family>::get();
-    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo, disableEUFusion)) {
+void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd) {
+    VFE_STATE_TYPE *mediaVfeState = static_cast<VFE_STATE_TYPE *>(cmd);
+    bool disableEUFusion = streamProperties.frontEndState.disableEUFusion.value == 1;
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    if (!gfxCoreHelper.isFusedEuDispatchEnabled(hwInfo, disableEUFusion)) {
         mediaVfeState->setDisableSlice0Subslice2(true);
     }
     if (DebugManager.flags.MediaVfeStateMaxSubSlices.get() != -1) {
@@ -92,6 +100,6 @@ void PreambleHelper<Family>::programAdditionalFieldsInVfeState(VFE_STATE_TYPE *m
     }
 }
 
-// Explicitly instantiate PreambleHelper for TGLLP device family
+// Explicitly instantiate PreambleHelper for Gen12Lp device family
 template struct PreambleHelper<Family>;
 } // namespace NEO

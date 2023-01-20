@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/gen12lp/hw_cmds_dg1.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.inl"
@@ -13,14 +13,14 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_DG1;
 
 #include "shared/source/gen12lp/dg1/os_agnostic_hw_info_config_dg1.inl"
 #include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
+namespace NEO {
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     GT_SYSTEM_INFO *gtSystemInfo = &hwInfo->gtSystemInfo;
     gtSystemInfo->SliceCount = 1;
 
@@ -33,5 +33,5 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
     return 0;
 }
 
-template class HwInfoConfigHw<gfxProduct>;
+template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

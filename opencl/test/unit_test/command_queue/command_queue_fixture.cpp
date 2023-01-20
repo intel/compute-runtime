@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/context/context.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 
@@ -67,12 +68,12 @@ void CommandQueueHwFixture::forceMapBufferOnGpu(Buffer &buffer) {
     }
 }
 
-void CommandQueueHwFixture::SetUp() {
+void CommandQueueHwFixture::setUp() {
     ASSERT_NE(nullptr, pCmdQ);
     context = new MockContext();
 }
 
-void CommandQueueHwFixture::SetUp(
+void CommandQueueHwFixture::setUp(
     ClDevice *pDevice,
     cl_command_queue_properties properties) {
     ASSERT_NE(nullptr, pDevice);
@@ -81,8 +82,8 @@ void CommandQueueHwFixture::SetUp(
     ASSERT_NE(nullptr, pCmdQ);
 }
 
-void CommandQueueHwFixture::TearDown() {
-    //resolve event dependencies
+void CommandQueueHwFixture::tearDown() {
+    // resolve event dependencies
     if (pCmdQ) {
         auto blocked = pCmdQ->isQueueBlocked();
         UNRECOVERABLE_IF(blocked);
@@ -109,7 +110,7 @@ CommandQueue *CommandQueueFixture::createCommandQueue(
         internalUsage);
 }
 
-void CommandQueueFixture::SetUp(
+void CommandQueueFixture::setUp(
     Context *context,
     ClDevice *device,
     cl_command_queue_properties properties) {
@@ -120,41 +121,41 @@ void CommandQueueFixture::SetUp(
         false);
 }
 
-void CommandQueueFixture::TearDown() {
+void CommandQueueFixture::tearDown() {
     delete pCmdQ;
     pCmdQ = nullptr;
 }
 
-void OOQueueFixture ::SetUp(ClDevice *pDevice, cl_command_queue_properties properties) {
+void OOQueueFixture ::setUp(ClDevice *pDevice, cl_command_queue_properties properties) {
     ASSERT_NE(nullptr, pDevice);
     BaseClass::pCmdQ = BaseClass::createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE);
     ASSERT_NE(nullptr, BaseClass::pCmdQ);
 }
 
 void CommandQueueHwTest::SetUp() {
-    ClDeviceFixture::SetUp();
+    ClDeviceFixture::setUp();
     cl_device_id device = pClDevice;
-    ContextFixture::SetUp(1, &device);
-    CommandQueueHwFixture::SetUp(pClDevice, 0);
+    ContextFixture::setUp(1, &device);
+    CommandQueueHwFixture::setUp(pClDevice, 0);
 }
 
 void CommandQueueHwTest::TearDown() {
-    CommandQueueHwFixture::TearDown();
-    ContextFixture::TearDown();
-    ClDeviceFixture::TearDown();
+    CommandQueueHwFixture::tearDown();
+    ContextFixture::tearDown();
+    ClDeviceFixture::tearDown();
 }
 
 void OOQueueHwTest::SetUp() {
-    ClDeviceFixture::SetUp();
+    ClDeviceFixture::setUp();
     cl_device_id device = pClDevice;
-    ContextFixture::SetUp(1, &device);
-    OOQueueFixture::SetUp(pClDevice, 0);
+    ContextFixture::setUp(1, &device);
+    OOQueueFixture::setUp(pClDevice, 0);
 }
 
 void OOQueueHwTest::TearDown() {
-    OOQueueFixture::TearDown();
-    ContextFixture::TearDown();
-    ClDeviceFixture::TearDown();
+    OOQueueFixture::tearDown();
+    ContextFixture::tearDown();
+    ClDeviceFixture::tearDown();
 }
 
 } // namespace NEO

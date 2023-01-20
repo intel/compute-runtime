@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "shared/source/helpers/l3_range.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/kernel/implicit_args.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
@@ -56,33 +57,6 @@ void HardwareCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
     LinearStream &commandStream,
     size_t offsetInterfaceDescriptorData,
     size_t sizeInterfaceDescriptorData) {
-}
-
-template <typename GfxFamily>
-void HardwareCommandsHelper<GfxFamily>::programPerThreadData(
-    size_t &sizePerThreadData,
-    const bool &localIdsGenerationByRuntime,
-    LinearStream &ioh,
-    uint32_t &simd,
-    uint32_t &numChannels,
-    const size_t localWorkSize[3],
-    Kernel &kernel,
-    size_t &sizePerThreadDataTotal,
-    size_t &localWorkItems,
-    uint32_t rootDeviceIndex) {
-    if (localIdsGenerationByRuntime) {
-        constexpr uint32_t grfSize = sizeof(typename GfxFamily::GRF);
-        sendPerThreadData(
-            ioh,
-            simd,
-            grfSize,
-            numChannels,
-            std::array<uint16_t, 3>{{static_cast<uint16_t>(localWorkSize[0]), static_cast<uint16_t>(localWorkSize[1]), static_cast<uint16_t>(localWorkSize[2])}},
-            {{0u, 1u, 2u}},
-            kernel.usesOnlyImages());
-
-        updatePerThreadDataTotal(sizePerThreadData, simd, numChannels, sizePerThreadDataTotal, localWorkItems);
-    }
 }
 
 template <typename GfxFamily>
@@ -155,11 +129,6 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
 }
 
 template <typename GfxFamily>
-bool HardwareCommandsHelper<GfxFamily>::resetBindingTablePrefetch() {
-    return false;
-}
-
-template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::setInterfaceDescriptorOffset(
     WALKER_TYPE *walkerCmd,
     uint32_t &interfaceDescriptorIndex) {
@@ -169,10 +138,9 @@ template <typename GfxFamily>
 void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(LinearStream *commandStream, const CommandQueue &commandQueue, const Kernel *kernel, [[maybe_unused]] uint64_t postSyncAddress) {
     // 1. make sure previous kernel finished
     PipeControlArgs args;
-    auto &hardwareInfo = commandQueue.getDevice().getHardwareInfo();
-    args.unTypedDataPortCacheFlush = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily).unTypedDataPortCacheFlushRequired();
+    args.unTypedDataPortCacheFlush = commandQueue.getDevice().getGfxCoreHelper().unTypedDataPortCacheFlushRequired();
 
-    MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandStream, args);
+    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandStream, args);
 
     // 2. flush all affected L3 lines
     if constexpr (GfxFamily::isUsingL3Control) {
@@ -190,6 +158,7 @@ void HardwareCommandsHelper<GfxFamily>::programCacheFlushAfterWalkerCommand(Line
                 postSyncAddressToFlush = postSyncAddress;
             }
 
+            auto &hardwareInfo = commandQueue.getDevice().getHardwareInfo();
             flushGpuCache<GfxFamily>(commandStream, range, postSyncAddressToFlush, hardwareInfo);
         }
     }

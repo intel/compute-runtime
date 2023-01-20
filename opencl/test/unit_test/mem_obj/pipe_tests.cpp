@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -17,7 +18,7 @@
 
 using namespace NEO;
 
-//Tests for pipes
+// Tests for pipes
 
 class PipeTest : public ::testing::Test, public MemoryManagementFixture {
   public:

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/image/image_hw.h"
@@ -106,6 +106,51 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggerLogsDisabledWhenCommandListIsSy
 }
 
 using Gen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
+using singleAddressSpaceModeTest = Test<L0DebuggerSingleAddressSpaceFixture>;
+
+HWTEST2_F(singleAddressSpaceModeTest, givenImmediateCommandListWhenExecutingWithFlushTaskThenGPR15isProgrammed, Gen12Plus) {
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    Mock<::L0::Kernel> kernel;
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_group_count_t groupCount{1, 1, 1};
+
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.storeMakeResidentAllocations = true;
+
+    auto commandList = CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue);
+
+    EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
+    EXPECT_EQ(&csr, commandList->csr);
+
+    csr.lastFlushedCommandStream = nullptr;
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_NE(nullptr, csr.lastFlushedCommandStream);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, commandList->csr->getCS().getCpuBase(), commandList->csr->getCS().getUsed()));
+    bool gpr15Found = false;
+    auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
+    for (size_t i = 0; i < miLoadImm.size(); i++) {
+        MI_LOAD_REGISTER_IMM *miLoad = genCmdCast<MI_LOAD_REGISTER_IMM *>(*miLoadImm[i]);
+        ASSERT_NE(nullptr, miLoad);
+
+        if (miLoad->getRegisterOffset() == CS_GPR_R15) {
+            gpr15Found = true;
+            break;
+        }
+    }
+    EXPECT_TRUE(gpr15Found);
+    commandList->destroy();
+}
+
 HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithFlushTaskThenSipIsInstalledAndDebuggerAllocationsAreResident, Gen12Plus) {
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -145,8 +190,8 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenImmediateCommandListWhenExecutingWithF
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, commandList->csr->getCS().getCpuBase(), commandList->csr->getCS().getUsed()));
 
-    const auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    if (hwHelper.isSipWANeeded(hwInfo)) {
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
 
         auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
 
@@ -309,7 +354,7 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenUseCsrImmediateSubmissionEnabledForReg
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
+    ASSERT_NE(nullptr, commandQueue);
 
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
@@ -420,7 +465,6 @@ HWTEST2_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenInternalCmdQIsUsed
     EXPECT_FALSE(debugSurfaceFound);
 
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
-    EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->programSbaTrackingCommandsCount);
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->getSbaTrackingCommandsSizeCount);
 
     auto commandList = CommandList::fromHandle(commandLists[0]);
@@ -433,7 +477,8 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecut
 
     auto &selectorCopyEngine = neoDevice->getSelectorCopyEngine();
     auto deviceBitfield = neoDevice->getDeviceBitfield();
-    auto bcsEngine = neoDevice->tryGetEngine(EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, false), EngineUsage::Regular);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
+    auto bcsEngine = neoDevice->tryGetEngine(EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, false), EngineUsage::Regular);
 
     if (!bcsEngine) {
         GTEST_SKIP();
@@ -443,9 +488,9 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecut
     ze_result_t returnValue;
 
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, bcsEngine->commandStreamReceiver, &queueDesc, true, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
+    ASSERT_NE(nullptr, commandQueue);
 
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     auto commandList = CommandList::create(productFamily, device, EngineGroupType::Copy, 0u, returnValue);
     ze_command_list_handle_t commandLists[] = {commandList->toHandle()};
@@ -459,12 +504,12 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecut
     result = commandQueue->executeCommandLists(numCommandLists, commandLists, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
 
@@ -492,7 +537,8 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenDebuggingEnabledWhenCommandListIsExecut
     EXPECT_EQ(0u, tdDebugControlRegisterCount);
     EXPECT_EQ(0u, globalSipFound);
 
-    if (!HwHelper::get(hwInfo.platform.eRenderCoreFamily).isSipWANeeded(hwInfo)) {
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    if (!gfxCoreHelper.isSipWANeeded(hwInfo)) {
         auto stateSipCmds = findAll<STATE_SIP *>(cmdList.begin(), cmdList.end());
 
         if (device->getDevicePreemptionMode() != PreemptionMode::MidThread) {

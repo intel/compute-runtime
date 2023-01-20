@@ -1,37 +1,29 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/device_binary_format/zebin_decoder.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 
 #include <tuple>
 
 namespace NEO {
 
-template <>
-bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const uint8_t> binary) {
-    auto header = Elf::decodeElfFileHeader<Elf::EI_CLASS_64>(binary);
-    if (nullptr == header) {
-        return false;
-    }
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
+                                     std::string &outErrReason, std::string &outWarning) {
 
-    return header->type == NEO::Elf::ET_REL ||
-           header->type == NEO::Elf::ET_ZEBIN_EXE;
-}
-
-template <>
-SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
-                                                                            std::string &outErrReason, std::string &outWarning) {
-    auto elf = Elf::decodeElf<Elf::EI_CLASS_64>(archive, outErrReason, outWarning);
+    auto elf = Elf::decodeElf<numBits>(archive, outErrReason, outWarning);
     if (nullptr == elf.elfFileHeader) {
         return {};
     }
@@ -63,14 +55,14 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
 
     bool validForTarget = true;
     if (elf.elfFileHeader->machine == Elf::ELF_MACHINE::EM_INTELGT) {
-        validForTarget &= validateTargetDevice(elf, requestedTargetDevice);
+        validForTarget &= validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning);
     } else {
         const auto &flags = reinterpret_cast<const NEO::Elf::ZebinTargetFlags &>(elf.elfFileHeader->flags);
         validForTarget &= flags.machineEntryUsesGfxCoreInsteadOfProductFamily
                               ? (requestedTargetDevice.coreFamily == static_cast<GFXCORE_FAMILY>(elf.elfFileHeader->machine))
                               : (requestedTargetDevice.productFamily == static_cast<PRODUCT_FAMILY>(elf.elfFileHeader->machine));
         validForTarget &= (0 == flags.validateRevisionId) | ((requestedTargetDevice.stepping >= flags.minHwRevisionId) & (requestedTargetDevice.stepping <= flags.maxHwRevisionId));
-        validForTarget &= (8U == requestedTargetDevice.maxPointerSizeInBytes);
+        validForTarget &= (requestedTargetDevice.maxPointerSizeInBytes >= static_cast<uint32_t>(numBits == Elf::EI_CLASS_32 ? 4 : 8));
     }
 
     if (false == validForTarget) {
@@ -84,6 +76,54 @@ SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(cons
     }
 
     return ret;
+}
+
+template <>
+SingleDeviceBinary unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
+                                                                            std::string &outErrReason, std::string &outWarning) {
+    return Elf::isElf<Elf::EI_CLASS_32>(archive)
+               ? unpackSingleZebin<Elf::EI_CLASS_32>(archive, requestedProductAbbreviation, requestedTargetDevice, outErrReason, outWarning)
+               : unpackSingleZebin<Elf::EI_CLASS_64>(archive, requestedProductAbbreviation, requestedTargetDevice, outErrReason, outWarning);
+}
+
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+void prepareLinkerInputForZebin(ProgramInfo &programInfo, Elf::Elf<numBits> &elf) {
+    programInfo.prepareLinkerInputStorage();
+
+    LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+    for (uint32_t id = 0; id < static_cast<uint32_t>(programInfo.kernelInfos.size()); id++) {
+        const auto &kernelName = programInfo.kernelInfos[id]->kernelDescriptor.kernelMetadata.kernelName;
+        nameToKernelId[kernelName] = id;
+        if (kernelName == Elf::SectionsNamesZebin::externalFunctions) {
+            programInfo.linkerInput->setExportedFunctionsSegmentId(static_cast<int32_t>(id));
+        }
+    }
+    programInfo.linkerInput->decodeElfSymbolTableAndRelocations(elf, nameToKernelId);
+}
+
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
+    auto elf = Elf::decodeElf<numBits>(src.deviceBinary, outErrReason, outWarning);
+    if (nullptr == elf.elfFileHeader) {
+        return DecodeError::InvalidBinary;
+    }
+
+    dst.grfSize = src.targetDevice.grfSize;
+    dst.minScratchSpaceSize = src.targetDevice.minScratchSpaceSize;
+    auto decodeError = decodeZebin<numBits>(dst, elf, outErrReason, outWarning);
+    if (DecodeError::Success != decodeError) {
+        return decodeError;
+    }
+
+    prepareLinkerInputForZebin<numBits>(dst, elf);
+    return decodeError;
+}
+
+template <>
+DecodeError decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
+    return Elf::isElf<Elf::EI_CLASS_32>(src.deviceBinary)
+               ? decodeSingleZebin<Elf::EI_CLASS_32>(dst, src, outErrReason, outWarning)
+               : decodeSingleZebin<Elf::EI_CLASS_64>(dst, src, outErrReason, outWarning);
 }
 
 } // namespace NEO

@@ -17,7 +17,6 @@ class FirmwareUtil;
 
 class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableOrMovableClass {
   public:
-    bool isFirmwareSupported(void) override;
     void osGetFwProperties(zes_firmware_properties_t *pProperties) override;
     ze_result_t osFirmwareFlash(void *pImage, uint32_t size) override;
     ze_result_t getFirmwareVersion(std::string fwType, zes_firmware_properties_t *pProperties);
@@ -28,7 +27,6 @@ class LinuxFirmwareImp : public OsFirmware, NEO::NonCopyableOrMovableClass {
   protected:
     FirmwareUtil *pFwInterface = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
-    bool isFWInitalized = false;
     std::string osFwType;
 };
 

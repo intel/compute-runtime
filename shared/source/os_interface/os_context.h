@@ -6,14 +6,9 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/preemption_mode.h"
-#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
-#include "engine_node.h"
-
-#include <memory>
 #include <mutex>
 
 namespace NEO {
@@ -24,8 +19,8 @@ struct HardwareInfo;
 
 class OsContext : public ReferenceTrackedObject<OsContext> {
   public:
-    OsContext(uint32_t contextId, const EngineDescriptor &engineDescriptor);
-    static OsContext *create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor);
+    OsContext(uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
+    static OsContext *create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor);
 
     bool isImmediateContextInitializationEnabled(bool isDefaultEngine) const;
     bool isInitialized() const { return contextInitialized; }
@@ -47,6 +42,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool isDefaultContext() const { return defaultContext; }
     void setDefaultContext(bool value) { defaultContext = value; }
     bool isDirectSubmissionActive() { return directSubmissionActive; }
+    bool isDebuggableContext() { return debuggableContext; }
     void setDirectSubmissionActive() { directSubmissionActive = true; }
 
     bool isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &submitOnInit);
@@ -58,9 +54,12 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     uint8_t getUmdPowerHintValue() { return powerHintValue; }
     void setUmdPowerHintValue(uint8_t powerHintValue) { this->powerHintValue = powerHintValue; }
 
+    uint32_t getRootDeviceIndex() { return rootDeviceIndex; }
+
   protected:
     virtual void initializeContext() {}
 
+    const uint32_t rootDeviceIndex;
     const uint32_t contextId;
     const DeviceBitfield deviceBitfield;
     const PreemptionMode preemptionMode;
@@ -72,6 +71,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     bool directSubmissionActive = false;
     std::once_flag contextInitializedFlag = {};
     bool contextInitialized = false;
+    bool debuggableContext = false;
     bool engineInstancedDevice = false;
     uint8_t powerHintValue = 0;
 };

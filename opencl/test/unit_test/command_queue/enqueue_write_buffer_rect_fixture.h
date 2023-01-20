@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,11 +19,11 @@ namespace NEO {
 struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
                                     public ::testing::Test {
     void SetUp() override {
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
         context.reset(new MockContext(pClDevice));
         BufferDefaults::context = context.get();
 
-        //For 3D
+        // For 3D
         hostPtr = ::alignedMalloc(slicePitch * rowPitch, 4096);
 
         auto retVal = CL_INVALID_VALUE;
@@ -44,7 +44,7 @@ struct EnqueueWriteBufferRectTest : public CommandEnqueueFixture,
         nonZeroCopyBuffer.reset();
         ::alignedFree(hostPtr);
         context.reset();
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
   protected:

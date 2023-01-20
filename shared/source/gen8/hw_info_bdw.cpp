@@ -1,31 +1,20 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
-#include "shared/source/gen8/hw_cmds.h"
+#include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/gen8/hw_cmds_bdw.h"
 #include "shared/source/helpers/constants.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 namespace NEO {
 
 const char *HwMapper<IGFX_BROADWELL>::abbreviation = "bdw";
-
-bool isSimulationBDW(unsigned short deviceId) {
-    switch (deviceId) {
-    case IBDW_GT0_DESK_DEVICE_F0_ID:
-    case IBDW_GT1_DESK_DEVICE_F0_ID:
-    case IBDW_GT2_DESK_DEVICE_F0_ID:
-    case IBDW_GT3_DESK_DEVICE_F0_ID:
-    case IBDW_GT4_DESK_DEVICE_F0_ID:
-        return true;
-    }
-    return false;
-};
 
 const PLATFORM BDW::platform = {
     IGFX_BROADWELL,
@@ -47,8 +36,6 @@ const RuntimeCapabilityTable BDW::capabilityTable{
     0,                                                 // sharedSystemMemCapabilities
     80,                                                // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                         // requiredPreemptionSurfaceSize
-    &isSimulationBDW,                                  // isSimulation
-    "core",                                            // platformType
     "",                                                // deviceName
     PreemptionMode::Disabled,                          // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                            // defaultEngineType
@@ -103,13 +90,9 @@ void BDW::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrSVM = true;
     featureTable->flags.ftrIA32eGfxPTEs = true;
     featureTable->flags.ftrFbc = true;
-    featureTable->flags.ftrFbc2AddressTranslation = true;
-    featureTable->flags.ftrFbcBlitterTracking = true;
-    featureTable->flags.ftrFbcCpuTracking = true;
     featureTable->flags.ftrTileY = true;
 
     workaroundTable->flags.waDisableLSQCROPERFforOCL = true;
-    workaroundTable->flags.waReportPerfCountUseGlobalContextID = true;
     workaroundTable->flags.waUseVAlign16OnTileXYBpp816 = true;
     workaroundTable->flags.waModifyVFEStateAfterGPGPUPreemption = true;
     workaroundTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;

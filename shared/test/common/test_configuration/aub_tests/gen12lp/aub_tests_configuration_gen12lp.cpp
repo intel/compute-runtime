@@ -11,7 +11,7 @@
 using namespace NEO;
 
 template <>
-AubTestsConfig getAubTestsConfig<TGLLPFamily>() {
+AubTestsConfig getAubTestsConfig<Gen12LpFamily>() {
     AubTestsConfig aubTestsConfig;
     aubTestsConfig.testCanonicalAddress = false;
     return aubTestsConfig;

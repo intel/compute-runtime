@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ inline void overwriteBuiltInBinaryName(
     retrieveBinaryKernelFilename(fclDebugVars.fileName, filename + "_", ".bc");
     fclDebugVars.appendOptionsToFileName = appendOptionsToFileName;
 
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".gen");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, filename + "_", ".bin");
     igcDebugVars.appendOptionsToFileName = appendOptionsToFileName;
 
     gEnvironment->fclPushDebugVars(fclDebugVars);

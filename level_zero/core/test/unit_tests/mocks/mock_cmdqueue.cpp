@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/engine_control.h"
 
 namespace L0 {
 namespace ult {

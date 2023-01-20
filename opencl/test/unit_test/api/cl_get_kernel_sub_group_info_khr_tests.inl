@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,16 +12,16 @@ using namespace NEO;
 struct KernelSubGroupInfoKhrFixture : HelloWorldFixture<HelloWorldFixtureFactory> {
     typedef HelloWorldFixture<HelloWorldFixtureFactory> ParentClass;
 
-    void SetUp() override {
-        ParentClass::SetUp();
+    void setUp() {
+        ParentClass::setUp();
         MaxSimdSize = static_cast<size_t>(pKernel->getKernelInfo().getMaxSimdSize());
         ASSERT_GE(MaxSimdSize, 8u);
         MaxWorkDim = static_cast<size_t>(pClDevice->getDeviceInfo().maxWorkItemDimensions);
         ASSERT_EQ(MaxWorkDim, 3u);
     }
 
-    void TearDown() override {
-        ParentClass::TearDown();
+    void tearDown() {
+        ParentClass::tearDown();
     }
 
     size_t inputValue[3];
@@ -40,11 +40,11 @@ template <typename ParamType>
 struct KernelSubGroupInfoKhrParamFixture : KernelSubGroupInfoKhrFixture,
                                            ::testing::TestWithParam<ParamType> {
     void SetUp() override {
-        KernelSubGroupInfoKhrFixture::SetUp();
+        KernelSubGroupInfoKhrFixture::setUp();
     }
 
     void TearDown() override {
-        KernelSubGroupInfoKhrFixture::TearDown();
+        KernelSubGroupInfoKhrFixture::tearDown();
     }
 };
 
@@ -137,18 +137,8 @@ TEST_F(KernelSubGroupInfoKhrReturnCompileSizeTest, GivenKernelWhenGettingRequire
         &paramValueSizeRet);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
-
     EXPECT_EQ(paramValueSizeRet, sizeof(size_t));
-
-    size_t requiredSubGroupSize = 0;
-    auto start = pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find("intel_reqd_sub_group_size(");
-    if (start != std::string::npos) {
-        start += strlen("intel_reqd_sub_group_size(");
-        auto stop = pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.find(")", start);
-        requiredSubGroupSize = stoi(pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.kernelLanguageAttributes.substr(start, stop - start));
-    }
-
-    EXPECT_EQ(paramValue, requiredSubGroupSize);
+    EXPECT_EQ(pKernel->getKernelInfo().kernelDescriptor.kernelMetadata.requiredSubGroupSize, paramValue);
 }
 
 TEST_F(KernelSubGroupInfoKhrTest, GivenNullKernelWhenGettingKernelSubGroupInfoThenInvalidKernelErrorIsReturned) {
@@ -294,7 +284,7 @@ TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidInputWhenGettingKernelS
 }
 
 TEST_P(KernelSubGroupInfoKhrInputParamsTest, GivenInvalidParamSizeWhenGettingKernelSubGroupInfoThenInvalidValueErrorIsReturned) {
-    //param_value_size < sizeof(size_t)
+    // param_value_size < sizeof(size_t)
     retVal = clGetKernelSubGroupInfoKHR(
         pMultiDeviceKernel,
         pClDevice,

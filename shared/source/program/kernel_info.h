@@ -1,19 +1,15 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/heap_info.h"
 #include "shared/source/utilities/arrayref.h"
-#include "shared/source/utilities/const_stringref.h"
-#include "shared/source/utilities/stackvec.h"
 
-#include <cmath>
 #include <cstdint>
 #include <string>
 #include <utility>
@@ -24,6 +20,7 @@ typedef struct igc_info_s igc_info_t;
 }
 
 namespace NEO {
+struct HardwareInfo;
 class BuiltinDispatchInfoBuilder;
 class Device;
 class Kernel;
@@ -32,30 +29,9 @@ class DispatchInfo;
 struct KernelArgumentType;
 class GraphicsAllocation;
 class MemoryManager;
+struct RootDeviceEnvironemnt;
 
 static const float YTilingRatioValue = 1.3862943611198906188344642429164f;
-
-struct WorkSizeInfo {
-    uint32_t maxWorkGroupSize;
-    uint32_t minWorkGroupSize;
-    bool hasBarriers;
-    uint32_t simdSize;
-    uint32_t slmTotalSize;
-    GFXCORE_FAMILY coreFamily;
-    uint32_t numThreadsPerSubSlice;
-    uint32_t localMemSize;
-    bool imgUsed = false;
-    bool yTiledSurfaces = false;
-    bool useRatio = false;
-    bool useStrictRatio = false;
-    float targetRatio = 0;
-
-    WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const HardwareInfo *hwInfo, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion);
-
-    void setIfUseImg(const KernelInfo &kernelInfo);
-    void setMinWorkGroupSize(const HardwareInfo *hwInfo, bool disableEUFusion);
-    void checkRatio(const size_t workItems[3]);
-};
 
 struct DeviceInfoKernelPayloadConstants {
     void *slmWindow = nullptr;
@@ -85,7 +61,6 @@ struct KernelInfo {
         return kernelDescriptor.explicitArgsExtendedMetadata[index];
     }
     size_t getSamplerStateArrayCount() const;
-    size_t getSamplerStateArraySize(const HardwareInfo &hwInfo) const;
     size_t getBorderColorOffset() const;
     unsigned int getMaxSimdSize() const {
         return kernelDescriptor.kernelAttributes.simdSize;
@@ -104,6 +79,10 @@ struct KernelInfo {
         return maxRequiredWorkGroupSize;
     }
 
+    bool isVmeUsed() const {
+        return kernelDescriptor.kernelAttributes.flags.usesVme;
+    }
+
     uint32_t getConstantBufferSize() const;
     int32_t getArgNumByName(const char *name) const;
 
@@ -116,7 +95,6 @@ struct KernelInfo {
     const BuiltinDispatchInfoBuilder *builtinDispatchBuilder = nullptr;
     uint32_t systemKernelOffset = 0;
     uint64_t kernelId = 0;
-    bool hasIndirectStatelessAccess = false;
     bool isKernelHeapSubstituted = false;
     GraphicsAllocation *kernelAllocation = nullptr;
     DebugData debugData;

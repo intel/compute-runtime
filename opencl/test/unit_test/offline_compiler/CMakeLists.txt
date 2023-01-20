@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -18,6 +18,8 @@ set(IGDRCL_SRCS_cloc
 set(IGDRCL_SRCS_offline_compiler_mock
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_decoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_encoder.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_zebin_decoder.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_zebin_encoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/mock/mock_iga_wrapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_argument_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_multi_command.h
@@ -58,12 +60,13 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/encoder_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/iga_wrapper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/decoder/iga_wrapper_tests.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/decoder/zebin_manipulator_tests.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/default_cache_config_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/environment.h
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_iga_dll.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock/mock_iga_dll.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_api_tests.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_arg_helper_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_concat_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fatbinary_tests.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ocloc_fatbinary_tests.h
@@ -81,15 +84,19 @@ set(IGDRCL_SRCS_offline_compiler_tests
     ${CMAKE_CURRENT_SOURCE_DIR}/offline_linker_tests.h
     ${CMAKE_CURRENT_SOURCE_DIR}/stdout_capturer.h
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
-    ${NEO_SHARED_DIRECTORY}/helpers/file_io.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/file_io_load.cpp
     ${NEO_SHARED_DIRECTORY}/memory_manager/deferred_deleter.cpp
     ${NEO_SHARED_DIRECTORY}/memory_manager/deferred_deleter.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_compilers.h
-    ${NEO_SHARED_TEST_DIRECTORY}/unit_test/device_binary_format/zebin_tests.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_modules_zebin.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/mock_modules_zebin.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/file_io.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/libult/signal_utils.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/libult/create_directory.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/test_excludes.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/virtual_file_system_listener.cpp
     ${IGDRCL_SRCS_cloc}
     ${IGDRCL_SRCS_offline_compiler_mock}
     ${NEO_CORE_tests_compiler_mocks}
@@ -103,12 +110,18 @@ if(WIN32)
        ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_thread_win.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/windows/signal_utils.cpp
   )
+  list(REMOVE_ITEM IGDRCL_SRCS_offline_compiler_tests
+       ${NEO_SHARED_DIRECTORY}/utilities/windows/directory.cpp
+  )
 else()
   list(APPEND IGDRCL_SRCS_offline_compiler_tests
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/os_thread_linux.cpp
        ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
        ${NEO_SHARED_TEST_DIRECTORY}/common/os_interface/linux/signal_utils.cpp
        ${OCLOC_DIRECTORY}/source/linux/os_library_ocloc_helper.cpp
+  )
+  list(REMOVE_ITEM IGDRCL_SRCS_offline_compiler_tests
+       ${NEO_SHARED_DIRECTORY}/utilities/linux/directory.cpp
   )
 endif()
 
@@ -150,18 +163,10 @@ endif()
 
 macro(macro_for_each_platform)
   if("${PLATFORM_IT_LOWER}" STREQUAL "${CLOC_LIB_DEFAULT_DEVICE}")
-    foreach(PLATFORM_TYPE ${PLATFORM_TYPES})
-      if(${PLATFORM_IT}_IS_${PLATFORM_TYPE})
-        list(GET ${PLATFORM_TYPE}_${CORE_TYPE}_REVISIONS 0 REVISION_ID)
-        get_family_name_with_type(${CORE_TYPE} ${PLATFORM_TYPE})
-        add_dependencies(run_ocloc_tests prepare_test_kernels_${family_name_with_type}_${REVISION_ID})
-        add_dependencies(unit_tests prepare_test_kernels_${family_name_with_type}_${REVISION_ID})
-        neo_copy_test_files(copy_test_files_${family_name_with_type}_${REVISION_ID} ${family_name_with_type})
-        add_dependencies(run_ocloc_tests copy_test_files_${family_name_with_type}_${REVISION_ID})
-        add_dependencies(unit_tests copy_test_files_${family_name_with_type}_${REVISION_ID})
-        set(run_tests_cmd ocloc_tests --device ${CLOC_LIB_DEFAULT_DEVICE} --family_type ${family_name_with_type} --rev_id ${REVISION_ID})
-      endif()
-    endforeach()
+    list(GET ${PLATFORM_IT}_${CORE_TYPE}_REVISIONS 0 REVISION_ID)
+    add_dependencies(run_ocloc_tests prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
+    add_dependencies(unit_tests prepare_test_kernels_${PLATFORM_IT_LOWER}_${REVISION_ID})
+    set(run_tests_cmd ocloc_tests --device ${PLATFORM_IT_LOWER} --rev_id ${REVISION_ID})
   endif()
 endmacro()
 macro(macro_for_each_core_type)

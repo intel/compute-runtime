@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
@@ -25,16 +26,35 @@ ClDeviceVector toClDeviceVector(ClDevice &clDevice);
 ////////////////////////////////////////////////////////////////////////////////
 // Program - Core implementation
 ////////////////////////////////////////////////////////////////////////////////
+class MockNeoProgram : public NEO::Program {
+  public:
+    using Base = NEO::Program;
+    using Base::buildInfos;
+    using Base::exportedFunctionsKernelId;
+
+    MockNeoProgram(NEO::Context *context, bool isBuiltIn, const NEO::ClDeviceVector &devices)
+        : NEO::Program(context, isBuiltIn, devices) {}
+
+    void resizeAndPopulateKernelInfoArray(size_t size) {
+        buildInfos[0].kernelInfoArray.resize(size);
+        for (auto &entry : buildInfos[0].kernelInfoArray) {
+            entry = new KernelInfo();
+        }
+    }
+};
+
 class MockProgram : public Program {
   public:
     using Program::allowNonUniform;
-    using Program::applyAdditionalOptions;
     using Program::areSpecializationConstantsInitialized;
     using Program::buildInfos;
+    using Program::containsVmeUsage;
     using Program::context;
     using Program::createdFrom;
     using Program::createProgramFromBinary;
     using Program::deviceBuildInfos;
+    using Program::disableZebinIfVmeEnabled;
+    using Program::enforceFallbackToPatchtokens;
     using Program::extractInternalOptions;
     using Program::getKernelInfo;
     using Program::internalOptionsToExtract;
@@ -47,6 +67,7 @@ class MockProgram : public Program {
     using Program::linkBinary;
     using Program::options;
     using Program::packDeviceBinary;
+    using Program::processGenBinaries;
     using Program::Program;
     using Program::requiresRebuild;
     using Program::setBuildStatus;
@@ -194,6 +215,14 @@ class MockProgram : public Program {
         wasDebuggerNotified = true;
     }
 
+    void callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex) override {
+        wasPopulateZebinExtendedArgsMetadataOnceCalled = true;
+
+        if (callBasePopulateZebinExtendedArgsMetadataOnce) {
+            return Program::callPopulateZebinExtendedArgsMetadataOnce(rootDeviceIndex);
+        }
+    }
+
     std::vector<NEO::ExternalFunctionInfo> externalFunctions;
     std::map<uint32_t, int> processGenBinaryCalledPerRootDevice;
     std::map<uint32_t, int> replaceDeviceBinaryCalledPerRootDevice;
@@ -204,12 +233,15 @@ class MockProgram : public Program {
     bool wasProcessDebugDataCalled = false;
     bool wasCreateDebugZebinCalled = false;
     bool wasDebuggerNotified = false;
+    bool wasPopulateZebinExtendedArgsMetadataOnceCalled = false;
+    bool callBasePopulateZebinExtendedArgsMetadataOnce = false;
 };
 
 class MockProgramAppendKernelDebugOptions : public Program {
   public:
     using Program::Program;
     ADDMETHOD_NOBASE(appendKernelDebugOptions, bool, true, (ClDevice & clDevice, std::string &internalOptions));
+    ADDMETHOD_NOBASE(processGenBinary, cl_int, CL_SUCCESS, (const ClDevice &clDevice));
 };
 
 } // namespace NEO

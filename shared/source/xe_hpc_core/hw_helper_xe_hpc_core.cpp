@@ -1,14 +1,14 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/xe_hpc_core/aub_mapper.h"
-#include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
-using Family = NEO::XE_HPC_COREFamily;
+using Family = NEO::XeHpcCoreFamily;
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -22,10 +22,10 @@ using Family = NEO::XE_HPC_COREFamily;
 namespace NEO {
 
 template <>
-const AuxTranslationMode HwHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Blit;
+const AuxTranslationMode GfxCoreHelperHw<Family>::defaultAuxTranslationMode = AuxTranslationMode::Blit;
 
 template <>
-uint8_t HwHelperHw<Family>::getBarriersCountFromHasBarriers(uint8_t hasBarriers) const {
+uint8_t GfxCoreHelperHw<Family>::getBarriersCountFromHasBarriers(uint8_t hasBarriers) const {
     static constexpr uint8_t possibleBarriersCounts[] = {
         0u,  // 0
         1u,  // 1
@@ -40,16 +40,16 @@ uint8_t HwHelperHw<Family>::getBarriersCountFromHasBarriers(uint8_t hasBarriers)
 }
 
 template <>
-const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
+const EngineInstancesContainer GfxCoreHelperHw<Family>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
     EngineInstancesContainer engines;
 
     if (hwInfo.featureTable.flags.ftrCCSNode) {
         for (uint32_t i = 0; i < hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled; i++) {
             engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::Regular});
-            if (hwInfoConfig.isCooperativeEngineSupported(hwInfo)) {
+            if (productHelper.isCooperativeEngineSupported(hwInfo)) {
                 engines.push_back({static_cast<aub_stream::EngineType>(i + aub_stream::ENGINE_CCS), EngineUsage::Cooperative});
             }
         }
@@ -73,8 +73,12 @@ const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const
             if (hwInfo.featureTable.ftrBcsInfo.test(i)) {
                 auto engineType = static_cast<aub_stream::EngineType>((i - 1) + aub_stream::ENGINE_BCS1); // Link copy engine
                 engines.push_back({engineType, EngineUsage::Regular});
-                if (i == 2) {
-                    engines.push_back({engineType, EngineUsage::Internal}); // BCS2 for internal usage
+                uint32_t internalIndex = 3;
+                if (DebugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
+                    internalIndex = DebugManager.flags.ForceBCSForInternalCopyEngine.get();
+                }
+                if (i == internalIndex) {
+                    engines.push_back({engineType, EngineUsage::Internal}); // BCS3 for internal usage
                 }
             }
         }
@@ -84,7 +88,7 @@ const EngineInstancesContainer HwHelperHw<Family>::getGpgpuEngineInstances(const
 };
 
 template <>
-EngineGroupType HwHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
+EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const {
     if (engineType == aub_stream::ENGINE_CCCS) {
         return EngineGroupType::RenderCompute;
     }
@@ -104,46 +108,29 @@ EngineGroupType HwHelperHw<Family>::getEngineGroupType(aub_stream::EngineType en
 }
 
 template <>
-void HwHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
+void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
     if (!pHwInfo->featureTable.flags.ftrCCSNode) {
         pHwInfo->capabilityTable.defaultEngineType = aub_stream::EngineType::ENGINE_CCCS;
     }
 }
 
 template <>
-bool HwHelperHw<Family>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) {
+bool GfxCoreHelperHw<Family>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const {
     return true;
 }
 
 template <>
-uint32_t HwHelperHw<Family>::calculateAvailableThreadCount(PRODUCT_FAMILY family, uint32_t grfCount, uint32_t euCount,
-                                                           uint32_t threadsPerEu) {
-    auto maxThreadsPerEuCount = 1024u / grfCount;
-    return maxThreadsPerEuCount * euCount;
-}
-
-template <>
-uint32_t HwHelperHw<Family>::getMetricsLibraryGenId() const {
+uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::XeHPC);
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getMinimalSIMDSize() {
+uint32_t GfxCoreHelperHw<Family>::getMinimalSIMDSize() const {
     return 16u;
 }
 
 template <>
-bool HwHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
-    if ((DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() == 0) &&
-        (DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() == 0) &&
-        (DebugManager.flags.ProgramGlobalFenceAsKernelInstructionInEUKernel.get() == 0)) {
-        return false;
-    }
-    return true;
-}
-
-template <>
-uint32_t HwHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
+uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
         return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;
     }
@@ -151,24 +138,24 @@ uint32_t HwHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool l3ena
 }
 
 template <>
-const StackVec<size_t, 3> HwHelperHw<Family>::getDeviceSubGroupSizes() const {
+const StackVec<size_t, 3> GfxCoreHelperHw<Family>::getDeviceSubGroupSizes() const {
     return {16, 32};
 }
 
 template <>
-const StackVec<uint32_t, 6> HwHelperHw<Family>::getThreadsPerEUConfigs() const {
+const StackVec<uint32_t, 6> GfxCoreHelperHw<Family>::getThreadsPerEUConfigs() const {
     return {4, 8};
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getMaxNumSamplers() const {
+uint32_t GfxCoreHelperHw<Family>::getMaxNumSamplers() const {
     return 0;
 }
 
 template <>
 size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronization(const HardwareInfo &hwInfo) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = hwInfoConfig.isGlobalFenceInCommandStreamRequired(hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = productHelper.isGlobalFenceInCommandStreamRequired(hwInfo);
     if (DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = !!DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
     }
@@ -185,8 +172,8 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
     using MI_MEM_FENCE = typename Family::MI_MEM_FENCE;
     using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = hwInfoConfig.isGlobalFenceInCommandStreamRequired(hwInfo);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto programGlobalFenceAsMiMemFenceCommandInCommandStream = productHelper.isGlobalFenceInCommandStreamRequired(hwInfo);
     if (DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = !!DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();
     }
@@ -210,7 +197,7 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
 }
 
 template <>
-bool MemorySynchronizationCommands<Family>::isPipeControlWArequired(const HardwareInfo &hwInfo) {
+bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const HardwareInfo &hwInfo) {
     if (DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1) {
         return true;
     }
@@ -223,7 +210,7 @@ size_t MemorySynchronizationCommands<Family>::getSizeForAdditonalSynchronization
 }
 
 template <>
-void HwHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) {
+void GfxCoreHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::RENDER_SURFACE_STATE *surfaceState, const HardwareInfo *hwInfo) const {
     if (useL1Cache) {
         surfaceState->setL1CachePolicyL1CacheControl(Family::RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB);
         if (DebugManager.flags.OverrideL1CacheControlInSurfaceStateForScratchSpace.get() != -1) {
@@ -233,7 +220,7 @@ void HwHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family::REND
 }
 
 template <>
-void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
+void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
     if (properties.allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER || properties.allocationType == AllocationType::COMMAND_BUFFER) {
         allocationData.flags.useSystemMemory = false;
     }
@@ -264,7 +251,7 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
     if (allocationData.flags.requiresCpuAccess && !allocationData.flags.useSystemMemory &&
         (allocationData.storageInfo.getMemoryBanks() > 1)) {
 
-        bool applyWa = HwInfoConfig::get(hwInfo.platform.eProductFamily)->isTilePlacementResourceWaRequired(hwInfo);
+        bool applyWa = ProductHelper::get(hwInfo.platform.eProductFamily)->isTilePlacementResourceWaRequired(hwInfo);
 
         if (applyWa) {
             allocationData.storageInfo.memoryBanks = 1; // force Tile0
@@ -273,7 +260,7 @@ void HwHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, 
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getNumCacheRegions() const {
+uint32_t GfxCoreHelperHw<Family>::getNumCacheRegions() const {
     constexpr uint32_t numSharedCacheRegions = 1;
     constexpr uint32_t numReservedCacheRegions = 2;
     constexpr uint32_t numTotalCacheRegions = numSharedCacheRegions + numReservedCacheRegions;
@@ -281,13 +268,12 @@ uint32_t HwHelperHw<Family>::getNumCacheRegions() const {
 }
 
 template <>
-std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
+std::string GfxCoreHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
     std::string extensions;
 
     extensions += "cl_intel_create_buffer_with_properties ";
     extensions += "cl_intel_dot_accumulate ";
     extensions += "cl_intel_subgroup_local_block_io ";
-    extensions += "cl_intel_subgroup_matrix_multiply_accumulate_for_PVC ";
     extensions += "cl_khr_subgroup_named_barrier ";
     extensions += "cl_intel_subgroup_extended_block_read ";
     extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
@@ -297,7 +283,7 @@ std::string HwHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const 
 }
 
 template <>
-uint32_t HwHelperHw<Family>::alignSlmSize(uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<Family>::alignSlmSize(uint32_t slmSize) const {
     const uint32_t alignedSlmSizes[] = {
         0u,
         1u * KB,
@@ -324,7 +310,7 @@ uint32_t HwHelperHw<Family>::alignSlmSize(uint32_t slmSize) {
 }
 
 template <>
-uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const {
     using SHARED_LOCAL_MEMORY_SIZE = typename Family::INTERFACE_DESCRIPTOR_DATA::SHARED_LOCAL_MEMORY_SIZE;
     if (slmSize == 0u) {
         return SHARED_LOCAL_MEMORY_SIZE::SHARED_LOCAL_MEMORY_SIZE_ENCODES_0K;
@@ -366,17 +352,17 @@ uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32
 }
 
 template <>
-int32_t HwHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
+int32_t GfxCoreHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
     return ThreadArbitrationPolicy::RoundRobinAfterDependency;
 }
 
 template <>
-bool HwHelperHw<Family>::isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const {
-    return HwInfoConfig::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported();
+bool GfxCoreHelperHw<Family>::isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const {
+    return ProductHelper::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported();
 }
 
 template <>
-bool HwHelperHw<Family>::isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const {
+bool GfxCoreHelperHw<Family>::isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const {
     constexpr uint64_t tile1Bitfield = 0b10;
 
     bool affectedEngine = (deviceBitfield.to_ulong() == tile1Bitfield) &&
@@ -384,43 +370,39 @@ bool HwHelperHw<Family>::isSubDeviceEngineSupported(const HardwareInfo &hwInfo, 
                            aub_stream::ENGINE_BCS1 == engineType ||
                            aub_stream::ENGINE_BCS3 == engineType);
 
-    return affectedEngine ? !HwInfoConfig::get(hwInfo.platform.eProductFamily)->isBcsReportWaRequired(hwInfo) : true;
+    return affectedEngine ? !ProductHelper::get(hwInfo.platform.eProductFamily)->isBcsReportWaRequired(hwInfo) : true;
 }
 
 template <>
-uint32_t HwHelperHw<Family>::getComputeUnitsUsedForScratch(const HardwareInfo *pHwInfo) const {
+uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     if (DebugManager.flags.OverrideNumComputeUnitsForScratch.get() != -1) {
         return static_cast<uint32_t>(DebugManager.flags.OverrideNumComputeUnitsForScratch.get());
     }
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(pHwInfo->platform.eProductFamily);
-    uint32_t threadEuRatio = hwInfoConfig.getThreadEuRatioForScratch(*pHwInfo);
+    auto &helper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    uint32_t threadEuRatio = helper.getThreadEuRatioForScratch(*hwInfo);
 
-    return pHwInfo->gtSystemInfo.MaxSubSlicesSupported * pHwInfo->gtSystemInfo.MaxEuPerSubSlice * threadEuRatio;
+    return hwInfo->gtSystemInfo.MaxSubSlicesSupported * hwInfo->gtSystemInfo.MaxEuPerSubSlice * threadEuRatio;
 }
 
 template <>
-bool HwHelperHw<Family>::isRevisionSpecificBinaryBuiltinRequired() const {
+bool GfxCoreHelperHw<Family>::isRevisionSpecificBinaryBuiltinRequired() const {
     return true;
 }
 
 template <>
-size_t HwHelperHw<Family>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const {
-    return 0x2800000;
+size_t GfxCoreHelperHw<Family>::getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const {
+    return 40 * MB;
 }
 
 template <>
-bool HwHelperHw<Family>::isTimestampWaitSupportedForQueues() const {
+bool GfxCoreHelperHw<Family>::isTimestampWaitSupportedForQueues() const {
     return true;
 }
 
 template <>
-bool HwHelperHw<Family>::isTimestampWaitSupportedForEvents(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <>
-uint64_t HwHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
+uint64_t GfxCoreHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePolicy cachePolicy) const {
     /*
     PAT Index  CLOS   MemType
     SHARED
@@ -446,7 +428,23 @@ uint64_t HwHelperHw<Family>::getPatIndex(CacheRegion cacheRegion, CachePolicy ca
 }
 
 template <>
-bool HwHelperHw<Family>::isPatIndexFallbackWaRequired() const {
+bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo) const {
+    if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
+        return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
+    }
+    return true;
+}
+
+template <>
+uint32_t GfxCoreHelperHw<Family>::getAmountOfAllocationsToFill() const {
+    if (DebugManager.flags.SetAmountOfReusableAllocations.get() != -1) {
+        return DebugManager.flags.SetAmountOfReusableAllocations.get();
+    }
+    return 1u;
+}
+
+template <>
+bool GfxCoreHelperHw<Family>::isRelaxedOrderingSupported() const {
     return true;
 }
 
@@ -455,10 +453,10 @@ bool HwHelperHw<Family>::isPatIndexFallbackWaRequired() const {
 #include "shared/source/helpers/hw_helper_pvc_and_later.inl"
 
 namespace NEO {
-template class HwHelperHw<Family>;
+template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;
 
-template LogicalStateHelper *LogicalStateHelper::create<Family>(bool pipelinedState);
+template LogicalStateHelper *LogicalStateHelper::create<Family>();
 } // namespace NEO

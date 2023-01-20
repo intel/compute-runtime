@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,14 +8,13 @@
 #pragma once
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
 
-#include "drm/i915_drm.h"
-#include "engine_node.h"
-#include "gtest/gtest.h"
+#include "aubstream/engine_node.h"
 
 #include <atomic>
 #include <cstdint>
@@ -43,6 +42,7 @@ class Ioctls {
     std::atomic<int32_t> gemSetTiling;
     std::atomic<int32_t> gemGetTiling;
     std::atomic<int32_t> gemVmCreate;
+    std::atomic<int32_t> gemVmDestroy;
     std::atomic<int32_t> primeFdToHandle;
     std::atomic<int32_t> handleToPrimeFd;
     std::atomic<int32_t> gemMmapOffset;
@@ -128,6 +128,8 @@ class DrmMockCustom : public Drm {
 
     int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) override;
 
+    bool getSetPairAvailable() override;
+
     bool isVmBindAvailable() override;
 
     bool completionFenceSupport() override {
@@ -162,49 +164,51 @@ class DrmMockCustom : public Drm {
     IoctlResExt NONE = {-1, 0};
 
     WaitUserFenceCall waitUserFenceCall{};
+    IsVmBindAvailableCall getSetPairAvailableCall{};
     IsVmBindAvailableCall isVmBindAvailableCall{};
 
     std::atomic<int> ioctl_res;
     std::atomic<IoctlResExt *> ioctl_res_ext;
 
-    //DRM_IOCTL_I915_GEM_EXECBUFFER2
+    // DRM_IOCTL_I915_GEM_EXECBUFFER2
     NEO::MockExecBuffer execBuffer{};
 
-    //First exec object
+    // First exec object
     NEO::MockExecObject execBufferBufferObjects{};
 
-    //DRM_IOCTL_I915_GEM_CREATE
+    // DRM_IOCTL_I915_GEM_CREATE
     uint64_t createParamsSize = 0;
     uint32_t createParamsHandle = 0;
-    //DRM_IOCTL_I915_GEM_SET_TILING
+    // DRM_IOCTL_I915_GEM_SET_TILING
     uint32_t setTilingMode = 0;
     uint32_t setTilingHandle = 0;
     uint32_t setTilingStride = 0;
-    //DRM_IOCTL_I915_GEM_GET_TILING
+    // DRM_IOCTL_I915_GEM_GET_TILING
     uint32_t getTilingModeOut = 0;
     uint32_t getTilingHandleIn = 0;
-    //DRM_IOCTL_PRIME_FD_TO_HANDLE
+    // DRM_IOCTL_PRIME_FD_TO_HANDLE
     uint32_t outputHandle = 0;
     int32_t inputFd = 0;
-    //DRM_IOCTL_PRIME_HANDLE_TO_FD
+    // DRM_IOCTL_PRIME_HANDLE_TO_FD
     uint32_t inputHandle = 0;
     int32_t outputFd = 0;
+    bool incrementOutputFdAfterCall = false;
     int32_t inputFlags = 0;
-    //DRM_IOCTL_I915_GEM_USERPTR
+    // DRM_IOCTL_I915_GEM_USERPTR
     uint32_t returnHandle = 0;
-    //DRM_IOCTL_I915_GEM_SET_DOMAIN
+    // DRM_IOCTL_I915_GEM_SET_DOMAIN
     uint32_t setDomainHandle = 0;
     uint32_t setDomainReadDomains = 0;
     uint32_t setDomainWriteDomain = 0;
-    //DRM_IOCTL_I915_GETPARAM
+    // DRM_IOCTL_I915_GETPARAM
     NEO::GetParam recordedGetParam = {0};
     int getParamRetValue = 0;
-    //DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM
+    // DRM_IOCTL_I915_GEM_CONTEXT_GETPARAM
     NEO::GemContextParam recordedGetContextParam = {0};
     uint64_t getContextParamRetValue = 0;
-    //DRM_IOCTL_I915_GEM_WAIT
+    // DRM_IOCTL_I915_GEM_WAIT
     int64_t gemWaitTimeout = 0;
-    //DRM_IOCTL_I915_GEM_MMAP_OFFSET
+    // DRM_IOCTL_I915_GEM_MMAP_OFFSET
     uint32_t mmapOffsetHandle = 0;
     uint32_t mmapOffsetPad = 0;
     uint64_t mmapOffsetExpected = 0;
@@ -212,10 +216,12 @@ class DrmMockCustom : public Drm {
     bool failOnMmapOffset = false;
     bool failOnPrimeFdToHandle = false;
 
-    //DRM_IOCTL_I915_GEM_CREATE_EXT
+    // DRM_IOCTL_I915_GEM_CREATE_EXT
     uint64_t createExtSize = 0;
     uint32_t createExtHandle = 0;
     uint64_t createExtExtensions = 0;
+
+    uint32_t vmIdToCreate = 0;
 
     int errnoValue = 0;
 

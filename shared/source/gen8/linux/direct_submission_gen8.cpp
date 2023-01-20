@@ -16,7 +16,7 @@
 #include "shared/source/gen8/hw_cmds.h"
 
 namespace NEO {
-using GfxFamily = BDWFamily;
+using GfxFamily = Gen8Family;
 
 template class Dispatcher<GfxFamily>;
 template class BlitterDispatcher<GfxFamily>;

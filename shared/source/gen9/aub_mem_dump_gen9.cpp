@@ -27,7 +27,7 @@ template struct AubPageTableHelper64<Traits<device, 48>>;
 } // namespace AubMemDump
 
 namespace NEO {
-using Family = SKLFamily;
+using Family = Gen9Family;
 
 static const AubMemDump::LrcaHelperRcs rcs(0x002000);
 static const AubMemDump::LrcaHelperBcs bcs(0x022000);

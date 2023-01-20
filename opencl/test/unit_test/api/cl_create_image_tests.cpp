@@ -28,7 +28,7 @@ struct clCreateImageTests : public ApiFixture<>,
                             public T {
 
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
 
         // clang-format off
         imageFormat.image_channel_order     = CL_RGBA;
@@ -48,7 +48,7 @@ struct clCreateImageTests : public ApiFixture<>,
     }
 
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_image_format imageFormat;
@@ -419,14 +419,13 @@ TEST_F(clCreateImageTest, GivenNonZeroPitchWhenCreatingImageFromBufferThenImageI
     REQUIRE_IMAGES_OR_SKIP(pContext);
 
     auto buffer = clCreateBuffer(pContext, CL_MEM_READ_WRITE, 4096 * 9, nullptr, nullptr);
-    auto &helper = HwHelper::get(renderCoreFamily);
-    HardwareInfo hardwareInfo = *defaultHwInfo;
+    auto &gfxCoreHelper = pDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
 
     imageDesc.mem_object = buffer;
     imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
     imageDesc.image_width = 17;
     imageDesc.image_height = 17;
-    imageDesc.image_row_pitch = helper.getPitchAlignmentForImage(&hardwareInfo) * 17;
+    imageDesc.image_row_pitch = gfxCoreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()) * 17;
 
     auto image = clCreateImage(
         pContext,

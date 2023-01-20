@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include <level_zero/zes_api.h>
 
+#include <mutex>
 #include <vector>
 
 struct _zes_temp_handle_t {
@@ -45,6 +46,7 @@ struct TemperatureHandleContext {
 
   private:
     void createHandle(const ze_device_handle_t &deviceHandle, zes_temp_sensors_t type);
+    std::once_flag initTemperatureOnce;
 };
 
 } // namespace L0

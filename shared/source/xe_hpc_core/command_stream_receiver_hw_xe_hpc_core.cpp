@@ -1,19 +1,20 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/source/xe_hpc_core/hw_info.h"
 
-using Family = NEO::XE_HPC_COREFamily;
+using Family = NEO::XeHpcCoreFamily;
 
 #include "shared/source/command_stream/command_stream_receiver_hw_dg2_and_later.inl"
 #include "shared/source/command_stream/command_stream_receiver_hw_xehp_and_later.inl"
 #include "shared/source/helpers/blit_commands_helper_xehp_and_later.inl"
 #include "shared/source/helpers/populate_factory.h"
+#include "shared/source/helpers/state_base_address_xehp_and_later.inl"
 
 namespace NEO {
 static auto gfxCore = IGFX_XE_HPC_CORE;
@@ -61,6 +62,11 @@ void BlitCommandsHelper<Family>::appendBlitCommandsForBuffer(const BlitPropertie
 }
 
 template <>
+uint32_t BlitCommandsHelper<Family>::getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize) {
+    return 1;
+}
+
+template <>
 void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties &blitProperites, typename Family::XY_COPY_BLT &blitCmd,
                                                            const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MEM_COPY = typename Family::MEM_COPY;
@@ -75,7 +81,7 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
     }
 
     auto cachePolicy = GMM_RESOURCE_USAGE_OCL_BUFFER;
-    //if transfer size bigger then L3 size, copy with L3 disabled
+    // if transfer size bigger then L3 size, copy with L3 disabled
     if (blitProperites.copySize.x * blitProperites.copySize.y * blitProperites.copySize.z * blitProperites.bytesPerPixel >= (rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo.L3CacheSizeInKb * KB / 2)) {
         cachePolicy = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
     }
@@ -204,6 +210,64 @@ void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProp
 template <>
 template <>
 void BlitCommandsHelper<Family>::appendColorDepth(const BlitProperties &blitProperites, typename Family::XY_COPY_BLT &blitCmd) {}
+
+template <>
+void BlitCommandsHelper<Family>::encodeWa(LinearStream &cmdStream, const BlitProperties &blitProperties, uint32_t &latestSentBcsWaValue) {
+    using MI_LOAD_REGISTER_IMM = typename Family::MI_LOAD_REGISTER_IMM;
+
+    if (DebugManager.flags.EnableBcsSwControlWa.get() <= 0) {
+        return;
+    }
+
+    constexpr int32_t srcInSystemMemOnly = 1;
+    constexpr int32_t dstInSystemMemOnly = 2;
+    constexpr int32_t enableAlways = 4;
+    constexpr uint32_t waEnabledMMioValue = 0x40004;
+    constexpr uint32_t waDisabledMMioValue = 0x40000;
+
+    const bool applyForSrc = (DebugManager.flags.EnableBcsSwControlWa.get() & srcInSystemMemOnly);
+    const bool applyForDst = (DebugManager.flags.EnableBcsSwControlWa.get() & dstInSystemMemOnly);
+    const bool applyAlways = (DebugManager.flags.EnableBcsSwControlWa.get() == enableAlways);
+
+    const bool enableWa = (!blitProperties.srcAllocation->isAllocatedInLocalMemoryPool() && applyForSrc) ||
+                          (!blitProperties.dstAllocation->isAllocatedInLocalMemoryPool() && applyForDst) ||
+                          applyAlways;
+
+    uint32_t newValue = enableWa ? waEnabledMMioValue : waDisabledMMioValue;
+
+    if (newValue == latestSentBcsWaValue) {
+        return;
+    }
+
+    latestSentBcsWaValue = newValue;
+
+    MI_LOAD_REGISTER_IMM cmd = Family::cmdInitLoadRegisterImm;
+    cmd.setRegisterOffset(0x22200);
+    cmd.setDataDword(newValue);
+    cmd.setMmioRemapEnable(true);
+
+    auto lri = cmdStream.getSpaceForCmd<MI_LOAD_REGISTER_IMM>();
+    *lri = cmd;
+}
+
+template <>
+size_t BlitCommandsHelper<Family>::getWaCmdsSize(const BlitPropertiesContainer &blitPropertiesContainer) {
+    using MI_LOAD_REGISTER_IMM = typename Family::MI_LOAD_REGISTER_IMM;
+
+    if (DebugManager.flags.EnableBcsSwControlWa.get() <= 0) {
+        return 0;
+    }
+
+    return (blitPropertiesContainer.size() * sizeof(MI_LOAD_REGISTER_IMM));
+}
+
+template <>
+uint64_t BlitCommandsHelper<Family>::getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
+    if (isSystemMemoryPoolUsed) {
+        return 512;
+    }
+    return 0;
+}
 
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;

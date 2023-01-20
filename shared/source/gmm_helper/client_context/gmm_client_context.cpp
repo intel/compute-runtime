@@ -7,7 +7,8 @@
 
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 
-#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
@@ -15,21 +16,24 @@
 #include "shared/source/sku_info/operations/sku_info_transfer.h"
 
 namespace NEO {
-GmmClientContext::GmmClientContext(OSInterface *osInterface, HardwareInfo *hwInfo) : hardwareInfo(hwInfo) {
+GmmClientContext::GmmClientContext(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    auto hardwareInfo = rootDeviceEnvironment.getHardwareInfo();
     _SKU_FEATURE_TABLE gmmFtrTable = {};
     _WA_TABLE gmmWaTable = {};
-    SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, &hwInfo->featureTable);
-    SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, &hwInfo->workaroundTable);
+    SkuInfoTransfer::transferFtrTableForGmm(&gmmFtrTable, &hardwareInfo->featureTable);
+    SkuInfoTransfer::transferWaTableForGmm(&gmmWaTable, &hardwareInfo->workaroundTable);
 
     GMM_INIT_IN_ARGS inArgs{};
     GMM_INIT_OUT_ARGS outArgs{};
 
+    auto gtSystemInfo = hardwareInfo->gtSystemInfo;
     inArgs.ClientType = GMM_CLIENT::GMM_OCL_VISTA;
-    inArgs.pGtSysInfo = &hwInfo->gtSystemInfo;
+    inArgs.pGtSysInfo = &gtSystemInfo;
     inArgs.pSkuTable = &gmmFtrTable;
     inArgs.pWaTable = &gmmWaTable;
-    inArgs.Platform = hwInfo->platform;
+    inArgs.Platform = hardwareInfo->platform;
 
+    auto osInterface = rootDeviceEnvironment.osInterface.get();
     if (osInterface && osInterface->getDriverModel()) {
         osInterface->getDriverModel()->setGmmInputArgs(&inArgs);
     }
@@ -77,6 +81,18 @@ uint8_t GmmClientContext::getMediaSurfaceStateCompressionFormat(GMM_RESOURCE_FOR
 
 void GmmClientContext::setGmmDeviceInfo(GMM_DEVICE_INFO *deviceInfo) {
     clientContext->GmmSetDeviceInfo(deviceInfo);
+}
+
+uint32_t GmmClientContext::cachePolicyGetPATIndex(GMM_RESOURCE_INFO *gmmResourceInfo, GMM_RESOURCE_USAGE_TYPE usage, bool compressed, bool cachable) {
+    bool outValue = compressed;
+    uint32_t patIndex = clientContext->CachePolicyGetPATIndex(gmmResourceInfo, usage, &outValue, cachable);
+
+    DEBUG_BREAK_IF(outValue != compressed);
+
+    return patIndex;
+}
+void GmmClientContext::setHandleAllocator(std::unique_ptr<GmmHandleAllocator> allocator) {
+    this->handleAllocator = std::move(allocator);
 }
 
 } // namespace NEO

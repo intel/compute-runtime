@@ -5,9 +5,9 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/tests_configuration.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/tests_configuration.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
@@ -17,10 +17,10 @@ using namespace NEO;
 struct OneVAFourPhysicalStoragesTest : public MulticontextAubFixture, public ::testing::Test {
     static const uint32_t numTiles = 4;
     void SetUp() override {
-        MulticontextAubFixture::SetUp(numTiles, MulticontextAubFixture::EnabledCommandStreamers::Single, false);
+        MulticontextAubFixture::setUp(numTiles, MulticontextAubFixture::EnabledCommandStreamers::Single, false);
     }
     void TearDown() override {
-        MulticontextAubFixture::TearDown();
+        MulticontextAubFixture::tearDown();
     }
 };
 

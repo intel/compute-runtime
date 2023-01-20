@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,10 @@
 #include <bitset>
 
 TEST(UnifiedMemoryTests, givenInternalMemoryTypesThenAllHaveOnlyOneBitSet) {
-    EXPECT_EQ(1u, std::bitset<32>(InternalMemoryType::DEVICE_UNIFIED_MEMORY).count());
-    EXPECT_EQ(1u, std::bitset<32>(InternalMemoryType::HOST_UNIFIED_MEMORY).count());
-    EXPECT_EQ(1u, std::bitset<32>(InternalMemoryType::SHARED_UNIFIED_MEMORY).count());
-    EXPECT_EQ(1u, std::bitset<32>(InternalMemoryType::SVM).count());
+    EXPECT_EQ(1u, std::bitset<4>(InternalMemoryType::DEVICE_UNIFIED_MEMORY).count());
+    EXPECT_EQ(1u, std::bitset<4>(InternalMemoryType::HOST_UNIFIED_MEMORY).count());
+    EXPECT_EQ(1u, std::bitset<4>(InternalMemoryType::SHARED_UNIFIED_MEMORY).count());
+    EXPECT_EQ(1u, std::bitset<4>(InternalMemoryType::SVM).count());
 }
 
 TEST(UnifiedMemoryTests, givenUnifiedMemoryControlsWhenDedicatedFieldsAreSetThenMaskIsProperlyGenerated) {

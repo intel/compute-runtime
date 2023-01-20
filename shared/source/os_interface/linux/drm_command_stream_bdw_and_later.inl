@@ -11,21 +11,25 @@
 namespace NEO {
 
 template <typename GfxFamily>
-int DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
-    this->processResidency(allocationsForResidency, 0u);
+SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) {
+    auto processResidencySuccess = this->processResidency(allocationsForResidency, 0u);
+    if (processResidencySuccess != SubmissionStatus::SUCCESS) {
+        return processResidencySuccess;
+    }
+
     int ret = this->exec(batchBuffer, 0u, static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0], 0);
 
-    return ret;
+    return Drm::getSubmissionStatusFromReturnCode(ret);
 }
 
 template <typename GfxFamily>
-int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(uint32_t waitValue) {
+int DrmCommandStreamReceiver<GfxFamily>::waitUserFence(TaskCountType waitValue) {
     uint32_t ctxId = 0u;
-    uint64_t tagAddress = castToUint64(const_cast<uint32_t *>(getTagAddress()));
+    uint64_t tagAddress = castToUint64(const_cast<TagAddressType *>(getTagAddress()));
     if (useContextForUserFenceWait) {
         ctxId = static_cast<const OsContextLinux *>(osContext)->getDrmContextIds()[0];
     }
-    return this->drm->waitUserFence(ctxId, tagAddress, waitValue, Drm::ValueWidth::U32, kmdWaitTimeout, 0u);
+    return this->drm->waitUserFence(ctxId, tagAddress, waitValue, Drm::ValueWidth::U64, kmdWaitTimeout, 0u);
 }
 
 } // namespace NEO

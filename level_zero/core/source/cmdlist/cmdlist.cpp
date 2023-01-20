@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,12 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/prefetch_manager.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/device_imp.h"
@@ -30,15 +32,16 @@ CommandList::~CommandList() {
     if (this->cmdListType == CommandListType::TYPE_REGULAR || !this->isFlushTaskSubmissionEnabled) {
         removeHostPtrAllocations();
     }
-    printfFunctionContainer.clear();
+    removeMemoryPrefetchAllocations();
+    printfKernelContainer.clear();
 }
 
-void CommandList::storePrintfFunction(Kernel *kernel) {
-    auto it = std::find(this->printfFunctionContainer.begin(), this->printfFunctionContainer.end(),
+void CommandList::storePrintfKernel(Kernel *kernel) {
+    auto it = std::find(this->printfKernelContainer.begin(), this->printfKernelContainer.end(),
                         kernel);
 
-    if (it == this->printfFunctionContainer.end()) {
-        this->printfFunctionContainer.push_back(kernel);
+    if (it == this->printfKernelContainer.end()) {
+        this->printfKernelContainer.push_back(kernel);
     }
 }
 
@@ -49,6 +52,16 @@ void CommandList::removeHostPtrAllocations() {
         memoryManager->freeGraphicsMemory(allocation.second);
     }
     hostPtrMap.clear();
+}
+
+void CommandList::removeMemoryPrefetchAllocations() {
+    if (this->performMemoryPrefetch) {
+        auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
+        if (prefetchManager) {
+            prefetchManager->removeAllocations(prefetchContext);
+        }
+        performMemoryPrefetch = false;
+    }
 }
 
 NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize) {
@@ -64,7 +77,7 @@ NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *bu
             return allocation->second;
         }
     }
-    if (this->cmdListType == CommandListType::TYPE_IMMEDIATE && this->isFlushTaskSubmissionEnabled) {
+    if (this->storeExternalPtrAsTemporary()) {
         auto allocation = this->csr->getInternalAllocationStorage()->obtainTemporaryAllocationWithPtr(bufferSize, buffer, NEO::AllocationType::EXTERNAL_HOST_PTR);
         if (allocation != nullptr) {
             auto alloc = allocation.get();
@@ -75,14 +88,24 @@ NEO::GraphicsAllocation *CommandList::getAllocationFromHostPtrMap(const void *bu
     return nullptr;
 }
 
+bool CommandList::isWaitForEventsFromHostEnabled() {
+    bool waitForEventsFromHostEnabled = false;
+    if (NEO::DebugManager.flags.EventWaitOnHost.get() != -1) {
+        waitForEventsFromHostEnabled = NEO::DebugManager.flags.EventWaitOnHost.get();
+    }
+    return waitForEventsFromHostEnabled;
+}
+
 NEO::GraphicsAllocation *CommandList::getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed) {
     NEO::GraphicsAllocation *alloc = getAllocationFromHostPtrMap(buffer, bufferSize);
     if (alloc) {
         return alloc;
     }
     alloc = device->allocateMemoryFromHostPtr(buffer, bufferSize, hostCopyAllowed);
-    UNRECOVERABLE_IF(alloc == nullptr);
-    if (this->cmdListType == CommandListType::TYPE_IMMEDIATE && this->isFlushTaskSubmissionEnabled) {
+    if (alloc == nullptr) {
+        return nullptr;
+    }
+    if (this->storeExternalPtrAsTemporary()) {
         this->csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<NEO::GraphicsAllocation>(alloc), NEO::AllocationUsage::TEMPORARY_ALLOCATION);
     } else if (alloc->getAllocationType() == NEO::AllocationType::EXTERNAL_HOST_PTR) {
         hostPtrMap.insert(std::make_pair(buffer, alloc));
@@ -131,22 +154,9 @@ void CommandList::eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocati
     }
 }
 
-NEO::PreemptionMode CommandList::obtainFunctionPreemptionMode(Kernel *kernel) {
+NEO::PreemptionMode CommandList::obtainKernelPreemptionMode(Kernel *kernel) {
     NEO::PreemptionFlags flags = NEO::PreemptionHelper::createPreemptionLevelFlags(*device->getNEODevice(), &kernel->getImmutableData()->getDescriptor());
     return NEO::PreemptionHelper::taskPreemptionMode(device->getDevicePreemptionMode(), flags);
-}
-
-void CommandList::makeResidentAndMigrate(bool performMigration) {
-    for (auto alloc : commandContainer.getResidencyContainer()) {
-        csr->makeResident(*alloc);
-
-        if (performMigration &&
-            (alloc->getAllocationType() == NEO::AllocationType::SVM_GPU ||
-             alloc->getAllocationType() == NEO::AllocationType::SVM_CPU)) {
-            auto pageFaultManager = device->getDriverHandle()->getMemoryManager()->getPageFaultManager();
-            pageFaultManager->moveAllocationToGpuDomain(reinterpret_cast<void *>(alloc->getGpuAddress()));
-        }
-    }
 }
 
 void CommandList::migrateSharedAllocations() {
@@ -163,37 +173,27 @@ void CommandList::migrateSharedAllocations() {
     }
 }
 
-void CommandList::handleIndirectAllocationResidency() {
-    bool indirectAllocationsAllowed = this->hasIndirectAllocationsAllowed();
-    NEO::Device *neoDevice = this->device->getNEODevice();
-    if (indirectAllocationsAllowed) {
-        auto svmAllocsManager = this->device->getDriverHandle()->getSvmAllocsManager();
-        auto submitAsPack = this->device->getDriverHandle()->getMemoryManager()->allowIndirectAllocationsAsPack(neoDevice->getRootDeviceIndex());
-        if (NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get() != -1) {
-            submitAsPack = !!NEO::DebugManager.flags.MakeIndirectAllocationsResidentAsPack.get();
-        }
-
-        if (submitAsPack) {
-            svmAllocsManager->makeIndirectAllocationsResident(*(this->csr), this->csr->peekTaskCount() + 1u);
-        } else {
-            UnifiedMemoryControls unifiedMemoryControls = this->getUnifiedMemoryControls();
-
-            svmAllocsManager->addInternalAllocationsToResidencyContainer(neoDevice->getRootDeviceIndex(),
-                                                                         this->commandContainer.getResidencyContainer(),
-                                                                         unifiedMemoryControls.generateMask());
-        }
+bool CommandList::isTimestampEventForMultiTile(Event *signalEvent) {
+    if (this->partitionCount > 1 && signalEvent && signalEvent->isEventTimestampFlagSet()) {
+        return true;
     }
+
+    return false;
 }
 
 bool CommandList::setupTimestampEventForMultiTile(Event *signalEvent) {
-    if (this->partitionCount > 1 &&
-        signalEvent) {
-        if (signalEvent->isEventTimestampFlagSet()) {
-            signalEvent->setPacketsInUse(this->partitionCount);
-            return true;
-        }
+    if (isTimestampEventForMultiTile(signalEvent)) {
+        signalEvent->setPacketsInUse(this->partitionCount);
+        return true;
     }
     return false;
+}
+
+void CommandList::synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t *waitEventList) {
+    for (uint32_t i = 0; i < numWaitEvents; i++) {
+        Event *event = Event::fromHandle(waitEventList[i]);
+        event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    }
 }
 
 } // namespace L0

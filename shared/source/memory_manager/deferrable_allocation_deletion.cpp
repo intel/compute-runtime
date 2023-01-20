@@ -26,7 +26,9 @@ bool DeferrableAllocationDeletion::apply() {
                     graphicsAllocation.releaseUsageInOsContext(contextId);
                 } else {
                     isStillUsed = true;
-                    engine.commandStreamReceiver->updateTagFromWait();
+                    if (engine.commandStreamReceiver->peekLatestFlushedTaskCount() < graphicsAllocation.getTaskCount(contextId)) {
+                        engine.commandStreamReceiver->updateTagFromWait();
+                    }
                 }
             }
         }

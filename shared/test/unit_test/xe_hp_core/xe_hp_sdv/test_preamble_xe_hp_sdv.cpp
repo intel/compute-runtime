@@ -8,20 +8,22 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/xe_hp_core/hw_cmds.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
 
 struct XeHPSlm : HardwareParse, ::testing::Test {
     void SetUp() override {
-        HardwareParse::SetUp();
+        HardwareParse::setUp();
     }
 
     void TearDown() override {
-        HardwareParse::TearDown();
+        HardwareParse::tearDown();
     }
 
     uint32_t cmdBuffer[1024]{};
@@ -117,12 +119,36 @@ using XeHPPipelineSelect = ::testing::Test;
 
 XEHPTEST_F(XeHPPipelineSelect, WhenAppendProgramPipelineSelectThenCorrectValuesSet) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
-    PIPELINE_SELECT cmd = FamilyType::cmdInitPipelineSelect;
-    PreambleHelper<FamilyType>::appendProgramPipelineSelect(&cmd, true, *defaultHwInfo);
-    EXPECT_TRUE(cmd.getSystolicModeEnable());
-    PreambleHelper<FamilyType>::appendProgramPipelineSelect(&cmd, false, *defaultHwInfo);
-    EXPECT_FALSE(cmd.getSystolicModeEnable());
-    EXPECT_EQ(pipelineSelectSystolicModeEnableMaskBits, cmd.getMaskBits());
+
+    constexpr size_t buffSize = 32;
+    char buffer[buffSize];
+    LinearStream stream(buffer, buffSize);
+
+    PipelineSelectArgs pipelineSelectArgs;
+    pipelineSelectArgs.systolicPipelineSelectSupport = true;
+
+    pipelineSelectArgs.systolicPipelineSelectMode = true;
+    PreambleHelper<FamilyType>::programPipelineSelect(&stream,
+                                                      pipelineSelectArgs,
+                                                      *defaultHwInfo);
+    size_t usedSize = stream.getUsed();
+
+    auto pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(buffer);
+    ASSERT_NE(nullptr, pipelineSelectCmd);
+    EXPECT_TRUE(pipelineSelectCmd->getSystolicModeEnable());
+    uint32_t systolicBit = pipelineSelectSystolicModeEnableMaskBits & pipelineSelectCmd->getMaskBits();
+    EXPECT_NE(0u, systolicBit);
+
+    pipelineSelectArgs.systolicPipelineSelectMode = false;
+    PreambleHelper<FamilyType>::programPipelineSelect(&stream,
+                                                      pipelineSelectArgs,
+                                                      *defaultHwInfo);
+
+    pipelineSelectCmd = genCmdCast<PIPELINE_SELECT *>(ptrOffset(buffer, usedSize));
+    ASSERT_NE(nullptr, pipelineSelectCmd);
+    EXPECT_FALSE(pipelineSelectCmd->getSystolicModeEnable());
+    systolicBit = pipelineSelectSystolicModeEnableMaskBits & pipelineSelectCmd->getMaskBits();
+    EXPECT_NE(0u, systolicBit);
 }
 
 XEHPTEST_F(XeHPPipelineSelect, WhenProgramPipelineSelectThenProgramMediaSamplerDopClockGateEnable) {

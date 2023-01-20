@@ -5,8 +5,8 @@
  *
  */
 
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/libult/signal_utils.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "gtest/gtest.h"
 #include "segfault_helper.h"

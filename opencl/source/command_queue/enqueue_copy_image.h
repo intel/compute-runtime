@@ -52,6 +52,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueCopyImage(
     if (isMipMapped(dstImage->getImageDesc())) {
         dc.dstMipLevel = findMipLevel(dstImage->getImageDesc().image_type, dstOrigin);
     }
+    dc.bcsSplit = this->isSplitEnqueueBlitNeeded(csrSelectionArgs.direction, getTotalSizeFromRectRegion(region), csr);
 
     MultiDispatchInfo dispatchInfo(dc);
 

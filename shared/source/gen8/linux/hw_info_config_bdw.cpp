@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/gen8/hw_cmds_base.h"
+#include "shared/source/gen8/hw_cmds_bdw.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.inl"
@@ -13,13 +13,14 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_BROADWELL;
 
 #include "shared/source/gen8/bdw/os_agnostic_hw_info_config_bdw.inl"
 
+namespace NEO {
+
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
+int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
     if (nullptr == osIface) {
         return 0;
     }
@@ -41,6 +42,6 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
     return 0;
 }
 
-template class HwInfoConfigHw<gfxProduct>;
+template class ProductHelperHw<gfxProduct>;
 
 } // namespace NEO

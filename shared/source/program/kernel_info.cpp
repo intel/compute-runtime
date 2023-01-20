@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,19 +8,13 @@
 #include "shared/source/program/kernel_info.h"
 
 #include "shared/source/device/device.h"
-#include "shared/source/device_binary_format/patchtokens_decoder.h"
-#include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/blit_commands_helper.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include <cstdint>
-#include <cstring>
-#include <map>
-#include <sstream>
 #include <unordered_map>
 
 namespace NEO {
@@ -30,69 +24,12 @@ struct KernelArgumentType {
     uint64_t argTypeQualifierValue;
 };
 
-WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const HardwareInfo *hwInfo, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion) {
-    this->maxWorkGroupSize = maxWorkGroupSize;
-    this->hasBarriers = hasBarriers;
-    this->simdSize = simdSize;
-    this->slmTotalSize = slmTotalSize;
-    this->coreFamily = hwInfo->platform.eRenderCoreFamily;
-    this->numThreadsPerSubSlice = numThreadsPerSubSlice;
-    this->localMemSize = localMemSize;
-    this->imgUsed = imgUsed;
-    this->yTiledSurfaces = yTiledSurface;
-
-    setMinWorkGroupSize(hwInfo, disableEUFusion);
-}
-
-void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
-    for (const auto &arg : kernelInfo.kernelDescriptor.payloadMappings.explicitArgs) {
-        if (arg.is<ArgDescriptor::ArgTImage>()) {
-            imgUsed = true;
-            yTiledSurfaces = true;
-            return;
-        }
-    }
-}
-
-void WorkSizeInfo::setMinWorkGroupSize(const HardwareInfo *hwInfo, bool disableEUFusion) {
-    minWorkGroupSize = 0;
-    if (hasBarriers) {
-        uint32_t maxBarriersPerHSlice = (coreFamily >= IGFX_GEN9_CORE) ? 32 : 16;
-        minWorkGroupSize = numThreadsPerSubSlice * simdSize / maxBarriersPerHSlice;
-    }
-    if (slmTotalSize > 0) {
-        UNRECOVERABLE_IF(localMemSize < slmTotalSize);
-        minWorkGroupSize = std::max(maxWorkGroupSize / ((localMemSize / slmTotalSize)), minWorkGroupSize);
-    }
-
-    const auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    if (hwHelper.isFusedEuDispatchEnabled(*hwInfo, disableEUFusion)) {
-        minWorkGroupSize *= 2;
-    }
-}
-
-void WorkSizeInfo::checkRatio(const size_t workItems[3]) {
-    if (slmTotalSize > 0) {
-        useRatio = true;
-        targetRatio = log((float)workItems[0]) - log((float)workItems[1]);
-        useStrictRatio = false;
-    } else if (yTiledSurfaces == true) {
-        useRatio = true;
-        targetRatio = YTilingRatioValue;
-        useStrictRatio = true;
-    }
-}
-
 KernelInfo::~KernelInfo() {
     delete[] crossThreadData;
 }
 
 size_t KernelInfo::getSamplerStateArrayCount() const {
     return kernelDescriptor.payloadMappings.samplerTable.numSamplers;
-}
-size_t KernelInfo::getSamplerStateArraySize(const HardwareInfo &hwInfo) const {
-    size_t samplerStateArraySize = getSamplerStateArrayCount() * HwHelper::get(hwInfo.platform.eRenderCoreFamily).getSamplerStateSize();
-    return samplerStateArraySize;
 }
 
 size_t KernelInfo::getBorderColorOffset() const {
@@ -131,9 +68,9 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
             kernelAllocation = kernelAllocations->second.kernelAllocation;
             kernelAllocations->second.reuseCounter++;
             auto &hwInfo = device.getHardwareInfo();
-            auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+            auto &productHelper = device.getProductHelper();
 
-            return MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelAllocation),
+            return MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelAllocation),
                                                                     device, kernelAllocation, 0, heapInfo.pKernelHeap,
                                                                     static_cast<size_t>(kernelIsaSize));
         } else {
@@ -149,9 +86,9 @@ bool KernelInfo::createKernelAllocation(const Device &device, bool internalIsa) 
     }
 
     auto &hwInfo = device.getHardwareInfo();
-    auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = device.getProductHelper();
 
-    return MemoryTransferHelper::transferMemoryToAllocation(hwInfoConfig.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelAllocation),
+    return MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelAllocation),
                                                             device, kernelAllocation, 0, heapInfo.pKernelHeap,
                                                             static_cast<size_t>(kernelIsaSize));
 }
@@ -180,10 +117,15 @@ std::string concatenateKernelNames(ArrayRef<KernelInfo *> kernelInfos) {
     std::string semiColonDelimitedKernelNameStr;
 
     for (const auto &kernelInfo : kernelInfos) {
+        const auto &kernelName = kernelInfo->kernelDescriptor.kernelMetadata.kernelName;
+        if (kernelName == NEO::Elf::SectionsNamesZebin::externalFunctions) {
+            continue;
+        }
+
         if (!semiColonDelimitedKernelNameStr.empty()) {
             semiColonDelimitedKernelNameStr += ';';
         }
-        semiColonDelimitedKernelNameStr += kernelInfo->kernelDescriptor.kernelMetadata.kernelName;
+        semiColonDelimitedKernelNameStr += kernelName;
     }
 
     return semiColonDelimitedKernelNameStr;

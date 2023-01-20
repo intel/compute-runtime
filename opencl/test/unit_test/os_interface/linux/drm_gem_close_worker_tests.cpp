@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
@@ -52,14 +53,14 @@ class DrmMockForWorker : public Drm {
 class DrmGemCloseWorkerFixture {
   public:
     DrmGemCloseWorkerFixture() : executionEnvironment(defaultHwInfo.get()){};
-    //max loop count for while
+    // max loop count for while
     static const uint32_t deadCntInit = 10 * 1000 * 1000;
 
     DrmMemoryManager *mm;
     DrmMockForWorker *drmMock;
     uint32_t deadCnt = deadCntInit;
 
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         this->drmMock = new DrmMockForWorker(*executionEnvironment.rootDeviceEnvironments[0]);
 
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
@@ -78,7 +79,7 @@ class DrmGemCloseWorkerFixture {
         this->drmMock->gem_close_expected = 0;
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
         if (this->drmMock->gem_close_expected >= 0) {
             EXPECT_EQ(this->drmMock->gem_close_expected, this->drmMock->gem_close_cnt);
         }
@@ -117,13 +118,13 @@ TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsWhenClosingGemThenSucceeds) {
 
     worker->push(bo);
 
-    //wait for worker to complete or deadCnt drops
+    // wait for worker to complete or deadCnt drops
     while (!worker->isEmpty() && (deadCnt-- > 0))
-        sched_yield(); //yield to another threads
+        sched_yield(); // yield to another threads
 
     worker->close(false);
 
-    //and check if GEM was closed
+    // and check if GEM was closed
     EXPECT_EQ(1, this->drmMock->gem_close_cnt.load());
 
     delete worker;
@@ -138,11 +139,11 @@ TEST_F(DrmGemCloseWorkerTests, GivenMultipleThreadsAndCloseFalseWhenClosingGemTh
     worker->push(bo);
     worker->close(false);
 
-    //wait for worker to complete or deadCnt drops
+    // wait for worker to complete or deadCnt drops
     while (!worker->isEmpty() && (deadCnt-- > 0))
-        sched_yield(); //yield to another threads
+        sched_yield(); // yield to another threads
 
-    //and check if GEM was closed
+    // and check if GEM was closed
     EXPECT_EQ(1, this->drmMock->gem_close_cnt.load());
 
     delete worker;

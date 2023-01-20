@@ -10,9 +10,6 @@
 
 #include <cstdint>
 
-// It's max SSH size per kernel (MAX_BINDING_TABLE_INDEX * 64)
-const uint32_t SAMPLER_OBJECT_ID_SHIFT = 253 * 64;
-
 // Sampler Patch Token Enums
 enum SAMPLER_PATCH_ENUM {
     CLK_DEFAULT_SAMPLER = 0x00,

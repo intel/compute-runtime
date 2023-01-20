@@ -16,7 +16,7 @@ class MockGdi : public Gdi {
     MockGdi() {
         initialized = MockGdi::getAllProcAddresses();
     }
-    ~MockGdi(){};
+    ~MockGdi() override{};
 
     static const D3DKMT_HANDLE adapterHandleForHdc = 0x1233;
     static UINT64 pagingFenceReturnValue;
@@ -30,7 +30,7 @@ class MockGdi : public Gdi {
 
     static NTSTATUS __stdcall makeResidentMock(IN OUT D3DDDI_MAKERESIDENT *arg) {
         if (arg->AllocationList[0] == INVALID_HANDLE) {
-            return STATUS_SEVERITY_ERROR;
+            return 0x3;
         }
         getMakeResidentArg() = *arg;
         arg->PagingFenceValue = pagingFenceReturnValue;

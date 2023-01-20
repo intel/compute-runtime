@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,16 +18,16 @@
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/command_queue/hardware_interface.h"
+#include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
-
 using namespace NEO;
 
 struct Dg2AndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
-    void SetUp() override {
-        LinearStreamFixture::SetUp();
+    void setUp() {
+        LinearStreamFixture::setUp();
         memset(globalOffsets, 0, sizeof(globalOffsets));
         memset(startWorkGroups, 0, sizeof(startWorkGroups));
         memset(&threadPayload, 0, sizeof(threadPayload));
@@ -73,40 +73,14 @@ struct Dg2AndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
 using WalkerDispatchTestDg2AndLater = ::testing::Test;
 using Dg2AndLaterDispatchWalkerBasicTest = Test<Dg2AndLaterDispatchWalkerBasicFixture>;
 using matcherDG2AndLater = IsAtLeastXeHpgCore;
-
-HWTEST2_F(WalkerDispatchTestDg2AndLater, whenProgramComputeWalkerThenApplyL3WAForSpecificPlatformAndRevision, matcherDG2AndLater) {
-    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
-    auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
-    auto hwInfo = *defaultHwInfo;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true};
-    {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hwInfo);
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
-
-        EXPECT_FALSE(walkerCmd.getL3PrefetchDisable());
-    }
-
-    {
-        hwInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hwInfo);
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
-
-        if (hwInfo.platform.eProductFamily == IGFX_DG2) {
-            EXPECT_TRUE(walkerCmd.getL3PrefetchDisable());
-        } else {
-            EXPECT_FALSE(walkerCmd.getL3PrefetchDisable());
-        }
-    }
-}
-
 HWTEST2_F(WalkerDispatchTestDg2AndLater, givenDebugVariableSetWhenProgramComputeWalkerThenApplyL3PrefetchAppropriately, matcherDG2AndLater) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     DebugManagerStateRestore restore;
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
     auto hwInfo = *defaultHwInfo;
 
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true};
+    KernelDescriptor kernelDescriptor;
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
     for (auto forceL3PrefetchForComputeWalker : {false, true}) {
         DebugManager.flags.ForceL3PrefetchForComputeWalker.set(forceL3PrefetchForComputeWalker);
         EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
@@ -131,16 +105,13 @@ HWTEST2_F(Dg2AndLaterDispatchWalkerBasicTest, givenTimestampPacketWhenDispatchin
     MockCommandQueue cmdQ(context.get(), device.get(), nullptr, false);
     auto &cmdStream = cmdQ.getCS(0);
 
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+    walkerArgs.currentTimestampPacketNodes = &timestampPacketContainer;
     HardwareInterface<FamilyType>::dispatchWalker(
         cmdQ,
         multiDispatchInfo,
         CsrDependencies(),
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        &timestampPacketContainer,
-        false);
+        walkerArgs);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);

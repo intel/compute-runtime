@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,25 +12,19 @@
 
 #include "sysman/linux/os_sysman_imp.h"
 
-using ::testing::_;
-using ::testing::NiceMock;
 using namespace NEO;
 
 namespace L0 {
 namespace ult {
 
-class LinuxSysfsAccess : public SysfsAccess {};
-template <>
-struct Mock<LinuxSysfsAccess> : public LinuxSysfsAccess {
+struct MockLinuxSysfsAccess : public SysfsAccess {
 
-    ze_result_t getRealPathVal(const std::string file, std::string &val) {
+    ze_result_t getRealPath(const std::string file, std::string &val) override {
         val = "/random/path";
         return ZE_RESULT_SUCCESS;
     }
 
-    Mock<LinuxSysfsAccess>() = default;
-
-    MOCK_METHOD(ze_result_t, getRealPath, (const std::string path, std::string &val), (override));
+    MockLinuxSysfsAccess() = default;
 };
 
 } // namespace ult

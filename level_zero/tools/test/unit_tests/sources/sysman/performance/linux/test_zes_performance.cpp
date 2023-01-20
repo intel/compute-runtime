@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,6 @@
 #include "mock_sysfs_performance.h"
 
 extern bool sysmanUltsEnable;
-
-using ::testing::_;
-using ::testing::Matcher;
 
 namespace L0 {
 namespace ult {
@@ -35,13 +32,18 @@ class ZesPerformanceFixture : public SysmanMultiDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pPerformanceHandleContext->init(deviceHandles, device);
+        getPerfHandles(0);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
         SysmanMultiDeviceFixture::TearDown();
+    }
+    std::vector<zes_perf_handle_t> getPerfHandles(uint32_t count) {
+        std::vector<zes_perf_handle_t> handles(count, nullptr);
+        EXPECT_EQ(zesDeviceEnumPerformanceFactorDomains(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
+        return handles;
     }
 };
 

@@ -26,7 +26,7 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
     this->inspectionId++;
     primaryCommandBuffer->inspectionId = currentInspection;
 
-    //primary command buffers must fix to budget
+    // primary command buffers must fix to budget
     for (auto &graphicsAllocation : primaryCommandBuffer->surfaces) {
         if (graphicsAllocation->getInspectionId(osContextId) < currentInspection) {
             graphicsAllocation->setInspectionId(currentInspection, osContextId);
@@ -35,12 +35,12 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
         }
     }
 
-    //check if we have anything for merge
+    // check if we have anything for merge
     if (!primaryCommandBuffer->next) {
         return;
     }
 
-    //check if next cmd buffer is compatible
+    // check if next cmd buffer is compatible
     if (primaryCommandBuffer->next->batchBuffer.requiresCoherency != primaryCommandBuffer->batchBuffer.requiresCoherency) {
         return;
     }
@@ -62,7 +62,7 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
 
     while (nextCommandBuffer) {
         size_t nextCommandBufferNewResourcesSize = 0;
-        //evaluate if buffer fits
+        // evaluate if buffer fits
         for (auto &graphicsAllocation : nextCommandBuffer->surfaces) {
             if (graphicsAllocation == primaryBatchGraphicsAllocation) {
                 continue;
@@ -99,15 +99,16 @@ void NEO::SubmissionAggregator::aggregateCommandBuffers(ResourcePackage &resourc
 }
 
 NEO::BatchBuffer::BatchBuffer(GraphicsAllocation *commandBufferAllocation, size_t startOffset,
-                              size_t chainedBatchBufferStartOffset, GraphicsAllocation *chainedBatchBuffer,
-                              bool requiresCoherency, bool lowPriority,
-                              QueueThrottle throttle, uint64_t sliceCount,
-                              size_t usedSize, LinearStream *stream, void *endCmdPtr, bool useSingleSubdevice)
+                              size_t chainedBatchBufferStartOffset, uint64_t taskStartAddress, GraphicsAllocation *chainedBatchBuffer,
+                              bool requiresCoherency, bool lowPriority, QueueThrottle throttle, uint64_t sliceCount,
+                              size_t usedSize, LinearStream *stream, void *endCmdPtr, bool hasStallingCmds,
+                              bool hasRelaxedOrderingDependencies)
     : commandBufferAllocation(commandBufferAllocation), startOffset(startOffset),
-      chainedBatchBufferStartOffset(chainedBatchBufferStartOffset), chainedBatchBuffer(chainedBatchBuffer),
+      chainedBatchBufferStartOffset(chainedBatchBufferStartOffset), taskStartAddress(taskStartAddress), chainedBatchBuffer(chainedBatchBuffer),
       requiresCoherency(requiresCoherency), low_priority(lowPriority),
       throttle(throttle), sliceCount(sliceCount),
-      usedSize(usedSize), stream(stream), endCmdPtr(endCmdPtr), useSingleSubdevice(useSingleSubdevice) {}
+      usedSize(usedSize), stream(stream), endCmdPtr(endCmdPtr), hasStallingCmds(hasStallingCmds),
+      hasRelaxedOrderingDependencies(hasRelaxedOrderingDependencies) {}
 
 NEO::CommandBuffer::CommandBuffer(Device &device) : device(device) {
     flushStamp.reset(new FlushStampTracker(false));

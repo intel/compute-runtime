@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,33 +8,25 @@
 #include "program.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
-#include "shared/source/compiler_interface/oclc_extensions.h"
-#include "shared/source/device_binary_format/device_binary_formats.h"
+#include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
-#include "shared/source/device_binary_format/patchtokens_decoder.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
-#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/kernel_helpers.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/platform/platform.h"
-
-#include "compiler_options.h"
-
-#include <sstream>
 
 namespace NEO {
 
@@ -74,8 +66,8 @@ std::string Program::getInternalOptions() const {
     }
 
     auto &hwInfo = pClDevice->getHardwareInfo();
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
-    auto forceToStatelessRequired = compilerHwInfoConfig.isForceToStatelessRequired();
+    const auto &compilerProductHelper = pClDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    auto forceToStatelessRequired = compilerProductHelper.isForceToStatelessRequired();
     auto disableStatelessToStatefulOptimization = DebugManager.flags.DisableStatelessToStatefulOptimization.get();
 
     if ((isBuiltIn && is32bit) || forceToStatelessRequired || disableStatelessToStatefulOptimization) {
@@ -86,17 +78,17 @@ std::string Program::getInternalOptions() const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::bindlessMode);
     }
 
-    auto enableStatelessToStatefullWithOffset = HwHelper::get(pClDevice->getHardwareInfo().platform.eRenderCoreFamily).isStatelesToStatefullWithOffsetSupported();
+    auto enableStatelessToStatefulWithOffset = pClDevice->getGfxCoreHelper().isStatelessToStatefulWithOffsetSupported();
     if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
-        enableStatelessToStatefullWithOffset = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
+        enableStatelessToStatefulWithOffset = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
     }
 
-    if (enableStatelessToStatefullWithOffset) {
+    if (enableStatelessToStatefulWithOffset) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::hasBufferOffsetArg);
     }
 
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (hwInfoConfig.isForceEmuInt32DivRemSPWARequired(hwInfo)) {
+    const auto &productHelper = pClDevice->getProductHelper();
+    if (productHelper.isForceEmuInt32DivRemSPWARequired(hwInfo)) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
 
@@ -105,7 +97,8 @@ std::string Program::getInternalOptions() const {
     }
 
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::preserveVec3Type);
-    CompilerOptions::concatenateAppend(internalOptions, compilerHwInfoConfig.getCachingPolicyOptions());
+    auto isDebuggerActive = pClDevice->getDevice().isDebuggerActive() || pClDevice->getDevice().getDebugger() != nullptr;
+    CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));
     return internalOptions;
 }
 
@@ -163,13 +156,11 @@ cl_int Program::createProgramFromBinary(
         deviceBuildInfos[&clDevice].programBinaryType = CL_PROGRAM_BINARY_TYPE_EXECUTABLE;
         this->isCreatedFromBinary = true;
 
-        auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+        auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
         auto productAbbreviation = hardwarePrefix[hwInfo->platform.eProductFamily];
 
-        auto copyHwInfo = *hwInfo;
-        CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
-
-        TargetDevice targetDevice = targetDeviceFromHwInfo(copyHwInfo);
+        TargetDevice targetDevice = getTargetDevice(rootDeviceEnvironment);
         std::string decodeErrors;
         std::string decodeWarnings;
         auto singleDeviceBinary = unpackSingleDeviceBinary(archive, ConstStringRef(productAbbreviation, strlen(productAbbreviation)), targetDevice,
@@ -178,7 +169,8 @@ cl_int Program::createProgramFromBinary(
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeWarnings.c_str());
         }
 
-        if (singleDeviceBinary.intermediateRepresentation.empty() && singleDeviceBinary.deviceBinary.empty()) {
+        bool singleDeviceBinaryEmpty = singleDeviceBinary.intermediateRepresentation.empty() && singleDeviceBinary.deviceBinary.empty();
+        if (singleDeviceBinaryEmpty || (singleDeviceBinary.deviceBinary.empty() && DebugManager.flags.DisableKernelRecompilation.get())) {
             retVal = CL_INVALID_BINARY;
             PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
         } else {
@@ -191,12 +183,17 @@ cl_int Program::createProgramFromBinary(
                 this->options += " " + NEO::CompilerOptions::allowZebin.str();
             }
 
-            if (false == singleDeviceBinary.debugData.empty()) {
-                this->buildInfos[rootDeviceIndex].debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
-                this->buildInfos[rootDeviceIndex].debugDataSize = singleDeviceBinary.debugData.size();
+            this->buildInfos[rootDeviceIndex].debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
+            this->buildInfos[rootDeviceIndex].debugDataSize = singleDeviceBinary.debugData.size();
+
+            auto isVmeUsed = containsVmeUsage(this->buildInfos[rootDeviceIndex].kernelInfoArray);
+            bool rebuild = isRebuiltToPatchtokensRequired(&clDevice.getDevice(), archive, this->options, this->isBuiltIn, isVmeUsed);
+            rebuild |= DebugManager.flags.RebuildPrecompiledKernels.get();
+
+            if (rebuild && 0u == this->irBinarySize) {
+                return CL_INVALID_BINARY;
             }
-            bool forceRebuildBuiltInFromIr = isBuiltIn && DebugManager.flags.RebuildPrecompiledKernels.get();
-            if ((false == singleDeviceBinary.deviceBinary.empty()) && (false == forceRebuildBuiltInFromIr)) {
+            if ((false == singleDeviceBinary.deviceBinary.empty()) && (false == rebuild)) {
                 this->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(singleDeviceBinary.deviceBinary.begin()), singleDeviceBinary.deviceBinary.size());
                 this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = singleDeviceBinary.deviceBinary.size();
                 this->buildInfos[rootDeviceIndex].packedDeviceBinary = makeCopy<char>(reinterpret_cast<const char *>(archive.begin()), archive.size());
@@ -281,23 +278,16 @@ cl_int Program::getSource(std::string &binary) const {
 
 void Program::updateBuildLog(uint32_t rootDeviceIndex, const char *pErrorString,
                              size_t errorStringSize) {
-    if ((pErrorString == nullptr) || (errorStringSize == 0) || (pErrorString[0] == '\0')) {
+    ConstStringRef errorString(pErrorString, errorStringSize);
+    if (errorString.empty()) {
         return;
     }
 
-    if (pErrorString[errorStringSize - 1] == '\0') {
-        --errorStringSize;
+    auto &buildLog = buildInfos[rootDeviceIndex].buildLog;
+    if (false == buildLog.empty()) {
+        buildLog.append("\n");
     }
-
-    auto &currentLog = buildInfos[rootDeviceIndex].buildLog;
-
-    if (currentLog.empty()) {
-        currentLog.assign(pErrorString, pErrorString + errorStringSize);
-        return;
-    }
-
-    currentLog.append("\n");
-    currentLog.append(pErrorString, pErrorString + errorStringSize);
+    buildLog.append(errorString.begin(), errorString.end());
 }
 
 const char *Program::getBuildLog(uint32_t rootDeviceIndex) const {
@@ -390,11 +380,11 @@ cl_int Program::packDeviceBinary(ClDevice &clDevice) {
         return CL_SUCCESS;
     }
 
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
 
     if (nullptr != this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()) {
         SingleDeviceBinary singleDeviceBinary = {};
-        singleDeviceBinary.targetDevice = NEO::targetDeviceFromHwInfo(*hwInfo);
+        singleDeviceBinary.targetDevice = NEO::getTargetDevice(rootDeviceEnvironment);
         singleDeviceBinary.buildOptions = this->options;
         singleDeviceBinary.deviceBinary = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), this->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
         singleDeviceBinary.intermediateRepresentation = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize);
@@ -452,6 +442,48 @@ void Program::setBuildStatusSuccess(const ClDeviceVector &deviceVector, cl_progr
     }
 }
 
+bool Program::containsVmeUsage(const std::vector<KernelInfo *> &kernelInfos) const {
+    for (auto kernelInfo : kernelInfos) {
+        if (kernelInfo->isVmeUsed()) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void Program::disableZebinIfVmeEnabled(std::string &options, std::string &internalOptions, const std::string &sourceCode) {
+
+    const char *vmeOptions[] = {"cl_intel_device_side_advanced_vme_enable",
+                                "cl_intel_device_side_avc_vme_enable",
+                                "cl_intel_device_side_vme_enable"};
+
+    const char *vmeEnabledExtensions[] = {"cl_intel_motion_estimation : enable",
+                                          "cl_intel_device_side_avc_motion_estimation : enable",
+                                          "cl_intel_advanced_motion_estimation : enable"};
+
+    auto containsVme = [](const auto &data, const auto &patterns) {
+        for (const auto &pattern : patterns) {
+            auto pos = data.find(pattern);
+            if (pos != std::string::npos) {
+                return true;
+            }
+        }
+        return false;
+    };
+
+    if (DebugManager.flags.DontDisableZebinIfVmeUsed.get() == true) {
+        return;
+    }
+
+    if (containsVme(options, vmeOptions) || containsVme(sourceCode, vmeEnabledExtensions)) {
+        auto pos = options.find(CompilerOptions::allowZebin.str());
+        if (pos != std::string::npos) {
+            options.erase(pos, pos + CompilerOptions::allowZebin.length());
+        }
+        internalOptions += " " + CompilerOptions::disableZebin.str();
+    }
+}
+
 bool Program::isValidCallback(void(CL_CALLBACK *funcNotify)(cl_program program, void *userData), void *userData) {
     return funcNotify != nullptr || userData == nullptr;
 }
@@ -491,11 +523,35 @@ cl_int Program::processInputDevices(ClDeviceVector *&deviceVectorPtr, cl_uint nu
 }
 
 void Program::prependFilePathToOptions(const std::string &filename) {
-    ConstStringRef cmcOption = "-cmc";
-    if (!filename.empty() && options.compare(0, cmcOption.size(), cmcOption.data())) {
+    auto isCMCOptionUsed = CompilerOptions::contains(options, CompilerOptions::useCMCompiler);
+    if (!filename.empty() && false == isCMCOptionUsed) {
         // Add "-s" flag first so it will be ignored by clang in case the options already have this flag set.
-        options = std::string("-s ") + filename + " " + options;
+        options = CompilerOptions::generateSourcePath.str() + " " + CompilerOptions::wrapInQuotes(filename) + " " + options;
     }
+}
+
+const std::vector<ConstStringRef> Program::internalOptionsToExtract = {CompilerOptions::gtpinRera,
+                                                                       CompilerOptions::defaultGrf,
+                                                                       CompilerOptions::largeGrf,
+                                                                       CompilerOptions::autoGrf,
+                                                                       CompilerOptions::greaterThan4gbBuffersRequired,
+                                                                       CompilerOptions::numThreadsPerEu};
+
+bool Program::isFlagOption(ConstStringRef option) {
+    if (option == CompilerOptions::numThreadsPerEu) {
+        return false;
+    }
+    return true;
+}
+
+bool Program::isOptionValueValid(ConstStringRef option, ConstStringRef value) {
+    if (option == CompilerOptions::numThreadsPerEu) {
+        const auto &threadCounts = clDevices[0]->getSharedDeviceInfo().threadsPerEUConfigs;
+        if (std::find(threadCounts.begin(), threadCounts.end(), atoi(value.data())) != threadCounts.end()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 const ClDeviceVector &Program::getDevicesInProgram() const {

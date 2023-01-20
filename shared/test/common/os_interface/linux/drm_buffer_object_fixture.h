@@ -8,11 +8,16 @@
 #pragma once
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_default.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 
+#include "gtest/gtest.h"
+
 #include <memory>
+
+using namespace NEO;
 
 class TestedBufferObject : public BufferObject {
   public:
@@ -35,7 +40,7 @@ class TestedBufferObject : public BufferObject {
     }
 
     int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
-             BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue) override {
+             BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, TaskCountType completionValue) override {
         this->receivedCompletionGpuAddress = completionGpuAddress;
         this->receivedCompletionValue = completionValue;
         this->execCalled++;
@@ -56,7 +61,7 @@ class TestedBufferObject : public BufferObject {
 
     uint64_t receivedCompletionGpuAddress = 0;
     ExecObject *execObjectPointerFilled = nullptr;
-    uint32_t receivedCompletionValue = 0;
+    TaskCountType receivedCompletionValue = 0;
     uint32_t execCalled = 0;
     bool callBaseEvictUnusedAllocations{true};
 };
@@ -65,21 +70,21 @@ template <typename DrmClass>
 class DrmBufferObjectFixture {
   public:
     std::unique_ptr<DrmClass> mock;
-    TestedBufferObject *bo;
-    ExecObject execObjectsStorage[256];
+    TestedBufferObject *bo = nullptr;
+    ExecObject execObjectsStorage[256]{};
     std::unique_ptr<OsContextLinux> osContext;
 
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         this->mock = std::make_unique<DrmClass>(*executionEnvironment.rootDeviceEnvironments[0]);
         ASSERT_NE(nullptr, this->mock);
         executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
-        osContext.reset(new OsContextLinux(*this->mock, 0u, EngineDescriptorHelper::getDefaultDescriptor()));
+        osContext.reset(new OsContextLinux(*this->mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor()));
         this->mock->reset();
         bo = new TestedBufferObject(this->mock.get());
         ASSERT_NE(nullptr, bo);
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
         delete bo;
         if (this->mock->ioctl_expected.total >= 0) {
             EXPECT_EQ(this->mock->ioctl_expected.total, this->mock->ioctl_cnt.total);

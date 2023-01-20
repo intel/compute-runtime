@@ -6,9 +6,9 @@
  */
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.inl"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -129,6 +129,7 @@ HWTEST2_F(AppendMemoryCopy, givenImmediateCommandListWhenAppendingMemoryCopyThen
     commandList->device = device;
     commandList->cmdQImmediate = &cmdQueue;
     commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
     auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -170,14 +171,204 @@ HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCop
     commandList->device = device;
     commandList->cmdQImmediate = &cmdQueue;
     commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
     auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     EXPECT_EQ(1u, cmdQueue.executeCommandListsCalled);
     EXPECT_EQ(0u, cmdQueue.synchronizeCalled);
-
+    EXPECT_EQ(0u, commandList->commandContainer.getResidencyContainer().size());
     commandList->cmdQImmediate = nullptr;
+}
+
+HWTEST2_F(AppendMemoryCopy, givenAsyncImmediateCommandListWhenAppendingMemoryCopyWithCopyEngineThenProgramCmdStreamWithFlushTask, IsAtLeastSkl) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    ultCsr->storeMakeResidentAllocations = true;
+
+    auto cmdQueue = std::make_unique<Mock<CommandQueue>>();
+    cmdQueue->csr = ultCsr;
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    ASSERT_NE(nullptr, commandList);
+    commandList->isFlushTaskSubmissionEnabled = true;
+    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    commandList->device = device;
+    commandList->isSyncModeQueue = false;
+    commandList->cmdQImmediate = cmdQueue.get();
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->csr = ultCsr;
+
+    // Program CSR state on first submit
+
+    EXPECT_EQ(0u, ultCsr->getCS(0).getUsed());
+
+    bool hwContextProgrammingRequired = (ultCsr->getCmdsSizeForHardwareContext() > 0);
+
+    size_t expectedSize = 0;
+    if (hwContextProgrammingRequired) {
+        expectedSize = alignUp(ultCsr->getCmdsSizeForHardwareContext() + sizeof(typename FamilyType::MI_BATCH_BUFFER_START), MemoryConstants::cacheLineSize);
+    }
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr));
+
+    EXPECT_EQ(expectedSize, ultCsr->getCS(0).getUsed());
+    EXPECT_TRUE(ultCsr->isMadeResident(commandList->commandContainer.getCommandStream()->getGraphicsAllocation()));
+
+    size_t offset = 0;
+    if constexpr (FamilyType::isUsingMiMemFence) {
+        if (ultCsr->globalFenceAllocation) {
+            using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
+            auto sysMemFence = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(ultCsr->getCS(0).getCpuBase());
+            ASSERT_NE(nullptr, sysMemFence);
+            EXPECT_EQ(ultCsr->globalFenceAllocation->getGpuAddress(), sysMemFence->getSystemMemoryFenceAddress());
+            offset += sizeof(STATE_SYSTEM_MEM_FENCE_ADDRESS);
+        }
+    }
+
+    if (hwContextProgrammingRequired) {
+        auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(ptrOffset(ultCsr->getCS(0).getCpuBase(), offset));
+        ASSERT_NE(nullptr, bbStartCmd);
+
+        EXPECT_EQ(commandList->commandContainer.getCommandStream()->getGpuBase(), bbStartCmd->getBatchBufferStartAddress());
+    }
+
+    auto findTagUpdate = [](void *streamBase, size_t sizeUsed, uint64_t tagAddress) -> bool {
+        GenCmdList genCmdList;
+        EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(genCmdList, streamBase, sizeUsed));
+
+        auto itor = find<MI_FLUSH_DW *>(genCmdList.begin(), genCmdList.end());
+        bool found = false;
+
+        while (itor != genCmdList.end()) {
+            auto cmd = genCmdCast<MI_FLUSH_DW *>(*itor);
+            if (cmd && cmd->getDestinationAddress() == tagAddress) {
+                found = true;
+                break;
+            }
+            itor++;
+        }
+
+        return found;
+    };
+
+    EXPECT_FALSE(findTagUpdate(commandList->commandContainer.getCommandStream()->getCpuBase(),
+                               commandList->commandContainer.getCommandStream()->getUsed(),
+                               ultCsr->getTagAllocation()->getGpuAddress()));
+
+    // Dont program CSR state on next submit
+    size_t csrOfffset = ultCsr->getCS(0).getUsed();
+    size_t cmdListOffset = commandList->commandContainer.getCommandStream()->getUsed();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr));
+
+    EXPECT_EQ(csrOfffset, ultCsr->getCS(0).getUsed());
+
+    EXPECT_FALSE(findTagUpdate(ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), cmdListOffset),
+                               commandList->commandContainer.getCommandStream()->getUsed() - cmdListOffset,
+                               ultCsr->getTagAllocation()->getGpuAddress()));
+}
+
+HWTEST2_F(AppendMemoryCopy, givenSyncImmediateCommandListWhenAppendingMemoryCopyWithCopyEngineThenProgramCmdStreamWithFlushTask, IsAtLeastSkl) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.EnableFlushTaskSubmission.set(1);
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
+    ultCsr->storeMakeResidentAllocations = true;
+
+    auto cmdQueue = std::make_unique<Mock<CommandQueue>>();
+    cmdQueue->csr = ultCsr;
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
+    ASSERT_NE(nullptr, commandList);
+    commandList->isFlushTaskSubmissionEnabled = true;
+    ze_result_t ret = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+    commandList->device = device;
+    commandList->isSyncModeQueue = true;
+    commandList->cmdQImmediate = cmdQueue.get();
+    commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    commandList->csr = ultCsr;
+
+    // Program CSR state on first submit
+
+    EXPECT_EQ(0u, ultCsr->getCS(0).getUsed());
+
+    bool hwContextProgrammingRequired = (ultCsr->getCmdsSizeForHardwareContext() > 0);
+
+    size_t expectedSize = 0;
+    if (hwContextProgrammingRequired) {
+        expectedSize = alignUp(ultCsr->getCmdsSizeForHardwareContext() + sizeof(typename FamilyType::MI_BATCH_BUFFER_START), MemoryConstants::cacheLineSize);
+    }
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr));
+
+    EXPECT_EQ(expectedSize, ultCsr->getCS(0).getUsed());
+    EXPECT_TRUE(ultCsr->isMadeResident(commandList->commandContainer.getCommandStream()->getGraphicsAllocation()));
+
+    size_t offset = 0;
+    if constexpr (FamilyType::isUsingMiMemFence) {
+        if (ultCsr->globalFenceAllocation) {
+            using STATE_SYSTEM_MEM_FENCE_ADDRESS = typename FamilyType::STATE_SYSTEM_MEM_FENCE_ADDRESS;
+            auto sysMemFence = genCmdCast<STATE_SYSTEM_MEM_FENCE_ADDRESS *>(ultCsr->getCS(0).getCpuBase());
+            ASSERT_NE(nullptr, sysMemFence);
+            EXPECT_EQ(ultCsr->globalFenceAllocation->getGpuAddress(), sysMemFence->getSystemMemoryFenceAddress());
+            offset += sizeof(STATE_SYSTEM_MEM_FENCE_ADDRESS);
+        }
+    }
+
+    if (hwContextProgrammingRequired) {
+        auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(ptrOffset(ultCsr->getCS(0).getCpuBase(), offset));
+        ASSERT_NE(nullptr, bbStartCmd);
+        EXPECT_EQ(commandList->commandContainer.getCommandStream()->getGpuBase(), bbStartCmd->getBatchBufferStartAddress());
+    }
+
+    auto findTagUpdate = [](void *streamBase, size_t sizeUsed, uint64_t tagAddress) -> bool {
+        GenCmdList genCmdList;
+        EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(genCmdList, streamBase, sizeUsed));
+
+        auto itor = find<MI_FLUSH_DW *>(genCmdList.begin(), genCmdList.end());
+        bool found = false;
+
+        while (itor != genCmdList.end()) {
+            auto cmd = genCmdCast<MI_FLUSH_DW *>(*itor);
+            if (cmd && cmd->getDestinationAddress() == tagAddress) {
+                found = true;
+                break;
+            }
+            itor++;
+        }
+
+        return found;
+    };
+
+    EXPECT_TRUE(findTagUpdate(commandList->commandContainer.getCommandStream()->getCpuBase(),
+                              commandList->commandContainer.getCommandStream()->getUsed(),
+                              ultCsr->getTagAllocation()->getGpuAddress()));
+
+    // Dont program CSR state on next submit
+    size_t csrOfffset = ultCsr->getCS(0).getUsed();
+    size_t cmdListOffset = commandList->commandContainer.getCommandStream()->getUsed();
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr));
+
+    EXPECT_EQ(csrOfffset, ultCsr->getCS(0).getUsed());
+
+    EXPECT_TRUE(findTagUpdate(ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), cmdListOffset),
+                              commandList->commandContainer.getCommandStream()->getUsed() - cmdListOffset,
+                              ultCsr->getTagAllocation()->getGpuAddress()));
 }
 
 HWTEST2_F(AppendMemoryCopy, givenSyncModeImmediateCommandListWhenAppendingMemoryCopyWithCopyEngineThenSuccessIsReturned, IsAtLeastSkl) {
@@ -193,6 +384,7 @@ HWTEST2_F(AppendMemoryCopy, givenSyncModeImmediateCommandListWhenAppendingMemory
     commandList->cmdQImmediate = &cmdQueue;
     commandList->cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
     commandList->isSyncModeQueue = true;
+    commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
 
     auto result = commandList->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);

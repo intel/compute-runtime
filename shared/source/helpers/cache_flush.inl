@@ -1,27 +1,28 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/l3_range.h"
 #include "shared/source/utilities/range.h"
 
-#include "hw_cmds.h"
-
 namespace NEO {
 
 template <typename GfxFamily>
-inline void flushGpuCache(LinearStream *commandStream, const Range<L3Range> &ranges, uint64_t postSyncAddress, const HardwareInfo &hwInfo) {
+inline void flushGpuCache(LinearStream *commandStream, const Range<L3Range> &ranges, uint64_t postSyncAddress, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using L3_FLUSH_ADDRESS_RANGE = typename GfxFamily::L3_FLUSH_ADDRESS_RANGE;
     using L3_FLUSH_EVICTION_POLICY = typename GfxFamily::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY;
     auto templ = GfxFamily::cmdInitL3ControlWithPostSync;
     templ.getBase().setHdcPipelineFlush(true);
-    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto isA0Stepping = hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+
+    auto hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto isA0Stepping = GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, productHelper);
 
     for (const L3Range *it = &*ranges.begin(), *last = &*ranges.rbegin(), *end = &*ranges.end(); it != end; ++it) {
         if ((it == last) && (postSyncAddress != 0)) {

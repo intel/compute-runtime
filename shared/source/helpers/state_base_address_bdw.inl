@@ -11,21 +11,16 @@ namespace NEO {
 
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
-    STATE_BASE_ADDRESS *stateBaseAddress,
-    const IndirectHeap *ssh,
-    bool setGeneralStateBaseAddress,
-    uint64_t indirectObjectHeapBaseAddress,
-    GmmHelper *gmmHelper,
-    bool isMultiOsContextCapable,
-    MemoryCompressionState memoryCompressionState,
-    bool overrideBindlessSurfaceStateBase,
-    bool useGlobalAtomics,
-    bool areMultipleSubDevicesInContext) {
+    StateBaseAddressHelperArgs<GfxFamily> &args,
+    bool overrideBindlessSurfaceStateBase) {
 }
 
 template <typename GfxFamily>
 uint32_t StateBaseAddressHelper<GfxFamily>::getMaxBindlessSurfaceStates() {
     return 0;
 }
+
+template <>
+void StateBaseAddressHelper<Gen8Family>::programStateBaseAddress(StateBaseAddressHelperArgs<Gen8Family> &args);
 
 } // namespace NEO

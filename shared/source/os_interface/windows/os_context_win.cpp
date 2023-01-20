@@ -15,17 +15,18 @@
 
 namespace NEO {
 
-OsContext *OsContextWin::create(OSInterface *osInterface, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
+OsContext *OsContextWin::create(OSInterface *osInterface, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor) {
     if (osInterface) {
-        return new OsContextWin(*osInterface->getDriverModel()->as<Wddm>(), contextId, engineDescriptor);
+        return new OsContextWin(*osInterface->getDriverModel()->as<Wddm>(), rootDeviceIndex, contextId, engineDescriptor);
     }
-    return new OsContext(contextId, engineDescriptor);
+    return new OsContext(rootDeviceIndex, contextId, engineDescriptor);
 }
 
-OsContextWin::OsContextWin(Wddm &wddm, uint32_t contextId, const EngineDescriptor &engineDescriptor)
-    : OsContext(contextId, engineDescriptor),
-      wddm(wddm),
-      residencyController(wddm, contextId) {}
+OsContextWin::OsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
+    : OsContext(rootDeviceIndex, contextId, engineDescriptor),
+      residencyController(wddm, contextId),
+      wddm(wddm) {
+}
 
 void OsContextWin::initializeContext() {
 
@@ -50,6 +51,29 @@ void OsContextWin::reInitializeContext() {
     }
     UNRECOVERABLE_IF(!wddm.createContext(*this));
 };
+
+void OsContextWin::getDeviceLuidArray(std::vector<uint8_t> &luidData, size_t arraySize) {
+    auto *wddm = this->getWddm();
+    auto *hwDeviceID = wddm->getHwDeviceId();
+    auto luid = hwDeviceID->getAdapterLuid();
+    luidData.reserve(arraySize);
+    for (size_t i = 0; i < arraySize; i++) {
+        char *luidArray = nullptr;
+        if (i < 4) {
+            luidArray = (char *)&luid.LowPart;
+            luidData.emplace(luidData.end(), luidArray[i]);
+        } else {
+            luidArray = (char *)&luid.HighPart;
+            luidData.emplace(luidData.end(), luidArray[i - 4]);
+        }
+    }
+};
+
+uint32_t OsContextWin::getDeviceNodeMask() {
+    auto *wddm = this->getWddm();
+    auto *hwDeviceID = wddm->getHwDeviceId();
+    return hwDeviceID->getAdapterNodeMask();
+}
 
 OsContextWin::~OsContextWin() {
     if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {

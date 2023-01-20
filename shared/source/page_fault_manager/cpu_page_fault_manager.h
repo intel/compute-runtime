@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,12 +10,11 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/utilities/spinlock.h"
 
-#include "memory_properties_flags.h"
-
 #include <memory>
 #include <unordered_map>
 
 namespace NEO {
+struct MemoryProperties;
 class GraphicsAllocation;
 class Device;
 class SVMAllocsManager;
@@ -59,13 +58,13 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL void transferToGpu(void *ptr, void *cmdQ);
     MOCKABLE_VIRTUAL void setAubWritable(bool writable, void *ptr, SVMAllocsManager *unifiedMemoryManager);
 
-    static void handleGpuDomainTransferForHw(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
-    static void handleGpuDomainTransferForAubAndTbx(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
+    static void transferAndUnprotectMemory(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
+    static void unprotectAndTransferMemory(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
     void selectGpuDomainHandler();
     inline void migrateStorageToGpuDomain(void *ptr, PageFaultData &pageFaultData);
     inline void migrateStorageToCpuDomain(void *ptr, PageFaultData &pageFaultData);
 
-    decltype(&handleGpuDomainTransferForHw) gpuDomainHandler = &handleGpuDomainTransferForHw;
+    decltype(&transferAndUnprotectMemory) gpuDomainHandler = &transferAndUnprotectMemory;
 
     std::unordered_map<void *, PageFaultData> memoryData;
     SpinLock mtx;

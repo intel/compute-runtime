@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -27,23 +28,23 @@ using namespace NEO;
 
 class KernelArgAcceleratorFixture : public ContextFixture, public ClDeviceFixture {
 
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
   public:
     KernelArgAcceleratorFixture() {
     }
 
   protected:
-    void SetUp() {
+    void setUp() {
         desc = {
             CL_ME_MB_TYPE_4x4_INTEL,
             CL_ME_SUBPIXEL_MODE_QPEL_INTEL,
             CL_ME_SAD_ADJUST_MODE_HAAR_INTEL,
             CL_ME_SEARCH_PATH_RADIUS_16_12_INTEL};
 
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         cl_device_id device = pClDevice;
-        ContextFixture::SetUp(1, &device);
+        ContextFixture::setUp(1, &device);
 
         pKernelInfo = std::make_unique<MockKernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
@@ -64,12 +65,12 @@ class KernelArgAcceleratorFixture : public ContextFixture, public ClDeviceFixtur
         pKernel->setCrossThreadData(&pCrossThreadData[0], sizeof(pCrossThreadData));
     }
 
-    void TearDown() {
+    void tearDown() {
         delete pKernel;
 
         delete pProgram;
-        ContextFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        ContextFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_motion_estimation_desc_intel desc;

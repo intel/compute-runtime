@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
@@ -16,6 +17,7 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/utilities/wait_util.h"
 
+#include <iostream>
 #include <memory>
 
 namespace NEO {
@@ -28,6 +30,10 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
 
     if (DebugManager.flags.DirectSubmissionDisableMonitorFence.get() != -1) {
         this->disableMonitorFence = DebugManager.flags.DirectSubmissionDisableMonitorFence.get();
+    }
+
+    if (DebugManager.flags.OverrideUserFenceStartValue.get() != -1) {
+        this->completionFenceValue = static_cast<decltype(completionFenceValue)>(DebugManager.flags.OverrideUserFenceStartValue.get());
     }
 
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
@@ -48,8 +54,21 @@ DrmDirectSubmission<GfxFamily, Dispatcher>::DrmDirectSubmission(const DirectSubm
         UNRECOVERABLE_IF(this->workPartitionAllocation == nullptr);
     }
 
-    if (drm.completionFenceSupport()) {
+    if (this->miMemFenceRequired || drm.completionFenceSupport()) {
         this->completionFenceAllocation = inputParams.completionFenceAllocation;
+        if (this->completionFenceAllocation) {
+            this->gpuVaForAdditionalSynchronizationWA = this->completionFenceAllocation->getGpuAddress() + 8u;
+            if (drm.completionFenceSupport()) {
+                this->completionFenceSupported = true;
+            }
+
+            if (DebugManager.flags.PrintCompletionFenceUsage.get()) {
+                std::cout << "Completion fence for DirectSubmission:"
+                          << " GPU address: " << std::hex << (this->completionFenceAllocation->getGpuAddress() + TagAllocationLayout::completionFenceOffset)
+                          << ", CPU address: " << (castToUint64(this->completionFenceAllocation->getUnderlyingBuffer()) + TagAllocationLayout::completionFenceOffset)
+                          << std::dec << std::endl;
+            }
+        }
     }
 }
 
@@ -59,20 +78,28 @@ inline DrmDirectSubmission<GfxFamily, Dispatcher>::~DrmDirectSubmission() {
         this->stopRingBuffer();
         this->wait(static_cast<uint32_t>(this->currentTagData.tagValue));
     }
-    if (this->completionFenceAllocation) {
+    if (this->isCompletionFenceSupported()) {
         auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
         auto &drm = osContextLinux->getDrm();
-        auto completionFenceCpuAddress = reinterpret_cast<uint64_t>(this->completionFenceAllocation->getUnderlyingBuffer()) + Drm::completionFenceOffset;
+        auto completionFenceCpuAddress = reinterpret_cast<uint64_t>(this->completionFenceAllocation->getUnderlyingBuffer()) + TagAllocationLayout::completionFenceOffset;
         drm.waitOnUserFences(*osContextLinux, completionFenceCpuAddress, this->completionFenceValue, this->activeTiles, this->postSyncOffset);
     }
     this->deallocateResources();
 }
 
 template <typename GfxFamily, typename Dispatcher>
+TaskCountType *DrmDirectSubmission<GfxFamily, Dispatcher>::getCompletionValuePointer() {
+    if (this->isCompletionFenceSupported()) {
+        return &this->completionFenceValue;
+    }
+    return DirectSubmissionHw<GfxFamily, Dispatcher>::getCompletionValuePointer();
+}
+
+template <typename GfxFamily, typename Dispatcher>
 bool DrmDirectSubmission<GfxFamily, Dispatcher>::allocateOsResources() {
     this->currentTagData.tagAddress = this->semaphoreGpuVa + offsetof(RingSemaphoreData, tagAllocation);
     this->currentTagData.tagValue = 0u;
-    this->tagAddress = reinterpret_cast<volatile uint32_t *>(reinterpret_cast<uint8_t *>(this->semaphorePtr) + offsetof(RingSemaphoreData, tagAllocation));
+    this->tagAddress = reinterpret_cast<volatile TagAddressType *>(reinterpret_cast<uint8_t *>(this->semaphorePtr) + offsetof(RingSemaphoreData, tagAllocation));
     return true;
 }
 
@@ -95,11 +122,11 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
     bool ret = false;
     uint32_t drmContextId = 0u;
 
-    uint32_t completionValue = 0u;
+    TaskCountType completionValue = 0u;
     uint64_t completionFenceGpuAddress = 0u;
-    if (this->completionFenceAllocation) {
+    if (this->isCompletionFenceSupported()) {
         completionValue = ++completionFenceValue;
-        completionFenceGpuAddress = this->completionFenceAllocation->getGpuAddress() + Drm::completionFenceOffset;
+        completionFenceGpuAddress = this->completionFenceAllocation->getGpuAddress() + TagAllocationLayout::completionFenceOffset;
     }
 
     for (auto drmIterator = 0u; drmIterator < osContextLinux->getDeviceBitfield().size(); drmIterator++) {
@@ -136,7 +163,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 template <typename GfxFamily, typename Dispatcher>
 bool DrmDirectSubmission<GfxFamily, Dispatcher>::isNewResourceHandleNeeded() {
     auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
-    auto newResourcesBound = osContextLinux->getNewResourceBound();
+    auto newResourcesBound = osContextLinux->isTlbFlushRequired();
 
     if (DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get() != -1) {
         newResourcesBound = DebugManager.flags.DirectSubmissionNewResourceTlbFlush.get();
@@ -148,22 +175,18 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::isNewResourceHandleNeeded() {
 template <typename GfxFamily, typename Dispatcher>
 void DrmDirectSubmission<GfxFamily, Dispatcher>::handleNewResourcesSubmission() {
     if (isNewResourceHandleNeeded()) {
-        Dispatcher::dispatchTlbFlush(this->ringCommandStream, this->gpuVaForMiFlush, *this->hwInfo);
-    }
+        auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
+        auto tlbFlushCounter = osContextLinux->peekTlbFlushCounter();
 
-    auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
-    osContextLinux->setNewResourceBound(false);
+        Dispatcher::dispatchTlbFlush(this->ringCommandStream, this->gpuVaForMiFlush, *this->hwInfo);
+        osContextLinux->setTlbFlushed(tlbFlushCounter);
+    }
 }
 
 template <typename GfxFamily, typename Dispatcher>
 size_t DrmDirectSubmission<GfxFamily, Dispatcher>::getSizeNewResourceHandler() {
-    size_t size = 0u;
-
-    if (isNewResourceHandleNeeded()) {
-        size += Dispatcher::getSizeTlbFlush();
-    }
-
-    return size;
+    // Overestimate to avoid race
+    return Dispatcher::getSizeTlbFlush();
 }
 
 template <typename GfxFamily, typename Dispatcher>
@@ -224,7 +247,12 @@ inline bool DrmDirectSubmission<GfxFamily, Dispatcher>::isCompleted(uint32_t rin
 }
 
 template <typename GfxFamily, typename Dispatcher>
-void DrmDirectSubmission<GfxFamily, Dispatcher>::wait(uint32_t taskCountToWait) {
+bool DrmDirectSubmission<GfxFamily, Dispatcher>::isCompletionFenceSupported() {
+    return this->completionFenceSupported;
+}
+
+template <typename GfxFamily, typename Dispatcher>
+void DrmDirectSubmission<GfxFamily, Dispatcher>::wait(TaskCountType taskCountToWait) {
     auto pollAddress = this->tagAddress;
     for (uint32_t i = 0; i < this->activeTiles; i++) {
         while (!WaitUtils::waitFunction(pollAddress, taskCountToWait)) {

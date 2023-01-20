@@ -17,6 +17,8 @@
 
 #include "cl_api_tests.h"
 
+#include <queue>
+
 using namespace NEO;
 
 using clEnqueueWaitForEventsTests = api_tests;
@@ -129,7 +131,7 @@ TEST_F(clEnqueueWaitForEventsTests, GivenInvalidEventWhenClEnqueueWaitForEventsI
 
 struct GTPinMockCommandQueue : MockCommandQueue {
     GTPinMockCommandQueue(Context *context, MockClDevice *device) : MockCommandQueue(context, device, nullptr, false) {}
-    WaitStatus waitUntilComplete(uint32_t gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+    WaitStatus waitUntilComplete(TaskCountType gpgpuTaskCountToWait, Range<CopyEngineState> copyEnginesToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
         return MockCommandQueue::waitUntilComplete(gpgpuTaskCountToWait, copyEnginesToWait, flushStampToWait, useQuickKmdSleep, true, true);
     }
 

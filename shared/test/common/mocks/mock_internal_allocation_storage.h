@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ namespace NEO {
 class MockInternalAllocationStorage : public InternalAllocationStorage {
   public:
     using InternalAllocationStorage::InternalAllocationStorage;
-    void cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) override {
+    void cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage) override {
         cleanAllocationsCalled++;
         lastCleanAllocationsTaskCount = waitTaskCount;
         lastCleanAllocationUsage = allocationUsage;
@@ -23,14 +23,14 @@ class MockInternalAllocationStorage : public InternalAllocationStorage {
             doUpdateCompletion = false;
         }
     }
-    void updateCompletionAfterCleaningList(uint32_t newValue) {
+    void updateCompletionAfterCleaningList(TaskCountType newValue) {
         doUpdateCompletion = true;
         valueToUpdateCompletion = newValue;
     }
     bool doUpdateCompletion = false;
-    uint32_t valueToUpdateCompletion;
+    TaskCountType valueToUpdateCompletion;
     uint32_t lastCleanAllocationUsage = 0;
-    uint32_t lastCleanAllocationsTaskCount = 0;
+    TaskCountType lastCleanAllocationsTaskCount = 0;
     uint32_t cleanAllocationsCalled = 0;
 };
 } // namespace NEO

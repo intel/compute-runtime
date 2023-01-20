@@ -6,56 +6,28 @@
  */
 
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp_prelim.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 static const std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToListOfEventsUncorrectable = {
     {ZES_RAS_ERROR_CAT_CACHE_ERRORS,
-     {"fatal-array-bist", "fatal-eu-grf", "fatal-eu-ic",
-      "fatal-guc", "fatal-idi-parity", "fatal-l3-double",
-      "fatal-l3-ecc-checker", "fatal-sampler", "fatal-slm",
+     {"fatal-array-bist", "fatal-idi-parity", "fatal-l3-double",
+      "fatal-l3-ecc-checker",
       "fatal-sqidi", "fatal-tlb"}},
     {ZES_RAS_ERROR_CAT_RESET,
      {"engine-reset"}},
     {ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS,
      {"eu-attention"}},
     {ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS,
-     {"soc-fatal-fabric-ss0-0", "soc-fatal-fabric-ss0-1", "soc-fatal-fabric-ss0-2",
-      "soc-fatal-fabric-ss0-3", "soc-fatal-fabric-ss1-0", "soc-fatal-fabric-ss1-1",
-      "soc-fatal-fabric-ss1-2", "soc-fatal-fabric-ss1-3", "soc-fatal-fabric-ss1-4",
-      "soc-fatal-hbm-ss0-0", "soc-fatal-hbm-ss0-1", "soc-fatal-hbm-ss0-2",
-      "soc-fatal-hbm-ss0-3", "soc-fatal-hbm-ss0-4", "soc-fatal-hbm-ss0-5",
-      "soc-fatal-hbm-ss0-6", "soc-fatal-hbm-ss0-7", "soc-fatal-hbm-ss0-8",
-      "soc-fatal-hbm-ss0-9", "soc-fatal-hbm-ss0-10", "soc-fatal-hbm-ss0-11",
-      "soc-fatal-hbm-ss0-12", "soc-fatal-hbm-ss0-13", "soc-fatal-hbm-ss0-14",
-      "soc-fatal-hbm-ss0-15", "soc-fatal-hbm-ss1-0", "soc-fatal-hbm-ss1-1",
-      "soc-fatal-hbm-ss1-2", "soc-fatal-hbm-ss1-3", "soc-fatal-hbm-ss1-4",
-      "soc-fatal-hbm-ss1-5", "soc-fatal-hbm-ss1-6", "soc-fatal-hbm-ss1-7",
-      "soc-fatal-hbm-ss1-8", "soc-fatal-hbm-ss1-9", "soc-fatal-hbm-ss1-10",
-      "soc-fatal-hbm-ss1-11", "soc-fatal-hbm-ss1-12", "soc-fatal-hbm-ss1-13",
-      "soc-fatal-hbm-ss1-14", "soc-fatal-hbm-ss1-15", "soc-fatal-mdfi-east",
-      "soc-fatal-mdfi-south", "soc-fatal-mdfi-west", "soc-fatal-psf-csc-0",
+     {"soc-fatal-mdfi-east", "soc-fatal-mdfi-south", "soc-fatal-mdfi-west",
+      "soc-fatal-psf-0", "soc-fatal-psf-1", "soc-fatal-psf-2", "soc-fatal-psf-csc-0",
       "soc-fatal-psf-csc-1", "soc-fatal-psf-csc-2", "soc-fatal-punit",
-      "sgunit-fatal", "soc-nonfatal-fabric-ss0-0", "soc-nonfatal-fabric-ss0-1",
-      "soc-nonfatal-fabric-ss0-2", "soc-nonfatal-fabric-ss0-3", "soc-nonfatal-fabric-ss1-0",
-      "soc-nonfatal-fabric-ss1-1", "soc-nonfatal-fabric-ss1-2", "soc-nonfatal-fabric-ss1-3",
-      "soc-nonfatal-fabric-ss1-4", "soc-nonfatal-hbm-ss0-0", "soc-nonfatal-hbm-ss0-1",
-      "soc-nonfatal-hbm-ss0-2", "soc-nonfatal-hbm-ss0-3", "soc-nonfatal-hbm-ss0-4",
-      "soc-nonfatal-hbm-ss0-5", "soc-nonfatal-hbm-ss0-6", "soc-nonfatal-hbm-ss0-7",
-      "soc-nonfatal-hbm-ss0-8", "soc-nonfatal-hbm-ss0-9", "soc-nonfatal-hbm-ss0-10",
-      "soc-nonfatal-hbm-ss0-11", "soc-nonfatal-hbm-ss0-12", "soc-nonfatal-hbm-ss0-13",
-      "soc-nonfatal-hbm-ss0-14", "soc-nonfatal-hbm-ss0-15", "soc-nonfatal-hbm-ss1-0",
-      "soc-nonfatal-hbm-ss1-1", "soc-nonfatal-hbm-ss1-2", "soc-nonfatal-hbm-ss1-3",
-      "soc-nonfatal-hbm-ss1-4", "soc-nonfatal-hbm-ss1-5", "soc-nonfatal-hbm-ss1-6",
-      "soc-nonfatal-hbm-ss1-7", "soc-nonfatal-hbm-ss1-8", "soc-nonfatal-hbm-ss1-9",
-      "soc-nonfatal-hbm-ss1-10", "soc-nonfatal-hbm-ss1-11", "soc-nonfatal-hbm-ss1-12",
-      "soc-nonfatal-hbm-ss1-13", "soc-nonfatal-hbm-ss1-14", "soc-nonfatal-hbm-ss1-15",
-      "soc-nonfatal-mdfi-east", "soc-nonfatal-mdfi-south", "soc-nonfatal-mdfi-west",
-      "soc-nonfatal-psf-csc-0", "soc-nonfatal-psf-csc-1", "soc-nonfatal-psf-csc-2",
-      "soc-nonfatal-punit", "sgunit-nonfatal"}},
+      "sgunit-fatal", "soc-nonfatal-punit", "sgunit-fatal", "sgunit-nonfatal"}},
     {ZES_RAS_ERROR_CAT_COMPUTE_ERRORS,
-     {"fatal-fpu", "fatal-l3-fabric"}},
+     {"fatal-fpu", "fatal-l3-fabric", "fatal-eu-grf", "fatal-sampler", "fatal-slm",
+      "fatal-guc", "fatal-eu-ic"}},
     {ZES_RAS_ERROR_CAT_DRIVER_ERRORS,
      {"driver-object-migration", "driver-engine-other", "driver-ggtt",
       "driver-gt-interrupt", "driver-gt-other", "driver-guc-communication",
@@ -63,25 +35,11 @@ static const std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToL
 
 static const std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToListOfEventsCorrectable = {
     {ZES_RAS_ERROR_CAT_CACHE_ERRORS,
-     {"correctable-eu-grf", "correctable-eu-ic", "correctable-guc",
-      "correctable-l3-sng", "correctable-sampler", "correctable-slm"}},
+     {"correctable-l3-sng"}},
     {ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS,
-     {"soc-correctable-fabric-ss0-0", "soc-correctable-fabric-ss0-1", "soc-correctable-fabric-ss0-2",
-      "soc-correctable-fabric-ss0-3", "soc-correctable-fabric-ss1-0", "soc-correctable-fabric-ss1-1",
-      "soc-correctable-fabric-ss1-2", "soc-correctable-fabric-ss1-3", "soc-correctable-fabric-ss1-4",
-      "soc-correctable-hbm-ss0-0", "soc-correctable-hbm-ss0-1", "soc-correctable-hbm-ss0-2",
-      "soc-correctable-hbm-ss0-3", "soc-correctable-hbm-ss0-4", "soc-correctable-hbm-ss0-5",
-      "soc-correctable-hbm-ss0-6", "soc-correctable-hbm-ss0-7", "soc-correctable-hbm-ss0-8",
-      "soc-correctable-hbm-ss0-9", "soc-correctable-hbm-ss0-10", "soc-correctable-hbm-ss0-11",
-      "soc-correctable-hbm-ss0-12", "soc-correctable-hbm-ss0-13", "soc-correctable-hbm-ss0-14",
-      "soc-correctable-hbm-ss0-15", "soc-correctable-hbm-ss1-0", "soc-correctable-hbm-ss1-1",
-      "soc-correctable-hbm-ss1-2", "soc-correctable-hbm-ss1-3", "soc-correctable-hbm-ss1-4",
-      "soc-correctable-hbm-ss1-5", "soc-correctable-hbm-ss1-6", "soc-correctable-hbm-ss1-7",
-      "soc-correctable-hbm-ss1-8", "soc-correctable-hbm-ss1-9", "soc-correctable-hbm-ss1-10",
-      "soc-correctable-hbm-ss1-11", "soc-correctable-hbm-ss1-12", "soc-correctable-hbm-ss1-13",
-      "soc-correctable-hbm-ss1-14", "soc-correctable-hbm-ss1-15", "soc-correctable-mdfi-east",
-      "soc-correctable-mdfi-south", "soc-correctable-mdfi-west", "soc-correctable-psf-csc-0",
-      "soc-correctable-psf-csc-1", "soc-correctable-punit", "sgunit-correctable"}}};
+     {"sgunit-correctable"}},
+    {ZES_RAS_ERROR_CAT_COMPUTE_ERRORS,
+     {"correctable-eu-grf", "correctable-eu-ic", "correctable-guc", "correctable-sampler", "correctable-slm"}}};
 
 static void closeFd(int64_t &fd) {
     if (fd != -1) {
@@ -129,10 +87,9 @@ static uint64_t convertHexToUint64(std::string strVal) {
 }
 
 static bool getErrorType(std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToListOfEvents, std::vector<std::string> &eventList, ze_device_handle_t deviceHandle) {
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    Device::fromHandle(deviceHandle)->getProperties(&deviceProperties);
-    bool onSubDevice = deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
-    uint32_t subDeviceId = deviceProperties.subdeviceId;
+    ze_bool_t onSubDevice = false;
+    uint32_t subDeviceId = 0;
+    SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subDeviceId, onSubDevice, true);
     // Naming convention of files containing config values for errors
     // error--<Name of error> Ex:- error--engine-reset  (config file with no subdevice)
     // error-gt<N>--<Name of error> Ex:- error-gt0--engine-reset (config file with subdevices)

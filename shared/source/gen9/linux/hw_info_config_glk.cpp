@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/gen9/hw_cmds_base.h"
+#include "shared/source/gen9/hw_cmds_glk.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.inl"
@@ -15,14 +15,15 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_GEMINILAKE;
 
 #include "shared/source/gen9/glk/os_agnostic_hw_info_config_glk.inl"
 
+namespace NEO {
+
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
-    if (nullptr == osIface) {
+int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const {
+    if (nullptr == osIface || osIface->getDriverModel()->getDriverModelType() == DriverModelType::WDDM) {
         return 0;
     }
 
@@ -68,5 +69,5 @@ int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OS
     return 0;
 }
 
-template class HwInfoConfigHw<gfxProduct>;
+template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

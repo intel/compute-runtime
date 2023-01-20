@@ -8,18 +8,17 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/os_interface/os_context.h"
 
 namespace NEO {
 
 InternalAllocationStorage::InternalAllocationStorage(CommandStreamReceiver &commandStreamReceiver)
-    : commandStreamReceiver(commandStreamReceiver),
-      temporaryAllocations(TEMPORARY_ALLOCATION),
-      allocationsForReuse(REUSABLE_ALLOCATION){};
+    : commandStreamReceiver(commandStreamReceiver){};
 
 void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage) {
-    uint32_t taskCount = gfxAllocation->getTaskCount(commandStreamReceiver.getOsContext().getContextId());
+    TaskCountType taskCount = gfxAllocation->getTaskCount(commandStreamReceiver.getOsContext().getContextId());
 
     if (allocationUsage == REUSABLE_ALLOCATION) {
         taskCount = commandStreamReceiver.peekTaskCount();
@@ -27,23 +26,27 @@ void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocati
 
     storeAllocationWithTaskCount(std::move(gfxAllocation), allocationUsage, taskCount);
 }
-void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage, uint32_t taskCount) {
+void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> &&gfxAllocation, uint32_t allocationUsage, TaskCountType taskCount) {
     if (allocationUsage == REUSABLE_ALLOCATION) {
         if (DebugManager.flags.DisableResourceRecycling.get()) {
             commandStreamReceiver.getMemoryManager()->freeGraphicsMemory(gfxAllocation.release());
             return;
         }
     }
-    auto &allocationsList = (allocationUsage == TEMPORARY_ALLOCATION) ? temporaryAllocations : allocationsForReuse;
+    auto &allocationsList = allocationLists[allocationUsage];
     gfxAllocation->updateTaskCount(taskCount, commandStreamReceiver.getOsContext().getContextId());
     allocationsList.pushTailOne(*gfxAllocation.release());
 }
 
-void InternalAllocationStorage::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) {
-    freeAllocationsList(waitTaskCount, (allocationUsage == TEMPORARY_ALLOCATION) ? temporaryAllocations : allocationsForReuse);
+void InternalAllocationStorage::cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage) {
+    freeAllocationsList(waitTaskCount, allocationLists[allocationUsage]);
+
+    if (allocationUsage == TEMPORARY_ALLOCATION) {
+        freeAllocationsList(waitTaskCount, allocationLists[DEFERRED_DEALLOCATION]);
+    }
 }
 
-void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList) {
+void InternalAllocationStorage::freeAllocationsList(TaskCountType waitTaskCount, AllocationsList &allocationsList) {
     auto memoryManager = commandStreamReceiver.getMemoryManager();
     auto lock = memoryManager->getHostPtrManager()->obtainOwnership();
 
@@ -66,12 +69,12 @@ void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, Allo
 }
 
 std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainReusableAllocation(size_t requiredSize, AllocationType allocationType) {
-    auto allocation = allocationsForReuse.detachAllocation(requiredSize, nullptr, &commandStreamReceiver, allocationType);
+    auto allocation = allocationLists[REUSABLE_ALLOCATION].detachAllocation(requiredSize, nullptr, &commandStreamReceiver, allocationType);
     return allocation;
 }
 
 std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainTemporaryAllocationWithPtr(size_t requiredSize, const void *requiredPtr, AllocationType allocationType) {
-    auto allocation = temporaryAllocations.detachAllocation(requiredSize, requiredPtr, &commandStreamReceiver, allocationType);
+    auto allocation = allocationLists[TEMPORARY_ALLOCATION].detachAllocation(requiredSize, requiredPtr, &commandStreamReceiver, allocationType);
     return allocation;
 }
 

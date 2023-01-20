@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ class AubHelper;
 namespace AubMemDump {
 #include "aub_services.h"
 
-constexpr uint32_t rcsRegisterBase = 0x2000;
+inline constexpr uint32_t rcsRegisterBase = 0x2000;
 
 #ifndef BIT
 #define BIT(x) (((uint64_t)1) << (x))
@@ -138,7 +138,7 @@ struct AubFileStream : public AubStream {
     MOCKABLE_VIRTUAL void expectMemory(uint64_t physAddress, const void *memory, size_t size,
                                        uint32_t addressSpace, uint32_t compareOperation);
     MOCKABLE_VIRTUAL bool addComment(const char *message);
-    MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lockStream();
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lockStream();
 
     std::ofstream fileHandle;
     std::string fileName;
@@ -309,7 +309,7 @@ struct LrcaHelper {
     int aubHintCommandBuffer = DataTypeHintValues::TraceCommandBuffer;
     int aubHintBatchBuffer = DataTypeHintValues::TraceBatchBuffer;
 
-    const char *name = "XCS";
+    std::string name = "XCS";
     uint32_t mmioBase = 0;
 
     size_t sizeLRCA = 0x2000;
@@ -321,12 +321,12 @@ struct LrcaHelper {
 
     uint32_t numNoops0 = 3;
 
-    uint32_t offsetLRI1 = offsetLRI0 + (1 + numRegsLRI0 * 2 + numNoops0) * sizeof(uint32_t); //offsetLRI == 0x21 * sizeof(uint32_t);
+    uint32_t offsetLRI1 = offsetLRI0 + (1 + numRegsLRI0 * 2 + numNoops0) * sizeof(uint32_t); // offsetLRI == 0x21 * sizeof(uint32_t);
     uint32_t numRegsLRI1 = 9;
 
     uint32_t numNoops1 = 13;
 
-    uint32_t offsetLRI2 = offsetLRI1 + (1 + numRegsLRI1 * 2 + numNoops1) * sizeof(uint32_t); //offsetLR2 == 0x41 * sizeof(uint32_t);
+    uint32_t offsetLRI2 = offsetLRI1 + (1 + numRegsLRI1 * 2 + numNoops1) * sizeof(uint32_t); // offsetLR2 == 0x41 * sizeof(uint32_t);
     uint32_t numRegsLRI2 = 1;
 
     uint32_t offsetRingRegisters = offsetLRI0 + (3 * sizeof(uint32_t));
@@ -400,8 +400,7 @@ struct LrcaHelperCcs : public LrcaHelper {
 
 struct LrcaHelperLinkBcs : public LrcaHelperBcs {
     LrcaHelperLinkBcs(uint32_t base, uint32_t engineId) : LrcaHelperBcs(base) {
-        std::string nameStr("BCS" + std::to_string(engineId));
-        name = nameStr.c_str();
+        name = "BCS" + std::to_string(engineId);
     }
 };
 

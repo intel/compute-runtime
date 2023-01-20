@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,19 +7,23 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
 
+#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 
+#include "gtest/gtest.h"
+
 namespace L0 {
 namespace ult {
 
-void DeviceFixture::SetUp() {
+void DeviceFixture::setUp() {
     auto executionEnvironment = MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0u);
     setupWithExecutionEnvironment(*executionEnvironment);
 }
@@ -42,13 +46,22 @@ void DeviceFixture::setupWithExecutionEnvironment(NEO::ExecutionEnvironment &exe
     executionEnvironment.incRefInternal();
 }
 
-void DeviceFixture::TearDown() {
+void DeviceFixture::tearDown() {
     context->destroy();
     driverHandle.reset(nullptr);
     execEnv->decRefInternal();
 }
 
-void PageFaultDeviceFixture::SetUp() {
+template <typename HelperType>
+HelperType &DeviceFixture::getHelper() const {
+    auto &helper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<HelperType>();
+    return helper;
+}
+
+template L0GfxCoreHelper &DeviceFixture::getHelper() const;
+template NEO::ProductHelper &DeviceFixture::getHelper() const;
+
+void PageFaultDeviceFixture::setUp() {
     neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     auto mockBuiltIns = new MockBuiltins();
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
@@ -70,12 +83,12 @@ void PageFaultDeviceFixture::SetUp() {
     device->getDriverHandle()->setMemoryManager(mockMemoryManager.get());
 }
 
-void PageFaultDeviceFixture::TearDown() {
+void PageFaultDeviceFixture::tearDown() {
     device->getDriverHandle()->setMemoryManager(memoryManager);
     context->destroy();
 }
 
-void MultiDeviceFixture::SetUp() {
+void MultiDeviceFixture::setUp() {
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
     auto executionEnvironment = new NEO::ExecutionEnvironment;
@@ -91,20 +104,12 @@ void MultiDeviceFixture::SetUp() {
     context = static_cast<ContextImp *>(Context::fromHandle(hContext));
 }
 
-void MultiDeviceFixture::TearDown() {
+void MultiDeviceFixture::tearDown() {
     context->destroy();
 }
 
-void ContextFixture::SetUp() {
-    DeviceFixture::SetUp();
-}
+void MultipleDevicesWithCustomHwInfo::setUp() {
 
-void ContextFixture::TearDown() {
-    DeviceFixture::TearDown();
-}
-
-void MultipleDevicesWithCustomHwInfo::SetUp() {
-    NEO::MockCompilerEnableGuard mock(true);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
     std::vector<std::unique_ptr<NEO::Device>> devices;
@@ -125,14 +130,18 @@ void MultipleDevicesWithCustomHwInfo::SetUp() {
     hwInfo.gtSystemInfo.MaxSubSlicesSupported = sliceCount * subsliceCount;
     hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = sliceCount * subsliceCount;
 
-    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = 1;
+    ASSERT_FALSE(numSubDevices == 0 || numSubDevices > 4);
+
+    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = numSubDevices > 0;
     hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = numSubDevices;
-    hwInfo.gtSystemInfo.MultiTileArchInfo.Tile0 = 1;
-    hwInfo.gtSystemInfo.MultiTileArchInfo.Tile1 = 1;
-    hwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = 3;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.Tile0 = numSubDevices >= 1;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.Tile1 = numSubDevices >= 2;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.Tile2 = numSubDevices >= 3;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.Tile3 = numSubDevices == 4;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.TileMask = static_cast<uint8_t>(maxNBitValue(numSubDevices));
 
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo);
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
 
@@ -147,15 +156,14 @@ void MultipleDevicesWithCustomHwInfo::SetUp() {
     driverHandle->initialize(std::move(devices));
 }
 
-void SingleRootMultiSubDeviceFixture::SetUp() {
+void SingleRootMultiSubDeviceFixture::setUp() {
     MultiDeviceFixture::numRootDevices = 1u;
-    MultiDeviceFixture::SetUp();
+    MultiDeviceFixture::setUp();
 
     device = driverHandle->devices[0];
     neoDevice = device->getNEODevice();
 }
-void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::SetUp() {
-    DebugManagerStateRestore restorer;
+void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::setUp() {
     DebugManager.flags.EnableImplicitScaling.set(implicitScaling);
     DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);
     DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
@@ -215,12 +223,12 @@ void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::SetUp() {
     }
 }
 
-void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::TearDown() {
+void SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl::tearDown() {
     context->destroy();
 }
 
-void GetMemHandlePtrTestFixture::SetUp() {
-    NEO::MockCompilerEnableGuard mock(true);
+void GetMemHandlePtrTestFixture::setUp() {
+
     neoDevice =
         NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get());
     auto mockBuiltIns = new MockBuiltins();
@@ -242,7 +250,7 @@ void GetMemHandlePtrTestFixture::SetUp() {
     context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
 }
 
-void GetMemHandlePtrTestFixture::TearDown() {
+void GetMemHandlePtrTestFixture::tearDown() {
     driverHandle->setMemoryManager(prevMemoryManager);
     delete currMemoryManager;
 }

@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/source/sysman/performance/linux/os_performance_imp_prelim.h"
+
+#include "shared/source/device/device.h"
 
 #include <cmath>
 
@@ -114,13 +116,13 @@ ze_result_t LinuxPerformanceImp::osPerformanceSetConfig(double pFactor) {
         break;
     case ZES_ENGINE_TYPE_FLAG_MEDIA:
         if (productFamily == IGFX_PVC) {
-            if (pFactor >= halfOfMaxPerformanceFactor) {
+            if (pFactor > halfOfMaxPerformanceFactor) {
                 multiplier = 1;
             } else {
                 multiplier = 0.5;
             }
         } else {
-            if (pFactor >= halfOfMaxPerformanceFactor) {
+            if (pFactor > halfOfMaxPerformanceFactor) {
                 multiplier = 1;
             } else if (pFactor > minPerformanceFactor) {
                 multiplier = 0.5;

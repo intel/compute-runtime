@@ -13,10 +13,19 @@ using namespace NEO;
 
 class MockPrintfHandler : public PrintfHandler {
   public:
-    MockPrintfHandler(ClDevice &device) : PrintfHandler{device} {}
+    using PrintfHandler::PrintfHandler;
+    using PrintfHandler::printfSurface;
+    using PrintfHandler::printfSurfaceInitialDataSizePtr;
+    MockPrintfHandler(Device &device) : PrintfHandler{device} {}
     ~MockPrintfHandler() override = default;
 
     bool printEnqueueOutput() override {
-        return false;
+        if (callBasePrintEnqueueOutput) {
+            return PrintfHandler::printEnqueueOutput();
+        }
+        return printEnqueueOutputReturnValue;
     }
+
+    bool callBasePrintEnqueueOutput = false;
+    bool printEnqueueOutputReturnValue = false;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,9 +26,11 @@ class RegistryReader : public SettingsReader {
     const char *appSpecificLocation(const std::string &name) override;
 
   protected:
-    HKEY hkeyType;
-    std::string registryReadRootKey;
     void setUpProcessName();
+
+    std::string registryReadRootKey;
     std::string processName;
+
+    HKEY hkeyType;
 };
 } // namespace NEO

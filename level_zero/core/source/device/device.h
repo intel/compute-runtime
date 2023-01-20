@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,16 +7,21 @@
 
 #pragma once
 
-#include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>
 
-static_assert(NEO::HwInfoConfig::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
+#include <memory>
+
+static_assert(NEO::ProductHelper::uuidSize == ZE_MAX_DEVICE_UUID_SIZE);
 
 struct _ze_device_handle_t {};
 namespace NEO {
+class CommandStreamReceiver;
+class DebuggerL0;
 class Device;
+class GfxCoreHelper;
 class MemoryManager;
 class SourceLevelDebugger;
 struct DeviceInfo;
@@ -29,13 +34,13 @@ struct ExecutionEnvironment;
 class MetricDeviceContext;
 struct SysmanDevice;
 struct DebugSession;
+class L0GfxCoreHelper;
 
 enum class ModuleType;
 
 struct Device : _ze_device_handle_t {
-    uint32_t getRootDeviceIndex() const {
-        return neoDevice->getRootDeviceIndex();
-    }
+    uint32_t getRootDeviceIndex() const;
+
     NEO::Device *getNEODevice() const {
         return this->neoDevice;
     }
@@ -86,7 +91,9 @@ struct Device : _ze_device_handle_t {
     virtual uint32_t getMOCS(bool l3enabled, bool l1enabled) = 0;
     virtual uint32_t getMaxNumHwThreads() const = 0;
 
-    virtual NEO::HwHelper &getHwHelper() = 0;
+    virtual const NEO::GfxCoreHelper &getGfxCoreHelper() = 0;
+    virtual const L0GfxCoreHelper &getL0GfxCoreHelper() = 0;
+    virtual const NEO::ProductHelper &getProductHelper() = 0;
     bool isImplicitScalingCapable() const {
         return implicitScalingCapable;
     }
@@ -95,7 +102,7 @@ struct Device : _ze_device_handle_t {
     virtual uint32_t getPlatformInfo() const = 0;
     virtual MetricDeviceContext &getMetricDeviceContext() = 0;
     virtual DebugSession *getDebugSession(const zet_debug_config_t &config) = 0;
-    virtual DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result) = 0;
+    virtual DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result, bool isRootAttach) = 0;
     virtual void removeDebugSession() = 0;
 
     virtual ze_result_t activateMetricGroupsDeferred(uint32_t count,
@@ -115,14 +122,8 @@ struct Device : _ze_device_handle_t {
 
     virtual NEO::PreemptionMode getDevicePreemptionMode() const = 0;
     virtual const NEO::DeviceInfo &getDeviceInfo() const = 0;
-    NEO::SourceLevelDebugger *getSourceLevelDebugger() { return getNEODevice()->getSourceLevelDebugger(); }
-    NEO::DebuggerL0 *getL0Debugger() {
-        auto debugger = getNEODevice()->getDebugger();
-        if (debugger) {
-            return !debugger->isLegacy() ? static_cast<NEO::DebuggerL0 *>(debugger) : nullptr;
-        }
-        return nullptr;
-    }
+    NEO::SourceLevelDebugger *getSourceLevelDebugger();
+    NEO::DebuggerL0 *getL0Debugger();
 
     virtual NEO::GraphicsAllocation *getDebugSurface() const = 0;
 
@@ -136,6 +137,9 @@ struct Device : _ze_device_handle_t {
     virtual ze_result_t getCsrForLowPriority(NEO::CommandStreamReceiver **csr) = 0;
     virtual NEO::GraphicsAllocation *obtainReusableAllocation(size_t requiredSize, NEO::AllocationType type) = 0;
     virtual void storeReusableAllocation(NEO::GraphicsAllocation &alloc) = 0;
+    virtual ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex) = 0;
+    virtual uint32_t getEventMaxPacketCount() const = 0;
+    virtual uint32_t getEventMaxKernelCount() const = 0;
 
   protected:
     NEO::Device *neoDevice = nullptr;

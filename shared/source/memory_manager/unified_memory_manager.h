@@ -1,23 +1,23 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/unified_memory/unified_memory.h"
-#include "shared/source/utilities/spinlock.h"
 
 #include "memory_properties_flags.h"
 
+#include <atomic>
 #include <cstdint>
 #include <map>
 #include <mutex>
-#include <set>
 #include <shared_mutex>
 
 namespace NEO {
@@ -60,9 +60,11 @@ struct SvmAllocationData {
         return allocId;
     }
 
+    static constexpr uint32_t uninitializedAllocId = std::numeric_limits<uint32_t>::max();
+
   protected:
     const uint32_t maxRootDeviceIndex;
-    uint32_t allocId = std::numeric_limits<uint32_t>::max();
+    uint32_t allocId = uninitializedAllocId;
 };
 
 struct SvmMapOperation {
@@ -106,8 +108,8 @@ class SVMAllocsManager {
     };
 
     struct InternalAllocationsTracker {
-        uint32_t latestSentTaskCount = 0lu;
-        uint32_t latestResidentObjectId = 0lu;
+        TaskCountType latestSentTaskCount = 0lu;
+        TaskCountType latestResidentObjectId = 0lu;
     };
 
     struct UnifiedMemoryProperties {
@@ -143,6 +145,12 @@ class SVMAllocsManager {
         std::mutex mtx;
     };
 
+    enum class FreePolicyType : uint32_t {
+        POLICY_NONE = 0,
+        POLICY_BLOCKING = 1,
+        POLICY_DEFER = 2
+    };
+
     SVMAllocsManager(MemoryManager *memoryManager, bool multiOsContextSupport);
     MOCKABLE_VIRTUAL ~SVMAllocsManager();
     void *createSVMAlloc(size_t size,
@@ -161,28 +169,34 @@ class SVMAllocsManager {
                                              const UnifiedMemoryProperties &unifiedMemoryProperties);
     void setUnifiedAllocationProperties(GraphicsAllocation *allocation, const SvmAllocationProperties &svmProperties);
     SvmAllocationData *getSVMAlloc(const void *ptr);
+    SvmAllocationData *getSVMDeferFreeAlloc(const void *ptr);
     MOCKABLE_VIRTUAL bool freeSVMAlloc(void *ptr, bool blocking);
-    MOCKABLE_VIRTUAL void freeSVMAllocImpl(void *ptr, bool blocking, SvmAllocationData *svmData);
+    MOCKABLE_VIRTUAL bool freeSVMAllocDefer(void *ptr);
+    MOCKABLE_VIRTUAL void freeSVMAllocDeferImpl();
+    MOCKABLE_VIRTUAL void freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData);
     bool freeSVMAlloc(void *ptr) { return freeSVMAlloc(ptr, false); }
     void trimUSMDeviceAllocCache();
     void insertSVMAlloc(const SvmAllocationData &svmData);
     void removeSVMAlloc(const SvmAllocationData &svmData);
     size_t getNumAllocs() const { return SVMAllocs.getNumAllocs(); }
+    MOCKABLE_VIRTUAL size_t getNumDeferFreeAllocs() const { return SVMDeferFreeAllocs.getNumAllocs(); }
     MapBasedAllocationTracker *getSVMAllocs() { return &SVMAllocs; }
 
     MOCKABLE_VIRTUAL void insertSvmMapOperation(void *regionSvmPtr, size_t regionSize, void *baseSvmPtr, size_t offset, bool readOnlyMap);
     void removeSvmMapOperation(const void *regionSvmPtr);
     SvmMapOperation *getSvmMapOperation(const void *regionPtr);
-    void addInternalAllocationsToResidencyContainer(uint32_t rootDeviceIndex,
-                                                    ResidencyContainer &residencyContainer,
-                                                    uint32_t requestedTypesMask);
+    MOCKABLE_VIRTUAL void addInternalAllocationsToResidencyContainer(uint32_t rootDeviceIndex,
+                                                                     ResidencyContainer &residencyContainer,
+                                                                     uint32_t requestedTypesMask);
     void makeInternalAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t requestedTypesMask);
     void *createUnifiedAllocationWithDeviceStorage(size_t size, const SvmAllocationProperties &svmProperties, const UnifiedMemoryProperties &unifiedMemoryProperties);
     void freeSvmAllocationWithDeviceStorage(SvmAllocationData *svmData);
     bool hasHostAllocations();
     std::atomic<uint32_t> allocationsCounter = 0;
-    void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t taskCount);
+    MOCKABLE_VIRTUAL void makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, TaskCountType taskCount);
     void prepareIndirectAllocationForDestruction(SvmAllocationData *);
+    void prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, SvmAllocationData &svmData);
+    std::unique_lock<std::mutex> obtainOwnership();
 
     std::map<CommandStreamReceiver *, InternalAllocationsTracker> indirectAllocationsResidency;
 
@@ -198,11 +212,14 @@ class SVMAllocsManager {
     void freeZeroCopySvmAllocation(SvmAllocationData *svmData);
 
     void initUsmDeviceAllocationsCache();
+    void freeSVMData(SvmAllocationData *svmData);
 
     MapBasedAllocationTracker SVMAllocs;
     MapOperationsTracker svmMapOperations;
+    MapBasedAllocationTracker SVMDeferFreeAllocs;
     MemoryManager *memoryManager;
     std::shared_mutex mtx;
+    std::mutex mtxForIndirectAccess;
     bool multiOsContextSupport;
     SvmAllocationCache usmDeviceAllocationsCache;
     bool usmDeviceAllocationsCacheEnabled = false;

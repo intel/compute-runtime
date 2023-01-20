@@ -10,23 +10,57 @@
 #include "shared/source/gen12lp/hw_info.h"
 #include "shared/source/helpers/debug_helpers.h"
 
-#include "igfxfmid.h"
-
-#include <cstddef>
-#include <type_traits>
+#include <cstring>
 
 template <class T>
 struct CmdParse;
 
 namespace NEO {
 class LogicalStateHelper;
-struct GEN12LP {
+struct Gen12Lp {
 #include "shared/source/generated/gen12lp/hw_cmds_generated_gen12lp.inl"
 
     static constexpr bool supportsSampler = true;
     static constexpr bool isUsingGenericMediaStateClear = true;
     static constexpr uint32_t stateComputeModeForceNonCoherentMask = (0b11u << 3);
     static constexpr bool isUsingMiMemFence = false;
+    static constexpr bool isUsingMiSetPredicate = false;
+
+    struct FrontEndStateSupport {
+        static constexpr bool scratchSize = true;
+        static constexpr bool privateScratchSize = false;
+        static constexpr bool computeDispatchAllWalker = false;
+        static constexpr bool disableEuFusion = true;
+        static constexpr bool disableOverdispatch = false;
+        static constexpr bool singleSliceDispatchCcsMode = false;
+    };
+
+    struct StateComputeModeStateSupport {
+        static constexpr bool threadArbitrationPolicy = false;
+        static constexpr bool coherencyRequired = true;
+        static constexpr bool largeGrfMode = false;
+        static constexpr bool zPassAsyncComputeThreadLimit = false;
+        static constexpr bool pixelAsyncComputeThreadLimit = false;
+        static constexpr bool devicePreemptionMode = false;
+    };
+
+    struct StateBaseAddressStateSupport {
+        static constexpr bool globalAtomics = false;
+        static constexpr bool statelessMocs = true;
+        static constexpr bool bindingTablePoolBaseAddress = false;
+    };
+
+    struct PipelineSelectStateSupport {
+        static constexpr bool modeSelected = true;
+        static constexpr bool mediaSamplerDopClockGate = true;
+        static constexpr bool systolicMode = false;
+    };
+
+    struct PreemptionDebugSupport {
+        static constexpr bool preemptionMode = true;
+        static constexpr bool stateSip = true;
+        static constexpr bool csrSurface = true;
+    };
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
@@ -53,9 +87,9 @@ struct GEN12LP {
 
     static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");
 };
-struct TGLLPFamily : public GEN12LP {
-    using PARSE = CmdParse<TGLLPFamily>;
-    using GfxFamily = TGLLPFamily;
+struct Gen12LpFamily : public Gen12Lp {
+    using PARSE = CmdParse<Gen12LpFamily>;
+    using GfxFamily = Gen12LpFamily;
     using WALKER_TYPE = GPGPU_WALKER;
     using VFE_STATE_TYPE = MEDIA_VFE_STATE;
     using XY_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;

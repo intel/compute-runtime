@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "opencl/source/event/event.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/hello_world_fixture.h"
@@ -23,12 +24,12 @@ struct PostSyncWriteXeHPTests : public HelloWorldFixture<AUBHelloWorldFixtureFac
     void SetUp() override {
         DebugManager.flags.EnableTimestampPacket.set(true);
 
-        HelloWorldFixture<AUBHelloWorldFixtureFactory>::SetUp();
+        HelloWorldFixture<AUBHelloWorldFixtureFactory>::setUp();
         EXPECT_TRUE(pCommandStreamReceiver->peekTimestampPacketWriteEnabled());
     };
 
     void TearDown() override {
-        HelloWorldFixture<AUBHelloWorldFixtureFactory>::TearDown();
+        HelloWorldFixture<AUBHelloWorldFixtureFactory>::tearDown();
     }
 
     DebugManagerStateRestore restore;
@@ -47,7 +48,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTimestampWriteEnabledW
 
     uint8_t writeData[bufferSize] = {1, 2, 3, 4};
     cmdQ.enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writeData, nullptr, 0, nullptr, nullptr);
-    expectMemory<FamilyType>(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()), writeData, bufferSize);
+    expectMemory<FamilyType>(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress() + buffer->getOffset()), writeData, bufferSize);
 
     typename FamilyType::TimestampPacketType expectedTimestampValues[4] = {1, 1, 1, 1};
     auto tagGpuAddress = reinterpret_cast<void *>(cmdQ.timestampPacketContainer->peekNodes().at(0)->getGpuAddress());
@@ -67,7 +68,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenDebugVariableEnabledWh
 
     uint8_t writeData[bufferSize] = {1, 2, 3, 4};
     cmdQ.enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writeData, nullptr, 0, nullptr, nullptr);
-    expectMemory<FamilyType>(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress()), writeData, bufferSize);
+    expectMemory<FamilyType>(reinterpret_cast<void *>(graphicsAllocation->getGpuAddress() + buffer->getOffset()), writeData, bufferSize);
 
     auto tagGpuAddress = reinterpret_cast<void *>(cmdQ.timestampPacketContainer->peekNodes().at(0)->getGpuAddress());
 
@@ -94,7 +95,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTwoBatchedEnqueuesWhen
     std::fill(writePattern2, writePattern2 + sizeof(writePattern2), 1);
 
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, CL_MEM_COPY_HOST_PTR, bufferSize, initialMemory, retVal));
-    //make sure that GPU copy is used
+    // make sure that GPU copy is used
     buffer->forceDisallowCPUCopy = true;
     cl_event outEvent1, outEvent2;
 
@@ -105,7 +106,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, PostSyncWriteXeHPTests, givenTwoBatchedEnqueuesWhen
     pCmdQ->enqueueWriteBuffer(buffer.get(), CL_TRUE, 0, bufferSize, writePattern2, nullptr, 0, nullptr, &outEvent2);
     auto node2 = castToObject<Event>(outEvent2)->getTimestampPacketNodes()->peekNodes().at(0);
 
-    expectMemory<FamilyType>(reinterpret_cast<void *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress()), writePattern2, bufferSize);
+    expectMemory<FamilyType>(reinterpret_cast<void *>(buffer->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress() + buffer->getOffset()), writePattern2, bufferSize);
 
     typename FamilyType::TimestampPacketType expectedEndTimestamp = 1;
     auto endTimestampAddress1 = TimestampPacketHelper::getContextEndGpuAddress(*node1);

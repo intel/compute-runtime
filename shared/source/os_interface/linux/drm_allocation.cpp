@@ -7,10 +7,12 @@
 
 #include "shared/source/os_interface/linux/drm_allocation.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/os_context.h"
 
@@ -36,12 +38,24 @@ std::string DrmAllocation::getAllocationInfoString() const {
     return ss.str();
 }
 
-uint64_t DrmAllocation::peekInternalHandle(MemoryManager *memoryManager) {
-    return static_cast<uint64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBO()->peekHandle(), this->rootDeviceIndex));
+int DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) {
+    return peekInternalHandle(memoryManager, 0u, handle);
 }
 
-uint64_t DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId) {
-    return static_cast<uint64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBufferObjectToModify(handleId)->peekHandle(), this->rootDeviceIndex));
+int DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) {
+    if (handles[handleId] != std::numeric_limits<uint64_t>::max()) {
+        handle = handles[handleId];
+        return 0;
+    }
+
+    int64_t ret = static_cast<int64_t>((static_cast<DrmMemoryManager *>(memoryManager))->obtainFdFromHandle(getBufferObjectToModify(handleId)->peekHandle(), this->rootDeviceIndex));
+    if (ret < 0) {
+        return -1;
+    }
+
+    handle = handles[handleId] = ret;
+
+    return 0;
 }
 
 void DrmAllocation::setCachePolicy(CachePolicy memType) {
@@ -170,6 +184,21 @@ int DrmAllocation::bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vecto
     return 0;
 }
 
+bool DrmAllocation::prefetchBO(BufferObject *bo, uint32_t vmHandleId, uint32_t subDeviceId) {
+    auto drm = bo->peekDrm();
+    auto ioctlHelper = drm->getIoctlHelper();
+    auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
+    auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceId);
+    auto vmId = drm->getVirtualMemoryAddressSpace(vmHandleId);
+
+    auto result = ioctlHelper->setVmPrefetch(bo->peekAddress(), bo->peekSize(), region, vmId);
+
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintBOPrefetchingResult.get(), stdout,
+                       "prefetch BO=%d to VM %u, drmVmId=%u, range: %llx - %llx, size: %lld, region: %x, result: %d\n",
+                       bo->peekHandle(), vmId, vmHandleId, bo->peekAddress(), ptrOffset(bo->peekAddress(), bo->peekSize()), bo->peekSize(), region, result);
+    return result;
+}
+
 void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
     if (!drm->resourceRegistrationEnabled()) {
         return;
@@ -195,8 +224,14 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
     }
 
     if (resourceClass != DrmResourceClass::MaxSize) {
-        uint64_t gpuAddress = getGpuAddress();
-        auto handle = drm->registerResource(resourceClass, &gpuAddress, sizeof(gpuAddress));
+        auto handle = 0;
+        if (resourceClass == DrmResourceClass::Isa) {
+            auto deviceBitfiled = static_cast<uint32_t>(this->storageInfo.subDeviceBitfield.to_ulong());
+            handle = drm->registerResource(resourceClass, &deviceBitfiled, sizeof(deviceBitfiled));
+        } else {
+            uint64_t gpuAddress = getGpuAddress();
+            handle = drm->registerResource(resourceClass, &gpuAddress, sizeof(gpuAddress));
+        }
         registeredBoBindHandles.push_back(handle);
 
         auto &bos = getBOs();
@@ -205,7 +240,7 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
             if (bo) {
                 bo->addBindExtHandle(handle);
                 bo->markForCapture();
-                if (resourceClass == DrmResourceClass::Isa) {
+                if (resourceClass == DrmResourceClass::Isa && storageInfo.tileInstanced == true) {
                     auto cookieHandle = drm->registerIsaCookie(handle);
                     bo->addBindExtHandle(cookieHandle);
                     registeredBoBindHandles.push_back(cookieHandle);
@@ -263,33 +298,33 @@ bool DrmAllocation::shouldAllocationPageFault(const Drm *drm) {
 bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     bool success = true;
 
-    if (flags.cached_memory != enabledMemAdviseFlags.cached_memory) {
-        CachePolicy memType = flags.cached_memory ? CachePolicy::WriteBack : CachePolicy::Uncached;
+    if (flags.cachedMemory != enabledMemAdviseFlags.cachedMemory) {
+        CachePolicy memType = flags.cachedMemory ? CachePolicy::WriteBack : CachePolicy::Uncached;
         setCachePolicy(memType);
     }
 
     auto ioctlHelper = drm->getIoctlHelper();
-    if (flags.non_atomic != enabledMemAdviseFlags.non_atomic) {
+    if (flags.nonAtomic != enabledMemAdviseFlags.nonAtomic) {
         for (auto bo : bufferObjects) {
             if (bo != nullptr) {
-                success &= ioctlHelper->setVmBoAdvise(drm, bo->peekHandle(), ioctlHelper->getAtomicAdvise(flags.non_atomic), nullptr);
+                success &= ioctlHelper->setVmBoAdvise(bo->peekHandle(), ioctlHelper->getAtomicAdvise(flags.nonAtomic), nullptr);
             }
         }
     }
 
-    if (flags.device_preferred_location != enabledMemAdviseFlags.device_preferred_location) {
+    if (flags.devicePreferredLocation != enabledMemAdviseFlags.devicePreferredLocation) {
         MemoryClassInstance region{};
         for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
             auto bo = bufferObjects[handleId];
             if (bo != nullptr) {
-                if (flags.device_preferred_location) {
+                if (flags.devicePreferredLocation) {
                     region.memoryClass = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
                     region.memoryInstance = handleId;
                 } else {
                     region.memoryClass = -1;
                     region.memoryInstance = 0;
                 }
-                success &= ioctlHelper->setVmBoAdvise(drm, bo->peekHandle(), ioctlHelper->getPreferredLocationAdvise(), &region);
+                success &= ioctlHelper->setVmBoAdvise(bo->peekHandle(), ioctlHelper->getPreferredLocationAdvise(), &region);
             }
         }
     }
@@ -301,16 +336,24 @@ bool DrmAllocation::setMemAdvise(Drm *drm, MemAdviseFlags flags) {
     return success;
 }
 
-bool DrmAllocation::setMemPrefetch(Drm *drm, uint32_t subDeviceId) {
-    bool success = true;
-    auto ioctlHelper = drm->getIoctlHelper();
-    auto memoryClassDevice = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
+bool DrmAllocation::setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds) {
+    UNRECOVERABLE_IF(subDeviceIds.size() == 0);
 
-    for (auto bo : bufferObjects) {
-        if (bo != nullptr) {
-            auto region = static_cast<uint32_t>((memoryClassDevice << 16u) | subDeviceId);
-            success &= ioctlHelper->setVmPrefetch(drm, bo->peekAddress(), bo->peekSize(), region);
+    bool success = true;
+    auto numHandles = GraphicsAllocation::getNumHandlesForKmdSharedAllocation(storageInfo.getNumBanks());
+
+    if (numHandles > 1) {
+        for (uint8_t handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
+            if (storageInfo.memoryBanks.test(handleId)) {
+                auto bo = this->getBOs()[handleId];
+                auto vmHandleId = subDeviceIds[handleId % subDeviceIds.size()];
+                auto subDeviceId = DebugManager.flags.CreateContextWithAccessCounters.get() > 0 ? vmHandleId : handleId;
+                success &= prefetchBO(bo, vmHandleId, subDeviceId);
+            }
         }
+    } else {
+        auto bo = this->getBO();
+        success = prefetchBO(bo, subDeviceIds[0], subDeviceIds[0]);
     }
 
     return success;

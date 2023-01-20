@@ -6,15 +6,16 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/queue_throttle.h"
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/helpers/completion_stamp.h"
 
 #include <atomic>
-#include <chrono>
 #include <cstdint>
 
 namespace NEO {
+enum QueueThrottle : uint32_t;
+using FlushStamp = uint64_t;
+
 struct KmdNotifyProperties {
     int64_t delayKmdNotifyMicroseconds;
     int64_t delayQuickKmdSleepMicroseconds;
@@ -31,8 +32,8 @@ struct KmdNotifyProperties {
 };
 
 namespace KmdNotifyConstants {
-constexpr int64_t timeoutInMicrosecondsForDisconnectedAcLine = 10000;
-constexpr uint32_t minimumTaskCountDiffToCheckAcLine = 10;
+inline constexpr int64_t timeoutInMicrosecondsForDisconnectedAcLine = 10000;
+inline constexpr uint32_t minimumTaskCountDiffToCheckAcLine = 10;
 } // namespace KmdNotifyConstants
 
 class KmdNotifyHelper {
@@ -42,8 +43,8 @@ class KmdNotifyHelper {
     MOCKABLE_VIRTUAL ~KmdNotifyHelper() = default;
 
     WaitParams obtainTimeoutParams(bool quickKmdSleepRequest,
-                                   uint32_t currentHwTag,
-                                   uint32_t taskCountToWait,
+                                   TagAddressType currentHwTag,
+                                   TaskCountType taskCountToWait,
                                    FlushStamp flushStampToWait,
                                    QueueThrottle throttle,
                                    bool kmdWaitModeActive,

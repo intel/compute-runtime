@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/image.h"
@@ -81,7 +80,7 @@ struct AubFillImage
       public ::testing::WithParamInterface<std::tuple<FillChannelType, uint32_t /*cl_channel_order*/, FillImageParams>>,
       public ::testing::Test {
 
-    using AUBCommandStreamFixture::SetUp;
+    using AUBCommandStreamFixture::setUp;
 
     typedef AUBCommandStreamFixture CommandStreamFixture;
 
@@ -93,11 +92,11 @@ struct AubFillImage
         auto channelOrder = std::get<1>(GetParam());
 
         if (dataType != CL_UNORM_INT8 && (channelOrder == CL_sRGBA || channelOrder == CL_sBGRA)) {
-            //sRGBA and sBGRA support only unorm int8 type
+            // sRGBA and sBGRA support only unorm int8 type
             GTEST_SKIP();
         }
-        CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
-        CommandStreamFixture::SetUp(pCmdQ);
+        CommandDeviceFixture::setUp(cl_command_queue_properties(0));
+        CommandStreamFixture::setUp(pCmdQ);
 
         context = std::make_unique<MockContext>(pClDevice);
         if ((pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features == false) && (channelOrder == CL_sRGBA || channelOrder == CL_sBGRA)) {
@@ -109,8 +108,8 @@ struct AubFillImage
         image.reset();
         context.reset();
 
-        CommandStreamFixture::TearDown();
-        CommandDeviceFixture::TearDown();
+        CommandStreamFixture::tearDown();
+        CommandDeviceFixture::tearDown();
     }
 
     std::unique_ptr<MockContext> context;

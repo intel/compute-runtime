@@ -8,42 +8,32 @@
 #include "shared/test/common/mock_gdi/mock_gdi.h"
 
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/string.h"
 
-ADAPTER_INFO gAdapterInfo = {0};
-D3DDDI_MAPGPUVIRTUALADDRESS gLastCallMapGpuVaArg = {0};
-D3DDDI_RESERVEGPUVIRTUALADDRESS gLastCallReserveGpuVaArg = {0};
+ADAPTER_INFO_KMD gAdapterInfo{};
+D3DDDI_MAPGPUVIRTUALADDRESS gLastCallMapGpuVaArg{};
+D3DDDI_RESERVEGPUVIRTUALADDRESS gLastCallReserveGpuVaArg{};
 uint32_t gMapGpuVaFailConfigCount = 0;
 uint32_t gMapGpuVaFailConfigMax = 0;
 uint64_t gGpuAddressSpace = 0ull;
 uint32_t gLastPriority = 0ull;
 ADAPTER_BDF gAdapterBDF{};
 
-#ifdef __cplusplus // If used by C++ code,
-extern "C" { // we need to export the C interface
-#endif
-BOOLEAN WINAPI DllMain(IN HINSTANCE hDllHandle,
-                       IN DWORD nReason,
-                       IN LPVOID Reserved) {
-    return TRUE;
-}
-
-NTSTATUS __stdcall D3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
-    static int PerfTicks = 0;
-    ++PerfTicks;
+NTSTATUS __stdcall mockD3DKMTEscape(IN CONST D3DKMT_ESCAPE *pData) {
+    static int perfTicks = 0;
+    ++perfTicks;
     ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.RetCode = NEO::GTDI_RET_OK;
-    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.gpuPerfTicks = ++PerfTicks;
-    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.cpuPerfTicks = PerfTicks;
+    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.gpuPerfTicks = ++perfTicks;
+    ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.cpuPerfTicks = perfTicks;
     ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.gpuPerfFreq = 1;
     ((NEO::TimeStampDataHeader *)pData->pPrivateDriverData)->m_Data.m_Out.cpuPerfFreq = 1;
 
     return STATUS_SUCCESS;
 }
 
-DECL_FUNCTIONS()
-
 UINT64 PagingFence = 0;
 
-void __stdcall MockSetAdapterInfo(const void *pGfxPlatform, const void *pGTSystemInfo, uint64_t gpuAddressSpace) {
+void mockSetAdapterInfo(const void *pGfxPlatform, const void *pGTSystemInfo, uint64_t gpuAddressSpace) {
     if (pGfxPlatform != NULL) {
         gAdapterInfo.GfxPlatform = *(PLATFORM *)pGfxPlatform;
     }
@@ -51,10 +41,10 @@ void __stdcall MockSetAdapterInfo(const void *pGfxPlatform, const void *pGTSyste
         gAdapterInfo.SystemInfo = *(GT_SYSTEM_INFO *)pGTSystemInfo;
     }
     gGpuAddressSpace = gpuAddressSpace;
-    InitGfxPartition();
+    initGfxPartition();
 }
 
-NTSTATUS __stdcall D3DKMTOpenAdapterFromLuid(IN OUT CONST D3DKMT_OPENADAPTERFROMLUID *openAdapter) {
+NTSTATUS __stdcall mockD3DKMTOpenAdapterFromLuid(IN OUT CONST D3DKMT_OPENADAPTERFROMLUID *openAdapter) {
     if (openAdapter == nullptr || (openAdapter->AdapterLuid.HighPart == 0 && openAdapter->AdapterLuid.LowPart == 0)) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -67,23 +57,23 @@ NTSTATUS __stdcall D3DKMTOpenAdapterFromLuid(IN OUT CONST D3DKMT_OPENADAPTERFROM
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTCreateDevice(IN OUT D3DKMT_CREATEDEVICE *createDevice) {
+NTSTATUS __stdcall mockD3DKMTCreateDevice(IN OUT D3DKMT_CREATEDEVICE *createDevice) {
     if (createDevice == nullptr || createDevice->hAdapter != ADAPTER_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
     createDevice->hDevice = DEVICE_HANDLE;
-    SetMockCreateDeviceParams(*createDevice);
+    setMockCreateDeviceParams(*createDevice);
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTDestroyDevice(IN CONST D3DKMT_DESTROYDEVICE *destoryDevice) {
+NTSTATUS __stdcall mockD3DKMTDestroyDevice(IN CONST D3DKMT_DESTROYDEVICE *destoryDevice) {
     if (destoryDevice == nullptr || destoryDevice->hDevice != DEVICE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTCreatePagingQueue(IN OUT D3DKMT_CREATEPAGINGQUEUE *createQueue) {
+NTSTATUS __stdcall mockD3DKMTCreatePagingQueue(IN OUT D3DKMT_CREATEPAGINGQUEUE *createQueue) {
     if (createQueue == nullptr || (createQueue->hDevice != DEVICE_HANDLE)) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -93,17 +83,17 @@ NTSTATUS __stdcall D3DKMTCreatePagingQueue(IN OUT D3DKMT_CREATEPAGINGQUEUE *crea
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTDestroyPagingQueue(IN OUT D3DDDI_DESTROYPAGINGQUEUE *destoryQueue) {
+NTSTATUS __stdcall mockD3DKMTDestroyPagingQueue(IN OUT D3DDDI_DESTROYPAGINGQUEUE *destoryQueue) {
     if (destoryQueue == nullptr || destoryQueue->hPagingQueue != PAGINGQUEUE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
     return STATUS_SUCCESS;
 }
 
-static D3DKMT_CREATECONTEXTVIRTUAL createContextData = {0};
-static CREATECONTEXT_PVTDATA createContextPrivateData = {{0}};
+static D3DKMT_CREATECONTEXTVIRTUAL createContextData{};
+static CREATECONTEXT_PVTDATA createContextPrivateData{};
 
-NTSTATUS __stdcall D3DKMTCreateContextVirtual(IN D3DKMT_CREATECONTEXTVIRTUAL *createContext) {
+NTSTATUS __stdcall mockD3DKMTCreateContextVirtual(IN D3DKMT_CREATECONTEXTVIRTUAL *createContext) {
     if (createContext == nullptr || createContext->hDevice != DEVICE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -123,9 +113,9 @@ NTSTATUS __stdcall D3DKMTCreateContextVirtual(IN D3DKMT_CREATECONTEXTVIRTUAL *cr
 }
 
 static bool failOnSetContextSchedulingPriority = false;
-static D3DKMT_SETCONTEXTSCHEDULINGPRIORITY setContextSchedulingPriorityData = {};
+static D3DKMT_SETCONTEXTSCHEDULINGPRIORITY setContextSchedulingPriorityData{};
 
-NTSTATUS __stdcall D3DKMTSetContextSchedulingPriority(_In_ CONST D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *setContextSchedulingPriority) {
+NTSTATUS __stdcall mockD3DKMTSetContextSchedulingPriority(_In_ CONST D3DKMT_SETCONTEXTSCHEDULINGPRIORITY *setContextSchedulingPriority) {
     setContextSchedulingPriorityData = *setContextSchedulingPriority;
 
     if (failOnSetContextSchedulingPriority) {
@@ -135,7 +125,7 @@ NTSTATUS __stdcall D3DKMTSetContextSchedulingPriority(_In_ CONST D3DKMT_SETCONTE
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTDestroyContext(IN CONST D3DKMT_DESTROYCONTEXT *destroyContext) {
+NTSTATUS __stdcall mockD3DKMTDestroyContext(IN CONST D3DKMT_DESTROYCONTEXT *destroyContext) {
     if (destroyContext == nullptr || destroyContext->hContext != CONTEXT_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -144,11 +134,11 @@ NTSTATUS __stdcall D3DKMTDestroyContext(IN CONST D3DKMT_DESTROYCONTEXT *destroyC
 
 static D3DKMT_CREATEALLOCATION pallocation{};
 
-NTSTATUS __stdcall D3DKMTCreateAllocation(IN OUT D3DKMT_CREATEALLOCATION *allocation) {
+NTSTATUS __stdcall mockD3DKMTCreateAllocation(IN OUT D3DKMT_CREATEALLOCATION *allocation) {
     return STATUS_INVALID_PARAMETER;
 }
 
-NTSTATUS __stdcall D3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *allocation) {
+NTSTATUS __stdcall mockD3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *allocation) {
     D3DDDI_ALLOCATIONINFO2 *allocationInfo;
     int numOfAllocations;
     bool createResource;
@@ -181,17 +171,17 @@ NTSTATUS __stdcall D3DKMTCreateAllocation2(IN OUT D3DKMT_CREATEALLOCATION *alloc
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTShareObjects(UINT cObjects, const D3DKMT_HANDLE *hObjects, POBJECT_ATTRIBUTES pObjectAttributes, DWORD dwDesiredAccess, HANDLE *phSharedNtHandle) {
+NTSTATUS __stdcall mockD3DKMTShareObjects(UINT cObjects, const D3DKMT_HANDLE *hObjects, POBJECT_ATTRIBUTES pObjectAttributes, DWORD dwDesiredAccess, HANDLE *phSharedNtHandle) {
     *phSharedNtHandle = reinterpret_cast<HANDLE>(reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(0x123)));
     return STATUS_SUCCESS;
 }
 
 static unsigned int DestroyAllocationWithResourceHandleCalled = 0u;
-static D3DKMT_DESTROYALLOCATION2 destroyalloc2 = {0};
+static D3DKMT_DESTROYALLOCATION2 destroyalloc2{};
 static D3DKMT_HANDLE LastDestroyedResourceHandle = 0;
-static D3DKMT_CREATEDEVICE CreateDeviceParams = {{0}};
+static D3DKMT_CREATEDEVICE CreateDeviceParams{};
 
-NTSTATUS __stdcall D3DKMTDestroyAllocation2(IN CONST D3DKMT_DESTROYALLOCATION2 *destroyAllocation) {
+NTSTATUS __stdcall mockD3DKMTDestroyAllocation2(IN CONST D3DKMT_DESTROYALLOCATION2 *destroyAllocation) {
     int numOfAllocations;
     const D3DKMT_HANDLE *allocationList;
     LastDestroyedResourceHandle = 0;
@@ -221,7 +211,7 @@ NTSTATUS __stdcall D3DKMTDestroyAllocation2(IN CONST D3DKMT_DESTROYALLOCATION2 *
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADDRESS *mapGpuVA) {
+NTSTATUS __stdcall mockD3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADDRESS *mapGpuVA) {
     if (mapGpuVA == nullptr) {
         memset(&gLastCallMapGpuVaArg, 0, sizeof(gLastCallMapGpuVaArg));
         return STATUS_INVALID_PARAMETER;
@@ -266,13 +256,13 @@ NTSTATUS __stdcall D3DKMTMapGpuVirtualAddress(IN OUT D3DDDI_MAPGPUVIRTUALADDRESS
     return STATUS_PENDING;
 }
 
-NTSTATUS __stdcall D3DKMTReserveGpuVirtualAddress(IN OUT D3DDDI_RESERVEGPUVIRTUALADDRESS *reserveGpuVirtualAddress) {
+NTSTATUS __stdcall mockD3DKMTReserveGpuVirtualAddress(IN OUT D3DDDI_RESERVEGPUVIRTUALADDRESS *reserveGpuVirtualAddress) {
     gLastCallReserveGpuVaArg = *reserveGpuVirtualAddress;
     reserveGpuVirtualAddress->VirtualAddress = reserveGpuVirtualAddress->MinimumAddress;
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *queryAdapterInfo) {
+NTSTATUS __stdcall mockD3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *queryAdapterInfo) {
     if (queryAdapterInfo == nullptr) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -301,7 +291,7 @@ NTSTATUS __stdcall D3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *quer
         if (queryAdapterInfo->hAdapter != ADAPTER_HANDLE && queryAdapterInfo->hAdapter != SHADOW_ADAPTER_HANDLE) {
             return STATUS_INVALID_PARAMETER;
         }
-        ADAPTER_INFO *adapterInfo = reinterpret_cast<ADAPTER_INFO *>(queryAdapterInfo->pPrivateDriverData);
+        ADAPTER_INFO_KMD *adapterInfo = reinterpret_cast<ADAPTER_INFO_KMD *>(queryAdapterInfo->pPrivateDriverData);
 
         adapterInfo->GfxPlatform = gAdapterInfo.GfxPlatform;
         adapterInfo->SystemInfo = gAdapterInfo.SystemInfo;
@@ -336,10 +326,53 @@ NTSTATUS __stdcall D3DKMTQueryAdapterInfo(IN CONST D3DKMT_QUERYADAPTERINFO *quer
         adapterInfo->stAdapterBDF.Data = gAdapterBDF.Data;
         return STATUS_SUCCESS;
     }
+
+    if (KMTQAITYPE_QUERYREGISTRY == queryAdapterInfo->Type) {
+        const wchar_t *driverStorePathStr = L"some/path/fffff";
+
+        if ((nullptr == queryAdapterInfo->pPrivateDriverData) || (sizeof(D3DDDI_QUERYREGISTRY_INFO) > queryAdapterInfo->PrivateDriverDataSize)) {
+            return STATUS_INVALID_PARAMETER;
+        }
+
+        D3DDDI_QUERYREGISTRY_INFO *queryRegistryInfo = reinterpret_cast<D3DDDI_QUERYREGISTRY_INFO *>(queryAdapterInfo->pPrivateDriverData);
+        if (D3DDDI_QUERYREGISTRY_DRIVERSTOREPATH != queryRegistryInfo->QueryType) {
+            return STATUS_INVALID_PARAMETER;
+        }
+        if (0U != queryRegistryInfo->QueryFlags.Value) {
+            return STATUS_INVALID_PARAMETER;
+        }
+        bool regValueNameIsEmpty = std::wstring(std::wstring(queryRegistryInfo->ValueName[0], queryRegistryInfo->ValueName[0] + sizeof(queryRegistryInfo->ValueName)).c_str()).empty();
+        if (false == regValueNameIsEmpty) {
+            return STATUS_INVALID_PARAMETER;
+        }
+        if (0U != queryRegistryInfo->ValueType) {
+            return STATUS_INVALID_PARAMETER;
+        }
+        if (0U != queryRegistryInfo->PhysicalAdapterIndex) {
+            return STATUS_INVALID_PARAMETER;
+        }
+
+        if (D3DDDI_QUERYREGISTRY_DRIVERSTOREPATH != queryRegistryInfo->QueryType) {
+            return STATUS_INVALID_PARAMETER;
+        }
+
+        queryRegistryInfo->OutputValueSize = static_cast<ULONG>(std::wstring(driverStorePathStr).size() * sizeof(wchar_t));
+        if (queryAdapterInfo->PrivateDriverDataSize < queryRegistryInfo->OutputValueSize + sizeof(D3DDDI_QUERYREGISTRY_INFO)) {
+            queryRegistryInfo->Status = D3DDDI_QUERYREGISTRY_STATUS_BUFFER_OVERFLOW;
+            return STATUS_SUCCESS;
+        }
+
+        memcpy_s(queryRegistryInfo->OutputString, queryAdapterInfo->PrivateDriverDataSize - sizeof(D3DDDI_QUERYREGISTRY_INFO),
+                 driverStorePathStr, queryRegistryInfo->OutputValueSize);
+
+        queryRegistryInfo->Status = D3DDDI_QUERYREGISTRY_STATUS_SUCCESS;
+        return STATUS_SUCCESS;
+    }
+
     return STATUS_INVALID_PARAMETER;
 }
 
-NTSTATUS __stdcall D3DKMTMakeResident(IN OUT D3DDDI_MAKERESIDENT *makeResident) {
+NTSTATUS __stdcall mockD3DKMTMakeResident(IN OUT D3DDDI_MAKERESIDENT *makeResident) {
     if (makeResident == nullptr || makeResident->hPagingQueue != PAGINGQUEUE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -352,21 +385,21 @@ static UINT gmmSize = 0u;
 static void *gmmPtr = nullptr;
 static UINT numberOfAllocsToReturn = 0u;
 
-NTSTATUS __stdcall D3DKMTOpenResource(IN OUT D3DKMT_OPENRESOURCE *openResurce) {
+NTSTATUS __stdcall mockD3DKMTOpenResource(IN OUT D3DKMT_OPENRESOURCE *openResurce) {
     openResurce->hResource = RESOURCE_HANDLE;
     openResurce->pOpenAllocationInfo[0].hAllocation = ALLOCATION_HANDLE;
     openResurce->pOpenAllocationInfo[0].pPrivateDriverData = gmmPtr;
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTOpenResourceFromNtHandle(IN OUT D3DKMT_OPENRESOURCEFROMNTHANDLE *openResurce) {
+NTSTATUS __stdcall mockD3DKMTOpenResourceFromNtHandle(IN OUT D3DKMT_OPENRESOURCEFROMNTHANDLE *openResurce) {
     openResurce->hResource = NT_RESOURCE_HANDLE;
     openResurce->pOpenAllocationInfo2[0].hAllocation = NT_ALLOCATION_HANDLE;
     openResurce->pOpenAllocationInfo2[0].pPrivateDriverData = gmmPtr;
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTQueryResourceInfo(IN OUT D3DKMT_QUERYRESOURCEINFO *queryResourceInfo) {
+NTSTATUS __stdcall mockD3DKMTQueryResourceInfo(IN OUT D3DKMT_QUERYRESOURCEINFO *queryResourceInfo) {
     if (queryResourceInfo->hDevice != DEVICE_HANDLE || queryResourceInfo->hGlobalShare == INVALID_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -377,8 +410,8 @@ NTSTATUS __stdcall D3DKMTQueryResourceInfo(IN OUT D3DKMT_QUERYRESOURCEINFO *quer
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTQueryResourceInfoFromNtHandle(IN OUT D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE *queryResourceInfo) {
-    if (queryResourceInfo->hDevice != DEVICE_HANDLE || queryResourceInfo->hNtHandle == INVALID_HANDLE) {
+NTSTATUS __stdcall mockD3DKMTQueryResourceInfoFromNtHandle(IN OUT D3DKMT_QUERYRESOURCEINFOFROMNTHANDLE *queryResourceInfo) {
+    if (queryResourceInfo->hDevice != DEVICE_HANDLE || queryResourceInfo->hNtHandle == reinterpret_cast<void *>(INVALID_HANDLE)) {
         return STATUS_INVALID_PARAMETER;
     }
     queryResourceInfo->TotalPrivateDriverDataSize = totalPrivateSize;
@@ -388,7 +421,7 @@ NTSTATUS __stdcall D3DKMTQueryResourceInfoFromNtHandle(IN OUT D3DKMT_QUERYRESOUR
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTLock2(IN OUT D3DKMT_LOCK2 *lock2) {
+NTSTATUS __stdcall mockD3DKMTLock2(IN OUT D3DKMT_LOCK2 *lock2) {
     if (lock2->hAllocation == 0 || lock2->hDevice == 0) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -396,7 +429,7 @@ NTSTATUS __stdcall D3DKMTLock2(IN OUT D3DKMT_LOCK2 *lock2) {
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTUnlock2(IN CONST D3DKMT_UNLOCK2 *unlock2) {
+NTSTATUS __stdcall mockD3DKMTUnlock2(IN CONST D3DKMT_UNLOCK2 *unlock2) {
     if (unlock2->hAllocation == 0 || unlock2->hDevice == 0) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -407,7 +440,7 @@ static size_t cpuFence = 0;
 
 static bool createSynchronizationObject2FailCall = false;
 
-NTSTATUS __stdcall D3DKMTCreateSynchronizationObject2(IN OUT D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *synchObject) {
+NTSTATUS __stdcall mockD3DKMTCreateSynchronizationObject2(IN OUT D3DKMT_CREATESYNCHRONIZATIONOBJECT2 *synchObject) {
     if (synchObject == nullptr) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -422,15 +455,15 @@ NTSTATUS __stdcall D3DKMTCreateSynchronizationObject2(IN OUT D3DKMT_CREATESYNCHR
     return STATUS_SUCCESS;
 }
 
-NTSTATUS __stdcall D3DKMTSetAllocationPriority(IN CONST D3DKMT_SETALLOCATIONPRIORITY *setAllocationPriority) {
+NTSTATUS __stdcall mockD3DKMTSetAllocationPriority(IN CONST D3DKMT_SETALLOCATIONPRIORITY *setAllocationPriority) {
     if (setAllocationPriority == nullptr || setAllocationPriority->hDevice != DEVICE_HANDLE) {
         return STATUS_INVALID_PARAMETER;
     }
 
-    if (setAllocationPriority->hResource == NULL && (setAllocationPriority->AllocationCount == 0 || setAllocationPriority->phAllocationList == NULL)) {
+    if (setAllocationPriority->hResource == static_cast<D3DKMT_HANDLE>(NULL) && (setAllocationPriority->AllocationCount == 0 || setAllocationPriority->phAllocationList == reinterpret_cast<void *>(NULL))) {
         return STATUS_INVALID_PARAMETER;
     }
-    if (setAllocationPriority->pPriorities == NULL) {
+    if (setAllocationPriority->pPriorities == reinterpret_cast<void *>(NULL)) {
         return STATUS_INVALID_PARAMETER;
     }
     auto priority = setAllocationPriority->pPriorities[0];
@@ -444,9 +477,9 @@ NTSTATUS __stdcall D3DKMTSetAllocationPriority(IN CONST D3DKMT_SETALLOCATIONPRIO
     return STATUS_SUCCESS;
 }
 
-static D3DKMT_CREATEHWQUEUE createHwQueueData = {};
+static D3DKMT_CREATEHWQUEUE createHwQueueData{};
 
-NTSTATUS __stdcall D3DKMTCreateHwQueue(IN OUT D3DKMT_CREATEHWQUEUE *createHwQueue) {
+NTSTATUS __stdcall mockD3DKMTCreateHwQueue(IN OUT D3DKMT_CREATEHWQUEUE *createHwQueue) {
     createHwQueue->hHwQueueProgressFence = 1;
     createHwQueue->HwQueueProgressFenceCPUVirtualAddress = reinterpret_cast<void *>(2);
     createHwQueue->HwQueueProgressFenceGPUVirtualAddress = 3;
@@ -455,30 +488,30 @@ NTSTATUS __stdcall D3DKMTCreateHwQueue(IN OUT D3DKMT_CREATEHWQUEUE *createHwQueu
     return STATUS_SUCCESS;
 }
 
-static D3DKMT_DESTROYHWQUEUE destroyHwQueueData = {};
+static D3DKMT_DESTROYHWQUEUE destroyHwQueueData{};
 
-NTSTATUS __stdcall D3DKMTDestroyHwQueue(IN CONST D3DKMT_DESTROYHWQUEUE *destroyHwQueue) {
+NTSTATUS __stdcall mockD3DKMTDestroyHwQueue(IN CONST D3DKMT_DESTROYHWQUEUE *destroyHwQueue) {
     destroyHwQueueData = *destroyHwQueue;
     return STATUS_SUCCESS;
 }
 
-static D3DKMT_SUBMITCOMMANDTOHWQUEUE submitCommandToHwQueueData = {};
+static D3DKMT_SUBMITCOMMANDTOHWQUEUE submitCommandToHwQueueData{};
 
-NTSTATUS __stdcall D3DKMTSubmitCommandToHwQueue(IN CONST D3DKMT_SUBMITCOMMANDTOHWQUEUE *submitCommandToHwQueue) {
+NTSTATUS __stdcall mockD3DKMTSubmitCommandToHwQueue(IN CONST D3DKMT_SUBMITCOMMANDTOHWQUEUE *submitCommandToHwQueue) {
     submitCommandToHwQueueData = *submitCommandToHwQueue;
     return STATUS_SUCCESS;
 }
 
-static D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySynchronizationObjectData = {};
+static D3DKMT_DESTROYSYNCHRONIZATIONOBJECT destroySynchronizationObjectData{};
 
-NTSTATUS __stdcall D3DKMTDestroySynchronizationObject(IN CONST D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *destroySynchronizationObject) {
+NTSTATUS __stdcall mockD3DKMTDestroySynchronizationObject(IN CONST D3DKMT_DESTROYSYNCHRONIZATIONOBJECT *destroySynchronizationObject) {
     destroySynchronizationObjectData = *destroySynchronizationObject;
     return STATUS_SUCCESS;
 }
 
 static bool registerTrimNotificationFailCall = false;
 
-NTSTATUS __stdcall D3DKMTRegisterTrimNotification(IN D3DKMT_REGISTERTRIMNOTIFICATION *registerTrimNotification) {
+NTSTATUS __stdcall mockD3DKMTRegisterTrimNotification(IN D3DKMT_REGISTERTRIMNOTIFICATION *registerTrimNotification) {
     if (registerTrimNotificationFailCall) {
         return STATUS_INVALID_PARAMETER;
     }
@@ -486,11 +519,83 @@ NTSTATUS __stdcall D3DKMTRegisterTrimNotification(IN D3DKMT_REGISTERTRIMNOTIFICA
     return STATUS_SUCCESS;
 }
 
-#ifdef __cplusplus
+NTSTATUS __stdcall mockD3DKMTOpenAdapterFromHdc(IN OUT D3DKMT_OPENADAPTERFROMHDC *) {
+    return STATUS_SUCCESS;
 }
-#endif
 
-NTSTATUS MockSetSizes(void *inGmmPtr, UINT inNumAllocsToReturn, UINT inGmmSize, UINT inTotalPrivateSize) {
+NTSTATUS __stdcall mockD3DKMTDestroyAllocation(IN CONST D3DKMT_DESTROYALLOCATION *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTCloseAdapter(IN CONST D3DKMT_CLOSEADAPTER *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTLock(IN OUT D3DKMT_LOCK *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTUnlock(IN CONST D3DKMT_UNLOCK *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTRender(IN OUT D3DKMT_RENDER *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTCreateSynchronizationObject(IN OUT D3DKMT_CREATESYNCHRONIZATIONOBJECT *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTSignalSynchronizationObject(IN CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECT *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTWaitForSynchronizationObject(IN OUT CONST D3DKMT_WAITFORSYNCHRONIZATIONOBJECT *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTWaitForSynchronizationObjectFromCpu(IN CONST D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMCPU *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTSignalSynchronizationObjectFromCpu(IN CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMCPU *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTWaitForSynchronizationObjectFromGpu(IN CONST D3DKMT_WAITFORSYNCHRONIZATIONOBJECTFROMGPU *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTSignalSynchronizationObjectFromGpu(IN CONST D3DKMT_SIGNALSYNCHRONIZATIONOBJECTFROMGPU *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTFreeGpuVirtualAddress(IN CONST D3DKMT_FREEGPUVIRTUALADDRESS *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTUpdateGpuVirtualAddress(IN CONST D3DKMT_UPDATEGPUVIRTUALADDRESS *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTSubmitCommand(IN CONST D3DKMT_SUBMITCOMMAND *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTEvict(IN OUT D3DKMT_EVICT *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTGetDeviceState(IN OUT D3DKMT_GETDEVICESTATE *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS __stdcall mockD3DKMTUnregisterTrimNotification(IN D3DKMT_UNREGISTERTRIMNOTIFICATION *) {
+    return STATUS_SUCCESS;
+}
+
+NTSTATUS setMockSizes(void *inGmmPtr, UINT inNumAllocsToReturn, UINT inGmmSize, UINT inTotalPrivateSize) {
     gmmSize = inGmmSize;
     gmmPtr = inGmmPtr;
     totalPrivateSize = inTotalPrivateSize;
@@ -498,25 +603,25 @@ NTSTATUS MockSetSizes(void *inGmmPtr, UINT inNumAllocsToReturn, UINT inGmmSize, 
     return STATUS_SUCCESS;
 }
 
-NTSTATUS GetMockSizes(UINT &destroyAlloactionWithResourceHandleCalled, D3DKMT_DESTROYALLOCATION2 *&ptrDestroyAlloc) {
+NTSTATUS getMockSizes(UINT &destroyAlloactionWithResourceHandleCalled, D3DKMT_DESTROYALLOCATION2 *&ptrDestroyAlloc) {
     destroyAlloactionWithResourceHandleCalled = DestroyAllocationWithResourceHandleCalled;
     ptrDestroyAlloc = &destroyalloc2;
     return NTSTATUS();
 }
 
-D3DKMT_HANDLE GetMockLastDestroyedResHandle() {
+D3DKMT_HANDLE getMockLastDestroyedResHandle() {
     return LastDestroyedResourceHandle;
 }
 
-void SetMockLastDestroyedResHandle(D3DKMT_HANDLE handle) {
+void setMockLastDestroyedResHandle(D3DKMT_HANDLE handle) {
     LastDestroyedResourceHandle = handle;
 }
 
-D3DKMT_CREATEDEVICE GetMockCreateDeviceParams() {
+D3DKMT_CREATEDEVICE getMockCreateDeviceParams() {
     return CreateDeviceParams;
 }
 
-void SetMockCreateDeviceParams(D3DKMT_CREATEDEVICE params) {
+void setMockCreateDeviceParams(D3DKMT_CREATEDEVICE params) {
     CreateDeviceParams = params;
 }
 

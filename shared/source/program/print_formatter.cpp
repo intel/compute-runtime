@@ -63,6 +63,7 @@ void PrintFormatter::printString(const char *formatString, const std::function<v
             size_t end = i;
             if (end + 1 <= length && formatString[end + 1] == '%') {
                 output[cursor++] = '%';
+                i++;
                 continue;
             }
 
@@ -109,6 +110,20 @@ void PrintFormatter::stripVectorTypeConversion(char *format) {
     if (len > 3 && format[len - 3] == 'h' && format[len - 2] == 'l') {
         format[len - 3] = format[len - 1];
         format[len - 2] = '\0';
+    }
+}
+
+template <>
+void PrintFormatter::adjustFormatString<int64_t>(std::string &formatString) {
+    auto longPosition = formatString.find('l');
+
+    if (longPosition == std::string::npos) {
+        return;
+    }
+    UNRECOVERABLE_IF(formatString.size() - 1 == longPosition);
+
+    if (formatString.at(longPosition + 1) != 'l') {
+        formatString.insert(longPosition, "l");
     }
 }
 

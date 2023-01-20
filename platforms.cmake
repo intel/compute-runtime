@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -149,6 +149,8 @@ macro(SET_FLAGS_FOR CORE_TYPE)
         message(STATUS "Auto-Enabling ${CORE_TYPE} support for ${SKU_NAME}")
         set(SUPPORT_${CORE_TYPE} TRUE CACHE BOOL "Support ${CORE_TYPE} devices" FORCE)
       endif()
+    endif()
+    if(TESTS_${SKU_NAME})
       if(NOT TESTS_${CORE_TYPE})
         message(STATUS "Auto-Enabling ${CORE_TYPE} tests for ${SKU_NAME}")
         set(TESTS_${CORE_TYPE} TRUE CACHE BOOL "Build ULTs for ${CORE_TYPE} devices" FORCE)
@@ -156,7 +158,7 @@ macro(SET_FLAGS_FOR CORE_TYPE)
     endif()
     string(TOLOWER ${CORE_TYPE} MAP_${SKU_NAME}_CORE_lower)
     string(TOLOWER ${SKU_NAME} MAP_${SKU_NAME}_lower)
-    set(MAP_${SKU_NAME}_CORE_lower "${CORE_PREFIX}${MAP_${SKU_NAME}_CORE_lower}" CACHE STRING "Core name for SKU" FORCE)
+    set(MAP_${SKU_NAME}_CORE_lower "${CORE_PREFIX}${MAP_${SKU_NAME}_CORE_lower}${CORE_SUFFIX}" CACHE STRING "Core name for SKU" FORCE)
     set(MAP_${SKU_NAME}_lower ${MAP_${SKU_NAME}_lower} CACHE STRING "SKU in lower case" FORCE)
   endforeach()
 
@@ -188,14 +190,20 @@ macro(SET_FLAGS_FOR CORE_TYPE)
   endif()
 endmacro()
 
-macro(ADD_PLATFORM_FOR_CORE_TYPE LIST_TYPE CORE_TYPE PLATFORM_NAME PLATFORM_TYPE)
-  list(APPEND PLATFORM_TYPES ${PLATFORM_TYPE})
-  list(REMOVE_DUPLICATES PLATFORM_TYPES)
+macro(DISABLE_FLAGS_FOR CORE_TYPE)
+  set(SUPPORT_${CORE_TYPE} FALSE CACHE BOOL "Support ${CORE_TYPE} devices" FORCE)
+  set(TESTS_${CORE_TYPE} FALSE CACHE BOOL "Build ULTs for ${CORE_TYPE} devices" FORCE)
+  foreach(SKU_NAME ${ARGN})
+    set(SUPPORT_${SKU_NAME} FALSE CACHE BOOL "Support ${SKU_NAME}" FORCE)
+    set(TESTS_${SKU_NAME} FALSE CACHE BOOL "Build ULTs for ${SKU_NAME}" FORCE)
+  endforeach()
+endmacro()
+
+macro(ADD_PLATFORM_FOR_CORE_TYPE LIST_TYPE CORE_TYPE PLATFORM_NAME)
   ADD_ITEM_FOR_CORE_TYPE("PLATFORMS" ${LIST_TYPE} ${CORE_TYPE} ${PLATFORM_NAME})
-  set(${CORE_TYPE}_HAS_${PLATFORM_TYPE} TRUE)
-  set(${PLATFORM_NAME}_IS_${PLATFORM_TYPE} TRUE)
-  if(NOT DEFAULT_${LIST_TYPE}_${CORE_TYPE}_${PLATFORM_TYPE}_PLATFORM)
-    string(TOLOWER ${PLATFORM_NAME} DEFAULT_${LIST_TYPE}_${CORE_TYPE}_${PLATFORM_TYPE}_PLATFORM)
+  set(${CORE_TYPE}_HAS_${PLATFORM_NAME} TRUE)
+  if(NOT DEFAULT_${LIST_TYPE}_${CORE_TYPE}_${PLATFORM_NAME}_PLATFORM)
+    string(TOLOWER ${PLATFORM_NAME} DEFAULT_${LIST_TYPE}_${CORE_TYPE}_${PLATFORM_NAME}_PLATFORM)
   endif()
 endmacro()
 

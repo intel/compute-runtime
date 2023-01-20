@@ -12,6 +12,7 @@ namespace NEO {
 struct PipeControlArgs {
     PipeControlArgs() = default;
 
+    bool csStallOnly = false;
     bool dcFlushEnable = false;
     bool renderTargetCacheFlushEnable = false;
     bool instructionCacheInvalidateEnable = false;

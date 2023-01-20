@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/device/device.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
@@ -15,11 +17,13 @@ namespace NEO {
 
 bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_intel *properties, MemoryProperties &memoryProperties,
                                                      cl_mem_flags &flags, cl_mem_flags_intel &flagsIntel,
-                                                     cl_mem_alloc_flags_intel &allocflags, MemoryPropertiesHelper::ObjType objectType, Context &context) {
-    Device *pDevice = &context.getDevice(0)->getDevice();
+                                                     cl_mem_alloc_flags_intel &allocflags, ClMemoryPropertiesHelper::ObjType objectType, Context &context) {
+    bool deviceSet = false;
+    Device *pDevice = context.getDevice(0)->getDevice().getRootDevice();
     uint64_t handle = 0;
     uint64_t handleType = 0;
     uintptr_t hostptr = 0;
+
     if (properties != nullptr) {
         for (int i = 0; properties[i] != 0; i += 2) {
             switch (properties[i]) {
@@ -32,6 +36,19 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
             case CL_MEM_ALLOC_FLAGS_INTEL:
                 allocflags |= static_cast<cl_mem_alloc_flags_intel>(properties[i + 1]);
                 break;
+            case CL_MEM_DEVICE_ID_INTEL: {
+                if (deviceSet) {
+                    return false;
+                }
+                cl_device_id deviceId = reinterpret_cast<cl_device_id>(properties[i + 1]);
+                auto pClDevice = NEO::castToObject<ClDevice>(deviceId);
+                if ((pClDevice == nullptr) || (!context.isDeviceAssociated(*pClDevice))) {
+                    return false;
+                }
+                pDevice = &pClDevice->getDevice();
+                deviceSet = true;
+                break;
+            }
             case CL_MEM_ALLOC_USE_HOST_PTR_INTEL:
                 hostptr = static_cast<uintptr_t>(properties[i + 1]);
                 break;
@@ -55,16 +72,15 @@ bool ClMemoryPropertiesHelper::parseMemoryProperties(const cl_mem_properties_int
     memoryProperties.hostptr = hostptr;
 
     switch (objectType) {
-    case MemoryPropertiesHelper::ObjType::BUFFER:
+    case ClMemoryPropertiesHelper::ObjType::BUFFER:
         return isFieldValid(flags, MemObjHelper::validFlagsForBuffer) &&
                isFieldValid(flagsIntel, MemObjHelper::validFlagsForBufferIntel);
-    case MemoryPropertiesHelper::ObjType::IMAGE:
+    case ClMemoryPropertiesHelper::ObjType::IMAGE:
         return isFieldValid(flags, MemObjHelper::validFlagsForImage) &&
                isFieldValid(flagsIntel, MemObjHelper::validFlagsForImageIntel);
     default:
-        break;
+        return true;
     }
-    return true;
 }
 
 } // namespace NEO

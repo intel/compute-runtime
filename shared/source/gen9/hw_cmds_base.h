@@ -13,18 +13,56 @@
 #include "igfxfmid.h"
 
 #include <cstddef>
+#include <cstring>
 
 template <class T>
 struct CmdParse;
 
 namespace NEO {
 class LogicalStateHelper;
-struct GEN9 {
+struct Gen9 {
 #include "shared/source/generated/gen9/hw_cmds_generated_gen9.inl"
 
     static constexpr bool supportsSampler = true;
     static constexpr bool isUsingGenericMediaStateClear = true;
     static constexpr bool isUsingMiMemFence = false;
+    static constexpr bool isUsingMiSetPredicate = false;
+
+    struct FrontEndStateSupport {
+        static constexpr bool scratchSize = true;
+        static constexpr bool privateScratchSize = false;
+        static constexpr bool computeDispatchAllWalker = false;
+        static constexpr bool disableEuFusion = false;
+        static constexpr bool disableOverdispatch = false;
+        static constexpr bool singleSliceDispatchCcsMode = false;
+    };
+
+    struct StateComputeModeStateSupport {
+        static constexpr bool threadArbitrationPolicy = true;
+        static constexpr bool coherencyRequired = false;
+        static constexpr bool largeGrfMode = false;
+        static constexpr bool zPassAsyncComputeThreadLimit = false;
+        static constexpr bool pixelAsyncComputeThreadLimit = false;
+        static constexpr bool devicePreemptionMode = false;
+    };
+
+    struct StateBaseAddressStateSupport {
+        static constexpr bool globalAtomics = false;
+        static constexpr bool statelessMocs = true;
+        static constexpr bool bindingTablePoolBaseAddress = false;
+    };
+
+    struct PipelineSelectStateSupport {
+        static constexpr bool modeSelected = true;
+        static constexpr bool mediaSamplerDopClockGate = true;
+        static constexpr bool systolicMode = false;
+    };
+
+    struct PreemptionDebugSupport {
+        static constexpr bool preemptionMode = true;
+        static constexpr bool stateSip = true;
+        static constexpr bool csrSurface = true;
+    };
 
     struct DataPortBindlessSurfaceExtendedMessageDescriptor {
         union {
@@ -52,9 +90,9 @@ struct GEN9 {
     static_assert(sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor) == sizeof(DataPortBindlessSurfaceExtendedMessageDescriptor::packed), "");
 };
 
-struct SKLFamily : public GEN9 {
-    using PARSE = CmdParse<SKLFamily>;
-    using GfxFamily = SKLFamily;
+struct Gen9Family : public Gen9 {
+    using PARSE = CmdParse<Gen9Family>;
+    using GfxFamily = Gen9Family;
     using WALKER_TYPE = GPGPU_WALKER;
     using VFE_STATE_TYPE = MEDIA_VFE_STATE;
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_SRC_COPY_BLT;

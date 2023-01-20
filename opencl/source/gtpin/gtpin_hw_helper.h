@@ -16,24 +16,24 @@ namespace NEO {
 class Kernel;
 struct HardwareInfo;
 
-class GTPinHwHelper {
+class GTPinGfxCoreHelper {
   public:
-    static GTPinHwHelper &get(GFXCORE_FAMILY gfxCore);
+    static GTPinGfxCoreHelper &get(GFXCORE_FAMILY gfxCore);
     virtual uint32_t getGenVersion() = 0;
     virtual bool addSurfaceState(Kernel *pKernel) = 0;
     virtual void *getSurfaceState(Kernel *pKernel, size_t bti) = 0;
     virtual bool canUseSharedAllocation(const HardwareInfo &hwInfo) const = 0;
 
   protected:
-    GTPinHwHelper(){};
+    GTPinGfxCoreHelper(){};
 };
 
 template <typename GfxFamily>
-class GTPinHwHelperHw : public GTPinHwHelper {
+class GTPinGfxCoreHelperHw : public GTPinGfxCoreHelper {
   public:
-    static GTPinHwHelper &get() {
-        static GTPinHwHelperHw<GfxFamily> gtpinHwHelper;
-        return gtpinHwHelper;
+    static GTPinGfxCoreHelper &get() {
+        static GTPinGfxCoreHelperHw<GfxFamily> gtpinGfxCoreHelper;
+        return gtpinGfxCoreHelper;
     }
     uint32_t getGenVersion() override;
     bool addSurfaceState(Kernel *pKernel) override;
@@ -41,6 +41,6 @@ class GTPinHwHelperHw : public GTPinHwHelper {
     bool canUseSharedAllocation(const HardwareInfo &hwInfo) const override;
 
   protected:
-    GTPinHwHelperHw(){};
+    GTPinGfxCoreHelperHw(){};
 };
 } // namespace NEO

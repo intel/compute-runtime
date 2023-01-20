@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@
 #include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/cl_blit_properties.h"
@@ -632,7 +632,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
     UltDeviceFactory deviceFactory{1, 0};
     auto pDevice = deviceFactory.rootDevices[0];
     auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    const auto &hwInfoConfig = *HwInfoConfig::get(pHwInfo->platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(pHwInfo->platform.eProductFamily);
 
     uint8_t memory[1 * KB];
     auto mockCsr = std::make_unique<MockCsrHw2<FamilyType>>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(),
@@ -642,17 +642,20 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};
     for (auto revision : revisions) {
-        pHwInfo->platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(revision, *pHwInfo);
+        pHwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(revision, *pHwInfo);
 
         {
+            mockCsr->getStreamProperties().frontEndState = {};
             auto flags = DispatchFlagsHelper::createDefaultDispatchFlags();
+            flags.additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
+
             LinearStream commandStream{&memory, sizeof(memory)};
             mockCsr->mediaVfeStateDirty = true;
             mockCsr->programVFEState(commandStream, flags, 10);
-            auto pCommand = reinterpret_cast<CFE_STATE *>(&memory);
+            auto cfeState = reinterpret_cast<CFE_STATE *>(&memory);
 
-            auto expectedDisableOverdispatch = hwInfoConfig.isDisableOverdispatchAvailable(*pHwInfo);
-            EXPECT_EQ(expectedDisableOverdispatch, pCommand->getComputeOverdispatchDisable());
+            auto expectedDisableOverdispatch = productHelper.isDisableOverdispatchAvailable(*pHwInfo);
+            EXPECT_EQ(expectedDisableOverdispatch, cfeState->getComputeOverdispatchDisable());
         }
         {
             auto flags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -660,8 +663,9 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
             LinearStream commandStream{&memory, sizeof(memory)};
             mockCsr->mediaVfeStateDirty = true;
             mockCsr->programVFEState(commandStream, flags, 10);
-            auto pCommand = reinterpret_cast<CFE_STATE *>(&memory);
-            EXPECT_FALSE(pCommand->getComputeOverdispatchDisable());
+            auto cfeState = reinterpret_cast<CFE_STATE *>(&memory);
+
+            EXPECT_FALSE(cfeState->getComputeOverdispatchDisable());
         }
     }
 }
@@ -669,43 +673,43 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
 HWTEST_F(BcsTests, WhenGetNumberOfBlitsForCopyPerRowIsCalledThenCorrectValuesAreReturned) {
     auto &rootDeviceEnvironment = pClDevice->getRootDeviceEnvironment();
     auto maxWidthToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitWidth(rootDeviceEnvironment));
-    auto maxHeightToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment));
+    auto maxHeightToCopy = static_cast<size_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(rootDeviceEnvironment, false));
     {
         Vec3<size_t> copySize = {(maxWidthToCopy * maxHeightToCopy - 1), 1, 1};
         size_t expectednBlitsCopyPerRow = 2;
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
     }
     {
         Vec3<size_t> copySize = {(maxWidthToCopy * maxHeightToCopy), 1, 1};
         size_t expectednBlitsCopyPerRow = 1;
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
     }
     {
         Vec3<size_t> copySize = {(maxWidthToCopy * maxHeightToCopy + 1), 1, 1};
         size_t expectednBlitsCopyPerRow = 2;
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
     }
     {
         Vec3<size_t> copySize = {(maxWidthToCopy * maxHeightToCopy + maxWidthToCopy), 1, 1};
         size_t expectednBlitsCopyPerRow = 2;
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
     }
     {
         Vec3<size_t> copySize = {(maxWidthToCopy * maxHeightToCopy + maxWidthToCopy + 1), 1, 1};
         size_t expectednBlitsCopyPerRow = 3;
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
     }
     {
         Vec3<size_t> copySize = {(maxWidthToCopy * maxHeightToCopy + 2 * maxWidthToCopy), 1, 1};
         size_t expectednBlitsCopyPerRow = 2;
-        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment);
+        auto nBlitsCopyPerRow = BlitCommandsHelper<FamilyType>::getNumberOfBlitsForCopyPerRow(copySize, rootDeviceEnvironment, false);
         EXPECT_EQ(expectednBlitsCopyPerRow, nBlitsCopyPerRow);
-        EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment));
+        EXPECT_FALSE(BlitCommandsHelper<FamilyType>::isCopyRegionPreferred(copySize, rootDeviceEnvironment, false));
     }
 }
 
@@ -884,9 +888,9 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     auto expectedSizeWithoutTimestampPacketWrite = expectedBaseSize;
 
     auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment());
+        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment(), false);
     auto estimatedSizeWithoutTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
+        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false);
 
     EXPECT_EQ(expectedSizeWithTimestampPacketWrite, estimatedSizeWithTimestampPacketWrite);
     EXPECT_EQ(expectedSizeWithoutTimestampPacketWrite, estimatedSizeWithoutTimestampPacketWrite);
@@ -907,9 +911,9 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     auto expectedSizeWithTimestampPacketWriteAndProfiling = expectedBaseSize + BlitCommandsHelper<FamilyType>::getProfilingMmioCmdsSize();
 
     auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment());
+        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment(), false);
     auto estimatedSizeWithTimestampPacketWriteAndProfiling = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, true, true, false, pClDevice->getRootDeviceEnvironment());
+        {1, 1, 1}, csrDependencies, true, true, false, pClDevice->getRootDeviceEnvironment(), false);
 
     EXPECT_EQ(expectedSizeWithTimestampPacketWriteAndProfiling, estimatedSizeWithTimestampPacketWriteAndProfiling);
     EXPECT_EQ(expectedBaseSize, estimatedSizeWithTimestampPacketWrite);
@@ -939,7 +943,7 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
     }
 
     auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment());
+        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false);
 
     EXPECT_EQ(expectedSize, estimatedSize);
 }
@@ -958,7 +962,7 @@ HWTEST_F(BcsTests, givenImageAndBufferWhenEstimateBlitCommandSizeThenReturnCorre
         }
 
         auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-            {1, 1, 1}, csrDependencies, false, false, isImage, pClDevice->getRootDeviceEnvironment());
+            {1, 1, 1}, csrDependencies, false, false, isImage, pClDevice->getRootDeviceEnvironment(), false);
 
         EXPECT_EQ(expectedSize, estimatedSize);
     }
@@ -983,13 +987,13 @@ HWTEST_F(BcsTests, givenImageAndBufferBlitDirectionsWhenIsImageOperationIsCalled
 HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommands) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    constexpr auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitterConstants::maxBlitHeight;
+    auto max2DBlitSize = BlitterConstants::maxBlitWidth * BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), true);
 
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
 
     uint32_t bltLeftover = 17;
-    size_t bltSize = (2 * max2DBlitSize) + bltLeftover;
+    size_t bltSize = static_cast<size_t>((2 * max2DBlitSize) + bltLeftover);
     uint32_t numberOfBlts = 3;
 
     cl_int retVal = CL_SUCCESS;
@@ -998,7 +1002,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
 
     uint32_t newTaskCount = 19;
     csr.taskCount = newTaskCount - 1;
-    uint32_t expectedResursiveLockCount = 0u;
+    uint32_t expectedResursiveLockCount = csr.resourcesInitialized ? 1u : 0u;
     EXPECT_EQ(expectedResursiveLockCount, csr.recursiveLockCounter.load());
     auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
                                                                           csr, buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex()), nullptr, hostPtr,
@@ -1009,12 +1013,16 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     }
 
     EXPECT_EQ(expectedResursiveLockCount, csr.recursiveLockCounter.load());
+    bool areResourcesInitialized = csr.resourcesInitialized;
     flushBcsTask(&csr, blitProperties, true, *pDevice);
     EXPECT_EQ(newTaskCount, csr.taskCount);
     EXPECT_EQ(newTaskCount, csr.latestFlushedTaskCount);
     EXPECT_EQ(newTaskCount, csr.latestSentTaskCount);
     EXPECT_EQ(newTaskCount, csr.latestSentTaskCountValueDuringFlush);
     expectedResursiveLockCount++;
+    if (areResourcesInitialized != csr.resourcesInitialized) {
+        expectedResursiveLockCount++;
+    }
     EXPECT_EQ(expectedResursiveLockCount, csr.recursiveLockCounter.load());
 
     HardwareParse hwParser;
@@ -1029,7 +1037,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
         EXPECT_NE(nullptr, bltCmd);
 
         uint32_t expectedWidth = static_cast<uint32_t>(BlitterConstants::maxBlitWidth);
-        uint32_t expectedHeight = static_cast<uint32_t>(BlitterConstants::maxBlitHeight);
+        uint32_t expectedHeight = static_cast<uint32_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), true));
         if (i == (numberOfBlts - 1)) {
             expectedWidth = bltLeftover;
             expectedHeight = 1;
@@ -1208,19 +1216,19 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     auto allocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(std::get<1>(GetParam()),     //blitDirection
-                                                                          csr, allocation,             //commandStreamReceiver
-                                                                          nullptr,                     //memObjAllocation
-                                                                          hostPtr,                     //preallocatedHostAllocation
-                                                                          allocation->getGpuAddress(), //memObjGpuVa
-                                                                          0,                           //hostAllocGpuVa
-                                                                          hostPtrOffset,               //hostPtrOffset
-                                                                          copyOffset,                  //copyOffset
-                                                                          bltSize,                     //copySize
-                                                                          dstRowPitch,                 //hostRowPitch
-                                                                          dstSlicePitch,               //hostSlicePitch
-                                                                          srcRowPitch,                 //gpuRowPitch
-                                                                          srcSlicePitch                //gpuSlicePitch
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(std::get<1>(GetParam()),     // blitDirection
+                                                                          csr, allocation,             // commandStreamReceiver
+                                                                          nullptr,                     // memObjAllocation
+                                                                          hostPtr,                     // preallocatedHostAllocation
+                                                                          allocation->getGpuAddress(), // memObjGpuVa
+                                                                          0,                           // hostAllocGpuVa
+                                                                          hostPtrOffset,               // hostPtrOffset
+                                                                          copyOffset,                  // copyOffset
+                                                                          bltSize,                     // copySize
+                                                                          dstRowPitch,                 // hostRowPitch
+                                                                          dstSlicePitch,               // hostSlicePitch
+                                                                          srcRowPitch,                 // gpuRowPitch
+                                                                          srcSlicePitch                // gpuSlicePitch
     );
 
     memoryManager->returnFakeAllocation = false;
@@ -1286,6 +1294,9 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
 }
 
 HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommandsForWriteReadBufferRect) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.LimitBlitterMaxHeight.set(BlitterConstants::maxBlitHeight);
+
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
 
@@ -1310,19 +1321,19 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
 
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
-    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(std::get<1>(GetParam()),     //blitDirection
-                                                                          csr, allocation,             //commandStreamReceiver
-                                                                          nullptr,                     //memObjAllocation
-                                                                          hostPtr,                     //preallocatedHostAllocation
-                                                                          allocation->getGpuAddress(), //memObjGpuVa
-                                                                          0,                           //hostAllocGpuVa
-                                                                          hostPtrOffset,               //hostPtrOffset
-                                                                          copyOffset,                  //copyOffset
-                                                                          bltSize,                     //copySize
-                                                                          dstRowPitch,                 //hostRowPitch
-                                                                          dstSlicePitch,               //hostSlicePitch
-                                                                          srcRowPitch,                 //gpuRowPitch
-                                                                          srcSlicePitch                //gpuSlicePitch
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(std::get<1>(GetParam()),     // blitDirection
+                                                                          csr, allocation,             // commandStreamReceiver
+                                                                          nullptr,                     // memObjAllocation
+                                                                          hostPtr,                     // preallocatedHostAllocation
+                                                                          allocation->getGpuAddress(), // memObjGpuVa
+                                                                          0,                           // hostAllocGpuVa
+                                                                          hostPtrOffset,               // hostPtrOffset
+                                                                          copyOffset,                  // copyOffset
+                                                                          bltSize,                     // copySize
+                                                                          dstRowPitch,                 // hostRowPitch
+                                                                          dstSlicePitch,               // hostSlicePitch
+                                                                          srcRowPitch,                 // gpuRowPitch
+                                                                          srcSlicePitch                // gpuSlicePitch
     );
 
     memoryManager->returnFakeAllocation = false;
@@ -1340,7 +1351,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
         EXPECT_NE(nullptr, bltCmd);
 
         uint32_t expectedWidth = static_cast<uint32_t>(BlitterConstants::maxBlitWidth);
-        uint32_t expectedHeight = static_cast<uint32_t>(BlitterConstants::maxBlitHeight);
+        uint32_t expectedHeight = static_cast<uint32_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), blitProperties.isSystemMemoryPoolUsed));
         if (i % numberOfBltsForSingleBltSizeProgramm == numberOfBltsForSingleBltSizeProgramm - 1) {
             expectedWidth = bltLeftover;
             expectedHeight = 1;
@@ -1382,6 +1393,9 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
 }
 
 HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommandsForCopyBufferRect) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.LimitBlitterMaxHeight.set(BlitterConstants::maxBlitHeight);
+
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
 
@@ -1403,16 +1417,16 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
     size_t buffer2SlicePitch = std::get<0>(GetParam()).srcSlicePitch;
     auto allocation = buffer1->getGraphicsAllocation(pDevice->getRootDeviceIndex());
 
-    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation,                   //dstAllocation
-                                                                     allocation,                   //srcAllocation
-                                                                     buffer1Offset,                //dstOffset
-                                                                     buffer2Offset,                //srcOffset
-                                                                     bltSize,                      //copySize
-                                                                     buffer1RowPitch,              //srcRowPitch
-                                                                     buffer1SlicePitch,            //srcSlicePitch
-                                                                     buffer2RowPitch,              //dstRowPitch
-                                                                     buffer2SlicePitch,            //dstSlicePitch
-                                                                     csr.getClearColorAllocation() //clearColorAllocation
+    auto blitProperties = BlitProperties::constructPropertiesForCopy(allocation,                   // dstAllocation
+                                                                     allocation,                   // srcAllocation
+                                                                     buffer1Offset,                // dstOffset
+                                                                     buffer2Offset,                // srcOffset
+                                                                     bltSize,                      // copySize
+                                                                     buffer1RowPitch,              // srcRowPitch
+                                                                     buffer1SlicePitch,            // srcSlicePitch
+                                                                     buffer2RowPitch,              // dstRowPitch
+                                                                     buffer2SlicePitch,            // dstSlicePitch
+                                                                     csr.getClearColorAllocation() // clearColorAllocation
     );
     flushBcsTask(&csr, blitProperties, true, *pDevice);
 
@@ -1428,7 +1442,7 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
         EXPECT_NE(nullptr, bltCmd);
 
         uint32_t expectedWidth = static_cast<uint32_t>(BlitterConstants::maxBlitWidth);
-        uint32_t expectedHeight = static_cast<uint32_t>(BlitterConstants::maxBlitHeight);
+        uint32_t expectedHeight = static_cast<uint32_t>(BlitCommandsHelper<FamilyType>::getMaxBlitHeight(pDevice->getRootDeviceEnvironment(), true));
         if (i % numberOfBltsForSingleBltSizeProgramm == numberOfBltsForSingleBltSizeProgramm - 1) {
             expectedWidth = bltLeftover;
             expectedHeight = 1;
@@ -1502,7 +1516,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenBarrierNodeSetWhe
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.barrierTimestampPacketNodes = &timestampPacketDependencies.barrierNodes;
 
-    size_t expectedCmdSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
+    size_t expectedCmdSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
     size_t estimatedCmdSize = commandStreamReceiver->getCmdSizeForStallingCommands(dispatchFlags);
     EXPECT_EQ(expectedCmdSize, estimatedCmdSize);
 
@@ -1513,7 +1527,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenBarrierNodeSetWhe
     findHardwareCommands<FamilyType>();
     auto cmdItor = cmdList.begin();
 
-    if (MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hwInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hwInfo)) {
         PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(*cmdItor);
         ASSERT_NE(nullptr, pipeControl);
         cmdItor++;
@@ -1527,4 +1541,213 @@ HWCMDTEST_F(IGFX_GEN8_CORE, UltCommandStreamReceiverTest, givenBarrierNodeSetWhe
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
     EXPECT_EQ(0u, pipeControl->getImmediateData());
     EXPECT_EQ(gpuAddress, UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenFrontEndStateNotInitedWhenTransitionFrontEndPropertiesThenExpectCorrectValuesStored) {
+    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.feSupportFlags.computeDispatchAllWalker = false;
+    commandStreamReceiver.feSupportFlags.disableEuFusion = false;
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.feSupportFlags.disableOverdispatch = true;
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::NotApplicable;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.feSupportFlags.disableOverdispatch = false;
+    commandStreamReceiver.lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.feSupportFlags.computeDispatchAllWalker = true;
+    dispatchFlags.kernelExecutionType = KernelExecutionType::NotApplicable;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    dispatchFlags.kernelExecutionType = KernelExecutionType::Default;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    dispatchFlags.kernelExecutionType = KernelExecutionType::Concurrent;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.feSupportFlags.computeDispatchAllWalker = false;
+    commandStreamReceiver.lastKernelExecutionType = KernelExecutionType::Default;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.feSupportFlags.disableEuFusion = true;
+    dispatchFlags.disableEUFusion = false;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.streamProperties.frontEndState.disableEUFusion.value = 0;
+    dispatchFlags.disableEUFusion = true;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    dispatchFlags.disableEUFusion = false;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.feSupportFlags.disableEuFusion = false;
+    commandStreamReceiver.streamProperties.frontEndState.disableEUFusion.value = -1;
+    dispatchFlags.disableEUFusion = false;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenFrontEndStateInitedWhenTransitionFrontEndPropertiesThenExpectCorrectValuesStored) {
+    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.feSupportFlags.computeDispatchAllWalker = false;
+    commandStreamReceiver.feSupportFlags.disableEuFusion = false;
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.feSupportFlags.disableOverdispatch = true;
+
+    commandStreamReceiver.streamProperties.frontEndState.disableOverdispatch.value = 0;
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.streamProperties.frontEndState.disableOverdispatch.value = 1;
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.feSupportFlags.disableOverdispatch = false;
+    commandStreamReceiver.feSupportFlags.computeDispatchAllWalker = true;
+
+    commandStreamReceiver.streamProperties.frontEndState.computeDispatchAllWalkerEnable.value = 0;
+    dispatchFlags.kernelExecutionType = KernelExecutionType::Default;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    dispatchFlags.kernelExecutionType = KernelExecutionType::Concurrent;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.streamProperties.frontEndState.computeDispatchAllWalkerEnable.value = 1;
+    dispatchFlags.kernelExecutionType = KernelExecutionType::Default;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+}
+
+HWTEST_F(UltCommandStreamReceiverTest, givenPipelineSelectStateNotInitedWhenTransitionPipelineSelectPropertiesThenExpectCorrectValuesStored) {
+    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = false;
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
+
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = false;
+    commandStreamReceiver.lastMediaSamplerConfig = -1;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
+    commandStreamReceiver.lastMediaSamplerConfig = 0;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = false;
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = true;
+
+    commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = false;
+    commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = true;
+    commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+}
+
+HWTEST_F(UltCommandStreamReceiverTest,
+         givenPipelineSelectStateInitedWhenTransitionPipelineSelectPropertiesThenExpectCorrectValuesStored) {
+    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = false;
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
+
+    commandStreamReceiver.streamProperties.pipelineSelect.mediaSamplerDopClockGate.value = 1;
+    commandStreamReceiver.lastMediaSamplerConfig = -1;
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.streamProperties.pipelineSelect.mediaSamplerDopClockGate.value = 0;
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.streamProperties.pipelineSelect.mediaSamplerDopClockGate.value = 0;
+    commandStreamReceiver.lastMediaSamplerConfig = 1;
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = false;
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = true;
+
+    commandStreamReceiver.streamProperties.pipelineSelect.systolicMode.value = 1;
+    commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+
+    commandStreamReceiver.streamProperties.pipelineSelect.systolicMode.value = 0;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+
+    commandStreamReceiver.streamProperties.pipelineSelect.systolicMode.value = 0;
+    commandStreamReceiver.lastSystolicPipelineSelectMode = true;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
 }

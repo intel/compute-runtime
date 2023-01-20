@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/utilities/hw_timestamps.h"
+#include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/fixtures/memory_allocator_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -14,7 +16,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_timestamp_packet.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 
@@ -25,7 +27,7 @@ using namespace NEO;
 struct TagAllocatorTest : public Test<MemoryAllocatorFixture> {
     void SetUp() override {
         DebugManager.flags.CreateMultipleSubDevices.set(4);
-        MemoryAllocatorFixture::SetUp();
+        MemoryAllocatorFixture::setUp();
     }
 
     const DeviceBitfield deviceBitfield{0xf};
@@ -457,7 +459,7 @@ TEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenPopulatingTagsThenCreateMul
     auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(maxRootDeviceIndex + 1);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
 
@@ -487,7 +489,7 @@ HWTEST_F(TagAllocatorTest, givenMultipleRootDevicesWhenCallingMakeResidentThenUs
     auto executionEnvironment = std::make_unique<NEO::ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(maxRootDeviceIndex + 1);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
 

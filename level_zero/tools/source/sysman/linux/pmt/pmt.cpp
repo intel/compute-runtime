@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/debug_helpers.h"
 
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
@@ -121,9 +122,11 @@ ze_result_t PlatformMonitoringTech::enumerateRootTelemIndex(FsAccess *pFsAccess,
     return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
 }
 
-ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string &gpuUpstreamPortPath) {
+ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string &gpuUpstreamPortPath, PRODUCT_FAMILY productFamily) {
     std::string telemNode = telem + std::to_string(rootDeviceTelemNodeIndex);
-    if (isSubdevice) {
+    // For XE_HP_SDV and PVC single tile devices, telemetry info is retrieved from
+    // tile's telem node rather from root device telem node.
+    if ((isSubdevice) || ((productFamily == IGFX_PVC) || (productFamily == IGFX_XE_HP_SDV))) {
         uint32_t telemNodeIndex = 0;
         // If rootDeviceTelemNode is telem1, then rootDeviceTelemNodeIndex = 1
         // And thus for subdevice0 --> telem node will be telem2,
@@ -151,7 +154,7 @@ ze_result_t PlatformMonitoringTech::init(FsAccess *pFsAccess, const std::string 
                               "Telemetry sysfs entry not available %s\n", guidPath.c_str());
         return result;
     }
-    result = getKeyOffsetMap(guid, keyOffsetMap);
+    result = PlatformMonitoringTech::getKeyOffsetMap(guid, keyOffsetMap);
     if (ZE_RESULT_SUCCESS != result) {
         // We didnt have any entry for this guid in guidToKeyOffsetMap
         return result;
@@ -174,8 +177,8 @@ PlatformMonitoringTech::PlatformMonitoringTech(FsAccess *pFsAccess, ze_bool_t on
 
 void PlatformMonitoringTech::doInitPmtObject(FsAccess *pFsAccess, uint32_t subdeviceId, PlatformMonitoringTech *pPmt,
                                              const std::string &gpuUpstreamPortPath,
-                                             std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject) {
-    if (pPmt->init(pFsAccess, gpuUpstreamPortPath) == ZE_RESULT_SUCCESS) {
+                                             std::map<uint32_t, L0::PlatformMonitoringTech *> &mapOfSubDeviceIdToPmtObject, PRODUCT_FAMILY productFamily) {
+    if (pPmt->init(pFsAccess, gpuUpstreamPortPath, productFamily) == ZE_RESULT_SUCCESS) {
         mapOfSubDeviceIdToPmtObject.emplace(subdeviceId, pPmt);
         return;
     }
@@ -189,11 +192,12 @@ void PlatformMonitoringTech::create(const std::vector<ze_device_handle_t> &devic
         for (const auto &deviceHandle : deviceHandles) {
             uint32_t subdeviceId = 0;
             ze_bool_t onSubdevice = false;
-            SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice);
+            SysmanDeviceImp::getSysmanDeviceInfo(deviceHandle, subdeviceId, onSubdevice, true);
+            auto productFamily = SysmanDeviceImp::getProductFamily(Device::fromHandle(deviceHandle));
             auto pPmt = new PlatformMonitoringTech(pFsAccess, onSubdevice, subdeviceId);
             UNRECOVERABLE_IF(nullptr == pPmt);
             PlatformMonitoringTech::doInitPmtObject(pFsAccess, subdeviceId, pPmt,
-                                                    gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject);
+                                                    gpuUpstreamPortPath, mapOfSubDeviceIdToPmtObject, productFamily);
         }
     }
 }

@@ -1,17 +1,19 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/built_ins/builtinops/built_in_ops.h"
 #include "shared/source/execution_environment/execution_environment.h"
 
-#include <mutex>
 #include <utility>
 #include <vector>
+
+namespace std {
+struct once_flag;
+}
 
 namespace NEO {
 

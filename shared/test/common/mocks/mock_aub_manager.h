@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,10 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
-#include "third_party/aub_stream/headers/allocation_params.h"
-#include "third_party/aub_stream/headers/aub_manager.h"
-#include "third_party/aub_stream/headers/aubstream.h"
-#include "third_party/aub_stream/headers/hardware_context.h"
+#include "aubstream/allocation_params.h"
+#include "aubstream/aub_manager.h"
+#include "aubstream/aubstream.h"
+#include "aubstream/hardware_context.h"
 
 struct MockHardwareContext : public aub_stream::HardwareContext {
     using SurfaceInfo = aub_stream::SurfaceInfo;
@@ -42,6 +42,7 @@ struct MockHardwareContext : public aub_stream::HardwareContext {
     void readMemory(uint64_t gfxAddress, void *memory, size_t size, uint32_t memoryBank, size_t pageSize) override { readMemoryCalled = true; }
     void dumpBufferBIN(uint64_t gfxAddress, size_t size) override { dumpBufferBINCalled = true; }
     void dumpSurface(const SurfaceInfo &surfaceInfo) override { dumpSurfaceCalled = true; }
+    void pollForFenceCompletion() override {}
 
     std::vector<aub_stream::AllocationParams> storedAllocationParams;
     bool storeAllocationParams = false;
@@ -69,14 +70,7 @@ class MockAubManager : public aub_stream::AubManager {
 
   public:
     MockAubManager(){};
-    MockAubManager(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSize, uint32_t stepping, bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace) {
-        mockAubManagerParams.productFamily = productFamily;
-        mockAubManagerParams.devicesCount = devicesCount;
-        mockAubManagerParams.memoryBankSize = memoryBankSize;
-        mockAubManagerParams.stepping = stepping;
-        mockAubManagerParams.localMemorySupported = localMemorySupported;
-        mockAubManagerParams.streamMode = streamMode;
-        mockAubManagerParams.gpuAddressSpace = gpuAddressSpace;
+    MockAubManager(const aub_stream::AubManagerOptions &inputOptions) : options(inputOptions) {
     }
     ~MockAubManager() override {}
 
@@ -107,7 +101,7 @@ class MockAubManager : public aub_stream::AubManager {
     }
 
     void addComment(const char *message) override {
-        receivedComment.assign(message);
+        receivedComments.append(message);
         addCommentCalled = true;
     }
 
@@ -138,6 +132,9 @@ class MockAubManager : public aub_stream::AubManager {
         freeMemoryCalled = true;
     }
 
+    bool reservePhysicalMemory(aub_stream::AllocationParams allocationParams, aub_stream::PhysicalAllocationInfo &physicalAllocInfo) override { return false; };
+    bool mapGpuVa(uint64_t gfxAddress, size_t size, aub_stream::PhysicalAllocationInfo physicalAllocInfo) override { return false; };
+
     std::vector<aub_stream::AllocationParams> storedAllocationParams;
     uint32_t openCalledCnt = 0;
     std::string fileName = "";
@@ -146,7 +143,7 @@ class MockAubManager : public aub_stream::AubManager {
     bool getFileNameCalled = false;
     bool isPaused = false;
     bool addCommentCalled = false;
-    std::string receivedComment = "";
+    std::string receivedComments = "";
     bool writeMemory2Called = false;
     bool writePageTableEntriesCalled = false;
     bool writePhysicalMemoryPagesCalled = false;
@@ -156,15 +153,7 @@ class MockAubManager : public aub_stream::AubManager {
     int hintToWriteMemory = 0;
     size_t writeMemoryPageSizePassed = 0;
 
-    struct MockAubManagerParams {
-        uint32_t productFamily = 0;
-        int32_t devicesCount = 0;
-        uint64_t memoryBankSize = 0;
-        uint32_t stepping = 0;
-        bool localMemorySupported = false;
-        uint32_t streamMode = 0xFFFFFFFF;
-        uint64_t gpuAddressSpace = 0xFFFFFFFFFFFF;
-    } mockAubManagerParams;
+    aub_stream::AubManagerOptions options{};
 
   protected:
     HardwareContext *hardwareContext = nullptr;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-typedef SKLFamily Family;
+typedef Gen9Family Family;
 static auto gfxCore = IGFX_GEN9_CORE;
 
 #include "opencl/source/sampler/sampler_factory_init.inl"

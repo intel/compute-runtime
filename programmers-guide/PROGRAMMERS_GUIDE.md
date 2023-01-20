@@ -14,3 +14,4 @@ This document provides the architectural design followed in the Intel(R) Graphic
 
 ### [Implicit scaling](IMPLICIT_SCALING.md)
 ### [Immediate Commandlist](IMMEDIATE_COMMANDLIST.md)
+### [System Memory Allocations in Level Zero](SYSTEM_MEMORY_ALLOCATIONS.md)

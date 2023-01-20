@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,5 +13,6 @@ using namespace NEO;
 class MockBuiltinsLib : BuiltinsLib {
   public:
     using BuiltinsLib::allStorages;
+    using BuiltinsLib::getBuiltinCode;
     using BuiltinsLib::getBuiltinResource;
 };

@@ -12,7 +12,6 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_l0_debugger_1.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_l0_debugger_2.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_l0_debugger_sba_tracking.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/test_l0_debugger_single_address_space.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_module_with_debug.cpp
 )
 

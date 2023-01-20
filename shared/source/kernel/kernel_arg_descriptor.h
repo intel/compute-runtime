@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,11 +10,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/kernel/kernel_arg_metadata.h"
 #include "shared/source/utilities/arrayref.h"
-#include "shared/source/utilities/stackvec.h"
-
-#include <cinttypes>
-#include <cstddef>
-#include <limits>
 
 namespace NEO {
 
@@ -50,6 +45,26 @@ struct ArgDescPointer final {
     }
 };
 
+enum class NEOImageType : uint8_t {
+    ImageTypeUnknown,
+    ImageTypeBuffer,
+    ImageType1D,
+    ImageType1DArray,
+    ImageType2D,
+    ImageType2DArray,
+    ImageType3D,
+    ImageTypeCube,
+    ImageTypeCubeArray,
+    ImageType2DDepth,
+    ImageType2DArrayDepth,
+    ImageType2DMSAA,
+    ImageType2DMSAADepth,
+    ImageType2DArrayMSAA,
+    ImageType2DArrayMSAADepth,
+    ImageType2DMedia,
+    ImageType2DMediaBlock,
+};
+
 struct ArgDescImage final {
     SurfaceStateHeapOffset bindful = undefined<SurfaceStateHeapOffset>; // stateful with BTI
     CrossThreadDataOffset bindless = undefined<CrossThreadDataOffset>;
@@ -69,6 +84,7 @@ struct ArgDescImage final {
         CrossThreadDataOffset flatHeight = undefined<CrossThreadDataOffset>;
         CrossThreadDataOffset flatPitch = undefined<CrossThreadDataOffset>;
     } metadataPayload;
+    NEOImageType imageType;
 };
 
 struct ArgDescSampler final {
@@ -87,6 +103,7 @@ struct ArgDescValue final {
         CrossThreadDataOffset offset = undefined<CrossThreadDataOffset>;
         uint16_t size = 0U;
         uint16_t sourceOffset = 0U;
+        bool isPtr = false;
     };
     StackVec<Element, 1> elements;
 };
@@ -113,7 +130,6 @@ struct ArgDescriptor final {
                 bool isTransformable : 1;
                 bool needsPatch : 1;
                 bool hasVmeExtendedDescriptor : 1;
-                bool hasDeviceSideEnqueueExtendedDescriptor : 1;
             };
             uint32_t packed;
         };
@@ -164,7 +180,9 @@ struct ArgDescriptor final {
         case ArgTImage:
             return (KernelArgMetadata::AccessReadOnly == traits.accessQualifier);
         case ArgTPointer:
-            return (KernelArgMetadata::AddrConstant == traits.addressQualifier) || (traits.typeQualifiers.constQual);
+            return (KernelArgMetadata::AddrConstant == traits.addressQualifier) ||
+                   (KernelArgMetadata::AccessReadOnly == traits.accessQualifier) ||
+                   traits.typeQualifiers.constQual;
         }
     }
 
@@ -185,7 +203,7 @@ struct ArgDescriptor final {
 
 namespace {
 constexpr auto ArgSize = sizeof(ArgDescriptor);
-static_assert(ArgSize <= 64, "Keep it small");
+static_assert(ArgSize <= 72, "Keep it small");
 } // namespace
 
 template <>

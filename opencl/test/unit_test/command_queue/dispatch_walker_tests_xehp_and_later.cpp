@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/fixtures/linear_stream_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -28,6 +29,7 @@
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/source/kernel/kernel.h"
+#include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
@@ -40,8 +42,8 @@ using namespace NEO;
 using WalkerDispatchTest = ::testing::Test;
 
 struct XeHPAndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
-    void SetUp() override {
-        LinearStreamFixture::SetUp();
+    void setUp() {
+        LinearStreamFixture::setUp();
         memset(globalOffsets, 0, sizeof(globalOffsets));
         memset(startWorkGroups, 0, sizeof(startWorkGroups));
 
@@ -459,16 +461,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
     MockCommandQueue cmdQ(context.get(), device.get(), nullptr, false);
     auto &cmdStream = cmdQ.getCS(0);
 
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(CL_COMMAND_NDRANGE_KERNEL);
+    walkerArgs.currentTimestampPacketNodes = &timestampPacketContainer;
     HardwareInterface<FamilyType>::dispatchWalker(
         cmdQ,
         multiDispatchInfo,
         CsrDependencies(),
-        nullptr,
-        nullptr,
-        nullptr,
-        nullptr,
-        &timestampPacketContainer,
-        false);
+        walkerArgs);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
@@ -559,13 +558,20 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0, false, false);
-    auto sizeWithDisabled = cmdQ.requestedCmdStreamSize;
+    size_t sizeWithDisabled = cmdQ.requestedCmdStreamSize;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0, false, false);
-    auto sizeWithEnabled = cmdQ.requestedCmdStreamSize;
+    size_t sizeWithEnabled = cmdQ.requestedCmdStreamSize;
 
-    EXPECT_EQ(sizeWithEnabled, sizeWithDisabled + 0);
+    size_t additionalSize = 0u;
+    const auto &hwInfo = device->getHardwareInfo();
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    if (productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, cmdQ.isOOQEnabled())) {
+        additionalSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
+    }
+
+    EXPECT_EQ(sizeWithEnabled, sizeWithDisabled + additionalSize);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenDebugVariableEnabledWhenEnqueueingThenWritePostsyncOperationInImmWriteMode) {
@@ -685,10 +691,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
     kd.kernelAttributes.flags.passInlineData = true;
-    kd.kernelAttributes.localId[0] = 1;
-    kd.kernelAttributes.localId[1] = 0;
-    kd.kernelAttributes.localId[2] = 0;
-    kd.kernelAttributes.numLocalIdChannels = 1;
 
     kernel->mockKernel->setCrossThreadData(crossThreadDataGrf, sizeof(INLINE_DATA));
 
@@ -722,8 +724,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataGrf, sizeof(INLINE_DATA)));
 
     uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
-    //only X is present
-    auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, sizeGrf, 1);
+    // only X is present
+    auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, sizeGrf);
     sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
     size_t perThreadTotalDataSize = getThreadsPerWG(simd, lws[0]) * sizePerThreadData;
 
@@ -825,15 +827,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     EXPECT_EQ(0, memcmp(payloadData, &crossThreadDataTwoGrf[sizeof(INLINE_DATA) / sizeof(uint32_t)], sizeof(INLINE_DATA)));
 
     uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
-    //only X is present
-    uint32_t localIdSizePerThread = PerThreadDataHelper::getLocalIdSizePerThread(simd, sizeGrf, 1);
+    // only X is present
+    uint32_t localIdSizePerThread = getPerThreadSizeLocalIDs(simd, sizeGrf);
     localIdSizePerThread = std::max(localIdSizePerThread, sizeGrf);
     auto sizePerThreadData = getThreadsPerWG(simd, lws[0]) * localIdSizePerThread;
 
     auto crossThreadDataSize = kernel->mockKernel->getCrossThreadDataSize();
     crossThreadDataSize -= std::min(static_cast<uint32_t>(sizeof(INLINE_DATA)), crossThreadDataSize);
 
-    //second GRF in indirect
+    // second GRF in indirect
     uint32_t expectedIndirectDataLength = static_cast<uint32_t>(sizePerThreadData + crossThreadDataSize);
     expectedIndirectDataLength = alignUp(expectedIndirectDataLength, COMPUTE_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
     EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
@@ -841,7 +843,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     memoryManager->freeGraphicsMemory(kernel->kernelInfo.kernelAllocation);
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlineDataEnabledWhenNoLocalIdsUsedThenExpectCrossThreadDataInWalkerAndNoEmitLocalFieldSet) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelWithoutLocalIdsAndPassInlineDataEnabledWhenNoHWGenerationOfLocalIdsUsedThenExpectCrossThreadDataInWalkerAndNoEmitLocalFieldSet) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     using INLINE_DATA = typename FamilyType::INLINE_DATA;
 
@@ -852,9 +854,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
     kd.kernelAttributes.flags.passInlineData = true;
-    kd.kernelAttributes.localId[0] = 0;
-    kd.kernelAttributes.localId[1] = 0;
-    kd.kernelAttributes.localId[2] = 0;
     kd.kernelAttributes.numLocalIdChannels = 0;
 
     kernel->mockKernel->setCrossThreadData(crossThreadDataGrf, sizeof(INLINE_DATA));
@@ -879,11 +878,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
     EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), crossThreadDataGrf, sizeof(INLINE_DATA)));
 
-    uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
-    //only X is present
-    auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, 1);
-    sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
-    size_t perThreadTotalDataSize = getThreadsPerWG(simd, lws[0]) * sizePerThreadData;
+    size_t perThreadTotalDataSize = 0U;
     uint32_t expectedIndirectDataLength = static_cast<uint32_t>(perThreadTotalDataSize);
     expectedIndirectDataLength = alignUp(expectedIndirectDataLength, COMPUTE_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
     EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
@@ -903,9 +898,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
 
     auto &kd = kernel->kernelInfo.kernelDescriptor;
     kd.kernelAttributes.flags.passInlineData = true;
-    kd.kernelAttributes.localId[0] = 0;
-    kd.kernelAttributes.localId[1] = 0;
-    kd.kernelAttributes.localId[2] = 0;
     kd.kernelAttributes.numLocalIdChannels = 0;
 
     kernel->mockKernel->setCrossThreadData(crossThreadDataTwoGrf, sizeof(INLINE_DATA) * 2);
@@ -932,13 +924,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     void *payloadData = ih.getCpuBase();
     EXPECT_EQ(0, memcmp(payloadData, &crossThreadDataTwoGrf[sizeof(INLINE_DATA) / sizeof(uint32_t)], sizeof(INLINE_DATA)));
 
-    uint32_t simd = kernel->mockKernel->getKernelInfo().getMaxSimdSize();
-    //only X is present
-    auto sizePerThreadData = getPerThreadSizeLocalIDs(simd, 1);
-    sizePerThreadData = std::max(sizePerThreadData, sizeGrf);
-    size_t perThreadTotalDataSize = getThreadsPerWG(simd, lws[0]) * sizePerThreadData;
+    size_t perThreadTotalDataSize = 0;
 
-    //second GRF in indirect
+    // second GRF in indirect
     uint32_t expectedIndirectDataLength = static_cast<uint32_t>(perThreadTotalDataSize + sizeof(INLINE_DATA));
     expectedIndirectDataLength = alignUp(expectedIndirectDataLength, COMPUTE_WALKER::INDIRECTDATASTARTADDRESS_ALIGN_SIZE);
     EXPECT_EQ(expectedIndirectDataLength, walker->getIndirectDataLength());
@@ -1098,7 +1086,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device, nullptr);
     auto &csr = cmdQ->getUltCommandStreamReceiver();
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(device->getHardwareInfo()) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getHardwareInfo()) ? 2 : 1;
 
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
@@ -1113,6 +1101,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.crossTileAtomicSynchronization = true;
     testArgs.emitPipeControlStall = true;
     testArgs.partitionCount = 2u;
+    testArgs.dcFlushEnable = csr.getDcFlushSupport();
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
     DebugManager.flags.SynchronizeWalkerInWparidMode.set(0);
@@ -1155,7 +1144,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(&context, device, nullptr);
     auto &csr = cmdQ->getUltCommandStreamReceiver();
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(device->getHardwareInfo()) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getHardwareInfo()) ? 2 : 1;
 
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
@@ -1170,6 +1159,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.emitPipeControlStall = false;
     testArgs.partitionCount = 2u;
+    testArgs.dcFlushEnable = csr.getDcFlushSupport();
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
     DebugManager.flags.SynchronizeWalkerInWparidMode.set(0);
@@ -1206,7 +1196,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenWalkerPart
     DebugManager.flags.EnableWalkerPartition.set(0u);
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(device->getHardwareInfo()) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getHardwareInfo()) ? 2 : 1;
 
     DispatchInfo dispatchInfo{};
     dispatchInfo.setNumberOfWorkgroups({32, 1, 1});
@@ -1226,7 +1216,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenPipeContro
     hwInfo.featureTable.flags.ftrLocalMemory = true;
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hwInfo) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hwInfo) ? 2 : 1;
 
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
@@ -1242,8 +1232,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), true);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    auto &csr = cmdQ->getUltCommandStreamReceiver();
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(device->getHardwareInfo()) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getHardwareInfo()) ? 2 : 1;
 
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
@@ -1255,6 +1246,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.emitPipeControlStall = true;
     testArgs.crossTileAtomicSynchronization = true;
     testArgs.partitionCount = 16u;
+    testArgs.dcFlushEnable = csr.getDcFlushSupport();
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
     auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);
@@ -1271,8 +1263,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     VariableBackup<bool> pipeControlConfigBackup(&ImplicitScalingDispatch<FamilyType>::getPipeControlStallRequired(), false);
 
     auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    auto &csr = cmdQ->getUltCommandStreamReceiver();
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(device->getHardwareInfo()) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(device->getHardwareInfo()) ? 2 : 1;
 
     auto baseSize = sizeof(typename FamilyType::COMPUTE_WALKER) +
                     (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
@@ -1284,6 +1277,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, GivenPipeContr
     testArgs.emitPipeControlStall = false;
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.partitionCount = 16u;
+    testArgs.dcFlushEnable = csr.getDcFlushSupport();
     testArgs.tileCount = static_cast<uint32_t>(device->getDeviceBitfield().count());
 
     auto partitionSize = WalkerPartition::estimateSpaceRequiredInCommandBuffer<FamilyType>(testArgs);
@@ -1330,29 +1324,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWal
     auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
     ASSERT_NE(nullptr, computeWalker);
     EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenKernelThatPrefersSingleSubdeviceWhenProgramWalkerThenPartitioningIsNotUsed) {
-    if (!OSInterface::osEnableLocalMemory) {
-        GTEST_SKIP();
-    }
-
-    struct SingleSubdeviceKernel : public MockKernel {
-        using MockKernel::MockKernel;
-        bool isSingleSubdevicePreferred() const override { return true; }
-    };
-
-    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
-    size_t gws[] = {2, 1, 1};
-    size_t lws[] = {1, 1, 1};
-    SingleSubdeviceKernel subdeviceKernel(kernel->mockProgram, kernel->kernelInfo, *device);
-    cmdQ->enqueueKernel(&subdeviceKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
-
-    ClHardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(*cmdQ);
-    auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
-    ASSERT_NE(nullptr, computeWalker);
-    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_DISABLED, computeWalker->getPartitionType());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenProgramWalkerIsCalledWithPartitionLogicDisabledThenWalkerPartitionLogicIsNotExecuted) {
@@ -1489,9 +1460,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, whenDispatchPr
 
     auto hwTimeStamp1 = timeStampAllocator.getTag();
 
-    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp1, &cmdStream, device->getHardwareInfo());
+    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsStart(*hwTimeStamp1, &cmdStream, device->getRootDeviceEnvironment());
 
-    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp1, &cmdStream, device->getHardwareInfo());
+    GpgpuWalkerHelper<FamilyType>::dispatchProfilingCommandsEnd(*hwTimeStamp1, &cmdStream, device->getRootDeviceEnvironment());
 
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
@@ -1870,7 +1841,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenEnabledLocalIdsGenerationW
         workDim, lws, walkOrder, true, requiredWalkOrder, simd));
     EXPECT_EQ(0u, requiredWalkOrder);
 
-    //incorrect walkOrder returns 6
+    // incorrect walkOrder returns 6
     walkOrder = {2, 2, 0};
     EXPECT_FALSE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws, walkOrder, true, requiredWalkOrder, simd));
@@ -1926,4 +1897,70 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerDispatchTest, givenSimdSize1TWhenCheckToGener
     simd = 1;
     EXPECT_TRUE(EncodeDispatchKernel<FamilyType>::isRuntimeLocalIdsGenerationRequired(
         workDim, lws.data(), walkOrder, false, requiredWalkOrder, simd));
+}
+
+struct XeHPAndLaterDispatchWalkerTestMultiTileDevice : public XeHPAndLaterDispatchWalkerBasicTest {
+    void SetUp() override {
+        DebugManager.flags.CreateMultipleSubDevices.set(2u);
+
+        XeHPAndLaterDispatchWalkerBasicTest::SetUp();
+    }
+    void TearDown() override {
+        XeHPAndLaterDispatchWalkerBasicTest::TearDown();
+    }
+};
+
+struct KernelWithSingleSubdevicePreferences : public MockKernel {
+    using MockKernel::MockKernel;
+    bool isSingleSubdevicePreferred() const override { return singleSubdevicePreferred; }
+
+    bool singleSubdevicePreferred = true;
+};
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, givenKernelThatPrefersSingleSubdeviceWhenProgramWalkerThenKernelIsExecutedOnSingleTile) {
+    if (!OSInterface::osEnableLocalMemory) {
+        GTEST_SKIP();
+    }
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    size_t gws[] = {2, 1, 1};
+    size_t lws[] = {1, 1, 1};
+    auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
+    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    KernelWithSingleSubdevicePreferences subdeviceKernel(kernel->mockProgram, kernel->kernelInfo, *device);
+    subdeviceKernel.singleSubdevicePreferred = true;
+    cmdQ->enqueueKernel(&subdeviceKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
+
+    ClHardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ);
+    auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
+    ASSERT_NE(nullptr, computeWalker);
+    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
+    EXPECT_EQ(2u, computeWalker->getPartitionSize());
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerTestMultiTileDevice, givenKernelThatDoesntPreferSingleSubdeviceWhenProgramWalkerThenKernelIsExecutedOnAllTiles) {
+    if (!OSInterface::osEnableLocalMemory) {
+        GTEST_SKIP();
+    }
+
+    auto cmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    size_t gws[] = {2, 1, 1};
+    size_t lws[] = {1, 1, 1};
+    auto &commandStreamReceiver = cmdQ->getUltCommandStreamReceiver();
+    if (device->getPreemptionMode() == PreemptionMode::MidThread || device->isDebuggerActive()) {
+        commandStreamReceiver.createPreemptionAllocation();
+    }
+    KernelWithSingleSubdevicePreferences subdeviceKernel(kernel->mockProgram, kernel->kernelInfo, *device);
+    subdeviceKernel.singleSubdevicePreferred = false;
+    cmdQ->enqueueKernel(&subdeviceKernel, 1, nullptr, gws, lws, 0, nullptr, nullptr);
+
+    ClHardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(*cmdQ);
+    auto computeWalker = reinterpret_cast<typename FamilyType::COMPUTE_WALKER *>(hwParser.cmdWalker);
+    ASSERT_NE(nullptr, computeWalker);
+    EXPECT_EQ(FamilyType::COMPUTE_WALKER::PARTITION_TYPE::PARTITION_TYPE_X, computeWalker->getPartitionType());
+    EXPECT_EQ(1u, computeWalker->getPartitionSize());
 }

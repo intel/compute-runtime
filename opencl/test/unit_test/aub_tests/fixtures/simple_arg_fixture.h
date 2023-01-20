@@ -43,23 +43,23 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
     typedef typename FixtureFactory::CommandQueueFixture CommandQueueFixture;
     typedef typename FixtureFactory::KernelFixture KernelFixture;
 
-    using AUBCommandStreamFixture::SetUp;
+    using AUBCommandStreamFixture::setUp;
     using CommandQueueFixture::pCmdQ;
     using CommandStreamFixture::pCS;
-    using IndirectHeapFixture::SetUp;
+    using IndirectHeapFixture::setUp;
     using KernelFixture::pKernel;
-    using KernelFixture::SetUp;
+    using KernelFixture::setUp;
 
   public:
-    void SetUp() override {
-        ClDeviceFixture::SetUp();
+    void setUp() {
+        ClDeviceFixture::setUp();
         ASSERT_NE(nullptr, pClDevice);
-        CommandQueueFixture::SetUp(pClDevice, 0);
+        CommandQueueFixture::setUp(pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
-        CommandStreamFixture::SetUp(pCmdQ);
+        CommandStreamFixture::setUp(pCmdQ);
         ASSERT_NE(nullptr, pCS);
-        IndirectHeapFixture::SetUp(pCmdQ);
-        KernelFixture::SetUp(pClDevice);
+        IndirectHeapFixture::setUp(pCmdQ);
+        KernelFixture::setUp(pClDevice);
         ASSERT_NE(nullptr, pKernel);
 
         argVal = static_cast<int>(0x22222222);
@@ -82,7 +82,7 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
         outBuffer->setMemObjectsAllocationWithWritableFlags(true);
     }
 
-    void TearDown() override {
+    void tearDown() {
         if (pExpectedMemory) {
             alignedFree(pExpectedMemory);
             pExpectedMemory = nullptr;
@@ -92,11 +92,11 @@ struct SimpleArgFixture : public FixtureFactory::IndirectHeapFixture,
             pDestMemory = nullptr;
         }
 
-        KernelFixture::TearDown();
-        IndirectHeapFixture::TearDown();
-        CommandStreamFixture::TearDown();
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        KernelFixture::tearDown();
+        IndirectHeapFixture::tearDown();
+        CommandStreamFixture::tearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     int argVal = 0;

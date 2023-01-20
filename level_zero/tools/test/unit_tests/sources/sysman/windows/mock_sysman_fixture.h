@@ -10,7 +10,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/sysman/sysman.h"
@@ -39,7 +39,7 @@ class SysmanDeviceFixture : public DeviceFixture, public SysmanEnabledFixture {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
 
         SysmanEnabledFixture::SetUp();
@@ -55,7 +55,7 @@ class SysmanDeviceFixture : public DeviceFixture, public SysmanEnabledFixture {
             GTEST_SKIP();
         }
         SysmanEnabledFixture::TearDown();
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     SysmanDevice *pSysmanDevice = nullptr;

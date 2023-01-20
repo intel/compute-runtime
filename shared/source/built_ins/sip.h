@@ -1,22 +1,24 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/built_ins/sip_kernel_type.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/program/program_info.h"
 
-#include <memory>
+#include "shared/source/built_ins/sip_kernel_type.h"
+
+#include <string>
 #include <vector>
+
 namespace NEO {
 
 class Device;
 class GraphicsAllocation;
 class MemoryManager;
+class GfxCoreHelper;
+
 struct RootDeviceEnvironment;
 
 class SipKernel {
@@ -62,10 +64,11 @@ class SipKernel {
     static std::string createHeaderFilename(const std::string &filename);
 
     static bool initHexadecimalArraySipKernel(SipKernelType type, Device &device);
-    static void selectSipClassType(std::string &fileName, const HardwareInfo &hwInfo);
+    static void selectSipClassType(std::string &fileName, const GfxCoreHelper &gfxCoreHelper);
 
     const std::vector<char> stateSaveAreaHeader;
     GraphicsAllocation *sipAllocation = nullptr;
     SipKernelType type = SipKernelType::COUNT;
 };
+
 } // namespace NEO

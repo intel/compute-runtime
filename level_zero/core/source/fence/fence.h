@@ -7,10 +7,8 @@
 
 #pragma once
 
-#include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/task_count_helper.h"
 
-#include "level_zero/core/source/cmdqueue/cmdqueue.h"
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 #include <level_zero/ze_api.h>
 
 #include <chrono>
@@ -19,6 +17,8 @@
 struct _ze_fence_handle_t {};
 
 namespace L0 {
+
+struct CommandQueueImp;
 
 struct Fence : _ze_fence_handle_t {
     static Fence *create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc);
@@ -41,7 +41,7 @@ struct Fence : _ze_fence_handle_t {
 
     std::chrono::microseconds gpuHangCheckPeriod{500'000};
     CommandQueueImp *cmdQueue;
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
 };
 
 } // namespace L0

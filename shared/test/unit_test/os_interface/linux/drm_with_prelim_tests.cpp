@@ -1,10 +1,12 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -22,11 +24,7 @@ extern int handlePrelimRequests(DrmIoctl request, void *arg, int ioctlRetVal, in
 
 class DrmPrelimMock : public DrmMock {
   public:
-    DrmPrelimMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmPrelimMock(rootDeviceEnvironment, defaultHwInfo.get()) {}
-    DrmPrelimMock(RootDeviceEnvironment &rootDeviceEnvironment, HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
-        rootDeviceEnvironment.setHwInfo(inputHwInfo);
-        rootDeviceEnvironment.getMutableHardwareInfo()->platform.eProductFamily = IGFX_UNKNOWN;
-    }
+    using DrmMock::DrmMock;
 
     int ioctlRetVal = 0;
     int queryDistanceIoctlRetVal = 0;
@@ -36,6 +34,30 @@ class DrmPrelimMock : public DrmMock {
     }
 
     int handleRemainingRequests(DrmIoctl request, void *arg) override {
+        if (request == DrmIoctl::Query && arg != nullptr) {
+            auto queryArg = static_cast<Query *>(arg);
+            for (auto i = 0u; i < queryArg->numItems; i++) {
+                auto queryItemArg = (reinterpret_cast<QueryItem *>(queryArg->itemsPtr) + i);
+                if (queryItemArg->queryId == PRELIM_DRM_I915_QUERY_HW_IP_VERSION) {
+                    ioctlCallsCount--;
+                    if (queryItemArg->length == 0) {
+                        queryItemArg->length = static_cast<int32_t>(sizeof(prelim_drm_i915_query_hw_ip_version));
+                        if (this->returnInvalidHwIpVersionLength) {
+                            queryItemArg->length -= 1;
+                        }
+                    } else {
+                        if (this->failRetHwIpVersion) {
+                            return EINVAL;
+                        }
+                        auto hwIpVersion = reinterpret_cast<prelim_drm_i915_query_hw_ip_version *>(queryItemArg->dataPtr);
+                        hwIpVersion->stepping = 1;
+                        hwIpVersion->release = 2;
+                        hwIpVersion->arch = 3;
+                    }
+                    return 0;
+                }
+            }
+        }
         return handlePrelimRequests(request, arg, ioctlRetVal, queryDistanceIoctlRetVal);
     }
 };
@@ -43,8 +65,7 @@ class DrmPrelimMock : public DrmMock {
 class IoctlHelperPrelimFixture : public ::testing::Test {
   public:
     void SetUp() override {
-        executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        executionEnvironment->prepareRootDeviceEnvironments(1);
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
         drm->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*drm);
     }
@@ -66,9 +87,9 @@ TEST(IoctlHelperPrelimTest, whenGettingVmBindAvailabilityThenProperValueIsReturn
             drm.context.vmBindQueryCalled = 0u;
 
             if (ioctlValue == 0) {
-                EXPECT_EQ(hasVmBind, ioctlHelper.isVmBindAvailable(&drm));
+                EXPECT_EQ(hasVmBind, ioctlHelper.isVmBindAvailable());
             } else {
-                EXPECT_FALSE(ioctlHelper.isVmBindAvailable(&drm));
+                EXPECT_FALSE(ioctlHelper.isVmBindAvailable());
             }
             EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
         }
@@ -86,7 +107,7 @@ TEST(IoctlHelperPrelimTest, whenVmBindIsCalledThenProperValueIsReturnedBasedOnIo
     for (auto &ioctlValue : {0, EINVAL}) {
         drm.context.vmBindReturn = ioctlValue;
         drm.context.vmBindCalled = 0u;
-        EXPECT_EQ(ioctlValue, ioctlHelper.vmBind(&drm, vmBindParams));
+        EXPECT_EQ(ioctlValue, ioctlHelper.vmBind(vmBindParams));
         EXPECT_EQ(1u, drm.context.vmBindCalled);
     }
 }
@@ -102,7 +123,7 @@ TEST(IoctlHelperPrelimTest, whenVmUnbindIsCalledThenProperValueIsReturnedBasedOn
     for (auto &ioctlValue : {0, EINVAL}) {
         drm.context.vmUnbindReturn = ioctlValue;
         drm.context.vmUnbindCalled = 0u;
-        EXPECT_EQ(ioctlValue, ioctlHelper.vmUnbind(&drm, vmBindParams));
+        EXPECT_EQ(ioctlValue, ioctlHelper.vmUnbind(vmBindParams));
         EXPECT_EQ(1u, drm.context.vmUnbindCalled);
     }
 }
@@ -111,11 +132,11 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) 
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
-    MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
-    auto ret = ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle, {});
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
+    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1);
 
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -126,8 +147,8 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
     testing::internal::CaptureStdout();
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
-    MemRegionsVec memClassInstance = {{I915_MEMORY_CLASS_DEVICE, 0}};
-    ioctlHelper->createGemExt(drm.get(), memClassInstance, 1024, handle, {});
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
+    ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, param: 0x1000000010001, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT has returned: 0 BO-1 with size: 1024\n");
@@ -137,15 +158,15 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegistered) {
     GemContextCreateExt arg{};
     drm->ioctlCallsCount = 0;
-    auto ret = drm->ioctlHelper->ioctl(drm.get(), DrmIoctl::GemContextCreateExt, &arg);
-    EXPECT_EQ(0u, ret);
+    auto ret = drm->ioctlHelper->ioctl(DrmIoctl::GemContextCreateExt, &arg);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocThenReturnCorrectRegion) {
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closAlloc(drm.get());
+    auto cacheRegion = ioctlHelper->closAlloc();
 
     EXPECT_EQ(CacheRegion::Region1, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -155,7 +176,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAll
     drm->ioctlRetVal = -1;
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closAlloc(drm.get());
+    auto cacheRegion = ioctlHelper->closAlloc();
 
     EXPECT_EQ(CacheRegion::None, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -164,7 +185,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAll
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosFreeThenReturnCorrectRegion) {
     auto ioctlHelper = drm->getIoctlHelper();
     drm->ioctlCallsCount = 0;
-    auto cacheRegion = ioctlHelper->closFree(drm.get(), CacheRegion::Region2);
+    auto cacheRegion = ioctlHelper->closFree(CacheRegion::Region2);
 
     EXPECT_EQ(CacheRegion::Region2, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -175,7 +196,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosFre
     drm->ioctlCallsCount = 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
-    auto cacheRegion = ioctlHelper->closFree(drm.get(), CacheRegion::Region2);
+    auto cacheRegion = ioctlHelper->closFree(CacheRegion::Region2);
 
     EXPECT_EQ(CacheRegion::None, cacheRegion);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -184,7 +205,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosFre
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenClosAllocWaysThenReturnCorrectRegion) {
     drm->ioctlCallsCount = 0;
     auto ioctlHelper = drm->getIoctlHelper();
-    auto numWays = ioctlHelper->closAllocWays(drm.get(), CacheRegion::Region2, 3, 10);
+    auto numWays = ioctlHelper->closAllocWays(CacheRegion::Region2, 3, 10);
 
     EXPECT_EQ(10u, numWays);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -195,7 +216,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsAndInvalidIoctlReturnValWhenClosAll
     drm->ioctlCallsCount = 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
-    auto numWays = ioctlHelper->closAllocWays(drm.get(), CacheRegion::Region2, 3, 10);
+    auto numWays = ioctlHelper->closAllocWays(CacheRegion::Region2, 3, 10);
 
     EXPECT_EQ(0u, numWays);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -206,7 +227,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenWaitUserFenceThenCorrectValueRe
     uint64_t value = 0x98765ull;
     auto ioctlHelper = drm->getIoctlHelper();
     for (uint32_t i = 0u; i < 4; i++) {
-        auto ret = ioctlHelper->waitUserFence(drm.get(), 10u, gpuAddress, value, i, -1, 0u);
+        auto ret = ioctlHelper->waitUserFence(10u, gpuAddress, value, i, -1, 0u);
         EXPECT_EQ(0, ret);
     }
 }
@@ -220,12 +241,12 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseFailsThenDont
     allocation.bufferObjects[0] = &bo;
 
     MemAdviseFlags memAdviseFlags{};
-    memAdviseFlags.non_atomic = 1;
+    memAdviseFlags.nonAtomic = 1;
 
     allocation.setMemAdvise(drm.get(), memAdviseFlags);
 
     EXPECT_EQ(1u, drm->ioctlCallsCount);
-    EXPECT_NE(memAdviseFlags.memadvise_flags, allocation.enabledMemAdviseFlags.memadvise_flags);
+    EXPECT_NE(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomicIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
@@ -237,10 +258,10 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomic
     MemAdviseFlags memAdviseFlags{};
 
     for (auto nonAtomic : {true, false}) {
-        memAdviseFlags.non_atomic = nonAtomic;
+        memAdviseFlags.nonAtomic = nonAtomic;
 
         EXPECT_TRUE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
-        EXPECT_EQ(memAdviseFlags.memadvise_flags, allocation.enabledMemAdviseFlags.memadvise_flags);
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
     }
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
@@ -254,30 +275,32 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePre
     MemAdviseFlags memAdviseFlags{};
 
     for (auto devicePreferredLocation : {true, false}) {
-        memAdviseFlags.device_preferred_location = devicePreferredLocation;
+        memAdviseFlags.devicePreferredLocation = devicePreferredLocation;
 
         EXPECT_TRUE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
-        EXPECT_EQ(memAdviseFlags.memadvise_flags, allocation.enabledMemAdviseFlags.memadvise_flags);
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
     }
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchSucceedsThenReturnTrue) {
+    SubDeviceIdsVec subDeviceIds{0};
     MockBufferObject bo(drm.get(), 3, 0, 0, 1);
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     drm->ioctlRetVal = 0;
-    EXPECT_TRUE(allocation.setMemPrefetch(drm.get(), 0));
+    EXPECT_TRUE(allocation.setMemPrefetch(drm.get(), subDeviceIds));
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchFailsThenReturnFalse) {
+    SubDeviceIdsVec subDeviceIds{0};
     MockBufferObject bo(drm.get(), 3, 0, 0, 1);
     MockDrmAllocation allocation(AllocationType::BUFFER, MemoryPool::LocalMemory);
     allocation.bufferObjects[0] = &bo;
 
     drm->ioctlRetVal = EINVAL;
-    EXPECT_FALSE(allocation.setMemPrefetch(drm.get(), 0));
+    EXPECT_FALSE(allocation.setMemPrefetch(drm.get(), subDeviceIds));
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenVariousDirectSubmissionFlagSettingWhenCreateDrmContextIsCalledThenCorrectFlagsArePassedToIoctl) {
@@ -310,14 +333,14 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistan
     auto ioctlHelper = drm->getIoctlHelper();
     std::vector<DistanceInfo> distances(3);
     distances[0].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 0};
-    distances[0].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    distances[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     distances[1].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassRender)), 1};
-    distances[1].region = {I915_MEMORY_CLASS_DEVICE, 1};
+    distances[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1};
     distances[2].engine = {static_cast<uint16_t>(ioctlHelper->getDrmParamValue(DrmParam::EngineClassCopy)), 4};
-    distances[2].region = {I915_MEMORY_CLASS_DEVICE, 2};
+    distances[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2};
     std::vector<QueryItem> queryItems(distances.size());
-    auto ret = ioctlHelper->queryDistances(drm.get(), queryItems, distances);
-    EXPECT_EQ(0u, ret);
+    auto ret = ioctlHelper->queryDistances(queryItems, distances);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(0, distances[0].distance);
     EXPECT_EQ(0, distances[1].distance);
     EXPECT_EQ(100, distances[2].distance);
@@ -326,11 +349,11 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenQueryDistancesThenCorrectDistan
 TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoWithDeviceMemoryThenDistancesUsedAndMultileValuesSet) {
     drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
-        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
-    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
     EXPECT_TRUE(drm->queryEngineInfo());
     EXPECT_EQ(3u, drm->ioctlCallsCount);
     auto hwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
@@ -357,10 +380,10 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoWithDeviceMemoryT
 TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoThenCorrectCCSFlagsSet) {
     drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
-        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0}};
-    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
     EXPECT_TRUE(drm->queryEngineInfo());
     EXPECT_EQ(3u, drm->ioctlCallsCount);
     auto hwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
@@ -373,11 +396,11 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoThenCorrectCCSFla
 TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenSysmanQueryEngineInfoThenAdditionalEnginesUsed) {
     drm->ioctlCallsCount = 0;
     std::vector<MemoryRegion> memRegions{
-        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
-    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
     EXPECT_TRUE(drm->sysmanQueryEngineInfo());
     EXPECT_EQ(3u, drm->ioctlCallsCount);
     auto engineInfo = drm->getEngineInfo();
@@ -396,11 +419,11 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimWhenQueryEngineInfoAndFailIoctlThenF
     drm->queryDistanceIoctlRetVal = -1;
 
     std::vector<MemoryRegion> memRegions{
-        {{I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
-        {{I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
-    drm->memoryInfo.reset(new MemoryInfo(memRegions));
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, 1024, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, 1024, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
     EXPECT_FALSE(drm->queryEngineInfo());
 
     EXPECT_EQ(3u, drm->ioctlCallsCount);
@@ -415,7 +438,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateContextWithAccessCou
 
     auto ioctlHelper = drm->getIoctlHelper();
     GemContextCreateExt gcc{};
-    EXPECT_THROW(ioctlHelper->createContextWithAccessCounters(drm.get(), gcc), std::runtime_error);
+    EXPECT_THROW(ioctlHelper->createContextWithAccessCounters(gcc), std::runtime_error);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -425,7 +448,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateContextWithAccessCou
 
     auto ioctlHelper = drm->getIoctlHelper();
     GemContextCreateExt gcc{};
-    EXPECT_EQ(0u, ioctlHelper->createContextWithAccessCounters(drm.get(), gcc));
+    EXPECT_EQ(0u, ioctlHelper->createContextWithAccessCounters(gcc));
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -435,7 +458,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlFailureWhenCreateCooperativeContexIsC
 
     auto ioctlHelper = drm->getIoctlHelper();
     GemContextCreateExt gcc{};
-    EXPECT_THROW(ioctlHelper->createCooperativeContext(drm.get(), gcc), std::runtime_error);
+    EXPECT_THROW(ioctlHelper->createCooperativeContext(gcc), std::runtime_error);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -445,7 +468,7 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlSuccessWhenCreateCooperativeContexIsC
 
     auto ioctlHelper = drm->getIoctlHelper();
     GemContextCreateExt gcc{};
-    EXPECT_EQ(0u, ioctlHelper->createCooperativeContext(drm.get(), gcc));
+    EXPECT_EQ(0u, ioctlHelper->createCooperativeContext(gcc));
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -477,7 +500,7 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWh
 
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = defaultHwInfo->platform.eProductFamily;
 
-    OsContextLinux osContext(*drm, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
     osContext.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
@@ -487,9 +510,62 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWh
         EXPECT_FALSE(drm->capturedCooperativeContextRequest);
     }
 
-    OsContextLinux osContext2(*drm, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Cooperative}));
+    OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Cooperative}));
     osContext2.ensureContextInitialized();
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
     EXPECT_TRUE(drm->capturedCooperativeContextRequest);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInitializatedThenIpVersionIsSet) {
+    auto &ipVersion = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->ipVersion;
+    ipVersion = {};
+    EXPECT_TRUE(drm->ioctlHelper->initialize());
+    EXPECT_EQ(ipVersion.revision, 1u);
+    EXPECT_EQ(ipVersion.release, 2u);
+    EXPECT_EQ(ipVersion.architecture, 3u);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpVersionIsNotSet) {
+    auto &ipVersion = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->ipVersion;
+    ipVersion = {};
+    drm->failRetHwIpVersion = true;
+    EXPECT_FALSE(drm->ioctlHelper->initialize());
+
+    EXPECT_EQ(ipVersion.revision, 0u);
+    EXPECT_EQ(ipVersion.release, 0u);
+    EXPECT_EQ(ipVersion.architecture, 0u);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInvalidHwIpVersionSizeOnInitializationThenErrorIsPrinted) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
+    testing::internal::CaptureStderr();
+    drm->returnInvalidHwIpVersionLength = true;
+    EXPECT_FALSE(drm->ioctlHelper->initialize());
+
+    DebugManager.flags.PrintDebugMessages.set(false);
+    std::string output = testing::internal::GetCapturedStderr();
+    std::string expectedOutput = "Size got from PRELIM_DRM_I915_QUERY_HW_IP_VERSION query does not match PrelimI915::prelim_drm_i915_query_hw_ip_version size\n";
+
+    EXPECT_STREQ(output.c_str(), expectedOutput.c_str());
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationAndPlatformQueryIsSupportedThenErrorIsPrinted) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
+    testing::internal::CaptureStderr();
+    drm->failRetHwIpVersion = true;
+    EXPECT_FALSE(drm->ioctlHelper->initialize());
+
+    DebugManager.flags.PrintDebugMessages.set(false);
+    std::string output = testing::internal::GetCapturedStderr();
+
+    if (ProductHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily)->isPlatformQuerySupported()) {
+        EXPECT_STRNE(output.c_str(), "");
+    } else {
+        EXPECT_STREQ(output.c_str(), "");
+    }
 }

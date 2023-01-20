@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,15 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_ostime.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/unit_test/tests_configuration.h"
+#include "shared/test/common/tests_configuration.h"
 
 using namespace NEO;
 
@@ -51,7 +54,7 @@ MockDevice::MockDevice(ExecutionEnvironment *executionEnvironment, uint32_t root
         getRootDeviceEnvironmentRef().osTime = MockOSTime::create();
     }
     auto &hwInfo = getHardwareInfo();
-    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
 
     initializeCaps();
@@ -92,10 +95,61 @@ void MockDevice::resetCommandStreamReceiver(CommandStreamReceiver *newCsr, uint3
     commandStreamReceivers[engineIndex].reset(newCsr);
     commandStreamReceivers[engineIndex]->initializeTagAllocation();
     commandStreamReceivers[engineIndex]->createGlobalFenceAllocation();
+    commandStreamReceivers[engineIndex]->createKernelArgsBufferAllocation();
 
     if (preemptionMode == PreemptionMode::MidThread || isDebuggerActive()) {
         commandStreamReceivers[engineIndex]->createPreemptionAllocation();
     }
+}
+
+ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
+    ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment();
+    auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : rootDeviceIndex + 1;
+    executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+    pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
+    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(pHwInfo);
+        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    }
+    executionEnvironment->calculateMaxOsContextCount();
+    return executionEnvironment;
+}
+
+bool MockDevice::verifyAdapterLuid() {
+    if (callBaseVerifyAdapterLuid)
+        return Device::verifyAdapterLuid();
+    return verifyAdapterLuidReturnValue;
+}
+
+void MockDevice::finalizeRayTracing() {
+    for (unsigned int i = 0; i < rtDispatchGlobalsInfos.size(); i++) {
+        auto rtDispatchGlobalsInfo = rtDispatchGlobalsInfos[i];
+        if (rtDispatchGlobalsForceAllocation == true && rtDispatchGlobalsInfo != nullptr) {
+            for (unsigned int j = 0; j < rtDispatchGlobalsInfo->rtStacks.size(); j++) {
+                delete rtDispatchGlobalsInfo->rtStacks[j];
+                rtDispatchGlobalsInfo->rtStacks[j] = nullptr;
+            }
+            delete rtDispatchGlobalsInfo->rtDispatchGlobalsArray;
+            rtDispatchGlobalsInfo->rtDispatchGlobalsArray = nullptr;
+            delete rtDispatchGlobalsInfos[i];
+            rtDispatchGlobalsInfos[i] = nullptr;
+        }
+    }
+
+    Device::finalizeRayTracing();
+}
+
+ExecutionEnvironment *MockDevice::prepareExecutionEnvironment(const HardwareInfo *pHwInfo) {
+    auto executionEnvironment = new ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+
+    auto hwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
+
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo);
+
+    MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
+    executionEnvironment->initializeMemoryManager();
+    return executionEnvironment;
 }
 
 bool MockSubDevice::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsage) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/helpers/simd_helper.h"
@@ -21,6 +22,8 @@
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
+#include "encode_surface_state_args.h"
+
 #include <algorithm>
 
 namespace L0 {
@@ -28,8 +31,8 @@ struct DeviceImp;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
-    auto &helper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
-    return helper.getRenderSurfaceStateSize();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    return gfxCoreHelper.getRenderSurfaceStateSize();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -39,8 +42,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
                                                                                const CmdListKernelLaunchParams &launchParams) {
     UNRECOVERABLE_IF(kernel == nullptr);
     const auto &kernelDescriptor = kernel->getKernelDescriptor();
-    appendEventForProfiling(event, true, false);
-    const auto functionImmutableData = kernel->getImmutableData();
+    if (kernelDescriptor.kernelAttributes.flags.isInvalid) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+    const auto kernelImmutableData = kernel->getImmutableData();
+    if (this->immediateCmdListHeapSharing) {
+        auto kernelInfo = kernelImmutableData->getKernelInfo();
+        commandContainer.ensureHeapSizePrepared(
+            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
+            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor));
+    }
+    appendEventForProfiling(event, true);
     auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(),
                                                         kernel->getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0]);
     this->setCommandListPerThreadScratchSize(perThreadScratchSize);
@@ -48,18 +60,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     auto slmEnable = (kernel->getImmutableData()->getDescriptor().kernelAttributes.slmInlineSize > 0);
     this->setCommandListSLMEnable(slmEnable);
 
-    auto kernelPreemptionMode = obtainFunctionPreemptionMode(kernel);
+    auto kernelPreemptionMode = obtainKernelPreemptionMode(kernel);
     commandListPreemptionMode = std::min(commandListPreemptionMode, kernelPreemptionMode);
 
     kernel->patchGlobalOffset();
 
-    if (kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize != 0U &&
-        nullptr == kernel->getPrivateMemoryGraphicsAllocation()) {
-        auto privateMemoryGraphicsAllocation = kernel->allocatePrivateMemoryGraphicsAllocation();
-        kernel->patchCrossthreadDataWithPrivateAllocation(privateMemoryGraphicsAllocation);
-        this->commandContainer.addToResidencyContainer(privateMemoryGraphicsAllocation);
-        this->ownedPrivateAllocations.push_back(privateMemoryGraphicsAllocation);
-    }
+    this->allocateKernelPrivateMemoryIfNeeded(kernel, kernelDescriptor.kernelAttributes.perHwThreadPrivateMemorySize);
 
     if (!launchParams.isIndirect) {
         kernel->setGroupCount(threadGroupDimensions->groupCountX,
@@ -109,6 +115,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     NEO::Device *neoDevice = device->getNEODevice();
 
+    auto localMemSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().localMemSize);
+    auto slmTotalSize = kernelImp->getSlmTotalSize();
+    if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::KernelNameTag>(
             *commandContainer.getCommandStream(),
@@ -116,30 +129,35 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             kernel->getKernelDescriptor().kernelMetadata.kernelName.c_str(), 0u);
     }
 
-    updateStreamProperties(*kernel, false, launchParams.isCooperative);
+    std::list<void *> additionalCommands;
+
+    updateStreamProperties(*kernel, launchParams.isCooperative);
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
-        0,                                                     // eventAddress
-        neoDevice,                                             // device
-        kernel,                                                // dispatchInterface
-        reinterpret_cast<const void *>(threadGroupDimensions), // threadGroupDimensions
-        commandListPreemptionMode,                             // preemptionMode
-        0,                                                     // partitionCount
-        launchParams.isIndirect,                               // isIndirect
-        launchParams.isPredicate,                              // isPredicate
-        false,                                                 // isTimestampEvent
-        this->containsStatelessUncachedResource,               // requiresUncachedMocs
-        false,                                                 // useGlobalAtomics
-        internalUsage,                                         // isInternal
-        launchParams.isCooperative,                            // isCooperative
-        false,                                                 // isHostScopeSignalEvent
-        false,                                                 // isKernelUsingSystemAllocation
-        cmdListType == CommandListType::TYPE_IMMEDIATE         // isKernelDispatchedFromImmediateCmdList
+        0,                                                      // eventAddress
+        neoDevice,                                              // device
+        kernel,                                                 // dispatchInterface
+        reinterpret_cast<const void *>(threadGroupDimensions),  // threadGroupDimensions
+        &additionalCommands,                                    // additionalCommands
+        commandListPreemptionMode,                              // preemptionMode
+        0,                                                      // partitionCount
+        launchParams.isIndirect,                                // isIndirect
+        launchParams.isPredicate,                               // isPredicate
+        false,                                                  // isTimestampEvent
+        this->containsStatelessUncachedResource,                // requiresUncachedMocs
+        false,                                                  // useGlobalAtomics
+        internalUsage,                                          // isInternal
+        launchParams.isCooperative,                             // isCooperative
+        false,                                                  // isHostScopeSignalEvent
+        false,                                                  // isKernelUsingSystemAllocation
+        cmdListType == CommandListType::TYPE_IMMEDIATE,         // isKernelDispatchedFromImmediateCmdList
+        engineGroupType == NEO::EngineGroupType::RenderCompute, // isRcs
+        this->dcFlushSupport                                    // dcFlushEnable
     };
 
-    NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs);
+    NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());
     this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
 
-    if (neoDevice->getDebugger()) {
+    if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing) {
         auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
         auto surfaceStateSpace = neoDevice->getDebugger()->getDebugSurfaceReservedSurfaceState(*ssh);
         auto surfaceState = GfxFamily::cmdInitRenderSurfaceState;
@@ -152,22 +170,37 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         args.numAvailableDevices = neoDevice->getNumGenericSubDevices();
         args.allocation = device->getDebugSurface();
         args.gmmHelper = neoDevice->getGmmHelper();
-        args.useGlobalAtomics = kernelImp->getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics;
+        args.useGlobalAtomics = kernelDescriptor.kernelAttributes.flags.useGlobalAtomics;
         args.areMultipleSubDevicesInContext = false;
+        args.isDebuggerActive = true;
         NEO::EncodeSurfaceState<GfxFamily>::encodeBuffer(args);
         *reinterpret_cast<typename GfxFamily::RENDER_SURFACE_STATE *>(surfaceStateSpace) = surfaceState;
     }
 
-    appendSignalEventPostWalker(event, false);
+    appendSignalEventPostWalker(event);
 
-    commandContainer.addToResidencyContainer(functionImmutableData->getIsaGraphicsAllocation());
+    commandContainer.addToResidencyContainer(kernelImmutableData->getIsaGraphicsAllocation());
     auto &residencyContainer = kernel->getResidencyContainer();
     for (auto resource : residencyContainer) {
         commandContainer.addToResidencyContainer(resource);
     }
 
-    if (functionImmutableData->getDescriptor().kernelAttributes.flags.usesPrintf) {
-        storePrintfFunction(kernel);
+    if (kernelImmutableData->getDescriptor().kernelAttributes.flags.usesPrintf) {
+        storePrintfKernel(kernel);
+    }
+
+    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
+        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueuePipeControlStart});
+        additionalCommands.pop_front();
+        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueueSemaphoreStart});
+        additionalCommands.pop_front();
+    }
+
+    if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
+        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueuePipeControlEnd});
+        additionalCommands.pop_front();
+        commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueueSemaphoreEnd});
+        additionalCommands.pop_front();
     }
 
     return ZE_RESULT_SUCCESS;
@@ -182,7 +215,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendMultiPartitionEpilogue() {}
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendComputeBarrierCommand() {
     NEO::PipeControlArgs args = createBarrierFlags();
-    NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(*commandContainer.getCommandStream(), args);
+    NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -209,11 +242,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelSplit(Kernel
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, bool beforeWalker) {
+void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Event *event, bool beforeWalker, bool singlePacketEvent) {
     if (beforeWalker) {
-        appendEventForProfiling(event, true, false);
+        appendEventForProfiling(event, true);
     } else {
-        appendSignalEventPostWalker(event, false);
+        appendSignalEventPostWalker(event);
     }
 }
 

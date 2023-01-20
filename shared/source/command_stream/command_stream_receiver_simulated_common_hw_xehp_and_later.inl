@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,16 +22,16 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::initGlobalMMIO() {
     }
 
     if (this->localMemoryEnabled) {
-        MMIOPair guCntl = {0x00101010, 0x00000080}; //GU_CNTL
+        MMIOPair guCntl = {0x00101010, 0x00000080}; // GU_CNTL
         stream->writeMMIO(guCntl.first, guCntl.second);
 
-        MMIOPair lmemCfg = {0x0000cf58, 0x80000000}; //LMEM_CFG
+        MMIOPair lmemCfg = {0x0000cf58, 0x80000000}; // LMEM_CFG
         stream->writeMMIO(lmemCfg.first, lmemCfg.second);
 
         MMIOPair tileAddrRange[] = {{0x00004900, 0x0001},
                                     {0x00004904, 0x0001},
                                     {0x00004908, 0x0001},
-                                    {0x0000490c, 0x0001}}; //XEHP_TILE_ADDR_RANGE
+                                    {0x0000490c, 0x0001}}; // XEHP_TILE_ADDR_RANGE
 
         const uint32_t numberOfTiles = 4;
         const uint32_t localMemorySizeGB = static_cast<uint32_t>(AubHelper::getPerTileLocalMemorySize(&this->peekHwInfo()) / MemoryConstants::gigaByte);

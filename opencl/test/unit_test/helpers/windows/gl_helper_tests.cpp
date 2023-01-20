@@ -7,7 +7,7 @@
 
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/windows/gl_helper.h"
 #include "opencl/test/unit_test/helpers/windows/mock_function.h"
@@ -19,33 +19,33 @@
 typedef const char *(__cdecl *funcType)();
 
 namespace NEO {
-class glFunctionHelperMock : public glFunctionHelper {
+class GlFunctionHelperMock : public GlFunctionHelper {
   public:
-    glFunctionHelperMock(OsLibrary *glLibrary, const std::string &functionName) : glFunctionHelper(glLibrary, functionName) {}
-    using glFunctionHelper::glFunctionPtr;
+    GlFunctionHelperMock(OsLibrary *glLibrary, const std::string &functionName) : GlFunctionHelper(glLibrary, functionName) {}
+    using GlFunctionHelper::glFunctionPtr;
 };
 
-TEST(glFunctionHelper, whenCreateGlFunctionHelperThenSetGlFunctionPtrToLoadAnotherFunctions) {
+TEST(GlFunctionHelper, whenCreateGlFunctionHelperThenSetGlFunctionPtrToLoadAnotherFunctions) {
     std::unique_ptr<OsLibrary> glLibrary(OsLibrary::load("mock_opengl32.dll"));
     EXPECT_TRUE(glLibrary->isLoaded());
-    glFunctionHelperMock loader(glLibrary.get(), "mockLoader");
+    GlFunctionHelperMock loader(glLibrary.get(), "mockLoader");
     funcType function1 = ConvertibleProcAddr{loader.glFunctionPtr("realFunction")};
     funcType function2 = loader["realFunction"];
     EXPECT_STREQ(function1(), function2());
 }
 
-TEST(glFunctionHelper, givenNonExistingFunctionNameWhenCreateGlFunctionHelperThenNullptr) {
+TEST(GlFunctionHelper, givenNonExistingFunctionNameWhenCreateGlFunctionHelperThenNullptr) {
     std::unique_ptr<OsLibrary> glLibrary(OsLibrary::load("mock_opengl32.dll"));
     EXPECT_TRUE(glLibrary->isLoaded());
-    glFunctionHelper loader(glLibrary.get(), "mockLoader");
+    GlFunctionHelper loader(glLibrary.get(), "mockLoader");
     funcType function = loader["nonExistingFunction"];
     EXPECT_EQ(nullptr, function);
 }
 
-TEST(glFunctionHelper, givenRealFunctionNameWhenCreateGlFunctionHelperThenGetPointerToAppropriateFunction) {
+TEST(GlFunctionHelper, givenRealFunctionNameWhenCreateGlFunctionHelperThenGetPointerToAppropriateFunction) {
     std::unique_ptr<OsLibrary> glLibrary(OsLibrary::load("mock_opengl32.dll"));
     EXPECT_TRUE(glLibrary->isLoaded());
-    glFunctionHelper loader(glLibrary.get(), "mockLoader");
+    GlFunctionHelper loader(glLibrary.get(), "mockLoader");
     funcType function = loader["realFunction"];
     EXPECT_STREQ(realFunction(), function());
 }

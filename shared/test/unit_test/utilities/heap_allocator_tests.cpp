@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/utilities/heap_allocator.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -172,6 +173,31 @@ TEST(HeapAllocatorTest, GivenOnlyMoreThanTwiceBiggerSizeChunksInFreedChunksWhenG
 
     EXPECT_EQ(pLowerBound, freedChunks[2].ptr);
     EXPECT_EQ(deltaSize, freedChunks[2].size);
+}
+
+TEST(HeapAllocatorTest, GivenMoreThanTwiceBiggerSizeChunksInFreedChunksWhenGetIsCalledAndAlignmentDoesNotThenNullIsReturned) {
+    uint64_t ptrBase = 0x100000llu;
+    size_t size = 1024 * 4096;
+    auto pLowerBound = ptrBase;
+
+    auto allocAlign = 8162u;
+
+    auto heapAllocator = std::make_unique<HeapAllocatorUnderTest>(ptrBase, size, allocationAlignment, sizeThreshold);
+
+    std::vector<HeapChunk> freedChunks;
+    uint64_t ptrExpected = 0llu;
+    size_t requestedSize = 2 * 4096;
+
+    freedChunks.emplace_back(pLowerBound, 9 * 4096);
+    pLowerBound += 9 * 4096;
+    freedChunks.emplace_back(pLowerBound, 3 * 4096);
+
+    EXPECT_EQ(2u, freedChunks.size());
+
+    auto ptrReturned = heapAllocator->getFromFreedChunks(requestedSize, freedChunks, allocAlign);
+
+    EXPECT_EQ(ptrExpected, ptrReturned);
+    EXPECT_EQ(2u, freedChunks.size());
 }
 
 TEST(HeapAllocatorTest, GivenStoredChunkAdjacentToLeftBoundaryOfIncomingChunkWhenStoreIsCalledThenChunkIsMerged) {
@@ -745,7 +771,7 @@ TEST(HeapAllocatorTest, WhenMemoryIsAllocatedThenAllocationsDoNotOverlap) {
         }
     }
 
-    //at this point we should be able to allocate full size
+    // at this point we should be able to allocate full size
     size_t totalSize = (size_t)(allocatorSize - reqAlignment);
     auto finalPtr = heapAllocator->allocate(totalSize);
     EXPECT_NE(0llu, finalPtr);

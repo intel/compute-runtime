@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,11 @@
 
 #include "level_zero/core/test/aub_tests/fixtures/aub_fixture.h"
 
+#include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/unit_test/tests_configuration.h"
+#include "shared/test/common/tests_configuration.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
@@ -33,31 +34,31 @@ void AUBFixtureL0::prepareCopyEngines(NEO::MockDevice &device, const std::string
     }
 }
 
-void AUBFixtureL0::SetUp() {
-    SetUp(NEO::defaultHwInfo.get(), false);
+void AUBFixtureL0::setUp() {
+    setUp(NEO::defaultHwInfo.get(), false);
 }
-void AUBFixtureL0::SetUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEnabled) {
+void AUBFixtureL0::setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEnabled) {
     ASSERT_NE(nullptr, hardwareInfo);
     const auto &hwInfo = *hardwareInfo;
 
-    auto &hwHelper = NEO::HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto engineType = getChosenEngineType(hwInfo);
-
-    const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
-    std::stringstream strfilename;
-
-    strfilename << NEO::ApiSpecificConfig::getAubPrefixForSpecificApi();
-    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << hwHelper.getCsTraits(engineType).name;
-
     executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1u);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(&hwInfo);
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     if (debuggingEnabled) {
         executionEnvironment->setDebuggingEnabled();
     }
     neoDevice = NEO::MockDevice::createWithExecutionEnvironment<NEO::MockDevice>(&hwInfo, executionEnvironment, 0u);
+
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    auto engineType = getChosenEngineType(hwInfo);
+
+    const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
+    std::stringstream strfilename;
+
+    strfilename << NEO::ApiSpecificConfig::getAubPrefixForSpecificApi();
+    strfilename << testInfo->test_case_name() << "_" << testInfo->name() << "_" << gfxCoreHelper.getCsTraits(engineType).name;
 
     if (NEO::testMode == NEO::TestMode::AubTestsWithTbx) {
         this->csr = NEO::TbxCommandStreamReceiver::create(strfilename.str(), true, *executionEnvironment, 0, neoDevice->getDeviceBitfield());
@@ -92,7 +93,7 @@ void AUBFixtureL0::SetUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEn
     pCmdq = CommandQueue::create(hwInfo.platform.eProductFamily, device, csr, &queueDesc, false, false, returnValue);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
-void AUBFixtureL0::TearDown() {
+void AUBFixtureL0::tearDown() {
     context->destroy();
     pCmdq->destroy();
 }

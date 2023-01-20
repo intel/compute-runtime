@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,11 +60,11 @@ TEST_F(clEnqueueWriteBufferTests, GivenNullCommandQueueWhenWritingBufferThenInva
     retVal = clEnqueueWriteBuffer(
         nullptr,
         buffer,
-        CL_FALSE, //blocking write
-        0,        //offset
-        0,        //sb
+        CL_FALSE, // blocking write
+        0,        // offset
+        0,        // sb
         nullptr,
-        0, //numEventsInWaitList
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -77,9 +77,9 @@ TEST_F(clEnqueueWriteBufferTests, GivenNullBufferWhenWritingBufferThenInvalidMem
     retVal = clEnqueueWriteBuffer(
         pCommandQueue,
         nullptr,
-        CL_FALSE, //blocking write
-        0,        //offset
-        0,        //cb
+        CL_FALSE, // blocking write
+        0,        // offset
+        0,        // cb
         ptr,
         0,
         nullptr,

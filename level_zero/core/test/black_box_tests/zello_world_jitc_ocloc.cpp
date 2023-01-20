@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,17 +8,14 @@
 #include "zello_common.h"
 #include "zello_compile.h"
 
-extern bool verbose;
-bool verbose = false;
-
-const char *module = R"===(
+const char *moduleSrc = R"===(
 __kernel void kernel_copy(__global char *dst, __global char *src){
     uint gid = get_global_id(0);
     dst[gid] = src[gid];
 }
 )===";
 
-void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
+void executeKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
     ze_command_queue_handle_t cmdQueue;
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     ze_command_list_handle_t cmdList;
@@ -49,7 +46,7 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
     memset(dstBuffer, 0, allocSize);
 
     std::string buildLog;
-    auto spirV = compileToSpirV(module, "", buildLog);
+    auto spirV = compileToSpirV(moduleSrc, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -74,6 +71,10 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
         std::cout << "Build log:" << strLog << std::endl;
 
         free(strLog);
+        SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
+        std::cout << "\nZello World Jitc Ocloc Results validation FAILED. Module creation error."
+                  << std::endl;
+        SUCCESS_OR_TERMINATE_BOOL(false);
     }
     SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 
@@ -82,21 +83,7 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
     ze_kernel_properties_t kernProps{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernProps));
-    std::cout << "Kernel : \n"
-              << " * name : " << kernelDesc.pKernelName << "\n"
-              << " * uuid.mid : " << kernProps.uuid.mid << "\n"
-              << " * uuid.kid : " << kernProps.uuid.kid << "\n"
-              << " * maxSubgroupSize : " << kernProps.maxSubgroupSize << "\n"
-              << " * localMemSize : " << kernProps.localMemSize << "\n"
-              << " * spillMemSize : " << kernProps.spillMemSize << "\n"
-              << " * privateMemSize : " << kernProps.privateMemSize << "\n"
-              << " * maxNumSubgroups : " << kernProps.maxNumSubgroups << "\n"
-              << " * numKernelArgs : " << kernProps.numKernelArgs << "\n"
-              << " * requiredSubgroupSize : " << kernProps.requiredSubgroupSize << "\n"
-              << " * requiredNumSubGroups : " << kernProps.requiredNumSubGroups << "\n"
-              << " * requiredGroupSizeX : " << kernProps.requiredGroupSizeX << "\n"
-              << " * requiredGroupSizeY : " << kernProps.requiredGroupSizeY << "\n"
-              << " * requiredGroupSizeZ : " << kernProps.requiredGroupSizeZ << "\n";
+    printKernelProperties(kernProps, kernelDesc.pKernelName);
 
     uint32_t groupSizeX = 32u;
     uint32_t groupSizeY = 1u;
@@ -146,7 +133,10 @@ void executeKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &d
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello World JIT";
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
+
     ze_context_handle_t context = nullptr;
     auto devices = zelloInitContextAndGetDevices(context);
     auto device = devices[0];
@@ -155,16 +145,13 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     executeKernelAndValidate(context, device, outputValidationSuccessful);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    std::cout << "\nZello World JIT Results validation "
-              << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
-
-    return 0;
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
+    return outputValidationSuccessful ? 0 : 1;
 }

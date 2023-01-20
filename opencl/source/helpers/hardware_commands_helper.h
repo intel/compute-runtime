@@ -1,24 +1,23 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/helpers/per_thread_data.h"
 
-#include "opencl/source/kernel/kernel.h"
-
-#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 
 namespace NEO {
 class CommandQueue;
+class Device;
+class Kernel;
 class LinearStream;
 class IndirectHeap;
+enum PreemptionMode : uint32_t;
 struct CrossThreadInfo;
 struct MultiDispatchInfo;
 
@@ -47,6 +46,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         size_t bindingTablePointer,
         [[maybe_unused]] size_t offsetSamplerState,
         uint32_t numSamplers,
+        const uint32_t threadGroupCount,
         uint32_t numThreadsPerThreadGroup,
         const Kernel &kernel,
         uint32_t bindingTablePrefetchSize,
@@ -79,6 +79,7 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         uint64_t kernelStartOffset,
         uint32_t simd,
         const size_t localWorkSize[3],
+        const uint32_t threadGroupCount,
         const uint64_t offsetInterfaceDescriptorTable,
         uint32_t &interfaceDescriptorIndex,
         PreemptionMode preemptionMode,
@@ -88,25 +89,12 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         const Device &device);
 
     static void programPerThreadData(
+        bool localIdsGenerationByRuntime,
         size_t &sizePerThreadData,
-        const bool &localIdsGenerationByRuntime,
+        size_t &sizePerThreadDataTotal,
         LinearStream &ioh,
-        uint32_t &simd,
-        uint32_t &numChannels,
-        const size_t localWorkSize[3],
-        Kernel &kernel,
-        size_t &sizePerThreadDataTotal,
-        size_t &localWorkItems,
-        uint32_t rootDeviceIndex);
-
-    static void updatePerThreadDataTotal(
-        size_t &sizePerThreadData,
-        uint32_t &simd,
-        uint32_t &numChannels,
-        size_t &sizePerThreadDataTotal,
-        size_t &localWorkItems);
-
-    inline static bool resetBindingTablePrefetch();
+        const Kernel &kernel,
+        const size_t localWorkSize[3]);
 
     static size_t getSizeRequiredCS();
     static size_t getSizeRequiredForCacheFlush(const CommandQueue &commandQueue, const Kernel *kernel, uint64_t postSyncAddress);

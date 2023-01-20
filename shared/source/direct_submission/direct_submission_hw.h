@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,12 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/hw_helper.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <memory>
 
 namespace NEO {
+class MemoryManager;
+struct RootDeviceEnvironment;
 
 #pragma pack(1)
 struct RingSemaphoreData {
@@ -46,8 +46,8 @@ enum class DirectSubmissionSfenceMode : int32_t {
 };
 
 namespace UllsDefaults {
-constexpr bool defaultDisableCacheFlush = true;
-constexpr bool defaultDisableMonitorFence = false;
+inline constexpr bool defaultDisableCacheFlush = true;
+inline constexpr bool defaultDisableMonitorFence = false;
 } // namespace UllsDefaults
 
 struct BatchBuffer;
@@ -88,7 +88,11 @@ class DirectSubmissionHw {
 
     static std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> create(const DirectSubmissionInputParams &inputParams);
 
-    virtual uint32_t *getCompletionValuePointer() { return nullptr; }
+    virtual TaskCountType *getCompletionValuePointer() { return nullptr; }
+
+    bool isRelaxedOrderingEnabled() const {
+        return relaxedOrderingEnabled;
+    }
 
   protected:
     static constexpr size_t prefetchSize = 8 * MemoryConstants::cacheLineSize;
@@ -107,11 +111,16 @@ class DirectSubmissionHw {
     GraphicsAllocation *switchRingBuffersAllocations();
     virtual uint64_t updateTagValue() = 0;
     virtual void getTagAddressValue(TagData &tagData) = 0;
+    void unblockGpu();
 
     void cpuCachelineFlush(void *ptr, size_t size);
 
     void dispatchSemaphoreSection(uint32_t value);
-    size_t getSizeSemaphoreSection();
+    size_t getSizeSemaphoreSection(bool relaxedOrderingSchedulerRequired);
+
+    MOCKABLE_VIRTUAL void dispatchRelaxedOrderingSchedulerSection(uint32_t value);
+
+    void dispatchRelaxedOrderingReturnPtrRegs(LinearStream &cmdStream, uint64_t returnPtr);
 
     void dispatchStartSection(uint64_t gpuStartAddress);
     size_t getSizeStartSection();
@@ -119,10 +128,18 @@ class DirectSubmissionHw {
     void dispatchSwitchRingBufferSection(uint64_t nextBufferGpuAddress);
     size_t getSizeSwitchRingBufferSection();
 
+    MOCKABLE_VIRTUAL void dispatchRelaxedOrderingQueueStall();
+    size_t getSizeDispatchRelaxedOrderingQueueStall();
+
+    MOCKABLE_VIRTUAL void dispatchTaskStoreSection(uint64_t taskStartSectionVa);
+    MOCKABLE_VIRTUAL void preinitializeRelaxedOrderingSections();
+
+    void initRelaxedOrderingRegisters();
+
     void setReturnAddress(void *returnCmd, uint64_t returnAddress);
 
     void *dispatchWorkloadSection(BatchBuffer &batchBuffer);
-    size_t getSizeDispatch();
+    size_t getSizeDispatch(bool relaxedOrderingSchedulerRequired, bool returnPtrsRequired);
 
     void dispatchPrefetchMitigation();
     size_t getSizePrefetchMitigation();
@@ -130,9 +147,9 @@ class DirectSubmissionHw {
     void dispatchDisablePrefetcher(bool disable);
     size_t getSizeDisablePrefetcher();
 
-    size_t getSizeEnd();
+    MOCKABLE_VIRTUAL void dispatchStaticRelaxedOrderingScheduler();
 
-    uint64_t getCommandBufferPositionGpuAddress(void *position);
+    size_t getSizeEnd(bool relaxedOrderingSchedulerRequired);
 
     void dispatchPartitionRegisterConfiguration();
     size_t getSizePartitionRegisterConfigurationSection();
@@ -159,6 +176,8 @@ class DirectSubmissionHw {
         GraphicsAllocation *ringBuffer = nullptr;
     };
     std::vector<RingBufferUse> ringBuffers;
+    std::unique_ptr<uint8_t[]> preinitializedTaskStoreSection;
+    std::unique_ptr<uint8_t[]> preinitializedRelaxedOrderingScheduler;
     uint32_t currentRingBuffer = 0u;
     uint32_t previousRingBuffer = 0u;
     uint32_t maxRingBufferCount = std::numeric_limits<uint32_t>::max();
@@ -168,6 +187,7 @@ class DirectSubmissionHw {
 
     uint64_t semaphoreGpuVa = 0u;
     uint64_t gpuVaForMiFlush = 0u;
+    uint64_t gpuVaForAdditionalSynchronizationWA = 0u;
 
     OsContext &osContext;
     const uint32_t rootDeviceIndex;
@@ -179,6 +199,8 @@ class DirectSubmissionHw {
     GraphicsAllocation *completionFenceAllocation = nullptr;
     GraphicsAllocation *semaphores = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
+    GraphicsAllocation *deferredTasksListAllocation = nullptr;
+    GraphicsAllocation *relaxedOrderingSchedulerAllocation = nullptr;
     void *semaphorePtr = nullptr;
     volatile RingSemaphoreData *semaphoreData = nullptr;
     volatile void *workloadModeOneStoreAddress = nullptr;
@@ -200,5 +222,11 @@ class DirectSubmissionHw {
     bool useNotifyForPostSync = false;
     bool miMemFenceRequired = false;
     bool systemMemoryFenceAddressSet = false;
+    bool completionFenceSupported = false;
+    bool isDisablePrefetcherRequired = false;
+    bool dcFlushRequired = false;
+    bool relaxedOrderingEnabled = false;
+    bool relaxedOrderingInitialized = false;
+    bool relaxedOrderingSchedulerRequired = false;
 };
 } // namespace NEO

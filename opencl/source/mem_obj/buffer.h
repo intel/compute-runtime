@@ -1,18 +1,15 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/constants.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
-#include "opencl/source/context/context_type.h"
 #include "opencl/source/mem_obj/mem_obj.h"
-#include "opencl/source/sharings/unified/unified_buffer.h"
 
 #include "igfxfmid.h"
 #include "memory_properties_flags.h"
@@ -20,26 +17,27 @@
 #include <functional>
 
 namespace NEO {
+struct UnifiedSharingMemoryDescription;
 class Buffer;
 class ClDevice;
 class Device;
 class MemoryManager;
 struct EncodeSurfaceStateArgs;
 
-using BufferCreatFunc = Buffer *(*)(Context *context,
-                                    const MemoryProperties &memoryProperties,
-                                    cl_mem_flags flags,
-                                    cl_mem_flags_intel flagsIntel,
-                                    size_t size,
-                                    void *memoryStorage,
-                                    void *hostPtr,
-                                    MultiGraphicsAllocation &&multiGraphicsAllocation,
-                                    bool zeroCopy,
-                                    bool isHostPtrSVM,
-                                    bool isImageRedescribed);
+using BufferCreateFunc = Buffer *(*)(Context *context,
+                                     const MemoryProperties &memoryProperties,
+                                     cl_mem_flags flags,
+                                     cl_mem_flags_intel flagsIntel,
+                                     size_t size,
+                                     void *memoryStorage,
+                                     void *hostPtr,
+                                     MultiGraphicsAllocation &&multiGraphicsAllocation,
+                                     bool zeroCopy,
+                                     bool isHostPtrSVM,
+                                     bool isImageRedescribed);
 
 struct BufferFactoryFuncs {
-    BufferCreatFunc createBufferFunction;
+    BufferCreateFunc createBufferFunction;
 };
 
 extern BufferFactoryFuncs bufferFactory[IGFX_MAX_CORE];
@@ -57,7 +55,12 @@ extern ValidateInputAndCreateBufferFunc validateInputAndCreateBuffer;
 
 class Buffer : public MemObj {
   public:
+    struct AdditionalBufferCreateArgs {
+        bool doNotProvidePerformanceHints;
+        bool makeAllocationLockable;
+    };
     constexpr static size_t maxBufferSizeForReadWriteOnCpu = 10 * MB;
+    constexpr static size_t maxBufferSizeForCopyOnCpu = 64 * KB;
     constexpr static cl_ulong maskMagic = 0xFFFFFFFFFFFFFFFFLL;
     constexpr static cl_ulong objectMagic = MemObj::objectMagic | 0x02;
     bool forceDisallowCPUCopy = false;
@@ -79,11 +82,27 @@ class Buffer : public MemObj {
                           cl_int &errcodeRet);
 
     static Buffer *create(Context *context,
+                          cl_mem_flags flags,
+                          size_t size,
+                          void *hostPtr,
+                          AdditionalBufferCreateArgs &bufferCreateArgs,
+                          cl_int &errcodeRet);
+
+    static Buffer *create(Context *context,
                           const MemoryProperties &properties,
                           cl_mem_flags flags,
                           cl_mem_flags_intel flagsIntel,
                           size_t size,
                           void *hostPtr,
+                          cl_int &errcodeRet);
+
+    static Buffer *create(Context *context,
+                          const MemoryProperties &properties,
+                          cl_mem_flags flags,
+                          cl_mem_flags_intel flagsIntel,
+                          size_t size,
+                          void *hostPtr,
+                          AdditionalBufferCreateArgs &bufferCreateArgs,
                           cl_int &errcodeRet);
 
     static Buffer *createSharedBuffer(Context *context,
@@ -135,7 +154,7 @@ class Buffer : public MemObj {
 
     static void provideCompressionHint(bool compressionEnabled, Context *context, Buffer *buffer);
 
-    BufferCreatFunc createFunction = nullptr;
+    BufferCreateFunc createFunction = nullptr;
     bool isSubBuffer();
     bool isValidSubBufferOffset(size_t offset);
     uint64_t setArgStateless(void *memory, uint32_t patchSize, uint32_t rootDeviceIndex, bool set32BitAddressing);

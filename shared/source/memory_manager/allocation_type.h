@@ -22,6 +22,7 @@ enum class AllocationType {
     INSTRUCTION_HEAP,
     INTERNAL_HEAP,
     INTERNAL_HOST_MEMORY,
+    KERNEL_ARGS_BUFFER,
     KERNEL_ISA,
     KERNEL_ISA_INTERNAL,
     LINEAR_STREAM,
@@ -54,6 +55,7 @@ enum class AllocationType {
     WORK_PARTITION_SURFACE,
     GPU_TIMESTAMP_DEVICE_BUFFER,
     SW_TAG_BUFFER,
+    DEFERRED_TASKS_LIST,
     COUNT
 };
 } // namespace NEO

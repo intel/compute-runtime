@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,9 +20,9 @@ class SettingsReader;
 class AubSubCaptureCommon {
   public:
     enum class SubCaptureMode {
-        Off = 0, //subcapture off
-        Filter,  //subcapture kernel specified by filter (static regkey)
-        Toggle   //toggle subcapture on/off (dynamic regkey)
+        Off = 0, // subcapture off
+        Filter,  // subcapture kernel specified by filter (static regkey)
+        Toggle   // toggle subcapture on/off (dynamic regkey)
     } subCaptureMode = SubCaptureMode::Off;
 
     struct SubCaptureFilter {
@@ -71,7 +71,7 @@ class AubSubCaptureManager {
     MOCKABLE_VIRTUAL std::string generateFilterFileName() const;
     MOCKABLE_VIRTUAL std::string generateToggleFileName(const std::string &kernelName) const;
     bool isKernelIndexInSubCaptureRange(uint32_t kernelIdx, uint32_t rangeStartIdx, uint32_t rangeEndIdx) const;
-    MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lock() const;
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<std::mutex> lock() const;
 
     bool subCaptureIsActive = false;
     bool subCaptureWasActiveInPreviousEnqueue = false;

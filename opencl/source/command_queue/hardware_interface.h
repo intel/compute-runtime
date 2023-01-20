@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/preemption_mode.h"
-
-#include "CL/cl.h"
+#include "shared/source/helpers/vec.h"
 
 #include <cstdint>
 
@@ -16,6 +15,7 @@ namespace NEO {
 
 class CommandQueue;
 class DispatchInfo;
+class Event;
 class IndirectHeap;
 class Kernel;
 class LinearStream;
@@ -23,9 +23,29 @@ class HwPerfCounter;
 class HwTimeStamps;
 struct KernelOperation;
 struct MultiDispatchInfo;
+struct TimestampPacketDependencies;
 
 template <class T>
 class TagNode;
+
+struct HardwareInterfaceWalkerArgs {
+    size_t globalWorkSizes[3] = {};
+    size_t localWorkSizes[3] = {};
+    TagNodeBase *hwTimeStamps = nullptr;
+    TagNodeBase *hwPerfCounter = nullptr;
+    TimestampPacketDependencies *timestampPacketDependencies = nullptr;
+    TimestampPacketContainer *currentTimestampPacketNodes = nullptr;
+    const Vec3<size_t> *numberOfWorkgroups = nullptr;
+    const Vec3<size_t> *startOfWorkgroups = nullptr;
+    KernelOperation *blockedCommandsData = nullptr;
+    Event *event = nullptr;
+    size_t currentDispatchIndex = 0;
+    size_t offsetInterfaceDescriptorTable = 0;
+    PreemptionMode preemptionMode = PreemptionMode::Initial;
+    uint32_t commandType = 0;
+    uint32_t interfaceDescriptorIndex = 0;
+    bool isMainKernel = false;
+};
 
 template <typename GfxFamily>
 class HardwareInterface {
@@ -37,12 +57,7 @@ class HardwareInterface {
         CommandQueue &commandQueue,
         const MultiDispatchInfo &multiDispatchInfo,
         const CsrDependencies &csrDependencies,
-        KernelOperation *blockedCommandsData,
-        TagNodeBase *hwTimeStamps,
-        TagNodeBase *hwPerfCounter,
-        TimestampPacketDependencies *timestampPacketDependencies,
-        TimestampPacketContainer *currentTimestampPacketNodes,
-        uint32_t commandType);
+        HardwareInterfaceWalkerArgs &walkerArgs);
 
     static void getDefaultDshSpace(
         const size_t &offsetInterfaceDescriptorTable,
@@ -81,19 +96,11 @@ class HardwareInterface {
         LinearStream &commandStream,
         Kernel &kernel,
         CommandQueue &commandQueue,
-        TimestampPacketContainer *currentTimestampPacketNodes,
         IndirectHeap &dsh,
         IndirectHeap &ioh,
         IndirectHeap &ssh,
-        size_t globalWorkSizes[3],
-        size_t localWorkSizes[3],
-        PreemptionMode preemptionMode,
-        size_t currentDispatchIndex,
-        uint32_t &interfaceDescriptorIndex,
         const DispatchInfo &dispatchInfo,
-        size_t offsetInterfaceDescriptorTable,
-        const Vec3<size_t> &numberOfWorkgroups,
-        const Vec3<size_t> &startOfWorkgroups);
+        HardwareInterfaceWalkerArgs &walkerArgs);
 
     static WALKER_TYPE *allocateWalkerSpace(LinearStream &commandStream,
                                             const Kernel &kernel);
@@ -101,11 +108,9 @@ class HardwareInterface {
     static void obtainIndirectHeaps(CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo,
                                     bool blockedQueue, IndirectHeap *&dsh, IndirectHeap *&ioh, IndirectHeap *&ssh);
 
-    static void dispatchKernelCommands(CommandQueue &commandQueue, const DispatchInfo &dispatchInfo, uint32_t commandType,
-                                       LinearStream &commandStream, bool isMainKernel, size_t currentDispatchIndex,
-                                       TimestampPacketContainer *currentTimestampPacketNodes, PreemptionMode preemptionMode,
-                                       uint32_t &interfaceDescriptorIndex, size_t offsetInterfaceDescriptorTable,
-                                       IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh);
+    static void dispatchKernelCommands(CommandQueue &commandQueue, const DispatchInfo &dispatchInfo, LinearStream &commandStream,
+                                       IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh,
+                                       HardwareInterfaceWalkerArgs &walkerArgs);
 };
 
 } // namespace NEO

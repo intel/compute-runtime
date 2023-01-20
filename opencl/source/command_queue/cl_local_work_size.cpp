@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,19 +7,17 @@
 
 #include "opencl/source/command_queue/cl_local_work_size.h"
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/device/device.h"
-#include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/local_work_size.h"
+#include "shared/source/utilities/logger.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/dispatch_info.h"
 
-#include <cmath>
 #include <cstdint>
-#include <ctime>
 
 namespace NEO {
 
@@ -30,10 +28,10 @@ Vec3<size_t> computeWorkgroupSize(const DispatchInfo &dispatchInfo) {
     if (kernel != nullptr) {
         auto &device = dispatchInfo.getClDevice();
         const auto &hwInfo = device.getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
         if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
             WorkSizeInfo wsInfo = createWorkSizeInfoFromDispatchInfo(dispatchInfo);
-            if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers && !wsInfo.imgUsed && hwHelper.preferSmallWorkgroupSizeForKernel(kernel->getKernelInfo().heapInfo.KernelUnpaddedSize, hwInfo) &&
+            if (wsInfo.slmTotalSize == 0 && !wsInfo.hasBarriers && !wsInfo.imgUsed && gfxCoreHelper.preferSmallWorkgroupSizeForKernel(kernel->getKernelInfo().heapInfo.KernelUnpaddedSize, hwInfo) &&
                 ((dispatchInfo.getDim() == 1) && (dispatchInfo.getGWS().x % wsInfo.simdSize * 2 == 0))) {
                 wsInfo.maxWorkGroupSize = wsInfo.simdSize * 2;
             }
@@ -103,7 +101,7 @@ WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo
                         kernelInfo.kernelDescriptor.kernelAttributes.usesBarriers(),
                         static_cast<uint32_t>(kernelInfo.getMaxSimdSize()),
                         static_cast<uint32_t>(dispatchInfo.getKernel()->getSlmTotalSize()),
-                        &device.getHardwareInfo(),
+                        device.getRootDeviceEnvironment(),
                         numThreadsPerSubSlice,
                         static_cast<uint32_t>(device.getSharedDeviceInfo().localMemSize),
                         false,

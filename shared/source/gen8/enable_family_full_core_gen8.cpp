@@ -17,14 +17,14 @@
 
 namespace NEO {
 
-extern HwHelper *hwHelperFactory[IGFX_MAX_CORE];
+extern GfxCoreHelper *gfxCoreHelperFactory[IGFX_MAX_CORE];
 
-using Family = BDWFamily;
+using Family = Gen8Family;
 static const auto gfxFamily = IGFX_GEN8_CORE;
 
 struct EnableCoreGen8 {
     EnableCoreGen8() {
-        hwHelperFactory[gfxFamily] = &HwHelperHw<Family>::get();
+        gfxCoreHelperFactory[gfxFamily] = &GfxCoreHelperHw<Family>::get();
         populateFactoryTable<AUBCommandStreamReceiverHw<Family>>();
         populateFactoryTable<CommandStreamReceiverHw<Family>>();
         populateFactoryTable<TbxCommandStreamReceiverHw<Family>>();

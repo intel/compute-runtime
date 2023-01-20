@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -18,6 +18,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
@@ -53,29 +54,29 @@ class CommandStreamReceiverMock : public UltCommandStreamReceiver<FamilyType> {
     ~CommandStreamReceiverMock() override {
         EXPECT_FALSE(pClDevice->hasOwnership());
         if (expectedToFreeCount == (size_t)-1) {
-            EXPECT_GT(toFree.size(), 0u); //make sure flush was called
+            EXPECT_GT(toFree.size(), 0u); // make sure flush was called
         } else {
             EXPECT_EQ(toFree.size(), expectedToFreeCount);
         }
 
         auto memoryManager = this->getMemoryManager();
-        //Now free memory. if CQ/CSR did the same, we will hit double-free
+        // Now free memory. if CQ/CSR did the same, we will hit double-free
         for (auto p : toFree)
             memoryManager->freeGraphicsMemory(p);
     }
 };
 
 struct EnqueueThreadingFixture : public ClDeviceFixture {
-    void SetUp() {
-        ClDeviceFixture::SetUp();
+    void setUp() {
+        ClDeviceFixture::setUp();
         context = new MockContext(pClDevice);
         pCmdQ = nullptr;
     }
 
-    void TearDown() {
+    void tearDown() {
         delete pCmdQ;
         context->release();
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     template <typename FamilyType>
@@ -93,6 +94,9 @@ struct EnqueueThreadingFixture : public ClDeviceFixture {
             return new MyCommandQueue<FamilyType>(context, device, properties);
         }
 
+        bool validateKernelSystemMemory = false;
+        bool expectedKernelSystemMemory = false;
+
       protected:
         ~MyCommandQueue() override {
             if (kernel) {
@@ -103,6 +107,14 @@ struct EnqueueThreadingFixture : public ClDeviceFixture {
             for (auto &dispatchInfo : multiDispatchInfo) {
                 auto &kernel = *dispatchInfo.getKernel();
                 EXPECT_TRUE(kernel.getMultiDeviceKernel()->hasOwnership());
+
+                if (validateKernelSystemMemory) {
+                    if (expectedKernelSystemMemory) {
+                        EXPECT_TRUE(kernel.getDestinationAllocationInSystemMemory());
+                    } else {
+                        EXPECT_FALSE(kernel.getDestinationAllocationInSystemMemory());
+                    }
+                }
             }
         }
 
@@ -349,6 +361,8 @@ HWTEST_F(EnqueueThreadingImage, WhenEnqueuingFillImageThenKernelHasOwnership) {
 HWTEST_F(EnqueueThreading, WhenEnqueuingReadBufferRectThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
+    static_cast<MyCommandQueue<FamilyType> *>(pCmdQ)->validateKernelSystemMemory = true;
+    static_cast<MyCommandQueue<FamilyType> *>(pCmdQ)->expectedKernelSystemMemory = true;
 
     std::unique_ptr<Buffer> buffer(Buffer::create(context, CL_MEM_READ_WRITE, 1024u, nullptr, retVal));
     ASSERT_NE(nullptr, buffer.get());
@@ -368,6 +382,8 @@ HWTEST_F(EnqueueThreading, WhenEnqueuingReadBufferRectThenKernelHasOwnership) {
 HWTEST_F(EnqueueThreadingImage, WhenEnqueuingReadImageThenKernelHasOwnership) {
     createCQ<FamilyType>();
     cl_int retVal;
+    static_cast<MyCommandQueue<FamilyType> *>(pCmdQ)->validateKernelSystemMemory = true;
+    static_cast<MyCommandQueue<FamilyType> *>(pCmdQ)->expectedKernelSystemMemory = true;
 
     cl_image_format imageFormat;
     imageFormat.image_channel_data_type = CL_UNORM_INT8;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,11 @@
 
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -34,8 +36,8 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenPipelin
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    ASSERT_NE(nullptr, commandQueue);
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
@@ -44,12 +46,12 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenPipelin
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
 
     using MEDIA_VFE_STATE = typename FamilyType::MEDIA_VFE_STATE;
     auto itorVFE = find<MEDIA_VFE_STATE *>(cmdList.begin(), cmdList.end());
@@ -75,8 +77,8 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenStateBa
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    ASSERT_NE(nullptr, commandQueue);
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t commandLists[] = {
         CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
@@ -85,12 +87,12 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenStateBa
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
     auto itorSba = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
@@ -123,8 +125,8 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenMidThre
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    ASSERT_NE(nullptr, commandQueue);
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     auto commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandList->commandListPreemptionMode = NEO::PreemptionMode::MidThread;
@@ -136,12 +138,12 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, WhenExecutingCmdListsThenMidThre
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using GPGPU_CSR_BASE_ADDRESS = typename FamilyType::GPGPU_CSR_BASE_ADDRESS;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -170,8 +172,8 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
     auto commandQueue = whiteboxCast(CommandQueue::create(
         productFamily,
         device, neoDevice->getDefaultEngine().commandStreamReceiver, &desc, false, false, returnValue));
-    ASSERT_NE(nullptr, commandQueue->commandStream);
-    auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+    ASSERT_NE(nullptr, commandQueue);
+    auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     auto commandListMidThread = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     commandListMidThread->commandListPreemptionMode = NEO::PreemptionMode::MidThread;
@@ -187,12 +189,12 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+    auto usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, commandQueue->commandStream->getCpuBase(), usedSpaceAfter));
+        cmdList, commandQueue->commandStream.getCpuBase(), usedSpaceAfter));
     using STATE_SIP = typename FamilyType::STATE_SIP;
     using GPGPU_CSR_BASE_ADDRESS = typename FamilyType::GPGPU_CSR_BASE_ADDRESS;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
@@ -213,11 +215,11 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
     uint32_t data = ((1 << 1) | (1 << 2)) << 16;
     EXPECT_EQ(data, lriCmd->getDataDword());
 
-    //next should be BB_START to 1st Mid-Thread Cmd List
+    // next should be BB_START to 1st Mid-Thread Cmd List
     auto itorBBStart = find<MI_BATCH_BUFFER_START *>(itorLri, cmdList.end());
     EXPECT_NE(itorBBStart, cmdList.end());
 
-    //next should be PIPE_CONTROL and LRI switching to thread-group
+    // next should be PIPE_CONTROL and LRI switching to thread-group
     auto itorPipeControl = find<PIPE_CONTROL *>(itorBBStart, cmdList.end());
     EXPECT_NE(itorPipeControl, cmdList.end());
 
@@ -228,11 +230,11 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
     EXPECT_EQ(0x2580u, lriCmd->getRegisterOffset());
     data = (1 << 1) | (((1 << 1) | (1 << 2)) << 16);
     EXPECT_EQ(data, lriCmd->getDataDword());
-    //start of thread-group command list
+    // start of thread-group command list
     itorBBStart = find<MI_BATCH_BUFFER_START *>(itorLri, cmdList.end());
     EXPECT_NE(itorBBStart, cmdList.end());
 
-    //next should be PIPE_CONTROL and LRI switching to mid-thread again
+    // next should be PIPE_CONTROL and LRI switching to mid-thread again
     itorPipeControl = find<PIPE_CONTROL *>(itorBBStart, cmdList.end());
     EXPECT_NE(itorPipeControl, cmdList.end());
 
@@ -243,7 +245,7 @@ GEN9TEST_F(CommandQueueExecuteCommandListsGen9, GivenCmdListsWithDifferentPreemp
     EXPECT_EQ(0x2580u, lriCmd->getRegisterOffset());
     data = ((1 << 1) | (1 << 2)) << 16;
     EXPECT_EQ(data, lriCmd->getDataDword());
-    //start of thread-group command list
+    // start of thread-group command list
     itorBBStart = find<MI_BATCH_BUFFER_START *>(itorLri, cmdList.end());
     EXPECT_NE(itorBBStart, cmdList.end());
 

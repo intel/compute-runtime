@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/test/common/test_macros/test_base.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"

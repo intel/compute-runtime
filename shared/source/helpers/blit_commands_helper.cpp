@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,12 +61,13 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
             copySize,                      // copySize
             copyOffset,                    // dstOffset
             hostPtrOffset,                 // srcOffset
-            gpuRowPitch,                   // dstRowPitch
-            gpuSlicePitch,                 // dstSlicePitch
-            hostRowPitch,                  // srcRowPitch
-            hostSlicePitch,                // srcSlicePitch
-            copySize,                      // dstSize
-            copySize                       // srcSize
+            true,
+            gpuRowPitch,    // dstRowPitch
+            gpuSlicePitch,  // dstSlicePitch
+            hostRowPitch,   // srcRowPitch
+            hostSlicePitch, // srcSlicePitch
+            copySize,       // dstSize
+            copySize        // srcSize
         };
 
     } else {
@@ -83,12 +84,13 @@ BlitProperties BlitProperties::constructPropertiesForReadWrite(BlitterConstants:
             copySize,                      // copySize
             hostPtrOffset,                 // dstOffset
             copyOffset,                    // srcOffset
-            hostRowPitch,                  // dstRowPitch
-            hostSlicePitch,                // dstSlicePitch
-            gpuRowPitch,                   // srcRowPitch
-            gpuSlicePitch,                 // srcSlicePitch
-            copySize,                      // dstSize
-            copySize                       // srcSize
+            true,
+            hostRowPitch,   // dstRowPitch
+            hostSlicePitch, // dstSlicePitch
+            gpuRowPitch,    // srcRowPitch
+            gpuSlicePitch,  // srcSlicePitch
+            copySize,       // dstSize
+            copySize        // srcSize
         };
     };
 }
@@ -113,10 +115,11 @@ BlitProperties BlitProperties::constructPropertiesForCopy(GraphicsAllocation *ds
         copySize,                                        // copySize
         dstOffset,                                       // dstOffset
         srcOffset,                                       // srcOffset
-        dstRowPitch,                                     // dstRowPitch
-        dstSlicePitch,                                   // dstSlicePitch
-        srcRowPitch,                                     // srcRowPitch
-        srcSlicePitch};                                  // srcSlicePitch
+        MemoryPoolHelper::isSystemMemoryPool(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool()),
+        dstRowPitch,    // dstRowPitch
+        dstSlicePitch,  // dstSlicePitch
+        srcRowPitch,    // srcRowPitch
+        srcSlicePitch}; // srcSlicePitch
 }
 
 BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslationDirection auxTranslationDirection,
@@ -135,8 +138,8 @@ BlitProperties BlitProperties::constructPropertiesForAuxTranslation(AuxTranslati
         allocation->getGpuAddress(),                     // srcGpuAddress
         {allocationSize, 1, 1},                          // copySize
         0,                                               // dstOffset
-        0                                                // srcOffset
-    };
+        0,                                               // srcOffset
+        MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool())};
 }
 
 void BlitProperties::setupDependenciesForAuxTranslation(BlitPropertiesContainer &blitPropertiesContainer, TimestampPacketDependencies &timestampPacketDependencies,
@@ -177,7 +180,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
     if (!hwInfo.capabilityTable.blitterOperationsSupported) {
         return BlitOperationResult::Unsupported;
     }
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device.getGfxCoreHelper();
 
     UNRECOVERABLE_IF(memoryBanks.none());
 
@@ -193,14 +196,14 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
         auto &selectorCopyEngine = pDeviceForBlit->getSelectorCopyEngine();
         auto deviceBitfield = pDeviceForBlit->getDeviceBitfield();
         auto internalUsage = true;
-        auto bcsEngineType = EngineHelpers::getBcsEngineType(hwInfo, deviceBitfield, selectorCopyEngine, internalUsage);
-        auto bcsEngineUsage = hwHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
+        auto bcsEngineType = EngineHelpers::getBcsEngineType(pDeviceForBlit->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine, internalUsage);
+        auto bcsEngineUsage = gfxCoreHelper.preferInternalBcsEngine() ? EngineUsage::Internal : EngineUsage::Regular;
         auto bcsEngine = pDeviceForBlit->tryGetEngine(bcsEngineType, bcsEngineUsage);
         if (!bcsEngine) {
             return BlitOperationResult::Unsupported;
         }
 
-        bcsEngine->osContext->ensureContextInitialized();
+        bcsEngine->commandStreamReceiver->initializeResources();
         bcsEngine->commandStreamReceiver->initDirectSubmission();
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(
@@ -211,7 +214,7 @@ BlitOperationResult BlitHelper::blitMemoryToAllocationBanks(const Device &device
                                                             0, 0, 0, size, 0, 0, 0, 0));
 
         const auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, *pDeviceForBlit);
-        if (!newTaskCount) {
+        if (newTaskCount == CompletionStamp::gpuHang) {
             return BlitOperationResult::GpuHang;
         }
     }

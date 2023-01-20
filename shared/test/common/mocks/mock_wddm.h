@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,11 +23,13 @@
 namespace NEO {
 class GraphicsAllocation;
 
-constexpr auto virtualAllocAddress = is64bit ? 0x7FFFF0000000 : 0xFF000000;
+inline constexpr auto virtualAllocAddress = is64bit ? 0x7FFFF0000000 : 0xFF000000;
 
 class WddmMock : public Wddm {
   public:
     using Wddm::adapterBDF;
+    using Wddm::additionalAdapterInfoOptions;
+    using Wddm::adjustEvictNeededParameter;
     using Wddm::createPagingFenceLogger;
     using Wddm::currentPagingFenceValue;
     using Wddm::dedicatedVideoMemory;
@@ -35,6 +37,7 @@ class WddmMock : public Wddm {
     using Wddm::deviceRegistryPath;
     using Wddm::enablePreemptionRegValue;
     using Wddm::featureTable;
+    using Wddm::forceEvictOnlyIfNecessary;
     using Wddm::getSystemInfo;
     using Wddm::gmmMemory;
     using Wddm::hwDeviceId;
@@ -42,15 +45,19 @@ class WddmMock : public Wddm {
     using Wddm::minAddress;
     using Wddm::pagingFenceAddress;
     using Wddm::pagingQueue;
+    using Wddm::platformSupportsEvictIfNecessary;
+    using Wddm::populateAdditionalAdapterInfoOptions;
+    using Wddm::populateIpVersion;
     using Wddm::residencyLogger;
     using Wddm::rootDeviceEnvironment;
+    using Wddm::setPlatformSupportEvictIfNecessaryFlag;
     using Wddm::temporaryResources;
     using Wddm::timestampFrequency;
     using Wddm::wddmInterface;
 
     WddmMock(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::move(hwDeviceId), rootDeviceEnvironment) {}
     WddmMock(RootDeviceEnvironment &rootDeviceEnvironment);
-    ~WddmMock();
+    ~WddmMock() override;
 
     bool mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr) override;
     bool mapGpuVirtualAddress(WddmAllocation *allocation);
@@ -64,7 +71,7 @@ class WddmMock : public Wddm {
     bool destroyAllocation(WddmAllocation *alloc, OsContextWin *osContext);
     bool openSharedHandle(D3DKMT_HANDLE handle, WddmAllocation *alloc) override;
     bool createContext(OsContextWin &osContext) override;
-    void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext, const HardwareInfo &hwInfo) override;
+    void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext) override;
     bool destroyContext(D3DKMT_HANDLE context) override;
     bool queryAdapterInfo() override;
     bool submit(uint64_t commandBuffer, size_t size, void *commandHeader, WddmSubmitArguments &submitArguments) override;
@@ -82,8 +89,8 @@ class WddmMock : public Wddm {
     void virtualFree(void *ptr, size_t size) override;
     void releaseReservedAddress(void *reservedAddress) override;
     VOID *registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback, WddmResidencyController &residencyController) override;
-    D3DGPU_VIRTUAL_ADDRESS reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size) override;
-    bool reserveValidAddressRange(size_t size, void *&reservedMem);
+    D3DGPU_VIRTUAL_ADDRESS reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size) override;
+    bool reserveValidAddressRange(size_t size, void *&reservedMem) override;
     PLATFORM *getGfxPlatform() { return gfxPlatform.get(); }
     uint64_t *getPagingFenceAddress() override;
     void waitOnPagingFenceFromCpu() override;
@@ -94,11 +101,12 @@ class WddmMock : public Wddm {
         }
         return verifyAdapterLuidReturnValue;
     }
+    LUID getAdapterLuid() { return hwDeviceId->getAdapterLuid(); }
     bool setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocationCount, uint32_t priority) override;
 
     bool configureDeviceAddressSpace() {
         configureDeviceAddressSpaceResult.called++;
-        //create context cant be called before configureDeviceAddressSpace
+        // create context cant be called before configureDeviceAddressSpace
         if (createContextResult.called > 0) {
             return configureDeviceAddressSpaceResult.success = false;
         } else {
@@ -123,7 +131,7 @@ class WddmMock : public Wddm {
 
     void resetGdi(Gdi *gdi);
     bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize) override;
-    bool evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) override;
+    bool evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim, bool evictNeeded) override;
     NTSTATUS createAllocationsAndMapGpuVa(OsHandleStorage &osHandles) override;
 
     WddmMockHelpers::MakeResidentCall makeResidentResult;
@@ -164,6 +172,7 @@ class WddmMock : public Wddm {
     NTSTATUS createAllocationStatus = STATUS_SUCCESS;
     bool verifyAdapterLuidReturnValue = true;
     bool callBaseVerifyAdapterLuid = false;
+    LUID mockAdaperLuid = {0, 0};
     bool mapGpuVaStatus = true;
     bool callBaseDestroyAllocations = true;
     bool failOpenSharedHandle = false;
@@ -175,5 +184,7 @@ class WddmMock : public Wddm {
     bool callBaseCreatePagingLogger = true;
     bool shutdownStatus = false;
     bool callBaseSetAllocationPriority = true;
+    bool callBaseWaitFromCpu = true;
+    bool failReserveGpuVirtualAddress = false;
 };
 } // namespace NEO

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021 Intel Corporation
+# Copyright (C) 2021-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -19,18 +19,14 @@ if(WIN32)
   )
 elseif(UNIX AND NOT DISABLE_WDDM_LINUX)
   list(APPEND NEO_SHARED_unit_tests_configurations
-       ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/gmm_memory/mock_gmm_memory.h
+       ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/mock_gmm_memory_base.cpp
+       ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/mock_gmm_memory_base.h
   )
 endif()
-if(DEFINED AUB_STREAM_PROJECT_NAME)
-  list(APPEND NEO_SHARED_unit_tests_configurations
-       ${NEO_SHARED_TEST_DIRECTORY}/common/aub_stream_mocks/aub_stream_interface_mock.cpp
-  )
-else()
-  list(APPEND NEO_SHARED_unit_tests_configurations
-       ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
-  )
-endif()
+list(APPEND NEO_SHARED_unit_tests_configurations
+     ${NEO_SHARED_TEST_DIRECTORY}/common/aub_stream_mocks/aub_stream_interface_mock.cpp
+)
 add_library(neo_unit_tests_config OBJECT EXCLUDE_FROM_ALL ${NEO_SHARED_unit_tests_configurations})
 
 set_target_properties(neo_unit_tests_config PROPERTIES POSITION_INDEPENDENT_CODE ON)
@@ -43,6 +39,10 @@ target_include_directories(neo_unit_tests_config PRIVATE
 if(WIN32)
   target_include_directories(neo_unit_tests_config PRIVATE
                              ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/gmm_memory${BRANCH_DIR_SUFFIX}
+  )
+elseif(NOT DISABLE_WDDM_LINUX)
+  target_include_directories(neo_unit_tests_config PRIVATE
+                             ${NEO_SHARED_TEST_DIRECTORY}/common/mocks/windows/gmm_memory
   )
 endif()
 target_compile_definitions(neo_unit_tests_config PRIVATE $<TARGET_PROPERTY:${NEO_SHARED_MOCKABLE_LIB_NAME},INTERFACE_COMPILE_DEFINITIONS>)

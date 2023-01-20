@@ -7,8 +7,7 @@
 
 #include "shared/source/command_stream/command_stream_receiver_hw_base.inl"
 #include "shared/source/helpers/address_patch.h"
-
-#include "hw_cmds.h"
+#include "shared/source/helpers/state_base_address_bdw_and_later.inl"
 
 namespace NEO {
 
@@ -28,7 +27,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programL3(LinearStream &csr, uin
         PipeControlArgs args = {};
         args.dcFlushEnable = true;
         setClearSlmWorkAroundParameter(args);
-        MemorySynchronizationCommands<GfxFamily>::addPipeControl(csr, args);
+        MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(csr, args);
 
         PreambleHelper<GfxFamily>::programL3(&csr, newL3Config);
         this->lastSentL3Config = newL3Config;
@@ -40,8 +39,8 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const
     using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
 
     size_t size = 0;
-    const auto &hwInfoConfig = *HwInfoConfig::get(peekHwInfo().platform.eProductFamily);
-    if (hwInfoConfig.is3DPipelineSelectWARequired()) {
+    const auto &productHelper = getProductHelper();
+    if (productHelper.is3DPipelineSelectWARequired()) {
         size += (2 * PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekHwInfo()));
     }
     size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
@@ -60,11 +59,14 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForL3Config() const 
 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &commandStream, PipelineSelectArgs &pipelineSelectArgs) {
-    if (csrSizeRequestFlags.mediaSamplerConfigChanged || !isPreambleSent) {
+    if (csrSizeRequestFlags.mediaSamplerConfigChanged || csrSizeRequestFlags.systolicPipelineSelectMode || !isPreambleSent) {
+        auto &hwInfo = peekHwInfo();
         if (!isPipelineSelectAlreadyProgrammed()) {
-            PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, peekHwInfo());
+            PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, hwInfo);
         }
         this->lastMediaSamplerConfig = pipelineSelectArgs.mediaSamplerRequired;
+        this->lastSystolicPipelineSelectMode = pipelineSelectArgs.systolicPipelineSelectMode;
+        this->streamProperties.pipelineSelect.setProperties(true, this->lastMediaSamplerConfig, this->lastSystolicPipelineSelectMode, hwInfo);
     }
 }
 
@@ -143,13 +145,13 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyn
 
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncCommands() const {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(peekHwInfo());
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekHwInfo(), false);
 }
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream) {
     PipeControlArgs args;
-    MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdStream, args);
+    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdStream, args);
 }
 
 template <typename GfxFamily>
@@ -157,10 +159,10 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
     auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(tagNode);
     const auto &hwInfo = peekHwInfo();
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+    args.dcFlushEnable = this->dcFlushSupport;
+    MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         cmdStream,
-        PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        PostSyncMode::ImmediateData,
         barrierTimestampPacketGpuAddress,
         0,
         hwInfo,

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/registry/built_ins_registry.h"
 
 #include "opencl/source/built_ins/built_in_ops_vme.h"

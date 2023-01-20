@@ -953,14 +953,8 @@ void testIDListUnlockOnException() {
     };
 
     ListMock l;
-    bool caughtEx = false;
-    try {
-        l.throwExFromLock();
-    } catch (const ExType &) {
-        caughtEx = true;
-    }
+    EXPECT_THROW(l.throwExFromLock(), ExType);
 
-    EXPECT_TRUE(caughtEx);
     EXPECT_FALSE(l.getLockedRef().test_and_set(std::memory_order_seq_cst));
 }
 

@@ -25,14 +25,12 @@ class LinuxDiagnosticsImp : public OsDiagnostics, NEO::NonCopyableOrMovableClass
     LinuxDiagnosticsImp(OsSysman *pOsSysman, const std::string &diagTests);
     ~LinuxDiagnosticsImp() override = default;
     std::string osDiagType = "unknown";
-    decltype(&L0::SysmanUtils::sleep) pSleepFunctionSecs = L0::SysmanUtils::sleep;
 
   protected:
     LinuxSysmanImp *pLinuxSysmanImp = nullptr;
     FirmwareUtil *pFwInterface = nullptr;
     SysfsAccess *pSysfsAccess = nullptr;
     FsAccess *pFsAccess = nullptr;
-    ProcfsAccess *pProcfsAccess = nullptr;
     ze_result_t gpuProcessCleanup();
     ze_result_t waitForQuiescentCompletion();
 

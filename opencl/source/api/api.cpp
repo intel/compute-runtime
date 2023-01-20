@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,15 +12,11 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/device_factory.h"
-#include "shared/source/os_interface/os_context.h"
-#include "shared/source/utilities/api_intercept.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/api/additional_extensions.h"
@@ -88,6 +84,14 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
         if (platformsImpl->empty()) {
             auto executionEnvironment = new ClExecutionEnvironment();
             executionEnvironment->incRefInternal();
+
+            if (NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
+                NEO::EnvironmentVariableReader envReader;
+                auto programDebugging = envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", false);
+                if (programDebugging) {
+                    executionEnvironment->setDebuggingEnabled();
+                }
+            }
             auto allDevices = DeviceFactory::createDevices(*executionEnvironment);
             executionEnvironment->decRefInternal();
             if (allDevices.empty()) {
@@ -781,13 +785,15 @@ cl_mem CL_API_CALL clCreateSubBuffer(cl_mem buffer,
             break;
         }
 
+        if (parentBuffer->isSubBuffer() == true) {
+            if (!parentBuffer->getContext()->getBufferPoolAllocator().isPoolBuffer(parentBuffer->getAssociatedMemObject())) {
+                retVal = CL_INVALID_MEM_OBJECT;
+                break;
+            }
+        }
+
         cl_mem_flags parentFlags = parentBuffer->getFlags();
         cl_mem_flags_intel parentFlagsIntel = parentBuffer->getFlagsIntel();
-
-        if (parentBuffer->isSubBuffer() == true) {
-            retVal = CL_INVALID_MEM_OBJECT;
-            break;
-        }
 
         /* Check whether flag is valid. */
         if (((flags & CL_MEM_HOST_READ_ONLY) && (flags & CL_MEM_HOST_NO_ACCESS)) ||
@@ -3502,6 +3508,17 @@ cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue commandQueue,
     }
 
     Kernel *pKernel = pMultiDeviceKernel->getKernel(pCommandQueue->getDevice().getRootDeviceIndex());
+
+    auto localMemSize = static_cast<uint32_t>(pCommandQueue->getDevice().getDeviceInfo().localMemSize);
+    auto slmTotalSize = pKernel->getSlmTotalSize();
+
+    if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
+        retVal = CL_OUT_OF_RESOURCES;
+        TRACING_EXIT(ClEnqueueNdRangeKernel, &retVal);
+        return retVal;
+    }
+
     if ((pKernel->getExecutionType() != KernelExecutionType::Default) ||
         pKernel->usesSyncBuffer()) {
         retVal = CL_INVALID_KERNEL;
@@ -3847,7 +3864,7 @@ CL_API_ENTRY void *CL_API_CALL clHostMemAllocINTEL(
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                         allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                         allocflags, ClMemoryPropertiesHelper::ObjType::UNKNOWN,
                                                          *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
@@ -3892,7 +3909,7 @@ CL_API_ENTRY void *CL_API_CALL clDeviceMemAllocINTEL(
     cl_mem_flags_intel flagsIntel = 0;
     cl_mem_alloc_flags_intel allocflags = 0;
     if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                         allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                         allocflags, ClMemoryPropertiesHelper::ObjType::UNKNOWN,
                                                          *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
@@ -3949,7 +3966,7 @@ CL_API_ENTRY void *CL_API_CALL clSharedMemAllocINTEL(
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, neoContext->getRootDeviceIndices(), subDeviceBitfields);
     unifiedMemoryProperties.device = unifiedMemoryPropertiesDevice;
     if (!ClMemoryPropertiesHelper::parseMemoryProperties(properties, unifiedMemoryProperties.allocationFlags, flags, flagsIntel,
-                                                         allocflags, MemoryPropertiesHelper::ObjType::UNKNOWN,
+                                                         allocflags, ClMemoryPropertiesHelper::ObjType::UNKNOWN,
                                                          *neoContext)) {
         err.set(CL_INVALID_VALUE);
         return nullptr;
@@ -4174,6 +4191,16 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMigrateMemINTEL(
         if (event) {
             auto pEvent = castToObjectOrAbort<Event>(*event);
             pEvent->setCmdType(CL_COMMAND_MIGRATEMEM_INTEL);
+        }
+
+        if (NEO::DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() > 0) {
+            auto pSvmAllocMgr = pCommandQueue->getContext().getSVMAllocsManager();
+            UNRECOVERABLE_IF(pSvmAllocMgr == nullptr);
+
+            auto allocData = pSvmAllocMgr->getSVMAlloc(ptr);
+            if (allocData) {
+                pSvmAllocMgr->prefetchMemory(pCommandQueue->getDevice(), pCommandQueue->getGpgpuCommandStreamReceiver(), *allocData);
+            }
         }
     }
 
@@ -4725,7 +4752,7 @@ cl_int CL_API_CALL clEnqueueSVMMemFill(cl_command_queue commandQueue,
     API_ENTER(&retVal);
 
     DBG_LOG_INPUTS("commandQueue", commandQueue,
-                   "svmPtr", NEO::fileLoggerInstance().infoPointerToString(svmPtr, size),
+                   "svmPtr", svmPtr,
                    "pattern", NEO::fileLoggerInstance().infoPointerToString(pattern, patternSize),
                    "patternSize", patternSize,
                    "size", size,
@@ -4889,9 +4916,9 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
                                             const void *argValue) {
     TRACING_ENTER(ClSetKernelArgSvmPointer, &kernel, &argIndex, &argValue);
 
-    MultiDeviceKernel *pMultiDeviceKernel = nullptr;
+    MultiDeviceKernel *multiDeviceKernel = nullptr;
 
-    auto retVal = validateObjects(withCastToInternal(kernel, &pMultiDeviceKernel));
+    auto retVal = validateObjects(withCastToInternal(kernel, &multiDeviceKernel));
     API_ENTER(&retVal);
 
     if (CL_SUCCESS != retVal) {
@@ -4899,27 +4926,27 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         return retVal;
     }
 
-    if (argIndex >= pMultiDeviceKernel->getKernelArgsNumber()) {
+    if (argIndex >= multiDeviceKernel->getKernelArgsNumber()) {
         retVal = CL_INVALID_ARG_INDEX;
         TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
         return retVal;
     }
 
-    const auto svmManager = pMultiDeviceKernel->getContext().getSVMAllocsManager();
+    const auto svmManager = multiDeviceKernel->getContext().getSVMAllocsManager();
 
     if (argValue != nullptr) {
-        if (pMultiDeviceKernel->getKernelArguments()[argIndex].allocId > 0 &&
-            pMultiDeviceKernel->getKernelArguments()[argIndex].value == argValue) {
+        if (multiDeviceKernel->getKernelArguments()[argIndex].allocId > 0 &&
+            multiDeviceKernel->getKernelArguments()[argIndex].value == argValue) {
             bool reuseFromCache = false;
             const auto allocationsCounter = svmManager->allocationsCounter.load();
             if (allocationsCounter > 0) {
-                if (allocationsCounter == pMultiDeviceKernel->getKernelArguments()[argIndex].allocIdMemoryManagerCounter) {
+                if (allocationsCounter == multiDeviceKernel->getKernelArguments()[argIndex].allocIdMemoryManagerCounter) {
                     reuseFromCache = true;
                 } else {
                     const auto svmData = svmManager->getSVMAlloc(argValue);
-                    if (svmData && pMultiDeviceKernel->getKernelArguments()[argIndex].allocId == svmData->getAllocId()) {
+                    if (svmData && multiDeviceKernel->getKernelArguments()[argIndex].allocId == svmData->getAllocId()) {
                         reuseFromCache = true;
-                        pMultiDeviceKernel->storeKernelArgAllocIdMemoryManagerCounter(argIndex, allocationsCounter);
+                        multiDeviceKernel->storeKernelArgAllocIdMemoryManagerCounter(argIndex, allocationsCounter);
                     }
                 }
                 if (reuseFromCache) {
@@ -4929,7 +4956,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
             }
         }
     } else {
-        if (pMultiDeviceKernel->getKernelArguments()[argIndex].isSetToNullptr) {
+        if (multiDeviceKernel->getKernelArguments()[argIndex].isSetToNullptr) {
             TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
             return CL_SUCCESS;
         }
@@ -4937,7 +4964,7 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
 
     DBG_LOG_INPUTS("kernel", kernel, "argIndex", argIndex, "argValue", argValue);
 
-    for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
+    for (const auto &pDevice : multiDeviceKernel->getDevices()) {
         const HardwareInfo &hwInfo = pDevice->getHardwareInfo();
         if (!hwInfo.capabilityTable.ftrSvm) {
             retVal = CL_INVALID_OPERATION;
@@ -4946,8 +4973,8 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         }
     }
 
-    for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
-        auto pKernel = pMultiDeviceKernel->getKernel(pDevice->getRootDeviceIndex());
+    for (const auto &pDevice : multiDeviceKernel->getDevices()) {
+        auto pKernel = multiDeviceKernel->getKernel(pDevice->getRootDeviceIndex());
         cl_int kernelArgAddressQualifier = asClKernelArgAddressQualifier(pKernel->getKernelInfo()
                                                                              .kernelDescriptor.payloadMappings.explicitArgs[argIndex]
                                                                              .getTraits()
@@ -4960,12 +4987,12 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
         }
     }
 
-    MultiGraphicsAllocation *pSvmAllocs = nullptr;
+    MultiGraphicsAllocation *svmAllocs = nullptr;
     uint32_t allocId = 0u;
     if (argValue != nullptr) {
         auto svmData = svmManager->getSVMAlloc(argValue);
         if (svmData == nullptr) {
-            for (const auto &pDevice : pMultiDeviceKernel->getDevices()) {
+            for (const auto &pDevice : multiDeviceKernel->getDevices()) {
                 if (!pDevice->areSharedSystemAllocationsAllowed()) {
                     retVal = CL_INVALID_ARG_VALUE;
                     TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
@@ -4973,12 +5000,12 @@ cl_int CL_API_CALL clSetKernelArgSVMPointer(cl_kernel kernel,
                 }
             }
         } else {
-            pSvmAllocs = &svmData->gpuAllocations;
+            svmAllocs = &svmData->gpuAllocations;
             allocId = svmData->getAllocId();
         }
     }
 
-    retVal = pMultiDeviceKernel->setArgSvmAlloc(argIndex, const_cast<void *>(argValue), pSvmAllocs, allocId);
+    retVal = multiDeviceKernel->setArgSvmAlloc(argIndex, const_cast<void *>(argValue), svmAllocs, allocId);
     TRACING_EXIT(ClSetKernelArgSvmPointer, &retVal);
     return retVal;
 }
@@ -5082,9 +5109,8 @@ cl_int CL_API_CALL clSetKernelExecInfo(cl_kernel kernel,
         return retVal;
     }
     default: {
-        retVal = pMultiDeviceKernel->setAdditionalKernelExecInfoWithParam(paramName, paramValueSize, paramValue);
-        TRACING_EXIT(ClSetKernelExecInfo, &retVal);
-        return retVal;
+        retVal = CL_INVALID_VALUE;
+        break;
     }
     }
 
@@ -6018,10 +6044,10 @@ cl_int CL_API_CALL clEnqueueNDCountKernelINTEL(cl_command_queue commandQueue,
         }
 
         auto &hardwareInfo = device.getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-        auto engineGroupType = hwHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(),
-                                                           pCommandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-        if (!hwHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
+        auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(),
+                                                                pCommandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
+        if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
             retVal = CL_INVALID_COMMAND_QUEUE;
             return retVal;
         }

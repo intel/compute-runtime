@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,12 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
@@ -26,7 +27,7 @@ class ImageArraySizeTest : public ClDeviceFixture,
 
   protected:
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         types = GetParam();
 
         // clang-format off
@@ -57,7 +58,7 @@ class ImageArraySizeTest : public ClDeviceFixture,
             clReleaseMemObject(imageDesc.mem_object);
         }
         delete context;
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_image_format imageFormat;
@@ -232,7 +233,7 @@ TEST_P(CheckImageType, GivenImageTypeWhenImageTypeIsCheckedThenProperValueIsRetu
 }
 
 static cl_mem_object_type AllImageTypes[] = {
-    0, //negative scenario
+    0, // negative scenario
     CL_MEM_OBJECT_IMAGE1D,
     CL_MEM_OBJECT_IMAGE1D_BUFFER,
     CL_MEM_OBJECT_IMAGE2D,
@@ -246,7 +247,7 @@ INSTANTIATE_TEST_CASE_P(
     testing::ValuesIn(AllImageTypes));
 
 static cl_mem_object_type AllImageTypesWithBadOne[] = {
-    0, //negative scenario
+    0, // negative scenario
     CL_MEM_OBJECT_BUFFER,
     CL_MEM_OBJECT_IMAGE1D,
     CL_MEM_OBJECT_IMAGE1D_BUFFER,

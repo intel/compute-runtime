@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,25 +7,29 @@
 
 #include "shared/source/memory_manager/memory_manager.h"
 
+#include "aubstream/product_family.h"
+
+namespace NEO {
 template <>
-void HwInfoConfigHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) {
-    using SAMPLER_STATE = typename XE_HPG_COREFamily::SAMPLER_STATE;
+void ProductHelperHw<gfxProduct>::adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const {
+    using SAMPLER_STATE = typename XeHpgCoreFamily::SAMPLER_STATE;
     auto samplerState = reinterpret_cast<SAMPLER_STATE *>(sampler);
     if (DebugManager.flags.ForceSamplerLowFilteringPrecision.get()) {
         samplerState->setLowQualityFilter(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE);
     }
 
-    HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
     auto isMirrorAddressMode = SAMPLER_STATE::TEXTURE_COORDINATE_MODE_MIRROR == samplerState->getTcxAddressControlMode();
     auto isNearestFilter = SAMPLER_STATE::MIN_MODE_FILTER_NEAREST == samplerState->getMinModeFilter();
-    if (isNearestFilter && isMirrorAddressMode && hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo)) {
+    auto isWorkaroundRequired = (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo, *this)) ||
+                                (DG2::isG11(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this));
+    if (isNearestFilter && isMirrorAddressMode && isWorkaroundRequired) {
         samplerState->setRAddressMinFilterRoundingEnable(true);
         samplerState->setRAddressMagFilterRoundingEnable(true);
     }
 }
 
 template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     switch (stepping) {
     case REVISION_A0:
         return 0x0;
@@ -41,7 +45,7 @@ uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, c
 }
 
 template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     switch (hwInfo.platform.usRevId) {
     case 0x0:
         return REVISION_A0;
@@ -57,29 +61,34 @@ uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const {
     return true;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
-    uint32_t stepping = getSteppingFromHwRevId(hwInfo);
-    if (stepping <= REVISION_B) {
+bool ProductHelperHw<gfxProduct>::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {
+    return true;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isAdditionalStateBaseAddressWARequired(const HardwareInfo &hwInfo) const {
+    if (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_C, hwInfo, *this)) {
         return true;
-    } else {
-        return false;
     }
+    if (DG2::isG11(hwInfo)) {
+        return true;
+    }
+    return false;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
-    uint32_t stepping = getSteppingFromHwRevId(hwInfo);
-    return (REVISION_A0 == stepping && DG2::isG10(hwInfo));
+bool ProductHelperHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
+    return DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo, *this);
 }
 
 template <>
-void HwInfoConfigHw<gfxProduct>::setForceNonCoherent(void *const statePtr, const StateComputeModeProperties &properties) {
-    using STATE_COMPUTE_MODE = typename XE_HPG_COREFamily::STATE_COMPUTE_MODE;
+void ProductHelperHw<gfxProduct>::setForceNonCoherent(void *const statePtr, const StateComputeModeProperties &properties) const {
+    using STATE_COMPUTE_MODE = typename XeHpgCoreFamily::STATE_COMPUTE_MODE;
     using FORCE_NON_COHERENT = typename STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
     STATE_COMPUTE_MODE &stateComputeMode = *static_cast<STATE_COMPUTE_MODE *>(statePtr);
@@ -88,49 +97,51 @@ void HwInfoConfigHw<gfxProduct>::setForceNonCoherent(void *const statePtr, const
     stateComputeMode.setForceNonCoherent(coherencyValue);
 
     auto mask = stateComputeMode.getMaskBits();
-    mask |= XE_HPG_COREFamily::stateComputeModeForceNonCoherentMask;
+    mask |= XeHpgCoreFamily::stateComputeModeForceNonCoherentMask;
     stateComputeMode.setMaskBits(mask);
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
-    return HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+bool ProductHelperHw<gfxProduct>::isDefaultEngineTypeAdjustmentRequired(const HardwareInfo &hwInfo) const {
+    return DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
-    return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
-}
-
-template <>
-bool HwInfoConfigHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) const {
-    if (HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo) &&
-        (hwInfo.gtSystemInfo.EUCount != 128)) {
+bool ProductHelperHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
+    if (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this)) {
         return false;
     }
     return true;
 }
 
 template <>
-LocalMemoryAccessMode HwInfoConfigHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
-    if (HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo)) {
+bool ProductHelperHw<gfxProduct>::allowCompression(const HardwareInfo &hwInfo) const {
+    if (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hwInfo, *this)) {
+        return false;
+    }
+    return true;
+}
+
+template <>
+LocalMemoryAccessMode ProductHelperHw<gfxProduct>::getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const {
+    if (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this)) {
         return LocalMemoryAccessMode::CpuAccessDisallowed;
     }
     return LocalMemoryAccessMode::Default;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
-    return HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+bool ProductHelperHw<gfxProduct>::isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const {
+    return DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
-    return HwHelper::get(hwInfo.platform.eRenderCoreFamily).isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo);
+bool ProductHelperHw<gfxProduct>::isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const {
+    return DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
 }
 
 template <>
-std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
+std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
     auto isBasicWARequired = true;
     auto isExtendedWARequired = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 1 && !isRcs;
 
@@ -142,24 +153,24 @@ std::pair<bool, bool> HwInfoConfigHw<gfxProduct>::isPipeControlPriorToNonPipelin
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isBlitterForImagesSupported() const {
+bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
     return true;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
-    return getSteppingFromHwRevId(hwInfo) >= REVISION_C;
+bool ProductHelperHw<gfxProduct>::isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const {
+    if (DG2::isG10(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_C, hwInfo, *this)) {
+        return false;
+    }
+    if (DG2::isG11(hwInfo) && GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this)) {
+        return false;
+    }
+    return true;
 }
 
 template <>
-uint32_t HwInfoConfigHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
-    auto highestEnabledSlice = 0;
-    for (int highestSlice = GT_MAX_SLICE - 1; highestSlice >= 0; highestSlice--) {
-        if (hwInfo.gtSystemInfo.SliceInfo[highestSlice].Enabled) {
-            highestEnabledSlice = highestSlice + 1;
-            break;
-        }
-    }
+uint32_t ProductHelperHw<gfxProduct>::computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const {
+    const uint32_t highestEnabledSlice = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
 
     auto subSlicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     auto maxSubSlice = highestEnabledSlice * subSlicesPerSlice;
@@ -171,27 +182,22 @@ uint32_t HwInfoConfigHw<gfxProduct>::computeMaxNeededSubSliceSpace(const Hardwar
 }
 
 template <>
-void HwInfoConfigHw<gfxProduct>::convertTimestampsFromOaToCsDomain(uint64_t &timestampData) {
-    timestampData >>= 1;
-}
-
-template <>
-bool HwInfoConfigHw<gfxProduct>::isFlushTaskAllowed() const {
+bool ProductHelperHw<gfxProduct>::isFlushTaskAllowed() const {
     return true;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::programAllStateComputeCommandFields() const {
+bool ProductHelperHw<gfxProduct>::programAllStateComputeCommandFields() const {
     return true;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
+bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
     return true;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const {
+bool ProductHelperHw<gfxProduct>::isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const {
     if (memoryManager) {
         if constexpr (is32bit) {
             return memoryManager->isWCMemory(ptr);
@@ -203,7 +209,7 @@ bool HwInfoConfigHw<gfxProduct>::isCpuCopyNecessary(const void *ptr, MemoryManag
     }
 }
 template <>
-bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
+bool ProductHelperHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
     if constexpr (is32bit) {
         return true;
     } else {
@@ -212,6 +218,22 @@ bool HwInfoConfigHw<gfxProduct>::isStorageInfoAdjustmentRequired() const {
 }
 
 template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getDefaultL1CachePolicy() const {
-    return XE_HPG_COREFamily::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP;
+bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const {
+    const bool enabled = !isOOQ;
+    if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
+        return DebugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
+    }
+    return enabled;
 }
+
+template <>
+bool ProductHelperHw<gfxProduct>::isBufferPoolAllocatorSupported() const {
+    return true;
+}
+
+template <>
+std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
+    return aub_stream::ProductFamily::Dg2;
+};
+
+} // namespace NEO

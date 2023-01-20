@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,9 +11,6 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::_;
-using ::testing::Matcher;
-
 namespace L0 {
 namespace ult {
 
@@ -24,7 +21,7 @@ constexpr uint32_t mockHandleCount = 1u;
 uint32_t mockSubDeviceHandleCount = 0u;
 class ZesStandbyFixture : public SysmanDeviceFixture {
   protected:
-    std::unique_ptr<Mock<StandbySysfsAccess>> ptestSysfsAccess;
+    std::unique_ptr<MockStandbySysfsAccess> ptestSysfsAccess;
     zes_standby_handle_t hSysmanStandby = {};
     SysfsAccess *pOriginalSysfsAccess = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
@@ -34,7 +31,7 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         SysmanDeviceFixture::SetUp();
-        ptestSysfsAccess = std::make_unique<NiceMock<Mock<StandbySysfsAccess>>>();
+        ptestSysfsAccess = std::make_unique<MockStandbySysfsAccess>();
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = ptestSysfsAccess.get();
         ptestSysfsAccess->setVal(standbyModeFile, standbyModeDefault);
@@ -51,7 +48,6 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pStandbyHandleContext->init(deviceHandles);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
@@ -68,6 +64,13 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
     }
 };
 
+TEST_F(ZesStandbyFixture, GivenStandbyModeFilesNotAvailableWhenCallingEnumerateThenSuccessResultAndZeroCountIsReturned) {
+    uint32_t count = 0;
+    ptestSysfsAccess->isStandbyModeFileAvailable = false;
+    ze_result_t result = zesDeviceEnumStandbyDomains(device, &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 0u);
+}
 TEST_F(ZesStandbyFixture, GivenComponentCountZeroWhenCallingzesStandbyGetThenNonZeroCountIsReturnedAndVerifyzesStandbyGetCallSucceeds) {
     std::vector<zes_standby_handle_t> standbyHandle = {};
     uint32_t count = 0;
@@ -299,7 +302,7 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeNev
 }
 
 class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {
-    std::unique_ptr<Mock<StandbySysfsAccess>> ptestSysfsAccess;
+    std::unique_ptr<MockStandbySysfsAccess> ptestSysfsAccess;
     SysfsAccess *pOriginalSysfsAccess = nullptr;
 
   protected:
@@ -309,7 +312,7 @@ class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {
         }
         SysmanMultiDeviceFixture::SetUp();
         mockSubDeviceHandleCount = subDeviceCount;
-        ptestSysfsAccess = std::make_unique<NiceMock<Mock<StandbySysfsAccess>>>();
+        ptestSysfsAccess = std::make_unique<MockStandbySysfsAccess>();
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = ptestSysfsAccess.get();
         ptestSysfsAccess->setVal(standbyModeFile, standbyModeDefault);
@@ -326,7 +329,6 @@ class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pStandbyHandleContext->init(deviceHandles);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
@@ -377,6 +379,42 @@ TEST_F(ZesStandbyMultiDeviceFixture, GivenOnSubdeviceNotSetWhenValidatingosStand
     EXPECT_EQ(properties.subdeviceId, deviceProperties.subdeviceId);
     EXPECT_EQ(properties.onSubdevice, isSubDevice);
     delete pLinuxStandbyImp;
+}
+
+class StandbyAffinityMaskFixture : public ZesStandbyMultiDeviceFixture {
+    void SetUp() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        NEO::DebugManager.flags.ZE_AFFINITY_MASK.set("0.1");
+        ZesStandbyMultiDeviceFixture::SetUp();
+    }
+
+    void TearDown() override {
+        if (!sysmanUltsEnable) {
+            GTEST_SKIP();
+        }
+        ZesStandbyMultiDeviceFixture::TearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+TEST_F(StandbyAffinityMaskFixture, GivenAffinityMaskIsSetWhenCallingStandbyPropertiesThenProertiesAreReturnedForTheSubDevicesAccordingToAffinityMask) {
+    uint32_t count = 0;
+
+    ze_result_t result = zesDeviceEnumStandbyDomains(device, &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockHandleCount);
+    zes_standby_properties_t properties = {};
+    auto handles = getStandbyHandles(mockHandleCount);
+
+    for (auto hSysmanStandby : handles) {
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesStandbyGetProperties(hSysmanStandby, &properties));
+        EXPECT_EQ(nullptr, properties.pNext);
+        EXPECT_EQ(ZES_STANDBY_TYPE_GLOBAL, properties.type);
+        EXPECT_TRUE(properties.onSubdevice);
+        EXPECT_EQ(1u, properties.subdeviceId); // Affinity mask 0.1 is set which means only subdevice 1 is exposed
+    }
 }
 
 } // namespace ult

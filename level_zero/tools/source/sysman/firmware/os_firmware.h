@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,6 @@ namespace L0 {
 
 class OsFirmware {
   public:
-    virtual bool isFirmwareSupported(void) = 0;
     virtual void osGetFwProperties(zes_firmware_properties_t *pProperties) = 0;
     virtual ze_result_t osFirmwareFlash(void *pImage, uint32_t size) = 0;
     static std::unique_ptr<OsFirmware> create(OsSysman *pOsSysman, const std::string &fwType);

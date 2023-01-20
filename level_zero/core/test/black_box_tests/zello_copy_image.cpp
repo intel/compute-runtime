@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,6 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
-
-bool verbose = false;
 
 void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t width = 32;
@@ -56,7 +54,7 @@ void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &devic
     ze_image_region_t srcRegion = {0, 0, 0, width, height, depth};
 
     SUCCESS_OR_TERMINATE(
-        zeImageCreate(context, device, const_cast<const ze_image_desc_t *>(&srcImgDesc), &srcImg));
+        zeImageCreate(context, device, &srcImgDesc, &srcImg));
 
     ze_image_desc_t dstImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
                                   nullptr,
@@ -74,7 +72,7 @@ void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &devic
     ze_image_region_t dstRegion = {0, 0, 0, width, height, depth};
 
     SUCCESS_OR_TERMINATE(
-        zeImageCreate(context, device, const_cast<const ze_image_desc_t *>(&dstImgDesc), &dstImg));
+        zeImageCreate(context, device, &dstImgDesc, &dstImg));
 
     uint8_t *srcBuffer = new uint8_t[size];
     uint8_t *dstBuffer = new uint8_t[size];
@@ -95,7 +93,7 @@ void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &devic
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     validRet = (0 == memcmp(srcBuffer, dstBuffer, size));
 
@@ -108,7 +106,10 @@ void testAppendImageCopy(ze_context_handle_t &context, ze_device_handle_t &devic
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Copy Image";
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
+
     ze_context_handle_t context = nullptr;
     auto devices = zelloInitContextAndGetDevices(context);
     auto device = devices[0];
@@ -116,13 +117,13 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     testAppendImageCopy(context, device, outputValidationSuccessful);
-
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-    std::cout << "\nZello Copy Image Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
+
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);
 }

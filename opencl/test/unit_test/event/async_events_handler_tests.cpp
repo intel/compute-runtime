@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/event/async_events_handler.h"
 #include "opencl/source/event/event.h"
@@ -26,15 +26,15 @@ class AsyncEventsHandlerTests : public ::testing::Test {
   public:
     class MyEvent : public Event {
       public:
-        MyEvent(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType, uint32_t taskLevel, uint32_t taskCount)
+        MyEvent(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType, TaskCountType taskLevel, TaskCountType taskCount)
             : Event(ctx, cmdQueue, cmdType, taskLevel, taskCount) {
             handler.reset(new MockHandler());
         }
         int getExecutionStatus() {
-            //return execution status without updating
+            // return execution status without updating
             return executionStatus.load();
         }
-        void setTaskStamp(uint32_t taskLevel, uint32_t taskCount) {
+        void setTaskStamp(TaskCountType taskLevel, TaskCountType taskCount) {
             this->taskLevel.store(taskLevel);
             this->updateTaskCount(taskCount, 0);
         }

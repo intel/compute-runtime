@@ -8,7 +8,6 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/image.h"
@@ -36,14 +35,14 @@ struct AUBMapImage
       public ::testing::Test {
     typedef AUBCommandStreamFixture CommandStreamFixture;
 
-    using AUBCommandStreamFixture::SetUp;
+    using AUBCommandStreamFixture::setUp;
 
     void SetUp() override {
         if (!(defaultHwInfo->capabilityTable.supportsImages)) {
             GTEST_SKIP();
         }
-        CommandDeviceFixture::SetUp(cl_command_queue_properties(0));
-        CommandStreamFixture::SetUp(pCmdQ);
+        CommandDeviceFixture::setUp(cl_command_queue_properties(0));
+        CommandStreamFixture::setUp(pCmdQ);
 
         context = std::make_unique<MockContext>(pClDevice);
     }
@@ -51,8 +50,8 @@ struct AUBMapImage
     void TearDown() override {
         srcImage.reset();
         context.reset();
-        CommandStreamFixture::TearDown();
-        CommandDeviceFixture::TearDown();
+        CommandStreamFixture::tearDown();
+        CommandDeviceFixture::tearDown();
     }
 
     std::unique_ptr<MockContext> context;

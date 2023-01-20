@@ -10,8 +10,6 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
 
-#include <atomic>
-#include <cstddef>
 #include <cstdint>
 
 namespace NEO {
@@ -38,6 +36,8 @@ class LinearStream {
     uint64_t getGpuBase() const;
     void setGpuBase(uint64_t gpuAddress);
 
+    uint64_t getCurrentGpuAddressPosition() const;
+
     void overrideMaxSize(size_t newMaxSize);
     void replaceBuffer(void *buffer, size_t bufferSize);
     GraphicsAllocation *getGraphicsAllocation() const;
@@ -50,7 +50,7 @@ class LinearStream {
     }
 
   protected:
-    std::atomic<size_t> sizeUsed{0};
+    size_t sizeUsed = 0;
     size_t maxAvailableSpace{0};
     void *buffer{nullptr};
     GraphicsAllocation *graphicsAllocation{nullptr};
@@ -68,12 +68,16 @@ inline void LinearStream::setGpuBase(uint64_t gpuAddress) {
 }
 
 inline void *LinearStream::getSpace(size_t size) {
+    if (size == 0u) {
+        return ptrOffset(buffer, sizeUsed);
+    }
+
     if (cmdContainer != nullptr && getAvailableSpace() < batchBufferEndSize + size) {
         UNRECOVERABLE_IF(sizeUsed + batchBufferEndSize > maxAvailableSpace);
         cmdContainer->closeAndAllocateNextCommandBuffer();
     }
     UNRECOVERABLE_IF(sizeUsed + size > maxAvailableSpace);
-    UNRECOVERABLE_IF(reinterpret_cast<int64_t>(buffer) <= 0);
+    UNRECOVERABLE_IF(reinterpret_cast<int64_t>(buffer) == 0);
     auto memory = ptrOffset(buffer, sizeUsed);
     sizeUsed += size;
     return memory;
@@ -109,4 +113,9 @@ inline GraphicsAllocation *LinearStream::getGraphicsAllocation() const {
 inline void LinearStream::replaceGraphicsAllocation(GraphicsAllocation *gfxAllocation) {
     graphicsAllocation = gfxAllocation;
 }
+
+inline uint64_t LinearStream::getCurrentGpuAddressPosition() const {
+    return (getGpuBase() + getUsed());
+}
+
 } // namespace NEO

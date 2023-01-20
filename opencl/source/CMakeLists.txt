@@ -69,7 +69,6 @@ else()
   target_include_directories(${NEO_STATIC_LIB_NAME} PUBLIC
                              ${NEO_SHARED_DIRECTORY}/os_interface/linux
                              ${NEO_SOURCE_DIR}/opencl/source/os_interface/linux
-                             ${I915_INCLUDES_DIR}
   )
 endif()
 
@@ -109,17 +108,26 @@ if(${GENERATE_EXECUTABLE})
        $<TARGET_OBJECTS:${SHARINGS_ENABLE_LIB_NAME}>
        $<TARGET_OBJECTS:${BUILTINS_SOURCES_LIB_NAME}>
        $<TARGET_OBJECTS:${BUILTINS_VME_LIB_NAME}>
+       $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_LIB_NAME}>
        $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
   )
 
-  if(DEFINED AUB_STREAM_PROJECT_NAME)
-    list(APPEND NEO_DYNAMIC_LIB__TARGET_OBJECTS $<TARGET_OBJECTS:${AUB_STREAM_PROJECT_NAME}_all_hw>)
-  endif()
-
   add_library(${NEO_DYNAMIC_LIB_NAME} SHARED
               ${NEO_DYNAMIC_LIB__TARGET_OBJECTS}
-              ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
   )
+  if(DEFINED AUB_STREAM_PROJECT_NAME)
+    target_sources(${NEO_DYNAMIC_LIB_NAME}
+                   PRIVATE
+                   $<TARGET_OBJECTS:${AUB_STREAM_PROJECT_NAME}_all_hw>
+                   ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface.cpp
+    )
+  else()
+    target_sources(${NEO_DYNAMIC_LIB_NAME}
+                   PRIVATE
+                   ${NEO_SOURCE_DIR}/shared/source/aub/aub_stream_interface_stub.cpp
+    )
+
+  endif()
 
   if(UNIX)
     if(NEO_BUILD_DEBUG_SYMBOLS_PACKAGE)

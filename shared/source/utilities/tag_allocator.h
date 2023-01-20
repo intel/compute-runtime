@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/utilities/idlist.h"
-#include "shared/source/utilities/stackvec.h"
+
+#include "metrics_library_api_1_0.h"
 
 #include <atomic>
 #include <cstdint>
@@ -19,6 +20,7 @@
 #include <vector>
 
 namespace NEO {
+class MemoryManager;
 class GraphicsAllocation;
 
 template <typename TagType>

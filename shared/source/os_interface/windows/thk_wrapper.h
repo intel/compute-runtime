@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/helpers/options.h"
 #include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
+#include "shared/source/os_interface/windows/gdi_interface_logging.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/source/utilities/api_intercept.h"
 
@@ -27,7 +28,7 @@ constexpr unsigned int getThkWrapperId() {
         return 0;                                    \
     }
 
-GET_ID(D3DKMT_OPENADAPTERFROMLUID *, SYSTIMER_ID_OPENADAPTERFROMLUID)
+GET_ID(CONST D3DKMT_OPENADAPTERFROMLUID *, SYSTIMER_ID_OPENADAPTERFROMLUID)
 GET_ID(CONST D3DKMT_CLOSEADAPTER *, SYSTIMER_ID_CLOSEADAPTER)
 GET_ID(CONST D3DKMT_QUERYADAPTERINFO *, SYSTIMER_ID_QUERYADAPTERINFO)
 GET_ID(CONST D3DKMT_ESCAPE *, SYSTIMER_ID_ESCAPE)
@@ -86,6 +87,12 @@ class ThkWrapper {
             NTSTATUS status;
             status = mFunc(param);
             SYSTEM_LEAVE(getId<Param>());
+            return status;
+        } else if constexpr (GdiLogging::gdiLoggingSupport) {
+            NTSTATUS status;
+            GdiLogging::logEnter<Param>(param);
+            status = mFunc(param);
+            GdiLogging::logExit<Param>(status, param);
             return status;
         } else {
             return mFunc(param);

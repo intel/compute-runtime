@@ -1,13 +1,12 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "compiler_options.h"
 
 TEST(CompilerOptions, WhenConcatenationLengthIsCalledThenReturnsSumOfLengthsAndSeperators) {
     using namespace NEO::CompilerOptions;

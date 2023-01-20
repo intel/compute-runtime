@@ -1,11 +1,14 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/utilities/tag_allocator.h"
+
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 
 namespace NEO {
 

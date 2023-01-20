@@ -7,10 +7,11 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/xe_hpg_core/hw_cmds_base.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
+
+#include "hw_cmds_xe_hpg_core_base.h"
 
 using namespace NEO;
 
@@ -29,16 +30,16 @@ HWTEST2_F(CommandEncodeStatesTestXeHpgCore, givenVariousValuesWhenCallingSetBarr
     }
 }
 template <PRODUCT_FAMILY productFamily>
-struct MockHwInfoConfig : NEO::HwInfoConfigHw<productFamily> {
+struct MockProductHelper : NEO::ProductHelperHw<productFamily> {
     bool isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const override { return true; }
 };
 
 HWTEST2_F(CommandEncodeStatesTestXeHpgCore, givenRequiredWorkGroupOrderAndIsAdjusttWalkOrderAvailableReturnTureWhenCallAdjustWalkOrderThenWalkerIsProgrammedCorrectly, IsXeHpgCore) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
-    MockHwInfoConfig<productFamily> hwInfoConfig{};
-    VariableBackup<HwInfoConfig *> hwInfoConfigFactoryBackup{&NEO::hwInfoConfigFactory[static_cast<size_t>(defaultHwInfo->platform.eProductFamily)]};
-    hwInfoConfigFactoryBackup = &hwInfoConfig;
+    MockProductHelper<productFamily> productHelper{};
+    VariableBackup<ProductHelper *> productHelperFactoryBackup{&NEO::productHelperFactory[static_cast<size_t>(defaultHwInfo->platform.eProductFamily)]};
+    productHelperFactoryBackup = &productHelper;
 
     WALKER_TYPE walkerCmd{};
     WALKER_TYPE walkerOnStart{};

@@ -36,7 +36,7 @@ void *PreambleHelper<GfxFamily>::getSpaceForVfeState(LinearStream *pCommandStrea
 
 template <typename GfxFamily>
 void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
-                                                const HardwareInfo &hwInfo,
+                                                const RootDeviceEnvironment &rootDeviceEnvironment,
                                                 uint32_t scratchSize,
                                                 uint64_t scratchAddress,
                                                 uint32_t maxFrontEndThreads,
@@ -56,8 +56,7 @@ void PreambleHelper<GfxFamily>::programVfeState(void *pVfeState,
     cmd.setScratchSpaceBasePointer(lowAddress);
     cmd.setScratchSpaceBasePointerHigh(highAddress);
 
-    programAdditionalFieldsInVfeState(&cmd, hwInfo, streamProperties.frontEndState.disableEUFusion.value == 1);
-    appendProgramVFEState(hwInfo, streamProperties, &cmd);
+    appendProgramVFEState(rootDeviceEnvironment, streamProperties, &cmd);
     *pMediaVfeState = cmd;
 }
 
@@ -75,17 +74,4 @@ size_t PreambleHelper<GfxFamily>::getVFECommandsSize() {
     return sizeof(MEDIA_VFE_STATE) + sizeof(PIPE_CONTROL);
 }
 
-template <typename GfxFamily>
-void PreambleHelper<GfxFamily>::appendProgramPipelineSelect(void *cmd, bool isSpecialModeSelected, const HardwareInfo &hwInfo) {}
-
-template <typename GfxFamily>
-bool PreambleHelper<GfxFamily>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) {
-    return false;
-}
-
-template <typename GfxFamily>
-bool PreambleHelper<GfxFamily>::isSpecialPipelineSelectModeChanged(bool lastSpecialPipelineSelectMode, bool newSpecialPipelineSelectMode,
-                                                                   const HardwareInfo &hwInfo) {
-    return false;
-}
 } // namespace NEO

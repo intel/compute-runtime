@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/aub_tests/command_stream/copy_engine_aub_tests_xehp_and_later.h"
@@ -33,7 +33,7 @@ constexpr uint32_t allSupportedCopyEngines[] = {
     aub_stream::EngineType::ENGINE_BCS8,
 };
 
-using OneTileXeHpcTests = CopyEnginesXeHpcFixture<1, XE_HPC_COREFamily>;
+using OneTileXeHpcTests = CopyEnginesXeHpcFixture<1, XeHpcCoreFamily>;
 
 INSTANTIATE_TEST_CASE_P(
     MemCopyBcsCmd,
@@ -84,7 +84,7 @@ XE_HPC_CORETEST_P(OneTileXeHpcTests, givenCopyBufferRectWithBigSizesWhenHostPtrB
     givenCopyBufferRectWithBigSizesWhenHostPtrBlitCommandIsDispatchedToHostPtrThenDataIsCorrectlyCopiedImpl<FamilyType>();
 }
 
-using OneTileSystemMemoryXeHpcTests = CopyEnginesXeHpcFixture<1, XE_HPC_COREFamily, false>;
+using OneTileSystemMemoryXeHpcTests = CopyEnginesXeHpcFixture<1, XeHpcCoreFamily, false>;
 
 INSTANTIATE_TEST_CASE_P(
     MemCopyBcsCmd,

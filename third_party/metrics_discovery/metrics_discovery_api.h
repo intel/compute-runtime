@@ -1,32 +1,15 @@
-//////////////////////////////////////////////////////////////////////////////
-//
-//     Copyright © 2019-2020, Intel Corporation
-//
-//     Permission is hereby granted, free of charge, to any person obtaining a
-//     copy of this software and associated documentation files (the "Software"),
-//     to deal in the Software without restriction, including without limitation
-//     the rights to use, copy, modify, merge, publish, distribute, sublicense,
-//     and/or sell copies of the Software, and to permit persons to whom the
-//     Software is furnished to do so, subject to the following conditions:
-//
-//     The above copyright notice and this permission notice shall be included
-//     in all copies or substantial portions of the Software.
-//
-//     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-//     IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-//     FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL
-//     THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-//     LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-//     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-//     IN THE SOFTWARE.
-//
+/*========================== begin_copyright_notice ============================
+
+Copyright (C) 2019-2022 Intel Corporation
+
+SPDX-License-Identifier: MIT
+
+============================= end_copyright_notice ===========================*/
+
 //     File Name:  metrics_discovery_api.h
-//
+
 //     Abstract:   Interface for metrics discovery DLL
-//
-//     Notes:
-//
-//////////////////////////////////////////////////////////////////////////////
+
 #pragma once
 
 #include <stdint.h>
@@ -42,7 +25,7 @@
 // Combines major and minor into one, comparable 64bit value.
 //////////////////////////////////////////////////////////////////////////////////
 #define MD_API_VERSION_COMBINE_MAJOR_MINOR( version ) \
-    ( ( uint64_t )( version ).MajorNumber << 32 | ( uint64_t )( version ).MinorNumber )
+    ( (uint64_t) ( version ).MajorNumber << 32 | (uint64_t) ( version ).MinorNumber )
 
 //////////////////////////////////////////////////////////////////////////////////
 // Macro to check required API version.
@@ -54,7 +37,7 @@
 //////////////////////////////////////////////////////////////////////////////////
 // API build number:
 //////////////////////////////////////////////////////////////////////////////////
-#define MD_API_BUILD_NUMBER_CURRENT 139
+#define MD_API_BUILD_NUMBER_CURRENT 155
 
 namespace MetricsDiscovery
 {
@@ -84,7 +67,9 @@ namespace MetricsDiscovery
         MD_API_MINOR_NUMBER_8       = 8,  // TAdapterParams update
         MD_API_MINOR_NUMBER_9       = 9,  // Sub device support.
         MD_API_MINOR_NUMBER_10      = 10, // GetGpuCpuTimestamps API function extended by a correlation indicator param
-        MD_API_MINOR_NUMBER_CURRENT = MD_API_MINOR_NUMBER_10,
+        MD_API_MINOR_NUMBER_11      = 11, // Add availability equations for metric sets
+        MD_API_MINOR_NUMBER_12      = 12, // Add support for Information Set in concurrent group
+        MD_API_MINOR_NUMBER_CURRENT = MD_API_MINOR_NUMBER_12,
         MD_API_MINOR_NUMBER_CEIL    = 0xFFFFFFFF
     } MD_API_MINOR_VERSION;
 
@@ -118,6 +103,8 @@ namespace MetricsDiscovery
     class IMetricsDevice_1_1;
     class IMetricsDevice_1_2;
     class IMetricsDevice_1_5;
+    class IMetricsDevice_1_10;
+    class IMetricsDevice_1_11;
 
     //////////////////////////////////////////////////////////////////////////////////
     // Abstract interface for Metrics Device overrides.
@@ -131,6 +118,7 @@ namespace MetricsDiscovery
     class IConcurrentGroup_1_0;
     class IConcurrentGroup_1_1;
     class IConcurrentGroup_1_5;
+    class IConcurrentGroup_1_11;
 
     //////////////////////////////////////////////////////////////////////////////////
     // Abstract interface for the metric sets mapping to different HW configuration
@@ -141,6 +129,7 @@ namespace MetricsDiscovery
     class IMetricSet_1_1;
     class IMetricSet_1_4;
     class IMetricSet_1_5;
+    class IMetricSet_1_11;
 
     //////////////////////////////////////////////////////////////////////////////////
     // Abstract interface for the metric that is sampled.
@@ -167,6 +156,7 @@ namespace MetricsDiscovery
         VALUE_TYPE_FLOAT,
         VALUE_TYPE_BOOL,
         VALUE_TYPE_CSTRING,
+        VALUE_TYPE_BYTEARRAY,
         // ...
         VALUE_TYPE_LAST,
     } TValueType;
@@ -195,9 +185,10 @@ namespace MetricsDiscovery
                 uint32_t Low;
                 uint32_t High;
             } ValueUInt64Fields;
-            float ValueFloat;
-            bool  ValueBool;
-            char* ValueCString;
+            float           ValueFloat;
+            bool            ValueBool;
+            char*           ValueCString;
+            TByteArray_1_0* ValueByteArray; // Dynamically allocated
         };
     } TTypedValue_1_0;
 
@@ -595,6 +586,14 @@ namespace MetricsDiscovery
     } TMetricSetParams_1_4;
 
     //////////////////////////////////////////////////////////////////////////////////
+    // AvailabilityEquation differenced MetricSet params:
+    //////////////////////////////////////////////////////////////////////////////////
+    typedef struct SMetricSetParams_1_11 : SMetricSetParams_1_4
+    {
+        const char* AvailabilityEquation;
+    } TMetricSetParams_1_11;
+
+    //////////////////////////////////////////////////////////////////////////////////
     // Metric result types:
     //////////////////////////////////////////////////////////////////////////////////
     typedef enum EMetricResultType
@@ -649,6 +648,7 @@ namespace MetricsDiscovery
         REPORT_REASON_INTERNAL_CONTEXT_SWITCH   = 0x0008,
         REPORT_REASON_INTERNAL_GO               = 0x0010,
         REPORT_REASON_INTERNAL_FREQUENCY_CHANGE = 0x0020,
+        REPORT_REASON_INTERNAL_MMIO_TRIGGER     = 0x0040,
         REPORT_REASON_QUERY_DEFAULT             = 0x0100,
         REPORT_REASON_QUERY_INTERNAL_RESOLVE    = 0x0200,
         REPORT_REASON_QUERY_INTERNAL_CLEAR      = 0x0400,
@@ -746,7 +746,7 @@ namespace MetricsDiscovery
         EQUATION_ELEM_INFORMATION_SYMBOL,        // Defined by i$"SymbolName", refers to information value type only
         EQUATION_ELEM_STD_NORM_GPU_DURATION,     // Action is $Self $GpuCoreClocks FDIV 100 FMUL
         EQUATION_ELEM_STD_NORM_EU_AGGR_DURATION, // Action is $Self $GpuCoreClocks $EuCoresTotalCount UMUL FDIV 100 FMUL
-
+        EQUATION_ELEM_MASK,                      //
         EQUATION_ELEM_LAST_1_0
 
     } TEquationElementType;
@@ -808,6 +808,7 @@ namespace MetricsDiscovery
         {
             uint64_t           ImmediateUInt64;
             float              ImmediateFloat;
+            TByteArray_1_0     Mask;
             TEquationOperation Operation;
             TReadParams_1_0    ReadParams;
         };
@@ -836,7 +837,7 @@ namespace MetricsDiscovery
     //////////////////////////////////////////////////////////////////////////////////
     typedef struct SMetricParams_1_0
     {
-        uint32_t           IdInSet;           // Position in the set
+        uint32_t           IdInSet;           // Position in set (may change after SetApiFiltering)
         uint32_t           GroupId;           // Specific metric group id
         const char*        SymbolName;        // Symbol name, used in equations
         const char*        ShortName;         // Consistent metric name, not changed platform to platform
@@ -863,7 +864,7 @@ namespace MetricsDiscovery
     //////////////////////////////////////////////////////////////////////////////////
     typedef struct SInformationParams_1_0
     {
-        uint32_t           IdInSet;           // Position in the set
+        uint32_t           IdInSet;           // Position in set (may change after SetApiFiltering)
         const char*        SymbolName;        // Symbol name, used in equations
         const char*        ShortName;         // Consistent name, not changed platform to platform
         const char*        GroupName;         // Some more global context of the information
@@ -1018,8 +1019,8 @@ namespace MetricsDiscovery
     // Updates:
     // - GetComplementaryMetricSet:         Update to 1.5 interface
     // - CalculateMetrics:                  CalculateMetrics extended with max values calculation.
-    //                                      ptional param 'outMaxValues' should have a memory
-    //                                      for at least 'MetricCount * RawReportCount' values, can be NULL.
+    //                                      optional param 'outMaxValues' should have a memory
+    //                                      for at least 'MetricCount * RawReportCount' values, can be nullptr.
     //
     ///////////////////////////////////////////////////////////////////////////////
     class IMetricSet_1_5 : public IMetricSet_1_4
@@ -1040,6 +1041,23 @@ namespace MetricsDiscovery
     ///////////////////////////////////////////////////////////////////////////////
     //
     // Class:
+    //   IMetricSet_1_11
+    //
+    // Description:
+    //   Updated 1.5 version to use with 1.11 interface version.
+    //   Extends set params with AvailabilityEquation information.
+    //
+    // Updates:
+    // - GetParams
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IMetricSet_1_11 : public IMetricSet_1_5
+    {
+    public:
+        virtual ~IMetricSet_1_11();
+        virtual TMetricSetParams_1_11* GetParams( void );
+    };
+
     //   IConcurrentGroup_1_0
     //
     // Description:
@@ -1113,6 +1131,24 @@ namespace MetricsDiscovery
     {
     public:
         virtual IMetricSet_1_5* GetMetricSet( uint32_t index );
+    };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Class:
+    //   IConcurrentGroup_1_11
+    //
+    // Description:
+    //   Updated 1.5 version to use with 1.11 interface version.
+    //
+    // Updates:
+    // - GetMetricSet:                  Update to 1.11 interface
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IConcurrentGroup_1_11 : public IConcurrentGroup_1_5
+    {
+    public:
+        virtual IMetricSet_1_11* GetMetricSet( uint32_t index );
     };
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -1203,9 +1239,12 @@ namespace MetricsDiscovery
     class IMetricsDevice_1_2 : public IMetricsDevice_1_1
     {
     public:
+        // Updates.
         virtual TMetricsDeviceParams_1_2* GetParams( void );
-        virtual IOverride_1_2*            GetOverride( uint32_t index );
-        virtual IOverride_1_2*            GetOverrideByName( const char* symbolName );
+
+        // New.
+        virtual IOverride_1_2* GetOverride( uint32_t index );
+        virtual IOverride_1_2* GetOverrideByName( const char* symbolName );
     };
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -1216,7 +1255,7 @@ namespace MetricsDiscovery
     // Description:
     //   Updated 1.2 version to use with 1.5 interface version.
     //
-    // New:
+    // Updates:
     // - GetConcurrentGroup:            Update to 1.5 interface
     //
     ///////////////////////////////////////////////////////////////////////////////
@@ -1243,6 +1282,24 @@ namespace MetricsDiscovery
     public:
         using IMetricsDevice_1_0::GetGpuCpuTimestamps; // To avoid hiding by 1.10 interface function
         virtual TCompletionCode GetGpuCpuTimestamps( uint64_t* gpuTimestampNs, uint64_t* cpuTimestampNs, uint32_t* cpuId, uint64_t* correlationIndicatorNs );
+    };
+
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Class:
+    //   IMetricsDevice_1_11
+    //
+    // Description:
+    //   Updated 1.10 version to use with 1.11 interface version.
+    //
+    // Updates:
+    // - GetConcurrentGroup:            Update to 1.11 interface
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IMetricsDevice_1_11 : public IMetricsDevice_1_10
+    {
+    public:
+        virtual IConcurrentGroup_1_11* GetConcurrentGroup( uint32_t index );
     };
 
     ///////////////////////////////////////////////////////////////////////////////
@@ -1282,8 +1339,8 @@ namespace MetricsDiscovery
     // Description:
     //   Abstract interface for GPU adapter.
     //
-    // New:
-    // - GetParams:                     To get this adapter params
+    // Updates:
+    // - GetParams:                     Update to 1.8 interface
     //
     ///////////////////////////////////////////////////////////////////////////////
     class IAdapter_1_8 : public IAdapter_1_6
@@ -1300,18 +1357,23 @@ namespace MetricsDiscovery
     // Description:
     //   Abstract interface for GPU adapter.
     //
+    // Updates:
+    // - GetParams:                     Update to 1.9 interface
+    //
     // New:
-    // - GetParams:                     To get this adapter parameters
-    // - GetSubDeviceParams             To get sub device parameters
-    // - GetEngineParams                To get engine parameters
-    // - OpenMetricsSubDevice           To open metrics device on given sub device
-    // - OpenMetricsSubDeviceFromFile   To open metrics device from file on given sub device
+    // - GetSubDeviceParams:            To get sub device parameters
+    // - GetEngineParams:               To get engine parameters
+    // - OpenMetricsSubDevice:          To open metrics device on given sub device
+    // - OpenMetricsSubDeviceFromFile:  To open metrics device from file on given sub device
     //
     ///////////////////////////////////////////////////////////////////////////////
     class IAdapter_1_9 : public IAdapter_1_8
     {
     public:
-        virtual const TAdapterParams_1_9*   GetParams( void ) const;
+        // Updates.
+        virtual const TAdapterParams_1_9* GetParams( void ) const;
+
+        // New.
         virtual const TSubDeviceParams_1_9* GetSubDeviceParams( const uint32_t subDeviceIndex );
         virtual const TEngineParams_1_9*    GetEngineParams( const uint32_t subDeviceIndex, const uint32_t engineIndex );
         virtual TCompletionCode             OpenMetricsSubDevice( const uint32_t subDeviceIndex, IMetricsDevice_1_5** metricsDevice );
@@ -1350,6 +1412,40 @@ namespace MetricsDiscovery
     ///////////////////////////////////////////////////////////////////////////////
     //
     // Class:
+    //   IAdapter_1_11
+    //
+    // Description:
+    //   Abstract interface for GPU adapter.
+    //
+    // Updates:
+    // - OpenMetricsDevice:              Update to 1.11 interface
+    // - OpenMetricsDeviceFromFile:      Update to 1.11 interface
+    // - OpenMetricsSubDevice:           Update to 1.11 interface
+    // - OpenMetricsSubDeviceFromFile:   Update to 1.11 interface
+    //
+    // New:
+    // - SaveMetricsDeviceToFile   To save metrics device with required minimal api version
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IAdapter_1_11 : public IAdapter_1_10
+    {
+    public:
+        // Updates.
+        using IAdapter_1_10::OpenMetricsDevice;
+        using IAdapter_1_10::OpenMetricsDeviceFromFile;
+        using IAdapter_1_10::OpenMetricsSubDevice;
+        using IAdapter_1_10::OpenMetricsSubDeviceFromFile;
+
+        virtual TCompletionCode OpenMetricsDevice( IMetricsDevice_1_11** metricsDevice );
+        virtual TCompletionCode OpenMetricsDeviceFromFile( const char* fileName, void* openParams, IMetricsDevice_1_11** metricsDevice );
+        virtual TCompletionCode OpenMetricsSubDevice( const uint32_t subDeviceIndex, IMetricsDevice_1_11** metricsDevice );
+        virtual TCompletionCode OpenMetricsSubDeviceFromFile( const uint32_t subDeviceIndex, const char* fileName, void* openParams, IMetricsDevice_1_11** metricsDevice );
+
+        // New.
+        using IAdapter_1_6::SaveMetricsDeviceToFile;
+        virtual TCompletionCode SaveMetricsDeviceToFile( const char* fileName, void* saveParams, IMetricsDevice_1_11* metricsDevice, const uint32_t minMajorApiVersion, const uint32_t minMinorApiVersion );
+    };
+
     //   IAdapterGroup_1_6
     //
     // Description:
@@ -1378,8 +1474,8 @@ namespace MetricsDiscovery
     // Description:
     //   Abstract interface for the GPU adapters root object.
     //
-    // New:
-    // - GetAdapter:                    To enumerate available GPU adapters
+    // Updates:
+    // - GetAdapter:                    Update to 1.8 interface
     //
     ///////////////////////////////////////////////////////////////////////////////
     class IAdapterGroup_1_8 : public IAdapterGroup_1_6
@@ -1396,8 +1492,8 @@ namespace MetricsDiscovery
     // Description:
     //   Abstract interface for the GPU adapters root object.
     //
-    // New:
-    // - GetAdapter:                    To enumerate available GPU adapters
+    // Updates:
+    // - GetAdapter:                    Update to 1.9 interface
     //
     ///////////////////////////////////////////////////////////////////////////////
     class IAdapterGroup_1_9 : public IAdapterGroup_1_8
@@ -1424,17 +1520,35 @@ namespace MetricsDiscovery
         virtual IAdapter_1_10* GetAdapter( uint32_t index );
     };
 
+    ///////////////////////////////////////////////////////////////////////////////
+    //
+    // Class:
+    //   IAdapterGroup_1_11
+    //
+    // Description:
+    //   Abstract interface for the GPU adapters root object.
+    //
+    // Updates:
+    // - GetAdapter:                    Update to 1.11 interface
+    //
+    ///////////////////////////////////////////////////////////////////////////////
+    class IAdapterGroup_1_11 : public IAdapterGroup_1_10
+    {
+    public:
+        virtual IAdapter_1_11* GetAdapter( uint32_t index );
+    };
+
     //////////////////////////////////////////////////////////////////////////////////
     // Latest interfaces and typedef structs versions:
     //////////////////////////////////////////////////////////////////////////////////
-    using IAdapterGroupLatest               = IAdapterGroup_1_10;
-    using IAdapterLatest                    = IAdapter_1_10;
-    using IConcurrentGroupLatest            = IConcurrentGroup_1_5;
+    using IAdapterGroupLatest               = IAdapterGroup_1_11;
+    using IAdapterLatest                    = IAdapter_1_11;
+    using IConcurrentGroupLatest            = IConcurrentGroup_1_11;
     using IEquationLatest                   = IEquation_1_0;
     using IInformationLatest                = IInformation_1_0;
     using IMetricLatest                     = IMetric_1_0;
-    using IMetricSetLatest                  = IMetricSet_1_5;
-    using IMetricsDeviceLatest              = IMetricsDevice_1_10;
+    using IMetricSetLatest                  = IMetricSet_1_11;
+    using IMetricsDeviceLatest              = IMetricsDevice_1_11;
     using IOverrideLatest                   = IOverride_1_2;
     using TAdapterGroupParamsLatest         = TAdapterGroupParams_1_6;
     using TAdapterIdLatest                  = TAdapterId_1_6;
@@ -1453,7 +1567,7 @@ namespace MetricsDiscovery
     using TGlobalSymbolLatest               = TGlobalSymbol_1_0;
     using TInformationParamsLatest          = TInformationParams_1_0;
     using TMetricParamsLatest               = TMetricParams_1_0;
-    using TMetricSetParamsLatest            = TMetricSetParams_1_4;
+    using TMetricSetParamsLatest            = TMetricSetParams_1_11;
     using TMetricsDeviceParamsLatest        = TMetricsDeviceParams_1_2;
     using TOverrideParamsLatest             = TOverrideParams_1_2;
     using TReadParamsLatest                 = TReadParams_1_0;

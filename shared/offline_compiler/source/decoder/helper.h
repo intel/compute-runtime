@@ -16,6 +16,9 @@
 #include <string>
 #include <vector>
 
+class OclocArgHelper;
+struct IgaWrapper;
+
 extern void (*abortOclocExecution)(int);
 
 void abortOclocExecutionDefaultHandler(int errorCode);
@@ -25,6 +28,7 @@ void addSlash(std::string &path);
 std::vector<char> readBinaryFile(const std::string &fileName);
 
 void readFileToVectorOfStrings(std::vector<std::string> &lines, const std::string &fileName, bool replaceTabs = false);
+void setProductFamilyForIga(const std::string &device, IgaWrapper *iga, OclocArgHelper *argHelper);
 
 size_t findPos(const std::vector<std::string> &lines, const std::string &whatToFind);
 

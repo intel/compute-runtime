@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 namespace NEO {
 GMM_INIT_IN_ARGS passedInputArgs = {};
+GT_SYSTEM_INFO passedGtSystemInfo = {};
 SKU_FEATURE_TABLE passedFtrTable = {};
 WA_TABLE passedWaTable = {};
 bool copyInputArgs = false;
@@ -23,6 +24,7 @@ GMM_STATUS initialize(GMM_INIT_IN_ARGS *pInArgs, GMM_INIT_OUT_ARGS *pOutArgs) {
         }
         if (copyInputArgs) {
             passedInputArgs = *pInArgs;
+            passedGtSystemInfo = *reinterpret_cast<GT_SYSTEM_INFO *>(pInArgs->pGtSysInfo);
             passedFtrTable = *reinterpret_cast<SKU_FEATURE_TABLE *>(pInArgs->pSkuTable);
             passedWaTable = *reinterpret_cast<WA_TABLE *>(pInArgs->pWaTable);
         }

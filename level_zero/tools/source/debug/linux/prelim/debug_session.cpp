@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,10 @@
 
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -30,10 +33,18 @@
 
 namespace L0 {
 
-DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd);
+DebugSession *createDebugSessionHelper(const zet_debug_config_t &config, Device *device, int debugFd, void *params);
 
-DebugSessionLinux::DebugSessionLinux(const zet_debug_config_t &config, Device *device, int debugFd) : DebugSessionImp(config, device), fd(debugFd) {
+DebugSessionLinux::DebugSessionLinux(const zet_debug_config_t &config, Device *device, int debugFd, void *params) : DebugSessionImp(config, device), fd(debugFd) {
     ioctlHandler.reset(new IoctlHandler);
+
+    if (params) {
+        this->i915DebuggerVersion = reinterpret_cast<prelim_drm_i915_debugger_open_param *>(params)->version;
+    }
+
+    if (this->i915DebuggerVersion >= 3) {
+        this->blockOnFenceMode = true;
+    }
 
     for (size_t i = 0; i < arrayCount(euControlInterruptSeqno); i++) {
         euControlInterruptSeqno[i] = invalidHandle;
@@ -42,20 +53,27 @@ DebugSessionLinux::DebugSessionLinux(const zet_debug_config_t &config, Device *d
 DebugSessionLinux::~DebugSessionLinux() {
     closeAsyncThread();
     closeInternalEventsThread();
+    for (auto &session : tileSessions) {
+        delete session.first;
+    }
+    tileSessions.resize(0);
+    closeFd();
 }
 
-DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result) {
+DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *device, ze_result_t &result, bool isRootAttach) {
     if (device->getOsInterface().isDebugAttachAvailable()) {
         struct prelim_drm_i915_debugger_open_param open = {};
         open.pid = config.pid;
         open.events = 0;
+        open.version = 0;
 
         auto debugFd = DrmHelper::ioctl(device, NEO::DrmIoctl::DebuggerOpen, &open);
         if (debugFd >= 0) {
             PRINT_DEBUGGER_INFO_LOG("PRELIM_DRM_IOCTL_I915_DEBUGGER_OPEN: open.pid: %d, open.events: %d, debugFd: %d\n",
                                     open.pid, open.events, debugFd);
 
-            auto debugSession = createDebugSessionHelper(config, device, debugFd);
+            auto debugSession = createDebugSessionHelper(config, device, debugFd, &open);
+            debugSession->setAttachMode(isRootAttach);
             result = debugSession->initialize();
 
             if (result != ZE_RESULT_SUCCESS) {
@@ -239,22 +257,37 @@ ze_result_t DebugSessionLinux::initialize() {
         return ZE_RESULT_NOT_READY;
     }
 
+    bool isRootDevice = !connectedDevice->getNEODevice()->isSubDevice();
+    if (isRootDevice && !tileAttachEnabled) {
+        createEuThreads();
+    }
+    createTileSessionsIfEnabled();
     startInternalEventsThread();
 
     bool allEventsCollected = false;
-    bool eventAvailable = false;
+    bool eventAvailable = true;
+    float timeDelta = 0;
+    float timeStart = clock();
     do {
-        auto eventMemory = getInternalEvent();
-        if (eventMemory != nullptr) {
-            handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get()));
-            eventAvailable = true;
+        if (internalThreadHasStarted) {
+            auto eventMemory = getInternalEvent();
+            auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get());
+            if (eventMemory != nullptr) {
+                handleEvent(debugEvent);
+                if (debugEvent->type != PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND && pendingVmBindEvents.size() > 0) {
+                    processPendingVmBindEvents();
+                }
+                eventAvailable = true;
+            } else {
+                eventAvailable = false;
+            }
+            allEventsCollected = checkAllEventsCollected();
         } else {
-            eventAvailable = false;
+            timeDelta = float(clock() - timeStart) / CLOCKS_PER_SEC;
         }
+    } while ((eventAvailable && !allEventsCollected) && timeDelta < getThreadStartLimitTime());
 
-        allEventsCollected = checkAllEventsCollected();
-
-    } while (eventAvailable && !allEventsCollected);
+    internalThreadHasStarted = false;
 
     if (clientHandleClosed == clientHandle && clientHandle != invalidClientHandle) {
         return ZE_RESULT_ERROR_DEVICE_LOST;
@@ -270,6 +303,25 @@ ze_result_t DebugSessionLinux::initialize() {
     return ZE_RESULT_NOT_READY;
 }
 
+void DebugSessionLinux::createTileSessionsIfEnabled() {
+    auto numTiles = connectedDevice->getNEODevice()->getNumSubDevices();
+    if (numTiles > 0 && tileAttachEnabled) {
+        tileSessions.resize(numTiles);
+
+        for (uint32_t i = 0; i < numTiles; i++) {
+            auto subDevice = connectedDevice->getNEODevice()->getSubDevice(i)->getSpecializedDevice<Device>();
+            tileSessions[i] = std::pair<DebugSessionImp *, bool>{createTileSession(config, subDevice, this), false};
+        }
+        tileSessionsEnabled = true;
+    }
+}
+
+TileDebugSessionLinux *DebugSessionLinux::createTileSession(const zet_debug_config_t &config, Device *device, DebugSessionImp *rootDebugSession) {
+    auto tileSession = new TileDebugSessionLinux(config, device, rootDebugSession);
+    tileSession->initialize();
+    return tileSession;
+}
+
 void *DebugSessionLinux::asyncThreadFunction(void *arg) {
     DebugSessionLinux *self = reinterpret_cast<DebugSessionLinux *>(arg);
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread start\n", "");
@@ -277,19 +329,26 @@ void *DebugSessionLinux::asyncThreadFunction(void *arg) {
     while (self->asyncThread.threadActive) {
         self->handleEventsAsync();
 
-        self->sendInterrupts();
-        self->generateEventsAndResumeStoppedThreads();
+        if (self->tileSessionsEnabled) {
+            for (size_t tileIndex = 0; tileIndex < self->tileSessions.size(); tileIndex++) {
+                static_cast<TileDebugSessionLinux *>(self->tileSessions[tileIndex].first)->sendInterrupts();
+                static_cast<TileDebugSessionLinux *>(self->tileSessions[tileIndex].first)->generateEventsAndResumeStoppedThreads();
+            }
+        } else {
+            self->sendInterrupts();
+            self->generateEventsAndResumeStoppedThreads();
+        }
     }
 
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread closing\n", "");
 
-    self->asyncThread.threadFinished.store(true);
     return nullptr;
 }
 
 void *DebugSessionLinux::readInternalEventsThreadFunction(void *arg) {
     DebugSessionLinux *self = reinterpret_cast<DebugSessionLinux *>(arg);
     PRINT_DEBUGGER_INFO_LOG("Debugger internal event thread started\n", "");
+    self->internalThreadHasStarted = true;
 
     while (self->internalEventThread.threadActive) {
         self->readInternalEventsAsync();
@@ -297,7 +356,6 @@ void *DebugSessionLinux::readInternalEventsThreadFunction(void *arg) {
 
     PRINT_DEBUGGER_INFO_LOG("Debugger internal event thread closing\n", "");
 
-    self->internalEventThread.threadFinished.store(true);
     return nullptr;
 }
 
@@ -310,6 +368,21 @@ void DebugSessionLinux::closeAsyncThread() {
     internalEventThread.close();
 }
 
+bool DebugSessionLinux::closeFd() {
+    if (fd == 0) {
+        return false;
+    }
+
+    auto ret = NEO::SysCalls::close(fd);
+
+    if (ret != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("Debug connection close() on fd: %d failed: retCode: %d\n", fd, ret);
+        return false;
+    }
+    fd = 0;
+    return true;
+}
+
 std::unique_ptr<uint64_t[]> DebugSessionLinux::getInternalEvent() {
     std::unique_ptr<uint64_t[]> eventMemory;
 
@@ -317,7 +390,7 @@ std::unique_ptr<uint64_t[]> DebugSessionLinux::getInternalEvent() {
         std::unique_lock<std::mutex> lock(internalEventThreadMutex);
 
         if (internalEventQueue.empty()) {
-            apiEventCondition.wait_for(lock, std::chrono::milliseconds(100));
+            internalEventCondition.wait_for(lock, std::chrono::milliseconds(100));
         }
 
         if (!internalEventQueue.empty()) {
@@ -331,7 +404,12 @@ std::unique_ptr<uint64_t[]> DebugSessionLinux::getInternalEvent() {
 void DebugSessionLinux::handleEventsAsync() {
     auto eventMemory = getInternalEvent();
     if (eventMemory != nullptr) {
-        handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get()));
+        auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(eventMemory.get());
+        handleEvent(debugEvent);
+
+        if (debugEvent->type != PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND && pendingVmBindEvents.size() > 0) {
+            processPendingVmBindEvents();
+        }
     }
 }
 
@@ -355,7 +433,15 @@ void DebugSessionLinux::readInternalEventsAsync() {
 
         PRINT_DEBUGGER_INFO_LOG("Debugger detached\n", "");
 
-        pushApiEvent(debugEvent, nullptr);
+        if (tileSessionsEnabled) {
+            auto numTiles = connectedDevice->getNEODevice()->getNumSubDevices();
+            for (uint32_t tileIndex = 0; tileIndex < numTiles; tileIndex++) {
+                static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent);
+                static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->detached = true;
+            }
+        } else {
+            pushApiEvent(debugEvent);
+        }
         detached = true;
     } else if (numberOfFds > 0) {
 
@@ -374,7 +460,7 @@ void DebugSessionLinux::readInternalEventsAsync() {
             maxLoopCount--;
 
             if (result == ZE_RESULT_SUCCESS) {
-                std::unique_lock<std::mutex> lock(internalEventThreadMutex);
+                std::lock_guard<std::mutex> lock(internalEventThreadMutex);
 
                 auto memory = std::make_unique<uint64_t[]>(maxEventSize / sizeof(uint64_t));
                 memcpy(memory.get(), event, maxEventSize);
@@ -388,18 +474,8 @@ void DebugSessionLinux::readInternalEventsAsync() {
 
 bool DebugSessionLinux::closeConnection() {
     closeAsyncThread();
-    internalEventThread.close();
-    if (fd == 0) {
-        return false;
-    }
-
-    auto res = NEO::SysCalls::close(fd);
-
-    if (res != 0) {
-        PRINT_DEBUGGER_ERROR_LOG("Debug connection close() on fd: %d failed: retCode: %d\n", fd, res);
-        return false;
-    }
-    return true;
+    closeInternalEventsThread();
+    return closeFd();
 }
 
 void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
@@ -453,16 +529,33 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
         bool create = event->flags & PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
 
         if (destroy && clientHandleToConnection[uuid->client_handle]->uuidMap[uuid->handle].classIndex == NEO::DrmResourceClass::L0ZebinModule) {
-            DEBUG_BREAK_IF(clientHandleToConnection[uuid->client_handle]->uuidToModule[uuid->handle].segmentVmBindCounter != 0 ||
-                           clientHandleToConnection[uuid->client_handle]->uuidToModule[uuid->handle].loadAddresses.size() > 0);
+            DEBUG_BREAK_IF(clientHandleToConnection[uuid->client_handle]->uuidToModule[uuid->handle].segmentVmBindCounter[0] != 0 ||
+                           clientHandleToConnection[uuid->client_handle]->uuidToModule[uuid->handle].loadAddresses[0].size() > 0);
 
             clientHandleToConnection[uuid->client_handle]->uuidToModule.erase(uuid->handle);
         }
 
-        if (destroy && (uuidL0CommandQueueHandle == uuid->handle) && (clientHandle == uuid->client_handle)) {
-            zet_debug_event_t debugEvent = {};
-            debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT;
-            pushApiEvent(debugEvent, nullptr);
+        if (destroy && (clientHandle == uuid->client_handle)) {
+
+            for (const auto &uuidToDevice : uuidL0CommandQueueHandleToDevice) {
+                if (uuidToDevice.first == uuid->handle) {
+                    auto deviceIndex = uuidToDevice.second;
+                    uuidL0CommandQueueHandleToDevice.erase(uuidToDevice.first);
+
+                    zet_debug_event_t debugEvent = {};
+                    debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT;
+
+                    if (tileSessionsEnabled) {
+                        auto tileSession = reinterpret_cast<TileDebugSessionLinux *>(tileSessions[deviceIndex].first);
+                        tileSession->processExit();
+                        tileSession->pushApiEvent(debugEvent);
+                    } else if (uuidL0CommandQueueHandleToDevice.size() == 0) {
+                        pushApiEvent(debugEvent);
+                    }
+
+                    break;
+                }
+            }
             break;
         }
 
@@ -475,9 +568,9 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
                 readUuid.handle = static_cast<decltype(readUuid.handle)>(uuid->handle);
                 readUuid.payload_ptr = reinterpret_cast<uint64_t>(payload.get());
                 readUuid.payload_size = uuid->payload_size;
-                auto res = ioctl(PRELIM_I915_DEBUG_IOCTL_READ_UUID, &readUuid);
+                auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_READ_UUID, &readUuid);
 
-                if (res == 0) {
+                if (ret == 0) {
                     std::string uuidString = std::string(readUuid.uuid, 36);
                     uint32_t classIndex = static_cast<uint32_t>(NEO::DrmResourceClass::MaxSize);
                     auto validClassUuid = NEO::DrmUuid::getClassUuidIndex(uuidString, classIndex);
@@ -485,10 +578,26 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
                     if (uuidString == NEO::uuidL0CommandQueueHash) {
                         if ((clientHandle == invalidClientHandle) || (clientHandle == uuid->client_handle)) {
                             clientHandle = uuid->client_handle;
-                            uuidL0CommandQueueHandle = uuid->handle;
+
+                            uint32_t deviceIndex = 0;
+                            if (readUuid.payload_size == sizeof(NEO::DebuggerL0::CommandQueueNotification)) {
+                                auto notification = reinterpret_cast<NEO::DebuggerL0::CommandQueueNotification *>(payload.get());
+                                deviceIndex = notification->subDeviceIndex;
+                                UNRECOVERABLE_IF(notification->subDeviceCount > 0 && notification->subDeviceIndex >= notification->subDeviceCount);
+                            }
+
                             zet_debug_event_t debugEvent = {};
                             debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
-                            pushApiEvent(debugEvent, nullptr);
+
+                            if (tileSessionsEnabled) {
+                                UNRECOVERABLE_IF(uuidL0CommandQueueHandleToDevice.find(uuid->handle) != uuidL0CommandQueueHandleToDevice.end());
+                                auto tileSession = static_cast<TileDebugSessionLinux *>(tileSessions[deviceIndex].first);
+                                tileSession->processEntry();
+                                tileSession->pushApiEvent(debugEvent);
+                            } else if (uuidL0CommandQueueHandleToDevice.size() == 0) {
+                                pushApiEvent(debugEvent);
+                            }
+                            uuidL0CommandQueueHandleToDevice[uuid->handle] = deviceIndex;
                         }
                     }
 
@@ -521,15 +630,20 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
 
                             auto &newModule = connection->uuidToModule[handle];
                             newModule.segmentCount = 0;
-                            newModule.segmentVmBindCounter = 0;
+                            newModule.moduleUuidHandle = handle;
+                            for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+                                newModule.segmentVmBindCounter[i] = 0;
+                                newModule.loadAddresses[i].clear();
+                                newModule.moduleLoadEventAcked[i] = false;
+                            }
                         }
                         extractUuidData(uuid->client_handle, uuidData);
                     }
 
-                    PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_READ_UUID client_handle = %llu handle = %llu flags = %d uuid = %s res = %d\n",
-                                            (uint64_t)readUuid.client_handle, (uint64_t)readUuid.handle, (int)readUuid.flags, uuidString.c_str(), res);
+                    PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_READ_UUID client_handle = %llu handle = %llu flags = %d uuid = %s ret = %d\n",
+                                            (uint64_t)readUuid.client_handle, (uint64_t)readUuid.handle, (int)readUuid.flags, uuidString.c_str(), ret);
                 } else {
-                    PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_READ_UUID res = %d errno = %d\n", res, errno);
+                    PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_READ_UUID ret = %d errno = %d\n", ret, errno);
                 }
             } else {
                 connection->uuidMap[uuid->handle].classHandle = uuid->class_handle;
@@ -559,7 +673,21 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
     case PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND: {
         prelim_drm_i915_debug_event_vm_bind *vmBind = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(event);
 
-        handleVmBindEvent(vmBind);
+        if (!handleVmBindEvent(vmBind)) {
+            if (event->flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
+                prelim_drm_i915_debug_event_ack eventToAck = {};
+                eventToAck.type = vmBind->base.type;
+                eventToAck.seqno = vmBind->base.seqno;
+                eventToAck.flags = 0;
+                auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
+                PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu ret = %d errno = %d\n", (uint64_t)eventToAck.seqno, ret, ret != 0 ? errno : 0);
+            } else {
+                auto sizeAligned = alignUp(event->size, sizeof(uint64_t));
+                auto pendingEvent = std::make_unique<uint64_t[]>(sizeAligned / sizeof(uint64_t));
+                memcpy_s(pendingEvent.get(), sizeAligned, event, event->size);
+                pendingVmBindEvents.push_back(std::move(pendingEvent));
+            }
+        }
 
     } break;
 
@@ -587,6 +715,20 @@ void DebugSessionLinux::handleEvent(prelim_drm_i915_debug_event *event) {
     default:
         PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT type: UNHANDLED %d flags = %d size = %llu\n", (int)event->type, (int)event->flags, (uint64_t)event->size);
         break;
+    }
+}
+
+void DebugSessionLinux::processPendingVmBindEvents() {
+    size_t processedEvents = 0;
+    for (size_t index = 0; index < pendingVmBindEvents.size(); index++) {
+        auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(pendingVmBindEvents[index].get());
+        if (handleVmBindEvent(debugEvent) == false) {
+            break;
+        }
+        processedEvents++;
+    }
+    if (processedEvents > 0) {
+        pendingVmBindEvents.erase(pendingVmBindEvents.begin(), pendingVmBindEvents.begin() + processedEvents);
     }
 }
 
@@ -626,7 +768,7 @@ void DebugSessionLinux::readStateSaveAreaHeader() {
     size_t totalSize = 0;
 
     {
-        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+        std::lock_guard<std::mutex> lock(asyncThreadMutex);
         if (clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.size() > 0) {
             vm = clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.begin()->first;
             gpuVa = clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.begin()->second.gpuVa;
@@ -640,60 +782,17 @@ void DebugSessionLinux::readStateSaveAreaHeader() {
         if (totalSize < headerSize) {
             PRINT_DEBUGGER_ERROR_LOG("Context State Save Area size incorrect\n", "");
             return;
-        }
-        std::vector<char> data(headerSize);
-        auto retVal = readGpuMemory(vm, data.data(), headerSize, gpuVa);
-
-        if (retVal != 0) {
-            PRINT_DEBUGGER_ERROR_LOG("Reading Context State Save Area failed, error = %d\n", retVal);
         } else {
-            auto pStateSaveArea = reinterpret_cast<const SIP::StateSaveAreaHeader *>(data.data());
-            if (0 == strcmp(pStateSaveArea->versionHeader.magic, "tssarea")) {
-                size_t size = pStateSaveArea->versionHeader.size * 8u;
-                DEBUG_BREAK_IF(size != sizeof(SIP::StateSaveAreaHeader));
-                stateSaveAreaHeader.assign(data.begin(), data.begin() + size);
-
-                PRINT_DEBUGGER_INFO_LOG("Context State Save Area : version == %d.%d.%d\n", (int)pStateSaveArea->versionHeader.version.major, (int)pStateSaveArea->versionHeader.version.minor, (int)pStateSaveArea->versionHeader.version.patch);
-            }
+            validateAndSetStateSaveAreaHeader(vm, gpuVa);
         }
     }
-}
-
-ze_result_t DebugSessionLinux::readEvent(uint64_t timeout, zet_debug_event_t *outputEvent) {
-
-    if (outputEvent) {
-        outputEvent->type = ZET_DEBUG_EVENT_TYPE_INVALID;
-        outputEvent->flags = 0;
-    } else {
-        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
-    }
-
-    if (clientHandle == invalidClientHandle) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
-
-    do {
-        std::unique_lock<std::mutex> lock(asyncThreadMutex);
-
-        if (timeout > 0 && clientHandleToConnection[clientHandle]->apiEvents.size() == 0) {
-            apiEventCondition.wait_for(lock, std::chrono::milliseconds(timeout));
-        }
-
-        if (clientHandleToConnection[clientHandle]->apiEvents.size() > 0) {
-            *outputEvent = clientHandleToConnection[clientHandle]->apiEvents.front();
-            clientHandleToConnection[clientHandle]->apiEvents.pop();
-            return ZE_RESULT_SUCCESS;
-        }
-    } while (timeout == UINT64_MAX && asyncThread.threadActive);
-
-    return ZE_RESULT_NOT_READY;
 }
 
 ze_result_t DebugSessionLinux::readEventImp(prelim_drm_i915_debug_event *drmDebugEvent) {
-    auto res = ioctl(PRELIM_I915_DEBUG_IOCTL_READ_EVENT, drmDebugEvent);
+    auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_READ_EVENT, drmDebugEvent);
 
-    if (res != 0) {
-        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT failed: retCode: %d errno = %d\n", res, errno);
+    if (ret != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT failed: retCode: %d errno = %d\n", ret, errno);
     } else {
         if ((drmDebugEvent->flags & PRELIM_DRM_I915_DEBUG_EVENT_CREATE) == 0 &&
             (drmDebugEvent->flags & PRELIM_DRM_I915_DEBUG_EVENT_DESTROY) == 0 &&
@@ -707,7 +806,7 @@ ze_result_t DebugSessionLinux::readEventImp(prelim_drm_i915_debug_event *drmDebu
     return ZE_RESULT_NOT_READY;
 }
 
-void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind) {
+bool DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *vmBind) {
 
     PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_READ_EVENT type: PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND flags = %d size = %llu client_handle = %llu vm_handle = %llu va_start = %p va_lenght = %llu num_uuids = %lu\n",
                             (int)vmBind->base.flags, (uint64_t)vmBind->base.size, (uint64_t)vmBind->client_handle, (uint64_t)vmBind->vm_handle, (void *)vmBind->va_start, (uint64_t)vmBind->va_length, (uint32_t)vmBind->num_uuids);
@@ -719,21 +818,30 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
 
     if (vmBind->num_uuids > 0 && vmBind->base.size > sizeof(prelim_drm_i915_debug_event_vm_bind)) {
         auto vmHandle = vmBind->vm_handle;
-        uint32_t index = 0;
         auto connection = clientHandleToConnection[vmBind->client_handle].get();
-        auto uuid = vmBind->uuids[index];
+        uint32_t index = 0;
+        const auto uuid = vmBind->uuids[index];
 
         if (connection->uuidMap.find(uuid) == connection->uuidMap.end()) {
             PRINT_DEBUGGER_ERROR_LOG("Unknown UUID handle = %llu\n", (uint64_t)uuid);
-            return;
+            return false;
         }
-        PRINT_DEBUGGER_INFO_LOG("UUID handle = %llu class index = %d\n", (uint64_t)vmBind->uuids[index], (int)clientHandleToConnection[vmBind->client_handle]->uuidMap[vmBind->uuids[index]].classIndex);
+
+        if (connection->vmToTile.find(vmHandle) == connection->vmToTile.end()) {
+            DEBUG_BREAK_IF(connection->vmToTile.find(vmHandle) == connection->vmToTile.end() && (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) &&
+                           (connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa || connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::ModuleHeapDebugArea));
+            return false;
+        }
+
+        const auto tileIndex = connection->vmToTile[vmHandle];
+
+        PRINT_DEBUGGER_INFO_LOG("UUID handle = %llu class index = %d\n", static_cast<uint64_t>(vmBind->uuids[index]), static_cast<int>(clientHandleToConnection[vmBind->client_handle]->uuidMap[vmBind->uuids[index]].classIndex));
 
         auto classUuid = connection->uuidMap[uuid].classHandle;
 
         if (connection->classHandleToIndex.find(classUuid) != connection->classHandleToIndex.end()) {
 
-            std::unique_lock<std::mutex> lock(asyncThreadMutex);
+            std::lock_guard<std::mutex> lock(asyncThreadMutex);
 
             if (connection->classHandleToIndex[classUuid].second ==
                 static_cast<uint32_t>(NEO::DrmResourceClass::SbaTrackingBuffer)) {
@@ -751,22 +859,36 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
             }
         }
 
-        if (connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa) {
-            PRINT_DEBUGGER_INFO_LOG("ISA vm_handle = %llu", (uint64_t)vmHandle);
+        bool handleEvent = isTileWithinDeviceBitfield(tileIndex);
 
+        if (handleEvent && connection->uuidMap[uuid].classIndex == NEO::DrmResourceClass::Isa) {
+
+            uint32_t deviceBitfield = 0;
+            memcpy_s(&deviceBitfield, sizeof(uint32_t), connection->uuidMap[uuid].data.get(), connection->uuidMap[uuid].dataSize);
+            const NEO::DeviceBitfield devices(deviceBitfield);
+
+            PRINT_DEBUGGER_INFO_LOG("ISA vm_handle = %llu, tileIndex = %lu, deviceBitfield = %llu", vmHandle, tileIndex, devices.to_ulong());
+
+            const auto isaUuidHandle = connection->uuidMap[uuid].handle;
             bool perKernelModules = true;
             int moduleUUIDindex = -1;
+            bool tileInstanced = false;
+            bool allInstancesEventsReceived = true;
 
             for (uint32_t uuidIter = 1; uuidIter < vmBind->num_uuids; uuidIter++) {
                 if (connection->uuidMap[vmBind->uuids[uuidIter]].classIndex == NEO::DrmResourceClass::L0ZebinModule) {
                     perKernelModules = false;
                     moduleUUIDindex = static_cast<int>(uuidIter);
                 }
+
+                if (connection->uuidMap[vmBind->uuids[uuidIter]].classHandle == isaUuidHandle) {
+                    tileInstanced = true;
+                }
             }
 
-            if (connection->isaMap.find(vmBind->va_start) == connection->isaMap.end() && createEvent) {
-                auto isaUuidHandle = connection->uuidMap[vmBind->uuids[index]].handle;
-                auto &isaMap = connection->isaMap;
+            if (connection->isaMap[tileIndex].find(vmBind->va_start) == connection->isaMap[tileIndex].end() && createEvent) {
+
+                auto &isaMap = connection->isaMap[tileIndex];
                 auto &elfMap = connection->elfMap;
 
                 auto isa = std::make_unique<IsaAllocation>();
@@ -775,6 +897,9 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 isa->elfUuidHandle = invalidHandle;
                 isa->moduleBegin = 0;
                 isa->moduleEnd = 0;
+                isa->tileInstanced = tileInstanced;
+                isa->perKernelModule = perKernelModules;
+                isa->deviceBitfield = devices;
 
                 for (index = 1; index < vmBind->num_uuids; index++) {
                     if (connection->uuidMap[vmBind->uuids[index]].classIndex == NEO::DrmResourceClass::Elf) {
@@ -785,11 +910,8 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                             DEBUG_BREAK_IF(module.elfUuidHandle != 0 && connection->uuidMap[vmBind->uuids[index]].ptr != connection->uuidMap[module.elfUuidHandle].ptr);
 
                             module.elfUuidHandle = vmBind->uuids[index];
+                            module.deviceBitfield = devices;
                         }
-                    }
-
-                    if (connection->uuidMap[vmBind->uuids[index]].classHandle == isaUuidHandle) {
-                        isa->cookies.emplace(static_cast<uint64_t>(vmBind->uuids[index]));
                     }
                 }
 
@@ -817,34 +939,66 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                 // Expect non canonical va_start
                 DEBUG_BREAK_IF(gmmHelper->decanonize(vmBind->va_start) != vmBind->va_start);
 
+                bool apiEventNeedsAck = (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK);
                 // If ACK flag is not set when triggering MODULE LOAD event, auto-ack immediately
-                if ((vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) == 0) {
-                    connection->isaMap[vmBind->va_start]->moduleLoadEventAck = true;
+                if (apiEventNeedsAck == false) {
+                    isaMap[vmBind->va_start]->moduleLoadEventAck = true;
+                }
+
+                if (tileSessionsEnabled) {
+                    auto tileAttached = tileSessions[tileIndex].second;
+
+                    if (!tileAttached) {
+                        isaMap[vmBind->va_start]->moduleLoadEventAck = true;
+                        apiEventNeedsAck = false;
+                    }
+
+                    PRINT_DEBUGGER_INFO_LOG("TileDebugSession attached = %d, tileIndex = %lu, apiEventNeedsAck = %d", (int)tileAttached, tileIndex, (int)apiEventNeedsAck);
                 }
                 memLock.unlock();
 
                 if (perKernelModules) {
-                    pushApiEvent(debugEvent, &vmBind->base);
-                    shouldAckEvent = false;
+                    debugEvent.flags = apiEventNeedsAck ? ZET_DEBUG_EVENT_FLAG_NEED_ACK : 0;
+
+                    if (tileSessionsEnabled) {
+                        auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->insertModule(debugEvent.info.module);
+                        if (tileAttached) {
+                            static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent);
+                        }
+                    } else {
+
+                        if (devices.count() > 1) {
+                            allInstancesEventsReceived = checkAllOtherTileIsaAllocationsPresent(tileIndex, vmBind->va_start);
+                        }
+                        if (allInstancesEventsReceived) {
+                            pushApiEvent(debugEvent);
+                        }
+                    }
                 }
             }
 
             if (createEvent) {
-                std::unique_lock<std::mutex> lock(asyncThreadMutex);
-                if (!connection->isaMap[vmBind->va_start]->moduleLoadEventAck && perKernelModules) {
-                    PRINT_DEBUGGER_INFO_LOG("Add event to ack, seqno = %llu", (uint64_t)vmBind->base.seqno);
-                    connection->isaMap[vmBind->va_start]->ackEvents.push_back(vmBind->base);
-                    shouldAckEvent = false;
+                std::lock_guard<std::mutex> lock(asyncThreadMutex);
+
+                if (!connection->isaMap[tileIndex][vmBind->va_start]->moduleLoadEventAck && perKernelModules) {
+                    bool doNotAutoAckEvent = (!blockOnFenceMode && allInstancesEventsReceived); // in block on CPU mode - do not auto-ack last event for isa instance
+                    doNotAutoAckEvent |= blockOnFenceMode;                                      // in block on fence mode - do not auto-ack any events
+
+                    if (doNotAutoAckEvent) {
+                        PRINT_DEBUGGER_INFO_LOG("Add event to ack, seqno = %llu", (uint64_t)vmBind->base.seqno);
+                        connection->isaMap[tileIndex][vmBind->va_start]->ackEvents.push_back(vmBind->base);
+                        shouldAckEvent = false;
+                    }
                 }
 
-                connection->isaMap[vmBind->va_start]->vmBindCounter++;
+                connection->isaMap[tileIndex][vmBind->va_start]->vmBindCounter++;
             }
 
-            if (destroyEvent && connection->isaMap.find(vmBind->va_start) != connection->isaMap.end()) {
-                DEBUG_BREAK_IF(connection->isaMap[vmBind->va_start]->vmBindCounter == 0);
-                connection->isaMap[vmBind->va_start]->vmBindCounter--;
-                if (connection->isaMap[vmBind->va_start]->vmBindCounter == 0) {
-                    const auto &isa = connection->isaMap[vmBind->va_start];
+            if (destroyEvent && connection->isaMap[tileIndex].find(vmBind->va_start) != connection->isaMap[tileIndex].end()) {
+                DEBUG_BREAK_IF(connection->isaMap[tileIndex][vmBind->va_start]->vmBindCounter == 0);
+                connection->isaMap[tileIndex][vmBind->va_start]->vmBindCounter--;
+                if (connection->isaMap[tileIndex][vmBind->va_start]->vmBindCounter == 0) {
+                    const auto &isa = connection->isaMap[tileIndex][vmBind->va_start];
 
                     zet_debug_event_t debugEvent = {};
 
@@ -858,61 +1012,165 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
                     debugEvent.info.module.moduleEnd = isa->moduleEnd;
 
                     if (perKernelModules) {
-                        pushApiEvent(debugEvent, nullptr);
+                        if (tileSessionsEnabled) {
+                            static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->removeModule(debugEvent.info.module);
+                            static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent);
+                        } else {
+                            bool notifyEvent = true;
+                            if (isa->deviceBitfield.count() > 1) {
+                                notifyEvent = checkAllOtherTileIsaAllocationsRemoved(tileIndex, vmBind->va_start);
+                            }
+                            if (notifyEvent) {
+                                pushApiEvent(debugEvent);
+                            }
+                        }
                     }
                     std::unique_lock<std::mutex> memLock(asyncThreadMutex);
-                    connection->isaMap.erase(vmBind->va_start);
+                    connection->isaMap[tileIndex].erase(vmBind->va_start);
                     memLock.unlock();
                 }
             }
         }
 
-        for (uint32_t uuidIter = 0; uuidIter < vmBind->num_uuids; uuidIter++) {
-            if (connection->uuidMap[vmBind->uuids[uuidIter]].classIndex == NEO::DrmResourceClass::L0ZebinModule) {
-                uint64_t loadAddress = 0;
-                auto &module = connection->uuidToModule[vmBind->uuids[uuidIter]];
+        if (handleEvent) {
 
-                if (createEvent) {
-                    module.segmentVmBindCounter++;
+            for (uint32_t uuidIter = 0; uuidIter < vmBind->num_uuids; uuidIter++) {
+                if (connection->uuidMap[vmBind->uuids[uuidIter]].classIndex == NEO::DrmResourceClass::L0ZebinModule) {
+                    uint64_t loadAddress = 0;
+                    auto &module = connection->uuidToModule[vmBind->uuids[uuidIter]];
 
-                    DEBUG_BREAK_IF(module.loadAddresses.size() > module.segmentCount);
-                    bool canTriggerEvent = module.loadAddresses.size() == (module.segmentCount - 1);
-                    module.loadAddresses.insert(vmBind->va_start);
+                    if (createEvent) {
+                        module.segmentVmBindCounter[tileIndex]++;
 
-                    if (canTriggerEvent && module.loadAddresses.size() == module.segmentCount) {
-                        auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-                        loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses.begin(), module.loadAddresses.end()));
-                        PRINT_DEBUGGER_INFO_LOG("Zebin module loaded at: %p, with %u isa allocations", (void *)loadAddress, module.segmentCount);
+                        DEBUG_BREAK_IF(module.loadAddresses[tileIndex].size() > module.segmentCount);
+                        bool canTriggerEvent = module.loadAddresses[tileIndex].size() == (module.segmentCount - 1);
+                        module.loadAddresses[tileIndex].insert(vmBind->va_start);
 
-                        zet_debug_event_t debugEvent = {};
-                        debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
-                        debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
-                        debugEvent.info.module.load = loadAddress;
-                        debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
-                        debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
+                        if (!blockOnFenceMode) {
+                            if (canTriggerEvent && module.loadAddresses[tileIndex].size() == module.segmentCount) {
+                                auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                                loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
+                                PRINT_DEBUGGER_INFO_LOG("Zebin module loaded at: %p, with %u isa allocations", (void *)loadAddress, module.segmentCount);
 
-                        pushApiEvent(debugEvent, &vmBind->base);
-                        shouldAckEvent = false;
+                                zet_debug_event_t debugEvent = {};
+                                debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
+                                debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+                                debugEvent.info.module.load = loadAddress;
+                                debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
+                                debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
+
+                                if (!tileSessionsEnabled) {
+                                    bool allInstancesEventsReceived = true;
+                                    if (module.deviceBitfield.count() > 1) {
+                                        allInstancesEventsReceived = checkAllOtherTileModuleSegmentsPresent(tileIndex, module);
+                                    }
+                                    if (allInstancesEventsReceived) {
+                                        if (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
+                                            debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
+                                            module.ackEvents[tileIndex].push_back(vmBind->base);
+                                        }
+                                        pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
+                                        shouldAckEvent = false;
+                                    }
+                                } else {
+                                    auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->insertModule(debugEvent.info.module);
+
+                                    if (tileAttached) {
+                                        if (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
+                                            debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
+                                            module.ackEvents[tileIndex].push_back(vmBind->base);
+                                        }
+                                        static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
+                                        shouldAckEvent = false;
+                                    }
+                                }
+                            }
+                        } else {
+                            if (canTriggerEvent && module.loadAddresses[tileIndex].size() == module.segmentCount) {
+                                auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                                loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
+                                PRINT_DEBUGGER_INFO_LOG("Zebin module loaded at: %p, with %u isa allocations", (void *)loadAddress, module.segmentCount);
+
+                                zet_debug_event_t debugEvent = {};
+                                debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
+                                debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+                                debugEvent.info.module.load = loadAddress;
+                                debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
+                                debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
+                                if (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK) {
+                                    debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
+                                }
+
+                                if (!tileSessionsEnabled) {
+                                    bool allInstancesEventsReceived = true;
+                                    if (module.deviceBitfield.count() > 1) {
+                                        allInstancesEventsReceived = checkAllOtherTileModuleSegmentsPresent(tileIndex, module);
+                                    }
+                                    if (allInstancesEventsReceived) {
+                                        pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
+                                        shouldAckEvent = false;
+                                    }
+                                } else {
+                                    auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->insertModule(debugEvent.info.module);
+                                    if (tileAttached) {
+                                        static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
+                                        shouldAckEvent = false;
+                                    }
+                                }
+                            }
+                            {
+                                std::lock_guard<std::mutex> lock(asyncThreadMutex);
+                                if (!module.moduleLoadEventAcked[tileIndex]) {
+                                    shouldAckEvent = false;
+                                }
+
+                                if (tileSessionsEnabled && !static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->isAttached) {
+                                    shouldAckEvent = true;
+                                }
+                                if (!shouldAckEvent && (vmBind->base.flags & PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK)) {
+                                    module.ackEvents[tileIndex].push_back(vmBind->base);
+                                }
+                            }
+                        }
+
+                    } else { // destroyEvent
+
+                        module.segmentVmBindCounter[tileIndex]--;
+
+                        if (module.segmentVmBindCounter[tileIndex] == 0) {
+
+                            zet_debug_event_t debugEvent = {};
+
+                            auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+                            auto loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses[tileIndex].begin(), module.loadAddresses[tileIndex].end()));
+                            debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
+                            debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
+                            debugEvent.info.module.load = loadAddress;
+                            debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
+                            debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
+
+                            if (tileSessionsEnabled) {
+
+                                auto tileAttached = static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->removeModule(debugEvent.info.module);
+
+                                if (tileAttached) {
+                                    static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
+                                }
+
+                            } else {
+                                bool notifyEvent = true;
+                                if (module.deviceBitfield.count() > 1) {
+                                    notifyEvent = checkAllOtherTileModuleSegmentsRemoved(tileIndex, module);
+                                }
+                                if (notifyEvent) {
+                                    pushApiEvent(debugEvent, vmBind->uuids[uuidIter]);
+                                }
+                            }
+                            module.loadAddresses[tileIndex].clear();
+                            module.moduleLoadEventAcked[tileIndex] = false;
+                        }
                     }
-                } else { //destroyEvent
-
-                    module.segmentVmBindCounter--;
-
-                    if (module.segmentVmBindCounter == 0) {
-
-                        zet_debug_event_t debugEvent = {};
-
-                        auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-                        auto loadAddress = gmmHelper->canonize(*std::min_element(module.loadAddresses.begin(), module.loadAddresses.end()));
-                        debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD;
-                        debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
-                        debugEvent.info.module.load = loadAddress;
-                        debugEvent.info.module.moduleBegin = connection->uuidMap[module.elfUuidHandle].ptr;
-                        debugEvent.info.module.moduleEnd = connection->uuidMap[module.elfUuidHandle].ptr + connection->uuidMap[module.elfUuidHandle].dataSize;
-
-                        pushApiEvent(debugEvent, nullptr);
-                        module.loadAddresses.clear();
-                    }
+                    break;
                 }
             }
         }
@@ -926,6 +1184,7 @@ void DebugSessionLinux::handleVmBindEvent(prelim_drm_i915_debug_event_vm_bind *v
         auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
         PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu ret = %d errno = %d\n", (uint64_t)eventToAck.seqno, ret, ret != 0 ? errno : 0);
     }
+    return true;
 }
 
 void DebugSessionLinux::handleContextParamEvent(prelim_drm_i915_debug_event_context_param *contextParam) {
@@ -945,7 +1204,7 @@ void DebugSessionLinux::handleContextParamEvent(prelim_drm_i915_debug_event_cont
         clientHandleToConnection[contextParam->client_handle]->contextsCreated[contextParam->ctx_handle].vm = contextParam->param.value;
         break;
     case I915_CONTEXT_PARAM_ENGINES: {
-        PRINT_DEBUGGER_INFO_LOG("I915_CONTEXT_PARAM_ENGINES ctx_id = %lu param = %llu value = %llu size = %lu \n",
+        PRINT_DEBUGGER_INFO_LOG("I915_CONTEXT_PARAM_ENGINES ctx_id = %lu param = %llu value = %llu size = %lu",
                                 (uint32_t)contextParam->param.ctx_id,
                                 (uint64_t)contextParam->param.param,
                                 (uint64_t)contextParam->param.value, (uint32_t)contextParam->param.size);
@@ -958,6 +1217,16 @@ void DebugSessionLinux::handleContextParamEvent(prelim_drm_i915_debug_event_cont
         for (uint32_t i = 0; i < numEngines; i++) {
             clientHandleToConnection[contextParam->client_handle]->contextsCreated[contextParam->ctx_handle].engines.push_back(engines->engines[i]);
         }
+
+        auto vm = clientHandleToConnection[contextParam->client_handle]->contextsCreated[contextParam->ctx_handle].vm;
+        if (numEngines && vm != invalidHandle) {
+            NEO::EngineClassInstance engineClassInstance = {engines->engines[0].engine_class, engines->engines[0].engine_instance};
+            auto tileIndex = DrmHelper::getEngineTileIndex(connectedDevice, engineClassInstance);
+            clientHandleToConnection[contextParam->client_handle]->vmToTile[vm] = tileIndex;
+
+            PRINT_DEBUGGER_INFO_LOG("VM = %llu mapped to TILE = %lu\n", vm, tileIndex);
+        }
+
         break;
     }
     default:
@@ -997,23 +1266,34 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
         return;
     }
 
-    auto hwInfo = connectedDevice->getHwInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    if (!connectedDevice->getNEODevice()->getDeviceBitfield().test(tileIndex)) {
+        return;
+    }
 
-    auto threadsWithAttention = l0HwHelper.getThreadsFromAttentionBitmask(hwInfo, attention->bitmask, attention->bitmask_size);
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+
+    auto threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, attention->bitmask, attention->bitmask_size);
 
     printBitmask(attention->bitmask, attention->bitmask_size);
 
     PRINT_DEBUGGER_THREAD_LOG("ATTENTION for tile = %d thread count = %d\n", tileIndex, (int)threadsWithAttention.size());
 
-    for (auto &thread : threadsWithAttention) {
-        EuThread::ThreadId threadId = {tileIndex, thread.slice, thread.subslice, thread.eu, thread.thread};
+    for (auto &threadId : threadsWithAttention) {
         PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
 
-        markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(threadId, vmHandle);
+        if (tileSessionsEnabled) {
+            static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(threadId, vmHandle);
+        } else {
+            markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(threadId, vmHandle);
+        }
     }
 
-    checkTriggerEventsForAttention();
+    if (tileSessionsEnabled) {
+        static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->checkTriggerEventsForAttention();
+    } else {
+        checkTriggerEventsForAttention();
+    }
 }
 
 void DebugSessionLinux::handleEnginesEvent(prelim_drm_i915_debug_event_engines *engines) {
@@ -1084,13 +1364,13 @@ uint64_t DebugSessionLinux::extractVaFromUuidString(std::string &uuid) {
     return parts[0];
 }
 
-int DebugSessionLinux::threadControl(std::vector<ze_device_thread_t> threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
+int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmaskOut, size_t &bitmaskSizeOut) {
 
     auto hwInfo = connectedDevice->getHwInfo();
     auto classInstance = DrmHelper::getEngineInstance(connectedDevice, tile, hwInfo.capabilityTable.defaultEngineType);
     UNRECOVERABLE_IF(!classInstance);
 
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
 
     bitmaskSizeOut = 0;
 
@@ -1124,27 +1404,27 @@ int DebugSessionLinux::threadControl(std::vector<ze_device_thread_t> threads, ui
     if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT ||
         command == PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME ||
         command == PRELIM_I915_DEBUG_EU_THREADS_CMD_STOPPED) {
-        l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+        l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
         euControl.bitmask_size = static_cast<uint32_t>(bitmaskSize);
         euControl.bitmask_ptr = reinterpret_cast<uint64_t>(bitmask.get());
     }
 
     if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME) {
-        applyResumeWa(threads, bitmask.get(), bitmaskSize);
+        applyResumeWa(bitmask.get(), bitmaskSize);
     }
 
     printBitmask(bitmask.get(), bitmaskSize);
 
-    auto res = ioctl(PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &euControl);
-    if (res != 0) {
-        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_EU_CONTROL failed: retCode: %d errno = %d command = %d\n", res, errno, command);
+    auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &euControl);
+    if (ret != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_EU_CONTROL failed: retCode: %d errno = %d command = %d\n", ret, errno, command);
     } else {
         PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_EU_CONTROL: seqno = %llu command = %u\n", (uint64_t)euControl.seqno, command);
     }
 
     if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT ||
         command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT_ALL) {
-        if (res == 0) {
+        if (ret == 0) {
             euControlInterruptSeqno[tile] = euControl.seqno;
         } else {
             euControlInterruptSeqno[tile] = invalidHandle;
@@ -1155,10 +1435,10 @@ int DebugSessionLinux::threadControl(std::vector<ze_device_thread_t> threads, ui
         bitmaskOut = std::move(bitmask);
         bitmaskSizeOut = euControl.bitmask_size;
     }
-    return res;
+    return ret;
 }
 
-ze_result_t DebugSessionLinux::resumeImp(std::vector<ze_device_thread_t> threads, uint32_t deviceIndex) {
+ze_result_t DebugSessionLinux::resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) {
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize;
 
@@ -1176,9 +1456,10 @@ ze_result_t DebugSessionLinux::interruptImp(uint32_t deviceIndex) {
     return result == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_NOT_AVAILABLE;
 }
 
-ze_result_t DebugSessionLinux::getISAVMHandle(const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) {
-    auto accessVA = desc->address;
-    auto &isaMap = clientHandleToConnection[clientHandle]->isaMap;
+ze_result_t DebugSessionLinux::getISAVMHandle(uint32_t deviceIndex, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t &vmHandle) {
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    auto accessVA = gmmHelper->decanonize(desc->address);
+    auto &isaMap = clientHandleToConnection[clientHandle]->isaMap[deviceIndex];
     ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
     vmHandle = invalidHandle;
 
@@ -1203,6 +1484,55 @@ ze_result_t DebugSessionLinux::getISAVMHandle(const zet_debug_memory_space_desc_
     return status;
 }
 
+bool DebugSessionLinux::getIsaInfoForAllInstances(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, uint64_t vmHandles[], ze_result_t &status) {
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    auto accessVA = gmmHelper->decanonize(desc->address);
+
+    status = ZE_RESULT_ERROR_UNINITIALIZED;
+
+    bool tileInstancedIsa = false;
+    bool invalidIsaRange = false;
+    uint32_t isaFound = 0;
+
+    for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+        vmHandles[i] = invalidHandle;
+
+        if (deviceBitfield.test(i)) {
+
+            auto &isaMap = clientHandleToConnection[clientHandle]->isaMap[i];
+            if (isaMap.size() > 0) {
+                uint64_t baseVa;
+                uint64_t ceilVa;
+                for (const auto &isa : isaMap) {
+                    baseVa = isa.second->bindInfo.gpuVa;
+                    ceilVa = isa.second->bindInfo.gpuVa + isa.second->bindInfo.size;
+                    if (accessVA >= baseVa && accessVA < ceilVa) {
+                        isaFound++;
+                        if (accessVA + size > ceilVa) {
+                            invalidIsaRange = true;
+                        } else {
+                            vmHandles[i] = isa.second->vmHandle;
+                        }
+                        tileInstancedIsa = isa.second->tileInstanced;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (invalidIsaRange) {
+        status = ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    } else if (isaFound > 0) {
+        if ((tileInstancedIsa && deviceBitfield.count() == isaFound) ||
+            !tileInstancedIsa) {
+            status = ZE_RESULT_SUCCESS;
+        }
+    }
+
+    return isaFound > 0;
+}
+
 void DebugSessionLinux::printContextVms() {
     if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_INFO) {
         PRINT_DEBUGGER_LOG(stdout, "\nINFO: Context - VM map: ", "");
@@ -1211,6 +1541,24 @@ void DebugSessionLinux::printContextVms() {
                                (uint64_t)clientHandleToConnection[clientHandle]->contextsCreated[i].vm);
         }
     }
+}
+
+bool DebugSessionLinux::tryReadElf(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status) {
+    const char *elfData = nullptr;
+    uint64_t offset = 0;
+
+    std::lock_guard<std::mutex> memLock(asyncThreadMutex);
+
+    status = getElfOffset(desc, size, elfData, offset);
+    if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
+        return true;
+    }
+
+    if (elfData) {
+        status = readElfSpace(desc, size, buffer, elfData, offset);
+        return true;
+    }
+    return false;
 }
 
 ze_result_t DebugSessionLinux::getElfOffset(const zet_debug_memory_space_desc_t *desc, size_t size, const char *&elfData, uint64_t &offset) {
@@ -1252,196 +1600,314 @@ ze_result_t DebugSessionLinux::readElfSpace(const zet_debug_memory_space_desc_t 
 }
 
 ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
-
-    if (clientHandle == invalidClientHandle) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
-
-    if (!isValidGpuAddress(desc->address)) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
-    status = sanityMemAccessThreadCheck(thread, desc);
+    ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }
 
-    uint64_t vmHandle = invalidHandle;
-    std::vector<uint64_t> allVms;
-
-    {
-        std::unique_lock<std::mutex> memLock(asyncThreadMutex);
-
-        status = getISAVMHandle(desc, size, vmHandle);
-        if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
-            return status;
-        }
-
-        if (vmHandle == invalidHandle) {
-            const char *elfData = nullptr;
-            uint64_t offset = 0;
-            status = getElfOffset(desc, size, elfData, offset);
-            if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
-                return status;
-            }
-
-            if (elfData) {
-                return readElfSpace(desc, size, buffer, elfData, offset);
-            }
-
-            auto &vmIds = clientHandleToConnection[clientHandle]->vmIds;
-            allVms.resize(vmIds.size());
-            std::copy(vmIds.begin(), vmIds.end(), allVms.begin());
-        }
+    if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+        status = readDefaultMemory(thread, desc, size, buffer);
+    } else {
+        auto threadId = convertToThreadId(thread);
+        status = slmMemoryAccess<void *, false>(threadId, desc, size, buffer);
     }
 
+    return status;
+}
+
+ze_result_t DebugSessionLinux::readDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
+    ze_result_t status;
+
+    bool isa = tryReadIsa(connectedDevice->getNEODevice()->getDeviceBitfield(), desc, size, buffer, status);
+    if (isa) {
+        return status;
+    }
+
+    bool elf = tryReadElf(desc, size, buffer, status);
+    if (elf) {
+        return status;
+    }
+
+    if (DebugSession::isThreadAll(thread)) {
+        return accessDefaultMemForThreadAll(desc, size, const_cast<void *>(buffer), false);
+    }
+
+    auto threadId = convertToThreadId(thread);
+    auto vmHandle = allThreads[threadId]->getMemoryHandle();
     if (vmHandle == invalidHandle) {
-        if (DebugSession::isThreadAll(thread)) {
-            if (allVms.size() > 0) {
-                for (auto vmHandle : allVms) {
-                    status = readGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
-                    if (status == ZE_RESULT_SUCCESS) {
-                        return status;
-                    }
-                }
-            }
-
-            return ZE_RESULT_ERROR_UNINITIALIZED;
-
-        } else {
-            auto threadId = convertToThreadId(thread);
-            vmHandle = allThreads[threadId]->getMemoryHandle();
-            if (vmHandle == invalidHandle) {
-                return ZE_RESULT_ERROR_NOT_AVAILABLE;
-            }
-        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
     return readGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
 }
 
 ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
-
-    if (clientHandle == invalidClientHandle) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
-
-    if (!isValidGpuAddress(desc->address)) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    ze_result_t status = ZE_RESULT_ERROR_UNINITIALIZED;
-    status = sanityMemAccessThreadCheck(thread, desc);
+    ze_result_t status = validateThreadAndDescForMemoryAccess(thread, desc);
     if (status != ZE_RESULT_SUCCESS) {
         return status;
     }
 
-    uint64_t vmHandle = invalidHandle;
-    std::vector<uint64_t> allVms;
+    if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+        status = writeDefaultMemory(thread, desc, size, buffer);
+    } else {
+        auto threadId = convertToThreadId(thread);
+        status = slmMemoryAccess<const void *, true>(threadId, desc, size, buffer);
+    }
+
+    return status;
+}
+
+ze_result_t DebugSessionLinux::writeDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
+    ze_result_t status;
+
+    auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
+
+    bool isa = tryWriteIsa(deviceBitfield, desc, size, buffer, status);
+    if (isa) {
+        return status;
+    }
+
+    if (DebugSession::isThreadAll(thread)) {
+        return accessDefaultMemForThreadAll(desc, size, const_cast<void *>(buffer), true);
+    }
+
+    auto threadId = convertToThreadId(thread);
+    auto threadVmHandle = allThreads[threadId]->getMemoryHandle();
+    if (threadVmHandle == invalidHandle) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    return writeGpuMemory(threadVmHandle, static_cast<const char *>(buffer), size, desc->address);
+}
+
+bool DebugSessionLinux::tryWriteIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer, ze_result_t &status) {
+    return tryAccessIsa(deviceBitfield, desc, size, const_cast<void *>(buffer), true, status);
+}
+
+bool DebugSessionLinux::tryReadIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, ze_result_t &status) {
+    return tryAccessIsa(deviceBitfield, desc, size, buffer, false, status);
+}
+
+bool DebugSessionLinux::tryAccessIsa(NEO::DeviceBitfield deviceBitfield, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write, ze_result_t &status) {
+    status = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    uint64_t vmHandle[NEO::EngineLimits::maxHandleCount] = {invalidHandle};
+    uint32_t deviceIndex = Math::getMinLsbSet(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+
+    bool isaAccess = false;
+
+    auto checkIfAnyFailed = [](const auto &result) { return result != ZE_RESULT_SUCCESS; };
 
     {
-        std::unique_lock<std::mutex> memLock(asyncThreadMutex);
+        std::lock_guard<std::mutex> memLock(asyncThreadMutex);
 
-        status = getISAVMHandle(desc, size, vmHandle);
-        if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
-            return status;
-        }
-
-        if (vmHandle == invalidHandle) {
-            auto &vmIds = clientHandleToConnection[clientHandle]->vmIds;
-            allVms.resize(vmIds.size());
-            std::copy(vmIds.begin(), vmIds.end(), allVms.begin());
+        if (deviceBitfield.count() == 1) {
+            status = getISAVMHandle(deviceIndex, desc, size, vmHandle[deviceIndex]);
+            if (status == ZE_RESULT_SUCCESS) {
+                isaAccess = true;
+            }
+            if (status == ZE_RESULT_ERROR_INVALID_ARGUMENT) {
+                return true;
+            }
+        } else {
+            isaAccess = getIsaInfoForAllInstances(deviceBitfield, desc, size, vmHandle, status);
         }
     }
 
-    if (vmHandle == invalidHandle) {
-        if (DebugSession::isThreadAll(thread)) {
-            if (allVms.size() > 0) {
-                for (auto vmHandle : allVms) {
-                    status = writeGpuMemory(vmHandle, static_cast<const char *>(buffer), size, desc->address);
-                    if (status == ZE_RESULT_SUCCESS) {
-                        return status;
+    if (isaAccess && status == ZE_RESULT_SUCCESS) {
+
+        if (write) {
+            if (deviceBitfield.count() == 1) {
+                if (vmHandle[deviceIndex] != invalidHandle) {
+                    status = writeGpuMemory(vmHandle[deviceIndex], static_cast<char *>(buffer), size, desc->address);
+                } else {
+                    status = ZE_RESULT_ERROR_UNINITIALIZED;
+                }
+            } else {
+                std::vector<ze_result_t> results(NEO::EngineLimits::maxHandleCount);
+
+                for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+                    results[i] = ZE_RESULT_SUCCESS;
+
+                    if (deviceBitfield.test(i) && vmHandle[i] != invalidHandle) {
+                        results[i] = writeGpuMemory(vmHandle[i], static_cast<char *>(buffer), size, desc->address);
+
+                        if (results[i] != ZE_RESULT_SUCCESS) {
+                            break;
+                        }
+                    }
+                }
+
+                const bool anyFailed = std::any_of(results.begin(), results.end(), checkIfAnyFailed);
+
+                if (anyFailed) {
+                    status = ZE_RESULT_ERROR_UNKNOWN;
+                }
+            }
+        } else {
+
+            if (deviceBitfield.count() > 1) {
+                for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+                    if (vmHandle[i] != invalidHandle) {
+                        deviceIndex = i;
+                        break;
                     }
                 }
             }
 
-            return ZE_RESULT_ERROR_UNINITIALIZED;
-
-        } else {
-            auto threadId = convertToThreadId(thread);
-            vmHandle = allThreads[threadId]->getMemoryHandle();
-            if (vmHandle == invalidHandle) {
-                return ZE_RESULT_ERROR_NOT_AVAILABLE;
+            if (vmHandle[deviceIndex] != invalidHandle) {
+                status = readGpuMemory(vmHandle[deviceIndex], static_cast<char *>(buffer), size, desc->address);
+            } else {
+                status = ZE_RESULT_ERROR_UNINITIALIZED;
             }
         }
     }
+    return isaAccess;
+}
 
-    return writeGpuMemory(vmHandle, static_cast<const char *>(buffer), size, desc->address);
+ze_result_t DebugSessionLinux::accessDefaultMemForThreadAll(const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer, bool write) {
+    auto status = ZE_RESULT_ERROR_UNINITIALIZED;
+    std::vector<uint64_t> allVms;
+
+    allVms = getAllMemoryHandles();
+
+    if (allVms.size() > 0) {
+        for (auto vmHandle : allVms) {
+            if (write) {
+                status = writeGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
+            } else {
+                status = readGpuMemory(vmHandle, static_cast<char *>(buffer), size, desc->address);
+            }
+            if (status == ZE_RESULT_SUCCESS) {
+                return status;
+            }
+        }
+
+        status = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    return status;
+}
+
+bool DebugSessionLinux::ackIsaEvents(uint32_t deviceIndex, uint64_t isaVa) {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+
+    auto connection = clientHandleToConnection[clientHandle].get();
+
+    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+    auto isaVaStart = gmmHelper->decanonize(isaVa);
+    auto isa = connection->isaMap[deviceIndex].find(isaVaStart);
+
+    if (isa != connection->isaMap[deviceIndex].end()) {
+
+        // zebin modules do not store ackEvents per ISA
+        UNRECOVERABLE_IF(isa->second->ackEvents.size() > 0 && isa->second->perKernelModule == false);
+
+        for (auto &event : isa->second->ackEvents) {
+            prelim_drm_i915_debug_event_ack eventToAck = {};
+            eventToAck.type = event.type;
+            eventToAck.seqno = event.seqno;
+            eventToAck.flags = 0;
+
+            auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
+            PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)event.seqno, ret, ret != 0 ? errno : 0);
+        }
+
+        isa->second->ackEvents.clear();
+        isa->second->moduleLoadEventAck = true;
+        return true;
+    }
+    return false;
+}
+
+bool DebugSessionLinux::ackModuleEvents(uint32_t deviceIndex, uint64_t moduleUuidHandle) {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+
+    auto connection = clientHandleToConnection[clientHandle].get();
+
+    if (connection->uuidToModule.find(moduleUuidHandle) != connection->uuidToModule.end()) {
+        auto &module = connection->uuidToModule[moduleUuidHandle];
+        for (auto &event : module.ackEvents[deviceIndex]) {
+
+            prelim_drm_i915_debug_event_ack eventToAck = {};
+            eventToAck.type = event.type;
+            eventToAck.seqno = event.seqno;
+            eventToAck.flags = 0;
+
+            auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
+            PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)event.seqno, ret, ret != 0 ? errno : 0);
+        }
+        module.ackEvents[deviceIndex].clear();
+        module.moduleLoadEventAcked[deviceIndex] = true;
+
+        return true;
+    }
+    DEBUG_BREAK_IF(true);
+    return false;
+}
+
+void DebugSessionLinux::cleanRootSessionAfterDetach(uint32_t deviceIndex) {
+    auto connection = clientHandleToConnection[clientHandle].get();
+
+    for (const auto &isa : connection->isaMap[deviceIndex]) {
+
+        // zebin modules do not store ackEvents per ISA
+        UNRECOVERABLE_IF(isa.second->ackEvents.size() > 0 && isa.second->perKernelModule == false);
+
+        for (auto &event : isa.second->ackEvents) {
+            prelim_drm_i915_debug_event_ack eventToAck = {};
+            eventToAck.type = event.type;
+            eventToAck.seqno = event.seqno;
+            eventToAck.flags = 0;
+
+            auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
+            PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)event.seqno, ret, ret != 0 ? errno : 0);
+        }
+
+        isa.second->ackEvents.clear();
+        isa.second->moduleLoadEventAck = true;
+    }
 }
 
 ze_result_t DebugSessionLinux::acknowledgeEvent(const zet_debug_event_t *event) {
-    std::unique_lock<std::mutex> lock(asyncThreadMutex);
-    for (size_t i = 0; i < clientHandleToConnection[clientHandle]->eventsToAck.size(); i++) {
-        if (apiEventCompare(*event, clientHandleToConnection[clientHandle]->eventsToAck[i].first)) {
 
-            bool perKernelIsaAcked = false;
-            if (event->type == ZET_DEBUG_EVENT_TYPE_MODULE_LOAD) {
-                auto connection = clientHandleToConnection[clientHandle].get();
+    const zet_debug_event_t apiEventToAck = *event;
+    {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
 
-                auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-                auto isaVaStart = gmmHelper->decanonize(event->info.module.load);
-                auto isa = connection->isaMap.find(isaVaStart);
+        for (size_t i = 0; i < eventsToAck.size(); i++) {
+            if (apiEventCompare(apiEventToAck, eventsToAck[i].first)) {
 
-                if (isa != connection->isaMap.end()) {
-                    for (auto &event : isa->second->ackEvents) {
-                        prelim_drm_i915_debug_event_ack eventToAck = {};
-                        eventToAck.type = event.type;
-                        eventToAck.seqno = event.seqno;
-                        eventToAck.flags = 0;
+                auto moduleUUID = eventsToAck[i].second;
+                auto iter = eventsToAck.begin() + i;
+                eventsToAck.erase(iter);
 
-                        auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
-                        PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)event.seqno, ret, ret != 0 ? errno : 0);
+                lock.unlock();
 
-                        perKernelIsaAcked = true;
+                for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+                    if (connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
+                        ackModuleEvents(i, moduleUUID);
                     }
-                    isa->second->ackEvents.clear();
-                    isa->second->moduleLoadEventAck = true;
+                }
+
+                return ZE_RESULT_SUCCESS;
+            }
+        }
+    }
+
+    if (apiEventToAck.type == ZET_DEBUG_EVENT_TYPE_MODULE_LOAD) {
+        bool allIsaAcked = true;
+        for (uint32_t i = 0; i < NEO::EngineLimits::maxHandleCount; i++) {
+            if (connectedDevice->getNEODevice()->getDeviceBitfield().test(i)) {
+                if (!ackIsaEvents(i, apiEventToAck.info.module.load)) {
+                    allIsaAcked = false;
                 }
             }
-
-            if (!perKernelIsaAcked) {
-                auto eventToAck = clientHandleToConnection[clientHandle]->eventsToAck[i].second;
-                auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_ACK_EVENT, &eventToAck);
-                PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_ACK_EVENT seqno = %llu, ret = %d errno = %d\n", (uint64_t)eventToAck.seqno, ret, ret != 0 ? errno : 0);
-            }
-
-            auto iter = clientHandleToConnection[clientHandle]->eventsToAck.begin() + i;
-            clientHandleToConnection[clientHandle]->eventsToAck.erase(iter);
-
+        }
+        if (allIsaAcked) {
             return ZE_RESULT_SUCCESS;
         }
     }
-    return ZE_RESULT_ERROR_UNKNOWN;
-}
 
-bool DebugSessionLinux::readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srIdent) {
-    auto stateSaveAreaHeader = getStateSaveAreaHeader();
-    if (!stateSaveAreaHeader) {
-        return false;
-    }
-
-    auto gpuVa = getContextStateSaveAreaGpuVa(vmHandle);
-    if (gpuVa == 0) {
-        return false;
-    }
-    auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
-    auto srMagicOffset = threadSlotOffset + getStateSaveAreaHeader()->regHeader.sr_magic_offset;
-
-    if (ZE_RESULT_SUCCESS != readGpuMemory(vmHandle, reinterpret_cast<char *>(&srIdent), sizeof(srIdent), gpuVa + srMagicOffset)) {
-        return false;
-    }
-    return true;
+    return ZE_RESULT_ERROR_UNINITIALIZED;
 }
 
 ze_result_t DebugSessionLinux::readSbaBuffer(EuThread::ThreadId threadId, NEO::SbaTrackedAddresses &sbaBuffer) {
@@ -1460,7 +1926,7 @@ ze_result_t DebugSessionLinux::readSbaBuffer(EuThread::ThreadId threadId, NEO::S
 }
 
 uint64_t DebugSessionLinux::getSbaBufferGpuVa(uint64_t memoryHandle) {
-    std::unique_lock<std::mutex> lock(asyncThreadMutex);
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
     auto bindInfo = clientHandleToConnection[clientHandle]->vmToStateBaseAreaBindInfo.find(memoryHandle);
     if (bindInfo == clientHandleToConnection[clientHandle]->vmToStateBaseAreaBindInfo.end()) {
         return 0;
@@ -1470,7 +1936,7 @@ uint64_t DebugSessionLinux::getSbaBufferGpuVa(uint64_t memoryHandle) {
 }
 
 uint64_t DebugSessionLinux::getContextStateSaveAreaGpuVa(uint64_t memoryHandle) {
-    std::unique_lock<std::mutex> lock(asyncThreadMutex);
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
     auto bindInfo = clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.find(memoryHandle);
     if (bindInfo == clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.end()) {
         return 0;
@@ -1479,91 +1945,88 @@ uint64_t DebugSessionLinux::getContextStateSaveAreaGpuVa(uint64_t memoryHandle) 
     return bindInfo->second.gpuVa;
 }
 
-void DebugSessionLinux::applyResumeWa(std::vector<ze_device_thread_t> threads, uint8_t *bitmask, size_t bitmaskSize) {
+void TileDebugSessionLinux::readStateSaveAreaHeader() {
 
-    UNRECOVERABLE_IF(bitmaskSize % 8 != 0);
-
-    auto hwInfo = connectedDevice->getHwInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-
-    if (l0HwHelper.isResumeWARequired()) {
-
-        uint32_t *dwordBitmask = reinterpret_cast<uint32_t *>(bitmask);
-        for (uint32_t i = 0; i < bitmaskSize / sizeof(uint32_t) - 1; i = i + 2) {
-            dwordBitmask[i] = dwordBitmask[i] | dwordBitmask[i + 1];
-            dwordBitmask[i + 1] = dwordBitmask[i] | dwordBitmask[i + 1];
-        }
+    const auto header = rootDebugSession->getStateSaveAreaHeader();
+    if (header) {
+        auto headerSize = rootDebugSession->stateSaveAreaHeader.size();
+        this->stateSaveAreaHeader.assign(reinterpret_cast<const char *>(header), reinterpret_cast<const char *>(header) + headerSize);
     }
-    return;
+};
+
+bool TileDebugSessionLinux::insertModule(zet_debug_event_info_module_t module) {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+    modules.insert({module.load, module});
+    return isAttached;
 }
 
-uint32_t DebugSessionLinux::getDeviceIndexFromApiThread(ze_device_thread_t thread) {
-    uint32_t deviceIndex = 0;
-    auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
-    const auto &topologyMap = DrmHelper::getTopologyMap(connectedDevice);
+bool TileDebugSessionLinux::removeModule(zet_debug_event_info_module_t module) {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+    modules.erase(module.load);
+    return isAttached;
+}
 
-    if (connectedDevice->getNEODevice()->isSubDevice()) {
-        auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
-        return Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
-    }
+bool TileDebugSessionLinux::processEntry() {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+    processEntryState = true;
+    return isAttached;
+}
 
-    if (deviceCount > 1) {
+bool TileDebugSessionLinux::processExit() {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+    processEntryState = false;
+    return isAttached;
+}
 
-        if (thread.slice == UINT32_MAX) {
-            deviceIndex = UINT32_MAX;
-        } else {
-            uint32_t sliceId = thread.slice;
-            for (uint32_t i = 0; i < topologyMap.size(); i++) {
-                if (sliceId < topologyMap.at(i).sliceIndices.size()) {
-                    deviceIndex = i;
-                }
-                sliceId = sliceId - static_cast<uint32_t>(topologyMap.at(i).sliceIndices.size());
+void TileDebugSessionLinux::attachTile() {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+
+    // clear apiEvents queue
+    apiEvents = decltype(apiEvents){};
+
+    if (detached) {
+        zet_debug_event_t debugEvent = {};
+        debugEvent.type = ZET_DEBUG_EVENT_TYPE_DETACHED;
+        debugEvent.info.detached.reason = ZET_DEBUG_DETACH_REASON_INVALID;
+
+        apiEvents.push(debugEvent);
+    } else {
+        if (processEntryState) {
+            zet_debug_event_t event = {};
+            event.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
+            event.flags = 0;
+            apiEvents.push(event);
+        }
+
+        if (modules.size()) {
+            zet_debug_event_t event = {};
+            event.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
+            event.flags = 0;
+
+            for (const auto &module : modules) {
+                memcpy_s(&event.info.module, sizeof(event.info.module), &module.second, sizeof(module.second));
+                apiEvents.push(event);
             }
         }
     }
-
-    return deviceIndex;
+    isAttached = true;
 }
 
-ze_device_thread_t DebugSessionLinux::convertToPhysicalWithinDevice(ze_device_thread_t thread, uint32_t deviceIndex) {
-    auto deviceImp = static_cast<DeviceImp *>(connectedDevice);
-    const auto &topologyMap = DrmHelper::getTopologyMap(connectedDevice);
-
-    // set slice for single slice config to allow subslice remapping
-    auto mapping = topologyMap.find(deviceIndex);
-    if (thread.slice == UINT32_MAX && mapping != topologyMap.end() && mapping->second.sliceIndices.size() == 1) {
-        thread.slice = 0;
-    }
-
-    if (thread.slice != UINT32_MAX) {
-        if (thread.subslice != UINT32_MAX) {
-            deviceImp->toPhysicalSliceId(topologyMap, thread.slice, thread.subslice, deviceIndex);
-        } else {
-            uint32_t dummy = 0;
-            deviceImp->toPhysicalSliceId(topologyMap, thread.slice, dummy, deviceIndex);
+void TileDebugSessionLinux::detachTile() {
+    std::vector<uint64_t> moduleUuids;
+    {
+        std::lock_guard<std::mutex> lock(asyncThreadMutex);
+        for (const auto &eventToAck : eventsToAck) {
+            auto moduleUUID = eventToAck.second;
+            moduleUuids.push_back(moduleUUID);
         }
+        eventsToAck.clear();
+        isAttached = false;
     }
 
-    return thread;
+    for (const auto &uuid : moduleUuids) {
+        rootDebugSession->ackModuleEvents(this->tileIndex, uuid);
+    }
 }
 
-EuThread::ThreadId DebugSessionLinux::convertToThreadId(ze_device_thread_t thread) {
-    auto deviceImp = static_cast<DeviceImp *>(connectedDevice);
-    UNRECOVERABLE_IF(!DebugSession::isSingleThread(thread));
-
-    uint32_t deviceIndex = 0;
-    deviceImp->toPhysicalSliceId(DrmHelper::getTopologyMap(connectedDevice), thread.slice, thread.subslice, deviceIndex);
-
-    EuThread::ThreadId threadId(deviceIndex, thread.slice, thread.subslice, thread.eu, thread.thread);
-    return threadId;
-}
-
-ze_device_thread_t DebugSessionLinux::convertToApi(EuThread::ThreadId threadId) {
-    auto deviceImp = static_cast<DeviceImp *>(connectedDevice);
-
-    ze_device_thread_t thread = {static_cast<uint32_t>(threadId.slice), static_cast<uint32_t>(threadId.subslice), static_cast<uint32_t>(threadId.eu), static_cast<uint32_t>(threadId.thread)};
-    deviceImp->toApiSliceId(DrmHelper::getTopologyMap(connectedDevice), thread.slice, thread.subslice, threadId.tileIndex);
-
-    return thread;
-}
 } // namespace L0

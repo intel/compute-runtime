@@ -5,12 +5,13 @@
  *
  */
 
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
 
-#include "drm/i915_drm.h"
 #include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
@@ -52,7 +53,7 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
     for (auto region : memoryInfo->getDrmRegionInfos()) {
-        if (region.region.memoryClass == I915_MEMORY_CLASS_DEVICE) {
+        if (region.region.memoryClass == drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE) {
             deviceRegions.push_back(region);
         }
     }

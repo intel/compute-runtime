@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -41,7 +41,8 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_operations_handler_default.h
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_memory_manager_create_multi_host_allocation.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}drm_version.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_version.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers_checks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_drm.cpp
@@ -49,6 +50,9 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/linux_inc.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/i915.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/i915_prelim.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/i915_upstream.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_prelim.cpp
@@ -95,6 +99,10 @@ if(SUPPORT_XEHP_AND_LATER)
   )
 endif()
 
+if(SUPPORT_MTL_AND_LATER)
+  list(APPEND NEO_CORE_OS_INTERFACE_LINUX ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_mtl_and_later.inl)
+endif()
+
 if(SUPPORT_PVC_AND_LATER)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_xe_hpc_and_later.inl)
 endif()
@@ -122,6 +130,12 @@ if("${BRANCH_TYPE}" STREQUAL "")
          ${CMAKE_CURRENT_SOURCE_DIR}/ioctl_helper_getter.cpp
     )
   endif()
+endif()
+
+if(NEO_ENABLE_XE_DRM_DETECTION)
+  list(REMOVE_ITEM NEO_CORE_OS_INTERFACE_LINUX
+       ${CMAKE_CURRENT_SOURCE_DIR}/drm_version.cpp
+  )
 endif()
 
 set_property(GLOBAL PROPERTY NEO_CORE_OS_INTERFACE_LINUX ${NEO_CORE_OS_INTERFACE_LINUX})

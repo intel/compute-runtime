@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/tools/source/sysman/temperature/os_temperature.h"
+
+#include "igfxfmid.h"
 
 #include <memory>
 
@@ -42,5 +44,6 @@ class LinuxTemperatureImp : public OsTemperature, NEO::NonCopyableOrMovableClass
     ze_result_t getGpuMaxTemperatureNoSubDevice(double *pTemperature);
     uint32_t subdeviceId = 0;
     ze_bool_t isSubdevice = 0;
+    PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
 };
 } // namespace L0

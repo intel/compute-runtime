@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/gen9/reg_configs.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_compilers.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
@@ -24,13 +26,11 @@ namespace ult {
 
 struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         ze_result_t returnValue = ZE_RESULT_SUCCESS;
-        auto executionEnvironment = new NEO::ExecutionEnvironment();
+        auto executionEnvironment = new NEO::MockExecutionEnvironment();
         auto mockBuiltIns = new MockBuiltins();
-        executionEnvironment->prepareRootDeviceEnvironments(1);
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
@@ -57,7 +57,7 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
                                                          false,
                                                          false,
                                                          returnValue));
-        ASSERT_NE(nullptr, commandQueue->commandStream);
+        ASSERT_NE(nullptr, commandQueue);
 
         commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue);
         ASSERT_NE(nullptr, commandList);
@@ -79,18 +79,18 @@ struct CommandQueueThreadArbitrationPolicyTests : public ::testing::Test {
 HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
           whenCommandListIsExecutedThenDefaultRoundRobinThreadArbitrationPolicyIsUsed,
           IsGen9) {
-    size_t usedSpaceBefore = commandQueue->commandStream->getUsed();
+    size_t usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t hCommandList = commandList->toHandle();
     auto result = commandQueue->executeCommandLists(1, &hCommandList, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    size_t usedSpaceAfter = commandQueue->commandStream->getUsed();
+    size_t usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
@@ -110,18 +110,18 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
           IsGen9) {
     DebugManager.flags.OverrideThreadArbitrationPolicy.set(0);
 
-    size_t usedSpaceBefore = commandQueue->commandStream->getUsed();
+    size_t usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t hCommandList = commandList->toHandle();
     auto result = commandQueue->executeCommandLists(1, &hCommandList, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    size_t usedSpaceAfter = commandQueue->commandStream->getUsed();
+    size_t usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
@@ -141,18 +141,18 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
           IsGen9) {
     DebugManager.flags.OverrideThreadArbitrationPolicy.set(1);
 
-    size_t usedSpaceBefore = commandQueue->commandStream->getUsed();
+    size_t usedSpaceBefore = commandQueue->commandStream.getUsed();
 
     ze_command_list_handle_t hCommandList = commandList->toHandle();
     auto result = commandQueue->executeCommandLists(1, &hCommandList, nullptr, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    size_t usedSpaceAfter = commandQueue->commandStream->getUsed();
+    size_t usedSpaceAfter = commandQueue->commandStream.getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandQueue->commandStream->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandQueue->commandStream.getCpuBase(), 0), usedSpaceAfter));
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(cmdList.begin(), cmdList.end());
@@ -168,9 +168,9 @@ HWTEST2_F(CommandQueueThreadArbitrationPolicyTests,
 }
 
 struct CommandQueueGroupMultiDeviceFixture : public MultiDeviceFixture {
-    void SetUp() {
-        NEO::MockCompilerEnableGuard mock(true);
-        MultiDeviceFixture::SetUp();
+    void setUp() {
+
+        MultiDeviceFixture::setUp();
         uint32_t count = 1;
         ze_device_handle_t hDevice;
         ze_result_t res = driverHandle->getDevice(&count, &hDevice);
@@ -178,8 +178,8 @@ struct CommandQueueGroupMultiDeviceFixture : public MultiDeviceFixture {
         device = L0::Device::fromHandle(hDevice);
         ASSERT_NE(nullptr, device);
     }
-    void TearDown() {
-        MultiDeviceFixture::TearDown();
+    void tearDown() {
+        MultiDeviceFixture::tearDown();
     }
     L0::Device *device = nullptr;
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,8 +13,6 @@
 #include <fstream>
 #include <iostream>
 #include <memory>
-
-bool verbose = false;
 
 const char *clProgram = R"==(
 __kernel void increment_by_one(__global uchar *dst, __global uchar *src) {
@@ -47,38 +45,28 @@ void createModule(ze_context_handle_t &context, ze_module_handle_t &module, ze_d
         std::cout << "Build log:" << strLog << std::endl;
 
         free(strLog);
+        SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
+        std::cout << "\nZello Fence Results validation FAILED. Module creation error."
+                  << std::endl;
+        SUCCESS_OR_TERMINATE_BOOL(false);
     }
     SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 }
 
 void createKernel(ze_module_handle_t &module, ze_kernel_handle_t &kernel,
-                  uint32_t numThreads, uint32_t sizex, uint32_t sizey,
-                  uint32_t sizez) {
+                  uint32_t numThreads, uint32_t &sizeX, uint32_t &sizeY,
+                  uint32_t &sizeZ) {
 
     ze_kernel_desc_t kernelDesc = {ZE_STRUCTURE_TYPE_KERNEL_DESC};
     kernelDesc.pKernelName = "increment_by_one";
     SUCCESS_OR_TERMINATE(zeKernelCreate(module, &kernelDesc, &kernel));
     ze_kernel_properties_t kernProps{ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeKernelGetProperties(kernel, &kernProps));
-    std::cout << "Kernel : \n"
-              << " * name : " << kernelDesc.pKernelName << "\n"
-              << " * uuid.mid : " << kernProps.uuid.mid << "\n"
-              << " * uuid.kid : " << kernProps.uuid.kid << "\n"
-              << " * maxSubgroupSize : " << kernProps.maxSubgroupSize << "\n"
-              << " * localMemSize : " << kernProps.localMemSize << "\n"
-              << " * spillMemSize : " << kernProps.spillMemSize << "\n"
-              << " * privateMemSize : " << kernProps.privateMemSize << "\n"
-              << " * maxNumSubgroups : " << kernProps.maxNumSubgroups << "\n"
-              << " * numKernelArgs : " << kernProps.numKernelArgs << "\n"
-              << " * requiredSubgroupSize : " << kernProps.requiredSubgroupSize << "\n"
-              << " * requiredNumSubGroups : " << kernProps.requiredNumSubGroups << "\n"
-              << " * requiredGroupSizeX : " << kernProps.requiredGroupSizeX << "\n"
-              << " * requiredGroupSizeY : " << kernProps.requiredGroupSizeY << "\n"
-              << " * requiredGroupSizeZ : " << kernProps.requiredGroupSizeZ << "\n";
+    printKernelProperties(kernProps, kernelDesc.pKernelName);
 
-    uint32_t groupSizeX = sizex;
-    uint32_t groupSizeY = sizey;
-    uint32_t groupSizeZ = sizey;
+    uint32_t groupSizeX = sizeX;
+    uint32_t groupSizeY = sizeY;
+    uint32_t groupSizeZ = sizeZ;
     SUCCESS_OR_TERMINATE(zeKernelSuggestGroupSize(kernel, numThreads, 1U, 1U, &groupSizeX, &groupSizeY, &groupSizeZ));
     SUCCESS_OR_TERMINATE_BOOL(numThreads % groupSizeX == 0);
     if (verbose) {
@@ -86,6 +74,10 @@ void createKernel(ze_module_handle_t &module, ze_kernel_handle_t &kernel,
                   << ")" << std::endl;
     }
     SUCCESS_OR_TERMINATE(zeKernelSetGroupSize(kernel, groupSizeX, groupSizeY, groupSizeZ));
+
+    sizeX = groupSizeX;
+    sizeY = groupSizeY;
+    sizeZ = groupSizeZ;
 }
 
 bool testFence(ze_context_handle_t &context, ze_device_handle_t &device) {
@@ -170,11 +162,11 @@ bool testFence(ze_context_handle_t &context, ze_device_handle_t &device) {
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, fence));
 
     // Wait for fence to be signaled
-    SUCCESS_OR_TERMINATE(zeFenceHostSynchronize(fence, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeFenceHostSynchronize(fence, std::numeric_limits<uint64_t>::max()));
     if (verbose)
         std::cout << "zeFenceHostSynchronize success" << std::endl;
 
-    //Tear down
+    // Tear down
     SUCCESS_OR_TERMINATE(zeFenceReset(fence));
     SUCCESS_OR_TERMINATE(zeCommandListReset(cmdList));
     SUCCESS_OR_TERMINATE(zeMemFree(context, dstBuffer));
@@ -189,8 +181,10 @@ bool testFence(ze_context_handle_t &context, ze_device_handle_t &device) {
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Fence";
     bool outputValidationSuccessful;
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
@@ -199,13 +193,13 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     outputValidationSuccessful = testFence(context, device);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-    std::cout << "\nZello Fence Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
-    return 0;
+
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
+    return outputValidationSuccessful ? 0 : 1;
 }

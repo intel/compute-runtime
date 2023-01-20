@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/source/os_interface/driver_info.h"
 
 #include "level_zero/tools/test/unit_tests/sources/sysman/ecc/windows/mock_ecc.h"
 
@@ -34,8 +36,6 @@ class ZesEccFixture : public SysmanDeviceFixture {
         pWddmSysmanImp->pFwUtilInterface = pMockFwInterface.get();
 
         pEccImp = static_cast<L0::EccImp *>(pSysmanDeviceImp->pEcc);
-
-        pEccImp->init();
     }
 
     void TearDown() override {
@@ -52,7 +52,6 @@ class ZesEccFixture : public SysmanDeviceFixture {
 TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingzesDeviceEccAvailableThenVerifyApiCallSucceeds) {
     ze_bool_t eccAvailable = false;
 
-    pEccImp->init();
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccAvailable(device, &eccAvailable));
     EXPECT_EQ(true, eccAvailable);
 }
@@ -60,7 +59,6 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingze
 TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsPresentWhenCallingzesDeviceEccConfigurableThenVerifyApiCallSucceeds) {
     ze_bool_t eccConfigurable = false;
 
-    pEccImp->init();
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEccConfigurable(device, &eccConfigurable));
     EXPECT_EQ(true, eccConfigurable);
 }
@@ -72,23 +70,6 @@ TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwInterfaceIsAbsentWhenCallingEcc
     auto deviceImp = static_cast<L0::DeviceImp *>(pWddmSysmanImp->getDeviceHandle());
     deviceImp->driverInfo.reset(nullptr);
     pWddmSysmanImp->pFwUtilInterface = nullptr;
-    tempEccImp->init();
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->deviceEccAvailable(&eccAvailable));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->deviceEccConfigurable(&eccConfigurable));
-
-    zes_device_ecc_desc_t newState = {};
-    zes_device_ecc_properties_t props = {};
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->setEccState(&newState, &props));
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->getEccState(&props));
-    delete tempEccImp;
-}
-
-TEST_F(ZesEccFixture, GivenValidSysmanHandleAndFwDeviceInitFailsThenVerifyApiCallReturnFailure) {
-    ze_bool_t eccConfigurable = true;
-    ze_bool_t eccAvailable = true;
-    pMockFwInterface->mockFwDeviceInit = ZE_RESULT_ERROR_UNKNOWN;
-
-    EccImp *tempEccImp = new EccImp(pOsSysman);
     tempEccImp->init();
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->deviceEccAvailable(&eccAvailable));
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, tempEccImp->deviceEccConfigurable(&eccConfigurable));

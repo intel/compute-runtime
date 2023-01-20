@@ -1,19 +1,18 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "third_party/aub_stream/headers/aub_manager.h"
-#include "third_party/aub_stream/headers/hardware_context.h"
+#include "aubstream/aub_manager.h"
+#include "aubstream/hardware_context.h"
 
 #include <memory>
 #include <vector>
 
 namespace NEO {
-struct AllocationParams;
 class OsContext;
 
 class HardwareContextController {

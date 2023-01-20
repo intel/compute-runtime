@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/utilities/numeric.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/sampler/sampler_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -151,7 +151,7 @@ INSTANTIATE_TEST_CASE_P(SamplerDescCombinations, SamplerCreateTest,
                                            samplerFilterMode,
                                            samplerIsNormalized));
 
-using ContextCreateSamplerTest = Test<ContextFixture>;
+using ContextCreateSamplerTest = Test<DeviceFixture>;
 
 HWTEST2_F(ContextCreateSamplerTest, givenDifferentDescriptorValuesThenSamplerIsCorrectlyCreated, SamplerCreateSupport) {
     ze_sampler_address_mode_t addressMode = ZE_SAMPLER_ADDRESS_MODE_NONE;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/direct_submission/windows/wddm_direct_submission.h"
+#include "shared/source/helpers/driver_model_type.h"
+#include "shared/source/os_interface/os_interface.h"
 
 namespace NEO {
 template <typename GfxFamily, typename Dispatcher>

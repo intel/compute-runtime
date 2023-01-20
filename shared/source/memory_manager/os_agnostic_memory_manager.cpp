@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,10 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
+#include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/os_memory.h"
 
@@ -77,8 +80,7 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
         sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize2Mb);
     }
 
-    if (allocationData.type == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
-        allocationData.type == AllocationType::DEBUG_SBA_TRACKING_BUFFER) {
+    if (GraphicsAllocation::isDebugSurfaceAllocationType(allocationData.type)) {
         sizeAligned *= allocationData.storageInfo.getNumBanks();
     }
 
@@ -104,15 +106,16 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
             memoryAllocation->setCpuPtrAndGpuAddress(ptr, canonizedGpuAddress);
         }
 
-        if (allocationData.type == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
-            allocationData.type == AllocationType::DEBUG_SBA_TRACKING_BUFFER) {
+        if (GraphicsAllocation::isDebugSurfaceAllocationType(allocationData.type)) {
             memoryAllocation->storageInfo = allocationData.storageInfo;
         }
 
-        auto pHwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-        if (HwHelper::get(pHwInfo->platform.eRenderCoreFamily).compressedBuffersSupported(*pHwInfo) &&
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
+        auto pHwInfo = rootDeviceEnvironment.getHardwareInfo();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        if (gfxCoreHelper.compressedBuffersSupported(*pHwInfo) &&
             allocationData.flags.preferCompressed) {
-            auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
+            auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment.getGmmHelper(),
                                              allocationData.hostPtr,
                                              sizeAligned,
                                              alignment,
@@ -157,9 +160,10 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithGpuVa(con
 GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const AllocationData &allocationData) {
     AllocationData allocationDataAlign = allocationData;
     allocationDataAlign.size = alignUp(allocationData.size, MemoryConstants::pageSize64k);
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-    allocationDataAlign.alignment = hwHelper.is1MbAlignmentSupported(*hwInfo, allocationData.flags.preferCompressed)
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex].get();
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    allocationDataAlign.alignment = gfxCoreHelper.is1MbAlignmentSupported(*hwInfo, allocationData.flags.preferCompressed)
                                         ? MemoryConstants::megaByte
                                         : MemoryConstants::pageSize64k;
     auto memoryAllocation = allocateGraphicsMemoryWithAlignment(allocationDataAlign);
@@ -235,11 +239,11 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocate32BitGraphicsMemoryImpl(con
     return memoryAllocation;
 }
 
-GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromMultipleSharedHandles(std::vector<osHandle> handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) {
+GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromMultipleSharedHandles(const std::vector<osHandle> &handles, AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) {
     return nullptr;
 }
 
-GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) {
+GraphicsAllocation *OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) {
     auto graphicsAllocation = createMemoryAllocation(properties.allocationType, nullptr, reinterpret_cast<void *>(1), 1,
                                                      4096u, static_cast<uint64_t>(handle), MemoryPool::SystemCpuInaccessible, properties.rootDeviceIndex,
                                                      false, false, requireSpecificBitness);
@@ -454,10 +458,21 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType
     return memoryAllocation;
 }
 
-AddressRange OsAgnosticMemoryManager::reserveGpuAddress(size_t size, uint32_t rootDeviceIndex) {
-    auto gfxPartition = getGfxPartition(rootDeviceIndex);
-    auto gmmHelper = getGmmHelper(rootDeviceIndex);
-    auto gpuVa = gmmHelper->canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size));
+AddressRange OsAgnosticMemoryManager::reserveGpuAddress(const void *requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
+    uint64_t gpuVa = 0u;
+    *reservedOnRootDeviceIndex = 0;
+    if (requiredStartAddress) {
+        return AddressRange{0, 0};
+    }
+    for (auto rootDeviceIndex : rootDeviceIndices) {
+        auto gfxPartition = getGfxPartition(rootDeviceIndex);
+        auto gmmHelper = getGmmHelper(rootDeviceIndex);
+        gpuVa = gmmHelper->canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size));
+        if (gpuVa != 0u) {
+            *reservedOnRootDeviceIndex = rootDeviceIndex;
+            break;
+        }
+    }
     return AddressRange{gpuVa, size};
 }
 
@@ -559,14 +574,6 @@ uint64_t OsAgnosticMemoryManager::getLocalMemorySize(uint32_t rootDeviceIndex, u
 
 double OsAgnosticMemoryManager::getPercentOfGlobalMemoryAvailable(uint32_t rootDeviceIndex) {
     return 0.8;
-}
-
-void MemoryAllocation::overrideMemoryPool(MemoryPool pool) {
-    if (DebugManager.flags.AUBDumpForceAllToLocalMemory.get()) {
-        this->memoryPool = MemoryPool::LocalMemory;
-        return;
-    }
-    this->memoryPool = pool;
 }
 
 } // namespace NEO

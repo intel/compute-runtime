@@ -9,6 +9,7 @@
 #include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
+#include <mutex>
 #include <vector>
 
 struct _zes_perf_handle_t {
@@ -47,6 +48,7 @@ struct PerformanceHandleContext {
 
   private:
     void createHandle(ze_device_handle_t deviceHandle, zes_engine_type_flag_t domain);
+    std::once_flag initPerformanceOnce;
 };
 
 } // namespace L0

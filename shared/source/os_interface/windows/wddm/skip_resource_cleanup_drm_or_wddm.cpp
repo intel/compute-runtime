@@ -30,7 +30,7 @@ NTSTATUS closeAdapterNoOp(const D3DKMT_CLOSEADAPTER *closeAdapter) {
     return STATUS_SUCCESS;
 }
 
-bool Wddm::isDriverAvaliable() {
+bool Wddm::isDriverAvailable() {
     D3DKMT_GETDEVICESTATE deviceState = {};
     deviceState.hDevice = device;
     deviceState.StateType = D3DKMT_DEVICESTATE_PRESENT;

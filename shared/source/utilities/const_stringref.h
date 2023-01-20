@@ -7,9 +7,6 @@
 
 #pragma once
 
-#include <cinttypes>
-#include <cstddef>
-#include <cstring>
 #include <string>
 
 namespace NEO {
@@ -79,6 +76,21 @@ class ConstStringRef {
         } else {
             return ConstStringRef(this->ptr, this->len + len);
         }
+    }
+
+    template <typename Predicate>
+    constexpr ConstStringRef trimEnd(Predicate &&pred) const noexcept {
+        const char *end = ptr + len;
+        end--;
+        auto newLen = len;
+        while (true == pred(*end)) {
+            if (0u == newLen) {
+                break;
+            }
+            newLen--;
+            end--;
+        }
+        return ConstStringRef(this->ptr, newLen);
     }
 
     constexpr const char *data() const noexcept {
@@ -166,6 +178,23 @@ class ConstStringRef {
             ++rhs;
         }
         return ('\0' == *rhs);
+    }
+
+    constexpr bool startsWith(ConstStringRef subString) const noexcept {
+        if (subString.length() > len) {
+            return false;
+        }
+        const char *findEnd = ptr + subString.length();
+        const char *lhs = ptr;
+        const char *rhs = subString.begin();
+        while ((lhs < findEnd)) {
+            if (*lhs != *rhs) {
+                return false;
+            }
+            lhs++;
+            rhs++;
+        }
+        return true;
     }
 
     constexpr bool isEqualWithoutSeparator(const char separator, const char *subString) const noexcept {

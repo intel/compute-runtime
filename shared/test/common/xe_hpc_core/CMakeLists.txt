@@ -5,7 +5,6 @@
 #
 
 if(TESTS_XE_HPC_CORE)
-
   set(NEO_CORE_TESTS_XE_HPC_CORE
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/definitions${BRANCH_DIR_SUFFIX}unit_test_helper_xe_hpc_core_extra.inl
@@ -16,9 +15,5 @@ if(TESTS_XE_HPC_CORE)
 
   add_subdirectories()
 
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${NEO_CORE_TESTS_XE_HPC_CORE}
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_xe_hpc_core.cpp
-  )
-
+  target_sources(neo_libult_common PRIVATE ${NEO_CORE_TESTS_XE_HPC_CORE})
 endif()

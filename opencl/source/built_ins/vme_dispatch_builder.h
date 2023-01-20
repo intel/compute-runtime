@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/helpers/basic_math.h"
 
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"
@@ -189,7 +190,7 @@ class VmeBuiltinDispatchInfoBuilder : public BuiltinDispatchInfoBuilder {
             }
 
             if (false == img->isTiledAllocation()) {
-                //VME only works with tiled images.
+                // VME only works with tiled images.
                 return CL_OUT_OF_RESOURCES;
             }
         }

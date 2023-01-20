@@ -6,18 +6,19 @@
  */
 
 #include "shared/source/command_stream/device_command_stream.h"
-#include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 #include "create_command_stream_receiver.inl"
 
 namespace NEO {
 
 template <>
-CommandStreamReceiver *createDeviceCommandStreamReceiver<XE_HPC_COREFamily>(bool withAubDump,
-                                                                            ExecutionEnvironment &executionEnvironment,
-                                                                            uint32_t rootDeviceIndex,
-                                                                            const DeviceBitfield deviceBitfield) {
-    return createCommandStreamReceiver<XE_HPC_COREFamily>(withAubDump, executionEnvironment, rootDeviceIndex, deviceBitfield);
+CommandStreamReceiver *createDeviceCommandStreamReceiver<XeHpcCoreFamily>(bool withAubDump,
+                                                                          ExecutionEnvironment &executionEnvironment,
+                                                                          uint32_t rootDeviceIndex,
+                                                                          const DeviceBitfield deviceBitfield) {
+    return createCommandStreamReceiver<XeHpcCoreFamily>(withAubDump, executionEnvironment, rootDeviceIndex, deviceBitfield);
 }
 
 } // namespace NEO

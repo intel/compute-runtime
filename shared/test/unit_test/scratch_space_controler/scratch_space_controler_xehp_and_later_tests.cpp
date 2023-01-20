@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,13 @@
 
 #include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
@@ -34,7 +36,7 @@ class MockScratchSpaceControllerXeHPAndLater : public ScratchSpaceControllerXeHP
     }
     void prepareScratchAllocation(uint32_t requiredPerThreadScratchSize,
                                   uint32_t requiredPerThreadPrivateScratchSize,
-                                  uint32_t currentTaskCount,
+                                  TaskCountType currentTaskCount,
                                   OsContext &osContext,
                                   bool &stateBaseAddressDirty,
                                   bool &scratchSurfaceDirty,

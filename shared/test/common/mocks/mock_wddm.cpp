@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ struct mockHwDeviceId : public HwDeviceIdWddm {
     using HwDeviceIdWddm::osEnvironment;
 };
 
-WddmMock::WddmMock(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::make_unique<HwDeviceIdWddm>(ADAPTER_HANDLE, LUID{}, rootDeviceEnvironment.executionEnvironment.osEnvironment.get(), std::make_unique<UmKmDataTranslator>()), rootDeviceEnvironment) {
+WddmMock::WddmMock(RootDeviceEnvironment &rootDeviceEnvironment) : Wddm(std::make_unique<HwDeviceIdWddm>(ADAPTER_HANDLE, LUID{}, 1u, rootDeviceEnvironment.executionEnvironment.osEnvironment.get(), std::make_unique<UmKmDataTranslator>()), rootDeviceEnvironment) {
     if (!rootDeviceEnvironment.executionEnvironment.osEnvironment.get()) {
         rootDeviceEnvironment.executionEnvironment.osEnvironment = std::make_unique<OsEnvironmentWin>();
     }
@@ -59,10 +59,10 @@ bool WddmMock::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool c
     }
     return makeResidentStatus;
 }
-bool WddmMock::evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim) {
+bool WddmMock::evict(const D3DKMT_HANDLE *handles, uint32_t num, uint64_t &sizeToTrim, bool evictNeeded) {
     evictResult.called++;
     if (callBaseEvict) {
-        evictStatus = Wddm::evict(handles, num, sizeToTrim);
+        evictStatus = Wddm::evict(handles, num, sizeToTrim, evictNeeded);
     }
     return evictStatus;
 }
@@ -170,9 +170,9 @@ bool WddmMock::createContext(OsContextWin &osContext) {
     return createContextResult.success = Wddm::createContext(osContext);
 }
 
-void WddmMock::applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext, const HardwareInfo &hwInfo) {
+void WddmMock::applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext) {
     applyAdditionalContextFlagsResult.called++;
-    Wddm::applyAdditionalContextFlags(privateData, osContext, hwInfo);
+    Wddm::applyAdditionalContextFlags(privateData, osContext);
 }
 
 bool WddmMock::destroyContext(D3DKMT_HANDLE context) {
@@ -249,7 +249,10 @@ bool WddmMock::waitFromCpu(uint64_t lastFenceValue, const MonitoredFence &monito
     waitFromCpuResult.called++;
     waitFromCpuResult.uint64ParamPassed = lastFenceValue;
     waitFromCpuResult.monitoredFence = &monitoredFence;
-    return waitFromCpuResult.success = Wddm::waitFromCpu(lastFenceValue, monitoredFence);
+    if (callBaseWaitFromCpu) {
+        return waitFromCpuResult.success = Wddm::waitFromCpu(lastFenceValue, monitoredFence);
+    }
+    return waitFromCpuResult.success = true;
 }
 
 void *WddmMock::virtualAlloc(void *inPtr, size_t size, bool topDownHint) {
@@ -289,9 +292,13 @@ VOID *WddmMock::registerTrimCallback(PFND3DKMT_TRIMNOTIFICATIONCALLBACK callback
     return Wddm::registerTrimCallback(callback, residencyController);
 }
 
-D3DGPU_VIRTUAL_ADDRESS WddmMock::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size) {
+D3DGPU_VIRTUAL_ADDRESS WddmMock::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size) {
     reserveGpuVirtualAddressResult.called++;
-    return Wddm::reserveGpuVirtualAddress(minimumAddress, maximumAddress, size);
+    if (failReserveGpuVirtualAddress) {
+        D3DGPU_VIRTUAL_ADDRESS nullAddress = {};
+        return nullAddress;
+    }
+    return Wddm::reserveGpuVirtualAddress(baseAddress, minimumAddress, maximumAddress, size);
 }
 
 uint64_t *WddmMock::getPagingFenceAddress() {

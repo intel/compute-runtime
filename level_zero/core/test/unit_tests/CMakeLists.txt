@@ -28,7 +28,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/mock.h
                ${CMAKE_CURRENT_SOURCE_DIR}/white_box.h
-               ${NEO_SHARED_TEST_DIRECTORY}/unit_test/tests_configuration.h
+               ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
                ${NEO_SOURCE_DIR}/level_zero/core/test/common/gen_kernel.cmake
 )
 
@@ -39,7 +39,6 @@ target_sources(${TARGET_NAME} PRIVATE
                $<TARGET_OBJECTS:neo_libult>
                $<TARGET_OBJECTS:neo_shared_mocks>
                $<TARGET_OBJECTS:neo_unit_tests_config>
-               $<TARGET_OBJECTS:l0_libult>
 )
 
 set_property(TARGET ${TARGET_NAME} APPEND_STRING PROPERTY COMPILE_FLAGS ${ASAN_FLAGS})
@@ -79,7 +78,6 @@ endif()
 
 if(WIN32)
   target_link_libraries(${TARGET_NAME} dbghelp)
-  add_dependencies(${TARGET_NAME} mock_gdi)
 endif()
 
 target_link_libraries(${TARGET_NAME}
@@ -93,6 +91,7 @@ target_sources(${TARGET_NAME} PRIVATE
                $<TARGET_OBJECTS:mock_gmm>
                $<TARGET_OBJECTS:${TARGET_NAME_L0}_fixtures>
                $<TARGET_OBJECTS:${TARGET_NAME_L0}_mocks>
+               $<TARGET_OBJECTS:${BUILTINS_BINARIES_STATELESS_LIB_NAME}>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDFUL_LIB_NAME}>
                $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
 )

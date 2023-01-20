@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ using namespace NEO;
 typedef MediaKernelFixture<HelloWorldFixtureFactory> MediaKernelTest;
 
 GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueBlockedVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
-    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    typedef typename Gen9Family::PIPELINE_SELECT PIPELINE_SELECT;
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
@@ -37,7 +37,7 @@ GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueBlockedVmeKernelFirstTimeThen
 
     userEvent.setStatus(CL_COMPLETE);
 
-    parseCommands<SKLFamily>(*pCmdQ);
+    parseCommands<Gen9Family>(*pCmdQ);
     ASSERT_NE(cmdPipelineSelect, nullptr);
     auto *pCmd = genCmdCast<PIPELINE_SELECT *>(cmdPipelineSelect);
 
@@ -49,7 +49,7 @@ GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueBlockedVmeKernelFirstTimeThen
 }
 
 GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueBlockedNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
-    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    typedef typename Gen9Family::PIPELINE_SELECT PIPELINE_SELECT;
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
@@ -71,7 +71,7 @@ GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueBlockedNonVmeKernelFirstTimeT
 
     userEvent.setStatus(CL_COMPLETE);
 
-    parseCommands<SKLFamily>(*pCmdQ);
+    parseCommands<Gen9Family>(*pCmdQ);
     ASSERT_NE(cmdPipelineSelect, nullptr);
     auto *pCmd = genCmdCast<PIPELINE_SELECT *>(cmdPipelineSelect);
 
@@ -83,8 +83,8 @@ GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueBlockedNonVmeKernelFirstTimeT
 }
 
 GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
-    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueVmeKernel<SKLFamily>();
+    typedef typename Gen9Family::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<Gen9Family>();
 
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
@@ -98,8 +98,8 @@ GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueVmeKernelFirstTimeThenProgram
 }
 
 GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
-    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueRegularKernel<SKLFamily>();
+    typedef typename Gen9Family::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueRegularKernel<Gen9Family>();
 
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
@@ -113,23 +113,23 @@ GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueNonVmeKernelFirstTimeThenProg
 }
 
 GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueVmeKernelTwiceThenProgramPipelineSelectOnce) {
-    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueVmeKernel<SKLFamily>();
+    typedef typename Gen9Family::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<Gen9Family>();
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
 GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueNonVmeKernelTwiceThenProgramPipelineSelectOnce) {
-    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueVmeKernel<SKLFamily>();
+    typedef typename Gen9Family::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<Gen9Family>();
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
 GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueVmeKernelAfterNonVmeKernelThenProgramPipelineSelectionAndMediaSamplerTwice) {
-    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueRegularKernel<SKLFamily>();
-    enqueueVmeKernel<SKLFamily>();
+    typedef typename Gen9Family::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueRegularKernel<Gen9Family>();
+    enqueueVmeKernel<Gen9Family>();
 
     auto commands = getCommandsList<PIPELINE_SELECT>();
     EXPECT_EQ(2u, commands.size());
@@ -142,9 +142,9 @@ GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueVmeKernelAfterNonVmeKernelThe
 }
 
 GEN9TEST_F(MediaKernelTest, givenGen9CsrWhenEnqueueNonVmeKernelAfterVmeKernelThenProgramProgramPipelineSelectionAndMediaSamplerTwice) {
-    typedef typename SKLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueVmeKernel<SKLFamily>();
-    enqueueRegularKernel<SKLFamily>();
+    typedef typename Gen9Family::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<Gen9Family>();
+    enqueueRegularKernel<Gen9Family>();
 
     auto commands = getCommandsList<PIPELINE_SELECT>();
     EXPECT_EQ(2u, commands.size());

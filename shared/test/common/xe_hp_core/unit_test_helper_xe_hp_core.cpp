@@ -5,10 +5,12 @@
  *
  */
 
+#include "shared/source/xe_hp_core/hw_cmds_base.h"
 #include "shared/source/xe_hp_core/hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.inl"
 #include "shared/test/common/helpers/unit_test_helper_xehp_and_later.inl"
+
 using Family = NEO::XeHpFamily;
 
 namespace NEO {

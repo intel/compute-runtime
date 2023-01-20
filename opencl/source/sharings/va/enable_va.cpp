@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,7 @@ std::unique_ptr<SharingContextBuilder> VaSharingBuilderFactory::createContextBui
 };
 
 std::string VaSharingBuilderFactory::getExtensions(DriverInfo *driverInfo) {
-    auto imageSupport = driverInfo ? driverInfo->getImageSupport() : false;
+    auto imageSupport = driverInfo ? driverInfo->getMediaSharingSupport() : false;
     if (imageSupport && VASharingFunctions::isVaLibraryAvailable()) {
         return "cl_intel_va_api_media_sharing ";
     }

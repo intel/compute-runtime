@@ -5,45 +5,48 @@
  *
  */
 
+#include "shared/source/gen11/hw_cmds_lkf.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
+
+#include "platforms.h"
+
 using namespace NEO;
 
-TEST(LkfHwInfoConfig, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
-    if (IGFX_LAKEFIELD != productFamily) {
-        return;
-    }
-    HardwareInfo hwInfo = *defaultHwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
+using LkfProductHelper = ProductHelperTest;
+
+LKFTEST_F(LkfProductHelper, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
+
+    GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&hwInfo, false, config));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
-using LkfHwInfo = ::testing::Test;
-
-LKFTEST_F(LkfHwInfo, givenHwInfoConfigStringThenAfterSetupResultingVmeIsDisabled) {
-    HardwareInfo hwInfo = *defaultHwInfo;
+LKFTEST_F(LkfProductHelper, givenProductHelperStringThenAfterSetupResultingVmeIsDisabled) {
 
     uint64_t config = 0x100080008;
-    hardwareInfoSetup[productFamily](&hwInfo, false, config);
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
-    EXPECT_FALSE(hwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
-    EXPECT_FALSE(hwInfo.capabilityTable.supportsVme);
+    hardwareInfoSetup[productFamily](&pInHwInfo, false, config);
+    EXPECT_FALSE(pInHwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
+    EXPECT_FALSE(pInHwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
+    EXPECT_FALSE(pInHwInfo.capabilityTable.supportsVme);
 }
 
-LKFTEST_F(LkfHwInfo, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
+LKFTEST_F(LkfProductHelper, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     bool boolValue[]{
         true, false};
-    HardwareInfo hwInfo = *defaultHwInfo;
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    FeatureTable &featureTable = hwInfo.featureTable;
-    WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
+
+    GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
+    FeatureTable &featureTable = pInHwInfo.featureTable;
+    WorkaroundTable &workaroundTable = pInHwInfo.workaroundTable;
 
     uint64_t config = 0x100080008;
 
@@ -52,7 +55,7 @@ LKFTEST_F(LkfHwInfo, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTableAndWor
         gtSystemInfo = {0};
         featureTable = {};
         workaroundTable = {};
-        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
+        hardwareInfoSetup[productFamily](&pInHwInfo, setParamBool, config);
 
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
@@ -63,21 +66,54 @@ LKFTEST_F(LkfHwInfo, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTableAndWor
         EXPECT_EQ(setParamBool, featureTable.flags.ftrTranslationTable);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrUserModeTranslationTable);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrTileMappedResource);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftrEnableGuC);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftrFbc2AddressTranslation);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcBlitterTracking);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftrFbcCpuTracking);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrTileY);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcHdr2D);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrAstcLdr2D);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftr3dMidBatchPreempt);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidThreadLevelPreempt);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-        EXPECT_EQ(setParamBool, featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
 
         EXPECT_EQ(setParamBool, workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-        EXPECT_EQ(setParamBool, workaroundTable.flags.waReportPerfCountUseGlobalContextID);
     }
+}
+
+LKFTEST_F(LkfProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+
+    EXPECT_EQ(productHelper->getProductConfigFromHwInfo(pInHwInfo), AOT::LKF);
+}
+
+LKFTEST_F(LkfProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
+
+    EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
+}
+
+LKFTEST_F(LkfProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSupportThenExpectCorrectValues) {
+
+    EXPECT_TRUE(productHelper->getScmPropertyThreadArbitrationPolicySupport());
+    EXPECT_TRUE(productHelper->getScmPropertyCoherencyRequiredSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyZPassAsyncComputeThreadLimitSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyPixelAsyncComputeThreadLimitSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyLargeGrfModeSupport());
+    EXPECT_FALSE(productHelper->getScmPropertyDevicePreemptionModeSupport());
+
+    EXPECT_FALSE(productHelper->getStateBaseAddressPropertyGlobalAtomicsSupport());
+    EXPECT_TRUE(productHelper->getStateBaseAddressPropertyStatelessMocsSupport());
+    EXPECT_FALSE(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
+
+    EXPECT_TRUE(productHelper->getFrontEndPropertyScratchSizeSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyPrivateScratchSizeSupport());
+
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyPreemptionModeSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyStateSipSupport());
+    EXPECT_TRUE(productHelper->getPreemptionDbgPropertyCsrSurfaceSupport());
+
+    EXPECT_FALSE(productHelper->getFrontEndPropertyComputeDispatchAllWalkerSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyDisableEuFusionSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
+    EXPECT_FALSE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
+
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertyModeSelectedSupport());
+    EXPECT_TRUE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
+    EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }

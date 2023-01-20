@@ -33,14 +33,14 @@ class CommandStreamReceiverWithAUBDump : public BaseCSR {
     AubSubCaptureStatus checkAndActivateAubSubCapture(const std::string &kernelName) override;
     void setupContext(OsContext &osContext) override;
 
-    CommandStreamReceiverType getType() override {
+    CommandStreamReceiverType getType() const override {
         if (BaseCSR::getType() == CommandStreamReceiverType::CSR_TBX) {
             return CommandStreamReceiverType::CSR_TBX_WITH_AUB;
         }
         return CommandStreamReceiverType::CSR_HW_WITH_AUB;
     }
 
-    WaitStatus waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
+    WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait,
                                                      bool useQuickKmdSleep, QueueThrottle throttle) override;
 
     size_t getPreferredTagPoolSize() const override { return 1; }

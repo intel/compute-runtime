@@ -1,12 +1,15 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/execution_environment/execution_environment.h"
@@ -15,15 +18,12 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/source/utilities/logger.h"
-#include "shared/source/utilities/time_measure_wrapper.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
-
-#include "compiler_options.h"
 
 #include <cstring>
 #include <iterator>
@@ -67,13 +67,16 @@ cl_int Program::build(
 
             const bool shouldSuppressRebuildWarning{CompilerOptions::extract(CompilerOptions::noRecompiledFromIr, options)};
             extractInternalOptions(options, internalOptions);
-            applyAdditionalOptions(internalOptions);
+            CompilerOptions::applyAdditionalApiOptions(options);
+            CompilerOptions::applyAdditionalInternalOptions(internalOptions);
 
             CompilerInterface *pCompilerInterface = defaultDevice.getCompilerInterface();
             if (!pCompilerInterface) {
                 retVal = CL_OUT_OF_HOST_MEMORY;
                 break;
             }
+
+            disableZebinIfVmeEnabled(options, internalOptions, sourceCode);
 
             TranslationInput inputArgs = {IGC::CodeType::oclC, IGC::CodeType::oclGenBin};
             if (createdFrom != CreatedFrom::SOURCE) {
@@ -112,6 +115,10 @@ cl_int Program::build(
 
             if (!this->getIsBuiltIn() && DebugManager.flags.InjectInternalBuildOptions.get() != "unk") {
                 NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::DebugManager.flags.InjectInternalBuildOptions.get());
+            }
+
+            if (this->enforceFallbackToPatchtokens) {
+                CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::disableZebin);
             }
 
             inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());
@@ -154,21 +161,7 @@ cl_int Program::build(
         }
         updateNonUniformFlag();
 
-        for (auto &clDevice : deviceVector) {
-            if (BuildPhase::BinaryProcessing == phaseReached[clDevice->getRootDeviceIndex()]) {
-                continue;
-            }
-            if (DebugManager.flags.PrintProgramBinaryProcessingTime.get()) {
-                retVal = TimeMeasureWrapper::functionExecution(*this, &Program::processGenBinary, *clDevice);
-            } else {
-                retVal = processGenBinary(*clDevice);
-            }
-
-            if (retVal != CL_SUCCESS) {
-                break;
-            }
-            phaseReached[clDevice->getRootDeviceIndex()] = BuildPhase::BinaryProcessing;
-        }
+        retVal = processGenBinaries(deviceVector, phaseReached);
 
         auto containsStatefulAccess = AddressingModeHelper::containsStatefulAccess(buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray);
         auto isUserKernel = !isBuiltIn;

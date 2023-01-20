@@ -42,7 +42,7 @@ class MetricDeviceContext {
   public:
     MetricDeviceContext(Device &device);
     ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups);
-    ze_result_t activateMetricGroupsDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
+    void activateMetricGroupsDeferred(uint32_t count, zet_metric_group_handle_t *phMetricGroups);
     ze_result_t activateMetricGroups();
     ze_result_t appendMetricMemoryBarrier(CommandList &commandList);
     bool isMetricGroupActivated(const zet_metric_group_handle_t hMetricGroup) const;
@@ -60,7 +60,8 @@ class MetricDeviceContext {
   private:
     bool enable();
     ze_result_t activateAllDomains();
-    ze_result_t deActivateAllDomains();
+    void deActivateAllDomains();
+    void deActivateDomain(uint32_t domain);
     struct Device &device;
     std::map<uint32_t, std::pair<zet_metric_group_handle_t, bool>> domains;
     bool multiDeviceCapable = false;

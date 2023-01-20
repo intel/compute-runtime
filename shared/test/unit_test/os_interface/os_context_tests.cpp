@@ -17,7 +17,7 @@
 using namespace NEO;
 
 TEST(OSContext, whenCreatingDefaultOsContextThenExpectInitializedAlways) {
-    OsContext *osContext = OsContext::create(nullptr, 0, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor());
     EXPECT_FALSE(osContext->isLowPriority());
     EXPECT_FALSE(osContext->isInternalEngine());
     EXPECT_FALSE(osContext->isRootDevice());
@@ -28,7 +28,7 @@ TEST(OSContext, givenInternalAndRootDeviceAreTrueWhenCreatingDefaultOsContextThe
     auto descriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Internal});
     descriptor.isRootDevice = true;
 
-    OsContext *osContext = OsContext::create(nullptr, 0, descriptor);
+    OsContext *osContext = OsContext::create(nullptr, 0, 0, descriptor);
     EXPECT_FALSE(osContext->isLowPriority());
     EXPECT_TRUE(osContext->isInternalEngine());
     EXPECT_TRUE(osContext->isRootDevice());
@@ -39,7 +39,7 @@ TEST(OSContext, givenLowPriorityAndRootDeviceAreTrueWhenCreatingDefaultOsContext
     auto descriptor = EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::LowPriority});
     descriptor.isRootDevice = true;
 
-    OsContext *osContext = OsContext::create(nullptr, 0, descriptor);
+    OsContext *osContext = OsContext::create(nullptr, 0, 0, descriptor);
     EXPECT_TRUE(osContext->isLowPriority());
     EXPECT_FALSE(osContext->isInternalEngine());
     EXPECT_TRUE(osContext->isRootDevice());
@@ -47,7 +47,7 @@ TEST(OSContext, givenLowPriorityAndRootDeviceAreTrueWhenCreatingDefaultOsContext
 }
 
 TEST(OSContext, givenOsContextCreatedDefaultIsFalseWhenSettingTrueThenFlagTrueReturned) {
-    OsContext *osContext = OsContext::create(nullptr, 0, EngineDescriptorHelper::getDefaultDescriptor());
+    OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor());
     EXPECT_FALSE(osContext->isDefaultContext());
     osContext->setDefaultContext(true);
     EXPECT_TRUE(osContext->isDefaultContext());
@@ -57,7 +57,7 @@ TEST(OSContext, givenOsContextCreatedDefaultIsFalseWhenSettingTrueThenFlagTrueRe
 TEST(OSContext, givenCooperativeEngineWhenIsCooperativeEngineIsCalledThenReturnTrue) {
     auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
     engineDescriptor.engineTypeUsage.second = EngineUsage::Cooperative;
-    auto pOsContext = OsContext::create(nullptr, 0, engineDescriptor);
+    auto pOsContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
     EXPECT_FALSE(pOsContext->isRegular());
     EXPECT_FALSE(pOsContext->isLowPriority());
     EXPECT_FALSE(pOsContext->isInternalEngine());
@@ -67,7 +67,7 @@ TEST(OSContext, givenCooperativeEngineWhenIsCooperativeEngineIsCalledThenReturnT
 
 TEST(OSContext, givenReinitializeContextWhenContextIsInitThenContextIsStillIinitializedAfter) {
     auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
-    auto pOsContext = OsContext::create(nullptr, 0, engineDescriptor);
+    auto pOsContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
     EXPECT_NO_THROW(pOsContext->reInitializeContext());
     EXPECT_NO_THROW(pOsContext->ensureContextInitialized());
     delete pOsContext;
@@ -75,7 +75,7 @@ TEST(OSContext, givenReinitializeContextWhenContextIsInitThenContextIsStillIinit
 
 TEST(OSContext, givenSetPowerHintThenGetPowerHintShowsTheSameValue) {
     auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor();
-    auto pOsContext = OsContext::create(nullptr, 0, engineDescriptor);
+    auto pOsContext = OsContext::create(nullptr, 0, 0, engineDescriptor);
     pOsContext->setUmdPowerHintValue(1);
     EXPECT_EQ(1, pOsContext->getUmdPowerHintValue());
     delete pOsContext;
@@ -89,7 +89,7 @@ struct DeferredOsContextCreationTests : ::testing::Test {
 
     std::unique_ptr<OsContext> createOsContext(EngineTypeUsage engineTypeUsage, bool defaultEngine) {
         OSInterface *osInterface = device->getRootDeviceEnvironment().osInterface.get();
-        std::unique_ptr<OsContext> osContext{OsContext::create(osInterface, 0, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage))};
+        std::unique_ptr<OsContext> osContext{OsContext::create(osInterface, device->getRootDeviceIndex(), 0, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage))};
         EXPECT_FALSE(osContext->isInitialized());
         return osContext;
     }
@@ -169,7 +169,7 @@ TEST_F(DeferredOsContextCreationTests, givenBlitterEngineWhenCreatingOsContextTh
 TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledMultipleTimesWhenOsContextIsCreatedThenInitializeOnlyOnce) {
     struct MyOsContext : OsContext {
         MyOsContext(uint32_t contextId,
-                    const EngineDescriptor &engineDescriptor) : OsContext(contextId, engineDescriptor) {}
+                    const EngineDescriptor &engineDescriptor) : OsContext(0, contextId, engineDescriptor) {}
 
         void initializeContext() override {
             initializeContextCalled++;

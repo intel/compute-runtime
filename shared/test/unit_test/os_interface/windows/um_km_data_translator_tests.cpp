@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/os_interface/windows/adapter_info_tests.h"
 #include "shared/wsl_compute_helper/source/gmm_resource_info_accessor.h"
 #include "shared/wsl_compute_helper/source/wsl_compute_helper.h"
@@ -25,12 +25,12 @@ namespace NEO {
 extern const char *wslComputeHelperLibNameToLoad;
 }
 
-constexpr char *mockTokToStrAdapterString = "MOCK_ADAPTER_TOK_TO_STR";
+constexpr const char *mockTokToStrAdapterString = "MOCK_ADAPTER_TOK_TO_STR";
 constexpr uint16_t mockTokToStrDriverBuildNumber = 0xabcd;
 constexpr uint32_t mockTokToStrProcessID = 0xabcdefbc;
 constexpr uint64_t mockTokToStrHeapBase = 0xabcdefbc;
 
-constexpr char *mockStrToTokAdapterString = "MOCK_ADAPTER_STR_TO_TOK";
+constexpr const char *mockStrToTokAdapterString = "MOCK_ADAPTER_STR_TO_TOK";
 constexpr uint16_t mockStrToTokDriverBuildNumber = 0xbadc;
 constexpr uint32_t mockStrToTokProcessID = 0xcdbaebfc;
 constexpr uint64_t mockStrToTokHeapBase = 0xabcdefbc;

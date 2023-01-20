@@ -13,10 +13,10 @@
 
 namespace NEO {
 
-template class HardwareInterface<ICLFamily>;
+template class HardwareInterface<Gen11Family>;
 
-template class GpgpuWalkerHelper<ICLFamily>;
+template class GpgpuWalkerHelper<Gen11Family>;
 
-template struct EnqueueOperation<ICLFamily>;
+template struct EnqueueOperation<Gen11Family>;
 
 } // namespace NEO

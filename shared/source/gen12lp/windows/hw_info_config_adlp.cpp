@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/gen12lp/hw_cmds_adlp.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
@@ -15,11 +15,9 @@
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_ALDERLAKE_P;
 
 #include "shared/source/gen12lp/adlp/os_agnostic_hw_info_config_adlp.inl"
 #include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
 
-template class HwInfoConfigHw<gfxProduct>;
-} // namespace NEO
+template class NEO::ProductHelperHw<gfxProduct>;

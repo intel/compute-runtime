@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
 
+#include "shared/source/memory_manager/memory_manager.h"
+
 #include "level_zero/core/source/driver/driver_handle.h"
 
 namespace L0 {

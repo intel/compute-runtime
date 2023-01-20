@@ -7,10 +7,9 @@
 
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/hash.h"
+#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "patchtokens_tests.h"
 
 #include <vector>
 
@@ -536,7 +535,6 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgPatchtokensThenDecodingSucceeds
     for (int i = 0; i < 6; ++i) {
         EXPECT_EQ(nullptr, decodedKernel.tokens.kernelArgs[i].argInfo);
         EXPECT_EQ(0U, decodedKernel.tokens.kernelArgs[i].byValMap.size());
-        EXPECT_EQ(nullptr, decodedKernel.tokens.kernelArgs[i].objectId);
         EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::None, decodedKernel.tokens.kernelArgs[i].objectTypeSpecialized);
     }
 }
@@ -677,11 +675,9 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgMetadataPatchtokensThenDecoding
 
     auto patchListOffset = ptrDiff(kernelToEncode.blobs.patchList.begin(), storage.data());
 
-    auto arg0ObjectIdOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_OBJECT_ID, storage, 0U, 0U);
     auto arg0BufferOffsetOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_BUFFER_OFFSET, storage, 0U, 0U);
     auto arg0BufferStatefulOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_BUFFER_STATEFUL, storage, 0U, 0U);
 
-    auto arg1ObjectIdOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_OBJECT_ID, storage, 0U, 1U);
     auto arg1ImageWidthOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_IMAGE_WIDTH, storage, 0U, 1U);
     auto arg1ImageHeightOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_IMAGE_HEIGHT, storage, 0U, 1U);
     auto arg1ImageDepthOff = pushBackDataParameterToken(iOpenCL::DATA_PARAMETER_IMAGE_DEPTH, storage, 0U, 1U);
@@ -723,11 +719,9 @@ TEST(KernelDecoder, GivenKernelWithValidObjectArgMetadataPatchtokensThenDecoding
     EXPECT_EQ(NEO::PatchTokenBinary::ArgObjectTypeSpecialized::None, decodedKernel.tokens.kernelArgs[3].objectTypeSpecialized);
 
     auto base = storage.data();
-    EXPECT_TRUE(tokenOffsetMatched(base, arg0ObjectIdOff, decodedKernel.tokens.kernelArgs[0].objectId));
     EXPECT_TRUE(tokenOffsetMatched(base, arg0BufferOffsetOff, decodedKernel.tokens.kernelArgs[0].metadata.buffer.bufferOffset));
     EXPECT_TRUE(tokenOffsetMatched(base, arg0BufferStatefulOff, decodedKernel.tokens.kernelArgs[0].metadata.buffer.pureStateful));
 
-    EXPECT_TRUE(tokenOffsetMatched(base, arg1ObjectIdOff, decodedKernel.tokens.kernelArgs[1].objectId));
     EXPECT_TRUE(tokenOffsetMatched(base, arg1ImageWidthOff, decodedKernel.tokens.kernelArgs[1].metadata.image.width));
     EXPECT_TRUE(tokenOffsetMatched(base, arg1ImageHeightOff, decodedKernel.tokens.kernelArgs[1].metadata.image.height));
     EXPECT_TRUE(tokenOffsetMatched(base, arg1ImageDepthOff, decodedKernel.tokens.kernelArgs[1].metadata.image.depth));
@@ -1024,8 +1018,11 @@ TEST(ProgramDecoder, GivenValidProgramWithConstantSurfacesThenDecodingSucceedsAn
     decodedProgram = {};
     auto inlineSize = programToEncode.programScopeTokens.allocateConstantMemorySurface[0]->InlineDataSize;
     auto secondConstantSurfaceOff = programToEncode.storage.size();
-    programToEncode.storage.insert(programToEncode.storage.end(), reinterpret_cast<uint8_t *>(programToEncode.constSurfMutable),
-                                   reinterpret_cast<uint8_t *>(programToEncode.constSurfMutable + 1));
+
+    std::vector<uint8_t> copiedConstSurfMutable(reinterpret_cast<uint8_t *>(programToEncode.constSurfMutable),
+                                                reinterpret_cast<uint8_t *>(programToEncode.constSurfMutable + 1));
+    programToEncode.storage.insert(programToEncode.storage.end(), copiedConstSurfMutable.begin(), copiedConstSurfMutable.end());
+
     programToEncode.storage.resize(programToEncode.storage.size() + inlineSize);
     programToEncode.recalcTokPtr();
     decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
@@ -1070,8 +1067,11 @@ TEST(ProgramDecoder, GivenValidProgramWithGlobalSurfacesThenDecodingSucceedsAndT
     decodedProgram = {};
     auto inlineSize = programToEncode.programScopeTokens.allocateGlobalMemorySurface[0]->InlineDataSize;
     auto secondGlobalSurfaceOff = programToEncode.storage.size();
-    programToEncode.storage.insert(programToEncode.storage.end(), reinterpret_cast<uint8_t *>(programToEncode.globalSurfMutable),
-                                   reinterpret_cast<uint8_t *>(programToEncode.globalSurfMutable + 1));
+
+    std::vector<uint8_t> copiedGlobalSurfMutable(reinterpret_cast<uint8_t *>(programToEncode.globalSurfMutable),
+                                                 reinterpret_cast<uint8_t *>(programToEncode.globalSurfMutable + 1));
+    programToEncode.storage.insert(programToEncode.storage.end(), copiedGlobalSurfMutable.begin(), copiedGlobalSurfMutable.end());
+
     programToEncode.storage.resize(programToEncode.storage.size() + inlineSize);
     programToEncode.recalcTokPtr();
     decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.blobs.programInfo, decodedProgram);
@@ -1161,7 +1161,10 @@ TEST(ProgramDecoder, GivenValidProgramWithKernelThenDecodingSucceedsAndTokensAre
 TEST(ProgramDecoder, GivenValidProgramWithTwoKernelsWhenThenDecodingSucceeds) {
     PatchTokensTestData::ValidProgramWithKernelUsingSlm programToEncode;
     programToEncode.headerMutable->NumberOfKernels = 2;
-    programToEncode.storage.insert(programToEncode.storage.end(), programToEncode.kernels[0].blobs.kernelInfo.begin(), programToEncode.kernels[0].blobs.kernelInfo.end());
+
+    std::vector<uint8_t> copiedKernelInfo(programToEncode.kernels[0].blobs.kernelInfo.begin(), programToEncode.kernels[0].blobs.kernelInfo.end());
+    programToEncode.storage.insert(programToEncode.storage.end(), copiedKernelInfo.begin(), copiedKernelInfo.end());
+
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.storage, decodedProgram);
     EXPECT_TRUE(decodeSuccess);
@@ -1194,7 +1197,10 @@ TEST(ProgramDecoder, GivenProgramWithMultipleKernelsWhenFailsToDecodeKernelThenD
     PatchTokensTestData::ValidProgramWithKernelUsingSlm programToEncode;
     programToEncode.slmMutable->Size = 0U;
     programToEncode.headerMutable->NumberOfKernels = 2;
-    programToEncode.storage.insert(programToEncode.storage.end(), programToEncode.kernels[0].blobs.kernelInfo.begin(), programToEncode.kernels[0].blobs.kernelInfo.end());
+
+    std::vector<uint8_t> copiedKernelInfo(programToEncode.kernels[0].blobs.kernelInfo.begin(), programToEncode.kernels[0].blobs.kernelInfo.end());
+    programToEncode.storage.insert(programToEncode.storage.end(), copiedKernelInfo.begin(), copiedKernelInfo.end());
+
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.storage, decodedProgram);
     EXPECT_FALSE(decodeSuccess);

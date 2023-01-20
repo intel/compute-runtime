@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include <cstddef>
 #include <cstdint>
-#include <cstdlib>
 
 namespace NEO {
 class IndirectHeap;

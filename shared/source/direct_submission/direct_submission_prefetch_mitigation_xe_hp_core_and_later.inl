@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,7 @@ namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchPrefetchMitigation() {
-    auto addressToJump = ptrOffset(ringCommandStream.getSpace(0u), getSizeStartSection());
-    dispatchStartSection(getCommandBufferPositionGpuAddress(addressToJump));
+    dispatchStartSection(ringCommandStream.getCurrentGpuAddressPosition() + getSizeStartSection());
 }
 
 template <typename GfxFamily, typename Dispatcher>

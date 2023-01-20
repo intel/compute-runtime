@@ -8,11 +8,11 @@
 #pragma once
 #include "shared/source/helpers/l3_range.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/test/common/helpers/cmd_buffer_validator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/static_size3.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/helpers/cmd_buffer_validator.h"
-#include "shared/test/unit_test/helpers/static_size3.h"
 
 #include "opencl/test/unit_test/fixtures/hello_world_fixture.h"
 #include "opencl/test/unit_test/helpers/hardware_commands_helper_tests.h"
@@ -49,7 +49,7 @@ struct L3ControlPolicy : CmdValidator {
 template <typename FamilyType>
 class GivenCacheFlushAfterWalkerEnabledWhenSvmAllocationsSetAsCacheFlushRequiringThenExpectCorrectCommandSize : public HardwareCommandsTest {
   public:
-    void TestBodyImpl() { // NOLINT(readability-identifier-naming)
+    void testBodyImpl() {
         using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using L3_CONTROL = typename FamilyType::L3_CONTROL;
@@ -81,7 +81,7 @@ class GivenCacheFlushAfterWalkerEnabledWhenSvmAllocationsSetAsCacheFlushRequirin
 template <typename FamilyType>
 class GivenCacheFlushAfterWalkerEnabledWhenSvmAllocationsSetAsCacheFlushRequiringThenExpectCacheFlushCommand : public HardwareCommandsTest {
   public:
-    void TestBodyImpl() { // NOLINT(readability-identifier-naming)
+    void testBodyImpl() {
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using L3_CONTROL = typename FamilyType::L3_CONTROL;
 
@@ -113,7 +113,7 @@ class GivenCacheFlushAfterWalkerEnabledWhenSvmAllocationsSetAsCacheFlushRequirin
 template <typename FamilyType>
 class GivenCacheFlushAfterWalkerEnabledWhenKernelArgIsSetAsCacheFlushRequiredThenExpectCacheFlushCommand : public HardwareCommandsTest {
   public:
-    void TestBodyImpl() { // NOLINT(readability-identifier-naming)
+    void testBodyImpl() {
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using L3_FLUSH_ADDRESS_RANGE = typename FamilyType::L3_FLUSH_ADDRESS_RANGE;
         using L3_CONTROL = typename FamilyType::L3_CONTROL;
@@ -152,7 +152,7 @@ class GivenCacheFlushAfterWalkerEnabledWhenKernelArgIsSetAsCacheFlushRequiredThe
 template <typename FamilyType>
 class GivenCacheFlushAfterWalkerEnabledWhenNoGlobalSurfaceSvmAllocationKernelArgRequireCacheFlushThenExpectNoCacheFlushCommand : public HardwareCommandsTest {
   public:
-    void TestBodyImpl() { // NOLINT(readability-identifier-naming)
+    void testBodyImpl() {
         DebugManagerStateRestore dbgRestore;
         DebugManager.flags.EnableCacheFlushAfterWalker.set(1);
 
@@ -172,7 +172,7 @@ class GivenCacheFlushAfterWalkerEnabledWhenNoGlobalSurfaceSvmAllocationKernelArg
 template <typename FamilyType>
 class GivenCacheFlushAfterWalkerEnabledWhenProgramGlobalSurfacePresentThenExpectCacheFlushCommand : public HardwareCommandsTest {
   public:
-    void TestBodyImpl() { // NOLINT(readability-identifier-naming)
+    void testBodyImpl() {
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using L3_CONTROL = typename FamilyType::L3_CONTROL;
         DebugManagerStateRestore dbgRestore;
@@ -202,7 +202,7 @@ class GivenCacheFlushAfterWalkerEnabledWhenProgramGlobalSurfacePresentThenExpect
 template <typename FamilyType>
 class GivenCacheFlushAfterWalkerEnabledWhenProgramGlobalSurfacePresentAndPostSyncRequiredThenExpectProperCacheFlushCommand : public HardwareCommandsTest {
   public:
-    void TestBodyImpl() { // NOLINT(readability-identifier-naming)
+    void testBodyImpl() {
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using L3_CONTROL = typename FamilyType::L3_CONTROL;
 
@@ -240,7 +240,7 @@ using EnqueueKernelTest = Test<EnqueueKernelFixture>;
 template <typename FamilyType>
 class GivenCacheFlushAfterWalkerEnabledWhenAllocationRequiresCacheFlushThenFlushCommandPresentAfterWalker : public EnqueueKernelTest {
   public:
-    void TestBodyImpl() { // NOLINT(readability-identifier-naming)
+    void testBodyImpl() {
         using WALKER = typename FamilyType::WALKER_TYPE;
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using L3_FLUSH_ADDRESS_RANGE = typename FamilyType::L3_FLUSH_ADDRESS_RANGE;
@@ -295,7 +295,7 @@ class GivenCacheFlushAfterWalkerEnabledWhenAllocationRequiresCacheFlushThenFlush
 template <typename FamilyType>
 class GivenCacheFlushAfterWalkerAndTimestampPacketsEnabledWhenAllocationRequiresCacheFlushThenFlushCommandPresentAfterWalker : public EnqueueKernelTest {
   public:
-    void TestBodyImpl() { // NOLINT(readability-identifier-naming)
+    void testBodyImpl() {
         using WALKER = typename FamilyType::WALKER_TYPE;
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using L3_FLUSH_ADDRESS_RANGE = typename FamilyType::L3_FLUSH_ADDRESS_RANGE;
@@ -352,7 +352,7 @@ class GivenCacheFlushAfterWalkerAndTimestampPacketsEnabledWhenAllocationRequires
 template <typename FamilyType>
 class GivenCacheFlushAfterWalkerDisabledWhenAllocationRequiresCacheFlushThenFlushCommandNotPresentAfterWalker : public EnqueueKernelTest {
   public:
-    void TestBodyImpl() { // NOLINT(readability-identifier-naming)
+    void testBodyImpl() {
         using WALKER = typename FamilyType::WALKER_TYPE;
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using L3_FLUSH_ADDRESS_RANGE = typename FamilyType::L3_FLUSH_ADDRESS_RANGE;
@@ -400,7 +400,7 @@ class GivenCacheFlushAfterWalkerDisabledWhenAllocationRequiresCacheFlushThenFlus
 template <typename FamilyType>
 class GivenCacheFlushAfterWalkerEnabledWhenMoreThan126AllocationRangesRequiresCacheFlushThenAtLeatsTwoFlushCommandPresentAfterWalker : public EnqueueKernelTest {
   public:
-    void TestBodyImpl() { // NOLINT(readability-identifier-naming)
+    void testBodyImpl() {
         using WALKER = typename FamilyType::WALKER_TYPE;
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using L3_FLUSH_ADDRESS_RANGE = typename FamilyType::L3_FLUSH_ADDRESS_RANGE;
@@ -452,7 +452,7 @@ class GivenCacheFlushAfterWalkerEnabledWhenMoreThan126AllocationRangesRequiresCa
 template <typename FamilyType>
 class GivenCacheFlushAfterWalkerAndTimestampPacketsEnabledWhenMoreThan126AllocationRangesRequiresCacheFlushThenExpectFlushWithOutPostSyncAndThenWithPostSync : public EnqueueKernelTest {
   public:
-    void TestBodyImpl() { // NOLINT(readability-identifier-naming)
+    void testBodyImpl() {
         using WALKER = typename FamilyType::WALKER_TYPE;
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using L3_FLUSH_ADDRESS_RANGE = typename FamilyType::L3_FLUSH_ADDRESS_RANGE;
@@ -525,7 +525,7 @@ class GivenCacheFlushAfterWalkerAndTimestampPacketsEnabledWhenMoreThan126Allocat
 template <typename FamilyType>
 class GivenCacheFlushAfterWalkerEnabledWhen126AllocationRangesRequiresCacheFlushThenExpectOneFlush : public EnqueueKernelTest {
   public:
-    void TestBodyImpl() { // NOLINT(readability-identifier-naming)
+    void testBodyImpl() {
         using WALKER = typename FamilyType::WALKER_TYPE;
         using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
         using L3_FLUSH_ADDRESS_RANGE = typename FamilyType::L3_FLUSH_ADDRESS_RANGE;

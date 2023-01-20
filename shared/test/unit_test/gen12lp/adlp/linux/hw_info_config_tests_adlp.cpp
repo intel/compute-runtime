@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,24 +7,25 @@
 
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
 #include "shared/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
 using namespace NEO;
 
-struct HwInfoConfigTestLinuxAdlp : HwInfoConfigTestLinux {
+struct AdlpProductHelperLinux : ProductHelperTestLinux {
     void SetUp() override {
-        HwInfoConfigTestLinux::SetUp();
+        ProductHelperTestLinux::SetUp();
 
         drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     }
 };
 
-ADLPTEST_F(HwInfoConfigTestLinuxAdlp, WhenConfiguringHwInfoThenInfoIsSetCorrectly) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
-    int ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+ADLPTEST_F(AdlpProductHelperLinux, WhenConfiguringHwInfoThenInfoIsSetCorrectly) {
+
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+
     EXPECT_EQ(0, ret);
     EXPECT_EQ(static_cast<uint32_t>(drm->storedEUVal), outHwInfo.gtSystemInfo.EUCount);
     EXPECT_EQ(static_cast<uint32_t>(drm->storedSSVal), outHwInfo.gtSystemInfo.SubSliceCount);
@@ -33,21 +34,21 @@ ADLPTEST_F(HwInfoConfigTestLinuxAdlp, WhenConfiguringHwInfoThenInfoIsSetCorrectl
     EXPECT_FALSE(outHwInfo.featureTable.flags.ftrTileY);
 }
 
-ADLPTEST_F(HwInfoConfigTestLinuxAdlp, GivenInvalidDeviceIdWhenConfiguringHwInfoThenErrorIsReturned) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+ADLPTEST_F(AdlpProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoThenErrorIsReturned) {
 
     drm->failRetTopology = true;
     drm->storedRetValForEUVal = -1;
-    auto ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    auto ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
+
     EXPECT_EQ(-1, ret);
 
     drm->storedRetValForEUVal = 0;
     drm->storedRetValForSSVal = -1;
-    ret = hwInfoConfig->configureHwInfoDrm(&pInHwInfo, &outHwInfo, osInterface);
+    ret = productHelper->configureHwInfoDrm(&pInHwInfo, &outHwInfo, getRootDeviceEnvironment());
     EXPECT_EQ(-1, ret);
 }
 
-ADLPTEST_F(HwInfoConfigTestLinuxAdlp, givenAdlpConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
+ADLPTEST_F(AdlpProductHelperLinux, givenAdlpConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     ADLP::setupHardwareInfoBase(&hwInfo, false);
@@ -59,13 +60,13 @@ ADLPTEST_F(HwInfoConfigTestLinuxAdlp, givenAdlpConfigWhenSetupHardwareInfoBaseTh
 }
 
 template <typename T>
-using AdlpConfigHwInfoTests = ::testing::Test;
+using AdlpHwInfoLinux = ::testing::Test;
 using adlpConfigTestTypes = ::testing::Types<AdlpHwConfig>;
-TYPED_TEST_CASE(AdlpConfigHwInfoTests, adlpConfigTestTypes);
-TYPED_TEST(AdlpConfigHwInfoTests, givenAdlpConfigWhenSetupHardwareInfoThenGtSystemInfoAndWaAndFtrTablesAreSetCorrect) {
+TYPED_TEST_CASE(AdlpHwInfoLinux, adlpConfigTestTypes);
+TYPED_TEST(AdlpHwInfoLinux, givenAdlpConfigWhenSetupHardwareInfoThenGtSystemInfoAndWaAndFtrTablesAreSetCorrect) {
     auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -90,21 +91,15 @@ TYPED_TEST(AdlpConfigHwInfoTests, givenAdlpConfigWhenSetupHardwareInfoThenGtSyst
         EXPECT_FALSE(featureTable.flags.ftrTranslationTable);
         EXPECT_FALSE(featureTable.flags.ftrUserModeTranslationTable);
         EXPECT_FALSE(featureTable.flags.ftrTileMappedResource);
-        EXPECT_FALSE(featureTable.flags.ftrEnableGuC);
         EXPECT_FALSE(featureTable.flags.ftrFbc);
-        EXPECT_FALSE(featureTable.flags.ftrFbc2AddressTranslation);
-        EXPECT_FALSE(featureTable.flags.ftrFbcBlitterTracking);
-        EXPECT_FALSE(featureTable.flags.ftrFbcCpuTracking);
         EXPECT_FALSE(featureTable.flags.ftrTileY);
         EXPECT_FALSE(featureTable.flags.ftrAstcHdr2D);
         EXPECT_FALSE(featureTable.flags.ftrAstcLdr2D);
-        EXPECT_FALSE(featureTable.flags.ftr3dMidBatchPreempt);
+
         EXPECT_FALSE(featureTable.flags.ftrGpGpuMidBatchPreempt);
         EXPECT_FALSE(featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-        EXPECT_FALSE(featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
 
         EXPECT_FALSE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-        EXPECT_FALSE(workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
         EXPECT_FALSE(workaroundTable.flags.waUntypedBufferCompression);
     }
     ret = drm.setupHardwareInfo(&device, true);
@@ -126,26 +121,20 @@ TYPED_TEST(AdlpConfigHwInfoTests, givenAdlpConfigWhenSetupHardwareInfoThenGtSyst
         EXPECT_TRUE(featureTable.flags.ftrTranslationTable);
         EXPECT_TRUE(featureTable.flags.ftrUserModeTranslationTable);
         EXPECT_TRUE(featureTable.flags.ftrTileMappedResource);
-        EXPECT_TRUE(featureTable.flags.ftrEnableGuC);
         EXPECT_TRUE(featureTable.flags.ftrFbc);
-        EXPECT_TRUE(featureTable.flags.ftrFbc2AddressTranslation);
-        EXPECT_TRUE(featureTable.flags.ftrFbcBlitterTracking);
-        EXPECT_TRUE(featureTable.flags.ftrFbcCpuTracking);
         EXPECT_FALSE(featureTable.flags.ftrTileY);
         EXPECT_TRUE(featureTable.flags.ftrAstcHdr2D);
         EXPECT_TRUE(featureTable.flags.ftrAstcLdr2D);
-        EXPECT_TRUE(featureTable.flags.ftr3dMidBatchPreempt);
+
         EXPECT_TRUE(featureTable.flags.ftrGpGpuMidBatchPreempt);
         EXPECT_TRUE(featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-        EXPECT_TRUE(featureTable.flags.ftrPerCtxtPreemptionGranularityControl);
 
         EXPECT_TRUE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-        EXPECT_TRUE(workaroundTable.flags.waEnablePreemptionGranularityControlByUMD);
         EXPECT_TRUE(workaroundTable.flags.waUntypedBufferCompression);
     }
 }
 
-TYPED_TEST(AdlpConfigHwInfoTests, givenSliceCountZeroWhenSetupHardwareInfoThenNotZeroValuesSetInGtSystemInfo) {
+TYPED_TEST(AdlpHwInfoLinux, givenSliceCountZeroWhenSetupHardwareInfoThenNotZeroValuesSetInGtSystemInfo) {
     HardwareInfo hwInfo = {};
     hwInfo.gtSystemInfo = {0};
 

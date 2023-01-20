@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,12 +14,13 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_logical_state_helper.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/enqueue_properties.h"
+#include "opencl/source/helpers/task_information.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/dispatch_flags_fixture.h"
 #include "opencl/test/unit_test/fixtures/enqueue_handler_fixture.h"
@@ -66,7 +67,8 @@ HWTEST_F(EnqueueHandlerTest, givenLogicalStateHelperWhenDispatchingCommandsThenA
     using MI_NOOP = typename FamilyType::MI_NOOP;
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context, pClDevice, nullptr);
-    auto logicalStateHelper = new LogicalStateHelperMock<FamilyType>(false);
+    auto logicalStateHelper = new LogicalStateHelperMock<FamilyType>();
+    logicalStateHelper->makeFakeStreamWrite = true;
 
     auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(mockCmdQ->getGpgpuCommandStreamReceiver());
     ultCsr.logicalStateHelper.reset(logicalStateHelper);
@@ -166,8 +168,6 @@ HWTEST_F(EnqueueHandlerTimestampEnabledTest, givenProflingAndTimeStampPacketsEna
     EXPECT_NE(ev->submitTimeStamp.CPUTimeinNS, 0u);
     EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
 
-    DebugManagerStateRestore dbgState;
-    DebugManager.flags.EnableDeviceBasedTimestamps.set(true);
     ev->queueTimeStamp.GPUTimeStamp = 1000;
     ev->calculateSubmitTimestampData();
 
@@ -206,8 +206,6 @@ HWTEST_F(EnqueueHandlerTimestampDisabledTest, givenProflingEnabledTimeStampPacke
     EXPECT_NE(ev->submitTimeStamp.CPUTimeinNS, 0u);
     EXPECT_EQ(ev->submitTimeStamp.GPUTimeStamp, 0u);
 
-    DebugManagerStateRestore dbgState;
-    DebugManager.flags.EnableDeviceBasedTimestamps.set(true);
     ev->queueTimeStamp.GPUTimeStamp = 1000;
     ev->calculateSubmitTimestampData();
 
@@ -243,7 +241,7 @@ HWTEST_F(EnqueueHandlerTest, givenNonBlitPropertyWhenEnqueueIsBlockedThenDontReg
 HWTEST_F(EnqueueHandlerTest, givenBlitPropertyWhenEnqueueIsBlockedThenRegisterBlitProperties) {
     HardwareInfo *hwInfo = pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_BLITTER_OR_SKIP(hwInfo);
+    REQUIRE_BLITTER_OR_SKIP(pClDevice->getRootDeviceEnvironment());
 
     std::unique_ptr<MockCommandQueueHw<FamilyType>> mockCmdQ(new MockCommandQueueHw<FamilyType>(context, pClDevice, 0));
     auto &csr = mockCmdQ->getGpgpuCommandStreamReceiver();
@@ -329,7 +327,7 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitEnqueueWhenDispatchingCommandsWithoutK
     DebugManager.flags.EnableTimestampPacket.set(1);
 
     setUpImpl<CsrType>();
-    REQUIRE_FULL_BLITTER_OR_SKIP(&device->getHardwareInfo());
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
@@ -368,13 +366,50 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitEnqueueWhenDispatchingCommandsWithoutK
     EXPECT_EQ(GrfConfig::NotApplicable, mockCsr->passedDispatchFlags.numGrfRequired);
 }
 
+HWTEST_F(DispatchFlagsBlitTests, givenBlitOperationWhenEnqueueCommandWithoutKernelThenDispatchFlagStateCacheInvalidationInFlushTaskIsSetCorrectly) {
+    using CsrType = MockCsrHw2<FamilyType>;
+    setUpImpl<CsrType>();
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
+    mockCsr->skipBlitCalls = true;
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = std::unique_ptr<Buffer>(Buffer::create(context.get(), 0, 1, nullptr, retVal));
+    auto &bcsCsr = *mockCmdQ->bcsEngines[0]->commandStreamReceiver;
+
+    auto blocking = true;
+    TimestampPacketDependencies timestampPacketDependencies;
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    EventBuilder eventBuilder;
+    BuiltinOpParams builtinOpParams;
+    builtinOpParams.srcMemObj = buffer.get();
+    builtinOpParams.dstPtr = reinterpret_cast<void *>(0x1234);
+    MultiDispatchInfo multiDispatchInfo;
+    multiDispatchInfo.setBuiltinOpParams(builtinOpParams);
+    CsrDependencies csrDeps;
+
+    BlitProperties blitProperties = mockCmdQ->processDispatchForBlitEnqueue(bcsCsr, multiDispatchInfo, timestampPacketDependencies,
+                                                                            eventsRequest, &mockCmdQ->getCS(0), CL_COMMAND_READ_BUFFER, false);
+
+    BlitPropertiesContainer blitPropertiesContainer;
+    blitPropertiesContainer.push_back(blitProperties);
+
+    EnqueueProperties enqueueProperties(true, false, false, false, false, &blitPropertiesContainer);
+    mockCmdQ->enqueueCommandWithoutKernel(nullptr, 0, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
+                                          eventsRequest, eventBuilder, 0, csrDeps, &bcsCsr);
+
+    auto expectedValue = mockCmdQ->getGpgpuCommandStreamReceiver().getDcFlushSupport();
+    EXPECT_EQ(expectedValue, mockCsr->passedDispatchFlags.stateCacheInvalidation);
+}
+
 HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenAllowOutOfOrderExecution) {
     using CsrType = MockCsrHw2<FamilyType>;
     DebugManager.flags.EnableTimestampPacket.set(1);
     DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(1);
 
     setUpImpl<CsrType>();
-    REQUIRE_FULL_BLITTER_OR_SKIP(&device->getHardwareInfo());
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
 
     auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
     auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
@@ -434,7 +469,7 @@ HWTEST_F(DispatchFlagsTests, givenMockKernelWhenSettingAdditionalKernelExecInfoT
     auto pKernel = mockKernelWithInternals.mockKernel;
     MockMultiDispatchInfo multiDispatchInfo(device.get(), pKernel);
 
-    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device.get()));
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, device->getDevice()));
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
     mockCmdQ->allocateHeapMemory(IndirectHeap::Type::DYNAMIC_STATE, 4096u, dsh);
     mockCmdQ->allocateHeapMemory(IndirectHeap::Type::INDIRECT_OBJECT, 4096u, ioh);
@@ -461,8 +496,8 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelAndZeroSurfacesWhenE
     const auto enqueueResult = mockCmdQ->template enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, false, multiDispatch, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, enqueueResult);
 
-    auto requiredCmdStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(
-                                             pDevice->getHardwareInfo()),
+    auto requiredCmdStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(
+                                             pDevice->getHardwareInfo(), false),
                                          MemoryConstants::cacheLineSize);
 
     EXPECT_EQ(mockCmdQ->getCS(0).getUsed(), requiredCmdStreamSize);

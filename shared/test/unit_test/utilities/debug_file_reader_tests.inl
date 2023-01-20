@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -134,7 +134,7 @@ TEST(SettingsFileReader, givenHexNumbersSemiColonSeparatedListInInputStreamWhenP
     auto reader = std::make_unique<TestSettingsFileReader>();
     ASSERT_NE(nullptr, reader);
 
-    //No settings should be parsed initially
+    // No settings should be parsed initially
     EXPECT_EQ(0u, reader->getStringSettingsCount());
 
     std::stringstream inputLineWithSemiColonList("KeyName = 0x1234;0x5555");

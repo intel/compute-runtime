@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -20,7 +21,7 @@ TEST(CompressionSelectorL0Tests, GivenDefaultDebugFlagWhenProvidingUsmAllocation
                                     deviceBitfield);
     properties.flags.isUSMDeviceAllocation = 1u;
 
-    EXPECT_FALSE(NEO::CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo));
+    EXPECT_FALSE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }
 
 TEST(CompressionSelectorL0Tests, GivenDisabledDebugFlagWhenProvidingUsmAllocationThenExpectCompressionDisabled) {
@@ -33,7 +34,7 @@ TEST(CompressionSelectorL0Tests, GivenDisabledDebugFlagWhenProvidingUsmAllocatio
                                     deviceBitfield);
     properties.flags.isUSMDeviceAllocation = 1u;
 
-    EXPECT_FALSE(NEO::CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo));
+    EXPECT_FALSE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }
 
 TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingUsmAllocationThenExpectCompressionEnabled) {
@@ -46,7 +47,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingUsmAllocation
                                     deviceBitfield);
     properties.flags.isUSMDeviceAllocation = 1u;
 
-    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo));
+    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }
 
 TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingSvmGpuAllocationThenExpectCompressionEnabled) {
@@ -58,7 +59,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingSvmGpuAllocat
                                     AllocationType::SVM_GPU,
                                     deviceBitfield);
 
-    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo));
+    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }
 
 TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingOtherAllocationThenExpectCompressionDisabled) {
@@ -70,7 +71,7 @@ TEST(CompressionSelectorL0Tests, GivenEnabledDebugFlagWhenProvidingOtherAllocati
                                     AllocationType::BUFFER_HOST_MEMORY,
                                     deviceBitfield);
 
-    EXPECT_FALSE(NEO::CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo));
+    EXPECT_FALSE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }
 
 } // namespace ult

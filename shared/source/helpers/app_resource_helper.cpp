@@ -48,6 +48,8 @@ const char *AppResourceHelper::getResourceTagStr(AllocationType type) {
         return "INTLHEAP";
     case AllocationType::INTERNAL_HOST_MEMORY:
         return "INHSTMEM";
+    case AllocationType::KERNEL_ARGS_BUFFER:
+        return "KARGBUF";
     case AllocationType::KERNEL_ISA:
         return "KERNLISA";
     case AllocationType::KERNEL_ISA_INTERNAL:
@@ -112,6 +114,8 @@ const char *AppResourceHelper::getResourceTagStr(AllocationType type) {
         return "GPUTSDBF";
     case AllocationType::SW_TAG_BUFFER:
         return "SWTAGBF";
+    case AllocationType::DEFERRED_TASKS_LIST:
+        return "TSKLIST";
     default:
         return "NOTFOUND";
     }

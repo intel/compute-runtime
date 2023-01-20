@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,17 +11,13 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::_;
-using ::testing::Matcher;
-using ::testing::NiceMock;
-
 namespace L0 {
 namespace ult {
 
 constexpr uint32_t mockHandleCount = 0;
 struct SysmanRasFixture : public SysmanDeviceFixture {
   protected:
-    std::unique_ptr<Mock<RasFsAccess>> pFsAccess;
+    std::unique_ptr<MockRasFsAccess> pFsAccess;
     std::vector<ze_device_handle_t> deviceHandles;
     FsAccess *pFsAccessOriginal = nullptr;
     void SetUp() override {
@@ -29,11 +25,10 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         SysmanDeviceFixture::SetUp();
-        pFsAccess = std::make_unique<NiceMock<Mock<RasFsAccess>>>();
+        pFsAccess = std::make_unique<MockRasFsAccess>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
-        ON_CALL(*pFsAccess.get(), isRootUser())
-            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<RasFsAccess>::userIsRoot));
+        pFsAccess->mockRootUser = true;
         pSysmanDeviceImp->pRasHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
@@ -43,7 +38,6 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
@@ -59,6 +53,15 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
         return handles;
     }
 };
+
+TEST_F(SysmanRasFixture, GivenValidRasContextWhenRetrievingRasHandlesThenSuccessIsReturned) {
+    uint32_t count = 0;
+    RasHandleContext *pRasHandleContext = new RasHandleContext(pSysmanDeviceImp->pOsSysman);
+    ze_result_t result = pRasHandleContext->rasGet(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockHandleCount);
+    delete pRasHandleContext;
+}
 
 TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRasErrorSetsThenCorrectCountIsReported) {
     uint32_t count = 0;
@@ -146,8 +149,7 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetConfigAfterzesRa
 }
 
 TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasSetConfigWithoutPermissionThenFailureIsReturned) {
-    ON_CALL(*pFsAccess.get(), isRootUser())
-        .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<RasFsAccess>::userIsNotRoot));
+    pFsAccess->mockRootUser = false;
     RasImp *pTestRasImp = new RasImp(pSysmanDeviceImp->pRasHandleContext->pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
     pSysmanDeviceImp->pRasHandleContext->handleList.push_back(pTestRasImp);
 

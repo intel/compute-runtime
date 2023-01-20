@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 
 #include <cstdint>
@@ -33,8 +34,8 @@ inline bool waitFunctionWithPredicate(volatile T const *pollAddress, T expectedV
     return false;
 }
 
-inline bool waitFunction(volatile uint32_t *pollAddress, uint32_t expectedValue) {
-    return waitFunctionWithPredicate<uint32_t>(pollAddress, expectedValue, std::greater_equal<uint32_t>());
+inline bool waitFunction(volatile TagAddressType *pollAddress, TaskCountType expectedValue) {
+    return waitFunctionWithPredicate<TaskCountType>(pollAddress, expectedValue, std::greater_equal<TaskCountType>());
 }
 
 void init();

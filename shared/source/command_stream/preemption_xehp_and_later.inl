@@ -18,10 +18,10 @@ void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStrea
     bool debuggingEnabled = device.getDebugger() != nullptr;
 
     if (debuggingEnabled) {
-        HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
         auto sipAllocation = SipKernel::getSipKernel(device).getSipAllocation();
 
-        if (hwHelper.isSipWANeeded(hwInfo)) {
+        if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
             auto mmio = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(preambleCmdStream.getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
             MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
 
@@ -43,16 +43,16 @@ void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStrea
 }
 
 template <>
-void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, Device &device) {
+void PreemptionHelper::programStateSipEndWa<GfxFamily>(LinearStream &cmdStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
-    bool debuggingEnabled = device.getDebugger() != nullptr;
 
-    if (debuggingEnabled) {
-        HwHelper &hwHelper = HwHelper::get(device.getHardwareInfo().platform.eRenderCoreFamily);
-        if (hwHelper.isSipWANeeded(device.getHardwareInfo())) {
+    if (rootDeviceEnvironment.debugger) {
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+        if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
 
             NEO::PipeControlArgs args;
-            NEO::MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdStream, args);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdStream, args);
 
             auto mmio = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(cmdStream.getSpace(sizeof(MI_LOAD_REGISTER_IMM)));
             MI_LOAD_REGISTER_IMM cmd = GfxFamily::cmdInitLoadRegisterImm;
@@ -76,18 +76,18 @@ size_t PreemptionHelper::getRequiredStateSipCmdSize<GfxFamily>(Device &device, b
     auto &hwInfo = device.getHardwareInfo();
 
     if (debuggingEnabled) {
-        HwHelper &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
 
-        if (hwHelper.isSipWANeeded(hwInfo)) {
-            size += sizeof(typename GfxFamily::PIPE_CONTROL);
+        if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
+            size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
             size += 2 * sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM);
         } else {
-            auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-            const auto &[isBasicWARequired, isExtendedWARequired] = hwInfoConfig->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+            auto &productHelper = device.getProductHelper();
+            const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
             const auto isWARequired = isBasicWARequired || isExtendedWARequired;
 
             if (isWARequired) {
-                size += sizeof(typename GfxFamily::PIPE_CONTROL);
+                size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
             }
             size += sizeof(typename GfxFamily::STATE_SIP);
         }

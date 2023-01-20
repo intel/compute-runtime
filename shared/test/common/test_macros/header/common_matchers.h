@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,11 +35,13 @@ using IsAtMostXeHpgCore = IsAtMostGfxCore<IGFX_XE_HPG_CORE>;
 using IsAtLeastXeHpcCore = IsAtLeastGfxCore<IGFX_XE_HPC_CORE>;
 using IsAtMostXeHpcCore = IsAtMostGfxCore<IGFX_XE_HPC_CORE>;
 
-using isXeHpOrXeHpgCore = IsAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
-using isXeHpOrXeHpcCore = IsAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
-using isXeHpcOrXeHpgCore = IsAnyGfxCores<IGFX_XE_HPC_CORE, IGFX_XE_HPG_CORE>;
+using IsXeHpOrXeHpgCore = IsAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
+using IsXeHpOrXeHpcCore = IsAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
+using IsXeHpcOrXeHpgCore = IsAnyGfxCores<IGFX_XE_HPC_CORE, IGFX_XE_HPG_CORE>;
 
-using isNotXeHpOrXeHpcCore = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
+using IsNotXeHpOrXeHpgCore = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE>;
+using IsNotXeHpOrXeHpcCore = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
+using IsNotXeHpgOrXeHpcCore = IsNotAnyGfxCores<IGFX_XE_HPG_CORE, IGFX_XE_HPC_CORE>;
 
 using IsSKL = IsProduct<IGFX_SKYLAKE>;
 using IsKBL = IsProduct<IGFX_KABYLAKE>;
@@ -58,13 +60,23 @@ using IsADLS = IsProduct<IGFX_ALDERLAKE_S>;
 using IsADLP = IsProduct<IGFX_ALDERLAKE_P>;
 using IsRKL = IsProduct<IGFX_ROCKETLAKE>;
 
+using IsICLLPOrTGLLP = IsAnyProducts<IGFX_ICELAKE_LP, IGFX_TIGERLAKE_LP>;
+
 using IsXEHP = IsProduct<IGFX_XE_HP_SDV>;
 using IsNotXEHP = IsNotWithinProducts<IGFX_XE_HP_SDV, IGFX_XE_HP_SDV>;
 
+using IsMTL = IsProduct<IGFX_METEORLAKE>;
 using IsDG2 = IsProduct<IGFX_DG2>;
 
 using IsPVC = IsProduct<IGFX_PVC>;
 
 using IsAtLeastSkl = IsAtLeastProduct<IGFX_SKYLAKE>;
 
+using IsAtLeastMtl = IsAtLeastProduct<IGFX_METEORLAKE>;
+using IsAtMostDg2 = IsAtMostProduct<IGFX_DG2>;
+
 using IsNotPVC = IsNotWithinProducts<IGFX_PVC, IGFX_PVC>;
+
+using HasStatefulSupport = IsNotAnyGfxCores<IGFX_XE_HPC_CORE>;
+
+using HasNoStatefulSupport = IsAnyGfxCores<IGFX_XE_HPC_CORE>;

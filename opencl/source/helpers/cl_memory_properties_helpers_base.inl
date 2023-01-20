@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 
 #include "CL/cl_ext.h"
+#include "memory_properties_flags.h"
 
 namespace NEO {
 

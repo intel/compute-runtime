@@ -1,12 +1,13 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/device/device.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/test/common/mocks/mock_sip.h"
 
 #include "common/StateSaveAreaHeader.h"
@@ -66,7 +67,7 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version) {
             {4704, 1, 128, 16},  // sp
             {0, 0, 0, 0},        // cmd
             {4640, 1, 128, 16},  // tm
-            {0, 0, 0, 0},        // fc
+            {0, 1, 32, 4},       // fc
             {4736, 1, 32, 4},    // dbg
         },
     };
@@ -109,7 +110,7 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version) {
             {4704, 1, 128, 16},      // sp
             {4768, 1, 128 * 8, 128}, // cmd
             {4640, 1, 128, 16},      // tm
-            {0, 0, 0, 0},            // fc
+            {0, 1, 32, 4},           // fc
             {4736, 1, 32, 4},        // dbg
         },
     };
@@ -127,8 +128,8 @@ std::vector<char> createStateSaveAreaHeader(uint32_t version) {
 
 bool SipKernel::initSipKernel(SipKernelType type, Device &device) {
     if (MockSipData::useMockSip) {
-        auto &hwHelper = HwHelper::get(device.getRootDeviceEnvironment().getHardwareInfo()->platform.eRenderCoreFamily);
-        if (hwHelper.isSipKernelAsHexadecimalArrayPreferred()) {
+        auto &gfxCoreHelper = device.getGfxCoreHelper();
+        if (gfxCoreHelper.isSipKernelAsHexadecimalArrayPreferred()) {
             SipKernel::classType = SipClassType::HexadecimalHeaderFile;
         } else {
             SipKernel::classType = SipClassType::Builtins;

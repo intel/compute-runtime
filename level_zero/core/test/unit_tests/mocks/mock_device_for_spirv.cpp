@@ -28,7 +28,7 @@ ze_result_t MockDeviceForSpv<useImagesBuiltins, isStateless>::createModule(const
 
         std::string kernelName;
 
-        retrieveBinaryKernelFilename(kernelName, (useImagesBuiltins ? builtinImages : builtinCopyfill) + (isStateless ? "_stateless_" : "_"), ".gen");
+        retrieveBinaryKernelFilename(kernelName, (useImagesBuiltins ? builtinImages : builtinCopyfill) + (isStateless ? "_stateless_" : "_"), ".bin");
 
         size_t size = 0;
         auto src = loadDataFromFile(
@@ -41,8 +41,8 @@ ze_result_t MockDeviceForSpv<useImagesBuiltins, isStateless>::createModule(const
         moduleDesc.inputSize = size;
 
         ModuleBuildLog *moduleBuildLog = nullptr;
-
-        mockModulePtr.reset(Module::create(this, &moduleDesc, moduleBuildLog, ModuleType::Builtin));
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        mockModulePtr.reset(Module::create(this, &moduleDesc, moduleBuildLog, ModuleType::Builtin, &result));
         wasModuleCreated = true;
         useImagesBuiltins_prev = useImagesBuiltins;
         isStateless_prev = isStateless;

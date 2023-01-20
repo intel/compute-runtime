@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -201,7 +201,7 @@ GlArbSyncEvent *GlArbSyncEvent::create(Event &baseEvent) {
     return arbSyncEvent;
 }
 
-void GlArbSyncEvent::unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus) {
+void GlArbSyncEvent::unblockEventBy(Event &event, TaskCountType taskLevel, int32_t transitionStatus) {
     DEBUG_BREAK_IF(&event != this->baseEvent);
     if ((transitionStatus > CL_SUBMITTED) || (transitionStatus < 0)) {
         return;

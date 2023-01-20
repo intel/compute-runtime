@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfStartCommands(
 
     // If hwTimeStampAlloc is passed (not nullptr), then we know that profiling is enabled
     if (hwTimeStamps != nullptr) {
-        GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(*hwTimeStamps, commandStream, commandQueue.getDevice().getHardwareInfo());
+        GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(*hwTimeStamps, commandStream, commandQueue.getDevice().getRootDeviceEnvironment());
     }
     if (hwPerfCounter != nullptr) {
         GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsStart(commandQueue, *hwPerfCounter, commandStream);
@@ -52,7 +52,7 @@ inline void HardwareInterface<GfxFamily>::dispatchProfilingPerfEndCommands(
 
     // If hwTimeStamps is passed (not nullptr), then we know that profiling is enabled
     if (hwTimeStamps != nullptr) {
-        GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(*hwTimeStamps, commandStream, commandQueue.getDevice().getHardwareInfo());
+        GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(*hwTimeStamps, commandStream, commandQueue.getDevice().getRootDeviceEnvironment());
     }
     if (hwPerfCounter != nullptr) {
         GpgpuWalkerHelper<GfxFamily>::dispatchPerfCountersCommandsEnd(commandQueue, *hwPerfCounter, commandStream);
@@ -64,17 +64,12 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     CommandQueue &commandQueue,
     const MultiDispatchInfo &multiDispatchInfo,
     const CsrDependencies &csrDependencies,
-    KernelOperation *blockedCommandsData,
-    TagNodeBase *hwTimeStamps,
-    TagNodeBase *hwPerfCounter,
-    TimestampPacketDependencies *timestampPacketDependencies,
-    TimestampPacketContainer *currentTimestampPacketNodes,
-    uint32_t commandType) {
+    HardwareInterfaceWalkerArgs &walkerArgs) {
 
     LinearStream *commandStream = nullptr;
     IndirectHeap *dsh = nullptr, *ioh = nullptr, *ssh = nullptr;
     auto mainKernel = multiDispatchInfo.peekMainKernel();
-    auto preemptionMode = ClPreemptionHelper::taskPreemptionMode(commandQueue.getDevice(), multiDispatchInfo);
+    walkerArgs.preemptionMode = ClPreemptionHelper::taskPreemptionMode(commandQueue.getDevice(), multiDispatchInfo);
 
     for (auto &dispatchInfo : multiDispatchInfo) {
         // Compute local workgroup sizes
@@ -85,11 +80,11 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     }
 
     // Allocate command stream and indirect heaps
-    bool blockedQueue = (blockedCommandsData != nullptr);
+    bool blockedQueue = (walkerArgs.blockedCommandsData != nullptr);
     obtainIndirectHeaps(commandQueue, multiDispatchInfo, blockedQueue, dsh, ioh, ssh);
     if (blockedQueue) {
-        blockedCommandsData->setHeaps(dsh, ioh, ssh);
-        commandStream = blockedCommandsData->commandStream.get();
+        walkerArgs.blockedCommandsData->setHeaps(dsh, ioh, ssh);
+        commandStream = walkerArgs.blockedCommandsData->commandStream.get();
     } else {
         commandStream = &commandQueue.getCS(0);
     }
@@ -104,37 +99,26 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                                 mainKernel->areMultipleSubDevicesInContext());
     }
 
-    bool programDependencies = true;
-
-    if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() == 1) {
-        //only optimize kernel after kernel
-        if (commandQueue.peekLatestSentEnqueueOperation() == EnqueueProperties::Operation::GpuKernel) {
-            programDependencies = false;
-        }
-    }
-
-    if (programDependencies) {
-        TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies);
-    }
+    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies);
 
     dsh->align(EncodeStates<GfxFamily>::alignInterfaceDescriptorData);
 
-    uint32_t interfaceDescriptorIndex = 0;
-    const size_t offsetInterfaceDescriptorTable = dsh->getUsed();
+    walkerArgs.interfaceDescriptorIndex = 0;
+    walkerArgs.offsetInterfaceDescriptorTable = dsh->getUsed();
 
     size_t totalInterfaceDescriptorTableSize = sizeof(INTERFACE_DESCRIPTOR_DATA);
 
-    getDefaultDshSpace(offsetInterfaceDescriptorTable, commandQueue, multiDispatchInfo, totalInterfaceDescriptorTableSize, dsh, commandStream);
+    getDefaultDshSpace(walkerArgs.offsetInterfaceDescriptorTable, commandQueue, multiDispatchInfo, totalInterfaceDescriptorTableSize, dsh, commandStream);
 
     // Program media interface descriptor load
     HardwareCommandsHelper<GfxFamily>::sendMediaInterfaceDescriptorLoad(
         *commandStream,
-        offsetInterfaceDescriptorTable,
+        walkerArgs.offsetInterfaceDescriptorTable,
         totalInterfaceDescriptorTableSize);
 
-    DEBUG_BREAK_IF(offsetInterfaceDescriptorTable % 64 != 0);
+    DEBUG_BREAK_IF(walkerArgs.offsetInterfaceDescriptorTable % 64 != 0);
 
-    dispatchProfilingPerfStartCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
+    dispatchProfilingPerfStartCommands(walkerArgs.hwTimeStamps, walkerArgs.hwPerfCounter, commandStream, commandQueue);
 
     const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnEnqueue.get(), commandQueue.getGpgpuCommandStreamReceiver().peekTaskCount(), PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
@@ -146,25 +130,23 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                                     multiDispatchInfo.begin()->getLocalWorkgroupSize(),
                                     multiDispatchInfo.begin()->getActualWorkgroupSize(),
                                     multiDispatchInfo.begin()->getOffset(),
-                                    currentTimestampPacketNodes);
+                                    walkerArgs.currentTimestampPacketNodes);
 
-    size_t currentDispatchIndex = 0;
+    walkerArgs.currentDispatchIndex = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
-        dispatchInfo.dispatchInitCommands(*commandStream, timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
-        bool isMainKernel = (dispatchInfo.getKernel() == mainKernel);
+        dispatchInfo.dispatchInitCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
+        walkerArgs.isMainKernel = (dispatchInfo.getKernel() == mainKernel);
 
-        dispatchKernelCommands(commandQueue, dispatchInfo, commandType, *commandStream, isMainKernel,
-                               currentDispatchIndex, currentTimestampPacketNodes, preemptionMode, interfaceDescriptorIndex,
-                               offsetInterfaceDescriptorTable, *dsh, *ioh, *ssh);
+        dispatchKernelCommands(commandQueue, dispatchInfo, *commandStream, *dsh, *ioh, *ssh, walkerArgs);
 
-        currentDispatchIndex++;
-        dispatchInfo.dispatchEpilogueCommands(*commandStream, timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
+        walkerArgs.currentDispatchIndex++;
+        dispatchInfo.dispatchEpilogueCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
     }
 
     if (mainKernel->requiresCacheFlushCommand(commandQueue)) {
         uint64_t postSyncAddress = 0;
         if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-            auto timestampPacketNodeForPostSync = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
+            auto timestampPacketNodeForPostSync = walkerArgs.currentTimestampPacketNodes->peekNodes().at(walkerArgs.currentDispatchIndex);
             timestampPacketNodeForPostSync->setProfilingCapable(false);
             postSyncAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketNodeForPostSync);
         }
@@ -182,15 +164,13 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                                    DebugPauseState::hasUserEndConfirmation, hwInfo);
     }
 
-    dispatchProfilingPerfEndCommands(hwTimeStamps, hwPerfCounter, commandStream, commandQueue);
+    dispatchProfilingPerfEndCommands(walkerArgs.hwTimeStamps, walkerArgs.hwPerfCounter, commandStream, commandQueue);
 }
 
 template <typename GfxFamily>
-void HardwareInterface<GfxFamily>::dispatchKernelCommands(CommandQueue &commandQueue, const DispatchInfo &dispatchInfo, uint32_t commandType,
-                                                          LinearStream &commandStream, bool isMainKernel, size_t currentDispatchIndex,
-                                                          TimestampPacketContainer *currentTimestampPacketNodes, PreemptionMode preemptionMode,
-                                                          uint32_t &interfaceDescriptorIndex, size_t offsetInterfaceDescriptorTable,
-                                                          IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh) {
+void HardwareInterface<GfxFamily>::dispatchKernelCommands(CommandQueue &commandQueue, const DispatchInfo &dispatchInfo, LinearStream &commandStream,
+                                                          IndirectHeap &dsh, IndirectHeap &ioh, IndirectHeap &ssh,
+                                                          HardwareInterfaceWalkerArgs &walkerArgs) {
     auto &kernel = *dispatchInfo.getKernel();
     DEBUG_BREAK_IF(!(dispatchInfo.getDim() >= 1 && dispatchInfo.getDim() <= 3));
     DEBUG_BREAK_IF(!(dispatchInfo.getGWS().z == 1 || dispatchInfo.getDim() == 3));
@@ -199,15 +179,15 @@ void HardwareInterface<GfxFamily>::dispatchKernelCommands(CommandQueue &commandQ
     DEBUG_BREAK_IF(!(dispatchInfo.getOffset().y == 0 || dispatchInfo.getDim() >= 2));
 
     // If we don't have a required WGS, compute one opportunistically
-    if (commandType == CL_COMMAND_NDRANGE_KERNEL) {
+    if (walkerArgs.commandType == CL_COMMAND_NDRANGE_KERNEL) {
         provideLocalWorkGroupSizeHints(commandQueue.getContextPtr(), dispatchInfo);
     }
 
-    //Get dispatch geometry
+    // Get dispatch geometry
     auto dim = dispatchInfo.getDim();
     const auto &gws = dispatchInfo.getGWS();
     const auto &offset = dispatchInfo.getOffset();
-    const auto &startOfWorkgroups = dispatchInfo.getStartOfWorkgroups();
+    walkerArgs.startOfWorkgroups = &dispatchInfo.getStartOfWorkgroups();
 
     // Compute local workgroup sizes
     const auto &lws = dispatchInfo.getLocalWorkgroupSize();
@@ -215,37 +195,39 @@ void HardwareInterface<GfxFamily>::dispatchKernelCommands(CommandQueue &commandQ
 
     // Compute number of work groups
     const auto &totalNumberOfWorkgroups = dispatchInfo.getTotalNumberOfWorkgroups();
-    const auto &numberOfWorkgroups = dispatchInfo.getNumberOfWorkgroups();
+    walkerArgs.numberOfWorkgroups = &dispatchInfo.getNumberOfWorkgroups();
     UNRECOVERABLE_IF(totalNumberOfWorkgroups.x == 0);
-    UNRECOVERABLE_IF(numberOfWorkgroups.x == 0);
+    UNRECOVERABLE_IF(walkerArgs.numberOfWorkgroups->x == 0);
 
-    size_t globalWorkSizes[3] = {gws.x, gws.y, gws.z};
+    walkerArgs.globalWorkSizes[0] = gws.x;
+    walkerArgs.globalWorkSizes[1] = gws.y;
+    walkerArgs.globalWorkSizes[2] = gws.z;
 
     // Patch our kernel constants
     kernel.setGlobalWorkOffsetValues(static_cast<uint32_t>(offset.x), static_cast<uint32_t>(offset.y), static_cast<uint32_t>(offset.z));
     kernel.setGlobalWorkSizeValues(static_cast<uint32_t>(gws.x), static_cast<uint32_t>(gws.y), static_cast<uint32_t>(gws.z));
 
-    if (isMainKernel || (!kernel.isLocalWorkSize2Patchable())) {
+    if (walkerArgs.isMainKernel || (!kernel.isLocalWorkSize2Patchable())) {
         kernel.setLocalWorkSizeValues(static_cast<uint32_t>(lws.x), static_cast<uint32_t>(lws.y), static_cast<uint32_t>(lws.z));
     }
 
     kernel.setLocalWorkSize2Values(static_cast<uint32_t>(lws.x), static_cast<uint32_t>(lws.y), static_cast<uint32_t>(lws.z));
     kernel.setEnqueuedLocalWorkSizeValues(static_cast<uint32_t>(elws.x), static_cast<uint32_t>(elws.y), static_cast<uint32_t>(elws.z));
 
-    if (isMainKernel) {
+    if (walkerArgs.isMainKernel) {
         kernel.setNumWorkGroupsValues(static_cast<uint32_t>(totalNumberOfWorkgroups.x), static_cast<uint32_t>(totalNumberOfWorkgroups.y), static_cast<uint32_t>(totalNumberOfWorkgroups.z));
     }
 
     kernel.setWorkDim(dim);
 
     // Send our indirect object data
-    size_t localWorkSizes[3] = {lws.x, lws.y, lws.z};
+    walkerArgs.localWorkSizes[0] = lws.x;
+    walkerArgs.localWorkSizes[1] = lws.y;
+    walkerArgs.localWorkSizes[2] = lws.z;
 
     dispatchWorkarounds(&commandStream, commandQueue, kernel, true);
 
-    programWalker(commandStream, kernel, commandQueue, currentTimestampPacketNodes, dsh, ioh, ssh, globalWorkSizes,
-                  localWorkSizes, preemptionMode, currentDispatchIndex, interfaceDescriptorIndex, dispatchInfo,
-                  offsetInterfaceDescriptorTable, numberOfWorkgroups, startOfWorkgroups);
+    programWalker(commandStream, kernel, commandQueue, dsh, ioh, ssh, dispatchInfo, walkerArgs);
 
     dispatchWorkarounds(&commandStream, commandQueue, kernel, false);
 }
@@ -290,15 +272,12 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
     if (!commandQueue.isSpecial()) {
         auto address = commandQueue.getGpgpuCommandStreamReceiver().getDebugPauseStateGPUAddress();
         {
-            using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
-            using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-
             const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
             PipeControlArgs args;
             args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
-            MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+            MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
                 *commandStream,
-                POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+                PostSyncMode::ImmediateData,
                 address,
                 static_cast<uint64_t>(confirmationTrigger),
                 hwInfo,

@@ -15,17 +15,30 @@ namespace NEO {
 template <typename GfxFamily>
 class LogicalStateHelperMock : public GfxFamily::LogicalStateHelperHw {
   public:
-    LogicalStateHelperMock(bool pipelinedState) : GfxFamily::LogicalStateHelperHw(pipelinedState) {
+    LogicalStateHelperMock() : GfxFamily::LogicalStateHelperHw() {
     }
 
-    void writeStreamInline(LinearStream &linearStream) override {
+    void writeStreamInline(LinearStream &linearStream, bool pipelinedState) override {
         writeStreamInlineCalledCounter++;
 
-        auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::MI_NOOP>();
-        *cmd = GfxFamily::cmdInitNoop;
-        cmd->setIdentificationNumber(0x123);
+        if (makeFakeStreamWrite) {
+            auto cmd = GfxFamily::cmdInitNoop;
+            cmd.setIdentificationNumber(0x123);
+
+            auto cmdBuffer = linearStream.getSpaceForCmd<typename GfxFamily::MI_NOOP>();
+            *cmdBuffer = cmd;
+        }
     }
 
+    void mergePipelinedState(const LogicalStateHelper &inputLogicalStateHelper) override {
+        mergePipelinedStateCounter++;
+
+        latestInputLogicalStateHelperForMerge = &inputLogicalStateHelper;
+    }
+
+    const LogicalStateHelper *latestInputLogicalStateHelperForMerge = nullptr;
     uint32_t writeStreamInlineCalledCounter = 0;
+    uint32_t mergePipelinedStateCounter = 0;
+    bool makeFakeStreamWrite = false;
 };
 } // namespace NEO

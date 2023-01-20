@@ -14,8 +14,8 @@ namespace NEO {
 class CommandQueue;
 
 struct IndirectHeapFixture {
-    virtual void SetUp(CommandQueue *pCmdQ); // NOLINT(readability-identifier-naming)
-    virtual void TearDown() {                // NOLINT(readability-identifier-naming)
+    void setUp(CommandQueue *pCmdQ);
+    void tearDown() {
     }
 
     IndirectHeap *pDSH = nullptr;

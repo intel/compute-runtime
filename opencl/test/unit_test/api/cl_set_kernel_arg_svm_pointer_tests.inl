@@ -20,8 +20,8 @@ using namespace NEO;
 
 class KernelArgSvmApiFixture : public ApiFixture<> {
   protected:
-    void SetUp() override {
-        ApiFixture::SetUp();
+    void setUp() {
+        ApiFixture::setUp();
         REQUIRE_SVM_OR_SKIP(defaultHwInfo);
 
         pKernelInfo = std::make_unique<MockKernelInfo>();
@@ -39,12 +39,12 @@ class KernelArgSvmApiFixture : public ApiFixture<> {
         pMockKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
     }
 
-    void TearDown() override {
+    void tearDown() {
         if (pMockMultiDeviceKernel) {
             delete pMockMultiDeviceKernel;
         }
 
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;

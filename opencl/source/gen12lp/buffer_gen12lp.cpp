@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 
 namespace NEO {
 
-typedef TGLLPFamily Family;
+typedef Gen12LpFamily Family;
 static auto gfxCore = IGFX_GEN12LP_CORE;
 
 #include "opencl/source/mem_obj/buffer_factory_init.inl"

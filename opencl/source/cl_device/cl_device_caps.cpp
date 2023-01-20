@@ -1,19 +1,16 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
-#include "shared/source/device/device_info.h"
-#include "shared/source/helpers/basic_math.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
-#include "shared/source/os_interface/hw_info_config.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
@@ -21,12 +18,10 @@
 
 #include "driver_version.h"
 
+#include <iterator>
 #include <sstream>
-#include <string>
 
 namespace NEO {
-extern const char *familyName[];
-
 static std::string vendor = "Intel(R) Corporation";
 static std::string profile = "FULL_PROFILE";
 static std::string spirVersions = "1.2 ";
@@ -50,25 +45,31 @@ void ClDevice::setupFp64Flags() {
         deviceExtensions += "cl_khr_fp64 ";
         deviceInfo.singleFpConfig = static_cast<cl_device_fp_config>(CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
         deviceInfo.doubleFpConfig = defaultFpFlags;
+        deviceInfo.nativeVectorWidthDouble = 1;
+        deviceInfo.preferredVectorWidthDouble = 1;
     } else if (DebugManager.flags.OverrideDefaultFP64Settings.get() == -1) {
         if (hwInfo.capabilityTable.ftrSupportsFP64) {
             deviceExtensions += "cl_khr_fp64 ";
+            deviceInfo.doubleFpConfig = defaultFpFlags;
+            deviceInfo.nativeVectorWidthDouble = 1;
+            deviceInfo.preferredVectorWidthDouble = 1;
+        } else {
+            deviceInfo.doubleFpConfig = 0;
+            deviceInfo.nativeVectorWidthDouble = 0;
+            deviceInfo.preferredVectorWidthDouble = 0;
         }
 
         deviceInfo.singleFpConfig = static_cast<cl_device_fp_config>(
             hwInfo.capabilityTable.ftrSupports64BitMath
                 ? CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT
                 : 0);
-
-        deviceInfo.doubleFpConfig = hwInfo.capabilityTable.ftrSupportsFP64
-                                        ? defaultFpFlags
-                                        : 0;
     }
 }
 
 void ClDevice::initializeCaps() {
     auto &hwInfo = getHardwareInfo();
-    auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = getRootDeviceEnvironment().getHelper<ProductHelper>();
+    auto &gfxCoreHelper = getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     auto &sharedDeviceInfo = getSharedDeviceInfo();
     deviceExtensions.clear();
     deviceExtensions.append(deviceExtensionsList);
@@ -78,7 +79,7 @@ void ClDevice::initializeCaps() {
     if (DebugManager.flags.OverrideDeviceName.get() != "unk") {
         name.assign(DebugManager.flags.OverrideDeviceName.get().c_str());
     } else {
-        name = getClDeviceName(hwInfo);
+        name = getClDeviceName();
         if (driverInfo) {
             name.assign(driverInfo->getDeviceName(name).c_str());
         }
@@ -88,8 +89,6 @@ void ClDevice::initializeCaps() {
         driverVersion.assign(driverInfo->getVersion(driverVersion).c_str());
         sharingFactory.verifyExtensionSupport(driverInfo.get());
     }
-
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
 
     deviceInfo.name = name.c_str();
     deviceInfo.driverVersion = driverVersion.c_str();
@@ -141,7 +140,7 @@ void ClDevice::initializeCaps() {
 
         auto simdSizeUsed = DebugManager.flags.UseMaxSimdSizeToDeduceMaxWorkgroupSize.get()
                                 ? CommonConstants::maximalSimdSize
-                                : hwHelper.getMinimalSIMDSize();
+                                : gfxCoreHelper.getMinimalSIMDSize();
 
         // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
         deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(sharedDeviceInfo.maxWorkGroupSize / simdSizeUsed);
@@ -204,7 +203,7 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_intel_media_block_io ";
     }
 
-    if (hwInfoConfig->isBFloat16ConversionSupported(hwInfo)) {
+    if (productHelper.isBFloat16ConversionSupported(hwInfo)) {
         deviceExtensions += "cl_intel_bfloat16_conversions ";
     }
 
@@ -228,7 +227,7 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_khr_pci_bus_info ";
     }
 
-    deviceExtensions += hwHelper.getExtensions(hwInfo);
+    deviceExtensions += gfxCoreHelper.getExtensions(hwInfo);
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
 
     std::vector<std::string> exposedBuiltinKernelsVector;
@@ -252,7 +251,7 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.deviceType = CL_DEVICE_TYPE_GPU;
     deviceInfo.endianLittle = 1;
-    deviceInfo.hostUnifiedMemory = (false == hwHelper.isLocalMemoryEnabled(hwInfo));
+    deviceInfo.hostUnifiedMemory = (false == gfxCoreHelper.isLocalMemoryEnabled(hwInfo));
     deviceInfo.deviceAvailable = CL_TRUE;
     deviceInfo.compilerAvailable = CL_TRUE;
     deviceInfo.parentDevice = nullptr;
@@ -272,19 +271,17 @@ void ClDevice::initializeCaps() {
     deviceInfo.preferredVectorWidthInt = 4;
     deviceInfo.preferredVectorWidthLong = 1;
     deviceInfo.preferredVectorWidthFloat = 1;
-    deviceInfo.preferredVectorWidthDouble = 1;
     deviceInfo.preferredVectorWidthHalf = 8;
     deviceInfo.nativeVectorWidthChar = 16;
     deviceInfo.nativeVectorWidthShort = 8;
     deviceInfo.nativeVectorWidthInt = 4;
     deviceInfo.nativeVectorWidthLong = 1;
     deviceInfo.nativeVectorWidthFloat = 1;
-    deviceInfo.nativeVectorWidthDouble = 1;
     deviceInfo.nativeVectorWidthHalf = 8;
     deviceInfo.maxReadWriteImageArgs = hwInfo.capabilityTable.supportsImages ? 128 : 0;
     deviceInfo.executionCapabilities = CL_EXEC_KERNEL;
 
-    //copy system info to prevent misaligned reads
+    // copy system info to prevent misaligned reads
     const auto systemInfo = hwInfo.gtSystemInfo;
 
     const auto subDevicesCount = std::max(getNumGenericSubDevices(), 1u);
@@ -326,11 +323,11 @@ void ClDevice::initializeCaps() {
 
     deviceInfo.localMemType = CL_LOCAL;
 
-    deviceInfo.image3DMaxWidth = hwHelper.getMax3dImageWidthOrHeight();
-    deviceInfo.image3DMaxHeight = hwHelper.getMax3dImageWidthOrHeight();
+    deviceInfo.image3DMaxWidth = gfxCoreHelper.getMax3dImageWidthOrHeight();
+    deviceInfo.image3DMaxHeight = gfxCoreHelper.getMax3dImageWidthOrHeight();
 
     // cl_khr_image2d_from_buffer
-    deviceInfo.imagePitchAlignment = hwHelper.getPitchAlignmentForImage(&hwInfo);
+    deviceInfo.imagePitchAlignment = gfxCoreHelper.getPitchAlignmentForImage(this->getRootDeviceEnvironment());
     deviceInfo.imageBaseAddressAlignment = 4;
     deviceInfo.queueOnHostProperties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 
@@ -382,8 +379,8 @@ void ClDevice::initializeCaps() {
         getQueueFamilyName(properties.name, engineGroup.engineGroupType);
         deviceInfo.queueFamilyProperties.push_back(properties);
     }
-    auto &clHwHelper = NEO::ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    const std::vector<uint32_t> &supportedThreadArbitrationPolicies = clHwHelper.getSupportedThreadArbitrationPolicies();
+    auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    const std::vector<uint32_t> &supportedThreadArbitrationPolicies = clGfxCoreHelper.getSupportedThreadArbitrationPolicies();
     deviceInfo.supportedThreadArbitrationPolicies.resize(supportedThreadArbitrationPolicies.size());
     for (size_t policy = 0u; policy < supportedThreadArbitrationPolicies.size(); policy++) {
         deviceInfo.supportedThreadArbitrationPolicies[policy] = supportedThreadArbitrationPolicies[policy];
@@ -393,7 +390,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.globalVariablePreferredTotalSize = ocl21FeaturesEnabled ? static_cast<size_t>(sharedDeviceInfo.maxMemAllocSize) : 0;
 
     deviceInfo.planarYuvMaxWidth = 16384;
-    deviceInfo.planarYuvMaxHeight = hwHelper.getPlanarYuvMaxHeight();
+    deviceInfo.planarYuvMaxHeight = gfxCoreHelper.getPlanarYuvMaxHeight();
 
     deviceInfo.vmeAvcSupportsTextureSampler = hwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler;
     if (hwInfo.capabilityTable.supportsVme) {
@@ -408,15 +405,15 @@ void ClDevice::initializeCaps() {
     deviceInfo.preferredLocalAtomicAlignment = MemoryConstants::cacheLineSize;
     deviceInfo.preferredPlatformAtomicAlignment = MemoryConstants::cacheLineSize;
 
-    deviceInfo.preferredWorkGroupSizeMultiple = hwHelper.isFusedEuDispatchEnabled(hwInfo, false)
+    deviceInfo.preferredWorkGroupSizeMultiple = gfxCoreHelper.isFusedEuDispatchEnabled(hwInfo, false)
                                                     ? CommonConstants::maximalSimdSize * 2
                                                     : CommonConstants::maximalSimdSize;
 
-    deviceInfo.hostMemCapabilities = hwInfoConfig->getHostMemCapabilities(&hwInfo);
-    deviceInfo.deviceMemCapabilities = hwInfoConfig->getDeviceMemCapabilities();
-    deviceInfo.singleDeviceSharedMemCapabilities = hwInfoConfig->getSingleDeviceSharedMemCapabilities();
-    deviceInfo.crossDeviceSharedMemCapabilities = hwInfoConfig->getCrossDeviceSharedMemCapabilities();
-    deviceInfo.sharedSystemMemCapabilities = hwInfoConfig->getSharedSystemMemCapabilities(&hwInfo);
+    deviceInfo.hostMemCapabilities = productHelper.getHostMemCapabilities(&hwInfo);
+    deviceInfo.deviceMemCapabilities = productHelper.getDeviceMemCapabilities();
+    deviceInfo.singleDeviceSharedMemCapabilities = productHelper.getSingleDeviceSharedMemCapabilities();
+    deviceInfo.crossDeviceSharedMemCapabilities = productHelper.getCrossDeviceSharedMemCapabilities();
+    deviceInfo.sharedSystemMemCapabilities = productHelper.getSharedSystemMemCapabilities(&hwInfo);
 
     initializeOsSpecificCaps();
     getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures);
@@ -452,7 +449,7 @@ void ClDevice::initializeOpenclCAllVersions() {
     }
 }
 
-const std::string ClDevice::getClDeviceName(const HardwareInfo &hwInfo) const {
+const std::string ClDevice::getClDeviceName() const {
     return this->getDevice().getDeviceInfo().name;
 }
 

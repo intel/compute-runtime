@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,7 +68,7 @@ TEST(PerfProfiler, WhenDestroyingAllThenAllObjectsAreDestroyed) {
     EXPECT_EQ(0, PerfProfiler::getCurrentCounter());
     PerfProfilerMock::addNullObjects(); // skip null objects
     EXPECT_EQ(1, PerfProfiler::getCurrentCounter());
-    PerfProfiler::destroyAll(); //destroy no object although counter is incorrect
+    PerfProfiler::destroyAll(); // destroy no object although counter is incorrect
     EXPECT_EQ(0, PerfProfiler::getCurrentCounter());
     EXPECT_EQ(nullptr, PerfProfiler::getObject(0));
 }

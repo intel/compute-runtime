@@ -69,7 +69,7 @@ bool BinaryEncoder::copyBinaryToBinary(const std::string &srcFileName, std::ostr
 int BinaryEncoder::createElf(std::stringstream &deviceBinary) {
     NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEncoder;
     elfEncoder.getElfFileHeader().type = NEO::Elf::ET_OPENCL_EXECUTABLE;
-    //Build Options
+    // Build Options
     if (argHelper->fileExists(pathToDump + "build.bin")) {
         auto binary = argHelper->readBinaryFile(pathToDump + "build.bin");
         elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_OPTIONS, "BuildOptions",
@@ -77,7 +77,7 @@ int BinaryEncoder::createElf(std::stringstream &deviceBinary) {
     } else {
         argHelper->printf("Warning! Missing build section.\n");
     }
-    //LLVM or SPIRV
+    // LLVM or SPIRV
     if (argHelper->fileExists(pathToDump + "llvm.bin")) {
         auto binary = argHelper->readBinaryFile(pathToDump + "llvm.bin");
         elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_LLVM_BINARY, "Intel(R) OpenCL LLVM Object",
@@ -90,13 +90,13 @@ int BinaryEncoder::createElf(std::stringstream &deviceBinary) {
         argHelper->printf("Warning! Missing llvm/spirv section.\n");
     }
 
-    //Device Binary
+    // Device Binary
     auto deviceBinaryStr = deviceBinary.str();
     std::vector<char> binary(deviceBinaryStr.begin(), deviceBinaryStr.end());
     elfEncoder.appendSection(NEO::Elf::SHT_OPENCL_DEV_BINARY, "Intel(R) OpenCL Device Binary",
                              ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(binary.data()), binary.size()));
 
-    //Resolve Elf Binary
+    // Resolve Elf Binary
     auto elfBinary = elfEncoder.encode();
     argHelper->saveOutput(elfName, elfBinary.data(), elfBinary.size());
 
@@ -133,7 +133,7 @@ Examples:
   Assemble to Intel Compute GPU device binary
     ocloc asm -out reassembled.bin
 )===",
-                      argHelper->getAllSupportedAcronyms().c_str());
+                      argHelper->createStringForArgs(argHelper->productConfigHelper->getDeviceAcronyms()).c_str());
 }
 
 int BinaryEncoder::encode() {
@@ -312,7 +312,7 @@ int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
             pathToDump = args[++argIndex];
             addSlash(pathToDump);
         } else if ("-device" == currArg && hasMoreArgs) {
-            iga->setProductFamily(getProductFamilyFromDeviceName(args[++argIndex]));
+            setProductFamilyForIga(args[++argIndex], iga.get(), argHelper);
         } else if ("-out" == currArg && hasMoreArgs) {
             elfName = args[++argIndex];
         } else if ("--help" == currArg) {
@@ -341,7 +341,7 @@ int BinaryEncoder::validateInput(const std::vector<std::string> &args) {
     }
 
     if (false == iga->isKnownPlatform()) {
-        argHelper->printf("Warning : missing or invalid -device parameter - results may be inacurate\n");
+        argHelper->printf("Warning : missing or invalid -device parameter - results may be inaccurate\n");
     }
     return 0;
 }

@@ -1,12 +1,16 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "opencl/source/sharings/sharing.h"
+
 #include "d3d_sharing_functions.h"
+
+#include <mutex>
 
 enum GMM_RESOURCE_FORMAT_ENUM;
 namespace NEO {

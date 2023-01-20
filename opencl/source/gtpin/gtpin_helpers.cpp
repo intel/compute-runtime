@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "gtpin_helpers.h"
 
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
@@ -31,7 +33,7 @@ GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinCreateBuffer(context_handle_t context
         return GTPIN_DI_ERROR_INVALID_ARGUMENT;
     }
     size_t size = alignUp(reqSize, MemoryConstants::cacheLineSize);
-    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pContext->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pContext->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
     if (gtpinHelper.canUseSharedAllocation(pContext->getDevice(0)->getHardwareInfo())) {
         void *unifiedMemorySharedAllocation = clSharedMemAllocINTEL(pContext, pContext->getDevice(0), 0, size, 0, &diag);
         auto allocationsManager = pContext->getSVMAllocsManager();
@@ -53,7 +55,7 @@ GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinFreeBuffer(context_handle_t context, 
     if ((pContext == nullptr) || (resource == nullptr)) {
         return GTPIN_DI_ERROR_INVALID_ARGUMENT;
     }
-    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pContext->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pContext->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
     if (gtpinHelper.canUseSharedAllocation(pContext->getDevice(0)->getHardwareInfo())) {
         auto allocData = reinterpret_cast<SvmAllocationData *>(resource);
         clMemFreeINTEL(pContext, allocData->cpuAllocation->getUnderlyingBuffer());
@@ -74,7 +76,7 @@ GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinMapBuffer(context_handle_t context, r
     if ((pContext == nullptr) || (buffer == nullptr) || (pAddress == nullptr)) {
         return GTPIN_DI_ERROR_INVALID_ARGUMENT;
     }
-    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pContext->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pContext->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
     if (gtpinHelper.canUseSharedAllocation(pContext->getDevice(0)->getHardwareInfo())) {
         auto allocData = reinterpret_cast<SvmAllocationData *>(resource);
         *pAddress = reinterpret_cast<uint8_t *>(allocData->cpuAllocation->getUnderlyingBuffer());
@@ -93,7 +95,7 @@ GTPIN_DI_STATUS GTPIN_DRIVER_CALLCONV gtpinUnmapBuffer(context_handle_t context,
     if ((pContext == nullptr) || (resource == nullptr)) {
         return GTPIN_DI_ERROR_INVALID_ARGUMENT;
     }
-    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pContext->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pContext->getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
     if (!gtpinHelper.canUseSharedAllocation(pContext->getDevice(0)->getHardwareInfo())) {
         auto pMemObj = castToObject<MemObj>(resource);
         if (pMemObj == nullptr) {

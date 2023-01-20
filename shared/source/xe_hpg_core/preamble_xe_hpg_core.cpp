@@ -5,9 +5,12 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
+
 namespace NEO {
-struct XE_HPG_COREFamily;
-using Family = XE_HPG_COREFamily;
+struct XeHpgCoreFamily;
+using Family = XeHpgCoreFamily;
 } // namespace NEO
 
 #include "shared/source/helpers/preamble_xehp_and_later.inl"
@@ -15,7 +18,7 @@ using Family = XE_HPG_COREFamily;
 namespace NEO {
 
 template <>
-void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, const StreamProperties &streamProperties, void *cmd) {
+void PreambleHelper<Family>::appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd) {
     auto command = static_cast<typename Family::CFE_STATE *>(cmd);
 
     command->setComputeOverdispatchDisable(streamProperties.frontEndState.disableOverdispatch.value == 1);
@@ -28,8 +31,9 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
         command->setSingleSliceDispatchCcsMode(DebugManager.flags.CFESingleSliceDispatchCCSMode.get());
     }
 
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    if (!hwHelper.isFusedEuDispatchEnabled(hwInfo, streamProperties.frontEndState.disableEUFusion.value == 1)) {
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    if (!gfxCoreHelper.isFusedEuDispatchEnabled(hwInfo, streamProperties.frontEndState.disableEUFusion.value == 1)) {
         command->setFusedEuDispatch(true);
     }
 
@@ -37,17 +41,6 @@ void PreambleHelper<Family>::appendProgramVFEState(const HardwareInfo &hwInfo, c
     if (DebugManager.flags.CFENumberOfWalkers.get() != -1) {
         command->setNumberOfWalkers(DebugManager.flags.CFENumberOfWalkers.get());
     }
-}
-
-template <>
-bool PreambleHelper<Family>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) {
-    return true;
-}
-
-template <>
-bool PreambleHelper<Family>::isSpecialPipelineSelectModeChanged(bool lastSpecialPipelineSelectMode, bool newSpecialPipelineSelectMode,
-                                                                const HardwareInfo &hwInfo) {
-    return lastSpecialPipelineSelectMode != newSpecialPipelineSelectMode;
 }
 
 template struct PreambleHelper<Family>;

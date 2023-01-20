@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,93 +7,105 @@
 
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/program/kernel_info.h"
+#include "shared/source/xe_hp_core/hw_cmds.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 
-using HwHelperTestXE_HP_CORE = HwHelperTest;
+using ClGfxCoreHelperTestsXeHpCore = Test<ClDeviceFixture>;
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+XE_HP_CORE_TEST_F(ClGfxCoreHelperTestsXeHpCore, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
     for (auto isPureStateful : {false, true}) {
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
 
-        EXPECT_EQ(!argAsPtr.isPureStateful(), clHwHelper.requiresNonAuxMode(argAsPtr, *defaultHwInfo));
+        EXPECT_EQ(!argAsPtr.isPureStateful(), clGfxCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
     }
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenGenHelperWhenEnableStatelessCompressionThenDontRequireNonAuxMode) {
+XE_HP_CORE_TEST_F(ClGfxCoreHelperTestsXeHpCore, givenGenHelperWhenEnableStatelessCompressionThenDontRequireNonAuxMode) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
     for (auto isPureStateful : {false, true}) {
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
-        EXPECT_FALSE(clHwHelper.requiresNonAuxMode(argAsPtr, *defaultHwInfo));
+        EXPECT_FALSE(clGfxCoreHelper.requiresNonAuxMode(argAsPtr, getRootDeviceEnvironment()));
     }
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXE_HP_COREThenAuxTranslationIsRequired) {
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+XE_HP_CORE_TEST_F(ClGfxCoreHelperTestsXeHpCore, givenXE_HP_COREThenAuxTranslationIsRequired) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
     for (auto isPureStateful : {false, true}) {
         KernelInfo kernelInfo{};
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = !isPureStateful;
-        EXPECT_EQ(!isPureStateful, clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo));
+        EXPECT_EQ(!isPureStateful, clGfxCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
     }
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXE_HP_COREWhenEnableStatelessCompressionThenAuxTranslationIsNotRequired) {
+XE_HP_CORE_TEST_F(ClGfxCoreHelperTestsXeHpCore, givenXE_HP_COREWhenEnableStatelessCompressionThenAuxTranslationIsNotRequired) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     KernelInfo kernelInfo{};
 
-    EXPECT_FALSE(clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo));
+    EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo, getRootDeviceEnvironment()));
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForCompression) {
+XE_HP_CORE_TEST_F(ClGfxCoreHelperTestsXeHpCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+    EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 5, 1), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
+}
+
+using GfxCoreHelperTestXE_HP_CORE = GfxCoreHelperTest;
+
+XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenDifferentBufferSizesWhenEnableStatelessCompressionThenEveryBufferSizeIsSuitableForCompression) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     const size_t sizesToCheck[] = {1, 128, 256, 1024, 2048};
     for (size_t size : sizesToCheck) {
-        EXPECT_TRUE(helper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
+        EXPECT_TRUE(gfxCoreHelper.isBufferSizeSuitableForCompression(size, *defaultHwInfo));
     }
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenStatelessCompressionEnabledWhenSetExtraAllocationDataThenDontRequireCpuAccessNorMakeResourceLocableForCompressedAllocations) {
+XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenStatelessCompressionEnabledWhenSetExtraAllocationDataThenDontRequireCpuAccessNorMakeResourceLocableForCompressedAllocations) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     for (auto allocType : {AllocationType::CONSTANT_SURFACE, AllocationType::GLOBAL_SURFACE, AllocationType::PRINTF_SURFACE}) {
         AllocationData allocData;
         AllocationProperties allocProperties(mockRootDeviceIndex, true, allocType, mockDeviceBitfield);
 
-        hwHelper.setExtraAllocationData(allocData, allocProperties, hwInfo);
+        gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, hwInfo);
         EXPECT_FALSE(allocData.flags.requiresCpuAccess);
         EXPECT_FALSE(allocData.storageInfo.isLockable);
     }
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
+XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenRevisionEnumAndPlatformFamilyTypeThenProperValueForIsWorkaroundRequiredIsReturned) {
     uint32_t steppings[] = {
         REVISION_A0,
         REVISION_A1,
@@ -102,123 +114,122 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenRevisionEnumAndPlatformFamilyType
         CommonConstants::invalidStepping,
     };
 
-    const auto &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
+    const auto &productHelper = getHelper<ProductHelper>();
 
     for (auto stepping : steppings) {
-        hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(stepping, hardwareInfo);
+        hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
 
         if (hardwareInfo.platform.eProductFamily == IGFX_XE_HP_SDV) {
             if (stepping == REVISION_A0) {
-                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo));
-                EXPECT_TRUE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo));
+                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hardwareInfo, productHelper));
+                EXPECT_TRUE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo, productHelper));
+                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_B, REVISION_A0, hardwareInfo, productHelper));
             } else if (stepping == REVISION_A1) {
-                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo));
-            } else if (stepping == REVISION_C || stepping == REVISION_D) { //undefined
-                EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_A1, hardwareInfo, productHelper));
+            } else if (stepping == REVISION_C || stepping == REVISION_D) { // undefined
+                EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo, productHelper));
             }
         } else {
-            EXPECT_FALSE(hwHelper.isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo));
+            EXPECT_FALSE(GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_D, hardwareInfo, productHelper));
         }
     }
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenRevisionEnumThenProperMaxThreadsForWorkgroupIsReturned) {
-    const auto &hwInfoConfig = *HwInfoConfig::get(hardwareInfo.platform.eProductFamily);
-    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
-    EXPECT_EQ(64u, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
+XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenRevisionEnumThenProperMaxThreadsForWorkgroupIsReturned) {
+    const auto &productHelper = *ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
+    EXPECT_EQ(64u, productHelper.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
 
-    hardwareInfo.platform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
+    hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
     uint32_t numThreadsPerEU = hardwareInfo.gtSystemInfo.ThreadCount / hardwareInfo.gtSystemInfo.EUCount;
-    EXPECT_EQ(64u * numThreadsPerEU, hwInfoConfig.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
+    EXPECT_EQ(64u * numThreadsPerEU, productHelper.getMaxThreadsForWorkgroupInDSSOrSS(hardwareInfo, 64u, 64u));
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsDefaultWhenLocalMemoryIsEnabledThenReturnFalseAndDoNotProgramPipeControl) {
+XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsDefaultWhenLocalMemoryIsEnabledThenReturnFalseAndDoNotProgramPipeControl) {
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
-    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo));
+    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hardwareInfo));
 
     constexpr size_t bufferSize = 128u;
     uint8_t buffer[bufferSize];
     LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addPipeControlWA(cmdStream, 0x1000, hardwareInfo);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, hardwareInfo);
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsDisabledWhenLocalMemoryIsEnabledThenReturnFalseAndDoNotProgramPipeControl) {
+XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsDisabledWhenLocalMemoryIsEnabledThenReturnFalseAndDoNotProgramPipeControl) {
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(0);
 
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
-    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo));
+    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hardwareInfo));
 
     constexpr size_t bufferSize = 128u;
     uint8_t buffer[bufferSize];
     LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addPipeControlWA(cmdStream, 0x1000, hardwareInfo);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, hardwareInfo);
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsEnabledThenReturnTrueAndProgramPipeControl) {
+XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsEnabledThenReturnTrueAndProgramPipeControl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
 
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
-    EXPECT_TRUE(MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo));
+    EXPECT_TRUE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hardwareInfo));
 
     constexpr size_t bufferSize = 128u;
     uint8_t buffer[bufferSize];
     LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addPipeControlWA(cmdStream, 0x1000, hardwareInfo);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, hardwareInfo);
     EXPECT_EQ(sizeof(PIPE_CONTROL), cmdStream.getUsed());
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsDisabledThenReturnTrueAndDoNotProgramPipeControl) {
+XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsEnabledWhenLocalMemoryIsDisabledThenReturnTrueAndDoNotProgramPipeControl) {
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
 
     hardwareInfo.featureTable.flags.ftrLocalMemory = false;
-    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(hardwareInfo));
+    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hardwareInfo));
 
     constexpr size_t bufferSize = 128u;
     uint8_t buffer[bufferSize];
     LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addPipeControlWA(cmdStream, 0x1000, hardwareInfo);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, hardwareInfo);
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenXeHPAndLaterPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnFalse) {
-    auto &hwHelper = HwHelperHw<FamilyType>::get();
-    EXPECT_FALSE(hwHelper.isAssignEngineRoundRobinSupported(*defaultHwInfo));
+XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenXeHPAndLaterPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnFalse) {
+    auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
+    EXPECT_FALSE(gfxCoreHelper.isAssignEngineRoundRobinSupported(*defaultHwInfo));
 }
 
-using HwInfoConfigTestXE_HP_CORE = ::testing::Test;
+using ProductHelperTestXE_HP_CORE = Test<DeviceFixture>;
 
-XE_HP_CORE_TEST_F(HwInfoConfigTestXE_HP_CORE, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
+XE_HP_CORE_TEST_F(ProductHelperTestXE_HP_CORE, givenDebugVariableSetWhenConfigureIsCalledThenSetupBlitterOperationsSupportedFlag) {
     DebugManagerStateRestore restore;
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+    auto &productHelper = getHelper<ProductHelper>();
 
     HardwareInfo hwInfo = *defaultHwInfo;
 
     DebugManager.flags.EnableBlitterOperationsSupport.set(0);
-    hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_FALSE(hwInfo.capabilityTable.blitterOperationsSupported);
 
     DebugManager.flags.EnableBlitterOperationsSupport.set(1);
-    hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
     EXPECT_TRUE(hwInfo.capabilityTable.blitterOperationsSupported);
 }
 
-XE_HP_CORE_TEST_F(HwInfoConfigTestXE_HP_CORE, givenMultitileConfigWhenConfiguringHwInfoThenEnableBlitter) {
-    auto hwInfoConfig = HwInfoConfig::get(productFamily);
+XE_HP_CORE_TEST_F(ProductHelperTestXE_HP_CORE, givenMultitileConfigWhenConfiguringHwInfoThenEnableBlitter) {
+    auto &productHelper = getHelper<ProductHelper>();
 
     HardwareInfo hwInfo = *defaultHwInfo;
 
     for (uint32_t tileCount = 0; tileCount <= 4; tileCount++) {
         hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = tileCount;
-        hwInfoConfig->configureHardwareCustom(&hwInfo, nullptr);
+        productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
         EXPECT_EQ(true, hwInfo.capabilityTable.blitterOperationsSupported);
     }
@@ -249,28 +260,26 @@ XE_HP_CORE_TEST_F(LriHelperTestsXE_HP_CORE, whenProgrammingLriCommandThenExpectM
     EXPECT_TRUE(memcmp(lri, &expectedLri, sizeof(MI_LOAD_REGISTER_IMM)) == 0);
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, GivenVariousValuesWhenAlignSlmSizeIsCalledThenCorrectValueIsReturned) {
-    EXPECT_EQ(0u, HwHelperHw<FamilyType>::get().alignSlmSize(0));
-    EXPECT_EQ(1024u, HwHelperHw<FamilyType>::get().alignSlmSize(1));
-    EXPECT_EQ(1024u, HwHelperHw<FamilyType>::get().alignSlmSize(1024));
-    EXPECT_EQ(2048u, HwHelperHw<FamilyType>::get().alignSlmSize(1025));
-    EXPECT_EQ(2048u, HwHelperHw<FamilyType>::get().alignSlmSize(2048));
-    EXPECT_EQ(4096u, HwHelperHw<FamilyType>::get().alignSlmSize(2049));
-    EXPECT_EQ(4096u, HwHelperHw<FamilyType>::get().alignSlmSize(4096));
-    EXPECT_EQ(8192u, HwHelperHw<FamilyType>::get().alignSlmSize(4097));
-    EXPECT_EQ(8192u, HwHelperHw<FamilyType>::get().alignSlmSize(8192));
-    EXPECT_EQ(16384u, HwHelperHw<FamilyType>::get().alignSlmSize(8193));
-    EXPECT_EQ(16384u, HwHelperHw<FamilyType>::get().alignSlmSize(16384));
-    EXPECT_EQ(32768u, HwHelperHw<FamilyType>::get().alignSlmSize(16385));
-    EXPECT_EQ(32768u, HwHelperHw<FamilyType>::get().alignSlmSize(32768));
-    EXPECT_EQ(65536u, HwHelperHw<FamilyType>::get().alignSlmSize(32769));
-    EXPECT_EQ(65536u, HwHelperHw<FamilyType>::get().alignSlmSize(65536));
+XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, GivenVariousValuesWhenAlignSlmSizeIsCalledThenCorrectValueIsReturned) {
+    EXPECT_EQ(0u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(0));
+    EXPECT_EQ(1024u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(1));
+    EXPECT_EQ(1024u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(1024));
+    EXPECT_EQ(2048u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(1025));
+    EXPECT_EQ(2048u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(2048));
+    EXPECT_EQ(4096u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(2049));
+    EXPECT_EQ(4096u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(4096));
+    EXPECT_EQ(8192u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(4097));
+    EXPECT_EQ(8192u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(8192));
+    EXPECT_EQ(16384u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(8193));
+    EXPECT_EQ(16384u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(16384));
+    EXPECT_EQ(32768u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(16385));
+    EXPECT_EQ(32768u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(32768));
+    EXPECT_EQ(65536u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(32769));
+    EXPECT_EQ(65536u, GfxCoreHelperHw<FamilyType>::get().alignSlmSize(65536));
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenHwHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {
-    auto &helper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    EXPECT_NE(nullptr, &helper);
-
+XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenGfxCoreHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {
+    auto &helper = pDevice->getGfxCoreHelper();
     auto &configs = helper.getThreadsPerEUConfigs();
 
     EXPECT_EQ(2U, configs.size());
@@ -278,18 +287,9 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, givenHwHelperWhenGettingThreadsPerEUCo
     EXPECT_EQ(8U, configs[1]);
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
-    EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 5, 1), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
-}
-
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE, whenGettingDefaultRevisionThenB0IsReturned) {
-    EXPECT_EQ(HwInfoConfigHw<IGFX_XE_HP_SDV>::get()->getHwRevIdFromStepping(REVISION_B, *defaultHwInfo), HwHelperHw<FamilyType>::get().getDefaultRevisionId(*defaultHwInfo));
-}
-
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE,
+XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE,
                   givenDebugFlagAndLocalMemoryIsNotAvailableWhenProgrammingPostSyncPipeControlThenExpectNotAddingWaPipeControl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
@@ -304,12 +304,12 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE,
     PipeControlArgs args;
     uint64_t gpuAddress = 0xABC0;
     uint64_t immediateValue = 0x10;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(cmdStream,
-                                                                                         POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                                                                                         gpuAddress,
-                                                                                         immediateValue,
-                                                                                         hardwareInfo,
-                                                                                         args);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(cmdStream,
+                                                                               PostSyncMode::ImmediateData,
+                                                                               gpuAddress,
+                                                                               immediateValue,
+                                                                               hardwareInfo,
+                                                                               args);
     EXPECT_EQ(sizeof(PIPE_CONTROL), cmdStream.getUsed());
 
     HardwareParse hwParser;
@@ -324,10 +324,9 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE,
     EXPECT_EQ(immediateValue, pipeControl->getImmediateData());
 }
 
-XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE,
+XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE,
                   givenDebugFlagAndLocalMemoryIsAvailableWhenProgrammingPostSyncPipeControlThenExpectAddingWaPipeControl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
 
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
@@ -342,12 +341,12 @@ XE_HP_CORE_TEST_F(HwHelperTestXE_HP_CORE,
     PipeControlArgs args;
     uint64_t gpuAddress = 0xABC0;
     uint64_t immediateValue = 0x10;
-    MemorySynchronizationCommands<FamilyType>::addPipeControlAndProgramPostSyncOperation(cmdStream,
-                                                                                         POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
-                                                                                         gpuAddress,
-                                                                                         immediateValue,
-                                                                                         hardwareInfo,
-                                                                                         args);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWithPostSyncOperation(cmdStream,
+                                                                               PostSyncMode::ImmediateData,
+                                                                               gpuAddress,
+                                                                               immediateValue,
+                                                                               hardwareInfo,
+                                                                               args);
     EXPECT_EQ(sizeof(PIPE_CONTROL) * 2, cmdStream.getUsed());
 
     HardwareParse hwParser;

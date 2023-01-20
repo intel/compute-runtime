@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,11 @@
 
 #include "level_zero/core/source/printf_handler/printf_handler.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/engine_node_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/program/print_formatter.h"
 
@@ -27,13 +31,46 @@ NEO::GraphicsAllocation *PrintfHandler::createPrintfBuffer(Device *device) {
 }
 
 void PrintfHandler::printOutput(const KernelImmutableData *kernelData,
-                                NEO::GraphicsAllocation *printfBuffer, Device *device) {
+                                NEO::GraphicsAllocation *printfBuffer, Device *device, bool useInternalBlitter) {
     bool using32BitGpuPointers = kernelData->getDescriptor().kernelAttributes.gpuPointerSize == 4u;
-
     auto usesStringMap = kernelData->getDescriptor().kernelAttributes.usesStringMap();
+
+    auto printfOutputBuffer = static_cast<uint8_t *>(printfBuffer->getUnderlyingBuffer());
+    auto printfOutputSize = static_cast<uint32_t>(printfBuffer->getUnderlyingBufferSize());
+    std::unique_ptr<uint8_t[]> printfOutputTemporary;
+
+    if (useInternalBlitter) {
+        auto selectedDevice = device->getNEODevice()->getNearestGenericSubDevice(0);
+        auto &selectorCopyEngine = selectedDevice->getSelectorCopyEngine();
+        auto deviceBitfield = selectedDevice->getDeviceBitfield();
+        const auto internalUsage = true;
+        auto bcsEngineType = NEO::EngineHelpers::getBcsEngineType(selectedDevice->getRootDeviceEnvironment(), deviceBitfield, selectorCopyEngine, internalUsage);
+        auto bcsEngineUsage = NEO::EngineUsage::Internal;
+        auto bcsEngine = selectedDevice->tryGetEngine(bcsEngineType, bcsEngineUsage);
+
+        if (bcsEngine) {
+            printfOutputTemporary = std::make_unique<uint8_t[]>(printfOutputSize);
+            printfOutputBuffer = printfOutputTemporary.get();
+
+            NEO::BlitPropertiesContainer blitPropertiesContainer;
+            blitPropertiesContainer.push_back(
+                NEO::BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::BufferToHostPtr,
+                                                                     *bcsEngine->commandStreamReceiver, printfBuffer, nullptr,
+                                                                     printfOutputBuffer,
+                                                                     printfBuffer->getGpuAddress(),
+                                                                     0, 0, 0, Vec3<size_t>(printfOutputSize, 0, 0), 0, 0, 0, 0));
+
+            const auto newTaskCount = bcsEngine->commandStreamReceiver->flushBcsTask(blitPropertiesContainer, true, false, *selectedDevice);
+            if (newTaskCount == NEO::CompletionStamp::gpuHang) {
+                PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Failed to copy printf buffer.\n", "");
+                printfOutputBuffer = static_cast<uint8_t *>(printfBuffer->getUnderlyingBuffer());
+            }
+        }
+    }
+
     NEO::PrintFormatter printfFormatter{
-        static_cast<uint8_t *>(printfBuffer->getUnderlyingBuffer()),
-        static_cast<uint32_t>(printfBuffer->getUnderlyingBufferSize()),
+        printfOutputBuffer,
+        printfOutputSize,
         using32BitGpuPointers,
         usesStringMap ? &kernelData->getDescriptor().kernelMetadata.printfStringsMap : nullptr};
     printfFormatter.printKernelOutput();

@@ -1,17 +1,18 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/program/program_info_from_patchtokens.h"
-#include "shared/test/unit_test/compiler_interface/linker_mock.h"
-#include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
+#include "shared/test/common/compiler_interface/linker_mock.h"
+#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 
 #include "RelocationInfo.h"
 #include "gtest/gtest.h"
@@ -302,7 +303,10 @@ TEST(PopulateProgramInfoFromPatchtokensTests, GivenProgramWithKernelsWhenKernelH
 TEST(PopulateProgramInfoFromPatchtokensTests, givenProgramWithKernelWhenKernelHasHostAccessTableThenPopulateDeviceHostNameMapCorrectly) {
     PatchTokensTestData::ValidProgramWithKernelUsingHostAccessTable programToEncode;
     programToEncode.headerMutable->NumberOfKernels = 1;
-    programToEncode.storage.insert(programToEncode.storage.end(), programToEncode.kernels[0].blobs.kernelInfo.begin(), programToEncode.kernels[0].blobs.kernelInfo.end());
+
+    std::vector<uint8_t> copiedKernelInfo(programToEncode.kernels[0].blobs.kernelInfo.begin(), programToEncode.kernels[0].blobs.kernelInfo.end());
+    programToEncode.storage.insert(programToEncode.storage.end(), copiedKernelInfo.begin(), copiedKernelInfo.end());
+
     NEO::PatchTokenBinary::ProgramFromPatchtokens decodedProgram;
     bool decodeSuccess = NEO::PatchTokenBinary::decodeProgramFromPatchtokensBlob(programToEncode.storage, decodedProgram);
     EXPECT_TRUE(decodeSuccess);

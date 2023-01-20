@@ -10,7 +10,7 @@
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
@@ -37,11 +37,13 @@ struct CompressionXeHPAndLater : public AUBFixture,
         DebugManager.flags.EnableLocalMemory.set(useLocalMemory);
         DebugManager.flags.NodeOrdinal.set(GetParam());
 
-        auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+        AUBFixture::setUp(defaultHwInfo.get());
+
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
 
         auto expectedEngine = static_cast<aub_stream::EngineType>(GetParam());
         bool engineSupported = false;
-        for (auto &engine : hwHelper.getGpgpuEngineInstances(*defaultHwInfo)) {
+        for (auto &engine : gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)) {
             if (engine.first == expectedEngine) {
                 engineSupported = true;
                 break;
@@ -52,7 +54,6 @@ struct CompressionXeHPAndLater : public AUBFixture,
             GTEST_SKIP();
         }
 
-        AUBFixture::SetUp(defaultHwInfo.get());
         auto &ftrTable = device->getHardwareInfo().featureTable;
         if ((!ftrTable.flags.ftrFlatPhysCCS) ||
             (!ftrTable.flags.ftrLocalMemory && useLocalMemory)) {
@@ -61,7 +62,7 @@ struct CompressionXeHPAndLater : public AUBFixture,
         context->contextType = ContextType::CONTEXT_TYPE_SPECIALIZED;
     }
     void TearDown() override {
-        AUBFixture::TearDown();
+        AUBFixture::tearDown();
     }
     std::unique_ptr<DebugManagerStateRestore> debugRestorer;
 
@@ -129,7 +130,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImage2DFromBufferW
     auto compressedBuffer = std::unique_ptr<Buffer>(Buffer::create(context, CL_MEM_COPY_HOST_PTR | CL_MEM_COMPRESSED_HINT_INTEL, bufferSize, writePattern, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //now create image2DFromBuffer
+    // now create image2DFromBuffer
 
     cl_image_desc imageDescriptor = {};
     imageDescriptor.mem_object = compressedBuffer.get();
@@ -170,7 +171,7 @@ void CompressionXeHPAndLater<testLocalMemory>::givenCompressedImage2DFromBufferW
 
     expectMemory<FamilyType>(destMemory, writePattern, imageSize);
 
-    //make sure our objects are in in fact compressed
+    // make sure our objects are in in fact compressed
     auto graphicsAllocation = compressedBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
     EXPECT_NE(nullptr, graphicsAllocation->getDefaultGmm());
     EXPECT_TRUE(graphicsAllocation->getDefaultGmm()->isCompressionEnabled);

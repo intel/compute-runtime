@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -335,6 +335,18 @@ struct Mock<FrequencyKmdSysManager> : public FrequencyKmdSysManager {
             pResponse->outDataSize = 0;
             pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
         } break;
+        case KmdSysman::Requests::Frequency::CurrentIccMax: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            mockIccMax = *pValue;
+            pResponse->outDataSize = 0;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+        } break;
+        case KmdSysman::Requests::Frequency::CurrentTjMax: {
+            uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
+            mockTjMax = *pValue;
+            pResponse->outDataSize = 0;
+            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+        } break;
         default: {
             pResponse->outDataSize = 0;
             pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
@@ -343,7 +355,7 @@ struct Mock<FrequencyKmdSysManager> : public FrequencyKmdSysManager {
     }
 
     Mock() = default;
-    ~Mock() = default;
+    ~Mock() override = default;
 };
 
 } // namespace ult

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,6 @@ const std::string defaultHeartbeatIntervalMilliSecs(".defaults/heartbeat_interva
 const std::string engineDir("engine");
 const std::vector<std::string> listOfMockedEngines = {"rcs0", "bcs0", "vcs0", "vcs1", "vecs0"};
 
-class SchedulerSysfsAccess : public SysfsAccess {};
 typedef struct SchedulerConfigValues {
     uint64_t defaultVal;
     uint64_t actualVal;
@@ -51,8 +50,18 @@ class SchedulerFileProperties {
     }
 };
 
-template <>
-struct Mock<SchedulerSysfsAccess> : public SysfsAccess {
+struct MockSchedulerSysfsAccess : public SysfsAccess {
+
+    ze_result_t mockReadFileFailureError = ZE_RESULT_SUCCESS;
+    ze_result_t mockWriteFileStatus = ZE_RESULT_SUCCESS;
+    ze_result_t mockGetScanDirEntryError = ZE_RESULT_SUCCESS;
+
+    std::vector<ze_result_t> mockReadReturnValues{ZE_RESULT_SUCCESS, ZE_RESULT_SUCCESS, ZE_RESULT_SUCCESS, ZE_RESULT_ERROR_NOT_AVAILABLE};
+
+    uint32_t mockReadCount = 0;
+
+    bool mockReadReturnStatus = false;
+
     std::map<std::string, SchedulerConfig_t *> engineSchedMap;
     std::map<std::string, SchedulerFileProperties> engineSchedFilePropertiesMap;
 
@@ -91,7 +100,21 @@ struct Mock<SchedulerSysfsAccess> : public SysfsAccess {
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    ze_result_t getVal(const std::string file, uint64_t &val) {
+    ze_result_t read(const std::string file, uint64_t &val) override {
+
+        if (mockReadReturnStatus == true) {
+
+            if (mockReadCount < mockReadReturnValues.size()) {
+                ze_result_t returnValue = mockReadReturnValues[mockReadCount];
+                mockReadCount++;
+                return returnValue;
+            }
+        }
+
+        if (mockReadFileFailureError != ZE_RESULT_SUCCESS) {
+            return mockReadFileFailureError;
+        }
+
         SchedulerFileProperties fileProperties;
         ze_result_t result = getFileProperties(file, fileProperties);
         if (ZE_RESULT_SUCCESS == result) {
@@ -147,7 +170,12 @@ struct Mock<SchedulerSysfsAccess> : public SysfsAccess {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    ze_result_t setVal(const std::string file, const uint64_t val) {
+    ze_result_t write(const std::string file, const uint64_t val) override {
+
+        if (mockWriteFileStatus != ZE_RESULT_SUCCESS) {
+            return mockWriteFileStatus;
+        }
+
         SchedulerFileProperties fileProperties;
         ze_result_t result = getFileProperties(file, fileProperties);
         if (ZE_RESULT_SUCCESS == result) {
@@ -229,7 +257,12 @@ struct Mock<SchedulerSysfsAccess> : public SysfsAccess {
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
-    ze_result_t getscanDirEntries(const std::string file, std::vector<std::string> &listOfEntries) {
+
+    ze_result_t scanDirEntries(const std::string file, std::vector<std::string> &listOfEntries) override {
+
+        if (mockGetScanDirEntryError != ZE_RESULT_SUCCESS) {
+            return mockGetScanDirEntryError;
+        }
 
         if (!isDirectoryAccessible(engineDir)) {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -248,11 +281,7 @@ struct Mock<SchedulerSysfsAccess> : public SysfsAccess {
         engineDirectoryPermissions = permission;
     }
 
-    Mock<SchedulerSysfsAccess>() = default;
-
-    MOCK_METHOD(ze_result_t, read, (const std::string file, uint64_t &val), (override));
-    MOCK_METHOD(ze_result_t, write, (const std::string file, const uint64_t val), (override));
-    MOCK_METHOD(ze_result_t, scanDirEntries, (const std::string file, std::vector<std::string> &listOfEntries), (override));
+    MockSchedulerSysfsAccess() = default;
 
   private:
     ::mode_t engineDirectoryPermissions = S_IRUSR | S_IWUSR;

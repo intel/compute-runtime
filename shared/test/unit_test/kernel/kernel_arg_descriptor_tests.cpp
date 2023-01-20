@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -181,6 +181,13 @@ TEST(ArgDescriptorIsReadOnly, GivenPointerArgWhenConstantAddressSpaceThenReturns
     EXPECT_FALSE(arg.isReadOnly());
 }
 
+TEST(ArgDescriptorIsReadOnly, GivenPointerArgWhenAccessQualifierIsReadOnlyThenReturnsTrue) {
+    NEO::ArgDescriptor arg;
+    arg.as<NEO::ArgDescPointer>(true);
+    arg.getTraits().accessQualifier = NEO::KernelArgMetadata::AccessReadOnly;
+    EXPECT_TRUE(arg.isReadOnly());
+}
+
 TEST(ArgDescriptorIsReadOnly, GivenSamplerArgThenReturnsTrue) {
     NEO::ArgDescriptor arg;
     arg.as<NEO::ArgDescSampler>(true);
@@ -295,7 +302,6 @@ TEST(ArgDescriptorAs, GivenMismatchedArgTypeThenAborts) {
 TEST(ArgDescriptorCopyAssign, WhenCopyAssignedThenCopiesExtendedTypeInfo) {
     NEO::ArgDescriptor arg0;
     arg0.getExtendedTypeInfo().isAccelerator = true;
-    arg0.getExtendedTypeInfo().hasDeviceSideEnqueueExtendedDescriptor = true;
 
     NEO::ArgDescriptor arg1{arg0};
     NEO::ArgDescriptor arg2;

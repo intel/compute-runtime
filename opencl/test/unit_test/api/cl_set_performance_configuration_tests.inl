@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,11 +16,11 @@ struct clSetPerformanceConfigurationINTELTests : public DeviceInstrumentationFix
                                                  public PerformanceCountersDeviceFixture,
                                                  ::testing::Test {
     void SetUp() override {
-        PerformanceCountersDeviceFixture::SetUp();
-        DeviceInstrumentationFixture::SetUp(true);
+        PerformanceCountersDeviceFixture::setUp();
+        DeviceInstrumentationFixture::setUp(true);
     }
     void TearDown() override {
-        PerformanceCountersDeviceFixture::TearDown();
+        PerformanceCountersDeviceFixture::tearDown();
     }
 };
 namespace ULT {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,26 +8,45 @@
 #include "level_zero/tools/source/debug/debug_session_imp.h"
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/sleep.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/include/zet_intel_gpu_debug.h"
 
-#include "common/StateSaveAreaHeader.h"
-
 namespace L0 {
 
-DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device) {
+DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : connectedDevice(device), config(config) {
+}
+
+const NEO::TopologyMap &DebugSession::getTopologyMap() {
+    return connectedDevice->getOsInterface().getDriverModel()->getTopologyMap();
+};
+
+void DebugSession::createEuThreads() {
     if (connectedDevice) {
+
+        bool isSubDevice = connectedDevice->getNEODevice()->isSubDevice();
+
         auto &hwInfo = connectedDevice->getHwInfo();
-        const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+        const uint32_t numSubslicesPerSlice = std::max(hwInfo.gtSystemInfo.MaxSubSlicesSupported, hwInfo.gtSystemInfo.MaxDualSubSlicesSupported) / hwInfo.gtSystemInfo.MaxSlicesSupported;
         const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
         const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
         uint32_t subDeviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
+        UNRECOVERABLE_IF(isSubDevice && subDeviceCount > 1);
 
         for (uint32_t tileIndex = 0; tileIndex < subDeviceCount; tileIndex++) {
+
+            if (isSubDevice || subDeviceCount == 1) {
+                tileIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
+            }
+
             for (uint32_t sliceID = 0; sliceID < hwInfo.gtSystemInfo.MaxSlicesSupported; sliceID++) {
                 for (uint32_t subsliceID = 0; subsliceID < numSubslicesPerSlice; subsliceID++) {
                     for (uint32_t euID = 0; euID < numEuPerSubslice; euID++) {
@@ -41,68 +60,88 @@ DebugSession::DebugSession(const zet_debug_config_t &config, Device *device) : c
                     }
                 }
             }
+
+            if (isSubDevice || subDeviceCount == 1) {
+                break;
+            }
         }
     }
 }
 
 uint32_t DebugSession::getDeviceIndexFromApiThread(ze_device_thread_t thread) {
-    uint32_t deviceIndex = 0;
-    auto &hwInfo = connectedDevice->getHwInfo();
-    auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
     auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
+    uint32_t deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
+    auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
+    const auto &topologyMap = getTopologyMap();
 
     if (connectedDevice->getNEODevice()->isSubDevice()) {
-        deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
-    } else {
-        if (thread.slice != UINT32_MAX) {
-            deviceIndex = thread.slice / hwInfo.gtSystemInfo.SliceCount;
-        } else if (deviceCount > 1) {
+        return deviceIndex;
+    }
+
+    if (deviceCount > 1) {
+
+        if (thread.slice == UINT32_MAX) {
             deviceIndex = UINT32_MAX;
+        } else {
+            uint32_t sliceId = thread.slice;
+            for (uint32_t i = 0; i < topologyMap.size(); i++) {
+                if (deviceBitfield.test(i)) {
+                    if (sliceId < topologyMap.at(i).sliceIndices.size()) {
+                        deviceIndex = i;
+                    }
+                    sliceId = sliceId - static_cast<uint32_t>(topologyMap.at(i).sliceIndices.size());
+                }
+            }
         }
     }
+
     return deviceIndex;
 }
 
 ze_device_thread_t DebugSession::convertToPhysicalWithinDevice(ze_device_thread_t thread, uint32_t deviceIndex) {
-    auto &hwInfo = connectedDevice->getHwInfo();
+    auto deviceImp = static_cast<DeviceImp *>(connectedDevice);
+    const auto &topologyMap = getTopologyMap();
+
+    // set slice for single slice config to allow subslice remapping
+    auto mapping = topologyMap.find(deviceIndex);
+    if (thread.slice == UINT32_MAX && mapping != topologyMap.end() && mapping->second.sliceIndices.size() == 1) {
+        thread.slice = 0;
+    }
 
     if (thread.slice != UINT32_MAX) {
-        thread.slice = thread.slice % hwInfo.gtSystemInfo.SliceCount;
+        if (thread.subslice != UINT32_MAX) {
+            deviceImp->toPhysicalSliceId(topologyMap, thread.slice, thread.subslice, deviceIndex);
+        } else {
+            uint32_t dummy = 0;
+            deviceImp->toPhysicalSliceId(topologyMap, thread.slice, dummy, deviceIndex);
+        }
     }
 
     return thread;
 }
 
 EuThread::ThreadId DebugSession::convertToThreadId(ze_device_thread_t thread) {
-    auto &hwInfo = connectedDevice->getHwInfo();
-    auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
-
-    UNRECOVERABLE_IF(!isSingleThread(thread));
+    auto deviceImp = static_cast<DeviceImp *>(connectedDevice);
+    UNRECOVERABLE_IF(!DebugSession::isSingleThread(thread));
 
     uint32_t deviceIndex = 0;
-    if (connectedDevice->getNEODevice()->isSubDevice()) {
-        deviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
-    } else {
-        deviceIndex = thread.slice / hwInfo.gtSystemInfo.SliceCount;
-        thread.slice = thread.slice % hwInfo.gtSystemInfo.SliceCount;
-    }
+    deviceImp->toPhysicalSliceId(getTopologyMap(), thread.slice, thread.subslice, deviceIndex);
 
     EuThread::ThreadId threadId(deviceIndex, thread.slice, thread.subslice, thread.eu, thread.thread);
     return threadId;
 }
 
 ze_device_thread_t DebugSession::convertToApi(EuThread::ThreadId threadId) {
-    auto &hwInfo = connectedDevice->getHwInfo();
+    auto deviceImp = static_cast<DeviceImp *>(connectedDevice);
 
     ze_device_thread_t thread = {static_cast<uint32_t>(threadId.slice), static_cast<uint32_t>(threadId.subslice), static_cast<uint32_t>(threadId.eu), static_cast<uint32_t>(threadId.thread)};
+    deviceImp->toApiSliceId(getTopologyMap(), thread.slice, thread.subslice, threadId.tileIndex);
 
-    if (!connectedDevice->getNEODevice()->isSubDevice()) {
-        thread.slice = thread.slice + static_cast<uint32_t>(threadId.tileIndex * hwInfo.gtSystemInfo.SliceCount);
-    }
     return thread;
 }
 
 std::vector<EuThread::ThreadId> DebugSession::getSingleThreadsForDevice(uint32_t deviceIndex, ze_device_thread_t physicalThread, const NEO::HardwareInfo &hwInfo) {
+
     const uint32_t numSubslicesPerSlice = hwInfo.gtSystemInfo.MaxSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
     const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
@@ -165,18 +204,28 @@ bool DebugSession::areRequestedThreadsStopped(ze_device_thread_t thread) {
     auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
     uint32_t deviceIndex = getDeviceIndexFromApiThread(thread);
 
-    for (uint32_t i = 0; i < deviceCount; i++) {
-        if (i == deviceIndex || deviceIndex == UINT32_MAX) {
-            auto physicalThread = convertToPhysicalWithinDevice(thread, i);
-            auto singleThreads = getSingleThreadsForDevice(i, physicalThread, hwInfo);
+    auto areAllThreadsStopped = [this, &hwInfo](uint32_t deviceIndex, const ze_device_thread_t &thread) -> bool {
+        auto physicalThread = convertToPhysicalWithinDevice(thread, deviceIndex);
+        auto singleThreads = getSingleThreadsForDevice(deviceIndex, physicalThread, hwInfo);
 
-            for (auto &threadId : singleThreads) {
+        for (auto &threadId : singleThreads) {
 
-                if (allThreads[threadId]->isStopped()) {
-                    continue;
-                }
-                return false;
+            if (allThreads[threadId]->isStopped()) {
+                continue;
             }
+            return false;
+        }
+        return true;
+    };
+
+    if (deviceIndex != UINT32_MAX) {
+        return areAllThreadsStopped(deviceIndex, thread);
+    }
+
+    for (uint32_t i = 0; i < deviceCount; i++) {
+
+        if (areAllThreadsStopped(i, thread) == false) {
+            return false;
         }
     }
 
@@ -191,10 +240,6 @@ ze_result_t DebugSession::sanityMemAccessThreadCheck(ze_device_thread_t thread, 
             return ZE_RESULT_SUCCESS;
         }
     } else if (DebugSession::isSingleThread(thread)) {
-        if (desc->type != ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
-            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-        }
-
         if (!areRequestedThreadsStopped(thread)) {
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         } else {
@@ -234,14 +279,14 @@ size_t DebugSession::getPerThreadScratchOffset(size_t ptss, EuThread::ThreadId t
     const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
 
-    const auto &hwInfoConfig = *NEO::HwInfoConfig::get(hwInfo.platform.eProductFamily);
-    uint32_t threadEuRatio = hwInfoConfig.getThreadEuRatioForScratch(hwInfo);
-
+    const auto &productHelper = connectedDevice->getProductHelper();
+    uint32_t threadEuRatio = productHelper.getThreadEuRatioForScratch(hwInfo);
+    uint32_t multiplyFactor = 1;
     if (threadEuRatio / numThreadsPerEu > 1) {
-        ptss *= threadEuRatio / numThreadsPerEu;
+        multiplyFactor = threadEuRatio / numThreadsPerEu;
     }
 
-    auto threadOffset = (((threadId.slice * numSubslicesPerSlice + threadId.subslice) * numEuPerSubslice + threadId.eu) * numThreadsPerEu + threadId.thread) * ptss;
+    auto threadOffset = (((threadId.slice * numSubslicesPerSlice + threadId.subslice) * numEuPerSubslice + threadId.eu) * numThreadsPerEu * multiplyFactor + threadId.thread) * ptss;
     return threadOffset;
 }
 
@@ -258,6 +303,43 @@ void DebugSession::printBitmask(uint8_t *bitmask, size_t bitmaskSize) {
             PRINT_DEBUGGER_LOG(stdout, "\n [%lu] = %#018" PRIx64, static_cast<uint64_t>(i), bitmask64);
         }
     }
+}
+
+DebugSession *DebugSessionImp::attachTileDebugSession(Device *device) {
+    std::unique_lock<std::mutex> lock(asyncThreadMutex);
+
+    uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(device->getNEODevice()->getDeviceBitfield().to_ulong()));
+
+    auto &[tileSession, attached] = tileSessions[subDeviceIndex];
+    if (attached) {
+        return nullptr;
+    }
+
+    tileSessions[subDeviceIndex].first->attachTile();
+    attached = true;
+
+    PRINT_DEBUGGER_INFO_LOG("TileDebugSession attached, deviceIndex = %lu\n", subDeviceIndex);
+    return tileSession;
+}
+
+void DebugSessionImp::detachTileDebugSession(DebugSession *tileSession) {
+
+    uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(tileSession->getConnectedDevice()->getNEODevice()->getDeviceBitfield().to_ulong()));
+
+    tileSessions[subDeviceIndex].second = false;
+    tileSessions[subDeviceIndex].first->detachTile();
+    cleanRootSessionAfterDetach(subDeviceIndex);
+
+    PRINT_DEBUGGER_INFO_LOG("TileDebugSession detached, deviceIndex = %lu\n", subDeviceIndex);
+}
+
+bool DebugSessionImp::areAllTileDebugSessionDetached() {
+    for (const auto &session : tileSessions) {
+        if (session.second == true) {
+            return false;
+        }
+    }
+    return true;
 }
 
 ze_result_t DebugSessionImp::interrupt(ze_device_thread_t thread) {
@@ -288,7 +370,6 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
 
     std::vector<ze_device_thread_t> resumeThreads;
     std::vector<EuThread::ThreadId> resumeThreadIds;
-
     for (auto &threadId : singleThreads) {
         if (allThreads[threadId]->isRunning()) {
             continue;
@@ -307,7 +388,7 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
     [[maybe_unused]] auto sipCommandResult = writeResumeCommand(resumeThreadIds);
     DEBUG_BREAK_IF(sipCommandResult != true);
 
-    auto result = resumeImp(resumeThreads, deviceIndex);
+    auto result = resumeImp(resumeThreadIds, deviceIndex);
 
     for (auto &threadID : resumeThreadIds) {
         while (checkThreadIsResumed(threadID) == false)
@@ -323,15 +404,32 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
     return retVal;
 }
 
+void DebugSessionImp::applyResumeWa(uint8_t *bitmask, size_t bitmaskSize) {
+
+    UNRECOVERABLE_IF(bitmaskSize % 8 != 0);
+
+    auto &l0GfxCoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+    if (l0GfxCoreHelper.isResumeWARequired()) {
+
+        uint32_t *dwordBitmask = reinterpret_cast<uint32_t *>(bitmask);
+        for (uint32_t i = 0; i < bitmaskSize / sizeof(uint32_t) - 1; i = i + 2) {
+            dwordBitmask[i] = dwordBitmask[i] | dwordBitmask[i + 1];
+            dwordBitmask[i + 1] = dwordBitmask[i] | dwordBitmask[i + 1];
+        }
+    }
+    return;
+}
+
 bool DebugSessionImp::writeResumeCommand(const std::vector<EuThread::ThreadId> &threadIds) {
     auto stateSaveAreaHeader = getStateSaveAreaHeader();
     bool success = true;
 
     if (stateSaveAreaHeader->versionHeader.version.major < 2u) {
         auto &hwInfo = connectedDevice->getHwInfo();
-        auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+        auto &l0GfxCoreHelper = connectedDevice->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-        if (l0HwHelper.isResumeWARequired()) {
+        if (l0GfxCoreHelper.isResumeWARequired()) {
             constexpr uint32_t sipResumeValue = 0x40000000;
 
             bool isBindlessSip = (debugArea.reserved1 == 1);
@@ -347,14 +445,13 @@ bool DebugSessionImp::writeResumeCommand(const std::vector<EuThread::ThreadId> &
             auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
 
             for (auto &threadID : threadIds) {
-                auto apiThread = convertToApi(threadID);
                 memset(reg.get(), 0, regSize);
 
-                if (readRegistersImp(apiThread, registerType, 0, 1, reg.get()) != ZE_RESULT_SUCCESS) {
+                if (readRegistersImp(threadID, registerType, 0, 1, reg.get()) != ZE_RESULT_SUCCESS) {
                     success = false;
                 } else {
                     reg[dword] |= sipResumeValue;
-                    if (writeRegistersImp(apiThread, registerType, 0, 1, reg.get()) != ZE_RESULT_SUCCESS) {
+                    if (writeRegistersImp(threadID, registerType, 0, 1, reg.get()) != ZE_RESULT_SUCCESS) {
                         success = false;
                     }
                 }
@@ -362,16 +459,13 @@ bool DebugSessionImp::writeResumeCommand(const std::vector<EuThread::ThreadId> &
         }
     } else // >= 2u
     {
-        auto *regdesc = &stateSaveAreaHeader->regHeader.cmd;
         SIP::sip_command resumeCommand = {0};
         resumeCommand.command = static_cast<uint32_t>(NEO::SipKernel::COMMAND::RESUME);
 
         for (auto &threadID : threadIds) {
-            PRINT_DEBUGGER_INFO_LOG("Write RESUME for %s\n", EuThread::toString(threadID).c_str());
-            auto result = registersAccessHelper(allThreads[threadID].get(), regdesc, 0, 1, &resumeCommand, true);
+            ze_result_t result = cmdRegisterAccessHelper(threadID, resumeCommand, true);
             if (result != ZE_RESULT_SUCCESS) {
                 success = false;
-                PRINT_DEBUGGER_ERROR_LOG("Failed to write RESUME command for thread %s\n", EuThread::toString(threadID).c_str());
             }
         }
     }
@@ -383,23 +477,10 @@ bool DebugSessionImp::checkThreadIsResumed(const EuThread::ThreadId &threadID) {
     bool resumed = true;
 
     if (stateSaveAreaHeader->versionHeader.version.major >= 2u) {
+        SIP::sr_ident srMagic = {{0}};
         const auto thread = allThreads[threadID].get();
-        auto gpuVa = getContextStateSaveAreaGpuVa(thread->getMemoryHandle());
-        if (gpuVa == 0) {
-            PRINT_DEBUGGER_ERROR_LOG("Failed to get Context State Save Area GPU Virtual Address\n", "");
-            return resumed;
-        }
 
-        auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
-        auto srMagicOffset = threadSlotOffset + getStateSaveAreaHeader()->regHeader.sr_magic_offset;
-        SIP::sr_ident srMagic;
-        memset(srMagic.magic, 0, sizeof(SIP::sr_ident::magic));
-
-        auto status = readGpuMemory(thread->getMemoryHandle(), reinterpret_cast<char *>(&srMagic), sizeof(srMagic), gpuVa + srMagicOffset);
-        DEBUG_BREAK_IF(status != ZE_RESULT_SUCCESS);
-
-        if (status != ZE_RESULT_SUCCESS || 0 != strcmp(srMagic.magic, "srmagic")) {
-            PRINT_DEBUGGER_ERROR_LOG("checkThreadIsResumed - Failed to read srMagic for thread %s\n", EuThread::toString(threadID).c_str());
+        if (!readSystemRoutineIdent(thread, thread->getMemoryHandle(), srMagic)) {
             return resumed;
         }
 
@@ -420,9 +501,14 @@ ze_result_t DebugSessionImp::resume(ze_device_thread_t thread) {
     ze_result_t retVal = ZE_RESULT_SUCCESS;
 
     if (singleDevice) {
-        uint32_t deviceIndex = 0;
-        if (thread.slice != UINT32_MAX) {
-            deviceIndex = getDeviceIndexFromApiThread(thread);
+        uint32_t deviceIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
+
+        if (connectedDevice->getNEODevice()->isSubDevice()) {
+            deviceIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
+        } else {
+            if (thread.slice != UINT32_MAX) {
+                deviceIndex = getDeviceIndexFromApiThread(thread);
+            }
         }
         auto physicalThread = convertToPhysicalWithinDevice(thread, deviceIndex);
         auto result = resumeThreadsWithinDevice(deviceIndex, physicalThread);
@@ -480,7 +566,8 @@ void DebugSessionImp::sendInterrupts() {
     auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
 
     if (deviceCount == 1) {
-        uint32_t deviceIndex = 0;
+        uint32_t deviceIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
+
         ze_result_t result;
         {
             std::unique_lock<std::mutex> lock(threadStateMutex);
@@ -553,9 +640,35 @@ void DebugSessionImp::sendInterrupts() {
     }
 }
 
+bool DebugSessionImp::readSystemRoutineIdent(EuThread *thread, uint64_t memoryHandle, SIP::sr_ident &srIdent) {
+    auto stateSaveAreaHeader = getStateSaveAreaHeader();
+    if (!stateSaveAreaHeader) {
+        return false;
+    }
+
+    auto gpuVa = getContextStateSaveAreaGpuVa(memoryHandle);
+    if (gpuVa == 0) {
+        return false;
+    }
+
+    auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
+    auto srMagicOffset = threadSlotOffset + stateSaveAreaHeader->regHeader.sr_magic_offset;
+
+    if (ZE_RESULT_SUCCESS != readGpuMemory(memoryHandle, reinterpret_cast<char *>(&srIdent), sizeof(srIdent), gpuVa + srMagicOffset)) {
+        return false;
+    }
+
+    if (0 != strcmp(srIdent.magic, "srmagic")) {
+        PRINT_DEBUGGER_ERROR_LOG("readSystemRoutineIdent - Failed to read srMagic for thread %s\n", EuThread::toString(thread->getThreadId()).c_str());
+        return false;
+    }
+
+    return true;
+}
+
 void DebugSessionImp::markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle) {
 
-    SIP::sr_ident srMagic = {};
+    SIP::sr_ident srMagic = {{0}};
     srMagic.count = 0;
 
     bool wasStopped = false;
@@ -586,7 +699,10 @@ void DebugSessionImp::markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttentio
         auto isInterrupted = checkSingleThreadWithinDeviceThread(apiThread, request.first);
 
         if (isInterrupted) {
-            request.second = true;
+            // mark pending interrupt as completed successfully only when new thread has been stopped
+            if (!wasStopped) {
+                request.second = true;
+            }
             threadWasInterrupted = true;
         }
     }
@@ -630,14 +746,16 @@ bool DebugSessionImp::isForceExceptionOrForceExternalHaltOnlyExceptionReason(uin
 
 void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<EuThread::ThreadId> &resumeThreads, std::vector<EuThread::ThreadId> &stoppedThreadsToReport) {
 
+    if (newlyStoppedThreads.empty()) {
+        return;
+    }
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU), 64u);
     auto reg = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
 
     for (auto &newlyStopped : newlyStoppedThreads) {
         if (allThreads[newlyStopped]->isStopped()) {
             memset(reg.get(), 0, regSize);
-            ze_device_thread_t apiThread = convertToApi(newlyStopped);
-            readRegistersImp(apiThread, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg.get());
+            readRegistersImp(newlyStopped, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg.get());
 
             if (isForceExceptionOrForceExternalHaltOnlyExceptionReason(reg.get())) {
                 PRINT_DEBUGGER_THREAD_LOG("RESUME accidentally stopped thread = %s\n", allThreads[newlyStopped]->toString().c_str());
@@ -691,10 +809,10 @@ void DebugSessionImp::resumeAccidentallyStoppedThreads(const std::vector<EuThrea
     for (uint32_t i = 0; i < 4; i++) {
         std::unique_lock<std::mutex> lock(threadStateMutex);
 
-        if (threads[i].size() > 0) {
+        if (threadIdsPerDevice[i].size() > 0) {
             [[maybe_unused]] auto writeSipCommandResult = writeResumeCommand(threadIdsPerDevice[i]);
             DEBUG_BREAK_IF(writeSipCommandResult != true);
-            resumeImp(threads[i], i);
+            resumeImp(threadIdsPerDevice[i], i);
         }
 
         for (auto &threadID : threadIdsPerDevice[i]) {
@@ -717,6 +835,67 @@ void DebugSessionImp::generateEventsForStoppedThreads(const std::vector<EuThread
     }
 }
 
+ze_result_t DebugSessionImp::readEvent(uint64_t timeout, zet_debug_event_t *outputEvent) {
+
+    if (outputEvent) {
+        outputEvent->type = ZET_DEBUG_EVENT_TYPE_INVALID;
+        outputEvent->flags = 0;
+    } else {
+        return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+    }
+
+    do {
+        std::unique_lock<std::mutex> lock(asyncThreadMutex);
+
+        if (timeout > 0 && apiEvents.size() == 0) {
+            apiEventCondition.wait_for(lock, std::chrono::milliseconds(timeout));
+        }
+
+        if (apiEvents.size() > 0) {
+            *outputEvent = apiEvents.front();
+            apiEvents.pop();
+            return ZE_RESULT_SUCCESS;
+        }
+    } while (timeout == UINT64_MAX && asyncThread.threadActive);
+
+    return ZE_RESULT_NOT_READY;
+}
+
+void DebugSessionImp::validateAndSetStateSaveAreaHeader(uint64_t vmHandle, uint64_t gpuVa) {
+    auto headerSize = sizeof(SIP::StateSaveAreaHeader);
+    std::vector<char> data(headerSize);
+    auto retVal = readGpuMemory(vmHandle, data.data(), headerSize, gpuVa);
+
+    if (retVal != ZE_RESULT_SUCCESS) {
+        PRINT_DEBUGGER_ERROR_LOG("Reading Context State Save Area failed, error = %d\n", retVal);
+        return;
+    }
+
+    auto pStateSaveArea = reinterpret_cast<const SIP::StateSaveAreaHeader *>(data.data());
+    if (0 == strcmp(pStateSaveArea->versionHeader.magic, "tssarea")) {
+        size_t size = pStateSaveArea->versionHeader.size * 8u;
+        DEBUG_BREAK_IF(size != sizeof(SIP::StateSaveAreaHeader));
+        stateSaveAreaHeader.assign(data.begin(), data.begin() + size);
+        PRINT_DEBUGGER_INFO_LOG("Context State Save Area : version == %d.%d.%d\n", (int)pStateSaveArea->versionHeader.version.major, (int)pStateSaveArea->versionHeader.version.minor, (int)pStateSaveArea->versionHeader.version.patch);
+        slmSipVersionCheck();
+    } else {
+        PRINT_DEBUGGER_ERROR_LOG("Setting Context State Save Area: failed to match magic numbers\n", "");
+    }
+}
+
+void DebugSessionImp::slmSipVersionCheck() {
+
+    SIP::version sipVersion = getStateSaveAreaHeader()->versionHeader.version;
+    if ((sipVersion.major < minSlmSipVersion.major) ||
+        ((sipVersion.major == minSlmSipVersion.major) && (sipVersion.minor < minSlmSipVersion.minor)) ||
+        ((sipVersion.major == minSlmSipVersion.major) && (sipVersion.minor == minSlmSipVersion.minor) && (sipVersion.patch < minSlmSipVersion.patch))) {
+
+        sipSupportsSlm = false;
+    } else {
+        sipSupportsSlm = true;
+    }
+}
+
 const SIP::StateSaveAreaHeader *DebugSessionImp::getStateSaveAreaHeader() {
     if (stateSaveAreaHeader.empty()) {
         readStateSaveAreaHeader();
@@ -733,8 +912,8 @@ const SIP::regset_desc *DebugSessionImp::getSbaRegsetDesc() {
 const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
     auto pStateSaveAreaHeader = getStateSaveAreaHeader();
 
-    DEBUG_BREAK_IF(pStateSaveAreaHeader == nullptr);
     if (pStateSaveAreaHeader == nullptr) {
+        DEBUG_BREAK_IF(pStateSaveAreaHeader == nullptr);
         return nullptr;
     }
 
@@ -761,6 +940,8 @@ const SIP::regset_desc *DebugSessionImp::typeToRegsetDesc(uint32_t type) {
         return &pStateSaveAreaHeader->regHeader.sp;
     case ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU:
         return &pStateSaveAreaHeader->regHeader.dbg;
+    case ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU:
+        return &pStateSaveAreaHeader->regHeader.fc;
     case ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU:
         return DebugSessionImp::getSbaRegsetDesc();
     default:
@@ -786,6 +967,7 @@ uint32_t DebugSessionImp::typeToRegsetFlags(uint32_t type) {
     case ZET_DEBUG_REGSET_TYPE_ACC_INTEL_GPU:
     case ZET_DEBUG_REGSET_TYPE_SP_INTEL_GPU:
     case ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU:
+    case ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU:
         return ZET_DEBUG_REGSET_FLAG_READABLE | ZET_DEBUG_REGSET_FLAG_WRITEABLE;
 
     case ZET_DEBUG_REGSET_TYPE_CE_INTEL_GPU:
@@ -807,7 +989,7 @@ size_t DebugSessionImp::calculateRegisterOffsetInThreadSlot(const SIP::regset_de
     return regdesc->offset + regdesc->bytes * start;
 }
 
-ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_t start, uint32_t count, void *pRegisterValues) {
+ze_result_t DebugSessionImp::readSbaRegisters(EuThread::ThreadId threadId, uint32_t start, uint32_t count, void *pRegisterValues) {
     auto sbaRegDesc = DebugSessionImp::getSbaRegsetDesc();
 
     if (start >= sbaRegDesc->num) {
@@ -821,7 +1003,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_
     ze_result_t ret = ZE_RESULT_SUCCESS;
 
     NEO::SbaTrackedAddresses sbaBuffer;
-    ret = readSbaBuffer(convertToThreadId(thread), sbaBuffer);
+    ret = readSbaBuffer(threadId, sbaBuffer);
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -830,7 +1012,7 @@ ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_
     const auto regSize = std::max(getRegisterSize(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), hwInfo.capabilityTable.grfSize);
     auto r0 = std::make_unique<uint32_t[]>(regSize / sizeof(uint32_t));
 
-    ret = readRegistersImp(thread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0.get());
+    ret = readRegistersImp(threadId, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0.get());
     if (ret != ZE_RESULT_SUCCESS) {
         return ret;
     }
@@ -838,8 +1020,8 @@ ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_
     uint64_t bindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaBuffer.SurfaceStateBaseAddress;
     uint64_t scratchSpaceBaseAddress = 0;
 
-    auto &hwHelper = NEO::HwHelper::get(connectedDevice->getNEODevice()->getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.isScratchSpaceSurfaceStateAccessible()) {
+    auto &gfxCoreHelper = connectedDevice->getGfxCoreHelper();
+    if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         auto surfaceStateForScratch = ((r0[5] >> 10) << 6);
 
         if (surfaceStateForScratch > 0) {
@@ -847,16 +1029,16 @@ ze_result_t DebugSessionImp::readSbaRegisters(ze_device_thread_t thread, uint32_
             constexpr size_t renderSurfaceStateSize = 64;
             std::vector<char> renderSurfaceState(renderSurfaceStateSize, 0);
 
-            ret = readGpuMemory(allThreads[convertToThreadId(thread)]->getMemoryHandle(), renderSurfaceState.data(), renderSurfaceStateSize, renderSurfaceStateGpuVa);
+            ret = readGpuMemory(allThreads[threadId]->getMemoryHandle(), renderSurfaceState.data(), renderSurfaceStateSize, renderSurfaceStateGpuVa);
 
             if (ret != ZE_RESULT_SUCCESS) {
                 return ret;
             }
 
-            auto scratchSpacePTSize = hwHelper.getRenderSurfaceStatePitch(renderSurfaceState.data());
-            auto threadOffset = getPerThreadScratchOffset(scratchSpacePTSize, convertToThreadId(thread));
+            auto scratchSpacePTSize = gfxCoreHelper.getRenderSurfaceStatePitch(renderSurfaceState.data());
+            auto threadOffset = getPerThreadScratchOffset(scratchSpacePTSize, threadId);
             auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-            auto scratchAllocationBase = gmmHelper->decanonize(hwHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data()));
+            auto scratchAllocationBase = gmmHelper->decanonize(gfxCoreHelper.getRenderSurfaceStateBaseAddress(renderSurfaceState.data()));
             if (scratchAllocationBase != 0) {
                 scratchSpaceBaseAddress = threadOffset + scratchAllocationBase;
             }
@@ -938,6 +1120,7 @@ ze_result_t DebugSession::getRegisterSetProperties(Device *device, uint32_t *pCo
     parseRegsetDesc(*DebugSessionImp::getSbaRegsetDesc(), ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU);
 
     parseRegsetDesc(pStateSaveArea->regHeader.dbg, ZET_DEBUG_REGSET_TYPE_DBG_INTEL_GPU);
+    parseRegsetDesc(pStateSaveArea->regHeader.fc, ZET_DEBUG_REGSET_TYPE_FC_INTEL_GPU);
 
     if (!*pCount || (*pCount > totalRegsetNum)) {
         *pCount = totalRegsetNum;
@@ -969,10 +1152,9 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
 
     auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
 
-    auto srMagicOffset = threadSlotOffset + getStateSaveAreaHeader()->regHeader.sr_magic_offset;
-    SIP::sr_ident srMagic;
-    memset(srMagic.magic, 0, sizeof(SIP::sr_ident::magic));
+    SIP::sr_ident srMagic = {{0}};
 
+    auto srMagicOffset = threadSlotOffset + getStateSaveAreaHeader()->regHeader.sr_magic_offset;
     readGpuMemory(thread->getMemoryHandle(), reinterpret_cast<char *>(&srMagic), sizeof(srMagic), gpuVa + srMagicOffset);
     if (0 != strcmp(srMagic.magic, "srmagic")) {
         return ZE_RESULT_ERROR_UNKNOWN;
@@ -990,8 +1172,27 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
     return ret == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_UNKNOWN;
 }
 
+ze_result_t DebugSessionImp::cmdRegisterAccessHelper(const EuThread::ThreadId &threadId, SIP::sip_command &command, bool write) {
+    auto stateSaveAreaHeader = getStateSaveAreaHeader();
+    auto *regdesc = &stateSaveAreaHeader->regHeader.cmd;
+
+    PRINT_DEBUGGER_INFO_LOG("Access CMD %d for thread %s\n", command.command, EuThread::toString(threadId).c_str());
+
+    ze_result_t result = registersAccessHelper(allThreads[threadId].get(), regdesc, 0, 1, &command, write);
+    if (result != ZE_RESULT_SUCCESS) {
+        PRINT_DEBUGGER_ERROR_LOG("Failed to access CMD for thread %s\n", EuThread::toString(threadId).c_str());
+    }
+
+    return result;
+}
+
 ze_result_t DebugSessionImp::readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
-    if (!areRequestedThreadsStopped(thread)) {
+    if (!isSingleThread(thread)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    auto threadId = convertToThreadId(thread);
+
+    if (!allThreads[threadId]->isStopped()) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -1001,23 +1202,28 @@ ze_result_t DebugSessionImp::readRegisters(ze_device_thread_t thread, uint32_t t
     }
 
     if (type == ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU) {
-        return readSbaRegisters(thread, start, count, pRegisterValues);
+        return readSbaRegisters(threadId, start, count, pRegisterValues);
     }
 
-    return readRegistersImp(thread, type, start, count, pRegisterValues);
+    return readRegistersImp(threadId, type, start, count, pRegisterValues);
 }
 
-ze_result_t DebugSessionImp::readRegistersImp(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
+ze_result_t DebugSessionImp::readRegistersImp(EuThread::ThreadId threadId, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
     auto regdesc = typeToRegsetDesc(type);
     if (nullptr == regdesc) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    return registersAccessHelper(allThreads[convertToThreadId(thread)].get(), regdesc, start, count, pRegisterValues, false);
+    return registersAccessHelper(allThreads[threadId].get(), regdesc, start, count, pRegisterValues, false);
 }
 
 ze_result_t DebugSessionImp::writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
-    if (!areRequestedThreadsStopped(thread)) {
+    if (!isSingleThread(thread)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    auto threadId = convertToThreadId(thread);
+
+    if (!allThreads[threadId]->isStopped()) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -1026,10 +1232,10 @@ ze_result_t DebugSessionImp::writeRegisters(ze_device_thread_t thread, uint32_t 
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    return writeRegistersImp(thread, type, start, count, pRegisterValues);
+    return writeRegistersImp(threadId, type, start, count, pRegisterValues);
 }
 
-ze_result_t DebugSessionImp::writeRegistersImp(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
+ze_result_t DebugSessionImp::writeRegistersImp(EuThread::ThreadId threadId, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) {
     auto regdesc = typeToRegsetDesc(type);
     if (nullptr == regdesc) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -1039,18 +1245,61 @@ ze_result_t DebugSessionImp::writeRegistersImp(ze_device_thread_t thread, uint32
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    return registersAccessHelper(allThreads[convertToThreadId(thread)].get(), regdesc, start, count, pRegisterValues, true);
+    return registersAccessHelper(allThreads[threadId].get(), regdesc, start, count, pRegisterValues, true);
 }
 
-bool DebugSessionImp::isValidGpuAddress(uint64_t address) {
-    auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
-    auto decanonizedAddress = gmmHelper->decanonize(address);
-    bool validAddress = gmmHelper->isValidCanonicalGpuAddress(address);
+bool DebugSessionImp::isValidGpuAddress(const zet_debug_memory_space_desc_t *desc) const {
 
-    if (address == decanonizedAddress || validAddress) {
-        return true;
+    if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT) {
+        auto gmmHelper = connectedDevice->getNEODevice()->getGmmHelper();
+        auto decanonizedAddress = gmmHelper->decanonize(desc->address);
+        bool validAddress = gmmHelper->isValidCanonicalGpuAddress(desc->address);
+
+        if (desc->address == decanonizedAddress || validAddress) {
+            return true;
+        }
+    } else if (desc->type == ZET_DEBUG_MEMORY_SPACE_TYPE_SLM) {
+        if (desc->address & (1 << slmAddressSpaceTag)) { // IGC sets bit 28 to identify SLM address
+            return true;
+        }
     }
+
     return false;
+}
+
+ze_result_t DebugSessionImp::validateThreadAndDescForMemoryAccess(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc) {
+    if (!isValidGpuAddress(desc)) {
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+    }
+
+    ze_result_t status = sanityMemAccessThreadCheck(thread, desc);
+    if (status != ZE_RESULT_SUCCESS) {
+        return status;
+    }
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t DebugSessionImp::waitForCmdReady(EuThread::ThreadId threadId, uint16_t retryCount) {
+    ze_result_t status;
+    SIP::sip_command sipCommand = {0};
+
+    for (uint16_t attempts = 0; attempts < retryCount; attempts++) {
+        status = cmdRegisterAccessHelper(threadId, sipCommand, false);
+        if (status != ZE_RESULT_SUCCESS) {
+            return status;
+        }
+
+        if (sipCommand.command == static_cast<uint32_t>(NEO::SipKernel::COMMAND::READY)) {
+            break;
+        }
+        NEO::sleep(std::chrono::microseconds(100));
+    }
+
+    if (sipCommand.command != static_cast<uint32_t>(NEO::SipKernel::COMMAND::READY)) {
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 } // namespace L0

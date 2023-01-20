@@ -6,8 +6,8 @@
  */
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/platform/platform.h"
@@ -25,10 +25,10 @@ class UmStatelessCompression : public AUBFixture,
     void SetUp() override {
         DebugManager.flags.EnableStatelessCompressionWithUnifiedMemory.set(1);
         compareCompressedMemory = GetParam();
-        AUBFixture::SetUp(defaultHwInfo.get());
+        AUBFixture::setUp(defaultHwInfo.get());
     }
     void TearDown() override {
-        AUBFixture::TearDown();
+        AUBFixture::tearDown();
     }
 
     DebugManagerStateRestore debugRestorer;
@@ -83,10 +83,10 @@ class UmStatelessCompressionWithBlitter : public MulticontextAubFixture,
         DebugManager.flags.EnableBlitterForEnqueueOperations.set(1);
         compareCompressedMemory = GetParam();
 
-        MulticontextAubFixture::SetUp(1, EnabledCommandStreamers::Single, true);
+        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);
     }
     void TearDown() override {
-        MulticontextAubFixture::TearDown();
+        MulticontextAubFixture::tearDown();
     }
 
     DebugManagerStateRestore debugRestorer;
@@ -141,12 +141,12 @@ class UmStatelessCompressionWithStatefulAccess : public ProgramFixture,
         DebugManager.flags.EnableSharedSystemUsmSupport.set(0);
         compareCompressedMemory = GetParam();
 
-        ProgramFixture::SetUp();
-        MulticontextAubFixture::SetUp(1, EnabledCommandStreamers::Single, true);
+        ProgramFixture::setUp();
+        MulticontextAubFixture::setUp(1, EnabledCommandStreamers::Single, true);
     }
     void TearDown() override {
-        MulticontextAubFixture::TearDown();
-        ProgramFixture::TearDown();
+        MulticontextAubFixture::tearDown();
+        ProgramFixture::tearDown();
     }
 
     DebugManagerStateRestore debugRestorer;
@@ -175,7 +175,7 @@ XE_HPC_CORETEST_P(UmStatelessCompressionWithStatefulAccess, givenDeviceMemAllocW
     EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, hostMemAlloc);
 
-    CreateProgramFromBinary(context.get(), context->getDevices(), "stateful_copy_buffer");
+    createProgramFromBinary(context.get(), context->getDevices(), "stateful_copy_buffer");
 
     retVal = pProgram->build(context->getDevices(), nullptr, false);
     ASSERT_EQ(CL_SUCCESS, retVal);

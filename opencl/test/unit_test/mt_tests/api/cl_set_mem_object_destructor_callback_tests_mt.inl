@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,12 +23,12 @@ struct clSetMemObjectDestructorCallbackMtTests : public ApiFixture<>,
                                                  public ::testing::Test {
 
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
         cbInvoked = 0;
     }
 
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     static void setMemCallbackThreadFunc(cl_mem buf) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,13 +76,11 @@ TEST(localMemoryUsageTest, givenOverrideLeastOccupiedBankDebugFlagWhenGetLeastOc
 }
 
 TEST(localMemoryUsageTest, givenLocalMemoryUsageBankSelectorWhenMemoryAllocatedSeveralTimesThenItIsStoredOnDifferentBanks) {
-    MockLocalMemoryUsageBankSelector selector(5u);
+    MockLocalMemoryUsageBankSelector selector(4u);
 
     uint64_t allocationSize = 1024u;
 
     auto bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
-    selector.reserveOnBank(bankIndex, allocationSize);
-    bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
     selector.reserveOnBank(bankIndex, allocationSize);
     bankIndex = selector.getLeastOccupiedBank(selector.bitfield);
     selector.reserveOnBank(bankIndex, allocationSize);

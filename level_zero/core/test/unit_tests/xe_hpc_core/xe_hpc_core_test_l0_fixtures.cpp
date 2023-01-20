@@ -7,7 +7,7 @@
 
 #include "level_zero/core/test/unit_tests/xe_hpc_core/xe_hpc_core_test_l0_fixtures.h"
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 
@@ -29,7 +29,7 @@ void DeviceFixtureXeHpcTests::checkIfCallingGetMemoryPropertiesWithNonNullPtrThe
 }
 
 void CommandListStatePrefetchXeHpcCore::checkIfDebugFlagSetWhenPrefetchApiCalledAThenStatePrefetchProgrammed(HardwareInfo *hwInfo) {
-    using STATE_PREFETCH = typename XE_HPC_COREFamily::STATE_PREFETCH;
+    using STATE_PREFETCH = typename XeHpcCoreFamily::STATE_PREFETCH;
     DebugManagerStateRestore restore;
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<IGFX_XE_HPC_CORE>>>();
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
@@ -76,8 +76,8 @@ void CommandListStatePrefetchXeHpcCore::checkIfDebugFlagSetWhenPrefetchApiCalled
 }
 
 void CommandListStatePrefetchXeHpcCore::checkIfCommandBufferIsExhaustedWhenPrefetchApiCalledThenStatePrefetchProgrammed(HardwareInfo *hwInfo) {
-    using STATE_PREFETCH = typename XE_HPC_COREFamily::STATE_PREFETCH;
-    using MI_BATCH_BUFFER_END = typename XE_HPC_COREFamily::MI_BATCH_BUFFER_END;
+    using STATE_PREFETCH = typename XeHpcCoreFamily::STATE_PREFETCH;
+    using MI_BATCH_BUFFER_END = typename XeHpcCoreFamily::MI_BATCH_BUFFER_END;
 
     DebugManagerStateRestore restore;
 

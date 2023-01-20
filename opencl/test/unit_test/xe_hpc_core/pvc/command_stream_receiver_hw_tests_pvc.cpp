@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,11 +13,13 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/ult_aub_command_stream_receiver.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -63,11 +65,11 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenNotExistPolicyWhenFlushin
     EXPECT_EQ(notExistPolicy, commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value);
 }
 
-PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLastSpecialPipelineSelectModeIsTrueAndFlushTaskIsCalledThenDontReprogramPipelineSelect) {
+PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLastSystolicPipelineSelectModeIsTrueAndFlushTaskIsCalledThenDontReprogramPipelineSelect) {
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
-    flushTaskFlags.pipelineSelectArgs.specialPipelineSelectMode = true;
+    flushTaskFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
     flushTaskFlags.pipelineSelectArgs.mediaSamplerRequired = false;
 
     struct {
@@ -81,15 +83,22 @@ PVCTEST_F(PvcCommandStreamReceiverFlushTaskTests, givenRevisionBAndAboveWhenLast
         {0x6, false},
         {0x7, false},
     };
+    auto &productHelper = pDevice->getProductHelper();
     for (auto &testInput : testInputs) {
         hwInfo->platform.usRevId = testInput.revId;
+        productHelper.fillPipelineSelectPropertiesSupportStructure(commandStreamReceiver.pipelineSupportFlags, *hwInfo);
         commandStreamReceiver.isPreambleSent = true;
         commandStreamReceiver.lastMediaSamplerConfig = false;
+        commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+        commandStreamReceiver.streamProperties.pipelineSelect.systolicMode.value = -1;
 
         flushTask(commandStreamReceiver);
 
-        EXPECT_EQ(testInput.expectedValue, commandStreamReceiver.lastSpecialPipelineSelectMode);
-        commandStreamReceiver.lastSpecialPipelineSelectMode = false;
+        if (testInput.expectedValue) {
+            EXPECT_TRUE(commandStreamReceiver.lastSystolicPipelineSelectMode);
+        } else {
+            EXPECT_FALSE(commandStreamReceiver.lastSystolicPipelineSelectMode);
+        }
     }
 }
 

@@ -17,7 +17,7 @@ template <bool hasHostPtr, cl_mem_flags parentFlags>
 class ClCreateSubBufferTemplateTests : public ApiFixture<>,
                                        public testing::TestWithParam<uint64_t /*cl_mem_flags*/> {
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
         cl_mem_flags flg = parentFlags;
         void *ptr = nullptr;
 
@@ -33,7 +33,7 @@ class ClCreateSubBufferTemplateTests : public ApiFixture<>,
 
     void TearDown() override {
         clReleaseMemObject(buffer);
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
   protected:
@@ -113,7 +113,7 @@ class ClCreateSubBufferTests : public api_tests {
 
     void TearDown() override {
         clReleaseMemObject(buffer);
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
   protected:

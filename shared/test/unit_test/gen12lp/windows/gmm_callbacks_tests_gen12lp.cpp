@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/command_stream_receiver_with_aub_dump.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/os_interface/windows/wddm_device_command_stream.h"
@@ -17,7 +18,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
@@ -74,7 +75,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCcsEnabledhenWriteL3CalledThenSetRe
     localHwInfo.featureTable.flags.ftrCCSNode = true;
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1u);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     executionEnvironment.initializeMemoryManager();
     UltCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1);
     uint8_t buffer[128] = {};
@@ -102,7 +103,7 @@ GEN12LPTEST_F(Gen12LpGmmCallbacksTests, givenCcsDisabledhenWriteL3CalledThenSetR
     localHwInfo.featureTable.flags.ftrCCSNode = false;
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1u);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&localHwInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&localHwInfo);
     executionEnvironment.initializeMemoryManager();
     UltCommandStreamReceiver<FamilyType> csr(executionEnvironment, 0, 1);
     uint8_t buffer[128] = {};

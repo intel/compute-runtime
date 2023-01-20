@@ -7,6 +7,11 @@
 
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/linux/i915.h"
+
+#include "gtest/gtest.h"
+
 const int mockFd = 33;
 const char *mockPciPath = "";
 
@@ -20,6 +25,7 @@ void Ioctls::reset() {
     gemSetTiling = 0;
     gemGetTiling = 0;
     gemVmCreate = 0;
+    gemVmDestroy = 0;
     primeFdToHandle = 0;
     handleToPrimeFd = 0;
     gemMmapOffset = 0;
@@ -66,7 +72,7 @@ void DrmMockCustom::testIoctls() {
 int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
     auto ext = ioctl_res_ext.load();
 
-    //store flags
+    // store flags
     switch (request) {
     case DrmIoctl::GemExecbuffer2: {
         auto execbuf = static_cast<NEO::MockExecBuffer *>(arg);
@@ -105,7 +111,7 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::PrimeFdToHandle: {
         auto *primeToHandleParams = static_cast<NEO::PrimeHandle *>(arg);
-        //return BO
+        // return BO
         primeToHandleParams->handle = outputHandle;
         inputFd = primeToHandleParams->fileDescriptor;
         ioctl_cnt.primeFdToHandle++;
@@ -115,10 +121,13 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::PrimeHandleToFd: {
         auto *handleToPrimeParams = static_cast<NEO::PrimeHandle *>(arg);
-        //return FD
+        // return FD
         inputHandle = handleToPrimeParams->handle;
         inputFlags = handleToPrimeParams->flags;
         handleToPrimeParams->fileDescriptor = outputFd;
+        if (incrementOutputFdAfterCall) {
+            outputFd++;
+        }
         ioctl_cnt.handleToPrimeFd++;
     } break;
     case DrmIoctl::GemSetDomain: {
@@ -178,7 +187,7 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         }
     } break;
     case DrmIoctl::GemCreateExt: {
-        auto createExtParams = reinterpret_cast<drm_i915_gem_create_ext *>(arg);
+        auto createExtParams = reinterpret_cast<NEO::I915::drm_i915_gem_create_ext *>(arg);
         createExtSize = createExtParams->size;
         createExtHandle = createExtParams->handle;
         createExtExtensions = createExtParams->extensions;
@@ -188,6 +197,11 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::GemVmUnbind: {
     } break;
+    case DrmIoctl::GemVmCreate: {
+        auto vmCreate = reinterpret_cast<NEO::GemVmControl *>(arg);
+        vmCreate->vmId = vmIdToCreate;
+        break;
+    }
     default:
         int res = ioctlExtra(request, arg);
         if (returnIoctlExtraErrorValue) {
@@ -206,10 +220,11 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
 DrmMockCustom::DrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment)
     : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, mockPciPath), rootDeviceEnvironment) {
     reset();
-    ioctl_expected.contextCreate = static_cast<int>(NEO::HwHelper::get(NEO::defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*NEO::defaultHwInfo).size());
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
+    ioctl_expected.contextCreate = static_cast<int>(gfxCoreHelper.getGpgpuEngineInstances(*NEO::defaultHwInfo).size());
     ioctl_expected.contextDestroy = ioctl_expected.contextCreate.load();
     setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
-    createVirtualMemoryAddressSpace(NEO::HwHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
+    createVirtualMemoryAddressSpace(NEO::GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()));
     isVmBindAvailable(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
     reset();
 }
@@ -231,5 +246,14 @@ bool DrmMockCustom::isVmBindAvailable() {
         return Drm::isVmBindAvailable();
     } else {
         return isVmBindAvailableCall.returnValue;
+    }
+}
+
+bool DrmMockCustom::getSetPairAvailable() {
+    getSetPairAvailableCall.called++;
+    if (getSetPairAvailableCall.callParent) {
+        return Drm::getSetPairAvailable();
+    } else {
+        return getSetPairAvailableCall.returnValue;
     }
 }

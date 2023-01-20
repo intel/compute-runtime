@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ namespace ULT {
 struct clEnqueueCopyImageToBufferTests : public ApiFixture<>,
                                          public ::testing::Test {
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
 
         // clang-format off
         imageFormat.image_channel_order     = CL_YUYV_INTEL;
@@ -40,7 +40,7 @@ struct clEnqueueCopyImageToBufferTests : public ApiFixture<>,
     }
 
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_image_format imageFormat;
@@ -53,12 +53,12 @@ TEST_F(clEnqueueCopyImageToBufferTests, GivenInvalidQueueWhenCopyingImageToBuffe
 
     auto retVal = clEnqueueCopyImageToBuffer(
         nullptr,
-        nullptr, //srcBuffer
-        nullptr, //dstBuffer
+        nullptr, // srcBuffer
+        nullptr, // dstBuffer
         srcOrigin,
         region,
-        0, //dstOffset
-        0, //numEventsInWaitList
+        0, // dstOffset
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -71,12 +71,12 @@ TEST_F(clEnqueueCopyImageToBufferTests, GivenInvalidBufferWhenCopyingImageToBuff
 
     auto retVal = clEnqueueCopyImageToBuffer(
         pCommandQueue,
-        nullptr, //srcBuffer
-        nullptr, //dstBuffer
+        nullptr, // srcBuffer
+        nullptr, // dstBuffer
         srcOrigin,
         region,
-        0, //dstOffset
-        0, //numEventsInWaitList
+        0, // dstOffset
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -99,8 +99,8 @@ TEST_F(clEnqueueCopyImageToBufferTests, GivenValidParametersWhenCopyingImageToBu
         dstBuffer.get(),
         srcOrigin,
         region,
-        0, //dstOffset
-        0, //numEventsInWaitList
+        0, // dstOffset
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -124,8 +124,8 @@ TEST_F(clEnqueueCopyImageToBufferTests, GivenQueueIncapableWhenCopyingImageToBuf
         dstBuffer.get(),
         srcOrigin,
         region,
-        0, //dstOffset
-        0, //numEventsInWaitList
+        0, // dstOffset
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 

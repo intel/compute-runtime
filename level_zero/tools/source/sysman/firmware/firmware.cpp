@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,11 +23,7 @@ void FirmwareHandleContext::releaseFwHandles() {
 }
 void FirmwareHandleContext::createHandle(const std::string &fwType) {
     Firmware *pFirmware = new FirmwareImp(pOsSysman, fwType);
-    if (pFirmware->isFirmwareEnabled == true) {
-        handleList.push_back(pFirmware);
-    } else {
-        delete pFirmware;
-    }
+    handleList.push_back(pFirmware);
 }
 
 void FirmwareHandleContext::init() {
@@ -39,6 +35,10 @@ void FirmwareHandleContext::init() {
 }
 
 ze_result_t FirmwareHandleContext::firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) {
+    std::call_once(initFirmwareOnce, [this]() {
+        this->init();
+        this->firmwareInitDone = true;
+    });
     uint32_t handleListSize = static_cast<uint32_t>(handleList.size());
     uint32_t numToCopy = std::min(*pCount, handleListSize);
     if (0 == *pCount || *pCount > handleListSize) {

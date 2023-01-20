@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,13 @@
 #include "opencl/source/memory_manager/migration_controller.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
+#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
@@ -27,12 +29,17 @@ void MigrationController::handleMigration(Context &context, CommandStreamReceive
     if (migrationSyncData->getCurrentLocation() != targetRootDeviceIndex) {
         migrateMemory(context, *memoryManager, memObj, targetRootDeviceIndex);
     }
-    migrationSyncData->signalUsage(targetCsr.getTagAddress(), targetCsr.peekTaskCount() + 1);
+    if (!context.getSpecialQueue(targetRootDeviceIndex)->isWaitForTimestampsEnabled()) {
+        migrationSyncData->signalUsage(targetCsr.getTagAddress(), targetCsr.peekTaskCount() + 1);
+    }
 }
 
 void MigrationController::migrateMemory(Context &context, MemoryManager &memoryManager, MemObj *memObj, uint32_t targetRootDeviceIndex) {
     auto &multiGraphicsAllocation = memObj->getMultiGraphicsAllocation();
     auto migrationSyncData = multiGraphicsAllocation.getMigrationSyncData();
+    if (migrationSyncData->isMigrationInProgress()) {
+        return;
+    }
 
     auto sourceRootDeviceIndex = migrationSyncData->getCurrentLocation();
     if (sourceRootDeviceIndex == std::numeric_limits<uint32_t>::max()) {

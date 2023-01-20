@@ -11,7 +11,7 @@ namespace L0 {
 namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingInitTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Global.pfnInit = [](ze_init_flags_t flags) { return ZE_RESULT_SUCCESS; };
 
     prologCbs.Global.pfnInitCb = genericPrologCallbackPtr;

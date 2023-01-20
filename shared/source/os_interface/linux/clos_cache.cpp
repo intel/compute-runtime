@@ -38,15 +38,15 @@ CacheRegion ClosCacheReservation::freeCache(CacheLevel cacheLevel, CacheRegion c
 }
 
 CacheRegion ClosCacheReservation::allocEntry() {
-    return drm.getIoctlHelper()->closAlloc(&drm);
+    return drm.getIoctlHelper()->closAlloc();
 }
 
 CacheRegion ClosCacheReservation::freeEntry(CacheRegion closIndex) {
-    return drm.getIoctlHelper()->closFree(&drm, closIndex);
+    return drm.getIoctlHelper()->closFree(closIndex);
 }
 
 uint16_t ClosCacheReservation::allocCacheWay(CacheRegion closIndex, CacheLevel cacheLevel, uint16_t numWays) {
-    return drm.getIoctlHelper()->closAllocWays(&drm, closIndex, static_cast<uint16_t>(cacheLevel), numWays);
+    return drm.getIoctlHelper()->closAllocWays(closIndex, static_cast<uint16_t>(cacheLevel), numWays);
 }
 
 } // namespace NEO

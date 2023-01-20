@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,10 +16,12 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/source/program/program.h"
 #include "opencl/source/sampler/sampler.h"
+#include "opencl/source/sharings/sharing_factory.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -94,11 +96,11 @@ class MockObject<Program> : public MockObjectBase<Program> {
 typedef ::testing::Types<
     MockPlatform,
     IntelAccelerator,
-    //Context,
-    //Program,
-    //Kernel,
-    //Sampler
-    //others...
+    // Context,
+    // Program,
+    // Kernel,
+    // Sampler
+    // others...
     MockCommandQueue>
     BaseObjectTypes;
 
@@ -224,7 +226,7 @@ TYPED_TEST(BaseObjectTests, WhenCastingToDispatchTableThenEntriesAreCorrect) {
 TEST(BaseObjectTests, WhenSettingSharedContextFlagThenItIsSetCorrectly) {
     MockContext newContext;
 
-    //cast to cl_context
+    // cast to cl_context
     cl_context clContext = &newContext;
     EXPECT_FALSE(newContext.isSharedContext);
 

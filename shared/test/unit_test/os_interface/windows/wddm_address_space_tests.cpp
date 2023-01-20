@@ -9,7 +9,8 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_wddm.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/os_interface/windows/wddm_fixture.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 

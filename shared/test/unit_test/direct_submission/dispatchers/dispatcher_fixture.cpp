@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,15 +12,15 @@
 
 using namespace NEO;
 
-void DispatcherFixture::SetUp() {
-    DeviceFixture::SetUp();
+void DispatcherFixture::setUp() {
+    DeviceFixture::setUp();
 
     bufferAllocation = alignedMalloc(MemoryConstants::pageSize, MemoryConstants::pageSize);
     cmdBuffer.replaceBuffer(bufferAllocation, MemoryConstants::pageSize);
 }
 
-void DispatcherFixture::TearDown() {
+void DispatcherFixture::tearDown() {
     alignedFree(bufferAllocation);
 
-    DeviceFixture::TearDown();
+    DeviceFixture::tearDown();
 }

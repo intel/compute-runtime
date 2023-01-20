@@ -8,9 +8,6 @@
 #include "zello_common.h"
 #include "zello_compile.h"
 
-extern bool verbose;
-bool verbose = false;
-
 const char *readNV12Module = R"===(
     __kernel void
     ReadNV12Kernel(
@@ -75,7 +72,7 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
                                   nullptr,
                                   (ZE_IMAGE_FLAG_BIAS_UNCACHED),
                                   ZE_IMAGE_TYPE_2D,
-                                  {ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_TYPE_UNORM,
                                    ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
                                    ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
                                   width,
@@ -87,7 +84,7 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
     ze_image_handle_t srcImg;
 
     SUCCESS_OR_TERMINATE(
-        zeImageCreate(context, device, const_cast<const ze_image_desc_t *>(&srcImgDesc), &srcImg));
+        zeImageCreate(context, device, &srcImgDesc, &srcImg));
 
     // create image_veiw for Y plane
     ze_image_view_planar_exp_desc_t planeYdesc = {};
@@ -176,11 +173,10 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
 
+    // create kernel which reads NV12 surface
+    ze_module_handle_t module = nullptr;
+    ze_kernel_handle_t kernel = nullptr;
     {
-        // create kernel which reads NV12 surface
-        ze_module_handle_t module = nullptr;
-        ze_kernel_handle_t kernel = nullptr;
-
         ze_module_desc_t moduleDesc = {};
         ze_module_build_log_handle_t buildlog;
         moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
@@ -197,6 +193,10 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
             std::cout << "Build log:" << strLog << std::endl;
 
             free(strLog);
+            SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
+            std::cout << "\nZello Image View Results validation FAILED. Module creation error."
+                      << std::endl;
+            SUCCESS_OR_TERMINATE_BOOL(false);
         }
         SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 
@@ -245,7 +245,7 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // validate Y plane data
     auto result = memcmp(srcVecY.data(), dstVecY.data(), width * height);
@@ -284,6 +284,8 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
     SUCCESS_OR_TERMINATE(zeImageDestroy(planeUVImageView));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+    SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
 }
 
 void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
@@ -327,7 +329,7 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
     ze_image_handle_t srcImg;
 
     SUCCESS_OR_TERMINATE(
-        zeImageCreate(context, device, const_cast<const ze_image_desc_t *>(&srcImgDesc), &srcImg));
+        zeImageCreate(context, device, &srcImgDesc, &srcImg));
 
     // create image_veiw for Y plane
     ze_image_view_planar_exp_desc_t planeYdesc = {};
@@ -479,7 +481,7 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // validate Y plane data
     auto result = memcmp(srcVecY.data(), dstVecY.data(), width * height);
@@ -515,6 +517,10 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Image View";
+    verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
+
     ze_context_handle_t context = nullptr;
     auto devices = zelloInitContextAndGetDevices(context);
     auto device = devices[0];
@@ -522,14 +528,16 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     testAppendImageViewNV12Copy(context, device, outputValidationSuccessful);
-    testAppendImageViewRGBPCopy(context, device, outputValidationSuccessful);
+    if (outputValidationSuccessful || aubMode) {
+        testAppendImageViewRGBPCopy(context, device, outputValidationSuccessful);
+    }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-    std::cout << "\nZello Image View Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
+
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);
 }

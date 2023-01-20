@@ -29,7 +29,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType
 }
 
 GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const HardwareInfo &hwInfo) {
-    const auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
 
     switch (allocationType) {
     case AllocationType::IMAGE:
@@ -62,7 +62,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
         return GMM_RESOURCE_USAGE_OCL_BUFFER;
     case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
     case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
-        if (hwInfoConfig->isDcFlushAllowed()) {
+        if (productHelper->isDcFlushAllowed()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
         return GMM_RESOURCE_USAGE_OCL_BUFFER;

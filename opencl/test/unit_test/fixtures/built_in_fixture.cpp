@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/fixtures/built_in_fixture.h"
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/device/device.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/test_files.h"
@@ -16,7 +17,7 @@
 
 using namespace NEO;
 
-void BuiltInFixture::SetUp(Device *pDevice) {
+void BuiltInFixture::setUp(Device *pDevice) {
     // create an instance of the builtins
     pBuiltIns = pDevice->getBuiltIns();
     pBuiltIns->setCacheingEnableState(false);
@@ -32,13 +33,13 @@ void BuiltInFixture::SetUp(Device *pDevice) {
         builtInsFileName = KernelBinaryHelper::BUILT_INS;
     }
     retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".bc");
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".gen");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin");
 
     gEnvironment->fclPushDebugVars(fclDebugVars);
     gEnvironment->igcPushDebugVars(igcDebugVars);
 }
 
-void BuiltInFixture::TearDown() {
+void BuiltInFixture::tearDown() {
     gEnvironment->igcPopDebugVars();
     gEnvironment->fclPopDebugVars();
 }

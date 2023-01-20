@@ -22,7 +22,7 @@ class OsEngine {
     virtual ze_result_t getActivity(zes_engine_stats_t *pStats) = 0;
     virtual ze_result_t getProperties(zes_engine_properties_t &properties) = 0;
     virtual bool isEngineModuleSupported() = 0;
-    static OsEngine *create(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId);
+    static OsEngine *create(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice);
     static ze_result_t getNumEngineTypeAndInstances(std::set<std::pair<zes_engine_group_t, EngineInstanceSubDeviceId>> &engineGroupInstance, OsSysman *pOsSysman);
     virtual ~OsEngine() = default;
 };

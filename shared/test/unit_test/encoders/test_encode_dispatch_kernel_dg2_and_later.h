@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/test/common/test_macros/test.h"
@@ -19,10 +20,11 @@ struct PreferredSlmTestValues {
 };
 
 template <typename FamilyType>
-void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest, NEO::HardwareInfo &hwInfo) {
+void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest, const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto threadsPerDssCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.SubSliceCount;
     uint32_t localWorkGroupsPerDssCounts[] = {1, 2, 4};
 
@@ -43,7 +45,7 @@ void verifyPreferredSlmValues(std::vector<PreferredSlmTestValues<FamilyType>> va
                                         : valueToTest.preferredSlmAllocationSizePerDss / localWorkGroupsPerDssCount;
 
                 NEO::EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd,
-                                                                                 hwInfo,
+                                                                                 rootDeviceEnvironment,
                                                                                  threadsPerThreadGroup,
                                                                                  slmTotalSize,
                                                                                  slmPolicy);

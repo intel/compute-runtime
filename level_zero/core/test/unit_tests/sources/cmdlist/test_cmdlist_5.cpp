@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -94,7 +94,8 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[1]);
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[2]);
 
-    EXPECT_EQ(NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    EXPECT_EQ(gfxCoreHelper.useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
 
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
@@ -160,7 +161,8 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[1]);
     EXPECT_EQ(1u, commandList.cmdListHelper.groupSize[2]);
 
-    EXPECT_EQ(NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    EXPECT_EQ(gfxCoreHelper.useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
 
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
@@ -215,7 +217,8 @@ HWTEST2_F(AppendQueryKernelTimestamps,
     EXPECT_EQ(groupSizeY, commandList.cmdListHelper.groupSize[1]);
     EXPECT_EQ(groupSizeZ, commandList.cmdListHelper.groupSize[2]);
 
-    EXPECT_EQ(NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    EXPECT_EQ(gfxCoreHelper.useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
 
     EXPECT_EQ(static_cast<uint32_t>(eventCount) / groupSizeX, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
@@ -269,7 +272,8 @@ HWTEST2_F(AppendQueryKernelTimestamps,
     EXPECT_EQ(groupSizeY, commandList.cmdListHelper.groupSize[1]);
     EXPECT_EQ(groupSizeZ, commandList.cmdListHelper.groupSize[2]);
 
-    EXPECT_EQ(NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily).useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    EXPECT_EQ(gfxCoreHelper.useOnlyGlobalTimestamps() ? 1u : 0u, commandList.cmdListHelper.useOnlyGlobalTimestamp);
 
     EXPECT_EQ(static_cast<uint32_t>(eventCount) / groupSizeX, commandList.cmdListHelper.threadGroupDimensions.groupCountX);
     EXPECT_EQ(1u, commandList.cmdListHelper.threadGroupDimensions.groupCountY);
@@ -570,6 +574,28 @@ HWTEST_F(CommandListCreate, givenCommandListWhenAppendSignalEventWithScopeThenPi
     EXPECT_NE(cmdList.end(), itor);
 }
 
+using CommandListTimestampEvent = Test<DeviceFixture>;
+
+HWTEST2_F(CommandListTimestampEvent, WhenIsTimestampEventForMultiTileThenCorrectResultIsReturned, IsAtLeastSkl) {
+
+    auto cmdList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+
+    cmdList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    MockEvent mockEvent;
+
+    cmdList->partitionCount = 1u;
+    EXPECT_FALSE(cmdList->isTimestampEventForMultiTile(nullptr));
+
+    cmdList->partitionCount = 2u;
+    EXPECT_FALSE(cmdList->isTimestampEventForMultiTile(nullptr));
+
+    mockEvent.setEventTimestampFlag(false);
+    EXPECT_FALSE(cmdList->isTimestampEventForMultiTile(&mockEvent));
+
+    mockEvent.setEventTimestampFlag(true);
+    EXPECT_TRUE(cmdList->isTimestampEventForMultiTile(&mockEvent));
+}
+
 HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendWaitEventsWithDcFlushThenMiFlushDWIsProgrammed) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     ze_result_t returnValue;
@@ -579,7 +605,7 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendWaitEventsWith
     event.signalScope = 0;
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     auto eventHandle = event.toHandle();
-    commandList->appendWaitOnEvents(1, &eventHandle);
+    commandList->appendWaitOnEvents(1, &eventHandle, false);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -603,7 +629,7 @@ HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushThen
     event.signalScope = 0;
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     auto eventHandle = event.toHandle();
-    commandList->appendWaitOnEvents(1, &eventHandle);
+    commandList->appendWaitOnEvents(1, &eventHandle, false);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -634,7 +660,7 @@ HWTEST_F(CommandListCreate, givenCommandListWhenAppendWaitEventsWithDcFlushThenP
     event2.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     ze_event_handle_t events[] = {&event, &event2};
 
-    commandList->appendWaitOnEvents(2, events);
+    commandList->appendWaitOnEvents(2, events, false);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -660,6 +686,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
 
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::DebugManager.flags.SignalAllEventPackets.set(0);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -685,7 +712,11 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     ze_event_handle_t events[] = {&event, &event2};
 
     size_t startOffset = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events);
+    commandList->appendWaitOnEvents(2, events, false);
+    size_t endOffset = commandContainer.getCommandStream()->getUsed();
+
+    size_t usedBufferSize = (endOffset - startOffset);
+    EXPECT_EQ(expectedUsed, usedBufferSize);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -704,6 +735,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
 
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    NEO::DebugManager.flags.SignalAllEventPackets.set(0);
 
     ze_command_queue_desc_t desc = {};
     desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -726,7 +758,11 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     ze_event_handle_t events[] = {&event, &event2};
 
     size_t startOffset = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events);
+    commandList->appendWaitOnEvents(2, events, false);
+    size_t endOffset = commandContainer.getCommandStream()->getUsed();
+
+    size_t usedBufferSize = (endOffset - startOffset);
+    EXPECT_EQ(expectedUsed, usedBufferSize);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -762,7 +798,7 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnly
     ze_event_handle_t events[] = {&event, &event2};
 
     auto used = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events);
+    commandList->appendWaitOnEvents(2, events, false);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -793,7 +829,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhe
     ze_event_handle_t events[] = {&event, &event2};
 
     auto used = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events);
+    commandList->appendWaitOnEvents(2, events, false);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -825,11 +861,11 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndTbxCsrWithCopyOnlyImmediateComm
     event2.waitScope = 0;
     ze_event_handle_t events[] = {&event, &event2};
 
-    auto ret = commandList->appendWaitOnEvents(2, events);
+    auto ret = commandList->appendWaitOnEvents(2, events, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
-HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueWithCopyOnlyImmediateCommandListCreatedThenSlushTaskSubmissionIsSetToFalse) {
+HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueWithCopyOnlyImmediateCommandListCreatedThenFlushTaskSubmissionIsSetToTrue) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
 
@@ -839,7 +875,27 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueWithCopyOnl
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
     ASSERT_NE(nullptr, commandList);
 
-    EXPECT_EQ(false, commandList->isFlushTaskSubmissionEnabled);
+    EXPECT_TRUE(commandList->isFlushTaskSubmissionEnabled);
+}
+
+HWTEST2_F(CommandListCreate, givenAllValuesTbxAndSyncModeFlagsWhenCheckingWaitlistEventSyncRequiredThenExpectTrueOnlyForTbxTrueAndAsyncMode, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+
+    cmdList.isSyncModeQueue = true;
+    cmdList.isTbxMode = false;
+    EXPECT_FALSE(cmdList.eventWaitlistSyncRequired());
+
+    cmdList.isSyncModeQueue = true;
+    cmdList.isTbxMode = true;
+    EXPECT_FALSE(cmdList.eventWaitlistSyncRequired());
+
+    cmdList.isSyncModeQueue = false;
+    cmdList.isTbxMode = false;
+    EXPECT_FALSE(cmdList.eventWaitlistSyncRequired());
+
+    cmdList.isSyncModeQueue = false;
+    cmdList.isTbxMode = true;
+    EXPECT_TRUE(cmdList.eventWaitlistSyncRequired());
 }
 
 } // namespace ult

@@ -14,7 +14,7 @@ namespace NEO {
 class OsContextLinux;
 class DrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler {
   public:
-    DrmMemoryOperationsHandlerDefault();
+    DrmMemoryOperationsHandlerDefault(uint32_t rootDeviceIndex);
     ~DrmMemoryOperationsHandlerDefault() override;
 
     MemoryOperationsStatus makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) override;
@@ -24,7 +24,7 @@ class DrmMemoryOperationsHandlerDefault : public DrmMemoryOperationsHandler {
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override;
 
     MemoryOperationsStatus mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) override;
-    std::unique_lock<std::mutex> lockHandlerIfUsed() override;
+    [[nodiscard]] std::unique_lock<std::mutex> lockHandlerIfUsed() override;
 
     MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded) override;
 

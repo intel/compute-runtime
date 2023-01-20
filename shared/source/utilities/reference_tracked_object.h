@@ -10,7 +10,6 @@
 
 #include <atomic>
 #include <memory>
-#include <type_traits>
 
 namespace NEO {
 

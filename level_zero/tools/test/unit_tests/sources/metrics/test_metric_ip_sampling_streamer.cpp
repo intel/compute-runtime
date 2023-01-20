@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "shared/test/common/test_macros/test_base.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -424,7 +426,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalle
     EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), device, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(streamerHandle, nullptr);
 
-    //Setup data for both subdevices
+    // Setup data for both subdevices
     osInterfaceVector[1]->isfillDataEnabled = true;
     osInterfaceVector[1]->fillData = 2;
     osInterfaceVector[1]->fillDataSize = 64 * 20;
@@ -467,7 +469,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenNotEnoughMemoryWhileReadingWhenReadDat
     EXPECT_EQ(zetMetricStreamerOpen(context->toHandle(), device, metricGroupHandle, &streamerDesc, eventHandle, &streamerHandle), ZE_RESULT_SUCCESS);
     EXPECT_NE(streamerHandle, nullptr);
 
-    //Setup data for both subdevices
+    // Setup data for both subdevices
     osInterfaceVector[1]->isfillDataEnabled = true;
     osInterfaceVector[1]->fillData = 2;
     osInterfaceVector[1]->fillDataSize = osInterfaceVector[1]->getUnitReportSize() * 20;
@@ -481,7 +483,7 @@ TEST_F(MetricIpSamplingStreamerTest, GivenNotEnoughMemoryWhileReadingWhenReadDat
     EXPECT_NE(rawSize, 0u);
 
     std::vector<uint8_t> rawData = {};
-    //Setup memory for only the first sub-device's read to succeed
+    // Setup memory for only the first sub-device's read to succeed
     rawSize = osInterfaceVector[1]->fillDataSize;
     rawData.resize(rawSize);
     EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 75, &rawSize, rawData.data()), ZE_RESULT_SUCCESS);

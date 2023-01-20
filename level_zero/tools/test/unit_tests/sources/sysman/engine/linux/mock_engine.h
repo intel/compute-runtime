@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
@@ -28,102 +29,94 @@ const std::string deviceDir("device");
 struct MockMemoryManagerInEngineSysman : public MemoryManagerMock {
     MockMemoryManagerInEngineSysman(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 };
-class EngineNeoDrm : public Drm {
-  public:
+
+struct MockEngineNeoDrm : public Drm {
     using Drm::getEngineInfo;
     using Drm::setupIoctlHelper;
     const int mockFd = 0;
-    EngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
-};
-template <>
-struct Mock<EngineNeoDrm> : public EngineNeoDrm {
-    Mock<EngineNeoDrm>(RootDeviceEnvironment &rootDeviceEnvironment) : EngineNeoDrm(rootDeviceEnvironment) {}
+    MockEngineNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
 
-    bool queryEngineInfoMockPositiveTest() {
+    bool mockSysmanQueryEngineInfoReturnFalse = true;
+    bool sysmanQueryEngineInfo() override {
+        if (mockSysmanQueryEngineInfoReturnFalse != true) {
+            return mockSysmanQueryEngineInfoReturnFalse;
+        }
+
         std::vector<NEO::EngineCapabilities> i915engineInfo(6);
-        i915engineInfo[0].engine.engineClass = I915_ENGINE_CLASS_RENDER;
+        i915engineInfo[0].engine.engineClass = drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER;
         i915engineInfo[0].engine.engineInstance = 0;
-        i915engineInfo[1].engine.engineClass = I915_ENGINE_CLASS_RENDER;
+        i915engineInfo[1].engine.engineClass = drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER;
         i915engineInfo[1].engine.engineInstance = 1;
-        i915engineInfo[2].engine.engineClass = I915_ENGINE_CLASS_VIDEO;
+        i915engineInfo[2].engine.engineClass = drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO;
         i915engineInfo[2].engine.engineInstance = 1;
-        i915engineInfo[3].engine.engineClass = I915_ENGINE_CLASS_COPY;
+        i915engineInfo[3].engine.engineClass = drm_i915_gem_engine_class::I915_ENGINE_CLASS_COPY;
         i915engineInfo[3].engine.engineInstance = 0;
-        i915engineInfo[4].engine.engineClass = I915_ENGINE_CLASS_VIDEO_ENHANCE;
+        i915engineInfo[4].engine.engineClass = drm_i915_gem_engine_class::I915_ENGINE_CLASS_VIDEO_ENHANCE;
         i915engineInfo[4].engine.engineInstance = 0;
         i915engineInfo[5].engine.engineClass = I915_INVALID_ENGINE_CLASS;
         i915engineInfo[5].engine.engineInstance = 0;
 
-        NEO::HardwareInfo hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-        this->engineInfo.reset(new EngineInfo(this, &hwInfo, i915engineInfo));
+        this->engineInfo.reset(new EngineInfo(this, i915engineInfo));
         return true;
     }
-
-    bool queryEngineInfoMockReturnFalse() {
-        return false;
-    }
-
-    MOCK_METHOD(bool, sysmanQueryEngineInfo, (), (override));
 };
 
-class MockPmuInterfaceImp : public PmuInterfaceImp {
-  public:
+struct MockEnginePmuInterfaceImp : public PmuInterfaceImp {
     using PmuInterfaceImp::perfEventOpen;
-    MockPmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
-};
-template <>
-struct Mock<MockPmuInterfaceImp> : public MockPmuInterfaceImp {
-    Mock<MockPmuInterfaceImp>(LinuxSysmanImp *pLinuxSysmanImp) : MockPmuInterfaceImp(pLinuxSysmanImp) {}
-    int64_t mockedPerfEventOpenAndSuccessReturn(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) {
+    MockEnginePmuInterfaceImp(LinuxSysmanImp *pLinuxSysmanImp) : PmuInterfaceImp(pLinuxSysmanImp) {}
+
+    int64_t mockPerfEventFailureReturnValue = 0;
+    int64_t perfEventOpen(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) override {
+        if (mockPerfEventFailureReturnValue == -1) {
+            return mockPerfEventFailureReturnValue;
+        }
+
         return mockPmuFd;
     }
-    int64_t mockedPerfEventOpenAndFailureReturn(perf_event_attr *attr, pid_t pid, int cpu, int groupFd, uint64_t flags) {
-        return -1;
-    }
-    int mockedPmuReadAndSuccessReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
+
+    int mockPmuReadFailureReturnValue = 0;
+    int pmuRead(int fd, uint64_t *data, ssize_t sizeOfdata) override {
+        if (mockPmuReadFailureReturnValue == -1) {
+            return mockPmuReadFailureReturnValue;
+        }
+
         data[0] = mockActiveTime;
         data[1] = mockTimestamp;
         return 0;
     }
-    int mockedPmuReadAndFailureReturn(int fd, uint64_t *data, ssize_t sizeOfdata) {
-        return -1;
-    }
-
-    MOCK_METHOD(int64_t, perfEventOpen, (perf_event_attr * attr, pid_t pid, int cpu, int groupFd, uint64_t flags), (override));
-    MOCK_METHOD(int, pmuRead, (int fd, uint64_t *data, ssize_t sizeOfdata), (override));
 };
 
-class EngineSysfsAccess : public SysfsAccess {};
-class EngineFsAccess : public FsAccess {};
+struct MockEngineFsAccess : public FsAccess {
+    uint32_t mockReadVal = 23;
+    ze_result_t mockReadErrorVal = ZE_RESULT_SUCCESS;
+    ze_result_t readResult = ZE_RESULT_SUCCESS;
+    ze_result_t read(const std::string file, uint32_t &val) override {
+        val = mockReadVal;
+        if (mockReadErrorVal != ZE_RESULT_SUCCESS) {
+            readResult = mockReadErrorVal;
+        }
 
-template <>
-struct Mock<EngineFsAccess> : public EngineFsAccess {
-    MOCK_METHOD(ze_result_t, read, (const std::string file, uint32_t &val), (override));
-    ze_result_t readValSuccess(const std::string file, uint32_t &val) {
-        val = 23;
-        return ZE_RESULT_SUCCESS;
-    }
-    ze_result_t readValFailure(const std::string file, uint32_t &val) {
-        val = 0;
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        return readResult;
     }
 };
 
-template <>
-struct Mock<EngineSysfsAccess> : public EngineSysfsAccess {
-    MOCK_METHOD(ze_result_t, readSymLink, (const std::string file, std::string &buf), (override));
-    ze_result_t getValStringSymLinkSuccess(const std::string file, std::string &val) {
+struct MockEngineSysfsAccess : public SysfsAccess {
+    ze_result_t mockReadSymLinkError = ZE_RESULT_SUCCESS;
+    ze_result_t readSymLinkResult = ZE_RESULT_SUCCESS;
+    uint32_t readSymLinkCalled = 0u;
+    ze_result_t readSymLink(const std::string file, std::string &val) override {
+        readSymLinkCalled++;
+        if ((mockReadSymLinkError != ZE_RESULT_SUCCESS) && (readSymLinkCalled == 1)) {
+            return mockReadSymLinkError;
+        }
+
         if (file.compare(deviceDir) == 0) {
             val = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0";
-            return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-    ze_result_t getValStringSymLinkFailure(const std::string file, std::string &val) {
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        return readSymLinkResult;
     }
 
-    Mock<EngineSysfsAccess>() = default;
+    MockEngineSysfsAccess() = default;
 };
 
 using DrmMockEngineInfoFailing = DrmMock;

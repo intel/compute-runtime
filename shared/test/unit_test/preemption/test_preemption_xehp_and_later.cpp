@@ -8,10 +8,10 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/fixtures/preemption_fixture.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/unit_test/fixtures/preemption_fixture.h"
 
 #include "test_traits_common.h"
 

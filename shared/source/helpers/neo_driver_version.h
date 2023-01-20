@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@
 #define TOSTR(b) QTR(b)
 
 namespace NEO {
-constexpr const char *driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
+inline constexpr const char *driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
 }
 
 #undef QTR

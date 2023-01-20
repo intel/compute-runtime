@@ -21,7 +21,7 @@ struct EnqueueWriteImageTest : public CommandEnqueueFixture,
 
     void SetUp(void) override {
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
 
         context = new MockContext(pClDevice);
         dstImage = Image2dHelper<>::create(context);
@@ -38,7 +38,7 @@ struct EnqueueWriteImageTest : public CommandEnqueueFixture,
         delete dstImage;
         delete[] srcPtr;
         delete context;
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
   protected:

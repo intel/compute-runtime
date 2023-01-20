@@ -40,9 +40,13 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
     hash.update("----", 4);
     hash.update(safePodCast<const char *>(&hwInfo.platform), sizeof(hwInfo.platform));
     hash.update("----", 4);
-    hash.update(safePodCast<const char *>(std::to_string(hwInfo.featureTable.asHash()).c_str()), std::to_string(hwInfo.featureTable.asHash()).length());
+
+    const auto featureTableHashStr = std::to_string(hwInfo.featureTable.asHash());
+    hash.update(featureTableHashStr.c_str(), featureTableHashStr.length());
     hash.update("----", 4);
-    hash.update(safePodCast<const char *>(std::to_string(hwInfo.workaroundTable.asHash()).c_str()), std::to_string(hwInfo.workaroundTable.asHash()).length());
+
+    const auto workaroundTableHashStr = std::to_string(hwInfo.workaroundTable.asHash());
+    hash.update(workaroundTableHashStr.c_str(), workaroundTableHashStr.length());
 
     auto res = hash.finish();
     std::stringstream stream;

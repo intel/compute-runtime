@@ -9,6 +9,7 @@
 #include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -44,9 +45,14 @@ struct DiagnosticsHandleContext {
     std::vector<std::string> supportedDiagTests = {};
     OsSysman *pOsSysman = nullptr;
     std::vector<Diagnostics *> handleList = {};
+    bool isDiagnosticsInitDone() {
+        return diagnosticsInitDone;
+    }
 
   private:
     void createHandle(const std::string &diagTests);
+    std::once_flag initDiagnosticsOnce;
+    bool diagnosticsInitDone = false;
 };
 
 } // namespace L0

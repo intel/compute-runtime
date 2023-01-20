@@ -55,9 +55,9 @@ function(generate_shared_lib LIB_NAME MOCKABLE)
     )
   else()
     target_include_directories(${LIB_NAME} PUBLIC
-                               ${I915_INCLUDES_DIR}
                                ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/linux
     )
+
   endif()
 
   create_project_source_tree(${LIB_NAME})

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/migration_sync_data.h"
 
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
 
@@ -20,14 +21,14 @@ MigrationSyncData::~MigrationSyncData() {
 }
 
 uint32_t MigrationSyncData::getCurrentLocation() const { return currentLocation; }
-bool MigrationSyncData::isUsedByTheSameContext(volatile uint32_t *tagAddress) const { return this->tagAddress == tagAddress; }
+bool MigrationSyncData::isUsedByTheSameContext(volatile TagAddressType *tagAddress) const { return this->tagAddress == tagAddress; }
 
 void MigrationSyncData::setCurrentLocation(uint32_t rootDeviceIndex) {
     currentLocation = rootDeviceIndex;
     migrationInProgress = false;
 }
 
-void MigrationSyncData::signalUsage(volatile uint32_t *tagAddress, uint32_t taskCount) {
+void MigrationSyncData::signalUsage(volatile TagAddressType *tagAddress, TaskCountType taskCount) {
     this->tagAddress = tagAddress;
     latestTaskCountUsed = taskCount;
 }

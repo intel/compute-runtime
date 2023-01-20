@@ -14,8 +14,10 @@ struct ApiSpecificConfig {
     enum ApiType { OCL,
                    L0 };
     static bool isStatelessCompressionSupported();
+    static bool isBcsSplitWaSupported();
     static bool getHeapConfiguration();
     static bool getBindlessConfiguration();
+    static bool isDeviceAllocationCacheEnabled();
     static ApiType getApiType();
     static std::string getName();
     static uint64_t getReducedMaxAllocSize(uint64_t maxAllocSize);

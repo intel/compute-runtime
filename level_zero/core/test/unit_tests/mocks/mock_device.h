@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,9 @@ struct Mock<Device> : public Device {
     ADDMETHOD_NOBASE(systemBarrier, ze_result_t, ZE_RESULT_SUCCESS, ());
     // Runtime internal methods
     ADDMETHOD_NOBASE(getExecEnvironment, void *, nullptr, ());
-    ADDMETHOD_NOBASE_REFRETURN(getHwHelper, NEO::HwHelper &, ());
+    ADDMETHOD_NOBASE_REFRETURN(getGfxCoreHelper, NEO::GfxCoreHelper &, ());
+    ADDMETHOD_NOBASE_REFRETURN(getL0GfxCoreHelper, L0GfxCoreHelper &, ());
+    ADDMETHOD_NOBASE_REFRETURN(getProductHelper, NEO::ProductHelper &, ());
     ADDMETHOD_NOBASE(getBuiltinFunctionsLib, BuiltinFunctionsLib *, nullptr, ());
     ADDMETHOD_CONST_NOBASE(getMaxNumHwThreads, uint32_t, 16u, ());
     ADDMETHOD_NOBASE(activateMetricGroupsDeferred, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t count, zet_metric_group_handle_t *phMetricGroups));
@@ -82,8 +84,11 @@ struct Mock<Device> : public Device {
     ADDMETHOD_NOBASE_VOIDRETURN(removeDebugSession, ());
     ADDMETHOD_NOBASE(obtainReusableAllocation, NEO::GraphicsAllocation *, nullptr, (size_t requiredSize, NEO::AllocationType type))
     ADDMETHOD_NOBASE_VOIDRETURN(storeReusableAllocation, (NEO::GraphicsAllocation & alloc));
+    ADDMETHOD_NOBASE(getFabricVertex, ze_result_t, ZE_RESULT_SUCCESS, (ze_fabric_vertex_handle_t * phVertex));
+    ADDMETHOD_CONST_NOBASE(getEventMaxPacketCount, uint32_t, 8, ())
+    ADDMETHOD_CONST_NOBASE(getEventMaxKernelCount, uint32_t, 3, ())
 
-    DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result) override {
+    DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result, bool isRootAttach) override {
         result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
         return nullptr;
     }
@@ -101,7 +106,11 @@ struct Mock<L0::DeviceImp> : public L0::DeviceImp {
     using Base = L0::DeviceImp;
     using Base::adjustCommandQueueDesc;
     using Base::debugSession;
+    using Base::getNEODevice;
     using Base::implicitScalingCapable;
+    using Base::neoDevice;
+
+    Mock() = default;
 
     explicit Mock(NEO::Device *device, NEO::ExecutionEnvironment *execEnv) {
         device->incRefInternal();

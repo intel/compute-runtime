@@ -8,7 +8,6 @@ set(TARGET_NAME ${TARGET_NAME_L0}_mocks)
 
 set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-    ${CMAKE_CURRENT_SOURCE_DIR}/debugger_l0_create.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_built_ins.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_built_ins.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtin_functions_lib_impl.h
@@ -33,7 +32,6 @@ set(L0_MOCKS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_host_pointer_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_image.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_kernel.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_l0_debugger.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_memory_manager.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_module.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_sampler.h

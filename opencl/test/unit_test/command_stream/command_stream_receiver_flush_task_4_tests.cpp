@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,9 @@
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
@@ -507,7 +508,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
     DebugManager.flags.EnableBlitterForEnqueueOperations.set(true);
 
     for (auto &rootDeviceEnvironment : deviceFactory->rootDevices[0]->getExecutionEnvironment()->rootDeviceEnvironments) {
-        REQUIRE_FULL_BLITTER_OR_SKIP(rootDeviceEnvironment->getHardwareInfo());
+        REQUIRE_FULL_BLITTER_OR_SKIP(*rootDeviceEnvironment);
     }
 
     auto clCmdQ1 = clCreateCommandQueue(context.get(), deviceFactory->rootDevices[1], {}, nullptr);
@@ -741,7 +742,7 @@ struct PreambleThreadArbitrationMatcher {
 
 HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenPolicyValueChangedWhenFlushingTaskThenProgramThreadArbitrationPolicy, PreambleThreadArbitrationMatcher) {
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    auto &hwHelper = HwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.isPreambleSent = true;
 
@@ -749,7 +750,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenPolicyValueChangedWhenFlushi
     size_t parsingOffset = commandStreamReceiver.commandStream.getUsed();
     for (auto arbitrationChanged : ::testing::Bool()) {
         commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value =
-            arbitrationChanged ? -1 : hwHelper.getDefaultThreadArbitrationPolicy();
+            arbitrationChanged ? -1 : gfxCoreHelper.getDefaultThreadArbitrationPolicy();
 
         flushTask(commandStreamReceiver);
         HardwareParse csHwParser;
@@ -765,18 +766,18 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenPolicyValueChangedWhenFlushi
 }
 
 namespace CpuIntrinsicsTests {
-extern volatile uint32_t *pauseAddress;
-extern uint32_t pauseValue;
+extern volatile TagAddressType *pauseAddress;
+extern TaskCountType pauseValue;
 } // namespace CpuIntrinsicsTests
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountToWaitWhenTagValueSwitchesThenWaitFunctionReturnsTrue) {
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    uint32_t taskCountToWait = 2u;
+    TaskCountType taskCountToWait = 2u;
 
     *mockCsr->tagAddress = 1u;
 
@@ -788,13 +789,13 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountTo
 }
 
 HWTEST_F(CommandStreamReceiverFlushTaskTests, givenTagValueNotMeetingTaskCountToWaitAndIndefinitelyPollWhenWaitForCompletionThenDoNotCallWaitUtils) {
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue);
 
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     pDevice->resetCommandStreamReceiver(mockCsr);
 
-    uint32_t taskCountToWait = 2u;
+    TaskCountType taskCountToWait = 2u;
 
     *mockCsr->tagAddress = 1u;
 
@@ -814,7 +815,7 @@ HWTEST_F(UltCommandStreamReceiverTest, WhenFlushingAllCachesThenPipeControlIsAdd
     LinearStream stream(buff, sizeof(PIPE_CONTROL) * 3);
 
     PipeControlArgs args;
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
 
     parseCommands<FamilyType>(stream, 0);
 
@@ -856,7 +857,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenDebugDisablingCacheFlushWhenAddingPi
     args.textureCacheInvalidationEnable = true;
     args.vfCacheInvalidationEnable = true;
 
-    MemorySynchronizationCommands<FamilyType>::addPipeControl(stream, args);
+    MemorySynchronizationCommands<FamilyType>::addSingleBarrier(stream, args);
 
     parseCommands<FamilyType>(stream, 0);
 
@@ -877,4 +878,86 @@ HWTEST_F(UltCommandStreamReceiverTest, givenDebugDisablingCacheFlushWhenAddingPi
     EXPECT_FALSE(pipeControl->getVfCacheInvalidationEnable());
     EXPECT_FALSE(pipeControl->getConstantCacheInvalidationEnable());
     EXPECT_FALSE(pipeControl->getStateCacheInvalidationEnable());
+}
+
+struct BcsCrossDeviceMigrationTests : public ::testing::Test {
+
+    template <typename FamilyType>
+    class MockCmdQToTestMigration : public CommandQueueHw<FamilyType> {
+      public:
+        MockCmdQToTestMigration(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false) {}
+
+        void migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpParams &operationParams, CommandStreamReceiver &csr) override {
+            migrateMultiGraphicsAllocationsIfRequiredCalled = true;
+            migrateMultiGraphicsAllocationsReceivedOperationParams = operationParams;
+            migrateMultiGraphicsAllocationsReceivedCsr = &csr;
+            CommandQueueHw<FamilyType>::migrateMultiGraphicsAllocationsIfRequired(operationParams, csr);
+        }
+
+        bool migrateMultiGraphicsAllocationsIfRequiredCalled = false;
+        BuiltinOpParams migrateMultiGraphicsAllocationsReceivedOperationParams{};
+        CommandStreamReceiver *migrateMultiGraphicsAllocationsReceivedCsr = nullptr;
+    };
+
+    void SetUp() override {
+        VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+
+        DebugManager.flags.EnableBlitterForEnqueueOperations.set(true);
+        DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(true);
+
+        deviceFactory = std::make_unique<UltClDeviceFactory>(2, 0);
+        auto device1 = deviceFactory->rootDevices[0];
+        REQUIRE_FULL_BLITTER_OR_SKIP(device1->getRootDeviceEnvironment());
+        auto device2 = deviceFactory->rootDevices[1];
+        REQUIRE_FULL_BLITTER_OR_SKIP(device2->getRootDeviceEnvironment());
+        cl_device_id devices[] = {device1, device2};
+
+        context = std::make_unique<MockContext>(ClDeviceVector(devices, 2), false);
+    }
+
+    void TearDown() override {
+    }
+
+    std::unique_ptr<UltClDeviceFactory> deviceFactory;
+    std::unique_ptr<MockContext> context;
+    DebugManagerStateRestore restorer;
+
+    template <typename FamilyType>
+    std::unique_ptr<MockCmdQToTestMigration<FamilyType>> createCommandQueue(uint32_t rooDeviceIndex) {
+        if (rooDeviceIndex < 2) {
+            return std::make_unique<MockCmdQToTestMigration<FamilyType>>(context.get(), deviceFactory->rootDevices[rooDeviceIndex]);
+        }
+        return nullptr;
+    }
+};
+
+HWTEST_F(BcsCrossDeviceMigrationTests, givenBufferWithMultiStorageWhenEnqueueReadBufferIsCalledThenMigrateBufferToRootDeviceAssociatedWithCommandQueue) {
+    uint32_t targetRootDeviceIndex = 1;
+    auto cmdQueue = createCommandQueue<FamilyType>(targetRootDeviceIndex);
+    ASSERT_NE(nullptr, cmdQueue);
+
+    cl_int retVal = CL_INVALID_VALUE;
+    constexpr size_t size = MemoryConstants::pageSize;
+
+    std::unique_ptr<Buffer> buffer(Buffer::create(context.get(), 0, size, nullptr, retVal));
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_NE(nullptr, buffer);
+
+    EXPECT_TRUE(buffer->getMultiGraphicsAllocation().requiresMigrations());
+
+    char hostPtr[size]{};
+
+    retVal = cmdQueue->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, size, hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    cmdQueue->finish();
+
+    EXPECT_TRUE(cmdQueue->migrateMultiGraphicsAllocationsIfRequiredCalled);
+
+    auto bcsCsr = cmdQueue->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS);
+    EXPECT_EQ(bcsCsr, cmdQueue->migrateMultiGraphicsAllocationsReceivedCsr);
+    EXPECT_EQ(targetRootDeviceIndex, bcsCsr->getRootDeviceIndex());
+
+    EXPECT_EQ(buffer.get(), cmdQueue->migrateMultiGraphicsAllocationsReceivedOperationParams.srcMemObj);
 }

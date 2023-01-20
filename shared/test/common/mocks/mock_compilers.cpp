@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "mock_compilers.h"
 
+#include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_inc_base.h"
@@ -16,7 +18,6 @@
 #include "shared/test/common/mocks/mock_sip.h"
 
 #include "cif/macros/enable.h"
-#include "compiler_options.h"
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"
 #include "ocl_igc_interface/igc_ocl_device_ctx.h"
 
@@ -148,22 +149,26 @@ Platform<0>::~Platform() {}
 template <typename... ArgsT>
 Platform<0>::Platform(ArgsT &&...args) {}
 
-#define DEFINE_GET_SET_PREFIX(INTERFACE, VERSION, NAME, TYPE, PREFIX)                       \
+#define DEFINE_GET_SET(INTERFACE, VERSION, NAME, TYPE)                                      \
     TYPE CIF_GET_INTERFACE_CLASS(INTERFACE, VERSION)::Get##NAME() const { return (TYPE)0; } \
     void CIF_GET_INTERFACE_CLASS(INTERFACE, VERSION)::Set##NAME(TYPE v) {}
 
-DEFINE_GET_SET_PREFIX(Platform, 1, ProductFamily, TypeErasedEnum, e);
-DEFINE_GET_SET_PREFIX(Platform, 1, PCHProductFamily, TypeErasedEnum, e);
-DEFINE_GET_SET_PREFIX(Platform, 1, DisplayCoreFamily, TypeErasedEnum, e);
-DEFINE_GET_SET_PREFIX(Platform, 1, RenderCoreFamily, TypeErasedEnum, e);
-DEFINE_GET_SET_PREFIX(Platform, 1, PlatformType, TypeErasedEnum, e);
-DEFINE_GET_SET_PREFIX(Platform, 1, DeviceID, unsigned short, us);
-DEFINE_GET_SET_PREFIX(Platform, 1, RevId, unsigned short, us);
-DEFINE_GET_SET_PREFIX(Platform, 1, DeviceID_PCH, unsigned short, us);
-DEFINE_GET_SET_PREFIX(Platform, 1, RevId_PCH, unsigned short, us);
-DEFINE_GET_SET_PREFIX(Platform, 1, GTType, TypeErasedEnum, e);
+DEFINE_GET_SET(Platform, 1, ProductFamily, TypeErasedEnum);
+DEFINE_GET_SET(Platform, 1, PCHProductFamily, TypeErasedEnum);
+DEFINE_GET_SET(Platform, 1, DisplayCoreFamily, TypeErasedEnum);
+DEFINE_GET_SET(Platform, 1, RenderCoreFamily, TypeErasedEnum);
+DEFINE_GET_SET(Platform, 1, PlatformType, TypeErasedEnum);
+DEFINE_GET_SET(Platform, 1, DeviceID, unsigned short);
+DEFINE_GET_SET(Platform, 1, RevId, unsigned short);
+DEFINE_GET_SET(Platform, 1, DeviceID_PCH, unsigned short);
+DEFINE_GET_SET(Platform, 1, RevId_PCH, unsigned short);
+DEFINE_GET_SET(Platform, 1, GTType, TypeErasedEnum);
 
-#undef DEFINE_GET_SET_PREFIX
+DEFINE_GET_SET(Platform, 2, RenderBlockID, unsigned int);
+DEFINE_GET_SET(Platform, 2, MediaBlockID, unsigned int);
+DEFINE_GET_SET(Platform, 2, DisplayBlockID, unsigned int);
+
+#undef DEFINE_GET_SET
 
 // GtSystemInfo stubs
 GTSystemInfo<0>::~GTSystemInfo() {}
@@ -409,6 +414,13 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
         }
     }
 
+    if (debugVars.forceSuccessWithEmptyOutput) {
+        if (out) {
+            out->setOutput(nullptr, 0);
+        }
+        return;
+    }
+
     if ((debugVars.forceBuildFailure == false) &&
         (out && src && src->GetMemoryRaw() && src->GetSizeRaw())) {
 
@@ -420,30 +432,41 @@ void translate(bool usingIgc, CIF::Builtins::BufferSimple *src, CIF::Builtins::B
             }
         }
 
-        std::string inputFile = "";
-        inputFile.append(debugVars.fileName);
-
-        std::string debugFile;
-        auto pos = inputFile.rfind(".");
-        debugFile = inputFile.substr(0, pos);
-        debugFile.append(".dbg");
-
-        if (debugVars.appendOptionsToFileName &&
-            options->GetSizeRaw()) {
-            std::string opts(options->GetMemory<char>(), options->GetMemory<char>() + options->GetSize<char>());
-            // handle special option "-create-library" - just erase it
-            size_t pos = opts.find(CompilerOptions::createLibrary.data(), 0);
-            if (pos != std::string::npos) {
-                opts.erase(pos, CompilerOptions::createLibrary.length());
+        std::string inputFile{}, debugFile{};
+        std::string opts(options->GetMemory<char>(), options->GetMemory<char>() + options->GetSize<char>());
+        if (false == debugVars.fileName.empty()) {
+            auto fileBaseName = debugVars.fileName;
+            auto pos = debugVars.fileName.rfind(".");
+            auto extension = debugVars.fileName.substr(pos, debugVars.fileName.length());
+            if (false == debugVars.fileNameSuffix.empty()) {
+                pos = debugVars.fileName.rfind(debugVars.fileNameSuffix);
             }
-            std::replace(opts.begin(), opts.end(), ' ', '_');
-            inputFile.append(opts);
+            fileBaseName = fileBaseName.substr(0, pos);
 
-            if (debugVars.debugDataToReturn == nullptr) {
-                debugFile.append(opts);
+            if (debugVars.appendOptionsToFileName && false == opts.empty()) {
+                // handle special option "-create-library" - just erase it
+                auto optPos = opts.find(CompilerOptions::createLibrary.data(), 0);
+                if (optPos != std::string::npos) {
+                    opts.erase(optPos, CompilerOptions::createLibrary.length());
+                }
+                std::replace(opts.begin(), opts.end(), ' ', '_');
             }
+
+            inputFile.append(fileBaseName);
+            debugFile.append(fileBaseName);
+
+            if (debugVars.appendOptionsToFileName && false == opts.empty()) {
+                auto optString = opts + "_";
+                inputFile.append(optString);
+                debugFile.append(optString);
+            }
+            if (false == debugVars.fileNameSuffix.empty()) {
+                inputFile.append(debugVars.fileNameSuffix);
+                debugFile.append(debugVars.fileNameSuffix);
+            }
+            inputFile.append(extension);
+            debugFile.append(".dbg");
         }
-
         if ((debugVars.binaryToReturn != nullptr) || (debugVars.binaryToReturnSize != 0)) {
             out->setOutput(debugVars.binaryToReturn, debugVars.binaryToReturnSize);
         } else {

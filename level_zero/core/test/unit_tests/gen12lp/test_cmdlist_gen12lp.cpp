@@ -11,7 +11,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/gen12lp/cmdlist_gen12lp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -60,7 +60,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierThenCheckWhet
 
 HWTEST2_F(CommandListCreate, GivenNullptrWaitEventsArrayAndCountGreaterThanZeroWhenAppendingMemoryBarrierThenInvalidArgumentErrorIsReturned,
           IsDG1) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
     const size_t pRangeSizes = 1;
     const char *ranges[pRangeSizes];
@@ -83,7 +83,7 @@ HWTEST2_F(CommandListCreate, GivenNullptrWaitEventsArrayAndCountGreaterThanZeroW
 
 HWTEST2_F(CommandListCreate, GivenImmediateListAndExecutionSuccessWhenAppendingMemoryBarrierThenExecuteCommandListImmediateCalledAndSuccessReturned,
           IsDG1) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
     const size_t rangeSizes = 1;
     const char *rangesBuffer[rangeSizes];
@@ -105,7 +105,7 @@ HWTEST2_F(CommandListCreate, GivenImmediateListAndExecutionSuccessWhenAppendingM
 
 HWTEST2_F(CommandListCreate, GivenImmediateListAndGpuFailureWhenAppendingMemoryBarrierThenExecuteCommandListImmediateCalledAndDeviceLostReturned,
           IsDG1) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
     const size_t rangeSizes = 1;
     const char *rangesBuffer[rangeSizes];
@@ -127,7 +127,7 @@ HWTEST2_F(CommandListCreate, GivenImmediateListAndGpuFailureWhenAppendingMemoryB
 
 HWTEST2_F(CommandListCreate, GivenHostMemoryNotInSvmManagerWhenAppendingMemoryBarrierThenAdditionalCommandsNotAdded,
           IsDG1) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
     const size_t pRangeSizes = 1;
     const char *ranges[pRangeSizes];
@@ -154,7 +154,7 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryNotInSvmManagerWhenAppendingMemoryBa
 
 HWTEST2_F(CommandListCreate, GivenHostMemoryInSvmManagerWhenAppendingMemoryBarrierThenL3CommandsAdded,
           IsDG1) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
     const size_t pRangeSizes = 1;
     void *ranges;
@@ -195,8 +195,8 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryInSvmManagerWhenAppendingMemoryBarri
     {
         using L3_FLUSH_EVICTION_POLICY = typename FamilyType::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY;
         auto cmd = genCmdCast<L3_CONTROL *>(*itorPC);
-        const auto &hwInfoConfig = *NEO::HwInfoConfig::get(device->getHwInfo().platform.eProductFamily);
-        auto isA0Stepping = (hwInfoConfig.getSteppingFromHwRevId(device->getHwInfo()) == REVISION_A0);
+        const auto &productHelper = device->getProductHelper();
+        auto isA0Stepping = (productHelper.getSteppingFromHwRevId(device->getHwInfo()) == REVISION_A0);
         auto maskedAddress = cmd->getL3FlushAddressRange().getAddress(isA0Stepping);
         EXPECT_NE(maskedAddress, 0u);
 
@@ -213,7 +213,7 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryInSvmManagerWhenAppendingMemoryBarri
 
 HWTEST2_F(CommandListCreate, GivenHostMemoryWhenAppendingMemoryBarrierThenAddressMisalignmentCorrected,
           IsDG1) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     uint32_t numRanges = 1;
     const size_t misalignmentFactor = 761;
     const size_t pRangeSizes = 4096;
@@ -258,8 +258,8 @@ HWTEST2_F(CommandListCreate, GivenHostMemoryWhenAppendingMemoryBarrierThenAddres
     {
         using L3_FLUSH_EVICTION_POLICY = typename FamilyType::L3_FLUSH_ADDRESS_RANGE::L3_FLUSH_EVICTION_POLICY;
         auto cmd = genCmdCast<L3_CONTROL *>(*itorPC);
-        const auto &hwInfoConfig = *NEO::HwInfoConfig::get(device->getHwInfo().platform.eProductFamily);
-        auto isA0Stepping = (hwInfoConfig.getSteppingFromHwRevId(device->getHwInfo()) == REVISION_A0);
+        const auto &productHelper = device->getProductHelper();
+        auto isA0Stepping = (productHelper.getSteppingFromHwRevId(device->getHwInfo()) == REVISION_A0);
         auto maskedAddress = cmd->getL3FlushAddressRange().getAddress(isA0Stepping);
         EXPECT_NE(maskedAddress, 0u);
 
@@ -279,7 +279,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
 
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     const size_t pRangeSizes = 4096;
     void *ranges;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -312,7 +312,7 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using L3_CONTROL = typename GfxFamily::L3_CONTROL;
 
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     const size_t pRangeSizes = 4096;
     void *ranges;
     ze_device_mem_alloc_desc_t deviceDesc = {};

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,24 +7,17 @@
 
 #include "opencl/source/mem_obj/buffer.h"
 
-#include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/get_info.h"
-#include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/ptr_math.h"
-#include "shared/source/helpers/string.h"
-#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/helpers/local_memory_access_modes.h"
+#include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
-#include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/utilities/debug_settings_reader_creator.h"
+#include "shared/source/os_interface/os_interface.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
@@ -32,7 +25,7 @@
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
-#include "opencl/source/os_interface/ocl_reg_path.h"
+#include "opencl/source/sharings/unified/unified_buffer.h"
 
 namespace NEO {
 
@@ -110,14 +103,14 @@ cl_mem Buffer::validateInputAndCreateBuffer(cl_context context,
     cl_mem_alloc_flags_intel allocflags = 0;
     cl_mem_flags_intel emptyFlagsIntel = 0;
     if ((false == ClMemoryPropertiesHelper::parseMemoryProperties(nullptr, memoryProperties, flags, emptyFlagsIntel, allocflags,
-                                                                  MemoryPropertiesHelper::ObjType::BUFFER, *pContext)) ||
+                                                                  ClMemoryPropertiesHelper::ObjType::BUFFER, *pContext)) ||
         (false == MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, emptyFlagsIntel, *pContext))) {
         retVal = CL_INVALID_VALUE;
         return nullptr;
     }
 
     if ((false == ClMemoryPropertiesHelper::parseMemoryProperties(properties, memoryProperties, flags, flagsIntel, allocflags,
-                                                                  MemoryPropertiesHelper::ObjType::BUFFER, *pContext)) ||
+                                                                  ClMemoryPropertiesHelper::ObjType::BUFFER, *pContext)) ||
         (false == MemObjHelper::validateMemoryPropertiesForBuffer(memoryProperties, flags, flagsIntel, *pContext))) {
         retVal = CL_INVALID_PROPERTY;
         return nullptr;
@@ -169,9 +162,79 @@ Buffer *Buffer::create(Context *context,
                        cl_mem_flags flags,
                        size_t size,
                        void *hostPtr,
+                       AdditionalBufferCreateArgs &bufferCreateArgs,
                        cl_int &errcodeRet) {
     return create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
-                  flags, 0, size, hostPtr, errcodeRet);
+                  flags, 0, size, hostPtr, bufferCreateArgs, errcodeRet);
+}
+
+Buffer *Buffer::create(Context *context,
+                       cl_mem_flags flags,
+                       size_t size,
+                       void *hostPtr,
+                       cl_int &errcodeRet) {
+    AdditionalBufferCreateArgs bufferCreateArgs{};
+    return create(context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context->getDevice(0)->getDevice()),
+                  flags, 0, size, hostPtr, bufferCreateArgs, errcodeRet);
+}
+
+bool inline copyHostPointer(Buffer *buffer,
+                            size_t size,
+                            void *hostPtr,
+                            GraphicsAllocation *memory,
+                            GraphicsAllocation *mapAllocation,
+                            uint32_t rootDeviceIndex,
+                            bool isCompressionEnabled,
+                            bool implicitScalingEnabled,
+                            cl_int &errcodeRet) {
+    const bool isLocalMemory = !MemoryPoolHelper::isSystemMemoryPool(memory->getMemoryPool());
+    const bool gpuCopyRequired = isCompressionEnabled || isLocalMemory;
+    if (gpuCopyRequired) {
+        auto context = buffer->getContext();
+        auto &device = context->getDevice(0u)->getDevice();
+        auto &hwInfo = device.getHardwareInfo();
+        auto &productHelper = device.getProductHelper();
+
+        auto &osInterface = device.getRootDeviceEnvironment().osInterface;
+        bool isLockable = true;
+        if (osInterface) {
+            isLockable = osInterface->isLockablePointer(memory->storageInfo.isLockable);
+        }
+
+        bool copyOnCpuAllowed = implicitScalingEnabled == false &&
+                                size <= Buffer::maxBufferSizeForCopyOnCpu &&
+                                isCompressionEnabled == false &&
+                                productHelper.getLocalMemoryAccessMode(hwInfo) != LocalMemoryAccessMode::CpuAccessDisallowed &&
+                                isLockable;
+        if (DebugManager.flags.CopyHostPtrOnCpu.get() != -1) {
+            copyOnCpuAllowed = DebugManager.flags.CopyHostPtrOnCpu.get() == 1;
+        }
+        if (auto lockedPointer = copyOnCpuAllowed ? device.getMemoryManager()->lockResource(memory) : nullptr) {
+            memcpy_s(ptrOffset(lockedPointer, buffer->getOffset()), size, hostPtr, size);
+            memory->setAubWritable(true, GraphicsAllocation::defaultBank);
+            memory->setTbxWritable(true, GraphicsAllocation::defaultBank);
+            return true;
+        } else {
+            auto blitMemoryToAllocationResult = BlitOperationResult::Unsupported;
+
+            if (productHelper.isBlitterFullySupported(hwInfo) && isLocalMemory) {
+                blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, memory, buffer->getOffset(), hostPtr, {size, 1, 1});
+            }
+
+            if (blitMemoryToAllocationResult != BlitOperationResult::Success) {
+                auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
+                if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(buffer, CL_TRUE, buffer->getOffset(), size, hostPtr, mapAllocation, 0, nullptr, nullptr)) {
+                    errcodeRet = CL_OUT_OF_RESOURCES;
+                    return false;
+                }
+            }
+            return true;
+        }
+    } else {
+        memcpy_s(ptrOffset(memory->getUnderlyingBuffer(), buffer->getOffset()), size, hostPtr, size);
+        return true;
+    }
+    return false;
 }
 
 Buffer *Buffer::create(Context *context,
@@ -181,8 +244,61 @@ Buffer *Buffer::create(Context *context,
                        size_t size,
                        void *hostPtr,
                        cl_int &errcodeRet) {
+    AdditionalBufferCreateArgs bufferCreateArgs{};
+    return create(context, memoryProperties, flags, flagsIntel, size, hostPtr, bufferCreateArgs, errcodeRet);
+}
+
+Buffer *Buffer::create(Context *context,
+                       const MemoryProperties &memoryProperties,
+                       cl_mem_flags flags,
+                       cl_mem_flags_intel flagsIntel,
+                       size_t size,
+                       void *hostPtr,
+                       AdditionalBufferCreateArgs &bufferCreateArgs,
+                       cl_int &errcodeRet) {
 
     errcodeRet = CL_SUCCESS;
+    Context::BufferPoolAllocator &bufferPoolAllocator = context->getBufferPoolAllocator();
+    const bool implicitScalingEnabled = ImplicitScalingHelper::isImplicitScalingEnabled(context->getDevice(0u)->getDeviceBitfield(), true);
+    const bool useHostPtr = memoryProperties.flags.useHostPtr;
+    const bool copyHostPtr = memoryProperties.flags.copyHostPtr;
+    if (implicitScalingEnabled == false &&
+        useHostPtr == false &&
+        memoryProperties.flags.forceHostMemory == false) {
+        cl_int poolAllocRet = CL_SUCCESS;
+        auto bufferFromPool = bufferPoolAllocator.allocateBufferFromPool(memoryProperties,
+                                                                         flags,
+                                                                         flagsIntel,
+                                                                         size,
+                                                                         hostPtr,
+                                                                         poolAllocRet);
+        if (CL_SUCCESS == poolAllocRet) {
+            const bool needsCopy = copyHostPtr;
+            if (needsCopy) {
+                for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
+                    auto graphicsAllocation = bufferFromPool->getGraphicsAllocation(rootDeviceIndex);
+                    auto mapAllocation = bufferFromPool->getMapAllocation(rootDeviceIndex);
+                    bool isCompressionEnabled = graphicsAllocation->isCompressionEnabled();
+                    if (copyHostPointer(bufferFromPool,
+                                        size,
+                                        hostPtr,
+                                        graphicsAllocation,
+                                        mapAllocation,
+                                        rootDeviceIndex,
+                                        isCompressionEnabled,
+                                        implicitScalingEnabled,
+                                        poolAllocRet)) {
+                        break;
+                    }
+                }
+            }
+            if (!needsCopy || poolAllocRet == CL_SUCCESS) {
+                return bufferFromPool;
+            } else {
+                clReleaseMemObject(bufferFromPool);
+            }
+        }
+    }
 
     MemoryManager *memoryManager = context->getMemoryManager();
     UNRECOVERABLE_IF(!memoryManager);
@@ -193,9 +309,6 @@ Buffer *Buffer::create(Context *context,
     AllocationInfoType allocationInfos;
     allocationInfos.resize(maxRootDeviceIndex + 1ull);
 
-    const bool useHostPtr = memoryProperties.flags.useHostPtr;
-    const bool copyHostPtr = memoryProperties.flags.copyHostPtr;
-
     void *allocationCpuPtr = nullptr;
     bool forceCopyHostPtr = false;
 
@@ -203,10 +316,13 @@ Buffer *Buffer::create(Context *context,
         allocationInfos[rootDeviceIndex] = {};
         auto &allocationInfo = allocationInfos[rootDeviceIndex];
 
-        auto hwInfo = (&memoryManager->peekExecutionEnvironment())->rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+        auto &executionEnvironment = memoryManager->peekExecutionEnvironment();
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+        auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
-        bool compressionEnabled = MemObjHelper::isSuitableForCompression(HwHelper::compressedBuffersSupported(*hwInfo), memoryProperties, *context,
-                                                                         HwHelper::get(hwInfo->platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(size, *hwInfo));
+        bool compressionEnabled = MemObjHelper::isSuitableForCompression(GfxCoreHelper::compressedBuffersSupported(*hwInfo), memoryProperties, *context,
+                                                                         gfxCoreHelper.isBufferSizeSuitableForCompression(size));
 
         allocationInfo.allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, *context, compressionEnabled,
                                                                                           memoryManager->isLocalMemorySupported(rootDeviceIndex));
@@ -265,7 +381,7 @@ Buffer *Buffer::create(Context *context,
             allocationInfo.allocateMemory = false;
         }
 
-        if (hostPtr && context->isProvidingPerformanceHints()) {
+        if (!bufferCreateArgs.doNotProvidePerformanceHints && hostPtr && context->isProvidingPerformanceHints()) {
             if (allocationInfo.zeroCopyAllowed) {
                 context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_MEETS_ALIGNMENT_RESTRICTIONS, hostPtr, size);
             } else {
@@ -277,7 +393,7 @@ Buffer *Buffer::create(Context *context,
             allocationInfo.zeroCopyAllowed = false;
         }
 
-        if (allocationInfo.allocateMemory && context->isProvidingPerformanceHints()) {
+        if (!bufferCreateArgs.doNotProvidePerformanceHints && allocationInfo.allocateMemory && context->isProvidingPerformanceHints()) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_GOOD_INTEL, CL_BUFFER_NEEDS_ALLOCATE_MEMORY);
         }
 
@@ -291,6 +407,7 @@ Buffer *Buffer::create(Context *context,
                                                                                                    *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex), context->isSingleDeviceContext());
             allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
             allocProperties.flags.preferCompressed = compressionEnabled;
+            allocProperties.makeDeviceBufferLockable = bufferCreateArgs.makeAllocationLockable;
 
             if (allocationCpuPtr) {
                 allocationInfo.memory = memoryManager->createGraphicsAllocationFromExistingStorage(allocProperties, allocationCpuPtr, multiGraphicsAllocation);
@@ -350,6 +467,8 @@ Buffer *Buffer::create(Context *context,
         }
     }
 
+    multiGraphicsAllocation.setMultiStorage(MemoryPropertiesHelper::useMultiStorageForCrossRootDeviceAccess(context->getRootDeviceIndices().size() > 1));
+
     auto rootDeviceIndex = context->getDevice(0u)->getRootDeviceIndex();
     auto &allocationInfo = allocationInfos[rootDeviceIndex];
     auto memoryStorage = multiGraphicsAllocation.getDefaultGraphicsAllocation()->getUnderlyingBuffer();
@@ -403,30 +522,15 @@ Buffer *Buffer::create(Context *context,
         pBuffer->setHostPtrMinSize(size);
 
         if (allocationInfo.copyMemoryFromHostPtr && !copyExecuted) {
-            auto isLocalMemory = !MemoryPoolHelper::isSystemMemoryPool(allocationInfo.memory->getMemoryPool());
-            bool gpuCopyRequired = isCompressionEnabled || isLocalMemory;
-
-            if (gpuCopyRequired) {
-                auto &device = pBuffer->getContext()->getDevice(0u)->getDevice();
-                auto &hwInfo = device.getHardwareInfo();
-                auto hwInfoConfig = HwInfoConfig::get(hwInfo.platform.eProductFamily);
-                auto blitMemoryToAllocationResult = BlitOperationResult::Unsupported;
-
-                if (hwInfoConfig->isBlitterFullySupported(hwInfo) && isLocalMemory) {
-                    blitMemoryToAllocationResult = BlitHelperFunctions::blitMemoryToAllocation(device, allocationInfo.memory, pBuffer->getOffset(), hostPtr, {size, 1, 1});
-                }
-
-                if (blitMemoryToAllocationResult != BlitOperationResult::Success) {
-                    auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
-                    if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(pBuffer, CL_TRUE, 0, size, hostPtr, allocationInfo.mapAllocation, 0, nullptr, nullptr)) {
-                        errcodeRet = CL_OUT_OF_RESOURCES;
-                    }
-                }
-                copyExecuted = true;
-            } else {
-                memcpy_s(allocationInfo.memory->getUnderlyingBuffer(), size, hostPtr, size);
-                copyExecuted = true;
-            }
+            copyExecuted = copyHostPointer(pBuffer,
+                                           size,
+                                           hostPtr,
+                                           allocationInfo.memory,
+                                           allocationInfo.mapAllocation,
+                                           rootDeviceIndex,
+                                           isCompressionEnabled,
+                                           implicitScalingEnabled,
+                                           errcodeRet);
         }
     }
 
@@ -542,7 +646,7 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
 
     auto copyMultiGraphicsAllocation = MultiGraphicsAllocation{this->multiGraphicsAllocation};
     auto buffer = createFunction(this->context, memoryProperties, flags, 0, region->size,
-                                 ptrOffset(this->memoryStorage, region->origin),
+                                 this->memoryStorage ? ptrOffset(this->memoryStorage, region->origin) : nullptr,
                                  this->hostPtr ? ptrOffset(this->hostPtr, region->origin) : nullptr,
                                  std::move(copyMultiGraphicsAllocation),
                                  this->isZeroCopy, this->isHostPtrSVM, false);
@@ -552,7 +656,7 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
     }
 
     buffer->associatedMemObject = this;
-    buffer->offset = region->origin;
+    buffer->offset = region->origin + this->offset;
     buffer->setParentSharingHandler(this->getSharingHandler());
     this->incRefInternal();
 
@@ -791,7 +895,7 @@ void Buffer::setSurfaceState(const Device *device,
 }
 
 void Buffer::provideCompressionHint(bool compressionEnabled, Context *context, Buffer *buffer) {
-    if (context->isProvidingPerformanceHints() && HwHelper::compressedBuffersSupported(context->getDevice(0)->getHardwareInfo())) {
+    if (context->isProvidingPerformanceHints() && GfxCoreHelper::compressedBuffersSupported(context->getDevice(0)->getHardwareInfo())) {
         if (compressionEnabled) {
             context->providePerformanceHint(CL_CONTEXT_DIAGNOSTICS_LEVEL_NEUTRAL_INTEL, BUFFER_IS_COMPRESSED, buffer);
         } else {

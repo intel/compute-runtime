@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,13 @@
 
 #pragma once
 
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/topology_map.h"
+#include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
+#include "level_zero/core/source/device/bcs_split.h"
 #include "level_zero/core/source/device/device.h"
 
 #include <map>
@@ -17,14 +21,18 @@
 
 namespace NEO {
 class AllocationsList;
-}
+class DriverInfo;
+} // namespace NEO
 
 namespace L0 {
 struct SysmanDevice;
+struct FabricVertex;
 class CacheReservation;
 
 struct DeviceImp : public Device {
     DeviceImp();
+    ze_result_t submitCopyForP2P(ze_device_handle_t hPeerDevice, ze_bool_t *value);
+    MOCKABLE_VIRTUAL ze_result_t queryFabricStats(DeviceImp *pPeerDevice, uint32_t &latency, uint32_t &bandwidth);
     ze_result_t canAccessPeer(ze_device_handle_t hPeerDevice, ze_bool_t *value) override;
     ze_result_t createCommandList(const ze_command_list_desc_t *desc,
                                   ze_command_list_handle_t *commandList) override;
@@ -63,14 +71,17 @@ struct DeviceImp : public Device {
     void *getExecEnvironment() override;
     BuiltinFunctionsLib *getBuiltinFunctionsLib() override;
     uint32_t getMOCS(bool l3enabled, bool l1enabled) override;
-    NEO::HwHelper &getHwHelper() override;
+    const NEO::GfxCoreHelper &getGfxCoreHelper() override;
+    const L0GfxCoreHelper &getL0GfxCoreHelper() override;
+    const NEO::ProductHelper &getProductHelper() override;
     const NEO::HardwareInfo &getHwInfo() const override;
     NEO::OSInterface &getOsInterface() override;
     uint32_t getPlatformInfo() const override;
     MetricDeviceContext &getMetricDeviceContext() override;
     DebugSession *getDebugSession(const zet_debug_config_t &config) override;
-    DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result) override;
-    void removeDebugSession() override { debugSession.release(); }
+    void setDebugSession(DebugSession *session);
+    DebugSession *createDebugSession(const zet_debug_config_t &config, ze_result_t &result, bool isRootAttach) override;
+    void removeDebugSession() override;
 
     uint32_t getMaxNumHwThreads() const override;
     ze_result_t activateMetricGroupsDeferred(uint32_t count,
@@ -82,7 +93,9 @@ struct DeviceImp : public Device {
     const NEO::DeviceInfo &getDeviceInfo() const override;
 
     void activateMetricGroups() override;
-    void processAdditionalKernelProperties(NEO::HwHelper &hwHelper, ze_device_module_properties_t *pKernelProperties);
+    void processAdditionalKernelProperties(const NEO::GfxCoreHelper &gfxCoreHelper, ze_device_module_properties_t *pKernelProperties);
+    uint32_t getAdditionalEngines(uint32_t numAdditionalEnginesRequested,
+                                  ze_command_queue_group_properties_t *pCommandQueueGroupProperties);
     NEO::GraphicsAllocation *getDebugSurface() const override { return debugSurface; }
     void setDebugSurface(NEO::GraphicsAllocation *debugSurface) { this->debugSurface = debugSurface; };
     ~DeviceImp() override;
@@ -110,8 +123,11 @@ struct DeviceImp : public Device {
     std::vector<Device *> subDevices;
     std::unordered_map<uint32_t, bool> crossAccessEnabledDevices;
     DriverHandle *driverHandle = nullptr;
+    FabricVertex *fabricVertex = nullptr;
     CommandList *pageFaultCommandList = nullptr;
     ze_pci_speed_ext_t pciMaxSpeed = {-1, -1, -1};
+
+    BcsSplit bcsSplit;
 
     bool resourcesReleased = false;
     void releaseResources();
@@ -122,22 +138,32 @@ struct DeviceImp : public Device {
     std::unique_ptr<NEO::AllocationsList> allocationsForReuse;
     std::unique_ptr<NEO::DriverInfo> driverInfo;
     void createSysmanHandle(bool isSubDevice);
-    NEO::Device::EngineGroupsT &getSubDeviceCopyEngineGroups();
     void populateSubDeviceCopyEngineGroups();
     bool isQueueGroupOrdinalValid(uint32_t ordinal);
+    void setFabricVertex(FabricVertex *inFabricVertex) { fabricVertex = inFabricVertex; }
 
-    using CmdListCreateFunT = std::function<ze_command_list_handle_t(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &)>;
-    CmdListCreateFunT getCmdListCreateFunc(const ze_command_list_desc_t *desc);
+    using CmdListCreateFunPtrT = L0::CommandList *(*)(uint32_t, Device *, NEO::EngineGroupType, ze_command_list_flags_t, ze_result_t &);
+    CmdListCreateFunPtrT getCmdListCreateFunc(const ze_command_list_desc_t *desc);
+    ze_result_t getFabricVertex(ze_fabric_vertex_handle_t *phVertex) override;
+
+    ze_result_t queryDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
+    ze_result_t setDeviceLuid(ze_device_luid_ext_properties_t *deviceLuidProperties);
+    uint32_t getEventMaxPacketCount() const override;
+    uint32_t getEventMaxKernelCount() const override;
+    uint32_t queryDeviceNodeMask();
 
   protected:
-    void adjustCommandQueueDesc(ze_command_queue_desc_t &desc);
-    NEO::Device::EngineGroupsT subDeviceCopyEngineGroups{};
+    void adjustCommandQueueDesc(uint32_t &ordinal, uint32_t &index);
+    NEO::EngineGroupType getEngineGroupTypeForOrdinal(uint32_t ordinal) const;
+    void getP2PPropertiesDirectFabricConnection(DeviceImp *peerDeviceImp,
+                                                ze_device_p2p_bandwidth_exp_properties_t *bandwidthPropertiesDesc);
+    NEO::EngineGroupsT subDeviceCopyEngineGroups{};
 
     NEO::GraphicsAllocation *debugSurface = nullptr;
     SysmanDevice *pSysmanDevice = nullptr;
     std::unique_ptr<DebugSession> debugSession;
 };
 
-void handleGpuDomainTransferForHwWithHints(NEO::PageFaultManager *pageFaultHandler, void *allocPtr, NEO::PageFaultManager::PageFaultData &pageFaultData);
+void transferAndUnprotectMemoryWithHints(NEO::PageFaultManager *pageFaultHandler, void *allocPtr, NEO::PageFaultManager::PageFaultData &pageFaultData);
 
 } // namespace L0

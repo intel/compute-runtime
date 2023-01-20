@@ -1,19 +1,21 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
@@ -31,7 +33,7 @@ class MyCsr : public UltCommandStreamReceiver<Family> {
     MyCsr(const ExecutionEnvironment &executionEnvironment, const DeviceBitfield deviceBitfield)
         : UltCommandStreamReceiver<Family>(const_cast<ExecutionEnvironment &>(executionEnvironment), 0, deviceBitfield) {}
 
-    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, uint32_t taskCountToWait) override {
+    WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
         waitForCompletionWithTimeoutParamsPassed.push_back({params.enableTimeout, params.waitTimeout, taskCountToWait});
         *this->getTagAddress() = getTagAddressValue;
@@ -41,7 +43,7 @@ class MyCsr : public UltCommandStreamReceiver<Family> {
     struct WaitForCompletionWithTimeoutParams {
         bool enableTimeout;
         int64_t timeoutMs;
-        uint32_t taskCountToWait;
+        TaskCountType taskCountToWait;
     };
 
     uint32_t waitForCompletionWithTimeoutCalled = 0u;
@@ -53,6 +55,7 @@ class MyCsr : public UltCommandStreamReceiver<Family> {
 void CL_CALLBACK emptyDestructorCallback(cl_mem memObj, void *userData) {
 }
 
+template <bool useMultiGraphicsAllocation = false>
 class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
   public:
     void SetUp() override {
@@ -61,12 +64,20 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
         executionEnvironment->memoryManager.reset(memoryManager);
         device = std::make_unique<MockClDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
         context.reset(new MockContext(device.get()));
-
         allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), size});
-        memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
-                            ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &device->getDevice()),
-                            CL_MEM_READ_WRITE, 0, size,
-                            nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false);
+        if constexpr (useMultiGraphicsAllocation) {
+            MultiGraphicsAllocation multiAllocation(1u);
+            multiAllocation.addAllocation(allocation);
+            memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
+                                ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &device->getDevice()),
+                                CL_MEM_READ_WRITE, 0, size,
+                                nullptr, nullptr, std::move(multiAllocation), true, false, false);
+        } else {
+            memObj = new MemObj(context.get(), CL_MEM_OBJECT_BUFFER,
+                                ClMemoryPropertiesHelper::createMemoryProperties(CL_MEM_READ_WRITE, 0, 0, &device->getDevice()),
+                                CL_MEM_READ_WRITE, 0, size,
+                                nullptr, nullptr, GraphicsAllocationHelper::toMultiGraphicsAllocation(allocation), true, false, false);
+        }
         csr = device->getDefaultEngine().commandStreamReceiver;
         *csr->getTagAddress() = 0;
         contextId = device->getDefaultEngine().osContext->getContextId();
@@ -90,7 +101,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
         *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = taskCountReady;
     }
 
-    constexpr static uint32_t taskCountReady = 3u;
+    constexpr static TaskCountType taskCountReady = 3u;
     ExecutionEnvironment *executionEnvironment = nullptr;
     std::unique_ptr<MockClDevice> device;
     uint32_t contextId = 0;
@@ -102,7 +113,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
     size_t size = MemoryConstants::pageSize;
 };
 
-class MemObjAsyncDestructionTest : public MemObjDestructionTest {
+class MemObjAsyncDestructionTest : public MemObjDestructionTest<> {
   public:
     void SetUp() override {
         DebugManager.flags.EnableAsyncDestroyAllocations.set(true);
@@ -110,12 +121,23 @@ class MemObjAsyncDestructionTest : public MemObjDestructionTest {
     }
     void TearDown() override {
         MemObjDestructionTest::TearDown();
-        DebugManager.flags.EnableAsyncDestroyAllocations.set(defaultFlag);
     }
-    bool defaultFlag = DebugManager.flags.EnableAsyncDestroyAllocations.get();
+    DebugManagerStateRestore restorer;
 };
 
-class MemObjSyncDestructionTest : public MemObjDestructionTest {
+class MemObjMulitAllocationAsyncDestructionTest : public MemObjDestructionTest<true> {
+  public:
+    void SetUp() override {
+        DebugManager.flags.EnableAsyncDestroyAllocations.set(true);
+        MemObjDestructionTest::SetUp();
+    }
+    void TearDown() override {
+        MemObjDestructionTest::TearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+class MemObjSyncDestructionTest : public MemObjDestructionTest<> {
   public:
     void SetUp() override {
         DebugManager.flags.EnableAsyncDestroyAllocations.set(false);
@@ -123,9 +145,8 @@ class MemObjSyncDestructionTest : public MemObjDestructionTest {
     }
     void TearDown() override {
         MemObjDestructionTest::TearDown();
-        DebugManager.flags.EnableAsyncDestroyAllocations.set(defaultFlag);
     }
-    bool defaultFlag = DebugManager.flags.EnableAsyncDestroyAllocations.get();
+    DebugManagerStateRestore restorer;
 };
 
 TEST_P(MemObjAsyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsyncDestructionsAreEnabledAndAllocationIsNotReadyAndMemObjectIsDestructedThenAllocationIsDeferred) {
@@ -139,7 +160,7 @@ TEST_P(MemObjAsyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsyn
     } else {
         makeMemObjNotReady();
     }
-    auto &allocationList = csr->getTemporaryAllocations();
+    auto &allocationList = csr->getDeferredAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
 
     delete memObj;
@@ -148,6 +169,34 @@ TEST_P(MemObjAsyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsyn
     if (expectedDeferration) {
         EXPECT_EQ(allocation, allocationList.peekHead());
     }
+}
+
+HWTEST_F(MemObjMulitAllocationAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabledThatHasMultiGraphicsAllocationWhenItIsDestroyedThenDestructorWaitsOnTaskCount) {
+    auto rootDeviceIndex = device->getRootDeviceIndex();
+    auto mockCsr0 = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
+    auto mockCsr1 = new MyCsr<FamilyType>(*device->executionEnvironment, device->getDeviceBitfield());
+    device->resetCommandStreamReceiver(mockCsr0, 0);
+    device->resetCommandStreamReceiver(mockCsr1, 1);
+    *mockCsr0->getTagAddress() = 0;
+    *mockCsr1->getTagAddress() = 0;
+    mockCsr0->getTagAddressValue = taskCountReady;
+    mockCsr1->getTagAddressValue = taskCountReady;
+    auto osContextId0 = mockCsr0->getOsContext().getContextId();
+    auto osContextId1 = mockCsr1->getOsContext().getContextId();
+    memObj->getGraphicsAllocation(rootDeviceIndex)->updateTaskCount(taskCountReady, osContextId0);
+    memObj->getGraphicsAllocation(rootDeviceIndex)->updateTaskCount(taskCountReady, osContextId1);
+    auto expectedTaskCount0 = allocation->getTaskCount(osContextId0);
+    auto expectedTaskCount1 = allocation->getTaskCount(osContextId1);
+
+    delete memObj;
+
+    EXPECT_EQ(1u, mockCsr0->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(TimeoutControls::maxTimeout, mockCsr0->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
+    EXPECT_EQ(expectedTaskCount0, mockCsr0->waitForCompletionWithTimeoutParamsPassed[0].taskCountToWait);
+
+    EXPECT_EQ(1u, mockCsr1->waitForCompletionWithTimeoutCalled);
+    EXPECT_EQ(TimeoutControls::maxTimeout, mockCsr1->waitForCompletionWithTimeoutParamsPassed[0].timeoutMs);
+    EXPECT_EQ(expectedTaskCount1, mockCsr1->waitForCompletionWithTimeoutParamsPassed[0].taskCountToWait);
 }
 
 HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabledThatHasDestructorCallbacksWhenItIsDestroyedThenDestructorWaitsOnTaskCount) {
@@ -175,8 +224,8 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     memObj->getGraphicsAllocation(rootDeviceIndex)->updateTaskCount(taskCountReady, osContextId0);
     memObj->getGraphicsAllocation(rootDeviceIndex)->updateTaskCount(taskCountReady, osContextId1);
 
-    uint32_t expectedTaskCount0{};
-    uint32_t expectedTaskCount1{};
+    TaskCountType expectedTaskCount0{};
+    TaskCountType expectedTaskCount1{};
 
     if (hasCallbacks) {
         expectedTaskCount0 = allocation->getTaskCount(osContextId0);
@@ -218,7 +267,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     *mockCsr->getTagAddress() = 0;
     auto osContextId = mockCsr->getOsContext().getContextId();
 
-    uint32_t expectedTaskCount{};
+    TaskCountType expectedTaskCount{};
 
     if (hasAllocatedMappedPtr) {
         expectedTaskCount = allocation->getTaskCount(osContextId);
@@ -262,7 +311,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
 
     auto osContextId = mockCsr->getOsContext().getContextId();
 
-    uint32_t expectedTaskCount{};
+    TaskCountType expectedTaskCount{};
 
     if (hasAllocatedMappedPtr) {
         expectedTaskCount = allocation->getTaskCount(osContextId);
@@ -298,7 +347,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
 
     auto osContextId = mockCsr->getOsContext().getContextId();
 
-    uint32_t expectedTaskCount = allocation->getTaskCount(osContextId);
+    TaskCountType expectedTaskCount = allocation->getTaskCount(osContextId);
 
     delete memObj;
 
@@ -348,7 +397,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithMapAllocationWhenAsyncDestruc
 
     auto osContextId = mockCsr->getOsContext().getContextId();
 
-    uint32_t expectedTaskCount{};
+    TaskCountType expectedTaskCount{};
 
     if (isMapAllocationUsed) {
         expectedTaskCount = mapAllocation->getTaskCount(osContextId);
@@ -419,7 +468,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithoutMemUseHo
 
     makeMemObjUsed();
 
-    auto &allocationList = mockCsr->getTemporaryAllocations();
+    auto &allocationList = mockCsr->getDeferredAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
 
     delete memObj;
@@ -459,7 +508,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenMemObjWithMapAllocationWithMemUseHostP
 
     makeMemObjUsed();
 
-    auto &allocationList = mockCsr->getTemporaryAllocations();
+    auto &allocationList = mockCsr->getDeferredAllocations();
     EXPECT_TRUE(allocationList.peekIsEmpty());
 
     delete memObj;

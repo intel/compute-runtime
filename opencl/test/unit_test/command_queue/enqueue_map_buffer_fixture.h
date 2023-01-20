@@ -17,7 +17,7 @@ struct EnqueueMapBufferTypeTest : public CommandEnqueueFixture,
                                   public ::testing::Test {
 
     void SetUp() override {
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
         BufferDefaults::context = new MockContext;
         srcBuffer = BufferHelper<>::create();
     }
@@ -25,7 +25,7 @@ struct EnqueueMapBufferTypeTest : public CommandEnqueueFixture,
     void TearDown() override {
         delete srcBuffer;
         delete BufferDefaults::context;
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
   protected:

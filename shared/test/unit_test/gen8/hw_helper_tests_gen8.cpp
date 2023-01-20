@@ -1,38 +1,46 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gen8/hw_cmds.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
-#include "shared/test/unit_test/helpers/get_gpgpu_engines_tests.inl"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
-using HwHelperTestGen8 = HwHelperTest;
+using GfxCoreHelperTestGen8 = GfxCoreHelperTest;
 
-GEN8TEST_F(HwHelperTestGen8, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
+GEN8TEST_F(GfxCoreHelperTestGen8, WhenGettingMaxBarriersPerSliceThenCorrectSizeIsReturned) {
+    auto &helper = getHelper<GfxCoreHelper>();
 
     EXPECT_EQ(16u, helper.getMaxBarrierRegisterPerSlice());
 }
 
-GEN8TEST_F(HwHelperTestGen8, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
-    auto &helper = HwHelper::get(renderCoreFamily);
-    EXPECT_EQ(4u, helper.getPitchAlignmentForImage(&hardwareInfo));
+GEN8TEST_F(GfxCoreHelperTestGen8, WhenGettingPitchAlignmentForImageThenCorrectValueIsReturned) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    EXPECT_EQ(4u, gfxCoreHelper.getPitchAlignmentForImage(pDevice->getRootDeviceEnvironment()));
 }
 
-GEN8TEST_F(HwHelperTestGen8, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
+GEN8TEST_F(GfxCoreHelperTestGen8, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
-    auto &helper = HwHelper::get(renderCoreFamily);
-    helper.adjustDefaultEngineType(&hardwareInfo);
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
-GEN8TEST_F(HwHelperTestGen8, whenGetGpgpuEnginesThenReturnThreeEngines) {
-    whenGetGpgpuEnginesThenReturnTwoRcsEngines<FamilyType>(pDevice->getHardwareInfo());
+GEN8TEST_F(GfxCoreHelperTestGen8, whenGetGpgpuEnginesThenReturnThreeEngines) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(pDevice->getHardwareInfo());
+    EXPECT_EQ(3u, gpgpuEngines.size());
+    EXPECT_EQ(aub_stream::ENGINE_RCS, gpgpuEngines[0].first);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, gpgpuEngines[1].first);
+    EXPECT_EQ(aub_stream::ENGINE_RCS, gpgpuEngines[2].first);
     EXPECT_EQ(3u, pDevice->allEngines.size());
 }
 
@@ -48,7 +56,7 @@ GEN8TEST_F(MemorySynchronizatiopCommandsTestsGen8, WhenProgrammingCacheFlushThen
     EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());
 }
 
-using HwInfoConfigTestGen8 = Test<DeviceFixture>;
-GEN8TEST_F(HwInfoConfigTestGen8, givenHwInfosWhenIsMatrixMultiplyAccumulateSupportedThenReturnFalse) {
-    EXPECT_FALSE(HwInfoConfig::get(productFamily)->isMatrixMultiplyAccumulateSupported(*defaultHwInfo));
+using ProductHelperTestGen8 = Test<DeviceFixture>;
+GEN8TEST_F(ProductHelperTestGen8, givenHwInfosWhenIsMatrixMultiplyAccumulateSupportedThenReturnFalse) {
+    EXPECT_FALSE(ProductHelper::get(productFamily)->isMatrixMultiplyAccumulateSupported(*defaultHwInfo));
 }

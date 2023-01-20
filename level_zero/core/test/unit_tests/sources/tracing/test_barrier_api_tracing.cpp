@@ -11,7 +11,7 @@ namespace L0 {
 namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendBarrierTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendBarrier =
         [](ze_command_list_handle_t hCommandList, ze_event_handle_t hSignalEvent,
            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };
@@ -29,7 +29,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendBarrierTracingWrapp
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingCommandListAppendMemoryRangesBarrierTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.CommandList.pfnAppendMemoryRangesBarrier =
         [](ze_command_list_handle_t hCommandList, uint32_t numRanges, const size_t *pRangeSizes, const void **pRanges,
            ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) { return ZE_RESULT_SUCCESS; };

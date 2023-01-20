@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -42,7 +42,7 @@ TEST(SubmissionsAggregator, givenCommandBufferWhenItIsPassedToSubmissionsAggrega
     EXPECT_EQ(cmdBuffer, submissionsAggregator.peekCommandBuffersList().peekHead());
     EXPECT_EQ(cmdBuffer, submissionsAggregator.peekCommandBuffersList().peekTail());
     EXPECT_EQ(cmdBuffer->surfaces.size(), 0u);
-    //idlist holds the ownership
+    // idlist holds the ownership
 }
 
 TEST(SubmissionsAggregator, givenTwoCommandBuffersWhenMergeResourcesIsCalledThenDuplicatesAreEliminated) {
@@ -96,7 +96,7 @@ TEST(SubmissionsAggregator, givenTwoCommandBuffersWhenMergeResourcesIsCalledThen
 
     submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
-    //command buffer 2 is aggregated to command buffer 1
+    // command buffer 2 is aggregated to command buffer 1
     auto primaryBatchInstepctionId = submissionsAggregator.peekCommandBuffersList().peekHead()->inspectionId;
     EXPECT_EQ(primaryBatchInstepctionId, submissionsAggregator.peekCommandBuffersList().peekHead()->next->inspectionId);
     EXPECT_EQ(submissionsAggregator.peekCommandBuffersList().peekHead(), cmdBuffer);
@@ -157,7 +157,7 @@ TEST(SubmissionsAggregator, givenSubmissionAggregatorWhenThreeCommandBuffersAreS
 
     submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
-    //command buffer 3 and 2 is aggregated to command buffer 1
+    // command buffer 3 and 2 is aggregated to command buffer 1
     auto primaryBatchInstepctionId = submissionsAggregator.peekCommandBuffersList().peekHead()->inspectionId;
 
     EXPECT_EQ(primaryBatchInstepctionId, submissionsAggregator.peekCommandBuffersList().peekHead()->next->inspectionId);
@@ -184,20 +184,20 @@ TEST(SubmissionsAggregator, givenMultipleCommandBuffersWhenTheyAreAggreagateWith
     MockGraphicsAllocation alloc6(nullptr, 6);
     MockGraphicsAllocation alloc7(nullptr, 7);
 
-    //14 bytes consumed
+    // 14 bytes consumed
     cmdBuffer->surfaces.push_back(&alloc5);
     cmdBuffer->surfaces.push_back(&alloc6);
     cmdBuffer->surfaces.push_back(&alloc5);
     cmdBuffer->surfaces.push_back(&alloc3);
     cmdBuffer->surfaces.push_back(&alloc6);
 
-    //12 bytes total , only 7 new
+    // 12 bytes total , only 7 new
     cmdBuffer2->surfaces.push_back(&alloc1);
     cmdBuffer2->surfaces.push_back(&alloc2);
     cmdBuffer2->surfaces.push_back(&alloc5);
     cmdBuffer2->surfaces.push_back(&alloc4);
 
-    //12 bytes total, only 7 new
+    // 12 bytes total, only 7 new
     cmdBuffer3->surfaces.push_back(&alloc7);
     cmdBuffer3->surfaces.push_back(&alloc5);
 
@@ -211,7 +211,7 @@ TEST(SubmissionsAggregator, givenMultipleCommandBuffersWhenTheyAreAggreagateWith
 
     submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
-    //command buffer 2 is aggregated to command buffer 1, comand buffer 3 becomes command buffer 2
+    // command buffer 2 is aggregated to command buffer 1, comand buffer 3 becomes command buffer 2
     EXPECT_EQ(submissionsAggregator.peekCommandBuffersList().peekHead(), cmdBuffer);
     EXPECT_EQ(submissionsAggregator.peekCommandBuffersList().peekTail(), cmdBuffer3);
     EXPECT_EQ(cmdBuffer->next, cmdBuffer2);
@@ -240,20 +240,20 @@ TEST(SubmissionsAggregator, givenMultipleCommandBuffersWhenAggregateIsCalledMult
     MockGraphicsAllocation alloc6(nullptr, 6);
     MockGraphicsAllocation alloc7(nullptr, 7);
 
-    //14 bytes consumed
+    // 14 bytes consumed
     cmdBuffer->surfaces.push_back(&alloc5);
     cmdBuffer->surfaces.push_back(&alloc6);
     cmdBuffer->surfaces.push_back(&alloc5);
     cmdBuffer->surfaces.push_back(&alloc3);
     cmdBuffer->surfaces.push_back(&alloc6);
 
-    //12 bytes total , only 7 new
+    // 12 bytes total , only 7 new
     cmdBuffer2->surfaces.push_back(&alloc1);
     cmdBuffer2->surfaces.push_back(&alloc2);
     cmdBuffer2->surfaces.push_back(&alloc5);
     cmdBuffer2->surfaces.push_back(&alloc4);
 
-    //12 bytes total, only 7 new
+    // 12 bytes total, only 7 new
     cmdBuffer3->surfaces.push_back(&alloc7);
     cmdBuffer3->surfaces.push_back(&alloc5);
 
@@ -267,18 +267,18 @@ TEST(SubmissionsAggregator, givenMultipleCommandBuffersWhenAggregateIsCalledMult
 
     submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
-    //command buffers not aggregated due to too low limit
+    // command buffers not aggregated due to too low limit
     EXPECT_EQ(submissionsAggregator.peekCommandBuffersList().peekHead(), cmdBuffer);
     EXPECT_EQ(cmdBuffer->next, cmdBuffer2);
     EXPECT_EQ(submissionsAggregator.peekCommandBuffersList().peekTail(), cmdBuffer3);
 
-    //budget is now larger we can fit everything
+    // budget is now larger we can fit everything
     totalMemoryBudget = 28;
     resourcePackage.clear();
     totalUsedSize = 0;
 
     submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
-    //all cmd buffers are merged to 1
+    // all cmd buffers are merged to 1
     EXPECT_EQ(cmdBuffer3->inspectionId, cmdBuffer2->inspectionId);
     EXPECT_EQ(cmdBuffer->inspectionId, cmdBuffer2->inspectionId);
 
@@ -300,10 +300,10 @@ TEST(SubmissionsAggregator, givenMultipleCommandBuffersWithDifferentGraphicsAllo
     MockGraphicsAllocation alloc5(nullptr, 5);
     MockGraphicsAllocation alloc7(nullptr, 7);
 
-    //5 bytes consumed
+    // 5 bytes consumed
     cmdBuffer->surfaces.push_back(&alloc5);
 
-    //10 bytes total
+    // 10 bytes total
     cmdBuffer2->surfaces.push_back(&alloc1);
     cmdBuffer2->surfaces.push_back(&alloc2);
     cmdBuffer2->batchBuffer.commandBufferAllocation = &alloc7;
@@ -336,7 +336,7 @@ TEST(SubmissionsAggregator, givenTwoCommandBufferWhereSecondContainsFirstOnResou
     cmdBuffer->batchBuffer.commandBufferAllocation = &cmdBufferAllocation1;
     cmdBuffer2->batchBuffer.commandBufferAllocation = &cmdBufferAllocation2;
 
-    //cmdBuffer2 has commandBufferAllocation on the surface list
+    // cmdBuffer2 has commandBufferAllocation on the surface list
     cmdBuffer2->surfaces.push_back(&cmdBufferAllocation1);
     cmdBuffer2->surfaces.push_back(&alloc7);
 
@@ -351,7 +351,7 @@ TEST(SubmissionsAggregator, givenTwoCommandBufferWhereSecondContainsFirstOnResou
 
     submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
-    //resource pack shuold have 3 surfaces
+    // resource pack shuold have 3 surfaces
     EXPECT_EQ(3u, resourcePackage.size());
     EXPECT_EQ(14u, totalUsedSize);
 }
@@ -370,7 +370,7 @@ TEST(SubmissionsAggregator, givenTwoCommandBufferWhereSecondContainsTheFirstComm
     cmdBuffer->batchBuffer.commandBufferAllocation = &cmdBufferAllocation1;
     cmdBuffer2->batchBuffer.commandBufferAllocation = &cmdBufferAllocation1;
 
-    //cmdBuffer2 has commandBufferAllocation on the surface list
+    // cmdBuffer2 has commandBufferAllocation on the surface list
     cmdBuffer2->surfaces.push_back(&alloc7);
     cmdBuffer->surfaces.push_back(&alloc5);
 
@@ -383,7 +383,7 @@ TEST(SubmissionsAggregator, givenTwoCommandBufferWhereSecondContainsTheFirstComm
 
     submissionsAggregator.aggregateCommandBuffers(resourcePackage, totalUsedSize, totalMemoryBudget, 0u);
 
-    //resource pack shuold have 3 surfaces
+    // resource pack shuold have 3 surfaces
     EXPECT_EQ(2u, resourcePackage.size());
     EXPECT_EQ(12u, totalUsedSize);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,12 +15,12 @@
 #include "shared/source/helpers/logical_state_helper.inl"
 
 namespace NEO {
-typedef BDWFamily Family;
+typedef Gen8Family Family;
 
 static uint32_t slmSizeId[] = {0, 1, 2, 4, 4, 8, 8, 8, 8, 16, 16, 16, 16, 16, 16, 16};
 
 template <>
-uint32_t HwHelperHw<Family>::alignSlmSize(uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<Family>::alignSlmSize(uint32_t slmSize) const {
     if (slmSize == 0u) {
         return 0u;
     }
@@ -30,7 +30,7 @@ uint32_t HwHelperHw<Family>::alignSlmSize(uint32_t slmSize) {
 }
 
 template <>
-uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) {
+uint32_t GfxCoreHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32_t slmSize) const {
     slmSize += (4 * KB - 1);
     slmSize = slmSize >> 12;
     slmSize = std::min(slmSize, 15u);
@@ -39,48 +39,44 @@ uint32_t HwHelperHw<Family>::computeSlmValues(const HardwareInfo &hwInfo, uint32
 }
 
 template <>
-size_t HwHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
+size_t GfxCoreHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
     return 16;
 }
 
 template <>
-size_t HwHelperHw<Family>::getMax3dImageWidthOrHeight() const {
+size_t GfxCoreHelperHw<Family>::getMax3dImageWidthOrHeight() const {
     return 2048;
 }
 
 template <>
-uint64_t HwHelperHw<Family>::getMaxMemAllocSize() const {
+uint64_t GfxCoreHelperHw<Family>::getMaxMemAllocSize() const {
     return (2 * MemoryConstants::gigaByte) - (8 * MemoryConstants::kiloByte);
 }
 
 template <>
-bool HwHelperHw<Family>::isStatelesToStatefullWithOffsetSupported() const {
+bool GfxCoreHelperHw<Family>::isStatelessToStatefulWithOffsetSupported() const {
     return false;
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::addPipeControl(LinearStream &commandStream, PipeControlArgs &args) {
+void MemorySynchronizationCommands<Family>::addSingleBarrier(LinearStream &commandStream, PipeControlArgs &args) {
     Family::PIPE_CONTROL cmd = Family::cmdInitPipeControl;
-    args.dcFlushEnable = true;
-    MemorySynchronizationCommands<Family>::setPipeControl(cmd, args);
+    MemorySynchronizationCommands<Family>::setSingleBarrier(&cmd, args);
+
+    cmd.setDcFlushEnable(true);
+
+    if (DebugManager.flags.DoNotFlushCaches.get()) {
+        cmd.setDcFlushEnable(false);
+    }
+
     Family::PIPE_CONTROL *cmdBuffer = commandStream.getSpaceForCmd<Family::PIPE_CONTROL>();
     *cmdBuffer = cmd;
 }
 
-template <>
-void MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(LinearStream &commandStream) {
-    using PIPE_CONTROL = typename Family::PIPE_CONTROL;
-    PIPE_CONTROL cmd = Family::cmdInitPipeControl;
-    cmd.setCommandStreamerStallEnable(true);
-    cmd.setDcFlushEnable(true);
-    auto pipeControl = commandStream.getSpaceForCmd<PIPE_CONTROL>();
-    *pipeControl = cmd;
-}
-
-template class HwHelperHw<Family>;
+template class GfxCoreHelperHw<Family>;
 template class FlatBatchBufferHelperHw<Family>;
 template struct MemorySynchronizationCommands<Family>;
 template struct LriHelper<Family>;
 
-template LogicalStateHelper *LogicalStateHelper::create<Family>(bool pipelinedState);
+template LogicalStateHelper *LogicalStateHelper::create<Family>();
 } // namespace NEO

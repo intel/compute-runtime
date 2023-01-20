@@ -41,19 +41,11 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     LinearStream &commandStream,
     Kernel &kernel,
     CommandQueue &commandQueue,
-    TimestampPacketContainer *currentTimestampPacketNodes,
     IndirectHeap &dsh,
     IndirectHeap &ioh,
     IndirectHeap &ssh,
-    size_t globalWorkSizes[3],
-    size_t localWorkSizes[3],
-    PreemptionMode preemptionMode,
-    size_t currentDispatchIndex,
-    uint32_t &interfaceDescriptorIndex,
     const DispatchInfo &dispatchInfo,
-    size_t offsetInterfaceDescriptorTable,
-    const Vec3<size_t> &numberOfWorkgroups,
-    const Vec3<size_t> &startOfWorkgroups) {
+    HardwareInterfaceWalkerArgs &walkerArgs) {
 
     using COMPUTE_WALKER = typename GfxFamily::COMPUTE_WALKER;
 
@@ -66,31 +58,32 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto numChannels = kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels;
 
     size_t globalOffsets[3] = {dispatchInfo.getOffset().x, dispatchInfo.getOffset().y, dispatchInfo.getOffset().z};
-    size_t startWorkGroups[3] = {startOfWorkgroups.x, startOfWorkgroups.y, startOfWorkgroups.z};
-    size_t numWorkGroups[3] = {numberOfWorkgroups.x, numberOfWorkgroups.y, numberOfWorkgroups.z};
+    size_t startWorkGroups[3] = {walkerArgs.startOfWorkgroups->x, walkerArgs.startOfWorkgroups->y, walkerArgs.startOfWorkgroups->z};
+    size_t numWorkGroups[3] = {walkerArgs.numberOfWorkgroups->x, walkerArgs.numberOfWorkgroups->y, walkerArgs.numberOfWorkgroups->z};
+    auto threadGroupCount = static_cast<uint32_t>(walkerArgs.numberOfWorkgroups->x * walkerArgs.numberOfWorkgroups->y * walkerArgs.numberOfWorkgroups->z);
     uint32_t requiredWalkOrder = 0u;
 
-    bool localIdsGenerationByRuntime = EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
-        numChannels,
-        localWorkSizes,
-        std::array<uint8_t, 3>{{kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[0],
-                                kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[1],
-                                kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]}},
-        kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder,
-        requiredWalkOrder,
-        simd);
+    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
+    bool localIdsGenerationByRuntime = kernelUsesLocalIds && EncodeDispatchKernel<GfxFamily>::isRuntimeLocalIdsGenerationRequired(
+                                                                 numChannels,
+                                                                 walkerArgs.localWorkSizes,
+                                                                 std::array<uint8_t, 3>{{kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[0],
+                                                                                         kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[1],
+                                                                                         kernelInfo.kernelDescriptor.kernelAttributes.workgroupWalkOrder[2]}},
+                                                                 kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresWorkgroupWalkOrder,
+                                                                 requiredWalkOrder,
+                                                                 simd);
 
     bool inlineDataProgrammingRequired = HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(kernel);
     auto idd = &walkerCmd.getInterfaceDescriptor();
     auto &queueCsr = commandQueue.getGpgpuCommandStreamReceiver();
 
-    if (currentTimestampPacketNodes && queueCsr.peekTimestampPacketWriteEnabled()) {
-        auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
+    if (walkerArgs.currentTimestampPacketNodes && queueCsr.peekTimestampPacketWriteEnabled()) {
+        auto timestampPacket = walkerArgs.currentTimestampPacketNodes->peekNodes().at(walkerArgs.currentDispatchIndex);
         GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacket, commandQueue.getDevice().getRootDeviceEnvironment());
     }
 
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
-    auto kernelUsesLocalIds = HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(kernel);
 
     const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     if (auto kernelAllocation = kernelInfo.getGraphicsAllocation()) {
@@ -103,26 +96,33 @@ inline void HardwareInterface<GfxFamily>::programWalker(
         ioh,
         ssh,
         kernel,
-        kernel.getKernelStartOffset(localIdsGenerationByRuntime, kernelUsesLocalIds, isCcsUsed),
+        kernel.getKernelStartAddress(localIdsGenerationByRuntime, kernelUsesLocalIds, isCcsUsed, false),
         simd,
-        localWorkSizes,
-        offsetInterfaceDescriptorTable,
-        interfaceDescriptorIndex,
-        preemptionMode,
+        walkerArgs.localWorkSizes,
+        threadGroupCount,
+        walkerArgs.offsetInterfaceDescriptorTable,
+        walkerArgs.interfaceDescriptorIndex,
+        walkerArgs.preemptionMode,
         &walkerCmd,
         idd,
         localIdsGenerationByRuntime,
         commandQueue.getDevice());
 
     GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(&walkerCmd, kernelInfo.kernelDescriptor, globalOffsets, startWorkGroups,
-                                                           numWorkGroups, localWorkSizes, simd, dim,
+                                                           numWorkGroups, walkerArgs.localWorkSizes, simd, dim,
                                                            localIdsGenerationByRuntime, inlineDataProgrammingRequired, requiredWalkOrder);
-
-    EncodeWalkerArgs walkerArgs{kernel.getExecutionType(), true};
-    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
+    bool kernelSystemAllocation = false;
+    if (kernel.isBuiltIn) {
+        kernelSystemAllocation = kernel.getDestinationAllocationInSystemMemory();
+    } else {
+        kernelSystemAllocation = kernel.isAnyKernelArgumentUsingSystemMemory();
+    }
+    bool requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr;
+    EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence, kernelInfo.kernelDescriptor};
+    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, encodeWalkerArgs);
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
-    auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, !kernel.isSingleSubdevicePreferred());
+    auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, true);
 
     if (partitionWalker) {
         const uint64_t workPartitionAllocationGpuVa = commandQueue.getDevice().getDefaultEngine().commandStreamReceiver->getWorkPartitionAllocationGpuAddress();
@@ -134,12 +134,14 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                              false,
                                                              false,
                                                              kernel.usesImages(),
+                                                             queueCsr.getDcFlushSupport(),
+                                                             kernel.isSingleSubdevicePreferred(),
                                                              workPartitionAllocationGpuVa,
                                                              hwInfo);
         if (queueCsr.isStaticWorkPartitioningEnabled()) {
             queueCsr.setActivePartitions(std::max(queueCsr.getActivePartitions(), partitionCount));
         }
-        auto timestampPacket = currentTimestampPacketNodes->peekNodes().at(currentDispatchIndex);
+        auto timestampPacket = walkerArgs.currentTimestampPacketNodes->peekNodes().at(walkerArgs.currentDispatchIndex);
         timestampPacket->setPacketsUsed(partitionCount);
     } else {
         auto computeWalkerOnStream = commandStream.getSpaceForCmd<typename GfxFamily::COMPUTE_WALKER>();

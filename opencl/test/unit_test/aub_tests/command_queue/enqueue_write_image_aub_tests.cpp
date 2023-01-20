@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/image.h"
@@ -34,13 +33,13 @@ struct AUBWriteImage
       public ::testing::WithParamInterface<std::tuple<uint32_t /*cl_channel_type*/, uint32_t /*cl_channel_order*/, WriteImageParams>>,
       public ::testing::Test {
     void SetUp() override {
-        ImageAubFixture::SetUp(enableBlitter);
+        ImageAubFixture::setUp(enableBlitter);
     }
 
     void TearDown() override {
         dstImage.reset();
 
-        ImageAubFixture::TearDown();
+        ImageAubFixture::tearDown();
     }
 
     template <typename FamilyType>
@@ -228,7 +227,7 @@ struct AUBWriteImage
 
         auto srcMemoryAligned = alignedMalloc(4 + pixelSize * numPixels, MemoryConstants::cacheLineSize);
         memset(srcMemoryAligned, 0x0, 4 + pixelSize * numPixels);
-        auto srcMemoryUnaligned = ptrOffset(reinterpret_cast<uint8_t *>(srcMemoryAligned), 4); //ensure non cacheline-aligned (but aligned to 4) hostPtr to create non-zerocopy image
+        auto srcMemoryUnaligned = ptrOffset(reinterpret_cast<uint8_t *>(srcMemoryAligned), 4); // ensure non cacheline-aligned (but aligned to 4) hostPtr to create non-zerocopy image
 
         cl_mem_flags flags = CL_MEM_USE_HOST_PTR | CL_MEM_READ_WRITE;
         auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, pClDevice->getHardwareInfo().capabilityTable.supportsOcl21Features);
@@ -336,7 +335,7 @@ HWTEST2_F(AUBWriteImageBCS, GivenMisalignedHostPtrWhenWritingImageWithBlitterEna
 
 HWTEST2_P(AUBWriteImageBCS, GivenUnalignedMemoryWhenWritingImageWithBlitterEnabledThenExpectationsAreMet, ImagesSupportedMatcher) {
     if (std::get<2>(GetParam()).imageType == CL_MEM_OBJECT_IMAGE3D &&
-        !(HwInfoConfig::get(defaultHwInfo->platform.eProductFamily)->isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {
+        !(ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isTile64With3DSurfaceOnBCSSupported(*defaultHwInfo))) {
         GTEST_SKIP();
     }
 

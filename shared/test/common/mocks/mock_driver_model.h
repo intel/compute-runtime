@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
 
@@ -37,9 +38,9 @@ class MockDriverModel : public NEO::DriverModel {
         return isGpuHangDetectedToReturn;
     }
 
-    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override { return pciSpeedInfo; }
+    PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override { return pciSpeedInfo; }
 
-    PhyicalDevicePciSpeedInfo pciSpeedInfo{};
+    PhysicalDevicePciSpeedInfo pciSpeedInfo{};
     PhysicalDevicePciBusInfo pciBusInfo{};
     bool isGpuHangDetectedToReturn{};
     std::function<void()> isGpuHangDetectedSideEffect{};

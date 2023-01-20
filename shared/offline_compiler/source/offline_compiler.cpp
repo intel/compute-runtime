@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/queries.h"
 #include "shared/offline_compiler/source/utilities/get_git_version_info.h"
+#include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/compiler_interface/default_cache_config.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
@@ -18,27 +20,13 @@
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/compiler_options_parser.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/file_io.h"
-#include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/validators.h"
-#include "shared/source/os_interface/os_inc_base.h"
-#include "shared/source/os_interface/os_library.h"
 
-#include "cif/common/cif_main.h"
-#include "cif/helpers/error.h"
-#include "cif/import/library_api.h"
-#include "compiler_options.h"
-#include "igfxfmid.h"
-#include "ocl_igc_interface/fcl_ocl_device_ctx.h"
-#include "ocl_igc_interface/igc_ocl_device_ctx.h"
-#include "ocl_igc_interface/platform_helper.h"
+#include "platforms.h"
 
-#include <algorithm>
 #include <iomanip>
-#include <iostream>
+#include <iterator>
 #include <list>
 
 #ifdef _WIN32
@@ -70,6 +58,20 @@ std::string convertToPascalCase(const std::string &inString) {
         }
     }
     return outString;
+}
+
+std::string getDeprecatedDevices(OclocArgHelper *helper) {
+    auto acronyms = helper->productConfigHelper->getDeprecatedAcronyms();
+    return helper->createStringForArgs(acronyms);
+}
+
+std::string getSupportedDevices(OclocArgHelper *helper) {
+    auto devices = helper->productConfigHelper->getAllProductAcronyms();
+    auto families = helper->productConfigHelper->getFamiliesAcronyms();
+    auto releases = helper->productConfigHelper->getReleasesAcronyms();
+    auto familiesAndReleases = helper->getArgsWithoutDuplicate(families, releases);
+
+    return helper->createStringForArgs(devices, familiesAndReleases);
 }
 
 OfflineCompiler::OfflineCompiler() = default;
@@ -121,9 +123,70 @@ int OfflineCompiler::query(size_t numArgs, const std::vector<std::string> &allAr
     } else if ("--help" == arg) {
         printQueryHelp(helper);
     } else {
-        helper->printf("Error: Invalid command line. Uknown argument %s.", arg.c_str());
+        helper->printf("Error: Invalid command line. Unknown argument %s.", arg.c_str());
         retVal = INVALID_COMMAND_LINE;
     }
+
+    return retVal;
+}
+
+void printAcronymIdsHelp(OclocArgHelper *helper) {
+    helper->printf(OfflineCompiler::idsHelp.data(), getSupportedDevices(helper).c_str());
+}
+
+int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper) {
+    const size_t numArgRequested = 3u;
+    auto retVal = SUCCESS;
+
+    if (numArgs != numArgRequested) {
+        helper->printf("Error: Invalid command line. Expected ocloc ids <acronym>.\n");
+        retVal = INVALID_COMMAND_LINE;
+        return retVal;
+    } else if ((ConstStringRef("-h") == allArgs[2] || ConstStringRef("--help") == allArgs[2])) {
+        printAcronymIdsHelp(helper);
+        return retVal;
+    }
+
+    std::string queryAcronym = allArgs[2];
+    ProductConfigHelper::adjustDeviceName(queryAcronym);
+
+    auto &enabledDevices = helper->productConfigHelper->getDeviceAotInfo();
+    std::vector<std::string> matchedVersions{};
+
+    if (helper->productConfigHelper->isFamily(queryAcronym)) {
+        auto family = ProductConfigHelper::getFamilyForAcronym(queryAcronym);
+        for (const auto &device : enabledDevices) {
+            if (device.family == family) {
+                matchedVersions.push_back(ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig));
+            }
+        }
+    } else if (helper->productConfigHelper->isRelease(queryAcronym)) {
+        auto release = ProductConfigHelper::getReleaseForAcronym(queryAcronym);
+        for (const auto &device : enabledDevices) {
+            if (device.release == release) {
+                matchedVersions.push_back(ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig));
+            }
+        }
+    } else if (helper->productConfigHelper->isProductConfig(queryAcronym)) {
+        auto product = ProductConfigHelper::getProductConfigForAcronym(queryAcronym);
+        for (const auto &device : enabledDevices) {
+            if (device.aotConfig.value == product) {
+                matchedVersions.push_back(ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig));
+            }
+        }
+    } else {
+        helper->printf("Error: Invalid command line. Unknown acronym %s.\n", allArgs[2].c_str());
+        retVal = INVALID_COMMAND_LINE;
+        return retVal;
+    }
+
+    std::ostringstream os;
+    for (const auto &prefix : matchedVersions) {
+        if (os.tellp())
+            os << "\n";
+        os << prefix;
+    }
+    helper->printf("Matched ids:\n%s\n", os.str().c_str());
 
     return retVal;
 }
@@ -137,6 +200,18 @@ struct OfflineCompiler::buildInfo {
 
 int OfflineCompiler::buildIrBinary() {
     int retVal = SUCCESS;
+
+    if (allowCaching) {
+        irHash = cache->getCachedFileName(getHardwareInfo(),
+                                          sourceCode,
+                                          options,
+                                          internalOptions);
+        irBinary = cache->loadCachedBinary(irHash, irBinarySize).release();
+        if (irBinary) {
+            return retVal;
+        }
+    }
+
     UNRECOVERABLE_IF(!fclFacade->isInitialized());
     pBuildInfo->intermediateRepresentation = useLlvmText ? IGC::CodeType::llvmLl
                                                          : (useLlvmBc ? IGC::CodeType::llvmBc : preferredIntermediateRepresentation);
@@ -205,6 +280,10 @@ int OfflineCompiler::buildIrBinary() {
 
     updateBuildLog(pBuildInfo->fclOutput->GetBuildLog()->GetMemory<char>(), pBuildInfo->fclOutput->GetBuildLog()->GetSizeRaw());
 
+    if (allowCaching) {
+        cache->cacheBinary(irHash, irBinary, static_cast<uint32_t>(irBinarySize));
+    }
+
     return retVal;
 }
 
@@ -238,54 +317,75 @@ std::string OfflineCompiler::validateInputType(const std::string &input, bool is
 int OfflineCompiler::buildSourceCode() {
     int retVal = SUCCESS;
 
-    do {
-        if (sourceCode.empty()) {
-            retVal = INVALID_PROGRAM;
-            break;
+    if (sourceCode.empty()) {
+        return INVALID_PROGRAM;
+    }
+
+    if (allowCaching) {
+        irHash = cache->getCachedFileName(getHardwareInfo(), sourceCode, options, internalOptions);
+        irBinary = cache->loadCachedBinary(irHash, irBinarySize).release();
+
+        genHash = cache->getCachedFileName(getHardwareInfo(), ArrayRef<const char>(irBinary, irBinarySize), options, internalOptions);
+        genBinary = cache->loadCachedBinary(genHash, genBinarySize).release();
+
+        if (irBinary && genBinary) {
+            if (!CompilerOptions::contains(options, CompilerOptions::generateDebugInfo))
+                return retVal;
+            else {
+                dbgHash = cache->getCachedFileName(getHardwareInfo(), irHash, options, internalOptions);
+                debugDataBinary = cache->loadCachedBinary(dbgHash, debugDataBinarySize).release();
+                if (debugDataBinary)
+                    return retVal;
+            }
         }
+    }
 
-        UNRECOVERABLE_IF(!igcFacade->isInitialized());
+    UNRECOVERABLE_IF(!igcFacade->isInitialized());
 
-        auto inputTypeWarnings = validateInputType(sourceCode, inputFileLlvm, inputFileSpirV);
-        this->argHelper->printf(inputTypeWarnings.c_str());
+    auto inputTypeWarnings = validateInputType(sourceCode, inputFileLlvm, inputFileSpirV);
+    this->argHelper->printf(inputTypeWarnings.c_str());
 
-        CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> igcOutput;
-        bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;
-        if (false == inputIsIntermediateRepresentation) {
-            retVal = buildIrBinary();
-            if (retVal != SUCCESS)
-                break;
+    CIF::RAII::UPtr_t<IGC::OclTranslationOutputTagOCL> igcOutput;
+    bool inputIsIntermediateRepresentation = inputFileLlvm || inputFileSpirV;
+    if (false == inputIsIntermediateRepresentation) {
+        retVal = buildIrBinary();
+        if (retVal != SUCCESS)
+            return retVal;
 
-            auto igcTranslationCtx = igcFacade->createTranslationContext(pBuildInfo->intermediateRepresentation, IGC::CodeType::oclGenBin);
-            igcOutput = igcTranslationCtx->Translate(pBuildInfo->fclOutput->GetOutput(), pBuildInfo->fclOptions.get(),
-                                                     pBuildInfo->fclInternalOptions.get(),
-                                                     nullptr, 0);
+        auto igcTranslationCtx = igcFacade->createTranslationContext(pBuildInfo->intermediateRepresentation, IGC::CodeType::oclGenBin);
+        igcOutput = igcTranslationCtx->Translate(pBuildInfo->fclOutput->GetOutput(), pBuildInfo->fclOptions.get(),
+                                                 pBuildInfo->fclInternalOptions.get(),
+                                                 nullptr, 0);
 
-        } else {
-            storeBinary(irBinary, irBinarySize, sourceCode.c_str(), sourceCode.size());
-            isSpirV = inputFileSpirV;
-            auto igcSrc = igcFacade->createConstBuffer(sourceCode.c_str(), sourceCode.size());
-            auto igcOptions = igcFacade->createConstBuffer(options.c_str(), options.size());
-            auto igcInternalOptions = igcFacade->createConstBuffer(internalOptions.c_str(), internalOptions.size());
-            auto igcTranslationCtx = igcFacade->createTranslationContext(inputFileSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
-            igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
-        }
-        if (igcOutput == nullptr) {
-            retVal = OUT_OF_HOST_MEMORY;
-            break;
-        }
-        UNRECOVERABLE_IF(igcOutput->GetBuildLog() == nullptr);
-        UNRECOVERABLE_IF(igcOutput->GetOutput() == nullptr);
-        updateBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
+    } else {
+        storeBinary(irBinary, irBinarySize, sourceCode.c_str(), sourceCode.size());
+        isSpirV = inputFileSpirV;
+        auto igcSrc = igcFacade->createConstBuffer(sourceCode.c_str(), sourceCode.size());
+        auto igcOptions = igcFacade->createConstBuffer(options.c_str(), options.size());
+        auto igcInternalOptions = igcFacade->createConstBuffer(internalOptions.c_str(), internalOptions.size());
+        auto igcTranslationCtx = igcFacade->createTranslationContext(inputFileSpirV ? IGC::CodeType::spirV : IGC::CodeType::llvmBc, IGC::CodeType::oclGenBin);
+        igcOutput = igcTranslationCtx->Translate(igcSrc.get(), igcOptions.get(), igcInternalOptions.get(), nullptr, 0);
+    }
+    if (igcOutput == nullptr) {
+        return OUT_OF_HOST_MEMORY;
+    }
+    UNRECOVERABLE_IF(igcOutput->GetBuildLog() == nullptr);
+    UNRECOVERABLE_IF(igcOutput->GetOutput() == nullptr);
+    updateBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
 
-        if (igcOutput->GetOutput()->GetSizeRaw() != 0) {
-            storeBinary(genBinary, genBinarySize, igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw());
-        }
-        if (igcOutput->GetDebugData()->GetSizeRaw() != 0) {
-            storeBinary(debugDataBinary, debugDataBinarySize, igcOutput->GetDebugData()->GetMemory<char>(), igcOutput->GetDebugData()->GetSizeRaw());
-        }
-        retVal = igcOutput->Successful() ? SUCCESS : BUILD_PROGRAM_FAILURE;
-    } while (0);
+    if (igcOutput->GetOutput()->GetSizeRaw() != 0) {
+        storeBinary(genBinary, genBinarySize, igcOutput->GetOutput()->GetMemory<char>(), igcOutput->GetOutput()->GetSizeRaw());
+    }
+    if (igcOutput->GetDebugData()->GetSizeRaw() != 0) {
+        storeBinary(debugDataBinary, debugDataBinarySize, igcOutput->GetDebugData()->GetMemory<char>(), igcOutput->GetDebugData()->GetSizeRaw());
+    }
+    if (allowCaching) {
+        cache->cacheBinary(irHash, irBinary, static_cast<uint32_t>(irBinarySize));
+        cache->cacheBinary(genHash, genBinary, static_cast<uint32_t>(genBinarySize));
+        cache->cacheBinary(dbgHash, debugDataBinary, static_cast<uint32_t>(debugDataBinarySize));
+    }
+
+    retVal = igcOutput->Successful() ? SUCCESS : BUILD_PROGRAM_FAILURE;
 
     return retVal;
 }
@@ -306,25 +406,23 @@ int OfflineCompiler::build() {
 }
 
 void OfflineCompiler::updateBuildLog(const char *pErrorString, const size_t errorStringSize) {
-    std::string errorString = (errorStringSize && pErrorString) ? std::string(pErrorString, pErrorString + errorStringSize) : "";
-    if (errorString[0] != '\0') {
-        if (buildLog.empty()) {
-            buildLog.assign(errorString.c_str());
-        } else {
-            buildLog.append("\n");
-            buildLog.append(errorString.c_str());
+    if (pErrorString != nullptr) {
+        std::string log(pErrorString, pErrorString + errorStringSize);
+        ConstStringRef errorString(log);
+        const bool warningFound = errorString.containsCaseInsensitive("warning");
+        if (!isQuiet() || !warningFound) {
+            if (buildLog.empty()) {
+                buildLog.assign(errorString.data());
+            } else {
+                buildLog.append("\n");
+                buildLog.append(errorString.data());
+            }
         }
     }
 }
 
 std::string &OfflineCompiler::getBuildLog() {
     return buildLog;
-}
-
-void OfflineCompiler::setFamilyType() {
-    familyNameWithType.clear();
-    familyNameWithType.append(familyName[hwInfo.platform.eRenderCoreFamily]);
-    familyNameWithType.append(hwInfo.capabilityTable.platformType);
 }
 
 int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceName, int deviceId) {
@@ -340,10 +438,11 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceNam
             if (deviceId != -1) {
                 hwInfo.platform.usDeviceID = deviceId;
             }
-            auto hwInfoConfig = defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
-            setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
+            uint64_t config = hwInfoConfig ? hwInfoConfig : defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
+            setHwInfoValuesFromConfig(config, hwInfo);
             hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
-            setFamilyType();
+
+            productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
             return SUCCESS;
         }
     }
@@ -351,25 +450,25 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceNam
 }
 
 int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
-    AheadOfTimeConfig aotConfig{AOT::UNKNOWN_ISA};
+    AOT::PRODUCT_CONFIG productConfig = AOT::UNKNOWN_ISA;
     ProductConfigHelper::adjustDeviceName(deviceName);
 
     if (deviceName.find(".") != std::string::npos) {
-        aotConfig = argHelper->getMajorMinorRevision(deviceName);
-        if (aotConfig.ProductConfig == AOT::UNKNOWN_ISA) {
+        productConfig = argHelper->productConfigHelper->getProductConfigForVersionValue(deviceName);
+        if (productConfig == AOT::UNKNOWN_ISA) {
             argHelper->printf("Could not determine device target: %s\n", deviceName.c_str());
         }
-    } else if (argHelper->isProductConfig(deviceName)) {
-        aotConfig.ProductConfig = ProductConfigHelper::returnProductConfigForAcronym(deviceName);
+    } else if (argHelper->productConfigHelper->isProductConfig(deviceName)) {
+        productConfig = ProductConfigHelper::getProductConfigForAcronym(deviceName);
     }
 
-    if (aotConfig.ProductConfig != AOT::UNKNOWN_ISA) {
-        if (argHelper->getHwInfoForProductConfig(aotConfig.ProductConfig, hwInfo)) {
+    if (productConfig != AOT::UNKNOWN_ISA) {
+        if (argHelper->getHwInfoForProductConfig(productConfig, hwInfo, hwInfoConfig)) {
             if (revisionId != -1) {
                 hwInfo.platform.usRevId = revisionId;
             }
-            deviceConfig = static_cast<AOT::PRODUCT_CONFIG>(aotConfig.ProductConfig);
-            setFamilyType();
+            deviceConfig = productConfig;
+            productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
             return SUCCESS;
         }
         argHelper->printf("Could not determine target based on product config: %s\n", deviceName.c_str());
@@ -382,8 +481,6 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
     if (deviceName.empty()) {
         return retVal;
     }
-
-    overridePlatformName(deviceName);
 
     const char hexPrefix = 2;
     int deviceId = -1;
@@ -427,6 +524,8 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     std::unique_ptr<char[]> sourceFromFile;
     size_t sourceFromFileSize = 0;
     this->pBuildInfo = std::make_unique<buildInfo>();
+    auto cacheConfig = getDefaultCompilerCacheConfig();
+    cacheDir = cacheConfig.cacheDir;
     retVal = parseCommandLine(numArgs, allArgs);
     if (showHelp) {
         printUsage();
@@ -445,16 +544,16 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
             std::string oclocOptionsFromFile;
             bool oclocOptionsRead = readOptionsFromFile(oclocOptionsFromFile, oclocOptionsFileName, argHelper);
             if (oclocOptionsRead) {
-                argHelper->printf("Building with ocloc options:\n%s\n", oclocOptionsFromFile.c_str());
+                if (!isQuiet()) {
+                    argHelper->printf("Building with ocloc options:\n%s\n", oclocOptionsFromFile.c_str());
+                }
                 std::istringstream iss(allArgs[0] + " " + oclocOptionsFromFile);
                 std::vector<std::string> tokens{
                     std::istream_iterator<std::string>{iss}, std::istream_iterator<std::string>{}};
 
                 retVal = parseCommandLine(tokens.size(), tokens);
                 if (retVal != SUCCESS) {
-                    if (isQuiet()) {
-                        printf("Failed with ocloc options from file:\n%s\n", oclocOptionsFromFile.c_str());
-                    }
+                    argHelper->printf("Failed with ocloc options from file:\n%s\n", oclocOptionsFromFile.c_str());
                     return retVal;
                 }
             }
@@ -496,8 +595,11 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
     }
 
     if (CompilerOptions::contains(options, CompilerOptions::generateDebugInfo.str())) {
-        if (hwInfo.platform.eRenderCoreFamily >= IGFX_GEN9_CORE) {
-            internalOptions = CompilerOptions::concatenate(internalOptions, CompilerOptions::debugKernelEnable);
+        if (false == inputFileSpirV && false == CompilerOptions::contains(options, CompilerOptions::generateSourcePath) && false == CompilerOptions::contains(options, CompilerOptions::useCMCompiler)) {
+            auto sourcePathStringOption = CompilerOptions::generateSourcePath.str();
+            sourcePathStringOption.append(" ");
+            sourcePathStringOption.append(CompilerOptions::wrapInQuotes(inputFile));
+            options = CompilerOptions::concatenate(options, sourcePathStringOption);
         }
     }
 
@@ -547,6 +649,11 @@ int OfflineCompiler::initialize(size_t numArgs, const std::vector<std::string> &
         argHelper->printf("Error! IGC initialization failure. Error code = %d\n", igcInitializationResult);
         return igcInitializationResult;
     }
+    if (allowCaching) {
+        cacheConfig.cacheDir = cacheDir;
+        cache = std::make_unique<CompilerCache>(cacheConfig);
+        createDir(cacheConfig.cacheDir);
+    }
 
     return retVal;
 }
@@ -556,12 +663,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
     bool compile32 = false;
     bool compile64 = false;
 
-    if (numArgs < 2) {
-        showHelp = true;
-        return INVALID_COMMAND_LINE;
-    }
-
-    for (uint32_t argIndex = 1; argIndex < numArgs; argIndex++) {
+    for (uint32_t argIndex = 1; argIndex < argv.size(); argIndex++) {
         const auto &currArg = argv[argIndex];
         const bool hasMoreArgs = (argIndex + 1 < numArgs);
         if ("compile" == currArg) {
@@ -608,7 +710,12 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if (("-out_dir" == currArg) && hasMoreArgs) {
             outputDirectory = argv[argIndex + 1];
             argIndex++;
+        } else if (("-cache_dir" == currArg) && hasMoreArgs) {
+            cacheDir = argv[argIndex + 1];
+            argIndex++;
         } else if ("-q" == currArg) {
+            quiet = true;
+        } else if ("-qq" == currArg) {
             argHelper->getPrinterRef() = MessagePrinter(true);
             quiet = true;
         } else if ("-spv_only" == currArg) {
@@ -626,6 +733,16 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if ("--format" == currArg) {
             formatToEnforce = argv[argIndex + 1];
             argIndex++;
+        } else if (("-config" == currArg) && hasMoreArgs) {
+            parseHwInfoConfigString(argv[argIndex + 1], hwInfoConfig);
+            if (!hwInfoConfig) {
+                argHelper->printf("Error: Invalid config.\n");
+                retVal = INVALID_COMMAND_LINE;
+                break;
+            }
+            argIndex++;
+        } else if ("-allow_caching" == currArg) {
+            allowCaching = true;
         } else {
             argHelper->printf("Invalid option (arg %d): %s\n", argIndex, argv[argIndex].c_str());
             retVal = INVALID_COMMAND_LINE;
@@ -672,11 +789,11 @@ void OfflineCompiler::unifyExcludeIrFlags() {
     }
 }
 
-void OfflineCompiler::setStatelessToStatefullBufferOffsetFlag() {
+void OfflineCompiler::setStatelessToStatefulBufferOffsetFlag() {
     bool isStatelessToStatefulBufferOffsetSupported = true;
     if (!deviceName.empty()) {
-        const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
-        isStatelessToStatefulBufferOffsetSupported = compilerHwInfoConfig.isStatelessToStatefulBufferOffsetSupported();
+        const auto &compilerProductHelper = *CompilerProductHelper::get(hwInfo.platform.eProductFamily);
+        isStatelessToStatefulBufferOffsetSupported = compilerProductHelper.isStatelessToStatefulBufferOffsetSupported();
     }
     if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
         isStatelessToStatefulBufferOffsetSupported = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
@@ -687,18 +804,18 @@ void OfflineCompiler::setStatelessToStatefullBufferOffsetFlag() {
 }
 
 void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
-    const auto &compilerHwInfoConfig = *CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
-    if (compilerHwInfoConfig.isForceToStatelessRequired() && !forceStatelessToStatefulOptimization) {
+    const auto &compilerProductHelper = *CompilerProductHelper::get(hwInfo.platform.eProductFamily);
+    if (compilerProductHelper.isForceToStatelessRequired() && !forceStatelessToStatefulOptimization) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
     }
-    if (compilerHwInfoConfig.isForceEmuInt32DivRemSPRequired()) {
+    if (compilerProductHelper.isForceEmuInt32DivRemSPRequired()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
-    CompilerOptions::concatenateAppend(internalOptions, compilerHwInfoConfig.getCachingPolicyOptions());
+    CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(false));
 }
 
 void OfflineCompiler::parseDebugSettings() {
-    setStatelessToStatefullBufferOffsetFlag();
+    setStatelessToStatefulBufferOffsetFlag();
 }
 
 std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, std::string &fileName) {
@@ -708,8 +825,8 @@ std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, s
     // Convert binary to cpp
     out << "#include <cstddef>\n";
     out << "#include <cstdint>\n\n";
-    out << "size_t " << builtinName << "BinarySize_" << familyNameWithType << " = " << size << ";\n";
-    out << "uint32_t " << builtinName << "Binary_" << familyNameWithType << "[" << (size + 3) / 4 << "] = {"
+    out << "size_t " << builtinName << "BinarySize_" << productFamilyName << " = " << size << ";\n";
+    out << "uint32_t " << builtinName << "Binary_" << productFamilyName << "[" << (size + 3) / 4 << "] = {"
         << std::endl
         << "    ";
 
@@ -736,16 +853,6 @@ std::string OfflineCompiler::parseBinAsCharArray(uint8_t *binary, size_t size, s
     }
     out << "};" << std::endl;
 
-    out << std::endl
-        << "#include \"shared/source/built_ins/registry/built_ins_registry.h\"\n"
-        << std::endl;
-    out << "namespace NEO {" << std::endl;
-    out << "static RegisterEmbeddedResource register" << builtinName << "Bin(" << std::endl;
-    out << "    \"" << familyNameWithType << "_0_" << fileName.c_str() << ".builtin_kernel.bin\"," << std::endl;
-    out << "    (const char *)" << builtinName << "Binary_" << familyNameWithType << "," << std::endl;
-    out << "    " << builtinName << "BinarySize_" << familyNameWithType << ");" << std::endl;
-    out << "}" << std::endl;
-
     return out.str();
 }
 
@@ -761,57 +868,6 @@ std::string OfflineCompiler::getFileNameTrunk(std::string &filePath) {
     return fileTrunk;
 }
 
-template <typename EqComparableT>
-auto findDuplicate(const EqComparableT &lhs) {
-    return [&lhs](const auto &rhs) { return lhs == rhs; };
-}
-
-std::string OfflineCompiler::getDeprecatedDevicesTypes() {
-    std::vector<std::string> prefixes;
-    for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
-        if (hardwarePrefix[j] == nullptr)
-            continue;
-        prefixes.push_back(hardwarePrefix[j]);
-    }
-
-    std::vector<NEO::ConstStringRef> enabledAcronyms{};
-    auto enabledConfigs = argHelper->getAllSupportedDeviceConfigs();
-    for (const auto &device : enabledConfigs) {
-        enabledAcronyms.insert(enabledAcronyms.end(), device.acronyms.begin(), device.acronyms.end());
-    }
-
-    std::ostringstream os;
-    for (const auto &prefix : prefixes) {
-        if (std::any_of(enabledAcronyms.begin(), enabledAcronyms.end(), ProductConfigHelper::findAcronymWithoutDash(prefix)))
-            continue;
-        if (os.tellp())
-            os << ", ";
-        os << prefix;
-    }
-
-    return os.str();
-}
-
-std::string OfflineCompiler::getDevicesReleasesAndFamilies() {
-    auto acronyms = argHelper->getEnabledReleasesAcronyms();
-    auto familiesAcronyms = argHelper->getEnabledFamiliesAcronyms();
-
-    for (const auto &family : familiesAcronyms) {
-        if (!std::any_of(acronyms.begin(), acronyms.end(), findDuplicate(family))) {
-            acronyms.push_back(family);
-        }
-    }
-
-    std::ostringstream os;
-    for (const auto &acronym : acronyms) {
-        if (os.tellp())
-            os << ", ";
-        os << acronym.str();
-    }
-
-    return os.str();
-}
-
 void OfflineCompiler::printUsage() {
     argHelper->printf(R"===(Compiles input file to Intel Compute GPU device binary (*.bin).
 Additionally, outputs intermediate representation (e.g. spirV).
@@ -824,7 +880,8 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                 OpenCL C kernel language).
 
   -device <device_type>         Target device.
-                                <device_type> can be: %s, %s, version  or hexadecimal value with 0x prefix - can be single or multiple target devices.
+                                <device_type> can be: %s, version  or hexadecimal value with 0x prefix
+                                - can be single or multiple target devices.
                                 The version is a representation of the
                                 <major>.<minor>.<revision> value.
                                 The hexadecimal value represents device ID.
@@ -871,6 +928,13 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
 
   -out_dir <output_dir>         Optional output directory.
                                 Default is current working directory.
+
+  -allow_caching                Allows caching binaries from compilation (like spirv,
+                                gen or debug data) and loading them by ocloc
+                                when the same program is compiled again.
+
+  -cache_dir <output_dir>       Optional caching directory.
+                                Default directory is "ocloc_cache".
 
   -options <options>            Optional OpenCL C compilation options
                                 as defined by OpenCL specification.
@@ -928,7 +992,9 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
   -force_stos_opt               Will forcibly enable stateless to stateful optimization,
                                 i.e. skip "-cl-intel-greater-than-4GB-buffer-required".
 
-  -q                            Will silence most of output messages.
+  -q                            Will silence output messages (except errors).
+
+  -qq                           Will silence most of output messages.
 
   -spv_only                     Will generate only spirV file.
 
@@ -949,13 +1015,15 @@ Usage: ocloc [compile] -file <filename> -device <device_type> [-output <filename
                                 --format zebin - Enforce generating zebin binary
                                 --format patchtokens - Enforce generating patchtokens (legacy) binary.
 
+  -config                       Target hardware info config for a single device,
+                                e.g 1x4x8.
+
 Examples :
   Compile file to Intel Compute GPU device binary (out = source_file_Gen9core.bin)
     ocloc -file source_file.cl -device skl
 )===",
-                      argHelper->getAllSupportedAcronyms().c_str(),
-                      getDevicesReleasesAndFamilies().c_str(),
-                      getDeprecatedDevicesTypes().c_str());
+                      getSupportedDevices(argHelper).c_str(),
+                      getDeprecatedDevices(argHelper).c_str());
 }
 
 void OfflineCompiler::storeBinary(
@@ -983,6 +1051,18 @@ bool OfflineCompiler::generateElfBinary() {
     if (isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(ArrayRef<uint8_t>(reinterpret_cast<uint8_t *>(genBinary), genBinarySize))) {
         this->elfBinary = std::vector<uint8_t>(genBinary, genBinary + genBinarySize);
         return true;
+    }
+
+    if (allowCaching) {
+        elfHash = cache->getCachedFileName(getHardwareInfo(),
+                                           genHash,
+                                           options,
+                                           internalOptions);
+        auto loadedData = cache->loadCachedBinary(elfHash, elfBinarySize);
+        elfBinary.assign(loadedData.get(), loadedData.get() + elfBinarySize);
+        if (!elfBinary.empty()) {
+            return true;
+        }
     }
 
     SingleDeviceBinary binary = {};
@@ -1018,7 +1098,9 @@ bool OfflineCompiler::generateElfBinary() {
     }
 
     this->elfBinary = elfEncoder.encode();
-
+    if (allowCaching) {
+        cache->cacheBinary(elfHash, reinterpret_cast<char *>(elfBinary.data()), static_cast<uint32_t>(this->elfBinary.size()));
+    }
     return true;
 }
 
@@ -1033,9 +1115,9 @@ void OfflineCompiler::writeOutAllFiles() {
         }
     } else {
         if (outputFile.empty()) {
-            fileBase = fileTrunk + "_" + familyNameWithType;
+            fileBase = fileTrunk + "_" + productFamilyName;
         } else {
-            fileBase = outputFile + "_" + familyNameWithType;
+            fileBase = outputFile + "_" + productFamilyName;
         }
     }
 
@@ -1063,9 +1145,10 @@ void OfflineCompiler::writeOutAllFiles() {
     }
 
     if (genBinary) {
-        std::string genOutputFile = generateFilePath(outputDirectory, fileBase, ".gen") + generateOptsSuffix();
-
-        argHelper->saveOutput(genOutputFile, genBinary, genBinarySize);
+        if (useGenFile) {
+            std::string genOutputFile = generateFilePath(outputDirectory, fileBase, ".gen") + generateOptsSuffix();
+            argHelper->saveOutput(genOutputFile, genBinary, genBinarySize);
+        }
 
         if (useCppFile) {
             std::string cppOutputFile = generateFilePath(outputDirectory, fileBase, ".cpp");
@@ -1132,6 +1215,7 @@ void OfflineCompiler::enforceFormat(std::string &format) {
     if (format == "zebin") {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::allowZebin);
     } else if (format == "patchtokens") {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::disableZebin);
     } else {
         argHelper->printf("Invalid format passed: %s. Ignoring.\n", format.c_str());
     }

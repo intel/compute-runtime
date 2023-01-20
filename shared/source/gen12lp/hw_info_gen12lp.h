@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,11 +10,11 @@
 
 namespace NEO {
 
-struct TGLLPFamily;
+struct Gen12LpFamily;
 
 template <>
 struct GfxFamilyMapper<IGFX_GEN12LP_CORE> {
-    typedef TGLLPFamily GfxFamily;
+    typedef Gen12LpFamily GfxFamily;
     static const char *name;
 };
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 #include <atomic>
 #include <condition_variable>
 #include <mutex>
-#include <utility>
 
 namespace NEO {
 class DeferrableDeletion;
@@ -32,11 +31,13 @@ class DeferredDeleter {
 
     MOCKABLE_VIRTUAL void drain(bool blocking);
 
+    MOCKABLE_VIRTUAL void clearQueueTillFirstFailure();
+
   protected:
     void stop();
     void safeStop();
     void ensureThread();
-    MOCKABLE_VIRTUAL void clearQueue();
+    MOCKABLE_VIRTUAL void clearQueue(bool breakOnFailure);
     MOCKABLE_VIRTUAL bool areElementsReleased();
     MOCKABLE_VIRTUAL bool shouldStop();
 

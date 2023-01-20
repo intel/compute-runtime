@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "gtest/gtest.h"
@@ -24,20 +25,20 @@
 using namespace NEO;
 
 class GetMemObjectInfo : public ::testing::Test, public PlatformFixture, public ClDeviceFixture {
-    using ClDeviceFixture::SetUp;
-    using PlatformFixture::SetUp;
+    using ClDeviceFixture::setUp;
+    using PlatformFixture::setUp;
 
   public:
     void SetUp() override {
-        PlatformFixture::SetUp();
-        ClDeviceFixture::SetUp();
+        PlatformFixture::setUp();
+        ClDeviceFixture::setUp();
         BufferDefaults::context = new MockContext;
     }
 
     void TearDown() override {
         delete BufferDefaults::context;
-        ClDeviceFixture::TearDown();
-        PlatformFixture::TearDown();
+        ClDeviceFixture::tearDown();
+        PlatformFixture::tearDown();
     }
 };
 

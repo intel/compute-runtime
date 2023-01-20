@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "cl_api_tests.h"
 
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
@@ -19,7 +20,7 @@ void CL_CALLBACK notifyFuncProgram(
     void *userData) {
     *((char *)userData) = 'a';
 }
-void api_fixture_using_aligned_memory_manager::SetUp() {
+void ApiFixtureUsingAlignedMemoryManager::setUp() {
     retVal = CL_SUCCESS;
     retSize = 0;
 
@@ -39,7 +40,7 @@ void api_fixture_using_aligned_memory_manager::SetUp() {
     ASSERT_NE(nullptr, kernel);
 }
 
-void api_fixture_using_aligned_memory_manager::TearDown() {
+void ApiFixtureUsingAlignedMemoryManager::tearDown() {
     delete kernel;
     delete commandQueue;
     context->release();

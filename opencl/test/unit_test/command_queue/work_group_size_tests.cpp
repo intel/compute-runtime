@@ -1,13 +1,16 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/local_work_size.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -56,7 +59,9 @@ struct WorkGroupSizeBase {
         size_t workGroupSize[3];
         auto maxWorkGroupSize = 256u;
         if (DebugManager.flags.EnableComputeWorkSizeND.get()) {
-            WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, simdSize, 0u, ::defaultHwInfo.get(), 32u, 0u, false, false, false);
+            MockExecutionEnvironment mockExecutionEnvironment{};
+            RootDeviceEnvironment &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+            WorkSizeInfo wsInfo(maxWorkGroupSize, 0u, simdSize, 0u, rootDeviceEnvironment, 32u, 0u, false, false, false);
             computeWorkgroupSizeND(wsInfo, workGroupSize, workItems, dims);
         } else {
             if (dims == 1) {
@@ -75,12 +80,12 @@ struct WorkGroupSizeBase {
         auto yRemainder = workItems[1] % workGroupSize[1];
         auto zRemainder = workItems[2] % workGroupSize[2];
 
-        //No remainders
+        // No remainders
         EXPECT_EQ(0u, xRemainder);
         EXPECT_EQ(0u, yRemainder);
         EXPECT_EQ(0u, zRemainder);
 
-        //Now setup GPGPU Walker
+        // Now setup GPGPU Walker
         typedef typename FamilyType::GPGPU_WALKER GPGPU_WALKER;
         GPGPU_WALKER pCmd = FamilyType::cmdInitGpgpuWalker;
 
@@ -93,7 +98,7 @@ struct WorkGroupSizeBase {
         GpgpuWalkerHelper<FamilyType>::setGpgpuWalkerThreadData(&pCmd, kd, globalOffsets, workGroupsStart, workGroupsNum,
                                                                 workGroupSize, simdSize, dims, true, false, 0u);
 
-        //And check if it is programmed correctly
+        // And check if it is programmed correctly
         auto numWorkItems = computeWalkerWorkItems<FamilyType>(pCmd);
         EXPECT_EQ(totalWorkItems, numWorkItems);
 

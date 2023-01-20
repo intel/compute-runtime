@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,19 +14,12 @@
 #include <memory>
 #include <vector>
 
-extern bool verbose;
-bool verbose = false;
-
 void createCmdQueueAndCmdList(ze_device_handle_t &device,
                               ze_context_handle_t &context,
                               ze_command_queue_handle_t &cmdqueue,
                               ze_command_list_handle_t &cmdList) {
     // Create commandQueue and cmdList
-    ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
-    cmdQueueDesc.ordinal = getCommandQueueOrdinal(device);
-    cmdQueueDesc.index = 0;
-    cmdQueueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
-    SUCCESS_OR_TERMINATE(zeCommandQueueCreate(context, device, &cmdQueueDesc, &cmdqueue));
+    cmdqueue = createCommandQueue(context, device, nullptr, ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL);
     SUCCESS_OR_TERMINATE(createCommandList(context, device, cmdList));
 }
 
@@ -68,7 +61,7 @@ bool testEventsDeviceSignalDeviceWait(ze_context_handle_t &context, ze_device_ha
                              ZE_EVENT_SCOPE_FLAG_HOST,
                              (ze_event_scope_flag_t)0);
 
-    //Initialize memory
+    // Initialize memory
     uint8_t dstValue = 0;
     uint8_t srcValue = 55;
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryFill(cmdList, dstBuffer, reinterpret_cast<void *>(&dstValue),
@@ -191,17 +184,12 @@ bool testEventsDeviceSignalHostWait(ze_context_handle_t &context, ze_device_hand
     return outputValidationSuccessful;
 }
 
-void printResult(bool outputValidationSuccessful, std::string &currentTest) {
-    std::cout << "\nZello Events: " << currentTest.c_str()
-              << "  Results validation "
-              << (outputValidationSuccessful ? "PASSED" : "FAILED")
-              << std::endl
-              << std::endl;
-}
-
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName("Zello Events");
+
     bool outputValidationSuccessful;
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     ze_driver_handle_t driverHandle = nullptr;
@@ -210,21 +198,22 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     std::string currentTest;
 
     currentTest = "Device signal and host wait test";
     outputValidationSuccessful = testEventsDeviceSignalHostWait(context, device);
-    printResult(outputValidationSuccessful, currentTest);
+    printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
 
-    currentTest = "Device signal and device wait test";
-    outputValidationSuccessful = testEventsDeviceSignalDeviceWait(context, device);
-    printResult(outputValidationSuccessful, currentTest);
+    if (outputValidationSuccessful || aubMode) {
+        currentTest = "Device signal and device wait test";
+        outputValidationSuccessful = testEventsDeviceSignalDeviceWait(context, device);
+        printResult(aubMode, outputValidationSuccessful, blackBoxName, currentTest);
+    }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return outputValidationSuccessful ? 0 : 1;
 }

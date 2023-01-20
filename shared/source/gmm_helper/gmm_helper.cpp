@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,13 +8,13 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
-#include "shared/source/os_interface/os_library.h"
-#include "shared/source/sku_info/operations/sku_info_transfer.h"
 
 #include <algorithm>
 
@@ -25,7 +25,11 @@ GmmClientContext *GmmHelper::getClientContext() const {
 }
 
 const HardwareInfo *GmmHelper::getHardwareInfo() {
-    return hwInfo;
+    return rootDeviceEnvironment.getHardwareInfo();
+}
+
+const RootDeviceEnvironment &GmmHelper::getRootDeviceEnvironment() const {
+    return rootDeviceEnvironment;
 }
 
 uint32_t GmmHelper::getMOCS(uint32_t type) const {
@@ -38,11 +42,18 @@ uint32_t GmmHelper::getMOCS(uint32_t type) const {
     return static_cast<uint32_t>(mocs.DwordValue);
 }
 
-GmmHelper::GmmHelper(OSInterface *osInterface, const HardwareInfo *pHwInfo) : hwInfo(pHwInfo) {
+void GmmHelper::applyMocsEncryptionBit(uint32_t &index) {
+    if (DebugManager.flags.ForceStatelessMocsEncryptionBit.get() == 1) {
+        index |= 1;
+    }
+}
+
+GmmHelper::GmmHelper(const RootDeviceEnvironment &rootDeviceEnvironmentArg) : rootDeviceEnvironment(rootDeviceEnvironmentArg) {
+    auto hwInfo = getHardwareInfo();
     auto hwInfoAddressWidth = Math::log2(hwInfo->capabilityTable.gpuAddressSpace + 1);
     addressWidth = std::max(hwInfoAddressWidth, 48u);
 
-    gmmClientContext = GmmHelper::createGmmContextWrapperFunc(osInterface, const_cast<HardwareInfo *>(pHwInfo));
+    gmmClientContext = GmmHelper::createGmmContextWrapperFunc(rootDeviceEnvironment);
     UNRECOVERABLE_IF(!gmmClientContext);
 }
 

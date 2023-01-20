@@ -9,7 +9,9 @@
 #include "shared/source/gen_common/reg_configs_common.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/xe_hp_core/hw_cmds.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
@@ -29,16 +31,16 @@ XEHPTEST_F(CommandQueueDebugCommandsForSldXeHP, givenSteppingA0OrBWhenGlobalSipI
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    std::array<uint32_t, 2> revisions = {hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
-                                         hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
+    std::array<uint32_t, 2> revisions = {productHelper.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
+                                         productHelper.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
 
     for (auto revision : revisions) {
         hwInfo.platform.usRevId = revision;
 
         auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, deviceL0, device->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
-        ASSERT_NE(nullptr, commandQueue->commandStream);
+        ASSERT_NE(nullptr, commandQueue);
 
         ze_command_list_handle_t commandLists[] = {
             CommandList::create(productFamily, deviceL0, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
@@ -49,14 +51,14 @@ XEHPTEST_F(CommandQueueDebugCommandsForSldXeHP, givenSteppingA0OrBWhenGlobalSipI
         std::vector<MI_LOAD_REGISTER_IMM *> globalSip;
 
         for (uint32_t execCount = 0; execCount < 2; execCount++) {
-            auto startPointer = ptrOffset(commandQueue->commandStream->getCpuBase(), commandQueue->commandStream->getUsed());
-            auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+            auto startPointer = ptrOffset(commandQueue->commandStream.getCpuBase(), commandQueue->commandStream.getUsed());
+            auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
             auto result = commandQueue->executeCommandLists(1, commandLists, nullptr, true);
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);
             commandQueue->synchronize(0);
 
-            auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+            auto usedSpaceAfter = commandQueue->commandStream.getUsed();
             EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
 
             GenCmdList cmdList;
@@ -108,16 +110,16 @@ XEHPTEST_F(CommandQueueDebugCommandsDebuggerL0XeHP, givenSteppingA0OrBWhenGlobal
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
-    const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
 
-    std::array<uint32_t, 2> revisions = {hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
-                                         hwInfoConfig.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
+    std::array<uint32_t, 2> revisions = {productHelper.getHwRevIdFromStepping(REVID::REVISION_A0, hwInfo),
+                                         productHelper.getHwRevIdFromStepping(REVID::REVISION_B, hwInfo)};
 
     for (auto revision : revisions) {
         hwInfo.platform.usRevId = revision;
 
         auto commandQueue = whiteboxCast(CommandQueue::create(productFamily, device, neoDevice->getDefaultEngine().commandStreamReceiver, &queueDesc, false, false, returnValue));
-        ASSERT_NE(nullptr, commandQueue->commandStream);
+        ASSERT_NE(nullptr, commandQueue);
 
         ze_command_list_handle_t commandLists[] = {
             CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle()};
@@ -126,14 +128,14 @@ XEHPTEST_F(CommandQueueDebugCommandsDebuggerL0XeHP, givenSteppingA0OrBWhenGlobal
         std::vector<MI_LOAD_REGISTER_IMM *> globalSip;
 
         for (uint32_t execCount = 0; execCount < 2; execCount++) {
-            auto startPointer = ptrOffset(commandQueue->commandStream->getCpuBase(), commandQueue->commandStream->getUsed());
-            auto usedSpaceBefore = commandQueue->commandStream->getUsed();
+            auto startPointer = ptrOffset(commandQueue->commandStream.getCpuBase(), commandQueue->commandStream.getUsed());
+            auto usedSpaceBefore = commandQueue->commandStream.getUsed();
 
             auto result = commandQueue->executeCommandLists(1, commandLists, nullptr, true);
             ASSERT_EQ(ZE_RESULT_SUCCESS, result);
             commandQueue->synchronize(0);
 
-            auto usedSpaceAfter = commandQueue->commandStream->getUsed();
+            auto usedSpaceAfter = commandQueue->commandStream.getUsed();
             EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
 
             GenCmdList cmdList;

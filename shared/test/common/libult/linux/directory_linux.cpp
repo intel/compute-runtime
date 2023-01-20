@@ -11,14 +11,21 @@
 
 #include <cstdio>
 #include <dirent.h>
+#include <map>
 
 namespace NEO {
 
 std::string byPathPattern(std::string(NEO_SHARED_TEST_FILES_DIR) + "/linux/by-path");
 std::string deviceDrmPath(std::string(NEO_SHARED_TEST_FILES_DIR) + "/linux/devices/device/drm");
+std::map<std::string, std::vector<std::string>> directoryFilesMap = {};
 
 std::vector<std::string> Directory::getFiles(const std::string &path) {
     std::vector<std::string> files;
+
+    if (Directory::ReturnEmptyFilesVector) {
+        return files;
+    }
+
     if (path == byPathPattern) {
         files.push_back(byPathPattern + "/pci-0000:00:02.0-card");
         files.push_back(byPathPattern + "/pci-0000:00:02.0-render");
@@ -50,6 +57,12 @@ std::vector<std::string> Directory::getFiles(const std::string &path) {
             "/sys/class/intel_pmt/telem9",
         };
     }
+
+    auto it = directoryFilesMap.find(path);
+    if (it != directoryFilesMap.end()) {
+        return directoryFilesMap[path];
+    }
+
     return files;
 }
 }; // namespace NEO

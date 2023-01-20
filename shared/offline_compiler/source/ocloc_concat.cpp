@@ -13,7 +13,7 @@
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
 
 namespace NEO {
-ErrorCode OclocConcat::initialize(const std::vector<std::string> &args) {
+OclocConcat::ErrorCode OclocConcat::initialize(const std::vector<std::string> &args) {
     auto error = parseArguments(args);
     if (error) {
         return error;
@@ -26,7 +26,7 @@ Ar::Ar OclocConcat::decodeAr(const std::vector<char> &arFile, std::string &outEr
     return NEO::Ar::decodeAr({reinterpret_cast<const uint8_t *>(arFile.data()), arFile.size()}, outErrors, outWarnings);
 }
 
-ErrorCode OclocConcat::parseArguments(const std::vector<std::string> &args) {
+OclocConcat::ErrorCode OclocConcat::parseArguments(const std::vector<std::string> &args) {
     for (size_t i = 2; i < args.size(); i++) {
         if (NEO::ConstStringRef("-out") == args[i]) {
             if (i + 1 >= args.size()) {
@@ -47,7 +47,7 @@ ErrorCode OclocConcat::parseArguments(const std::vector<std::string> &args) {
     return OclocErrorCode::SUCCESS;
 }
 
-ErrorCode OclocConcat::checkIfFatBinariesExist() {
+OclocConcat::ErrorCode OclocConcat::checkIfFatBinariesExist() {
     bool filesExist = true;
     for (auto &fileName : fileNamesToConcat) {
         if (false == argHelper->fileExists(fileName)) {
@@ -59,7 +59,7 @@ ErrorCode OclocConcat::checkIfFatBinariesExist() {
     return filesExist ? OclocErrorCode::SUCCESS : OclocErrorCode::INVALID_COMMAND_LINE;
 }
 
-ErrorCode OclocConcat::concatenate() {
+OclocConcat::ErrorCode OclocConcat::concatenate() {
     NEO::Ar::ArEncoder arEncoder(true);
     for (auto &fileName : fileNamesToConcat) {
         auto arFile = argHelper->readBinaryFile(fileName);

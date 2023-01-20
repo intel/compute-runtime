@@ -16,7 +16,6 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_gmm.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include <memory>
 
@@ -27,13 +26,13 @@ class ImageSurfaceStateTests : public DeviceFixture,
   public:
     ImageSurfaceStateTests() = default;
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         gmmHelper = pDevice->getGmmHelper();
         mockGmm = std::make_unique<MockGmm>(gmmHelper);
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     std::unique_ptr<MockGmm> mockGmm;

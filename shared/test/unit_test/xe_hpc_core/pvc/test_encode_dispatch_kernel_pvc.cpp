@@ -1,17 +1,19 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/fixtures/command_container_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/mocks/mock_dispatch_kernel_encoder_interface.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/fixtures/command_container_fixture.h"
+#include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
 using namespace NEO;
 
@@ -21,7 +23,9 @@ PVCTEST_F(CommandEncodeStatesPvcTest, GivenSmallSlmTotalSizesWhenSetAdditionalIn
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using PREFERRED_SLM_ALLOCATION_SIZE = typename INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
 
-    HardwareInfo hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     uint32_t threadsCount = 1;
     uint32_t slmTotalSize = 0;
 
@@ -37,12 +41,12 @@ PVCTEST_F(CommandEncodeStatesPvcTest, GivenSmallSlmTotalSizesWhenSetAdditionalIn
         {0x9d, false},
     };
 
-    for (auto &revisionToTest : revisionsToTest) {
-        for (auto &deviceId : PVC_XL_IDS) {
+    for (const auto &revisionToTest : revisionsToTest) {
+        for (const auto &deviceId : pvcXlDeviceIds) {
             hwInfo.platform.usDeviceID = deviceId;
             hwInfo.platform.usRevId = revisionToTest.revisionId;
             INTERFACE_DESCRIPTOR_DATA idd = FamilyType::cmdInitInterfaceDescriptorData;
-            EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, hwInfo, threadsCount, slmTotalSize, SlmPolicy::SlmPolicyNone);
+            EncodeDispatchKernel<FamilyType>::appendAdditionalIDDFields(&idd, rootDeviceEnvironment, threadsCount, slmTotalSize, SlmPolicy::SlmPolicyNone);
             if (revisionToTest.isWaRequired) {
                 EXPECT_EQ(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K, idd.getPreferredSlmAllocationSize());
             } else {
@@ -60,7 +64,7 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredThen
 
     uint32_t dims[] = {1, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = true;
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
 
     struct {
         unsigned short revId;
@@ -73,16 +77,18 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredThen
         {0x6, false},
         {0x7, false},
     };
-    for (auto &testInput : testInputs) {
-        for (auto &deviceId : PVC_XL_IDS) {
+    auto productHelper = ProductHelper::get(hwInfo->platform.eProductFamily);
+    for (const auto &testInput : testInputs) {
+        for (const auto &deviceId : pvcXlDeviceIds) {
             hwInfo->platform.usDeviceID = deviceId;
             hwInfo->platform.usRevId = testInput.revId;
+            cmdContainer->systolicModeSupport = productHelper->isSystolicModeConfigurable(*hwInfo);
             cmdContainer->lastPipelineSelectModeRequired = false;
 
             EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
             dispatchArgs.preemptionMode = NEO::PreemptionMode::Initial;
 
-            EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs);
+            EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
             EXPECT_EQ(testInput.expectedValue, cmdContainer->lastPipelineSelectModeRequired);
         }
     }
@@ -93,7 +99,7 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredAndA
     auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
 
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSpecialPipelineSelectMode = true;
+    dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
 
     struct {
         unsigned short revId;
@@ -106,10 +112,12 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredAndA
         {0x6, false},
         {0x7, false},
     };
-    for (auto &testInput : testInputs) {
-        for (auto &deviceId : PVC_XL_IDS) {
+    auto productHelper = ProductHelper::get(hwInfo->platform.eProductFamily);
+    for (const auto &testInput : testInputs) {
+        for (const auto &deviceId : pvcXlDeviceIds) {
             hwInfo->platform.usDeviceID = deviceId;
             hwInfo->platform.usRevId = testInput.revId;
+            cmdContainer->systolicModeSupport = productHelper->isSystolicModeConfigurable(*hwInfo);
             EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), dispatchInterface->kernelDescriptor);
             GenCmdList commands;
             CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());

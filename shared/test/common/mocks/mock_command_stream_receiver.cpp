@@ -7,7 +7,7 @@
 
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 
-volatile uint32_t MockCommandStreamReceiver::mockTagAddress[MockCommandStreamReceiver::tagSize];
+volatile TagAddressType MockCommandStreamReceiver::mockTagAddress[MockCommandStreamReceiver::tagSize];
 
 SubmissionStatus MockCommandStreamReceiver::flush(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency) {
     return SubmissionStatus::SUCCESS;
@@ -19,9 +19,16 @@ CompletionStamp MockCommandStreamReceiver::flushTask(
     const IndirectHeap *dsh,
     const IndirectHeap *ioh,
     const IndirectHeap *ssh,
-    uint32_t taskLevel,
+    TaskCountType taskLevel,
     DispatchFlags &dispatchFlags,
     Device &device) {
+    ++taskCount;
+    CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp()};
+    return stamp;
+}
+
+CompletionStamp MockCommandStreamReceiver::flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
+                                                        const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) {
     ++taskCount;
     CompletionStamp stamp = {taskCount, taskLevel, flushStamp->peekStamp()};
     return stamp;

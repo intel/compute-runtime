@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,12 @@
 
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 using namespace NEO;
@@ -30,15 +31,15 @@ struct OOMCommandQueueTest : public ClDeviceFixture,
                              public CommandQueueFixture,
                              public ::testing::TestWithParam<OOMSetting> {
 
-    using CommandQueueFixture::SetUp;
+    using CommandQueueFixture::setUp;
 
     OOMCommandQueueTest() {
     }
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
+        ClDeviceFixture::setUp();
         context = new MockContext(pClDevice);
-        CommandQueueFixture::SetUp(context, pClDevice, 0);
+        CommandQueueFixture::setUp(context, pClDevice, 0);
 
         const auto &oomSetting = GetParam();
         auto oomSize = 10u;
@@ -60,9 +61,9 @@ struct OOMCommandQueueTest : public ClDeviceFixture,
     }
 
     void TearDown() override {
-        CommandQueueFixture::TearDown();
+        CommandQueueFixture::tearDown();
         context->release();
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     MockContext *context;

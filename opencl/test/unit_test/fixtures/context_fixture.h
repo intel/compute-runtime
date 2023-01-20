@@ -13,8 +13,8 @@ class MockContext;
 
 class ContextFixture {
   protected:
-    void SetUp(cl_uint numDevices, cl_device_id *pDeviceList); // NOLINT(readability-identifier-naming)
-    void TearDown();                                           // NOLINT(readability-identifier-naming)
+    void setUp(cl_uint numDevices, cl_device_id *pDeviceList);
+    void tearDown();
 
     MockContext *pContext = nullptr;
 };

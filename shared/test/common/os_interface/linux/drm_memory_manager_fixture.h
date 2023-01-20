@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -41,9 +42,9 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
     TestedDrmMemoryManager *memoryManager = nullptr;
     MockDevice *device = nullptr;
 
-    void SetUp() override;
-    void SetUp(DrmMockCustom *mock, bool localMemoryEnabled);
-    void TearDown() override;
+    void setUp();
+    void setUp(DrmMockCustom *mock, bool localMemoryEnabled);
+    void tearDown();
 
   protected:
     ExecutionEnvironment *executionEnvironment = nullptr;
@@ -57,41 +58,43 @@ class DrmMemoryManagerFixture : public MemoryManagementFixture {
 
 class DrmMemoryManagerWithLocalMemoryFixture : public DrmMemoryManagerFixture {
   public:
-    void SetUp() override;
-    void TearDown() override;
+    void setUp();
+    void tearDown();
     std::unique_ptr<VariableBackup<UltHwConfig>> backup;
 };
 
 struct MockedMemoryInfo : public NEO::MemoryInfo {
-    MockedMemoryInfo(const std::vector<MemoryRegion> &regionInfo) : MemoryInfo(regionInfo) {}
-    ~MockedMemoryInfo() override{};
+    using NEO::MemoryInfo::MemoryInfo;
+    ~MockedMemoryInfo() override = default;
 
     size_t getMemoryRegionSize(uint32_t memoryBank) override {
         return 1024u;
     }
-    uint32_t createGemExt(Drm *drm, const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId) override {
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override {
         if (allocSize == 0) {
             return EINVAL;
         }
         handle = 1u;
-        return 0u;
+        return 0;
     }
-    uint32_t createGemExtWithSingleRegion(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
+    int createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, int32_t pairHandle) override {
         if (allocSize == 0) {
             return EINVAL;
         }
         handle = 1u;
-        return 0u;
+        pairHandlePassed = pairHandle;
+        return 0;
     }
-    uint32_t createGemExtWithMultipleRegions(Drm *drm, uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
+    int createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
         if (allocSize == 0) {
             return EINVAL;
         }
         handle = 1u;
         banks = memoryBanks;
-        return 0u;
+        return 0;
     }
     uint32_t banks = 0;
+    int32_t pairHandlePassed = -1;
 };
 
 class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
@@ -99,9 +102,9 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
     std::unique_ptr<TestedDrmMemoryManager> memoryManager;
     DrmMockCustom *mock;
 
-    void SetUp();                    // NOLINT(readability-identifier-naming)
-    void SetUp(bool enableLocalMem); // NOLINT(readability-identifier-naming)
-    void TearDown();                 // NOLINT(readability-identifier-naming)
+    void setUp();
+    void setUp(bool enableLocalMem);
+    void tearDown();
 
   protected:
     ExecutionEnvironment *executionEnvironment = nullptr;
@@ -114,7 +117,7 @@ class DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
 
 class DrmMemoryManagerFixtureWithLocalMemoryAndWithoutQuietIoctlExpectation : public DrmMemoryManagerFixtureWithoutQuietIoctlExpectation {
   public:
-    void SetUp();
-    void TearDown();
+    void setUp();
+    void tearDown();
 };
 } // namespace NEO

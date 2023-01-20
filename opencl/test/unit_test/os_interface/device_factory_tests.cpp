@@ -1,23 +1,26 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
@@ -106,6 +109,22 @@ TEST_F(DeviceFactoryTest, WhenOverridingUsingDebugManagerThenOverridesAreApplied
               hwInfo->capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
 }
 
+TEST_F(DeviceFactoryTest, givenDebugFlagSetWhenCreatingDevicesThenForceImagesSupport) {
+    DebugManagerStateRestore stateRestore;
+
+    for (int32_t flag : {0, 1}) {
+        DebugManager.flags.ForceImagesSupport.set(flag);
+
+        MockExecutionEnvironment mockExecutionEnvironment(defaultHwInfo.get());
+
+        auto success = DeviceFactory::prepareDeviceEnvironments(mockExecutionEnvironment);
+        ASSERT_TRUE(success);
+        auto hwInfo = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
+
+        EXPECT_EQ(!!flag, hwInfo->capabilityTable.supportsImages);
+    }
+}
+
 TEST_F(DeviceFactoryTest, givenZeAffinityMaskSetWhenCreateDevicesThenProperNumberOfDevicesIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleRootDevices.set(5);
@@ -186,9 +205,9 @@ TEST_F(DeviceFactoryTest, givenPointerToHwInfoWhenGetDevicedCalledThenRequiedSur
     ASSERT_TRUE(success);
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
 
-    const auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    const auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
     auto expextedSize = static_cast<size_t>(hwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte);
-    hwHelper.adjustPreemptionSurfaceSize(expextedSize);
+    gfxCoreHelper.adjustPreemptionSurfaceSize(expextedSize);
 
     EXPECT_EQ(expextedSize, hwInfo->capabilityTable.requiredPreemptionSurfaceSize);
 }
@@ -301,15 +320,6 @@ TEST_F(DeviceFactoryTest, givenInvalidHwConfigStringWhenPreparingDeviceEnvironme
     EXPECT_FALSE(success);
 }
 
-HWTEST_F(DeviceFactoryTest, givenInvalidHwConfigStringWhenPrepareDeviceEnvironmentsForProductFamilyOverrideThenThrowsException) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.HardwareInfoOverride.set("1x1x1");
-
-    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
-
-    EXPECT_ANY_THROW(DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(executionEnvironment));
-}
-
 TEST_F(DeviceFactoryTest, givenPrepareDeviceEnvironmentsCallWhenItIsDoneThenOsInterfaceIsAllocated) {
     bool success = DeviceFactory::prepareDeviceEnvironments(*executionEnvironment);
     EXPECT_TRUE(success);
@@ -323,7 +333,7 @@ TEST(DeviceFactory, givenCreateMultipleRootDevicesWhenCreateDevicesIsCalledThenV
     executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
     for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
         hwInfo[i] = *NEO::defaultHwInfo.get();
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(&hwInfo[i]);
+        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&hwInfo[i]);
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
     }
     executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
@@ -361,29 +371,12 @@ TEST(DeviceFactory, givenNonHwModeSelectedWhenIsHwModeSelectedIsCalledThenFalseI
     }
 }
 
-TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExistingDeviceThenReturnNullptr) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ForceDeviceId.set("invalid");
-    ExecutionEnvironment executionEnviornment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnviornment);
-    EXPECT_TRUE(hwDeviceIds.empty());
-}
-
-TEST(DiscoverDevices, whenDiscoverDevicesAndForceDeviceIdIsDifferentFromTheExistingDeviceThenPrepareDeviceEnvironmentsReturnsFalse) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ForceDeviceId.set("invalid");
-    ExecutionEnvironment executionEnviornment;
-
-    auto result = DeviceFactory::prepareDeviceEnvironments(executionEnviornment);
-    EXPECT_FALSE(result);
-}
-
 TEST(DiscoverDevices, whenDiscoverDevicesAndFilterDifferentFromTheExistingDeviceThenReturnNullptr) {
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.FilterDeviceId.set("invalid");
     DebugManager.flags.FilterBdfPath.set("invalid");
-    ExecutionEnvironment executionEnviornment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnviornment);
+    ExecutionEnvironment executionEnvironment;
+    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
     EXPECT_TRUE(hwDeviceIds.empty());
 }
 
@@ -391,9 +384,9 @@ TEST(DiscoverDevices, whenDiscoverDevicesAndFilterDifferentFromTheExistingDevice
     DebugManagerStateRestore stateRestore;
     DebugManager.flags.FilterDeviceId.set("invalid");
     DebugManager.flags.FilterBdfPath.set("invalid");
-    ExecutionEnvironment executionEnviornment;
+    ExecutionEnvironment executionEnvironment;
 
-    auto result = DeviceFactory::prepareDeviceEnvironments(executionEnviornment);
+    auto result = DeviceFactory::prepareDeviceEnvironments(executionEnvironment);
     EXPECT_FALSE(result);
 }
 

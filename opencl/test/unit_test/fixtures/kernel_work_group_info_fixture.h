@@ -18,7 +18,7 @@ struct clGetKernelWorkGroupInfoTest : public ApiFixture<>,
     typedef ApiFixture BaseClass;
 
     void SetUp() override {
-        BaseClass::SetUp();
+        BaseClass::setUp();
 
         std::unique_ptr<char[]> pSource = nullptr;
         size_t sourceSize = 0;
@@ -68,7 +68,7 @@ struct clGetKernelWorkGroupInfoTest : public ApiFixture<>,
         EXPECT_EQ(CL_SUCCESS, retVal);
 
         delete kbHelper;
-        BaseClass::TearDown();
+        BaseClass::tearDown();
     }
 
     cl_program pProgram = nullptr;

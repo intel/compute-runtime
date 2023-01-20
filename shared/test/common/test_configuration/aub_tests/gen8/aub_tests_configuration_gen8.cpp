@@ -10,4 +10,4 @@
 
 using namespace NEO;
 
-template AubTestsConfig getAubTestsConfig<BDWFamily>();
+template AubTestsConfig getAubTestsConfig<Gen8Family>();

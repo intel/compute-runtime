@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,15 +8,17 @@
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/memory_manager/gfx_partition.h"
+#include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
@@ -258,8 +260,8 @@ HWTEST_F(MemoryManagerTests, givenEnabledLocalMemoryWhenAllocatingDebugAreaThenH
                                          mockDeviceBitfield};
     properties.flags.use32BitFrontWindow = true;
 
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    auto systemMemoryPlacement = hwHelper.useSystemMemoryPlacementForISA(*defaultHwInfo);
+    auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto systemMemoryPlacement = gfxCoreHelper.useSystemMemoryPlacementForISA(*defaultHwInfo);
 
     HeapIndex expectedHeap = HeapIndex::TOTAL_HEAPS;
     HeapIndex baseHeap = HeapIndex::TOTAL_HEAPS;
@@ -487,7 +489,7 @@ TEST(MemoryManagerTest, givenOsAgnosticMemoryManagerWhenGetLocalMemoryIsCalledTh
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
 
-    auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
+    auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
     uint32_t deviceMask = static_cast<uint32_t>(maxNBitValue(subDevicesCount));
 
     EXPECT_EQ(AubHelper::getPerTileLocalMemorySize(hwInfo) * subDevicesCount, memoryManager.getLocalMemorySize(0u, deviceMask));

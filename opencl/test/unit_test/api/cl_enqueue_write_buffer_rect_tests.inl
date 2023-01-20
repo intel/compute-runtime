@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,12 +32,12 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenInvalidBufferWhenWritingRectangularRe
         buffOrigin,
         hostOrigin,
         region,
-        10,  //bufferRowPitch
-        0,   //bufferSlicePitch
-        10,  //hostRowPitch
-        0,   //hostSlicePitch
-        ptr, //hostPtr
-        0,   //numEventsInWaitList
+        10,  // bufferRowPitch
+        0,   // bufferSlicePitch
+        10,  // hostRowPitch
+        0,   // hostSlicePitch
+        ptr, // hostPtr
+        0,   // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -58,12 +58,12 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenNullCommandQueueWhenWritingRectangula
         buffOrigin,
         hostOrigin,
         region,
-        10,  //bufferRowPitch
-        0,   //bufferSlicePitch
-        10,  //hostRowPitch
-        0,   //hostSlicePitch
-        ptr, //hostPtr
-        0,   //numEventsInWaitList
+        10,  // bufferRowPitch
+        0,   // bufferSlicePitch
+        10,  // hostRowPitch
+        0,   // hostSlicePitch
+        ptr, // hostPtr
+        0,   // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -91,12 +91,12 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenNullHostPtrWhenWritingRectangularRegi
         buffOrigin,
         hostOrigin,
         region,
-        10,      //bufferRowPitch
-        0,       //bufferSlicePitch
-        10,      //hostRowPitch
-        0,       //hostSlicePitch
-        nullptr, //hostPtr
-        0,       //numEventsInWaitList
+        10,      // bufferRowPitch
+        0,       // bufferSlicePitch
+        10,      // hostRowPitch
+        0,       // hostSlicePitch
+        nullptr, // hostPtr
+        0,       // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -121,12 +121,12 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenCorrectParametersWhenWritingRectangul
         buffOrigin,
         hostOrigin,
         region,
-        10,  //bufferRowPitch
-        0,   //bufferSlicePitch
-        10,  //hostRowPitch
-        0,   //hostSlicePitch
-        ptr, //hostPtr
-        0,   //numEventsInWaitList
+        10,  // bufferRowPitch
+        0,   // bufferSlicePitch
+        10,  // hostRowPitch
+        0,   // hostSlicePitch
+        ptr, // hostPtr
+        0,   // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -150,12 +150,12 @@ TEST_F(clEnqueueWriteBufferRectTests, GivenQueueIncapableWhenWritingRectangularR
         buffOrigin,
         hostOrigin,
         region,
-        10,  //bufferRowPitch
-        0,   //bufferSlicePitch
-        10,  //hostRowPitch
-        0,   //hostSlicePitch
-        ptr, //hostPtr
-        0,   //numEventsInWaitList
+        10,  // bufferRowPitch
+        0,   // bufferSlicePitch
+        10,  // hostRowPitch
+        0,   // hostSlicePitch
+        ptr, // hostPtr
+        0,   // numEventsInWaitList
         nullptr,
         nullptr);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,12 +8,13 @@
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 
 #include "opencl/source/program/create.inl"
+#include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 namespace NEO {
-void ProgramFixture::CreateProgramWithSource(Context *pContext,
+void ProgramFixture::createProgramWithSource(Context *pContext,
                                              const std::string &sourceFileName) {
-    Cleanup();
+    cleanup();
     cl_int retVal = CL_SUCCESS;
     std::string testFile;
 
@@ -40,7 +41,14 @@ void ProgramFixture::CreateProgramWithSource(Context *pContext,
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
 
-void ProgramFixture::CreateProgramFromBinary(Context *pContext,
+void ProgramFixture::cleanup() {
+    if (pProgram != nullptr) {
+        pProgram->release();
+    }
+    knownSource.reset();
+}
+
+void ProgramFixture::createProgramFromBinary(Context *pContext,
                                              const ClDeviceVector &deviceVector,
                                              const std::string &binaryFileName,
                                              cl_int &retVal,
@@ -66,13 +74,13 @@ void ProgramFixture::CreateProgramFromBinary(Context *pContext,
         retVal);
 }
 
-void ProgramFixture::CreateProgramFromBinary(Context *pContext,
+void ProgramFixture::createProgramFromBinary(Context *pContext,
                                              const ClDeviceVector &deviceVector,
                                              const std::string &binaryFileName,
                                              const std::string &options) {
-    Cleanup();
+    cleanup();
     cl_int retVal = CL_SUCCESS;
-    CreateProgramFromBinary(
+    createProgramFromBinary(
         pContext,
         deviceVector,
         binaryFileName,
@@ -82,5 +90,15 @@ void ProgramFixture::CreateProgramFromBinary(Context *pContext,
     ASSERT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
 }
+
+NEOProgramFixture::NEOProgramFixture() = default;
+NEOProgramFixture::~NEOProgramFixture() = default;
+
+void NEOProgramFixture::setUp() {
+    context = std::make_unique<MockContext>();
+    program = std::make_unique<MockNeoProgram>(context.get(), false, context->getDevices());
+}
+
+void NEOProgramFixture::tearDown() {}
 
 } // namespace NEO

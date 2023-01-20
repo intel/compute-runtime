@@ -11,13 +11,17 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/hardware_interface.h"
+#include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
+
+#include "hw_cmds_xe_hpc_core_base.h"
 
 using namespace NEO;
 
@@ -63,12 +67,11 @@ XE_HPC_CORETEST_F(MemoryPrefetchTestsXeHpcCore, givenKernelWhenWalkerIsProgramme
     size_t workSize[] = {1, 1, 1};
     Vec3<size_t> wgInfo = {1, 1, 1};
 
-    uint32_t iddIndex = 0;
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(workSize, wgInfo, PreemptionMode::Disabled);
+
     mockKernel->kernelInfo.heapInfo.KernelHeapSize = 1;
     HardwareInterface<FamilyType>::programWalker(commandStream, *mockKernel->mockKernel, *commandQueue,
-                                                 nullptr, heap, heap, heap, workSize, workSize,
-                                                 PreemptionMode::Disabled, 0, iddIndex,
-                                                 dispatchInfo, 0, wgInfo, wgInfo);
+                                                 heap, heap, heap, dispatchInfo, walkerArgs);
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(commandStream, 0);
@@ -88,7 +91,7 @@ XE_HPC_CORETEST_F(MemoryPrefetchTestsXeHpcCore, givenKernelWhenWalkerIsProgramme
 XE_HPC_CORETEST_F(MemoryPrefetchTestsXeHpcCore, givenPrefetchEnabledWhenEstimatingCommandsSizeThenAddStatePrefetch) {
     auto commandQueue = createCommandQueue<FamilyType>();
 
-    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(clDevice->getHardwareInfo()) ? 2 : 1;
+    size_t numPipeControls = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(clDevice->getHardwareInfo()) ? 2 : 1;
 
     size_t expected = sizeof(typename FamilyType::COMPUTE_WALKER) +
                       (sizeof(typename FamilyType::PIPE_CONTROL) * numPipeControls) +
@@ -110,16 +113,15 @@ XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenDebugVariableSetWhenProgramm
     size_t workSize[] = {1, 1, 1};
     Vec3<size_t> wgInfo = {1, 1, 1};
 
-    uint32_t iddIndex = 0;
+    HardwareInterfaceWalkerArgs walkerArgs = createHardwareInterfaceWalkerArgs(workSize, wgInfo, PreemptionMode::Disabled);
+
     size_t commandsOffset = 0;
 
     {
         // default
 
         HardwareInterface<FamilyType>::programWalker(commandStream, *mockKernel->mockKernel, *commandQueue,
-                                                     nullptr, heap, heap, heap, workSize, workSize,
-                                                     PreemptionMode::Disabled, 0, iddIndex,
-                                                     dispatchInfo, 0, wgInfo, wgInfo);
+                                                     heap, heap, heap, dispatchInfo, walkerArgs);
 
         HardwareParse hwParse;
         hwParse.parseCommands<FamilyType>(commandStream, 0);
@@ -138,9 +140,7 @@ XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenDebugVariableSetWhenProgramm
         DebugManager.flags.ForceL3PrefetchForComputeWalker.set(1);
 
         HardwareInterface<FamilyType>::programWalker(commandStream, *mockKernel->mockKernel, *commandQueue,
-                                                     nullptr, heap, heap, heap, workSize, workSize,
-                                                     PreemptionMode::Disabled, 0, iddIndex,
-                                                     dispatchInfo, 0, wgInfo, wgInfo);
+                                                     heap, heap, heap, dispatchInfo, walkerArgs);
 
         HardwareParse hwParse;
         hwParse.parseCommands<FamilyType>(commandStream, commandsOffset);
@@ -159,9 +159,7 @@ XE_HPC_CORETEST_F(ProgramWalkerTestsXeHpcCore, givenDebugVariableSetWhenProgramm
         DebugManager.flags.ForceL3PrefetchForComputeWalker.set(0);
 
         HardwareInterface<FamilyType>::programWalker(commandStream, *mockKernel->mockKernel, *commandQueue,
-                                                     nullptr, heap, heap, heap, workSize, workSize,
-                                                     PreemptionMode::Disabled, 0, iddIndex,
-                                                     dispatchInfo, 0, wgInfo, wgInfo);
+                                                     heap, heap, heap, dispatchInfo, walkerArgs);
 
         HardwareParse hwParse;
         hwParse.parseCommands<FamilyType>(commandStream, commandsOffset);

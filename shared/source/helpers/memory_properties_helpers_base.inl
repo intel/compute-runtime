@@ -1,13 +1,17 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+
+#include "memory_properties_flags.h"
 
 namespace NEO {
 
@@ -58,6 +62,14 @@ GraphicsAllocation::UsmInitialPlacement MemoryPropertiesHelper::getUSMInitialPla
 
 void MemoryPropertiesHelper::setUSMInitialPlacement(AllocationProperties &allocationProperties, GraphicsAllocation::UsmInitialPlacement initialPlacement) {
     allocationProperties.usmInitialPlacement = initialPlacement;
+}
+
+bool MemoryPropertiesHelper::useSystemMemoryForCrossRootDeviceAccess(bool multiRootDevice) {
+    return multiRootDevice && !DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.get();
+}
+
+bool MemoryPropertiesHelper::useMultiStorageForCrossRootDeviceAccess(bool multiRootDevice) {
+    return multiRootDevice && DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.get();
 }
 
 } // namespace NEO

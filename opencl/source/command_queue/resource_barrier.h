@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/utilities/stackvec.h"
+
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/memory_manager/resource_surface.h"
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,6 @@ using MetricsLibraryApi::LinuxAdapterType;
 
 class MockPerformanceCountersLinux : public PerformanceCountersLinux {
   public:
-    MockPerformanceCountersLinux(Device *device);
+    MockPerformanceCountersLinux();
 };
 } // namespace NEO

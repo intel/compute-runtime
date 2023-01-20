@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,10 @@
 
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
+#include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
@@ -110,9 +113,8 @@ bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const Mem
     }
     for (auto &pClDevice : context.getDevices()) {
         auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
-        auto &hwInfo = pClDevice->getHardwareInfo();
-        auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        if (!clHwHelper.allowCompressionForContext(*pClDevice, context)) {
+        auto &clGfxCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+        if (!clGfxCoreHelper.allowCompressionForContext(*pClDevice, context)) {
             return false;
         }
 
@@ -121,7 +123,7 @@ bool MemObjHelper::isSuitableForCompression(bool compressionSupported, const Mem
                 return false;
             }
 
-            //for unrestrictive and default context, turn on compression only for read only surfaces with no host access.
+            // for unrestrictive and default context, turn on compression only for read only surfaces with no host access.
             bool isContextSpecialized = (context.peekContextType() == ContextType::CONTEXT_TYPE_SPECIALIZED);
             bool isReadOnlyAndHostNoAccess = (properties.flags.readOnly && properties.flags.hostNoAccess);
             if (!isContextSpecialized && !isReadOnlyAndHostNoAccess) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,13 +13,15 @@
 #include "shared/test/common/libult/linux/drm_mock_prelim_context.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
 
+#include <cmath>
+
 TEST(DrmQueryTopologyTest, givenDrmWhenQueryTopologyCalledThenPassNoFlags) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     Drm::QueryTopologyData topologyData = {};
@@ -86,11 +88,8 @@ struct QueryTopologyTests : ::testing::Test {
     };
 
     void SetUp() override {
-        executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        executionEnvironment->prepareRootDeviceEnvironments(1);
-
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
-        rootDeviceEnvironment->setHwInfo(NEO::defaultHwInfo.get());
     }
 
     void createDrm(uint32_t tileCount) {
@@ -99,7 +98,7 @@ struct QueryTopologyTests : ::testing::Test {
         multiTileArch.TileCount = tileCount;
         multiTileArch.TileMask = static_cast<uint8_t>(maxNBitValue(tileCount));
 
-        drmMock = std::make_unique<MyDrmQueryMock>(*rootDeviceEnvironment, rootDeviceEnvironment->getHardwareInfo());
+        drmMock = std::make_unique<MyDrmQueryMock>(*rootDeviceEnvironment);
 
         drmMock->storedSVal = 8;
         drmMock->storedSSVal = 32;
@@ -317,8 +316,7 @@ TEST_F(QueryTopologyTests, givenDrmWhenGettingTopologyMapThenCorrectMapIsReturne
 }
 
 TEST(DrmQueryTest, WhenCallingQueryPageFaultSupportThenReturnFalseByDefault) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     drm.queryPageFaultSupport();
@@ -327,8 +325,7 @@ TEST(DrmQueryTest, WhenCallingQueryPageFaultSupportThenReturnFalseByDefault) {
 }
 
 TEST(DrmQueryTest, givenPageFaultSupportEnabledWhenCallingQueryPageFaultSupportThenReturnCorrectValue) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     for (bool hasPageFaultSupport : {false, true}) {
@@ -340,8 +337,7 @@ TEST(DrmQueryTest, givenPageFaultSupportEnabledWhenCallingQueryPageFaultSupportT
 }
 
 TEST(DrmQueryTest, WhenQueryPageFaultSupportFailsThenReturnFalse) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     drm.context.hasPageFaultQueryReturn = -1;
@@ -354,8 +350,7 @@ TEST(DrmQueryTest, givenUseKmdMigrationWhenShouldAllocationFaultIsCalledOnFaulta
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseKmdMigration.set(true);
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.pageFaultSupported = true;
 
@@ -372,8 +367,7 @@ TEST(DrmQueryTest, givenUseKmdMigrationWhenShouldAllocationFaultIsCalledOnFaulta
 }
 
 TEST(DrmQueryTest, givenRecoverablePageFaultsEnabledWhenCallingHasPageFaultSupportThenReturnCorrectValue) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     for (bool hasPageFaultSupport : {false, true}) {
@@ -384,8 +378,7 @@ TEST(DrmQueryTest, givenRecoverablePageFaultsEnabledWhenCallingHasPageFaultSuppo
 }
 
 TEST(DrmQueryTest, givenDrmAllocationWhenShouldAllocationFaultIsCalledOnNonFaultableHardwareThenReturnFalse) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.pageFaultSupported = false;
 
@@ -397,8 +390,7 @@ TEST(DrmQueryTest, givenEnableImplicitMigrationOnFaultableHardwareWhenShouldAllo
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableImplicitMigrationOnFaultableHardware.set(true);
 
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.pageFaultSupported = true;
 

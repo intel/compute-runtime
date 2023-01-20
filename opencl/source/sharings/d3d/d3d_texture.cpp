@@ -7,11 +7,13 @@
 
 #include "opencl/source/sharings/d3d/d3d_texture.h"
 
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
@@ -91,7 +93,7 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
                                              false, // isMultiStorageAllocation
                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         if (memoryManager->verifyHandle(toOsHandle(sharedHandle), rootDeviceIndex, false)) {
-            alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false, false);
+            alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false, false, true);
         } else {
             err.set(CL_INVALID_D3D11_RESOURCE_KHR);
             return nullptr;
@@ -106,21 +108,23 @@ Image *D3DTexture<D3D>::create2d(Context *context, D3DTexture2d *d3dTexture, cl_
 
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
 
-    auto hwInfo = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    auto &executionEnvironment = memoryManager->peekExecutionEnvironment();
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     const ClSurfaceFormatInfo *clSurfaceFormat = nullptr;
     if ((textureDesc.Format == DXGI_FORMAT_NV12) || (textureDesc.Format == DXGI_FORMAT_P010) || (textureDesc.Format == DXGI_FORMAT_P016)) {
         clSurfaceFormat = findYuvSurfaceFormatInfo(textureDesc.Format, imagePlane, flags);
         imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     } else {
-        clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, hwHelper.packedFormatsSupported());
+        clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, hwInfo->capabilityTable.supportsOcl21Features, gfxCoreHelper.packedFormatsSupported());
         imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
     }
 
     if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
-        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-        alloc->getDefaultGmm()->isCompressionEnabled = hwInfoConfig.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
-                                                                                                         : true;
+        const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+        alloc->getDefaultGmm()->isCompressionEnabled = productHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
+                                                                                                          : true;
     }
     auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
     multiGraphicsAllocation.addAllocation(alloc);
@@ -183,7 +187,7 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
                                              false, // isMultiStorageAllocation
                                              context->getDeviceBitfieldForAllocation(rootDeviceIndex));
         if (memoryManager->verifyHandle(toOsHandle(sharedHandle), rootDeviceIndex, false)) {
-            alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false, false);
+            alloc = memoryManager->createGraphicsAllocationFromSharedHandle(toOsHandle(sharedHandle), allocProperties, false, false, true);
         } else {
             err.set(CL_INVALID_D3D11_RESOURCE_KHR);
             return nullptr;
@@ -196,18 +200,20 @@ Image *D3DTexture<D3D>::create3d(Context *context, D3DTexture3d *d3dTexture, cl_
 
     updateImgInfoAndDesc(alloc->getDefaultGmm(), imgInfo, ImagePlane::NO_PLANE, 0u);
 
-    auto hwInfo = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    auto &executionEnvironment = memoryManager->peekExecutionEnvironment();
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto d3dTextureObj = new D3DTexture<D3D>(context, d3dTexture, subresource, textureStaging, sharedResource);
-    auto *clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, context->getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features, hwHelper.packedFormatsSupported());
+    auto *clSurfaceFormat = findSurfaceFormatInfo(alloc->getDefaultGmm()->gmmResourceInfo->getResourceFormat(), flags, hwInfo->capabilityTable.supportsOcl21Features, gfxCoreHelper.packedFormatsSupported());
     imgInfo.qPitch = alloc->getDefaultGmm()->queryQPitch(GMM_RESOURCE_TYPE::RESOURCE_3D);
 
     imgInfo.surfaceFormat = &clSurfaceFormat->surfaceFormat;
 
     if (alloc->getDefaultGmm()->unifiedAuxTranslationCapable()) {
-        const auto &hwInfoConfig = *HwInfoConfig::get(hwInfo->platform.eProductFamily);
-        alloc->getDefaultGmm()->isCompressionEnabled = hwInfoConfig.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
-                                                                                                         : true;
+        const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+        alloc->getDefaultGmm()->isCompressionEnabled = productHelper.isPageTableManagerSupported(*hwInfo) ? memoryManager->mapAuxGpuVA(alloc)
+                                                                                                          : true;
     }
     auto multiGraphicsAllocation = MultiGraphicsAllocation(rootDeviceIndex);
     multiGraphicsAllocation.addAllocation(alloc);

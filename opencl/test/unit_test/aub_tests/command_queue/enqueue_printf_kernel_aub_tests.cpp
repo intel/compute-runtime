@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,19 +19,19 @@ class AUBPrintfKernelFixture : public AUBFixture,
                                public HelloWorldKernelFixture,
                                public testing::Test {
   public:
-    using HelloWorldKernelFixture::SetUp;
+    using HelloWorldKernelFixture::setUp;
 
     void SetUp() override {
-        AUBFixture::SetUp(nullptr);
+        AUBFixture::setUp(nullptr);
         ASSERT_NE(nullptr, device.get());
-        HelloWorldKernelFixture::SetUp(device.get(), programFile, kernelName);
+        HelloWorldKernelFixture::setUp(device.get(), programFile, kernelName);
     }
     void TearDown() override {
         if (IsSkipped()) {
             return;
         }
-        HelloWorldKernelFixture::TearDown();
-        AUBFixture::TearDown();
+        HelloWorldKernelFixture::tearDown();
+        AUBFixture::tearDown();
     }
     const char *programFile = "printf";
     const char *kernelName = "test_printf_number";

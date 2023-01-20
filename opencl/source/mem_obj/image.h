@@ -1,43 +1,39 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/string.h"
-#include "shared/source/image/image_surface_state.h"
-
-#include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/surface_formats.h"
-#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
 namespace NEO {
+struct HardwareInfo;
 class Image;
 struct KernelInfo;
 struct SurfaceFormatInfo;
-class HwHelper;
+class GfxCoreHelper;
 
-using ImageCreatFunc = Image *(*)(Context *context,
-                                  const MemoryProperties &memoryProperties,
-                                  uint64_t flags,
-                                  uint64_t flagsIntel,
-                                  size_t size,
-                                  void *hostPtr,
-                                  const cl_image_format &imageFormat,
-                                  const cl_image_desc &imageDesc,
-                                  bool zeroCopy,
-                                  MultiGraphicsAllocation multiGraphicsAllocation,
-                                  bool isImageRedescribed,
-                                  uint32_t baseMipLevel,
-                                  uint32_t mipCount,
-                                  const ClSurfaceFormatInfo *surfaceFormatInfo,
-                                  const SurfaceOffsets *surfaceOffsets);
+using ImageCreateFunc = Image *(*)(Context *context,
+                                   const MemoryProperties &memoryProperties,
+                                   uint64_t flags,
+                                   uint64_t flagsIntel,
+                                   size_t size,
+                                   void *hostPtr,
+                                   const cl_image_format &imageFormat,
+                                   const cl_image_desc &imageDesc,
+                                   bool zeroCopy,
+                                   MultiGraphicsAllocation multiGraphicsAllocation,
+                                   bool isImageRedescribed,
+                                   uint32_t baseMipLevel,
+                                   uint32_t mipCount,
+                                   const ClSurfaceFormatInfo *surfaceFormatInfo,
+                                   const SurfaceOffsets *surfaceOffsets);
 
 struct ImageFactoryFuncs {
-    ImageCreatFunc createImageFunction;
+    ImageCreateFunc createImageFunction;
 };
 
 namespace ImageFunctions {
@@ -150,7 +146,7 @@ class Image : public MemObj {
 
     Image *redescribe();
     Image *redescribeFillImage();
-    ImageCreatFunc createFunction = nullptr;
+    ImageCreateFunc createFunction = nullptr;
 
     uint32_t getQPitch() { return qPitch; }
     void setQPitch(uint32_t qPitch) { this->qPitch = qPitch; }

@@ -7,10 +7,7 @@
 
 #include "zello_common.h"
 
-extern bool verbose;
-bool verbose = false;
-
-void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
+void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
     ze_command_queue_handle_t cmdQueue;
     ze_command_queue_desc_t cmdQueueDesc = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
     ze_command_list_handle_t cmdList;
@@ -70,6 +67,10 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
             std::cout << "Build log:" << strLog << std::endl;
 
             free(strLog);
+            SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
+            std::cout << "\nZello World Gpu Results validation FAILED. Module creation error."
+                      << std::endl;
+            SUCCESS_OR_TERMINATE_BOOL(false);
         }
         SUCCESS_OR_TERMINATE(zeModuleBuildLogDestroy(buildlog));
 
@@ -129,10 +130,20 @@ void executeGpuKernelAndValidate(ze_context_handle_t context, ze_device_handle_t
     SUCCESS_OR_TERMINATE(zeMemFree(context, srcBuffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
+
+    if (kernel != nullptr) {
+        SUCCESS_OR_TERMINATE(zeKernelDestroy(kernel));
+    }
+    if (module != nullptr) {
+        SUCCESS_OR_TERMINATE(zeModuleDestroy(module));
+    }
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello World";
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
+
     ze_context_handle_t context = nullptr;
     auto devices = zelloInitContextAndGetDevices(context);
     auto device = devices[0];
@@ -141,15 +152,13 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     executeGpuKernelAndValidate(context, device, outputValidationSuccessful);
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
 
-    std::cout << "\nZello World Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
-
-    return 0;
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
+    return outputValidationSuccessful ? 0 : 1;
 }

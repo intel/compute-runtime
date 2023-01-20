@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "zello_common.h"
+#include "zello_ipc_common.h"
 
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -15,59 +15,8 @@
 #define CHILDPROCESSES 4
 
 int sv[CHILDPROCESSES][2];
-extern bool verbose;
-bool verbose = false;
 
 size_t allocSize = 131072 + 7; // +7 to break alignment and make it harder
-
-static int sendmsgForIpcHandle(int socket, int fd, char *payload) {
-    char sendBuf[ZE_MAX_IPC_HANDLE_SIZE] = {};
-    memcpy(sendBuf, payload, sizeof(sendBuf));
-    char cmsgBuf[CMSG_SPACE(ZE_MAX_IPC_HANDLE_SIZE)];
-
-    struct iovec msgBuffer = {};
-    msgBuffer.iov_base = sendBuf;
-    msgBuffer.iov_len = ZE_MAX_IPC_HANDLE_SIZE;
-
-    struct msghdr msgHeader = {};
-    msgHeader.msg_iov = &msgBuffer;
-    msgHeader.msg_iovlen = 1;
-    msgHeader.msg_control = cmsgBuf;
-    msgHeader.msg_controllen = CMSG_LEN(sizeof(fd));
-    struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
-    controlHeader->cmsg_type = SCM_RIGHTS;
-    controlHeader->cmsg_level = SOL_SOCKET;
-    controlHeader->cmsg_len = CMSG_LEN(sizeof(fd));
-    *(int *)CMSG_DATA(controlHeader) = fd;
-    ssize_t bytesSent = sendmsg(socket, &msgHeader, 0);
-    if (bytesSent < 0) {
-        std::cerr << "Error on sendmsgForIpcHandle " << strerror(errno) << "\n";
-        return -1;
-    }
-    return 0;
-}
-static int recvmsgForIpcHandle(int socket, char *payload) {
-    int fd = -1;
-    char recvBuf[ZE_MAX_IPC_HANDLE_SIZE] = {};
-    char cmsgBuf[CMSG_SPACE(ZE_MAX_IPC_HANDLE_SIZE)];
-    struct iovec msgBuffer;
-    msgBuffer.iov_base = recvBuf;
-    msgBuffer.iov_len = ZE_MAX_IPC_HANDLE_SIZE;
-    struct msghdr msgHeader = {};
-    msgHeader.msg_iov = &msgBuffer;
-    msgHeader.msg_iovlen = 1;
-    msgHeader.msg_control = cmsgBuf;
-    msgHeader.msg_controllen = CMSG_LEN(sizeof(fd));
-    ssize_t bytesSent = recvmsg(socket, &msgHeader, 0);
-    if (bytesSent < 0) {
-        std::cerr << "Error on recvmsgForIpcHandle " << strerror(errno) << "\n";
-        return -1;
-    }
-    struct cmsghdr *controlHeader = CMSG_FIRSTHDR(&msgHeader);
-    memmove(&fd, CMSG_DATA(controlHeader), sizeof(int)); // NOLINT(clang-analyzer-core.NonNullParamChecker)
-    memmove(payload, recvBuf, sizeof(recvBuf));
-    return fd;
-}
 
 inline void initializeProcess(ze_driver_handle_t &driverHandle,
                               ze_context_handle_t &context,
@@ -313,6 +262,7 @@ void runServer(bool &validRet) {
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello IPC";
     verbose = isVerbose(argc, argv);
     bool outputValidationSuccessful;
 
@@ -339,9 +289,6 @@ int main(int argc, char *argv[]) {
 
     runServer(outputValidationSuccessful);
 
-    std::cout << "\nZello IPC Results validation "
-              << (outputValidationSuccessful ? "PASSED" : "FAILED")
-              << std::endl;
-
-    return 0;
+    printResult(false, outputValidationSuccessful, blackBoxName);
+    return outputValidationSuccessful ? 0 : 1;
 }

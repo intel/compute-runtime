@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/engine_node_helper.h"
-#include "shared/source/helpers/string.h"
+#include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/surface.h"
 
@@ -38,7 +36,7 @@ CommandMapUnmap::CommandMapUnmap(MapOperationType operationType, MemObj &memObj,
     memObj.incRefInternal();
 }
 
-CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
+CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminated) {
     DecRefInternalAtScopeEnd decRefInternalAtScopeEnd{memObj};
 
     if (terminated) {
@@ -54,35 +52,37 @@ CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
     Device &device = commandQueue.getDevice();
 
     DispatchFlags dispatchFlags(
-        {},                                                                          //csrDependencies
-        nullptr,                                                                     //barrierTimestampPacketNodes
-        {},                                                                          //pipelineSelectArgs
-        commandQueue.flushStamp->getStampReference(),                                //flushStampReference
-        commandQueue.getThrottle(),                                                  //throttle
-        ClPreemptionHelper::taskPreemptionMode(device, multiDispatch),               //preemptionMode
-        GrfConfig::NotApplicable,                                                    //numGrfRequired
-        L3CachingSettings::NotApplicable,                                            //l3CacheSettings
-        ThreadArbitrationPolicy::NotPresent,                                         //threadArbitrationPolicy
-        AdditionalKernelExecInfo::NotApplicable,                                     //additionalKernelExecInfo
-        KernelExecutionType::NotApplicable,                                          //kernelExecutionType
-        MemoryCompressionState::NotApplicable,                                       //memoryCompressionState
-        commandQueue.getSliceCount(),                                                //sliceCount
-        true,                                                                        //blocking
-        true,                                                                        //dcFlush
-        false,                                                                       //useSLM
-        !commandQueue.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),  //guardCommandBufferWithPipeControl
-        false,                                                                       //GSBA32BitRequired
-        false,                                                                       //requiresCoherency
-        commandQueue.getPriority() == QueuePriority::LOW,                            //lowPriority
-        false,                                                                       //implicitFlush
-        commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), //outOfOrderExecutionAllowed
-        false,                                                                       //epilogueRequired
-        false,                                                                       //usePerDssBackedBuffer
-        false,                                                                       //useSingleSubdevice
-        false,                                                                       //useGlobalAtomics
-        false,                                                                       //areMultipleSubDevicesInContext
-        false,                                                                       //memoryMigrationRequired
-        false);                                                                      //textureCacheFlush
+        {},                                                                          // csrDependencies
+        nullptr,                                                                     // barrierTimestampPacketNodes
+        {},                                                                          // pipelineSelectArgs
+        commandQueue.flushStamp->getStampReference(),                                // flushStampReference
+        commandQueue.getThrottle(),                                                  // throttle
+        ClPreemptionHelper::taskPreemptionMode(device, multiDispatch),               // preemptionMode
+        GrfConfig::NotApplicable,                                                    // numGrfRequired
+        L3CachingSettings::NotApplicable,                                            // l3CacheSettings
+        ThreadArbitrationPolicy::NotPresent,                                         // threadArbitrationPolicy
+        AdditionalKernelExecInfo::NotApplicable,                                     // additionalKernelExecInfo
+        KernelExecutionType::NotApplicable,                                          // kernelExecutionType
+        MemoryCompressionState::NotApplicable,                                       // memoryCompressionState
+        commandQueue.getSliceCount(),                                                // sliceCount
+        true,                                                                        // blocking
+        true,                                                                        // dcFlush
+        false,                                                                       // useSLM
+        !commandQueue.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),  // guardCommandBufferWithPipeControl
+        false,                                                                       // GSBA32BitRequired
+        false,                                                                       // requiresCoherency
+        commandQueue.getPriority() == QueuePriority::LOW,                            // lowPriority
+        false,                                                                       // implicitFlush
+        commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(), // outOfOrderExecutionAllowed
+        false,                                                                       // epilogueRequired
+        false,                                                                       // usePerDssBackedBuffer
+        false,                                                                       // useGlobalAtomics
+        false,                                                                       // areMultipleSubDevicesInContext
+        false,                                                                       // memoryMigrationRequired
+        false,                                                                       // textureCacheFlush
+        false,                                                                       // hasStallingCmds
+        false,                                                                       // hasRelaxedOrderingDependencies
+        false);                                                                      // stateCacheInvalidation
 
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
@@ -131,7 +131,7 @@ CommandComputeKernel::~CommandComputeKernel() {
     kernel->decRefInternal();
 }
 
-CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminated) {
+CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool terminated) {
     if (terminated) {
         this->terminated = true;
         for (auto surface : surfaces) {
@@ -180,38 +180,40 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
 
     const auto &kernelDescriptor = kernel->getKernelInfo().kernelDescriptor;
 
-    auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(kernel->isAuxTranslationRequired(), commandQueue.getDevice().getHardwareInfo());
+    auto memoryCompressionState = commandStreamReceiver.getMemoryCompressionState(kernel->isAuxTranslationRequired());
 
     DispatchFlags dispatchFlags(
-        {},                                                                               //csrDependencies
-        nullptr,                                                                          //barrierTimestampPacketNodes
-        {false, kernel->isVmeKernel()},                                                   //pipelineSelectArgs
-        commandQueue.flushStamp->getStampReference(),                                     //flushStampReference
-        commandQueue.getThrottle(),                                                       //throttle
-        preemptionMode,                                                                   //preemptionMode
-        kernelDescriptor.kernelAttributes.numGrfRequired,                                 //numGrfRequired
-        L3CachingSettings::l3CacheOn,                                                     //l3CacheSettings
-        kernel->getThreadArbitrationPolicy(),                                             //threadArbitrationPolicy
-        kernel->getAdditionalKernelExecInfo(),                                            //additionalKernelExecInfo
-        kernel->getExecutionType(),                                                       //kernelExecutionType
-        memoryCompressionState,                                                           //memoryCompressionState
-        commandQueue.getSliceCount(),                                                     //sliceCount
-        true,                                                                             //blocking
-        flushDC,                                                                          //dcFlush
-        slmUsed,                                                                          //useSLM
-        !commandQueue.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),       //guardCommandBufferWithPipeControl
-        commandType == CL_COMMAND_NDRANGE_KERNEL,                                         //GSBA32BitRequired
-        requiresCoherency,                                                                //requiresCoherency
-        commandQueue.getPriority() == QueuePriority::LOW,                                 //lowPriority
-        false,                                                                            //implicitFlush
-        commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      //outOfOrderExecutionAllowed
-        false,                                                                            //epilogueRequired
-        false,                                                                            //usePerDssBackedBuffer
-        kernel->isSingleSubdevicePreferred(),                                             //useSingleSubdevice
-        kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, //useGlobalAtomics
-        kernel->areMultipleSubDevicesInContext(),                                         //areMultipleSubDevicesInContext
-        kernel->requiresMemoryMigration(),                                                //memoryMigrationRequired
-        commandQueue.isTextureCacheFlushNeeded(this->commandType));                       //textureCacheFlush
+        {},                                                                               // csrDependencies
+        nullptr,                                                                          // barrierTimestampPacketNodes
+        {false, kernel->isVmeKernel()},                                                   // pipelineSelectArgs
+        commandQueue.flushStamp->getStampReference(),                                     // flushStampReference
+        commandQueue.getThrottle(),                                                       // throttle
+        preemptionMode,                                                                   // preemptionMode
+        kernelDescriptor.kernelAttributes.numGrfRequired,                                 // numGrfRequired
+        L3CachingSettings::l3CacheOn,                                                     // l3CacheSettings
+        kernelDescriptor.kernelAttributes.threadArbitrationPolicy,                        // threadArbitrationPolicy
+        kernel->getAdditionalKernelExecInfo(),                                            // additionalKernelExecInfo
+        kernel->getExecutionType(),                                                       // kernelExecutionType
+        memoryCompressionState,                                                           // memoryCompressionState
+        commandQueue.getSliceCount(),                                                     // sliceCount
+        true,                                                                             // blocking
+        flushDC,                                                                          // dcFlush
+        slmUsed,                                                                          // useSLM
+        !commandQueue.getGpgpuCommandStreamReceiver().isUpdateTagFromWaitEnabled(),       // guardCommandBufferWithPipeControl
+        commandType == CL_COMMAND_NDRANGE_KERNEL,                                         // GSBA32BitRequired
+        requiresCoherency,                                                                // requiresCoherency
+        commandQueue.getPriority() == QueuePriority::LOW,                                 // lowPriority
+        false,                                                                            // implicitFlush
+        commandQueue.getGpgpuCommandStreamReceiver().isNTo1SubmissionModelEnabled(),      // outOfOrderExecutionAllowed
+        false,                                                                            // epilogueRequired
+        false,                                                                            // usePerDssBackedBuffer
+        kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, // useGlobalAtomics
+        kernel->areMultipleSubDevicesInContext(),                                         // areMultipleSubDevicesInContext
+        kernel->requiresMemoryMigration(),                                                // memoryMigrationRequired
+        commandQueue.isTextureCacheFlushNeeded(this->commandType),                        // textureCacheFlush
+        false,                                                                            // hasStallingCmds
+        false,                                                                            // hasRelaxedOrderingDependencies
+        false);                                                                           // stateCacheInvalidation
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);
@@ -226,7 +228,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         }
         dispatchFlags.barrierTimestampPacketNodes = &timestampPacketDependencies->barrierNodes;
     }
-    dispatchFlags.pipelineSelectArgs.specialPipelineSelectMode = kernel->requiresSpecialPipelineSelectMode();
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = kernel->requiresSystolicPipelineSelectMode();
     if (anyUncacheableArgs) {
         dispatchFlags.l3CacheSettings = L3CachingSettings::l3CacheOff;
     } else if (!kernel->areStatelessWritesUsed()) {
@@ -261,14 +263,12 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
         commandQueue.clearLastBcsPackets();
     }
 
-    bool isGpuHangDetected{false};
-
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
         const auto newTaskCount = bcsCsrForAuxTranslation->flushBcsTask(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
-        if (newTaskCount) {
-            commandQueue.updateBcsTaskCount(bcsCsrForAuxTranslation->getOsContext().getEngineType(), *newTaskCount);
+        if (newTaskCount <= CompletionStamp::notReady) {
+            commandQueue.updateBcsTaskCount(bcsCsrForAuxTranslation->getOsContext().getEngineType(), newTaskCount);
         } else {
-            isGpuHangDetected = true;
+            completionStamp.taskCount = newTaskCount;
         }
     }
     commandQueue.updateLatestSentEnqueueType(EnqueueProperties::Operation::GpuKernel);
@@ -280,11 +280,11 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     if (printfHandler) {
         const auto waitStatus = commandQueue.waitUntilComplete(completionStamp.taskCount, {}, completionStamp.flushStamp, false);
         if (waitStatus == WaitStatus::GpuHang) {
-            isGpuHangDetected = true;
+            completionStamp.taskCount = CompletionStamp::gpuHang;
         }
 
         if (!printfHandler->printEnqueueOutput()) {
-            isGpuHangDetected = true;
+            completionStamp.taskCount = CompletionStamp::gpuHang;
         }
     }
 
@@ -293,14 +293,10 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     }
     surfaces.clear();
 
-    if (isGpuHangDetected) {
-        completionStamp.taskCount = CompletionStamp::gpuHang;
-    }
-
     return completionStamp;
 }
 
-bool CommandWithoutKernel::dispatchBlitOperation() {
+TaskCountType CommandWithoutKernel::dispatchBlitOperation() {
     auto bcsCsr = kernelOperation->bcsCsr;
     UNRECOVERABLE_IF(bcsCsr == nullptr);
 
@@ -317,17 +313,17 @@ bool CommandWithoutKernel::dispatchBlitOperation() {
     }
 
     const auto newTaskCount = bcsCsr->flushBcsTask(kernelOperation->blitPropertiesContainer, false, commandQueue.isProfilingEnabled(), commandQueue.getDevice());
-    if (!newTaskCount) {
-        return false;
+    if (newTaskCount > CompletionStamp::notReady) {
+        return newTaskCount;
     }
 
-    commandQueue.updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), *newTaskCount);
+    commandQueue.updateBcsTaskCount(bcsCsr->getOsContext().getEngineType(), newTaskCount);
     commandQueue.setLastBcsPacket(bcsCsr->getOsContext().getEngineType());
 
-    return true;
+    return newTaskCount;
 }
 
-CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminated) {
+CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool terminated) {
     if (terminated) {
         this->terminated = true;
         return completionStamp;
@@ -363,35 +359,37 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
 
     auto rootDeviceIndex = commandStreamReceiver.getRootDeviceIndex();
     DispatchFlags dispatchFlags(
-        {},                                                                    //csrDependencies
-        barrierNodes,                                                          //barrierTimestampPacketNodes
-        {},                                                                    //pipelineSelectArgs
-        commandQueue.flushStamp->getStampReference(),                          //flushStampReference
-        commandQueue.getThrottle(),                                            //throttle
-        commandQueue.getDevice().getPreemptionMode(),                          //preemptionMode
-        GrfConfig::NotApplicable,                                              //numGrfRequired
-        L3CachingSettings::NotApplicable,                                      //l3CacheSettings
-        ThreadArbitrationPolicy::NotPresent,                                   //threadArbitrationPolicy
-        AdditionalKernelExecInfo::NotApplicable,                               //additionalKernelExecInfo
-        KernelExecutionType::NotApplicable,                                    //kernelExecutionType
-        MemoryCompressionState::NotApplicable,                                 //memoryCompressionState
-        commandQueue.getSliceCount(),                                          //sliceCount
-        true,                                                                  //blocking
-        false,                                                                 //dcFlush
-        false,                                                                 //useSLM
-        !commandStreamReceiver.isUpdateTagFromWaitEnabled(),                   //guardCommandBufferWithPipeControl
-        false,                                                                 //GSBA32BitRequired
-        false,                                                                 //requiresCoherency
-        commandQueue.getPriority() == QueuePriority::LOW,                      //lowPriority
-        false,                                                                 //implicitFlush
-        commandStreamReceiver.isNTo1SubmissionModelEnabled(),                  //outOfOrderExecutionAllowed
-        false,                                                                 //epilogueRequired
-        false,                                                                 //usePerDssBackedBuffer
-        false,                                                                 //useSingleSubdevice
-        false,                                                                 //useGlobalAtomics
-        commandQueue.getContext().containsMultipleSubDevices(rootDeviceIndex), //areMultipleSubDevicesInContext
-        false,                                                                 //memoryMigrationRequired
-        false);                                                                //textureCacheFlush
+        {},                                                                    // csrDependencies
+        barrierNodes,                                                          // barrierTimestampPacketNodes
+        {},                                                                    // pipelineSelectArgs
+        commandQueue.flushStamp->getStampReference(),                          // flushStampReference
+        commandQueue.getThrottle(),                                            // throttle
+        commandQueue.getDevice().getPreemptionMode(),                          // preemptionMode
+        GrfConfig::NotApplicable,                                              // numGrfRequired
+        L3CachingSettings::NotApplicable,                                      // l3CacheSettings
+        ThreadArbitrationPolicy::NotPresent,                                   // threadArbitrationPolicy
+        AdditionalKernelExecInfo::NotApplicable,                               // additionalKernelExecInfo
+        KernelExecutionType::NotApplicable,                                    // kernelExecutionType
+        MemoryCompressionState::NotApplicable,                                 // memoryCompressionState
+        commandQueue.getSliceCount(),                                          // sliceCount
+        true,                                                                  // blocking
+        false,                                                                 // dcFlush
+        false,                                                                 // useSLM
+        !commandStreamReceiver.isUpdateTagFromWaitEnabled(),                   // guardCommandBufferWithPipeControl
+        false,                                                                 // GSBA32BitRequired
+        false,                                                                 // requiresCoherency
+        commandQueue.getPriority() == QueuePriority::LOW,                      // lowPriority
+        false,                                                                 // implicitFlush
+        commandStreamReceiver.isNTo1SubmissionModelEnabled(),                  // outOfOrderExecutionAllowed
+        false,                                                                 // epilogueRequired
+        false,                                                                 // usePerDssBackedBuffer
+        false,                                                                 // useGlobalAtomics
+        commandQueue.getContext().containsMultipleSubDevices(rootDeviceIndex), // areMultipleSubDevicesInContext
+        false,                                                                 // memoryMigrationRequired
+        false,                                                                 // textureCacheFlush
+        false,                                                                 // hasStallingCmds
+        false,                                                                 // hasRelaxedOrderingDependencies
+        false);                                                                // stateCacheInvalidation
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForTaskCountContainer(dispatchFlags.csrDependencies, commandStreamReceiver);
@@ -423,8 +421,9 @@ CompletionStamp &CommandWithoutKernel::submit(uint32_t taskLevel, bool terminate
     }
 
     if (kernelOperation->blitEnqueue) {
-        if (!dispatchBlitOperation()) {
-            completionStamp.taskCount = CompletionStamp::gpuHang;
+        auto taskCount = dispatchBlitOperation();
+        if (taskCount > CompletionStamp::notReady) {
+            completionStamp.taskCount = taskCount;
         }
     }
 

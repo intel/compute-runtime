@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,9 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
@@ -24,45 +26,72 @@ using CommandEncoderTest = Test<DeviceFixture>;
 using Platforms = IsWithinProducts<IGFX_SKYLAKE, IGFX_ROCKETLAKE>;
 HWTEST2_F(CommandEncoderTest, whenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, Platforms) {
     auto container = CommandContainer();
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container);
+    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
     EXPECT_EQ(size, 76ul);
 }
 
-HWTEST2_F(CommandEncoderTest, givenGLLPWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsTGLLP) {
+HWTEST2_F(CommandEncoderTest, givenTglLpUsingRcsWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsTGLLP) {
     auto container = CommandContainer();
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container);
+    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, true);
     EXPECT_EQ(size, 200ul);
 }
 
-HWTEST2_F(CommandEncoderTest, givenDG1WhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsDG1) {
+HWTEST2_F(CommandEncoderTest, givenTglLpNotUsingRcsWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsTGLLP) {
     auto container = CommandContainer();
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container);
-    EXPECT_EQ(size, 200ul);
-}
-
-HWTEST2_F(CommandEncoderTest, givenEHLWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsEHL) {
-    auto container = CommandContainer();
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container);
+    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
     EXPECT_EQ(size, 88ul);
 }
 
-HWTEST2_F(CommandEncoderTest, givenRKLWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsRKL) {
+HWTEST2_F(CommandEncoderTest, givenDg1UsingRcsWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsDG1) {
     auto container = CommandContainer();
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container);
+    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, true);
+    EXPECT_EQ(size, 200ul);
+}
+
+HWTEST2_F(CommandEncoderTest, givenDg1NotUsingRcsWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsDG1) {
+    auto container = CommandContainer();
+    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
+    EXPECT_EQ(size, 88ul);
+}
+
+HWTEST2_F(CommandEncoderTest, givenEhlWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsEHL) {
+    auto container = CommandContainer();
+    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
+    EXPECT_EQ(size, 88ul);
+}
+
+HWTEST2_F(CommandEncoderTest, givenRklUsingRcsWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsRKL) {
+    auto container = CommandContainer();
+    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, true);
     EXPECT_EQ(size, 104ul);
 }
 
-HWTEST2_F(CommandEncoderTest, givenLFKWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsLKF) {
+HWTEST2_F(CommandEncoderTest, givenRklNotUsingRcsWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsRKL) {
     auto container = CommandContainer();
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container);
+    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
     EXPECT_EQ(size, 88ul);
 }
 
-HWTEST2_F(CommandEncoderTest, givenICLLPWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsICLLP) {
+HWTEST2_F(CommandEncoderTest, givenLkfWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsLKF) {
     auto container = CommandContainer();
-    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container);
+    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
     EXPECT_EQ(size, 88ul);
 }
+
+HWTEST2_F(CommandEncoderTest, givenIclLpWhenGettingRequiredSizeForStateBaseAddressCommandThenCorrectSizeIsReturned, IsICLLP) {
+    auto container = CommandContainer();
+    size_t size = EncodeStateBaseAddress<FamilyType>::getRequiredSizeForStateBaseAddress(*pDevice, container, false);
+    EXPECT_EQ(size, 88ul);
+}
+
+template <typename Family>
+struct L0DebuggerSbaAddressSetter : public EncodeStateBaseAddress<Family> {
+    using STATE_BASE_ADDRESS = typename Family::STATE_BASE_ADDRESS;
+
+    void proxySetSbaAddressesForDebugger(NEO::Debugger::SbaAddresses &sbaAddress, const STATE_BASE_ADDRESS &sbaCmd) {
+        EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(sbaAddress, sbaCmd);
+    }
+};
 
 HWTEST2_F(CommandEncoderTest, givenSbaCommandWhenGettingSbaAddressesForDebuggerThenCorrectValuesAreReturned, IsAtMostXeHpgCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -73,7 +102,8 @@ HWTEST2_F(CommandEncoderTest, givenSbaCommandWhenGettingSbaAddressesForDebuggerT
     cmd.setGeneralStateBaseAddress(0x1236000);
 
     NEO::Debugger::SbaAddresses sbaAddress = {};
-    EncodeStateBaseAddress<FamilyType>::setSbaAddressesForDebugger(sbaAddress, cmd);
+    auto setter = L0DebuggerSbaAddressSetter<FamilyType>{};
+    setter.proxySetSbaAddressesForDebugger(sbaAddress, cmd);
     EXPECT_EQ(0x1234000u, sbaAddress.InstructionBaseAddress);
     EXPECT_EQ(0x1235000u, sbaAddress.SurfaceStateBaseAddress);
     EXPECT_EQ(0x1236000u, sbaAddress.GeneralStateBaseAddress);

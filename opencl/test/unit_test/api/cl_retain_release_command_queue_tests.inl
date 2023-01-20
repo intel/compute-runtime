@@ -18,10 +18,10 @@ class ClRetainReleaseCommandQueueTests : public ApiFixture<>,
                                          public ::testing::Test {
   public:
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
     }
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_command_queue createClQueue() {

@@ -6,9 +6,11 @@
  */
 
 #include "shared/source/helpers/heap_assigner.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
@@ -49,14 +51,15 @@ struct MockMemoryManagerAllocationHelper : public MemoryManagerMock {
     }
     bool passedUseLocalMem = false;
 };
-TEST_F(AlocationHelperTests, GivenLinearStreamAllocTypeWhenUseExternalAllocatorForSshAndDshEnabledThenUseLocalMemEqualHwHelperValue) {
+TEST_F(AlocationHelperTests, GivenLinearStreamAllocTypeWhenUseExternalAllocatorForSshAndDshEnabledThenUseLocalMemEqualGfxCoreHelperValue) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(true);
     AllocationData allocationData;
     allocationData.type = AllocationType::LINEAR_STREAM;
     std::unique_ptr<MockMemoryManagerAllocationHelper> mockMemoryManager(new MockMemoryManagerAllocationHelper(*device->getNEODevice()->getExecutionEnvironment()));
     mockMemoryManager->allocateGraphicsMemory(allocationData);
-    EXPECT_EQ(mockMemoryManager->passedUseLocalMem, HwInfoConfig::get(device->getHwInfo().platform.eProductFamily)->heapInLocalMem(device->getHwInfo()));
+    auto &productHelper = device->getProductHelper();
+    EXPECT_EQ(mockMemoryManager->passedUseLocalMem, productHelper.heapInLocalMem(device->getHwInfo()));
 }
 
 TEST_F(AlocationHelperTests, GivenInternalAllocTypeWhenUseExternalAllocatorForSshAndDshDisabledThenUseLocalMemEqualFalse) {

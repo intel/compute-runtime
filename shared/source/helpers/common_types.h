@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/utilities/stackvec.h"
+
 #include <bitset>
 #include <cstdint>
 #include <memory>
@@ -14,9 +16,10 @@
 namespace NEO {
 struct EngineControl;
 using EngineControlContainer = std::vector<EngineControl>;
-using DeviceBitfield = std::bitset<32>;
+using DeviceBitfield = std::bitset<4>;
 class Device;
 using DeviceVector = std::vector<std::unique_ptr<Device>>;
+using SubDeviceIdsVec = StackVec<uint32_t, 4>;
 
 enum class DebugPauseState : uint32_t {
     disabled,
@@ -61,6 +64,12 @@ enum class CachePolicy : uint32_t {
     WriteCombined = 1,
     WriteThrough = 2,
     WriteBack = 3,
+};
+
+enum class PostSyncMode : uint32_t {
+    NoWrite = 0,
+    Timestamp = 1,
+    ImmediateData = 2,
 };
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,18 +7,25 @@
 
 #pragma once
 
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/windows/dxgi_wrapper.h"
 
-#include <cwchar>
-#include <dxcore.h>
-#include <dxgi.h>
+#include "dxcore_interface.h"
+
+#include <vector>
+
+struct _SYSTEM_INFO;
+typedef struct _SYSTEM_INFO SYSTEM_INFO;
 
 namespace NEO {
-static constexpr auto error = 1;
+extern uint32_t numRootDevicesToEnum;
+constexpr auto error = 1;
 
 class UltDxCoreAdapter : public IDXCoreAdapter {
   public:
+    virtual ~UltDxCoreAdapter() = default;
+
     const static char *description;
     LUID luid = {0u, 0x1234u};
     bool STDMETHODCALLTYPE IsValid() override {
@@ -118,10 +125,17 @@ class UltDxCoreAdapter : public IDXCoreAdapter {
     }
 
     // IUnknown
+#ifdef _WIN32
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject) override {
         UNRECOVERABLE_IF(true);
         return error;
     }
+#else
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, _COM_Outptr_ void **ppvObject) override {
+        UNRECOVERABLE_IF(true);
+        return error;
+    }
+#endif
 
     ULONG STDMETHODCALLTYPE AddRef(void) override {
         UNRECOVERABLE_IF(true);
@@ -135,9 +149,10 @@ class UltDxCoreAdapter : public IDXCoreAdapter {
     }
 };
 
-extern uint32_t numRootDevicesToEnum;
 class UltDXCoreAdapterList : public IDXCoreAdapterList {
   public:
+    virtual ~UltDXCoreAdapterList() = default;
+
     static bool firstInvalid;
     HRESULT STDMETHODCALLTYPE GetAdapter(uint32_t index, REFIID riid, _COM_Outptr_ void **ppvAdapter) override {
         auto adapter = new UltDxCoreAdapter;
@@ -173,10 +188,17 @@ class UltDXCoreAdapterList : public IDXCoreAdapterList {
     }
 
     // IUnknown
+#ifdef _WIN32
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject) override {
         UNRECOVERABLE_IF(true);
         return error;
     }
+#else
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, _COM_Outptr_ void **ppvObject) override {
+        UNRECOVERABLE_IF(true);
+        return error;
+    }
+#endif
 
     ULONG STDMETHODCALLTYPE AddRef(void) override {
         UNRECOVERABLE_IF(true);
@@ -190,9 +212,10 @@ class UltDXCoreAdapterList : public IDXCoreAdapterList {
     }
 };
 
-extern uint32_t numRootDevicesToEnum;
 class UltDXCoreAdapterFactory : public IDXCoreAdapterFactory {
   public:
+    virtual ~UltDXCoreAdapterFactory() = default;
+
     struct CreateAdapterListArgs {
         uint32_t numAttributes;
         const GUID *filterAttributesPtr;
@@ -237,10 +260,17 @@ class UltDXCoreAdapterFactory : public IDXCoreAdapterFactory {
     }
 
     // IUnknown
+#ifdef _WIN32
     HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void __RPC_FAR *__RPC_FAR *ppvObject) override {
         UNRECOVERABLE_IF(true);
         return error;
     }
+#else
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, _COM_Outptr_ void **ppvObject) override {
+        UNRECOVERABLE_IF(true);
+        return error;
+    }
+#endif
 
     ULONG STDMETHODCALLTYPE AddRef(void) override {
         UNRECOVERABLE_IF(true);
@@ -254,7 +284,7 @@ class UltDXCoreAdapterFactory : public IDXCoreAdapterFactory {
     }
 };
 
-HRESULT WINAPI ULTDXCoreCreateAdapterFactory(REFIID riid, void **ppFactory);
-void WINAPI ULTGetSystemInfo(SYSTEM_INFO *pSystemInfo);
+HRESULT WINAPI ultDxCoreCreateAdapterFactory(REFIID riid, void **ppFactory);
+void WINAPI ultGetSystemInfo(SYSTEM_INFO *pSystemInfo);
 
 } // namespace NEO

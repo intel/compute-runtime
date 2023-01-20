@@ -1,17 +1,20 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "aubstream/product_family.h"
+
+namespace NEO {
 template <>
-bool HwInfoConfigHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isMaxThreadsForWorkgroupWARequired(const HardwareInfo &hwInfo) const {
     return PVC::isXl(hwInfo);
 }
 
 template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     if (PVC::isXt(hwInfo)) {
         switch (stepping) {
         case REVISION_A0:
@@ -37,7 +40,7 @@ uint32_t HwInfoConfigHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, c
 }
 
 template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     switch (hwInfo.platform.usRevId & PVC::pvcSteppingBits) {
     case 0x0:
     case 0x1:
@@ -53,7 +56,7 @@ uint32_t HwInfoConfigHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &
 }
 
 template <>
-AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+AOT::PRODUCT_CONFIG ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     uint32_t stepping = getSteppingFromHwRevId(hwInfo);
     if (stepping == CommonConstants::invalidStepping) {
         return AOT::UNKNOWN_ISA;
@@ -83,32 +86,27 @@ AOT::PRODUCT_CONFIG HwInfoConfigHw<gfxProduct>::getProductConfigFromHwInfo(const
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
     return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isSpecialPipelineSelectModeChanged(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) const {
     return PVC::isAtMostXtA0(hwInfo);
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) const {
-    return PVC::isAtMostXtA0(hwInfo);
-}
-
-template <>
-bool HwInfoConfigHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const {
     return !PVC::isXlA0(hwInfo);
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isAdjustProgrammableIdPreferredSlmSizeRequired(const HardwareInfo &hwInfo) const {
     return PVC::isXlA0(hwInfo);
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isCooperativeEngineSupported(const HardwareInfo &hwInfo) const {
     return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }
 
@@ -117,17 +115,7 @@ bool isBaseDieA0(const HardwareInfo &hwInfo) {
 }
 
 template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo) {
-    bool isDieA0 = isBaseDieA0(hwInfo);
-    if (isDieA0) {
-        // For IGFX_PVC REV A0 HBM frequency would be 3.2 GT/s = 3.2 * 1000 MT/s = 3200 MT/s
-        return 3200u;
-    }
-    return 0u;
-}
-
-template <>
-bool HwInfoConfigHw<gfxProduct>::isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const {
     bool baseDieA0 = isBaseDieA0(hwInfo);
     bool applyWa = ((DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() == 1) || baseDieA0);
     applyWa &= (DebugManager.flags.ForceTile0PlacementForTile1ResourcesWaActive.get() != 0);
@@ -135,7 +123,7 @@ bool HwInfoConfigHw<gfxProduct>::isTilePlacementResourceWaRequired(const Hardwar
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::allowMemoryPrefetch(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::allowMemoryPrefetch(const HardwareInfo &hwInfo) const {
     bool prefetch = !isBaseDieA0(hwInfo);
     if (DebugManager.flags.EnableMemoryPrefetch.get() != -1) {
         prefetch = !!DebugManager.flags.EnableMemoryPrefetch.get();
@@ -143,7 +131,7 @@ bool HwInfoConfigHw<gfxProduct>::allowMemoryPrefetch(const HardwareInfo &hwInfo)
     return prefetch;
 }
 template <>
-bool HwInfoConfigHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwInfo) const {
     if (DebugManager.flags.DoNotReportTile1BscWaActive.get() != -1) {
         return DebugManager.flags.DoNotReportTile1BscWaActive.get();
     }
@@ -151,7 +139,7 @@ bool HwInfoConfigHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwInf
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
+bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
     if (!allocation.isAllocatedInLocalMemoryPool()) {
         return false;
     }
@@ -176,31 +164,58 @@ bool HwInfoConfigHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const Hardware
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
-    return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
-}
-
-template <>
-bool HwInfoConfigHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
-    return false;
-}
-
-template <>
-bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
-uint32_t HwInfoConfigHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
-    return PVC::isXlA0(hwInfo) ? 8u : 16u;
-}
-
-template <>
-bool HwInfoConfigHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const {
     return true;
 }
 
 template <>
-bool HwInfoConfigHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
+bool ProductHelperHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
+    return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
+    return false;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getThreadEuRatioForScratch(const HardwareInfo &hwInfo) const {
+    return PVC::isXlA0(hwInfo) ? 8u : 16u;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const {
+    return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isIpSamplingSupported(const HardwareInfo &hwInfo) const {
     return PVC::isXt(hwInfo);
 }
+
+template <>
+void ProductHelperHw<gfxProduct>::adjustNumberOfCcs(HardwareInfo &hwInfo) const {
+    hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 1;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isStatefulAddressingModeSupported() const {
+    return false;
+}
+
+template <>
+std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
+    return aub_stream::ProductFamily::Pvc;
+};
+
+} // namespace NEO

@@ -18,7 +18,7 @@ namespace ult {
 constexpr uint32_t memoryHandleComponentCount = 1u;
 class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
   protected:
-    Mock<MemoryNeoDrm> *pDrm = nullptr;
+    MockMemoryNeoDrm *pDrm = nullptr;
     Drm *pOriginalDrm = nullptr;
 
     void SetUp() override {
@@ -28,20 +28,17 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         SysmanDeviceFixture::SetUp();
 
         pMemoryManagerOld = device->getDriverHandle()->getMemoryManager();
-        pMemoryManager = new ::testing::NiceMock<MockMemoryManagerSysman>(*neoDevice->getExecutionEnvironment());
+        pMemoryManager = new MockMemoryManagerSysman(*neoDevice->getExecutionEnvironment());
         pMemoryManager->localMemorySupported[0] = false;
         device->getDriverHandle()->setMemoryManager(pMemoryManager);
 
-        pDrm = new NiceMock<Mock<MemoryNeoDrm>>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
+        pDrm = new MockMemoryNeoDrm(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
 
         pSysmanDevice = device->getSysmanHandle();
         pSysmanDeviceImp = static_cast<SysmanDeviceImp *>(pSysmanDevice);
         pOsSysman = pSysmanDeviceImp->pOsSysman;
         pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
         pLinuxSysmanImp->pDrm = pDrm;
-
-        ON_CALL(*pDrm, queryMemoryInfo())
-            .WillByDefault(::testing::Invoke(pDrm, &Mock<MemoryNeoDrm>::queryMemoryInfoMockPositiveTest));
 
         for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
             delete handle;
@@ -58,7 +55,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pMemoryHandleContext->init(deviceHandles);
+        getMemoryHandles(0);
     }
 
     void TearDown() override {
@@ -109,7 +106,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     MemoryManager *pMemoryManagerOld;
 };
 
-TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidCountIsReturned) {
     setLocalSupportedAndReinit(true);
 
     uint32_t count = 0;
@@ -117,7 +114,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryMo
     EXPECT_EQ(count, memoryHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenInvalidComponentCountWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceMemoryFixture, GivenInvalidComponentCountWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidCountIsReturned) {
     setLocalSupportedAndReinit(true);
 
     uint32_t count = 0;
@@ -129,7 +126,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenInvalidComponentCountWhenEnumeratingMemor
     EXPECT_EQ(count, memoryHandleComponentCount);
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidPowerHandlesIsReturned) {
+TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithLocalMemorySupportThenValidHandlesIsReturned) {
     setLocalSupportedAndReinit(true);
 
     uint32_t count = 0;
@@ -143,7 +140,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryMo
     }
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithNoLocalMemorySupportThenZeroCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithNoLocalMemorySupportThenZeroCountIsReturned) {
     setLocalSupportedAndReinit(false);
 
     uint32_t count = 0;
@@ -151,7 +148,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryMo
     EXPECT_EQ(count, 0u);
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenInvalidComponentCountWhenEnumeratingMemoryModulesWithNoLocalMemorySupportThenZeroCountIsReturnedAndVerifySysmanPowerGetCallSucceeds) {
+TEST_F(SysmanDeviceMemoryFixture, GivenInvalidComponentCountWhenEnumeratingMemoryModulesWithNoLocalMemorySupportThenZeroCountIsReturned) {
     setLocalSupportedAndReinit(false);
 
     uint32_t count = 0;
@@ -163,7 +160,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenInvalidComponentCountWhenEnumeratingMemor
     EXPECT_EQ(count, 0u);
 }
 
-TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithNoLocalMemorySupportThenValidPowerHandlesIsReturned) {
+TEST_F(SysmanDeviceMemoryFixture, GivenComponentCountZeroWhenEnumeratingMemoryModulesWithNoLocalMemorySupportThenValidHandlesIsReturned) {
     setLocalSupportedAndReinit(false);
 
     uint32_t count = 0;
@@ -217,9 +214,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingStateThenCall
 
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleAndIfQueryMemoryInfoFailsWhenGettingStateThenErrorIsReturned) {
     setLocalSupportedAndReinit(true);
-
-    ON_CALL(*pDrm, queryMemoryInfo())
-        .WillByDefault(::testing::Invoke(pDrm, &Mock<MemoryNeoDrm>::queryMemoryInfoMockReturnFalse));
+    pDrm->mockQueryMemoryInfoReturnStatus.push_back(false);
 
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 
@@ -231,9 +226,7 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleAndIfQueryMemoryInfoFail
 
 TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleAndIfQueryMemoryInfoAndIfMemoryInfoIsNotCorrectWhenGettingStateThenErrorIsReturned) {
     setLocalSupportedAndReinit(true);
-
-    ON_CALL(*pDrm, queryMemoryInfo())
-        .WillByDefault(::testing::Invoke(pDrm, &Mock<MemoryNeoDrm>::queryMemoryInfoMockReturnFakeTrue));
+    pDrm->mockQueryMemoryInfoReturnStatus.push_back(true);
 
     auto handles = getMemoryHandles(memoryHandleComponentCount);
 

@@ -7,6 +7,8 @@
 
 #include "sysman/pci/windows/os_pci_imp.h"
 
+#include "shared/source/memory_manager/memory_manager.h"
+
 #include "level_zero/core/source/driver/driver_handle.h"
 
 namespace L0 {

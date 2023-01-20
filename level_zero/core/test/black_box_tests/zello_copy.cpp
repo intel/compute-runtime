@@ -9,10 +9,7 @@
 
 #include <iomanip>
 
-extern bool verbose;
-bool verbose = false;
-
-void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
+void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
     char *heapBuffer = new char[allocSize];
     void *zeBuffer = nullptr;
@@ -49,7 +46,7 @@ void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t context, ze
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Validate stack and ze buffers have the original data from heapBuffer
     validRet = (0 == memcmp(heapBuffer, stackBuffer, allocSize));
@@ -60,7 +57,7 @@ void testAppendMemoryCopyFromHeapToDeviceToStack(ze_context_handle_t context, ze
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 }
 
-void testAppendMemoryCopyFromHostToDeviceToStack(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
+void testAppendMemoryCopyFromHostToDeviceToStack(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 4096 + 7; // +7 to break alignment and make it harder
     char *hostBuffer;
     void *zeBuffer = nullptr;
@@ -103,7 +100,7 @@ void testAppendMemoryCopyFromHostToDeviceToStack(ze_context_handle_t context, ze
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Validate stack and ze buffers have the original data from hostBuffer
     validRet = (0 == memcmp(hostBuffer, stackBuffer, allocSize));
@@ -114,7 +111,7 @@ void testAppendMemoryCopyFromHostToDeviceToStack(ze_context_handle_t context, ze
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 }
 
-void testAppendMemoryCopy2DRegion(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
+void testAppendMemoryCopy2DRegion(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     validRet = true;
 
     ze_command_queue_handle_t cmdQueue;
@@ -179,12 +176,12 @@ void testAppendMemoryCopy2DRegion(ze_context_handle_t context, ze_device_handle_
 
     // Perform the copy
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopyRegion(cmdList, dstBuffer, &dstRegion, dstWidth, 0,
-                                                             const_cast<const void *>(srcBuffer), &srcRegion, srcWidth, 0,
+                                                             srcBuffer, &srcRegion, srcWidth, 0,
                                                              nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     uint8_t *dstBufferChar = reinterpret_cast<uint8_t *>(dstBuffer);
     if (verbose) {
@@ -223,7 +220,7 @@ void testAppendMemoryCopy2DRegion(ze_context_handle_t context, ze_device_handle_
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 }
 
-void testMemoryFillWithWordSizedPattern(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
+void testMemoryFillWithWordSizedPattern(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 10;
     char pattern[] = {'\001', '\002'};
     void *zeBuffer = nullptr;
@@ -255,7 +252,7 @@ void testMemoryFillWithWordSizedPattern(ze_context_handle_t context, ze_device_h
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     validRet = true;
     char *zeBufferChar = reinterpret_cast<char *>(zeBuffer);
@@ -276,7 +273,7 @@ void testMemoryFillWithWordSizedPattern(ze_context_handle_t context, ze_device_h
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 }
 
-void testAppendMemoryFillWithSomePattern(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
+void testAppendMemoryFillWithSomePattern(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     const size_t allocSize = 4096 + 7;
 
     char pattern0 = 5;
@@ -328,7 +325,7 @@ void testAppendMemoryFillWithSomePattern(ze_context_handle_t context, ze_device_
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     validRet = true;
     uint8_t *zeBufferChar0 = reinterpret_cast<uint8_t *>(zeBuffer0);
@@ -367,7 +364,7 @@ void testAppendMemoryFillWithSomePattern(ze_context_handle_t context, ze_device_
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
 }
 
-void testAppendMemoryCopy3DRegion(ze_context_handle_t context, ze_device_handle_t &device, bool &validRet) {
+void testAppendMemoryCopy3DRegion(ze_context_handle_t &context, ze_device_handle_t &device, bool &validRet) {
     validRet = true;
 
     ze_command_queue_handle_t cmdQueue;
@@ -440,12 +437,12 @@ void testAppendMemoryCopy3DRegion(ze_context_handle_t context, ze_device_handle_
 
     // Perform the copy
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopyRegion(cmdList, dstBuffer, &dstRegion, dstWidth, (dstWidth * dstHeight),
-                                                             const_cast<const void *>(srcBuffer), &srcRegion, srcWidth, (srcWidth * srcHeight),
+                                                             srcBuffer, &srcRegion, srcWidth, (srcWidth * srcHeight),
                                                              nullptr, 0, nullptr));
 
     SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     uint8_t *dstBufferChar = reinterpret_cast<uint8_t *>(dstBuffer);
     if (verbose) {
@@ -495,7 +492,9 @@ void testAppendMemoryCopy3DRegion(ze_context_handle_t context, ze_device_handle_
 }
 
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Copy";
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
 
     ze_context_handle_t context = nullptr;
     auto devices = zelloInitContextAndGetDevices(context);
@@ -504,23 +503,29 @@ int main(int argc, char *argv[]) {
 
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &deviceProperties));
-    std::cout << "Device : \n"
-              << " * name : " << deviceProperties.name << "\n"
-              << " * vendorId : " << std::hex << deviceProperties.vendorId << "\n";
+    printDeviceProperties(deviceProperties);
 
     testAppendMemoryCopyFromHeapToDeviceToStack(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    if (outputValidationSuccessful || aubMode) {
         testAppendMemoryCopyFromHostToDeviceToStack(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testAppendMemoryCopy2DRegion(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testAppendMemoryFillWithSomePattern(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testAppendMemoryCopy3DRegion(context, device, outputValidationSuccessful);
-    if (outputValidationSuccessful)
+    }
+    if (outputValidationSuccessful || aubMode) {
         testMemoryFillWithWordSizedPattern(context, device, outputValidationSuccessful);
+    }
 
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-    std::cout << "\nZello Copy Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
+
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
     return (outputValidationSuccessful ? 0 : 1);
 }

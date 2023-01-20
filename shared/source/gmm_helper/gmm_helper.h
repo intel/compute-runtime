@@ -6,23 +6,23 @@
  */
 
 #pragma once
-#include "shared/source/helpers/constants.h"
 
 #include <memory>
 
 namespace NEO {
 class GmmClientContext;
-class OSInterface;
 struct HardwareInfo;
+struct RootDeviceEnvironment;
 
 class GmmHelper {
   public:
     GmmHelper() = delete;
-    GmmHelper(OSInterface *osInterface, const HardwareInfo *hwInfo);
+    GmmHelper(const RootDeviceEnvironment &rootDeviceEnvironment);
     MOCKABLE_VIRTUAL ~GmmHelper();
 
     const HardwareInfo *getHardwareInfo();
     uint32_t getMOCS(uint32_t type) const;
+    static void applyMocsEncryptionBit(uint32_t &index);
     void forceAllResourcesUncached() { allResourcesUncached = true; };
 
     static constexpr uint64_t maxPossiblePitch = (1ull << 31);
@@ -37,11 +37,12 @@ class GmmHelper {
 
     GmmClientContext *getClientContext() const;
 
-    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(OSInterface *, HardwareInfo *);
+    const RootDeviceEnvironment &getRootDeviceEnvironment() const;
+    static std::unique_ptr<GmmClientContext> (*createGmmContextWrapperFunc)(const RootDeviceEnvironment &);
 
   protected:
     uint32_t addressWidth;
-    const HardwareInfo *hwInfo = nullptr;
+    const RootDeviceEnvironment &rootDeviceEnvironment;
     std::unique_ptr<GmmClientContext> gmmClientContext;
     bool allResourcesUncached = false;
 };

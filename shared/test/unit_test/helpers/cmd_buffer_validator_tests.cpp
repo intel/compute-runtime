@@ -6,8 +6,8 @@
  */
 
 #include "shared/test/common/cmd_parse/hw_parse.h"
-#include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/helpers/cmd_buffer_validator.h"
+#include "shared/test/common/helpers/cmd_buffer_validator.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using HwParseTest = ::testing::Test;
 
@@ -17,8 +17,11 @@ HWTEST_F(HwParseTest, WhenEmptyBufferThenDontExpectCommands) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     bool cmdBuffOk = false;
 
-    GenCmdList::iterator beg, end;
-    end = beg;
+    GenCmdList cmdList;
+
+    auto beg = cmdList.begin();
+    auto end = cmdList.end();
+
     cmdBuffOk = expectCmdBuff<FamilyType>(beg, end,
                                           std::vector<MatchCmd *>{});
     EXPECT_TRUE(cmdBuffOk);

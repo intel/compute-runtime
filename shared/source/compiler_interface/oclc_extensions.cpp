@@ -16,6 +16,7 @@
 
 namespace NEO {
 const char *deviceExtensionsList = "cl_khr_byte_addressable_store "
+                                   "cl_khr_device_uuid "
                                    "cl_khr_fp16 "
                                    "cl_khr_global_int32_base_atomics "
                                    "cl_khr_global_int32_extended_atomics "

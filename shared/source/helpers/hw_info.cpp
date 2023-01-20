@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,10 +30,6 @@ uint64_t defaultHardwareInfoConfigTable[IGFX_MAX_PRODUCT] = {
 };
 
 // Global table of family names
-const char *familyName[IGFX_MAX_CORE] = {
-    nullptr,
-};
-// Global table of family names
 bool familyEnabled[IGFX_MAX_CORE] = {
     false,
 };
@@ -49,8 +45,6 @@ void (*hardwareInfoBaseSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool) = {
 
 bool getHwInfoForPlatformString(std::string &platform, const HardwareInfo *&hwInfoIn) {
     std::transform(platform.begin(), platform.end(), platform.begin(), ::tolower);
-
-    overridePlatformName(platform);
 
     bool ret = false;
     for (int j = 0; j < IGFX_MAX_PRODUCT; j++) {
@@ -75,6 +69,7 @@ void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfo
     hwInfoIn.gtSystemInfo.SubSliceCount = subSlicePerSliceCount * sliceCount;
     hwInfoIn.gtSystemInfo.DualSubSliceCount = subSlicePerSliceCount * sliceCount;
     hwInfoIn.gtSystemInfo.EUCount = euPerSubSliceCount * subSlicePerSliceCount * sliceCount;
+    hwInfoIn.gtSystemInfo.IsDynamicallyPopulated = true;
     for (uint32_t slice = 0; slice < hwInfoIn.gtSystemInfo.SliceCount; slice++) {
         hwInfoIn.gtSystemInfo.SliceInfo[slice].Enabled = true;
     }
@@ -124,11 +119,5 @@ aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo) {
     return DebugManager.flags.NodeOrdinal.get() == -1
                ? hwInfo.capabilityTable.defaultEngineType
                : static_cast<aub_stream::EngineType>(DebugManager.flags.NodeOrdinal.get());
-}
-
-const std::string getFamilyNameWithType(const HardwareInfo &hwInfo) {
-    std::string platformName = familyName[hwInfo.platform.eRenderCoreFamily];
-    platformName.append(hwInfo.capabilityTable.platformType);
-    return platformName;
 }
 } // namespace NEO

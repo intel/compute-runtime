@@ -6,10 +6,10 @@
  */
 
 #include "shared/source/command_stream/experimental_command_buffer.inl"
-#include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 namespace NEO {
-using GfxFamily = XE_HPC_COREFamily;
+using GfxFamily = XeHpcCoreFamily;
 
 template void ExperimentalCommandBuffer::injectBufferStart<GfxFamily>(LinearStream &parentStream, size_t cmdBufferOffset);
 template size_t ExperimentalCommandBuffer::getRequiredInjectionSize<GfxFamily>() noexcept;

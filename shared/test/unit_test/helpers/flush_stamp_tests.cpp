@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,7 @@ TEST(FlushStampTest, WhenSettingStampValueThenItIsSet) {
 
 TEST(FlushStampTest, WhenReplacingStampObjectThenRefCountIsUpdated) {
     FlushStampTracker flushStampTracker(true);
-    EXPECT_EQ(1, flushStampTracker.getStampReference()->getRefInternalCount()); //obj to release
+    EXPECT_EQ(1, flushStampTracker.getStampReference()->getRefInternalCount()); // obj to release
 
     auto stampObj = new FlushStampTrackingObj();
     EXPECT_EQ(0, stampObj->getRefInternalCount()); // no owner

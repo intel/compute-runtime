@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/common_types.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/stackvec.h"
 
 #include "level_zero/core/source/context/context.h"
@@ -58,7 +59,7 @@ struct ContextImp : Context {
     ze_result_t getIpcMemHandle(const void *ptr,
                                 ze_ipc_mem_handle_t *pIpcHandle) override;
     ze_result_t openIpcMemHandle(ze_device_handle_t hDevice,
-                                 ze_ipc_mem_handle_t handle,
+                                 const ze_ipc_mem_handle_t &handle,
                                  ze_ipc_memory_flags_t flags,
                                  void **ptr) override;
 
@@ -126,8 +127,8 @@ struct ContextImp : Context {
                                              size_t size,
                                              ze_memory_access_attribute_t *access,
                                              size_t *outSize) override;
-    ze_result_t openEventPoolIpcHandle(ze_ipc_event_pool_handle_t hIpc,
-                                       ze_event_pool_handle_t *phEventPool) override;
+    ze_result_t openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &ipcEventPoolHandle,
+                                       ze_event_pool_handle_t *eventPoolHandle) override;
     ze_result_t createEventPool(const ze_event_pool_desc_t *desc,
                                 uint32_t numDevices,
                                 ze_device_handle_t *phDevices,
@@ -142,18 +143,31 @@ struct ContextImp : Context {
 
     void freePeerAllocations(const void *ptr, bool blocking, Device *device);
 
+    ze_result_t handleAllocationExtensions(NEO::GraphicsAllocation *alloc, ze_memory_type_t type,
+                                           void *pNext, struct DriverHandleImp *driverHandle);
+
     RootDeviceIndicesContainer rootDeviceIndices;
     std::map<uint32_t, NEO::DeviceBitfield> deviceBitfields;
 
     bool isDeviceDefinedForThisContext(Device *inDevice);
     bool isShareableMemory(const void *exportDesc, bool exportableMemory, NEO::Device *neoDevice) override;
-    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, ze_ipc_memory_flags_t flags) override;
+    void *getMemHandlePtr(ze_device_handle_t hDevice, uint64_t handle, NEO::AllocationType allocationType, ze_ipc_memory_flags_t flags) override;
+
+    void initDeviceHandles(uint32_t numDevices, ze_device_handle_t *deviceHandles) {
+        this->numDevices = numDevices;
+        if (numDevices > 0) {
+            this->deviceHandles.assign(deviceHandles, deviceHandles + numDevices);
+        }
+    }
 
   protected:
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);
+    size_t getPageSizeRequired(size_t size);
 
     std::map<uint32_t, ze_device_handle_t> devices;
+    std::vector<ze_device_handle_t> deviceHandles;
     DriverHandleImp *driverHandle = nullptr;
+    uint32_t numDevices = 0;
 };
 
 } // namespace L0

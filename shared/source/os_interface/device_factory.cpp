@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,10 +9,12 @@
 
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
-#include "shared/source/device/device.h"
 #include "shared/source/device/root_device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/aub_memory_operations_handler.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -30,15 +32,29 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
     executionEnvironment.prepareRootDeviceEnvironments(numRootDevices);
 
     auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
+
+    auto configStr = productFamily;
+    ProductConfigHelper::adjustDeviceName(configStr);
+    auto productConfig = ProductConfigHelper::getProductConfigForAcronym(configStr);
+
     const HardwareInfo *hwInfoConst = getDefaultHwInfo();
-    getHwInfoForPlatformString(productFamily, hwInfoConst);
+    auto productConfigHelper = std::make_unique<ProductConfigHelper>();
+    DeviceAotInfo aotInfo{};
+    auto productConfigFound = productConfigHelper->getDeviceAotInfoForProductConfig(productConfig, aotInfo);
+    if (productConfigFound) {
+        hwInfoConst = aotInfo.hwInfo;
+    } else {
+        getHwInfoForPlatformString(productFamily, hwInfoConst);
+    }
     std::string hwInfoConfigStr;
     uint64_t hwInfoConfig = 0x0;
     DebugManager.getHardwareInfoOverride(hwInfoConfigStr);
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
-        auto hardwareInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
+        auto hardwareInfo = rootDeviceEnvironment.getMutableHardwareInfo();
         *hardwareInfo = *hwInfoConst;
+        rootDeviceEnvironment.initHelpers();
 
         if (hwInfoConfigStr == "default") {
             hwInfoConfig = defaultHardwareInfoConfigTable[hwInfoConst->platform.eProductFamily];
@@ -49,8 +65,14 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig);
 
-        HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
-        hwConfig->configureHardwareCustom(hardwareInfo, nullptr);
+        auto &productHelper = rootDeviceEnvironment.getProductHelper();
+        productHelper.configureHardwareCustom(hardwareInfo, nullptr);
+
+        if (productConfigFound) {
+            const auto &compilerProductHelper = *CompilerProductHelper::get(hardwareInfo->platform.eProductFamily);
+            compilerProductHelper.setProductConfigForHwInfo(*hardwareInfo, aotInfo.aotConfig);
+            hardwareInfo->platform.usDeviceID = aotInfo.deviceIds->front();
+        }
 
         if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
             hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
@@ -64,21 +86,22 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
             hardwareInfo->platform.usDeviceID = static_cast<unsigned short>(std::stoi(DebugManager.flags.ForceDeviceId.get(), nullptr, 16));
         }
 
-        [[maybe_unused]] bool result = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAilConfiguration();
+        [[maybe_unused]] bool result = rootDeviceEnvironment.initAilConfiguration();
         DEBUG_BREAK_IF(!result);
 
         auto csrType = DebugManager.flags.SetCommandStreamReceiver.get();
         if (csrType > 0) {
-            auto &hwHelper = HwHelper::get(hardwareInfo->platform.eRenderCoreFamily);
-            auto localMemoryEnabled = hwHelper.getEnableLocalMemory(*hardwareInfo);
-            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initGmm();
-            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->initAubCenter(localMemoryEnabled, "", static_cast<CommandStreamReceiverType>(csrType));
-            auto aubCenter = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->aubCenter.get();
-            executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->memoryOperationsInterface = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
+            auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+            auto localMemoryEnabled = gfxCoreHelper.getEnableLocalMemory(*hardwareInfo);
+            rootDeviceEnvironment.initGmm();
+            rootDeviceEnvironment.initAubCenter(localMemoryEnabled, "", static_cast<CommandStreamReceiverType>(csrType));
+            auto aubCenter = rootDeviceEnvironment.aubCenter.get();
+            rootDeviceEnvironment.memoryOperationsInterface = std::make_unique<AubMemoryOperationsHandler>(aubCenter->getAubManager());
         }
     }
 
     executionEnvironment.parseAffinityMask();
+    executionEnvironment.adjustCcsCount();
     executionEnvironment.calculateMaxOsContextCount();
     return true;
 }
@@ -138,6 +161,7 @@ bool DeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &executionEnv
 
     executionEnvironment.sortNeoDevices();
     executionEnvironment.parseAffinityMask();
+    executionEnvironment.adjustCcsCount();
     executionEnvironment.calculateMaxOsContextCount();
 
     return true;
@@ -155,7 +179,12 @@ bool DeviceFactory::prepareDeviceEnvironment(ExecutionEnvironment &executionEnvi
 
     // HwDeviceIds should contain only one entry corresponding to osPciPath
     UNRECOVERABLE_IF(hwDeviceIds.size() > 1);
-    return initHwDeviceIdResources(executionEnvironment, std::move(hwDeviceIds[0]), rootDeviceIndex);
+    if (!initHwDeviceIdResources(executionEnvironment, std::move(hwDeviceIds[0]), rootDeviceIndex)) {
+        return false;
+    }
+
+    executionEnvironment.adjustCcsCount(rootDeviceIndex);
+    return true;
 }
 
 std::unique_ptr<Device> DeviceFactory::createDevice(ExecutionEnvironment &executionEnvironment, std::string &osPciPath, const uint32_t rootDeviceIndex) {

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
@@ -12,6 +13,8 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/debug_settings_reader.h"
+#include "shared/source/utilities/logger.h"
+#include "shared/test/common/base_ult_config_listener.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
@@ -24,11 +27,9 @@
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
-#include "shared/test/unit_test/base_ult_config_listener.h"
-#include "shared/test/unit_test/test_stats.h"
-#include "shared/test/unit_test/tests_configuration.h"
+#include "shared/test/common/test_stats.h"
+#include "shared/test/common/tests_configuration.h"
 
-#include "gmock/gmock.h"
 #include "hw_cmds_default.h"
 #include "test_files_setup.h"
 
@@ -88,31 +89,17 @@ void applyWorkarounds() {
         int val;
         ss >> val;
     }
-    {
-        class BaseClass {
-          public:
-            int method(int param) { return 1; }
-        };
-        class MockClass : public BaseClass {
-          public:
-            MOCK_METHOD1(method, int(int param));
-        };
-        ::testing::NiceMock<MockClass> mockObj;
-        EXPECT_CALL(mockObj, method(::testing::_))
-            .Times(1);
-        mockObj.method(2);
-    }
 
-    //intialize rand
+    // intialize rand
     srand(static_cast<unsigned int>(time(nullptr)));
 
-    //Create at least on thread to prevent false memory leaks in tests using threads
+    // Create at least on thread to prevent false memory leaks in tests using threads
     std::thread t([&]() {
     });
     tempThreadID = t.get_id();
     t.join();
 
-    //Create FileLogger to prevent false memory leaks
+    // Create FileLogger to prevent false memory leaks
     {
         NEO::fileLoggerInstance();
     }
@@ -175,7 +162,7 @@ int main(int argc, char **argv) {
     }
 #endif
 
-    ::testing::InitGoogleMock(&argc, argv);
+    ::testing::InitGoogleTest(&argc, argv);
     HardwareInfo hwInfoForTests = DEFAULT_TEST_PLATFORM::hwInfo;
 
     uint32_t euPerSubSlice = 0;
@@ -197,7 +184,7 @@ int main(int argc, char **argv) {
             dumpTestStats = true;
             ++i;
             dumpTestStatsFileName = std::string(argv[i]);
-        } else if (!strcmp("--disable_pagefaulting_tests", argv[i])) { //disable tests which raise page fault signal during execution
+        } else if (!strcmp("--disable_pagefaulting_tests", argv[i])) { // disable tests which raise page fault signal during execution
             NEO::PagaFaultManagerTestConfig::disabled = true;
         } else if (!strcmp("--tbx", argv[i])) {
             if (testMode == TestMode::AubTests) {
@@ -280,7 +267,7 @@ int main(int argc, char **argv) {
 
     productFamily = hwInfoForTests.platform.eProductFamily;
     renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
-    uint32_t threadsPerEu = hwInfoConfigFactory[productFamily]->threadsPerEu;
+    uint32_t threadsPerEu = productHelperFactory[productFamily]->threadsPerEu;
     PLATFORM &platform = hwInfoForTests.platform;
     if (revId != -1) {
         platform.usRevId = revId;
@@ -307,11 +294,9 @@ int main(int argc, char **argv) {
     gtSystemInfo.MaxEuPerSubSlice       = std::max(gtSystemInfo.MaxEuPerSubSlice, euPerSubSlice);
     gtSystemInfo.MaxSlicesSupported     = std::max(gtSystemInfo.MaxSlicesSupported, gtSystemInfo.SliceCount);
     gtSystemInfo.MaxSubSlicesSupported  = std::max(gtSystemInfo.MaxSubSlicesSupported, gtSystemInfo.SubSliceCount);
-    gtSystemInfo.IsDynamicallyPopulated = false;
     // clang-format on
 
-    binaryNameSuffix.append(familyName[hwInfoForTests.platform.eRenderCoreFamily]);
-    binaryNameSuffix.append(hwInfoForTests.capabilityTable.platformType);
+    binaryNameSuffix.append(hardwarePrefix[hwInfoForTests.platform.eProductFamily]);
 
     std::string testBinaryFiles = getRunPath(argv[0]);
     testBinaryFiles.append("/");
@@ -372,7 +357,7 @@ int main(int argc, char **argv) {
         builtInsFileName = KernelBinaryHelper::BUILT_INS;
     }
     retrieveBinaryKernelFilename(fclDebugVars.fileName, builtInsFileName + "_", ".bc");
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".gen");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, builtInsFileName + "_", ".bin");
 
     gEnvironment->setMockFileNames(fclDebugVars.fileName, igcDebugVars.fileName);
     gEnvironment->setDefaultDebugVars(fclDebugVars, igcDebugVars, hwInfoForTests);

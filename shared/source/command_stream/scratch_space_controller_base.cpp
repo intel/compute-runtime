@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,12 @@
 #include "shared/source/command_stream/scratch_space_controller_base.h"
 
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -26,7 +28,7 @@ void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
                                                          uint32_t scratchSlot,
                                                          uint32_t requiredPerThreadScratchSize,
                                                          uint32_t requiredPerThreadPrivateScratchSize,
-                                                         uint32_t currentTaskCount,
+                                                         TaskCountType currentTaskCount,
                                                          OsContext &osContext,
                                                          bool &stateBaseAddressDirty,
                                                          bool &vfeStateDirty) {
@@ -59,14 +61,14 @@ uint64_t ScratchSpaceControllerBase::calculateNewGSH() {
     return gsh;
 }
 uint64_t ScratchSpaceControllerBase::getScratchPatchAddress() {
-    //for 32 bit scratch space pointer is being programmed in Media VFE State and is relative to 0 as General State Base Address
-    //for 64 bit, scratch space pointer is being programmed as "General State Base Address - scratchSpaceOffsetFor64bit"
-    //            and "0 + scratchSpaceOffsetFor64bit" is being programmed in Media VFE state
+    // for 32 bit scratch space pointer is being programmed in Media VFE State and is relative to 0 as General State Base Address
+    // for 64 bit, scratch space pointer is being programmed as "General State Base Address - scratchSpaceOffsetFor64bit"
+    //             and "0 + scratchSpaceOffsetFor64bit" is being programmed in Media VFE state
     uint64_t scratchAddress = 0;
     if (scratchAllocation) {
         scratchAddress = scratchAllocation->getGpuAddressToPatch();
         if (is64bit && !getMemoryManager()->peekForce32BitAllocations()) {
-            //this is to avoid scractch allocation offset "0"
+            // this is to avoid scractch allocation offset "0"
             scratchAddress = ScratchSpaceConstants::scratchSpaceOffsetFor64Bit;
         }
     }
@@ -75,8 +77,8 @@ uint64_t ScratchSpaceControllerBase::getScratchPatchAddress() {
 
 void ScratchSpaceControllerBase::reserveHeap(IndirectHeap::Type heapType, IndirectHeap *&indirectHeap) {
     if (heapType == IndirectHeap::Type::SURFACE_STATE) {
-        auto &hwHelper = HwHelper::get(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->platform.eRenderCoreFamily);
-        auto surfaceStateSize = hwHelper.getRenderSurfaceStateSize();
+        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
+        auto surfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
         indirectHeap->getSpace(surfaceStateSize);
     }
 }
@@ -85,7 +87,7 @@ void ScratchSpaceControllerBase::programHeaps(HeapContainer &heapContainer,
                                               uint32_t offset,
                                               uint32_t requiredPerThreadScratchSize,
                                               uint32_t requiredPerThreadPrivateScratchSize,
-                                              uint32_t currentTaskCount,
+                                              TaskCountType currentTaskCount,
                                               OsContext &osContext,
                                               bool &stateBaseAddressDirty,
                                               bool &vfeStateDirty) {
@@ -94,7 +96,7 @@ void ScratchSpaceControllerBase::programHeaps(HeapContainer &heapContainer,
 void ScratchSpaceControllerBase::programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                                        uint32_t requiredPerThreadScratchSize,
                                                                        uint32_t requiredPerThreadPrivateScratchSize,
-                                                                       uint32_t currentTaskCount,
+                                                                       TaskCountType currentTaskCount,
                                                                        OsContext &osContext,
                                                                        bool &stateBaseAddressDirty,
                                                                        bool &vfeStateDirty,

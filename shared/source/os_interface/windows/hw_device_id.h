@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
@@ -21,13 +22,16 @@ class HwDeviceIdWddm : public HwDeviceId {
   public:
     static constexpr DriverModelType driverModelType = DriverModelType::WDDM;
 
-    HwDeviceIdWddm(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn, OsEnvironment *osEnvironmentIn, std::unique_ptr<UmKmDataTranslator> umKmDataTranslator);
+    HwDeviceIdWddm(D3DKMT_HANDLE adapterIn, LUID adapterLuidIn, uint32_t adapterNodeMaskIn, OsEnvironment *osEnvironmentIn, std::unique_ptr<UmKmDataTranslator> umKmDataTranslator);
     Gdi *getGdi() const;
     constexpr D3DKMT_HANDLE getAdapter() const {
         return adapter;
     }
     constexpr LUID getAdapterLuid() const {
         return adapterLuid;
+    }
+    constexpr uint32_t getAdapterNodeMask() const {
+        return adapterNodeMask;
     }
     ~HwDeviceIdWddm() override;
 
@@ -36,9 +40,10 @@ class HwDeviceIdWddm : public HwDeviceId {
     }
 
   protected:
-    const D3DKMT_HANDLE adapter;
     const LUID adapterLuid;
-    OsEnvironment *osEnvironment;
+    const uint32_t adapterNodeMask;
     std::unique_ptr<UmKmDataTranslator> umKmDataTranslator;
+    OsEnvironment *osEnvironment;
+    const D3DKMT_HANDLE adapter;
 };
 } // namespace NEO

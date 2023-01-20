@@ -17,7 +17,7 @@ class Drm;
 class OsContext;
 class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
   public:
-    DrmMemoryOperationsHandler() = default;
+    DrmMemoryOperationsHandler(uint32_t rootDeviceIndex) : rootDeviceIndex(rootDeviceIndex){};
     ~DrmMemoryOperationsHandler() override = default;
 
     virtual MemoryOperationsStatus mergeWithResidencyContainer(OsContext *osContext, ResidencyContainer &residencyContainer) = 0;
@@ -27,7 +27,15 @@ class DrmMemoryOperationsHandler : public MemoryOperationsHandler {
 
     static std::unique_ptr<DrmMemoryOperationsHandler> create(Drm &drm, uint32_t rootDeviceIndex);
 
+    uint32_t getRootDeviceIndex() const {
+        return this->rootDeviceIndex;
+    }
+    void setRootDeviceIndex(uint32_t index) {
+        this->rootDeviceIndex = index;
+    }
+
   protected:
     std::mutex mutex;
+    uint32_t rootDeviceIndex = 0;
 };
 } // namespace NEO

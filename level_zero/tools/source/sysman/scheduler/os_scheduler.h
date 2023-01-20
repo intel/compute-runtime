@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include <level_zero/zet_api.h>
+#include <level_zero/zes_api.h>
 
 #include <map>
 #include <string>
@@ -18,13 +18,13 @@ using namespace std;
 
 class OsScheduler {
   public:
-    virtual ze_result_t getPreemptTimeout(uint64_t &timeout, ze_bool_t getDefault) = 0;
-    virtual ze_result_t getTimesliceDuration(uint64_t &timeslice, ze_bool_t getDefault) = 0;
-    virtual ze_result_t getHeartbeatInterval(uint64_t &heartbeat, ze_bool_t getDefault) = 0;
-    virtual ze_result_t setPreemptTimeout(uint64_t timeout) = 0;
-    virtual ze_result_t setTimesliceDuration(uint64_t timeslice) = 0;
-    virtual ze_result_t setHeartbeatInterval(uint64_t heartbeat) = 0;
-    virtual ze_bool_t canControlScheduler() = 0;
+    virtual ze_result_t getCurrentMode(zes_sched_mode_t *pMode) = 0;
+    virtual ze_result_t getTimeoutModeProperties(ze_bool_t getDefaults, zes_sched_timeout_properties_t *pConfig) = 0;
+    virtual ze_result_t getTimesliceModeProperties(ze_bool_t getDefaults, zes_sched_timeslice_properties_t *pConfig) = 0;
+    virtual ze_result_t setTimeoutMode(zes_sched_timeout_properties_t *pProperties, ze_bool_t *pNeedReload) = 0;
+    virtual ze_result_t setTimesliceMode(zes_sched_timeslice_properties_t *pProperties, ze_bool_t *pNeedReload) = 0;
+    virtual ze_result_t setExclusiveMode(ze_bool_t *pNeedReload) = 0;
+    virtual ze_result_t setComputeUnitDebugMode(ze_bool_t *pNeedReload) = 0;
     virtual ze_result_t getProperties(zes_sched_properties_t &properties) = 0;
     static OsScheduler *create(OsSysman *pOsSysman, zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines,
                                ze_bool_t isSubdevice, uint32_t subdeviceId);

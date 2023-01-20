@@ -8,12 +8,8 @@
 #pragma once
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
-#include <cinttypes>
-#include <cstddef>
-#include <iostream>
 #include <mutex>
 #include <sstream>
-#include <string>
 #include <thread>
 
 namespace NEO {
@@ -28,7 +24,7 @@ template <DebugFunctionalityLevel DebugLevel>
 class FileLogger {
   public:
     FileLogger(std::string filename, const DebugVariables &flags);
-    ~FileLogger();
+    MOCKABLE_VIRTUAL ~FileLogger();
 
     FileLogger(const FileLogger &) = delete;
     FileLogger &operator=(const FileLogger &) = delete;
@@ -93,7 +89,7 @@ class FileLogger {
 
     // Expects pairs of args (even number of args)
     template <typename... Types>
-    void logInputs(Types &&...params) {
+    void logInputs(const Types &...params) {
         if (enabled()) {
             if (logApiCalls) {
                 std::thread::id thisThread = std::this_thread::get_id();
@@ -101,7 +97,9 @@ class FileLogger {
                 ss << "------------------------------\n";
                 printInputs(ss, "ThreadID", thisThread, params...);
                 ss << "------------------------------" << std::endl;
-                writeToFile(logFileName, ss.str().c_str(), ss.str().length(), std::ios::app);
+
+                const auto str = ss.str();
+                writeToFile(logFileName, str.c_str(), str.length(), std::ios::app);
             }
         }
     }
@@ -116,23 +114,27 @@ class FileLogger {
     }
 
     template <typename... Types>
-    void log(bool enableLog, Types... params) {
+    void log(bool enableLog, const Types &...params) {
         if (enabled()) {
             if (enableLog) {
                 std::thread::id thisThread = std::this_thread::get_id();
                 std::stringstream ss;
                 print(ss, "ThreadID", thisThread, params...);
-                writeToFile(logFileName, ss.str().c_str(), ss.str().length(), std::ios::app);
+
+                const auto str = ss.str();
+                writeToFile(logFileName, str.c_str(), str.length(), std::ios::app);
             }
         }
     }
+
+    void logDebugString(bool enableLog, std::string_view debugString);
 
     const char *getLogFileName() {
         return logFileName.c_str();
     }
 
     void setLogFileName(std::string filename) {
-        logFileName = filename;
+        logFileName = std::move(filename);
     }
 
     bool peekLogApiCalls() { return logApiCalls; }
@@ -151,7 +153,7 @@ class FileLogger {
 
     // Prints inputs in format: InputName: InputValue \newline
     template <typename T1, typename... Types>
-    void printInputs(std::stringstream &ss, T1 first, Types... params) {
+    void printInputs(std::stringstream &ss, const T1 &first, const Types &...params) {
         if (enabled()) {
             const size_t argsLeft = sizeof...(params);
 
@@ -169,7 +171,7 @@ class FileLogger {
     void print(std::stringstream &ss) {}
 
     template <typename T1, typename... Types>
-    void print(std::stringstream &ss, T1 first, Types... params) {
+    void print(std::stringstream &ss, const T1 &first, const Types &...params) {
         if (enabled()) {
             const size_t argsLeft = sizeof...(params);
 

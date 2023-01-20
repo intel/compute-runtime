@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,19 +17,17 @@ using namespace NEO;
 struct clCreateKernelsInProgramTests : public api_tests {
     void SetUp() override {
         api_tests::SetUp();
-        std::string testFile;
-        retrieveBinaryKernelFilename(testFile, "CopyBuffer_simd16_", ".bin");
 
-        size_t binarySize = 0;
-        auto pBinary = loadDataFromFile(
-            testFile.c_str(),
-            binarySize);
+        constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
+        auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
+        const auto &src = zebinData->storage;
+        const auto &binarySize = src.size();
 
-        ASSERT_NE(0u, binarySize);
-        ASSERT_NE(nullptr, pBinary);
+        ASSERT_NE(0u, src.size());
+        ASSERT_NE(nullptr, src.data());
 
         auto binaryStatus = CL_SUCCESS;
-        const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(pBinary.get())};
+        const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(src.data())};
         program = clCreateProgramWithBinary(
             pContext,
             1,
@@ -39,7 +37,6 @@ struct clCreateKernelsInProgramTests : public api_tests {
             &binaryStatus,
             &retVal);
 
-        pBinary.reset();
         ASSERT_NE(nullptr, program);
         ASSERT_EQ(CL_SUCCESS, retVal);
 

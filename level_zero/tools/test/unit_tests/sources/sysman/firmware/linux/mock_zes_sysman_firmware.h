@@ -21,8 +21,7 @@ std::string mockEmpty = {};
 class FirmwareInterface : public FirmwareUtil {};
 class FirmwareFsAccess : public FsAccess {};
 
-template <>
-struct Mock<FirmwareFsAccess> : public FirmwareFsAccess {
+struct MockFirmwareFsAccess : public FirmwareFsAccess {
     ze_bool_t isReadFwTypes = true;
     ze_result_t read(const std::string file, std::vector<std::string> &val) override {
         if (isReadFwTypes) {
@@ -36,8 +35,7 @@ struct Mock<FirmwareFsAccess> : public FirmwareFsAccess {
     }
 };
 
-template <>
-struct Mock<FirmwareInterface> : public FirmwareUtil {
+struct MockFirmwareInterface : public FirmwareUtil {
 
     ze_result_t getFwVersionResult = ZE_RESULT_SUCCESS;
 
@@ -67,7 +65,7 @@ struct Mock<FirmwareInterface> : public FirmwareUtil {
         fwTypes = mockSupportedFwTypes;
     }
 
-    Mock<FirmwareInterface>() = default;
+    MockFirmwareInterface() = default;
 
     ADDMETHOD_NOBASE(fwDeviceInit, ze_result_t, ZE_RESULT_SUCCESS, ());
     ADDMETHOD_NOBASE(getFirstDevice, ze_result_t, ZE_RESULT_SUCCESS, (igsc_device_info * info));

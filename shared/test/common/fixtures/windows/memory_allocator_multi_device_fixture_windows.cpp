@@ -7,6 +7,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/test/common/fixtures/memory_allocator_multi_device_fixture.h"
@@ -16,17 +17,17 @@
 
 using namespace NEO;
 
-void MemoryAllocatorMultiDeviceSystemSpecificFixture::SetUp(ExecutionEnvironment &executionEnvironment) {
+void MemoryAllocatorMultiDeviceSystemSpecificFixture::setUp(ExecutionEnvironment &executionEnvironment) {
     static D3DDDI_OPENALLOCATIONINFO allocationInfo;
     auto gdi = new MockGdi();
     gdi->getQueryResourceInfoArgOut().NumAllocations = 1;
     gdi->getOpenResourceArgOut().pOpenAllocationInfo = &allocationInfo;
     auto osEnvironment = new OsEnvironmentWin();
     osEnvironment->gdi.reset(gdi);
-    for (auto i = 0u; i < executionEnvironment.rootDeviceEnvironments.size(); i++) {
-        gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[i]->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
-        auto wddm = static_cast<WddmMock *>(executionEnvironment.rootDeviceEnvironments[i]->osInterface->getDriverModel()->as<Wddm>());
-        wddm->hwDeviceId = std::make_unique<HwDeviceIdWddm>(ADAPTER_HANDLE, LUID{}, osEnvironment, std::make_unique<UmKmDataTranslator>());
+    for (const auto &rootDeviceEnvironment : executionEnvironment.rootDeviceEnvironments) {
+        gmm = std::make_unique<Gmm>(rootDeviceEnvironment->getGmmHelper(), nullptr, 0, 0, GMM_RESOURCE_USAGE_OCL_BUFFER, false, StorageInfo{}, true);
+        auto wddm = static_cast<WddmMock *>(rootDeviceEnvironment->osInterface->getDriverModel()->as<Wddm>());
+        wddm->hwDeviceId = std::make_unique<HwDeviceIdWddm>(ADAPTER_HANDLE, LUID{}, 1u, osEnvironment, std::make_unique<UmKmDataTranslator>());
         wddm->callBaseMapGpuVa = false;
 
         allocationInfo.pPrivateDriverData = gmm->gmmResourceInfo->peekHandle();
@@ -36,4 +37,4 @@ void MemoryAllocatorMultiDeviceSystemSpecificFixture::SetUp(ExecutionEnvironment
     executionEnvironment.osEnvironment.reset(osEnvironment);
 }
 
-void MemoryAllocatorMultiDeviceSystemSpecificFixture::TearDown(ExecutionEnvironment &executionEnvironment) {}
+void MemoryAllocatorMultiDeviceSystemSpecificFixture::tearDown(ExecutionEnvironment &executionEnvironment) {}

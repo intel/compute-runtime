@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
+#include "opencl/source/helpers/task_information.h"
 #include "opencl/test/unit_test/command_queue/enqueue_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_event.h"
 
@@ -168,24 +169,24 @@ TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithoutReturnEv
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskCount = csr.peekTaskCount();
 
-    //call NDR
+    // call NDR
     auto retVal = callOneWorkItemNDRKernel(eventWaitList, 1);
 
     auto taskCountAfter = csr.peekTaskCount();
 
-    //queue should be in blocked state at this moment, task level should be inherited from user event
+    // queue should be in blocked state at this moment, task level should be inherited from user event
     EXPECT_EQ(CompletionStamp::notReady, pCmdQ->taskLevel);
 
-    //queue should be in blocked state at this moment, task count should be inherited from user event
+    // queue should be in blocked state at this moment, task count should be inherited from user event
     EXPECT_EQ(CompletionStamp::notReady, pCmdQ->taskCount);
 
-    //queue should be in blocked state
+    // queue should be in blocked state
     EXPECT_EQ(pCmdQ->isQueueBlocked(), true);
 
-    //and virtual event should be created
+    // and virtual event should be created
     ASSERT_NE(nullptr, pCmdQ->virtualEvent);
 
-    //check if kernel was in fact not submitted
+    // check if kernel was in fact not submitted
     EXPECT_EQ(taskCountAfter, taskCount);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -201,30 +202,30 @@ TEST_F(MockEventTests, GivenBlockedUserEventWhenEnqueueingNdRangeWithReturnEvent
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskCount = csr.peekTaskCount();
 
-    //call NDR
+    // call NDR
     auto retVal = callOneWorkItemNDRKernel(eventWaitList, 1, &retEvent);
 
     auto taskCountAfter = csr.peekTaskCount();
 
-    //queue should be in blocked state at this moment, task level should be inherited from user event
+    // queue should be in blocked state at this moment, task level should be inherited from user event
     EXPECT_EQ(CompletionStamp::notReady, pCmdQ->taskLevel);
 
-    //queue should be in blocked state at this moment, task count should be inherited from user event
+    // queue should be in blocked state at this moment, task count should be inherited from user event
     EXPECT_EQ(CompletionStamp::notReady, pCmdQ->taskCount);
 
-    //queue should be in blocked state
+    // queue should be in blocked state
     EXPECT_EQ(pCmdQ->isQueueBlocked(), true);
 
-    //and virtual event should be created
+    // and virtual event should be created
     ASSERT_NE(nullptr, pCmdQ->virtualEvent);
 
-    //that matches the retEvent
+    // that matches the retEvent
     EXPECT_EQ(retEvent, pCmdQ->virtualEvent);
 
-    //check if kernel was in fact not submitted
+    // check if kernel was in fact not submitted
     EXPECT_EQ(taskCountAfter, taskCount);
 
-    //and if normal event inherited status from user event
+    // and if normal event inherited status from user event
     Event *returnEvent = castToObject<Event>(retEvent);
     EXPECT_EQ(returnEvent->taskLevel, CompletionStamp::notReady);
 
@@ -242,18 +243,18 @@ TEST_F(MockEventTests, WhenAddingChildEventThenConnectionIsCreatedAndCountOnRetu
 
     cl_event *eventWaitList = &userEvent;
 
-    //call NDR
+    // call NDR
     callOneWorkItemNDRKernel(eventWaitList, 1, &retEvent);
 
-    //check if dependency count is increased
+    // check if dependency count is increased
     Event *returnEvent = castToObject<Event>(retEvent);
 
     EXPECT_EQ(1U, returnEvent->peekNumEventsBlockingThis());
 
-    //check if user event knows his childs
+    // check if user event knows his childs
     EXPECT_TRUE(uEvent->peekHasChildEvents());
 
-    //make sure that proper event is set as child
+    // make sure that proper event is set as child
     Event *childEvent = pCmdQ->virtualEvent;
     EXPECT_EQ(childEvent, uEvent->peekChildEvents()->ref);
 
@@ -281,31 +282,31 @@ TEST_F(MockEventTests, WhenAddingTwoChildEventsThenConnectionIsCreatedAndCountOn
     cl_event eventWaitList[] = {uEvent.get(), uEvent2.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
-    //call NDR
+    // call NDR
     callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
 
-    //check if dependency count is increased
+    // check if dependency count is increased
     Event *returnEvent = castToObject<Event>(retEvent);
 
     ASSERT_EQ(2U, returnEvent->peekNumEventsBlockingThis());
 
-    //check if user event knows his childs
+    // check if user event knows his childs
     EXPECT_TRUE(uEvent->peekHasChildEvents());
 
-    //check if user event knows his childs
+    // check if user event knows his childs
     EXPECT_TRUE(uEvent2->peekHasChildEvents());
 
-    //make sure that proper event is set as child
+    // make sure that proper event is set as child
     Event *childEvent = pCmdQ->virtualEvent;
     EXPECT_EQ(childEvent, uEvent->peekChildEvents()->ref);
     EXPECT_FALSE(childEvent->isReadyForSubmission());
 
-    //make sure that proper event is set as child
+    // make sure that proper event is set as child
     EXPECT_EQ(childEvent, uEvent2->peekChildEvents()->ref);
 
-    //signal one user event, child event after this operation isn't ready for submission
+    // signal one user event, child event after this operation isn't ready for submission
     uEvent->setStatus(0);
-    //check if user event knows his children
+    // check if user event knows his children
     EXPECT_FALSE(uEvent->peekHasChildEvents());
     EXPECT_EQ(1U, returnEvent->peekNumEventsBlockingThis());
     EXPECT_FALSE(returnEvent->isReadyForSubmission());
@@ -323,49 +324,49 @@ TEST_F(MockEventTests, GivenTwoUserEvenstWhenCountOnNdr1IsInjectedThenItIsPropag
     cl_event eventWaitList[] = {uEvent.get(), uEvent2.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
-    //call NDR, no return Event
+    // call NDR, no return Event
     auto retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //check if dependency count is increased
+    // check if dependency count is increased
     Event *returnEvent1 = castToObject<Event>(pCmdQ->virtualEvent);
 
     ASSERT_EQ(2U, returnEvent1->peekNumEventsBlockingThis());
 
-    //check if user event knows his childs
+    // check if user event knows his childs
     EXPECT_TRUE(uEvent->peekHasChildEvents());
 
-    //check if user event knows his childs
+    // check if user event knows his childs
     EXPECT_TRUE(uEvent2->peekHasChildEvents());
 
-    //make sure that proper event is set as child
+    // make sure that proper event is set as child
     Event *childEvent = pCmdQ->virtualEvent;
     EXPECT_EQ(childEvent, uEvent->peekChildEvents()->ref);
 
-    //make sure that proper event is set as child
+    // make sure that proper event is set as child
     EXPECT_EQ(childEvent, uEvent2->peekChildEvents()->ref);
 
-    //call NDR, no events, Virtual Event mustn't leak and will be bind to previous Virtual Event
+    // call NDR, no events, Virtual Event mustn't leak and will be bind to previous Virtual Event
     retVal = callOneWorkItemNDRKernel();
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //queue must be in blocked state
+    // queue must be in blocked state
     EXPECT_EQ(pCmdQ->isQueueBlocked(), true);
 
-    //check if virtual event2 is a child of virtual event 1
+    // check if virtual event2 is a child of virtual event 1
     VirtualEvent *returnEvent2 = castToObject<VirtualEvent>(pCmdQ->virtualEvent);
     ASSERT_TRUE(returnEvent1->peekHasChildEvents());
 
     EXPECT_EQ(returnEvent2, returnEvent1->peekChildEvents()->ref);
 
-    //now signal both parents and see if all childs are notified
+    // now signal both parents and see if all childs are notified
     uEvent->setStatus(CL_COMPLETE);
     uEvent2->setStatus(CL_COMPLETE);
 
-    //queue shoud be in unblocked state
+    // queue shoud be in unblocked state
     EXPECT_EQ(pCmdQ->isQueueBlocked(), false);
 
-    //finish returns immidieatly
+    // finish returns immidieatly
     retVal = clFinish(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
@@ -393,7 +394,7 @@ TEST_F(MockEventTests, GivenUserEventSignalingWhenFinishThenExecutionIsNotBlocke
     cl_event eventWaitList[] = {uEvent.get(), uEvent2.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
-    //call NDR, no return Event
+    // call NDR, no return Event
     auto retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -410,13 +411,13 @@ TEST_F(MockEventTests, WhenCompletingUserEventThenStatusPropagatedToNormalEvent)
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
-    //call NDR
+    // call NDR
     callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
 
-    //set user event status
+    // set user event status
     uEvent->setStatus(CL_COMPLETE);
 
-    //wait for returned event
+    // wait for returned event
     auto retVal = clWaitForEvents(1, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -437,7 +438,7 @@ HWTEST_F(EventTests, WhenSignalingThenUserEventObtainsProperTaskLevel) {
     csr.taskLevel = 2;
     csr.taskCount = 5;
     uEvent.setStatus(CL_COMPLETE);
-    //even though csr taskLevel has changed, user event taskLevel should remain constant
+    // even though csr taskLevel has changed, user event taskLevel should remain constant
     EXPECT_EQ(0u, uEvent.taskLevel);
 }
 
@@ -450,19 +451,19 @@ TEST_F(MockEventTests, GivenUserEventWhenSettingStatusCompleteThenTaskLevelIsUpd
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //check if dependency count is increased
+    // check if dependency count is increased
     Event *returnEvent = castToObject<Event>(retEvent);
     EXPECT_EQ(CompletionStamp::notReady, returnEvent->taskLevel);
     EXPECT_EQ(CompletionStamp::notReady, returnEvent->peekTaskCount());
 
-    //now set user event for complete status, this triggers update of childs.
+    // now set user event for complete status, this triggers update of childs.
     uEvent->setStatus(CL_COMPLETE);
 
-    //child event should have the same taskLevel as parentEvent, as parent event is top of the tree and doesn't have any commands.
+    // child event should have the same taskLevel as parentEvent, as parent event is top of the tree and doesn't have any commands.
     EXPECT_EQ(returnEvent->taskLevel, taskLevel);
     EXPECT_EQ(csr.peekTaskCount(), returnEvent->peekTaskCount());
 
@@ -477,15 +478,15 @@ TEST_F(MockEventTests, GivenCompleteParentWhenWaitingForEventsThenChildrenAreCom
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //check if dependency count is increased
+    // check if dependency count is increased
     Event *returnEvent = castToObject<Event>(retEvent);
     EXPECT_EQ(CompletionStamp::notReady, returnEvent->taskLevel);
 
-    //now set user event for complete status, this triggers update of childs.
+    // now set user event for complete status, this triggers update of childs.
     uEvent->setStatus(CL_COMPLETE);
 
     retVal = clWaitForEvents(1, &retEvent);
@@ -500,7 +501,7 @@ TEST_F(EventTests, WhenStatusIsAbortedWhenWaitingForEventsThenErrorIsReturned) {
     cl_event eventWaitList[] = {&uEvent};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
-    //negative values indicate abortion
+    // negative values indicate abortion
     uEvent.setStatus(-1);
 
     retVal = clWaitForEvents(sizeOfWaitList, eventWaitList);
@@ -517,11 +518,11 @@ TEST_F(MockEventTests, GivenAbortedUserEventWhenEnqueingNdrThenDoNotFlushToCsr) 
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskCount = csr.peekTaskCount();
 
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //negative values indicate abortion
+    // negative values indicate abortion
     uEvent->setStatus(-1);
 
     auto taskCountAfter = csr.peekTaskCount();
@@ -576,15 +577,15 @@ TEST_F(MockEventTests, GivenAbortedParentWhenDestroyingChildEventThenDoNotProces
     auto &csr = pCmdQ->getGpgpuCommandStreamReceiver();
     auto taskCount = csr.peekTaskCount();
 
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //call second NDR to create Virtual Event
+    // call second NDR to create Virtual Event
     retVal = callOneWorkItemNDRKernel(&retEvent, 1, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //negative values indicate abortion
+    // negative values indicate abortion
     uEvent->setStatus(-1);
 
     auto taskCountAfter = csr.peekTaskCount();
@@ -613,11 +614,11 @@ TEST_F(MockEventTests, GivenAbortedUserEventWhenWaitingForEventThenErrorIsReturn
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
     cl_event retEvent = nullptr;
 
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //negative values indicate abortion
+    // negative values indicate abortion
     uEvent->setStatus(-1);
 
     eventWaitList[0] = retEvent;
@@ -636,11 +637,11 @@ TEST_F(MockEventTests, GivenAbortedUserEventAndTwoInputsWhenWaitingForEventThenE
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
     cl_event retEvent = nullptr;
 
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //negative values indicate abortion
+    // negative values indicate abortion
     uEvent->setStatus(-1);
 
     eventWaitList[0] = retEvent;
@@ -662,14 +663,14 @@ TEST_F(MockEventTests, GivenAbortedQueueWhenFinishingThenSuccessIsReturned) {
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //negative values indicate abortion
+    // negative values indicate abortion
     uEvent->setStatus(-1);
 
-    //make sure we didn't asked CSR for task level for this event, as it is aborted
+    // make sure we didn't asked CSR for task level for this event, as it is aborted
     EXPECT_NE(taskLevel, uEvent->taskLevel);
 
     retVal = clFinish(pCmdQ);
@@ -681,10 +682,10 @@ TEST_F(MockEventTests, GivenUserEventWhenEnqueingThenDependantPacketIsRegistered
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList);
 
-    //virtual event should register for this command packet
+    // virtual event should register for this command packet
     ASSERT_NE(nullptr, pCmdQ->virtualEvent);
     EXPECT_NE(nullptr, pCmdQ->virtualEvent->peekCommand());
     EXPECT_FALSE(pCmdQ->virtualEvent->peekIsCmdSubmitted());
@@ -695,10 +696,10 @@ TEST_F(MockEventTests, GivenUserEventWhenEnqueingThenCommandPacketContainsValidC
     cl_event eventWaitList[] = {uEvent.get()};
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList);
 
-    //virtual event should register for this command packet
+    // virtual event should register for this command packet
     ASSERT_NE(nullptr, pCmdQ->virtualEvent);
     auto cmd = static_cast<CommandComputeKernel *>(pCmdQ->virtualEvent->peekCommand());
     EXPECT_NE(0u, cmd->getCommandStream()->getUsed());
@@ -712,14 +713,14 @@ TEST_F(MockEventTests, WhenStatusIsSetThenBlockedPacketsAreSent) {
 
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
 
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //task level untouched as queue blocked by user event
+    // task level untouched as queue blocked by user event
     EXPECT_EQ(csr.peekTaskLevel(), 0u);
 
-    //virtual event have stored command packet
+    // virtual event have stored command packet
     Event *childEvent = pCmdQ->virtualEvent;
     EXPECT_NE(nullptr, childEvent);
     EXPECT_NE(nullptr, childEvent->peekCommand());
@@ -727,7 +728,7 @@ TEST_F(MockEventTests, WhenStatusIsSetThenBlockedPacketsAreSent) {
 
     EXPECT_NE(nullptr, childEvent->peekCommand());
 
-    //signal the input user event
+    // signal the input user event
     uEvent->setStatus(0);
 
     EXPECT_EQ(csr.peekTaskLevel(), 1u);
@@ -739,19 +740,19 @@ TEST_F(MockEventTests, WhenFinishingThenVirtualEventIsNullAndReleaseEventReturns
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
     cl_event retEvent;
 
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     uEvent->setStatus(0);
-    //call finish multiple times
+    // call finish multiple times
     retVal |= clFinish(pCmdQ);
     retVal |= clFinish(pCmdQ);
     retVal |= clFinish(pCmdQ);
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //Virtual Event is gone, but retEvent still lives.
+    // Virtual Event is gone, but retEvent still lives.
     EXPECT_EQ(nullptr, pCmdQ->virtualEvent);
     retVal = clReleaseEvent(retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -766,7 +767,7 @@ TEST_F(MockEventTests, givenBlockedQueueThenCommandStreamDoesNotChangeWhileEnque
     auto &cs = pCmdQ->getCS(1024);
     auto used = cs.getSpace(0);
 
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -778,7 +779,7 @@ TEST_F(MockEventTests, givenBlockedQueueThenCommandStreamDoesNotChangeWhileEnque
 
     auto used3 = cs.getSpace(0);
 
-    //call finish multiple times
+    // call finish multiple times
     retVal |= clFinish(pCmdQ);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -814,7 +815,7 @@ TEST_F(EventTests, givenUserEventThatHasCallbackAndBlockQueueWhenQueueIsQueriedF
     int sizeOfWaitList = sizeof(eventWaitList) / sizeof(cl_event);
     cl_event retEvent;
 
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(eventWaitList, sizeOfWaitList, &retEvent);
     ASSERT_EQ(retVal, CL_SUCCESS);
 
@@ -850,7 +851,7 @@ TEST_F(EventTests, GivenEventCallbackWithWaitWhenWaitingForEventsThenSuccessIsRe
     };
 
     cl_event retEvent;
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(nullptr, 0, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -881,7 +882,7 @@ TEST_F(EventTests, GivenEventCallbackWithoutWaitWhenWaitingForEventsThenSuccessI
     };
 
     cl_event retEvent;
-    //call NDR
+    // call NDR
     retVal = callOneWorkItemNDRKernel(nullptr, 0, &retEvent);
     EXPECT_EQ(CL_SUCCESS, retVal);
 

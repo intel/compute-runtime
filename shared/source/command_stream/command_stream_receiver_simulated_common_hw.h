@@ -10,7 +10,7 @@
 #include "shared/source/memory_manager/memory_banks.h"
 
 #include "aub_mapper.h"
-#include "third_party/aub_stream/headers/hardware_context.h"
+#include "aubstream/hardware_context.h"
 
 namespace aub_stream {
 class AubManager;

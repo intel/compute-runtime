@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -16,21 +18,27 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/heap_assigner.h"
+#include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/surface_format_info.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/deferrable_allocation_deletion.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/local_memory_usage.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
+#include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/utilities/stackvec.h"
+#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 #include <algorithm>
 
@@ -48,10 +56,12 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
     isaInLocalMemory.resize(rootEnvCount);
 
     for (uint32_t rootDeviceIndex = 0; rootDeviceIndex < rootEnvCount; ++rootDeviceIndex) {
-        auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-        internalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(HwHelper::getSubDevicesCount(hwInfo)));
-        externalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(HwHelper::getSubDevicesCount(hwInfo)));
-        this->localMemorySupported.push_back(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*hwInfo));
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex];
+        auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        internalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(GfxCoreHelper::getSubDevicesCount(hwInfo)));
+        externalLocalMemoryUsageBankSelector.emplace_back(new LocalMemoryUsageBankSelector(GfxCoreHelper::getSubDevicesCount(hwInfo)));
+        this->localMemorySupported.push_back(gfxCoreHelper.getEnableLocalMemory(*hwInfo));
         this->enable64kbpages.push_back(OSInterface::osEnabled64kbPages && hwInfo->capabilityTable.ftr64KBpages && !!DebugManager.flags.Enable64kbpages.get());
 
         gfxPartitions.push_back(std::make_unique<GfxPartition>(reservedCpuAddressRange));
@@ -62,6 +72,7 @@ MemoryManager::MemoryManager(ExecutionEnvironment &executionEnvironment) : execu
 
     if (anyLocalMemorySupported) {
         pageFaultManager = PageFaultManager::create();
+        prefetchManager = PrefetchManager::create();
     }
 
     if (DebugManager.flags.EnableMultiStorageResources.get() != -1) {
@@ -76,6 +87,41 @@ MemoryManager::~MemoryManager() {
     registeredEngines.clear();
     if (reservedMemory) {
         MemoryManager::alignedFreeWrapper(reservedMemory);
+    }
+}
+
+bool MemoryManager::isLimitedGPU(uint32_t rootDeviceIndex) {
+    return peek32bit() && !peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->isFullRangeSvm();
+}
+
+bool MemoryManager::isLimitedGPUOnType(uint32_t rootDeviceIndex, AllocationType type) {
+    return isLimitedGPU(rootDeviceIndex) &&
+           (type != AllocationType::MAP_ALLOCATION) &&
+           (type != AllocationType::IMAGE);
+}
+
+void *MemoryManager::alignedMallocWrapper(size_t bytes, size_t alignment) {
+    return ::alignedMalloc(bytes, alignment);
+}
+
+void MemoryManager::alignedFreeWrapper(void *ptr) {
+    ::alignedFree(ptr);
+}
+
+GmmHelper *MemoryManager::getGmmHelper(uint32_t rootDeviceIndex) {
+    return executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper();
+}
+
+HeapIndex MemoryManager::selectInternalHeap(bool useLocalMemory) {
+    return useLocalMemory ? HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_INTERNAL;
+}
+HeapIndex MemoryManager::selectExternalHeap(bool useLocalMemory) {
+    return useLocalMemory ? HeapIndex::HEAP_EXTERNAL_DEVICE_MEMORY : HeapIndex::HEAP_EXTERNAL;
+}
+
+void MemoryManager::zeroCpuMemoryIfRequested(const AllocationData &allocationData, void *cpuPtr, size_t size) {
+    if (allocationData.flags.zeroMemory) {
+        memset(cpuPtr, 0, size);
     }
 }
 
@@ -212,13 +258,20 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
     freeGraphicsMemoryImpl(gfxAllocation, isImportedAllocation);
 }
 
-//if not in use destroy in place
-//if in use pass to temporary allocation list that is cleaned on blocking calls
+// if not in use destroy in place
+// if in use pass to temporary allocation list that is cleaned on blocking calls
 void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation) {
     if (gfxAllocation->isUsed()) {
         if (gfxAllocation->isUsedByManyOsContexts()) {
+            int index = gfxAllocation->getRootDeviceIndex();
             multiContextResourceDestructor->deferDeletion(new DeferrableAllocationDeletion{*this, *gfxAllocation});
-            multiContextResourceDestructor->drain(false);
+            auto &productHelper = executionEnvironment.rootDeviceEnvironments[index]->getHelper<ProductHelper>();
+            if (productHelper.isMultiContextResourceDeferDeletionSupported()) {
+                multiContextResourceDestructor->clearQueueTillFirstFailure();
+            } else {
+                multiContextResourceDestructor->drain(false);
+            }
+
             return;
         }
         for (auto &engine : getRegisteredEngines()) {
@@ -227,12 +280,23 @@ void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocatio
             if (gfxAllocation->isUsedByOsContext(osContextId) &&
                 allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
                 engine.commandStreamReceiver->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(gfxAllocation),
-                                                                                              TEMPORARY_ALLOCATION);
+                                                                                              DEFERRED_DEALLOCATION);
                 return;
             }
         }
     }
     freeGraphicsMemory(gfxAllocation);
+}
+
+uint64_t MemoryManager::getInternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory) {
+    return getGfxPartition(rootDeviceIndex)->getHeapBase(selectInternalHeap(useLocalMemory));
+}
+uint64_t MemoryManager::getExternalHeapBaseAddress(uint32_t rootDeviceIndex, bool useLocalMemory) {
+    return getGfxPartition(rootDeviceIndex)->getHeapBase(selectExternalHeap(useLocalMemory));
+}
+
+bool MemoryManager::isLimitedRange(uint32_t rootDeviceIndex) {
+    return getGfxPartition(rootDeviceIndex)->isLimitedRange();
 }
 
 void MemoryManager::waitForDeletions() {
@@ -274,8 +338,10 @@ OsContext *MemoryManager::createAndRegisterOsContext(CommandStreamReceiver *comm
     updateLatestContextIdForRootDevice(rootDeviceIndex);
 
     auto contextId = ++latestContextId;
-    auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->osInterface.get(), contextId, engineDescriptor);
+    auto osContext = OsContext::create(peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->osInterface.get(), rootDeviceIndex, contextId, engineDescriptor);
     osContext->incRefInternal();
+
+    UNRECOVERABLE_IF(rootDeviceIndex != osContext->getRootDeviceIndex());
 
     registeredEngines.emplace_back(commandStreamReceiver, osContext);
 
@@ -286,8 +352,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     UNRECOVERABLE_IF(hostPtr == nullptr && !properties.flags.allocateMemory);
     UNRECOVERABLE_IF(properties.allocationType == AllocationType::UNKNOWN);
 
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo();
-    auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex];
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto &helper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
     bool allow64KbPages = false;
     bool allow32Bit = false;
@@ -376,10 +443,11 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     }
 
     if (GraphicsAllocation::isIsaAllocationType(properties.allocationType)) {
-        allocationData.flags.useSystemMemory = hwHelper.useSystemMemoryPlacementForISA(*hwInfo);
+        allocationData.flags.useSystemMemory = helper.useSystemMemoryPlacementForISA(hwInfo);
     }
 
     switch (properties.allocationType) {
+    case AllocationType::DEFERRED_TASKS_LIST:
     case AllocationType::COMMAND_BUFFER:
     case AllocationType::IMAGE:
     case AllocationType::INDIRECT_OBJECT_HEAP:
@@ -406,7 +474,8 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     default:
         allocationData.flags.resource48Bit = properties.flags.resource48Bit;
     }
-
+    allocationData.forceKMDAllocation = properties.forceKMDAllocation;
+    allocationData.makeGPUVaDifferentThanCPUPtr = properties.makeGPUVaDifferentThanCPUPtr;
     allocationData.flags.shareable = properties.flags.shareable;
     allocationData.flags.isUSMDeviceMemory = properties.flags.isUSMDeviceAllocation;
     allocationData.flags.requiresCpuAccess = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
@@ -418,12 +487,11 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.flushL3 =
         (mayRequireL3Flush ? properties.flags.flushL3RequiredForRead | properties.flags.flushL3RequiredForWrite : 0u);
     allocationData.flags.preferCompressed = properties.flags.preferCompressed;
-    allocationData.flags.preferCompressed |= CompressionSelector::preferCompressedAllocation(properties, *hwInfo);
+    allocationData.flags.preferCompressed |= CompressionSelector::preferCompressedAllocation(properties);
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
     allocationData.usmInitialPlacement = properties.usmInitialPlacement;
 
-    if (properties.allocationType == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
-        properties.allocationType == AllocationType::DEBUG_SBA_TRACKING_BUFFER) {
+    if (GraphicsAllocation::isDebugSurfaceAllocationType(properties.allocationType)) {
         allocationData.flags.zeroMemory = 1;
     }
 
@@ -436,7 +504,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.hostPtr = hostPtr;
     if (properties.allocationType == AllocationType::KERNEL_ISA ||
         properties.allocationType == AllocationType::KERNEL_ISA_INTERNAL) {
-        allocationData.size = properties.size + hwHelper.getPaddingForISAAllocation();
+        allocationData.size = properties.size + helper.getPaddingForISAAllocation();
     } else {
         allocationData.size = properties.size;
     }
@@ -455,9 +523,9 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.useMmapObject = properties.useMmapObject;
 
     allocationData.flags.crossRootDeviceAccess = properties.flags.crossRootDeviceAccess;
-    allocationData.flags.useSystemMemory |= properties.flags.crossRootDeviceAccess;
+    allocationData.flags.useSystemMemory |= MemoryPropertiesHelper::useSystemMemoryForCrossRootDeviceAccess(properties.flags.crossRootDeviceAccess);
 
-    hwHelper.setExtraAllocationData(allocationData, properties, *hwInfo);
+    helper.setExtraAllocationData(allocationData, properties, hwInfo);
     allocationData.flags.useSystemMemory |= properties.flags.forceSystemMemory;
 
     overrideAllocationData(allocationData, properties);
@@ -476,15 +544,18 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemoryInPreferredPool(const A
     GraphicsAllocation *allocation = allocateGraphicsMemoryInDevicePool(allocationData, status);
     if (allocation) {
         getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->reserveOnBanks(allocationData.storageInfo.getMemoryBanks(), allocation->getUnderlyingBufferSize());
-        this->registerLocalMemAlloc(allocation, properties.rootDeviceIndex);
+        status = this->registerLocalMemAlloc(allocation, properties.rootDeviceIndex);
     }
     if (!allocation && status == AllocationStatus::RetryInNonDevicePool) {
         allocation = allocateGraphicsMemory(allocationData);
         if (allocation) {
-            this->registerSysMemAlloc(allocation);
+            status = this->registerSysMemAlloc(allocation);
         }
     }
-
+    if (allocation && status != AllocationStatus::Success) {
+        freeGraphicsMemory(allocation);
+        allocation = nullptr;
+    }
     if (!allocation) {
         return nullptr;
     }
@@ -545,7 +616,7 @@ GraphicsAllocation *MemoryManager::allocateGraphicsMemory(const AllocationData &
     if (use32Allocator || isAllocationOnLimitedGPU ||
         (force32bitAllocations && allocationData.flags.allow32Bit && is64bit)) {
         auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-        bool useLocalMem = heapAssigner.useExternal32BitHeap(allocationData.type) ? HwInfoConfig::get(hwInfo->platform.eProductFamily)->heapInLocalMem(*hwInfo) : false;
+        bool useLocalMem = heapAssigner.useExternal32BitHeap(allocationData.type) ? ProductHelper::get(hwInfo->platform.eProductFamily)->heapInLocalMem(*hwInfo) : false;
         return allocate32BitGraphicsMemoryImpl(allocationData, useLocalMem);
     }
     if (allocationData.flags.isUSMHostAllocation && allocationData.hostPtr) {
@@ -690,11 +761,11 @@ bool MemoryManager::copyMemoryToAllocation(GraphicsAllocation *graphicsAllocatio
     if (!graphicsAllocation->getUnderlyingBuffer()) {
         return false;
     }
+
     for (auto i = 0u; i < graphicsAllocation->storageInfo.getNumBanks(); ++i) {
         memcpy_s(ptrOffset(static_cast<uint8_t *>(graphicsAllocation->getUnderlyingBuffer()) + i * graphicsAllocation->getUnderlyingBufferSize(), destinationOffset),
                  (graphicsAllocation->getUnderlyingBufferSize() - destinationOffset), memoryToCopy, sizeToCopy);
-        if (graphicsAllocation->getAllocationType() != AllocationType::DEBUG_CONTEXT_SAVE_AREA &&
-            graphicsAllocation->getAllocationType() != AllocationType::DEBUG_SBA_TRACKING_BUFFER) {
+        if (!GraphicsAllocation::isDebugSurfaceAllocationType(graphicsAllocation->getAllocationType())) {
             break;
         }
     }
@@ -716,6 +787,19 @@ void MemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAllocat
             engine.commandStreamReceiver->waitForCompletionWithTimeout(WaitParams{false, false, TimeoutControls::maxTimeout}, allocationTaskCount);
         }
     }
+}
+
+bool MemoryManager::allocInUse(GraphicsAllocation &graphicsAllocation) {
+    for (auto &engine : getRegisteredEngines()) {
+        auto osContextId = engine.osContext->getContextId();
+        auto allocationTaskCount = graphicsAllocation.getTaskCount(osContextId);
+        if (graphicsAllocation.isUsedByOsContext(osContextId) &&
+            engine.commandStreamReceiver->getTagAllocation() != nullptr &&
+            allocationTaskCount > *engine.commandStreamReceiver->getTagAddress()) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void MemoryManager::cleanTemporaryAllocationListOnAllEngines(bool waitForCompletion) {
@@ -874,6 +958,36 @@ bool MemoryManager::isLocalMemoryUsedForIsa(uint32_t rootDeviceIndex) {
     });
 
     return isaInLocalMemory[rootDeviceIndex];
+}
+
+bool MemoryManager::isKernelBinaryReuseEnabled() {
+    auto reuseBinaries = false;
+
+    if (DebugManager.flags.ReuseKernelBinaries.get() != -1) {
+        reuseBinaries = DebugManager.flags.ReuseKernelBinaries.get();
+    }
+
+    return reuseBinaries;
+}
+
+OsContext *MemoryManager::getDefaultEngineContext(uint32_t rootDeviceIndex, DeviceBitfield subdevicesBitfield) {
+    OsContext *defaultContext = nullptr;
+    for (auto engineIndex = 0u; engineIndex < this->getRegisteredEnginesCount(); engineIndex++) {
+        OsContext *engine = this->getRegisteredEngines()[engineIndex].osContext;
+        if ((engine->getRootDeviceIndex() == rootDeviceIndex) &&
+            (engine->isDefaultContext() && engine->getDeviceBitfield() == subdevicesBitfield)) {
+            defaultContext = engine;
+            break;
+        }
+    }
+    if (!defaultContext) {
+        defaultContext = registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext;
+    }
+    return defaultContext;
+}
+
+void MemoryManager::commonCleanup() {
+    multiContextResourceDestructor->drain(false);
 }
 
 bool MemoryTransferHelper::transferMemoryToAllocation(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory, size_t srcSize) {

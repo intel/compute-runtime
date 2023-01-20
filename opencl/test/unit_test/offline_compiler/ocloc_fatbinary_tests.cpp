@@ -9,7 +9,7 @@
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
-#include "shared/source/compiler_interface/compiler_options/compiler_options_base.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device_binary_format/ar/ar.h"
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
@@ -20,6 +20,7 @@
 #include "environment.h"
 #include "mock/mock_argument_helper.h"
 #include "mock/mock_offline_compiler.h"
+#include "platforms.h"
 
 #include <algorithm>
 #include <unordered_set>
@@ -53,7 +54,7 @@ auto allFilesInArchiveExceptPaddingStartsWith(const Ar::Ar &archive, const Const
 }
 
 std::string getDeviceConfig(const OfflineCompiler &offlineCompiler, MockOclocArgHelper *argHelper) {
-    auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
+    auto allEnabledDeviceConfigs = argHelper->productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
         return {};
     }
@@ -68,7 +69,7 @@ std::string getDeviceConfig(const OfflineCompiler &offlineCompiler, MockOclocArg
 }
 
 std::string prepareTwoDevices(MockOclocArgHelper *argHelper) {
-    auto enabledProductsAcronyms = argHelper->getEnabledProductAcronyms();
+    auto enabledProductsAcronyms = argHelper->productConfigHelper->getRepresentativeProductAcronyms();
     if (enabledProductsAcronyms.size() < 2) {
         return {};
     }
@@ -90,7 +91,7 @@ void appendAcronymWithoutDashes(std::vector<std::string> &out, ConstStringRef ac
 }
 
 std::vector<std::string> prepareProductsWithoutDashes(OclocArgHelper *argHelper) {
-    auto enabledProductsAcronyms = argHelper->getEnabledProductAcronyms();
+    auto enabledProductsAcronyms = argHelper->productConfigHelper->getRepresentativeProductAcronyms();
     if (enabledProductsAcronyms.size() < 2) {
         return {};
     }
@@ -104,7 +105,7 @@ std::vector<std::string> prepareProductsWithoutDashes(OclocArgHelper *argHelper)
 }
 
 std::vector<std::string> prepareReleasesWithoutDashes(OclocArgHelper *argHelper) {
-    auto enabledReleasesAcronyms = argHelper->getEnabledReleasesAcronyms();
+    auto enabledReleasesAcronyms = argHelper->productConfigHelper->getReleasesAcronyms();
     if (enabledReleasesAcronyms.size() < 2) {
         return {};
     }
@@ -118,7 +119,7 @@ std::vector<std::string> prepareReleasesWithoutDashes(OclocArgHelper *argHelper)
 }
 
 std::vector<std::string> prepareFamiliesWithoutDashes(OclocArgHelper *argHelper) {
-    auto enabledFamiliesAcronyms = argHelper->getEnabledFamiliesAcronyms();
+    auto enabledFamiliesAcronyms = argHelper->productConfigHelper->getFamiliesAcronyms();
     if (enabledFamiliesAcronyms.size() < 2) {
         return {};
     }
@@ -143,9 +144,15 @@ TEST(OclocFatBinaryRequestedFatBinary, WhenDeviceArgMissingThenReturnsFalse) {
     EXPECT_FALSE(NEO::requestedFatBinary(4, args, argHelper.get()));
 }
 
+TEST(OclocFatBinaryRequestedFatBinary, givenHwInfoForProductConfigWhenUnknownIsaIsPassedThenFalseIsReturned) {
+    std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
+    NEO::HardwareInfo hwInfo;
+    EXPECT_FALSE(argHelper->getHwInfoForProductConfig(AOT::UNKNOWN_ISA, hwInfo, 0u));
+}
+
 TEST(OclocFatBinaryRequestedFatBinary, givenReleaseOrFamilyAcronymWhenGetAcronymsForTargetThenCorrectValuesAreReturned) {
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto &enabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
+    auto &enabledDeviceConfigs = argHelper->productConfigHelper->getDeviceAotInfo();
     if (enabledDeviceConfigs.empty()) {
         GTEST_SKIP();
     }
@@ -177,21 +184,22 @@ TEST(OclocFatBinaryRequestedFatBinary, givenReleaseOrFamilyAcronymWhenGetAcronym
 
 TEST(OclocFatBinaryRequestedFatBinary, givenDeviceArgToFatBinaryWhenConfigIsNotFullThenFalseIsReturned) {
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allEnabledDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
+    auto allEnabledDeviceConfigs = argHelper->productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
         GTEST_SKIP();
     }
     auto aotConfig = allEnabledDeviceConfigs[0].aotConfig;
 
     std::stringstream majorString;
-    majorString << aotConfig.ProductConfigID.Major;
+    majorString << aotConfig.architecture;
     auto major = majorString.str();
-    auto aotValue0 = argHelper->getMajorMinorRevision(major);
-    EXPECT_EQ(aotValue0.ProductConfig, AOT::UNKNOWN_ISA);
+
+    auto aotValue0 = argHelper->productConfigHelper->getProductConfigForVersionValue(major);
+    EXPECT_EQ(aotValue0, AOT::UNKNOWN_ISA);
 
     auto majorMinor = ProductConfigHelper::parseMajorMinorValue(aotConfig);
-    auto aotValue1 = argHelper->getMajorMinorRevision(majorMinor);
-    EXPECT_EQ(aotValue1.ProductConfig, AOT::UNKNOWN_ISA);
+    auto aotValue1 = argHelper->productConfigHelper->getProductConfigForVersionValue(majorMinor);
+    EXPECT_EQ(aotValue1, AOT::UNKNOWN_ISA);
 
     const char *cutRevision[] = {"ocloc", "-device", majorMinor.c_str()};
     const char *cutMinorAndRevision[] = {"ocloc", "-device", major.c_str()};
@@ -225,7 +233,7 @@ TEST(OclocFatBinaryRequestedFatBinary, givenDeviceArgProvidedWhenFatBinaryFormat
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgAsSingleProductThenFatBinaryIsNotRequested) {
-    auto allEnabledDeviceConfigs = oclocArgHelperWithoutInput->getAllSupportedDeviceConfigs();
+    auto allEnabledDeviceConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
 
     for (const auto &deviceConfig : allEnabledDeviceConfigs) {
         std::string configStr = ProductConfigHelper::parseMajorMinorRevisionValue(deviceConfig.aotConfig);
@@ -241,7 +249,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgAsSingleProductThenFatB
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenAsterixThenReturnAllEnabledAcronyms) {
-    auto expected = oclocArgHelperWithoutInput->getEnabledProductAcronyms();
+    auto expected = oclocArgHelperWithoutInput->productConfigHelper->getRepresentativeProductAcronyms();
     auto got = NEO::getTargetProductsForFatbinary("*", oclocArgHelperWithoutInput.get());
 
     EXPECT_EQ(got.size(), expected.size());
@@ -253,8 +261,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgProvidedWhenUnknownFami
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgProvidedWhenKnownNameIsPassedWithCoreSuffixThenRequestedFatBinaryReturnsTrue) {
-    for (const auto &acronyms : {enabledFamiliesAcronyms, enabledReleasesAcronyms}) {
-        for (const auto &acronym : acronyms) {
+    for (const auto *acronyms : {&enabledFamiliesAcronyms, &enabledReleasesAcronyms}) {
+        for (const auto &acronym : *acronyms) {
             auto acronymStr = acronym.str() + "_core";
             const char *name[] = {"ocloc", "-device", acronymStr.c_str()};
             EXPECT_TRUE(NEO::requestedFatBinary(3, name, oclocArgHelperWithoutInput.get()));
@@ -263,8 +271,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgProvidedWhenKnownNameIs
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenDeviceArgProvidedWhenKnownNameIsPassedThenRequestedFatBinaryReturnsTrue) {
-    for (const auto &acronyms : {enabledFamiliesAcronyms, enabledReleasesAcronyms}) {
-        for (const auto &acronym : acronyms) {
+    for (const auto *acronyms : {&enabledFamiliesAcronyms, &enabledReleasesAcronyms}) {
+        for (const auto &acronym : *acronyms) {
             auto acronymStr = acronym.str();
             const char *name[] = {"ocloc", "-device", acronymStr.c_str()};
             EXPECT_TRUE(NEO::requestedFatBinary(3, name, oclocArgHelperWithoutInput.get()));
@@ -278,7 +286,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenUnkownArchitectureThenReturnEmpt
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeTooExtensiveWhenProductsOrFamiliesOrReleasesAreValidThenFailIsReturned) {
-    for (const auto &enabledAcronyms : {enabledProductsAcronyms, enabledReleasesAcronyms, enabledFamiliesAcronyms}) {
+    for (const auto *enabledAcronymsPtr : {&enabledProductsAcronyms, &enabledReleasesAcronyms, &enabledFamiliesAcronyms}) {
+        const auto &enabledAcronyms = *enabledAcronymsPtr;
         if (enabledAcronyms.size() < 3) {
             GTEST_SKIP();
         }
@@ -315,8 +324,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenAcronymOpenRangeWhenAcronymIsUnk
 }
 
 TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeWhenAnyOfAcronymIsUnknownThenReturnEmptyList) {
-    for (const auto &vec : {enabledProductsAcronyms, enabledReleasesAcronyms, enabledFamiliesAcronyms}) {
-        for (const auto &acronym : vec) {
+    for (const auto *vec : {&enabledProductsAcronyms, &enabledReleasesAcronyms, &enabledFamiliesAcronyms}) {
+        for (const auto &acronym : *vec) {
             auto got = NEO::getTargetProductsForFatbinary("unk:" + acronym.str(), oclocArgHelperWithoutInput.get());
             EXPECT_TRUE(got.empty());
 
@@ -342,6 +351,43 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfProductsWhenFatBinar
         std::vector<ConstStringRef> expected{acronym0, acronym1};
 
         std::string acronymsTarget = acronym0.str() + "," + acronym1.str();
+        auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
+        EXPECT_EQ(got, expected);
+
+        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        std::stringstream resString;
+        std::vector<std::string> argv = {
+            "ocloc",
+            "-file",
+            clFiles + "copybuffer.cl",
+            "-device",
+            acronymsTarget};
+
+        testing::internal::CaptureStdout();
+        int retVal = buildFatBinary(argv, oclocArgHelperWithoutInput.get());
+        auto output = testing::internal::GetCapturedStdout();
+        EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+
+        for (const auto &product : expected) {
+            resString << "Build succeeded for : " << product.str() + ".\n";
+        }
+
+        EXPECT_STREQ(output.c_str(), resString.str().c_str());
+    }
+}
+
+TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoVersionsOfProductConfigsWhenFatBinaryBuildIsInvokedThenSuccessIsReturned) {
+    if (enabledProducts.size() < 2) {
+        GTEST_SKIP();
+    }
+    for (unsigned int product = 0; product < enabledProducts.size() - 1; product++) {
+        auto config0 = enabledProducts.at(product).aotConfig;
+        auto config1 = enabledProducts.at(product + 1).aotConfig;
+        auto configStr0 = ProductConfigHelper::parseMajorMinorRevisionValue(config0);
+        auto configStr1 = ProductConfigHelper::parseMajorMinorRevisionValue(config1);
+        std::vector<ConstStringRef> expected{configStr0, configStr1};
+
+        std::string acronymsTarget = configStr0 + "," + configStr1;
         auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 
@@ -408,7 +454,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoSameReleaseTargetsWhenGetProd
     auto acronym = enabledReleasesAcronyms[0];
     std::vector<ConstStringRef> acronyms{};
 
-    auto release = ProductConfigHelper::returnReleaseForAcronym(acronym.str());
+    auto release = ProductConfigHelper::getReleaseForAcronym(acronym.str());
     getProductsAcronymsForTarget(acronyms, release, oclocArgHelperWithoutInput.get());
     auto expectedSize = acronyms.size();
     getProductsAcronymsForTarget(acronyms, release, oclocArgHelperWithoutInput.get());
@@ -423,7 +469,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoSameFamilyTargetsWhenGetProdu
     auto acronym = enabledFamiliesAcronyms[0];
     std::vector<ConstStringRef> acronyms{};
 
-    auto family = ProductConfigHelper::returnFamilyForAcronym(acronym.str());
+    auto family = ProductConfigHelper::getFamilyForAcronym(acronym.str());
     getProductsAcronymsForTarget(acronyms, family, oclocArgHelperWithoutInput.get());
     auto expectedSize = acronyms.size();
     getProductsAcronymsForTarget(acronyms, family, oclocArgHelperWithoutInput.get());
@@ -438,8 +484,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenReleasesAcronymsWithoutDashesWhe
     }
 
     std::vector<ConstStringRef> expected{};
-    auto release0 = ProductConfigHelper::returnReleaseForAcronym(acronyms[0]);
-    auto release1 = ProductConfigHelper::returnReleaseForAcronym(acronyms[1]);
+    auto release0 = ProductConfigHelper::getReleaseForAcronym(acronyms[0]);
+    auto release1 = ProductConfigHelper::getReleaseForAcronym(acronyms[1]);
     getProductsAcronymsForTarget(expected, release0, oclocArgHelperWithoutInput.get());
     getProductsAcronymsForTarget(expected, release1, oclocArgHelperWithoutInput.get());
 
@@ -455,8 +501,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenFamiliesAcronymsWithoutDashesWhe
     }
 
     std::vector<ConstStringRef> expected{};
-    auto family0 = ProductConfigHelper::returnFamilyForAcronym(acronyms[0]);
-    auto family1 = ProductConfigHelper::returnFamilyForAcronym(acronyms[1]);
+    auto family0 = ProductConfigHelper::getFamilyForAcronym(acronyms[0]);
+    auto family1 = ProductConfigHelper::getFamilyForAcronym(acronyms[1]);
     getProductsAcronymsForTarget(expected, family0, oclocArgHelperWithoutInput.get());
     getProductsAcronymsForTarget(expected, family1, oclocArgHelperWithoutInput.get());
 
@@ -474,8 +520,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfReleasesWhenFatBinar
         auto acronym1 = enabledReleasesAcronyms.at(product + 1);
         std::vector<ConstStringRef> expected{};
 
-        auto release0 = ProductConfigHelper::returnReleaseForAcronym(acronym0.str());
-        auto release1 = ProductConfigHelper::returnReleaseForAcronym(acronym1.str());
+        auto release0 = ProductConfigHelper::getReleaseForAcronym(acronym0.str());
+        auto release1 = ProductConfigHelper::getReleaseForAcronym(acronym1.str());
         getProductsAcronymsForTarget(expected, release0, oclocArgHelperWithoutInput.get());
         getProductsAcronymsForTarget(expected, release1, oclocArgHelperWithoutInput.get());
 
@@ -515,8 +561,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfFamiliesWhenFatBinar
         auto acronym1 = enabledFamiliesAcronyms.at(product + 1);
         std::vector<ConstStringRef> expected{};
 
-        auto family0 = ProductConfigHelper::returnFamilyForAcronym(acronym0.str());
-        auto family1 = ProductConfigHelper::returnFamilyForAcronym(acronym1.str());
+        auto family0 = ProductConfigHelper::getFamilyForAcronym(acronym0.str());
+        auto family1 = ProductConfigHelper::getFamilyForAcronym(acronym1.str());
         getProductsAcronymsForTarget(expected, family0, oclocArgHelperWithoutInput.get());
         getProductsAcronymsForTarget(expected, family1, oclocArgHelperWithoutInput.get());
 
@@ -634,8 +680,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenReleasesClosedRangeWithoutDashes
     if (acronyms.size() < 2) {
         GTEST_SKIP();
     }
-    auto releaseFromIt = ProductConfigHelper::returnReleaseForAcronym(acronyms[0]);
-    auto releaseToIt = ProductConfigHelper::returnReleaseForAcronym(acronyms[1]);
+    auto releaseFromIt = ProductConfigHelper::getReleaseForAcronym(acronyms[0]);
+    auto releaseToIt = ProductConfigHelper::getReleaseForAcronym(acronyms[1]);
 
     if (releaseFromIt > releaseToIt) {
         std::swap(releaseFromIt, releaseToIt);
@@ -657,8 +703,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenFamiliesClosedRangeWithoutDashes
         GTEST_SKIP();
     }
 
-    auto familyFromIt = ProductConfigHelper::returnFamilyForAcronym(acronyms[0]);
-    auto familyToIt = ProductConfigHelper::returnFamilyForAcronym(acronyms[1]);
+    auto familyFromIt = ProductConfigHelper::getFamilyForAcronym(acronyms[0]);
+    auto familyToIt = ProductConfigHelper::getFamilyForAcronym(acronyms[1]);
 
     if (familyFromIt > familyToIt) {
         std::swap(familyFromIt, familyToIt);
@@ -686,8 +732,8 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenFamiliesClosedRangeWhenFatBinary
         auto acronymFrom = enabledFamiliesAcronyms.at(family);
         auto acronymTo = enabledFamiliesAcronyms.at(enabledFamiliesAcronyms.size() / 2);
 
-        auto familyFromIt = ProductConfigHelper::returnFamilyForAcronym(acronymFrom.str());
-        auto familyToIt = ProductConfigHelper::returnFamilyForAcronym(acronymTo.str());
+        auto familyFromIt = ProductConfigHelper::getFamilyForAcronym(acronymFrom.str());
+        auto familyToIt = ProductConfigHelper::getFamilyForAcronym(acronymTo.str());
 
         if (familyFromIt > familyToIt) {
             std::swap(familyFromIt, familyToIt);
@@ -833,7 +879,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromReleaseWithoutDashe
     }
     std::vector<ConstStringRef> expected{};
 
-    auto releaseFromId = ProductConfigHelper::returnReleaseForAcronym(acronyms[0]);
+    auto releaseFromId = ProductConfigHelper::getReleaseForAcronym(acronyms[0]);
     auto releaseToId = AOT::RELEASE_MAX;
     while (releaseFromId < releaseToId) {
         getProductsAcronymsForTarget(expected, releaseFromId, oclocArgHelperWithoutInput.get());
@@ -853,7 +899,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromReleaseWhenFatBinar
     for (const auto &release : enabledReleasesAcronyms) {
         std::vector<ConstStringRef> expected{};
 
-        auto releaseFromId = ProductConfigHelper::returnReleaseForAcronym(release.str());
+        auto releaseFromId = ProductConfigHelper::getReleaseForAcronym(release.str());
         auto releaseToId = AOT::RELEASE_MAX;
         while (releaseFromId < releaseToId) {
             getProductsAcronymsForTarget(expected, releaseFromId, oclocArgHelperWithoutInput.get());
@@ -895,7 +941,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToReleaseWhenFatBinaryB
         std::vector<ConstStringRef> expected{};
 
         auto releaseFromId = static_cast<AOT::RELEASE>(static_cast<unsigned int>(AOT::UNKNOWN_RELEASE) + 1);
-        auto releaseToId = ProductConfigHelper::returnReleaseForAcronym(release.str());
+        auto releaseToId = ProductConfigHelper::getReleaseForAcronym(release.str());
 
         while (releaseFromId <= releaseToId) {
             getProductsAcronymsForTarget(expected, releaseFromId, oclocArgHelperWithoutInput.get());
@@ -935,7 +981,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromFamilyWithoutDashes
     }
     std::vector<ConstStringRef> expected{};
 
-    auto familyFromId = ProductConfigHelper::returnFamilyForAcronym(acronyms[0]);
+    auto familyFromId = ProductConfigHelper::getFamilyForAcronym(acronyms[0]);
     auto familyToId = AOT::FAMILY_MAX;
     while (familyFromId < familyToId) {
         getProductsAcronymsForTarget(expected, familyFromId, oclocArgHelperWithoutInput.get());
@@ -955,7 +1001,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromFamilyWhenFatBinary
     for (const auto &family : enabledFamiliesAcronyms) {
         std::vector<ConstStringRef> expected{};
 
-        auto familyFromId = ProductConfigHelper::returnFamilyForAcronym(family.str());
+        auto familyFromId = ProductConfigHelper::getFamilyForAcronym(family.str());
         auto familyToId = AOT::FAMILY_MAX;
         while (familyFromId < familyToId) {
             getProductsAcronymsForTarget(expected, familyFromId, oclocArgHelperWithoutInput.get());
@@ -997,7 +1043,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToFamilyWhenFatBinaryBu
         std::vector<ConstStringRef> expected{};
 
         auto familyFromId = static_cast<AOT::FAMILY>(static_cast<unsigned int>(AOT::UNKNOWN_FAMILY) + 1);
-        auto familyToId = ProductConfigHelper::returnFamilyForAcronym(family.str());
+        auto familyToId = ProductConfigHelper::getFamilyForAcronym(family.str());
 
         while (familyFromId <= familyToId) {
             getProductsAcronymsForTarget(expected, familyFromId, oclocArgHelperWithoutInput.get());
@@ -1384,7 +1430,7 @@ TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTar
     MockOfflineCompiler mockOfflineCompiler{};
     mockOfflineCompiler.initialize(argv.size(), argv);
 
-    const char buildWarning[] = "Warning: This is a build log!";
+    const char buildWarning[] = "warning: This is a build log!";
     mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning));
     mockOfflineCompiler.buildReturnValue = OclocErrorCode::SUCCESS;
 
@@ -1406,6 +1452,39 @@ TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTar
 
     const std::string expectedOutput{buildWarning + "\nBuild succeeded for : "s + deviceConfig + ".\n"s};
     EXPECT_EQ(expectedOutput, output);
+}
+
+TEST(OclocFatBinaryHelpersTest, givenNonEmptyBuildLogWhenBuildingFatbinaryForTargetThenBuildLogIsNotPrinted) {
+    ::testing::internal::CaptureStdout();
+
+    const std::vector<std::string> argv = {
+        "ocloc",
+        "-q",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.initialize(argv.size(), argv);
+
+    const auto mockArgHelper = mockOfflineCompiler.uniqueHelper.get();
+    const auto deviceConfig = getDeviceConfig(mockOfflineCompiler, mockArgHelper);
+
+    const char buildWarning[] = "Warning: this is a build log!";
+    mockOfflineCompiler.updateBuildLog(buildWarning, sizeof(buildWarning));
+    mockOfflineCompiler.buildReturnValue = OclocErrorCode::SUCCESS;
+
+    mockOfflineCompiler.elfBinary = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+
+    Ar::ArEncoder ar;
+    const std::string pointerSize{"32"};
+
+    const int previousReturnValue{OclocErrorCode::SUCCESS};
+    buildFatBinaryForTarget(previousReturnValue, argv, pointerSize, ar, &mockOfflineCompiler, mockArgHelper, deviceConfig);
+    const auto output{::testing::internal::GetCapturedStdout()};
+
+    EXPECT_TRUE(output.empty()) << output;
 }
 
 TEST(OclocFatBinaryHelpersTest, givenQuietModeWhenBuildingFatbinaryForTargetThenNothingIsPrinted) {

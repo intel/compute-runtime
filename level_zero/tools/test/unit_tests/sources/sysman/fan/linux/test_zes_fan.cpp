@@ -23,7 +23,6 @@ class SysmanDeviceFanFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         SysmanDeviceFixture::SetUp();
-        pSysmanDeviceImp->pFanHandleContext->init();
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {

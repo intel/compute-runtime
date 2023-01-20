@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
@@ -46,8 +47,8 @@ class MockKernelWithApplicableWa : public MockKernel {
 
 struct HardwareInterfaceTests : public ClDeviceFixture, public LinearStreamFixture, public ::testing::Test {
     void SetUp() override {
-        ClDeviceFixture::SetUp();
-        LinearStreamFixture::SetUp();
+        ClDeviceFixture::setUp();
+        LinearStreamFixture::setUp();
 
         pContext = new NEO::MockContext(pClDevice);
         pCommandQueue = new MockCommandQueue(pContext, pClDevice, nullptr, false);
@@ -63,8 +64,8 @@ struct HardwareInterfaceTests : public ClDeviceFixture, public LinearStreamFixtu
         pCommandQueue->release();
         pContext->release();
 
-        LinearStreamFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        LinearStreamFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     CommandQueue *pCommandQueue = nullptr;
@@ -105,7 +106,7 @@ GEN12LPTEST_F(HardwareInterfaceTests, GivenKernelWithApplicableWaDisableRccRhwoO
     size_t expectedUsedForDisableWa = 2 * (sizeof(PIPE_CONTROL) + sizeof(MI_LOAD_REGISTER_IMM));
     ASSERT_EQ(expectedUsedForDisableWa, linearStream.getUsed());
 
-    hwParse.TearDown();
+    hwParse.tearDown();
     hwParse.parseCommands<FamilyType>(linearStream, expectedUsedForEnableWa);
     itorPipeCtrl = find<PIPE_CONTROL *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
     ASSERT_NE(hwParse.cmdList.end(), itorPipeCtrl);

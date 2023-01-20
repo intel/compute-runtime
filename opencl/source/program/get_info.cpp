@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "shared/source/helpers/get_info.h"
 
+#include "shared/source/compiler_interface/compiler_cache.h"
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/program/kernel_info.h"
@@ -44,7 +46,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         break;
 
     case CL_PROGRAM_BINARIES: {
-        auto requiredSize = clDevices.size() * sizeof(const unsigned char **);
+        auto requiredSize = clDevices.size() * sizeof(unsigned char *);
         if (!paramValue) {
             retSize = requiredSize;
             srcSize = 0u;
@@ -75,7 +77,7 @@ cl_int Program::getInfo(cl_program_info paramName, size_t paramValueSize,
         }
 
         pSrc = binarySizes.data();
-        retSize = srcSize = binarySizes.size() * sizeof(cl_device_id);
+        retSize = srcSize = binarySizes.size() * sizeof(size_t);
         break;
 
     case CL_PROGRAM_KERNEL_NAMES:

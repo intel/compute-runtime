@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,15 +20,15 @@ class DestructorCallbackFixture : public MemoryManagementFixture {
     DestructorCallbackFixture() {
     }
 
-    void SetUp() override {
-        MemoryManagementFixture::SetUp();
+    void setUp() {
+        MemoryManagementFixture::setUp();
         BufferDefaults::context = new MockContext;
     }
 
-    void TearDown() override {
+    void tearDown() {
         delete BufferDefaults::context;
         platformsImpl->clear();
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
     }
 
   protected:

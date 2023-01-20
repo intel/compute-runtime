@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -309,10 +310,11 @@ TEST_F(EnqueueKernelTest, GivenNullKernelWhenEnqueuingNDCountKernelINTELThenInva
 using clEnqueueNDCountKernelTests = api_tests;
 
 TEST_F(clEnqueueNDCountKernelTests, GivenQueueIncapableWhenEnqueuingNDCountKernelINTELThenInvalidOperationIsReturned) {
-    auto &hwHelper = HwHelper::get(::defaultHwInfo->platform.eRenderCoreFamily);
-    auto engineGroupType = hwHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(),
-                                                       pCommandQueue->getGpgpuEngine().getEngineUsage(), *::defaultHwInfo);
-    if (!hwHelper.isCooperativeDispatchSupported(engineGroupType, *::defaultHwInfo)) {
+
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(),
+                                                            pCommandQueue->getGpgpuEngine().getEngineUsage(), *::defaultHwInfo);
+    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, *::defaultHwInfo)) {
         GTEST_SKIP();
     }
 
@@ -343,10 +345,10 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDCountKernel
     cl_int retVal = CL_SUCCESS;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    auto engineGroupType = hwHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
-                                                       pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    if (!hwHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+    auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
+                                                            pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
+    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
@@ -391,10 +393,10 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
     cl_int retVal = CL_SUCCESS;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    auto engineGroupType = hwHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
-                                                       pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    if (!hwHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
+    auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
+    auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
+                                                            pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
+    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
@@ -439,10 +441,10 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
     cl_int retVal = CL_SUCCESS;
     CommandQueue *pCmdQ2 = createCommandQueue(pClDevice);
 
-    HwHelper &hwHelper = HwHelper::get(hardwareInfo.platform.eRenderCoreFamily);
-    auto engineGroupType = hwHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
-                                                       pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    if (!hwHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
+    auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
+    auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
+                                                            pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
+    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
@@ -503,8 +505,14 @@ HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenTaskLevelIsIncremented) {
     EXPECT_GT(pCmdQ->taskLevel, taskLevelBefore);
 }
 
+HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenLatestSentEnqueueTypeIsUpdated) {
+    EXPECT_NE(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::GpuKernel);
+    callOneWorkItemNDRKernel();
+    EXPECT_EQ(pCmdQ->peekLatestSentEnqueueOperation(), EnqueueProperties::Operation::GpuKernel);
+}
+
 HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenCsrTaskLevelIsIncremented) {
-    //this test case assumes IOQ
+    // this test case assumes IOQ
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     csr.taskCount = pCmdQ->taskCount + 100;
     csr.taskLevel = pCmdQ->taskLevel + 50;
@@ -554,6 +562,8 @@ HWTEST_F(EnqueueKernelTest, GivenGpuHangAndBlockingCallWhenEnqueingKernelThenOut
 }
 
 HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenIndirectDataIsAdded) {
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+
     auto dshBefore = pDSH->getUsed();
     auto iohBefore = pIOH->getUsed();
     auto sshBefore = pSSH->getUsed();
@@ -561,7 +571,7 @@ HWTEST_F(EnqueueKernelTest, WhenEnqueingKernelThenIndirectDataIsAdded) {
     callOneWorkItemNDRKernel();
     EXPECT_TRUE(UnitTestHelper<FamilyType>::evaluateDshUsage(dshBefore, pDSH->getUsed(), &pKernel->getKernelInfo().kernelDescriptor, rootDeviceIndex));
     EXPECT_NE(iohBefore, pIOH->getUsed());
-    if (pKernel->usesBindfulAddressingForBuffers() || pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesImages) {
+    if ((pKernel->usesBindfulAddressingForBuffers() || pKernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesImages) && compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
         EXPECT_NE(sshBefore, pSSH->getUsed());
     }
 }
@@ -698,9 +708,9 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteWhenSbaIsBeingP
 
     EXPECT_EQ(csr.recordedDispatchFlags.l3CacheSettings, L3CachingSettings::l3AndL1On);
 
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto gmmHelper = this->pDevice->getGmmHelper();
-    auto expectedMocsIndex = helper.getMocsIndex(*gmmHelper, true, true);
+    auto expectedMocsIndex = gfxCoreHelper.getMocsIndex(*gmmHelper, true, true);
     EXPECT_EQ(expectedMocsIndex, csr.latestSentStatelessMocsConfig);
 }
 
@@ -720,9 +730,10 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithNoStatelessWriteOnBlockedCodePa
 
     EXPECT_EQ(csr.recordedDispatchFlags.l3CacheSettings, L3CachingSettings::l3AndL1On);
 
-    auto &helper = HwHelper::get(renderCoreFamily);
+    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+
     auto gmmHelper = this->pDevice->getGmmHelper();
-    auto expectedMocsIndex = helper.getMocsIndex(*gmmHelper, true, true);
+    auto expectedMocsIndex = gfxCoreHelper.getMocsIndex(*gmmHelper, true, true);
     EXPECT_EQ(expectedMocsIndex, csr.latestSentStatelessMocsConfig);
 
     clReleaseEvent(userEvent);
@@ -771,9 +782,10 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenEnqueueK
 
     auto cmdBuffer = mockedSubmissionsAggregator->peekCmdBufferList().peekHead();
 
-    //Three more surfaces from preemptionAllocation, SipKernel and clearColorAllocation
+    // Three more surfaces from preemptionAllocation, SipKernel and clearColorAllocation
     size_t csrSurfaceCount = (pDevice->getPreemptionMode() == PreemptionMode::MidThread) ? 2 : 0;
     csrSurfaceCount -= pDevice->getHardwareInfo().capabilityTable.supportsImages ? 0 : 1;
+    csrSurfaceCount += mockCsr->getKernelArgsBufferAllocation() ? 1 : 0;
     size_t timestampPacketSurfacesCount = mockCsr->peekTimestampPacketWriteEnabled() ? 1 : 0;
     size_t fenceSurfaceCount = mockCsr->globalFenceAllocation ? 1 : 0;
     size_t clearColorSize = mockCsr->clearColorAllocation ? 1 : 0;
@@ -926,7 +938,7 @@ HWTEST_F(EnqueueKernelTest, givenCommandStreamReceiverInBatchingModeWhenKernelIs
 
     MockKernelWithInternals mockKernel(*pClDevice, context);
     size_t gws[3] = {1, 0, 0};
-    //make sure csr emits something
+    // make sure csr emits something
     mockCsrmockCsr.mediaVfeStateDirty = true;
     pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     mockCsrmockCsr.mediaVfeStateDirty = true;
@@ -1498,6 +1510,97 @@ TEST_F(EnqueueKernelTest, givenEnqueueCommandWithWorkDimLargerThanAllowedWhenEnq
     EXPECT_EQ(CL_INVALID_WORK_DIMENSION, status);
 }
 
+TEST_F(EnqueueKernelTest, givenEnqueueCommandWithWorkDimsResultingInMoreThan32BitMaxGroupsWhenEnqueueNDRangeKernelIsCalledThenInvalidGlobalSizeIsReturned) {
+
+    if (sizeof(size_t) < 8) {
+        GTEST_SKIP();
+    }
+
+    size_t max32Bit = std::numeric_limits<uint32_t>::max();
+    size_t globalWorkSize[3] = {max32Bit * 4, 4, 4};
+    size_t localWorkSize[3] = {4, 4, 4};
+    MockKernelWithInternals mockKernel(*pClDevice);
+    auto testedWorkDim = 3;
+
+    auto status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    globalWorkSize[0] = max32Bit * 4 + 4;
+    status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+
+    globalWorkSize[0] = 4;
+    globalWorkSize[1] = max32Bit * 4 + 4;
+
+    status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+
+    globalWorkSize[1] = 4;
+    globalWorkSize[2] = max32Bit * 4 + 4;
+
+    status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+}
+
+TEST_F(EnqueueKernelTest, givenEnqueueCommandWithNullLwsAndWorkDimsResultingInMoreThan32BitMaxGroupsWhenEnqueueNDRangeKernelIsCalledThenInvalidGlobalSizeIsReturned) {
+
+    if (sizeof(size_t) < 8) {
+        GTEST_SKIP();
+    }
+
+    auto maxWgSize = static_cast<uint32_t>(pClDevice->getDevice().getDeviceInfo().maxWorkGroupSize);
+
+    size_t max32Bit = std::numeric_limits<uint32_t>::max();
+    size_t globalWorkSize[3] = {(max32Bit + 1) * maxWgSize, 3, 4};
+    MockKernelWithInternals mockKernel(*pClDevice);
+    auto testedWorkDim = 3;
+
+    auto status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+
+    globalWorkSize[0] = (max32Bit + 1) * maxWgSize + 3;
+    status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+
+    globalWorkSize[0] = 4;
+    globalWorkSize[1] = (max32Bit + 1) * maxWgSize;
+
+    status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+
+    globalWorkSize[1] = 4;
+    globalWorkSize[2] = (max32Bit + 1) * maxWgSize * 2 + 3;
+
+    status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_INVALID_GLOBAL_WORK_SIZE, status);
+}
+
+TEST_F(EnqueueKernelTest, givenEnqueueCommandWithNullLwsAndWorkDimsResultingInLessThan32BitMaxGroupsWhenEnqueueNDRangeKernelIsCalledThenSuccessIsReturned) {
+
+    if (sizeof(size_t) < 8) {
+        GTEST_SKIP();
+    }
+
+    size_t max32Bit = std::numeric_limits<uint32_t>::max();
+    size_t globalWorkSize[3] = {(max32Bit + 1) * 4, 1, 1};
+    MockKernelWithInternals mockKernel(*pClDevice);
+    auto testedWorkDim = 3;
+
+    auto status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    globalWorkSize[0] = 1;
+    globalWorkSize[1] = (max32Bit + 1) * 4;
+    status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+
+    globalWorkSize[1] = 1;
+    globalWorkSize[2] = (max32Bit + 1) * 4;
+
+    status = clEnqueueNDRangeKernel(pCmdQ, mockKernel.mockMultiDeviceKernel, testedWorkDim, nullptr, globalWorkSize, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, status);
+}
+
 HWTEST_F(EnqueueKernelTest, givenVMEKernelWhenEnqueueKernelThenDispatchFlagsHaveMediaSamplerRequired) {
     auto mockCsr = new MockCsrHw2<FamilyType>(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     mockCsr->overrideDispatchPolicy(DispatchMode::BatchedDispatch);
@@ -1544,10 +1647,10 @@ HWTEST_F(EnqueueKernelTest, givenContextWithSeveralDevicesWhenEnqueueKernelThenD
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_FALSE(mockCsr->passedDispatchFlags.areMultipleSubDevicesInContext);
 
-    context->deviceBitfields[rootDeviceIndex].set(7, true);
+    context->deviceBitfields[rootDeviceIndex].set(3, true);
     clEnqueueNDRangeKernel(this->pCmdQ, mockKernel.mockMultiDeviceKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
     EXPECT_TRUE(mockCsr->passedDispatchFlags.areMultipleSubDevicesInContext);
-    context->deviceBitfields[rootDeviceIndex].set(7, false);
+    context->deviceBitfields[rootDeviceIndex].set(3, false);
 }
 
 HWTEST_F(EnqueueKernelTest, givenNonVMEKernelWhenEnqueueKernelThenDispatchFlagsDoesntHaveMediaSamplerRequired) {

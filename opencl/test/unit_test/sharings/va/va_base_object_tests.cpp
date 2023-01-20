@@ -28,11 +28,6 @@ struct VABaseObjectTests : public ::testing::Test {
 typedef ::testing::Types<
     MockPlatform,
     IntelAccelerator,
-    //Context,
-    //Program,
-    //Kernel,
-    //Sampler
-    //others...
     MockCommandQueue>
     BaseObjectTypes;
 

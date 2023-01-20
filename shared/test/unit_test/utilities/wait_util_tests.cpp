@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/utilities/wait_util.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "gtest/gtest.h"
 
@@ -50,8 +50,8 @@ TEST(WaitTest, givenDefaultSettingsWhenPollAddressProvidedDoesNotMeetCriteriaThe
     WaitUtils::init();
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
 
-    volatile uint32_t pollValue = 1u;
-    uint32_t expectedValue = 3;
+    volatile TagAddressType pollValue = 1u;
+    TaskCountType expectedValue = 3;
 
     uint32_t oldCount = CpuIntrinsicsTests::pauseCounter.load();
     bool ret = WaitUtils::waitFunction(&pollValue, expectedValue);
@@ -63,8 +63,8 @@ TEST(WaitTest, givenDefaultSettingsWhenPollAddressProvidedMeetsCriteriaThenPause
     WaitUtils::init();
     EXPECT_EQ(WaitUtils::defaultWaitCount, WaitUtils::waitCount);
 
-    volatile uint32_t pollValue = 3u;
-    uint32_t expectedValue = 1;
+    volatile TagAddressType pollValue = 3u;
+    TaskCountType expectedValue = 1;
 
     uint32_t oldCount = CpuIntrinsicsTests::pauseCounter.load();
     bool ret = WaitUtils::waitFunction(&pollValue, expectedValue);
@@ -82,8 +82,8 @@ TEST(WaitTest, givenDebugFlagSetZeroWhenPollAddressProvidedMeetsCriteriaThenPaus
     WaitUtils::init();
     EXPECT_EQ(count, WaitUtils::waitCount);
 
-    volatile uint32_t pollValue = 3u;
-    uint32_t expectedValue = 1;
+    volatile TagAddressType pollValue = 3u;
+    TaskCountType expectedValue = 1;
 
     uint32_t oldCount = CpuIntrinsicsTests::pauseCounter.load();
     bool ret = WaitUtils::waitFunction(&pollValue, expectedValue);

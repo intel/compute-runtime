@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
@@ -21,15 +21,15 @@ class MigrateMemObjectsFixture
     : public ClDeviceFixture,
       public CommandQueueHwFixture {
   public:
-    void SetUp() override {
-        ClDeviceFixture::SetUp();
-        CommandQueueHwFixture::SetUp(pClDevice, 0);
+    void setUp() {
+        ClDeviceFixture::setUp();
+        CommandQueueHwFixture::setUp(pClDevice, 0);
         ASSERT_NE(nullptr, pCmdQ);
     }
 
-    void TearDown() override {
-        CommandQueueHwFixture::TearDown();
-        ClDeviceFixture::TearDown();
+    void tearDown() {
+        CommandQueueHwFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 };
 

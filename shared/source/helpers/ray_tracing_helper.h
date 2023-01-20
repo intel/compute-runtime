@@ -24,10 +24,12 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
     static constexpr uint32_t memoryBackedFifoSizePerDss = 8 * KB;
     static constexpr uint32_t maxBvhLevels = 8;
 
-    static size_t getDispatchGlobalSize(const Device &device, uint32_t maxBvhLevel, uint32_t extraBytesLocal, uint32_t extraBytesGlobal) {
-        return static_cast<size_t>(alignUp(getRtGlobalsSize(), MemoryConstants::cacheLineSize) +
-                                   getStackSizePerRay(maxBvhLevel, extraBytesLocal) * getNumRtStacks(device) +
-                                   extraBytesGlobal);
+    static size_t getDispatchGlobalSize() {
+        return static_cast<size_t>(alignUp(sizeof(RTDispatchGlobals), MemoryConstants::cacheLineSize));
+    }
+
+    static size_t getRTStackSizePerTile(const Device &device, uint32_t tiles, uint32_t maxBvhLevel, uint32_t extraBytesLocal, uint32_t extraBytesGlobal) {
+        return static_cast<size_t>(alignUp(getStackSizePerRay(maxBvhLevel, extraBytesLocal) * (getNumRtStacks(device)) + extraBytesGlobal, MemoryConstants::cacheLineSize));
     }
 
     static size_t getTotalMemoryBackedFifoSize(const Device &device) {
@@ -38,10 +40,8 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
         return static_cast<size_t>(Math::log2(memoryBackedFifoSizePerDss / KB) - 1);
     }
 
-    static size_t getRtGlobalsSize() { return sizeof(RTDispatchGlobals); }
-
     static uint32_t getNumRtStacks(const Device &device) {
-        return device.getHardwareInfo().gtSystemInfo.DualSubSliceCount * stackDssMultiplier;
+        return device.getHardwareInfo().gtSystemInfo.MaxDualSubSlicesSupported * stackDssMultiplier;
     }
 
     static uint32_t getNumRtStacksPerDss(const Device &device) {
@@ -49,13 +49,11 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
     }
 
     static uint32_t getNumDss(const Device &device) {
-        return device.getHardwareInfo().gtSystemInfo.DualSubSliceCount;
+        return device.getHardwareInfo().gtSystemInfo.MaxDualSubSlicesSupported;
     }
 
     static uint32_t getStackSizePerRay(uint32_t maxBvhLevel, uint32_t extraBytesLocal) {
-        return alignUp((hitInfoSize + bvhStackSize * maxBvhLevel +
-                        extraBytesLocal),
-                       MemoryConstants::cacheLineSize);
+        return hitInfoSize + bvhStackSize * maxBvhLevel + extraBytesLocal;
     }
 };
 } // namespace NEO

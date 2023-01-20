@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/image/image_hw.h"
@@ -239,11 +240,11 @@ HWTEST_F(CommandListCreate, givenUseCsrImmediateSubmissionEnabledForCopyImmediat
 
 class CommandListImmediateFlushTaskTests : public DeviceFixture {
   public:
-    void SetUp() {
-        DeviceFixture::SetUp();
+    void setUp() {
+        DeviceFixture::setUp();
     }
-    void TearDown() {
-        DeviceFixture::TearDown();
+    void tearDown() {
+        DeviceFixture::tearDown();
     }
     DebugManagerStateRestore restorer;
 };
@@ -257,12 +258,20 @@ HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenDG2CommandListIsInitit
     EXPECT_EQ(true, commandList->isFlushTaskSubmissionEnabled);
 }
 
-HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenXeHPCommandListIsInititalizedThenByDefaultFlushTaskSubmissionEnabled, IsXEHP) {
+HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenMTLCommandListIsInititalizedThenByDefaultFlushTaskSubmissionDisabled, IsMTL) {
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
 
     EXPECT_EQ(false, commandList->isFlushTaskSubmissionEnabled);
+}
+
+HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenXeHPCommandListIsInititalizedThenByDefaultFlushTaskSubmissionEnabled, IsXEHP) {
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
+
+    EXPECT_EQ(true, commandList->isFlushTaskSubmissionEnabled);
 }
 
 using MatchXeHpc = IsGfxCore<IGFX_XE_HPC_CORE>;
@@ -279,7 +288,7 @@ HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenCommandListIsInititali
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
 
-    EXPECT_EQ(false, commandList->isFlushTaskSubmissionEnabled);
+    EXPECT_EQ(true, commandList->isFlushTaskSubmissionEnabled);
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenFlushTaskSubmissionDisabledWhenCommandListIsInititalizedThenFlushTaskIsSetToFalse) {
@@ -305,6 +314,50 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     CmdListKernelLaunchParams launchParams = {};
     auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+using CommandListAppendLaunchKernelResetKernelCount = Test<DeviceFixture>;
+
+HWTEST2_F(CommandListAppendLaunchKernelResetKernelCount, givenIsKernelSplitOperationFalseWhenAppendLaunchKernelThenResetKernelCount, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+
+    NEO::DebugManager.flags.CompactL3FlushEventPacket.set(0);
+    NEO::DebugManager.flags.UsePipeControlMultiKernelEventSync.set(0);
+
+    Mock<::L0::Kernel> kernel;
+    ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    ze_group_count_t groupCount{1, 1, 1};
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = 1;
+    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    auto event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
+    CmdListKernelLaunchParams launchParams = {};
+    {
+        event->zeroKernelCount();
+        event->increaseKernelCount();
+        event->increaseKernelCount();
+        launchParams.isKernelSplitOperation = true;
+
+        result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(2u, event->getKernelCount());
+    }
+    {
+        launchParams.isKernelSplitOperation = false;
+        result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams);
+        ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(1u, event->getKernelCount());
+    }
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionEnabledForImmediateCommandListForAppendPageFaultThenSuccessIsReturned) {
@@ -568,7 +621,7 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
 
     ze_event_handle_t hEventHandle = event->toHandle();
-    result = commandList->appendWaitOnEvents(1, &hEventHandle);
+    result = commandList->appendWaitOnEvents(1, &hEventHandle, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     context->destroy();

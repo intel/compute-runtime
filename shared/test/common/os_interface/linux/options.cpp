@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/os_interface/os_library.h"
-
 #include "common/gtsysinfo.h"
 #include "igfxfmid.h"
 #include "test_files_setup.h"
@@ -29,7 +27,3 @@ const char *sysFsPciPathPrefix = NEO_SHARED_TEST_FILES_DIR "/linux/devices/";
 const char *pciDevicesDirectory = NEO_SHARED_TEST_FILES_DIR "/linux/by-path";
 const char *sysFsProcPathPrefix = NEO_SHARED_TEST_FILES_DIR "/linux/proc/";
 } // namespace Os
-
-NEO::OsLibrary *setAdapterInfo(const PLATFORM *platform, const GT_SYSTEM_INFO *gtSystemInfo, uint64_t gpuAddressSpace) {
-    return nullptr;
-}

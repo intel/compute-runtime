@@ -1,13 +1,18 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/app_resource_helper.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/local_memory_usage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include <bitset>
@@ -18,7 +23,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         return {};
     }
 
-    const auto deviceCount = HwHelper::getSubDevicesCount(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo());
+    const auto deviceCount = GfxCoreHelper::getSubDevicesCount(executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getHardwareInfo());
     const auto leastOccupiedBank = getLocalMemoryUsageBankSelector(properties.allocationType, properties.rootDeviceIndex)->getLeastOccupiedBank(properties.subDevicesBitfield);
     const auto subDevicesMask = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->deviceAffinityMask.getGenericSubDevicesMask().to_ulong();
 
@@ -35,26 +40,19 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
 
     StorageInfo storageInfo{preferredTile, allTilesValue};
     storageInfo.subDeviceBitfield = properties.subDevicesBitfield;
-    storageInfo.isLockable = GraphicsAllocation::isLockable(properties.allocationType);
+    storageInfo.isLockable = GraphicsAllocation::isLockable(properties.allocationType) || (properties.makeDeviceBufferLockable && properties.allocationType == AllocationType::BUFFER);
     storageInfo.cpuVisibleSegment = GraphicsAllocation::isCpuAccessRequired(properties.allocationType);
 
     AppResourceHelper::copyResourceTagStr(storageInfo.resourceTag, properties.allocationType,
                                           sizeof(storageInfo.resourceTag));
 
     switch (properties.allocationType) {
+    case AllocationType::CONSTANT_SURFACE:
     case AllocationType::KERNEL_ISA:
     case AllocationType::KERNEL_ISA_INTERNAL:
     case AllocationType::DEBUG_MODULE_AREA: {
-        auto placeIsaOnMultiTile = (properties.subDevicesBitfield.count() != 1);
-
-        if (executionEnvironment.isDebuggingEnabled()) {
-            placeIsaOnMultiTile = false;
-        }
-
-        if (DebugManager.flags.MultiTileIsaPlacement.get() != -1) {
-            placeIsaOnMultiTile = !!DebugManager.flags.MultiTileIsaPlacement.get();
-        }
-        if (placeIsaOnMultiTile) {
+        auto placeAllocOnMultiTile = (properties.subDevicesBitfield.count() != 1);
+        if (placeAllocOnMultiTile) {
             storageInfo.cloningOfPageTables = false;
             storageInfo.memoryBanks = allTilesValue;
             storageInfo.tileInstanced = true;
@@ -93,6 +91,7 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
         break;
     case AllocationType::SCRATCH_SURFACE:
     case AllocationType::PREEMPTION:
+    case AllocationType::DEFERRED_TASKS_LIST:
         if (properties.flags.multiOsContextCapable) {
             storageInfo.cloningOfPageTables = false;
             storageInfo.memoryBanks = allTilesValue;
@@ -150,9 +149,6 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
     }
     case AllocationType::UNIFIED_SHARED_MEMORY:
         storageInfo.memoryBanks = allTilesValue;
-        if (DebugManager.flags.UseKmdMigration.get() != -1) {
-            storageInfo.memoryBanks = preferredTile;
-        }
         if (DebugManager.flags.OverrideMultiStoragePlacement.get() != -1) {
             storageInfo.memoryBanks = DebugManager.flags.OverrideMultiStoragePlacement.get();
         }
@@ -189,7 +185,20 @@ StorageInfo MemoryManager::createStorageInfoFromProperties(const AllocationPrope
             UNRECOVERABLE_IF(storageInfo.memoryBanks.none());
         }
     }
-
+    if (DebugManager.flags.ForceMultiTileAllocPlacement.get()) {
+        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceMultiTileAllocPlacement.get()) {
+            storageInfo.cloningOfPageTables = false;
+            storageInfo.memoryBanks = allTilesValue;
+            storageInfo.tileInstanced = true;
+        }
+    }
+    if (DebugManager.flags.ForceSingleTileAllocPlacement.get()) {
+        if ((1llu << (static_cast<int64_t>(properties.allocationType) - 1)) & DebugManager.flags.ForceSingleTileAllocPlacement.get()) {
+            storageInfo.cloningOfPageTables = true;
+            storageInfo.memoryBanks = preferredTile;
+            storageInfo.tileInstanced = false;
+        }
+    }
     return storageInfo;
 }
 uint32_t StorageInfo::getNumBanks() const {
@@ -197,5 +206,9 @@ uint32_t StorageInfo::getNumBanks() const {
         return 1u;
     }
     return static_cast<uint32_t>(memoryBanks.count());
+}
+
+uint32_t StorageInfo::getTotalBanksCnt() const {
+    return Math::log2(getMemoryBanks()) + 1;
 }
 } // namespace NEO

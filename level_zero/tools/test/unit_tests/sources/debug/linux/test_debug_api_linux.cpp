@@ -1,44 +1,43 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/os_interface/linux/i915_prelim.h"
 // Force prelim headers over upstream headers
-// clang-format off
-#include "third_party/uapi/prelim/drm/i915_drm.h"
-// clang-format on
-
 // prevent including any other headers to avoid redefintion errors
 #define _I915_DRM_H_
 #define _UAPI_I915_DRM_H_
 
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
 #include "shared/test/common/mocks/mock_sip.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/debug_handlers.h"
 #include "level_zero/tools/source/debug/linux/prelim/debug_session.h"
+#include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
+#include "level_zero/tools/test/unit_tests/sources/debug/linux/debug_session_fixtures_linux.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
-#include "shared/test/common/mocks/ult_device_factory.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "common/StateSaveAreaHeader.h"
 
-#include <atomic>
 #include <fstream>
-#include <queue>
 #include <type_traits>
-#include <unordered_map>
 
 namespace NEO {
 namespace SysCalls {
@@ -56,494 +55,7 @@ extern uint32_t munmapFuncCalled;
 namespace L0 {
 namespace ult {
 
-using typeOfUUID = std::decay<decltype(prelim_drm_i915_debug_event_vm_bind::uuids[0])>::type;
-
-struct MockIoctlHandler : public L0::DebugSessionLinux::IoctlHandler {
-    using EventPair = std::pair<char *, uint64_t>;
-    using EventQueue = std::queue<EventPair>;
-
-    int ioctl(int fd, unsigned long request, void *arg) override {
-        ioctlCalled++;
-
-        if ((request == PRELIM_I915_DEBUG_IOCTL_READ_EVENT) && (arg != nullptr)) {
-            auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(arg);
-            debugEventInput = *debugEvent;
-
-            if (!eventQueue.empty()) {
-                auto frontEvent = eventQueue.front();
-                memcpy(arg, frontEvent.first, frontEvent.second);
-                eventQueue.pop();
-                return 0;
-            } else {
-                debugEventRetVal = -1;
-            }
-            return debugEventRetVal;
-        } else if ((request == PRELIM_I915_DEBUG_IOCTL_ACK_EVENT) && (arg != nullptr)) {
-            auto debugEvent = reinterpret_cast<prelim_drm_i915_debug_event *>(arg);
-            debugEventAcked = *debugEvent;
-            return 0;
-        } else if ((request == PRELIM_I915_DEBUG_IOCTL_READ_UUID) && (arg != nullptr)) {
-            prelim_drm_i915_debug_read_uuid *uuid = reinterpret_cast<prelim_drm_i915_debug_read_uuid *>(arg);
-            if (returnUuid) {
-                uuid->client_handle = returnUuid->client_handle;
-                uuid->handle = returnUuid->handle;
-                uuid->flags = returnUuid->flags;
-                memcpy(uuid->uuid, returnUuid->uuid, sizeof(prelim_drm_i915_debug_read_uuid::uuid));
-                int returnError = 0;
-                if (uuid->payload_size >= returnUuid->payload_size) {
-                    memcpy(reinterpret_cast<void *>(uuid->payload_ptr), reinterpret_cast<void *>(returnUuid->payload_ptr), returnUuid->payload_size);
-                } else {
-                    returnError = -1;
-                }
-                returnUuid = nullptr;
-                return returnError;
-            }
-            return -1;
-        } else if ((request == PRELIM_I915_DEBUG_IOCTL_VM_OPEN) && (arg != nullptr)) {
-            prelim_drm_i915_debug_vm_open *vmOpenIn = reinterpret_cast<prelim_drm_i915_debug_vm_open *>(arg);
-            vmOpen = *vmOpenIn;
-            return vmOpenRetVal;
-        } else if ((request == PRELIM_I915_DEBUG_IOCTL_EU_CONTROL) && (arg != nullptr)) {
-            prelim_drm_i915_debug_eu_control *euControlArg = reinterpret_cast<prelim_drm_i915_debug_eu_control *>(arg);
-            euControl = *euControlArg;
-
-            euControlArg->seqno = euControlOutputSeqno;
-
-            if (euControlArg->bitmask_size != 0) {
-                euControlBitmaskSize = euControlArg->bitmask_size;
-                euControlBitmask = std::make_unique<uint8_t[]>(euControlBitmaskSize);
-
-                memcpy(euControlBitmask.get(), reinterpret_cast<void *>(euControlArg->bitmask_ptr), euControlBitmaskSize);
-            }
-        }
-
-        return ioctlRetVal;
-    }
-
-    int poll(pollfd *pollFd, unsigned long int numberOfFds, int timeout) override {
-        passedTimeout = timeout;
-        pollCounter++;
-
-        if (eventQueue.empty() && pollRetVal >= 0) {
-            return 0;
-        }
-        return pollRetVal;
-    }
-
-    int64_t pread(int fd, void *buf, size_t count, off_t offset) override {
-        preadCalled++;
-        preadOffset = offset;
-        if ((midZeroReturn > 0) && (preadCalled > 1)) {
-            midZeroReturn--;
-            return 0;
-        }
-
-        if (!pReadArrayRef.empty()) {
-            auto offsetInMemory = offset - pReadBase;
-            auto result = memcpy_s(buf, count, pReadArrayRef.begin() + offsetInMemory, std::min(count, pReadArrayRef.size() - offsetInMemory));
-            if (result == 0) {
-                return count;
-            }
-            return -1;
-        }
-
-        if (count > 0 && preadRetVal > 0) {
-            memset(buf, 0xaa, count);
-        }
-        return preadRetVal;
-    }
-
-    int64_t pwrite(int fd, const void *buf, size_t count, off_t offset) override {
-        pwriteCalled++;
-        pwriteOffset = offset;
-        if ((midZeroReturn > 0) && (pwriteCalled > 1)) {
-            midZeroReturn--;
-            return 0;
-        }
-
-        if (!pWriteArrayRef.empty()) {
-            auto offsetInMemory = offset - pWriteBase;
-            auto result = memcpy_s(pWriteArrayRef.begin() + offsetInMemory, pWriteArrayRef.size() - offsetInMemory, buf, count);
-            if (result == 0) {
-                return count;
-            }
-            return -1;
-        }
-
-        return pwriteRetVal;
-    }
-
-    void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) override {
-        mmapCalled++;
-        if (mmapFail) {
-            return MAP_FAILED;
-        }
-        if (mmapRet) {
-            return mmapRet + (off - mmapBase);
-        } else {
-            auto ret = new char[size];
-            if (size > 0) {
-                memset(ret, 0xaa, size);
-            }
-            return ret;
-        }
-    }
-
-    int munmap(void *addr, size_t size) override {
-        munmapCalled++;
-        if (mmapRet) {
-            return 0;
-        }
-        if (addr != MAP_FAILED && addr != 0) {
-            if (*static_cast<char *>(addr) != static_cast<char>(0xaa)) {
-                memoryModifiedInMunmap = true;
-            }
-            delete[](char *) addr;
-        } else {
-            return -1;
-        }
-        return 0;
-    }
-
-    void setPreadMemory(char *memory, size_t size, uint64_t baseAddress) {
-        pReadArrayRef = ArrayRef<char>(memory, size);
-        pReadBase = baseAddress;
-    }
-
-    void setPwriteMemory(char *memory, size_t size, uint64_t baseAddress) {
-        pWriteArrayRef = ArrayRef<char>(memory, size);
-        pWriteBase = baseAddress;
-    }
-
-    prelim_drm_i915_debug_event debugEventInput = {};
-    prelim_drm_i915_debug_event debugEventAcked = {};
-    prelim_drm_i915_debug_read_uuid *returnUuid = nullptr;
-    prelim_drm_i915_debug_vm_open vmOpen = {};
-    prelim_drm_i915_debug_eu_control euControl = {};
-
-    std::unique_ptr<uint8_t[]> euControlBitmask;
-    size_t euControlBitmaskSize = 0;
-
-    int ioctlRetVal = 0;
-    int debugEventRetVal = 0;
-    int ioctlCalled = 0;
-    int pollRetVal = 0;
-    int vmOpenRetVal = 600;
-    int passedTimeout = 0;
-
-    ArrayRef<char> pReadArrayRef;
-    uint64_t pReadBase = 0;
-    int64_t preadCalled = 0;
-    int64_t preadRetVal = 0;
-
-    ArrayRef<char> pWriteArrayRef;
-    uint64_t pWriteBase = 0;
-    int64_t pwriteCalled = 0;
-    int64_t pwriteRetVal = 0;
-
-    uint64_t preadOffset = 0;
-    uint64_t pwriteOffset = 0;
-
-    uint8_t midZeroReturn = 0;
-    int64_t mmapCalled = 0;
-    int64_t munmapCalled = 0;
-    bool mmapFail = false;
-    char *mmapRet = nullptr;
-    uint64_t mmapBase = 0;
-    bool memoryModifiedInMunmap = false;
-    std::atomic<int> pollCounter = 0;
-    EventQueue eventQueue;
-    uint64_t euControlOutputSeqno = 10;
-};
-
-struct MockDebugSessionLinux : public L0::DebugSessionLinux {
-    using L0::DebugSessionImp::allThreads;
-    using L0::DebugSessionImp::enqueueApiEvent;
-    using L0::DebugSessionImp::expectedAttentionEvents;
-    using L0::DebugSessionImp::interruptSent;
-    using L0::DebugSessionImp::isValidGpuAddress;
-    using L0::DebugSessionImp::stateSaveAreaHeader;
-    using L0::DebugSessionImp::triggerEvents;
-
-    using L0::DebugSessionLinux::asyncThread;
-    using L0::DebugSessionLinux::checkAllEventsCollected;
-    using L0::DebugSessionLinux::clientHandle;
-    using L0::DebugSessionLinux::clientHandleClosed;
-    using L0::DebugSessionLinux::clientHandleToConnection;
-    using L0::DebugSessionLinux::closeAsyncThread;
-    using L0::DebugSessionLinux::debugArea;
-    using L0::DebugSessionLinux::euControlInterruptSeqno;
-    using L0::DebugSessionLinux::extractVaFromUuidString;
-    using L0::DebugSessionLinux::getRegisterSetProperties;
-    using L0::DebugSessionLinux::getStateSaveAreaHeader;
-    using L0::DebugSessionLinux::handleEvent;
-    using L0::DebugSessionLinux::handleEventsAsync;
-    using L0::DebugSessionLinux::handleVmBindEvent;
-    using L0::DebugSessionLinux::internalEventQueue;
-    using L0::DebugSessionLinux::interruptImp;
-    using L0::DebugSessionLinux::ioctl;
-    using L0::DebugSessionLinux::ioctlHandler;
-    using L0::DebugSessionLinux::newlyStoppedThreads;
-    using L0::DebugSessionLinux::pendingInterrupts;
-    using L0::DebugSessionLinux::printContextVms;
-    using L0::DebugSessionLinux::pushApiEvent;
-    using L0::DebugSessionLinux::readEventImp;
-    using L0::DebugSessionLinux::readGpuMemory;
-    using L0::DebugSessionLinux::readInternalEventsAsync;
-    using L0::DebugSessionLinux::readModuleDebugArea;
-    using L0::DebugSessionLinux::readSbaBuffer;
-    using L0::DebugSessionLinux::readStateSaveAreaHeader;
-    using L0::DebugSessionLinux::startAsyncThread;
-    using L0::DebugSessionLinux::threadControl;
-    using L0::DebugSessionLinux::ThreadControlCmd;
-    using L0::DebugSessionLinux::typeToRegsetDesc;
-    using L0::DebugSessionLinux::typeToRegsetFlags;
-    using L0::DebugSessionLinux::uuidL0CommandQueueHandle;
-    using L0::DebugSessionLinux::writeGpuMemory;
-
-    MockDebugSessionLinux(const zet_debug_config_t &config, L0::Device *device, int debugFd) : DebugSessionLinux(config, device, debugFd) {
-        clientHandleToConnection[mockClientHandle].reset(new ClientConnection);
-        clientHandle = mockClientHandle;
-    }
-
-    std::unordered_map<uint64_t, std::pair<std::string, uint32_t>> &getClassHandleToIndex() {
-        return clientHandleToConnection[mockClientHandle]->classHandleToIndex;
-    }
-
-    int64_t getTimeDifferenceMilliseconds(std::chrono::high_resolution_clock::time_point time) override {
-        if (returnTimeDiff != -1) {
-            return returnTimeDiff;
-        }
-        return L0::DebugSessionLinux::getTimeDifferenceMilliseconds(time);
-    }
-
-    int threadControl(std::vector<ze_device_thread_t> threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize) override {
-        numThreadsPassedToThreadControl = threads.size();
-        return L0::DebugSessionLinux::threadControl(threads, tile, threadCmd, bitmask, bitmaskSize);
-    }
-
-    ze_result_t readRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
-        readRegistersCallCount++;
-        return L0::DebugSessionLinux::readRegisters(thread, type, start, count, pRegisterValues);
-    }
-
-    ze_result_t writeRegisters(ze_device_thread_t thread, uint32_t type, uint32_t start, uint32_t count, void *pRegisterValues) override {
-        writeRegistersCallCount++;
-        writeRegistersReg = type;
-        return L0::DebugSessionLinux::writeRegisters(thread, type, start, count, pRegisterValues);
-    }
-
-    ze_result_t resumeImp(std::vector<ze_device_thread_t> threads, uint32_t deviceIndex) override {
-        resumedThreads.push_back(threads);
-        resumedDevices.push_back(deviceIndex);
-        return L0::DebugSessionLinux::resumeImp(threads, deviceIndex);
-    }
-
-    void handleEvent(prelim_drm_i915_debug_event *event) override {
-        handleEventCalledCount++;
-        L0::DebugSessionLinux::handleEvent(event);
-    }
-
-    bool areRequestedThreadsStopped(ze_device_thread_t thread) override {
-        if (allThreadsStopped) {
-            return allThreadsStopped;
-        }
-        return L0::DebugSessionLinux::areRequestedThreadsStopped(thread);
-    }
-
-    void ensureThreadStopped(ze_device_thread_t thread) {
-        auto threadId = convertToThreadId(thread);
-        if (allThreads.find(threadId) == allThreads.end()) {
-            allThreads[threadId] = std::make_unique<EuThread>(threadId);
-        }
-        allThreads[threadId]->stopThread(vmHandle);
-    }
-
-    bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srIdent) override {
-        srIdent.count = 0;
-        if (stoppedThreads.size()) {
-            auto entry = stoppedThreads.find(thread->getThreadId());
-            if (entry != stoppedThreads.end()) {
-                srIdent.count = entry->second;
-            }
-            return true;
-        }
-        return L0::DebugSessionLinux::readSystemRoutineIdent(thread, vmHandle, srIdent);
-    }
-
-    bool writeResumeCommand(const std::vector<EuThread::ThreadId> &threadIds) override {
-        writeResumeCommandCalled++;
-        if (skipWriteResumeCommand) {
-            return true;
-        }
-        return L0::DebugSessionLinux::writeResumeCommand(threadIds);
-    }
-
-    bool checkThreadIsResumed(const EuThread::ThreadId &threadID) override {
-        checkThreadIsResumedCalled++;
-        if (skipcheckThreadIsResumed) {
-            return true;
-        }
-        return L0::DebugSessionLinux::checkThreadIsResumed(threadID);
-    }
-
-    std::unique_ptr<uint64_t[]> getInternalEvent() override {
-        getInternalEventCounter++;
-        if (synchronousInternalEventRead) {
-            readInternalEventsAsync();
-        }
-        return DebugSessionLinux::getInternalEvent();
-    }
-
-    bool allThreadsStopped = false;
-    int64_t returnTimeDiff = -1;
-    static constexpr uint64_t mockClientHandle = 1;
-    size_t numThreadsPassedToThreadControl = 0;
-    uint32_t readRegistersCallCount = 0;
-    uint32_t writeRegistersCallCount = 0;
-    uint32_t writeRegistersReg = 0;
-    uint32_t handleEventCalledCount = 0;
-    uint64_t vmHandle = UINT64_MAX;
-    bool skipWriteResumeCommand = true;
-    uint32_t writeResumeCommandCalled = 0;
-    bool skipcheckThreadIsResumed = true;
-    uint32_t checkThreadIsResumedCalled = 0;
-
-    std::vector<uint32_t> resumedDevices;
-    std::vector<std::vector<ze_device_thread_t>> resumedThreads;
-
-    std::unordered_map<uint64_t, uint8_t> stoppedThreads;
-
-    std::atomic<int> getInternalEventCounter = 0;
-    bool synchronousInternalEventRead = false;
-};
-
-size_t threadSlotOffset(SIP::StateSaveAreaHeader *pStateSaveAreaHeader, int slice, int subslice, int eu, int thread) {
-    return pStateSaveAreaHeader->versionHeader.size * 8 +
-           pStateSaveAreaHeader->regHeader.state_area_offset +
-           ((((slice * pStateSaveAreaHeader->regHeader.num_subslices_per_slice + subslice) * pStateSaveAreaHeader->regHeader.num_eus_per_subslice + eu) * pStateSaveAreaHeader->regHeader.num_threads_per_eu + thread) * pStateSaveAreaHeader->regHeader.state_save_size);
-};
-
-size_t regOffsetInThreadSlot(const SIP::regset_desc *regdesc, uint32_t start) {
-    return regdesc->offset + regdesc->bytes * start;
-};
-
-void initStateSaveArea(std::vector<char> &stateSaveArea, SIP::version version) {
-    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(version.major);
-    auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
-
-    if (version.major >= 2) {
-        stateSaveArea.resize(
-            threadSlotOffset(pStateSaveAreaHeader, 0, 0, 0, 0) +
-            pStateSaveAreaHeader->regHeader.num_subslices_per_slice * pStateSaveAreaHeader->regHeader.num_eus_per_subslice * pStateSaveAreaHeader->regHeader.num_threads_per_eu * pStateSaveAreaHeader->regHeader.state_save_size);
-    } else {
-        auto &hwInfo = *NEO::defaultHwInfo.get();
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        stateSaveArea.resize(hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo) + MemoryConstants::pageSize);
-    }
-
-    memcpy(stateSaveArea.data(), pStateSaveAreaHeader, sizeof(*pStateSaveAreaHeader));
-
-    auto fillRegForThread = [&](const SIP::regset_desc *regdesc, int slice, int subslice, int eu, int thread, int start, char value) {
-        memset(stateSaveArea.data() + threadSlotOffset(pStateSaveAreaHeader, slice, subslice, eu, thread) + regOffsetInThreadSlot(regdesc, start), value, regdesc->bytes);
-    };
-
-    auto fillRegsetForThread = [&](const SIP::regset_desc *regdesc, int slice, int subslice, int eu, int thread, char value) {
-        for (uint32_t reg = 0; reg < regdesc->num; ++reg) {
-            fillRegForThread(regdesc, slice, subslice, eu, thread, reg, value + reg);
-        }
-        SIP::sr_ident *srIdent = reinterpret_cast<SIP::sr_ident *>(stateSaveArea.data() + threadSlotOffset(pStateSaveAreaHeader, slice, subslice, eu, thread) + pStateSaveAreaHeader->regHeader.sr_magic_offset);
-        srIdent->count = 2;
-        srIdent->version.major = version.major;
-        srIdent->version.minor = version.minor;
-        srIdent->version.patch = version.patch;
-        strcpy(stateSaveArea.data() + threadSlotOffset(pStateSaveAreaHeader, slice, subslice, eu, thread) + pStateSaveAreaHeader->regHeader.sr_magic_offset, "srmagic"); // NOLINT(clang-analyzer-security.insecureAPI.strcpy)
-    };
-
-    // grfs for 0/0/0/0 - very first eu thread
-    fillRegsetForThread(&pStateSaveAreaHeader->regHeader.grf, 0, 0, 0, 0, 'a');
-
-    if (version.major < 2) {
-        // grfs for 0/3/7/3 - somewhere in the middle
-        fillRegsetForThread(&pStateSaveAreaHeader->regHeader.grf, 0, 3, 7, 3, 'a');
-
-        // grfs for 0/5/15/6 - very last eu thread
-        fillRegsetForThread(&pStateSaveAreaHeader->regHeader.grf, 0, 5, 15, 6, 'a');
-    }
-}
-
-struct DebugApiLinuxFixture : public DeviceFixture {
-    void SetUp() {
-        SetUp(nullptr);
-    }
-
-    void SetUp(NEO::HardwareInfo *hwInfo) {
-        if (hwInfo != nullptr) {
-            auto executionEnvironment = MockDevice::prepareExecutionEnvironment(hwInfo, 0u);
-            DeviceFixture::setupWithExecutionEnvironment(*executionEnvironment);
-        } else {
-            DeviceFixture::SetUp();
-        }
-
-        mockDrm = new DrmQueryMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
-        mockDrm->allowDebugAttach = true;
-        mockDrm->queryEngineInfo();
-
-        // set config from HwInfo to have correct topology requested by tests
-        if (hwInfo) {
-            mockDrm->storedSVal = hwInfo->gtSystemInfo.SliceCount;
-            mockDrm->storedSSVal = hwInfo->gtSystemInfo.SubSliceCount;
-            mockDrm->storedEUVal = hwInfo->gtSystemInfo.EUCount;
-        }
-        NEO::Drm::QueryTopologyData topologyData = {};
-        mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
-
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
-        neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
-    }
-
-    void TearDown() {
-        DeviceFixture::TearDown();
-    }
-    DrmQueryMock *mockDrm = nullptr;
-    static constexpr uint8_t bufferSize = 16;
-};
-
-struct DebugApiLinuxMultiDeviceFixture : public MultipleDevicesWithCustomHwInfo {
-    void SetUp() {
-        MultipleDevicesWithCustomHwInfo::SetUp();
-        neoDevice = driverHandle->devices[0]->getNEODevice();
-
-        L0::Device *device = driverHandle->devices[0];
-        deviceImp = static_cast<DeviceImp *>(device);
-
-        mockDrm = new DrmQueryMock(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0], neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getHardwareInfo());
-        mockDrm->allowDebugAttach = true;
-
-        // set config from HwInfo to have correct topology requested by tests
-        mockDrm->storedSVal = hwInfo.gtSystemInfo.SliceCount;
-        mockDrm->storedSSVal = hwInfo.gtSystemInfo.SubSliceCount;
-        mockDrm->storedEUVal = hwInfo.gtSystemInfo.EUCount;
-
-        mockDrm->queryEngineInfo();
-        auto engineInfo = mockDrm->getEngineInfo();
-        ASSERT_NE(nullptr, engineInfo->getEngineInstance(1, hwInfo.capabilityTable.defaultEngineType));
-
-        NEO::Drm::QueryTopologyData topologyData = {};
-        mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
-
-        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
-        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
-    }
-
-    void TearDown() {
-        MultipleDevicesWithCustomHwInfo::TearDown();
-    }
-    NEO::Device *neoDevice = nullptr;
-    L0::DeviceImp *deviceImp = nullptr;
-    DrmQueryMock *mockDrm = nullptr;
-    static constexpr uint8_t bufferSize = 16;
-};
+extern CreateDebugSessionHelperFunc createDebugSessionFunc;
 
 TEST(IoctlHandler, GivenHandlerWhenPreadCalledThenSysCallIsCalled) {
     L0::DebugSessionLinux::IoctlHandler handler;
@@ -582,7 +94,57 @@ TEST(IoctlHandler, GivenHandlerWhenMmapAndMunmapCalledThenRedirectedToSysCall) {
     NEO::SysCalls::munmapFuncCalled = 0;
 }
 
-TEST(DebugSessionTest, GivenDebugSessionWhenExtractingCpuVaFromUuidThenCorrectCpuVaReturned) {
+TEST(IoctlHandler, GivenHandlerWhenEuControlIoctlFailsWithEBUSYThenIoctlIsNotCalledAgain) {
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl);
+    VariableBackup<int> mockErrno(&errno);
+    int ioctlCount = 0;
+
+    SysCalls::sysCallsIoctl = [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        auto ioctlCount = reinterpret_cast<int *>(arg);
+        (*ioctlCount)++;
+        if (*ioctlCount < 2) {
+            errno = EBUSY;
+            return -1;
+        }
+        errno = 0;
+        return 0;
+    };
+
+    L0::DebugSessionLinux::IoctlHandler handler;
+
+    auto result = handler.ioctl(0, PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &ioctlCount);
+    EXPECT_EQ(-1, result);
+    EXPECT_EQ(1, ioctlCount);
+}
+
+TEST(IoctlHandler, GivenHandlerWhenEuControlIoctlFailsWithEAGAINOrEINTRThenIoctlIsCalledAgain) {
+    VariableBackup<decltype(SysCalls::sysCallsIoctl)> mockIoctl(&SysCalls::sysCallsIoctl);
+    VariableBackup<int> mockErrno(&errno);
+    int ioctlCount = 0;
+
+    SysCalls::sysCallsIoctl = [](int fileDescriptor, unsigned long int request, void *arg) -> int {
+        auto ioctlCount = reinterpret_cast<int *>(arg);
+        (*ioctlCount)++;
+        if (*ioctlCount == 1) {
+            errno = EAGAIN;
+            return -1;
+        }
+        if (*ioctlCount == 2) {
+            errno = EINTR;
+            return -1;
+        }
+        errno = 0;
+        return 0;
+    };
+
+    L0::DebugSessionLinux::IoctlHandler handler;
+
+    auto result = handler.ioctl(0, PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &ioctlCount);
+    EXPECT_EQ(0, result);
+    EXPECT_EQ(3, ioctlCount);
+}
+
+TEST(DebugSessionLinuxTest, GivenDebugSessionWhenExtractingCpuVaFromUuidThenCorrectCpuVaReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -601,69 +163,7 @@ TEST(DebugSessionTest, GivenDebugSessionWhenExtractingCpuVaFromUuidThenCorrectCp
     EXPECT_EQ(epxectedVa, va);
 }
 
-TEST(DebugSessionTest, WhenConvertingThreadIdsThenDeviceFunctionsAreCalled) {
-    auto hwInfo = *NEO::defaultHwInfo.get();
-    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
-
-    auto mockDrm = new DrmQueryMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
-
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
-
-    auto sessionMock = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, &deviceImp, 10);
-    ASSERT_NE(nullptr, sessionMock);
-
-    ze_device_thread_t thread = {0, 0, 0, 0};
-
-    auto threadID = sessionMock->convertToThreadId(thread);
-
-    EXPECT_EQ(0u, threadID.tileIndex);
-    EXPECT_EQ(0u, threadID.slice);
-    EXPECT_EQ(0u, threadID.subslice);
-    EXPECT_EQ(0u, threadID.eu);
-    EXPECT_EQ(0u, threadID.thread);
-
-    auto apiThread = sessionMock->convertToApi(threadID);
-
-    EXPECT_EQ(0u, apiThread.slice);
-    EXPECT_EQ(0u, apiThread.subslice);
-    EXPECT_EQ(0u, apiThread.eu);
-    EXPECT_EQ(0u, apiThread.thread);
-
-    uint32_t deviceIndex = 1;
-
-    auto physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
-
-    EXPECT_EQ(1u, deviceIndex);
-    EXPECT_EQ(0u, physicalThread.slice);
-    EXPECT_EQ(0u, physicalThread.subslice);
-    EXPECT_EQ(0u, physicalThread.eu);
-    EXPECT_EQ(0u, physicalThread.thread);
-
-    thread.slice = UINT32_MAX;
-    physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
-
-    EXPECT_EQ(1u, deviceIndex);
-    EXPECT_EQ(uint32_t(UINT32_MAX), physicalThread.slice);
-    EXPECT_EQ(0u, physicalThread.subslice);
-    EXPECT_EQ(0u, physicalThread.eu);
-    EXPECT_EQ(0u, physicalThread.thread);
-
-    thread.slice = 0;
-    thread.subslice = UINT32_MAX;
-    thread.eu = 1;
-    thread.thread = 3;
-    physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
-
-    EXPECT_EQ(1u, deviceIndex);
-    EXPECT_EQ(0u, physicalThread.slice);
-    EXPECT_EQ(uint32_t(UINT32_MAX), physicalThread.subslice);
-    EXPECT_EQ(1u, physicalThread.eu);
-    EXPECT_EQ(3u, physicalThread.thread);
-}
-
-TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithSingleSliceThenSubsliceIsCorrectlyRemapped) {
+TEST(DebugSessionLinuxTest, WhenConvertingThreadIDsForDeviceWithSingleSliceThenSubsliceIsCorrectlyRemapped) {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     hwInfo.gtSystemInfo.SliceCount = 1;
@@ -708,7 +208,7 @@ TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithSingleSliceThenSubsli
     EXPECT_EQ(0u, physicalThread.thread);
 }
 
-TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithMultipleSlicesThenSubsliceIsNotRemapped) {
+TEST(DebugSessionLinuxTest, WhenConvertingThreadIDsForDeviceWithMultipleSlicesThenSubsliceIsNotRemapped) {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     hwInfo.gtSystemInfo.SliceCount = 8;
@@ -753,7 +253,7 @@ TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithMultipleSlicesThenSub
     EXPECT_EQ(0u, physicalThread.thread);
 }
 
-TEST(DebugSessionTest, GivenDeviceWithSingleSliceWhenCallingAreRequestedThreadsStoppedForSliceAllThenCorrectValuesAreReturned) {
+TEST(DebugSessionLinuxTest, GivenDeviceWithSingleSliceWhenCallingAreRequestedThreadsStoppedForSliceAllThenCorrectValuesAreReturned) {
     auto hwInfo = *NEO::defaultHwInfo.get();
 
     hwInfo.gtSystemInfo.SliceCount = 1;
@@ -792,17 +292,17 @@ TEST(DebugSessionTest, GivenDeviceWithSingleSliceWhenCallingAreRequestedThreadsS
     EXPECT_TRUE(stopped);
 }
 
-TEST(DebugSessionTest, WhenEnqueueApiEventCalledThenEventPushed) {
+TEST(DebugSessionLinuxTest, WhenEnqueueApiEventCalledThenEventPushed) {
     auto sessionMock = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, nullptr, 10);
     sessionMock->clientHandle = MockDebugSessionLinux::mockClientHandle;
     zet_debug_event_t debugEvent = {};
 
     sessionMock->enqueueApiEvent(debugEvent);
 
-    EXPECT_EQ(1u, sessionMock->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, sessionMock->apiEvents.size());
 }
 
-TEST(DebugSessionTest, GivenLogsEnabledWhenPrintContextVmsCalledThenMapIsPrinted) {
+TEST(DebugSessionLinuxTest, GivenLogsEnabledWhenPrintContextVmsCalledThenMapIsPrinted) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
 
@@ -832,7 +332,7 @@ TEST(DebugSessionTest, GivenLogsEnabledWhenPrintContextVmsCalledThenMapIsPrinted
     EXPECT_TRUE(hasSubstr(map, std::string("Context = 1 : 2")));
 }
 
-TEST(DebugSessionTest, GivenLogsDisabledWhenPrintContextVmsCalledThenMapIsiNotPrinted) {
+TEST(DebugSessionLinuxTest, GivenLogsDisabledWhenPrintContextVmsCalledThenMapIsiNotPrinted) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DebuggerLogBitmask.set(0);
 
@@ -860,7 +360,7 @@ TEST(DebugSessionTest, GivenLogsDisabledWhenPrintContextVmsCalledThenMapIsiNotPr
     EXPECT_TRUE(map.empty());
 }
 
-TEST(DebugSessionTest, GivenNullptrEventWhenReadingEventThenErrorNullptrReturned) {
+TEST(DebugSessionLinuxTest, GivenNullptrEventWhenReadingEventThenErrorNullptrReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -871,7 +371,94 @@ TEST(DebugSessionTest, GivenNullptrEventWhenReadingEventThenErrorNullptrReturned
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, result);
 }
 
+TEST(DebugSessionLinuxTest, GivenRootDebugSessionWhenCreateTileSessionCalledThenSessionIsCreated) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+
+    auto mockDrm = new DrmQueryMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
+
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    struct DebugSession : public DebugSessionLinux {
+        using DebugSessionLinux::createTileSession;
+        using DebugSessionLinux::DebugSessionLinux;
+    };
+
+    auto session = std::make_unique<DebugSession>(zet_debug_config_t{0x1234}, &deviceImp, 10, nullptr);
+    ASSERT_NE(nullptr, session);
+
+    std::unique_ptr<TileDebugSessionLinux> tileSession = std::unique_ptr<TileDebugSessionLinux>{session->createTileSession(zet_debug_config_t{0x1234}, &deviceImp, nullptr)};
+    EXPECT_NE(nullptr, tileSession);
+}
+
+TEST(DebugSessionLinuxTest, GivenRootLinuxSessionWhenCallingTileSepcificFunctionsThenUnrecoverableIsCalled) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+
+    auto mockDrm = new DrmQueryMock(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
+
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    ASSERT_NE(nullptr, sessionMock);
+
+    EXPECT_THROW(sessionMock->attachTile(), std::exception);
+    EXPECT_THROW(sessionMock->detachTile(), std::exception);
+}
+
+using DebugSessionLinuxFenceMode = Test<DebugApiLinuxFixture>;
+
+TEST_F(DebugSessionLinuxFenceMode, GivenDebuggerOpenVersionGreaterEqual3WhenDebugSessionCreatedThanBlockingOnFenceModeIsSet) {
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
+        auto session = new MockDebugSessionLinux(config, device, debugFd, params);
+        session->initializeRetVal = ZE_RESULT_SUCCESS;
+        return session;
+    });
+
+    mockDrm->context.debuggerOpenVersion = 3;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result, false));
+
+    MockDebugSessionLinux *linuxSession = static_cast<MockDebugSessionLinux *>(session.get());
+
+    EXPECT_TRUE(linuxSession->blockOnFenceMode);
+}
+
 using DebugApiLinuxTest = Test<DebugApiLinuxFixture>;
+
+TEST_F(DebugApiLinuxTest, GivenDebuggerOpenVersion1AndSuccessfulInitializationWhenCreatingDebugSessionThenBlockOnFenceModeIsFalse) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
+        auto session = new MockDebugSessionLinux(config, device, debugFd, params);
+        session->initializeRetVal = ZE_RESULT_SUCCESS;
+        return session;
+    });
+
+    mockDrm->context.debuggerOpenRetval = 10;
+    mockDrm->context.debuggerOpenVersion = 1;
+    mockDrm->baseErrno = false;
+    mockDrm->errnoRetVal = 0;
+
+    auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice()));
+
+    EXPECT_NE(nullptr, session);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    MockDebugSessionLinux *linuxSession = static_cast<MockDebugSessionLinux *>(session.get());
+    EXPECT_FALSE(linuxSession->blockOnFenceMode);
+}
 
 TEST_F(DebugApiLinuxTest, givenDeviceWhenCallingDebugAttachThenSuccessAndValidSessionHandleAreReturned) {
     zet_debug_config_t config = {};
@@ -906,7 +493,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingResumeThenProperIoctlsAreCalled) {
     auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(sessionMock->stateSaveAreaHeader, version);
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
 
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
@@ -925,7 +512,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingResumeThenProperIoctlsAreCalled) {
     EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControl.cmd);
 }
 
-TEST_F(DebugApiLinuxTest, GivenUnknownEventWhenAcknowledgeEventCalledThenErrorUnknownIsReturned) {
+TEST_F(DebugApiLinuxTest, GivenUnknownEventWhenAcknowledgeEventCalledThenErrorUninitializedIsReturned) {
     auto sessionMock = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, device, 10);
     ASSERT_NE(nullptr, sessionMock);
     auto handler = new MockIoctlHandler;
@@ -937,14 +524,7 @@ TEST_F(DebugApiLinuxTest, GivenUnknownEventWhenAcknowledgeEventCalledThenErrorUn
 
     // No events to acknowledge
     auto result = L0::DebugApiHandlers::debugAcknowledgeEvent(session, &debugEvent);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
-
-    // One event to acknowledge
-    prelim_drm_i915_debug_event eventToAck = {};
-    eventToAck.type = 500;
-    eventToAck.seqno = 5;
-    eventToAck.flags = PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
-    eventToAck.size = sizeof(prelim_drm_i915_debug_event);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
 
     debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
     debugEvent.info.module.format = ZET_MODULE_DEBUG_INFO_FORMAT_ELF_DWARF;
@@ -952,7 +532,7 @@ TEST_F(DebugApiLinuxTest, GivenUnknownEventWhenAcknowledgeEventCalledThenErrorUn
     debugEvent.info.module.moduleBegin = 0x2000;
     debugEvent.info.module.moduleEnd = 0x3000;
 
-    sessionMock->pushApiEvent(debugEvent, &eventToAck);
+    sessionMock->pushApiEvent(debugEvent);
 
     // Different event acknowledged
     debugEvent.info.module.load = 0x2221000;
@@ -960,7 +540,7 @@ TEST_F(DebugApiLinuxTest, GivenUnknownEventWhenAcknowledgeEventCalledThenErrorUn
     debugEvent.info.module.moduleEnd = 0x2223000;
 
     result = L0::DebugApiHandlers::debugAcknowledgeEvent(session, &debugEvent);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
 
     EXPECT_EQ(0, handler->ioctlCalled);
 }
@@ -975,15 +555,33 @@ TEST_F(DebugApiLinuxTest, GivenEventRequiringAckWhenAcknowledgeEventCalledThenSu
     zet_debug_session_handle_t session = sessionMock->toHandle();
     sessionMock->clientHandle = MockDebugSessionLinux::mockClientHandle;
 
+    uint64_t isaGpuVa = 0x345000;
+    uint64_t isaSize = 0x2000;
+
     zet_debug_event_t debugEvent = {};
     debugEvent.flags = ZET_DEBUG_EVENT_FLAG_NEED_ACK;
+    debugEvent.info.module.load = isaGpuVa;
+    debugEvent.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
 
     prelim_drm_i915_debug_event eventToAck = {};
     eventToAck.type = 500;
     eventToAck.seqno = 10;
     eventToAck.flags = PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
     eventToAck.size = sizeof(prelim_drm_i915_debug_event);
-    sessionMock->pushApiEvent(debugEvent, &eventToAck);
+
+    auto isa = std::make_unique<DebugSessionLinux::IsaAllocation>();
+    isa->bindInfo = {isaGpuVa, isaSize};
+    isa->vmHandle = 3;
+    isa->elfUuidHandle = DebugSessionLinux::invalidHandle;
+    isa->moduleBegin = 0;
+    isa->moduleEnd = 0;
+
+    auto &isaMap = sessionMock->clientHandleToConnection[sessionMock->clientHandle]->isaMap[0];
+    isaMap[isaGpuVa] = std::move(isa);
+    isaMap[isaGpuVa]->vmBindCounter = 5;
+    isaMap[isaGpuVa]->ackEvents.push_back(eventToAck);
+
+    sessionMock->pushApiEvent(debugEvent);
 
     auto result = zetDebugAcknowledgeEvent(session, &debugEvent);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -1002,13 +600,28 @@ TEST_F(DebugApiLinuxTest, GivenSuccessfulInitializationWhenCreatingDebugSessionT
     mockDrm->baseErrno = false;
     mockDrm->errnoRetVal = 0;
 
-    auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result));
+    auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice()));
 
     EXPECT_NE(nullptr, session);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto mockSession = static_cast<DebugSessionMock *>(session.get());
     EXPECT_TRUE(mockSession->asyncThreadStarted);
+}
+
+TEST_F(DebugApiLinuxTest, GivenRootDeviceWhenDebugSessionIsCreatedForTheSecondTimeThenSuccessIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto sessionMock = device->createDebugSession(config, result, true);
+    ASSERT_NE(nullptr, sessionMock);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto sessionMock2 = device->createDebugSession(config, result, true);
+    EXPECT_EQ(sessionMock, sessionMock2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
 TEST_F(DebugApiLinuxTest, GivenClientAndMatchingUuidEventsWhenReadingEventsThenProcessEntryIsReturned) {
@@ -1052,6 +665,7 @@ TEST_F(DebugApiLinuxTest, GivenClientAndMatchingUuidEventsWhenReadingEventsThenP
     handler->returnUuid = &readUuid;
 
     session->ioctlHandler.reset(handler);
+    session->synchronousInternalEventRead = true;
     session->initialize();
 
     handler->pollRetVal = 1;
@@ -1130,14 +744,14 @@ TEST_F(DebugApiLinuxTest, GivenUuidCommandQueueCreatedHandledThenProcessEntryEve
     session->handleEvent(&uuid.base);
     EXPECT_EQ(DebugSessionLinux::invalidClientHandle, session->clientHandle);
     EXPECT_EQ(0, handler->ioctlCalled);
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     uuid.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
     handler->returnUuid = &readUuid;
     session->clientHandle = 2;
     session->handleEvent(&uuid.base);
     EXPECT_EQ(1, handler->ioctlCalled);
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     uuidHash = NEO::uuidL0CommandQueueHash;
     memcpy(readUuid.uuid, uuidHash, strlen(uuidHash));
@@ -1145,27 +759,105 @@ TEST_F(DebugApiLinuxTest, GivenUuidCommandQueueCreatedHandledThenProcessEntryEve
     session->handleEvent(&uuid.base);
     EXPECT_EQ(2u, session->clientHandle);
     EXPECT_EQ(2, handler->ioctlCalled);
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     session->clientHandle = DebugSessionLinux::invalidClientHandle;
     uuid.client_handle = MockDebugSessionLinux::mockClientHandle;
     handler->returnUuid = &readUuid;
     session->handleEvent(&uuid.base);
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(MockDebugSessionLinux::mockClientHandle, session->clientHandle);
     EXPECT_EQ(3, handler->ioctlCalled);
-    auto event = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front();
+
+    EXPECT_EQ(0u, session->uuidL0CommandQueueHandleToDevice[2]);
+
+    auto event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY, event.type);
 
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
     uuid.client_handle = MockDebugSessionLinux::mockClientHandle;
     handler->returnUuid = &readUuid;
     session->handleEvent(&uuid.base);
-    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(MockDebugSessionLinux::mockClientHandle, session->clientHandle);
     EXPECT_EQ(4, handler->ioctlCalled);
-    event = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front();
+}
+
+TEST_F(DebugApiLinuxTest, GivenUuidCommandQueueWhenQueuesOnToSubdevicesCreatedAndDestroyedThenProcessEntryAndExitEventIsGeneratedOnce) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    session->clientHandle = MockDebugSessionLinux::mockClientHandle;
+
+    prelim_drm_i915_debug_event_uuid uuid = {};
+    uuid.base.type = PRELIM_DRM_I915_DEBUG_EVENT_UUID;
+    uuid.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    uuid.base.size = sizeof(prelim_drm_i915_debug_event_uuid);
+    uuid.client_handle = MockDebugSessionLinux::mockClientHandle;
+    uuid.handle = 2;
+    uuid.payload_size = sizeof(NEO::DebuggerL0::CommandQueueNotification);
+
+    auto uuidHash = NEO::uuidL0CommandQueueHash;
+    prelim_drm_i915_debug_read_uuid readUuid = {};
+    memcpy(readUuid.uuid, uuidHash, strlen(uuidHash));
+
+    NEO::DebuggerL0::CommandQueueNotification notification;
+    notification.subDeviceCount = 2;
+    notification.subDeviceIndex = 1;
+    readUuid.payload_ptr = reinterpret_cast<uint64_t>(&notification);
+    readUuid.payload_size = sizeof(NEO::DebuggerL0::CommandQueueNotification);
+    readUuid.handle = uuid.handle;
+
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+    handler->returnUuid = &readUuid;
+
+    // Handle UUID create for commandQueue on subdevice 1
+    session->handleEvent(&uuid.base);
+    EXPECT_EQ(1, handler->ioctlCalled);
+    EXPECT_EQ(1u, session->apiEvents.size());
+    auto event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY, event.type);
+
+    EXPECT_EQ(1u, session->uuidL0CommandQueueHandleToDevice.size());
+
+    notification.subDeviceCount = 2;
+    notification.subDeviceIndex = 0;
+    uuid.handle = 3;
+    handler->returnUuid = &readUuid;
+
+    // Handle UUID create for commandQueue on subdevice 0
+    session->handleEvent(&uuid.base);
+    EXPECT_EQ(2, handler->ioctlCalled);
+    EXPECT_EQ(1u, session->apiEvents.size());
+
+    EXPECT_EQ(2u, session->uuidL0CommandQueueHandleToDevice.size());
+    EXPECT_EQ(1u, session->uuidL0CommandQueueHandleToDevice[2]);
+    EXPECT_EQ(0u, session->uuidL0CommandQueueHandleToDevice[3]);
+
+    // Handle UUID destroy for commandQueue on subdevice 0
+    uuid.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
+    session->handleEvent(&uuid.base);
+
+    EXPECT_EQ(1u, session->uuidL0CommandQueueHandleToDevice.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
+
+    // Handle UUID destroy with invalid uuid handle
+    uuid.handle = 300;
+    session->handleEvent(&uuid.base);
+    EXPECT_EQ(1u, session->uuidL0CommandQueueHandleToDevice.size());
+
+    // Handle UUID destroy for commandQueue on subdevice 1
+    uuid.handle = 2;
+    session->handleEvent(&uuid.base);
+    EXPECT_EQ(0u, session->uuidL0CommandQueueHandleToDevice.size());
+    EXPECT_EQ(2u, session->apiEvents.size());
+
+    session->apiEvents.pop();
+    event = session->apiEvents.front();
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT, event.type);
 }
 
 TEST_F(DebugApiLinuxTest, GivenCommandQueueDestroyedWhenHandlingEventThenExitEventIsGenerated) {
@@ -1175,7 +867,8 @@ TEST_F(DebugApiLinuxTest, GivenCommandQueueDestroyedWhenHandlingEventThenExitEve
     auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, session);
     session->clientHandle = DebugSessionLinux::invalidHandle;
-    session->uuidL0CommandQueueHandle = 5;
+    const uint64_t validUuidCmdQHandle = 5u;
+    session->uuidL0CommandQueueHandleToDevice[validUuidCmdQHandle] = 0;
 
     prelim_drm_i915_debug_event_uuid uuid = {};
     uuid.base.type = PRELIM_DRM_I915_DEBUG_EVENT_UUID;
@@ -1189,20 +882,20 @@ TEST_F(DebugApiLinuxTest, GivenCommandQueueDestroyedWhenHandlingEventThenExitEve
     session->clientHandleToConnection[10u].reset(new L0::DebugSessionLinux::ClientConnection);
 
     session->handleEvent(&uuid.base);
-    EXPECT_EQ(0u, session->clientHandleToConnection[10]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     uuid.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
     session->handleEvent(&uuid.base);
-    EXPECT_EQ(0u, session->clientHandleToConnection[10]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
-    uuid.handle = session->uuidL0CommandQueueHandle;
+    uuid.handle = validUuidCmdQHandle;
     session->handleEvent(&uuid.base);
-    EXPECT_EQ(0u, session->clientHandleToConnection[10]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     session->clientHandle = uuid.client_handle;
     session->handleEvent(&uuid.base);
-    EXPECT_EQ(1u, session->clientHandleToConnection[10]->apiEvents.size());
-    auto event = session->clientHandleToConnection[10]->apiEvents.front();
+    EXPECT_EQ(1u, session->apiEvents.size());
+    auto event = session->apiEvents.front();
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT, event.type);
 }
 
@@ -1226,7 +919,7 @@ TEST_F(DebugApiLinuxTest, GivenDestroyClientForClientNotSavedWhenHandlingEventTh
     session->clientHandleToConnection[10u].reset(new L0::DebugSessionLinux::ClientConnection);
 
     session->handleEvent(&clientDestroy.base);
-    EXPECT_EQ(0u, session->clientHandleToConnection[10]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 }
 
 TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenReadingEventThenResultNotReadyIsReturned) {
@@ -1245,23 +938,6 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenReadingEventThenResultNotReadyIsR
     EXPECT_EQ(result, ZE_RESULT_NOT_READY);
 }
 
-TEST_F(DebugApiLinuxTest, GivenDebugSessionWithoutValidClientHandleWhenReadingEventThenErrorNotInitializedIsReturned) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
-
-    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
-    auto sessionMock = new MockDebugSessionLinux(config, &deviceImp, 10);
-    deviceImp.debugSession.reset(sessionMock);
-
-    sessionMock->clientHandle = MockDebugSessionLinux::invalidClientHandle;
-
-    zet_debug_session_handle_t session = deviceImp.debugSession->toHandle();
-
-    zet_debug_event_t event = {};
-    auto result = L0::DebugApiHandlers::debugReadEvent(session, 0, &event);
-    EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
-}
-
 TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerFailsThenCorrectMessageIsPrintedAndResultSet) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DebuggerLogBitmask.set(255);
@@ -1275,7 +951,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerFailsThenCorrectMessa
     mockDrm->errnoRetVal = 22;
     ::testing::internal::CaptureStderr();
 
-    auto session = DebugSession::create(config, device, result);
+    auto session = DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice());
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
@@ -1292,25 +968,25 @@ TEST_F(DebugApiLinuxTest, WhenOpenDebuggerFailsThenCorrectErrorIsReturned) {
     mockDrm->context.debuggerOpenRetval = -1;
     mockDrm->baseErrno = false;
     mockDrm->errnoRetVal = EBUSY;
-    auto session = DebugSession::create(config, device, result);
+    auto session = DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice());
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
 
     mockDrm->errnoRetVal = ENODEV;
-    session = DebugSession::create(config, device, result);
+    session = DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice());
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
 
     mockDrm->errnoRetVal = EACCES;
-    session = DebugSession::create(config, device, result);
+    session = DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice());
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_INSUFFICIENT_PERMISSIONS, result);
 
     mockDrm->errnoRetVal = ESRCH;
-    session = DebugSession::create(config, device, result);
+    session = DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice());
 
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
@@ -1330,7 +1006,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenOpenDebuggerSucceedsThenCorrectMe
     mockDrm->errnoRetVal = 0;
     ::testing::internal::CaptureStdout();
 
-    auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result));
+    auto session = std::unique_ptr<DebugSession>(DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice()));
 
     EXPECT_NE(nullptr, session);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1348,12 +1024,32 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenClosingConnectionThenSysCallClose
     EXPECT_NE(nullptr, session);
 
     NEO::SysCalls::closeFuncCalled = 0;
+    NEO::SysCalls::closeFuncArgPassed = 0;
+
     auto ret = session->closeConnection();
     EXPECT_TRUE(ret);
 
     EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
     EXPECT_EQ(10, NEO::SysCalls::closeFuncArgPassed);
     EXPECT_FALSE(session->asyncThread.threadActive);
+
+    NEO::SysCalls::closeFuncCalled = 0;
+    NEO::SysCalls::closeFuncArgPassed = 0;
+}
+
+TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenDestroyedThenSysCallCloseOnFdIsCalled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    EXPECT_NE(nullptr, session);
+
+    NEO::SysCalls::closeFuncCalled = 0;
+    NEO::SysCalls::closeFuncArgPassed = 0;
+
+    session.reset(nullptr);
+    EXPECT_EQ(1u, NEO::SysCalls::closeFuncCalled);
+    EXPECT_EQ(10, NEO::SysCalls::closeFuncArgPassed);
 
     NEO::SysCalls::closeFuncCalled = 0;
     NEO::SysCalls::closeFuncArgPassed = 0;
@@ -1583,7 +1279,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerMmapMemoryAccessFalseWhenCallingReadGpuMe
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
 
     NEO::SysCalls::closeFuncCalled = 0;
-    handler->preadRetVal = bufferSize; //16 bytes to read
+    handler->preadRetVal = bufferSize; // 16 bytes to read
     char output[bufferSize] = {};
     auto retVal = session->readGpuMemory(7, output, bufferSize, 0x23000);
     EXPECT_EQ(0, retVal);
@@ -1792,7 +1488,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAThenMemoryIsRead) {
     isa->moduleBegin = 0;
     isa->moduleEnd = 0;
 
-    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap[0];
     isaMap[isaGpuVa] = std::move(isa);
     isaMap[isaGpuVa]->vmBindCounter = 5;
 
@@ -1816,6 +1512,40 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAThenMemoryIsRead) {
 
     retVal = session->readMemory(thread, &desc, bufferSize, output);
     EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+}
+
+TEST_F(DebugApiLinuxTest, GivenCanonizedAddressWhenGettingIsaVmHandleThenCorrectVmIsReturned) {
+    auto session = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, device, 10);
+    ASSERT_NE(nullptr, session);
+    session->clientHandle = MockDebugSessionLinux::mockClientHandle;
+
+    const uint64_t isaGpuVa = device->getHwInfo().capabilityTable.gpuAddressSpace - 0x3000;
+    const uint64_t isaSize = 0x2000;
+    auto gmmHelper = neoDevice->getGmmHelper();
+
+    auto isa = std::make_unique<DebugSessionLinux::IsaAllocation>();
+    isa->bindInfo = {isaGpuVa, isaSize};
+    isa->vmHandle = 3;
+    isa->elfUuidHandle = DebugSessionLinux::invalidHandle;
+    isa->moduleBegin = 0;
+    isa->moduleEnd = 0;
+
+    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap[0];
+    isaMap[isaGpuVa] = std::move(isa);
+    isaMap[isaGpuVa]->vmBindCounter = 1;
+
+    zet_debug_memory_space_desc_t desc;
+    desc.address = gmmHelper->canonize(isaGpuVa);
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    if (Math::log2(device->getHwInfo().capabilityTable.gpuAddressSpace + 1) >= 48) {
+        EXPECT_NE(isaGpuVa, desc.address);
+    }
+
+    uint64_t vmHandle = 0;
+    auto retVal = session->getISAVMHandle(0, &desc, isaSize, vmHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, retVal);
+    EXPECT_EQ(3u, vmHandle);
 }
 
 TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForELFThenMemoryIsRead) {
@@ -1904,7 +1634,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryforAllThreadsOnDefaultMemoryThenM
     handler->mmapFail = true;
     handler->preadRetVal = -1;
     retVal = session->readMemory(thread, &desc, bufferSize, output);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, retVal);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 }
 
 TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryforASingleThreadThenMemoryIsRead) {
@@ -1964,7 +1694,7 @@ TEST_F(DebugApiLinuxTest, GivenInvalidAddressWhenCallingReadMemoryThenErrorIsRet
     desc.address = 0xf0ffffff00000000;
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
 
-    EXPECT_FALSE(session->isValidGpuAddress(desc.address));
+    EXPECT_FALSE(session->isValidGpuAddress(&desc));
 
     char output[bufferSize];
     session->vmHandle = UINT64_MAX;
@@ -1986,7 +1716,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAForExpectedFailureCasesThen
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
 
-    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap[0];
     uint64_t isaGpuVa = 0x345000;
     uint64_t isaSize = 0x2000;
 
@@ -2010,20 +1740,12 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAForExpectedFailureCasesThen
 
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
 
-    thread.slice = 1;
-    thread.subslice = 1;
-    thread.eu = 1;
-    thread.thread = 1;
-
-    auto retVal = session->readMemory(thread, &desc, size, output);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
-
     thread.slice = UINT32_MAX;
     thread.subslice = UINT32_MAX;
     thread.eu = UINT32_MAX;
     thread.thread = UINT32_MAX;
 
-    retVal = session->readMemory(thread, &desc, size, output);
+    auto retVal = session->readMemory(thread, &desc, size, output);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
 
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
@@ -2083,10 +1805,6 @@ TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForISAForExpectedFailureCasesThen
 
     retVal = session->readMemory(thread, &desc, size, output);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
-
-    session->clientHandle = MockDebugSessionLinux::invalidClientHandle;
-    retVal = session->readMemory(thread, &desc, size, output);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, retVal);
 }
 
 TEST_F(DebugApiLinuxTest, WhenCallingReadMemoryForElfForExpectedFailureCasesThenErrorIsReturned) {
@@ -2159,7 +1877,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForISAThenMemoryIsWritten) {
     isa->moduleBegin = 0;
     isa->moduleEnd = 0;
 
-    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap[0];
     isaMap[isaGpuVa] = std::move(isa);
     isaMap[isaGpuVa]->vmBindCounter = 5;
 
@@ -2217,7 +1935,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForAllThreadsOnDefaultMemoryThen
     // Fail with a found VMid.
     handler->pwriteRetVal = -1;
     retVal = session->writeMemory(thread, &desc, bufferSize, output);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, retVal);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
 }
 
 TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForASignleThreadThenMemoryIsWritten) {
@@ -2280,7 +1998,7 @@ TEST_F(DebugApiLinuxTest, GivenInvalidAddressWhenCallingWriteMemoryThenErrorIsRe
     desc.address = 0xf0ffffff00000000;
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
 
-    EXPECT_FALSE(session->isValidGpuAddress(desc.address));
+    EXPECT_FALSE(session->isValidGpuAddress(&desc));
 
     char output[bufferSize];
     session->vmHandle = UINT64_MAX;
@@ -2301,7 +2019,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForExpectedFailureCasesThenError
     session->ioctlHandler.reset(handler);
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
 
-    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[session->clientHandle]->isaMap[0];
     uint64_t isaGpuVa = 0x345000;
     uint64_t isaSize = 0x2000;
 
@@ -2323,10 +2041,6 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForExpectedFailureCasesThenError
     char output[bufferSize];
     size_t size = bufferSize;
 
-    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
-    auto retVal = session->writeMemory(thread, &desc, size, output);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
-
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
 
     thread.slice = UINT32_MAX;
@@ -2334,7 +2048,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForExpectedFailureCasesThenError
     thread.eu = 0;
     thread.thread = 0;
 
-    retVal = session->writeMemory(thread, &desc, size, output);
+    auto retVal = session->writeMemory(thread, &desc, size, output);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
 
     thread.slice = UINT32_MAX;
@@ -2389,10 +2103,6 @@ TEST_F(DebugApiLinuxTest, WhenCallingWriteMemoryForExpectedFailureCasesThenError
 
     retVal = session->writeMemory(thread, &desc, size, output);
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
-
-    session->clientHandle = MockDebugSessionLinux::invalidClientHandle;
-    retVal = session->writeMemory(thread, &desc, size, output);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, retVal);
 }
 
 TEST_F(DebugApiLinuxTest, GivenErrorFromVmOpenWhenCallingReadGpuMemoryThenCloseIsNotCalledAndErrorReturned) {
@@ -2477,7 +2187,7 @@ TEST_F(DebugApiLinuxTest, givenErrorReturnedFromInitializeWhenDebugSessionIsCrea
     config.pid = 0;
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    auto session = DebugSession::create(config, device, result);
+    auto session = DebugSession::create(config, device, result, !device->getNEODevice()->isSubDevice());
     EXPECT_EQ(nullptr, session);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
 }
@@ -2497,6 +2207,38 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenPollReturnsZeroThenNotReadyIsRetu
 
     auto handler = new MockIoctlHandler;
     session->ioctlHandler.reset(handler);
+
+    result = session->initialize();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+}
+
+TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenInternalEventsThreadIsNotStartedOnTimeThenNotReadyIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    mockDrm->context.debuggerOpenRetval = 10;
+    mockDrm->baseErrno = false;
+    mockDrm->errnoRetVal = 0;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandler;
+    handler->pollRetVal = 1;
+
+    prelim_drm_i915_debug_event_client client = {};
+
+    client.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
+    client.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    client.base.size = sizeof(prelim_drm_i915_debug_event_client);
+    client.handle = 1;
+    handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
+
+    session->ioctlHandler.reset(handler);
+    session->failInternalEventsThreadStart = true;
+    session->threadStartLimit = 0.0;
 
     result = session->initialize();
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
@@ -2543,6 +2285,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsWhenReadEventFailsDuringInitializatio
     client.base.size = sizeof(prelim_drm_i915_debug_event_client);
     client.handle = 1;
     handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
+    session->synchronousInternalEventRead = true;
 
     ze_result_t result = session->initialize();
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
@@ -2703,19 +2446,30 @@ TEST_F(DebugApiLinuxTest, GivenErrorInVmOpenWhenReadingModuleDebugAreaThenGpuMem
     EXPECT_STRNE("dbgarea", session->debugArea.magic);
 }
 
-TEST_F(DebugApiLinuxTest, GivenClientContextAndModuleDebugAreaEventsWhenInitializingThenSuccessIsReturned) {
+TEST_F(DebugApiLinuxTest, GivenInOrderClientVmContextUuidAndModuleDebugAreaEventsWhenInitializingThenSuccessIsReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
     auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, session);
+    session->synchronousInternalEventRead = true;
 
+    const uint64_t vmId = 50;
     prelim_drm_i915_debug_event_client client = {};
 
     client.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
     client.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
     client.base.size = sizeof(prelim_drm_i915_debug_event_client);
     client.handle = 1;
+
+    uint64_t vmData[(sizeof(prelim_drm_i915_debug_event_vm) + sizeof(uint64_t)) / sizeof(uint64_t)];
+    prelim_drm_i915_debug_event_vm *vm = reinterpret_cast<prelim_drm_i915_debug_event_vm *>(&vmData);
+
+    vm->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM;
+    vm->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vm->base.size = sizeof(prelim_drm_i915_debug_event_vm);
+    vm->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vm->handle = vmId;
 
     prelim_drm_i915_debug_event_context context = {};
 
@@ -2724,6 +2478,43 @@ TEST_F(DebugApiLinuxTest, GivenClientContextAndModuleDebugAreaEventsWhenInitiali
     context.base.size = sizeof(prelim_drm_i915_debug_event_context);
     context.client_handle = MockDebugSessionLinux::mockClientHandle;
     context.handle = 3;
+
+    prelim_drm_i915_debug_event_context_param contextParamEvent = {};
+    contextParamEvent.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CONTEXT_PARAM;
+    contextParamEvent.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    contextParamEvent.base.size = sizeof(prelim_drm_i915_debug_event_context_param);
+    contextParamEvent.client_handle = MockDebugSessionLinux::mockClientHandle;
+    contextParamEvent.ctx_handle = context.handle;
+    contextParamEvent.param = {.ctx_id = static_cast<uint32_t>(context.handle), .size = 8, .param = I915_CONTEXT_PARAM_VM, .value = vmId};
+
+    constexpr auto size = sizeof(prelim_drm_i915_debug_event_context_param) + sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance) + sizeof(uint64_t);
+
+    uint64_t contextParamData[size / sizeof(uint64_t)];
+    auto *contextParamEvent2 = reinterpret_cast<prelim_drm_i915_debug_event_context_param *>(contextParamData);
+    contextParamEvent2->base.type = PRELIM_DRM_I915_DEBUG_EVENT_CONTEXT_PARAM;
+    contextParamEvent2->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    contextParamEvent2->base.size = size;
+    contextParamEvent2->client_handle = MockDebugSessionLinux::mockClientHandle;
+    contextParamEvent2->ctx_handle = context.handle;
+    auto offset = offsetof(prelim_drm_i915_debug_event_context_param, param);
+
+    GemContextParam paramToCopy = {};
+    paramToCopy.contextId = static_cast<uint32_t>(context.handle);
+    paramToCopy.size = sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance);
+    paramToCopy.param = I915_CONTEXT_PARAM_ENGINES;
+    paramToCopy.value = 0;
+    memcpy(ptrOffset(contextParamData, offset), &paramToCopy, sizeof(GemContextParam));
+
+    auto valueOffset = offsetof(GemContextParam, value);
+    auto *engines = ptrOffset(contextParamData, offset + valueOffset);
+    i915_context_param_engines enginesParam;
+    enginesParam.extensions = 0;
+    memcpy(engines, &enginesParam, sizeof(i915_context_param_engines));
+
+    auto enginesOffset = offsetof(i915_context_param_engines, engines);
+    auto *classInstance = ptrOffset(contextParamData, offset + valueOffset + enginesOffset);
+    i915_engine_class_instance ci = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, 1};
+    memcpy(classInstance, &ci, sizeof(i915_engine_class_instance));
 
     auto uuidName = NEO::classNamesToUuid[2].first;
     auto uuidNameSize = strlen(uuidName);
@@ -2764,7 +2555,7 @@ TEST_F(DebugApiLinuxTest, GivenClientContextAndModuleDebugAreaEventsWhenInitiali
     vmBindDebugArea->client_handle = MockDebugSessionLinux::mockClientHandle;
     vmBindDebugArea->va_start = moduleDebugAddress;
     vmBindDebugArea->va_length = 0x1000;
-    vmBindDebugArea->vm_handle = 50;
+    vmBindDebugArea->vm_handle = vmId;
     vmBindDebugArea->num_uuids = 1;
     auto uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindDebugAreaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
     typeOfUUID uuidTemp = 3;
@@ -2772,7 +2563,10 @@ TEST_F(DebugApiLinuxTest, GivenClientContextAndModuleDebugAreaEventsWhenInitiali
 
     auto handler = new MockIoctlHandler;
     handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(vm), static_cast<uint64_t>(vm->base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&context), static_cast<uint64_t>(context.base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(&contextParamEvent), static_cast<uint64_t>(contextParamEvent.base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(contextParamEvent2), static_cast<uint64_t>(contextParamEvent2->base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&uuid), static_cast<uint64_t>(uuid.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&uuidDebugArea), static_cast<uint64_t>(uuidDebugArea.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(vmBindDebugArea), static_cast<uint64_t>(vmBindDebugArea->base.size)});
@@ -2792,28 +2586,41 @@ TEST_F(DebugApiLinuxTest, GivenClientContextAndModuleDebugAreaEventsWhenInitiali
     handler->preadRetVal = sizeof(session->debugArea);
 
     session->ioctlHandler.reset(handler);
+    session->synchronousInternalEventRead = true;
 
     ze_result_t result = session->initialize();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(eventsCount, static_cast<size_t>(session->getInternalEventCounter.load()));
 
     // Expect VM OPEN called
-    EXPECT_EQ(50u, handler->vmOpen.handle);
+    EXPECT_EQ(vmId, handler->vmOpen.handle);
+    EXPECT_EQ(0u, session->processPendingVmBindEventsCalled);
 }
 
-TEST_F(DebugApiLinuxTest, GivenClientContextAndModuleDebugAreaEventsWhenIncorrectModuleDebugAreaReadThenErrorIsReturned) {
+TEST_F(DebugApiLinuxTest, GivenOutOfOrderClientVmContextUuidAndModuleDebugAreaEventsWhenInitializingThenPendingVmBindIsProcessedAndSuccessReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
     auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, session);
+    session->synchronousInternalEventRead = true;
 
+    const uint64_t vmId = 50;
     prelim_drm_i915_debug_event_client client = {};
 
     client.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
     client.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
     client.base.size = sizeof(prelim_drm_i915_debug_event_client);
     client.handle = 1;
+
+    uint64_t vmData[(sizeof(prelim_drm_i915_debug_event_vm) + sizeof(uint64_t)) / sizeof(uint64_t)];
+    prelim_drm_i915_debug_event_vm *vm = reinterpret_cast<prelim_drm_i915_debug_event_vm *>(&vmData);
+
+    vm->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM;
+    vm->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vm->base.size = sizeof(prelim_drm_i915_debug_event_vm);
+    vm->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vm->handle = vmId;
 
     prelim_drm_i915_debug_event_context context = {};
 
@@ -2822,6 +2629,43 @@ TEST_F(DebugApiLinuxTest, GivenClientContextAndModuleDebugAreaEventsWhenIncorrec
     context.base.size = sizeof(prelim_drm_i915_debug_event_context);
     context.client_handle = MockDebugSessionLinux::mockClientHandle;
     context.handle = 3;
+
+    prelim_drm_i915_debug_event_context_param contextParamEvent = {};
+    contextParamEvent.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CONTEXT_PARAM;
+    contextParamEvent.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    contextParamEvent.base.size = sizeof(prelim_drm_i915_debug_event_context_param);
+    contextParamEvent.client_handle = MockDebugSessionLinux::mockClientHandle;
+    contextParamEvent.ctx_handle = context.handle;
+    contextParamEvent.param = {.ctx_id = static_cast<uint32_t>(context.handle), .size = 8, .param = I915_CONTEXT_PARAM_VM, .value = vmId};
+
+    constexpr auto size = sizeof(prelim_drm_i915_debug_event_context_param) + sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance) + sizeof(uint64_t);
+
+    uint64_t contextParamData[size / sizeof(uint64_t)];
+    auto *contextParamEvent2 = reinterpret_cast<prelim_drm_i915_debug_event_context_param *>(contextParamData);
+    contextParamEvent2->base.type = PRELIM_DRM_I915_DEBUG_EVENT_CONTEXT_PARAM;
+    contextParamEvent2->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    contextParamEvent2->base.size = size;
+    contextParamEvent2->client_handle = MockDebugSessionLinux::mockClientHandle;
+    contextParamEvent2->ctx_handle = context.handle;
+    auto offset = offsetof(prelim_drm_i915_debug_event_context_param, param);
+
+    GemContextParam paramToCopy = {};
+    paramToCopy.contextId = static_cast<uint32_t>(context.handle);
+    paramToCopy.size = sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance);
+    paramToCopy.param = I915_CONTEXT_PARAM_ENGINES;
+    paramToCopy.value = 0;
+    memcpy(ptrOffset(contextParamData, offset), &paramToCopy, sizeof(GemContextParam));
+
+    auto valueOffset = offsetof(GemContextParam, value);
+    auto *engines = ptrOffset(contextParamData, offset + valueOffset);
+    i915_context_param_engines enginesParam;
+    enginesParam.extensions = 0;
+    memcpy(engines, &enginesParam, sizeof(i915_context_param_engines));
+
+    auto enginesOffset = offsetof(i915_context_param_engines, engines);
+    auto *classInstance = ptrOffset(contextParamData, offset + valueOffset + enginesOffset);
+    i915_engine_class_instance ci = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, 1};
+    memcpy(classInstance, &ci, sizeof(i915_engine_class_instance));
 
     auto uuidName = NEO::classNamesToUuid[2].first;
     auto uuidNameSize = strlen(uuidName);
@@ -2862,7 +2706,7 @@ TEST_F(DebugApiLinuxTest, GivenClientContextAndModuleDebugAreaEventsWhenIncorrec
     vmBindDebugArea->client_handle = MockDebugSessionLinux::mockClientHandle;
     vmBindDebugArea->va_start = moduleDebugAddress;
     vmBindDebugArea->va_length = 0x1000;
-    vmBindDebugArea->vm_handle = 0;
+    vmBindDebugArea->vm_handle = vmId;
     vmBindDebugArea->num_uuids = 1;
     auto uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindDebugAreaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
     typeOfUUID uuidTemp = 3;
@@ -2870,7 +2714,165 @@ TEST_F(DebugApiLinuxTest, GivenClientContextAndModuleDebugAreaEventsWhenIncorrec
 
     auto handler = new MockIoctlHandler;
     handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(vm), static_cast<uint64_t>(vm->base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&context), static_cast<uint64_t>(context.base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(&uuid), static_cast<uint64_t>(uuid.base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(&uuidDebugArea), static_cast<uint64_t>(uuidDebugArea.base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(vmBindDebugArea), static_cast<uint64_t>(vmBindDebugArea->base.size)});
+    // context params allowing to map VM to TILE after VM BIND
+    handler->eventQueue.push({reinterpret_cast<char *>(&contextParamEvent), static_cast<uint64_t>(contextParamEvent.base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(contextParamEvent2), static_cast<uint64_t>(contextParamEvent2->base.size)});
+
+    handler->returnUuid = &readUuid;
+
+    auto eventsCount = handler->eventQueue.size();
+    handler->pollRetVal = 1;
+
+    DebugAreaHeader debugArea;
+    debugArea.reserved1 = 1;
+    debugArea.pgsize = uint8_t(4);
+    debugArea.version = 1;
+
+    handler->mmapRet = reinterpret_cast<char *>(&debugArea);
+    handler->setPreadMemory(reinterpret_cast<char *>(&debugArea), sizeof(session->debugArea), moduleDebugAddress);
+    handler->preadRetVal = sizeof(session->debugArea);
+
+    session->ioctlHandler.reset(handler);
+    session->synchronousInternalEventRead = true;
+
+    ze_result_t result = session->initialize();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(eventsCount, static_cast<size_t>(session->getInternalEventCounter.load()));
+
+    // Expect VM OPEN called
+    EXPECT_EQ(vmId, handler->vmOpen.handle);
+
+    EXPECT_EQ(2u, session->processPendingVmBindEventsCalled);
+    EXPECT_EQ(0u, session->pendingVmBindEvents.size());
+}
+
+TEST_F(DebugApiLinuxTest, GivenAllNecessaryEventsWhenIncorrectModuleDebugAreaReadThenErrorIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->synchronousInternalEventRead = true;
+
+    const uint64_t vmId = 50;
+    prelim_drm_i915_debug_event_client client = {};
+
+    client.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
+    client.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    client.base.size = sizeof(prelim_drm_i915_debug_event_client);
+    client.handle = 1;
+
+    uint64_t vmData[(sizeof(prelim_drm_i915_debug_event_vm) + sizeof(uint64_t)) / sizeof(uint64_t)];
+    prelim_drm_i915_debug_event_vm *vm = reinterpret_cast<prelim_drm_i915_debug_event_vm *>(&vmData);
+
+    vm->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM;
+    vm->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vm->base.size = sizeof(prelim_drm_i915_debug_event_vm);
+    vm->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vm->handle = vmId;
+
+    prelim_drm_i915_debug_event_context context = {};
+
+    context.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CONTEXT;
+    context.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    context.base.size = sizeof(prelim_drm_i915_debug_event_context);
+    context.client_handle = MockDebugSessionLinux::mockClientHandle;
+    context.handle = 3;
+
+    prelim_drm_i915_debug_event_context_param contextParamEvent = {};
+    contextParamEvent.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CONTEXT_PARAM;
+    contextParamEvent.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    contextParamEvent.base.size = sizeof(prelim_drm_i915_debug_event_context_param);
+    contextParamEvent.client_handle = MockDebugSessionLinux::mockClientHandle;
+    contextParamEvent.ctx_handle = context.handle;
+    contextParamEvent.param = {.ctx_id = static_cast<uint32_t>(context.handle), .size = 8, .param = I915_CONTEXT_PARAM_VM, .value = vmId};
+
+    constexpr auto size = sizeof(prelim_drm_i915_debug_event_context_param) + sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance) + sizeof(uint64_t);
+
+    uint64_t contextParamData[size / sizeof(uint64_t)];
+    auto *contextParamEvent2 = reinterpret_cast<prelim_drm_i915_debug_event_context_param *>(contextParamData);
+    contextParamEvent2->base.type = PRELIM_DRM_I915_DEBUG_EVENT_CONTEXT_PARAM;
+    contextParamEvent2->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    contextParamEvent2->base.size = size;
+    contextParamEvent2->client_handle = MockDebugSessionLinux::mockClientHandle;
+    contextParamEvent2->ctx_handle = context.handle;
+    auto offset = offsetof(prelim_drm_i915_debug_event_context_param, param);
+
+    GemContextParam paramToCopy = {};
+    paramToCopy.contextId = static_cast<uint32_t>(context.handle);
+    paramToCopy.size = sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance);
+    paramToCopy.param = I915_CONTEXT_PARAM_ENGINES;
+    paramToCopy.value = 0;
+    memcpy(ptrOffset(contextParamData, offset), &paramToCopy, sizeof(GemContextParam));
+
+    auto valueOffset = offsetof(GemContextParam, value);
+    auto *engines = ptrOffset(contextParamData, offset + valueOffset);
+    i915_context_param_engines enginesParam;
+    enginesParam.extensions = 0;
+    memcpy(engines, &enginesParam, sizeof(i915_context_param_engines));
+
+    auto enginesOffset = offsetof(i915_context_param_engines, engines);
+    auto *classInstance = ptrOffset(contextParamData, offset + valueOffset + enginesOffset);
+    i915_engine_class_instance ci = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, 1};
+    memcpy(classInstance, &ci, sizeof(i915_engine_class_instance));
+
+    auto uuidName = NEO::classNamesToUuid[2].first;
+    auto uuidNameSize = strlen(uuidName);
+    auto uuidHash = NEO::classNamesToUuid[2].second;
+
+    prelim_drm_i915_debug_event_uuid uuid = {};
+    uuid.base.type = PRELIM_DRM_I915_DEBUG_EVENT_UUID;
+    uuid.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    uuid.base.size = sizeof(prelim_drm_i915_debug_event_uuid);
+    uuid.client_handle = MockDebugSessionLinux::mockClientHandle;
+    uuid.handle = 2;
+    uuid.class_handle = PRELIM_I915_UUID_CLASS_STRING;
+    uuid.payload_size = uuidNameSize;
+
+    prelim_drm_i915_debug_read_uuid readUuid = {};
+    readUuid.client_handle = MockDebugSessionLinux::mockClientHandle;
+    memcpy(readUuid.uuid, uuidHash.data(), uuidHash.size());
+    readUuid.payload_ptr = reinterpret_cast<uint64_t>(uuidName);
+    readUuid.payload_size = uuid.payload_size;
+    readUuid.handle = 3;
+
+    prelim_drm_i915_debug_event_uuid uuidDebugArea = {};
+
+    uuidDebugArea.base.type = PRELIM_DRM_I915_DEBUG_EVENT_UUID;
+    uuidDebugArea.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    uuidDebugArea.base.size = sizeof(prelim_drm_i915_debug_event_uuid);
+    uuidDebugArea.client_handle = MockDebugSessionLinux::mockClientHandle;
+    uuidDebugArea.handle = 3;
+    uuidDebugArea.class_handle = 2;
+
+    uint64_t moduleDebugAddress = 0x34567000;
+    uint64_t vmBindDebugAreaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindDebugArea = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindDebugAreaData);
+
+    vmBindDebugArea->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindDebugArea->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vmBindDebugArea->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + sizeof(typeOfUUID);
+    vmBindDebugArea->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindDebugArea->va_start = moduleDebugAddress;
+    vmBindDebugArea->va_length = 0x1000;
+    vmBindDebugArea->vm_handle = vmId;
+    vmBindDebugArea->num_uuids = 1;
+    auto uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindDebugAreaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+    typeOfUUID uuidTemp = 3;
+    memcpy(uuids, &uuidTemp, sizeof(typeOfUUID));
+
+    auto handler = new MockIoctlHandler;
+    handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(vm), static_cast<uint64_t>(vm->base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(&context), static_cast<uint64_t>(context.base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(&contextParamEvent), static_cast<uint64_t>(contextParamEvent.base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(contextParamEvent2), static_cast<uint64_t>(contextParamEvent2->base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&uuid), static_cast<uint64_t>(uuid.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(&uuidDebugArea), static_cast<uint64_t>(uuidDebugArea.base.size)});
     handler->eventQueue.push({reinterpret_cast<char *>(vmBindDebugArea), static_cast<uint64_t>(vmBindDebugArea->base.size)});
@@ -2879,6 +2881,8 @@ TEST_F(DebugApiLinuxTest, GivenClientContextAndModuleDebugAreaEventsWhenIncorrec
     handler->pollRetVal = 1;
 
     session->ioctlHandler.reset(handler);
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile[0] = 0;
+    session->synchronousInternalEventRead = true;
 
     ze_result_t result = session->initialize();
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
@@ -2914,6 +2918,7 @@ TEST_F(DebugApiLinuxTest, GivenTwoClientEventsWithTheSameHandleWhenInitializingT
     auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, session);
     const uint64_t clientHandle = 2;
+    session->synchronousInternalEventRead = true;
 
     prelim_drm_i915_debug_event_client client = {};
     client.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
@@ -2933,6 +2938,8 @@ TEST_F(DebugApiLinuxTest, GivenTwoClientEventsWithTheSameHandleWhenInitializingT
     handler->pollRetVal = 1;
 
     session->ioctlHandler.reset(handler);
+    session->synchronousInternalEventRead = true;
+
     session->initialize();
 
     EXPECT_NE(nullptr, session->clientHandleToConnection[clientHandle]);
@@ -2964,6 +2971,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionWhenClientCreateAndDestroyEventsReadO
     handler->pollRetVal = 1;
     auto eventsCount = handler->eventQueue.size() + 1;
 
+    session->synchronousInternalEventRead = true;
     session->ioctlHandler.reset(handler);
     session->clientHandle = 1;
 
@@ -3019,7 +3027,7 @@ TEST_F(DebugApiLinuxTest, GivenDebugSessionInitializationWhenNoValidEventsAreRea
     auto handler = new MockIoctlHandler;
     handler->eventQueue.push({reinterpret_cast<char *>(&clientInvalidFlag), static_cast<uint64_t>(clientInvalidFlag.base.size)});
     handler->pollRetVal = 1;
-
+    session->synchronousInternalEventRead = true;
     session->ioctlHandler.reset(handler);
 
     ze_result_t result = session->initialize();
@@ -3167,7 +3175,7 @@ TEST_F(DebugApiLinuxTest, GivenContextCreateAndDestroyEventsWhenInitializingThen
 
     auto eventsCount = handler->eventQueue.size() + 1;
     handler->pollRetVal = 1;
-
+    session->synchronousInternalEventRead = true;
     session->ioctlHandler.reset(handler);
     session->initialize();
 
@@ -3344,7 +3352,7 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventForL0ZebinModuleWhenHandlingEventThenKer
 
     // inject module segment
     auto &module = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[l0ModuleUuid.handle];
-    module.loadAddresses.insert(0x12340000);
+    module.loadAddresses[0].insert(0x12340000);
 
     l0ModuleUuid.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
     l0ModuleUuid.payload_size = 0;
@@ -3559,9 +3567,9 @@ TEST_F(DebugApiLinuxTest, GivenUuidEventOfKnownClassWhenHandlingEventThenGpuAddr
     EXPECT_EQ(contextSaveAddress, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextStateSaveAreaGpuVa);
 }
 
-struct DebugApiLinuxVmBindFixture : public DebugApiLinuxFixture {
-    void SetUp() {
-        DebugApiLinuxFixture::SetUp();
+struct DebugApiLinuxVmBindFixture : public DebugApiLinuxFixture, public MockDebugSessionLinuxHelper {
+    void setUp() {
+        DebugApiLinuxFixture::setUp();
 
         zet_debug_config_t config = {};
         config.pid = 0x1234;
@@ -3573,75 +3581,17 @@ struct DebugApiLinuxVmBindFixture : public DebugApiLinuxFixture {
         handler = new MockIoctlHandler;
         session->ioctlHandler.reset(handler);
 
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[sbaClassHandle] = {"SBA AREA", static_cast<uint32_t>(NEO::DrmResourceClass::SbaTrackingBuffer)};
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[moduleDebugClassHandle] = {"DEBUG AREA", static_cast<uint32_t>(NEO::DrmResourceClass::ModuleHeapDebugArea)};
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[contextSaveClassHandle] = {"CONTEXT SAVE AREA", static_cast<uint32_t>(NEO::DrmResourceClass::ContextSaveArea)};
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[isaClassHandle] = {"ISA", static_cast<uint32_t>(NEO::DrmResourceClass::Isa)};
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[elfClassHandle] = {"ELF", static_cast<uint32_t>(NEO::DrmResourceClass::Elf)};
-
-        DebugSessionLinux::UuidData isaUuidData = {
-            .handle = isaUUID,
-            .classHandle = isaClassHandle,
-            .classIndex = NEO::DrmResourceClass::Isa};
-        DebugSessionLinux::UuidData elfUuidData = {
-            .handle = elfUUID,
-            .classHandle = elfClassHandle,
-            .classIndex = NEO::DrmResourceClass::Elf,
-            .data = std::make_unique<char[]>(10),
-            .dataSize = 10};
-
-        DebugSessionLinux::UuidData cookieUuidData = {
-            .handle = cookieUUID,
-            .classHandle = isaUUID,
-            .classIndex = NEO::DrmResourceClass::MaxSize,
-        };
-        DebugSessionLinux::UuidData sbaUuidData = {
-            .handle = sbaUUID,
-            .classHandle = sbaClassHandle,
-            .classIndex = NEO::DrmResourceClass::SbaTrackingBuffer,
-            .data = nullptr,
-            .dataSize = 0};
-
-        DebugSessionLinux::UuidData debugAreaUuidData = {
-            .handle = debugAreaUUID,
-            .classHandle = moduleDebugClassHandle,
-            .classIndex = NEO::DrmResourceClass::ModuleHeapDebugArea,
-            .data = nullptr,
-            .dataSize = 0};
-
-        DebugSessionLinux::UuidData stateSaveUuidData = {
-            .handle = stateSaveUUID,
-            .classHandle = contextSaveClassHandle,
-            .classIndex = NEO::DrmResourceClass::ContextSaveArea,
-            .data = nullptr,
-            .dataSize = 0};
-
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(isaUUID, std::move(isaUuidData));
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(elfUUID, std::move(elfUuidData));
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(cookieUUID, std::move(cookieUuidData));
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(sbaUUID, std::move(sbaUuidData));
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(debugAreaUUID, std::move(debugAreaUuidData));
-        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(stateSaveUUID, std::move(stateSaveUuidData));
+        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile[vmHandleForVmBind] = 0;
+        setupSessionClassHandlesAndUuidMap(session.get());
     }
 
-    void TearDown() {
-        DebugApiLinuxFixture::TearDown();
+    void tearDown() {
+        DebugApiLinuxFixture::tearDown();
     }
 
-    const uint64_t sbaClassHandle = 1;
-    const uint64_t moduleDebugClassHandle = 2;
-    const uint64_t contextSaveClassHandle = 3;
-    const uint64_t isaClassHandle = 4;
-    const uint64_t elfClassHandle = 5;
     const uint64_t zebinModuleClassHandle = 101;
     const uint64_t vmHandleForVmBind = 3;
 
-    const uint64_t isaUUID = 2;
-    const uint64_t elfUUID = 3;
-    const uint64_t cookieUUID = 5;
-    const uint64_t sbaUUID = 6;
-    const uint64_t debugAreaUUID = 7;
-    const uint64_t stateSaveUUID = 8;
     const uint64_t zebinModuleUUID = 9;
 
     MockIoctlHandler *handler = nullptr;
@@ -3699,6 +3649,9 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventWithKnownUuidClassWhenHandlingEv
     temp = static_cast<typeOfUUID>(stateSaveUUID);
     memcpy(uuids, &temp, sizeof(typeOfUUID));
 
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile[4] = 0;
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile[5] = 0;
+
     session->handleEvent(&vmBindSba->base);
     session->handleEvent(&vmBindDebugArea->base);
     session->handleEvent(&vmBindContextArea->base);
@@ -3749,14 +3702,14 @@ TEST_F(DebugApiLinuxVmBindTest, GivenNeedsAckFlagWhenHandlingVmBindEventThenAckI
     vmBind.va_length = 0x1000;
     vmBind.num_uuids = 0;
 
-    session->handleVmBindEvent(&vmBind);
+    session->handleEvent(&vmBind.base);
 
     EXPECT_EQ(1, handler->ioctlCalled);
     EXPECT_EQ(vmBind.base.seqno, handler->debugEventAcked.seqno);
     EXPECT_EQ(vmBind.base.type, handler->debugEventAcked.type);
 }
 
-TEST_F(DebugApiLinuxVmBindTest, GivenEventWithAckFlagWhenHandlingEventForISAThenEventToAckIsPushed) {
+TEST_F(DebugApiLinuxVmBindTest, GivenEventWithAckFlagWhenHandlingEventForISAThenEventToAckIsPushedToIsaEvents) {
     uint64_t isaGpuVa = 0x345000;
     uint64_t isaSize = 0x2000;
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
@@ -3783,17 +3736,17 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithAckFlagWhenHandlingEventForISAThen
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(0u, session->eventsToAck.size());
 
-    auto event = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front();
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.pop();
+    auto event = session->apiEvents.front();
+    session->apiEvents.pop();
 
     EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
     EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
 
-    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.find(isaGpuVa);
-    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.end(), isaIter);
+    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].find(isaGpuVa);
+    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].end(), isaIter);
 
     EXPECT_EQ(1u, isaIter->second->ackEvents.size());
     auto ackedEvent = isaIter->second->ackEvents[0];
@@ -3801,6 +3754,64 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithAckFlagWhenHandlingEventForISAThen
     EXPECT_EQ(vmBindIsa->base.flags, ackedEvent.flags);
     EXPECT_EQ(vmBindIsa->base.seqno, ackedEvent.seqno);
     EXPECT_EQ(vmBindIsa->base.type, ackedEvent.type);
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenUnknownVmAndEventWithAckFlagForIsaWhenHandlingVmBindEventThenEventIsAutoAckedAndNotPushedToPendingEvents) {
+    uint64_t isaGpuVa = 0x345000;
+    uint64_t isaSize = 0x2000;
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE | PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 20u;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = 5678;
+    vmBindIsa->num_uuids = 3;
+
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+
+    typeOfUUID uuidsTemp[3];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(cookieUUID);
+    uuidsTemp[2] = static_cast<typeOfUUID>(elfUUID);
+
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+
+    session->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(0u, session->apiEvents.size());
+    EXPECT_EQ(0u, session->eventsToAck.size());
+
+    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].find(isaGpuVa);
+    ASSERT_EQ(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].end(), isaIter);
+
+    EXPECT_EQ(0u, session->processPendingVmBindEventsCalled);
+    EXPECT_EQ(20u, handler->debugEventAcked.seqno);
+    EXPECT_EQ(1u, handler->ackCount);
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenUnknownVmAndEventWithoutUuidsWhenHandlingVmBindEventThenEventIsNotPushedToPendingEvents) {
+    uint64_t vmBindIsaData[(sizeof(prelim_drm_i915_debug_event_vm_bind) + sizeof(uint64_t)) / sizeof(uint64_t)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind);
+    vmBindIsa->base.seqno = 20u;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = 0x1000;
+    vmBindIsa->va_length = 0x1000;
+    vmBindIsa->vm_handle = 5678;
+    vmBindIsa->num_uuids = 0;
+
+    session->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(0u, session->pendingVmBindEvents.size());
+    EXPECT_EQ(0u, session->processPendingVmBindEventsCalled);
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenEventForISAWhenModuleLoadEventAlreadyAckedThenEventIsAckedImmediatelyAndNotPushed) {
@@ -3816,7 +3827,6 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventForISAWhenModuleLoadEventAlreadyAckedT
     vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
     vmBindIsa->va_start = isaGpuVa;
     vmBindIsa->va_length = isaSize;
-    vmBindIsa->vm_handle = vmHandleForVmBind;
     vmBindIsa->num_uuids = 3;
 
     auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
@@ -3828,22 +3838,33 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventForISAWhenModuleLoadEventAlreadyAckedT
 
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
 
-    session->handleEvent(&vmBindIsa->base);
+    bool modes[] = {false,
+                    true};
 
-    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.find(isaGpuVa);
-    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.end(), isaIter);
-    EXPECT_EQ(1u, isaIter->second->ackEvents.size());
+    for (const auto &mode : modes) {
 
-    auto event = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front();
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.pop();
+        session->blockOnFenceMode = mode;
 
-    session->acknowledgeEvent(&event);
-    EXPECT_EQ(0u, isaIter->second->ackEvents.size());
+        vmBindIsa->vm_handle = vmHandleForVmBind;
+        session->handleEvent(&vmBindIsa->base);
 
-    vmBindIsa->vm_handle = vmHandleForVmBind + 100;
-    session->handleEvent(&vmBindIsa->base);
+        auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].find(isaGpuVa);
+        ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].end(), isaIter);
+        EXPECT_EQ(1u, isaIter->second->ackEvents.size());
 
-    EXPECT_EQ(0u, isaIter->second->ackEvents.size());
+        auto event = session->apiEvents.front();
+        session->apiEvents.pop();
+
+        session->acknowledgeEvent(&event);
+        EXPECT_EQ(0u, isaIter->second->ackEvents.size());
+
+        vmBindIsa->vm_handle = vmHandleForVmBind + 100;
+        session->handleEvent(&vmBindIsa->base);
+
+        EXPECT_EQ(0u, isaIter->second->ackEvents.size());
+
+        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap->clear();
+    }
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenEventForIsaWithoutAckTriggeredBeforeAttachWhenHandlingSubsequentEventsWithAckThenEventsAreAckedImmediatelyAndNotPushed) {
@@ -3874,14 +3895,14 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventForIsaWithoutAckTriggeredBeforeAttachW
 
     session->handleEvent(&vmBindIsa->base);
 
-    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.find(isaGpuVa);
-    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.end(), isaIter);
+    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].find(isaGpuVa);
+    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].end(), isaIter);
     EXPECT_EQ(0u, isaIter->second->ackEvents.size());
     // Auto-acked event
     EXPECT_TRUE(isaIter->second->moduleLoadEventAck);
 
-    auto event = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front();
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.pop();
+    auto event = session->apiEvents.front();
+    session->apiEvents.pop();
     EXPECT_EQ(0u, event.flags & ZET_DEBUG_EVENT_FLAG_NEED_ACK);
 
     // VM BIND after attach needs ACK
@@ -3895,7 +3916,134 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventForIsaWithoutAckTriggeredBeforeAttachW
     EXPECT_EQ(vmBindIsa->base.seqno, handler->debugEventAcked.seqno);
 }
 
-TEST_F(DebugApiLinuxVmBindTest, GivenIsaRemovedWhenModuleLoadEventIsAckedThenSuccessReturned) {
+TEST_F(DebugApiLinuxVmBindTest, GivenTwoPendingEventsWhenAcknowledgeEventCalledThenCorrectEventIsAcked) {
+    setupVmToTile(session.get());
+    // first module
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+
+    // second module
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0, 1);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1, 1);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID1].ackEvents[0].size());
+    EXPECT_EQ(2u, session->apiEvents.size());
+
+    zet_debug_event_t event0 = {};
+    auto result = session->readEvent(0, &event0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    zet_debug_event_t event1 = {};
+    result = session->readEvent(0, &event1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // 2 modules need ack
+    EXPECT_EQ(2u, session->eventsToAck.size());
+
+    handler->ackCount = 0;
+    session->acknowledgeEvent(&event1);
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID1].ackEvents[0].size());
+    EXPECT_NE(0u, handler->ackCount);
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+
+    // 1 module needs ack
+    EXPECT_EQ(1u, session->eventsToAck.size());
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenNoIsaUUIDAndZebinModuleForDataSegmentWhenHandlingVmBindEventThenModuleLoadAndUnloadEventsAreTriggered) {
+    setupVmToTile(session.get());
+
+    uint64_t vmBindIsaData[(sizeof(prelim_drm_i915_debug_event_vm_bind) + 2 * sizeof(typeOfUUID) + sizeof(uint64_t)) / sizeof(uint64_t)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vmBindIsa->base.flags |= PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 2 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 10;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+
+    DebugSessionLinux::UuidData zebinModuleUuidData = {
+        .handle = zebinModuleUUID,
+        .classHandle = zebinModuleClassHandle,
+        .classIndex = NEO::DrmResourceClass::L0ZebinModule,
+        .data = std::make_unique<char[]>(sizeof(1)),
+        .dataSize = sizeof(1)};
+
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(zebinModuleUUID, std::move(zebinModuleUuidData));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount = 1;
+
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = vm0;
+    vmBindIsa->num_uuids = 2;
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+    typeOfUUID uuidsTemp[2];
+    uuidsTemp[0] = static_cast<typeOfUUID>(elfUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(zebinModuleUUID);
+
+    memcpy_s(uuids, 2 * sizeof(typeOfUUID), uuidsTemp, sizeof(uuidsTemp));
+    session->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(1u, session->eventsToAck.size());
+
+    zet_debug_event_t event0 = {};
+    auto result = session->readEvent(0, &event0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event0.type);
+
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
+    session->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(1u, session->apiEvents.size());
+    result = session->readEvent(0, &event0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event0.type);
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenBlockOnFenceAndTwoPendingEventsWhenAcknowledgeEventCalledThenCorrectEventIsAcked) {
+    session->blockOnFenceMode = true;
+    setupVmToTile(session.get());
+    // first module
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+
+    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+
+    // second module
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0, 1);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1, 1);
+
+    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID1].ackEvents[0].size());
+
+    EXPECT_EQ(2u, session->apiEvents.size());
+
+    zet_debug_event_t event0 = {};
+    auto result = session->readEvent(0, &event0);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    zet_debug_event_t event1 = {};
+    result = session->readEvent(0, &event1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // 2 modules need ack
+    EXPECT_EQ(2u, session->eventsToAck.size());
+
+    handler->ackCount = 0;
+    session->acknowledgeEvent(&event1);
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID1].ackEvents[0].size());
+    EXPECT_EQ(2u, handler->ackCount);
+    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+
+    // 1 module needs ack
+    EXPECT_EQ(1u, session->eventsToAck.size());
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenIsaRemovedWhenModuleLoadEventIsAckedThenErrorReturned) {
     uint64_t isaGpuVa = 0x345000;
     uint64_t isaSize = 0x2000;
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
@@ -3922,18 +4070,18 @@ TEST_F(DebugApiLinuxVmBindTest, GivenIsaRemovedWhenModuleLoadEventIsAckedThenSuc
 
     session->handleEvent(&vmBindIsa->base);
 
-    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.find(isaGpuVa);
-    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.end(), isaIter);
+    auto isaIter = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].find(isaGpuVa);
+    ASSERT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].end(), isaIter);
     EXPECT_EQ(1u, isaIter->second->ackEvents.size());
 
     zet_debug_event_t event = {};
     auto result = session->readEvent(0, &event);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap.clear();
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0].clear();
 
     result = session->acknowledgeEvent(&event);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventWithInvalidNumUUIDsWhenHandlingEventThenBindInfoIsNotStored) {
@@ -3978,11 +4126,11 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventWithAckNeededForIsaWhenHandlingE
 
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck.size());
+    EXPECT_EQ(0u, session->eventsToAck.size());
 
     session->handleEvent(&vmBindIsa->base);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
 
     EXPECT_EQ(1u, isaMap.size());
     EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
@@ -3992,14 +4140,89 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventWithAckNeededForIsaWhenHandlingE
     EXPECT_EQ(isaSize, isaAllocation->bindInfo.size);
     EXPECT_EQ(elfUUID, isaAllocation->elfUuidHandle);
     EXPECT_EQ(3u, isaAllocation->vmHandle);
-    EXPECT_EQ(1u, isaAllocation->cookies.size());
-    EXPECT_EQ(cookieUUID, *isaAllocation->cookies.begin());
+    EXPECT_TRUE(isaAllocation->tileInstanced);
 
-    ASSERT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck.size());
-    auto eventToAck = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck[0].second;
+    ASSERT_EQ(1u, isaAllocation->ackEvents.size());
+    auto eventToAck = isaAllocation->ackEvents[0];
     EXPECT_EQ(vmBindIsa->base.type, eventToAck.type);
     EXPECT_EQ(vmBindIsa->base.seqno, eventToAck.seqno);
     EXPECT_EQ(0u, handler->debugEventAcked.seqno);
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenCookieWhenHandlingVmBindForIsaThenIsaAllocationIsTileInstanced) {
+    uint64_t isaGpuVa = 0x345000;
+    uint64_t isaSize = 0x2000;
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE | PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 3;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = vmHandleForVmBind;
+    vmBindIsa->num_uuids = 3;
+
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+    typeOfUUID uuidsTemp[3];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(cookieUUID);
+    uuidsTemp[2] = static_cast<typeOfUUID>(elfUUID);
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+
+    session->handleEvent(&vmBindIsa->base);
+
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
+
+    EXPECT_EQ(1u, isaMap.size());
+    EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
+
+    auto isaAllocation = isaMap[isaGpuVa].get();
+    EXPECT_EQ(isaGpuVa, isaAllocation->bindInfo.gpuVa);
+    EXPECT_EQ(isaSize, isaAllocation->bindInfo.size);
+    EXPECT_EQ(elfUUID, isaAllocation->elfUuidHandle);
+    EXPECT_EQ(3u, isaAllocation->vmHandle);
+    EXPECT_TRUE(isaAllocation->tileInstanced);
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenNoCookieWhenHandlingVmBindForIsaThenIsaAllocationIsNotTileInstanced) {
+    uint64_t isaGpuVa = 0x345000;
+    uint64_t isaSize = 0x2000;
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE | PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 3;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = vmHandleForVmBind;
+    vmBindIsa->num_uuids = 2;
+
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+
+    typeOfUUID uuidsTemp[2];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(elfUUID);
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+
+    session->handleEvent(&vmBindIsa->base);
+
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
+
+    EXPECT_EQ(1u, isaMap.size());
+    EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
+
+    auto isaAllocation = isaMap[isaGpuVa].get();
+    EXPECT_EQ(isaGpuVa, isaAllocation->bindInfo.gpuVa);
+    EXPECT_EQ(isaSize, isaAllocation->bindInfo.size);
+    EXPECT_EQ(elfUUID, isaAllocation->elfUuidHandle);
+    EXPECT_EQ(3u, isaAllocation->vmHandle);
+    EXPECT_FALSE(isaAllocation->tileInstanced);
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenTwoVmBindEventForTheSameIsaInDifferentVMWhenHandlingEventThenIsaVmHandleIsNotOverriden) {
@@ -4026,7 +4249,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenTwoVmBindEventForTheSameIsaInDifferentVMWhe
 
     session->handleEvent(&vmBindIsa->base);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(1u, isaMap.size());
     EXPECT_NE(isaMap.end(), isaMap.find(isaGpuVa));
     auto isaAllocation = isaMap[isaGpuVa].get();
@@ -4065,7 +4288,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindDestroyEventForIsaWhenHandlingEventTh
 
     session->handleEvent(&vmBindIsa->base);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(0u, isaMap.size());
 }
 
@@ -4091,7 +4314,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventForIsaWhenReadingEventThenModule
 
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(0u, isaMap.size());
 
     session->handleEvent(&vmBindIsa->base);
@@ -4100,7 +4323,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventForIsaWhenReadingEventThenModule
     EXPECT_EQ(isaGpuVa, isaMap[isaGpuVa]->bindInfo.gpuVa);
 
     // No event to ACK if vmBind doesn't have ACK flag
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->eventsToAck.size());
+    EXPECT_EQ(0u, session->eventsToAck.size());
 
     zet_debug_event_t event = {};
     ze_result_t result = zetDebugReadEvent(session->toHandle(), 0, &event);
@@ -4142,7 +4365,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenVmBindCreateAndDestroyEventsForIsaWhenReadi
 
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(0u, isaMap.size());
 
     session->handleEvent(&vmBindIsa->base);
@@ -4182,7 +4405,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenIsaBoundMultipleTimesWhenHandlingVmBindDest
     uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
     prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
 
     auto isa = std::make_unique<DebugSessionLinux::IsaAllocation>();
     isa->bindInfo = {isaGpuVa, isaSize};
@@ -4211,7 +4434,7 @@ TEST_F(DebugApiLinuxVmBindTest, GivenIsaBoundMultipleTimesWhenHandlingVmBindDest
     session->handleEvent(&vmBindIsa->base);
 
     EXPECT_EQ(1u, isaMap.size());
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenVmBindEventForIsaWithInvalidElfWhenReadingEventThenModuleLoadEventReturnZeroElf) {
@@ -4290,12 +4513,12 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithL0ZebinModuleWhenHandlingEventThen
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
 
     // event not pushed to ack
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa]->ackEvents.size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0][isaGpuVa]->ackEvents.size());
     EXPECT_EQ(1, handler->ioctlCalled); // ACK
     EXPECT_EQ(vmBindIsa->base.seqno, handler->debugEventAcked.seqno);
 
@@ -4306,21 +4529,21 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithL0ZebinModuleWhenHandlingEventThen
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
-    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
+    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
     EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount);
 
     // event not pushed to ack
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa2]->ackEvents.size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0][isaGpuVa2]->ackEvents.size());
     EXPECT_EQ(0, handler->ioctlCalled);
     EXPECT_EQ(0u, handler->debugEventAcked.seqno);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(2u, isaMap.size());
 
-    EXPECT_FALSE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa]->moduleLoadEventAck);
-    EXPECT_FALSE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa2]->moduleLoadEventAck);
+    EXPECT_FALSE(isaMap[isaGpuVa]->moduleLoadEventAck);
+    EXPECT_FALSE(isaMap[isaGpuVa2]->moduleLoadEventAck);
 
     zet_debug_event_t event = {};
     ze_result_t result = zetDebugReadEvent(session->toHandle(), 0, &event);
@@ -4334,19 +4557,27 @@ TEST_F(DebugApiLinuxVmBindTest, GivenEventWithL0ZebinModuleWhenHandlingEventThen
     EXPECT_EQ(elfAddress, event.info.module.moduleBegin);
     EXPECT_EQ(elfAddress + elfSize, event.info.module.moduleEnd);
 
+    result = zetDebugAcknowledgeEvent(session->toHandle(), &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_FALSE(isaMap[isaGpuVa]->moduleLoadEventAck);
+    EXPECT_FALSE(isaMap[isaGpuVa2]->moduleLoadEventAck);
+    // vm_bind acked
+    EXPECT_EQ(1, handler->ioctlCalled);
+    EXPECT_EQ(11u, handler->debugEventAcked.seqno);
+
     vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
     vmBindIsa->va_start = isaGpuVa2;
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
     vmBindIsa->va_start = isaGpuVa;
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
 
     memset(&event, 0, sizeof(zet_debug_event_t));
 
@@ -4405,12 +4636,12 @@ TEST_F(DebugApiLinuxVmBindTest, GivenAttachAfterModuleCreateWhenHandlingEventWit
     memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
 
     // event not pushed to ack
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa]->ackEvents.size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0][isaGpuVa]->ackEvents.size());
     EXPECT_EQ(0, handler->ioctlCalled);
     EXPECT_EQ(0u, handler->debugEventAcked.seqno);
 
@@ -4420,21 +4651,21 @@ TEST_F(DebugApiLinuxVmBindTest, GivenAttachAfterModuleCreateWhenHandlingEventWit
     handler->ioctlCalled = 0;
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
-    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
+    EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
     EXPECT_EQ(2u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount);
 
     // event not pushed to ack
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa]->ackEvents.size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0][isaGpuVa]->ackEvents.size());
     EXPECT_EQ(0, handler->ioctlCalled);
     EXPECT_EQ(0u, handler->debugEventAcked.seqno); // Not acked
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(2u, isaMap.size());
 
-    EXPECT_TRUE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa]->moduleLoadEventAck);
-    EXPECT_TRUE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[isaGpuVa2]->moduleLoadEventAck);
+    EXPECT_TRUE(isaMap[isaGpuVa2]->moduleLoadEventAck);
+    EXPECT_TRUE(isaMap[isaGpuVa]->moduleLoadEventAck);
 
     zet_debug_event_t event = {};
     ze_result_t result = zetDebugReadEvent(session->toHandle(), 0, &event);
@@ -4454,14 +4685,14 @@ TEST_F(DebugApiLinuxVmBindTest, GivenAttachAfterModuleCreateWhenHandlingEventWit
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 
     vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_DESTROY;
     vmBindIsa->va_start = isaGpuVa;
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
 
     memset(&event, 0, sizeof(zet_debug_event_t));
 
@@ -4530,7 +4761,62 @@ TEST_F(DebugApiLinuxVmBindTest, GivenMultipleSegmentsInL0ZebinModuleWhenLoadAddr
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
+}
+
+TEST_F(DebugApiLinuxVmBindTest, GivenMultipleSegmentsInL0ZebinModuleWhenLoadAddressCountReachesSegmentsCountThenModuleLoadEventIsTriggered) {
+    const uint64_t isaGpuVa = 0x345000;
+    const uint64_t dataGpuVa = 0x333000;
+    const uint64_t isaSize = 0x2000;
+    const uint64_t dataSize = 0x2000;
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    const uint32_t segmentCount = 2;
+    DebugSessionLinux::UuidData zebinModuleUuidData = {
+        .handle = zebinModuleUUID,
+        .classHandle = zebinModuleClassHandle,
+        .classIndex = NEO::DrmResourceClass::L0ZebinModule,
+        .data = std::make_unique<char[]>(sizeof(segmentCount)),
+        .dataSize = sizeof(segmentCount)};
+
+    memcpy(zebinModuleUuidData.data.get(), &segmentCount, sizeof(segmentCount));
+
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[zebinModuleClassHandle] = {"L0_ZEBIN_MODULE", static_cast<uint32_t>(NEO::DrmResourceClass::L0ZebinModule)};
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap.emplace(zebinModuleUUID, std::move(zebinModuleUuidData));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount = segmentCount;
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[elfUUID].ptr = 0x1000;
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = vmHandleForVmBind;
+    vmBindIsa->num_uuids = 4;
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+    typeOfUUID uuidsTemp[4];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(cookieUUID);
+    uuidsTemp[2] = static_cast<typeOfUUID>(elfUUID);
+    uuidsTemp[3] = static_cast<typeOfUUID>(zebinModuleUUID);
+
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+    session->handleEvent(&vmBindIsa->base);
+
+    vmBindIsa->num_uuids = 1;
+    vmBindIsa->va_start = dataGpuVa;
+    vmBindIsa->va_length = dataSize;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 1 * sizeof(typeOfUUID);
+    uuidsTemp[0] = static_cast<typeOfUUID>(zebinModuleUUID); // only module UUID attached
+
+    memcpy(uuids, uuidsTemp, sizeof(typeOfUUID));
+
+    session->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, session->apiEvents.front().type);
 }
 
 TEST_F(DebugApiLinuxVmBindTest, GivenMultipleBindEventsWithZebinModuleWhenHandlingEventsThenModuleLoadIsReportedOnceOnly) {
@@ -4572,20 +4858,20 @@ TEST_F(DebugApiLinuxVmBindTest, GivenMultipleBindEventsWithZebinModuleWhenHandli
 
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount);
 
     vmBindIsa->vm_handle = vmHandleForVmBind + 1000;
     session->handleEvent(&vmBindIsa->base);
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(1u, session->apiEvents.size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.size());
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses.size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].loadAddresses[0].size());
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].segmentCount);
 
-    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap;
+    auto &isaMap = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->isaMap[0];
     EXPECT_EQ(1u, isaMap.size());
 
     zet_debug_event_t event = {};
@@ -4694,7 +4980,7 @@ TEST_F(DebugApiLinuxTest, GivenDebuggerLogsAndFailingReadUuidEventIoctlWhenHandl
     EXPECT_EQ(0u, session->getClassHandleToIndex().size());
 
     auto errorMessage = ::testing::internal::GetCapturedStderr();
-    EXPECT_EQ(std::string("\nERROR: PRELIM_I915_DEBUG_IOCTL_READ_UUID res = -1 errno = 0\n"), errorMessage);
+    EXPECT_EQ(std::string("\nERROR: PRELIM_I915_DEBUG_IOCTL_READ_UUID ret = -1 errno = 0\n"), errorMessage);
 }
 
 TEST_F(DebugApiLinuxTest, GivenEventsAvailableWhenReadingEventThenEventsAreReturned) {
@@ -4708,7 +4994,7 @@ TEST_F(DebugApiLinuxTest, GivenEventsAvailableWhenReadingEventThenEventsAreRetur
 
     zet_debug_event_t debugEvent = {};
     debugEvent.type = ZET_DEBUG_EVENT_TYPE_PROCESS_ENTRY;
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.push(debugEvent);
+    session->apiEvents.push(debugEvent);
 
     zet_debug_event_t debugEvent2 = {};
     debugEvent2.type = ZET_DEBUG_EVENT_TYPE_MODULE_LOAD;
@@ -4716,11 +5002,11 @@ TEST_F(DebugApiLinuxTest, GivenEventsAvailableWhenReadingEventThenEventsAreRetur
     debugEvent2.info.module.moduleBegin = 1000;
     debugEvent2.info.module.moduleEnd = 2000;
     debugEvent2.info.module.load = 0x1234000;
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.push(debugEvent2);
+    session->apiEvents.push(debugEvent2);
 
     zet_debug_event_t debugEvent3 = {};
     debugEvent3.type = ZET_DEBUG_EVENT_TYPE_PROCESS_EXIT;
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.push(debugEvent3);
+    session->apiEvents.push(debugEvent3);
 
     zet_debug_event_t outputEvent = {};
 
@@ -4781,6 +5067,7 @@ TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamEngineThenEventIs
     uint32_t contextHandle = 20;
 
     session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].handle = contextHandle;
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].vm = vmId;
     session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmIds.insert(vmId);
 
     constexpr auto size = sizeof(prelim_drm_i915_debug_event_context_param) + sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance);
@@ -4813,7 +5100,7 @@ TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamEngineThenEventIs
 
     auto enginesOffset = offsetof(i915_context_param_engines, engines);
     auto *classInstance = ptrOffset(memory, offset + valueOffset + enginesOffset);
-    i915_engine_class_instance ci = {I915_ENGINE_CLASS_RENDER, 1};
+    i915_engine_class_instance ci = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, 1};
     memcpy(classInstance, &ci, sizeof(i915_engine_class_instance));
 
     ::testing::internal::CaptureStdout();
@@ -4821,11 +5108,84 @@ TEST_F(DebugApiLinuxTest, GivenContextParamEventWhenTypeIsParamEngineThenEventIs
     alignedFree(memory);
 
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines.size());
-    EXPECT_EQ(static_cast<uint32_t>(I915_ENGINE_CLASS_RENDER), session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_class);
+    EXPECT_EQ(static_cast<uint32_t>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_class);
     EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_instance);
+
+    EXPECT_NE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.end(),
+              session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.find(vmId));
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile[vmId]);
 
     auto infoMessage = ::testing::internal::GetCapturedStdout();
     EXPECT_TRUE(hasSubstr(infoMessage, std::string("I915_CONTEXT_PARAM_ENGINES ctx_id = 20 param = 10 value = 0")));
+}
+
+TEST_F(DebugApiLinuxTest, GivenNoVmIdWhenOrZeroEnginesContextParamEventIsHandledThenVmToTileIsNotSet) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    session->clientHandle = DebugSessionLinux::invalidClientHandle;
+
+    uint64_t vmId = 10;
+    uint32_t contextHandle = 20;
+
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].handle = contextHandle;
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].vm = MockDebugSessionLinux::invalidHandle;
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmIds.insert(vmId);
+
+    constexpr auto size = sizeof(prelim_drm_i915_debug_event_context_param) + sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance);
+
+    auto memory = alignedMalloc(size, sizeof(prelim_drm_i915_debug_event_context_param));
+    auto *contextParamEvent = static_cast<prelim_drm_i915_debug_event_context_param *>(memory);
+
+    {
+        contextParamEvent->base.type = PRELIM_DRM_I915_DEBUG_EVENT_CONTEXT_PARAM;
+        contextParamEvent->base.flags = 0;
+        contextParamEvent->base.size = size;
+        contextParamEvent->client_handle = MockDebugSessionLinux::mockClientHandle;
+        contextParamEvent->ctx_handle = contextHandle;
+    }
+
+    auto offset = offsetof(prelim_drm_i915_debug_event_context_param, param);
+
+    GemContextParam paramToCopy = {};
+    paramToCopy.contextId = contextHandle;
+    paramToCopy.size = sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance);
+    paramToCopy.param = I915_CONTEXT_PARAM_ENGINES;
+    paramToCopy.value = 0;
+    memcpy(ptrOffset(memory, offset), &paramToCopy, sizeof(GemContextParam));
+
+    auto valueOffset = offsetof(GemContextParam, value);
+    auto *engines = ptrOffset(memory, offset + valueOffset);
+    i915_context_param_engines enginesParam;
+    enginesParam.extensions = 0;
+    memcpy(engines, &enginesParam, sizeof(i915_context_param_engines));
+
+    auto enginesOffset = offsetof(i915_context_param_engines, engines);
+    auto *classInstance = ptrOffset(memory, offset + valueOffset + enginesOffset);
+    i915_engine_class_instance ci = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, 1};
+    memcpy(classInstance, &ci, sizeof(i915_engine_class_instance));
+
+    session->handleEvent(&contextParamEvent->base);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines.size());
+    EXPECT_EQ(static_cast<uint32_t>(drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER), session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_class);
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].engines[0].engine_instance);
+
+    EXPECT_EQ(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.end(),
+              session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.find(MockDebugSessionLinux::invalidHandle));
+
+    paramToCopy.size = sizeof(i915_context_param_engines);
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle].vm = vmId;
+    memcpy(ptrOffset(memory, offset), &paramToCopy, sizeof(GemContextParam));
+
+    session->handleEvent(&contextParamEvent->base);
+
+    EXPECT_EQ(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.end(),
+              session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile.find(vmId));
+
+    alignedFree(memory);
 }
 
 TEST_F(DebugApiLinuxTest, GivenDebuggerErrorLogsWhenContextParamWithInvalidContextIsHandledThenErrorIsPrinted) {
@@ -4907,7 +5267,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForInterruptThenProperIoctlsIs
 
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
-    std::vector<ze_device_thread_t> threads({});
+    std::vector<EuThread::ThreadId> threads({});
 
     std::unique_ptr<uint8_t[]> bitmaskOut;
     size_t bitmaskSizeOut = 0;
@@ -4948,7 +5308,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromIoctlWhenCallingThreadControlForInterrup
 
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
-    std::vector<ze_device_thread_t> threads({});
+    std::vector<EuThread::ThreadId> threads({});
 
     std::unique_ptr<uint8_t[]> bitmaskOut;
     size_t bitmaskSizeOut = 0;
@@ -4972,7 +5332,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForResumeThenProperIoctlsIsCal
 
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
-    std::vector<ze_device_thread_t> threads({});
+    std::vector<EuThread::ThreadId> threads({});
 
     std::unique_ptr<uint8_t[]> bitmaskOut;
     size_t bitmaskSizeOut = 0;
@@ -4993,11 +5353,11 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto &l0HwHelper = L0HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(sessionMock->stateSaveAreaHeader, version);
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
 
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
@@ -5014,7 +5374,7 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
     auto bitmask = handler->euControlBitmask.get();
 
     EXPECT_EQ(1u, bitmask[0]);
-    if (l0HwHelper.isResumeWARequired()) {
+    if (l0GfxCoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, bitmask[4]);
     } else {
         EXPECT_EQ(0u, bitmask[4]);
@@ -5028,7 +5388,7 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
 
     bitmask = handler->euControlBitmask.get();
 
-    if (l0HwHelper.isResumeWARequired()) {
+    if (l0GfxCoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, bitmask[0]);
         EXPECT_EQ(1u, bitmask[4]);
     } else {
@@ -5106,7 +5466,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForThreadStoppedThenProperIoct
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
 
-    std::vector<ze_device_thread_t> threads({});
+    std::vector<EuThread::ThreadId> threads({});
 
     std::unique_ptr<uint8_t[]> bitmaskOut;
     size_t bitmaskSizeOut = 0;
@@ -5189,6 +5549,22 @@ TEST_F(DebugApiLinuxTest, givenEnginesEventHandledThenLrcToContextHandleMapIsFil
     EXPECT_TRUE(hasSubstr(infoMessage, std::string("ENGINES event: client_handle = 34, ctx_handle = 20, num_engines = 2 DESTROY")));
 }
 
+TEST_F(DebugApiLinuxTest, givenTileAttachEnabledWhenDeviceDoesNotHaveTilesThenTileSessionsAreNotEnabled) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(1);
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+    session->clientHandle = MockDebugSessionLinux::mockClientHandle;
+
+    session->createTileSessionsIfEnabled();
+    EXPECT_FALSE(session->tileSessionsEnabled);
+    EXPECT_EQ(0u, session->tileSessions.size());
+}
+
 using DebugApiLinuxAttentionTest = Test<DebugApiLinuxFixture>;
 
 TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventForThreadsWhenHandlingEventThenNewlyStoppedThreadsSaved) {
@@ -5210,22 +5586,22 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventForThreadsWhenHandlingEv
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    std::vector<ze_device_thread_t> threads{
-        {0, 0, 0, 0},
-        {0, 0, 0, 1},
-        {0, 0, 0, 2},
-        {0, 0, 0, 3},
-        {0, 0, 0, 4},
-        {0, 0, 0, 5},
-        {0, 0, 0, 6}};
+    std::vector<EuThread::ThreadId> threads{
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 1},
+        {0, 0, 0, 0, 2},
+        {0, 0, 0, 0, 3},
+        {0, 0, 0, 0, 4},
+        {0, 0, 0, 0, 5},
+        {0, 0, 0, 0, 6}};
 
     for (auto thread : threads) {
-        sessionMock->stoppedThreads[EuThread::ThreadId(0, thread).packed] = 1;
+        sessionMock->stoppedThreads[thread.packed] = 1;
     }
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
 
     prelim_drm_i915_debug_event_eu_attention attention = {};
     attention.base.type = PRELIM_DRM_I915_DEBUG_EVENT_EU_ATTENTION;
@@ -5258,18 +5634,18 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEuAttentionEventWithInvalidClientWhenHan
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    std::vector<ze_device_thread_t> threads{
-        {0, 0, 0, 0},
-        {0, 0, 0, 1},
-        {0, 0, 0, 2},
-        {0, 0, 0, 3},
-        {0, 0, 0, 4},
-        {0, 0, 0, 5},
-        {0, 0, 0, 6}};
+    std::vector<EuThread::ThreadId> threads{
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 1},
+        {0, 0, 0, 0, 2},
+        {0, 0, 0, 0, 3},
+        {0, 0, 0, 0, 4},
+        {0, 0, 0, 0, 5},
+        {0, 0, 0, 0, 6}};
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
 
     prelim_drm_i915_debug_event_eu_attention attention = {};
 
@@ -5350,18 +5726,18 @@ TEST_F(DebugApiLinuxAttentionTest, GivenInterruptedThreadsWhenOnlySomeThreadsRai
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    std::vector<ze_device_thread_t> threads{
-        {0, 0, 0, 0}};
+    std::vector<EuThread::ThreadId> threads{
+        {0, 0, 0, 0, 0}};
 
-    sessionMock->stoppedThreads[EuThread::ThreadId(0, threads[0]).packed] = 1;
+    sessionMock->stoppedThreads[threads[0].packed] = 1;
 
     if (hwInfo.gtSystemInfo.MaxEuPerSubSlice > 8) {
         sessionMock->allThreads[EuThread::ThreadId(0, 0, 0, 4, 0)]->stopThread(1u);
     }
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
 
     ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
     ze_device_thread_t thread2 = {0, 0, 1, UINT32_MAX};
@@ -5455,18 +5831,18 @@ TEST_F(DebugApiLinuxAttentionTest, GivenEventSeqnoLowerEqualThanSentInterruptWhe
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize = 0;
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0HwHelper = L0HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    std::vector<ze_device_thread_t> threads{
-        {0, 0, 0, 0},
-        {0, 0, 0, 1},
-        {0, 0, 0, 2},
-        {0, 0, 0, 3},
-        {0, 0, 0, 4},
-        {0, 0, 0, 5},
-        {0, 0, 0, 6}};
+    std::vector<EuThread::ThreadId> threads{
+        {0, 0, 0, 0, 0},
+        {0, 0, 0, 0, 1},
+        {0, 0, 0, 0, 2},
+        {0, 0, 0, 0, 3},
+        {0, 0, 0, 0, 4},
+        {0, 0, 0, 0, 5},
+        {0, 0, 0, 0, 6}};
 
-    l0HwHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
 
     ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
     sessionMock->pendingInterrupts.push_back(std::pair<ze_device_thread_t, bool>(thread, false));
@@ -5607,13 +5983,13 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEinvalWhenReadingIn
     errno = EINVAL;
     session->readInternalEventsAsync();
 
-    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_DETACHED, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front().type);
-    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.pop();
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_DETACHED, session->apiEvents.front().type);
+    session->apiEvents.pop();
     errno = 0;
 
     session->readInternalEventsAsync();
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 }
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEBusyWhenReadingInternalEventsAsyncThenDetachEventIsNotGenerated) {
@@ -5631,7 +6007,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsErrorAndEBusyWhenReadingInt
     errno = EBUSY;
     session->readInternalEventsAsync();
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
     errno = 0;
 }
 
@@ -5651,7 +6027,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsZeroWhenReadingInternalEven
     EXPECT_EQ(0, handler->ioctlCalled);
     EXPECT_EQ(0u, handler->debugEventInput.type);
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 }
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsNonZeroWhenReadingInternalEventsAsyncThenEventReadIsCalled) {
@@ -5716,6 +6092,109 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenEventsAvailableWhenHandlingEventsAsync
     EXPECT_NE(nullptr, session->clientHandleToConnection[clientHandle]);
 }
 
+TEST_F(DebugApiLinuxAsyncThreadTest, GivenOutOfOrderEventsForIsaWithoutAckNeededFlagWhenHandleEventsAsyncCalledThenPendingVmBindEventsAreHandled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    auto handler = new MockIoctlHandler;
+    handler->pollRetVal = 1;
+    session->ioctlHandler.reset(handler);
+    session->clientHandle = MockDebugSessionLinux::mockClientHandle;
+    session->synchronousInternalEventRead = true;
+
+    uint64_t isaUUID = 10;
+    uint64_t isaClassHandle = 64;
+
+    uint32_t devices = static_cast<uint32_t>(device->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->classHandleToIndex[isaClassHandle] = {"ISA", static_cast<uint32_t>(NEO::DrmResourceClass::Isa)};
+
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 1 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 20u;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = 0x1234000;
+    vmBindIsa->va_length = 0x1000;
+    vmBindIsa->vm_handle = 10;
+    vmBindIsa->num_uuids = 1;
+
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+
+    typeOfUUID uuidsTemp[1];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+
+    uint64_t contextHandle = 12;
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[contextHandle];
+
+    prelim_drm_i915_debug_event_context_param contextParamEvent = {};
+    contextParamEvent.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CONTEXT_PARAM;
+    contextParamEvent.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    contextParamEvent.base.size = sizeof(prelim_drm_i915_debug_event_context_param);
+    contextParamEvent.client_handle = MockDebugSessionLinux::mockClientHandle;
+    contextParamEvent.ctx_handle = contextHandle;
+    contextParamEvent.param = {.ctx_id = static_cast<uint32_t>(contextHandle), .size = 8, .param = I915_CONTEXT_PARAM_VM, .value = 10};
+
+    constexpr auto size = sizeof(prelim_drm_i915_debug_event_context_param) + sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance) + sizeof(uint64_t);
+    uint64_t contextParamData[size / sizeof(uint64_t)];
+    auto *contextParamEvent2 = reinterpret_cast<prelim_drm_i915_debug_event_context_param *>(contextParamData);
+    contextParamEvent2->base.type = PRELIM_DRM_I915_DEBUG_EVENT_CONTEXT_PARAM;
+    contextParamEvent2->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    contextParamEvent2->base.size = size;
+    contextParamEvent2->client_handle = MockDebugSessionLinux::mockClientHandle;
+    contextParamEvent2->ctx_handle = contextHandle;
+    auto offset = offsetof(prelim_drm_i915_debug_event_context_param, param);
+
+    GemContextParam paramToCopy = {};
+    paramToCopy.contextId = static_cast<uint32_t>(contextHandle);
+    paramToCopy.size = sizeof(i915_context_param_engines) + sizeof(i915_engine_class_instance);
+    paramToCopy.param = I915_CONTEXT_PARAM_ENGINES;
+    paramToCopy.value = 0;
+    memcpy(ptrOffset(contextParamData, offset), &paramToCopy, sizeof(GemContextParam));
+
+    auto valueOffset = offsetof(GemContextParam, value);
+    auto *engines = ptrOffset(contextParamData, offset + valueOffset);
+    i915_context_param_engines enginesParam;
+    enginesParam.extensions = 0;
+    memcpy(engines, &enginesParam, sizeof(i915_context_param_engines));
+
+    auto enginesOffset = offsetof(i915_context_param_engines, engines);
+    auto *classInstance = ptrOffset(contextParamData, offset + valueOffset + enginesOffset);
+    i915_engine_class_instance ci = {drm_i915_gem_engine_class::I915_ENGINE_CLASS_RENDER, 1};
+    memcpy(classInstance, &ci, sizeof(i915_engine_class_instance));
+
+    handler->eventQueue.push({reinterpret_cast<char *>(vmBindIsa), static_cast<uint64_t>(vmBindIsa->base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(&contextParamEvent), static_cast<uint64_t>(contextParamEvent.base.size)});
+    handler->eventQueue.push({reinterpret_cast<char *>(contextParamEvent2), static_cast<uint64_t>(contextParamEvent2->base.size)});
+
+    handler->pollRetVal = 1;
+
+    auto eventsCount = handler->eventQueue.size();
+    for (size_t i = 0; i < eventsCount; i++) {
+        session->handleEventsAsync();
+    }
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(2u, session->processPendingVmBindEventsCalled);
+    EXPECT_EQ(0u, session->pendingVmBindEvents.size());
+}
+
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenPollReturnsNonZeroWhenReadingEventsAsyncThenEventReadIsCalledForAtMost3Times) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -5752,7 +6231,7 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyn
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    auto session = std::make_unique<MockAsyncThreadDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
@@ -5766,19 +6245,43 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingAsyn
         ;
 
     EXPECT_TRUE(session->asyncThread.threadActive);
-    EXPECT_FALSE(session->asyncThread.threadFinished);
+    EXPECT_FALSE(session->asyncThreadFinished);
 
     session->closeAsyncThread();
 
     EXPECT_FALSE(session->asyncThread.threadActive);
-    EXPECT_TRUE(session->asyncThread.threadFinished);
+    EXPECT_TRUE(session->asyncThreadFinished);
+}
+
+TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWhenStartingAndClosingInternalEventsAsyncThreadThenThreadIsStartedAndFinishes) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto session = std::make_unique<MockAsyncThreadDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, session);
+
+    session->clientHandle = MockDebugSessionLinux::mockClientHandle;
+
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    session->startInternalEventsThread();
+
+    while (handler->pollCounter == 0)
+        ;
+
+    EXPECT_TRUE(session->internalEventThread.threadActive);
+
+    session->closeInternalEventsThread();
+
+    EXPECT_FALSE(session->internalEventThread.threadActive);
 }
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosingConnectionThenAsyncThreadIsTerminated) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    auto session = std::make_unique<MockAsyncThreadDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
@@ -5792,19 +6295,19 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenDebugSessionWithAsyncThreadWhenClosing
         ;
 
     EXPECT_TRUE(session->asyncThread.threadActive);
-    EXPECT_FALSE(session->asyncThread.threadFinished);
+    EXPECT_FALSE(session->asyncThreadFinished);
 
     session->closeConnection();
 
     EXPECT_FALSE(session->asyncThread.threadActive);
-    EXPECT_TRUE(session->asyncThread.threadFinished);
+    EXPECT_TRUE(session->asyncThreadFinished);
 }
 
 TEST_F(DebugApiLinuxAsyncThreadTest, GivenNoEventsAvailableWithinTimeoutWhenReadingEventThenNotReadyReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
-    auto session = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    auto session = std::make_unique<MockAsyncThreadDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, session);
 
     session->clientHandle = MockDebugSessionLinux::mockClientHandle;
@@ -5842,8 +6345,8 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
 
     session->closeAsyncThread();
 
-    if (session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size() > 0) {
-        auto event = session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.front();
+    if (session->apiEvents.size() > 0) {
+        auto event = session->apiEvents.front();
         EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, event.type);
         EXPECT_EQ(0u, event.info.thread.thread.slice);
         EXPECT_EQ(0u, event.info.thread.thread.subslice);
@@ -5876,15 +6379,15 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
 
     session->closeAsyncThread();
 
-    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->apiEvents.size());
+    EXPECT_EQ(0u, session->apiEvents.size());
 }
 
 struct DebugApiRegistersAccessFixture : public DebugApiLinuxFixture {
-    void SetUp() {
+    void setUp() {
         hwInfo = *NEO::defaultHwInfo.get();
         hwInfo.gtSystemInfo.SubSliceCount = 6 * hwInfo.gtSystemInfo.SliceCount;
 
-        DebugApiLinuxFixture::SetUp(&hwInfo);
+        DebugApiLinuxFixture::setUp(&hwInfo);
 
         mockBuiltins = new MockBuiltins();
         mockBuiltins->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(1);
@@ -5892,14 +6395,15 @@ struct DebugApiRegistersAccessFixture : public DebugApiLinuxFixture {
         session = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{}, device, 0);
         session->clientHandle = MockDebugSessionLinux::mockClientHandle;
         session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
-        auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-        maxDbgSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
+        maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
         session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = {stateSaveAreaGpuVa, maxDbgSurfaceSize};
         session->allThreadsStopped = true;
+        session->allThreads[stoppedThreadId]->stopThread(1u);
     }
 
-    void TearDown() {
-        DebugApiLinuxFixture::TearDown();
+    void tearDown() {
+        DebugApiLinuxFixture::tearDown();
     }
     NEO::HardwareInfo hwInfo;
     std::unique_ptr<MockDebugSessionLinux> session;
@@ -5909,6 +6413,8 @@ struct DebugApiRegistersAccessFixture : public DebugApiLinuxFixture {
     uint64_t vmHandle = 7;
     uint64_t stateSaveAreaGpuVa = 0x123400000000;
     size_t maxDbgSurfaceSize = 0;
+    ze_device_thread_t stoppedThread = {0, 0, 0, 0};
+    EuThread::ThreadId stoppedThreadId{0, stoppedThread};
 };
 
 using DebugApiRegistersAccessTest = Test<DebugApiRegistersAccessFixture>;
@@ -5920,7 +6426,7 @@ TEST_F(DebugApiRegistersAccessTest, givenInvalidClientHandleWhenReadRegistersCal
 
 TEST_F(DebugApiRegistersAccessTest, givenCorruptedTssAreaWhenReadRegistersCalledThenErrorUnknownIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
@@ -5938,7 +6444,7 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedTssAreaWhenReadRegistersCalled
 
 TEST_F(DebugApiRegistersAccessTest, givenInvalidRegistersIndicesWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 128, 1, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 127, 2, nullptr));
 }
@@ -5954,7 +6460,7 @@ TEST_F(DebugApiRegistersAccessTest, givenStateSaveAreaNotCapturedWhenReadRegiste
 
 TEST_F(DebugApiRegistersAccessTest, givenReadGpuMemoryFailedWhenReadRegistersCalledThenErrorUnknownIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     auto ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapFail = true;
     session->ioctlHandler.reset(ioctlHandler);
@@ -5965,7 +6471,7 @@ TEST_F(DebugApiRegistersAccessTest, givenReadGpuMemoryFailedWhenReadRegistersCal
 
 TEST_F(DebugApiRegistersAccessTest, givenCorruptedSrMagicWhenReadRegistersCalledThenErrorUnknownIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -5980,7 +6486,7 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedSrMagicWhenReadRegistersCalled
 
 TEST_F(DebugApiRegistersAccessTest, givenReadRegistersCalledCorrectValuesRead) {
     SIP::version version = {1, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
@@ -6023,7 +6529,7 @@ TEST_F(DebugApiRegistersAccessTest, givenInvalidClientHandleWhenWriteRegistersCa
 
 TEST_F(DebugApiRegistersAccessTest, givenCorruptedTssAreaWhenWriteRegistersCalledThenErrorUnknownIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6036,10 +6542,10 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedTssAreaWhenWriteRegistersCalle
 
 TEST_F(DebugApiRegistersAccessTest, givenInvalidRegistersIndicesWhenWriteRegistersCalledThenErrorInvalidArgumentIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 128, 1, nullptr));
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 127, 2, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 128, 1, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 127, 2, nullptr));
 }
 
 TEST_F(DebugApiRegistersAccessTest, givenStateSaveAreaNotCapturedWhenWriteRegistersIsCalledThenErrorUnknownIsReturned) {
@@ -6047,13 +6553,13 @@ TEST_F(DebugApiRegistersAccessTest, givenStateSaveAreaNotCapturedWhenWriteRegist
     session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToContextStateSaveAreaBindInfo.clear();
 
     char r0[32];
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0));
     session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = bindInfoSave;
 }
 
 TEST_F(DebugApiRegistersAccessTest, givenWriteGpuMemoryFailedWhenWriteRegistersCalledThenErrorUnknownIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6062,12 +6568,12 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteGpuMemoryFailedWhenWriteRegistersC
     ioctlHandler->mmapFail = true;
 
     char r0[32];
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0));
 }
 
 TEST_F(DebugApiRegistersAccessTest, givenCorruptedSrMagicWhenWriteRegistersCalledThenErrorUnknownIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6077,12 +6583,12 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedSrMagicWhenWriteRegistersCalle
     auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
     strcpy(session->stateSaveAreaHeader.data() + threadSlotOffset(pStateSaveAreaHeader, 0, 0, 0, 0) + pStateSaveAreaHeader->regHeader.sr_magic_offset, "garbage"); // NOLINT(clang-analyzer-security.insecureAPI.strcpy)
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, nullptr));
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, nullptr));
 }
 
 TEST_F(DebugApiRegistersAccessTest, givenWriteRegistersCalledCorrectValuesRead) {
     SIP::version version = {1, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
     ioctlHandler->mmapBase = stateSaveAreaGpuVa;
@@ -6098,12 +6604,12 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteRegistersCalledCorrectValuesRead) 
 
     // grfs for 0/0/0/0 - very first eu thread
     memset(grfRef, 'k', 32); // 'a' + 10, r10
-    session->ensureThreadStopped({0, 0, 0, 0});
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grf));
+    session->ensureThreadStopped(stoppedThread);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grf));
     EXPECT_EQ(0, memcmp(grf, grfRef, 32));
     memset(grfRef, 'x', 32);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grfRef));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grf));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grfRef));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 10, 1, grf));
     EXPECT_EQ(0, memcmp(grf, grfRef, 32));
 
     // grfs for 0/3/7/3 - somewhere in the middle
@@ -6129,14 +6635,14 @@ TEST_F(DebugApiRegistersAccessTest, givenWriteRegistersCalledCorrectValuesRead) 
 
 TEST_F(DebugApiRegistersAccessTest, givenNoneThreadsStoppedWhenWriteRegistersCalledThenErrorNotAvailableReturned) {
     session->allThreadsStopped = false;
-
+    session->allThreads[stoppedThreadId]->resumeThread();
     char grf[32] = {0};
-    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, grf));
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, grf));
 }
 
 TEST_F(DebugApiRegistersAccessTest, GivenThreadWhenReadingSystemRoutineIdentThenCorrectStateSaveAreaLocationIsRead) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6148,7 +6654,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenThreadWhenReadingSystemRoutineIdentThen
     session->ioctlHandler.reset(ioctlHandler);
     EuThread thread({0, 0, 0, 0, 0});
 
-    SIP::sr_ident srIdent = {};
+    SIP::sr_ident srIdent = {{0}};
     auto result = session->readSystemRoutineIdent(&thread, vmHandle, srIdent);
 
     EXPECT_TRUE(result);
@@ -6172,16 +6678,53 @@ TEST_F(DebugApiRegistersAccessTest, GivenThreadWhenReadingSystemRoutineIdentThen
     EXPECT_STREQ("srmagic", srIdent.magic);
 }
 
+TEST_F(DebugApiRegistersAccessTest, GivenSipNotUpdatingSipCmdThenAccessToSlmFailsGracefully) {
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
+
+    ioctlHandler = new MockIoctlHandler;
+    ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
+    ioctlHandler->mmapBase = stateSaveAreaGpuVa;
+
+    ioctlHandler->setPreadMemory(session->stateSaveAreaHeader.data(), session->stateSaveAreaHeader.size(), stateSaveAreaGpuVa);
+    ioctlHandler->setPwriteMemory(session->stateSaveAreaHeader.data(), session->stateSaveAreaHeader.size(), stateSaveAreaGpuVa);
+
+    session->ioctlHandler.reset(ioctlHandler);
+    session->vmHandle = 7;
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToStateBaseAreaBindInfo[vmHandle] = {stateSaveAreaGpuVa + maxDbgSurfaceSize, sizeof(SbaTrackedAddresses)};
+
+    ze_device_thread_t thread;
+    thread.slice = 0;
+    thread.subslice = 0;
+    thread.eu = 0;
+    thread.thread = 0;
+
+    zet_debug_memory_space_desc_t desc;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_SLM;
+    desc.address = 0x10000000;
+
+    char output[bufferSize];
+    session->ensureThreadStopped(thread);
+
+    session->sipSupportsSlm = true;
+
+    auto retVal = session->readMemory(thread, &desc, bufferSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
+
+    retVal = session->writeMemory(thread, &desc, bufferSize, output);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, retVal);
+}
+
 TEST_F(DebugApiRegistersAccessTest, GivenNoVmHandleWhenReadingSystemRoutineIdentThenFalseIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     ioctlHandler = new MockIoctlHandler;
 
     session->ioctlHandler.reset(ioctlHandler);
 
     EuThread thread({0, 0, 0, 0, 0});
 
-    SIP::sr_ident srIdent = {};
+    SIP::sr_ident srIdent = {{0}};
     auto result = session->readSystemRoutineIdent(&thread, DebugSessionLinux::invalidHandle, srIdent);
 
     EXPECT_FALSE(result);
@@ -6192,7 +6735,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenNoStatSaveAreaWhenReadingSystemRoutineI
     session->ioctlHandler.reset(ioctlHandler);
     EuThread thread({0, 0, 0, 0, 0});
 
-    SIP::sr_ident srIdent = {};
+    SIP::sr_ident srIdent = {{0}};
     auto result = session->readSystemRoutineIdent(&thread, 0x1234u, srIdent);
 
     EXPECT_FALSE(result);
@@ -6200,7 +6743,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenNoStatSaveAreaWhenReadingSystemRoutineI
 
 TEST_F(DebugApiRegistersAccessTest, GivenMemReadFailureWhenReadingSystemRoutineIdentThenFalseIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6211,7 +6754,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenMemReadFailureWhenReadingSystemRoutineI
 
     EuThread thread({0, 0, 0, 0, 0});
 
-    SIP::sr_ident srIdent = {};
+    SIP::sr_ident srIdent = {{0}};
     auto result = session->readSystemRoutineIdent(&thread, vmHandle, srIdent);
 
     EXPECT_FALSE(result);
@@ -6219,7 +6762,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenMemReadFailureWhenReadingSystemRoutineI
 
 TEST_F(DebugApiRegistersAccessTest, GivenCSSANotBoundWhenReadingSystemRoutineIdentThenFalseIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6230,7 +6773,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenCSSANotBoundWhenReadingSystemRoutineIde
 
     EuThread thread({0, 0, 0, 0, 0});
 
-    SIP::sr_ident srIdent = {};
+    SIP::sr_ident srIdent = {{0}};
     auto result = session->readSystemRoutineIdent(&thread, 0x1234u, srIdent);
 
     EXPECT_FALSE(result);
@@ -6260,10 +6803,10 @@ struct MockRenderSurfaceState {
 };
 static_assert(64 == sizeof(MockRenderSurfaceState));
 
-void sbaInit(std::vector<char> &stateSaveArea, uint64_t stateSaveAreaGpuVa, SbaTrackedAddresses &sba, uint32_t r0[8]) {
+void sbaInit(std::vector<char> &stateSaveArea, uint64_t stateSaveAreaGpuVa, SbaTrackedAddresses &sba, uint32_t r0[8], L0::Device *device) {
     auto &hwInfo = *NEO::defaultHwInfo.get();
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
-    auto maxDbgSurfaceSize = hwHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto maxDbgSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
     uint64_t surfaceStateBaseAddress = stateSaveAreaGpuVa + maxDbgSurfaceSize + sizeof(SbaTrackedAddresses);
     uint32_t renderSurfaceStateOffset = 256;
     r0[4] = 0xAAAAAAAA;
@@ -6286,7 +6829,7 @@ void sbaInit(std::vector<char> &stateSaveArea, uint64_t stateSaveAreaGpuVa, SbaT
 TEST_F(DebugApiRegistersAccessTest, GivenReadSbaBufferCalledThenSbaBufferIsRead) {
 
     SIP::version version = {1, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6303,7 +6846,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaBufferCalledThenSbaBufferIsRead)
 
     SbaTrackedAddresses sba, sbaExpected;
     uint32_t r0[8];
-    sbaInit(session->stateSaveAreaHeader, stateSaveAreaGpuVa, sbaExpected, r0);
+    sbaInit(session->stateSaveAreaHeader, stateSaveAreaGpuVa, sbaExpected, r0, device);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, session->readSbaBuffer(session->convertToThreadId(thread), sba));
     EXPECT_EQ(sbaExpected.GeneralStateBaseAddress, sba.GeneralStateBaseAddress);
@@ -6317,7 +6860,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaBufferCalledThenSbaBufferIsRead)
 
 TEST_F(DebugApiRegistersAccessTest, givenInvalidSbaRegistersIndicesWhenReadSbaRegistersCalledThenErrorInvalidArgumentIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 9, 1, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 8, 2, nullptr));
@@ -6325,7 +6868,7 @@ TEST_F(DebugApiRegistersAccessTest, givenInvalidSbaRegistersIndicesWhenReadSbaRe
 
 TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersAreRead) {
     SIP::version version = {1, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6342,7 +6885,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersA
 
     SbaTrackedAddresses sbaExpected;
     uint32_t r0[8];
-    sbaInit(session->stateSaveAreaHeader, stateSaveAreaGpuVa, sbaExpected, r0);
+    sbaInit(session->stateSaveAreaHeader, stateSaveAreaGpuVa, sbaExpected, r0, device);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugWriteRegisters(session->toHandle(), thread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, r0));
 
     uint64_t sba[9];
@@ -6359,8 +6902,8 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersA
     uint64_t expectedBindingTableBaseAddress = ((r0[4] >> 5) << 5) + sbaExpected.SurfaceStateBaseAddress;
     uint64_t expectedScratchSpaceBaseAddress = 0;
 
-    auto &hwHelper = HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (hwHelper.isScratchSpaceSurfaceStateAccessible()) {
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    if (gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         expectedScratchSpaceBaseAddress = 0xBA5EBA5E;
     } else {
         expectedScratchSpaceBaseAddress = ((r0[5] >> 10) << 10) + sbaExpected.GeneralStateBaseAddress;
@@ -6372,7 +6915,7 @@ TEST_F(DebugApiRegistersAccessTest, GivenReadSbaRegistersCalledThenSbaRegistersA
 
 TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceStateWhenGettingScratchBaseRegThenValueIsZero) {
     SIP::version version = {1, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
 
     ioctlHandler = new MockIoctlHandler;
     ioctlHandler->mmapRet = session->stateSaveAreaHeader.data();
@@ -6395,8 +6938,8 @@ TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceSt
     r0[4] = 0xAAAAAAAA;
     r0[5] = ((renderSurfaceStateOffset) >> 6) << 10;
 
-    auto &hwHelper = HwHelper::get(neoDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (!hwHelper.isScratchSpaceSurfaceStateAccessible()) {
+    auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
+    if (!gfxCoreHelper.isScratchSpaceSurfaceStateAccessible()) {
         r0[5] = 0;
     }
     sbaExpected.SurfaceStateBaseAddress = surfaceStateBaseAddress;
@@ -6419,11 +6962,119 @@ TEST_F(DebugApiRegistersAccessTest, GivenScarcthPointerAndZeroAddressInSurfaceSt
 
 TEST_F(DebugApiRegistersAccessTest, givenWriteSbaRegistersCalledThenErrorInvalidArgumentIsReturned) {
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(session->stateSaveAreaHeader, version);
+    initStateSaveArea(session->stateSaveAreaHeader, version, device);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 0, 1, nullptr));
 }
 
 using DebugApiLinuxMultitileTest = Test<DebugApiLinuxMultiDeviceFixture>;
+
+TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndTileAttachDisabledWhenDebugSessionInitializedThenEuThreadsAreCreated) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.ExperimentalEnableTileAttach.set(0);
+
+    zet_debug_config_t config = {};
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 1);
+    auto handler = new MockIoctlHandler;
+    handler->pollRetVal = 1;
+    session->ioctlHandler.reset(handler);
+    session->allThreads.clear();
+
+    prelim_drm_i915_debug_event_client client = {};
+
+    client.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
+    client.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    client.base.size = sizeof(prelim_drm_i915_debug_event_client);
+    client.handle = 1;
+    handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
+    session->synchronousInternalEventRead = true;
+
+    session->initialize();
+
+    EXPECT_NE(0u, session->allThreads.size());
+    EXPECT_FALSE(session->tileAttachEnabled);
+    EXPECT_FALSE(session->tileSessionsEnabled);
+}
+
+TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceAndRootAttachModeWhenDebugSessionInitializedThenEuThreadsAreCreated) {
+    zet_debug_config_t config = {};
+
+    auto session = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 1);
+    auto handler = new MockIoctlHandler;
+    handler->pollRetVal = 1;
+    session->ioctlHandler.reset(handler);
+    session->allThreads.clear();
+    session->setAttachMode(true);
+
+    prelim_drm_i915_debug_event_client client = {};
+
+    client.base.type = PRELIM_DRM_I915_DEBUG_EVENT_CLIENT;
+    client.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    client.base.size = sizeof(prelim_drm_i915_debug_event_client);
+    client.handle = 1;
+    handler->eventQueue.push({reinterpret_cast<char *>(&client), static_cast<uint64_t>(client.base.size)});
+    session->synchronousInternalEventRead = true;
+
+    session->initialize();
+
+    EXPECT_NE(0u, session->allThreads.size());
+    EXPECT_FALSE(session->tileAttachEnabled);
+    EXPECT_FALSE(session->tileSessionsEnabled);
+}
+
+TEST_F(DebugApiLinuxMultitileTest, GivenRootDeviceWhenDebugAttachCalledThenRootSessionIsCreatedAndTileAttachDisabled) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    zet_debug_session_handle_t debugSession = nullptr;
+
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
+        auto session = new MockDebugSessionLinux(config, device, debugFd);
+        session->initializeRetVal = ZE_RESULT_SUCCESS;
+        return session;
+    });
+
+    auto result = zetDebugAttach(deviceImp->toHandle(), &config, &debugSession);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, debugSession);
+
+    EXPECT_TRUE(deviceImp->getDebugSession(config)->isAttached());
+
+    auto session = static_cast<MockDebugSessionLinux *>(deviceImp->getDebugSession(config));
+    EXPECT_FALSE(session->tileAttachEnabled);
+
+    result = zetDebugAttach(deviceImp->subDevices[0]->toHandle(), &config, &debugSession);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+
+    zetDebugDetach(debugSession);
+}
+
+TEST_F(DebugApiLinuxMultitileTest, GivenSubDeviceWhenDebugAttachCalledThenTileSessionsAreCreatedAndRootCannotBeAttached) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    zet_debug_session_handle_t debugSession = nullptr;
+    zet_debug_session_handle_t debugSessionRoot = nullptr;
+
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
+        auto session = new MockDebugSessionLinux(config, device, debugFd);
+        session->initializeRetVal = ZE_RESULT_SUCCESS;
+        return session;
+    });
+
+    auto result = zetDebugAttach(deviceImp->subDevices[0]->toHandle(), &config, &debugSession);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, debugSession);
+
+    EXPECT_FALSE(deviceImp->getDebugSession(config)->isAttached());
+
+    auto session = static_cast<MockDebugSessionLinux *>(deviceImp->getDebugSession(config));
+    EXPECT_TRUE(session->tileAttachEnabled);
+
+    result = zetDebugAttach(deviceImp->toHandle(), &config, &debugSessionRoot);
+    EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, result);
+    EXPECT_EQ(nullptr, debugSessionRoot);
+
+    zetDebugDetach(debugSession);
+}
 
 TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThreadsFromBothTilesAreResumed) {
     zet_debug_config_t config = {};
@@ -6432,7 +7083,7 @@ TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThre
     auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 10);
     ASSERT_NE(nullptr, sessionMock);
     SIP::version version = {2, 0, 0};
-    initStateSaveArea(sessionMock->stateSaveAreaHeader, version);
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, deviceImp);
 
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
@@ -6501,47 +7152,787 @@ TEST_F(DebugApiLinuxMultitileTest, givenApiThreadAndMultipleTilesWhenGettingDevi
     EXPECT_EQ(1u, deviceIndex);
 }
 
-TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingAreRequestedThreadsStoppedThenCorrectValueIsReturned) {
-    zet_debug_config_t config = {};
-    config.pid = 0x1234;
+template <bool BlockOnFence = false>
+struct DebugApiLinuxMultiDeviceVmBindFixture : public DebugApiLinuxMultiDeviceFixture, public MockDebugSessionLinuxHelper {
+    void setUp() {
+        DebugApiLinuxMultiDeviceFixture::setUp();
 
-    auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 10);
-    ASSERT_NE(nullptr, sessionMock);
-    SIP::version version = {2, 0, 0};
-    initStateSaveArea(sessionMock->stateSaveAreaHeader, version);
+        zet_debug_config_t config = {};
+        config.pid = 0x1234;
+
+        session = std::make_unique<MockDebugSessionLinux>(config, deviceImp, 10);
+        ASSERT_NE(nullptr, session);
+        session->clientHandle = MockDebugSessionLinux::mockClientHandle;
+
+        handler = new MockIoctlHandler;
+        session->ioctlHandler.reset(handler);
+
+        session->blockOnFenceMode = BlockOnFence;
+        setupSessionClassHandlesAndUuidMap(session.get());
+        setupVmToTile(session.get());
+    }
+
+    void tearDown() {
+        DebugApiLinuxMultiDeviceFixture::tearDown();
+    }
+
+    void givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived() {
+        auto handler = new MockIoctlHandler;
+        session->ioctlHandler.reset(handler);
+
+        uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+        DebugSessionLinux::UuidData isaUuidData = {
+            .handle = isaUUID,
+            .classHandle = isaClassHandle,
+            .classIndex = NEO::DrmResourceClass::Isa,
+            .data = std::make_unique<char[]>(sizeof(devices)),
+            .dataSize = sizeof(devices)};
+
+        memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+        session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+        // VM BIND events for 2 kernels from zebin in vm0 - tile0
+        addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+        addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+
+        EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+        EXPECT_EQ(0u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+        // VM BIND events for 2 kernels from zebin in vm1 - tile0
+        addZebinVmBindEvent(session.get(), vm1, true, true, 0);
+        addZebinVmBindEvent(session.get(), vm1, true, true, 1);
+        EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+        auto numberOfEvents = session->apiEvents.size();
+
+        // remove all VM BINDs
+        addZebinVmBindEvent(session.get(), vm1, false, false, 0);
+        EXPECT_EQ(numberOfEvents, session->apiEvents.size());
+        addZebinVmBindEvent(session.get(), vm1, false, false, 1);
+        EXPECT_EQ(numberOfEvents, session->apiEvents.size());
+        addZebinVmBindEvent(session.get(), vm0, false, false, 0);
+        EXPECT_EQ(numberOfEvents, session->apiEvents.size());
+        addZebinVmBindEvent(session.get(), vm0, false, false, 1);
+
+        // MODULE UNLOAD after all unbinds
+        auto numberOfAllEvents = session->apiEvents.size();
+        EXPECT_EQ(numberOfEvents + 1, numberOfAllEvents);
+
+        zet_debug_event_t event;
+        ze_result_t result = ZE_RESULT_SUCCESS;
+        while (numberOfAllEvents--) {
+            result = session->readEvent(0, &event);
+            if (result != ZE_RESULT_SUCCESS) {
+                break;
+            }
+        }
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event.type);
+        EXPECT_EQ(isaGpuVa, event.info.module.load);
+    }
+
+    MockIoctlHandler *handler = nullptr;
+    std::unique_ptr<MockDebugSessionLinux> session;
+};
+
+using DebugApiLinuxMultiDeviceVmBindTest = Test<DebugApiLinuxMultiDeviceVmBindFixture<false>>;
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {
 
     auto handler = new MockIoctlHandler;
-    sessionMock->ioctlHandler.reset(handler);
-    sessionMock->clientHandle = MockDebugSessionLinux::mockClientHandle;
-    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->vmToContextStateSaveAreaBindInfo[1u] = {0x1000, 0x1000};
+    session->ioctlHandler.reset(handler);
 
-    ze_device_thread_t thread = {0, 0, 0, 0};
-    ze_device_thread_t allSlices = {UINT32_MAX, 0, 0, 0};
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
 
-    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
-    sessionMock->allThreads[EuThread::ThreadId(1, thread)]->stopThread(1u);
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
 
-    auto stopped = sessionMock->areRequestedThreadsStopped(thread);
-    EXPECT_TRUE(stopped);
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
 
-    stopped = sessionMock->areRequestedThreadsStopped(allSlices);
-    EXPECT_FALSE(stopped);
+    addIsaVmBindEvent(session.get(), vm0, true, true);
 
-    for (uint32_t i = 0; i < sliceCount; i++) {
-        EuThread::ThreadId threadId(0, i, 0, 0, 0);
-        sessionMock->allThreads[threadId]->stopThread(1u);
-    }
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+    EXPECT_EQ(20u, handler->debugEventAcked.seqno);
 
-    stopped = sessionMock->areRequestedThreadsStopped(allSlices);
-    EXPECT_FALSE(stopped);
+    EXPECT_EQ(0u, session->apiEvents.size());
 
-    for (uint32_t i = 0; i < sliceCount; i++) {
-        EuThread::ThreadId threadId(1, i, 0, 0, 0);
-        sessionMock->allThreads[threadId]->stopThread(1u);
-    }
+    addIsaVmBindEvent(session.get(), vm1, true, true);
 
-    stopped = sessionMock->areRequestedThreadsStopped(allSlices);
-    EXPECT_TRUE(stopped);
+    EXPECT_EQ(1u, session->apiEvents.size());
+
+    zet_debug_event_t event;
+    auto result = session->readEvent(0, &event);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(isaGpuVa, event.info.module.load);
 }
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addIsaVmBindEvent(session.get(), vm0, false, true);
+    addIsaVmBindEvent(session.get(), vm1, false, true);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+    auto numberOfEvents = session->apiEvents.size();
+
+    addIsaVmBindEvent(session.get(), vm0, false, false);
+    EXPECT_EQ(numberOfEvents, session->apiEvents.size());
+
+    addIsaVmBindEvent(session.get(), vm1, false, false);
+
+    auto numberOfAllEvents = session->apiEvents.size();
+    EXPECT_EQ(numberOfEvents + 1, numberOfAllEvents);
+
+    zet_debug_event_t event;
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    while (numberOfAllEvents--) {
+        result = session->readEvent(0, &event);
+        if (result != ZE_RESULT_SUCCESS) {
+            break;
+        }
+    }
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_UNLOAD, event.type);
+    EXPECT_EQ(isaGpuVa, event.info.module.load);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {
+
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    EXPECT_EQ(1u, handler->ackCount);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+    EXPECT_EQ(2u, handler->ackCount);
+
+    EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+    EXPECT_EQ(10u, handler->debugEventAcked.seqno);
+    EXPECT_EQ(0u, session->apiEvents.size());
+
+    addZebinVmBindEvent(session.get(), vm1, true, true, 0);
+    EXPECT_EQ(3u, handler->ackCount);
+    addZebinVmBindEvent(session.get(), vm1, true, true, 1);
+    // ACK not called for last segment
+    EXPECT_EQ(3u, handler->ackCount);
+
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[1].size());
+
+    zet_debug_event_t event;
+    auto result = session->readEvent(0, &event);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
+    EXPECT_EQ(isaGpuVa, event.info.module.load);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived) {
+    givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived();
+}
+
+using DebugLinuxMultiDeviceVmBindBlockOnFenceTest = Test<DebugApiLinuxMultiDeviceVmBindFixture<true>>;
+
+TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterAllInstancesEventsReceived) {
+
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+    handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+    EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+    // No ACK ioctl called
+    EXPECT_EQ(0u, handler->ackCount);
+    EXPECT_EQ(0u, session->apiEvents.size());
+
+    addZebinVmBindEvent(session.get(), vm1, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm1, true, true, 1);
+
+    // No ACK ioctl called
+    EXPECT_EQ(0u, handler->ackCount);
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(kernelCount, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    EXPECT_EQ(kernelCount, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[1].size());
+
+    zet_debug_event_t event;
+    auto result = session->readEvent(0, &event);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
+    EXPECT_EQ(isaGpuVa, event.info.module.load);
+}
+
+TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived) {
+    givenTileInstancedIsaAndZebinModuleWhenHandlingVmBindDestroyEventsThenModuleUnloadIsTriggeredAfterAllInstancesEventsReceived();
+}
+
+TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenAcknowledgingEventThenModuleFromBothTilesAreAcked) {
+
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+    handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+
+    addZebinVmBindEvent(session.get(), vm1, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm1, true, true, 1);
+
+    // No ACK ioctl called
+    EXPECT_EQ(0u, handler->ackCount);
+    EXPECT_EQ(1u, session->apiEvents.size());
+
+    zet_debug_event_t event;
+    auto result = session->readEvent(0, &event);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
+
+    result = zetDebugAcknowledgeEvent(session->toHandle(), &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(4u, handler->ackCount);
+    EXPECT_TRUE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].moduleLoadEventAcked[0]);
+    EXPECT_TRUE(session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].moduleLoadEventAcked[1]);
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[1].size());
+}
+
+TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenTileInstancedIsaAndZebinModuleWhenModuleUUIDIsNotFoundThenAcknowledgeCallsDebugBreakAndReturnsSuccess) {
+
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+    handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addZebinVmBindEvent(session.get(), vm0, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, true, true, 1);
+
+    addZebinVmBindEvent(session.get(), vm1, true, true, 0);
+    addZebinVmBindEvent(session.get(), vm1, true, true, 1);
+
+    ASSERT_EQ(1u, session->apiEvents.size());
+
+    zet_debug_event_t event;
+    auto result = session->readEvent(0, &event);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(ZET_DEBUG_EVENT_FLAG_NEED_ACK, event.flags);
+
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule.erase(zebinModuleUUID);
+
+    result = zetDebugAcknowledgeEvent(session->toHandle(), &event);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, handler->ackCount);
+}
+
+TEST_F(DebugLinuxMultiDeviceVmBindBlockOnFenceTest, givenZebinModuleForTileWithoutAckFlagWhenHandlingVmBindCreateEventsThenModuleLoadIsTriggeredAfterOneTileInstancesEventsReceived) {
+
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+    handler->debugEventAcked.seqno = std::numeric_limits<uint64_t>::max();
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getSubDevice(0)->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addZebinVmBindEvent(session.get(), vm0, false, true, 0);
+    addZebinVmBindEvent(session.get(), vm0, false, true, 1);
+    EXPECT_EQ(2u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+    // No ACK ioctl called
+    EXPECT_EQ(0u, handler->ackCount);
+    EXPECT_EQ(1u, session->apiEvents.size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[0].size());
+    EXPECT_EQ(0u, session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidToModule[zebinModuleUUID].ackEvents[1].size());
+
+    zet_debug_event_t event;
+    auto result = session->readEvent(0, &event);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_MODULE_LOAD, event.type);
+    EXPECT_EQ(0u, event.flags);
+    EXPECT_EQ(isaGpuVa, event.info.module.load);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndReadingIsaMemoryThenOnlyWritesAreMirrored) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addIsaVmBindEvent(session.get(), vm0, false, true);
+    addIsaVmBindEvent(session.get(), vm1, false, true);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint8_t buffer[16];
+    handler->pwriteRetVal = 16;
+    auto result = session->writeMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(2, handler->pwriteCalled);
+
+    handler->preadRetVal = 16;
+    result = session->readMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1, handler->preadCalled);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingMemoryFailsThenErrorIsReturned) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addIsaVmBindEvent(session.get(), vm0, false, true);
+    addIsaVmBindEvent(session.get(), vm1, false, true);
+
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint8_t buffer[16];
+    handler->pwriteRetVal = -1;
+    auto result = session->writeMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
+
+    EXPECT_EQ(1, handler->pwriteCalled);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleIsaWithInvalidVmWhenReadingIsaMemoryThenErrorUninitializedIsReturned) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(neoDevice->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vmBindIsa->base.flags |= PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 20u;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = MockDebugSessionLinux::invalidHandle;
+    vmBindIsa->num_uuids = 2;
+
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+
+    typeOfUUID uuidsTemp[2];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(elfUUID);
+
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+
+    session->handleEvent(&vmBindIsa->base);
+
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint8_t buffer[16];
+
+    handler->preadRetVal = 16;
+    auto result = session->readMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, result);
+
+    EXPECT_EQ(0, handler->preadCalled);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaAndSingleInstanceWhenGettingIsaInfoThenIsaTrueAndErrorUninitializedIsReturned) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addIsaVmBindEvent(session.get(), vm1, false, true);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint64_t vm[4];
+    ze_result_t status = ZE_RESULT_SUCCESS;
+    auto isIsa = session->getIsaInfoForAllInstances(devices, &desc, 16, vm, status);
+
+    EXPECT_TRUE(isIsa);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, status);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenNoIsaWhenGettingIsaInfoThenFalseReturned) {
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint64_t vm[4];
+    ze_result_t status = ZE_RESULT_SUCCESS;
+    auto isIsa = session->getIsaInfoForAllInstances(devices, &desc, 16, vm, status);
+
+    EXPECT_FALSE(isIsa);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, status);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenIsaWhenGettingIsaInfoForWrongAddressThenErrorUninitializedReturned) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addIsaVmBindEvent(session.get(), vm0, false, true);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+
+    uint64_t vm[4];
+    ze_result_t status = ZE_RESULT_SUCCESS;
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa - 0x1000;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+    auto isIsa = session->getIsaInfoForAllInstances(devices, &desc, 16, vm, status);
+
+    EXPECT_FALSE(isIsa);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, status);
+
+    desc.address = isaGpuVa + isaSize + 0x1000;
+    isIsa = session->getIsaInfoForAllInstances(devices, &desc, 16, vm, status);
+
+    EXPECT_FALSE(isIsa);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, status);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenTileInstancedIsaWhenWritingAndReadingWrongIsaRangeThenErrorInvalidArgReturned) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(deviceImp->getNEODevice()->getDeviceBitfield().to_ulong());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    addIsaVmBindEvent(session.get(), vm0, false, true);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[0].size());
+
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint8_t buffer[16];
+    auto result = session->writeMemory(thread, &desc, isaSize * 2, buffer);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    EXPECT_EQ(0, handler->pwriteCalled);
+
+    result = session->readMemory(thread, &desc, isaSize * 2, buffer);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    EXPECT_EQ(0, handler->preadCalled);
+}
+
+TEST_F(DebugApiLinuxMultiDeviceVmBindTest, givenSingleMemoryIsaWhenWritingAndReadingThenOnlyOneInstanceIsWrittenAndRead) {
+    auto handler = new MockIoctlHandler;
+    session->ioctlHandler.reset(handler);
+
+    uint32_t devices = static_cast<uint32_t>(neoDevice->getSubDevice(1)->getDeviceBitfield().to_ulong());
+    EXPECT_EQ(1u, neoDevice->getSubDevice(1)->getDeviceBitfield().count());
+
+    DebugSessionLinux::UuidData isaUuidData = {
+        .handle = isaUUID,
+        .classHandle = isaClassHandle,
+        .classIndex = NEO::DrmResourceClass::Isa,
+        .data = std::make_unique<char[]>(sizeof(devices)),
+        .dataSize = sizeof(devices)};
+
+    memcpy_s(isaUuidData.data.get(), sizeof(devices), &devices, sizeof(devices));
+    session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->uuidMap[isaUUID] = std::move(isaUuidData);
+
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE;
+    vmBindIsa->base.flags |= PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 20u;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = vm1;
+    vmBindIsa->num_uuids = 2;
+
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+
+    typeOfUUID uuidsTemp[2];
+    uuidsTemp[0] = static_cast<typeOfUUID>(isaUUID);
+    uuidsTemp[1] = static_cast<typeOfUUID>(elfUUID);
+
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+
+    session->handleEvent(&vmBindIsa->base);
+
+    EXPECT_EQ(1u, session->clientHandleToConnection[session->clientHandle]->isaMap[1].size());
+
+    ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    zet_debug_memory_space_desc_t desc;
+    desc.address = isaGpuVa;
+    desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
+
+    uint8_t buffer[16];
+    handler->pwriteRetVal = 16;
+    auto result = session->writeMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1, handler->pwriteCalled);
+
+    handler->preadRetVal = 16;
+    result = session->readMemory(thread, &desc, 16, buffer);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1, handler->preadCalled);
+}
+
+struct AffinityMaskMultipleSubdevicesLinux : DebugApiLinuxMultiDeviceFixture {
+    void setUp() {
+        DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.1,0.3");
+        MultipleDevicesWithCustomHwInfo::numSubDevices = 4;
+        DebugApiLinuxMultiDeviceFixture::setUp();
+    }
+
+    void tearDown() {
+        MultipleDevicesWithCustomHwInfo::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+using AffinityMaskMultipleSubdevicesTestLinux = Test<AffinityMaskMultipleSubdevicesLinux>;
+
+TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenEventWithAckFlagAndTileNotWithinBitfieldWhenHandlingEventForISAThenIsaIsNotStoredInMapAndEventIsAcked) {
+    uint64_t isaGpuVa = 0x345000;
+    uint64_t isaSize = 0x2000;
+    uint64_t vmBindIsaData[sizeof(prelim_drm_i915_debug_event_vm_bind) / sizeof(uint64_t) + 3 * sizeof(typeOfUUID)];
+    prelim_drm_i915_debug_event_vm_bind *vmBindIsa = reinterpret_cast<prelim_drm_i915_debug_event_vm_bind *>(&vmBindIsaData);
+
+    auto debugSession = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{1234}, deviceImp, 10);
+    auto handler = new MockIoctlHandler;
+    debugSession->ioctlHandler.reset(handler);
+
+    vmBindIsa->base.type = PRELIM_DRM_I915_DEBUG_EVENT_VM_BIND;
+    vmBindIsa->base.flags = PRELIM_DRM_I915_DEBUG_EVENT_CREATE | PRELIM_DRM_I915_DEBUG_EVENT_NEED_ACK;
+    vmBindIsa->base.size = sizeof(prelim_drm_i915_debug_event_vm_bind) + 3 * sizeof(typeOfUUID);
+    vmBindIsa->base.seqno = 20u;
+    vmBindIsa->client_handle = MockDebugSessionLinux::mockClientHandle;
+    vmBindIsa->va_start = isaGpuVa;
+    vmBindIsa->va_length = isaSize;
+    vmBindIsa->vm_handle = 5;
+    vmBindIsa->num_uuids = 1;
+
+    auto *uuids = reinterpret_cast<typeOfUUID *>(ptrOffset(vmBindIsaData, sizeof(prelim_drm_i915_debug_event_vm_bind)));
+
+    typeOfUUID uuidsTemp[1];
+    uuidsTemp[0] = static_cast<typeOfUUID>(6);
+    debugSession->clientHandleToConnection[debugSession->clientHandle]->uuidMap[6].classIndex = NEO::DrmResourceClass::Isa;
+    debugSession->clientHandleToConnection[debugSession->clientHandle]->vmToTile[vmBindIsa->vm_handle] = 2;
+    memcpy(uuids, uuidsTemp, sizeof(uuidsTemp));
+
+    debugSession->handleEvent(&vmBindIsa->base);
+    EXPECT_EQ(0u, debugSession->clientHandleToConnection[debugSession->clientHandle]->isaMap[0].size());
+    EXPECT_EQ(0u, debugSession->clientHandleToConnection[debugSession->clientHandle]->isaMap[2].size());
+    EXPECT_EQ(vmBindIsa->base.seqno, handler->debugEventAcked.seqno);
+}
+
+TEST_F(AffinityMaskMultipleSubdevicesTestLinux, GivenAttEventForTileNotWithinBitfieldWhenHandlingEventThenEventIsSkipped) {
+    auto debugSession = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{1234}, deviceImp, 10);
+
+    uint64_t ctxHandle = 2;
+    uint64_t vmHandle = 7;
+    uint64_t lrcHandle = 8;
+
+    debugSession->clientHandleToConnection[debugSession->clientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
+    debugSession->clientHandleToConnection[debugSession->clientHandle]->lrcToContextHandle[lrcHandle] = ctxHandle;
+    debugSession->clientHandleToConnection[debugSession->clientHandle]->vmToTile[vmHandle] = 2;
+
+    prelim_drm_i915_debug_event_eu_attention attEvent = {};
+    attEvent.base.type = PRELIM_DRM_I915_DEBUG_EVENT_EU_ATTENTION;
+    attEvent.base.flags = PRELIM_DRM_I915_DEBUG_EVENT_STATE_CHANGE;
+    attEvent.base.size = sizeof(prelim_drm_i915_debug_event_eu_attention);
+    attEvent.bitmask_size = 0;
+    attEvent.client_handle = MockDebugSessionLinux::mockClientHandle;
+    attEvent.lrc_handle = lrcHandle;
+    attEvent.flags = 0;
+
+    auto engineInfo = mockDrm->getEngineInfo();
+    auto ci = engineInfo->getEngineInstance(2, hwInfo.capabilityTable.defaultEngineType);
+    attEvent.ci.engine_class = ci->engineClass;
+    attEvent.ci.engine_instance = ci->engineInstance;
+
+    ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
+    debugSession->pendingInterrupts.push_back(std::pair<ze_device_thread_t, bool>(thread, false));
+
+    debugSession->handleEvent(&attEvent.base);
+    EXPECT_FALSE(debugSession->triggerEvents);
+}
+
 } // namespace ult
 } // namespace L0

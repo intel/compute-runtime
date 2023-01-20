@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,12 +33,12 @@ TEST_F(clEnqueueReadBufferRectTest, GivenInvalidBufferWhenReadingRectangularRegi
         buffOrigin,
         hostOrigin,
         region,
-        10,  //bufferRowPitch
-        0,   //bufferSlicePitch
-        10,  //hostRowPitch
-        0,   //hostSlicePitch
-        ptr, //hostPtr
-        0,   //numEventsInWaitList
+        10,  // bufferRowPitch
+        0,   // bufferSlicePitch
+        10,  // hostRowPitch
+        0,   // hostSlicePitch
+        ptr, // hostPtr
+        0,   // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -59,12 +59,12 @@ TEST_F(clEnqueueReadBufferRectTest, GivenNullCommandQueueWhenReadingRectangularR
         buffOrigin,
         hostOrigin,
         region,
-        10,  //bufferRowPitch
-        0,   //bufferSlicePitch
-        10,  //hostRowPitch
-        0,   //hostSlicePitch
-        ptr, //hostPtr
-        0,   //numEventsInWaitList
+        10,  // bufferRowPitch
+        0,   // bufferSlicePitch
+        10,  // hostRowPitch
+        0,   // hostSlicePitch
+        ptr, // hostPtr
+        0,   // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -92,12 +92,12 @@ TEST_F(clEnqueueReadBufferRectTest, GivenNullHostPtrWhenReadingRectangularRegion
         buffOrigin,
         hostOrigin,
         region,
-        10,      //bufferRowPitch
-        0,       //bufferSlicePitch
-        10,      //hostRowPitch
-        0,       //hostSlicePitch
-        nullptr, //hostPtr
-        0,       //numEventsInWaitList
+        10,      // bufferRowPitch
+        0,       // bufferSlicePitch
+        10,      // hostRowPitch
+        0,       // hostSlicePitch
+        nullptr, // hostPtr
+        0,       // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -129,12 +129,12 @@ TEST_F(clEnqueueReadBufferRectTest, GivenValidParametersWhenReadingRectangularRe
         buffOrigin,
         hostOrigin,
         region,
-        10,  //bufferRowPitch
-        0,   //bufferSlicePitch
-        10,  //hostRowPitch
-        0,   //hostSlicePitch
-        ptr, //hostPtr
-        0,   //numEventsInWaitList
+        10,  // bufferRowPitch
+        0,   // bufferSlicePitch
+        10,  // hostRowPitch
+        0,   // hostSlicePitch
+        ptr, // hostPtr
+        0,   // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -159,12 +159,12 @@ TEST_F(clEnqueueReadBufferRectTest, GivenQueueIncapableWhenReadingRectangularReg
         buffOrigin,
         hostOrigin,
         region,
-        10,  //bufferRowPitch
-        0,   //bufferSlicePitch
-        10,  //hostRowPitch
-        0,   //hostSlicePitch
-        ptr, //hostPtr
-        0,   //numEventsInWaitList
+        10,  // bufferRowPitch
+        0,   // bufferSlicePitch
+        10,  // hostRowPitch
+        0,   // hostSlicePitch
+        ptr, // hostPtr
+        0,   // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -195,12 +195,12 @@ TEST_F(clEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegio
         buffOrigin,
         hostOrigin,
         region,
-        bufferRowPitch, //bufferRowPitch
-        0,              //bufferSlicePitch
-        10,             //hostRowPitch
-        0,              //hostSlicePitch
-        ptr,            //hostPtr
-        0,              //numEventsInWaitList
+        bufferRowPitch, // bufferRowPitch
+        0,              // bufferSlicePitch
+        10,             // hostRowPitch
+        0,              // hostSlicePitch
+        ptr,            // hostPtr
+        0,              // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -214,12 +214,12 @@ TEST_F(clEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegio
         buffOrigin,
         hostOrigin,
         region,
-        10,           //bufferRowPitch
-        0,            //bufferSlicePitch
-        hostRowPitch, //hostRowPitch
-        0,            //hostSlicePitch
-        ptr,          //hostPtr
-        0,            //numEventsInWaitList
+        10,           // bufferRowPitch
+        0,            // bufferSlicePitch
+        hostRowPitch, // hostRowPitch
+        0,            // hostSlicePitch
+        ptr,          // hostPtr
+        0,            // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -233,12 +233,12 @@ TEST_F(clEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegio
         buffOrigin,
         hostOrigin,
         region,
-        10,               //bufferRowPitch
-        bufferSlicePitch, //bufferSlicePitch
-        10,               //hostRowPitch
-        0,                //hostSlicePitch
-        ptr,              //hostPtr
-        0,                //numEventsInWaitList
+        10,               // bufferRowPitch
+        bufferSlicePitch, // bufferSlicePitch
+        10,               // hostRowPitch
+        0,                // hostSlicePitch
+        ptr,              // hostPtr
+        0,                // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -252,12 +252,12 @@ TEST_F(clEnqueueReadBufferRectTest, GivenInvalidPitchWhenReadingRectangularRegio
         buffOrigin,
         hostOrigin,
         region,
-        10,             //bufferRowPitch
-        0,              //bufferSlicePitch
-        10,             //hostRowPitch
-        hostSlicePitch, //hostSlicePitch
-        ptr,            //hostPtr
-        0,              //numEventsInWaitList
+        10,             // bufferRowPitch
+        0,              // bufferSlicePitch
+        10,             // hostRowPitch
+        hostSlicePitch, // hostSlicePitch
+        ptr,            // hostPtr
+        0,              // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -273,7 +273,7 @@ class EnqueueReadBufferRectFlagsTest : public ApiFixture<>,
 
   protected:
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
         buffer_flags = GetParam();
 
         unsigned int bufferSize = 16;
@@ -294,7 +294,7 @@ class EnqueueReadBufferRectFlagsTest : public ApiFixture<>,
         retVal = clReleaseMemObject(buffer);
         EXPECT_EQ(CL_SUCCESS, retVal);
         delete[] pHostMem;
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -318,12 +318,12 @@ TEST_P(EnqueueReadReadBufferRectTests, GivenNoReadFlagsWhenReadingRectangularReg
         buffOrigin,
         hostOrigin,
         region,
-        10,  //bufferRowPitch
-        0,   //bufferSlicePitch
-        10,  //hostRowPitch
-        0,   //hostSlicePitch
-        ptr, //hostPtr
-        0,   //numEventsInWaitList
+        10,  // bufferRowPitch
+        0,   // bufferSlicePitch
+        10,  // hostRowPitch
+        0,   // hostSlicePitch
+        ptr, // hostPtr
+        0,   // numEventsInWaitList
         nullptr,
         nullptr);
     EXPECT_EQ(CL_INVALID_OPERATION, retVal);

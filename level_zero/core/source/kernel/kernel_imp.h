@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -84,6 +84,8 @@ struct KernelImp : Kernel {
 
     virtual void setBufferSurfaceState(uint32_t argIndex, void *address, NEO::GraphicsAllocation *alloc) = 0;
 
+    void setInlineSamplers();
+
     ze_result_t initialize(const ze_kernel_desc_t *desc);
 
     const uint8_t *getPerThreadData() const override { return perThreadDataForWholeThreadGroup; }
@@ -94,7 +96,7 @@ struct KernelImp : Kernel {
     uint32_t getThreadExecutionMask() const override { return threadExecutionMask; }
 
     NEO::GraphicsAllocation *getPrintfBufferAllocation() override { return this->printfBuffer; }
-    void printPrintfOutput() override;
+    void printPrintfOutput(bool hangDetected) override;
 
     bool usesSyncBuffer() override;
     void patchSyncBuffer(NEO::GraphicsAllocation *gfxAllocation, size_t bufferOffset) override;
@@ -146,14 +148,14 @@ struct KernelImp : Kernel {
         return kernelImmData->getDescriptor().kernelAttributes.flags.hasRTCalls;
     }
 
-    ze_result_t getProfileInfo(zet_profile_properties_t *pProfileProperties) override {
-        pProfileProperties->flags = 0;
-        pProfileProperties->numTokens = 0;
-        return ZE_RESULT_SUCCESS;
-    }
+    ze_result_t getProfileInfo(zet_profile_properties_t *pProfileProperties) override;
 
     bool hasIndirectAccess() {
         return kernelHasIndirectAccess;
+    }
+
+    const Module &getParentModule() const {
+        return *this->module;
     }
 
     NEO::GraphicsAllocation *allocatePrivateMemoryGraphicsAllocation() override;
@@ -164,7 +166,6 @@ struct KernelImp : Kernel {
     }
 
     ze_result_t setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint) override;
-    int32_t getSchedulingHintExp() const override;
 
     NEO::ImplicitArgs *getImplicitArgs() const override { return pImplicitArgs.get(); }
 
@@ -226,7 +227,6 @@ struct KernelImp : Kernel {
 
     bool kernelHasIndirectAccess = true;
 
-    int32_t schedulingHintExpFlag = NEO::ThreadArbitrationPolicy::NotPresent;
     std::unique_ptr<NEO::ImplicitArgs> pImplicitArgs;
 
     std::unique_ptr<KernelExt> pExtension;

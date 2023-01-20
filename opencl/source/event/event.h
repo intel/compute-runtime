@@ -1,36 +1,35 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/command_stream/wait_status.h"
-#include "shared/source/helpers/flush_stamp.h"
+#include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/os_interface/os_time.h"
-#include "shared/source/os_interface/performance_counters.h"
-#include "shared/source/utilities/arrayref.h"
-#include "shared/source/utilities/hw_timestamps.h"
 #include "shared/source/utilities/idlist.h"
 #include "shared/source/utilities/iflist.h"
 
 #include "opencl/source/api/cl_types.h"
 #include "opencl/source/command_queue/copy_engine_state.h"
 #include "opencl/source/helpers/base_object.h"
-#include "opencl/source/helpers/task_information.h"
 
 #include <atomic>
 #include <cstdint>
 #include <vector>
 
 namespace NEO {
+class Command;
+class TagNodeBase;
+class FlushStampTracker;
 template <typename TagType>
 class TagNode;
 class CommandQueue;
 class Context;
 class Device;
 class TimestampPacketContainer;
+enum class WaitStatus;
 
 template <>
 struct OpenCLObjectMapper<_cl_event> {
@@ -84,7 +83,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     static constexpr cl_int executionAbortedDueToGpuHang = -777;
 
     Event(CommandQueue *cmdQueue, cl_command_type cmdType,
-          uint32_t taskLevel, uint32_t taskCount);
+          TaskCountType taskLevel, TaskCountType taskCount);
 
     Event(const Event &) = delete;
     Event &operator=(const Event &) = delete;
@@ -92,10 +91,10 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     ~Event() override;
 
     void setupBcs(aub_stream::EngineType bcsEngineType);
-    uint32_t peekBcsTaskCountFromCommandQueue();
+    TaskCountType peekBcsTaskCountFromCommandQueue();
 
-    uint32_t getCompletionStamp() const;
-    void updateCompletionStamp(uint32_t taskCount, uint32_t bcsTaskCount, uint32_t tasklevel, FlushStamp flushStamp);
+    TaskCountType getCompletionStamp() const;
+    void updateCompletionStamp(TaskCountType taskCount, TaskCountType bcsTaskCount, TaskCountType tasklevel, FlushStamp flushStamp);
     cl_ulong getDelta(cl_ulong startTime,
                       cl_ulong endTime);
     void setCPUProfilingPath(bool isCPUPath) { this->profilingCpuPath = isCPUPath; }
@@ -132,9 +131,9 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     TagNodeBase *getHwPerfCounterNode();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
-    std::atomic<uint32_t> taskLevel;
+    std::atomic<TaskCountType> taskLevel;
 
-    uint32_t peekTaskLevel() const;
+    TaskCountType peekTaskLevel() const;
     void addChild(Event &e);
 
     virtual bool setStatus(cl_int status);
@@ -142,11 +141,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     static cl_int waitForEvents(cl_uint numEvents,
                                 const cl_event *eventList);
 
-    void setCommand(std::unique_ptr<Command> newCmd) {
-        UNRECOVERABLE_IF(cmdToSubmit.load());
-        cmdToSubmit.exchange(newCmd.release());
-        eventWithoutCommand = false;
-    }
+    void setCommand(std::unique_ptr<Command> newCmd);
+
     Command *peekCommand() {
         return cmdToSubmit;
     }
@@ -208,13 +204,13 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return submittedCmd != nullptr;
     }
 
-    //commands blocked by user event depencies
+    // commands blocked by user event depencies
     bool isReadyForSubmission();
 
     // adds a callback (execution state change listener) to this event's list of callbacks
     void addCallback(Callback::ClbFuncT fn, cl_int type, void *data);
 
-    //if(blocking==false), will return with WaitStatus::NotReady instead of blocking while waiting for completion
+    // if(blocking==false), will return with WaitStatus::NotReady instead of blocking while waiting for completion
     virtual WaitStatus wait(bool blocking, bool useQuickKmdSleep);
 
     bool isUserEvent() const {
@@ -241,7 +237,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return cmdType;
     }
 
-    virtual uint32_t getTaskLevel();
+    virtual TaskCountType getTaskLevel();
 
     cl_int peekExecutionStatus() const {
         return executionStatus;
@@ -256,16 +252,16 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return (peekNumEventsBlockingThis() > 0);
     }
 
-    virtual void unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus);
+    virtual void unblockEventBy(Event &event, TaskCountType taskLevel, int32_t transitionStatus);
 
-    void updateTaskCount(uint32_t gpgpuTaskCount, uint32_t bcsTaskCount) {
+    void updateTaskCount(TaskCountType gpgpuTaskCount, TaskCountType bcsTaskCount) {
         if (gpgpuTaskCount == CompletionStamp::notReady) {
             DEBUG_BREAK_IF(true);
             return;
         }
 
         this->bcsState.taskCount = bcsTaskCount;
-        uint32_t prevTaskCount = this->taskCount.exchange(gpgpuTaskCount);
+        TaskCountType prevTaskCount = this->taskCount.exchange(gpgpuTaskCount);
         if ((prevTaskCount != CompletionStamp::notReady) && (prevTaskCount > gpgpuTaskCount)) {
             this->taskCount = prevTaskCount;
             DEBUG_BREAK_IF(true);
@@ -283,7 +279,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     virtual void updateExecutionStatus();
     void tryFlushEvent();
 
-    uint32_t peekTaskCount() const {
+    TaskCountType peekTaskCount() const {
         return this->taskCount;
     }
 
@@ -313,7 +309,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
   protected:
     Event(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType,
-          uint32_t taskLevel, uint32_t taskCount);
+          TaskCountType taskLevel, TaskCountType taskCount);
 
     ECallbackTarget translateToCallbackTarget(cl_int execStatus) {
         switch (execStatus) {
@@ -349,7 +345,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     // guarantees that newStatus <= oldStatus
     void transitionExecutionStatus(int32_t newExecutionStatus) const;
 
-    //vector storing events that needs to be notified when this event is ready to go
+    // vector storing events that needs to be notified when this event is ready to go
     IFRefList<Event, true, true> childEventsToNotify;
     void unblockEventsBlockedByThis(int32_t transitionStatus);
     void submitCommand(bool abortBlockedTasks);
@@ -389,13 +385,13 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     TagNodeBase *timeStampNode = nullptr;
     TagNodeBase *perfCounterNode = nullptr;
     std::unique_ptr<TimestampPacketContainer> timestampPacketContainer;
-    //number of events this event depends on
+    // number of events this event depends on
     std::atomic<int> parentCount;
-    //event parents
+    // event parents
     std::vector<Event *> parentEvents;
 
   private:
     // can be accessed only with updateTaskCount
-    std::atomic<uint32_t> taskCount;
+    std::atomic<TaskCountType> taskCount;
 };
 } // namespace NEO

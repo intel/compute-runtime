@@ -8,6 +8,7 @@
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/sleep.h"
 
 namespace L0 {
 
@@ -277,7 +278,7 @@ ze_result_t APITracerContextImp::finalizeDisableImpTracingWait(struct APITracerI
 
     case disabledWaitingState:
         while (testAndFreeRetiredTracers() != 0) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
+            NEO::sleep(std::chrono::milliseconds(1));
         }
         tracerImp->tracingState = disabledState;
         result = ZE_RESULT_SUCCESS;

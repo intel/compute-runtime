@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/tbx/tbx_proto.h"
 
-#include "third_party/aub_stream/headers/aubstream.h"
+#include "aubstream/aubstream.h"
 
 namespace NEO {
 
@@ -46,6 +46,6 @@ uint64_t AubHelper::getPerTileLocalMemorySize(const HardwareInfo *pHwInfo) {
     if (DebugManager.flags.HBMSizePerTileInGigabytes.get() > 0) {
         return DebugManager.flags.HBMSizePerTileInGigabytes.get() * MemoryConstants::gigaByte;
     }
-    return getTotalMemBankSize() / HwHelper::getSubDevicesCount(pHwInfo);
+    return getTotalMemBankSize() / GfxCoreHelper::getSubDevicesCount(pHwInfo);
 }
 } // namespace NEO

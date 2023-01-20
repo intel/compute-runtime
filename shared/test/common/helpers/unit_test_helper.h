@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/aux_translation.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 
 #include <cstddef>
 #include <vector>
@@ -82,6 +83,15 @@ struct UnitTestHelper {
     static bool timestampRegisterHighAddress();
 
     static void validateSbaMocs(uint32_t expectedMocs, CommandStreamReceiver &csr);
+
+    static GenCmdList::iterator findMidThreadPreemptionAllocationCommand(GenCmdList::iterator begin, GenCmdList::iterator end);
+
+    static std::vector<GenCmdList::iterator> findAllMidThreadPreemptionAllocationCommand(GenCmdList::iterator begin, GenCmdList::iterator end);
+
+    static bool getDisableFusionStateFromFrontEndCommand(const typename GfxFamily::VFE_STATE_TYPE &feCmd);
+    static bool getComputeDispatchAllWalkerFromFrontEndCommand(const typename GfxFamily::VFE_STATE_TYPE &feCmd);
+    static bool getSystolicFlagValueFromPipelineSelectCommand(const typename GfxFamily::PIPELINE_SELECT &pipelineSelectCmd);
+    static size_t getAdditionalDshSize();
 };
 
 } // namespace NEO

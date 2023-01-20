@@ -7,8 +7,8 @@
 
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
@@ -69,12 +69,12 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenEnabledFtrPooledEuAndA0SteppingWhen
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     FeatureTable &mySkuTable = myHwInfo.featureTable;
     PLATFORM &myPlatform = myHwInfo.platform;
-    const auto &hwInfoConfig = *HwInfoConfig::get(myPlatform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(myPlatform.eProductFamily);
 
     mySysInfo.EUCount = 20;
     mySysInfo.EuCountPerPoolMin = 99999;
     mySkuTable.flags.ftrPooledEuEnabled = 1;
-    myPlatform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, myHwInfo);
+    myPlatform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, myHwInfo);
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
@@ -88,13 +88,13 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenDeviceThatHasHighNumberOfExecutionU
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     PLATFORM &myPlatform = myHwInfo.platform;
-    const auto &hwInfoConfig = *HwInfoConfig::get(myPlatform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(myPlatform.eProductFamily);
 
     mySysInfo.EUCount = 32;
     mySysInfo.SubSliceCount = 2;
     mySysInfo.DualSubSliceCount = 2;
     mySysInfo.ThreadCount = 32 * 8;
-    myPlatform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_A0, myHwInfo);
+    myPlatform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, myHwInfo);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     EXPECT_EQ(512u, device->sharedDeviceInfo.maxWorkGroupSize);
@@ -106,12 +106,12 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenEnabledFtrPooledEuAndNotA0SteppingW
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     FeatureTable &mySkuTable = myHwInfo.featureTable;
     PLATFORM &myPlatform = myHwInfo.platform;
-    const auto &hwInfoConfig = *HwInfoConfig::get(myPlatform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(myPlatform.eProductFamily);
 
     mySysInfo.EUCount = 20;
     mySysInfo.EuCountPerPoolMin = 99999;
     mySkuTable.flags.ftrPooledEuEnabled = 1;
-    myPlatform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, myHwInfo);
+    myPlatform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, myHwInfo);
 
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
@@ -125,13 +125,13 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenDeviceThatHasHighNumberOfExecutionU
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     PLATFORM &myPlatform = myHwInfo.platform;
-    const auto &hwInfoConfig = *HwInfoConfig::get(myPlatform.eProductFamily);
+    const auto &productHelper = *ProductHelper::get(myPlatform.eProductFamily);
 
     mySysInfo.EUCount = 32;
     mySysInfo.SubSliceCount = 2;
     mySysInfo.DualSubSliceCount = 2;
     mySysInfo.ThreadCount = 32 * 8; // 128 threads per subslice, in simd 8 gives 1024
-    myPlatform.usRevId = hwInfoConfig.getHwRevIdFromStepping(REVISION_B, myHwInfo);
+    myPlatform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, myHwInfo);
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     EXPECT_EQ(1024u, device->sharedDeviceInfo.maxWorkGroupSize);
@@ -139,23 +139,23 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenDeviceThatHasHighNumberOfExecutionU
 }
 
 XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchAndMaxSubSlicesSupportedIsSmallerThanMinMaxSubSlicesSupportedThenReturnValidValue) {
-    HardwareInfo hwInfo = *defaultHwInfo;
+    HardwareInfo &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
     testSysInfo.MaxSubSlicesSupported = 24;
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     uint32_t minMaxSubSlicesSupported = 32;
     uint32_t minCalculation = minMaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice *
                               hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
 
     EXPECT_LE(testSysInfo.MaxSubSlicesSupported, minMaxSubSlicesSupported);
-    EXPECT_EQ(minCalculation, hwHelper.getComputeUnitsUsedForScratch(&hwInfo));
+    EXPECT_EQ(minCalculation, gfxCoreHelper.getComputeUnitsUsedForScratch(pClDevice->getRootDeviceEnvironment()));
 }
 XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsedForScratchAndMaxSubSlicesSupportedIsGreaterThanMinMaxSubSlicesSupportedThenReturnValidValue) {
-    HardwareInfo hwInfo = *defaultHwInfo;
+    HardwareInfo &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
     testSysInfo.MaxSubSlicesSupported = 40;
 
-    auto &hwHelper = HwHelper::get(hwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = pClDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
     uint32_t minMaxSubSlicesSupported = 32;
     uint32_t minCalculation = minMaxSubSlicesSupported * hwInfo.gtSystemInfo.MaxEuPerSubSlice *
                               hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
@@ -164,7 +164,7 @@ XE_HP_CORE_TEST_F(XE_HP_COREDeviceCaps, givenHwInfoWhenRequestedComputeUnitsUsed
 
     EXPECT_GT(testSysInfo.MaxSubSlicesSupported, minMaxSubSlicesSupported);
     EXPECT_GT(properCalculation, minCalculation);
-    EXPECT_EQ(properCalculation, hwHelper.getComputeUnitsUsedForScratch(&hwInfo));
+    EXPECT_EQ(properCalculation, gfxCoreHelper.getComputeUnitsUsedForScratch(pClDevice->getRootDeviceEnvironment()));
 }
 
 HWTEST_EXCLUDE_PRODUCT(DeviceGetCapsTest, givenEnabledFtrPooledEuWhenCalculatingMaxEuPerSSThenDontIgnoreEuCountPerPoolMin, IGFX_XE_HP_CORE);

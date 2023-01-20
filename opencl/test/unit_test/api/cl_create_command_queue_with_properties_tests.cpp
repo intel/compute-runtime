@@ -34,11 +34,11 @@ struct CommandQueueWithPropertiesTest : public ApiFixture<>,
 
     void SetUp() override {
         std::tie(commandQueueProperties, queueSize, queuePriority, queueThrottle) = GetParam();
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
     }
 
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_command_queue_properties commandQueueProperties = 0;
@@ -55,13 +55,13 @@ struct clCreateCommandQueueWithPropertiesApi : public ApiFixture<>,
 
     void SetUp() override {
         platformsImpl->clear();
-        MemoryManagementFixture::SetUp();
-        ApiFixture::SetUp();
+        MemoryManagementFixture::setUp();
+        ApiFixture::setUp();
     }
 
     void TearDown() override {
-        ApiFixture::TearDown();
-        MemoryManagementFixture::TearDown();
+        ApiFixture::tearDown();
+        MemoryManagementFixture::tearDown();
     }
 };
 

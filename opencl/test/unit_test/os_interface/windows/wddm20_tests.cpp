@@ -1,33 +1,17 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/os_library.h"
-#include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
-#include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/os_interface/windows/os_environment_win.h"
-#include "shared/source/os_interface/windows/sys_calls.h"
-#include "shared/source/os_interface/windows/wddm/wddm_interface.h"
-#include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/source/os_interface/windows/wddm_engine_mapper.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
-#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_wddm_residency_logger.h"
@@ -36,20 +20,16 @@
 
 #include "opencl/test/unit_test/os_interface/windows/mock_wddm_allocation.h"
 
-#include "gtest/gtest.h"
 #include "mock_gmm_memory.h"
 
-#include <cstdint>
-#include <functional>
-#include <limits>
-#include <memory>
+#include <dxgi.h>
 
 namespace NEO {
 namespace SysCalls {
 extern const wchar_t *currentLibraryPath;
 }
 extern uint32_t numRootDevicesToEnum;
-std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid);
+std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid, uint32_t adapterNodeOrdinalIn);
 } // namespace NEO
 
 using namespace NEO;
@@ -303,7 +283,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenAllocationSmallerUnderlyingThanAlignedSiz
 TEST_F(Wddm20WithMockGdiDllTests, givenReserveCallWhenItIsCalledWithProperParamtersThenAddressInRangeIsReturend) {
     auto sizeAlignedTo64Kb = 64 * KB;
 
-    auto reservationAddress = wddm->reserveGpuVirtualAddress(wddm->getGfxPartition().Heap32[0].Base,
+    auto reservationAddress = wddm->reserveGpuVirtualAddress(0ull, wddm->getGfxPartition().Heap32[0].Base,
                                                              wddm->getGfxPartition().Heap32[0].Limit,
                                                              sizeAlignedTo64Kb);
 
@@ -481,21 +461,9 @@ TEST_F(WddmTestWithMockGdiDll, givenShareableAllocationWhenCreateThenSharedHandl
     allocation.setDefaultGmm(gmm.get());
     auto status = memoryManager.createGpuAllocationsWithRetry(&allocation);
     EXPECT_TRUE(status);
-    EXPECT_NE(0u, allocation.peekInternalHandle(&memoryManager));
-}
-
-TEST(WddmAllocationTest, whenAllocationIsShareableThenSharedHandleToModifyIsSharedHandleOfAllocation) {
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, true, 1u);
-    auto sharedHandleToModify = allocation.getSharedHandleToModify();
-    EXPECT_NE(nullptr, sharedHandleToModify);
-    *sharedHandleToModify = 1234u;
-    EXPECT_EQ(*sharedHandleToModify, allocation.peekInternalHandle(nullptr));
-}
-
-TEST(WddmAllocationTest, whenAllocationIsNotShareableThenItDoesntReturnSharedHandleToModify) {
-    WddmAllocation allocation(0, AllocationType::UNKNOWN, nullptr, 0, MemoryConstants::pageSize, nullptr, MemoryPool::MemoryNull, false, 1u);
-    auto sharedHandleToModify = allocation.getSharedHandleToModify();
-    EXPECT_EQ(nullptr, sharedHandleToModify);
+    uint64_t handle = 0;
+    allocation.peekInternalHandle(&memoryManager, handle);
+    EXPECT_NE(0u, handle);
 }
 
 TEST_F(Wddm20Tests, WhenMakingResidentAndEvictingThenReturnIsCorrect) {
@@ -520,7 +488,7 @@ TEST_F(Wddm20Tests, WhenMakingResidentAndEvictingThenReturnIsCorrect) {
     EXPECT_TRUE(error);
 
     uint64_t sizeToTrim;
-    error = wddm->evict(&allocation.getHandles()[0], allocation.getNumGmms(), sizeToTrim);
+    error = wddm->evict(&allocation.getHandles()[0], allocation.getNumGmms(), sizeToTrim, true);
     EXPECT_TRUE(error);
 
     auto monitoredFence = osContext->getResidencyController().getMonitoredFence();
@@ -544,7 +512,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     MemoryManagerCreate<WddmMemoryManager> mm(false, false, *executionEnvironment);
     AllocationProperties properties(0, false, 4096u, AllocationType::SHARED_BUFFER, false, {});
 
-    auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, properties, false, false);
+    auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, properties, false, false, true);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
     ASSERT_NE(nullptr, wddmAllocation);
 
@@ -582,7 +550,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     AllocationProperties properties(0, false, 4096u, AllocationType::SHARED_BUFFER, false, {});
 
     std::vector<osHandle> handles{ALLOCATION_HANDLE};
-    auto graphicsAllocation = mm.createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false);
+    auto graphicsAllocation = mm.createGraphicsAllocationFromMultipleSharedHandles(handles, properties, false, false, true);
     ASSERT_EQ(nullptr, graphicsAllocation);
 }
 
@@ -595,7 +563,7 @@ TEST_F(Wddm20WithMockGdiDllTests, givenSharedHandleWhenCreateGraphicsAllocationF
     MemoryManagerCreate<WddmMemoryManager> mm(false, false, *executionEnvironment);
     AllocationProperties properties(0, false, 4096, AllocationType::SHARED_BUFFER, false, {});
 
-    auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, properties, false, false);
+    auto graphicsAllocation = mm.createGraphicsAllocationFromSharedHandle(ALLOCATION_HANDLE, properties, false, false, true);
     auto wddmAllocation = (WddmAllocation *)graphicsAllocation;
     ASSERT_NE(nullptr, wddmAllocation);
 
@@ -689,11 +657,12 @@ struct WddmContextSchedulingPriorityTests : public Wddm20WithMockGdiDllTestsWith
         wddm->wddmInterface.reset(wddmMockInterface);
 
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        auto engine = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0];
+        auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        auto engine = gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0];
 
         auto engineDescriptor = EngineDescriptorHelper::getDefaultDescriptor(engine, preemptionMode);
         engineDescriptor.engineTypeUsage.second = lowPriority ? EngineUsage::LowPriority : EngineUsage::Regular;
-        osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0u, engineDescriptor);
+        osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, engineDescriptor);
         osContext->ensureContextInitialized();
     }
 };
@@ -755,7 +724,8 @@ TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenUseNoRingFlushesKmdModeDeb
 TEST_F(Wddm20WithMockGdiDllTestsWithoutWddmInit, givenEngineTypeWhenCreatingContextThenPassCorrectNodeOrdinal) {
     init();
     auto createContextParams = this->getCreateContextDataFcn();
-    UINT expected = WddmEngineMapper::engineNodeMap(HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*defaultHwInfo)[0].first);
+    auto &gfxCoreHelper = this->rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+    UINT expected = WddmEngineMapper::engineNodeMap(gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0].first);
     EXPECT_EQ(expected, createContextParams->NodeOrdinal);
 }
 
@@ -814,7 +784,13 @@ TEST_F(Wddm20Tests, GivenMultipleHandlesWhenMakingResidentThenBytesToTrimIsCorre
     EXPECT_EQ(gdi->getMakeResidentArg().NumBytesToTrim, bytesToTrim);
 }
 
-TEST_F(Wddm20Tests, WhenMakingNonResidentThenEvictIsCalled) {
+TEST_F(Wddm20Tests, WhenMakingNonResidentAndEvictNotNeededThenEvictIsCalledWithProperFlagSet) {
+    DebugManagerStateRestore restorer{};
+    DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.set(1);
+
+    auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
+    wddm->setPlatformSupportEvictIfNecessaryFlag(productHelper);
+
     D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
 
     gdi->getEvictArg().AllocationList = nullptr;
@@ -825,12 +801,33 @@ TEST_F(Wddm20Tests, WhenMakingNonResidentThenEvictIsCalled) {
     wddm->callBaseEvict = true;
 
     uint64_t sizeToTrim = 10;
-    wddm->evict(&handle, 1, sizeToTrim);
+    wddm->evict(&handle, 1, sizeToTrim, false);
 
     EXPECT_EQ(1u, gdi->getEvictArg().NumAllocations);
     EXPECT_EQ(&handle, gdi->getEvictArg().AllocationList);
     EXPECT_EQ(wddm->getDeviceHandle(), gdi->getEvictArg().hDevice);
     EXPECT_EQ(0u, gdi->getEvictArg().NumBytesToTrim);
+    EXPECT_EQ(1u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
+}
+
+TEST_F(Wddm20Tests, WhenMakingNonResidentAndEvictNeededThenEvictIsCalledWithProperFlagSet) {
+    D3DKMT_HANDLE handle = (D3DKMT_HANDLE)0x1234;
+
+    gdi->getEvictArg().AllocationList = nullptr;
+    gdi->getEvictArg().Flags.Value = 0;
+    gdi->getEvictArg().hDevice = 0;
+    gdi->getEvictArg().NumAllocations = 0;
+    gdi->getEvictArg().NumBytesToTrim = 20;
+    wddm->callBaseEvict = true;
+
+    uint64_t sizeToTrim = 10;
+    wddm->evict(&handle, 1, sizeToTrim, true);
+
+    EXPECT_EQ(1u, gdi->getEvictArg().NumAllocations);
+    EXPECT_EQ(&handle, gdi->getEvictArg().AllocationList);
+    EXPECT_EQ(wddm->getDeviceHandle(), gdi->getEvictArg().hDevice);
+    EXPECT_EQ(0u, gdi->getEvictArg().NumBytesToTrim);
+    EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
 }
 
 TEST_F(Wddm20Tests, givenDestroyAllocationWhenItIsCalledThenAllocationIsPassedToDestroyAllocation) {
@@ -1072,11 +1069,13 @@ TEST_F(WddmLockWithMakeResidentTests, whenApplyBlockingMakeResidentAndTemporaryR
     allocation.handle = 0x3;
     WddmMock mockWddm(*executionEnvironment->rootDeviceEnvironments[0]);
     mockWddm.makeResidentStatus = false;
+    mockWddm.callBaseEvict = true;
     auto mockTemporaryResources = static_cast<MockWddmResidentAllocationsContainer *>(mockWddm.temporaryResources.get());
     mockTemporaryResources->resourceHandles.push_back(allocation.handle);
     mockWddm.temporaryResources->makeResidentResource(allocation.handle, 0x1000);
     EXPECT_EQ(2u, mockTemporaryResources->evictAllResourcesResult.called);
     EXPECT_EQ(1u, mockWddm.evictResult.called);
+    EXPECT_EQ(0u, gdi->getEvictArg().Flags.EvictOnlyIfNecessary);
     EXPECT_EQ(allocation.handle, mockWddm.makeResidentResult.handlePack[0]);
     EXPECT_EQ(3u, mockWddm.makeResidentResult.called);
 }
@@ -1353,15 +1352,6 @@ TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndFilterDeviceIdIsTheSameAsTheE
     EXPECT_NE(nullptr, hwDeviceIds[0].get());
 }
 
-TEST_F(Wddm20Tests, givenWddmWhenDiscoverDevicesAndForceDeviceIdIsTheSameAsTheExistingDeviceThenReturnTheAdapter) {
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.ForceDeviceId.set("1234"); // Existing device Id
-    ExecutionEnvironment executionEnvironment;
-    auto hwDeviceIds = OSInterface::discoverDevices(executionEnvironment);
-    EXPECT_EQ(1u, hwDeviceIds.size());
-    EXPECT_NE(nullptr, hwDeviceIds[0].get());
-}
-
 TEST_F(WddmTest, WhenFeatureFlagHwQueueIsDisabledThenReturnWddm20Version) {
     wddm->featureTable->flags.ftrWddmHwQueues = 0;
     EXPECT_EQ(WddmVersion::WDDM_2_0, wddm->getWddmVersion());
@@ -1501,7 +1491,7 @@ TEST(HwDeviceId, whenHwDeviceIdIsDestroyedThenAdapterIsClosed) {
 
     D3DKMT_HANDLE adapter = 0x1234;
     {
-        HwDeviceIdWddm hwDeviceId{adapter, {}, osEnv.get(), std::make_unique<UmKmDataTranslator>()};
+        HwDeviceIdWddm hwDeviceId{adapter, {}, 1u, osEnv.get(), std::make_unique<UmKmDataTranslator>()};
     }
     EXPECT_EQ(1u, GdiWithMockedCloseFunc::closeAdapterCalled);
     EXPECT_EQ(adapter, GdiWithMockedCloseFunc::closeAdapterCalledArgPassed);
@@ -1545,7 +1535,7 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentSuccessThenExpectSi
     uint64_t bytesToTrim = 0;
     wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
 
-    //2 - one for open log, second for allocation size
+    // 2 - one for open log, second for allocation size
     EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_TRUE(logger->makeResidentCall);
     EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->makeResidentPagingFence);
@@ -1573,9 +1563,20 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentFailThenExpectTrimR
 
     wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
 
-    //3 - one for open log, second for report allocations, 3rd for trim size
+    // 3 - one for open log, second for report allocations, 3rd for trim size
     EXPECT_EQ(3u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_FALSE(logger->makeResidentCall);
+}
+
+TEST_F(WddmTest, GivenInvalidHandleAndCantTrimFurtherSetToTrueWhenCallingMakeResidentThenFalseIsReturned) {
+    wddm->callBaseMakeResident = true;
+
+    D3DKMT_HANDLE handle = INVALID_HANDLE;
+    uint64_t bytesToTrim = 4 * 4096;
+
+    bool retVal = wddm->makeResident(&handle, 1, true, &bytesToTrim, 0x1000);
+
+    EXPECT_FALSE(retVal);
 }
 
 TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenEnterWaitCalledThenExpectInternalFlagOn) {
@@ -1618,7 +1619,7 @@ TEST_F(WddmTest, GivenResidencyLoggingEnabledWhenMakeResidentAndWaitPagingThenEx
     uint64_t bytesToTrim = 0;
     wddm->makeResident(&handle, 1, false, &bytesToTrim, 0x1000);
 
-    //2 - one for open log, second for allocation size
+    // 2 - one for open log, second for allocation size
     EXPECT_EQ(2u, NEO::IoFunctions::mockVfptrinfCalled);
     EXPECT_TRUE(logger->makeResidentCall);
     EXPECT_EQ(MockGdi::pagingFenceReturnValue, logger->makeResidentPagingFence);
@@ -1706,7 +1707,7 @@ TEST(VerifyAdapterType, whenAdapterDoesntSupportRenderThenDontCreateHwDeviceId) 
     osEnv->gdi.reset(gdi.release());
 
     LUID shadowAdapterLuid = {0xdd, 0xdd};
-    auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnv, shadowAdapterLuid);
+    auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnv, shadowAdapterLuid, 1u);
     EXPECT_EQ(nullptr, hwDeviceId.get());
 }
 
@@ -1716,7 +1717,7 @@ TEST(VerifyAdapterType, whenAdapterSupportsRenderThenCreateHwDeviceId) {
     osEnv->gdi.reset(gdi.release());
 
     LUID adapterLuid = {0x12, 0x1234};
-    auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnv, adapterLuid);
+    auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnv, adapterLuid, 1u);
     EXPECT_NE(nullptr, hwDeviceId.get());
 }
 

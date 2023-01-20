@@ -9,7 +9,9 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/utilities/io_functions.h"
 
+#include <fstream>
 #include <memory>
 #include <string>
 
@@ -22,7 +24,7 @@ FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance() {
 
 template <DebugFunctionalityLevel DebugLevel>
 FileLogger<DebugLevel>::FileLogger(std::string filename, const DebugVariables &flags) {
-    logFileName = filename;
+    logFileName = std::move(filename);
     std::remove(logFileName.c_str());
 
     dumpKernels = flags.DumpKernels.get();
@@ -37,11 +39,20 @@ FileLogger<DebugLevel>::~FileLogger() = default;
 
 template <DebugFunctionalityLevel DebugLevel>
 void FileLogger<DebugLevel>::writeToFile(std::string filename, const char *str, size_t length, std::ios_base::openmode mode) {
-    std::unique_lock<std::mutex> theLock(mutex);
+    std::lock_guard theLock(mutex);
     std::ofstream outFile(filename, mode);
     if (outFile.is_open()) {
         outFile.write(str, length);
         outFile.close();
+    }
+}
+
+template <DebugFunctionalityLevel DebugLevel>
+void FileLogger<DebugLevel>::logDebugString(bool enableLog, std::string_view debugString) {
+    if (enabled()) {
+        if (enableLog) {
+            writeToFile(logFileName, debugString.data(), debugString.size(), std::ios::app);
+        }
     }
 }
 
@@ -162,6 +173,8 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
         return "INTERNAL_HEAP";
     case AllocationType::INTERNAL_HOST_MEMORY:
         return "INTERNAL_HOST_MEMORY";
+    case AllocationType::KERNEL_ARGS_BUFFER:
+        return "KERNEL_ARGS_BUFFER";
     case AllocationType::KERNEL_ISA:
         return "KERNEL_ISA";
     case AllocationType::KERNEL_ISA_INTERNAL:
@@ -228,6 +241,8 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
         return "UNIFIED_SHARED_MEMORY";
     case AllocationType::SW_TAG_BUFFER:
         return "SW_TAG_BUFFER";
+    case AllocationType::DEFERRED_TASKS_LIST:
+        return "DEFERRED_TASKS_LIST";
     default:
         return "ILLEGAL_VALUE";
     }

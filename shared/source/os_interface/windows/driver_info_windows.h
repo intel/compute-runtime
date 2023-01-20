@@ -21,12 +21,14 @@ bool isCompatibleDriverStore(std::string &&deviceRegistryPath);
 
 class DriverInfoWindows : public DriverInfo {
   public:
+    static constexpr DriverInfoType driverInfoType = DriverInfoType::WINDOWS;
+
     DriverInfoWindows(const std::string &path, const PhysicalDevicePciBusInfo &pciBusInfo);
     ~DriverInfoWindows() override;
     std::string getDeviceName(std::string defaultName) override;
     std::string getVersion(std::string defaultVersion) override;
     bool isCompatibleDriverStore() const;
-    bool getMediaSharingSupport() override;
+    MOCKABLE_VIRTUAL bool containsSetting(const char *setting);
     static std::function<std::unique_ptr<SettingsReader>(const std::string &registryPath)> createRegistryReaderFunc;
 
   protected:

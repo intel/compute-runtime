@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 
@@ -18,7 +19,7 @@ class DrmTipMock : public DrmMock {
   public:
     DrmTipMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmTipMock(rootDeviceEnvironment, defaultHwInfo.get()) {}
     DrmTipMock(RootDeviceEnvironment &rootDeviceEnvironment, const HardwareInfo *inputHwInfo) : DrmMock(rootDeviceEnvironment) {
-        rootDeviceEnvironment.setHwInfo(inputHwInfo);
+        rootDeviceEnvironment.setHwInfoAndInitHelpers(inputHwInfo);
         ioctlHelper.reset();
         setupIoctlHelper(inputHwInfo->platform.eProductFamily);
     }
@@ -26,13 +27,13 @@ class DrmTipMock : public DrmMock {
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();
     uint32_t queryMemoryRegionInfoSuccessCount = std::numeric_limits<uint32_t>::max();
 
-    //DRM_IOCTL_I915_GEM_CREATE_EXT
+    // DRM_IOCTL_I915_GEM_CREATE_EXT
     drm_i915_gem_create_ext createExt{};
     MemoryClassInstance memRegions{};
     uint32_t numRegions = 0;
     int gemCreateExtRetVal = 0;
 
-    //DRM_IOCTL_I915_GEM_MMAP_OFFSET
+    // DRM_IOCTL_I915_GEM_MMAP_OFFSET
     __u64 mmapOffsetFlagsReceived = 0;
     __u64 offset = 0;
     int mmapOffsetRetVal = 0;
@@ -81,10 +82,10 @@ class DrmTipMock : public DrmMock {
                     auto queryMemoryRegionInfo = reinterpret_cast<drm_i915_query_memory_regions *>(queryItem->dataPtr);
                     EXPECT_EQ(0u, queryMemoryRegionInfo->num_regions);
                     queryMemoryRegionInfo->num_regions = numberOfRegions;
-                    queryMemoryRegionInfo->regions[0].region.memory_class = I915_MEMORY_CLASS_SYSTEM;
+                    queryMemoryRegionInfo->regions[0].region.memory_class = drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM;
                     queryMemoryRegionInfo->regions[0].region.memory_instance = 1;
                     queryMemoryRegionInfo->regions[0].probed_size = 2 * MemoryConstants::gigaByte;
-                    queryMemoryRegionInfo->regions[1].region.memory_class = I915_MEMORY_CLASS_DEVICE;
+                    queryMemoryRegionInfo->regions[1].region.memory_class = drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE;
                     queryMemoryRegionInfo->regions[1].region.memory_instance = 1;
                     queryMemoryRegionInfo->regions[1].probed_size = 2 * MemoryConstants::gigaByte;
                 }
@@ -101,7 +102,7 @@ class DrmTipMock : public DrmMock {
             }
             createExtParams->handle = 1u;
             this->createExt = *createExtParams;
-            auto extMemRegions = reinterpret_cast<drm_i915_gem_create_ext_memory_regions *>(createExt.extensions);
+            auto extMemRegions = reinterpret_cast<I915::drm_i915_gem_create_ext_memory_regions *>(createExt.extensions);
             if (extMemRegions->base.name != I915_GEM_CREATE_EXT_MEMORY_REGIONS) {
                 return EINVAL;
             }
@@ -110,7 +111,7 @@ class DrmTipMock : public DrmMock {
             if (this->numRegions == 0) {
                 return EINVAL;
             }
-            if ((this->memRegions.memoryClass != I915_MEMORY_CLASS_SYSTEM) && (this->memRegions.memoryClass != I915_MEMORY_CLASS_DEVICE)) {
+            if ((this->memRegions.memoryClass != drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM) && (this->memRegions.memoryClass != drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE)) {
                 return EINVAL;
             }
             return gemCreateExtRetVal;

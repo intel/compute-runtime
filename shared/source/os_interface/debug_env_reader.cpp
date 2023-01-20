@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ int64_t EnvironmentVariableReader::getSetting(const char *settingName, int64_t d
 
     envValue = IoFunctions::getenvPtr(settingName);
     if (envValue) {
-        value = atoi(envValue);
+        value = atoll(envValue);
     }
     return value;
 }

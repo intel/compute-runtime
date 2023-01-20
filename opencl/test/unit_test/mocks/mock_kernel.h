@@ -97,12 +97,14 @@ class MockKernel : public Kernel {
   public:
     using Kernel::addAllocationToCacheFlushVector;
     using Kernel::allBufferArgsStateful;
+    using Kernel::anyKernelArgumentUsingSystemMemory;
     using Kernel::auxTranslationRequired;
     using Kernel::containsStatelessWrites;
     using Kernel::dataParameterSimdSize;
     using Kernel::executionType;
     using Kernel::getDevice;
     using Kernel::getHardwareInfo;
+    using Kernel::graphicsAllocationTypeUseSystemMemory;
     using Kernel::hasDirectStatelessAccessToHostMemory;
     using Kernel::hasDirectStatelessAccessToSharedBuffer;
     using Kernel::hasIndirectStatelessAccessToHostMemory;
@@ -115,18 +117,20 @@ class MockKernel : public Kernel {
     using Kernel::kernelSubmissionMap;
     using Kernel::kernelSvmGfxAllocations;
     using Kernel::kernelUnifiedMemoryGfxAllocations;
+    using Kernel::localIdsCache;
     using Kernel::maxKernelWorkGroupSize;
     using Kernel::maxWorkGroupSizeForCrossThreadData;
     using Kernel::numberOfBindingTableStates;
     using Kernel::parentEventOffset;
     using Kernel::patchBufferOffset;
+    using Kernel::patchPrivateSurface;
     using Kernel::patchWithImplicitSurface;
     using Kernel::pImplicitArgs;
     using Kernel::preferredWkgMultipleOffset;
     using Kernel::privateSurface;
+    using Kernel::setInlineSamplers;
     using Kernel::singleSubdevicePreferredInCurrentEnqueue;
     using Kernel::svmAllocationsRequireCacheFlush;
-    using Kernel::threadArbitrationPolicy;
     using Kernel::unifiedMemoryControls;
 
     using Kernel::slmSizes;
@@ -134,6 +138,7 @@ class MockKernel : public Kernel {
 
     MockKernel(Program *programArg, const KernelInfo &kernelInfoArg, ClDevice &clDeviceArg)
         : Kernel(programArg, kernelInfoArg, clDeviceArg) {
+        initializeLocalIdsCache();
     }
 
     ~MockKernel() override {
@@ -242,7 +247,7 @@ class MockKernel : public Kernel {
     void makeResident(CommandStreamReceiver &commandStreamReceiver) override;
     void getResidency(std::vector<Surface *> &dst) override;
 
-    void setSpecialPipelineSelectMode(bool value) { specialPipelineSelectMode = value; }
+    void setSystolicPipelineSelectMode(bool value) { systolicPipelineSelectMode = value; }
 
     bool requiresCacheFlushCommand(const CommandQueue &commandQueue) const override;
 
@@ -260,7 +265,7 @@ class MockKernel : public Kernel {
     KernelInfo *kernelInfoAllocated = nullptr;
 };
 
-//class below have enough internals to service Enqueue operation.
+// class below have enough internals to service Enqueue operation.
 class MockKernelWithInternals {
   public:
     MockKernelWithInternals(const ClDeviceVector &deviceVector, Context *context = nullptr, bool addDefaultArg = false, SPatchExecutionEnvironment execEnv = {}) {
@@ -278,6 +283,7 @@ class MockKernelWithInternals {
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
         kernelInfo.setCrossThreadDataSize(sizeof(crossThreadData));
         kernelInfo.setLocalIds({1, 1, 1});
+        kernelInfo.kernelDescriptor.kernelAttributes.numLocalIdChannels = 3;
 
         if (context == nullptr) {
             mockContext = new MockContext(deviceVector);

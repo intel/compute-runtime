@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,14 @@
 
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 
 namespace NEO {
-struct HwHelperTestsXeHpcCore : public ClDeviceFixture {
+class ClDevice;
+
+struct ClGfxCoreHelperXeHpcCoreFixture : public ClDeviceFixture {
     void checkIfSingleTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInProperMemoryPool(HardwareInfo *hwInfo);
     void checkIfMultiTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInLocalMemoryPool(HardwareInfo *hwInfo);
     void setupDeviceIdAndRevision(HardwareInfo *hwInfo, ClDevice &clDevice);

@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -37,7 +37,7 @@ get_l0_gpu_driver_version	# NEO_L0_VERSION_MAJOR.NEO_L0_VERSION_MINOR.NEO_L0_VER
 if [ -z "${BRANCH_SUFFIX}" ]; then
     VERSION="${NEO_L0_VERSION_MAJOR}.${NEO_L0_VERSION_MINOR}.${NEO_L0_VERSION_PATCH}${API_DEB_MODEL_LINK}"
 else
-    VERSION="${NEO_L0_VERSION_MAJOR}.${NEO_L0_VERSION_MINOR}.${NEO_L0_VERSION_PATCH}.${API_VERSION}-${NEO_L0_VERSION_HOTFIX}${API_VERSION_SRC}${API_DEB_MODEL_LINK}"
+    VERSION="${NEO_L0_VERSION_MAJOR}.${NEO_L0_VERSION_MINOR}.${NEO_L0_VERSION_PATCH}${API_VERSION}-${NEO_L0_VERSION_HOTFIX}${API_VERSION_SRC}${API_DEB_MODEL_LINK}"
 fi
 
 PKG_VERSION=${VERSION}
@@ -77,13 +77,9 @@ if [ -z "${BRANCH_SUFFIX}" ]; then
         perl -pi -e "s/^ libigdgmm-dev(?=,|$)/ libigdgmm-dev (>=$GMM_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
     fi
 
-    IGC_VERSION=$(apt-cache policy intel-igc-opencl | grep Installed | cut -f2- -d ':' | xargs)
+    IGC_VERSION=$(apt-cache policy intel-igc-core | grep Installed | cut -f2- -d ':' | xargs)
     if [ ! -z "${IGC_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-opencl(?=,|$)/ intel-igc-opencl (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
-    fi
-    IGC_DEVEL_VERSION=$(apt-cache policy intel-igc-opencl-devel | grep Installed | cut -f2- -d ':' | xargs)
-    if [ ! -z "${IGC_DEVEL_VERSION}" ]; then
-        perl -pi -e "s/^ intel-igc-opencl-devel(?=,|$)/ intel-igc-opencl-devel (=$IGC_DEVEL_VERSION)/" "$BUILD_DIR/debian/control"
+        perl -pi -e "s/^ intel-igc-core(?=,|$)/ intel-igc-core (=$IGC_VERSION)/" "$BUILD_DIR/debian/control"
     fi
 fi
 
@@ -120,6 +116,7 @@ EOF
     export NEO_SKIP_UNIT_TESTS
 
     dch -v ${PKG_VERSION} -m "build $PKG_VERSION"
+    ulimit -n 65535 || true
     dpkg-buildpackage -j`nproc --all` -us -uc -b -rfakeroot
     sudo dpkg -i --force-depends ../*.deb
     if [ "${LOG_CCACHE_STATS}" == "1" ]; then

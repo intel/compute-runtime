@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,19 +7,23 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/raii_hw_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_sip.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
-#include "shared/test/unit_test/helpers/raii_hw_helper.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_hw_helper.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
@@ -30,10 +34,6 @@
 #include "gtest/gtest.h"
 
 #include <memory>
-
-namespace NEO {
-extern const char *familyName[];
-} // namespace NEO
 
 using namespace NEO;
 
@@ -114,12 +114,12 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     const auto &caps = device->getDeviceInfo();
     const auto &sharedCaps = device->getSharedDeviceInfo();
     const auto &sysInfo = defaultHwInfo->gtSystemInfo;
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
 
     EXPECT_NE(nullptr, caps.builtInKernels);
 
     std::string strDriverName = caps.name;
-    std::string strDeviceName = device->getClDeviceName(*defaultHwInfo.get());
+    std::string strDeviceName = device->getClDeviceName();
 
     EXPECT_NE(std::string::npos, strDriverName.find(strDeviceName));
 
@@ -144,14 +144,12 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(4u, caps.preferredVectorWidthInt);
     EXPECT_EQ(1u, caps.preferredVectorWidthLong);
     EXPECT_EQ(1u, caps.preferredVectorWidthFloat);
-    EXPECT_EQ(1u, caps.preferredVectorWidthDouble);
     EXPECT_EQ(8u, caps.preferredVectorWidthHalf);
     EXPECT_EQ(16u, caps.nativeVectorWidthChar);
     EXPECT_EQ(8u, caps.nativeVectorWidthShort);
     EXPECT_EQ(4u, caps.nativeVectorWidthInt);
     EXPECT_EQ(1u, caps.nativeVectorWidthLong);
     EXPECT_EQ(1u, caps.nativeVectorWidthFloat);
-    EXPECT_EQ(1u, caps.nativeVectorWidthDouble);
     EXPECT_EQ(8u, caps.nativeVectorWidthHalf);
     EXPECT_EQ(1u, caps.linkerAvailable);
     EXPECT_NE(0u, sharedCaps.globalMemCachelineSize);
@@ -187,7 +185,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(sharedCaps.maxWorkItemSizes[0], sharedCaps.maxWorkGroupSize);
     EXPECT_EQ(sharedCaps.maxWorkItemSizes[1], sharedCaps.maxWorkGroupSize);
     EXPECT_EQ(sharedCaps.maxWorkItemSizes[2], sharedCaps.maxWorkGroupSize);
-    EXPECT_EQ(hwHelper.getMaxNumSamplers(), sharedCaps.maxSamplers);
+    EXPECT_EQ(gfxCoreHelper.getMaxNumSamplers(), sharedCaps.maxSamplers);
 
     // Minimum requirements for OpenCL 1.x
     EXPECT_EQ(static_cast<cl_device_fp_config>(CL_FP_ROUND_TO_NEAREST), CL_FP_ROUND_TO_NEAREST & caps.singleFpConfig);
@@ -211,14 +209,14 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
 
     EXPECT_EQ(1u, caps.endianLittle);
 
-    auto expectedDeviceSubgroups = hwHelper.getDeviceSubGroupSizes();
+    auto expectedDeviceSubgroups = gfxCoreHelper.getDeviceSubGroupSizes();
     EXPECT_EQ(expectedDeviceSubgroups.size(), sharedCaps.maxSubGroups.size());
 
     for (uint32_t i = 0; i < expectedDeviceSubgroups.size(); i++) {
         EXPECT_EQ(expectedDeviceSubgroups[i], sharedCaps.maxSubGroups[i]);
     }
 
-    auto expectedMaxNumOfSubGroups = device->areOcl21FeaturesEnabled() ? sharedCaps.maxWorkGroupSize / hwHelper.getMinimalSIMDSize() : 0u;
+    auto expectedMaxNumOfSubGroups = device->areOcl21FeaturesEnabled() ? sharedCaps.maxWorkGroupSize / gfxCoreHelper.getMinimalSIMDSize() : 0u;
     EXPECT_EQ(expectedMaxNumOfSubGroups, caps.maxNumOfSubGroups);
 
     EXPECT_EQ(0u, caps.maxOnDeviceEvents);
@@ -242,7 +240,7 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
     EXPECT_EQ(64u, caps.preferredPlatformAtomicAlignment);
     EXPECT_TRUE(caps.nonUniformWorkGroupSupport);
 
-    auto expectedPreferredWorkGroupSizeMultiple = hwHelper.isFusedEuDispatchEnabled(*defaultHwInfo, false)
+    auto expectedPreferredWorkGroupSizeMultiple = gfxCoreHelper.isFusedEuDispatchEnabled(*defaultHwInfo, false)
                                                       ? CommonConstants::maximalSimdSize * 2
                                                       : CommonConstants::maximalSimdSize;
     EXPECT_EQ(expectedPreferredWorkGroupSizeMultiple, caps.preferredWorkGroupSizeMultiple);
@@ -258,9 +256,9 @@ TEST_F(DeviceGetCapsTest, WhenCreatingDeviceThenCapsArePopulatedCorrectly) {
 
 HWTEST_F(DeviceGetCapsTest, givenDeviceWhenAskingForSubGroupSizesThenReturnCorrectValues) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    auto &hwHelper = HwHelper::get(device->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
 
-    auto deviceSubgroups = hwHelper.getDeviceSubGroupSizes();
+    auto deviceSubgroups = gfxCoreHelper.getDeviceSubGroupSizes();
 
     EXPECT_EQ(3u, deviceSubgroups.size());
     EXPECT_EQ(8u, deviceSubgroups[0]);
@@ -441,7 +439,8 @@ HWTEST_F(DeviceGetCapsTest, givenGlobalMemSizeAndSharedSystemAllocationsNotSuppo
     const auto &caps = device->getSharedDeviceInfo();
 
     uint64_t expectedSize = std::max((caps.globalMemSize / 2), static_cast<uint64_t>(128ULL * MemoryConstants::megaByte));
-    expectedSize = std::min(expectedSize, HwHelperHw<FamilyType>::get().getMaxMemAllocSize());
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    expectedSize = std::min(expectedSize, gfxCoreHelper.getMaxMemAllocSize());
     EXPECT_EQ(caps.maxMemAllocSize, expectedSize);
 }
 
@@ -943,9 +942,8 @@ TEST_F(DeviceGetCapsTest, givenNotSupporteImagesWhenCreateExtentionsListThenDevi
 TEST_F(DeviceGetCapsTest, givenDeviceWhenGettingHostUnifiedMemoryCapThenItDependsOnLocalMemory) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     const auto &caps = device->getDeviceInfo();
-
-    auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily);
-    auto localMemoryEnabled = hwHelper.isLocalMemoryEnabled(*defaultHwInfo);
+    auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    auto localMemoryEnabled = gfxCoreHelper.isLocalMemoryEnabled(*defaultHwInfo);
 
     EXPECT_EQ((localMemoryEnabled == false), caps.hostUnifiedMemory);
 }
@@ -995,11 +993,15 @@ TEST_F(DeviceGetCapsTest, givenFp64SupportForcedWhenCheckingFp64SupportThenFp64I
                 EXPECT_NE(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
                 EXPECT_NE(0u, caps.doubleFpConfig);
                 EXPECT_EQ(1u, fp64FeaturesCount);
+                EXPECT_NE(0u, caps.nativeVectorWidthDouble);
+                EXPECT_NE(0u, caps.preferredVectorWidthDouble);
                 EXPECT_TRUE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
             } else {
                 EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
                 EXPECT_EQ(0u, caps.doubleFpConfig);
                 EXPECT_EQ(0u, fp64FeaturesCount);
+                EXPECT_EQ(0u, caps.nativeVectorWidthDouble);
+                EXPECT_EQ(0u, caps.preferredVectorWidthDouble);
                 EXPECT_FALSE(isValueSet(caps.singleFpConfig, CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT));
             }
         }
@@ -1057,11 +1059,12 @@ HWTEST_F(DeviceGetCapsTest, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThe
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
     auto &deviceInfo = device->deviceInfo;
 
-    auto simdSizeUsed = HwHelperHw<FamilyType>::get().getMinimalSIMDSize();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto simdSizeUsed = gfxCoreHelper.getMinimalSIMDSize();
 
-    auto hwInfoConfig = HwInfoConfig::get(myHwInfo.platform.eProductFamily);
-    auto expectedMaxWGS = hwInfoConfig->getMaxThreadsForWorkgroupInDSSOrSS(myHwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice),
-                                                                           static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) *
+    auto productHelper = ProductHelper::get(myHwInfo.platform.eProductFamily);
+    auto expectedMaxWGS = productHelper->getMaxThreadsForWorkgroupInDSSOrSS(myHwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice),
+                                                                            static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) *
                           simdSizeUsed;
 
     expectedMaxWGS = std::min(Math::prevPowerOfTwo(expectedMaxWGS), 1024u);
@@ -1106,18 +1109,19 @@ TEST(DeviceGetCaps, givenDebugFlagToUseMaxSimdSizeForWkgCalculationWhenDeviceCap
 
 HWTEST_F(DeviceGetCapsTest, givenDeviceThatHasHighNumberOfExecutionUnitsWhenMaxWorkgroupSizeIsComputedThenItIsLimitedTo1024) {
     REQUIRE_OCL_21_OR_SKIP(defaultHwInfo);
-
     HardwareInfo myHwInfo = *defaultHwInfo;
-    GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
-    auto &hwHelper = HwHelper::get(myHwInfo.platform.eRenderCoreFamily);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 
+    GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     mySysInfo.EUCount = 32;
     mySysInfo.SubSliceCount = 2;
-    mySysInfo.ThreadCount = 32 * hwHelper.getMinimalSIMDSize(); // 128 threads per subslice, in simd 8 gives 1024
+    mySysInfo.ThreadCount = 32 * gfxCoreHelper.getMinimalSIMDSize(); // 128 threads per subslice, in simd 8 gives 1024
+
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
 
     EXPECT_EQ(1024u, device->getSharedDeviceInfo().maxWorkGroupSize);
-    EXPECT_EQ(device->getSharedDeviceInfo().maxWorkGroupSize / hwHelper.getMinimalSIMDSize(), device->getDeviceInfo().maxNumOfSubGroups);
+    EXPECT_EQ(device->getSharedDeviceInfo().maxWorkGroupSize / gfxCoreHelper.getMinimalSIMDSize(), device->getDeviceInfo().maxNumOfSubGroups);
 }
 
 TEST_F(DeviceGetCapsTest, givenSystemWithDriverInfoWhenGettingNameAndVersionThenReturnValuesFromDriverInfo) {
@@ -1195,7 +1199,7 @@ TEST_F(DeviceGetCapsTest, givenPciBusInfoThenPciBusInfoExtensionAvailable) {
 static bool getPlanarYuvHeightCalled = false;
 
 template <typename GfxFamily>
-class MyMockHwHelper : public HwHelperHw<GfxFamily> {
+class MyMockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
   public:
     uint32_t getPlanarYuvMaxHeight() const override {
         getPlanarYuvHeightCalled = true;
@@ -1206,7 +1210,7 @@ class MyMockHwHelper : public HwHelperHw<GfxFamily> {
 
 HWTEST_F(DeviceGetCapsTest, givenDeviceWhenInitializingCapsThenPlanarYuvHeightIsTakenFromHelper) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
-    RAIIHwHelperFactory<MyMockHwHelper<FamilyType>> hwHelperBackup{device->getHardwareInfo().platform.eRenderCoreFamily};
+    RAIIGfxCoreHelperFactory<MyMockGfxCoreHelper<FamilyType>> gfxCoreHelperBackup{device->getHardwareInfo().platform.eRenderCoreFamily};
 
     DriverInfoMock *driverInfoMock = new DriverInfoMock();
     device->driverInfo.reset(driverInfoMock);
@@ -1214,7 +1218,7 @@ HWTEST_F(DeviceGetCapsTest, givenDeviceWhenInitializingCapsThenPlanarYuvHeightIs
     EXPECT_TRUE(getPlanarYuvHeightCalled);
     getPlanarYuvHeightCalled = false;
     const auto &caps = device->getDeviceInfo();
-    EXPECT_EQ(hwHelperBackup.mockHwHelper.dummyPlanarYuvValue, caps.planarYuvMaxHeight);
+    EXPECT_EQ(gfxCoreHelperBackup.mockGfxCoreHelper.dummyPlanarYuvValue, caps.planarYuvMaxHeight);
 }
 
 TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionThenReturnDefaultValues) {
@@ -1226,7 +1230,7 @@ TEST_F(DeviceGetCapsTest, givenSystemWithNoDriverInfoWhenGettingNameAndVersionTh
 
     const auto &caps = device->getDeviceInfo();
 
-    std::string tempName = device->getClDeviceName(*defaultHwInfo.get());
+    std::string tempName = device->getClDeviceName();
 
 #define QTR(a) #a
 #define TOSTR(b) QTR(b)
@@ -1423,7 +1427,7 @@ TEST(Device_UseCaps, givenOverrideSlmSizeWhenWhenInitializeDeviceThenSlmSizeInDe
     EXPECT_EQ(newSlmSize, static_cast<uint32_t>(deviceInfoWithForceSlmFlag.localMemSize / KB));
 }
 
-typedef HwHelperTest DeviceCapsWithModifiedHwInfoTest;
+typedef GfxCoreHelperTest DeviceCapsWithModifiedHwInfoTest;
 
 TEST_F(DeviceCapsWithModifiedHwInfoTest, givenPlatformWithSourceLevelDebuggerNotSupportedWhenDeviceIsCreatedThenSourceLevelDebuggerActiveIsSetToFalse) {
 
@@ -1474,31 +1478,36 @@ HWTEST_F(QueueFamilyNameTest, givenInvalidEngineGroupWhenGettingQueueFamilyNameT
     verify(EngineGroupType::MaxEngineGroups, "");
 }
 
-HWTEST_F(QueueFamilyNameTest, givenTooBigQueueFamilyNameWhenGettingQueueFamilyNameThenExceptionIsThrown) {
-    struct MockClHwHelper : NEO::ClHwHelperHw<FamilyType> {
-        bool getQueueFamilyName(std::string &name, EngineGroupType type) const override {
-            name = familyNameOverride;
-            return true;
-        }
-        std::string familyNameOverride = "";
-    };
+template <typename FamilyType>
+struct MyMockClGfxCoreHelper : NEO::ClGfxCoreHelperHw<FamilyType> {
+    bool getQueueFamilyName(std::string &name, EngineGroupType type) const override {
+        name = familyNameOverride;
+        return true;
+    }
+    std::string familyNameOverride = "";
+};
 
-    MockClHwHelper clHwHelper{};
-    VariableBackup<ClHwHelper *> clHwHelperFactoryBackup{
-        &NEO::clHwHelperFactory[static_cast<size_t>(defaultHwInfo->platform.eRenderCoreFamily)]};
-    clHwHelperFactoryBackup = &clHwHelper;
+HWTEST_F(QueueFamilyNameTest, givenTooBigQueueFamilyNameWhenGettingQueueFamilyNameThenExceptionIsThrown) {
+
+    MyMockClGfxCoreHelper<FamilyType> mockClGfxCoreHelper{};
+    std::unique_ptr<ApiGfxCoreHelper> clGfxCoreHelper(static_cast<ApiGfxCoreHelper *>(&mockClGfxCoreHelper));
+    device->executionEnvironment->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(clGfxCoreHelper);
 
     char name[CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL] = "";
 
-    clHwHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL - 1, 'a');
+    mockClGfxCoreHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL - 1, 'a');
     device->getQueueFamilyName(name, EngineGroupType::MaxEngineGroups);
-    EXPECT_EQ(0, std::strcmp(name, clHwHelper.familyNameOverride.c_str()));
+    EXPECT_EQ(0, std::strcmp(name, mockClGfxCoreHelper.familyNameOverride.c_str()));
 
-    clHwHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL, 'a');
+    mockClGfxCoreHelper.familyNameOverride = std::string(CL_QUEUE_FAMILY_MAX_NAME_SIZE_INTEL, 'a');
     EXPECT_ANY_THROW(device->getQueueFamilyName(name, EngineGroupType::MaxEngineGroups));
+
+    device->executionEnvironment->rootDeviceEnvironments[0]->apiGfxCoreHelper.swap(clGfxCoreHelper);
+    clGfxCoreHelper.release();
 }
 
-HWCMDTEST_F(IGFX_GEN8_CORE, DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupCalculatedCorrectly) {
+using isPreGen12 = IsBeforeGfxCore<IGFX_GEN12_CORE>;
+HWTEST2_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIsCalculatedCorrectly, isPreGen12) {
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
     PLATFORM &myPlatform = myHwInfo.platform;
@@ -1509,11 +1518,31 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThen
     mySysInfo.ThreadCount = 16 * 8;
     myPlatform.usRevId = 0x4;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
-    auto minSimd = 8;
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto minSimd = gfxCoreHelper.getMinimalSIMDSize();
 
-    auto expectedWG = (mySysInfo.ThreadCount / mySysInfo.EUCount) * (mySysInfo.EUCount / mySysInfo.SubSliceCount) * minSimd;
+    size_t expectedWGSize = (mySysInfo.ThreadCount / mySysInfo.SubSliceCount) * minSimd;
 
-    EXPECT_EQ(expectedWG, device->sharedDeviceInfo.maxWorkGroupSize);
+    EXPECT_EQ(expectedWGSize, device->sharedDeviceInfo.maxWorkGroupSize);
+}
+
+using isGen12Plus = IsAtLeastGfxCore<IGFX_GEN12_CORE>;
+HWTEST2_F(DeviceGetCapsTest, givenSysInfoWhenDeviceCreatedThenMaxWorkGroupSizeIsCalculatedCorrectly, isGen12Plus) {
+    HardwareInfo myHwInfo = *defaultHwInfo;
+    GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;
+    PLATFORM &myPlatform = myHwInfo.platform;
+
+    mySysInfo.EUCount = 16;
+    mySysInfo.SubSliceCount = 4;
+    mySysInfo.DualSubSliceCount = 2;
+    mySysInfo.ThreadCount = 16 * 8;
+    myPlatform.usRevId = 0x4;
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&myHwInfo));
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto minSimd = gfxCoreHelper.getMinimalSIMDSize();
+
+    size_t expectedWGSize = (mySysInfo.ThreadCount / mySysInfo.DualSubSliceCount) * minSimd;
+    EXPECT_EQ(expectedWGSize, device->sharedDeviceInfo.maxWorkGroupSize);
 }
 
 HWTEST_F(DeviceGetCapsTest, givenDSSDifferentThanZeroWhenDeviceCreatedThenDualSubSliceCountIsDifferentThanSubSliceCount) {

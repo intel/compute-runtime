@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -706,14 +706,18 @@ TEST(clUnifiedSharedMemoryTests, whenDeviceSupportSharedMemoryAllocationsAndSyst
     auto device = mockContext->getDevice(0u);
     REQUIRE_SVM_OR_SKIP(device);
 
-    MockKernelWithInternals mockKernel(*mockContext->getDevice(0u), mockContext.get(), true);
+    MockKernelWithInternals mockKernel(*device, mockContext.get(), true);
 
     auto systemPointer = reinterpret_cast<void *>(0xfeedbac);
 
+    auto kernel = mockKernel.mockMultiDeviceKernel->getKernel(device->getRootDeviceIndex());
+    EXPECT_FALSE(kernel->isAnyKernelArgumentUsingSystemMemory());
+
     auto retVal = clSetKernelArgMemPointerINTEL(mockKernel.mockMultiDeviceKernel, 0, systemPointer);
     EXPECT_EQ(retVal, CL_SUCCESS);
+    EXPECT_TRUE(kernel->isAnyKernelArgumentUsingSystemMemory());
 
-    //check if cross thread is updated
+    // check if cross thread is updated
     auto crossThreadLocation = reinterpret_cast<uintptr_t *>(ptrOffset(mockKernel.mockKernel->getCrossThreadData(), mockKernel.kernelInfo.argAsPtr(0).stateless));
     auto systemAddress = reinterpret_cast<uintptr_t>(systemPointer);
 
@@ -893,6 +897,92 @@ TEST(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithProperP
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
+TEST(clUnifiedSharedMemoryTests, givenUseKmdMigrationAndAppendMemoryPrefetchForKmdMigratedSharedAllocationsWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheDeviceAssociatedWithCommandQueue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseKmdMigration.set(1);
+    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(1);
+
+    MockContext mockContext;
+    auto device = mockContext.getDevice(0u);
+    REQUIRE_SVM_OR_SKIP(device);
+
+    MockCommandQueue mockCmdQueue{mockContext};
+    cl_int retVal = CL_SUCCESS;
+
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&mockContext, device, nullptr, 4, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
+
+    retVal = clEnqueueMigrateMemINTEL(&mockCmdQueue, unifiedMemorySharedAllocation, 10, 0, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    EXPECT_TRUE(mockMemoryManager->setMemPrefetchCalled);
+    EXPECT_EQ(0u, mockMemoryManager->memPrefetchSubDeviceIds[0]);
+
+    clMemFreeINTEL(&mockContext, unifiedMemorySharedAllocation);
+}
+
+TEST(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheSubDeviceAssociatedWithCommandQueue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseKmdMigration.set(1);
+    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(1);
+
+    UltClDeviceFactory deviceFactory{1, 4};
+    cl_device_id allDevices[] = {deviceFactory.rootDevices[0], deviceFactory.subDevices[0], deviceFactory.subDevices[1],
+                                 deviceFactory.subDevices[2], deviceFactory.subDevices[3]};
+    MockContext multiTileContext(ClDeviceVector{allDevices, 5});
+    auto subDevice = deviceFactory.subDevices[1];
+    REQUIRE_SVM_OR_SKIP(subDevice);
+
+    MockCommandQueue mockCmdQueue(&multiTileContext, subDevice, 0, false);
+    cl_int retVal = CL_SUCCESS;
+
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&multiTileContext, subDevice, nullptr, 4, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
+
+    retVal = clEnqueueMigrateMemINTEL(&mockCmdQueue, unifiedMemorySharedAllocation, 10, 0, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(subDevice->getMemoryManager());
+    EXPECT_TRUE(mockMemoryManager->setMemPrefetchCalled);
+    EXPECT_EQ(1u, mockMemoryManager->memPrefetchSubDeviceIds[0]);
+
+    clMemFreeINTEL(&multiTileContext, unifiedMemorySharedAllocation);
+}
+
+TEST(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheRootDeviceAssociatedWithCommandQueue) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseKmdMigration.set(1);
+    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(1);
+
+    UltClDeviceFactory deviceFactory{1, 4};
+    cl_device_id allDevices[] = {deviceFactory.rootDevices[0], deviceFactory.subDevices[0], deviceFactory.subDevices[1],
+                                 deviceFactory.subDevices[2], deviceFactory.subDevices[3]};
+    MockContext multiTileContext(ClDeviceVector{allDevices, 5});
+    auto device = deviceFactory.rootDevices[0];
+    REQUIRE_SVM_OR_SKIP(device);
+
+    MockCommandQueue mockCmdQueue(&multiTileContext, device, 0, false);
+    cl_int retVal = CL_SUCCESS;
+
+    auto unifiedMemorySharedAllocation = clSharedMemAllocINTEL(&multiTileContext, device, nullptr, 4, 0, &retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, unifiedMemorySharedAllocation);
+
+    retVal = clEnqueueMigrateMemINTEL(&mockCmdQueue, unifiedMemorySharedAllocation, 10, 0, 0, nullptr, nullptr);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    auto mockMemoryManager = static_cast<MockMemoryManager *>(device->getMemoryManager());
+    EXPECT_TRUE(mockMemoryManager->setMemPrefetchCalled);
+    for (auto index = 0u; index < mockMemoryManager->memPrefetchSubDeviceIds.size(); index++) {
+        EXPECT_EQ(index, mockMemoryManager->memPrefetchSubDeviceIds[index]);
+    }
+
+    clMemFreeINTEL(&multiTileContext, unifiedMemorySharedAllocation);
+}
+
 TEST(clUnifiedSharedMemoryTests, whenClEnqueueMemAdviseINTELisCalledWithWrongQueueThenInvalidQueueErrorIsReturned) {
     auto retVal = clEnqueueMemAdviseINTEL(0, nullptr, 0, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
@@ -914,7 +1004,7 @@ class ClUnifiedSharedMemoryEventTests : public CommandQueueHwFixture,
     }
     void TearDown() override {
         clReleaseEvent(event);
-        CommandQueueHwFixture::TearDown();
+        CommandQueueHwFixture::tearDown();
     }
 
     cl_event event = nullptr;

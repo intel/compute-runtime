@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,70 +8,76 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
-using ClHwHelperTestsXeHpgCore = ::testing::Test;
+#include "hw_cmds_xe_hpg_core_base.h"
+
+using ClGfxCoreHelperTestsXeHpgCore = Test<ClDeviceFixture>;
 
 using namespace NEO;
 
-XE_HPG_CORETEST_F(ClHwHelperTestsXeHpgCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
+XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, WhenGettingDeviceIpVersionThenMakeCorrectDeviceIpVersion) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
+
     if (defaultHwInfo->capabilityTable.isIntegratedDevice) {
-        EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 7, 0), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
+        EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 7, 0), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
     } else {
-        EXPECT_EQ(ClHwHelperMock::makeDeviceIpVersion(12, 7, 1), ClHwHelper::get(renderCoreFamily).getDeviceIpVersion(*defaultHwInfo));
+        EXPECT_EQ(ClGfxCoreHelperMock::makeDeviceIpVersion(12, 7, 1), clGfxCoreHelper.getDeviceIpVersion(*defaultHwInfo));
     }
 }
 
-XE_HPG_CORETEST_F(ClHwHelperTestsXeHpgCore, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenKernelArgumentIsNotPureStatefulThenRequireNonAuxMode) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
     for (auto isPureStateful : ::testing::Bool()) {
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
 
-        EXPECT_EQ(!argAsPtr.isPureStateful(), clHwHelper.requiresNonAuxMode(argAsPtr, *defaultHwInfo));
+        EXPECT_EQ(!argAsPtr.isPureStateful(), clGfxCoreHelper.requiresNonAuxMode(argAsPtr));
     }
 }
 
-XE_HPG_CORETEST_F(ClHwHelperTestsXeHpgCore, givenGenHelperWhenEnableStatelessCompressionThenDontRequireNonAuxMode) {
+XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenEnableStatelessCompressionThenDontRequireNonAuxMode) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
     for (auto isPureStateful : ::testing::Bool()) {
         ArgDescPointer argAsPtr{};
         argAsPtr.accessedUsingStatelessAddressingMode = !isPureStateful;
-        EXPECT_FALSE(clHwHelper.requiresNonAuxMode(argAsPtr, *defaultHwInfo));
+        EXPECT_FALSE(clGfxCoreHelper.requiresNonAuxMode(argAsPtr));
     }
 }
 
-XE_HPG_CORETEST_F(ClHwHelperTestsXeHpgCore, givenGenHelperWhenCheckAuxTranslationThenAuxResolvesIsRequired) {
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenCheckAuxTranslationThenAuxResolvesIsRequired) {
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
     for (auto isPureStateful : ::testing::Bool()) {
         KernelInfo kernelInfo{};
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
         kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0].as<ArgDescPointer>(true).accessedUsingStatelessAddressingMode = !isPureStateful;
-        EXPECT_EQ(!isPureStateful, clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo));
+        EXPECT_EQ(!isPureStateful, clGfxCoreHelper.requiresAuxResolves(kernelInfo));
     }
 }
 
-XE_HPG_CORETEST_F(ClHwHelperTestsXeHpgCore, givenGenHelperWhenEnableStatelessCompressionThenAuxTranslationIsNotRequired) {
+XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenGenHelperWhenEnableStatelessCompressionThenAuxTranslationIsNotRequired) {
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    auto &clHwHelper = ClHwHelper::get(renderCoreFamily);
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
     KernelInfo kernelInfo{};
 
-    EXPECT_FALSE(clHwHelper.requiresAuxResolves(kernelInfo, *defaultHwInfo));
+    EXPECT_FALSE(clGfxCoreHelper.requiresAuxResolves(kernelInfo));
 }
 
-XE_HPG_CORETEST_F(ClHwHelperTestsXeHpgCore, givenDifferentCLImageFormatsWhenCallingAllowImageCompressionThenCorrectValueReturned) {
+XE_HPG_CORETEST_F(ClGfxCoreHelperTestsXeHpgCore, givenDifferentCLImageFormatsWhenCallingAllowImageCompressionThenCorrectValueReturned) {
     struct ImageFormatCompression {
         cl_image_format imageFormat;
         bool isCompressable;
@@ -108,11 +114,11 @@ XE_HPG_CORETEST_F(ClHwHelperTestsXeHpgCore, givenDifferentCLImageFormatsWhenCall
         {{CL_R, CL_UNORM_INT8}, true},
         {{CL_R, CL_UNORM_INT16}, true},
     };
-    MockContext context;
-    auto &clHwHelper = ClHwHelper::get(context.getDevice(0)->getHardwareInfo().platform.eRenderCoreFamily);
+
+    auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();
 
     for (const auto &format : imageFormats) {
-        bool result = clHwHelper.allowImageCompression(format.imageFormat);
+        bool result = clGfxCoreHelper.allowImageCompression(format.imageFormat);
         EXPECT_EQ(format.isCompressable, result);
     }
 }

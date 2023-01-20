@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,12 +8,17 @@
 #pragma once
 
 #include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/submission_status.h"
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/helpers/completion_stamp.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 
 #include <vector>
+
+struct UnifiedMemoryControls;
 
 namespace NEO {
 class LinearStream;
@@ -42,16 +47,16 @@ struct CommandQueueImp : public CommandQueue {
             return buffers[bufferUse];
         }
 
-        void setCurrentFlushStamp(uint32_t taskCount, NEO::FlushStamp flushStamp) {
+        void setCurrentFlushStamp(TaskCountType taskCount, NEO::FlushStamp flushStamp) {
             flushId[bufferUse] = std::make_pair(taskCount, flushStamp);
         }
-        std::pair<uint32_t, NEO::FlushStamp> &getCurrentFlushStamp() {
+        std::pair<TaskCountType, NEO::FlushStamp> &getCurrentFlushStamp() {
             return flushId[bufferUse];
         }
 
       private:
         NEO::GraphicsAllocation *buffers[BUFFER_ALLOCATION::COUNT];
-        std::pair<uint32_t, NEO::FlushStamp> flushId[BUFFER_ALLOCATION::COUNT];
+        std::pair<TaskCountType, NEO::FlushStamp> flushId[BUFFER_ALLOCATION::COUNT];
         BUFFER_ALLOCATION bufferUse = BUFFER_ALLOCATION::FIRST;
     };
     static constexpr size_t defaultQueueCmdBufferSize = 128 * MemoryConstants::kiloByte;
@@ -72,13 +77,15 @@ struct CommandQueueImp : public CommandQueue {
 
     Device *getDevice() { return device; }
 
-    uint32_t getTaskCount() { return taskCount; }
+    TaskCountType getTaskCount() { return taskCount; }
 
     NEO::CommandStreamReceiver *getCsr() { return csr; }
 
     MOCKABLE_VIRTUAL NEO::WaitStatus reserveLinearStreamSize(size_t size);
     ze_command_queue_mode_t getSynchronousMode() const;
     virtual bool getPreemptionCmdProgramming() = 0;
+    void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) override;
+    void makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) override;
 
   protected:
     MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
@@ -86,22 +93,21 @@ struct CommandQueueImp : public CommandQueue {
 
     ze_result_t synchronizeByPollingForTaskCount(uint64_t timeout);
 
-    void printFunctionsPrintfOutput();
+    void printKernelsPrintfOutput(bool hangDetected);
 
-    void postSyncOperations();
+    void postSyncOperations(bool hangDetected);
 
     CommandBufferManager buffers;
     NEO::HeapContainer heapContainer;
     ze_command_queue_desc_t desc;
-    std::vector<Kernel *> printfFunctionContainer;
+    std::vector<Kernel *> printfKernelContainer;
 
     Device *device = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;
-    NEO::LinearStream *commandStream = nullptr;
+    NEO::LinearStream commandStream{};
 
-    std::atomic<uint32_t> taskCount{0};
+    std::atomic<TaskCountType> taskCount{0};
 
-    bool gpgpuEnabled = false;
     bool useKmdWaitFunction = false;
 };
 

@@ -1,16 +1,19 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gen11/hw_cmds.h"
+#include "shared/test/common/helpers/static_size3.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/helpers/static_size3.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/helpers/cl_hw_parse.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "reg_configs_common.h"
@@ -33,7 +36,7 @@ GEN11TEST_F(Gen11EnqueueTest, givenKernelRequiringIndependentForwardProgressWhen
 
     auto cmd = findMmioCmd<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), RowChickenReg4::address);
     ASSERT_NE(nullptr, cmd);
-    EXPECT_EQ(RowChickenReg4::regDataForArbitrationPolicy[HwHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy()], cmd->getDataDword());
+    EXPECT_EQ(RowChickenReg4::regDataForArbitrationPolicy[GfxCoreHelperHw<FamilyType>::get().getDefaultThreadArbitrationPolicy()], cmd->getDataDword());
     EXPECT_EQ(1U, countMmio<FamilyType>(hwParser.cmdList.begin(), hwParser.cmdList.end(), RowChickenReg4::address));
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ namespace ult {
 
 class SysmanDevicePciFixture : public SysmanDeviceFixture {
   protected:
-    Mock<PciKmdSysManager> *pKmdSysManager = nullptr;
+    std::unique_ptr<Mock<PciKmdSysManager>> pKmdSysManager = nullptr;
     KmdSysManager *pOriginalKmdSysManager = nullptr;
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -33,13 +33,10 @@ class SysmanDevicePciFixture : public SysmanDeviceFixture {
 
         device->getDriverHandle()->setMemoryManager(pMemoryManager);
 
-        pKmdSysManager = new Mock<PciKmdSysManager>;
-
-        EXPECT_CALL(*pKmdSysManager, escape(_, _, _, _, _))
-            .WillRepeatedly(::testing::Invoke(pKmdSysManager, &Mock<PciKmdSysManager>::mock_escape));
+        pKmdSysManager.reset(new Mock<PciKmdSysManager>);
 
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
-        pWddmSysmanImp->pKmdSysManager = pKmdSysManager;
+        pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
         delete pSysmanDeviceImp->pPci;
 
@@ -55,12 +52,8 @@ class SysmanDevicePciFixture : public SysmanDeviceFixture {
             GTEST_SKIP();
         }
         device->getDriverHandle()->setMemoryManager(pMemoryManagerOld);
-        SysmanDeviceFixture::TearDown();
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;
-        if (pKmdSysManager != nullptr) {
-            delete pKmdSysManager;
-            pKmdSysManager = nullptr;
-        }
+        SysmanDeviceFixture::TearDown();
         if (pMemoryManager != nullptr) {
             delete pMemoryManager;
             pMemoryManager = nullptr;
@@ -99,20 +92,59 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetP
     EXPECT_EQ(properties.maxSpeed.width, pKmdSysManager->mockMaxLinkWidth[KmdSysman::PciDomainsType::PciRootPort]);
 }
 
-TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetPropertiesWithNoLocalMemoryThenVerifyzetSysmanPciGetPropertiesCallSucceeds) {
-    setLocalMemorySupportedAndReinit(false);
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallinggetPciBdfAndkmdSysmanCallFailsThenUnknownValuesArereturned) {
+    setLocalMemorySupportedAndReinit(true);
+    pKmdSysManager->pciBusReturnCode = KmdSysman::KmdSysmanFail;
+    pKmdSysManager->pciDomainReturnCode = KmdSysman::KmdSysmanFail;
+    pKmdSysManager->pciDeviceReturnCode = KmdSysman::KmdSysmanFail;
+    pKmdSysManager->pciFunctionReturnCode = KmdSysman::KmdSysmanFail;
+    zes_pci_properties_t properties = {};
+    WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pPciImp->getPciBdf(properties));
+    EXPECT_EQ(0, properties.address.domain);
+    EXPECT_EQ(0, properties.address.bus);
+    EXPECT_EQ(0, properties.address.device);
+    EXPECT_EQ(0, properties.address.function);
+    delete pPciImp;
+}
+
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetProLocalMemoryThenVerifyzetSysmanPciGetPropertiesCallSucceeds) {
+    setLocalMemorySupportedAndReinit(true);
 
     zes_pci_properties_t properties;
 
     ze_result_t result = zesDevicePciGetProperties(device, &properties);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(properties.address.domain, pKmdSysManager->mockDomain[KmdSysman::PciDomainsType::PciCurrentDevice]);
-    EXPECT_EQ(properties.address.bus, pKmdSysManager->mockBus[KmdSysman::PciDomainsType::PciCurrentDevice]);
-    EXPECT_EQ(properties.address.device, pKmdSysManager->mockDevice[KmdSysman::PciDomainsType::PciCurrentDevice]);
-    EXPECT_EQ(properties.address.function, pKmdSysManager->mockFunction[KmdSysman::PciDomainsType::PciCurrentDevice]);
-    EXPECT_EQ(properties.maxSpeed.gen, pKmdSysManager->mockMaxLinkSpeed[KmdSysman::PciDomainsType::PciCurrentDevice]);
-    EXPECT_EQ(properties.maxSpeed.width, pKmdSysManager->mockMaxLinkWidth[KmdSysman::PciDomainsType::PciCurrentDevice]);
+    EXPECT_EQ(properties.address.domain, pKmdSysManager->mockDomain[KmdSysman::PciDomainsType::PciRootPort]);
+    EXPECT_EQ(properties.address.bus, pKmdSysManager->mockBus[KmdSysman::PciDomainsType::PciRootPort]);
+    EXPECT_EQ(properties.address.device, pKmdSysManager->mockDevice[KmdSysman::PciDomainsType::PciRootPort]);
+    EXPECT_EQ(properties.address.function, pKmdSysManager->mockFunction[KmdSysman::PciDomainsType::PciRootPort]);
+    EXPECT_EQ(properties.maxSpeed.gen, pKmdSysManager->mockMaxLinkSpeed[KmdSysman::PciDomainsType::PciRootPort]);
+    EXPECT_EQ(properties.maxSpeed.width, pKmdSysManager->mockMaxLinkWidth[KmdSysman::PciDomainsType::PciRootPort]);
+}
+
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingGetPciBdfAndRequestMultpileFailsThenFailureIsReturned) {
+    setLocalMemorySupportedAndReinit(true);
+    pKmdSysManager->mockRequestMultiple = true;
+    pKmdSysManager->mockRequestMultipleResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    zes_pci_properties_t properties = {};
+    WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPciImp->getPciBdf(properties));
+    delete pPciImp;
+}
+
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenGettingMaxLinkSpeedAndMaxLinkWidthAndRequestSingleFailsThenUnknownValuesAreReturned) {
+    setLocalMemorySupportedAndReinit(true);
+    pKmdSysManager->mockRequestSingle = true;
+    pKmdSysManager->mockRequestSingleResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    double maxLinkSpeed;
+    int32_t maxLinkWidth;
+    WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
+    pPciImp->getMaxLinkCaps(maxLinkSpeed, maxLinkWidth);
+    EXPECT_DOUBLE_EQ(0.0, maxLinkSpeed);
+    EXPECT_EQ(-1, maxLinkWidth);
+    delete pPciImp;
 }
 
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetBarsThenVerifyzetSysmanPciGetBarsCallSucceeds) {
@@ -205,6 +237,30 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetS
     EXPECT_EQ(state.speed.width, pKmdSysManager->mockCurrentLinkWidth[KmdSysman::PciDomainsType::PciCurrentDevice]);
 }
 
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingGetPciStateAndRequestMultipleFailsThenFailureIsReturned) {
+    setLocalMemorySupportedAndReinit(true);
+    pKmdSysManager->mockRequestMultiple = true;
+    pKmdSysManager->mockRequestMultipleResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    zes_pci_state_t pState = {};
+    WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pPciImp->getState(&pState));
+    delete pPciImp;
+}
+
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingGetPciStateAndKmdSysmanCallFailsThenUnknownValuesAreReturned) {
+    setLocalMemorySupportedAndReinit(true);
+    pKmdSysManager->pciCurrentLinkSpeedReturnCode = KmdSysman::KmdSysmanFail;
+    pKmdSysManager->pciCurrentLinkWidthReturnCode = KmdSysman::KmdSysmanFail;
+    zes_pci_state_t pState = {};
+    pState.speed.gen = -1;
+    pState.speed.width = -1;
+    WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pPciImp->getState(&pState));
+    EXPECT_EQ(pState.speed.gen, -1);
+    EXPECT_EQ(pState.speed.gen, -1);
+    delete pPciImp;
+}
+
 TEST_F(SysmanDevicePciFixture, WhenConvertingLinkSpeedThenResultIsCorrect) {
     for (int32_t i = PciGenerations::PciGen1; i <= PciGenerations::PciGen5; i++) {
         double speed = convertPciGenToLinkSpeed(i);
@@ -214,6 +270,25 @@ TEST_F(SysmanDevicePciFixture, WhenConvertingLinkSpeedThenResultIsCorrect) {
 
     EXPECT_EQ(-1, convertLinkSpeedToPciGen(0.0));
     EXPECT_EQ(0.0, convertPciGenToLinkSpeed(0));
+}
+
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenGettingResizableBarSupportAndRequestSingleFailsThenUnknownValuesAreReturned) {
+    setLocalMemorySupportedAndReinit(true);
+    pKmdSysManager->mockRequestSingle = true;
+    pKmdSysManager->mockRequestSingleResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
+    EXPECT_EQ(false, pPciImp->resizableBarSupported());
+    delete pPciImp;
+}
+
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenGettingResizableBarEnabledAndRequestSingleFailsThenUnknownValuesAreReturned) {
+    setLocalMemorySupportedAndReinit(true);
+    pKmdSysManager->mockRequestSingle = true;
+    pKmdSysManager->mockRequestSingleResult = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    uint32_t barIndex = 1;
+    WddmPciImp *pPciImp = new WddmPciImp(pOsSysman);
+    EXPECT_EQ(false, pPciImp->resizableBarEnabled(barIndex));
+    delete pPciImp;
 }
 
 } // namespace ult

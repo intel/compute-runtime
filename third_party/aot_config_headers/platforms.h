@@ -48,6 +48,10 @@ enum PRODUCT_CONFIG : uint32_t {
     PVC_XT_B0 = 0x030f0005,
     PVC_XT_B1 = 0x030f0006,
     PVC_XT_C0 = 0x030f0007,
+    XE_LPG_MD_A0 = 0x03118000,
+    XE_LPG_MD_B0 = 0x03118004,
+    XE_LPG_LG_A0 = 0x0311c000,
+    XE_LPG_LG_B0 = 0x0311c004,
     CONFIG_MAX_PLATFORM,
 };
 
@@ -60,6 +64,7 @@ enum RELEASE : uint32_t {
     XE_HP_RELEASE,
     XE_HPG_RELEASE,
     XE_HPC_RELEASE,
+    XE_LPG_RELEASE,
     RELEASE_MAX,
 };
 
@@ -73,7 +78,7 @@ enum FAMILY : uint32_t {
     FAMILY_MAX,
 };
 
-static const std::map<std::string, FAMILY> familyAcronyms = {
+inline const std::map<std::string, FAMILY> familyAcronyms = {
 #ifdef SUPPORT_GEN8
     {"gen8", GEN8_FAMILY},
 #endif
@@ -91,7 +96,7 @@ static const std::map<std::string, FAMILY> familyAcronyms = {
 #endif
 };
 
-static const std::map<std::string, RELEASE> releaseAcronyms = {
+inline const std::map<std::string, RELEASE> releaseAcronyms = {
 #ifdef SUPPORT_GEN8
     {"gen8", GEN8_RELEASE},
 #endif
@@ -115,7 +120,7 @@ static const std::map<std::string, RELEASE> releaseAcronyms = {
 #endif
 };
 
-static const std::map<std::string, AOT::PRODUCT_CONFIG> productConfigAcronyms = {
+inline const std::map<std::string, AOT::PRODUCT_CONFIG> deviceAcronyms = {
 #ifdef SUPPORT_BDW
     {"bdw", BDW},
 #endif
@@ -155,7 +160,6 @@ static const std::map<std::string, AOT::PRODUCT_CONFIG> productConfigAcronyms = 
     {"rkl", RKL},
 #endif
 #ifdef SUPPORT_ADLS
-    {"rpl-s", RPL_S},
     {"adl-s", ADL_S},
 #endif
 #ifdef SUPPORT_ADLP

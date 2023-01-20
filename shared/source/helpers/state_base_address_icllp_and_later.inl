@@ -11,31 +11,23 @@ namespace NEO {
 
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
-    STATE_BASE_ADDRESS *stateBaseAddress,
-    const IndirectHeap *ssh,
-    bool setGeneralStateBaseAddress,
-    uint64_t indirectObjectHeapBaseAddress,
-    GmmHelper *gmmHelper,
-    bool isMultiOsContextCapable,
-    MemoryCompressionState memoryCompressionState,
-    bool overrideBindlessSurfaceStateBase,
-    bool useGlobalAtomics,
-    bool areMultipleSubDevicesInContext) {
+    StateBaseAddressHelperArgs<GfxFamily> &args,
+    bool overrideBindlessSurfaceStateBase) {
 
-    if (overrideBindlessSurfaceStateBase && ssh) {
-        stateBaseAddress->setBindlessSurfaceStateBaseAddressModifyEnable(true);
-        stateBaseAddress->setBindlessSurfaceStateBaseAddress(ssh->getHeapGpuBase());
-        uint32_t size = uint32_t(ssh->getMaxAvailableSpace() / 64) - 1;
-        stateBaseAddress->setBindlessSurfaceStateSize(size);
+    if (overrideBindlessSurfaceStateBase && args.ssh) {
+        args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
+        args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.ssh->getHeapGpuBase());
+        uint32_t size = uint32_t(args.ssh->getMaxAvailableSpace() / 64) - 1;
+        args.stateBaseAddressCmd->setBindlessSurfaceStateSize(size);
     }
 
-    stateBaseAddress->setBindlessSamplerStateBaseAddressModifyEnable(true);
+    args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddressModifyEnable(true);
 
     auto l3CacheOnPolicy = GMM_RESOURCE_USAGE_OCL_STATE_HEAP_BUFFER;
 
-    if (gmmHelper != nullptr) {
-        stateBaseAddress->setBindlessSurfaceStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
-        stateBaseAddress->setBindlessSamplerStateMemoryObjectControlState(gmmHelper->getMOCS(l3CacheOnPolicy));
+    if (args.gmmHelper != nullptr) {
+        args.stateBaseAddressCmd->setBindlessSurfaceStateMemoryObjectControlState(args.gmmHelper->getMOCS(l3CacheOnPolicy));
+        args.stateBaseAddressCmd->setBindlessSamplerStateMemoryObjectControlState(args.gmmHelper->getMOCS(l3CacheOnPolicy));
     }
 }
 

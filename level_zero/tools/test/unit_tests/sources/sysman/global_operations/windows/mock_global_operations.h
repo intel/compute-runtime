@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ struct Mock<GlobalOpsKmdSysManager> : public GlobalOpsKmdSysManager {
         }
     }
     Mock() = default;
-    ~Mock() = default;
+    ~Mock() override = default;
 };
 
 } // namespace ult

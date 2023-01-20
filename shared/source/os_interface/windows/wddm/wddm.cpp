@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,9 +18,11 @@
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/heap_assigner.h"
-#include "shared/source/helpers/interlocked_max.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
@@ -31,7 +33,6 @@
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/adapter_factory.h"
-#include "shared/source/os_interface/windows/wddm/adapter_info.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
@@ -40,7 +41,6 @@
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"
 #include "shared/source/sku_info/operations/windows/sku_info_receiver.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include "gmm_memory.h"
 
@@ -88,26 +88,29 @@ bool Wddm::init() {
     if (!hardwareInfoTable[productFamily]) {
         return false;
     }
-    auto hardwareInfo = std::make_unique<HardwareInfo>();
+
+    auto hardwareInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     hardwareInfo->platform = *gfxPlatform;
     hardwareInfo->featureTable = *featureTable;
     hardwareInfo->workaroundTable = *workaroundTable;
     hardwareInfo->gtSystemInfo = *gtSystemInfo;
-
     hardwareInfo->capabilityTable = hardwareInfoTable[productFamily]->capabilityTable;
     hardwareInfo->capabilityTable.maxRenderFrequency = maxRenderFrequency;
     hardwareInfo->capabilityTable.instrumentationEnabled =
         (hardwareInfo->capabilityTable.instrumentationEnabled && instrumentationEnabled);
 
-    HwInfoConfig *hwConfig = HwInfoConfig::get(productFamily);
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    productHelper.adjustPlatformForProductFamily(hardwareInfo);
+    rootDeviceEnvironment.initHelpers();
 
-    hwConfig->adjustPlatformForProductFamily(hardwareInfo.get());
-    if (hwConfig->configureHwInfoWddm(hardwareInfo.get(), hardwareInfo.get(), nullptr)) {
+    if (productHelper.configureHwInfoWddm(hardwareInfo, hardwareInfo, rootDeviceEnvironment)) {
         return false;
     }
+    setPlatformSupportEvictIfNecessaryFlag(productHelper);
 
     auto preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*hardwareInfo);
-    rootDeviceEnvironment.setHwInfo(hardwareInfo.get());
+    populateIpVersion(*hardwareInfo);
+
     rootDeviceEnvironment.initGmm();
     this->rootDeviceEnvironment.getGmmClientContext()->setHandleAllocator(this->hwDeviceId->getUmKmDataTranslator()->createGmmHandleAllocator());
 
@@ -130,7 +133,94 @@ bool Wddm::init() {
         gmmMemory.reset(GmmMemory::create(rootDeviceEnvironment.getGmmClientContext()));
     }
 
+    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
+        if (!buildTopologyMapping()) {
+            return false;
+        }
+    }
+
     return configureDeviceAddressSpace();
+}
+
+void Wddm::setPlatformSupportEvictIfNecessaryFlag(const ProductHelper &productHelper) {
+    platformSupportsEvictIfNecessary = productHelper.isEvictionIfNecessaryFlagSupported();
+    int32_t overridePlatformSupportsEvictIfNecessary =
+        DebugManager.flags.PlaformSupportEvictIfNecessaryFlag.get();
+    if (overridePlatformSupportsEvictIfNecessary != -1) {
+        platformSupportsEvictIfNecessary = !!overridePlatformSupportsEvictIfNecessary;
+    }
+    forceEvictOnlyIfNecessary = DebugManager.flags.ForceEvictOnlyIfNecessaryFlag.get();
+}
+
+bool Wddm::buildTopologyMapping() {
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+
+    UNRECOVERABLE_IF(hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount > 1);
+    TopologyMapping mapping;
+    if (!translateTopologyInfo(mapping)) {
+        PRINT_DEBUGGER_ERROR_LOG("translateTopologyInfo Failed\n", "");
+        return false;
+    }
+    this->topologyMap[0] = mapping;
+
+    return true;
+}
+
+bool Wddm::translateTopologyInfo(TopologyMapping &mapping) {
+    int sliceCount = 0;
+    int subSliceCount = 0;
+    int euCount = 0;
+    std::vector<int> sliceIndices;
+    auto gtSystemInfo = rootDeviceEnvironment.getHardwareInfo()->gtSystemInfo;
+    sliceIndices.reserve(gtSystemInfo.SliceCount);
+    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
+    const uint32_t highestEnabledSlice = NEO::GfxCoreHelper::getHighestEnabledSlice(*hwInfo);
+
+    for (uint32_t x = 0; x < std::max(highestEnabledSlice, hwInfo->gtSystemInfo.MaxSlicesSupported); x++) {
+        if (!gtSystemInfo.SliceInfo[x].Enabled) {
+            continue;
+        }
+        sliceIndices.push_back(x);
+        sliceCount++;
+
+        std::vector<int> subSliceIndices;
+        subSliceIndices.reserve((gtSystemInfo.SliceInfo[x].DualSubSliceEnabledCount) * GT_MAX_SUBSLICE_PER_DSS);
+
+        // subSliceIndex is used to track the index number of subslices from all DSS in this slice
+        int subSliceIndex = -1;
+        for (uint32_t dss = 0; dss < GT_MAX_DUALSUBSLICE_PER_SLICE; dss++) {
+            if (!gtSystemInfo.SliceInfo[x].DSSInfo[dss].Enabled) {
+                subSliceIndex += 2;
+                continue;
+            }
+
+            for (uint32_t y = 0; y < GT_MAX_SUBSLICE_PER_DSS; y++) {
+                subSliceIndex++;
+                if (!gtSystemInfo.SliceInfo[x].DSSInfo[dss].SubSlice[y].Enabled) {
+                    continue;
+                }
+                subSliceCount++;
+                subSliceIndices.push_back(subSliceIndex);
+
+                euCount += gtSystemInfo.SliceInfo[x].DSSInfo[dss].SubSlice[y].EuEnabledCount;
+            }
+        }
+
+        // single slice available
+        if (sliceCount == 1) {
+            mapping.subsliceIndices = std::move(subSliceIndices);
+        }
+    }
+
+    if (sliceIndices.size()) {
+        mapping.sliceIndices = std::move(sliceIndices);
+    }
+
+    if (sliceCount != 1) {
+        mapping.subsliceIndices.clear();
+    }
+    PRINT_DEBUGGER_INFO_LOG("Topology Mapping: sliceCount=%d subSliceCount=%d euCount=%d\n", sliceCount, subSliceCount, euCount);
+    return (sliceCount && subSliceCount && euCount);
 }
 
 bool Wddm::queryAdapterInfo() {
@@ -178,6 +268,8 @@ bool Wddm::queryAdapterInfo() {
         maxRenderFrequency = adapterInfo.MaxRenderFreq;
         timestampFrequency = adapterInfo.GfxTimeStampFreq;
         instrumentationEnabled = adapterInfo.Caps.InstrumentationIsEnabled != 0;
+
+        populateAdditionalAdapterInfoOptions(adapterInfo);
     }
 
     return status == STATUS_SUCCESS;
@@ -261,7 +353,7 @@ bool validDriverStorePath(OsEnvironmentWin &osEnvironment, D3DKMT_HANDLE adapter
     return isCompatibleDriverStore(std::move(deviceRegistryPath));
 }
 
-std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid) {
+std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid, uint32_t adapterNodeOrdinal) {
     D3DKMT_OPENADAPTERFROMLUID openAdapterData = {};
     openAdapterData.AdapterLuid = adapterLuid;
     auto status = osEnvironment.gdi->openAdapterFromLuid(&openAdapterData);
@@ -291,8 +383,8 @@ std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin
     if (0 == queryAdapterType.RenderSupported) {
         return nullptr;
     }
-
-    return std::make_unique<HwDeviceIdWddm>(openAdapterData.hAdapter, adapterLuid, &osEnvironment, std::move(umKmDataTranslator));
+    uint32_t adapterNodeMask = 1 << adapterNodeOrdinal;
+    return std::make_unique<HwDeviceIdWddm>(openAdapterData.hAdapter, adapterLuid, adapterNodeMask, &osEnvironment, std::move(umKmDataTranslator));
 }
 
 std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironment &executionEnvironment) {
@@ -342,7 +434,7 @@ std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironm
                 continue;
             }
 
-            auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterDesc.luid);
+            auto hwDeviceId = createHwDeviceIdFromAdapterLuid(*osEnvironment, adapterDesc.luid, i);
             if (hwDeviceId) {
                 hwDeviceIds.push_back(std::unique_ptr<HwDeviceId>(hwDeviceId.release()));
             }
@@ -359,13 +451,14 @@ std::vector<std::unique_ptr<HwDeviceId>> Wddm::discoverDevices(ExecutionEnvironm
     return hwDeviceIds;
 }
 
-bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim) {
+bool Wddm::evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim, bool evictNeeded) {
     NTSTATUS status = STATUS_SUCCESS;
     D3DKMT_EVICT evict = {};
     evict.AllocationList = handleList;
     evict.hDevice = device;
     evict.NumAllocations = numOfHandles;
     evict.NumBytesToTrim = 0;
+    evict.Flags.EvictOnlyIfNecessary = adjustEvictNeededParameter(evictNeeded) ? 0 : 1;
 
     status = getGdi()->evict(&evict);
 
@@ -389,7 +482,7 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
     makeResident.NumAllocations = count;
     makeResident.PriorityList = &priority;
     makeResident.Flags.CantTrimFurther = cantTrimFurther ? 1 : 0;
-    makeResident.Flags.MustSucceed = cantTrimFurther ? 1 : 0;
+    makeResident.Flags.MustSucceed = 0;
 
     status = getGdi()->makeResident(&makeResident);
     if (status == STATUS_PENDING) {
@@ -402,9 +495,10 @@ bool Wddm::makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantT
     } else {
         DEBUG_BREAK_IF(true);
         perfLogResidencyTrimRequired(residencyLogger.get(), makeResident.NumBytesToTrim);
-        if (numberOfBytesToTrim != nullptr)
+        if (numberOfBytesToTrim != nullptr) {
             *numberOfBytesToTrim = makeResident.NumBytesToTrim;
-        UNRECOVERABLE_IF(cantTrimFurther);
+        }
+        return false;
     }
 
     kmDafListener->notifyMakeResident(featureTable->flags.ftrKmdDaf, getAdapter(), device, handles, count, getGdi()->escape);
@@ -457,7 +551,8 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
 
     kmDafListener->notifyMapGpuVA(featureTable->flags.ftrKmdDaf, getAdapter(), device, handle, mapGPUVA.VirtualAddress, getGdi()->escape);
     bool ret = true;
-    if (gmm->isCompressionEnabled && HwInfoConfig::get(gfxPlatform->eProductFamily)->isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    if (gmm->isCompressionEnabled && productHelper.isPageTableManagerSupported(*rootDeviceEnvironment.getHardwareInfo())) {
         for (auto engine : rootDeviceEnvironment.executionEnvironment.memoryManager->getRegisteredEngines()) {
             if (engine.commandStreamReceiver->pageTableManager.get()) {
                 ret &= engine.commandStreamReceiver->pageTableManager->updateAuxTable(gpuPtr, gmm, true);
@@ -468,11 +563,13 @@ bool Wddm::mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_A
     return ret;
 }
 
-D3DGPU_VIRTUAL_ADDRESS Wddm::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress,
+D3DGPU_VIRTUAL_ADDRESS Wddm::reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress,
+                                                      D3DGPU_VIRTUAL_ADDRESS minimumAddress,
                                                       D3DGPU_VIRTUAL_ADDRESS maximumAddress,
                                                       D3DGPU_SIZE_T size) {
     UNRECOVERABLE_IF(size % MemoryConstants::pageSize64k);
     D3DDDI_RESERVEGPUVIRTUALADDRESS reserveGpuVirtualAddress = {};
+    reserveGpuVirtualAddress.BaseAddress = baseAddress;
     reserveGpuVirtualAddress.MinimumAddress = minimumAddress;
     reserveGpuVirtualAddress.MaximumAddress = maximumAddress;
     reserveGpuVirtualAddress.hPagingQueue = this->pagingQueue;
@@ -511,7 +608,7 @@ NTSTATUS Wddm::createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKM
     createAllocation.NumAllocations = 1;
     createAllocation.Flags.CreateShared = outSharedHandle ? TRUE : FALSE;
     createAllocation.Flags.NtSecuritySharing = outSharedHandle ? TRUE : FALSE;
-    createAllocation.Flags.CreateResource = outSharedHandle || alignedCpuPtr ? TRUE : FALSE;
+    createAllocation.Flags.CreateResource = outSharedHandle ? TRUE : FALSE;
     createAllocation.pAllocationInfo2 = &allocationInfo;
     createAllocation.hDevice = device;
 
@@ -823,8 +920,7 @@ bool Wddm::createContext(OsContextWin &osContext) {
     privateData.pHwContextId = &hwContextId;
     privateData.NoRingFlushes = DebugManager.flags.UseNoRingFlushesKmdMode.get();
 
-    auto &rootDeviceEnvironment = this->getRootDeviceEnvironment();
-    applyAdditionalContextFlags(privateData, osContext, *rootDeviceEnvironment.getHardwareInfo());
+    applyAdditionalContextFlags(privateData, osContext);
 
     createContext.EngineAffinity = 0;
     createContext.Flags.NullRendering = static_cast<UINT>(DebugManager.flags.EnableNullHardware.get());
@@ -1078,7 +1174,7 @@ void Wddm::waitOnPagingFenceFromCpu() {
 }
 
 void Wddm::updatePagingFenceValue(uint64_t newPagingFenceValue) {
-    interlockedMax(currentPagingFenceValue, newPagingFenceValue);
+    NEO::MultiThreadHelpers::interlockedMax(currentPagingFenceValue, newPagingFenceValue);
 }
 
 WddmVersion Wddm::getWddmVersion() {
@@ -1108,8 +1204,8 @@ PhysicalDevicePciBusInfo Wddm::getPciBusInfo() const {
     return PhysicalDevicePciBusInfo(0, adapterBDF.Bus, adapterBDF.Device, adapterBDF.Function);
 }
 
-PhyicalDevicePciSpeedInfo Wddm::getPciSpeedInfo() const {
-    PhyicalDevicePciSpeedInfo speedInfo{};
+PhysicalDevicePciSpeedInfo Wddm::getPciSpeedInfo() const {
+    PhysicalDevicePciSpeedInfo speedInfo{};
     return speedInfo;
 }
 

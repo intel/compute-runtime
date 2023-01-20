@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
@@ -28,14 +29,14 @@ enum class NewAluOpcodes : uint32_t {
 
 struct MiMath : public AUBFixture, public ::testing::Test {
     void SetUp() override {
-        AUBFixture::SetUp(defaultHwInfo.get());
+        AUBFixture::setUp(defaultHwInfo.get());
 
         streamAllocation = this->device->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::COMMAND_BUFFER, device->getDeviceBitfield()});
         taskStream = std::make_unique<LinearStream>(streamAllocation);
     }
     void TearDown() override {
         this->device->getMemoryManager()->freeGraphicsMemory(streamAllocation);
-        AUBFixture::TearDown();
+        AUBFixture::tearDown();
     }
 
     void flushStream() {
@@ -43,9 +44,9 @@ struct MiMath : public AUBFixture, public ::testing::Test {
         dispatchFlags.guardCommandBufferWithPipeControl = true;
 
         csr->flushTask(*taskStream, 0,
-                       &csr->getIndirectHeap(IndirectHeap::Type::DYNAMIC_STATE, 0u),
-                       &csr->getIndirectHeap(IndirectHeap::Type::INDIRECT_OBJECT, 0u),
-                       &csr->getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 0u),
+                       &csr->getIndirectHeap(IndirectHeapType::DYNAMIC_STATE, 0u),
+                       &csr->getIndirectHeap(IndirectHeapType::INDIRECT_OBJECT, 0u),
+                       &csr->getIndirectHeap(IndirectHeapType::SURFACE_STATE, 0u),
                        0u, dispatchFlags, device->getDevice());
 
         csr->flushBatchedSubmissions();

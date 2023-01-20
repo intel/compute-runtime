@@ -1,13 +1,17 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/mocks/mock_device.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
@@ -37,7 +41,7 @@ class SubBufferTest : public ClDeviceFixture,
 
     void TearDown() override {
         delete buffer;
-        ClDeviceFixture::TearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -174,6 +178,25 @@ TEST_F(SubBufferTest, GivenBufferWithMemoryStorageAndNullHostPtrWhenSubBufferIsC
 
     subBuffer->release();
     buffer->release();
+}
+
+TEST_F(SubBufferTest, givenBufferWithNullMemoryStorageWhenSubBufferIsCreatedThenMemoryStorageIsNotOffseted) {
+    cl_buffer_region region = {1, 1};
+    cl_int retVal = 0;
+
+    MockBuffer *mockBuffer = static_cast<MockBuffer *>(buffer);
+    void *savedMemoryStorage = mockBuffer->memoryStorage;
+    mockBuffer->memoryStorage = nullptr;
+
+    auto subBuffer = buffer->createSubBuffer(0, 0, &region, retVal);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    ASSERT_NE(nullptr, subBuffer);
+
+    MockBuffer *mockSubBuffer = static_cast<MockBuffer *>(subBuffer);
+    EXPECT_EQ(nullptr, mockSubBuffer->memoryStorage);
+
+    mockBuffer->memoryStorage = savedMemoryStorage;
+    delete subBuffer;
 }
 
 TEST_F(SubBufferTest, givenBufferWithHostPtrWhenSubbufferGetsMapPtrThenExpectBufferHostPtr) {

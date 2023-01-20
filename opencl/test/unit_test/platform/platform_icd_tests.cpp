@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ class PlatformTestedSharingBuilderFactory : public SharingBuilderFactory {
         return "--extension--";
     };
     void fillGlobalDispatchTable() override {
-        icdGlobalDispatchTable.clCreateFromGLBuffer = (decltype(icdGlobalDispatchTable.clCreateFromGLBuffer)) & fakeGlF;
+        icdGlobalDispatchTable.clCreateFromGLBuffer = (decltype(icdGlobalDispatchTable.clCreateFromGLBuffer))&fakeGlF;
     };
     void *getExtensionFunctionAddress(const std::string &functionName) override {
         return nullptr;

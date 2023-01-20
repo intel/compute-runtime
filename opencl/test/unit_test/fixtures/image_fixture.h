@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,12 @@
 
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/platform.h"
@@ -133,7 +135,7 @@ struct ImageClearColorFixture : ::testing::Test {
 
         NEO::platformsImpl->clear();
         NEO::constructPlatform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
-        NEO::platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+        NEO::platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
         NEO::platform()->peekExecutionEnvironment()->rootDeviceEnvironments[0]->initGmm();
     }
 

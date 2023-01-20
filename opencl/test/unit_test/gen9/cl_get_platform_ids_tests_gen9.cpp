@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ using namespace NEO;
 typedef api_tests clGetPlatformIDsTests;
 
 TEST(clGetPlatformIDsMultiPlatformTest, whenCreateDevicesWithDifferentProductFamilyThenClGetPlatformIdsCreatesMultiplePlatformsProperlySorted) {
-    if ((HwInfoConfig::get(IGFX_SKYLAKE) == nullptr) || (HwInfoConfig::get(IGFX_KABYLAKE) == nullptr)) {
+    if ((ProductHelper::get(IGFX_SKYLAKE) == nullptr) || (ProductHelper::get(IGFX_KABYLAKE) == nullptr)) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore restorer;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,12 @@
 #include "shared/source/ail/ail_configuration.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
 using IsSKL = IsProduct<IGFX_SKYLAKE>;
 using IsDG2 = IsProduct<IGFX_DG2>;
+using IsHostPtrTrackingDisabled = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN11LP_CORE>;
 
 using AILTests = ::testing::Test;
 template <PRODUCT_FAMILY productFamily>
@@ -20,13 +21,12 @@ class AILMock : public AILConfigurationHw<productFamily> {
   public:
     using AILConfiguration::isKernelHashCorrect;
     using AILConfiguration::processName;
-    using AILConfiguration::sourcesContainKernel;
+    using AILConfiguration::sourcesContain;
 };
 
-HWTEST2_F(AILTests, givenUninitializedTemplateWhenGetAILConfigurationThenNullptrIsReturned, IsSKL) {
+HWTEST2_F(AILTests, givenInitializedTemplateWhenGetAILConfigurationThenNullptrIsNotReturned, IsSKL) {
     auto ailConfiguration = AILConfiguration::get(productFamily);
-
-    ASSERT_EQ(nullptr, ailConfiguration);
+    EXPECT_NE(nullptr, ailConfiguration);
 }
 
 HWTEST2_F(AILTests, givenInitilizedTemplateWhenApplyWithBlenderIsCalledThenFP64SupportIsEnabled, IsAtLeastGen12lp) {
@@ -131,8 +131,8 @@ __kernel void CopyBufferToBufferMiddle(
     uint4 loaded = vload4(gid, pSrc);
     vstore4(loaded, gid, pDst);)";
 
-    EXPECT_TRUE(ail.sourcesContainKernel(kernelSources, "CopyBufferToBufferMiddle"));
-    EXPECT_FALSE(ail.sourcesContainKernel(kernelSources, "CopyBufferToBufferMiddleStateless"));
+    EXPECT_TRUE(ail.sourcesContain(kernelSources, "CopyBufferToBufferMiddle"));
+    EXPECT_FALSE(ail.sourcesContain(kernelSources, "CopyBufferToBufferMiddleStateless"));
 }
 
 HWTEST2_F(AILTests, whenCheckingIsKernelHashCorrectThenCorrectResultIsReturned, IsAtLeastGen12lp) {
@@ -177,6 +177,42 @@ HWTEST2_F(AILTests, whenModifyKernelIfRequiredIsCalledThenDontChangeKernelSource
     ail.modifyKernelIfRequired(kernelSources);
 
     EXPECT_STREQ(copyKernel.c_str(), kernelSources.c_str());
+}
+
+HWTEST2_F(AILTests, givenPreGen12AndProcessNameIsResolveWhenApplyWithDavinciResolveThenHostPtrTrackingIsDisabled, IsHostPtrTrackingDisabled) {
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+
+    AILMock<productFamily> ailTemp;
+    ailTemp.processName = "resolve";
+    ailConfigurationTable[productFamily] = &ailTemp;
+
+    auto ailConfiguration = AILConfiguration::get(productFamily);
+    ASSERT_NE(nullptr, ailConfiguration);
+
+    NEO::RuntimeCapabilityTable rtTable = {};
+    rtTable.hostPtrTrackingEnabled = true;
+
+    ailConfiguration->apply(rtTable);
+
+    EXPECT_FALSE(rtTable.hostPtrTrackingEnabled);
+}
+
+HWTEST2_F(AILTests, givenPreGen12AndAndProcessNameIsNotResolveWhenApplyWithDavinciResolveThenHostPtrTrackingIsEnabled, IsHostPtrTrackingDisabled) {
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+
+    AILMock<productFamily> ailTemp;
+    ailTemp.processName = "usualProcessName";
+    ailConfigurationTable[productFamily] = &ailTemp;
+
+    auto ailConfiguration = AILConfiguration::get(productFamily);
+    ASSERT_NE(nullptr, ailConfiguration);
+
+    NEO::RuntimeCapabilityTable rtTable = {};
+    rtTable.hostPtrTrackingEnabled = true;
+
+    ailConfiguration->apply(rtTable);
+
+    EXPECT_TRUE(rtTable.hostPtrTrackingEnabled);
 }
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,13 +9,17 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/affinity_mask.h"
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_environment.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/wait_util.h"
@@ -23,6 +27,7 @@
 namespace NEO {
 ExecutionEnvironment::ExecutionEnvironment() {
     WaitUtils::init();
+    this->configureNeoEnvironment();
 }
 
 void ExecutionEnvironment::releaseRootDeviceEnvironmentResources(RootDeviceEnvironment *rootDeviceEnvironment) {
@@ -79,9 +84,9 @@ void ExecutionEnvironment::calculateMaxOsContextCount() {
     MemoryManager::maxOsContextCount = 0u;
     for (const auto &rootDeviceEnvironment : this->rootDeviceEnvironments) {
         auto hwInfo = rootDeviceEnvironment->getHardwareInfo();
-        auto &hwHelper = HwHelper::get(hwInfo->platform.eRenderCoreFamily);
-        auto osContextCount = static_cast<uint32_t>(hwHelper.getGpgpuEngineInstances(*hwInfo).size());
-        auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
+        auto &gfxCoreHelper = rootDeviceEnvironment->getHelper<GfxCoreHelper>();
+        auto osContextCount = static_cast<uint32_t>(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo).size());
+        auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
         auto ccsCount = hwInfo->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
         bool hasRootCsr = subDevicesCount > 1;
 
@@ -154,7 +159,7 @@ void ExecutionEnvironment::parseAffinityMask() {
 
         if (rootDeviceIndex < numRootDevices) {
             auto hwInfo = rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-            auto subDevicesCount = HwHelper::getSubDevicesCount(hwInfo);
+            auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
 
             if (subEntries.size() > 1) {
                 uint32_t subDeviceIndex = StringHelpers::toUint32t(subEntries[1]);
@@ -198,5 +203,71 @@ void ExecutionEnvironment::parseAffinityMask() {
     }
 
     rootDeviceEnvironments.swap(filteredEnvironments);
+}
+
+void ExecutionEnvironment::adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceEnvironment) const {
+    auto hwInfo = rootDeviceEnvironment->getMutableHardwareInfo();
+    auto &productHelper = rootDeviceEnvironment->getHelper<ProductHelper>();
+    productHelper.adjustNumberOfCcs(*hwInfo);
+}
+
+void ExecutionEnvironment::adjustCcsCount() {
+    parseCcsCountLimitations();
+
+    for (auto rootDeviceIndex = 0u; rootDeviceIndex < rootDeviceEnvironments.size(); rootDeviceIndex++) {
+        auto &rootDeviceEnvironment = rootDeviceEnvironments[rootDeviceIndex];
+        UNRECOVERABLE_IF(!rootDeviceEnvironment);
+        if (!rootDeviceEnvironment->isNumberOfCcsLimited()) {
+            adjustCcsCountImpl(rootDeviceEnvironment.get());
+        }
+    }
+}
+
+void ExecutionEnvironment::adjustCcsCount(const uint32_t rootDeviceIndex) const {
+    auto &rootDeviceEnvironment = rootDeviceEnvironments[rootDeviceIndex];
+    UNRECOVERABLE_IF(!rootDeviceEnvironment);
+    if (rootDeviceNumCcsMap.find(rootDeviceIndex) != rootDeviceNumCcsMap.end()) {
+        rootDeviceEnvironment->limitNumberOfCcs(rootDeviceNumCcsMap.at(rootDeviceIndex));
+    } else {
+        adjustCcsCountImpl(rootDeviceEnvironment.get());
+    }
+}
+
+void ExecutionEnvironment::parseCcsCountLimitations() {
+    const auto &numberOfCcsString = DebugManager.flags.ZEX_NUMBER_OF_CCS.get();
+
+    if (numberOfCcsString.compare("default") == 0 ||
+        numberOfCcsString.empty()) {
+        return;
+    }
+
+    const uint32_t numRootDevices = static_cast<uint32_t>(rootDeviceEnvironments.size());
+
+    auto numberOfCcsEntries = StringHelpers::split(numberOfCcsString, ",");
+
+    for (const auto &entry : numberOfCcsEntries) {
+        auto subEntries = StringHelpers::split(entry, ":");
+        uint32_t rootDeviceIndex = StringHelpers::toUint32t(subEntries[0]);
+
+        if (rootDeviceIndex < numRootDevices) {
+            if (subEntries.size() > 1) {
+                uint32_t maxCcsCount = StringHelpers::toUint32t(subEntries[1]);
+                rootDeviceNumCcsMap.insert({rootDeviceIndex, maxCcsCount});
+                rootDeviceEnvironments[rootDeviceIndex]->limitNumberOfCcs(maxCcsCount);
+            }
+        }
+    }
+}
+
+void ExecutionEnvironment::configureNeoEnvironment() {
+    if (DebugManager.flags.NEO_CAL_ENABLED.get()) {
+        DebugManager.flags.UseDrmVirtualEnginesForBcs.setIfDefault(0);
+        DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssignLimit.setIfDefault(6);
+        DebugManager.flags.EnableCmdQRoundRobindBcsEngineAssign.setIfDefault(1);
+        DebugManager.flags.ForceBCSForInternalCopyEngine.setIfDefault(7);
+        DebugManager.flags.AssignBCSAtEnqueue.setIfDefault(0);
+        DebugManager.flags.EnableCopyEngineSelector.setIfDefault(1);
+        DebugManager.flags.SplitBcsCopy.setIfDefault(0);
+    }
 }
 } // namespace NEO

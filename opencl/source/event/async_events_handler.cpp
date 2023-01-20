@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,7 +29,7 @@ AsyncEventsHandler::~AsyncEventsHandler() {
 
 void AsyncEventsHandler::registerEvent(Event *event) {
     std::unique_lock<std::mutex> lock(asyncMtx);
-    //Create on first use
+    // Create on first use
     openThread();
 
     event->incRefInternal();
@@ -38,7 +38,7 @@ void AsyncEventsHandler::registerEvent(Event *event) {
 }
 
 Event *AsyncEventsHandler::processList() {
-    uint32_t lowestTaskCount = CompletionStamp::notReady;
+    TaskCountType lowestTaskCount = CompletionStamp::notReady;
     Event *sleepCandidate = nullptr;
     pendingList.clear();
 

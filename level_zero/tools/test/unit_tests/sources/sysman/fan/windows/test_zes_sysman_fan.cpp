@@ -33,9 +33,6 @@ class SysmanDeviceFanFixture : public SysmanDeviceFixture {
         pKmdSysManager->allowSetCalls = allowSetCalls;
         pKmdSysManager->fanSupported = fanSupported;
 
-        EXPECT_CALL(*pKmdSysManager, escape(_, _, _, _, _))
-            .WillRepeatedly(::testing::Invoke(pKmdSysManager.get(), &Mock<FanKmdSysManager>::mock_escape));
-
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
@@ -44,14 +41,13 @@ class SysmanDeviceFanFixture : public SysmanDeviceFixture {
         }
 
         pSysmanDeviceImp->pFanHandleContext->handleList.clear();
-        pSysmanDeviceImp->pFanHandleContext->init();
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
-        SysmanDeviceFixture::TearDown();
         pWddmSysmanImp->pKmdSysManager = pOriginalKmdSysManager;
+        SysmanDeviceFixture::TearDown();
     }
 
     std::vector<zes_fan_handle_t> getFanHandles() {
@@ -164,7 +160,7 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanPropertiesAllowS
     }
 }
 
-TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigThenUnsupportedIsReturned) {
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigThenSuccessIsReturnedDefaultFanTable) {
     // Setting allow set calls or not
     init(true, true);
 
@@ -172,7 +168,62 @@ TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigThenUnsupp
 
     for (auto handle : handles) {
         zes_fan_config_t fanConfig;
-        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFanGetConfig(handle, &fanConfig));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanSetDefaultMode(handle));
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanGetConfig(handle, &fanConfig));
+        EXPECT_EQ(fanConfig.mode, ZES_FAN_SPEED_MODE_DEFAULT);
+    }
+}
+
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigThenFirstSingleRequestFails) {
+    // Setting allow set calls or not
+    init(true, true);
+
+    auto handles = getFanHandles();
+
+    pKmdSysManager->mockRequestSingle = TRUE;
+    pKmdSysManager->mockRequestSingleResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    for (auto handle : handles) {
+        zes_fan_config_t fanConfig;
+        EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesFanGetConfig(handle, &fanConfig));
+    }
+}
+
+TEST_F(SysmanDeviceFanFixture, GivenValidFanHandleWhenGettingFanConfigWithValidFanPointsSuccessCustomFanTable) {
+    // Setting allow set calls or not
+    init(true, true);
+
+    auto handles = getFanHandles();
+
+    for (auto handle : handles) {
+        zes_fan_speed_table_t fanSpeedTable = {0};
+        fanSpeedTable.numPoints = 4;
+        fanSpeedTable.table[0].speed.speed = 65;
+        fanSpeedTable.table[0].speed.units = ZES_FAN_SPEED_UNITS_PERCENT;
+        fanSpeedTable.table[0].temperature = 30;
+
+        fanSpeedTable.table[1].speed.speed = 75;
+        fanSpeedTable.table[1].speed.units = ZES_FAN_SPEED_UNITS_PERCENT;
+        fanSpeedTable.table[1].temperature = 45;
+
+        fanSpeedTable.table[2].speed.speed = 85;
+        fanSpeedTable.table[2].speed.units = ZES_FAN_SPEED_UNITS_PERCENT;
+        fanSpeedTable.table[2].temperature = 60;
+
+        fanSpeedTable.table[3].speed.speed = 100;
+        fanSpeedTable.table[3].speed.units = ZES_FAN_SPEED_UNITS_PERCENT;
+        fanSpeedTable.table[3].temperature = 90;
+
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanSetSpeedTableMode(handle, &fanSpeedTable));
+
+        zes_fan_config_t fanConfig;
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesFanGetConfig(handle, &fanConfig));
+        EXPECT_EQ(fanConfig.mode, ZES_FAN_SPEED_MODE_TABLE);
+        EXPECT_EQ(fanConfig.speedTable.numPoints, 4);
+        EXPECT_EQ(fanConfig.speedTable.table[0].speed.units, ZES_FAN_SPEED_UNITS_PERCENT);
+        EXPECT_EQ(fanConfig.speedTable.table[1].speed.units, ZES_FAN_SPEED_UNITS_PERCENT);
+        EXPECT_EQ(fanConfig.speedTable.table[2].speed.units, ZES_FAN_SPEED_UNITS_PERCENT);
+        EXPECT_EQ(fanConfig.speedTable.table[3].speed.units, ZES_FAN_SPEED_UNITS_PERCENT);
     }
 }
 

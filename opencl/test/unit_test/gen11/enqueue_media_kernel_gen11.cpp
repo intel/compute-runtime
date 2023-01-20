@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits |
                     pipelineSelectMediaSamplerPowerClockGateMaskBits;
 
 GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueBlockedVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
-    typedef typename ICLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    typedef typename Gen11Family::PIPELINE_SELECT PIPELINE_SELECT;
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
@@ -40,7 +40,7 @@ GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueBlockedVmeKernelFirstTimeTh
 
     userEvent.setStatus(CL_COMPLETE);
 
-    parseCommands<ICLFamily>(*pCmdQ);
+    parseCommands<Gen11Family>(*pCmdQ);
     ASSERT_NE(cmdPipelineSelect, nullptr);
     auto *pCmd = genCmdCast<PIPELINE_SELECT *>(cmdPipelineSelect);
     auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
@@ -50,7 +50,7 @@ GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueBlockedVmeKernelFirstTimeTh
 }
 
 GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueBlockedNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
-    typedef typename ICLFamily::PIPELINE_SELECT PIPELINE_SELECT;
+    typedef typename Gen11Family::PIPELINE_SELECT PIPELINE_SELECT;
 
     cl_uint workDim = 1;
     size_t globalWorkOffset[3] = {0, 0, 0};
@@ -72,7 +72,7 @@ GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueBlockedNonVmeKernelFirstTim
 
     userEvent.setStatus(CL_COMPLETE);
 
-    parseCommands<ICLFamily>(*pCmdQ);
+    parseCommands<Gen11Family>(*pCmdQ);
     ASSERT_NE(cmdPipelineSelect, nullptr);
     auto *pCmd = genCmdCast<PIPELINE_SELECT *>(cmdPipelineSelect);
     auto expectedPipelineSelection = PIPELINE_SELECT::PIPELINE_SELECTION_GPGPU;
@@ -82,8 +82,8 @@ GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueBlockedNonVmeKernelFirstTim
 }
 
 GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
-    typedef typename ICLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueVmeKernel<ICLFamily>();
+    typedef typename Gen11Family::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<Gen11Family>();
 
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
@@ -97,8 +97,8 @@ GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueVmeKernelFirstTimeThenProgr
 }
 
 GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueNonVmeKernelFirstTimeThenProgramPipelineSelectionAndMediaSampler) {
-    typedef typename ICLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueRegularKernel<ICLFamily>();
+    typedef typename Gen11Family::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueRegularKernel<Gen11Family>();
 
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
@@ -112,23 +112,23 @@ GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueNonVmeKernelFirstTimeThenPr
 }
 
 GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueVmeKernelTwiceThenProgramPipelineSelectOnce) {
-    typedef typename ICLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueVmeKernel<ICLFamily>();
+    typedef typename Gen11Family::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<Gen11Family>();
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
 GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueNonVmeKernelTwiceThenProgramPipelineSelectOnce) {
-    typedef typename ICLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueVmeKernel<ICLFamily>();
+    typedef typename Gen11Family::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<Gen11Family>();
     auto numCommands = getCommandsList<PIPELINE_SELECT>().size();
     EXPECT_EQ(1u, numCommands);
 }
 
 GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueVmeKernelAfterNonVmeKernelThenProgramPipelineSelectionAndMediaSamplerTwice) {
-    typedef typename ICLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueRegularKernel<ICLFamily>();
-    enqueueVmeKernel<ICLFamily>();
+    typedef typename Gen11Family::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueRegularKernel<Gen11Family>();
+    enqueueVmeKernel<Gen11Family>();
 
     auto commands = getCommandsList<PIPELINE_SELECT>();
     EXPECT_EQ(2u, commands.size());
@@ -141,9 +141,9 @@ GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueVmeKernelAfterNonVmeKernelT
 }
 
 GEN11TEST_F(MediaKernelTest, givenGen11CsrWhenEnqueueNonVmeKernelAfterVmeKernelThenProgramProgramPipelineSelectionAndMediaSamplerTwice) {
-    typedef typename ICLFamily::PIPELINE_SELECT PIPELINE_SELECT;
-    enqueueVmeKernel<ICLFamily>();
-    enqueueRegularKernel<ICLFamily>();
+    typedef typename Gen11Family::PIPELINE_SELECT PIPELINE_SELECT;
+    enqueueVmeKernel<Gen11Family>();
+    enqueueRegularKernel<Gen11Family>();
 
     auto commands = getCommandsList<PIPELINE_SELECT>();
     EXPECT_EQ(2u, commands.size());

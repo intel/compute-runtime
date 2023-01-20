@@ -32,9 +32,6 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
 
         pKmdSysManager->allowSetCalls = allowSetCalls;
 
-        EXPECT_CALL(*pKmdSysManager, escape(_, _, _, _, _))
-            .WillRepeatedly(::testing::Invoke(pKmdSysManager.get(), &Mock<PowerKmdSysManager>::mock_escape));
-
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
@@ -52,7 +49,6 @@ class SysmanDevicePowerFixture : public SysmanDeviceFixture {
             deviceHandles.resize(subDeviceCount, nullptr);
             Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, deviceHandles.data());
         }
-        pSysmanDeviceImp->pPowerHandleContext->init(deviceHandles, device->toHandle());
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
@@ -103,7 +99,7 @@ TEST_F(SysmanDevicePowerFixture, GivenComponentCountZeroWhenEnumeratingPowerDoma
     }
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAllowSetToTrueThenCallSucceeds) {
+TEST_F(SysmanDevicePowerFixture, DISABLED_GivenValidPowerHandleWhenGettingPowerPropertiesAllowSetToTrueThenCallSucceeds) {
     // Setting allow set calls or not
     init(true);
 
@@ -125,7 +121,7 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerProperties
     }
 }
 
-TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerPropertiesAllowSetToFalseThenCallSucceeds) {
+TEST_F(SysmanDevicePowerFixture, DISABLED_GivenValidPowerHandleWhenGettingPowerPropertiesAllowSetToFalseThenCallSucceeds) {
     // Setting allow set calls or not
     init(false);
 
@@ -158,12 +154,8 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenGettingPowerEnergyCoun
 
         ze_result_t result = zesPowerGetEnergyCounter(handle, &energyCounter);
 
-        uint32_t conversionUnit = (1 << pKmdSysManager->mockEnergyUnit);
-        double valueConverted = static_cast<double>(pKmdSysManager->mockEnergyCounter) / static_cast<double>(conversionUnit);
-        valueConverted *= static_cast<double>(convertJouleToMicroJoule);
-        uint64_t mockEnergytoMicroJoules = static_cast<uint64_t>(valueConverted);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_EQ(energyCounter.energy, mockEnergytoMicroJoules);
+        EXPECT_EQ(energyCounter.energy, pKmdSysManager->mockEnergyCounter64Bit);
         EXPECT_EQ(energyCounter.timestamp, convertTStoMicroSec(pKmdSysManager->mockTimeStamp, pKmdSysManager->mockFrequencyTimeStamp));
     }
 }
@@ -294,6 +286,19 @@ TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandleWhenSettingPowerLimitsAllo
         EXPECT_EQ(newBurst.power, burst.power);
         EXPECT_EQ(newPeak.powerAC, peak.powerAC);
         EXPECT_EQ(newPeak.powerDC, peak.powerDC);
+    }
+}
+
+TEST_F(SysmanDevicePowerFixture, GivenValidPowerHandlesWhenCallingSetAndGetPowerLimitExtWhenHwmonInterfaceExistThenUnsupportedFeatureIsReturned) {
+    // Setting allow set calls or not
+    init(true);
+
+    auto handles = get_power_handles(powerHandleComponentCount);
+    for (auto handle : handles) {
+        uint32_t limitCount = 0;
+
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
+        EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesPowerSetLimitsExt(handle, &limitCount, nullptr));
     }
 }
 

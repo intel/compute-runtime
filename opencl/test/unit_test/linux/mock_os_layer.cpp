@@ -8,7 +8,9 @@
 #include "mock_os_layer.h"
 
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/i915.h"
 
 #include <cassert>
 #include <dirent.h>
@@ -176,7 +178,7 @@ int drmSetContextParam(NEO::GemContextParam *param) {
     int ret = 0;
 
     switch (param->param) {
-    case I915_CONTEXT_PRIVATE_PARAM_BOOST:
+    case NEO::contextPrivateParamBoost:
         ret = failOnParamBoost;
         break;
     case I915_CONTEXT_PARAM_VM:
@@ -235,7 +237,9 @@ int drmContextDestroy(NEO::GemContextDestroy *destroy) {
 
 int drmVirtualMemoryCreate(NEO::GemVmControl *control) {
     assert(control);
-    control->vmId = ++vmId;
+    if (!failOnVirtualMemoryCreate) {
+        control->vmId = ++vmId;
+    }
     return failOnVirtualMemoryCreate;
 }
 

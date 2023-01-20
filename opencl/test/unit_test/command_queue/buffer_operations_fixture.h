@@ -22,7 +22,7 @@ struct EnqueueWriteBufferTypeTest : public CommandEnqueueFixture,
     }
 
     void SetUp() override {
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
         BufferDefaults::context = new MockContext;
 
         zeroCopyBuffer.reset(BufferHelper<>::create());
@@ -33,7 +33,7 @@ struct EnqueueWriteBufferTypeTest : public CommandEnqueueFixture,
         srcBuffer.reset(nullptr);
         zeroCopyBuffer.reset(nullptr);
         delete BufferDefaults::context;
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
   protected:

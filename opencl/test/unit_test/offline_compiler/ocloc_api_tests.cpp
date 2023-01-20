@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/queries.h"
 #include "shared/offline_compiler/source/utilities/get_git_version_info.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
@@ -176,13 +177,46 @@ TEST(OclocApiTests, GivenInvalidQueryWhenQueryingThenErrorIsReturned) {
     std::string output = testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(retVal, NEO::OclocErrorCode::INVALID_COMMAND_LINE);
-    EXPECT_STREQ("Error: Invalid command line. Uknown argument unknown_query.", output.c_str());
+    EXPECT_STREQ("Error: Invalid command line. Unknown argument unknown_query.", output.c_str());
+}
+
+TEST(OclocApiTests, givenNoAcronymWhenIdsCommandIsInvokeThenErrorIsReported) {
+    const char *argv[] = {
+        "ocloc",
+        "ids"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(retVal, NEO::OclocErrorCode::INVALID_COMMAND_LINE);
+    EXPECT_STREQ("Error: Invalid command line. Expected ocloc ids <acronym>.\n", output.c_str());
+}
+
+TEST(OclocApiTests, givenUnknownAcronymWhenIdsCommandIsInvokeThenErrorIsReported) {
+    const char *argv[] = {
+        "ocloc",
+        "ids",
+        "unk"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_EQ(retVal, NEO::OclocErrorCode::INVALID_COMMAND_LINE);
+    EXPECT_STREQ("Error: Invalid command line. Unknown acronym unk.\n", output.c_str());
 }
 
 TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
     std::string clFileName(clFiles + "copybuffer.cl");
     std::unique_ptr<OclocArgHelper> argHelper = std::make_unique<OclocArgHelper>();
-    auto allSupportedDeviceConfigs = argHelper->getAllSupportedDeviceConfigs();
+    auto allSupportedDeviceConfigs = argHelper->productConfigHelper->getDeviceAotInfo();
     if (allSupportedDeviceConfigs.empty()) {
         GTEST_SKIP();
     }
@@ -256,8 +290,8 @@ TEST(OclocApiTests, givenInputOptionsAndInternalOptionsWhenCmdlineIsPrintedThenB
                              nullptr, nullptr, nullptr, nullptr);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(retVal, NEO::OclocErrorCode::SUCCESS);
-    EXPECT_TRUE(output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device "s +
-                            gEnvironment->devicePrefix.c_str() +
+    EXPECT_TRUE(output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device " +
+                            gEnvironment->devicePrefix +
                             " -options \"-D DEBUG -cl-kernel-arg-info\" -internal_options \"-internalOption1 -internal-option-2\"") != std::string::npos);
 
     size_t quotesCount = std::count(output.begin(), output.end(), '\"');
@@ -282,8 +316,8 @@ TEST(OclocApiTests, givenInputOptionsCalledOptionsWhenCmdlineIsPrintedThenQuotes
                              nullptr, nullptr, nullptr, nullptr);
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_NE(retVal, NEO::OclocErrorCode::SUCCESS);
-    EXPECT_TRUE(output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device "s +
-                            gEnvironment->devicePrefix.c_str() +
+    EXPECT_TRUE(output.find("Command was: ocloc -q -file test_files/IDoNotExist.cl -device " +
+                            gEnvironment->devicePrefix +
                             " -options \"-options\" -internal_options \"-internalOption\"") != std::string::npos);
 
     size_t quotesCount = std::count(output.begin(), output.end(), '\"');
@@ -377,6 +411,33 @@ TEST(OclocApiTests, givenInvalidOclocOptionsFileWhenCmdlineIsPrintedThenTheyAreP
 
     EXPECT_TRUE(output.find("Failed with ocloc options from file:\n"
                             "-invalid_ocloc_option") != std::string::npos);
+    EXPECT_FALSE(output.find("Building with ocloc options:") != std::string::npos);
+}
+
+TEST(OclocApiTests, givenInvalidOclocOptionsFileWhenCmdlineIsPrintedThenTheyAreNotPrinted) {
+    ASSERT_TRUE(fileExists(clFiles + "valid_kernel.cl"));
+    ASSERT_TRUE(fileExists(clFiles + "valid_kernel_ocloc_options.txt"));
+    std::string clFileName(clFiles + "valid_kernel.cl");
+
+    const char *argv[] = {
+        "ocloc",
+        "-qq",
+        "-file",
+        clFileName.c_str(),
+        "-device",
+        gEnvironment->devicePrefix.c_str()};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_NE(retVal, NEO::OclocErrorCode::SUCCESS);
+
+    EXPECT_FALSE(output.find("Failed with ocloc options from file:\n"
+                             "-invalid_ocloc_option") != std::string::npos);
     EXPECT_FALSE(output.find("Building with ocloc options:") != std::string::npos);
 }
 
@@ -623,18 +684,6 @@ TEST(OclocApiTests, GivenNonexistentFileWhenValidateIsInvokedThenErrorIsPrinted)
 
     const std::string expectedErrorMessage{"Error : Input file missing : some_special_nonexistent_file.gen\n"};
     EXPECT_EQ(expectedErrorMessage, output);
-}
-
-TEST(OclocApiTests, GivenZeroArgumentsWhenOclocIsInvokedThenHelpIsPrinted) {
-    testing::internal::CaptureStdout();
-    int retVal = oclocInvoke(0, nullptr,
-                             0, nullptr, nullptr, nullptr,
-                             0, nullptr, nullptr, nullptr,
-                             nullptr, nullptr, nullptr, nullptr);
-
-    const auto output = testing::internal::GetCapturedStdout();
-    EXPECT_EQ(NEO::OclocErrorCode::INVALID_COMMAND_LINE, retVal);
-    EXPECT_FALSE(output.empty());
 }
 
 TEST(OclocApiTests, GivenCommandWithoutArgsWhenOclocIsInvokedThenHelpIsPrinted) {

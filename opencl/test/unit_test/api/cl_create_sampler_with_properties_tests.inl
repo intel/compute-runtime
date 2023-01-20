@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,11 +23,11 @@ struct SamplerWithPropertiesTest : public ApiFixture<>,
 
     void SetUp() override {
         std::tie(NormalizdProperties, AddressingProperties, FilterProperties) = GetParam();
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
     }
 
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 
     cl_sampler_properties NormalizdProperties = 0;

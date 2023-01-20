@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/abort.h"
 #include "shared/source/helpers/preprocessor.h"
 
 #define UNRECOVERABLE_IF(expression)                             \

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@
 #include "os_pci.h"
 #include "pci.h"
 
+#include <mutex>
 #include <vector>
 
 namespace L0 {
@@ -37,6 +38,8 @@ class PciImp : public Pci, NEO::NonCopyableOrMovableClass {
     bool resizableBarSupported = false;
     zes_pci_properties_t pciProperties = {};
     std::vector<zes_pci_bar_properties_t *> pciBarProperties = {};
+    std::once_flag initPciOnce;
+    void initPci();
 };
 
 } // namespace L0

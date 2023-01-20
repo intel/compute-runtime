@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -14,6 +15,7 @@
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
+#include "level_zero/tools/source/sysman/linux/udev/udev_lib.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <linux/pci_regs.h>
@@ -44,6 +46,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
 
     ze_result_t init() override;
 
+    L0::UdevLib *getUdevLibHandle();
     PmuInterface *getPmuInterface();
     FirmwareUtil *getFwUtilInterface();
     FsAccess &getFsAccess();
@@ -52,14 +55,16 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     NEO::Drm &getDrm();
     PlatformMonitoringTech *getPlatformMonitoringTechAccess(uint32_t subDeviceId);
     Device *getDeviceHandle();
+    std::vector<ze_device_handle_t> &getDeviceHandles() override;
+    ze_device_handle_t getCoreDeviceHandle() override;
     SysmanDeviceImp *getSysmanDeviceImp();
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
+    static std::string getPciRootPortDirectoryPath(std::string realPciPath);
     void releasePmtObject();
     ze_result_t createPmtHandles();
     void createFwUtilInterface();
     void releaseFwUtilInterface();
     void releaseLocalDrmHandle();
-    PRODUCT_FAMILY getProductFamily();
     void releaseSysmanDeviceResources();
     MOCKABLE_VIRTUAL void releaseDeviceResources();
     MOCKABLE_VIRTUAL ze_result_t initDevice();
@@ -67,12 +72,12 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     MOCKABLE_VIRTUAL void getPidFdsForOpenDevice(ProcfsAccess *, SysfsAccess *, const ::pid_t, std::vector<int> &);
     MOCKABLE_VIRTUAL ze_result_t osWarmReset();
     MOCKABLE_VIRTUAL ze_result_t osColdReset();
+    ze_result_t gpuProcessCleanup();
     std::string getAddressFromPath(std::string &rootPortPath);
     decltype(&NEO::SysCalls::open) openFunction = NEO::SysCalls::open;
     decltype(&NEO::SysCalls::close) closeFunction = NEO::SysCalls::close;
     decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;
     decltype(&NEO::SysCalls::pwrite) pwriteFunction = NEO::SysCalls::pwrite;
-    decltype(&L0::SysmanUtils::sleep) pSleepFunctionSecs = L0::SysmanUtils::sleep;
     std::string devicePciBdf = "";
     uint32_t rootDeviceIndex = 0u;
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
@@ -87,6 +92,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     NEO::Drm *pDrm = nullptr;
     PmuInterface *pPmuInterface = nullptr;
     FirmwareUtil *pFwUtilInterface = nullptr;
+    L0::UdevLib *pUdevLib = nullptr;
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
     ze_result_t initLocalDeviceAndDrmHandles();
 
@@ -94,6 +100,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     LinuxSysmanImp() = delete;
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
     static const std::string deviceDir;
+    void clearHPIE(int fd);
 };
 
 } // namespace L0

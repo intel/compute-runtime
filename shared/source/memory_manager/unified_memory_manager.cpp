@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,19 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/device/sub_device.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/compression_selector.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/os_context.h"
+#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 
 namespace NEO {
 
@@ -37,6 +46,7 @@ void *SVMAllocsManager::SvmAllocationCache::get(size_t size, const UnifiedMemory
          ++allocationIter) {
         void *allocationPtr = allocationIter->allocation;
         SvmAllocationData *svmAllocData = svmAllocsManager->getSVMAlloc(allocationPtr);
+        UNRECOVERABLE_IF(!svmAllocData);
         if (svmAllocData->device == unifiedMemoryProperties.device &&
             svmAllocData->allocationFlagsProperty.allFlags == unifiedMemoryProperties.allocationFlags.allFlags &&
             svmAllocData->allocationFlagsProperty.allAllocFlags == unifiedMemoryProperties.allocationFlags.allAllocFlags) {
@@ -52,7 +62,7 @@ void SVMAllocsManager::SvmAllocationCache::trim(SVMAllocsManager *svmAllocsManag
     for (auto &cachedAllocationInfo : this->allocations) {
         SvmAllocationData *svmData = svmAllocsManager->getSVMAlloc(cachedAllocationInfo.allocation);
         DEBUG_BREAK_IF(nullptr == svmData);
-        svmAllocsManager->freeSVMAllocImpl(cachedAllocationInfo.allocation, false, svmData);
+        svmAllocsManager->freeSVMAllocImpl(cachedAllocationInfo.allocation, FreePolicyType::POLICY_NONE, svmData);
     }
     this->allocations.clear();
 }
@@ -136,15 +146,16 @@ void SVMAllocsManager::makeInternalAllocationsResident(CommandStreamReceiver &co
 
 SVMAllocsManager::SVMAllocsManager(MemoryManager *memoryManager, bool multiOsContextSupport)
     : memoryManager(memoryManager), multiOsContextSupport(multiOsContextSupport) {
-    if (DebugManager.flags.ExperimentalEnableDeviceAllocationCache.get()) {
+    this->usmDeviceAllocationsCacheEnabled = NEO::ApiSpecificConfig::isDeviceAllocationCacheEnabled();
+    if (DebugManager.flags.ExperimentalEnableDeviceAllocationCache.get() != -1) {
+        this->usmDeviceAllocationsCacheEnabled = !!DebugManager.flags.ExperimentalEnableDeviceAllocationCache.get();
+    }
+    if (this->usmDeviceAllocationsCacheEnabled) {
         this->initUsmDeviceAllocationsCache();
-        this->usmDeviceAllocationsCacheEnabled = true;
     }
 }
 
-SVMAllocsManager::~SVMAllocsManager() {
-    this->trimUSMDeviceAllocCache();
-}
+SVMAllocsManager::~SVMAllocsManager() = default;
 
 void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationProperties svmProperties,
                                        const RootDeviceIndicesContainer &rootDeviceIndices,
@@ -380,6 +391,11 @@ SvmAllocationData *SVMAllocsManager::getSVMAlloc(const void *ptr) {
     return SVMAllocs.get(ptr);
 }
 
+SvmAllocationData *SVMAllocsManager::getSVMDeferFreeAlloc(const void *ptr) {
+    std::shared_lock<std::shared_mutex> lock(mtx);
+    return SVMDeferFreeAllocs.get(ptr);
+}
+
 void SVMAllocsManager::insertSVMAlloc(const SvmAllocationData &svmAllocData) {
     std::unique_lock<std::shared_mutex> lock(mtx);
     SVMAllocs.insert(svmAllocData);
@@ -391,24 +407,51 @@ void SVMAllocsManager::removeSVMAlloc(const SvmAllocationData &svmAllocData) {
 }
 
 bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
+
+    if (SVMDeferFreeAllocs.allocations.size() > 0) {
+        this->freeSVMAllocDeferImpl();
+    }
+
     SvmAllocationData *svmData = getSVMAlloc(ptr);
     if (svmData) {
         if (InternalMemoryType::DEVICE_UNIFIED_MEMORY == svmData->memoryType &&
             this->usmDeviceAllocationsCacheEnabled) {
-            size_t alignedSize = alignUp<size_t>(svmData->size, svmData->pageSizeForAlignment);
-            this->usmDeviceAllocationsCache.insert(alignedSize, ptr);
+            this->usmDeviceAllocationsCache.insert(svmData->size, ptr);
             return true;
         }
-        this->freeSVMAllocImpl(ptr, blocking, svmData);
+        if (blocking) {
+            this->freeSVMAllocImpl(ptr, FreePolicyType::POLICY_BLOCKING, svmData);
+        } else {
+            this->freeSVMAllocImpl(ptr, FreePolicyType::POLICY_NONE, svmData);
+        }
         return true;
     }
     return false;
 }
 
-void SVMAllocsManager::freeSVMAllocImpl(void *ptr, bool blocking, SvmAllocationData *svmData) {
+bool SVMAllocsManager::freeSVMAllocDefer(void *ptr) {
+
+    if (SVMDeferFreeAllocs.allocations.size() > 0) {
+        this->freeSVMAllocDeferImpl();
+    }
+
+    SvmAllocationData *svmData = getSVMAlloc(ptr);
+    if (svmData) {
+        if (InternalMemoryType::DEVICE_UNIFIED_MEMORY == svmData->memoryType &&
+            this->usmDeviceAllocationsCacheEnabled) {
+            this->usmDeviceAllocationsCache.insert(svmData->size, ptr);
+            return true;
+        }
+        this->freeSVMAllocImpl(ptr, FreePolicyType::POLICY_DEFER, svmData);
+        return true;
+    }
+    return false;
+}
+
+void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAllocationData *svmData) {
     this->prepareIndirectAllocationForDestruction(svmData);
 
-    if (blocking) {
+    if (policy == FreePolicyType::POLICY_BLOCKING) {
         if (svmData->cpuAllocation) {
             this->memoryManager->waitForEnginesCompletion(*svmData->cpuAllocation);
         }
@@ -418,17 +461,50 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, bool blocking, SvmAllocationD
                 this->memoryManager->waitForEnginesCompletion(*gpuAllocation);
             }
         }
+    } else if (policy == FreePolicyType::POLICY_DEFER) {
+        if (svmData->cpuAllocation) {
+            if (this->memoryManager->allocInUse(*svmData->cpuAllocation)) {
+                if (getSVMDeferFreeAlloc(svmData) == nullptr) {
+                    this->SVMDeferFreeAllocs.insert(*svmData);
+                }
+                return;
+            }
+        }
+        for (auto &gpuAllocation : svmData->gpuAllocations.getGraphicsAllocations()) {
+            if (gpuAllocation) {
+                if (this->memoryManager->allocInUse(*gpuAllocation)) {
+                    if (getSVMDeferFreeAlloc(svmData) == nullptr) {
+                        this->SVMDeferFreeAllocs.insert(*svmData);
+                    }
+                    return;
+                }
+            }
+        }
     }
-
     auto pageFaultManager = this->memoryManager->getPageFaultManager();
-    if (pageFaultManager) {
-        pageFaultManager->removeAllocation(ptr);
+    if (svmData->cpuAllocation && pageFaultManager) {
+        pageFaultManager->removeAllocation(svmData->cpuAllocation->getUnderlyingBuffer());
     }
-    std::unique_lock<std::shared_mutex> lock(mtx);
     if (svmData->gpuAllocations.getAllocationType() == AllocationType::SVM_ZERO_COPY) {
         freeZeroCopySvmAllocation(svmData);
     } else {
         freeSvmAllocationWithDeviceStorage(svmData);
+    }
+}
+
+void SVMAllocsManager::freeSVMAllocDeferImpl() {
+
+    std::vector<void *> freedPtr;
+    for (auto iter = SVMDeferFreeAllocs.allocations.begin(); iter != SVMDeferFreeAllocs.allocations.end(); ++iter) {
+        void *ptr = reinterpret_cast<void *>(iter->second.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
+        this->freeSVMAllocImpl(ptr, FreePolicyType::POLICY_DEFER, this->getSVMAlloc(ptr));
+
+        if (this->getSVMAlloc(ptr) == nullptr) {
+            freedPtr.push_back(ptr);
+        }
+    }
+    for (uint32_t i = 0; i < freedPtr.size(); ++i) {
+        SVMDeferFreeAllocs.allocations.erase(freedPtr[i]);
     }
 }
 
@@ -475,24 +551,29 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     auto rootDeviceIndex = unifiedMemoryProperties.device
                                ? unifiedMemoryProperties.device->getRootDeviceIndex()
                                : *unifiedMemoryProperties.rootDeviceIndices.begin();
-    size_t alignedSizeCpu = alignUp<size_t>(size, MemoryConstants::pageSize2Mb);
-    size_t pageSizeForAlignment = MemoryConstants::pageSize64k;
-    size_t alignedSizeGpu = alignUp<size_t>(size, pageSizeForAlignment);
+    auto externalPtr = reinterpret_cast<void *>(unifiedMemoryProperties.allocationFlags.hostptr);
+    bool useExternalHostPtrForCpu = externalPtr != nullptr;
+    constexpr auto pageSizeForAlignment = MemoryConstants::pageSize64k;
+    size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
     DeviceBitfield subDevices = unifiedMemoryProperties.subdeviceBitfields.at(rootDeviceIndex);
     AllocationProperties cpuProperties{rootDeviceIndex,
-                                       true, // allocateMemory
-                                       alignedSizeCpu, AllocationType::SVM_CPU,
+                                       !useExternalHostPtrForCpu, // allocateMemory
+                                       alignedSize, AllocationType::SVM_CPU,
                                        false, // isMultiStorageAllocation
                                        subDevices};
-    cpuProperties.alignment = MemoryConstants::pageSize2Mb;
+    cpuProperties.alignment = memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getProductHelper().getSvmCpuAlignment();
+    cpuProperties.flags.isUSMHostAllocation = useExternalHostPtrForCpu;
+    cpuProperties.forceKMDAllocation = true;
+    cpuProperties.makeGPUVaDifferentThanCPUPtr = true;
     auto cacheRegion = MemoryPropertiesHelper::getCacheRegion(unifiedMemoryProperties.allocationFlags);
     MemoryPropertiesHelper::fillCachePolicyInProperties(cpuProperties, false, svmProperties.readOnly, false, cacheRegion);
-    GraphicsAllocation *allocationCpu = memoryManager->allocateGraphicsMemoryWithProperties(cpuProperties);
+    GraphicsAllocation *allocationCpu = memoryManager->allocateGraphicsMemoryWithProperties(cpuProperties, externalPtr);
     if (!allocationCpu) {
         return nullptr;
     }
     setUnifiedAllocationProperties(allocationCpu, svmProperties);
     void *svmPtr = allocationCpu->getUnderlyingBuffer();
+    UNRECOVERABLE_IF(useExternalHostPtrForCpu && (externalPtr != svmPtr));
 
     bool multiStorageAllocation = (subDevices.count() > 1) && multiOsContextSupport;
     if ((subDevices.count() > 1) && !multiOsContextSupport) {
@@ -507,7 +588,7 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
 
     AllocationProperties gpuProperties{rootDeviceIndex,
                                        false,
-                                       alignedSizeGpu,
+                                       alignedSize,
                                        AllocationType::SVM_GPU,
                                        false,
                                        multiStorageAllocation,
@@ -535,9 +616,15 @@ void *SVMAllocsManager::createUnifiedAllocationWithDeviceStorage(size_t size, co
     return svmPtr;
 }
 
+void SVMAllocsManager::freeSVMData(SvmAllocationData *svmData) {
+    std::unique_lock<std::mutex> lockForIndirect(mtxForIndirectAccess);
+    std::unique_lock<std::shared_mutex> lock(mtx);
+    SVMAllocs.remove(*svmData);
+}
+
 void SVMAllocsManager::freeZeroCopySvmAllocation(SvmAllocationData *svmData) {
     auto gpuAllocations = svmData->gpuAllocations;
-    SVMAllocs.remove(*svmData);
+    freeSVMData(svmData);
     for (const auto &graphicsAllocation : gpuAllocations.getGraphicsAllocations()) {
         memoryManager->freeGraphicsMemory(graphicsAllocation);
     }
@@ -551,8 +638,7 @@ void SVMAllocsManager::freeSvmAllocationWithDeviceStorage(SvmAllocationData *svm
     auto graphicsAllocations = svmData->gpuAllocations.getGraphicsAllocations();
     GraphicsAllocation *cpuAllocation = svmData->cpuAllocation;
     bool isImportedAllocation = svmData->isImportedAllocation;
-    SVMAllocs.remove(*svmData);
-
+    freeSVMData(svmData);
     for (auto gpuAllocation : graphicsAllocations) {
         memoryManager->freeGraphicsMemory(gpuAllocation, isImportedAllocation);
     }
@@ -569,7 +655,7 @@ bool SVMAllocsManager::hasHostAllocations() {
     return false;
 }
 
-void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, uint32_t taskCount) {
+void SVMAllocsManager::makeIndirectAllocationsResident(CommandStreamReceiver &commandStreamReceiver, TaskCountType taskCount) {
     std::unique_lock<std::shared_mutex> lock(mtx);
     bool parseAllAllocations = false;
     auto entry = indirectAllocationsResidency.find(&commandStreamReceiver);
@@ -652,8 +738,7 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
             allocationType = AllocationType::WRITE_COMBINED;
         } else {
             UNRECOVERABLE_IF(nullptr == unifiedMemoryProperties.device);
-            const auto &hwInfoConfig = *HwInfoConfig::get(unifiedMemoryProperties.device->getHardwareInfo().platform.eProductFamily);
-            if (hwInfoConfig.allowStatelessCompression(unifiedMemoryProperties.device->getHardwareInfo())) {
+            if (CompressionSelector::allowStatelessCompression()) {
                 compressionEnabled = true;
             }
             allocationType = AllocationType::BUFFER;
@@ -662,4 +747,37 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
     return allocationType;
 }
 
+void SVMAllocsManager::prefetchMemory(Device &device, CommandStreamReceiver &commandStreamReceiver, SvmAllocationData &svmData) {
+    auto getSubDeviceId = [](Device &device) {
+        if (!device.isSubDevice()) {
+            uint32_t deviceBitField = static_cast<uint32_t>(device.getDeviceBitfield().to_ulong());
+            if (device.getDeviceBitfield().count() > 1) {
+                deviceBitField &= ~deviceBitField + 1;
+            }
+            return Math::log2(deviceBitField);
+        }
+        return static_cast<NEO::SubDevice *>(&device)->getSubDeviceIndex();
+    };
+
+    auto getSubDeviceIds = [](CommandStreamReceiver &csr) {
+        SubDeviceIdsVec subDeviceIds;
+        for (auto subDeviceId = 0u; subDeviceId < csr.getOsContext().getDeviceBitfield().size(); subDeviceId++) {
+            if (csr.getOsContext().getDeviceBitfield().test(subDeviceId)) {
+                subDeviceIds.push_back(subDeviceId);
+            }
+        }
+        return subDeviceIds;
+    };
+
+    if (memoryManager->isKmdMigrationAvailable(device.getRootDeviceIndex()) &&
+        (svmData.memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY)) {
+        auto gfxAllocation = svmData.gpuAllocations.getGraphicsAllocation(device.getRootDeviceIndex());
+        auto subDeviceIds = commandStreamReceiver.getActivePartitions() > 1 ? getSubDeviceIds(commandStreamReceiver) : SubDeviceIdsVec{getSubDeviceId(device)};
+        memoryManager->setMemPrefetch(gfxAllocation, subDeviceIds, device.getRootDeviceIndex());
+    }
+}
+
+std::unique_lock<std::mutex> SVMAllocsManager::obtainOwnership() {
+    return std::unique_lock<std::mutex>(mtxForIndirectAccess);
+}
 } // namespace NEO

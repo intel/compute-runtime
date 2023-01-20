@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,11 +9,12 @@
 #include "shared/source/gen9/reg_configs.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/per_thread_data.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_compilers.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
@@ -25,9 +26,9 @@ namespace L0 {
 namespace ult {
 struct CommandListAppendLaunchKernelSWTags : public Test<ModuleFixture> {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         NEO::DebugManager.flags.EnableSWTags.set(true);
-        ModuleFixture::SetUp();
+        ModuleFixture::setUp();
     }
 
     DebugManagerStateRestore dbgRestorer;
@@ -35,13 +36,13 @@ struct CommandListAppendLaunchKernelSWTags : public Test<ModuleFixture> {
 
 struct CommandListDualStorage : public Test<ModuleFixture> {
     void SetUp() override {
-        NEO::MockCompilerEnableGuard mock(true);
+
         DebugManager.flags.EnableLocalMemory.set(1);
         DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(1);
-        ModuleFixture::SetUp();
+        ModuleFixture::setUp();
     }
     void TearDown() override {
-        ModuleFixture::TearDown();
+        ModuleFixture::tearDown();
     }
     DebugManagerStateRestore restorer;
 };
@@ -633,7 +634,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendWaitOnE
 
     eventPool->createEvent(&eventDesc, &hEvent);
 
-    auto result = commandList->appendWaitOnEvents(1, &hEvent);
+    auto result = commandList->appendWaitOnEvents(1, &hEvent, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = cmdStream->getUsed();
@@ -958,7 +959,7 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
         kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[0] = workgroupDimOrder[0];
         kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[1] = workgroupDimOrder[1];
         kernelDescriptor->kernelAttributes.workgroupDimensionsOrder[2] = workgroupDimOrder[2];
-        createModuleFromBinary(0u, false, mockKernelImmData.get());
+        createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 
         auto kernel = std::make_unique<MockKernel>(module.get());
 
@@ -1108,7 +1109,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithoutImplicitArgsWhenAppen
     std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
     auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
     kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
-    createModuleFromBinary(0u, false, mockKernelImmData.get());
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 
     auto kernel = std::make_unique<MockKernel>(module.get());
 
@@ -1146,7 +1147,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests, givenKernelWitchScratchAndPrivateWhenA
     kernelDescriptor->kernelAttributes.flags.requiresImplicitArgs = false;
     kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x200;
     kernelDescriptor->kernelAttributes.perThreadScratchSize[1] = 0x100;
-    createModuleFromBinary(0u, false, mockKernelImmData.get());
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
 
     auto kernel = std::make_unique<MockKernel>(module.get());
 
@@ -1218,7 +1219,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, whenEncodingWorkDimForIndirectDispatchT
 using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernelsWhenAppendLaunchCooperativeKernelIsCalledThenReturnError, IsAtLeastSkl) {
     Mock<::L0::Kernel> kernel;
-    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    std::unique_ptr<Module> pMockModule = std::make_unique<Mock<Module>>(device, nullptr);
     kernel.module = pMockModule.get();
 
     kernel.setGroupSize(4, 1, 1);
@@ -1244,16 +1245,126 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCooperativeAndNonCooperativeKernel
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
+HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSlmSizeExceedingLocalMemorySizeWhenAppendLaunchKernelWithParamsIsCalledThenDebugMsgErrIsPrintedAndOutOfDeviceMemoryIsReturned, IsAtLeastSkl) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.PrintDebugMessages.set(true);
+
+    Mock<::L0::Kernel> kernel;
+    std::unique_ptr<Module> pMockModule = std::make_unique<Mock<Module>>(device, nullptr);
+    kernel.module = pMockModule.get();
+
+    kernel.setGroupSize(4, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    CmdListKernelLaunchParams launchParams = {};
+
+    ::testing::internal::CaptureStderr();
+
+    auto result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    std::string output = testing::internal::GetCapturedStderr();
+    EXPECT_EQ(std::string(""), output);
+
+    auto localMemSize = static_cast<uint32_t>(device->getNEODevice()->getDeviceInfo().localMemSize);
+    kernel.immutableData.kernelDescriptor->kernelAttributes.slmInlineSize = localMemSize + 10u;
+
+    ::testing::internal::CaptureStderr();
+
+    result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, result);
+
+    output = testing::internal::GetCapturedStderr();
+    const auto &slmInlineSize = kernel.immutableData.kernelDescriptor->kernelAttributes.slmInlineSize;
+    std::string expectedOutput = "Size of SLM (" + std::to_string(slmInlineSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
+    EXPECT_EQ(expectedOutput, output);
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichTogetherExceedGlobalMemSizeWhenAppendLaunchKernelWithParamsIsCalledOnlyThenAllocationHappens, IsAtLeastSkl) {
+
+    auto devInfo = device->getNEODevice()->getDeviceInfo();
+    auto kernelsNb = 2u;
+    uint32_t margin1KB = (1 << 10);
+    auto overAllocMinSize = static_cast<uint32_t>(devInfo.globalMemSize / kernelsNb / devInfo.computeUnitsUsedForScratch) + margin1KB;
+    auto kernelNames = std::array<std::string, 2u>{"test1", "test2"};
+
+    auto proxyModuleImpl = static_cast<ModuleFixture::ProxyModuleImp *>(this->module.get());
+    auto &kernelImmDatas = proxyModuleImpl->getKernelImmDatas();
+    for (size_t i = 0; i < kernelsNb; i++) {
+        auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmDatas[i]->getDescriptor());
+        kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = overAllocMinSize;
+        kernelDesc.kernelAttributes.flags.usesPrintf = false;
+        kernelDesc.kernelMetadata.kernelName = kernelNames[i];
+    }
+
+    EXPECT_FALSE(this->module->shouldAllocatePrivateMemoryPerDispatch());
+    this->module->checkIfPrivateMemoryPerDispatchIsNeeded();
+    EXPECT_TRUE(this->module->shouldAllocatePrivateMemoryPerDispatch());
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    pCommandList->device = this->module->getDevice();
+    auto memoryMgr = static_cast<OsAgnosticMemoryManager *>(pCommandList->device->getNEODevice()->getExecutionEnvironment()->memoryManager.get());
+    memoryMgr->turnOnFakingBigAllocations();
+
+    auto kernels = std::vector<std::unique_ptr<WhiteBox<::L0::Kernel>>>();
+    for (size_t i = 0; i < kernelsNb; i++) {
+        EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), i);
+        kernels.push_back(this->createKernelWithName(kernelNames[i]));
+        // This function is called by appendLaunchKernelWithParams
+        pCommandList->allocateKernelPrivateMemoryIfNeeded(kernels[i].get(),
+                                                          kernels[i]->getKernelDescriptor().kernelAttributes.perHwThreadPrivateMemorySize);
+        EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), i + 1);
+    }
+}
+
+HWTEST2_F(CommandListAppendLaunchKernel, givenTwoKernelPrivateAllocsWhichDontExceedGlobalMemSizeWhenAppendLaunchKernelWithParamsIsCalledThenNoAllocationIsDone, IsAtLeastSkl) {
+
+    auto devInfo = device->getNEODevice()->getDeviceInfo();
+    auto kernelsNb = 2u;
+    uint32_t margin128KB = 131072u;
+    auto underAllocSize = static_cast<uint32_t>(devInfo.globalMemSize / kernelsNb / devInfo.computeUnitsUsedForScratch) - margin128KB;
+    auto kernelNames = std::array<std::string, 2u>{"test1", "test2"};
+
+    auto proxyModuleImpl = static_cast<ModuleFixture::ProxyModuleImp *>(this->module.get());
+    auto &kernelImmDatas = proxyModuleImpl->getKernelImmDatas();
+    for (size_t i = 0; i < kernelsNb; i++) {
+        auto &kernelDesc = const_cast<KernelDescriptor &>(kernelImmDatas[i]->getDescriptor());
+        kernelDesc.kernelAttributes.perHwThreadPrivateMemorySize = underAllocSize;
+        kernelDesc.kernelAttributes.flags.usesPrintf = false;
+        kernelDesc.kernelMetadata.kernelName = kernelNames[i];
+    }
+
+    EXPECT_FALSE(this->module->shouldAllocatePrivateMemoryPerDispatch());
+    this->module->checkIfPrivateMemoryPerDispatchIsNeeded();
+    EXPECT_FALSE(this->module->shouldAllocatePrivateMemoryPerDispatch());
+
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    pCommandList->device = this->module->getDevice();
+    auto memoryMgr = static_cast<OsAgnosticMemoryManager *>(pCommandList->device->getNEODevice()->getExecutionEnvironment()->memoryManager.get());
+    memoryMgr->turnOnFakingBigAllocations();
+
+    auto kernels = std::vector<std::unique_ptr<WhiteBox<::L0::Kernel>>>();
+    for (size_t i = 0; i < kernelsNb; i++) {
+        EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), 0u);
+        kernels.push_back(this->createKernelWithName(kernelNames[i]));
+        // This function is called by appendLaunchKernelWithParams
+        pCommandList->allocateKernelPrivateMemoryIfNeeded(kernels[i].get(),
+                                                          kernels[i]->getKernelDescriptor().kernelAttributes.perHwThreadPrivateMemorySize);
+        EXPECT_EQ(pCommandList->getOwnedPrivateAllocationsSize(), 0u);
+    }
+}
 HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamPropertiesIsCalledThenCorrectThreadArbitrationPolicyIsSet, IsAtLeastSkl) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
-    auto &hwHelper = NEO::HwHelper::get(device->getHwInfo().platform.eRenderCoreFamily);
-    auto defaultThreadArbitrationPolicy = hwHelper.getDefaultThreadArbitrationPolicy();
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto defaultThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
     auto nonDefaultThreadArbitrationPolicy = defaultThreadArbitrationPolicy + 1;
 
     Mock<::L0::Kernel> kernel;
-    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    std::unique_ptr<Module> pMockModule = std::make_unique<Mock<Module>>(device, nullptr);
     kernel.module = pMockModule.get();
 
     auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -1261,24 +1372,24 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamProp
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     // initial kernel with no policy preference
-    pCommandList->updateStreamProperties(kernel, false, false);
+    pCommandList->updateStreamProperties(kernel, false);
     EXPECT_EQ(defaultThreadArbitrationPolicy, pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
 
     // policy changed to non-default state
     pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value = nonDefaultThreadArbitrationPolicy;
     // another kernel with no policy preference - do not update policy
-    pCommandList->updateStreamProperties(kernel, false, false);
+    pCommandList->updateStreamProperties(kernel, false);
     EXPECT_EQ(nonDefaultThreadArbitrationPolicy, pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
 
     // another kernel with no policy preference, this time with debug toggle set - update policy back to default value
     DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.set(true);
-    pCommandList->updateStreamProperties(kernel, false, false);
+    pCommandList->updateStreamProperties(kernel, false);
     EXPECT_EQ(defaultThreadArbitrationPolicy, pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
 }
 
-using MultiTileCommandListAppendLaunchFunctionXeHpCoreTest = Test<MultiTileCommandListAppendLaunchFunctionFixture>;
+using MultiTileCommandListAppendLaunchKernelXeHpCoreTest = Test<MultiTileCommandListAppendLaunchKernelFixture>;
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenImplicitScalingEnabledWhenAppendingKernelWithEventThenAllEventPacketsAreUsed) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenImplicitScalingEnabledWhenAppendingKernelWithEventThenAllEventPacketsAreUsed) {
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.stype = ZE_STRUCTURE_TYPE_EVENT_POOL_DESC;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -1307,8 +1418,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, MultiTileCommandListAppendLaunchFunctionXeHpCoreTes
     EXPECT_EQ(4u, commandList->partitionCount);
 }
 
-HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenCooperativeKernelWhenAppendingKernelsThenDoNotUseImplicitScaling, IsAtLeastXeHpCore) {
-    ze_group_count_t groupCount{1, 1, 1};
+HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKernelWhenAppendingKernelsThenSetProperPartitionSize, IsAtLeastXeHpCore) {
+    ze_group_count_t groupCount{16, 1, 1};
 
     auto commandListWithNonCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     auto result = commandListWithNonCooperativeKernel->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -1324,6 +1435,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenCooperative
     auto itorWalker = find<typename FamilyType::WALKER_TYPE *>(cmdList.begin(), cmdList.end());
     auto cmd = genCmdCast<typename FamilyType::WALKER_TYPE *>(*itorWalker);
     EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
+    EXPECT_EQ(4u, cmd->getPartitionSize());
 
     auto commandListWithCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     result = commandListWithCooperativeKernel->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
@@ -1335,14 +1447,15 @@ HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest, givenCooperative
     sizeAfter = commandListWithCooperativeKernel->commandContainer.getCommandStream()->getUsed();
     cmdList.clear();
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
+        cmdList, ptrOffset(commandListWithCooperativeKernel->commandContainer.getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
 
     itorWalker = find<typename FamilyType::WALKER_TYPE *>(cmdList.begin(), cmdList.end());
     cmd = genCmdCast<typename FamilyType::WALKER_TYPE *>(*itorWalker);
     EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
+    EXPECT_EQ(16u, cmd->getPartitionSize());
 }
 
-HWTEST2_F(MultiTileCommandListAppendLaunchFunctionXeHpCoreTest,
+HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
           givenRegularCommandListWhenSynchronizationRequiredThenExpectJumpingBbStartCommandToSecondary, IsAtLeastXeHpCore) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;

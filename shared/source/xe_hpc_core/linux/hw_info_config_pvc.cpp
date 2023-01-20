@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device/sub_device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/kernel_properties.h"
@@ -18,42 +19,64 @@
 #include "shared/source/os_interface/linux/pmt_util.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/directory.h"
-#include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 
 #include "platforms.h"
 
-namespace NEO {
 constexpr static auto gfxProduct = IGFX_PVC;
+
+namespace NEO {
 const std::map<std::string, std::pair<uint32_t, uint32_t>> guidUuidOffsetMap = {
     // add new values for guid in the form of {"guid", {offset, size}} for each platform
-    {"0x0", {0x0, 0}}};
-
+    {"0x41fe79a5", {64u, 8u}}};
 #include "shared/source/os_interface/linux/hw_info_config_uuid_xehp_and_later.inl"
 #include "shared/source/os_interface/linux/hw_info_config_xe_hpc_and_later.inl"
+} // namespace NEO
 #include "shared/source/xe_hpc_core/os_agnostic_hw_info_config_xe_hpc_core.inl"
 #include "shared/source/xe_hpc_core/pvc/os_agnostic_hw_info_config_pvc.inl"
+namespace NEO {
 
 template <>
-int HwInfoConfigHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) {
-    enableCompression(hwInfo);
+uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const {
 
-    hwInfo->featureTable.flags.ftr57bGPUAddressing = (hwInfo->capabilityTable.gpuAddressSpace == maxNBitValue(57));
-
-    enableBlitterOperationsSupport(hwInfo);
-
-    hwInfo->featureTable.flags.ftrRcsNode = false;
-    if (DebugManager.flags.NodeOrdinal.get() == static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCCS)) {
-        hwInfo->featureTable.flags.ftrRcsNode = true;
+    if (osIface == nullptr) {
+        return 0;
+    }
+    auto pDrm = osIface->getDriverModel()->as<Drm>();
+    uint64_t memoryPhysicalSize = 0;
+    if (pDrm->getDeviceMemoryPhysicalSizeInBytes(subDeviceIndex, memoryPhysicalSize) == false) {
+        return 0;
     }
 
-    auto &kmdNotifyProperties = hwInfo->capabilityTable.kmdNotifyProperties;
-    kmdNotifyProperties.enableKmdNotify = true;
-    kmdNotifyProperties.delayKmdNotifyMicroseconds = 150;
-    kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission = true;
-    kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds = 20;
-
-    return 0;
+    return memoryPhysicalSize;
 }
 
-template class HwInfoConfigHw<gfxProduct>;
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
+
+    if (osIface == nullptr) {
+        return 0;
+    }
+
+    auto pDrm = osIface->getDriverModel()->as<Drm>();
+    uint32_t memoryMaxClkRateInMhz = 0;
+    if (pDrm->getDeviceMemoryMaxClockRateInMhz(subDeviceIndex, memoryMaxClkRateInMhz) == false) {
+        return 0;
+    }
+
+    return memoryMaxClkRateInMhz;
+}
+
+template <>
+uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecond(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const {
+    uint64_t memoryMaxClkRateInMhz = getDeviceMemoryMaxClkRate(hwInfo, osIface, subDeviceIndex);
+    const uint64_t numberOfHbmStacksPerTile = 4u;
+    const uint64_t memoryBusWidth = 128u;
+    return memoryMaxClkRateInMhz * 1000 * 1000 * numberOfHbmStacksPerTile * memoryBusWidth / 8;
+}
+
 } // namespace NEO
+
+#include "shared/source/xe_hpc_core/linux/hw_info_config_xe_hpc_core.inl"
+
+template class NEO::ProductHelperHw<gfxProduct>;

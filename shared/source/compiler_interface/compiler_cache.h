@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "shared/source/utilities/arrayref.h"
 
 #include <cstdint>
-#include <cstring>
 #include <memory>
 #include <mutex>
 #include <string>

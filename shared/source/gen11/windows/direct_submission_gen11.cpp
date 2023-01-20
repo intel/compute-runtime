@@ -16,7 +16,7 @@
 #include "shared/source/gen11/hw_cmds_base.h"
 
 namespace NEO {
-using GfxFamily = ICLFamily;
+using GfxFamily = Gen11Family;
 
 template class Dispatcher<GfxFamily>;
 template class BlitterDispatcher<GfxFamily>;

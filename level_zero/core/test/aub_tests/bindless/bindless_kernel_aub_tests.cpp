@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/test_files.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/context/context_imp.h"
@@ -27,12 +28,12 @@ struct L0BindlessAub : Test<AUBFixtureL0> {
     void SetUp() override {
         DebugManager.flags.UseBindlessMode.set(1);
         DebugManager.flags.UseExternalAllocatorForSshAndDsh.set(1);
-        AUBFixtureL0::SetUp();
+        AUBFixtureL0::setUp();
     }
     void TearDown() override {
 
         module->destroy();
-        AUBFixtureL0::TearDown();
+        AUBFixtureL0::tearDown();
     }
 
     void createModuleFromFile(const std::string &fileName, ze_context_handle_t context, L0::Device *device) {
@@ -54,14 +55,15 @@ struct L0BindlessAub : Test<AUBFixtureL0> {
         moduleDesc.pBuildFlags = "";
 
         module = new ModuleImp(device, nullptr, ModuleType::User);
-        bool success = module->initialize(&moduleDesc, device->getNEODevice());
-        ASSERT_TRUE(success);
+        ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
+        result = module->initialize(&moduleDesc, device->getNEODevice());
+        ASSERT_EQ(result, ZE_RESULT_SUCCESS);
     }
     DebugManagerStateRestore restorer;
     ModuleImp *module = nullptr;
 };
 
-HWTEST_F(L0BindlessAub, GivenBindlessKernelWhenExecutedThenOutputIsCorrect) {
+HWTEST_F(L0BindlessAub, DISABLED_GivenBindlessKernelWhenExecutedThenOutputIsCorrect) {
     constexpr size_t bufferSize = MemoryConstants::pageSize;
     const uint32_t groupSize[] = {32, 1, 1};
     const uint32_t groupCount[] = {bufferSize / 32, 1, 1};

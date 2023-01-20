@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,9 +12,12 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/logical_state_helper.h"
+#include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -27,8 +30,8 @@ struct UltCommandStreamReceiverTest
       public ClHardwareParse,
       ::testing::Test {
     void SetUp() override {
-        ClDeviceFixture::SetUp();
-        ClHardwareParse::SetUp();
+        ClDeviceFixture::setUp();
+        ClHardwareParse::setUp();
 
         cmdBuffer = alignedMalloc(sizeStream, alignmentStream);
         dshBuffer = alignedMalloc(sizeStream, alignmentStream);
@@ -41,8 +44,8 @@ struct UltCommandStreamReceiverTest
         ASSERT_NE(nullptr, sshBuffer);
 
         initHeaps();
-
-        flushTaskFlags.threadArbitrationPolicy = NEO::HwHelper::get(hardwareInfo.platform.eRenderCoreFamily).getDefaultThreadArbitrationPolicy();
+        auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+        flushTaskFlags.threadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
 
         pDevice->getGpgpuCommandStreamReceiver().setupContext(*pDevice->getDefaultEngine().osContext);
     }
@@ -81,8 +84,8 @@ struct UltCommandStreamReceiverTest
         alignedFree(iohBuffer);
         alignedFree(dshBuffer);
         alignedFree(cmdBuffer);
-        ClHardwareParse::TearDown();
-        ClDeviceFixture::TearDown();
+        ClHardwareParse::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     template <typename CommandStreamReceiverType>
@@ -109,8 +112,8 @@ struct UltCommandStreamReceiverTest
     }
 
     template <typename CommandStreamReceiverType>
-    void flushSmallTask(CommandStreamReceiverType &commandStreamReceiver,
-                        size_t startOffset = 0) {
+    SubmissionStatus flushSmallTask(CommandStreamReceiverType &commandStreamReceiver,
+                                    size_t startOffset = 0) {
         return commandStreamReceiver.flushSmallTask(
             commandStream,
             startOffset);
@@ -140,8 +143,8 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
         commandStreamReceiver.setMediaVFEStateDirty(false);
         auto gmmHelper = pDevice->getGmmHelper();
-        auto &hwHelper = HwHelper::get(defaultHwInfo->platform.eDisplayCoreFamily);
-        auto mocsIndex = hwHelper.getMocsIndex(*gmmHelper, true, isL1CacheEnabled);
+        auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
+        auto mocsIndex = gfxCoreHelper.getMocsIndex(*gmmHelper, true, isL1CacheEnabled);
 
         commandStreamReceiver.latestSentStatelessMocsConfig = mocsIndex;
         commandStreamReceiver.lastSentL3Config = l3Config;
@@ -150,8 +153,20 @@ struct UltCommandStreamReceiverTest
 
         commandStreamReceiver.lastMediaSamplerConfig = 0;
         commandStreamReceiver.lastSentUseGlobalAtomics = false;
+        commandStreamReceiver.streamProperties.pipelineSelect.setProperties(true, false, false, *defaultHwInfo);
         commandStreamReceiver.streamProperties.stateComputeMode.setProperties(0, GrfConfig::DefaultGrfNumber,
-                                                                              hwHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode(), *defaultHwInfo);
+                                                                              gfxCoreHelper.getDefaultThreadArbitrationPolicy(), pDevice->getPreemptionMode(), pDevice->getRootDeviceEnvironment());
+        commandStreamReceiver.streamProperties.frontEndState.setProperties(false, false, false, -1, *defaultHwInfo);
+
+        auto logicalStateHelper = commandStreamReceiver.getLogicalStateHelper();
+
+        if (logicalStateHelper) {
+            uint8_t buffer[512] = {};
+            LinearStream tempStream(buffer, sizeof(buffer));
+
+            EncodeKernelArgsBuffer<GfxFamily>::encodeKernelArgsBufferCmds(commandStreamReceiver.getKernelArgsBufferAllocation(), logicalStateHelper);
+            logicalStateHelper->writeStreamInline(tempStream, false);
+        }
     }
 
     template <typename GfxFamily>
@@ -160,7 +175,7 @@ struct UltCommandStreamReceiverTest
     }
 
     DispatchFlags flushTaskFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
-    uint32_t taskLevel = 42;
+    TaskCountType taskLevel = 42;
     LinearStream commandStream;
     IndirectHeap dsh = {nullptr};
     IndirectHeap ioh = {nullptr};

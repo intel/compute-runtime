@@ -6,15 +6,15 @@
  */
 
 #pragma once
-#include "shared/source/xe_hpc_core/hw_cmds_base.h"
 
-#include "device_ids_configs_pvc.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
+#include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 
 #include <algorithm>
 
 namespace NEO {
 
-struct PVC : public XE_HPC_COREFamily {
+struct PVC : public XeHpcCoreFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
     static const uint64_t defaultHardwareInfoConfig;
@@ -27,6 +27,25 @@ struct PVC : public XE_HPC_COREFamily {
     static const uint32_t maxSubslicesSupported = 64;
     static const uint32_t maxDualSubslicesSupported = 64;
     static const RuntimeCapabilityTable capabilityTable;
+
+    struct FrontEndStateSupport {
+        static constexpr bool scratchSize = true;
+        static constexpr bool privateScratchSize = true;
+        static constexpr bool computeDispatchAllWalker = true;
+        static constexpr bool disableEuFusion = false;
+        static constexpr bool disableOverdispatch = true;
+        static constexpr bool singleSliceDispatchCcsMode = true;
+    };
+
+    struct StateComputeModeStateSupport {
+        static constexpr bool threadArbitrationPolicy = true;
+        static constexpr bool coherencyRequired = true;
+        static constexpr bool largeGrfMode = true;
+        static constexpr bool zPassAsyncComputeThreadLimit = false;
+        static constexpr bool pixelAsyncComputeThreadLimit = false;
+        static constexpr bool devicePreemptionMode = false;
+    };
+
     static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
@@ -37,13 +56,13 @@ struct PVC : public XE_HPC_COREFamily {
     static constexpr uint8_t pvcBaseDieA0Masked = 0;       // [3:5] == 0
 
     static bool isXl(const HardwareInfo &hwInfo) {
-        auto it = std::find(PVC_XL_IDS.begin(), PVC_XL_IDS.end(), hwInfo.platform.usDeviceID);
-        return it != PVC_XL_IDS.end();
+        auto it = std::find(pvcXlDeviceIds.begin(), pvcXlDeviceIds.end(), hwInfo.platform.usDeviceID);
+        return it != pvcXlDeviceIds.end();
     }
 
     static bool isXt(const HardwareInfo &hwInfo) {
-        auto it = std::find(PVC_XT_IDS.begin(), PVC_XT_IDS.end(), hwInfo.platform.usDeviceID);
-        return it != PVC_XT_IDS.end();
+        auto it = std::find(pvcXtDeviceIds.begin(), pvcXtDeviceIds.end(), hwInfo.platform.usDeviceID);
+        return it != pvcXtDeviceIds.end();
     }
 
     static bool isXlA0(const HardwareInfo &hwInfo) {

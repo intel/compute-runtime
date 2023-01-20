@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 namespace NEO {
-void DeviceInstrumentationFixture::SetUp(bool instrumentation) {
+void DeviceInstrumentationFixture::setUp(bool instrumentation) {
     ExecutionEnvironment *executionEnvironment = getExecutionEnvironmentImpl(hwInfo, 1);
     hwInfo->capabilityTable.instrumentationEnabled = instrumentation;
     device = std::make_unique<ClDevice>(*Device::create<RootDevice>(executionEnvironment, 0), platform());

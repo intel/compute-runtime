@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -76,12 +76,6 @@ macro(apply_macro_for_each_platform)
     string(TOLOWER ${PLATFORM_IT} PLATFORM_IT_LOWER)
     macro_for_each_platform()
   endforeach()
-endmacro()
-
-macro(get_family_name_with_type core_type platform_type)
-  string(REPLACE "GEN" "Gen" core_type_capitalized ${core_type})
-  string(TOLOWER ${platform_type} platform_type_lower)
-  set(family_name_with_type ${core_type_capitalized}${platform_type_lower})
 endmacro()
 
 macro(append_sources_from_properties list_name)

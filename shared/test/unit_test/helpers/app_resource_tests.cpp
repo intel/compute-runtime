@@ -25,7 +25,7 @@ using namespace NEO;
 
 struct AppResourceTests : public MockExecutionEnvironmentTagTest {
     void SetUp() override {
-        MockExecutionEnvironmentGmmFixture::SetUp();
+        MockExecutionEnvironmentGmmFixture::setUp();
         rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
         localPlatformDevice = rootDeviceEnvironment->getMutableHardwareInfo();
     }
@@ -71,6 +71,7 @@ AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(AllocationTyp
     {AllocationType::INSTRUCTION_HEAP, "INSTHEAP"},
     {AllocationType::INTERNAL_HEAP, "INTLHEAP"},
     {AllocationType::INTERNAL_HOST_MEMORY, "INHSTMEM"},
+    {AllocationType::KERNEL_ARGS_BUFFER, "KARGBUF"},
     {AllocationType::KERNEL_ISA, "KERNLISA"},
     {AllocationType::KERNEL_ISA_INTERNAL, "KRLISAIN"},
     {AllocationType::LINEAR_STREAM, "LINRSTRM"},
@@ -103,7 +104,8 @@ AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(AllocationTyp
     {AllocationType::DEBUG_MODULE_AREA, "DBMDLARE"},
     {AllocationType::UNIFIED_SHARED_MEMORY, "USHRDMEM"},
     {AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, "GPUTSDBF"},
-    {AllocationType::SW_TAG_BUFFER, "SWTAGBF"}};
+    {AllocationType::SW_TAG_BUFFER, "SWTAGBF"},
+    {AllocationType::DEFERRED_TASKS_LIST, "TSKLIST"}};
 class AllocationTypeTagString : public ::testing::TestWithParam<AllocationTypeTagTestCase> {};
 
 TEST_P(AllocationTypeTagString, givenGraphicsAllocationTypeWhenCopyTagToStorageInfoThenCorrectTagIsReturned) {

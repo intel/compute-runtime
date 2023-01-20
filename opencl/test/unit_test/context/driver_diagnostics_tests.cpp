@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,12 @@
 
 #include "driver_diagnostics_tests.h"
 
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
+#include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 
 #include <tuple>
@@ -91,19 +93,23 @@ TEST_P(PerformanceHintBufferTest, GivenHostPtrAndSizeAlignmentsWhenBufferIsCreat
         flags |= CL_MEM_FORCE_HOST_MEMORY_INTEL;
     }
 
+    Buffer::AdditionalBufferCreateArgs bufferCreateArgs{};
+    bufferCreateArgs.doNotProvidePerformanceHints = !providePerformanceHint;
+
     buffer = Buffer::create(
         context,
         flags,
         sizeForBuffer,
         (void *)addressForBuffer,
+        bufferCreateArgs,
         retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, buffer);
 
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_BUFFER_DOESNT_MEET_ALIGNMENT_RESTRICTIONS], addressForBuffer, sizeForBuffer, MemoryConstants::pageSize, MemoryConstants::pageSize);
-    EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
+    EXPECT_EQ(providePerformanceHint && !(alignedSize && alignedAddress), containsHint(expectedHint, userData));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[CL_BUFFER_NEEDS_ALLOCATE_MEMORY], 0);
-    EXPECT_EQ(!(alignedSize && alignedAddress), containsHint(expectedHint, userData));
+    EXPECT_EQ(providePerformanceHint && !(alignedSize && alignedAddress), containsHint(expectedHint, userData));
 }
 
 TEST_P(PerformanceHintCommandQueueTest, GivenProfilingFlagAndPreemptionFlagWhenCommandQueueIsCreatingThenContextProvidesProperHints) {
@@ -459,16 +465,21 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
 }
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallFillWithKernelObjsForAuxTranslationOnGfxAllocationThenContextProvidesProperHint) {
+    auto device = castToObject<ClDevice>(devices[0]);
+    const ClDeviceInfo &devInfo = device->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.PrintDriverDiagnostics.set(1);
 
-    auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(*device, context);
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
+    MockBuffer::setAllocationType(&gfxAllocation, device->getRootDeviceEnvironment().getGmmHelper(), true);
 
     mockKernel.kernelInfo.addExtendedMetadata(0, "arg0");
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
@@ -558,16 +569,21 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenCallF
 }
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKernelObjectWithGraphicsAllocationAccessedStatefullyOnlyThenDontReportAnyHint) {
+    auto device = castToObject<ClDevice>(devices[0]);
+    const ClDeviceInfo &devInfo = device->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.PrintDriverDiagnostics.set(1);
 
-    auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    MockKernelWithInternals mockKernel(*device, context);
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
+    MockBuffer::setAllocationType(&gfxAllocation, device->getRootDeviceEnvironment().getGmmHelper(), true);
 
     mockKernel.kernelInfo.addExtendedMetadata(0, "arg0");
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
@@ -588,13 +604,17 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeEnabledWhenKerne
 }
 
 TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCallFillWithKernelObjsForAuxTranslationOnGfxAllocationThenDontReportAnyHint) {
-    auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    auto device = castToObject<ClDevice>(devices[0]);
+    const ClDeviceInfo &devInfo = device->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+    MockKernelWithInternals mockKernel(*device, context);
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
 
-    MockBuffer::setAllocationType(&gfxAllocation, pDevice->getRootDeviceEnvironment().getGmmHelper(), true);
+    MockBuffer::setAllocationType(&gfxAllocation, device->getRootDeviceEnvironment().getGmmHelper(), true);
 
     mockKernel.kernelInfo.addExtendedMetadata(0, "arg0");
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
@@ -614,8 +634,12 @@ TEST_F(PerformanceHintTest, givenPrintDriverDiagnosticsDebugModeDisabledWhenCall
 }
 
 TEST_F(PerformanceHintTest, whenCallingFillWithKernelObjsForAuxTranslationOnNullGfxAllocationThenDontReportAnyHint) {
-    auto pDevice = castToObject<ClDevice>(devices[0]);
-    MockKernelWithInternals mockKernel(*pDevice, context);
+    auto device = castToObject<ClDevice>(devices[0]);
+    const ClDeviceInfo &devInfo = device->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+    MockKernelWithInternals mockKernel(*device, context);
 
     mockKernel.kernelInfo.addExtendedMetadata(0, "arg0");
     mockKernel.kernelInfo.addArgBuffer(0, 0, 0, 0);
@@ -671,8 +695,10 @@ HWTEST2_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenPrope
         Buffer::create(context.get(), ClMemoryPropertiesHelper::createMemoryProperties(0, 0, 0, &context->getDevice(0)->getDevice()),
                        0, 0, size, static_cast<void *>(NULL), retVal));
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[BUFFER_IS_COMPRESSED], buffer.get());
-    auto compressionSupported = HwHelper::get(hwInfo.platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(size, hwInfo) &&
-                                HwHelper::compressedBuffersSupported(hwInfo);
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    auto compressionSupported = gfxCoreHelper.isBufferSizeSuitableForCompression(size) &&
+                                GfxCoreHelper::compressedBuffersSupported(hwInfo);
     if (compressionSupported) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
     } else {
@@ -681,6 +707,8 @@ HWTEST2_F(PerformanceHintTest, given64bitCompressedBufferWhenItsCreatedThenPrope
 }
 
 TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerformanceHintIsProvided) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.ExperimentalSmallBufferPoolAllocator.set(0); // pool buffer will not provide performance hints
     cl_int retVal;
     HardwareInfo hwInfo = context->getDevice(0)->getHardwareInfo();
     hwInfo.capabilityTable.ftrRenderCompressedBuffers = true;
@@ -696,11 +724,14 @@ TEST_F(PerformanceHintTest, givenUncompressedBufferWhenItsCreatedThenProperPerfo
     auto context = std::unique_ptr<MockContext>(Context::create<NEO::MockContext>(validProperties, ClDeviceVector(&deviceId, 1), callbackFunction, static_cast<void *>(userData), retVal));
     std::unique_ptr<Buffer> buffer;
     bool isCompressed = true;
+
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+
     if (context->getMemoryManager()) {
         isCompressed = MemObjHelper::isSuitableForCompression(
-                           HwHelper::compressedBuffersSupported(hwInfo),
+                           GfxCoreHelper::compressedBuffersSupported(hwInfo),
                            memoryProperties, *context,
-                           HwHelper::get(hwInfo.platform.eRenderCoreFamily).isBufferSizeSuitableForCompression(size, hwInfo)) &&
+                           gfxCoreHelper.isBufferSizeSuitableForCompression(size)) &&
                        !is32bit && !context->isSharedContext &&
                        (!memoryProperties.flags.useHostPtr || context->getMemoryManager()->isLocalMemorySupported(device->getRootDeviceIndex())) &&
                        !memoryProperties.flags.forceHostMemory;
@@ -743,8 +774,8 @@ HWTEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerfor
     auto graphicsAllocation = mockBuffer->getGraphicsAllocation(device->getRootDeviceIndex());
 
     graphicsAllocation->setDefaultGmm(gmm);
-
-    if (!HwHelperHw<FamilyType>::get().checkResourceCompatibility(*graphicsAllocation)) {
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    if (!gfxCoreHelper.checkResourceCompatibility(*graphicsAllocation)) {
         GTEST_SKIP();
     }
 
@@ -778,7 +809,7 @@ HWTEST_F(PerformanceHintTest, givenCompressedImageWhenItsCreatedThenProperPerfor
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[IMAGE_IS_COMPRESSED], image.get());
     alignedFree(hostPtr);
 
-    if (HwHelper::compressedImagesSupported(hwInfo)) {
+    if (GfxCoreHelper::compressedImagesSupported(hwInfo)) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
     } else {
         EXPECT_FALSE(containsHint(expectedHint, userData));
@@ -841,7 +872,7 @@ TEST_F(PerformanceHintTest, givenUncompressedImageWhenItsCreatedThenProperPerfor
     snprintf(expectedHint, DriverDiagnostics::maxHintStringSize, DriverDiagnostics::hintFormat[IMAGE_IS_NOT_COMPRESSED], image.get());
     alignedFree(hostPtr);
 
-    if (HwHelper::compressedImagesSupported(hwInfo)) {
+    if (GfxCoreHelper::compressedImagesSupported(hwInfo)) {
         EXPECT_TRUE(containsHint(expectedHint, userData));
     } else {
         EXPECT_FALSE(containsHint(expectedHint, userData));
@@ -898,6 +929,7 @@ INSTANTIATE_TEST_CASE_P(
     DriverDiagnosticsTests,
     PerformanceHintBufferTest,
     testing::Combine(
+        ::testing::Bool(),
         ::testing::Bool(),
         ::testing::Bool()));
 

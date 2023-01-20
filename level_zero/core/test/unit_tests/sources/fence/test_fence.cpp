@@ -1,13 +1,14 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/built_ins/sip.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_csr.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -24,8 +25,8 @@ using namespace std::chrono_literals;
 
 namespace CpuIntrinsicsTests {
 extern std::atomic<uint32_t> pauseCounter;
-extern volatile uint32_t *pauseAddress;
-extern uint32_t pauseValue;
+extern volatile TagAddressType *pauseAddress;
+extern TaskCountType pauseValue;
 extern uint32_t pauseOffset;
 extern std::function<void()> setupPauseAddress;
 } // namespace CpuIntrinsicsTests
@@ -247,14 +248,14 @@ TEST_F(FenceSynchronizeTest, givenInfiniteTimeoutWhenWaitingForFenceCompletionTh
 
     fence->taskCount = 1;
 
-    VariableBackup<volatile uint32_t *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
-    VariableBackup<uint32_t> backupPauseValue(&CpuIntrinsicsTests::pauseValue, 0);
+    VariableBackup<volatile TagAddressType *> backupPauseAddress(&CpuIntrinsicsTests::pauseAddress);
+    VariableBackup<TaskCountType> backupPauseValue(&CpuIntrinsicsTests::pauseValue, 0);
     VariableBackup<uint32_t> backupPauseOffset(&CpuIntrinsicsTests::pauseOffset);
     VariableBackup<std::function<void()>> backupSetupPauseAddress(&CpuIntrinsicsTests::setupPauseAddress);
     CpuIntrinsicsTests::pauseCounter = 0u;
     CpuIntrinsicsTests::pauseAddress = csr->getTagAddress();
 
-    volatile uint32_t *hostAddr = csr->getTagAddress();
+    volatile TagAddressType *hostAddr = csr->getTagAddress();
     for (uint32_t i = 0; i < activePartitions; i++) {
         *hostAddr = 0;
         hostAddr = ptrOffset(hostAddr, postSyncOffset);
@@ -262,7 +263,7 @@ TEST_F(FenceSynchronizeTest, givenInfiniteTimeoutWhenWaitingForFenceCompletionTh
 
     CpuIntrinsicsTests::setupPauseAddress = [&]() {
         if (CpuIntrinsicsTests::pauseCounter > 10) {
-            volatile uint32_t *nextPacket = CpuIntrinsicsTests::pauseAddress;
+            volatile TagAddressType *nextPacket = CpuIntrinsicsTests::pauseAddress;
             for (uint32_t i = 0; i < activePartitions; i++) {
                 *nextPacket = 1;
                 nextPacket = ptrOffset(nextPacket, postSyncOffset);

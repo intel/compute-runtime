@@ -27,4 +27,10 @@ void EncodeMemoryFence<Family>::encodeSystemMemoryFence(LinearStream &commandStr
     *stateSystemFenceAddressSpace = stateSystemFenceAddress;
 }
 
+template <>
+void EncodeBatchBufferStartOrEnd<Family>::appendBatchBufferStart(MI_BATCH_BUFFER_START &cmd, bool indirect, bool predicate) {
+    cmd.setIndirectAddressEnable(indirect);
+    cmd.setPredicationEnable(predicate);
+}
+
 } // namespace NEO

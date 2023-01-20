@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,13 +9,12 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/base_object.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/base_object.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_blit_properties.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}cl_device_helpers.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/cl_device_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_bdw_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_factory_init.inl
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}cl_memory_properties_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_memory_properties_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_memory_properties_helpers_base.inl

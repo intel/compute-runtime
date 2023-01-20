@@ -20,8 +20,8 @@ struct clCreatePerfCountersCommandQueueINTELTests : public DeviceInstrumentation
                                                     public PerformanceCountersDeviceFixture,
                                                     ::testing::Test {
     void SetUp() override {
-        PerformanceCountersDeviceFixture::SetUp();
-        DeviceInstrumentationFixture::SetUp(true);
+        PerformanceCountersDeviceFixture::setUp();
+        DeviceInstrumentationFixture::setUp(true);
 
         deviceId = device.get();
         retVal = CL_SUCCESS;
@@ -29,7 +29,7 @@ struct clCreatePerfCountersCommandQueueINTELTests : public DeviceInstrumentation
                                                                         nullptr, nullptr, retVal));
     }
     void TearDown() override {
-        PerformanceCountersDeviceFixture::TearDown();
+        PerformanceCountersDeviceFixture::tearDown();
     }
 
     std::unique_ptr<Context> context;

@@ -65,8 +65,8 @@ ze_result_t zeModuleGetKernelNames(
 ze_result_t zeKernelCreate(
     ze_module_handle_t hModule,
     const ze_kernel_desc_t *desc,
-    ze_kernel_handle_t *phFunction) {
-    return L0::Module::fromHandle(hModule)->createKernel(desc, phFunction);
+    ze_kernel_handle_t *kernelHandle) {
+    return L0::Module::fromHandle(hModule)->createKernel(desc, kernelHandle);
 }
 
 ze_result_t zeKernelDestroy(
@@ -141,45 +141,45 @@ ze_result_t zeKernelGetProperties(
 
 ze_result_t zeCommandListAppendLaunchKernel(
     ze_command_list_handle_t hCommandList,
-    ze_kernel_handle_t hKernel,
-    const ze_group_count_t *pLaunchFuncArgs,
+    ze_kernel_handle_t kernelHandle,
+    const ze_group_count_t *launchKernelArgs,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     L0::CmdListKernelLaunchParams launchParams = {};
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernel(hKernel, pLaunchFuncArgs, hSignalEvent, numWaitEvents, phWaitEvents, launchParams);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernel(kernelHandle, launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, launchParams);
 }
 
 ze_result_t zeCommandListAppendLaunchCooperativeKernel(
     ze_command_list_handle_t hCommandList,
-    ze_kernel_handle_t hKernel,
-    const ze_group_count_t *pLaunchFuncArgs,
+    ze_kernel_handle_t kernelHandle,
+    const ze_group_count_t *launchKernelArgs,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchCooperativeKernel(hKernel, pLaunchFuncArgs, hSignalEvent, numWaitEvents, phWaitEvents);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchCooperativeKernel(kernelHandle, launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ze_result_t zeCommandListAppendLaunchKernelIndirect(
     ze_command_list_handle_t hCommandList,
-    ze_kernel_handle_t hKernel,
+    ze_kernel_handle_t kernelHandle,
     const ze_group_count_t *pLaunchArgumentsBuffer,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernelIndirect(hKernel, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernelIndirect(kernelHandle, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ze_result_t zeCommandListAppendLaunchMultipleKernelsIndirect(
     ze_command_list_handle_t hCommandList,
     uint32_t numKernels,
-    ze_kernel_handle_t *phKernels,
+    ze_kernel_handle_t *kernelHandles,
     const uint32_t *pCountBuffer,
     const ze_group_count_t *pLaunchArgumentsBuffer,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchMultipleKernelsIndirect(numKernels, phKernels, pCountBuffer, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchMultipleKernelsIndirect(numKernels, kernelHandles, pCountBuffer, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
 }
 
 ze_result_t zeKernelGetName(
@@ -433,15 +433,15 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeKernelGetName(
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernel(
     ze_command_list_handle_t hCommandList,
-    ze_kernel_handle_t hKernel,
-    const ze_group_count_t *pLaunchFuncArgs,
+    ze_kernel_handle_t kernelHandle,
+    const ze_group_count_t *launchKernelArgs,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     return L0::zeCommandListAppendLaunchKernel(
         hCommandList,
-        hKernel,
-        pLaunchFuncArgs,
+        kernelHandle,
+        launchKernelArgs,
         hSignalEvent,
         numWaitEvents,
         phWaitEvents);
@@ -449,15 +449,15 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernel(
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchCooperativeKernel(
     ze_command_list_handle_t hCommandList,
-    ze_kernel_handle_t hKernel,
-    const ze_group_count_t *pLaunchFuncArgs,
+    ze_kernel_handle_t kernelHandle,
+    const ze_group_count_t *launchKernelArgs,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     return L0::zeCommandListAppendLaunchCooperativeKernel(
         hCommandList,
-        hKernel,
-        pLaunchFuncArgs,
+        kernelHandle,
+        launchKernelArgs,
         hSignalEvent,
         numWaitEvents,
         phWaitEvents);
@@ -465,14 +465,14 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchCooperativeKernel(
 
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelIndirect(
     ze_command_list_handle_t hCommandList,
-    ze_kernel_handle_t hKernel,
+    ze_kernel_handle_t kernelHandle,
     const ze_group_count_t *pLaunchArgumentsBuffer,
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     return L0::zeCommandListAppendLaunchKernelIndirect(
         hCommandList,
-        hKernel,
+        kernelHandle,
         pLaunchArgumentsBuffer,
         hSignalEvent,
         numWaitEvents,
@@ -482,7 +482,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchKernelIndirect(
 ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchMultipleKernelsIndirect(
     ze_command_list_handle_t hCommandList,
     uint32_t numKernels,
-    ze_kernel_handle_t *phKernels,
+    ze_kernel_handle_t *kernelHandles,
     const uint32_t *pCountBuffer,
     const ze_group_count_t *pLaunchArgumentsBuffer,
     ze_event_handle_t hSignalEvent,
@@ -491,7 +491,7 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeCommandListAppendLaunchMultipleKernelsIndi
     return L0::zeCommandListAppendLaunchMultipleKernelsIndirect(
         hCommandList,
         numKernels,
-        phKernels,
+        kernelHandles,
         pCountBuffer,
         pLaunchArgumentsBuffer,
         hSignalEvent,

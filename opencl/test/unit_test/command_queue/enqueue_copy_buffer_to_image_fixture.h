@@ -22,7 +22,7 @@ struct EnqueueCopyBufferToImageTest : public CommandEnqueueFixture,
     void SetUp() override {
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
 
         BufferDefaults::context = new MockContext(pClDevice);
         context = new MockContext(pClDevice);
@@ -38,7 +38,7 @@ struct EnqueueCopyBufferToImageTest : public CommandEnqueueFixture,
         delete srcBuffer;
         delete BufferDefaults::context;
         delete context;
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
   protected:
@@ -63,7 +63,7 @@ struct EnqueueCopyBufferToImageMipMapTest : public CommandEnqueueFixture,
 
     void SetUp(void) override {
         REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
-        CommandEnqueueFixture::SetUp();
+        CommandEnqueueFixture::setUp();
         BufferDefaults::context = new MockContext(pClDevice);
         context = new MockContext(pClDevice);
         srcBuffer = BufferHelper<>::create(context);
@@ -76,7 +76,7 @@ struct EnqueueCopyBufferToImageMipMapTest : public CommandEnqueueFixture,
         delete srcBuffer;
         delete BufferDefaults::context;
         delete context;
-        CommandEnqueueFixture::TearDown();
+        CommandEnqueueFixture::tearDown();
     }
 
     MockContext *context = nullptr;

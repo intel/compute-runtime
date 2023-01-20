@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,29 +10,28 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/memory_manager/memory_pool.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
-#include "shared/test/common/mocks/mock_csr_simulated_common_hw.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_os_context.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/unit_test/mocks/mock_csr_simulated_common_hw.h"
 
 #include <array>
 #include <memory>
 using namespace NEO;
 
-using CommandStreamSimulatedTests = HwHelperTest;
+using CommandStreamSimulatedTests = GfxCoreHelperTest;
 
 HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageInfoNonZeroWhenMemoryBankIsQueriedThenBankForAllocationDeviceIsReturned) {
     ExecutionEnvironment executionEnvironment;
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::UNKNOWN, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
@@ -51,7 +50,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndNonLocalMemoryAllocatio
     ExecutionEnvironment executionEnvironment;
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
 
     executionEnvironment.initializeMemoryManager();
     MemoryAllocation allocation(0, AllocationType::UNKNOWN, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
@@ -67,7 +66,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
     ExecutionEnvironment executionEnvironment;
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::UNKNOWN, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
@@ -86,7 +85,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndNonLocalMemoryAllocatio
     ExecutionEnvironment executionEnvironment;
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::UNKNOWN, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
@@ -105,7 +104,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryNoncloneableAllocationWith
     ExecutionEnvironment executionEnvironment;
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::UNKNOWN, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
@@ -129,7 +128,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryCloneableAllocationWithMan
     ExecutionEnvironment executionEnvironment;
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::UNKNOWN, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
@@ -153,7 +152,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryNoncloneableAllocationWith
     ExecutionEnvironment executionEnvironment;
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::UNKNOWN, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
@@ -178,7 +177,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryAndAllocationWithStorageIn
     ExecutionEnvironment executionEnvironment;
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
 
     MemoryAllocation allocation(0, AllocationType::UNKNOWN, nullptr, reinterpret_cast<void *>(0x1000), 0x1000u,
@@ -200,7 +199,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryWhenSimulatedCsrGetAddress
     ExecutionEnvironment executionEnvironment;
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
 
     std::array<uint32_t, 6> localMemoryHints = {AubMemDump::DataTypeHintValues::TraceLogicalRingContextRcs,
@@ -228,7 +227,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenLocalMemoryDisabledWhenSimulatedCsrGe
     ExecutionEnvironment executionEnvironment;
     hardwareInfo.featureTable.flags.ftrLocalMemory = false;
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
 
     std::array<uint32_t, 7> nonLocalMemoryHints = {AubMemDump::DataTypeHintValues::TraceNotype,
@@ -253,7 +252,7 @@ HWTEST_F(CommandStreamSimulatedTests, givenAUBDumpForceAllToLocalMemoryWhenSimul
     hardwareInfo.featureTable.flags.ftrLocalMemory = false;
     ExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);
-    executionEnvironment.rootDeviceEnvironments[0]->setHwInfo(&hardwareInfo);
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hardwareInfo);
     executionEnvironment.initializeMemoryManager();
 
     std::array<uint32_t, 7> localMemoryHints = {AubMemDump::DataTypeHintValues::TraceNotype,

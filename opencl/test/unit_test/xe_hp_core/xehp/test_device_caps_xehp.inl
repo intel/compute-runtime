@@ -24,10 +24,6 @@ XEHPTEST_F(XeHPUsDeviceIdTest, givenXeHPWhenCheckftr64KBpagesThenTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftr64KBpages);
 }
 
-XEHPTEST_F(XeHPUsDeviceIdTest, WheCheckingIsSimulationThenFalseIsReturned) {
-    EXPECT_FALSE(pDevice->isSimulation());
-}
-
 XEHPTEST_F(XeHPUsDeviceIdTest, givenXeHPSkusThenItSupportCorrectlyRoundedDivSqrtBit) {
     EXPECT_TRUE(pClDevice->getHardwareInfo().capabilityTable.ftrSupports64BitMath);
     cl_device_fp_config actual = pClDevice->getDeviceInfo().singleFpConfig & CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT;

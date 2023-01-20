@@ -11,7 +11,7 @@ namespace L0 {
 namespace ult {
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageGetPropertiesTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Image.pfnGetProperties =
         [](ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_properties_t *pImageProperties) { return ZE_RESULT_SUCCESS; };
     const ze_image_desc_t desc = {};
@@ -28,7 +28,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageGetPropertiesTracingWrapperWith
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageCreateTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Image.pfnCreate =
         [](ze_context_handle_t hContext, ze_device_handle_t hDevice, const ze_image_desc_t *desc, ze_image_handle_t *phImage) { return ZE_RESULT_SUCCESS; };
     const ze_image_desc_t desc = {};
@@ -45,7 +45,7 @@ TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageCreateTracingWrapperWithOneSetO
 }
 
 TEST_F(ZeApiTracingRuntimeTests, WhenCallingImageDestroyTracingWrapperWithOneSetOfPrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
     driver_ddiTable.core_ddiTable.Image.pfnDestroy =
         [](ze_image_handle_t hImage) { return ZE_RESULT_SUCCESS; };
     prologCbs.Image.pfnDestroyCb = genericPrologCallbackPtr;
@@ -72,7 +72,7 @@ struct {
 } ImageGetProperties_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageGetPropertiesTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     ImageGetProperties_args.hDevice0 = generateRandomHandle<ze_device_handle_t>();
@@ -224,7 +224,7 @@ struct {
 } ImageCreate_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageCreateTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     ImageCreate_args.hContext0 = generateRandomHandle<ze_context_handle_t>();
@@ -478,7 +478,7 @@ struct {
 } ImageDestroy_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingImageDestroyTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     ImageDestroy_args.hImage0 = generateRandomHandle<ze_image_handle_t>();

@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
@@ -63,12 +64,12 @@ int configureCacheInfo(HardwareInfo *hwInfo) {
     return 0;
 }
 
-int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, OSInterface *osIface) {
+int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
     int ret = 0;
-    Drm *drm = osIface->getDriverModel()->as<Drm>();
+    auto osInterface = rootDeviceEnvironemnt.osInterface.get();
+    Drm *drm = osInterface->getDriverModel()->as<Drm>();
 
     *outHwInfo = *inHwInfo;
-    auto platform = &outHwInfo->platform;
     auto gtSystemInfo = &outHwInfo->gtSystemInfo;
     auto featureTable = &outHwInfo->featureTable;
 
@@ -110,6 +111,7 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
     gtSystemInfo->MaxSubSlicesSupported = std::max(static_cast<uint32_t>(topologyData.maxSubSliceCount * topologyData.maxSliceCount), gtSystemInfo->MaxSubSlicesSupported);
     gtSystemInfo->MaxSlicesSupported = topologyData.maxSliceCount;
 
+    gtSystemInfo->IsDynamicallyPopulated = true;
     for (uint32_t slice = 0; slice < gtSystemInfo->SliceCount; slice++) {
         gtSystemInfo->SliceInfo[slice].Enabled = true;
     }
@@ -127,7 +129,7 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
     int maxGpuFreq = 0;
     drm->getMaxGpuFrequency(*outHwInfo, maxGpuFreq);
 
-    ret = configureHardwareCustom(outHwInfo, osIface);
+    ret = configureHardwareCustom(outHwInfo, osInterface);
     if (ret != 0) {
         *outHwInfo = {};
         return ret;
@@ -138,24 +140,24 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
     outHwInfo->capabilityTable.maxRenderFrequency = maxGpuFreq;
     outHwInfo->capabilityTable.ftrSvm = featureTable->flags.ftrSVM;
 
-    HwHelper &hwHelper = HwHelper::get(platform->eRenderCoreFamily);
+    GfxCoreHelper &gfxCoreHelper = rootDeviceEnvironemnt.getHelper<GfxCoreHelper>();
     outHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
-    hwHelper.adjustDefaultEngineType(outHwInfo);
+    gfxCoreHelper.adjustDefaultEngineType(outHwInfo);
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
     drm->checkQueueSliceSupport();
     drm->checkNonPersistentContextsSupport();
     drm->checkPreemptionSupport();
     bool preemption = drm->isPreemptionSupported();
-    auto compilerHwInfoConfig = CompilerHwInfoConfig::get(outHwInfo->platform.eProductFamily);
+    auto compilerProductHelper = CompilerProductHelper::get(outHwInfo->platform.eProductFamily);
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
-                                                  compilerHwInfoConfig->isMidThreadPreemptionSupported(*outHwInfo) && preemption,
+                                                  compilerProductHelper->isMidThreadPreemptionSupported(*outHwInfo) && preemption,
                                                   static_cast<bool>(outHwInfo->featureTable.flags.ftrGpGpuThreadGroupLevelPreempt) && preemption,
                                                   static_cast<bool>(outHwInfo->featureTable.flags.ftrGpGpuMidBatchPreempt) && preemption);
 
     outHwInfo->capabilityTable.requiredPreemptionSurfaceSize = outHwInfo->gtSystemInfo.CsrSizeInMb * MemoryConstants::megaByte;
-    hwHelper.adjustPreemptionSurfaceSize(outHwInfo->capabilityTable.requiredPreemptionSurfaceSize);
+    gfxCoreHelper.adjustPreemptionSurfaceSize(outHwInfo->capabilityTable.requiredPreemptionSurfaceSize);
 
     auto &kmdNotifyProperties = outHwInfo->capabilityTable.kmdNotifyProperties;
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideEnableKmdNotify.get(), kmdNotifyProperties.enableKmdNotify);
@@ -166,6 +168,10 @@ int HwInfoConfig::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo 
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideDelayQuickKmdSleepForSporadicWaitsMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepForSporadicWaitsMicroseconds);
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideEnableQuickKmdSleepForDirectSubmission.get(), kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideDelayQuickKmdSleepForDirectSubmissionMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
+
+    if (DebugManager.flags.ForceImagesSupport.get() != -1) {
+        outHwInfo->capabilityTable.supportsImages = DebugManager.flags.ForceImagesSupport.get();
+    }
 
     return 0;
 }

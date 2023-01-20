@@ -11,12 +11,7 @@
 #include "shared/source/utilities/logger.h"
 
 #include <algorithm>
-#include <cstddef>
-#include <cstdint>
 #include <functional>
-#include <memory>
-#include <new>
-#include <type_traits>
 
 #ifdef _MSC_VER
 #define ALIGNAS(x) __declspec(align(x))

@@ -13,8 +13,8 @@ namespace NEO {
 
 class PlatformFixture {
   protected:
-    void SetUp();    // NOLINT(readability-identifier-naming)
-    void TearDown(); // NOLINT(readability-identifier-naming)
+    void setUp();
+    void tearDown();
 
     Platform *pPlatform = nullptr;
 

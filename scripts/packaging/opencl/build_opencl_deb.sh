@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -42,7 +42,7 @@ export NEO_OCL_VERSION_BUILD
 if [ -z "${BRANCH_SUFFIX}" ]; then
     VERSION="${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_OCL_VERSION_BUILD}${API_DEB_MODEL_LINK}"
 else
-    VERSION="1:${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_OCL_VERSION_BUILD}.${API_VERSION}-${NEO_OCL_VERSION_HOTFIX}${API_VERSION_SRC}${API_DEB_MODEL_LINK}"
+    VERSION="1:${NEO_OCL_VERSION_MAJOR}.${NEO_OCL_VERSION_MINOR}.${NEO_OCL_VERSION_BUILD}${API_VERSION}-${NEO_OCL_VERSION_HOTFIX}${API_VERSION_SRC}${API_DEB_MODEL_LINK}"
 fi
 
 PKG_VERSION=${VERSION}
@@ -115,6 +115,7 @@ EOF
     export NEO_SKIP_UNIT_TESTS
 
     dch -v ${PKG_VERSION} -m "build $PKG_VERSION" -b
+    ulimit -n 65535 || true
     dpkg-buildpackage -j`nproc --all` -us -uc -b -rfakeroot
     sudo dpkg -i --force-depends ../*.deb
     if [ "${LOG_CCACHE_STATS}" == "1" ]; then

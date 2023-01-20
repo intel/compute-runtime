@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,21 +8,22 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hash.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
-#include "shared/test/unit_test/page_fault_manager/mock_cpu_page_fault_manager.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/context/context.h"
@@ -32,6 +33,7 @@
 #include "opencl/source/gtpin/gtpin_init.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_validators.h"
+#include "opencl/source/helpers/task_information.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/program/create.inl"
@@ -55,7 +57,7 @@ using namespace gtpin;
 
 namespace NEO {
 extern std::deque<gtpinkexec_t> kernelExecQueue;
-extern GTPinHwHelper *gtpinHwHelperFactory[IGFX_MAX_CORE];
+extern GTPinGfxCoreHelper *gtpinGfxCoreHelperFactory[IGFX_MAX_CORE];
 } // namespace NEO
 
 namespace ULT {
@@ -158,22 +160,22 @@ struct MockResidentTestsPageFaultManager : public MockPageFaultManager {
 };
 
 class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
-    using ContextFixture::SetUp;
+    using ContextFixture::setUp;
 
   public:
-    void SetUp() override {
+    void setUp() {
         DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(false);
         setUpImpl();
     }
 
     void setUpImpl() {
         platformsImpl->clear();
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
         constructPlatform();
         pPlatform = platform();
         auto executionEnvironment = pPlatform->peekExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
         memoryManager = new MockMemoryManagerWithFailures(*executionEnvironment);
         memoryManager->pageFaultManager.reset(new MockResidentTestsPageFaultManager());
@@ -182,7 +184,7 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
         pDevice = pPlatform->getClDevice(0);
         rootDeviceIndex = pDevice->getRootDeviceIndex();
         cl_device_id device = pDevice;
-        ContextFixture::SetUp(1, &device);
+        ContextFixture::setUp(1, &device);
 
         driverServices.bufferAllocate = nullptr;
         driverServices.bufferDeallocate = nullptr;
@@ -200,10 +202,10 @@ class GTPinFixture : public ContextFixture, public MemoryManagementFixture {
         kernelOffset = 0;
     }
 
-    void TearDown() override {
-        ContextFixture::TearDown();
+    void tearDown() {
+        ContextFixture::tearDown();
         platformsImpl->clear();
-        MemoryManagementFixture::TearDown();
+        MemoryManagementFixture::tearDown();
         NEO::isGTPinInitialized = false;
     }
 
@@ -715,7 +717,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextIsCreatedThenCorrect
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
     GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
+    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(genFamily);
     EXPECT_EQ(ULT::platformInfo.gen_version, static_cast<gtpin::GTPIN_GEN_VERSION>(gtpinHelper.getGenVersion()));
 
     retVal = clReleaseContext(context);
@@ -723,6 +725,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextIsCreatedThenCorrect
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCallbacksAreCalled) {
+
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -873,6 +881,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsExecutedThenGTPinCa
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGTPinCallbacksAreCalled) {
+
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -1071,6 +1085,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenK
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenGTPinSubmitKernelCallbackIsNotCalled) {
+
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -1185,6 +1205,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenG
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUsedThenGTPinSubmitKernelCallbackIsNotCalled) {
+
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -1308,6 +1334,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUs
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwiceThenGTPinCreateKernelCallbackIsCalledOnce) {
+
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -1471,6 +1503,10 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwice
 }
 
 TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThenOnlyNonNullSurfacesAreMadeResident) {
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -1533,6 +1569,8 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
     auto pCmdQueue = castToObject<CommandQueue>(cmdQ);
 
     gtpinNotifyKernelSubmit(pMultiDeviceKernel1, pCmdQueue);
+
+    ASSERT_NE(0u, kernelExecQueue.size());
     EXPECT_EQ(nullptr, kernelExecQueue[0].gtpinResource);
 
     CommandStreamReceiver &csr = pCmdQueue->getGpgpuCommandStreamReceiver();
@@ -1592,6 +1630,12 @@ TEST_F(GTPinTests, givenMultipleKernelSubmissionsWhenOneOfGtpinSurfacesIsNullThe
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKernelSubmitRelatedNotificationsAreCalled) {
+
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -1739,7 +1783,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Verify that if flush occurs on another queue then our kernel is not flushed to CSR
-    uint32_t taskCount = 11;
+    TaskCountType taskCount = 11;
     gtpinNotifyPreFlushTask(nullptr);
     EXPECT_EQ(1u, kernelExecQueue.size());
     EXPECT_FALSE(kernelExecQueue[0].isTaskCountValid);
@@ -1757,7 +1801,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     EXPECT_EQ(taskCount, kernelExecQueue[0].taskCount);
 
     // Verify that if previous task was completed then it does not affect our kernel
-    uint32_t taskCompleted = taskCount - 1;
+    TaskCountType taskCompleted = taskCount - 1;
     int prevCount4 = CommandBufferCompleteCallbackCount;
     gtpinNotifyTaskCompletion(taskCompleted);
     EXPECT_EQ(1u, kernelExecQueue.size());
@@ -1787,6 +1831,12 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveralTimesThenCorrectBuffersAreMadeResident) {
+
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -2035,6 +2085,11 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThe
 }
 
 TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
+        GTEST_SKIP();
+    }
+
     cl_kernel kernel = nullptr;
     cl_program pProgram = nullptr;
     cl_device_id device = (cl_device_id)pDevice;
@@ -2087,7 +2142,7 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     EXPECT_NE(0u, offsetBTS1);
 
     GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(genFamily);
+    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(genFamily);
     void *pSS1 = gtpinHelper.getSurfaceState(pKernel, 0);
     EXPECT_NE(nullptr, pSS1);
 
@@ -2209,9 +2264,9 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(GTPinTests, WhenGettingGtPinHwHelperThenValidPointerIsReturned) {
+TEST_F(GTPinTests, WhenGettingGtPinGfxCoreHelperThenValidPointerIsReturned) {
     GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    GTPinHwHelper *pGTPinHelper = &GTPinHwHelper::get(genFamily);
+    GTPinGfxCoreHelper *pGTPinHelper = &GTPinGfxCoreHelper::get(genFamily);
     EXPECT_NE(nullptr, pGTPinHelper);
 }
 
@@ -2221,7 +2276,7 @@ TEST(GTPinOfflineTests, givenGtPinInDisabledStateWhenCallbacksFromEnqueuePathAre
     auto dummyQueue = reinterpret_cast<void *>(0x1000);
     uint32_t dummyCompletedTask = 0u;
 
-    //now call gtpin function with dummy data, this must not crash
+    // now call gtpin function with dummy data, this must not crash
     gtpinNotifyKernelSubmit(dummyKernel, dummyQueue);
     gtpinNotifyPreFlushTask(dummyQueue);
     gtpinNotifyTaskCompletion(dummyCompletedTask);
@@ -2391,13 +2446,13 @@ HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushed
 
 class GTPinFixtureWithLocalMemory : public GTPinFixture {
   public:
-    void SetUp() override {
+    void setUp() {
         DebugManager.flags.EnableLocalMemory.set(true);
         DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(true);
         GTPinFixture::setUpImpl();
     }
-    void TearDown() override {
-        GTPinFixture::TearDown();
+    void tearDown() {
+        GTPinFixture::tearDown();
     }
     DebugManagerStateRestore restore;
 };
@@ -2406,7 +2461,7 @@ using GTPinTestsWithLocalMemory = Test<GTPinFixtureWithLocalMemory>;
 
 TEST_F(GTPinTestsWithLocalMemory, whenPlatformHasNoSvmSupportThenGtPinBufferCantBeAllocatedInSharedMemory) {
     DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(-1);
-    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     auto canUseSharedAllocation = gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo());
     if (!pDevice->getHardwareInfo().capabilityTable.ftrSvm) {
         EXPECT_FALSE(canUseSharedAllocation);
@@ -2414,12 +2469,12 @@ TEST_F(GTPinTestsWithLocalMemory, whenPlatformHasNoSvmSupportThenGtPinBufferCant
 }
 
 HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinWithSupportForSharedAllocationWhenGtPinHelperFunctionsAreCalledThenCheckIfSharedAllocationCabBeUsed) {
-    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
         GTEST_SKIP();
     }
 
-    class MockGTPinHwHelperHw : public GTPinHwHelperHw<FamilyType> {
+    class MockGTPinGfxCoreHelperHw : public GTPinGfxCoreHelperHw<FamilyType> {
       public:
         bool canUseSharedAllocation(const HardwareInfo &hwInfo) const override {
             canUseSharedAllocationCalled = true;
@@ -2429,32 +2484,32 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinWithSupportForSharedAllocationWhen
     };
 
     const auto family = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    MockGTPinHwHelperHw mockGTPinHwHelperHw;
-    VariableBackup<GTPinHwHelper *> gtpinHwHelperBackup{&gtpinHwHelperFactory[family], &mockGTPinHwHelperHw};
+    MockGTPinGfxCoreHelperHw mockGTPinGfxCoreHelperHw;
+    VariableBackup<GTPinGfxCoreHelper *> gtpinGfxCoreHelperBackup{&gtpinGfxCoreHelperFactory[family], &mockGTPinGfxCoreHelperHw};
 
     resource_handle_t resource = nullptr;
     cl_context ctxt = (cl_context)((Context *)pContext);
 
-    mockGTPinHwHelperHw.canUseSharedAllocationCalled = false;
+    mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled = false;
     gtpinCreateBuffer((gtpin::context_handle_t)ctxt, 256, &resource);
-    EXPECT_TRUE(mockGTPinHwHelperHw.canUseSharedAllocationCalled);
+    EXPECT_TRUE(mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled);
 
-    mockGTPinHwHelperHw.canUseSharedAllocationCalled = false;
+    mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled = false;
     uint8_t *address = nullptr;
     gtpinMapBuffer((gtpin::context_handle_t)ctxt, resource, &address);
-    EXPECT_TRUE(mockGTPinHwHelperHw.canUseSharedAllocationCalled);
+    EXPECT_TRUE(mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled);
 
-    mockGTPinHwHelperHw.canUseSharedAllocationCalled = false;
+    mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled = false;
     gtpinUnmapBuffer((gtpin::context_handle_t)ctxt, resource);
-    EXPECT_TRUE(mockGTPinHwHelperHw.canUseSharedAllocationCalled);
+    EXPECT_TRUE(mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled);
 
-    mockGTPinHwHelperHw.canUseSharedAllocationCalled = false;
+    mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled = false;
     gtpinFreeBuffer((gtpin::context_handle_t)ctxt, resource);
-    EXPECT_TRUE(mockGTPinHwHelperHw.canUseSharedAllocationCalled);
+    EXPECT_TRUE(mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled);
 }
 
 HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsCreatedThenAllocateBufferInSharedMemory) {
-    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
         GTEST_SKIP();
     }
@@ -2490,8 +2545,10 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuf
 }
 
 HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsAllocatedInSharedMemoryThenSetSurfaceStateForTheBufferAndMakeItResident) {
-    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
-    if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
+    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo()) ||
+        compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
         GTEST_SKIP();
     }
 
@@ -2603,11 +2660,11 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuf
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNotifyKernelSubmitThenMoveToAllocationDomainCalled) {
-    GTPinHwHelper &gtpinHelper = GTPinHwHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
         GTEST_SKIP();
     }
-    class MockGTPinHwHelperHw : public GTPinHwHelperHw<FamilyType> {
+    class MockGTPinGfxCoreHelperHw : public GTPinGfxCoreHelperHw<FamilyType> {
       public:
         void *getSurfaceState(Kernel *pKernel, size_t bti) override {
             return data;
@@ -2626,8 +2683,8 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNot
     static std::unique_ptr<SvmAllocationData> allocDataHandle;
     static std::unique_ptr<MockGraphicsAllocation> mockGAHandle;
     const auto family = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    MockGTPinHwHelperHw mockGTPinHwHelperHw;
-    VariableBackup<GTPinHwHelper *> gtpinHwHelperBackup{&gtpinHwHelperFactory[family], &mockGTPinHwHelperHw};
+    MockGTPinGfxCoreHelperHw mockGTPinGfxCoreHelperHw;
+    VariableBackup<GTPinGfxCoreHelper *> gtpinGfxCoreHelperBackup{&gtpinGfxCoreHelperFactory[family], &mockGTPinGfxCoreHelperHw};
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;

@@ -12,16 +12,11 @@
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/stackvec.h"
 
-#include "igfxfmid.h"
 #include "patch_g7.h"
 #include "patch_list.h"
 #include "patch_shared.h"
-#include "program_debug_data.h"
 
 #include <cstdint>
-#include <limits>
-#include <memory>
-#include <utility>
 
 namespace NEO {
 
@@ -49,7 +44,6 @@ using StackVecStrings = StackVec<const SPatchString *, 4>;
 struct KernelArgFromPatchtokens {
     const SPatchKernelArgumentInfo *argInfo = nullptr;
     const SPatchItemHeader *objectArg = nullptr;
-    const SPatchDataParameterBuffer *objectId = nullptr;
     ArgObjectType objectType = ArgObjectType::None;
     ArgObjectTypeSpecialized objectTypeSpecialized = ArgObjectTypeSpecialized::None;
     StackVecByValMap byValMap;
@@ -131,7 +125,7 @@ struct KernelFromPatchtokens {
         const SPatchAllocateStatelessEventPoolSurface *allocateStatelessEventPoolSurface = nullptr;
         const SPatchAllocateStatelessDefaultDeviceQueueSurface *allocateStatelessDefaultDeviceQueueSurface = nullptr;
         const SPatchAllocateSyncBuffer *allocateSyncBuffer = nullptr;
-        const void *allocateRTGlobalBuffer = nullptr;
+        const SPatchAllocateRTGlobalBuffer *allocateRTGlobalBuffer = nullptr;
         const SPatchItemHeader *inlineVmeSamplerInfo = nullptr;
         const SPatchGtpinFreeGRFInfo *gtpinFreeGrfInfo = nullptr;
         const SPatchStateSIP *stateSip = nullptr;

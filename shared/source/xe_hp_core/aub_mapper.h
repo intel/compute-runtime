@@ -10,7 +10,7 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/xe_hp_core/hw_cmds.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 namespace NEO {
 struct XeHpFamily;

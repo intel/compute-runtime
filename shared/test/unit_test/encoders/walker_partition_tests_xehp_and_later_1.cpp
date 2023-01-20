@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,8 @@
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
     testArgs.partitionCount = 16u;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     checkForProperCmdBufferAddressOffset = false;
     uint64_t gpuVirtualAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
@@ -87,7 +89,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
     auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, batchBufferStart);
     EXPECT_TRUE(batchBufferStart->getPredicationEnable());
-    //address routes to WALKER section which is before control section
+    // address routes to WALKER section which is before control section
     auto address = batchBufferStart->getBatchBufferStartAddress();
     EXPECT_EQ(address, gpuVirtualAddress + expectedCommandUsedSize - walkerSectionCommands);
     parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
@@ -123,7 +125,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
 
     parsedOffset += sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
-    //final batch buffer start that routes at the end of the batch buffer
+    // final batch buffer start that routes at the end of the batch buffer
     auto batchBufferStartFinal = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     EXPECT_NE(nullptr, batchBufferStartFinal);
     EXPECT_EQ(batchBufferStartFinal->getBatchBufferStartAddress(), gpuVirtualAddress + optionalBatchBufferEndOffset);
@@ -157,6 +159,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
     uint64_t cmdBufferGpuAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
     testArgs.workPartitionAllocationGpuVa = 0x8000444000;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     auto walker = createWalker<FamilyType>(postSyncAddress);
 
     uint32_t totalBytesProgrammed{};
@@ -231,6 +235,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAndPreWalkerSyncWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     checkForProperCmdBufferAddressOffset = false;
     testArgs.synchronizeBeforeExecution = true;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -332,6 +338,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
@@ -415,6 +423,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     testArgs.partitionCount = testArgs.tileCount;
     testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -565,6 +574,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     testArgs.partitionCount = testArgs.tileCount;
     testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
@@ -714,6 +725,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     testArgs.useAtomicsForSelfCleanup = true;
     testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
@@ -870,6 +883,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
     testArgs.emitSelfCleanup = true;
     testArgs.useAtomicsForSelfCleanup = true;
     testArgs.staticPartitioning = true;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
@@ -1025,6 +1040,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerParti
     testArgs.tileCount = 4u;
     testArgs.partitionCount = 16u;
     testArgs.emitBatchBufferEnd = true;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t gpuVirtualAddress = 0x8000123000;
@@ -1099,7 +1115,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerParti
     auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, batchBufferStart);
     EXPECT_TRUE(batchBufferStart->getPredicationEnable());
-    //address routes to WALKER section which is before control section
+    // address routes to WALKER section which is before control section
     auto address = batchBufferStart->getBatchBufferStartAddress();
     EXPECT_EQ(address, gpuVirtualAddress + expectedCommandUsedSize - walkerSectionCommands);
     parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
@@ -1128,7 +1144,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerParti
         miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     }
 
-    //final batch buffer start that routes at the end of the batch buffer
+    // final batch buffer start that routes at the end of the batch buffer
     auto batchBufferStartFinal = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     EXPECT_NE(nullptr, batchBufferStartFinal);
     EXPECT_EQ(batchBufferStartFinal->getBatchBufferStartAddress(), gpuVirtualAddress + optionalBatchBufferEndOffset);
@@ -1258,6 +1274,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
     testArgs.staticPartitioning = staticPartitioning;
     testArgs.preferredStaticPartitioning = preferredStaticPartitioning;
     testArgs.workPartitionAllocationGpuVa = 0x800BADA55000;
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
 
     auto expectedCommandUsedSize = sizeof(WalkerPartition::LOAD_REGISTER_IMM<FamilyType>) +
                                    sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) * 2 +
@@ -1319,7 +1336,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
     auto batchBufferStart = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     ASSERT_NE(nullptr, batchBufferStart);
     EXPECT_TRUE(batchBufferStart->getPredicationEnable());
-    //address routes to WALKER section which is before control section
+    // address routes to WALKER section which is before control section
     auto address = batchBufferStart->getBatchBufferStartAddress();
     EXPECT_EQ(address, gpuVirtualAddress + expectedCommandUsedSize - walkerSectionCommands);
     parsedOffset += sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
@@ -1357,7 +1374,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
     EXPECT_EQ(wparidCCSOffset, loadRegisterMem->getRegisterAddress());
     parsedOffset += sizeof(WalkerPartition::LOAD_REGISTER_MEM<FamilyType>);
 
-    //final batch buffer start that routes at the end of the batch buffer
+    // final batch buffer start that routes at the end of the batch buffer
     auto batchBufferStartFinal = genCmdCast<WalkerPartition::BATCH_BUFFER_START<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     EXPECT_NE(nullptr, batchBufferStartFinal);
     EXPECT_EQ(batchBufferStartFinal->getBatchBufferStartAddress(), gpuVirtualAddress + totalProgrammedSize);
@@ -1385,7 +1402,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     uint32_t totalBytesProgrammed = 0u;
     uint64_t gpuVirtualAddress = 0xFF0000;
 
-    auto expectedOffsetSectionSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(testHardwareInfo) +
+    auto expectedOffsetSectionSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(testHardwareInfo, false) +
                                      sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
                                      sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
 
@@ -1409,7 +1426,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(testHardwareInfo);
 
-    if (NEO::MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(testHardwareInfo)) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(testHardwareInfo)) {
         constexpr uint64_t zeroGpuAddress = 0;
         constexpr uint64_t zeroImmediateValue = 0;
         auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1473,7 +1490,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     uint64_t gpuVirtualAddress = 0xFF0000;
 
     auto expectedOffsetSectionSize = sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>) +
-                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(testHardwareInfo) +
+                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(testHardwareInfo, false) +
                                      sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
                                      sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
 
@@ -1509,7 +1526,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(testHardwareInfo);
 
-    if (NEO::MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(testHardwareInfo)) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(testHardwareInfo)) {
         constexpr uint64_t zeroGpuAddress = 0;
         constexpr uint64_t zeroImmediateValue = 0;
         auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1614,7 +1631,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     uint64_t gpuVirtualAddress = 0xFF0000;
 
     auto expectedOffsetSectionSize = sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) +
-                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(testHardwareInfo) +
+                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(testHardwareInfo, false) +
                                      sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
                                      sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
 
@@ -1656,7 +1673,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(testHardwareInfo);
 
-    if (NEO::MemorySynchronizationCommands<FamilyType>::isPipeControlWArequired(testHardwareInfo)) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(testHardwareInfo)) {
         constexpr uint64_t zeroGpuAddress = 0;
         constexpr uint64_t zeroImmediateValue = 0;
         auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));

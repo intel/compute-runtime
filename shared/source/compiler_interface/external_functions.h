@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-
-#include "shared/source/utilities/arrayref.h"
 
 #include <string>
 #include <unordered_map>
@@ -20,7 +18,7 @@ enum ExternalFunctionResolveError : uint32_t {
     RESOLVE_SUCCESS = 0,
     ERROR_EXTERNAL_FUNCTION_INFO_MISSING,
     ERROR_KERNEL_DESCRIPTOR_MISSING,
-    ERROR_LOOP_DETECKTED
+    ERROR_LOOP_DETECTED
 };
 
 struct ExternalFunctionInfo {
@@ -52,24 +50,22 @@ class DependencyResolver {
   public:
     DependencyResolver(const std::vector<std::vector<size_t>> &graph) : graph(graph) {}
     std::vector<size_t> resolveDependencies();
-    inline bool hasLoop() { return loopDeteckted; }
 
   protected:
     void resolveDependency(size_t nodeId, const std::vector<size_t> &edges);
     std::vector<size_t> seen;
     std::vector<size_t> resolved;
     const std::vector<std::vector<size_t>> &graph;
-    bool loopDeteckted = false;
 };
 
-uint32_t resolveBarrierCount(ExternalFunctionInfosT externalFunctionInfos, KernelDependenciesT kernelDependencies,
-                             FunctionDependenciesT funcDependencies, KernelDescriptorMapT &nameToKernelDescriptor);
+uint32_t resolveBarrierCount(const ExternalFunctionInfosT &externalFunctionInfos, const KernelDependenciesT &kernelDependencies,
+                             const FunctionDependenciesT &funcDependencies, const KernelDescriptorMapT &nameToKernelDescriptor);
 
-uint32_t getExtFuncDependencies(FuncNameToIdMapT &funcNameToId, FunctionDependenciesT funcDependencies, size_t numExternalFuncs,
+uint32_t getExtFuncDependencies(const FuncNameToIdMapT &funcNameToId, const FunctionDependenciesT &funcDependencies, size_t numExternalFuncs,
                                 DependenciesT &outDependencies, CalledByT &outCalledBy);
 
-uint32_t resolveExtFuncDependencies(ExternalFunctionInfosT externalFunctionInfos, FuncNameToIdMapT &funcNameToId, FunctionDependenciesT funcDependencies);
+uint32_t resolveExtFuncDependencies(const ExternalFunctionInfosT &externalFunctionInfos, const FuncNameToIdMapT &funcNameToId, const FunctionDependenciesT &funcDependencies);
 
-uint32_t resolveKernelDependencies(ExternalFunctionInfosT externalFunctionInfos, FuncNameToIdMapT &funcNameToId, KernelDependenciesT kernelDependencies, KernelDescriptorMapT &nameToKernelDescriptor);
+uint32_t resolveKernelDependencies(const ExternalFunctionInfosT &externalFunctionInfos, const FuncNameToIdMapT &funcNameToId, const KernelDependenciesT &kernelDependencies, const KernelDescriptorMapT &nameToKernelDescriptor);
 
 } // namespace NEO

@@ -17,3 +17,4 @@ extern std::string binaryNameSuffix;
 
 void retrieveBinaryKernelFilename(std::string &outputFilename, const std::string &kernelName, const std::string &extension, const std::string &options = "");
 void retrieveBinaryKernelFilenameApiSpecific(std::string &outputFilename, const std::string &kernelName, const std::string &extension, const std::string &options = "");
+void appendBinaryNameSuffix(std::string &outputFileNameSuffix);

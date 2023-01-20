@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,18 +7,25 @@
 
 #include "opencl/test/unit_test/xe_hpc_core/xe_hpc_core_test_ocl_fixtures.h"
 
+#include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/engine_control.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
+#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
+
+#include "gtest/gtest.h"
 
 namespace NEO {
 
-void HwHelperTestsXeHpcCore::setupDeviceIdAndRevision(HardwareInfo *hwInfo, ClDevice &clDevice) {
+void ClGfxCoreHelperXeHpcCoreFixture::setupDeviceIdAndRevision(HardwareInfo *hwInfo, ClDevice &clDevice) {
     auto deviceHwInfo = clDevice.getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     deviceHwInfo->platform.usDeviceID = hwInfo->platform.usDeviceID;
     deviceHwInfo->platform.usRevId = hwInfo->platform.usRevId;
 }
-void HwHelperTestsXeHpcCore::checkIfSingleTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInProperMemoryPool(HardwareInfo *hwInfo) {
+void ClGfxCoreHelperXeHpcCoreFixture::checkIfSingleTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInProperMemoryPool(HardwareInfo *hwInfo) {
     const uint32_t numDevices = 4u;
     const uint32_t tileIndex = 2u;
     const DeviceBitfield singleTileMask{static_cast<uint32_t>(1u << tileIndex)};
@@ -46,7 +53,7 @@ void HwHelperTestsXeHpcCore::checkIfSingleTileCsrWhenAllocatingCsrSpecificAlloca
     EXPECT_EQ(commandBufferAllocation->getMemoryPool(), MemoryPool::LocalMemory);
 }
 
-void HwHelperTestsXeHpcCore::checkIfMultiTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInLocalMemoryPool(HardwareInfo *hwInfo) {
+void ClGfxCoreHelperXeHpcCoreFixture::checkIfMultiTileCsrWhenAllocatingCsrSpecificAllocationsThenStoredInLocalMemoryPool(HardwareInfo *hwInfo) {
     const uint32_t numDevices = 4u;
     const DeviceBitfield tile0Mask{0x1};
     ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;

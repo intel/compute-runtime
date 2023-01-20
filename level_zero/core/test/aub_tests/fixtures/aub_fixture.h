@@ -43,9 +43,9 @@ class AUBFixtureL0 {
   public:
     AUBFixtureL0();
     virtual ~AUBFixtureL0();
-    void SetUp();                                                             // NOLINT(readability-identifier-naming)
-    void SetUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEnabled); // NOLINT(readability-identifier-naming)
-    void TearDown();                                                          // NOLINT(readability-identifier-naming)
+    void setUp();
+    void setUp(const NEO::HardwareInfo *hardwareInfo, bool debuggingEnabled);
+    void tearDown();
     static void prepareCopyEngines(NEO::MockDevice &device, const std::string &filename);
 
     template <typename FamilyType>

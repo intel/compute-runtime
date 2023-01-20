@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/test.h"
@@ -48,11 +49,11 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
       public:
         using OsAgnosticMemoryManager::OsAgnosticMemoryManager;
         bool failAlloc = false;
-        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation) override {
+        GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) override {
             if (failAlloc) {
                 return nullptr;
             }
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation);
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation);
             alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;
             return alloc;
@@ -62,7 +63,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
                 return nullptr;
             }
             AllocationProperties properties(rootDeviceIndex, true, 0, AllocationType::INTERNAL_HOST_MEMORY, false, false, 0);
-            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(toOsHandle(handle), properties, false, false);
+            auto alloc = OsAgnosticMemoryManager::createGraphicsAllocationFromSharedHandle(toOsHandle(handle), properties, false, false, true);
             alloc->setDefaultGmm(forceGmm);
             gmmOwnershipPassed = true;
             return alloc;
@@ -97,7 +98,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
     void SetUp() override {
         VariableBackup<UltHwConfig> backup(&ultHwConfig);
         ultHwConfig.useMockedPrepareDeviceEnvironmentsFunc = false;
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
         rootDeviceIndex = pPlatform->getClDevice(0)->getRootDeviceIndex();
         context = new MockContext(pPlatform->getClDevice(0));
         context->preferD3dSharedResources = true;
@@ -134,7 +135,7 @@ class D3DTests : public PlatformFixture, public ::testing::Test {
         if (!mockMM->gmmOwnershipPassed) {
             delete gmm;
         }
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 
     cl_int pickParam(cl_int d3d10, cl_int d3d11) {

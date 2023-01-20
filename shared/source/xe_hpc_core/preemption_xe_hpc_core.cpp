@@ -7,11 +7,12 @@
 
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/preemption.inl"
-#include "shared/source/xe_hpc_core/hw_cmds_base.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 
 namespace NEO {
 
-using GfxFamily = XE_HPC_COREFamily;
+using GfxFamily = XeHpcCoreFamily;
 
 #include "shared/source/command_stream/preemption_xehp_and_later.inl"
 

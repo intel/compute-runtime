@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "third_party/aub_stream/headers/aub_manager.h"
-#include "third_party/aub_stream/headers/aubstream.h"
+#include "aubstream/aubstream.h"
 
 namespace aub_stream_stubs {
 uint16_t tbxServerPort = 4321;
@@ -15,10 +14,6 @@ bool tbxFrontdoorMode = false;
 } // namespace aub_stream_stubs
 
 namespace aub_stream {
-
-AubManager *AubManager::create(uint32_t productFamily, uint32_t devicesCount, uint64_t memoryBankSizeInGB, uint32_t stepping, bool localMemorySupported, uint32_t streamMode, uint64_t gpuAddressSpace) {
-    return nullptr;
-}
 
 extern "C" {
 void injectMMIOList(MMIOList mmioList){};

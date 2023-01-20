@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #include "shared/source/helpers/get_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/raii_hw_helper.h"
 #include "shared/test/common/mocks/mock_driver_info.h"
 #include "shared/test/common/mocks/mock_os_context.h"
-#include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/helpers/raii_hw_helper.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/cl_device/cl_device_info_map.h"
 #include "opencl/source/helpers/cl_hw_helper.h"
@@ -672,12 +672,12 @@ TEST(GetDeviceInfo, WhenQueryingGenericAddressSpaceSupportThenProperValueIsRetur
 }
 
 template <typename GfxFamily, int ccsCount, int bcsCount>
-class MockHwHelper : public HwHelperHw<GfxFamily> {
+class MockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
   public:
     const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
         EngineInstancesContainer result{};
         for (int i = 0; i < ccsCount; i++) {
-            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
+            result.push_back({static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + i), EngineUsage::Regular});
         }
         for (int i = 0; i < bcsCount; i++) {
             result.push_back({aub_stream::ENGINE_BCS, EngineUsage::Regular});
@@ -709,8 +709,8 @@ class MockHwHelper : public HwHelperHw<GfxFamily> {
         return true;
     }
 
-    static auto overrideHwHelper() {
-        return RAIIHwHelperFactory<MockHwHelper<GfxFamily, ccsCount, bcsCount>>{::defaultHwInfo->platform.eRenderCoreFamily};
+    static auto overrideGfxCoreHelper() {
+        return RAIIGfxCoreHelperFactory<MockGfxCoreHelper<GfxFamily, ccsCount, bcsCount>>{::defaultHwInfo->platform.eRenderCoreFamily};
     }
 
     uint64_t disableEngineSupportOnSubDevice = -1; // disabled by default
@@ -720,7 +720,7 @@ class MockHwHelper : public HwHelperHw<GfxFamily> {
 using GetDeviceInfoQueueFamilyTest = ::testing::Test;
 
 HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSingleDeviceWhenInitializingCapsThenReturnCorrectFamilies) {
-    auto raiiHwHelper = MockHwHelper<FamilyType, 3, 1>::overrideHwHelper();
+    auto raiiGfxCoreHelper = MockGfxCoreHelper<FamilyType, 3, 1>::overrideGfxCoreHelper();
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
     UltClDeviceFactory deviceFactory{1, 0};
@@ -743,7 +743,7 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSingleDeviceWhenInitializingCapsThen
 }
 
 HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWhenInitializingCapsThenReturnCorrectFamilies) {
-    auto raiiHwHelper = MockHwHelper<FamilyType, 3, 1>::overrideHwHelper();
+    auto raiiGfxCoreHelper = MockGfxCoreHelper<FamilyType, 3, 1>::overrideGfxCoreHelper();
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
     UltClDeviceFactory deviceFactory{1, 2};
@@ -768,13 +768,13 @@ HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWhenInitializingCapsThenRet
 HWTEST_F(GetDeviceInfoQueueFamilyTest, givenSubDeviceWithoutSupportedEngineWhenInitializingCapsThenReturnCorrectFamilies) {
     constexpr int bcsCount = 1;
 
-    using MockHwHelperT = MockHwHelper<FamilyType, 3, bcsCount>;
+    using MockGfxCoreHelperT = MockGfxCoreHelper<FamilyType, 3, bcsCount>;
 
-    auto raiiHwHelper = MockHwHelperT::overrideHwHelper();
-    MockHwHelperT &mockHwHelper = static_cast<MockHwHelperT &>(raiiHwHelper.mockHwHelper);
+    auto raiiGfxCoreHelper = MockGfxCoreHelperT::overrideGfxCoreHelper();
+    MockGfxCoreHelperT &mockGfxCoreHelper = static_cast<MockGfxCoreHelperT &>(raiiGfxCoreHelper.mockGfxCoreHelper);
 
-    mockHwHelper.disableEngineSupportOnSubDevice = 0b10; // subdevice 1
-    mockHwHelper.disabledSubDeviceEngineType = aub_stream::EngineType::ENGINE_BCS;
+    mockGfxCoreHelper.disableEngineSupportOnSubDevice = 0b10; // subdevice 1
+    mockGfxCoreHelper.disabledSubDeviceEngineType = aub_stream::EngineType::ENGINE_BCS;
 
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
@@ -970,6 +970,7 @@ cl_device_info deviceInfoParams[] = {
     CL_DEVICE_VENDOR_ID,
     CL_DEVICE_VERSION,
     CL_DRIVER_VERSION,
+    CL_DRIVER_UUID_KHR,
 };
 
 INSTANTIATE_TEST_CASE_P(
@@ -1043,7 +1044,7 @@ TEST(GetDeviceInfoTest, givenPciBusInfoIsNotAvailableWhenGettingPciBusInfoForDev
 }
 
 TEST(GetDeviceInfo, givenDeviceUuidWhenGettingDeviceInfoThenGenerateDeviceUuid) {
-    std::array<uint8_t, HwInfoConfig::uuidSize> generateDeviceUuid, deviceUuidKHR;
+    std::array<uint8_t, CL_UUID_SIZE_KHR> generateDeviceUuid, deviceUuidKHR;
     size_t retSize = 0;
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
@@ -1051,6 +1052,19 @@ TEST(GetDeviceInfo, givenDeviceUuidWhenGettingDeviceInfoThenGenerateDeviceUuid) 
     ASSERT_EQ(retVal, CL_SUCCESS);
 
     device.get()->getDevice().generateUuid(generateDeviceUuid);
+    EXPECT_EQ(generateDeviceUuid, deviceUuidKHR);
+}
+
+TEST(GetDeviceInfo, givenDeviceUuidWhenGettingDeviceInfoThenGenerateDeviceUuidFromPci) {
+    std::array<uint8_t, CL_UUID_SIZE_KHR> generateDeviceUuid, deviceUuidKHR;
+    size_t retSize = 0;
+    memset(generateDeviceUuid.data(), 1, CL_UUID_SIZE_KHR);
+
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    device->setPciUuid(generateDeviceUuid);
+    auto retVal = device->getDeviceInfo(CL_DEVICE_UUID_KHR, sizeof(deviceUuidKHR), &deviceUuidKHR, &retSize);
+    ASSERT_EQ(retVal, CL_SUCCESS);
+
     EXPECT_EQ(generateDeviceUuid, deviceUuidKHR);
 }
 
@@ -1083,8 +1097,8 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
         case CL_DEVICE_IP_VERSION_INTEL: {
             auto pDeviceIpVersion = reinterpret_cast<cl_version *>(object.get());
             auto &hwInfo = device.getHardwareInfo();
-            auto &clHwHelper = NEO::ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
-            EXPECT_EQ(clHwHelper.getDeviceIpVersion(hwInfo), *pDeviceIpVersion);
+            auto &clGfxCoreHelper = device.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+            EXPECT_EQ(clGfxCoreHelper.getDeviceIpVersion(hwInfo), *pDeviceIpVersion);
             EXPECT_EQ(sizeof(cl_version), sizeReturned);
             break;
         }
@@ -1124,9 +1138,8 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
         }
         case CL_DEVICE_FEATURE_CAPABILITIES_INTEL: {
             auto pCapabilities = reinterpret_cast<cl_device_feature_capabilities_intel *>(object.get());
-            auto &hwInfo = device.getHardwareInfo();
-            auto &clHwHelper = ClHwHelper::get(hwInfo.platform.eRenderCoreFamily);
-            EXPECT_EQ(clHwHelper.getSupportedDeviceFeatureCapabilities(hwInfo), *pCapabilities);
+            auto &clGfxCoreHelper = device.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+            EXPECT_EQ(clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(device.getRootDeviceEnvironment()), *pCapabilities);
             EXPECT_EQ(sizeof(cl_device_feature_capabilities_intel), sizeReturned);
             break;
         }

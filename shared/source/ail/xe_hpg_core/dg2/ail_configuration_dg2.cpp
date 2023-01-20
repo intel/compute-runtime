@@ -1,19 +1,18 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/ail/ail_configuration.h"
 #include "shared/source/ail/ail_configuration_base.inl"
+#include "shared/source/helpers/hw_info.h"
 
 #include <algorithm>
 #include <map>
-#include <string>
-#include <vector>
 
 namespace NEO {
+
 static EnableAIL<IGFX_DG2> enableAILDG2;
 
 std::map<std::string_view, std::vector<AILEnumeration>> applicationMapDG2 = {
@@ -63,7 +62,7 @@ void AILConfigurationHw<IGFX_DG2>::modifyKernelIfRequired(std::string &kernelsSo
 
     if (it != applicationsKernelFixesDG2.end()) {
 
-        if (sourcesContainKernel(kernelsSources, it->kernelName) && isKernelHashCorrect(kernelsSources, it->kernelHash)) {
+        if (sourcesContain(kernelsSources, it->kernelName) && isKernelHashCorrect(kernelsSources, it->kernelHash)) {
             kernelsSources.insert(it->fixStartPosition, it->fixCode);
         }
     }

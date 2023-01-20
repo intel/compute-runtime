@@ -5,6 +5,7 @@
 %global rel xxx
 %global build_id xxx
 %global NEO_RELEASE_WITH_REGKEYS FALSE
+%global I915_HEADERS_DIR %{nil}
 
 %define gmmlib_sover 12
 %define igc_sover 1
@@ -24,11 +25,14 @@ Summary: Intel(R) GPU Driver for oneAPI Level Zero.
 Group: System Environment/Libraries
 License: MIT
 URL: https://github.com/intel/compute-runtime
-Source0: %{url}/archive/%{version}/compute-runtime-%{version}.tar.xz
+Source0: %{url}/archive/%{version}/compute-runtime.tar.xz
 Source1: copyright
+%if "%{I915_HEADERS_DIR}" != ""
+Source2: uapi.tar.xz
+%endif
 
 ExclusiveArch:  x86_64
-BuildRequires:  cmake make gcc-c++
+BuildRequires:  cmake gcc-c++ ninja make
 #BuildRequires:  libva-devel
 BuildRequires:  libigdgmm%{?name_suffix}-devel
 BuildRequires:  libigdfcl%{?name_suffix}-devel
@@ -45,49 +49,52 @@ libraries. Level Zero offers fine-grain control over accelerators capabilities,
 delivering a simplified and low-latency interface to hardware, and efficiently
 exposing hardware capabilities to applications.
 
-%debug_package
+%debug_package %{nil}
 
 %prep
-%autosetup -p1 -n compute-runtime-%{version}
+%if "%{I915_HEADERS_DIR}" == ""
+%autosetup -p1 -n compute-runtime
+%else
+%autosetup -p1 -n compute-runtime -b 2
+%endif
 
 %build
 %cmake .. \
+   -GNinja ${NEO_BUILD_EXTRA_OPTS} \
    -DNEO_VERSION_BUILD=%{build_id} \
    -DCMAKE_BUILD_TYPE=%{build_type} \
-   -DCMAKE_INSTALL_PREFIX=/usr \
    -DNEO_BUILD_WITH_OCL=FALSE \
    -DNEO_SKIP_UNIT_TESTS=TRUE \
    -DNEO_ENABLE_i915_PRELIM_DETECTION=TRUE \
+   -DNEO_ENABLE_XE_DRM_DETECTION=TRUE \
    -DRELEASE_WITH_REGKEYS=%{NEO_RELEASE_WITH_REGKEYS} \
    -DL0_INSTALL_UDEV_RULES=1 \
    -DUDEV_RULES_DIR=/etc/udev/rules.d/ \
-   -Wno-dev
-%make_build
+   -DCMAKE_VERBOSE_MAKEFILE=FALSE \
+   -DI915_HEADERS_DIR=$(realpath %{I915_HEADERS_DIR})
+%ninja_build
 
 %install
 cd build
-%make_install
+%ninja_install
 
-#Remove OpenCL files before installing
-rm -rf %{buildroot}%{_libdir}/intel-opencl/
-rm -rf %{buildroot}%{_sysconfdir}/OpenCL/
-rm -rf %{buildroot}%{_bindir}/ocloc
-rm -rf %{buildroot}%{_libdir}/libocloc.so
-rm -rf %{buildroot}%{_includedir}/ocloc_api.h
+#Remove OpenCL files
+rm -rvf %{buildroot}%{_libdir}/intel-opencl/
+rm -rvf %{buildroot}%{_sysconfdir}/OpenCL/
+rm -rvf %{buildroot}%{_bindir}/ocloc
+rm -rvf %{buildroot}%{_libdir}/libocloc.so
+rm -rvf %{buildroot}%{_includedir}/ocloc_api.h
 #Remove debug files
-rm -f %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
-rm -f %{buildroot}/%{_libdir}/libocloc.so.debug
-rm -rf %{buildroot}/usr/lib/debug/
+rm -vf %{buildroot}/%{_libdir}/intel-opencl/libigdrcl.so.debug
+rm -vf %{buildroot}/%{_libdir}/libocloc.so.debug
+rm -rvf %{buildroot}/usr/lib/debug/
 #insert license into package
 mkdir -p %{buildroot}/usr/share/doc/intel-level-zero-gpu%{?name_suffix}/
-cp -pR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-level-zero-gpu%{?name_suffix}/.
+cp -pvR %{_sourcedir}/copyright %{buildroot}/usr/share/doc/intel-level-zero-gpu%{?name_suffix}/.
 
 %files -n intel-level-zero-gpu%{?name_suffix}
 %defattr(-,root,root)
 %{_libdir}/libze_intel_gpu.so.*
-%{_sharedstatedir}/libze_intel_gpu/pci_bind_status_file
-%{_sharedstatedir}/libze_intel_gpu/wedged_file
-%{_sysconfdir}/udev/rules.d/99-drm_ze_intel_gpu.rules
 /usr/share/doc/intel-level-zero-gpu%{?name_suffix}/copyright
 %config(noreplace)
 

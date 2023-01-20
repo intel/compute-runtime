@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,15 +9,19 @@
 #include "shared/source/aub_mem_dump/page_table_entry_bits.h"
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/memory_manager/address_mapper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 
-#include "third_party/aub_stream/headers/aub_manager.h"
+#include "aubstream/aub_manager.h"
 
 namespace NEO {
 
@@ -38,6 +42,10 @@ void CommandStreamReceiverSimulatedCommonHw<GfxFamily>::setupContext(OsContext &
     auto engineType = osContext.getEngineType();
     uint32_t flags = 0;
     getCsTraits(engineType).setContextSaveRestoreFlags(flags);
+
+    if (DebugManager.flags.AppendAubStreamContextFlags.get() != -1) {
+        flags |= static_cast<uint32_t>(DebugManager.flags.AppendAubStreamContextFlags.get());
+    }
 
     if (aubManager && !osContext.isLowPriority()) {
         hardwareContextController = std::make_unique<HardwareContextController>(*aubManager, osContext, flags);

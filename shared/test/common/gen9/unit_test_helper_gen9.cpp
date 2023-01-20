@@ -12,7 +12,7 @@
 #include "shared/test/common/helpers/unit_test_helper_bdw_and_later.inl"
 
 namespace NEO {
-using Family = SKLFamily;
+using Family = Gen9Family;
 
 template <>
 bool UnitTestHelper<Family>::isPipeControlWArequired(const HardwareInfo &hwInfo) {

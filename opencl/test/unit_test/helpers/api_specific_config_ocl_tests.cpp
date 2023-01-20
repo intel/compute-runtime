@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/compression_selector.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -32,12 +33,20 @@ TEST(ApiSpecificConfigOclTests, WhenCheckingIfStatelessCompressionIsSupportedThe
     EXPECT_TRUE(ApiSpecificConfig::isStatelessCompressionSupported());
 }
 
+TEST(ApiSpecificConfigOclTests, WhenCheckingIfBcsSplitWaIsSupportedThenReturnTrue) {
+    EXPECT_TRUE(ApiSpecificConfig::isBcsSplitWaSupported());
+}
+
 TEST(ApiSpecificConfigOclTests, givenMaxAllocSizeWhenGettingReducedMaxAllocSizeThenReturnHalfOfThat) {
     EXPECT_EQ(512u, ApiSpecificConfig::getReducedMaxAllocSize(1024));
 }
 
 TEST(ApiSpecificConfigOclTests, WhenGettingRegistryPathThenOclRegistryPathIsReturned) {
     EXPECT_STREQ(oclRegPath, ApiSpecificConfig::getRegistryPath());
+}
+
+TEST(ApiSpecificConfigOclTests, WhenCheckingIfDeviceAllocationCacheIsEnabledThenReturnFalse) {
+    EXPECT_FALSE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
 }
 
 TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingSvmGpuAllocationThenPreferCompressedBuffer) {
@@ -50,7 +59,7 @@ TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingSvmG
                                     AllocationType::SVM_GPU,
                                     deviceBitfield);
 
-    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo));
+    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }
 
 TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingPrintfSurfaceThenPreferCompressedBuffer) {
@@ -63,6 +72,6 @@ TEST(ApiSpecificConfigOclTests, givenEnableStatelessCompressionWhenProvidingPrin
                                     AllocationType::PRINTF_SURFACE,
                                     deviceBitfield);
 
-    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties, *defaultHwInfo));
+    EXPECT_TRUE(NEO::CompressionSelector::preferCompressedAllocation(properties));
 }
 } // namespace NEO

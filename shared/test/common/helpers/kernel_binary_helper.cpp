@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/libult/global_environment.h"
 
@@ -20,7 +21,10 @@ KernelBinaryHelper::KernelBinaryHelper(const std::string &name, bool appendOptio
     MockCompilerDebugVars igcDebugVars;
 
     retrieveBinaryKernelFilename(fclDebugVars.fileName, name + "_", ".bc");
-    retrieveBinaryKernelFilename(igcDebugVars.fileName, name + "_", ".gen");
+    retrieveBinaryKernelFilename(igcDebugVars.fileName, name + "_", ".bin");
+
+    appendBinaryNameSuffix(fclDebugVars.fileNameSuffix);
+    appendBinaryNameSuffix(igcDebugVars.fileNameSuffix);
 
     fclDebugVars.appendOptionsToFileName = appendOptionsToFileName;
     igcDebugVars.appendOptionsToFileName = appendOptionsToFileName;

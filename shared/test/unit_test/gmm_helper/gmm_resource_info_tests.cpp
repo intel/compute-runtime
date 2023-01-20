@@ -8,12 +8,14 @@
 #include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
-extern PRODUCT_FAMILY productFamily;
+using namespace NEO;
 
 struct MockGmmHandleAllocator : NEO::GmmHandleAllocator {
     void *createHandle(const GMM_RESOURCE_INFO *gmmResourceInfo) override {
@@ -39,9 +41,9 @@ struct MockGmmHandleAllocator : NEO::GmmHandleAllocator {
 };
 
 TEST(GmmResourceInfo, WhenGmmHandleAllocatorIsPresentThenItsBeingUsedForCreatingGmmResourceInfoHandles) {
-    NEO::HardwareInfo hwInfo;
-    hwInfo.platform.eProductFamily = productFamily;
-    NEO::MockGmmClientContext gmmClientCtx{nullptr, &hwInfo};
+    auto hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment executionEnvironment{&hwInfo};
+    NEO::MockGmmClientContext gmmClientCtx{*executionEnvironment.rootDeviceEnvironments[0]};
     gmmClientCtx.setHandleAllocator(std::make_unique<MockGmmHandleAllocator>());
     auto handleAllocator = static_cast<MockGmmHandleAllocator *>(gmmClientCtx.getHandleAllocator());
 
@@ -72,9 +74,9 @@ TEST(GmmResourceInfo, WhenGmmHandleAllocatorIsPresentThenItsBeingUsedForCreating
 }
 
 TEST(GmmResourceInfo, GivenGmmResourceInfoAndHandleAllocatorInClientContextWhenDecodingResourceInfoThenExistingHandleIsOpened) {
-    NEO::HardwareInfo hwInfo;
-    hwInfo.platform.eProductFamily = productFamily;
-    NEO::MockGmmClientContext gmmClientCtx{nullptr, &hwInfo};
+    auto hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment executionEnvironment{&hwInfo};
+    NEO::MockGmmClientContext gmmClientCtx{*executionEnvironment.rootDeviceEnvironments[0]};
     gmmClientCtx.setHandleAllocator(std::make_unique<MockGmmHandleAllocator>());
     auto handleAllocator = static_cast<MockGmmHandleAllocator *>(gmmClientCtx.getHandleAllocator());
 
@@ -95,10 +97,9 @@ TEST(GmmResourceInfo, GivenGmmResourceInfoAndHandleAllocatorInClientContextWhenD
     auto resInfo2 = static_cast<NEO::MockGmmResourceInfo *>(NEO::GmmResourceInfo::create(nullptr, reinterpret_cast<GMM_RESOURCE_INFO *>(resInfo), true));
     ASSERT_NE(nullptr, resInfo2);
     resInfo2->clientContext = &gmmClientCtx;
-    auto resourceInfoPtr = resInfo2->clientContext->copyResInfoObject(static_cast<GMM_RESOURCE_INFO *>(resInfo->GmmResourceInfo::peekHandle()));
-    resInfo2->decodeResourceInfo(resourceInfoPtr, static_cast<GMM_RESOURCE_INFO *>(resInfo->GmmResourceInfo::peekHandle()));
+    resInfo2->decodeResourceInfo(static_cast<GMM_RESOURCE_INFO *>(resInfo->GmmResourceInfo::peekHandle()));
 
-    EXPECT_EQ(1U, created.size());
+    EXPECT_EQ(2U, created.size());
     EXPECT_EQ(1U, opened.size());
     EXPECT_EQ(0U, destroyed.size());
 
@@ -116,7 +117,7 @@ TEST(GmmResourceInfo, GivenGmmResourceInfoAndHandleAllocatorInClientContextWhenD
 
     resInfo2->refreshHandle();
 
-    EXPECT_EQ(1U, created.size());
+    EXPECT_EQ(2U, created.size());
     EXPECT_EQ(2U, opened.size());
     EXPECT_EQ(0U, destroyed.size());
     EXPECT_EQ(1u, resInfo2->refreshHandleCalled);
@@ -124,8 +125,67 @@ TEST(GmmResourceInfo, GivenGmmResourceInfoAndHandleAllocatorInClientContextWhenD
     delete resInfo;
     delete resInfo2;
 
-    EXPECT_EQ(1U, created.size());
+    EXPECT_EQ(2U, created.size());
     EXPECT_EQ(2U, opened.size());
+    EXPECT_EQ(2U, destroyed.size());
+    EXPECT_NE(destroyed.end(), std::find(destroyed.begin(), destroyed.end(), handle));
+}
+
+TEST(GmmResourceInfo, GivenResourceInfoWhenRefreshIsCalledTiwceThenOpenHandleIsCalledTwice) {
+    auto hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment executionEnvironment{&hwInfo};
+    NEO::MockGmmClientContext gmmClientCtx{*executionEnvironment.rootDeviceEnvironments[0]};
+    gmmClientCtx.setHandleAllocator(std::make_unique<MockGmmHandleAllocator>());
+    auto handleAllocator = static_cast<MockGmmHandleAllocator *>(gmmClientCtx.getHandleAllocator());
+
+    GMM_RESCREATE_PARAMS createParams = {};
+    createParams.Type = RESOURCE_BUFFER;
+    createParams.Format = GMM_FORMAT_R8G8B8A8_SINT;
+    auto resInfo = static_cast<NEO::MockGmmResourceInfo *>(NEO::GmmResourceInfo::create(nullptr, &createParams));
+    ASSERT_NE(nullptr, resInfo);
+    resInfo->clientContext = &gmmClientCtx;
+    resInfo->createResourceInfo(nullptr);
+
+    auto &created = handleAllocator->createdHandles;
+    auto &opened = handleAllocator->openedHandles;
+    auto &destroyed = handleAllocator->destroyedHandles;
+
+    EXPECT_EQ(0U, opened.size());
+
+    auto resInfo2 = static_cast<NEO::MockGmmResourceInfo *>(NEO::GmmResourceInfo::create(nullptr, reinterpret_cast<GMM_RESOURCE_INFO *>(resInfo), true));
+    ASSERT_NE(nullptr, resInfo2);
+    resInfo2->clientContext = &gmmClientCtx;
+    resInfo2->decodeResourceInfo(static_cast<GMM_RESOURCE_INFO *>(resInfo->GmmResourceInfo::peekHandle()));
+
+    EXPECT_EQ(2U, created.size());
+    EXPECT_EQ(1U, opened.size());
+    EXPECT_EQ(0U, destroyed.size());
+
+    EXPECT_EQ(handleAllocator->getHandleSize(), resInfo->GmmResourceInfo::peekHandleSize());
+
+    auto handle = resInfo->GmmResourceInfo::peekHandle();
+    EXPECT_NE(nullptr, handle);
+    EXPECT_NE(created.end(), std::find(created.begin(), created.end(), handle));
+    EXPECT_NE(opened.end(), std::find(opened.begin(), opened.end(), handle));
+
+    auto handle2 = resInfo2->GmmResourceInfo::peekHandle();
+    EXPECT_NE(nullptr, handle2);
+
+    EXPECT_EQ(0u, resInfo2->refreshHandleCalled);
+
+    resInfo2->refreshHandle();
+    resInfo2->refreshHandle();
+
+    EXPECT_EQ(2U, created.size());
+    EXPECT_EQ(3U, opened.size());
+    EXPECT_EQ(0U, destroyed.size());
+    EXPECT_EQ(2u, resInfo2->refreshHandleCalled);
+
+    delete resInfo;
+    delete resInfo2;
+
+    EXPECT_EQ(2U, created.size());
+    EXPECT_EQ(3U, opened.size());
     EXPECT_EQ(2U, destroyed.size());
     EXPECT_NE(destroyed.end(), std::find(destroyed.begin(), destroyed.end(), handle));
 }
@@ -147,23 +207,28 @@ TEST(GmmResourceInfo, GivenEmptyHandleWhenUsingBaseHandleAllocatorThenOpenHandle
 }
 
 TEST(GmmHelperTests, WhenInitializingGmmHelperThenCorrectAddressWidthIsSet) {
-    auto hwInfo = *NEO::defaultHwInfo;
+    auto hwInfo = *defaultHwInfo;
+    {
+        hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48);
+        MockExecutionEnvironment executionEnvironment{&hwInfo};
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
-    hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(48);
-    auto gmmHelper = std::make_unique<NEO::GmmHelper>(nullptr, &hwInfo);
+        auto addressWidth = gmmHelper->getAddressWidth();
+        EXPECT_EQ(48u, addressWidth);
+    }
+    {
+        hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(36);
+        MockExecutionEnvironment executionEnvironment{&hwInfo};
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
 
-    auto addressWidth = gmmHelper->getAddressWidth();
-    EXPECT_EQ(48u, addressWidth);
-
-    hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(36);
-    gmmHelper = std::make_unique<NEO::GmmHelper>(nullptr, &hwInfo);
-
-    addressWidth = gmmHelper->getAddressWidth();
-    EXPECT_EQ(48u, addressWidth);
-
-    hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(57);
-    gmmHelper = std::make_unique<NEO::GmmHelper>(nullptr, &hwInfo);
-
-    addressWidth = gmmHelper->getAddressWidth();
-    EXPECT_EQ(57u, addressWidth);
+        auto addressWidth = gmmHelper->getAddressWidth();
+        EXPECT_EQ(48u, addressWidth);
+    }
+    {
+        hwInfo.capabilityTable.gpuAddressSpace = maxNBitValue(57);
+        MockExecutionEnvironment executionEnvironment{&hwInfo};
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[0]->getGmmHelper();
+        auto addressWidth = gmmHelper->getAddressWidth();
+        EXPECT_EQ(57u, addressWidth);
+    }
 }

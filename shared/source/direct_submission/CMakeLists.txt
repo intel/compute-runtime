@@ -17,6 +17,7 @@ set(NEO_CORE_DIRECT_SUBMISSION
     ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_hw_diagnostic_mode.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_hw_diagnostic_mode.h
     ${CMAKE_CURRENT_SOURCE_DIR}/direct_submission_properties.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/relaxed_ordering_helper.h
 )
 
 if(SUPPORT_XEHP_AND_LATER)

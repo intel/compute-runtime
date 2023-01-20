@@ -12,11 +12,10 @@
 #include <iostream>
 #include <memory>
 
-bool verbose = false;
-
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Multidev";
     verbose = isVerbose(argc, argv);
-
+    bool aubMode = isAubMode(argc, argv);
     // Set-up
     constexpr size_t allocSize = 4096;
     constexpr size_t bytesPerThread = sizeof(char);
@@ -89,7 +88,7 @@ int main(int argc, char *argv[]) {
     kernel.resize(deviceCount);
 
     std::string buildLog;
-    auto moduleBinary = compileToSpirV(const_cast<const char *>(memcpyBytesTestKernelSrc), "", buildLog);
+    auto moduleBinary = compileToSpirV(memcpyBytesTestKernelSrc, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -124,7 +123,7 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeKernelCreate(module[i], &kernelDesc, &kernel[i]));
     }
 
-    // ITERATE OVER DEVICES and Launch the function
+    // iterate over devices and launch the kernel
     for (uint32_t i = 0; i < deviceCount; i++) {
         std::cout << "Launching kernels for device " << i << " " << deviceNames[i] << "\n";
         uint32_t groupSizeX = 32u;
@@ -170,10 +169,10 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(
             cmdList[i], dstBuffer, initDataDst, sizeof(initDataDst), nullptr, 0, nullptr));
 
-        // copying of data must finish before running the user function
+        // copying of data must finish before running the user kernel
         SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList[i], nullptr, 0, nullptr));
 
-        // Set function args and get ready to dispatch
+        // set kernel args and get ready to dispatch
         SUCCESS_OR_TERMINATE(
             zeKernelSetArgumentValue(kernel[i], 0, sizeof(dstBuffer), &dstBuffer));
         SUCCESS_OR_TERMINATE(
@@ -192,7 +191,7 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeCommandListAppendLaunchKernel(
             cmdList[i], kernel[i], &dispatchTraits, nullptr, 0, nullptr));
 
-        // Barrier to complete function
+        // barrier to complete kernel
         uint8_t readBackData[allocSize];
         memset(readBackData, 2, sizeof(readBackData));
         SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList[i], nullptr, 0, nullptr));
@@ -231,11 +230,13 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue[i]));
     }
 
-    bool aubMode = isAubMode(argc, argv);
+    SUCCESS_OR_TERMINATE(zeContextDestroy(context));
+
     if (aubMode == false) {
         std::cout << "\nZello Multidev Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED")
                   << std::endl;
     }
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
     int resultOnFailure = aubMode ? 0 : 1;
     return outputValidationSuccessful ? 0 : resultOnFailure;
 }

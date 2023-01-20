@@ -1,16 +1,17 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 using namespace NEO;
@@ -27,7 +28,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithGreaterSizeT
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
-    size_t isaPadding = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getPaddingForISAAllocation();
+    auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(firstAllocationSize, initialHeapSize + isaPadding);
 
     auto firstAllocationId = static_cast<MemoryAllocation *>(firstAllocation)->id;
@@ -58,7 +60,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSameSizeThen
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
-    size_t isaPadding = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getPaddingForISAAllocation();
+    auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(firstAllocationSize, initialHeapSize + isaPadding);
 
     auto firstAllocationId = static_cast<MemoryAllocation *>(firstAllocation)->id;
@@ -88,7 +91,8 @@ TEST_F(KernelSubstituteTest, givenKernelWhenSubstituteKernelHeapWithSmallerSizeT
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
     EXPECT_NE(nullptr, firstAllocation);
     auto firstAllocationSize = firstAllocation->getUnderlyingBufferSize();
-    size_t isaPadding = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getPaddingForISAAllocation();
+    auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    size_t isaPadding = helper.getPaddingForISAAllocation();
     EXPECT_EQ(firstAllocationSize, initialHeapSize + isaPadding);
 
     auto firstAllocationId = static_cast<MemoryAllocation *>(firstAllocation)->id;
@@ -119,7 +123,7 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
     kernel.kernelInfo.createKernelAllocation(*pDevice, false);
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
 
-    uint32_t notReadyTaskCount = *commandStreamReceiver.getTagAddress() + 1u;
+    TaskCountType notReadyTaskCount = *commandStreamReceiver.getTagAddress() + 1u;
 
     firstAllocation->updateTaskCount(notReadyTaskCount, commandStreamReceiver.getOsContext().getContextId());
 
@@ -127,12 +131,14 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
     char newHeap[newHeapSize];
 
     EXPECT_TRUE(commandStreamReceiver.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_TRUE(commandStreamReceiver.getDeferredAllocations().peekIsEmpty());
 
     kernel.mockKernel->substituteKernelHeap(newHeap, newHeapSize);
     auto secondAllocation = kernel.kernelInfo.kernelAllocation;
 
-    EXPECT_FALSE(commandStreamReceiver.getTemporaryAllocations().peekIsEmpty());
-    EXPECT_EQ(commandStreamReceiver.getTemporaryAllocations().peekHead(), firstAllocation);
+    EXPECT_TRUE(commandStreamReceiver.getTemporaryAllocations().peekIsEmpty());
+    EXPECT_FALSE(commandStreamReceiver.getDeferredAllocations().peekIsEmpty());
+    EXPECT_EQ(commandStreamReceiver.getDeferredAllocations().peekHead(), firstAllocation);
     memoryManager->checkGpuUsageAndDestroyGraphicsAllocations(secondAllocation);
     commandStreamReceiver.getInternalAllocationStorage()->cleanAllocationList(notReadyTaskCount, TEMPORARY_ALLOCATION);
 }

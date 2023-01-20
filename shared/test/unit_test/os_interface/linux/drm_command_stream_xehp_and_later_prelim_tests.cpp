@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,13 @@
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/sys_calls_common.h"
+#include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture_prelim.h"
 #include "shared/test/common/os_interface/linux/drm_command_stream_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_memory_manager_prelim_fixtures.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include <sstream>
 
@@ -73,7 +74,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenEnableImmediateVm
     LinearStream cs(commandBuffer);
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     csr->makeResident(*allocation);
@@ -103,7 +104,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenDirectSubmissionE
     LinearStream cs(commandBuffer);
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     auto allocation = mm->allocateGraphicsMemoryWithProperties(MockAllocationProperties{csr->getRootDeviceIndex(), MemoryConstants::pageSize});
     csr->makeResident(*allocation);
@@ -141,7 +142,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     testDrmCsr->useContextForUserFenceWait = true;
     testDrmCsr->activePartitions = static_cast<uint32_t>(drmCtxSize);
 
-    uint64_t tagAddress = castToUint64(const_cast<uint32_t *>(testDrmCsr->getTagAddress()));
+    uint64_t tagAddress = castToUint64(const_cast<TagAddressType *>(testDrmCsr->getTagAddress()));
     FlushStamp handleToWait = 123;
     testDrmCsr->waitForFlushStamp(handleToWait);
 
@@ -154,7 +155,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     EXPECT_NE(0u, mock->context.receivedGemWaitUserFence.ctxId);
     EXPECT_EQ(DrmPrelimHelper::getGTEWaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.op);
     EXPECT_EQ(0u, mock->context.receivedGemWaitUserFence.flags);
-    EXPECT_EQ(DrmPrelimHelper::getU32WaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.mask);
+    EXPECT_EQ(DrmPrelimHelper::getU64WaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.mask);
     EXPECT_EQ(-1, mock->context.receivedGemWaitUserFence.timeout);
 }
 
@@ -174,7 +175,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     testDrmCsr->useUserFenceWait = true;
     testDrmCsr->useContextForUserFenceWait = false;
 
-    uint64_t tagAddress = castToUint64(const_cast<uint32_t *>(testDrmCsr->getTagAddress()));
+    uint64_t tagAddress = castToUint64(const_cast<TaskCountType *>(testDrmCsr->getTagAddress()));
     FlushStamp handleToWait = 123;
     testDrmCsr->waitForFlushStamp(handleToWait);
 
@@ -187,7 +188,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     EXPECT_EQ(0u, mock->context.receivedGemWaitUserFence.ctxId);
     EXPECT_EQ(DrmPrelimHelper::getGTEWaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.op);
     EXPECT_EQ(0u, mock->context.receivedGemWaitUserFence.flags);
-    EXPECT_EQ(DrmPrelimHelper::getU32WaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.mask);
+    EXPECT_EQ(DrmPrelimHelper::getU64WaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.mask);
     EXPECT_EQ(-1, mock->context.receivedGemWaitUserFence.timeout);
 }
 
@@ -209,7 +210,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     testDrmCsr->activePartitions = 2u;
     EXPECT_NE(0u, testDrmCsr->postSyncWriteOffset);
 
-    uint64_t tagAddress = castToUint64(const_cast<uint32_t *>(testDrmCsr->getTagAddress()));
+    uint64_t tagAddress = castToUint64(const_cast<TagAddressType *>(testDrmCsr->getTagAddress()));
     FlushStamp handleToWait = 123;
     testDrmCsr->waitForFlushStamp(handleToWait);
 
@@ -222,7 +223,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamEnhancedTestDrmPrelim, givenWaitUserFenceEnab
     EXPECT_EQ(0u, mock->context.receivedGemWaitUserFence.ctxId);
     EXPECT_EQ(DrmPrelimHelper::getGTEWaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.op);
     EXPECT_EQ(0u, mock->context.receivedGemWaitUserFence.flags);
-    EXPECT_EQ(DrmPrelimHelper::getU32WaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.mask);
+    EXPECT_EQ(DrmPrelimHelper::getU64WaitUserFenceFlag(), mock->context.receivedGemWaitUserFence.mask);
     EXPECT_EQ(-1, mock->context.receivedGemWaitUserFence.timeout);
 }
 
@@ -275,7 +276,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
             : DrmCommandStreamReceiver<GfxFamily>(executionEnvironment, rootDeviceIndex, deviceBitfield, mode), expectedHandleId(inputHandleId) {
         }
 
-        void processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override {
+        SubmissionStatus processResidency(const ResidencyContainer &allocationsForResidency, uint32_t handleId) override {
             EXPECT_EQ(handleId, expectedHandleId);
             return DrmCommandStreamReceiver<GfxFamily>::processResidency(allocationsForResidency, handleId);
         }
@@ -293,9 +294,11 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
         executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock, 0u);
         executionEnvironment.rootDeviceEnvironments[0]->initGmm();
 
-        mock->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(hwInfo));
-        osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex,
-                                                     EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+        mock->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(hwInfo));
+
+        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        osContext = std::make_unique<OsContextLinux>(*mock, rootDeviceIndex, 0,
+                                                     EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*hwInfo), DeviceBitfield(3)));
         osContext->ensureContextInitialized();
 
@@ -313,7 +316,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
                                              executionEnvironment);
         executionEnvironment.memoryManager.reset(memoryManager);
 
-        //assert we have memory manager
+        // assert we have memory manager
         ASSERT_NE(nullptr, memoryManager);
     }
 
@@ -324,7 +327,7 @@ class DrmCommandStreamForceTileTest : public ::testing::Test {
         delete csr;
         // Expect 2 calls with DRM_IOCTL_I915_GEM_CONTEXT_DESTROY request on OsContextLinux destruction
         // Expect 1 call with DRM_IOCTL_GEM_CLOSE request on BufferObject close
-        mock->expectedIoctlCallsOnDestruction = mock->ioctlCallsCount + 3;
+        mock->expectedIoctlCallsOnDestruction = mock->ioctlCallsCount + 3 + static_cast<uint32_t>(mock->virtualMemoryIds.size());
         mock->expectIoctlCallsOnDestruction = true;
     }
 
@@ -350,11 +353,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamForceTileTest, givenForceExecutionTileThenCor
     auto &cs = csr->getCS();
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(),
-                            0, 0, nullptr, false, false,
-                            QueueThrottle::MEDIUM,
-                            QueueSliceCount::defaultSliceCount,
-                            cs.getUsed(), &cs, nullptr, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 }
@@ -369,7 +368,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenPrintIndicesEnabledWhenFlushThenPr
     auto &cs = csr->getCS();
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     ::testing::internal::CaptureStdout();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
@@ -395,21 +394,22 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
         hwInfo.reset(new HardwareInfo(*defaultHwInfo));
         hwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = true;
         hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = 0b11;
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo.get());
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         constexpr int mockFd = 33;
         drm = new DrmMock(mockFd, *executionEnvironment->rootDeviceEnvironments[0]);
         drm->setupIoctlHelper(hwInfo->platform.eProductFamily);
-        drm->createVirtualMemoryAddressSpace(HwHelper::getSubDevicesCount(hwInfo.get()));
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo.get());
+        drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(hwInfo.get()));
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo.get());
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
         executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
         executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
-        osContext = std::make_unique<OsContextLinux>(*drm, 0u,
-                                                     EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        osContext = std::make_unique<OsContextLinux>(*drm, 0, 0u,
+                                                     EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                   PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo), DeviceBitfield(0b11)));
         osContext->ensureContextInitialized();
 
@@ -420,7 +420,7 @@ struct DrmImplicitScalingCommandStreamTest : ::testing::Test {
     void TearDown() override {
         // Expect 2 calls with DRM_IOCTL_I915_GEM_CONTEXT_DESTROY request on OsContextLinux destruction
         // Expect 1 call with DRM_IOCTL_GEM_CLOSE request on BufferObject close
-        drm->expectedIoctlCallsOnDestruction = drm->ioctlCallsCount + 3;
+        drm->expectedIoctlCallsOnDestruction = drm->ioctlCallsCount + 3 + static_cast<uint32_t>(drm->virtualMemoryIds.size());
         drm->expectIoctlCallsOnDestruction = true;
     }
 
@@ -468,7 +468,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenTwoTilesW
     const std::array<NEO::BufferObject *, 8> execBos = {multiStorageBo0, multiStorageBo1, tileInstancedBo0, commandBuffer->getBO(),
                                                         multiStorageBo0, multiStorageBo1, tileInstancedBo1, commandBuffer->getBO()};
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
     auto availableSpacePriorToFlush = cs.getAvailableSpace();
     csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_EQ(availableSpacePriorToFlush, cs.getAvailableSpace());
@@ -505,8 +505,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
         uint32_t execCalled = 0;
     };
 
-    auto osContext = std::make_unique<OsContextLinux>(*drm, 0u,
-                                                      EngineDescriptorHelper::getDefaultDescriptor(HwHelper::get(hwInfo->platform.eRenderCoreFamily).getGpgpuEngineInstances(*hwInfo)[0],
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto osContext = std::make_unique<OsContextLinux>(*drm, 0, 0u,
+                                                      EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
                                                                                                    PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     osContext->ensureContextInitialized();
     auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield(),
@@ -527,7 +528,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
@@ -570,48 +571,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, whenForceExecu
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
     memoryManager->freeGraphicsMemory(tileInstancedAllocation);
-}
-
-HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenUseSingleSubdeviceParamSetWhenFlushingThenUseOnlyContext0) {
-    struct MockCsr : DrmCommandStreamReceiver<FamilyType> {
-        using DrmCommandStreamReceiver<FamilyType>::DrmCommandStreamReceiver;
-        int exec(const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index) override {
-            EXPECT_EQ(0u, execCalled);
-            EXPECT_EQ(0u, drmContextId);
-            EXPECT_EQ(0u, vmHandleId);
-            execCalled++;
-            return 0;
-        }
-        void processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
-            EXPECT_EQ(0u, processResidencyCalled);
-            EXPECT_EQ(0u, handleId);
-            processResidencyCalled++;
-        }
-
-        uint32_t execCalled = 0;
-        uint32_t processResidencyCalled = 0;
-    };
-    auto csr = std::make_unique<MockCsr>(*executionEnvironment, 0, osContext->getDeviceBitfield(),
-                                         gemCloseWorkerMode::gemCloseWorkerActive);
-    csr->setupContext(*osContext);
-
-    const auto size = 1024u;
-    BufferObject *bufferObject = new BufferObject(drm, 3, 30, 0, 1);
-    BufferObjects bufferObjects{bufferObject};
-    auto allocation = new DrmAllocation(0, AllocationType::UNKNOWN, bufferObjects, nullptr, 0u, size, MemoryPool::LocalMemory);
-    csr->CommandStreamReceiver::makeResident(*allocation);
-
-    auto &cs = csr->getCS();
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, true};
-
-    csr->flush(batchBuffer, csr->getResidencyAllocations());
-
-    memoryManager->freeGraphicsMemory(allocation);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledImplicitScalingWhenFlushingThenUseOnlyOneContext) {
@@ -627,10 +591,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledI
             execCalled++;
             return 0;
         }
-        void processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
+        SubmissionStatus processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
             EXPECT_EQ(0u, processResidencyCalled);
             EXPECT_EQ(0u, handleId);
             processResidencyCalled++;
+            return SubmissionStatus::SUCCESS;
         }
 
         uint32_t execCalled = 0;
@@ -647,7 +612,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenDisabledI
     csr->CommandStreamReceiver::makeResident(*allocation);
 
     auto &cs = csr->getCS();
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 
@@ -663,8 +628,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenMultiTile
             execCalled++;
             return 0;
         }
-        void processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
+        SubmissionStatus processResidency(const ResidencyContainer &inputAllocationsForResidency, uint32_t handleId) override {
             EXPECT_EQ(execCalled, handleId);
+            return SubmissionStatus::SUCCESS;
         }
 
         uint32_t execCalled = 0;
@@ -680,7 +646,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmImplicitScalingCommandStreamTest, givenMultiTile
     csr->CommandStreamReceiver::makeResident(*allocation);
 
     auto &cs = csr->getCS();
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     csr->flush(batchBuffer, csr->getResidencyAllocations());
 

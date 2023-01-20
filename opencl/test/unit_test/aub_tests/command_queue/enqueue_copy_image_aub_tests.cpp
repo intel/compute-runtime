@@ -7,7 +7,6 @@
 
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/image.h"
@@ -21,14 +20,14 @@ struct AUBCopyImage
       public ::testing::WithParamInterface<std::tuple<uint32_t, uint32_t>>,
       public ::testing::Test {
     void SetUp() override {
-        ImageAubFixture::SetUp(enableBlitter);
+        ImageAubFixture::setUp(enableBlitter);
     }
 
     void TearDown() override {
         srcImage.reset();
         dstImage.reset();
 
-        ImageAubFixture::TearDown();
+        ImageAubFixture::tearDown();
     }
 
     template <typename FamilyType>

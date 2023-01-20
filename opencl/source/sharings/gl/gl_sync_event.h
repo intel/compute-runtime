@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ class GlSyncEvent : public Event {
 
     static GlSyncEvent *create(Context &context, cl_GLsync sync, cl_int *errCode);
     void updateExecutionStatus() override;
-    uint32_t getTaskLevel() override;
+    TaskCountType getTaskLevel() override;
 
     bool isExternallySynchronized() const override { return true; }
 

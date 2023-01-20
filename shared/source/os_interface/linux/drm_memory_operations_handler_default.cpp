@@ -13,7 +13,9 @@
 
 namespace NEO {
 
-DrmMemoryOperationsHandlerDefault::DrmMemoryOperationsHandlerDefault() = default;
+DrmMemoryOperationsHandlerDefault::DrmMemoryOperationsHandlerDefault(uint32_t rootDeviceIndex)
+    : DrmMemoryOperationsHandler(rootDeviceIndex){};
+;
 DrmMemoryOperationsHandlerDefault::~DrmMemoryOperationsHandlerDefault() = default;
 
 MemoryOperationsStatus DrmMemoryOperationsHandlerDefault::makeResidentWithinOsContext(OsContext *osContext, ArrayRef<GraphicsAllocation *> gfxAllocations, bool evictable) {

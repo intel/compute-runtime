@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/aub_mem_dump/aub_alloc_dump.h"
+#include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw_bdw_and_later.inl"
 #include "shared/source/helpers/array_count.h"
@@ -13,7 +14,7 @@
 #include "shared/source/memory_manager/memory_pool.h"
 
 namespace NEO {
-typedef TGLLPFamily Family;
+typedef Gen12LpFamily Family;
 static auto gfxCore = IGFX_GEN12LP_CORE;
 
 template <>

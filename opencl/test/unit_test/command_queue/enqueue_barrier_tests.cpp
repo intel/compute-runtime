@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,7 +53,7 @@ HWTEST_F(BarrierTest, givenCsrWithHigherLevelThenCommandQueueWhenEnqueueBarrierI
     EXPECT_EQ(2u, commandStreamReceiver.peekTaskLevel());
     EXPECT_EQ(3u, pCmdQ->taskLevel);
 
-    //make sure nothing was added to CommandStream or CSR-CommandStream and command queue still uses this stream
+    // make sure nothing was added to CommandStream or CSR-CommandStream and command queue still uses this stream
     EXPECT_EQ(used, commandStream.getUsed());
     EXPECT_EQ(&commandStream, &pCmdQ->getCS(0));
 
@@ -294,7 +294,7 @@ HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEve
     size_t barrierCmdStreamSize = NEO::EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_BARRIER, false, false, *pCmdQ, nullptr, {});
     commandStream.getSpace(commandStream.getMaxAvailableSpace() - barrierCmdStreamSize);
 
-    //now trigger event
+    // now trigger event
     event2.setStatus(CL_COMPLETE);
 
     auto commandStreamStart2 = commandStream.getUsed();

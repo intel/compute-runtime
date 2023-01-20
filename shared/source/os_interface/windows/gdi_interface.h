@@ -19,9 +19,9 @@ namespace NEO {
 class Gdi {
   public:
     Gdi();
-    MOCKABLE_VIRTUAL ~Gdi() = default;
+    MOCKABLE_VIRTUAL ~Gdi();
 
-    ThkWrapper<IN OUT D3DKMT_OPENADAPTERFROMLUID *> openAdapterFromLuid{};
+    ThkWrapper<IN OUT CONST D3DKMT_OPENADAPTERFROMLUID *> openAdapterFromLuid{};
     ThkWrapper<IN OUT D3DKMT_CREATEALLOCATION *> createAllocation_{};
     ThkWrapper<IN OUT D3DKMT_CREATEALLOCATION *> createAllocation2{};
     NTSTATUS(APIENTRY *shareObjects)
@@ -79,8 +79,9 @@ class Gdi {
     MOCKABLE_VIRTUAL bool setupHwQueueProcAddresses();
 
   protected:
+    OsLibrary *createGdiDLL();
     MOCKABLE_VIRTUAL bool getAllProcAddresses();
-    bool initialized = false;
     std::unique_ptr<NEO::OsLibrary> gdiDll;
+    bool initialized = false;
 };
 } // namespace NEO

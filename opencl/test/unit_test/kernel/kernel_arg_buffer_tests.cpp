@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -17,6 +19,7 @@
 #include "opencl/test/unit_test/fixtures/context_fixture.h"
 #include "opencl/test/unit_test/kernel/kernel_arg_buffer_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
@@ -67,12 +70,12 @@ struct MultiDeviceKernelArgBufferTest : public ::testing::Test {
         kernelInfos[1] = pKernelInfosStorage[0].get();
         kernelInfos[2] = pKernelInfosStorage[1].get();
 
-        auto &hwHelper = HwHelper::get(renderCoreFamily);
+        auto &gfxCoreHelper = pContext->getDevice(0)->getGfxCoreHelper();
 
         for (auto i = 0u; i < 2; i++) {
             pKernelInfosStorage[i]->heapInfo.pSsh = pSshLocal[i];
             pKernelInfosStorage[i]->heapInfo.SurfaceStateHeapSize = sizeof(pSshLocal[i]);
-            pKernelInfosStorage[i]->kernelDescriptor.kernelAttributes.simdSize = hwHelper.getMinimalSIMDSize();
+            pKernelInfosStorage[i]->kernelDescriptor.kernelAttributes.simdSize = gfxCoreHelper.getMinimalSIMDSize();
 
             auto crossThreadDataPointer = &pCrossThreadData[i];
             memcpy_s(ptrOffset(&pCrossThreadData[i], i * sizeof(void *)), sizeof(void *), &crossThreadDataPointer, sizeof(void *));
@@ -372,6 +375,11 @@ TEST_F(KernelArgBufferTest, givenBufferInHostMemoryWhenHasDirectStatelessAccessT
 }
 
 TEST_F(KernelArgBufferTest, givenGfxAllocationWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnFalse) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
@@ -388,6 +396,11 @@ TEST_F(KernelArgBufferTest, givenGfxAllocationWhenHasDirectStatelessAccessToHost
 }
 
 TEST_F(KernelArgBufferTest, givenGfxAllocationInHostMemoryWhenHasDirectStatelessAccessToHostMemoryIsCalledThenReturnCorrectValue) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
     char data[128];
     void *ptr = &data;
     MockGraphicsAllocation gfxAllocation(ptr, 128);
@@ -420,11 +433,12 @@ TEST_F(KernelArgBufferTest, givenInvalidKernelObjWhenHasDirectStatelessAccessToH
 
 TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessWhenHasIndirectStatelessAccessToHostMemoryIsCalledThenReturnTrueForHostMemoryAllocations) {
     KernelInfo kernelInfo;
-    EXPECT_FALSE(kernelInfo.hasIndirectStatelessAccess);
+    auto &kernelDescriptor = kernelInfo.kernelDescriptor;
+    EXPECT_FALSE(kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess);
 
     MockKernel kernelWithNoIndirectStatelessAccess(pProgram, kernelInfo, *pClDevice);
     EXPECT_FALSE(kernelWithNoIndirectStatelessAccess.hasIndirectStatelessAccessToHostMemory());
-    kernelInfo.hasIndirectStatelessAccess = true;
+    kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
     MockKernel kernelWithNoIndirectHostAllocations(pProgram, kernelInfo, *pClDevice);
     EXPECT_FALSE(kernelWithNoIndirectHostAllocations.hasIndirectStatelessAccessToHostMemory());
@@ -448,7 +462,8 @@ TEST_F(KernelArgBufferTest, givenKernelWithIndirectStatelessAccessWhenHasIndirec
 
 TEST_F(KernelArgBufferTest, givenKernelExecInfoWithIndirectStatelessAccessWhenHasIndirectStatelessAccessToHostMemoryIsCalledThenReturnTrueForHostMemoryAllocations) {
     KernelInfo kernelInfo;
-    kernelInfo.hasIndirectStatelessAccess = true;
+    auto &kernelDescriptor = kernelInfo.kernelDescriptor;
+    kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
     MockKernel mockKernel(pProgram, kernelInfo, *pClDevice);
     EXPECT_FALSE(mockKernel.unifiedMemoryControls.indirectHostAllocationsAllowed);
@@ -548,6 +563,11 @@ TEST_F(KernelArgBufferTest, givenSetArgBufferOnKernelWithNoDirectStatelessAccess
 }
 
 TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithDirectStatelessAccessToHostMemoryWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnTrue) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
@@ -569,6 +589,11 @@ TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithDirectStatelessAccess
 }
 
 TEST_F(KernelArgBufferTest, givenSetArgSvmAllocOnKernelWithNoDirectStatelessAccessToHostMemoryWhenUpdateAuxTranslationRequiredIsCalledThenIsAuxTranslationRequiredShouldReturnFalse) {
+    const ClDeviceInfo &devInfo = pClDevice->getDeviceInfo();
+    if (devInfo.svmCapabilities == 0) {
+        GTEST_SKIP();
+    }
+
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
@@ -592,7 +617,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithNoIndirectS
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    pKernelInfo->hasIndirectStatelessAccess = false;
+    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = false;
 
     MockGraphicsAllocation gfxAllocation;
     gfxAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
@@ -612,7 +637,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    pKernelInfo->hasIndirectStatelessAccess = true;
+    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
     const auto allocationTypes = {AllocationType::BUFFER,
                                   AllocationType::BUFFER_HOST_MEMORY};
@@ -649,7 +674,7 @@ TEST_F(KernelArgBufferTest, givenSetUnifiedMemoryExecInfoOnKernelWithIndirectSta
     DebugManagerStateRestore debugRestorer;
     DebugManager.flags.EnableStatelessCompression.set(1);
 
-    pKernelInfo->hasIndirectStatelessAccess = true;
+    pKernelInfo->kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = true;
 
     constexpr std::array<AllocationTypeHelper, 4> allocationTypes = {{{AllocationType::BUFFER, false},
                                                                       {AllocationType::BUFFER, true},
@@ -730,9 +755,9 @@ TEST_F(KernelArgBufferTest, givenSVMAllocsManagerWithCompressedSVMAllocationsWhe
 
 class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
   public:
-    void SetUp() {
+    void setUp() {
         DebugManager.flags.UseBindlessMode.set(1);
-        KernelArgBufferFixture::SetUp();
+        KernelArgBufferFixture::setUp();
 
         pBuffer = new MockBuffer();
         ASSERT_NE(nullptr, pBuffer);
@@ -741,9 +766,9 @@ class KernelArgBufferFixtureBindless : public KernelArgBufferFixture {
         pKernelInfo->argAsPtr(0).stateless = undefined<CrossThreadDataOffset>;
         pKernelInfo->argAsPtr(0).bindful = undefined<SurfaceStateHeapOffset>;
     }
-    void TearDown() {
+    void tearDown() {
         delete pBuffer;
-        KernelArgBufferFixture::TearDown();
+        KernelArgBufferFixture::tearDown();
     }
     DebugManagerStateRestore restorer;
     MockBuffer *pBuffer;
@@ -761,4 +786,50 @@ HWTEST_F(KernelArgBufferTestBindless, givenUsedBindlessBuffersWhenPatchingSurfac
     retVal = pKernel->setArg(0, sizeof(memObj), &memObj);
 
     EXPECT_NE(0xdeadu, *patchLocation);
+}
+
+TEST_F(KernelArgBufferTest, givenBufferAsHostMemoryWhenSettingKernelArgThenKernelUsesSystemMemory) {
+    MockBuffer buffer;
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::BUFFER_HOST_MEMORY);
+
+    auto memVal = (cl_mem)&buffer;
+    auto val = &memVal;
+
+    EXPECT_FALSE(pKernel->isAnyKernelArgumentUsingSystemMemory());
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), val);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pKernel->isAnyKernelArgumentUsingSystemMemory());
+}
+
+TEST_F(KernelArgBufferTest, givenBufferAsDeviceMemoryWhenSettingKernelArgThenKernelNotUsesSystemMemory) {
+    MockBuffer buffer;
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::BUFFER);
+
+    auto memVal = (cl_mem)&buffer;
+    auto val = &memVal;
+
+    EXPECT_FALSE(pKernel->isAnyKernelArgumentUsingSystemMemory());
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), val);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_FALSE(pKernel->isAnyKernelArgumentUsingSystemMemory());
+}
+
+TEST_F(KernelArgBufferTest, givenBufferAsDeviceMemoryAndKernelIsAlreadySetToUseSystemWhenSettingKernelArgThenKernelUsesSystemMemory) {
+    MockBuffer buffer;
+    buffer.getGraphicsAllocation(mockRootDeviceIndex)->setAllocationType(AllocationType::BUFFER);
+
+    auto memVal = (cl_mem)&buffer;
+    auto val = &memVal;
+
+    EXPECT_FALSE(pKernel->isAnyKernelArgumentUsingSystemMemory());
+    pKernel->anyKernelArgumentUsingSystemMemory = true;
+
+    auto retVal = pKernel->setArg(0, sizeof(cl_mem *), val);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    EXPECT_TRUE(pKernel->isAnyKernelArgumentUsingSystemMemory());
 }

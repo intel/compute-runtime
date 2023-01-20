@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,19 +7,18 @@
 
 #pragma once
 
-#include "shared/source/helpers/product_config_helper.h"
+#include "shared/source/helpers/hw_ip_version.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
-#include <cstddef>
 #include <cstdint>
 #include <igfxfmid.h>
-#include <memory>
 #include <vector>
 
 namespace NEO {
 struct ProgramInfo;
-struct HardwareInfo;
+struct RootDeviceEnvironment;
+class GfxCoreHelper;
 
 enum class DeviceBinaryFormat : uint8_t {
     Unknown,
@@ -58,12 +57,13 @@ inline const char *asString(DecodeError err) {
 struct TargetDevice {
     GFXCORE_FAMILY coreFamily = IGFX_UNKNOWN_CORE;
     PRODUCT_FAMILY productFamily = IGFX_UNKNOWN;
-    AheadOfTimeConfig aotConfig = {0};
+    HardwareIpVersion aotConfig = {0};
     uint32_t stepping = 0U;
     uint32_t maxPointerSizeInBytes = 4U;
     uint32_t grfSize = 32U;
+    uint32_t minScratchSpaceSize = 0U;
 };
-TargetDevice targetDeviceFromHwInfo(const NEO::HardwareInfo &hwInfo);
+TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment);
 
 struct SingleDeviceBinary {
     DeviceBinaryFormat format = DeviceBinaryFormat::Unknown;
@@ -160,33 +160,33 @@ inline bool isAnySingleDeviceBinaryFormat(const ArrayRef<const uint8_t> binary) 
 }
 
 template <DeviceBinaryFormat Format>
-DecodeError decodeSingleDeviceBinary(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning);
+DecodeError decodeSingleDeviceBinary(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper);
 
 template <>
-DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::OclElf>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &);
+DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::OclElf>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &, const GfxCoreHelper &gfxCoreHelper);
 template <>
-DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Patchtokens>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &);
+DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Patchtokens>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &, const GfxCoreHelper &gfxCoreHelper);
 template <>
-DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Archive>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &);
+DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Archive>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &, const GfxCoreHelper &gfxCoreHelper);
 template <>
-DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Zebin>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &);
+DecodeError decodeSingleDeviceBinary<DeviceBinaryFormat::Zebin>(ProgramInfo &, const SingleDeviceBinary &, std::string &, std::string &, const GfxCoreHelper &gfxCoreHelper);
 
-inline std::pair<DecodeError, DeviceBinaryFormat> decodeSingleDeviceBinary(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning) {
+inline std::pair<DecodeError, DeviceBinaryFormat> decodeSingleDeviceBinary(ProgramInfo &dst, const SingleDeviceBinary &src, std::string &outErrReason, std::string &outWarning, const GfxCoreHelper &gfxCoreHelper) {
     std::pair<DecodeError, DeviceBinaryFormat> ret;
     ret.first = DecodeError::InvalidBinary;
     ret.second = DeviceBinaryFormat::Unknown;
     if (isDeviceBinaryFormat<DeviceBinaryFormat::OclElf>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::OclElf;
-        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::OclElf>(dst, src, outErrReason, outWarning);
+        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::OclElf>(dst, src, outErrReason, outWarning, gfxCoreHelper);
     } else if (isDeviceBinaryFormat<DeviceBinaryFormat::Patchtokens>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::Patchtokens;
-        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Patchtokens>(dst, src, outErrReason, outWarning);
+        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Patchtokens>(dst, src, outErrReason, outWarning, gfxCoreHelper);
     } else if (isDeviceBinaryFormat<DeviceBinaryFormat::Archive>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::Archive;
-        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Archive>(dst, src, outErrReason, outWarning);
+        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Archive>(dst, src, outErrReason, outWarning, gfxCoreHelper);
     } else if (isDeviceBinaryFormat<DeviceBinaryFormat::Zebin>(src.deviceBinary)) {
         ret.second = DeviceBinaryFormat::Zebin;
-        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Zebin>(dst, src, outErrReason, outWarning);
+        ret.first = decodeSingleDeviceBinary<DeviceBinaryFormat::Zebin>(dst, src, outErrReason, outWarning, gfxCoreHelper);
     } else {
         outErrReason = "Unknown format";
     }

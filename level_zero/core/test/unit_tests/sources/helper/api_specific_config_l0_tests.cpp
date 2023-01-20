@@ -30,6 +30,10 @@ TEST(ApiSpecificConfigL0Tests, WhenCheckingIfStatelessCompressionIsSupportedThen
     EXPECT_FALSE(ApiSpecificConfig::isStatelessCompressionSupported());
 }
 
+TEST(ApiSpecificConfigL0Tests, WhenCheckingIfBcsSplitWaIsSupportedThenReturnTrue) {
+    EXPECT_TRUE(ApiSpecificConfig::isBcsSplitWaSupported());
+}
+
 TEST(ApiSpecificConfigL0Tests, givenMaxAllocSizeWhenGettingReducedMaxAllocSizeThenReturnSameValue) {
     EXPECT_EQ(1024u, ApiSpecificConfig::getReducedMaxAllocSize(1024));
 }
@@ -37,6 +41,11 @@ TEST(ApiSpecificConfigL0Tests, givenMaxAllocSizeWhenGettingReducedMaxAllocSizeTh
 TEST(ApiSpecificConfigL0Tests, WhenGettingRegistryPathThenL0RegistryPathIsReturned) {
     EXPECT_STREQ(L0::registryPath, ApiSpecificConfig::getRegistryPath());
 }
+
+TEST(ApiSpecificConfigL0Tests, WhenCheckingIfDeviceAllocationCacheIsEnabledThenReturnFalse) {
+    EXPECT_FALSE(ApiSpecificConfig::isDeviceAllocationCacheEnabled());
+}
+
 TEST(ImplicitScalingApiTests, givenLevelZeroApiUsedThenSupportEnabled) {
     EXPECT_TRUE(ImplicitScaling::apiSupport);
 }

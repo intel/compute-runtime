@@ -9,8 +9,8 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/test/common/mocks/mock_elf.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/device_binary_format/zebin_tests.h"
 
 using namespace NEO::Elf;
 TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
@@ -125,7 +125,6 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     NEO::Debug::Segments segments;
     segments.constData = {0x10000000, 0x10000};
     segments.varData = {0x20000000, 0x20000};
-    segments.stringData = {0x30000000, 0x30000};
     segments.nameToSegMap["kernel"] = {0x40000000, 0x50000};
 
     auto zebinBin = elfEncoder.encode();
@@ -148,10 +147,10 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
 
     EXPECT_EQ(zebin.sectionHeaders.size(), debugZebin.sectionHeaders.size());
 
-    uint64_t offsetKernel, offsetConstData, offsetVarData, offsetStringData;
-    uint64_t fileSzKernel, fileSzConstData, fileSzVarData, fileSzStringData;
-    offsetKernel = offsetConstData = offsetVarData = offsetStringData = std::numeric_limits<uint64_t>::max();
-    fileSzKernel = fileSzConstData = fileSzVarData = fileSzStringData = 0;
+    uint64_t offsetKernel, offsetConstData, offsetVarData;
+    uint64_t fileSzKernel, fileSzConstData, fileSzVarData;
+    offsetKernel = offsetConstData = offsetVarData = std::numeric_limits<uint64_t>::max();
+    fileSzKernel = fileSzConstData = fileSzVarData = 0;
     for (uint32_t i = 0; i < zebin.sectionHeaders.size(); ++i) {
         EXPECT_EQ(zebin.sectionHeaders[i].header->type, debugZebin.sectionHeaders[i].header->type);
         EXPECT_EQ(zebin.sectionHeaders[i].header->link, debugZebin.sectionHeaders[i].header->link);
@@ -175,10 +174,6 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
             offsetVarData = sectionHeader->offset;
             fileSzVarData = sectionHeader->size;
             EXPECT_EQ(segments.varData.address, sectionHeader->addr);
-        } else if (refSectionName == SectionsNamesZebin::dataConstString) {
-            offsetStringData = sectionHeader->offset;
-            fileSzStringData = sectionHeader->size;
-            EXPECT_EQ(segments.stringData.address, sectionHeader->addr);
         } else if (refSectionName == SectionsNamesZebin::debugInfo) {
             auto ptrDebugInfo = sectionData.begin();
             EXPECT_EQ(segments.nameToSegMap["kernel"].address + symbols[0].value + debugRelocations[0].addend,
@@ -228,12 +223,11 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
 
     std::vector<std::tuple<Segment, uint64_t, uint64_t>> segmentsSortedByAddr = {{segments.constData, offsetConstData, fileSzConstData},
                                                                                  {segments.varData, offsetVarData, fileSzVarData},
-                                                                                 {segments.stringData, offsetStringData, fileSzStringData},
                                                                                  {segments.nameToSegMap["kernel"], offsetKernel, fileSzKernel}};
     std::sort(segmentsSortedByAddr.begin(), segmentsSortedByAddr.end(), [](auto seg1, auto seg2) { return std::get<0>(seg1).address < std::get<0>(seg2).address; });
 
-    EXPECT_EQ(4U, debugZebin.programHeaders.size());
-    for (size_t i = 0; i < 4U; i++) {
+    EXPECT_EQ(3U, debugZebin.programHeaders.size());
+    for (size_t i = 0; i < debugZebin.programHeaders.size(); i++) {
         auto &segment = std::get<0>(segmentsSortedByAddr[i]);
         auto &offset = std::get<1>(segmentsSortedByAddr[i]);
         auto &fileSz = std::get<2>(segmentsSortedByAddr[i]);
@@ -302,4 +296,18 @@ TEST(DebugZebinTest, givenSymTabShndxUndefinedThenDoNotApplyRelocations) {
     dzc.symTabShndx = std::numeric_limits<uint32_t>::max();
     dzc.applyRelocations();
     EXPECT_EQ(0U, *reinterpret_cast<uint64_t *>(zebin.data() + zebinElf.sectionHeaders[1].header->offset + relocation.offset));
+}
+
+TEST(PatchWithValueTest, GivenMisalignedAddressWhenPatchingWithValueThenMemoryIsPatchedCorrectly) {
+    auto mem = std::make_unique<uint8_t[]>(9);
+    NEO::Debug::patchWithValue<uint64_t>(reinterpret_cast<uintptr_t>(mem.get() + 1), std::numeric_limits<uint64_t>::max());
+    EXPECT_EQ(0x00U, mem[0]);
+    EXPECT_EQ(0xFFU, mem[1]);
+    EXPECT_EQ(0xFFU, mem[2]);
+    EXPECT_EQ(0xFFU, mem[3]);
+    EXPECT_EQ(0xFFU, mem[4]);
+    EXPECT_EQ(0xFFU, mem[5]);
+    EXPECT_EQ(0xFFU, mem[6]);
+    EXPECT_EQ(0xFFU, mem[7]);
+    EXPECT_EQ(0xFFU, mem[8]);
 }

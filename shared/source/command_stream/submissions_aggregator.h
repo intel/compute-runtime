@@ -6,11 +6,10 @@
  */
 
 #pragma once
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/csr_definitions.h"
-#include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/memory_manager/residency_container.h"
+#include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/utilities/idlist.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <vector>
 namespace NEO {
@@ -23,6 +22,7 @@ struct BatchBuffer {
     BatchBuffer(GraphicsAllocation *commandBufferAllocation,
                 size_t startOffset,
                 size_t chainedBatchBufferStartOffset,
+                uint64_t taskStartAddress,
                 GraphicsAllocation *chainedBatchBuffer,
                 bool requiresCoherency,
                 bool lowPriority,
@@ -31,11 +31,14 @@ struct BatchBuffer {
                 size_t usedSize,
                 LinearStream *stream,
                 void *endCmdPtr,
-                bool useSingleSubdevice);
+                bool hasStallingCmds,
+                bool hasRelaxedOrderingDependencies);
     BatchBuffer() {}
     GraphicsAllocation *commandBufferAllocation = nullptr;
     size_t startOffset = 0u;
     size_t chainedBatchBufferStartOffset = 0u;
+    uint64_t taskStartAddress = 0; // if task not available, use CSR stream
+
     GraphicsAllocation *chainedBatchBuffer = nullptr;
     bool requiresCoherency = false;
     bool low_priority = false;
@@ -43,11 +46,12 @@ struct BatchBuffer {
     uint64_t sliceCount = QueueSliceCount::defaultSliceCount;
     size_t usedSize = 0u;
 
-    //only used in drm csr in gem close worker active mode
+    // only used in drm csr in gem close worker active mode
     LinearStream *stream = nullptr;
     void *endCmdPtr = nullptr;
 
-    bool useSingleSubdevice = false;
+    bool hasStallingCmds = false;
+    bool hasRelaxedOrderingDependencies = false;
     bool ringBufferRestartRequest = false;
 };
 
@@ -57,9 +61,10 @@ struct CommandBuffer : public IDNode<CommandBuffer> {
     BatchBuffer batchBuffer;
     void *batchBufferEndLocation = nullptr;
     uint32_t inspectionId = 0;
-    uint32_t taskCount = 0u;
+    TaskCountType taskCount = 0u;
     void *pipeControlThatMayBeErasedLocation = nullptr;
     void *epiloguePipeControlLocation = nullptr;
+    PipeControlArgs epiloguePipeControlArgs;
     std::unique_ptr<FlushStampTracker> flushStamp;
     Device &device;
 };

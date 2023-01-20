@@ -13,26 +13,26 @@ namespace L0 {
 namespace ult {
 void MetricQueryPoolTest::SetUp() {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    MetricContextFixture::SetUp();
+    MetricContextFixture::setUp();
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     driverHandle.reset(DriverHandle::create(NEO::DeviceFactory::createDevices(*executionEnvironment), L0EnvVariables{}, &returnValue));
 }
 
 void MetricQueryPoolTest::TearDown() {
-    MetricContextFixture::TearDown();
+    MetricContextFixture::tearDown();
     driverHandle.reset();
     GlobalDriver = nullptr;
 }
 
 void MultiDeviceMetricQueryPoolTest::SetUp() {
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    MetricMultiDeviceFixture::SetUp();
+    MetricMultiDeviceFixture::setUp();
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     driverHandle.reset(DriverHandle::create(NEO::DeviceFactory::createDevices(*executionEnvironment), L0EnvVariables{}, &returnValue));
 }
 
 void MultiDeviceMetricQueryPoolTest::TearDown() {
-    MetricMultiDeviceFixture::TearDown();
+    MetricMultiDeviceFixture::tearDown();
     driverHandle.reset();
     GlobalDriver = nullptr;
 }

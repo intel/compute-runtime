@@ -81,27 +81,35 @@ class PrintFormatter {
     }
 
     template <class T>
-    size_t typedPrintToken(char *output, size_t size, const char *formatString) {
-        T value = {0};
+    void adjustFormatString(std::string &formatString) {}
+
+    template <class T>
+    size_t typedPrintToken(char *output, size_t size, const char *inputFormatString) {
+        T value{0};
         read(&value);
-        return simpleSprintf(output, size, formatString, value);
+        currentOffset = alignUp(currentOffset, sizeof(uint32_t));
+        std::string formatString(inputFormatString);
+        adjustFormatString<T>(formatString);
+        return simpleSprintf(output, size, formatString.c_str(), value);
     }
 
     template <class T>
-    size_t typedPrintVectorToken(char *output, size_t size, const char *formatString) {
+    size_t typedPrintVectorToken(char *output, size_t size, const char *inputFormatString) {
         T value = {0};
         int valueCount = 0;
         read(&valueCount);
 
         size_t charactersPrinted = 0;
-        char strippedFormat[1024];
+        char strippedFormat[1024]{};
 
-        stripVectorFormat(formatString, strippedFormat);
+        stripVectorFormat(inputFormatString, strippedFormat);
         stripVectorTypeConversion(strippedFormat);
+        std::string formatString(strippedFormat);
+        adjustFormatString<T>(formatString);
 
         for (int i = 0; i < valueCount; i++) {
             read(&value);
-            charactersPrinted += simpleSprintf(output + charactersPrinted, size - charactersPrinted, strippedFormat, value);
+            charactersPrinted += simpleSprintf(output + charactersPrinted, size - charactersPrinted, formatString.c_str(), value);
             if (i < valueCount - 1) {
                 charactersPrinted += simpleSprintf(output + charactersPrinted, size - charactersPrinted, "%c", ',');
             }

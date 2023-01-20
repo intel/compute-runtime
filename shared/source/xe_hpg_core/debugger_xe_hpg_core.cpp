@@ -8,10 +8,11 @@
 #include "shared/source/debugger/debugger_l0.inl"
 #include "shared/source/debugger/debugger_l0_tgllp_and_later.inl"
 #include "shared/source/helpers/populate_factory.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 namespace NEO {
 
-using GfxFamily = NEO::XE_HPG_COREFamily;
+using GfxFamily = NEO::XeHpgCoreFamily;
 
 static auto coreFamily = IGFX_XE_HPG_CORE;
 

@@ -1,26 +1,20 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/bit_helpers.h"
-#include "shared/source/memory_manager/allocation_properties.h"
-
-#include "memory_properties_flags.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 
 namespace NEO {
+struct AllocationProperties;
+struct HardwareInfo;
+struct MemoryProperties;
 
 class MemoryPropertiesHelper {
   public:
-    enum class ObjType {
-        UNKNOWN,
-        BUFFER,
-        IMAGE,
-    };
-
     static AllocationProperties getAllocationProperties(
         uint32_t rootDeviceIndex, const MemoryProperties &memoryProperties, bool allocateMemory, size_t size,
         AllocationType type, bool multiStorageResource, const HardwareInfo &hwInfo,
@@ -39,5 +33,9 @@ class MemoryPropertiesHelper {
     static GraphicsAllocation::UsmInitialPlacement getUSMInitialPlacement(const MemoryProperties &memoryProperties);
 
     static void setUSMInitialPlacement(AllocationProperties &allocationProperties, GraphicsAllocation::UsmInitialPlacement initialPlacement);
+
+    static bool useSystemMemoryForCrossRootDeviceAccess(bool multiRootDevice);
+
+    static bool useMultiStorageForCrossRootDeviceAccess(bool multiRootDevice);
 };
 } // namespace NEO

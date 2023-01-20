@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,10 +23,14 @@ bool OSInterface::gpuIdleImplicitFlush = true;
 bool OSInterface::requiresSupportForWddmTrimNotification = false;
 
 bool OSInterface::isDebugAttachAvailable() const {
-    if (driverModel) {
+    if (driverModel && driverModel->getDriverModelType() == DriverModelType::DRM) {
         return driverModel->as<Drm>()->isDebugAttachAvailable();
     }
     return false;
+}
+
+bool OSInterface::isLockablePointer(bool isLockable) const {
+    return true;
 }
 
 bool initDrmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootDeviceIndex,
@@ -42,8 +46,8 @@ bool initDrmOsInterface(std::unique_ptr<HwDeviceId> &&hwDeviceId, uint32_t rootD
     dstOsInterface.reset(new OSInterface());
     dstOsInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     auto hardwareInfo = rootDeviceEnv->getMutableHardwareInfo();
-    HwInfoConfig *hwConfig = HwInfoConfig::get(hardwareInfo->platform.eProductFamily);
-    if (hwConfig->configureHwInfoDrm(hardwareInfo, hardwareInfo, dstOsInterface.get())) {
+    auto &productHelper = rootDeviceEnv->getHelper<ProductHelper>();
+    if (productHelper.configureHwInfoDrm(hardwareInfo, hardwareInfo, *rootDeviceEnv)) {
         return false;
     }
     rootDeviceEnv->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, rootDeviceIndex);

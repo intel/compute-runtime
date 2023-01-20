@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,11 +23,11 @@ PageFaultManagerWindows::PageFaultManagerWindows() {
     pageFaultHandler = [this](struct _EXCEPTION_POINTERS *exceptionInfo) {
         if (exceptionInfo->ExceptionRecord->ExceptionCode == EXCEPTION_ACCESS_VIOLATION) {
             if (this->verifyPageFault(reinterpret_cast<void *>(exceptionInfo->ExceptionRecord->ExceptionInformation[1]))) {
-                //this is our fault that we serviced, continue app execution
+                // this is our fault that we serviced, continue app execution
                 return EXCEPTION_CONTINUE_EXECUTION;
             }
         }
-        //not our exception
+        // not our exception
         return EXCEPTION_CONTINUE_SEARCH;
     };
 

@@ -33,7 +33,7 @@ void populateKernelInfo(KernelInfo &dst, const PatchTokenBinary::KernelFromPatch
     dst.heapInfo.pSsh = src.heaps.surfaceState.begin();
 
     if (src.tokens.executionEnvironment != nullptr) {
-        dst.hasIndirectStatelessAccess = (src.tokens.executionEnvironment->IndirectStatelessCount > 0);
+        dst.kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess = (src.tokens.executionEnvironment->IndirectStatelessCount > 0);
     }
 
     dst.systemKernelOffset = src.tokens.stateSip ? src.tokens.stateSip->SystemKernelOffset : 0U;

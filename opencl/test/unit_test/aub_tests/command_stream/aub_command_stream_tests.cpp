@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,14 +8,15 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
-#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/mocks/mock_os_context.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 #include "aub_command_stream_fixture.h"
 
@@ -27,19 +28,19 @@ struct AUBFixture : public AUBCommandStreamFixture,
                     public CommandQueueFixture,
                     public ClDeviceFixture {
 
-    using AUBCommandStreamFixture::SetUp;
-    using CommandQueueFixture::SetUp;
+    using AUBCommandStreamFixture::setUp;
+    using CommandQueueFixture::setUp;
 
-    void SetUp() {
-        ClDeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(nullptr, pClDevice, 0);
-        AUBCommandStreamFixture::SetUp(pCmdQ);
+    void setUp() {
+        ClDeviceFixture::setUp();
+        CommandQueueFixture::setUp(nullptr, pClDevice, 0);
+        AUBCommandStreamFixture::setUp(pCmdQ);
     }
 
-    void TearDown() override {
-        AUBCommandStreamFixture::TearDown();
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+    void tearDown() {
+        AUBCommandStreamFixture::tearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     template <typename FamilyType>
@@ -61,7 +62,8 @@ struct AUBFixture : public AUBCommandStreamFixture,
 
         CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(*pCS, nullptr);
         EncodeNoop<FamilyType>::alignToCacheLine(*pCS);
-        BatchBuffer batchBuffer{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, pCS->getUsed(), pCS, nullptr, false};
+        BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(pCS->getGraphicsAllocation(), pCS, pCS->getUsed());
+
         ResidencyContainer allocationsForResidency;
         pCommandStreamReceiver->flush(batchBuffer, allocationsForResidency);
 
@@ -71,16 +73,16 @@ struct AUBFixture : public AUBCommandStreamFixture,
     }
 };
 
-typedef Test<AUBFixture> AUBcommandstreamTests;
+using AUBcommandstreamTests = Test<AUBFixture>;
 
 HWTEST_F(AUBcommandstreamTests, WhenFlushingTwiceThenCompletes) {
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(*pCS, nullptr);
     EncodeNoop<FamilyType>::alignToCacheLine(*pCS);
-    BatchBuffer batchBuffer{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, pCS->getUsed(), pCS, nullptr, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(pCS->getGraphicsAllocation(), pCS, pCS->getUsed());
     ResidencyContainer allocationsForResidency;
 
     pCommandStreamReceiver->flush(batchBuffer, allocationsForResidency);
-    BatchBuffer batchBuffer2{pCS->getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, pCS->getUsed(), pCS, nullptr, false};
+    BatchBuffer batchBuffer2 = BatchBufferHelper::createDefaultBatchBuffer(pCS->getGraphicsAllocation(), pCS, pCS->getUsed());
     pCommandStreamReceiver->flush(batchBuffer2, allocationsForResidency);
     AUBCommandStreamFixture::getSimulatedCsr<FamilyType>()->pollForCompletion();
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,14 @@
 
 #include "shared/test/common/mocks/ult_device_factory.h"
 
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/tests_configuration.h"
 
 using namespace NEO;
 
@@ -58,15 +61,17 @@ void UltDeviceFactory::prepareDeviceEnvironments(ExecutionEnvironment &execution
         if (executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo() == nullptr ||
             (executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->platform.eProductFamily == IGFX_UNKNOWN &&
              executionEnvironment.rootDeviceEnvironments[i]->getHardwareInfo()->platform.eRenderCoreFamily == IGFX_UNKNOWN_CORE)) {
-            executionEnvironment.rootDeviceEnvironments[i]->setHwInfo(defaultHwInfo.get());
+            executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         }
     }
+    executionEnvironment.parseAffinityMask();
     executionEnvironment.calculateMaxOsContextCount();
     DeviceFactory::createMemoryManagerFunc(executionEnvironment);
 }
 bool UltDeviceFactory::initializeMemoryManager(ExecutionEnvironment &executionEnvironment) {
     if (executionEnvironment.memoryManager == nullptr) {
-        bool enableLocalMemory = HwHelper::get(defaultHwInfo->platform.eRenderCoreFamily).getEnableLocalMemory(*defaultHwInfo);
+        auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        bool enableLocalMemory = gfxCoreHelper.getEnableLocalMemory(*defaultHwInfo);
         bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
         executionEnvironment.memoryManager.reset(new MockMemoryManager(false, enableLocalMemory, aubUsage, executionEnvironment));
     }

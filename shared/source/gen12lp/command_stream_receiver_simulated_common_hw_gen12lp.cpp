@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/command_stream/command_stream_receiver_simulated_common_hw_bdw_and_later.inl"
 
 namespace NEO {
-typedef TGLLPFamily Family;
+typedef Gen12LpFamily Family;
 
 template <>
 void CommandStreamReceiverSimulatedCommonHw<Family>::initGlobalMMIO() {
@@ -17,7 +17,7 @@ void CommandStreamReceiverSimulatedCommonHw<Family>::initGlobalMMIO() {
     }
 
     if (this->isLocalMemoryEnabled()) {
-        MMIOPair lmemCfg = {0x0000cf58, 0x80000000}; //LMEM_CFG
+        MMIOPair lmemCfg = {0x0000cf58, 0x80000000}; // LMEM_CFG
         stream->writeMMIO(lmemCfg.first, lmemCfg.second);
     }
 }

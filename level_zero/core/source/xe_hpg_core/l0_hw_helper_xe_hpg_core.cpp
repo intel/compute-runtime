@@ -1,36 +1,29 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/xe_hpg_core/hw_cmds.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
 #include "level_zero/core/source/helpers/l0_populate_factory.h"
 #include "level_zero/core/source/hw_helpers/l0_hw_helper_base.inl"
-#include "level_zero/core/source/hw_helpers/l0_hw_helper_skl_and_later.inl"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper_tgllp_to_dg2.inl"
+#include "level_zero/core/source/hw_helpers/l0_hw_helper_xehp_and_later.inl"
 
 namespace L0 {
 
-using Family = NEO::XE_HPG_COREFamily;
+using Family = NEO::XeHpgCoreFamily;
 static auto gfxCore = IGFX_XE_HPG_CORE;
 
-template <>
-void populateFactoryTable<L0HwHelperHw<Family>>() {
-    extern L0HwHelper *l0HwHelperFactory[IGFX_MAX_CORE];
-    l0HwHelperFactory[gfxCore] = &L0HwHelperHw<Family>::get();
-}
+#include "level_zero/core/source/helpers/l0_hw_helper_factory_init.inl"
 
 template <>
-bool L0HwHelperHw<Family>::isResumeWARequired() {
+bool L0GfxCoreHelperHw<Family>::isResumeWARequired() {
     return true;
 }
 
-// clang-format off
-#include "level_zero/core/source/hw_helpers/l0_hw_helper_tgllp_plus.inl"
-// clang-format on
-
-template class L0HwHelperHw<Family>;
+template class L0GfxCoreHelperHw<Family>;
 
 } // namespace L0

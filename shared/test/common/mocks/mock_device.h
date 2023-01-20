@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,10 +10,10 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/root_device.h"
 #include "shared/source/device/sub_device.h"
-#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
 
 namespace NEO {
 class CommandStreamReceiver;
@@ -48,7 +48,6 @@ class MockDevice : public RootDevice {
   public:
     using Device::addEngineToEngineGroup;
     using Device::allEngines;
-    using Device::allocateRTDispatchGlobals;
     using Device::commandStreamReceivers;
     using Device::createDeviceInternals;
     using Device::createEngine;
@@ -58,12 +57,14 @@ class MockDevice : public RootDevice {
     using Device::engineInstanced;
     using Device::engineInstancedType;
     using Device::executionEnvironment;
+    using Device::generateUuidFromPciBusInfo;
     using Device::getGlobalMemorySize;
     using Device::initializeCaps;
     using Device::isDebuggerActive;
     using Device::regularEngineGroups;
     using Device::rootCsrCreated;
     using Device::rtMemoryBackedBuffer;
+    using Device::uuid;
     using RootDevice::createEngines;
     using RootDevice::defaultEngineIndex;
     using RootDevice::getDeviceBitfield;
@@ -87,12 +88,8 @@ class MockDevice : public RootDevice {
 
     void injectMemoryManager(MemoryManager *);
 
-    void setPerfCounters(PerformanceCounters *perfCounters) {
-        if (perfCounters) {
-            performanceCounters = std::unique_ptr<PerformanceCounters>(perfCounters);
-        } else {
-            performanceCounters.release();
-        }
+    void setPerfCounters(std::unique_ptr<PerformanceCounters> perfCounters) {
+        performanceCounters = std::move(perfCounters);
     }
 
     size_t getMaxParameterSizeFromIGC() const override {
@@ -124,23 +121,12 @@ class MockDevice : public RootDevice {
     template <typename T>
     static T *createWithExecutionEnvironment(const HardwareInfo *pHwInfo, ExecutionEnvironment *executionEnvironment, uint32_t rootDeviceIndex) {
         pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
-        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(pHwInfo);
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(pHwInfo);
         T *device = new T(executionEnvironment, rootDeviceIndex);
         return createDeviceInternals(device);
     }
 
-    static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
-        ExecutionEnvironment *executionEnvironment = new ExecutionEnvironment();
-        auto numRootDevices = DebugManager.flags.CreateMultipleRootDevices.get() ? DebugManager.flags.CreateMultipleRootDevices.get() : rootDeviceIndex + 1;
-        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
-        pHwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
-        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-            executionEnvironment->rootDeviceEnvironments[i]->setHwInfo(pHwInfo);
-            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
-        }
-        executionEnvironment->calculateMaxOsContextCount();
-        return executionEnvironment;
-    }
+    static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex);
 
     template <typename T>
     static T *createWithNewExecutionEnvironment(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex = 0) {
@@ -167,25 +153,28 @@ class MockDevice : public RootDevice {
         return isDebuggerActiveReturn;
     }
 
+    bool verifyAdapterLuid() override;
+
+    void finalizeRayTracing();
+
+    void setRTDispatchGlobalsForceAllocation() {
+        rtDispatchGlobalsForceAllocation = true;
+    }
+    static ExecutionEnvironment *prepareExecutionEnvironment(const HardwareInfo *pHwInfo);
     static decltype(&createCommandStream) createCommandStreamReceiverFunc;
 
     bool isDebuggerActiveParentCall = true;
     bool isDebuggerActiveReturn = false;
     bool callBaseGetMaxParameterSizeFromIGC = false;
+    bool callBaseVerifyAdapterLuid = true;
+    bool verifyAdapterLuidReturnValue = true;
     size_t maxParameterSizeFromIGC = 0u;
+    bool rtDispatchGlobalsForceAllocation = true;
 };
 
 template <>
 inline Device *MockDevice::createWithNewExecutionEnvironment<Device>(const HardwareInfo *pHwInfo, uint32_t rootDeviceIndex) {
-    auto executionEnvironment = new ExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-
-    auto hwInfo = pHwInfo ? pHwInfo : defaultHwInfo.get();
-
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(hwInfo);
-
-    MockAubCenterFixture::setMockAubCenter(*executionEnvironment->rootDeviceEnvironments[0]);
-    executionEnvironment->initializeMemoryManager();
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(pHwInfo);
     return Device::create<RootDevice>(executionEnvironment, 0u);
 }
 

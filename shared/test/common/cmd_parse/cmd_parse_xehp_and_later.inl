@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/test/common/cmd_parse/cmd_parse_base.inl"
 //
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/cmd_parse/cmd_parse_3d_state_btd.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_compute_mi_arb.inl"
 #include "shared/test/common/cmd_parse/cmd_parse_compute_mode.inl"

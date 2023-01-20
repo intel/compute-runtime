@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,14 +8,13 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/test/unit_test/aub_tests/command_stream/aub_command_stream_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
-#include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 #include "opencl/test/unit_test/indirect_heap/indirect_heap_fixture.h"
 
@@ -36,8 +35,8 @@ struct AubDispatchThreadDataFixture : public KernelAUBFixture<SimpleKernelFixtur
         size_t gwsSize = 0;
         size_t lwsSize = 0;
     };
-    void SetUp() override {
-        KernelAUBFixture<SimpleKernelFixture>::SetUp();
+    void setUp() {
+        KernelAUBFixture<SimpleKernelFixture>::setUp();
         variablesCount = arrayCount(variables);
 
         BufferDefaults::context = context;
@@ -55,7 +54,7 @@ struct AubDispatchThreadDataFixture : public KernelAUBFixture<SimpleKernelFixtur
         }
     }
 
-    void TearDown() override {
+    void tearDown() {
         pCmdQ->flush();
 
         for (size_t i = 0; i < variablesCount; i++) {
@@ -73,7 +72,7 @@ struct AubDispatchThreadDataFixture : public KernelAUBFixture<SimpleKernelFixtur
             }
         }
         BufferDefaults::context = nullptr;
-        KernelAUBFixture<SimpleKernelFixture>::TearDown();
+        KernelAUBFixture<SimpleKernelFixture>::tearDown();
     }
 
     std::unique_ptr<DebugManagerStateRestore> debugRestorer;
@@ -84,14 +83,14 @@ struct AubDispatchThreadDataFixture : public KernelAUBFixture<SimpleKernelFixtur
 };
 
 struct InlineDataFixture : AubDispatchThreadDataFixture {
-    void SetUp() override {
+    void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
         DebugManager.flags.EnablePassInlineData.set(true);
 
         initializeKernel3Variables();
         initializeKernel4Variables();
 
-        AubDispatchThreadDataFixture::SetUp();
+        AubDispatchThreadDataFixture::setUp();
 
         setUpKernel3();
     }
@@ -181,8 +180,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadFitI
 
     EXPECT_EQ(expectedEmitLocal, walker->getEmitLocalId());
     EXPECT_EQ(0, memcmp(walker->getInlineDataPointer(), kernels[4]->getCrossThreadData(), sizeof(INLINE_DATA)));
-    //this kernel does nothing, so no expectMemory because only such kernel can fit into single GRF
-    //this is for sake of testing inline data data copying by COMPUTE_WALKER
+    // this kernel does nothing, so no expectMemory because only such kernel can fit into single GRF
+    // this is for sake of testing inline data data copying by COMPUTE_WALKER
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSizeMoreThanSingleGrfWhenInlineDataAllowedThenCopyGrfCrossThreadToInline) {
@@ -251,13 +250,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubInlineDataTest, givenCrossThreadSize
 }
 
 struct HwLocalIdsFixture : AubDispatchThreadDataFixture {
-    void SetUp() override {
+    void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
         DebugManager.flags.EnableHwGenerationLocalIds.set(1);
 
         initializeKernel2Variables();
 
-        AubDispatchThreadDataFixture::SetUp();
+        AubDispatchThreadDataFixture::setUp();
 
         if (kernels[2]->getKernelInfo().kernelDescriptor.kernelAttributes.flags.passInlineData) {
             DebugManager.flags.EnablePassInlineData.set(true);
@@ -404,13 +403,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsTest, givenNonPowOf2LocalW
 }
 
 struct HwLocalIdsWithSubGroups : AubDispatchThreadDataFixture {
-    void SetUp() override {
+    void setUp() {
         debugRestorer = std::make_unique<DebugManagerStateRestore>();
         DebugManager.flags.EnableHwGenerationLocalIds.set(1);
 
         kernelIds |= (1 << 9);
         variables[0].sizeUserMemory = 16 * KB;
-        AubDispatchThreadDataFixture::SetUp();
+        AubDispatchThreadDataFixture::setUp();
 
         memset(variables[0].destMemory, 0, variables[0].sizeUserMemory);
         variables[0].expectedMemory = alignedMalloc(variables[0].sizeUserMemory, 4096);
@@ -462,7 +461,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterAubHwLocalIdsWithSubgroupsTest, givenKe
 
     pCmdQ->finish();
 
-    //we expect sequence of local ids from 0..199
+    // we expect sequence of local ids from 0..199
     auto expectedMemory = reinterpret_cast<uint32_t *>(variables[0].expectedMemory);
     auto currentWorkItem = 0u;
 

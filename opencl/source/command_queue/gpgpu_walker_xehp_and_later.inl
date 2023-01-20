@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,9 +61,9 @@ size_t GpgpuWalkerHelper<GfxFamily>::setGpgpuWalkerThreadData(
     walkerCmd->setThreadGroupIdStartingY(static_cast<uint32_t>(startWorkGroups[1]));
     walkerCmd->setThreadGroupIdStartingZ(static_cast<uint32_t>(startWorkGroups[2]));
 
-    //1) cross-thread inline data will be put into R1, but if kernel uses local ids, then cross-thread should be put further back
-    //so whenever local ids are driver or hw generated, reserve space by setting right values for emitLocalIds
-    //2) Auto-generation of local ids should be possible, when in fact local ids are used
+    // 1) cross-thread inline data will be put into R1, but if kernel uses local ids, then cross-thread should be put further back
+    // so whenever local ids are driver or hw generated, reserve space by setting right values for emitLocalIds
+    // 2) Auto-generation of local ids should be possible, when in fact local ids are used
     if (!localIdsGenerationByRuntime && kernelUsesLocalIds) {
         uint32_t emitLocalIdsForDim = 0;
         if (kernelDescriptor.kernelAttributes.localId[0]) {
@@ -104,7 +104,8 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
     auto &postSyncData = walkerCmd->getPostSync();
     postSyncData.setDataportPipelineFlush(true);
 
-    EncodeDispatchKernel<GfxFamily>::setupPostSyncMocs(*walkerCmd, rootDeviceEnvironment);
+    EncodeDispatchKernel<GfxFamily>::setupPostSyncMocs(*walkerCmd, rootDeviceEnvironment,
+                                                       MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo));
 
     EncodeDispatchKernel<GfxFamily>::adjustTimestampPacket(*walkerCmd, hwInfo);
 
@@ -130,15 +131,14 @@ void GpgpuWalkerHelper<GfxFamily>::adjustMiStoreRegMemMode(MI_STORE_REG_MEM<GfxF
 
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel, const DispatchInfo &dispatchInfo) {
-    size_t numPipeControls = MemorySynchronizationCommands<GfxFamily>::isPipeControlWArequired(commandQueue.getDevice().getHardwareInfo()) ? 2 : 1;
+    size_t numBarriers = MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(commandQueue.getDevice().getHardwareInfo()) ? 2 : 1;
 
     size_t size = sizeof(typename GfxFamily::COMPUTE_WALKER) +
-                  (sizeof(typename GfxFamily::PIPE_CONTROL) * numPipeControls) +
+                  (MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) * numBarriers) +
                   HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() +
                   EncodeMemoryPrefetch<GfxFamily>::getSizeForMemoryPrefetch(pKernel->getKernelInfo().heapInfo.KernelHeapSize, commandQueue.getDevice().getHardwareInfo());
     auto devices = commandQueue.getGpgpuCommandStreamReceiver().getOsContext().getDeviceBitfield();
-    auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices,
-                                                                           !pKernel->isSingleSubdevicePreferred());
+    auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, true);
     if (partitionWalker) {
         Vec3<size_t> groupStart = dispatchInfo.getStartOfWorkgroups();
         Vec3<size_t> groupCount = dispatchInfo.getNumberOfWorkgroups();
@@ -158,11 +158,11 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite() {
 }
 
 template <typename GfxFamily>
-void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(TagNodeBase &hwTimeStamps, LinearStream *commandStream, const HardwareInfo &hwInfo) {
+void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(TagNodeBase &hwTimeStamps, LinearStream *commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
 
 template <typename GfxFamily>
-void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(TagNodeBase &hwTimeStamps, LinearStream *commandStream, const HardwareInfo &hwInfo) {
+void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(TagNodeBase &hwTimeStamps, LinearStream *commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
 
 template <typename GfxFamily>
@@ -170,7 +170,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeForCacheFlushAfterWalkerCommands(cons
     size_t size = 0;
 
     if (kernel.requiresCacheFlushCommand(commandQueue)) {
-        size += sizeof(typename GfxFamily::PIPE_CONTROL);
+        size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
 
         if constexpr (GfxFamily::isUsingL3Control) {
             StackVec<GraphicsAllocation *, 32> allocationsForCacheFlush;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,9 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/logger.h"
 
 namespace NEO {
@@ -50,7 +52,7 @@ GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms,
 
 GraphicsAllocation::~GraphicsAllocation() = default;
 
-void GraphicsAllocation::updateTaskCount(uint32_t newTaskCount, uint32_t contextId) {
+void GraphicsAllocation::updateTaskCount(TaskCountType newTaskCount, uint32_t contextId) {
     if (usageInfos[contextId].taskCount == objectNotUsed) {
         registeredContextsNum++;
     }
@@ -116,7 +118,10 @@ void GraphicsAllocation::prepareHostPtrForResidency(CommandStreamReceiver *csr) 
     }
 }
 
-constexpr uint32_t GraphicsAllocation::objectNotUsed;
-constexpr uint32_t GraphicsAllocation::objectNotResident;
-constexpr uint32_t GraphicsAllocation::objectAlwaysResident;
+uint32_t GraphicsAllocation::getNumHandlesForKmdSharedAllocation(uint32_t numBanks) {
+    return (numBanks > 1) && (DebugManager.flags.CreateKmdMigratedSharedAllocationWithMultipleBOs.get() != 0) ? numBanks : 1u;
+}
+constexpr TaskCountType GraphicsAllocation::objectNotUsed;
+constexpr TaskCountType GraphicsAllocation::objectNotResident;
+constexpr TaskCountType GraphicsAllocation::objectAlwaysResident;
 } // namespace NEO

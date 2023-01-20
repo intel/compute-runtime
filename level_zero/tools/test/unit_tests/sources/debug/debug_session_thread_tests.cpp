@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
@@ -329,7 +329,11 @@ TEST(DebugSession, givenApiThreadAndSingleTileWhenConvertingThenCorrectValuesRet
     convertedThread = debugSession->convertToPhysicalWithinDevice(thread, deviceIndex);
 
     EXPECT_EQ(0u, deviceIndex);
-    EXPECT_EQ(convertedThread.slice, thread.slice);
+    if (hwInfo.gtSystemInfo.SliceCount == 1) {
+        EXPECT_EQ(convertedThread.slice, 0u);
+    } else {
+        EXPECT_EQ(convertedThread.slice, thread.slice);
+    }
 }
 
 TEST(DebugSession, givenApiThreadAndSingleTileWhenGettingDeviceIndexThenCorrectIndexIsReturned) {
@@ -358,7 +362,7 @@ TEST(DebugSession, givenAllStoppedThreadsWhenAreRequestedThreadsStoppedCalledThe
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<DebugSessionMock>(config, &deviceImp);
-
+    sessionMock->initialize();
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);
@@ -377,7 +381,7 @@ TEST(DebugSession, givenSomeStoppedThreadsWhenAreRequestedThreadsStoppedCalledTh
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<DebugSessionMock>(config, &deviceImp);
-
+    sessionMock->initialize();
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         if (i % 2) {
@@ -412,6 +416,7 @@ TEST(DebugSession, givenDifferentCombinationsOfThreadsAndMemoryTypeCheckExpected
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<DebugSessionMock>(config, &deviceImp);
+    sessionMock->initialize();
     ze_device_thread_t thread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
     zet_debug_memory_space_desc_t desc;
     desc.address = 0x1000;
@@ -430,9 +435,6 @@ TEST(DebugSession, givenDifferentCombinationsOfThreadsAndMemoryTypeCheckExpected
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, retVal);
 
     thread = {0, 0, 0, 1};
-    retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, retVal);
-
     desc.type = ZET_DEBUG_MEMORY_SPACE_TYPE_DEFAULT;
 
     retVal = sessionMock->sanityMemAccessThreadCheck(thread, &desc);
@@ -498,6 +500,202 @@ TEST(DebugSession, GivenLogsDisabledWhenPrintBitmaskCalledThenBitmaskIsNotPrinte
     auto output = ::testing::internal::GetCapturedStdout();
 
     EXPECT_EQ(0u, output.size());
+}
+
+TEST(DebugSession, WhenConvertingThreadIdsThenDeviceFunctionsAreCalled) {
+
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<DebugSessionMock>(zet_debug_config_t{0x1234}, &deviceImp);
+    ASSERT_NE(nullptr, sessionMock);
+
+    ze_device_thread_t thread = {0, 0, 0, 0};
+
+    auto threadID = sessionMock->convertToThreadId(thread);
+
+    EXPECT_EQ(0u, threadID.tileIndex);
+    EXPECT_EQ(0u, threadID.slice);
+    EXPECT_EQ(0u, threadID.subslice);
+    EXPECT_EQ(0u, threadID.eu);
+    EXPECT_EQ(0u, threadID.thread);
+
+    auto apiThread = sessionMock->convertToApi(threadID);
+
+    EXPECT_EQ(0u, apiThread.slice);
+    EXPECT_EQ(0u, apiThread.subslice);
+    EXPECT_EQ(0u, apiThread.eu);
+    EXPECT_EQ(0u, apiThread.thread);
+
+    uint32_t deviceIndex = 1;
+
+    auto physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(1u, deviceIndex);
+    EXPECT_EQ(0u, physicalThread.slice);
+    EXPECT_EQ(0u, physicalThread.subslice);
+    EXPECT_EQ(0u, physicalThread.eu);
+    EXPECT_EQ(0u, physicalThread.thread);
+
+    thread.slice = UINT32_MAX;
+    physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(1u, deviceIndex);
+    EXPECT_EQ(uint32_t(UINT32_MAX), physicalThread.slice);
+    EXPECT_EQ(0u, physicalThread.subslice);
+    EXPECT_EQ(0u, physicalThread.eu);
+    EXPECT_EQ(0u, physicalThread.thread);
+
+    thread.slice = 0;
+    thread.subslice = UINT32_MAX;
+    thread.eu = 1;
+    thread.thread = 3;
+    physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(1u, deviceIndex);
+    EXPECT_EQ(0u, physicalThread.slice);
+    EXPECT_EQ(uint32_t(UINT32_MAX), physicalThread.subslice);
+    EXPECT_EQ(1u, physicalThread.eu);
+    EXPECT_EQ(3u, physicalThread.thread);
+}
+
+TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithSingleSliceThenSubsliceIsCorrectlyRemapped) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.gtSystemInfo.SliceCount = 2;
+    hwInfo.gtSystemInfo.SubSliceCount = 8;
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto sessionMock = std::make_unique<DebugSessionMock>(zet_debug_config_t{0x1234}, &deviceImp);
+    ASSERT_NE(nullptr, sessionMock);
+
+    // fuse off first slice
+    sessionMock->topologyMap[0].sliceIndices.erase(sessionMock->topologyMap[0].sliceIndices.begin());
+    hwInfo.gtSystemInfo.SliceCount = 1;
+    sessionMock->topologyMap[0].subsliceIndices.push_back(2);
+    sessionMock->topologyMap[0].subsliceIndices.push_back(3);
+
+    ze_device_thread_t thread = {UINT32_MAX, 1, 0, 0};
+    uint32_t deviceIndex = 0;
+
+    auto physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(1u, physicalThread.slice);
+    EXPECT_EQ(3u, physicalThread.subslice);
+    EXPECT_EQ(0u, physicalThread.eu);
+    EXPECT_EQ(0u, physicalThread.thread);
+
+    thread.slice = 0;
+    physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(1u, physicalThread.slice);
+    EXPECT_EQ(3u, physicalThread.subslice);
+    EXPECT_EQ(0u, physicalThread.eu);
+    EXPECT_EQ(0u, physicalThread.thread);
+}
+
+TEST(DebugSessionTest, WhenConvertingThreadIDsForDeviceWithMultipleSlicesThenSubsliceIsNotRemapped) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    hwInfo.gtSystemInfo.SliceCount = 8;
+    hwInfo.gtSystemInfo.SubSliceCount = 8;
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<DebugSessionMock>(zet_debug_config_t{0x1234}, &deviceImp);
+    ASSERT_NE(nullptr, sessionMock);
+
+    // fuse off first slice
+    sessionMock->topologyMap[0].sliceIndices.erase(sessionMock->topologyMap[0].sliceIndices.begin());
+    hwInfo.gtSystemInfo.SliceCount = 7;
+
+    ze_device_thread_t thread = {UINT32_MAX, 1, 0, 0};
+    uint32_t deviceIndex = 0;
+
+    auto physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(UINT32_MAX, physicalThread.slice);
+    EXPECT_EQ(thread.subslice, physicalThread.subslice);
+    EXPECT_EQ(0u, physicalThread.eu);
+    EXPECT_EQ(0u, physicalThread.thread);
+
+    thread.slice = 0;
+    physicalThread = sessionMock->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(1u, physicalThread.slice);
+    EXPECT_EQ(thread.subslice, physicalThread.subslice);
+    EXPECT_EQ(0u, physicalThread.eu);
+    EXPECT_EQ(0u, physicalThread.thread);
+}
+
+struct AffinityMaskMultipleSubdevices : MultipleDevicesWithCustomHwInfo {
+    void setUp() {
+        DebugManager.flags.ZE_AFFINITY_MASK.set("0.0,0.1,0.3");
+        MultipleDevicesWithCustomHwInfo::numSubDevices = 4;
+        MultipleDevicesWithCustomHwInfo::setUp();
+    }
+
+    void tearDown() {
+        MultipleDevicesWithCustomHwInfo::tearDown();
+    }
+    DebugManagerStateRestore restorer;
+};
+
+using AffinityMaskMultipleSubdevicesTest = Test<AffinityMaskMultipleSubdevices>;
+
+TEST_F(AffinityMaskMultipleSubdevicesTest, givenApiThreadAndMultipleTilesWhenConvertingToPhysicalThenCorrectValuesReturned) {
+
+    L0::Device *device = driverHandle->devices[0];
+    auto deviceImp = static_cast<DeviceImp *>(device);
+
+    auto debugSession = std::make_unique<DebugSessionMock>(zet_debug_config_t{0x1234}, deviceImp);
+    ASSERT_NE(nullptr, debugSession);
+
+    ze_device_thread_t thread = {2 * sliceCount - 1, 0, 0, 0};
+
+    uint32_t deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
+    EXPECT_EQ(1u, deviceIndex);
+
+    auto convertedThread = debugSession->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(1u, deviceIndex);
+    EXPECT_EQ(sliceCount - 1, convertedThread.slice);
+    EXPECT_EQ(thread.subslice, convertedThread.subslice);
+    EXPECT_EQ(thread.eu, convertedThread.eu);
+    EXPECT_EQ(thread.thread, convertedThread.thread);
+
+    thread = {3 * sliceCount - 1, 0, 0, 0};
+
+    deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
+    EXPECT_EQ(3u, deviceIndex);
+
+    convertedThread = debugSession->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(3u, deviceIndex);
+    EXPECT_EQ(sliceCount - 1, convertedThread.slice);
+    EXPECT_EQ(thread.subslice, convertedThread.subslice);
+    EXPECT_EQ(thread.eu, convertedThread.eu);
+    EXPECT_EQ(thread.thread, convertedThread.thread);
+
+    thread = {sliceCount - 1, 0, 0, 0};
+
+    deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
+    EXPECT_EQ(0u, deviceIndex);
+
+    convertedThread = debugSession->convertToPhysicalWithinDevice(thread, deviceIndex);
+
+    EXPECT_EQ(0u, deviceIndex);
+    EXPECT_EQ(sliceCount - 1, convertedThread.slice);
+    EXPECT_EQ(thread.subslice, convertedThread.subslice);
+    EXPECT_EQ(thread.eu, convertedThread.eu);
+    EXPECT_EQ(thread.thread, convertedThread.thread);
+
+    thread.slice = UINT32_MAX;
+    deviceIndex = debugSession->getDeviceIndexFromApiThread(thread);
+    EXPECT_EQ(UINT32_MAX, deviceIndex);
 }
 
 using DebugSessionMultiTile = Test<MultipleDevicesWithCustomHwInfo>;

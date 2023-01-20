@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ class GlArbSyncEvent : public Event {
     GlArbSyncEvent() = delete;
     ~GlArbSyncEvent() override;
 
-    void unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus) override;
+    void unblockEventBy(Event &event, TaskCountType taskLevel, int32_t transitionStatus) override;
 
     static GlArbSyncEvent *create(Event &baseEvent);
 

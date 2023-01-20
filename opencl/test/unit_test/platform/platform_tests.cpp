@@ -10,7 +10,9 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_builtins.h"
@@ -19,8 +21,6 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
-#include "shared/test/unit_test/fixtures/mock_aub_center_fixture.h"
-#include "shared/test/unit_test/helpers/gtest_helpers.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/sharings/sharing_factory.h"
@@ -438,6 +438,16 @@ TEST(PlatformInitTest, givenSingleDeviceWithNonZeroRootDeviceIndexInPassedDevice
     size_t expectedNumDevices = 1u;
     EXPECT_EQ(expectedNumDevices, platform()->getNumDevices());
     EXPECT_EQ(2u, platform()->getClDevice(0)->getRootDeviceIndex());
+}
+
+TEST(PlatformInitTest, GivenDebuggingEnabledWhenPlatformIsInitializedThenL0DebuggerIsCreated) {
+    std::vector<std::unique_ptr<Device>> devices;
+    auto executionEnvironment = new MockExecutionEnvironment(defaultHwInfo.get(), false, 1);
+    executionEnvironment->setDebuggingEnabled();
+    devices.push_back(std::make_unique<MockDevice>(executionEnvironment, 0));
+    auto status = platform()->initialize(std::move(devices));
+    EXPECT_TRUE(status);
+    EXPECT_NE(nullptr, platform()->getClDevice(0)->getDevice().getL0Debugger());
 }
 
 TEST(PlatformGroupDevicesTest, whenMultipleDevicesAreCreatedThenGroupDevicesCreatesVectorPerEachProductFamily) {

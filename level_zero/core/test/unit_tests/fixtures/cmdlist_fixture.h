@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,78 +14,28 @@
 
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 
 namespace L0 {
 namespace ult {
 
 class CommandListFixture : public DeviceFixture {
   public:
-    void SetUp() {
-        DeviceFixture::SetUp();
-        ze_result_t returnValue;
-        commandList.reset(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
-
-        ze_event_pool_desc_t eventPoolDesc = {};
-        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-        eventPoolDesc.count = 2;
-
-        ze_event_desc_t eventDesc = {};
-        eventDesc.index = 0;
-        eventDesc.wait = 0;
-        eventDesc.signal = 0;
-
-        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-        event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    }
-
-    void TearDown() {
-        event.reset(nullptr);
-        eventPool.reset(nullptr);
-        commandList.reset(nullptr);
-        DeviceFixture::TearDown();
-    }
+    void setUp();
+    void tearDown();
 
     std::unique_ptr<L0::ult::CommandList> commandList;
     std::unique_ptr<EventPool> eventPool;
     std::unique_ptr<Event> event;
 };
 
-template <bool createImmediate, bool createInternal, bool createCopy>
-struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
-    void SetUp() {
-        DebugManager.flags.EnableImplicitScaling.set(1);
-        osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&NEO::OSInterface::osEnableLocalMemory, true);
-        apiSupportBackup = std::make_unique<VariableBackup<bool>>(&NEO::ImplicitScaling::apiSupport, true);
-
-        SingleRootMultiSubDeviceFixture::SetUp();
-        ze_result_t returnValue;
-
-        NEO::EngineGroupType cmdListEngineType = createCopy ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::RenderCompute;
-
-        if (!createImmediate) {
-            commandList.reset(whiteboxCast(CommandList::create(productFamily, device, cmdListEngineType, 0u, returnValue)));
-        } else {
-            const ze_command_queue_desc_t desc = {};
-            commandList.reset(whiteboxCast(CommandList::createImmediate(productFamily, device, &desc, createInternal, cmdListEngineType, returnValue)));
-        }
-        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-
-        ze_event_pool_desc_t eventPoolDesc = {};
-        eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-        eventPoolDesc.count = 2;
-
-        ze_event_desc_t eventDesc = {};
-        eventDesc.index = 0;
-        eventDesc.wait = 0;
-        eventDesc.signal = 0;
-
-        eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-        event = std::unique_ptr<Event>(Event::create<uint32_t>(eventPool.get(), &eventDesc, device));
-    }
-
-    void TearDown() {
-        SingleRootMultiSubDeviceFixture::TearDown();
+struct MultiTileCommandListFixtureInit : public SingleRootMultiSubDeviceFixture {
+    void setUp();
+    void setUpParams(bool createImmediate, bool createInternal, bool createCopy);
+    inline void tearDown() {
+        SingleRootMultiSubDeviceFixture::tearDown();
     }
 
     std::unique_ptr<L0::ult::CommandList> commandList;
@@ -95,6 +45,18 @@ struct MultiTileCommandListFixture : public SingleRootMultiSubDeviceFixture {
     std::unique_ptr<VariableBackup<bool>> osLocalMemoryBackup;
 };
 
+template <bool createImmediate, bool createInternal, bool createCopy>
+struct MultiTileCommandListFixture : public MultiTileCommandListFixtureInit {
+    void setUp() {
+        MultiTileCommandListFixtureInit::setUp();
+        MultiTileCommandListFixtureInit::setUpParams(createImmediate, createInternal, createCopy);
+    }
+
+    void tearDown() {
+        MultiTileCommandListFixtureInit::tearDown();
+    }
+};
+
 template <typename FamilyType>
 void validateTimestampRegisters(GenCmdList &cmdList,
                                 GenCmdList::iterator &startIt,
@@ -102,89 +64,166 @@ void validateTimestampRegisters(GenCmdList &cmdList,
                                 uint64_t firstStoreRegMemAddress,
                                 uint32_t secondLoadRegisterRegSrcAddress,
                                 uint64_t secondStoreRegMemAddress,
-                                bool workloadPartition) {
-    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
-    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    using MI_MATH = typename FamilyType::MI_MATH;
-    using MI_STORE_REGISTER_MEM = typename FamilyType::MI_STORE_REGISTER_MEM;
+                                bool workloadPartition);
 
-    constexpr uint32_t mask = 0xfffffffe;
-
-    auto itor = find<MI_LOAD_REGISTER_REG *>(startIt, cmdList.end());
-
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-        EXPECT_EQ(firstLoadRegisterRegSrcAddress, cmdLoadReg->getSourceRegisterAddress());
-        EXPECT_EQ(CS_GPR_R0, cmdLoadReg->getDestinationRegisterAddress());
+struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
+    void setUp() {
+        setUp(0u);
     }
+    void setUp(uint32_t revision);
+    void tearDown();
+    void setUpImpl(uint32_t revision);
 
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-        EXPECT_EQ(CS_GPR_R1, cmdLoadImm->getRegisterOffset());
-        EXPECT_EQ(mask, cmdLoadImm->getDataDword());
-    }
+    std::unique_ptr<MockImmutableData> mockKernelImmData;
+    std::unique_ptr<L0::ult::CommandList> commandList;
+    std::unique_ptr<L0::ult::CommandList> commandListImmediate;
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    L0::ult::CommandQueue *commandQueue;
+    NEO::EngineGroupType engineGroupType;
+};
 
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdMath = genCmdCast<MI_MATH *>(*itor);
-        EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
-    }
+struct MultiReturnCommandListFixture : public ModuleMutableCommandListFixture {
+    void setUp();
 
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(CS_GPR_R2, cmdMem->getRegisterAddress());
-        EXPECT_EQ(firstStoreRegMemAddress, cmdMem->getMemoryAddress());
-        if (workloadPartition) {
-            EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
-        } else {
-            EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
+    DebugManagerStateRestore restorer;
+};
+
+struct CmdListPipelineSelectStateFixture : public ModuleMutableCommandListFixture {
+    void setUp();
+
+    template <typename FamilyType>
+    void testBody();
+
+    template <typename FamilyType>
+    void testBodyShareStateRegularImmediate();
+
+    template <typename FamilyType>
+    void testBodyShareStateImmediateRegular();
+
+    DebugManagerStateRestore restorer;
+};
+
+struct CmdListStateComputeModeStateFixture : public ModuleMutableCommandListFixture {
+    void setUp();
+
+    DebugManagerStateRestore restorer;
+};
+
+struct CmdListThreadArbitrationFixture : public CmdListStateComputeModeStateFixture {
+    template <typename FamilyType>
+    void testBody();
+};
+
+struct CmdListLargeGrfFixture : public CmdListStateComputeModeStateFixture {
+    template <typename FamilyType>
+    void testBody();
+};
+
+struct ImmediateCmdListSharedHeapsFixture : public ModuleMutableCommandListFixture {
+    void setUp();
+
+    DebugManagerStateRestore restorer;
+};
+
+class AppendFillFixture : public DeviceFixture {
+  public:
+    class MockDriverFillHandle : public L0::DriverHandleImp {
+      public:
+        bool findAllocationDataForRange(const void *buffer,
+                                        size_t size,
+                                        NEO::SvmAllocationData **allocData) override;
+
+        const uint32_t rootDeviceIndex = 0u;
+        std::unique_ptr<NEO::GraphicsAllocation> mockAllocation;
+        NEO::SvmAllocationData data{rootDeviceIndex};
+    };
+
+    template <GFXCORE_FAMILY gfxCoreFamily>
+    class MockCommandList : public WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>> {
+      public:
+        MockCommandList() : WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>() {}
+
+        ze_result_t appendLaunchKernelWithParams(Kernel *kernel,
+                                                 const ze_group_count_t *pThreadGroupDimensions,
+                                                 Event *event,
+                                                 const CmdListKernelLaunchParams &launchParams) override {
+            if (numberOfCallsToAppendLaunchKernelWithParams == thresholdOfCallsToAppendLaunchKernelWithParamsToFail) {
+                return ZE_RESULT_ERROR_UNKNOWN;
+            }
+            if (numberOfCallsToAppendLaunchKernelWithParams < 3) {
+                threadGroupDimensions[numberOfCallsToAppendLaunchKernelWithParams] = *pThreadGroupDimensions;
+                xGroupSizes[numberOfCallsToAppendLaunchKernelWithParams] = kernel->getGroupSize()[0];
+            }
+            numberOfCallsToAppendLaunchKernelWithParams++;
+            return CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(kernel,
+                                                                                      pThreadGroupDimensions,
+                                                                                      event,
+                                                                                      launchParams);
         }
+        ze_group_count_t threadGroupDimensions[3];
+        uint32_t xGroupSizes[3];
+        uint32_t thresholdOfCallsToAppendLaunchKernelWithParamsToFail = std::numeric_limits<uint32_t>::max();
+        uint32_t numberOfCallsToAppendLaunchKernelWithParams = 0;
+    };
+
+    void setUp();
+    void tearDown();
+
+    DebugManagerStateRestore restorer;
+
+    std::unique_ptr<Mock<MockDriverFillHandle>> driverHandle;
+    NEO::MockDevice *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    static constexpr size_t allocSize = 70;
+    static constexpr size_t patternSize = 8;
+    uint8_t *dstPtr = nullptr;
+    uint8_t pattern[patternSize] = {1, 2, 3, 4};
+
+    static constexpr size_t immediateAllocSize = 106;
+    uint8_t immediatePattern = 4;
+    uint8_t *immediateDstPtr = nullptr;
+};
+
+struct TestExpectedValues {
+    uint32_t expectedPacketsInUse = 0;
+    uint32_t expectedKernelCount = 0;
+    uint32_t expectedWalkerPostSyncOp = 0;
+    uint32_t expectedPostSyncPipeControls = 0;
+    uint32_t expectDcFlush = 0;
+    uint32_t expectStoreDataImm = 0;
+    bool postSyncAddressZero = false;
+    bool workloadPartition = false;
+};
+
+struct CommandListEventUsedPacketSignalFixture : public CommandListFixture {
+    void setUp();
+
+    DebugManagerStateRestore restorer;
+};
+
+struct TbxImmediateCommandListFixture : public ModuleMutableCommandListFixture {
+    using EventFieldType = uint32_t;
+
+    template <typename FamilyType>
+    void setUpT();
+
+    template <typename FamilyType>
+    void tearDownT() {
+        event.reset(nullptr);
+        eventPool.reset(nullptr);
+
+        ModuleMutableCommandListFixture::tearDown();
     }
 
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdLoadReg = genCmdCast<MI_LOAD_REGISTER_REG *>(*itor);
-        EXPECT_EQ(secondLoadRegisterRegSrcAddress, cmdLoadReg->getSourceRegisterAddress());
-        EXPECT_EQ(CS_GPR_R0, cmdLoadReg->getDestinationRegisterAddress());
-    }
+    void setEvent();
 
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdLoadImm = genCmdCast<MI_LOAD_REGISTER_IMM *>(*itor);
-        EXPECT_EQ(CS_GPR_R1, cmdLoadImm->getRegisterOffset());
-        EXPECT_EQ(mask, cmdLoadImm->getDataDword());
-    }
+    void setUp() {}
+    void tearDown() {}
 
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdMath = genCmdCast<MI_MATH *>(*itor);
-        EXPECT_EQ(3u, cmdMath->DW0.BitField.DwordLength);
-    }
-
-    itor++;
-    {
-        ASSERT_NE(cmdList.end(), itor);
-        auto cmdMem = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
-        EXPECT_EQ(CS_GPR_R2, cmdMem->getRegisterAddress());
-        EXPECT_EQ(secondStoreRegMemAddress, cmdMem->getMemoryAddress());
-        if (workloadPartition) {
-            EXPECT_TRUE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
-        } else {
-            EXPECT_FALSE(UnitTestHelper<FamilyType>::getWorkloadPartitionForStoreRegisterMemCmd(*cmdMem));
-        }
-    }
-    itor++;
-    startIt = itor;
-}
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<EventPool> eventPool;
+    std::unique_ptr<Event> event;
+};
 
 } // namespace ult
 } // namespace L0

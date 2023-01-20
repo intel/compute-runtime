@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/utilities/software_tags_manager.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 using namespace SWTags;
@@ -34,7 +36,7 @@ struct VeryLargeTag : public BaseTag {
 struct SoftwareTagsManagerTests : public DeviceFixture, public ::testing::Test {
     void SetUp() override {
         DebugManager.flags.EnableSWTags.set(true);
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
 
         tagsManager = pDevice->getRootDeviceEnvironment().tagsManager.get();
 
@@ -44,7 +46,7 @@ struct SoftwareTagsManagerTests : public DeviceFixture, public ::testing::Test {
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
 
     template <typename GfxFamily>

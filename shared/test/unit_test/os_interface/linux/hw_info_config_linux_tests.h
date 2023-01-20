@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@
 
 using namespace NEO;
 
-struct HwInfoConfigTestLinux : public HwInfoConfigTest {
+struct ProductHelperTestLinux : public ProductHelperTest {
     static void mockCpuidex(int *cpuInfo, int functionId, int subfunctionId) {
         if (subfunctionId == 0) {
             cpuInfo[0] = 0x7F;
@@ -31,13 +31,14 @@ struct HwInfoConfigTestLinux : public HwInfoConfigTest {
     }
 
     void SetUp() override {
-        HwInfoConfigTest::SetUp();
+        ProductHelperTest::SetUp();
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
 
-        osInterface = new OSInterface();
         drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+        executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new OSInterface());
+        osInterface = executionEnvironment->rootDeviceEnvironments[0]->osInterface.get();
         osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
 
         drm->storedEUVal = pInHwInfo.gtSystemInfo.EUCount;
@@ -50,9 +51,17 @@ struct HwInfoConfigTestLinux : public HwInfoConfigTest {
     void TearDown() override {
         CpuInfo::cpuidexFunc = rt_cpuidex_func;
 
-        delete osInterface;
+        ProductHelperTest::TearDown();
+    }
 
-        HwInfoConfigTest::TearDown();
+    template <typename HelperType>
+    HelperType &getHelper() const {
+        auto &helper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<HelperType>();
+        return helper;
+    }
+
+    RootDeviceEnvironment &getRootDeviceEnvironment() {
+        return *executionEnvironment->rootDeviceEnvironments[0].get();
     }
 
     OSInterface *osInterface;

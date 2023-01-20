@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ namespace NEO {
 
 std::optional<std::function<std::unique_ptr<IoctlHelper>(Drm &drm)>> ioctlHelperFactory[IGFX_MAX_PRODUCT] = {};
 
-std::unique_ptr<IoctlHelper> IoctlHelper::get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, const std::string &drmVersion, Drm &drm) {
+std::unique_ptr<IoctlHelper> IoctlHelper::getI915Helper(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, Drm &drm) {
     auto productSpecificIoctlHelperCreator = ioctlHelperFactory[productFamily];
     if (productSpecificIoctlHelperCreator) {
         return productSpecificIoctlHelperCreator.value()(drm);

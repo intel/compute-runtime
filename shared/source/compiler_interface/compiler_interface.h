@@ -1,15 +1,11 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/built_ins/sip.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
-#include "shared/source/helpers/string.h"
-#include "shared/source/os_interface/os_library.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/spinlock.h"
 
@@ -22,6 +18,9 @@
 #include <unordered_map>
 
 namespace NEO {
+enum class SipKernelType : std::uint32_t;
+class OsLibrary;
+class CompilerCache;
 class Device;
 
 using specConstValuesMap = std::unordered_map<uint32_t, uint64_t>;
@@ -78,16 +77,7 @@ struct TranslationOutput {
         dst.assign(src->GetMemory<char>(), src->GetSize<char>());
     }
 
-    static void makeCopy(MemAndSize &dst, CIF::Builtins::BufferSimple *src) {
-        if ((nullptr == src) || (src->GetSizeRaw() == 0)) {
-            dst.mem.reset();
-            dst.size = 0U;
-            return;
-        }
-
-        dst.size = src->GetSize<char>();
-        dst.mem = ::makeCopy(src->GetMemory<void>(), src->GetSize<char>());
-    }
+    static void makeCopy(MemAndSize &dst, CIF::Builtins::BufferSimple *src);
 };
 
 struct SpecConstantInfo {
@@ -144,7 +134,7 @@ class CompilerInterface {
     MOCKABLE_VIRTUAL bool loadIgc();
 
     static SpinLock spinlock;
-    MOCKABLE_VIRTUAL std::unique_lock<SpinLock> lock() {
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> lock() {
         return std::unique_lock<SpinLock>{spinlock};
     }
     std::unique_ptr<CompilerCache> cache = nullptr;

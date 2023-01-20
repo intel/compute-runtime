@@ -67,14 +67,14 @@ void ThreadGroupPreemptionEnqueueKernelTest::SetUp() {
     originalPreemptionMode = globalHwInfo->capabilityTable.defaultPreemptionMode;
     globalHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::ThreadGroup;
 
-    HelloWorldFixture::SetUp();
+    HelloWorldFixture::setUp();
     pDevice->setPreemptionMode(PreemptionMode::ThreadGroup);
 }
 
 void ThreadGroupPreemptionEnqueueKernelTest::TearDown() {
     globalHwInfo->capabilityTable.defaultPreemptionMode = originalPreemptionMode;
 
-    HelloWorldFixture::TearDown();
+    HelloWorldFixture::tearDown();
 }
 
 void MidThreadPreemptionEnqueueKernelTest::SetUp() {
@@ -85,12 +85,12 @@ void MidThreadPreemptionEnqueueKernelTest::SetUp() {
     originalPreemptionMode = globalHwInfo->capabilityTable.defaultPreemptionMode;
     globalHwInfo->capabilityTable.defaultPreemptionMode = PreemptionMode::MidThread;
 
-    HelloWorldFixture::SetUp();
+    HelloWorldFixture::setUp();
     pDevice->setPreemptionMode(PreemptionMode::MidThread);
 }
 
 void MidThreadPreemptionEnqueueKernelTest::TearDown() {
     globalHwInfo->capabilityTable.defaultPreemptionMode = originalPreemptionMode;
 
-    HelloWorldFixture::TearDown();
+    HelloWorldFixture::tearDown();
 }

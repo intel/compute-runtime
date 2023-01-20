@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #pragma once
 
 #include "shared/source/helpers/constants.h"
+#include "shared/source/os_interface/windows/dxgi_wrapper.h"
 
 #include <cwchar>
-#include <dxgi.h>
 
 namespace NEO {
 class UltIDXGIAdapter1 : public IDXGIAdapter1 {

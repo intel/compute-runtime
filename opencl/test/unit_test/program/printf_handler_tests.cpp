@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,11 @@
 
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -22,6 +23,7 @@
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
+#include "opencl/test/unit_test/mocks/mock_printf_handler.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
 
 using namespace NEO;
@@ -29,14 +31,7 @@ using namespace NEO;
 using PrintfHandlerTests = ::testing::Test;
 
 TEST_F(PrintfHandlerTests, givenPrintfHandlerWhenBeingConstructedThenStorePrintfSurfaceInitialDataSize) {
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-
-    struct MockPrintfHandler : public PrintfHandler {
-        using PrintfHandler::PrintfHandler;
-        using PrintfHandler::printfSurfaceInitialDataSizePtr;
-
-        MockPrintfHandler(ClDevice &device) : PrintfHandler(device) {}
-    };
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     MockPrintfHandler printfHandler(*device);
 
@@ -55,7 +50,7 @@ TEST_F(PrintfHandlerTests, givenNotPreparedPrintfHandlerWhenGetSurfaceIsCalledTh
     MockKernel *pKernel = new MockKernel(pProgram, *pKernelInfo, *device);
 
     MockMultiDispatchInfo multiDispatchInfo(device, pKernel);
-    PrintfHandler *printfHandler = PrintfHandler::create(multiDispatchInfo, *device);
+    PrintfHandler *printfHandler = PrintfHandler::create(multiDispatchInfo, device->getDevice());
 
     EXPECT_EQ(nullptr, printfHandler->getSurface());
 
@@ -80,7 +75,7 @@ TEST_F(PrintfHandlerTests, givenPreparedPrintfHandlerWithUndefinedSshOffsetWhenG
     pKernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 
     MockMultiDispatchInfo multiDispatchInfo(device, pKernel);
-    PrintfHandler *printfHandler = PrintfHandler::create(multiDispatchInfo, *device);
+    PrintfHandler *printfHandler = PrintfHandler::create(multiDispatchInfo, device->getDevice());
     printfHandler->prepareDispatch(multiDispatchInfo);
     EXPECT_NE(nullptr, printfHandler->getSurface());
 
@@ -108,7 +103,7 @@ TEST_F(PrintfHandlerTests, givenKernelWithImplicitArgsWhenPreparingPrintfHandler
     kernel.initialize();
 
     MockMultiDispatchInfo multiDispatchInfo(device.get(), &kernel);
-    auto printfHandler = std::unique_ptr<PrintfHandler>(PrintfHandler::create(multiDispatchInfo, *device));
+    auto printfHandler = std::unique_ptr<PrintfHandler>(PrintfHandler::create(multiDispatchInfo, device->getDevice()));
     printfHandler->prepareDispatch(multiDispatchInfo);
 
     auto printfSurface = printfHandler->getSurface();
@@ -123,14 +118,15 @@ TEST_F(PrintfHandlerTests, givenKernelWithImplicitArgsWhenPreparingPrintfHandler
 HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToDecompressPrintfOutput) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_BLITTER_OR_SKIP(&hwInfo);
-
     DebugManagerStateRestore restore;
 
     for (auto enable : {-1, 0, 1}) {
         DebugManager.flags.EnableStatelessCompression.set(enable);
 
         auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+        REQUIRE_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+
         MockContext context(device.get());
 
         auto kernelInfo = std::make_unique<MockKernelInfo>();
@@ -143,13 +139,13 @@ HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOut
         kernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 
         MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.get());
-        std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device));
+        std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, device->getDevice()));
         printfHandler->prepareDispatch(multiDispatchInfo);
         EXPECT_NE(nullptr, printfHandler->getSurface());
 
         EXPECT_TRUE(printfHandler->printEnqueueOutput());
 
-        auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Regular);
+        auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Regular);
         auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
 
         if (enable > 0) {
@@ -162,14 +158,15 @@ HWTEST_F(PrintfHandlerTests, givenEnabledStatelessCompressionWhenPrintEnqueueOut
 }
 
 HWTEST_F(PrintfHandlerTests, givenGpuHangOnFlushBcsStreamAndEnabledStatelessCompressionWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToDecompressPrintfOutputAndFalseIsReturned) {
-    HardwareInfo hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_BLITTER_OR_SKIP(&hwInfo);
 
     DebugManagerStateRestore restore;
     DebugManager.flags.EnableStatelessCompression.set(1);
-
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+
+    REQUIRE_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+
     MockContext context(device.get());
 
     auto kernelInfo = std::make_unique<MockKernelInfo>();
@@ -182,14 +179,14 @@ HWTEST_F(PrintfHandlerTests, givenGpuHangOnFlushBcsStreamAndEnabledStatelessComp
     kernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 
     MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.get());
-    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device));
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, device->getDevice()));
     printfHandler->prepareDispatch(multiDispatchInfo);
     EXPECT_NE(nullptr, printfHandler->getSurface());
 
-    auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Regular);
+    auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Regular);
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
     bcsCsr->callBaseFlushBcsTask = false;
-    bcsCsr->flushBcsTaskReturnValue = std::nullopt;
+    bcsCsr->flushBcsTaskReturnValue = CompletionStamp::gpuHang;
 
     EXPECT_FALSE(printfHandler->printEnqueueOutput());
     EXPECT_EQ(1u, bcsCsr->blitBufferCalled);
@@ -199,21 +196,13 @@ HWTEST_F(PrintfHandlerTests, givenGpuHangOnFlushBcsStreamAndEnabledStatelessComp
 HWTEST_F(PrintfHandlerTests, givenDisallowedLocalMemoryCpuAccessWhenPrintEnqueueOutputIsCalledThenBCSEngineIsUsedToCopyPrintfOutput) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-    REQUIRE_BLITTER_OR_SKIP(&hwInfo);
-
-    class MockPrintfHandler : public PrintfHandler {
-      public:
-        using PrintfHandler::PrintfHandler;
-        using PrintfHandler::printfSurface;
-
-        MockPrintfHandler(ClDevice &device) : PrintfHandler(device) {}
-    };
 
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceLocalMemoryAccessMode.set(static_cast<int32_t>(LocalMemoryAccessMode::CpuAccessDisallowed));
     DebugManager.flags.EnableLocalMemory.set(1);
 
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
+    REQUIRE_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
     MockContext context(device.get());
 
     auto kernelInfo = std::make_unique<MockKernelInfo>();
@@ -226,8 +215,9 @@ HWTEST_F(PrintfHandlerTests, givenDisallowedLocalMemoryCpuAccessWhenPrintEnqueue
     kernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 
     MockMultiDispatchInfo multiDispatchInfo(device.get(), kernel.get());
-    auto printfHandler = std::make_unique<MockPrintfHandler>(*device);
+    auto printfHandler = std::make_unique<MockPrintfHandler>(device->getDevice());
 
+    printfHandler->callBasePrintEnqueueOutput = true;
     printfHandler->prepareDispatch(multiDispatchInfo);
     EXPECT_NE(nullptr, printfHandler->getSurface());
 
@@ -240,7 +230,7 @@ HWTEST_F(PrintfHandlerTests, givenDisallowedLocalMemoryCpuAccessWhenPrintEnqueue
 
     printfHandler->printEnqueueOutput();
 
-    auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getHardwareInfo(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Regular);
+    auto &bcsEngine = device->getEngine(EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), device->getSelectorCopyEngine(), true), EngineUsage::Regular);
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsEngine.commandStreamReceiver);
 
     EXPECT_TRUE(bcsCsr->blitBufferCalled >= 1);
@@ -321,7 +311,7 @@ TEST_F(PrintfHandlerTests, givenMultiDispatchInfoWithMultipleKernelsWhenCreating
     multiDispatchInfo.push(mainDispatchInfo);
     multiDispatchInfo.push(dispatchInfo2);
 
-    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device));
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, device->getDevice()));
     ASSERT_NE(nullptr, printfHandler.get());
 
     printfHandler->prepareDispatch(multiDispatchInfo);
@@ -335,12 +325,13 @@ TEST_F(PrintfHandlerTests, GivenEmptyMultiDispatchInfoWhenCreatingPrintfHandlerT
     multiDispatchInfo.dispatchInfos.resize(0);
     EXPECT_EQ(nullptr, multiDispatchInfo.peekMainKernel());
 
-    auto printfHandler = PrintfHandler::create(multiDispatchInfo, device);
+    auto printfHandler = PrintfHandler::create(multiDispatchInfo, device.getDevice());
     EXPECT_EQ(nullptr, printfHandler);
 }
 
 TEST_F(PrintfHandlerTests, GivenAllocationInLocalMemoryWhichRequiresBlitterWhenPreparingPrintfSurfaceDispatchThenBlitterIsUsed) {
-    REQUIRE_BLITTER_OR_SKIP(defaultHwInfo.get());
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    REQUIRE_BLITTER_OR_SKIP(*mockExecutionEnvironment.rootDeviceEnvironments[0].get());
 
     DebugManagerStateRestore restorer;
 
@@ -378,7 +369,7 @@ TEST_F(PrintfHandlerTests, GivenAllocationInLocalMemoryWhichRequiresBlitterWhenP
             kernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 
             MockMultiDispatchInfo multiDispatchInfo(pClDevice.get(), kernel.get());
-            std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *pClDevice));
+            std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, pClDevice->getDevice()));
             printfHandler->prepareDispatch(multiDispatchInfo);
 
             if (printfHandler->getSurface()->isAllocatedInLocalMemoryPool() &&
@@ -403,7 +394,7 @@ TEST_F(PrintfHandlerMultiRootDeviceTests, GivenPrintfSurfaceThenItHasCorrectRoot
     kernel->setCrossThreadData(&crossThread, sizeof(uint64_t) * 8);
 
     MockMultiDispatchInfo multiDispatchInfo(device1, kernel.get());
-    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, *device1));
+    std::unique_ptr<PrintfHandler> printfHandler(PrintfHandler::create(multiDispatchInfo, device1->getDevice()));
     printfHandler->prepareDispatch(multiDispatchInfo);
     auto surface = printfHandler->getSurface();
 

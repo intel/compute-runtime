@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/tests_configuration.h"
+#include "shared/test/common/tests_configuration.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/platform/platform.h"
@@ -23,7 +23,7 @@
 
 namespace NEO {
 
-void MulticontextAubFixture::SetUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression) {
+void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreamers enabledCommandStreamers, bool enableCompression) {
     this->numberOfEnabledTiles = numberOfTiles;
     const ::testing::TestInfo *const testInfo = ::testing::UnitTest::GetInstance()->current_test_info();
 
@@ -55,10 +55,10 @@ void MulticontextAubFixture::SetUp(uint32_t numberOfTiles, EnabledCommandStreame
         localHwInfo.capabilityTable.blitterOperationsSupported = !!DebugManager.flags.EnableBlitterOperationsSupport.get();
     }
 
-    auto &hwHelper = HwHelper::get(localHwInfo.platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
     auto engineType = getChosenEngineType(localHwInfo);
     auto renderEngine = aub_stream::NUM_ENGINES;
-    for (auto &engine : hwHelper.getGpgpuEngineInstances(localHwInfo)) {
+    for (auto &engine : gfxCoreHelper.getGpgpuEngineInstances(localHwInfo)) {
         if (!EngineHelpers::isCcs(engine.first)) {
             renderEngine = engine.first;
             break;
@@ -66,7 +66,7 @@ void MulticontextAubFixture::SetUp(uint32_t numberOfTiles, EnabledCommandStreame
     }
     ASSERT_NE(aub_stream::NUM_ENGINES, renderEngine);
 
-    auto renderEngineName = hwHelper.getCsTraits(renderEngine).name;
+    auto renderEngineName = gfxCoreHelper.getCsTraits(renderEngine).name;
 
     std::stringstream strfilename;
     strfilename << ApiSpecificConfig::getAubPrefixForSpecificApi();
@@ -99,7 +99,7 @@ void MulticontextAubFixture::SetUp(uint32_t numberOfTiles, EnabledCommandStreame
 
     ultHwConfig.useHwCsr = true;
     constructPlatform()->peekExecutionEnvironment()->prepareRootDeviceEnvironments(1u);
-    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(&localHwInfo);
+    platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(&localHwInfo);
     platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->initGmm();
     initPlatform();
 
@@ -153,7 +153,7 @@ void MulticontextAubFixture::SetUp(uint32_t numberOfTiles, EnabledCommandStreame
     }
 }
 
-void MulticontextAubFixture::TearDown() {
+void MulticontextAubFixture::tearDown() {
     auto filename = DebugManager.flags.AUBDumpCaptureFileName.get();
 
     std::string tileString = std::to_string(numberOfEnabledTiles) + "tx";

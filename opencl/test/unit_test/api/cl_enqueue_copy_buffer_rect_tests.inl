@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,10 +16,10 @@ using namespace NEO;
 
 struct clEnqueueCopyBufferRectTests : public ApiFixture<0>, ::testing::Test {
     void SetUp() override {
-        ApiFixture::SetUp();
+        ApiFixture::setUp();
     }
     void TearDown() override {
-        ApiFixture::TearDown();
+        ApiFixture::tearDown();
     }
 };
 
@@ -34,16 +34,16 @@ TEST_F(clEnqueueCopyBufferRectTests, GivenCorrectParametersWhenEnqueingCopyBuffe
 
     auto retVal = clEnqueueCopyBufferRect(
         pCommandQueue,
-        &srcBuffer, //srcBuffer
-        &dstBuffer, //dstBuffer
+        &srcBuffer, // srcBuffer
+        &dstBuffer, // dstBuffer
         srcOrigin,
         dstOrigin,
         region,
-        10, //srcRowPitch
-        0,  //srcSlicePitch
-        10, //dstRowPitch
-        0,  //dstSlicePitch
-        0,  //numEventsInWaitList
+        10, // srcRowPitch
+        0,  // srcSlicePitch
+        10, // dstRowPitch
+        0,  // dstSlicePitch
+        0,  // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -52,16 +52,16 @@ TEST_F(clEnqueueCopyBufferRectTests, GivenCorrectParametersWhenEnqueingCopyBuffe
 
 TEST_F(clEnqueueCopyBufferRectTests, GivenNullCommandQueueWhenEnqueingCopyBufferRectThenInvalidCommandQueueErrorIsReturned) {
     auto retVal = clEnqueueCopyBufferRect(
-        nullptr, //command_queue
-        nullptr, //srcBuffer
-        nullptr, //dstBuffer
-        nullptr, //srcOrigin
-        nullptr, //dstOrigin
-        nullptr, //retion
-        0,       //srcRowPitch
-        0,       //srcSlicePitch
-        0,       //dstRowPitch
-        0,       //dstSlicePitch
+        nullptr, // command_queue
+        nullptr, // srcBuffer
+        nullptr, // dstBuffer
+        nullptr, // srcOrigin
+        nullptr, // dstOrigin
+        nullptr, // retion
+        0,       // srcRowPitch
+        0,       // srcSlicePitch
+        0,       // dstRowPitch
+        0,       // dstSlicePitch
         0,
         nullptr,
         nullptr);
@@ -79,16 +79,16 @@ TEST_F(clEnqueueCopyBufferRectTests, GivenQueueIncapableWhenEnqueingCopyBufferRe
     this->disableQueueCapabilities(CL_QUEUE_CAPABILITY_TRANSFER_BUFFER_RECT_INTEL);
     auto retVal = clEnqueueCopyBufferRect(
         pCommandQueue,
-        &srcBuffer, //srcBuffer
-        &dstBuffer, //dstBuffer
+        &srcBuffer, // srcBuffer
+        &dstBuffer, // dstBuffer
         srcOrigin,
         dstOrigin,
         region,
-        10, //srcRowPitch
-        0,  //srcSlicePitch
-        10, //dstRowPitch
-        0,  //dstSlicePitch
-        0,  //numEventsInWaitList
+        10, // srcRowPitch
+        0,  // srcSlicePitch
+        10, // dstRowPitch
+        0,  // dstSlicePitch
+        0,  // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -104,16 +104,16 @@ TEST_F(clEnqueueCopyBufferRectTests, givenPitchesEqualZeroAndZerosInRegionWhenCa
 
     auto retVal = clEnqueueCopyBufferRect(
         pCommandQueue,
-        &srcBuffer, //srcBuffer
-        &dstBuffer, //dstBuffer
+        &srcBuffer, // srcBuffer
+        &dstBuffer, // dstBuffer
         srcOrigin,
         dstOrigin,
         region,
-        0, //srcRowPitch
-        0, //srcSlicePitch
-        0, //dstRowPitch
-        0, //dstSlicePitch
-        0, //numEventsInWaitList
+        0, // srcRowPitch
+        0, // srcSlicePitch
+        0, // dstRowPitch
+        0, // dstSlicePitch
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -129,16 +129,16 @@ TEST_F(clEnqueueCopyBufferRectTests, givenZeroInRegionWhenCallClEnqueueCopyBuffe
 
     auto retVal = clEnqueueCopyBufferRect(
         pCommandQueue,
-        &srcBuffer, //srcBuffer
-        &dstBuffer, //dstBuffer
+        &srcBuffer, // srcBuffer
+        &dstBuffer, // dstBuffer
         srcOrigin,
         dstOrigin,
         region,
-        10, //srcRowPitch
-        0,  //srcSlicePitch
-        10, //dstRowPitch
-        0,  //dstSlicePitch
-        0,  //numEventsInWaitList
+        10, // srcRowPitch
+        0,  // srcSlicePitch
+        10, // dstRowPitch
+        0,  // dstSlicePitch
+        0,  // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -148,16 +148,16 @@ TEST_F(clEnqueueCopyBufferRectTests, givenZeroInRegionWhenCallClEnqueueCopyBuffe
 
     retVal = clEnqueueCopyBufferRect(
         pCommandQueue,
-        &srcBuffer, //srcBuffer
-        &dstBuffer, //dstBuffer
+        &srcBuffer, // srcBuffer
+        &dstBuffer, // dstBuffer
         srcOrigin,
         dstOrigin,
         region1,
-        10, //srcRowPitch
-        0,  //srcSlicePitch
-        10, //dstRowPitch
-        0,  //dstSlicePitch
-        0,  //numEventsInWaitList
+        10, // srcRowPitch
+        0,  // srcSlicePitch
+        10, // dstRowPitch
+        0,  // dstSlicePitch
+        0,  // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -166,16 +166,16 @@ TEST_F(clEnqueueCopyBufferRectTests, givenZeroInRegionWhenCallClEnqueueCopyBuffe
 
     retVal = clEnqueueCopyBufferRect(
         pCommandQueue,
-        &srcBuffer, //srcBuffer
-        &dstBuffer, //dstBuffer
+        &srcBuffer, // srcBuffer
+        &dstBuffer, // dstBuffer
         srcOrigin,
         dstOrigin,
         region2,
-        10, //srcRowPitch
-        0,  //srcSlicePitch
-        10, //dstRowPitch
-        0,  //dstSlicePitch
-        0,  //numEventsInWaitList
+        10, // srcRowPitch
+        0,  // srcSlicePitch
+        10, // dstRowPitch
+        0,  // dstSlicePitch
+        0,  // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -184,16 +184,16 @@ TEST_F(clEnqueueCopyBufferRectTests, givenZeroInRegionWhenCallClEnqueueCopyBuffe
 
     retVal = clEnqueueCopyBufferRect(
         pCommandQueue,
-        &srcBuffer, //srcBuffer
-        &dstBuffer, //dstBuffer
+        &srcBuffer, // srcBuffer
+        &dstBuffer, // dstBuffer
         srcOrigin,
         dstOrigin,
         region3,
-        10, //srcRowPitch
-        0,  //srcSlicePitch
-        10, //dstRowPitch
-        0,  //dstSlicePitch
-        0,  //numEventsInWaitList
+        10, // srcRowPitch
+        0,  // srcSlicePitch
+        10, // dstRowPitch
+        0,  // dstSlicePitch
+        0,  // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -210,16 +210,16 @@ TEST_F(clEnqueueCopyBufferRectTests, givenNonProperSrcBufferSizeWhenCallClEnqueu
 
     auto retVal = clEnqueueCopyBufferRect(
         pCommandQueue,
-        &srcBuffer, //srcBuffer
-        &dstBuffer, //dstBuffer
+        &srcBuffer, // srcBuffer
+        &dstBuffer, // dstBuffer
         srcOrigin,
         dstOrigin,
         region,
-        10, //srcRowPitch
-        0,  //srcSlicePitch
-        10, //dstRowPitch
-        0,  //dstSlicePitch
-        0,  //numEventsInWaitList
+        10, // srcRowPitch
+        0,  // srcSlicePitch
+        10, // dstRowPitch
+        0,  // dstSlicePitch
+        0,  // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -236,16 +236,16 @@ TEST_F(clEnqueueCopyBufferRectTests, givenNonProperDstBufferSizeWhenCallClEnqueu
 
     auto retVal = clEnqueueCopyBufferRect(
         pCommandQueue,
-        &srcBuffer, //srcBuffer
-        &dstBuffer, //dstBuffer
+        &srcBuffer, // srcBuffer
+        &dstBuffer, // dstBuffer
         srcOrigin,
         dstOrigin,
         region,
-        10, //srcRowPitch
-        0,  //srcSlicePitch
-        10, //dstRowPitch
-        0,  //dstSlicePitch
-        0,  //numEventsInWaitList
+        10, // srcRowPitch
+        0,  // srcSlicePitch
+        10, // dstRowPitch
+        0,  // dstSlicePitch
+        0,  // numEventsInWaitList
         nullptr,
         nullptr);
 
@@ -284,16 +284,16 @@ TEST_F(clEnqueueCopyBufferRectTests, givenPitchesEqualZeroAndNotZeroRegionWhenCa
 
     auto retVal = clEnqueueCopyBufferRect(
         commandQueue.get(),
-        &srcBuffer, //srcBuffer
-        &dstBuffer, //dstBuffer
+        &srcBuffer, // srcBuffer
+        &dstBuffer, // dstBuffer
         srcOrigin,
         dstOrigin,
         region,
-        0, //srcRowPitch
-        0, //srcSlicePitch
-        0, //dstRowPitch
-        0, //dstSlicePitch
-        0, //numEventsInWaitList
+        0, // srcRowPitch
+        0, // srcSlicePitch
+        0, // dstRowPitch
+        0, // dstSlicePitch
+        0, // numEventsInWaitList
         nullptr,
         nullptr);
 

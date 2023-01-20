@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,10 @@
 
 #include "shared/source/compiler_interface/compiler_interface.h"
 
+#include "shared/source/built_ins/sip_kernel_type.h"
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.inl"
+#include "shared/source/compiler_interface/igc_platform_helper.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
@@ -33,6 +35,17 @@ enum CachingMode {
     Direct,
     PreProcess
 };
+
+void TranslationOutput::makeCopy(MemAndSize &dst, CIF::Builtins::BufferSimple *src) {
+    if ((nullptr == src) || (src->GetSizeRaw() == 0)) {
+        dst.mem.reset();
+        dst.size = 0U;
+        return;
+    }
+
+    dst.size = src->GetSize<char>();
+    dst.mem = ::makeCopy(src->GetMemory<void>(), src->GetSize<char>());
+}
 
 CompilerInterface::CompilerInterface()
     : cache() {
@@ -396,8 +409,8 @@ IGC::FclOclDeviceCtxTagOCL *CompilerInterface::getFclDeviceCtx(const Device &dev
             DEBUG_BREAK_IF(true); // could not acquire handles to platform descriptor
             return nullptr;
         }
-        const HardwareInfo *hwInfo = &device.getHardwareInfo();
-        IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, hwInfo->platform);
+        const auto &hwInfo = device.getHardwareInfo();
+        populateIgcPlatform(*igcPlatform, hwInfo);
     }
     fclDeviceContexts[&device] = std::move(newDeviceCtx);
 
@@ -436,23 +449,12 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
         getHwInfoForPlatformString(productFamily, hwInfo);
     }
 
-    auto copyHwInfo = *hwInfo;
-    CompilerHwInfoConfig::get(copyHwInfo.platform.eProductFamily)->adjustHwInfoForIgc(copyHwInfo);
+    populateIgcPlatform(*igcPlatform, *hwInfo);
+    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo->gtSystemInfo);
 
-    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform, copyHwInfo.platform);
-    IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, copyHwInfo.gtSystemInfo);
-
-    igcFtrWa->SetFtrDesktop(device.getHardwareInfo().featureTable.flags.ftrDesktop);
-    igcFtrWa->SetFtrChannelSwizzlingXOREnabled(device.getHardwareInfo().featureTable.flags.ftrChannelSwizzlingXOREnabled);
-    igcFtrWa->SetFtrIVBM0M1Platform(device.getHardwareInfo().featureTable.flags.ftrIVBM0M1Platform);
-    igcFtrWa->SetFtrSGTPVSKUStrapPresent(device.getHardwareInfo().featureTable.flags.ftrSGTPVSKUStrapPresent);
-    igcFtrWa->SetFtr5Slice(device.getHardwareInfo().featureTable.flags.ftr5Slice);
-    igcFtrWa->SetFtrGpGpuMidThreadLevelPreempt(CompilerHwInfoConfig::get(hwInfo->platform.eProductFamily)->isMidThreadPreemptionSupported(*hwInfo));
-    igcFtrWa->SetFtrIoMmuPageFaulting(device.getHardwareInfo().featureTable.flags.ftrIoMmuPageFaulting);
+    igcFtrWa->SetFtrGpGpuMidThreadLevelPreempt(CompilerProductHelper::get(hwInfo->platform.eProductFamily)->isMidThreadPreemptionSupported(*hwInfo));
     igcFtrWa->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.flags.ftrWddm2Svm);
     igcFtrWa->SetFtrPooledEuEnabled(device.getHardwareInfo().featureTable.flags.ftrPooledEuEnabled);
-
-    igcFtrWa->SetFtrResourceStreamer(device.getHardwareInfo().featureTable.flags.ftrResourceStreamer);
 
     igcDeviceContexts[&device] = std::move(newDeviceCtx);
     return igcDeviceContexts[&device].get();

@@ -1,17 +1,19 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/tag_allocation_layout.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -23,12 +25,12 @@
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_buffer_object_fixture.h"
 #include "shared/test/common/os_interface/linux/drm_command_stream_fixture.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 using namespace NEO;
 
 struct DrmCommandStreamMultiTileMemExecFixture {
-    void SetUp() { // NOLINT(readability-identifier-naming)
+    void setUp() {
         DebugManager.flags.CreateMultipleSubDevices.set(2u);
         DebugManager.flags.EnableImplicitScaling.set(1);
         DebugManager.flags.EnableForcePin.set(false);
@@ -49,7 +51,7 @@ struct DrmCommandStreamMultiTileMemExecFixture {
                                              *executionEnvironment);
         executionEnvironment->memoryManager.reset(memoryManager);
         executionEnvironment->prepareRootDeviceEnvironments(1u);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
         executionEnvironment->initializeMemoryManager();
 
         VariableBackup<UltHwConfig> backup(&ultHwConfig);
@@ -57,7 +59,7 @@ struct DrmCommandStreamMultiTileMemExecFixture {
         device.reset(MockDevice::create<MockDevice>(executionEnvironment, 0));
     }
 
-    void TearDown() { // NOLINT(readability-identifier-naming)
+    void tearDown() {
         executionEnvironment->decRefInternal();
     }
 
@@ -89,7 +91,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
     EncodeNoop<FamilyType>::alignToCacheLine(cs);
 
-    BatchBuffer batchBuffer{cs.getGraphicsAllocation(), 0, 0, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount, cs.getUsed(), &cs, nullptr, false};
+    BatchBuffer batchBuffer = BatchBufferHelper::createDefaultBatchBuffer(cs.getGraphicsAllocation(), &cs, cs.getUsed());
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{testCsr->getRootDeviceIndex(), MemoryConstants::pageSize});
     testCsr->makeResident(cmdBuffer);
@@ -99,10 +101,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     testCsr->latestSentTaskCount = 2;
     testCsr->postSyncWriteOffset = 16;
 
-    uint64_t expectedCompletionGpuAddress = testCsr->getTagAllocation()->getGpuAddress() + Drm::completionFenceOffset + testCsr->postSyncWriteOffset;
+    uint64_t expectedCompletionGpuAddress = testCsr->getTagAllocation()->getGpuAddress() + TagAllocationLayout::completionFenceOffset + testCsr->postSyncWriteOffset;
 
-    int ret = testCsr->flushInternal(batchBuffer, testCsr->getResidencyAllocations());
-    EXPECT_EQ(0, ret);
+    SubmissionStatus ret = testCsr->flushInternal(batchBuffer, testCsr->getResidencyAllocations());
+    EXPECT_EQ(SubmissionStatus::SUCCESS, ret);
 
     EXPECT_EQ(expectedCompletionGpuAddress, bo.receivedCompletionGpuAddress);
     EXPECT_EQ(testCsr->latestSentTaskCount, bo.receivedCompletionValue);
@@ -125,16 +127,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, AllocationType::COMMAND_BUFFER});
     allocation->updateTaskCount(2, defaultEngine.osContext->getContextId());
 
-    volatile uint32_t *completionAddress = defaultEngine.commandStreamReceiver->getTagAddress();
-    completionAddress += (Drm::completionFenceOffset / sizeof(uint32_t));
+    volatile TagAddressType *completionAddress = defaultEngine.commandStreamReceiver->getTagAddress();
+    completionAddress += (TagAllocationLayout::completionFenceOffset / sizeof(TagAddressType));
     *completionAddress = 1;
-    completionAddress += (postSyncOffset / sizeof(uint32_t));
+    completionAddress += (postSyncOffset / sizeof(TagAddressType));
     *completionAddress = 1;
 
     memoryManager->handleFenceCompletion(allocation);
 
-    uint64_t expectedAddress = castToUint64(const_cast<uint32_t *>(defaultEngine.commandStreamReceiver->getTagAddress())) +
-                               Drm::completionFenceOffset +
+    uint64_t expectedAddress = castToUint64(const_cast<TagAddressType *>(defaultEngine.commandStreamReceiver->getTagAddress())) +
+                               TagAllocationLayout::completionFenceOffset +
                                postSyncOffset;
     constexpr uint64_t expectedValue = 2;
 
@@ -159,16 +161,16 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DrmCommandStreamMultiTileMemExecTest, GivenDrmSuppo
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{0, 1024, AllocationType::COMMAND_BUFFER});
     allocation->updateTaskCount(2, defaultEngine.osContext->getContextId());
 
-    volatile uint32_t *completionAddress = defaultEngine.commandStreamReceiver->getTagAddress();
-    completionAddress += (Drm::completionFenceOffset / sizeof(uint32_t));
-    *completionAddress = 2; //1st context is ready
-    completionAddress += (postSyncOffset / sizeof(uint32_t));
+    volatile TagAddressType *completionAddress = defaultEngine.commandStreamReceiver->getTagAddress();
+    completionAddress += (TagAllocationLayout::completionFenceOffset / sizeof(TagAddressType));
+    *completionAddress = 2; // 1st context is ready
+    completionAddress += (postSyncOffset / sizeof(TagAddressType));
     *completionAddress = 1;
 
     memoryManager->handleFenceCompletion(allocation);
 
-    uint64_t expectedAddress = castToUint64(const_cast<uint32_t *>(defaultEngine.commandStreamReceiver->getTagAddress())) +
-                               Drm::completionFenceOffset +
+    uint64_t expectedAddress = castToUint64(const_cast<TagAddressType *>(defaultEngine.commandStreamReceiver->getTagAddress())) +
+                               TagAllocationLayout::completionFenceOffset +
                                postSyncOffset;
     constexpr uint64_t expectedValue = 2;
 

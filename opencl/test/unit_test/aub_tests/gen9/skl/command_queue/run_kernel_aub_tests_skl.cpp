@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,11 +18,11 @@ class AUBRunKernelIntegrateTest : public RunKernelFixture<AUBRunKernelFixtureFac
 
   protected:
     void SetUp() override {
-        ParentClass::SetUp();
+        ParentClass::setUp();
     }
 
     void TearDown() override {
-        ParentClass::TearDown();
+        ParentClass::tearDown();
     }
 };
 
@@ -39,7 +39,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
 
     std::string kernelFilename;
     retrieveBinaryKernelFilename(kernelFilename, "simple_kernels_", ".bin");
-    Program *pProgram = CreateProgramFromBinary(kernelFilename);
+    Program *pProgram = createProgramFromBinary(kernelFilename);
     ASSERT_NE(nullptr, pProgram);
 
     retVal = pProgram->build(
@@ -122,7 +122,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
         retVal);
     ASSERT_NE(nullptr, destinationBuffer1);
 
-    //buffer may not be zero copied
+    // buffer may not be zero copied
     pDestinationMemory1 = reinterpret_cast<decltype(pDestinationMemory1)>(destinationBuffer1->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress());
 
     auto destinationBuffer2 = Buffer::create(
@@ -133,7 +133,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
         retVal);
     ASSERT_NE(nullptr, destinationBuffer2);
 
-    //buffer may not be zero copied
+    // buffer may not be zero copied
     pDestinationMemory2 = reinterpret_cast<decltype(pDestinationMemory2)>(destinationBuffer2->getGraphicsAllocation(pClDevice->getRootDeviceIndex())->getGpuAddress());
 
     cl_mem arg2 = intermediateBuffer;
@@ -262,7 +262,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
 
     std::string kernelFilename;
     retrieveBinaryKernelFilename(kernelFilename, "vme_kernels_", ".bin");
-    Program *pProgram = CreateProgramFromBinary(kernelFilename);
+    Program *pProgram = createProgramFromBinary(kernelFilename);
     ASSERT_NE(nullptr, pProgram);
 
     retVal = pProgram->build(
@@ -382,7 +382,7 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
     ASSERT_NE(nullptr, shapesBuffer);
 
     // kernel decl:
-    //void  block_motion_estimate_intel_noacc(
+    // void  block_motion_estimate_intel_noacc(
     //    __read_only image2d_t   srcImg,               // IN
     //    __read_only image2d_t   refImg,               // IN
     //    __global short2*        prediMVbuffer,        // IN

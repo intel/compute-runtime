@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,25 +9,20 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/root_device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
-#include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/string.h"
-#include "shared/source/os_interface/device_factory.h"
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
+#include "opencl/source/platform/platform_info.h"
 #include "opencl/source/sharings/sharing_factory.h"
 
 #include "CL/cl_ext.h"
@@ -44,7 +39,10 @@ Platform::Platform(ExecutionEnvironment &executionEnvironmentIn) : executionEnvi
 }
 
 Platform::~Platform() {
+    executionEnvironment.prepareForCleanup();
+
     for (auto clDevice : this->clDevices) {
+        clDevice->getDevice().getRootDeviceEnvironmentRef().debugger.reset(nullptr);
         clDevice->decRefInternal();
     }
 
@@ -137,6 +135,12 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
         UNRECOVERABLE_IF(!pDevice);
         pClDevice = new ClDevice{*pDevice, this};
         this->clDevices.push_back(pClDevice);
+
+        if (pClDevice->getDevice().getExecutionEnvironment()->isDebuggingEnabled()) {
+            const auto rootDeviceIndex = pClDevice->getDevice().getRootDeviceIndex();
+            auto rootDeviceEnvironment = pClDevice->getDevice().getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex].get();
+            rootDeviceEnvironment->initDebuggerL0(&pClDevice->getDevice());
+        }
 
         if (pClDevice->getPreemptionMode() == PreemptionMode::MidThread || pClDevice->isDebuggerActive()) {
             bool ret = SipKernel::initSipKernel(SipKernel::getSipKernelType(*pDevice), *pDevice);

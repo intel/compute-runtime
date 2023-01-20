@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/utilities/spinlock.h"
 
-#include "third_party/aub_stream/headers/aub_manager.h"
+#include "aubstream/aub_manager.h"
 
 #include <mutex>
 #include <vector>
@@ -31,7 +31,7 @@ class AubMemoryOperationsHandler : public MemoryOperationsHandler {
     void setAubManager(aub_stream::AubManager *aubManager);
 
   protected:
-    MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock) {
+    [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> acquireLock(SpinLock &lock) {
         return std::unique_lock<SpinLock>{lock};
     }
     aub_stream::AubManager *aubManager = nullptr;

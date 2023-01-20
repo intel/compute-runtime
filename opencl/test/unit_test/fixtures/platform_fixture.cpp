@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 #include "gtest/gtest.h"
 
 namespace NEO {
-void PlatformFixture::SetUp() {
+void PlatformFixture::setUp() {
     pPlatform = constructPlatform();
     ASSERT_EQ(0u, pPlatform->getNumDevices());
 
@@ -35,7 +35,7 @@ void PlatformFixture::SetUp() {
     }
 }
 
-void PlatformFixture::TearDown() {
+void PlatformFixture::tearDown() {
     platformsImpl->clear();
     delete[] devices;
 }

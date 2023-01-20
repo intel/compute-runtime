@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,21 +25,23 @@ namespace NEO {
 
 struct HardwareInfo;
 class OsLibrary;
+class CompilerCache;
 
 std::string convertToPascalCase(const std::string &inString);
 
 std::string generateFilePath(const std::string &directory, const std::string &fileNameBase, const char *extension);
+std::string getSupportedDevices(OclocArgHelper *helper);
 
 class OfflineCompiler {
   public:
     static int query(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
+    static int queryAcronymIds(size_t numArgs, const std::vector<std::string> &allArgs, OclocArgHelper *helper);
 
     static OfflineCompiler *create(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles, int &retVal, OclocArgHelper *helper);
+
     MOCKABLE_VIRTUAL int build();
     std::string &getBuildLog();
     void printUsage();
-    std::string getDevicesReleasesAndFamilies();
-    std::string getDeprecatedDevicesTypes();
 
     static constexpr ConstStringRef queryHelp =
         "Depending on <query_option> will generate file\n"
@@ -52,6 +54,13 @@ class OfflineCompiler {
         "Examples:\n"
         "  Extract driver version\n"
         "    ocloc query OCL_DRIVER_VERSION\n";
+
+    static constexpr ConstStringRef idsHelp = R"===(
+Depending on <acronym> will return all
+matched versions (<major>.<minor>.<revision>)
+that correspond to the given name.
+All supported acronyms: %s.
+)===";
 
     OfflineCompiler &operator=(const OfflineCompiler &) = delete;
     OfflineCompiler(const OfflineCompiler &) = delete;
@@ -89,7 +98,6 @@ class OfflineCompiler {
   protected:
     OfflineCompiler();
 
-    void setFamilyType();
     int initHardwareInfo(std::string deviceName);
     int initHardwareInfoForProductConfig(std::string deviceName);
     int initHardwareInfoForDeprecatedAcronyms(std::string deviceName, int deviceId);
@@ -97,13 +105,13 @@ class OfflineCompiler {
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);
     int parseCommandLine(size_t numArgs, const std::vector<std::string> &allArgs);
-    void setStatelessToStatefullBufferOffsetFlag();
+    void setStatelessToStatefulBufferOffsetFlag();
     void appendExtraInternalOptions(std::string &internalOptions);
     void parseDebugSettings();
     void storeBinary(char *&pDst, size_t &dstSize, const void *pSrc, const size_t srcSize);
     MOCKABLE_VIRTUAL int buildSourceCode();
     MOCKABLE_VIRTUAL std::string validateInputType(const std::string &input, bool isLlvm, bool isSpirv);
-    int buildIrBinary();
+    MOCKABLE_VIRTUAL int buildIrBinary();
     void updateBuildLog(const char *pErrorString, const size_t errorStringSize);
     MOCKABLE_VIRTUAL bool generateElfBinary();
     std::string generateFilePathForIr(const std::string &fileNameBase) {
@@ -123,9 +131,9 @@ class OfflineCompiler {
     void enforceFormat(std::string &format);
     HardwareInfo hwInfo;
 
-    AOT::PRODUCT_CONFIG deviceConfig = AOT::UNKNOWN_ISA;
+    AOT::PRODUCT_CONFIG deviceConfig = {};
     std::string deviceName;
-    std::string familyNameWithType;
+    std::string productFamilyName;
     std::string inputFile;
     std::string outputFile;
     std::string outputDirectory;
@@ -136,7 +144,10 @@ class OfflineCompiler {
     std::string optionsReadFromFile = "";
     std::string internalOptionsReadFromFile = "";
     std::string formatToEnforce = "";
+    std::string irHash, genHash, dbgHash, elfHash;
+    std::string cacheDir;
 
+    bool allowCaching = false;
     bool dumpFiles = true;
     bool useLlvmText = false;
     bool useLlvmBc = false;
@@ -154,6 +165,7 @@ class OfflineCompiler {
     bool excludeIr = false;
 
     std::vector<uint8_t> elfBinary;
+    size_t elfBinarySize = 0;
     char *genBinary = nullptr;
     size_t genBinarySize = 0;
     char *irBinary = nullptr;
@@ -163,9 +175,11 @@ class OfflineCompiler {
     struct buildInfo;
     std::unique_ptr<buildInfo> pBuildInfo;
     int revisionId = -1;
+    uint64_t hwInfoConfig = 0u;
 
     std::unique_ptr<OclocIgcFacade> igcFacade{nullptr};
     std::unique_ptr<OclocFclFacade> fclFacade{nullptr};
+    std::unique_ptr<CompilerCache> cache;
     IGC::CodeType::CodeType_t preferredIntermediateRepresentation;
 
     OclocArgHelper *argHelper = nullptr;

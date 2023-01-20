@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/platform/platform_info.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 
 using namespace NEO;
@@ -213,7 +214,7 @@ TEST_F(clGetPlatformInfoTests, WhenCheckingPlatformExtensionsWithVersionThenThey
 
 class GetPlatformInfoTests : public PlatformFixture,
                              public testing::TestWithParam<uint32_t /*cl_platform_info*/> {
-    using PlatformFixture::SetUp;
+    using PlatformFixture::setUp;
 
   public:
     GetPlatformInfoTests() {}
@@ -221,11 +222,11 @@ class GetPlatformInfoTests : public PlatformFixture,
   protected:
     void SetUp() override {
         platformInfo = GetParam();
-        PlatformFixture::SetUp();
+        PlatformFixture::setUp();
     }
 
     void TearDown() override {
-        PlatformFixture::TearDown();
+        PlatformFixture::tearDown();
     }
 
     char *getPlatformInfoString(Platform *pPlatform, cl_platform_info paramName) {

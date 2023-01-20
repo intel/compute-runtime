@@ -15,6 +15,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -25,8 +26,8 @@ ScratchSpaceControllerXeHPAndLater::ScratchSpaceControllerXeHPAndLater(uint32_t 
                                                                        ExecutionEnvironment &environment,
                                                                        InternalAllocationStorage &allocationStorage)
     : ScratchSpaceController(rootDeviceIndex, environment, allocationStorage) {
-    auto &hwHelper = HwHelper::get(environment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->platform.eRenderCoreFamily);
-    singleSurfaceStateSize = hwHelper.getRenderSurfaceStateSize();
+    auto &gfxCoreHelper = environment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
+    singleSurfaceStateSize = gfxCoreHelper.getRenderSurfaceStateSize();
     if (DebugManager.flags.EnablePrivateScratchSlot1.get() != -1) {
         privateScratchSpaceSupported = !!DebugManager.flags.EnablePrivateScratchSlot1.get();
     }
@@ -54,7 +55,7 @@ void ScratchSpaceControllerXeHPAndLater::setRequiredScratchSpace(void *sshBaseAd
                                                                  uint32_t offset,
                                                                  uint32_t requiredPerThreadScratchSize,
                                                                  uint32_t requiredPerThreadPrivateScratchSize,
-                                                                 uint32_t currentTaskCount,
+                                                                 TaskCountType currentTaskCount,
                                                                  OsContext &osContext,
                                                                  bool &stateBaseAddressDirty,
                                                                  bool &vfeStateDirty) {
@@ -80,14 +81,14 @@ void ScratchSpaceControllerXeHPAndLater::programSurfaceState() {
 }
 
 void ScratchSpaceControllerXeHPAndLater::programSurfaceStateAtPtr(void *surfaceStateForScratchAllocation) {
-    auto &hwHelper = HwHelper::get(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo()->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
     uint64_t scratchAllocationAddress = 0u;
     if (scratchAllocation) {
         scratchAllocationAddress = scratchAllocation->getGpuAddress();
     }
-    hwHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
-                                                     surfaceStateForScratchAllocation, computeUnitsUsedForScratch, scratchAllocationAddress, 0,
-                                                     perThreadScratchSize, nullptr, false, scratchType, false, true);
+    gfxCoreHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
+                                                          surfaceStateForScratchAllocation, computeUnitsUsedForScratch, scratchAllocationAddress, 0,
+                                                          perThreadScratchSize, nullptr, false, scratchType, false, true);
 
     if (privateScratchSpaceSupported) {
         void *surfaceStateForPrivateScratchAllocation = ptrOffset(surfaceStateForScratchAllocation, singleSurfaceStateSize);
@@ -96,10 +97,10 @@ void ScratchSpaceControllerXeHPAndLater::programSurfaceStateAtPtr(void *surfaceS
         if (privateScratchAllocation) {
             privateScratchAllocationAddress = privateScratchAllocation->getGpuAddress();
         }
-        hwHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
-                                                         surfaceStateForPrivateScratchAllocation, computeUnitsUsedForScratch,
-                                                         privateScratchAllocationAddress, 0, perThreadPrivateScratchSize, nullptr, false,
-                                                         scratchType, false, true);
+        gfxCoreHelper.setRenderSurfaceStateForScratchResource(*executionEnvironment.rootDeviceEnvironments[rootDeviceIndex],
+                                                              surfaceStateForPrivateScratchAllocation, computeUnitsUsedForScratch,
+                                                              privateScratchAllocationAddress, 0, perThreadPrivateScratchSize, nullptr, false,
+                                                              scratchType, false, true);
     }
 }
 
@@ -135,7 +136,7 @@ void ScratchSpaceControllerXeHPAndLater::reserveHeap(IndirectHeap::Type heapType
 void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(BindlessHeapsHelper *heapsHelper,
                                                                                uint32_t requiredPerThreadScratchSize,
                                                                                uint32_t requiredPerThreadPrivateScratchSize,
-                                                                               uint32_t currentTaskCount,
+                                                                               TaskCountType currentTaskCount,
                                                                                OsContext &osContext,
                                                                                bool &stateBaseAddressDirty,
                                                                                bool &vfeStateDirty,
@@ -152,13 +153,13 @@ void ScratchSpaceControllerXeHPAndLater::programBindlessSurfaceStateForScratch(B
 
 void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requiredPerThreadScratchSize,
                                                                   uint32_t requiredPerThreadPrivateScratchSize,
-                                                                  uint32_t currentTaskCount,
+                                                                  TaskCountType currentTaskCount,
                                                                   OsContext &osContext,
                                                                   bool &stateBaseAddressDirty,
                                                                   bool &scratchSurfaceDirty,
                                                                   bool &vfeStateDirty) {
     uint32_t requiredPerThreadScratchSizeAlignedUp = alignUp(requiredPerThreadScratchSize, 64);
-    size_t requiredScratchSizeInBytes = requiredPerThreadScratchSizeAlignedUp * computeUnitsUsedForScratch;
+    size_t requiredScratchSizeInBytes = static_cast<size_t>(requiredPerThreadScratchSizeAlignedUp) * computeUnitsUsedForScratch;
     scratchSurfaceDirty = false;
     auto multiTileCapable = osContext.getNumSupportedDevices() > 1;
     if (scratchSizeBytes < requiredScratchSizeInBytes) {
@@ -174,7 +175,7 @@ void ScratchSpaceControllerXeHPAndLater::prepareScratchAllocation(uint32_t requi
     }
     if (privateScratchSpaceSupported) {
         uint32_t requiredPerThreadPrivateScratchSizeAlignedUp = alignUp(requiredPerThreadPrivateScratchSize, 64);
-        size_t requiredPrivateScratchSizeInBytes = requiredPerThreadPrivateScratchSizeAlignedUp * computeUnitsUsedForScratch;
+        size_t requiredPrivateScratchSizeInBytes = static_cast<size_t>(requiredPerThreadPrivateScratchSizeAlignedUp) * computeUnitsUsedForScratch;
         if (privateScratchSizeBytes < requiredPrivateScratchSizeInBytes) {
             if (privateScratchAllocation) {
                 privateScratchAllocation->updateTaskCount(currentTaskCount, osContext.getContextId());
@@ -193,7 +194,7 @@ void ScratchSpaceControllerXeHPAndLater::programHeaps(HeapContainer &heapContain
                                                       uint32_t scratchSlot,
                                                       uint32_t requiredPerThreadScratchSize,
                                                       uint32_t requiredPerThreadPrivateScratchSize,
-                                                      uint32_t currentTaskCount,
+                                                      TaskCountType currentTaskCount,
                                                       OsContext &osContext,
                                                       bool &stateBaseAddressDirty,
                                                       bool &vfeStateDirty) {

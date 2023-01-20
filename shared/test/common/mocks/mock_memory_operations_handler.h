@@ -10,6 +10,8 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 class GraphicsAllocation;
@@ -40,13 +42,35 @@ class MockMemoryOperations : public MemoryOperationsHandler {
 
     MemoryOperationsStatus makeResident(Device *device, ArrayRef<GraphicsAllocation *> gfxAllocations) override {
         makeResidentCalledCount++;
+        if (captureGfxAllocationsForMakeResident) {
+            for (auto &gfxAllocation : gfxAllocations) {
+                gfxAllocationsForMakeResident.push_back(gfxAllocation);
+            }
+        }
         return MemoryOperationsStatus::SUCCESS;
     }
     MemoryOperationsStatus evict(Device *device, GraphicsAllocation &gfxAllocation) override {
         evictCalledCount++;
+        if (captureGfxAllocationsForMakeResident) {
+            auto allocIterator = std::find(gfxAllocationsForMakeResident.begin(), gfxAllocationsForMakeResident.end(), &gfxAllocation);
+            if (allocIterator != gfxAllocationsForMakeResident.end()) {
+                gfxAllocationsForMakeResident.erase(allocIterator);
+                return MemoryOperationsStatus::SUCCESS;
+            } else {
+                return MemoryOperationsStatus::MEMORY_NOT_FOUND;
+            }
+        }
         return MemoryOperationsStatus::SUCCESS;
     }
     MemoryOperationsStatus isResident(Device *device, GraphicsAllocation &gfxAllocation) override {
+        isResidentCalledCount++;
+        if (captureGfxAllocationsForMakeResident) {
+            if (std::find(gfxAllocationsForMakeResident.begin(), gfxAllocationsForMakeResident.end(), &gfxAllocation) != gfxAllocationsForMakeResident.end()) {
+                return MemoryOperationsStatus::SUCCESS;
+            } else {
+                return MemoryOperationsStatus::MEMORY_NOT_FOUND;
+            }
+        }
         return MemoryOperationsStatus::SUCCESS;
     }
 
@@ -70,6 +94,7 @@ class MockMemoryOperations : public MemoryOperationsHandler {
     std::vector<GraphicsAllocation *> gfxAllocationsForMakeResident{};
     int makeResidentCalledCount = 0;
     int evictCalledCount = 0;
+    uint32_t isResidentCalledCount = 0;
     uint32_t makeResidentContextId = std::numeric_limits<uint32_t>::max();
     bool captureGfxAllocationsForMakeResident = false;
 };

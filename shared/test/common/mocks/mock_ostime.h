@@ -10,10 +10,11 @@
 
 namespace NEO {
 static int PerfTicks = 0;
+constexpr uint64_t convertToNs = 100;
 class MockDeviceTime : public DeviceTime {
     bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
         pGpuCpuTime->GPUTimeStamp = ++PerfTicks;
-        pGpuCpuTime->CPUTimeinNS = PerfTicks;
+        pGpuCpuTime->CPUTimeinNS = PerfTicks * convertToNs;
         return true;
     }
 
@@ -33,7 +34,7 @@ class MockOSTime : public OSTime {
     }
 
     bool getCpuTime(uint64_t *timeStamp) override {
-        *timeStamp = ++PerfTicks;
+        *timeStamp = ++PerfTicks * convertToNs;
         return true;
     };
     double getHostTimerResolution() const override {
@@ -50,12 +51,12 @@ class MockOSTime : public OSTime {
 
 class MockDeviceTimeWithConstTimestamp : public DeviceTime {
   public:
-    static constexpr uint64_t CPU_TIME_IN_NS = 1u; // NOLINT(readability-identifier-naming)
-    static constexpr uint64_t GPU_TIMESTAMP = 2u;  // NOLINT(readability-identifier-naming)
+    static constexpr uint64_t cpuTimeInNs = 1u;
+    static constexpr uint64_t gpuTimestamp = 2u;
 
     bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
-        pGpuCpuTime->GPUTimeStamp = GPU_TIMESTAMP;
-        pGpuCpuTime->CPUTimeinNS = CPU_TIME_IN_NS;
+        pGpuCpuTime->GPUTimeStamp = gpuTimestamp;
+        pGpuCpuTime->CPUTimeinNS = cpuTimeInNs;
         return true;
     }
 
@@ -75,7 +76,7 @@ class MockOSTimeWithConstTimestamp : public OSTime {
     }
 
     bool getCpuTime(uint64_t *timeStamp) override {
-        *timeStamp = MockDeviceTimeWithConstTimestamp::CPU_TIME_IN_NS;
+        *timeStamp = MockDeviceTimeWithConstTimestamp::cpuTimeInNs;
         return true;
     }
 

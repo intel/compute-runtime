@@ -16,12 +16,12 @@
 
 namespace NEO {
 
-using Family = SKLFamily;
+using Family = Gen9Family;
 
 struct EnableOCLGen9 {
     EnableOCLGen9() {
         populateFactoryTable<BufferHw<Family>>();
-        populateFactoryTable<ClHwHelperHw<Family>>();
+        populateFactoryTable<ClGfxCoreHelperHw<Family>>();
         populateFactoryTable<CommandQueueHw<Family>>();
         populateFactoryTable<ImageHw<Family>>();
         populateFactoryTable<SamplerHw<Family>>();

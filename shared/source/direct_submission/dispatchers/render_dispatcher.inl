@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,15 +30,15 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
                                                               uint64_t immediateData,
                                                               const HardwareInfo &hwInfo,
                                                               bool useNotifyEnable,
-                                                              bool partitionedWorkload) {
-    using POST_SYNC_OPERATION = typename GfxFamily::PIPE_CONTROL::POST_SYNC_OPERATION;
+                                                              bool partitionedWorkload,
+                                                              bool dcFlushRequired) {
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+    args.dcFlushEnable = dcFlushRequired;
     args.workloadPartitionOffset = partitionedWorkload;
     args.notifyEnable = useNotifyEnable;
-    MemorySynchronizationCommands<GfxFamily>::addPipeControlAndProgramPostSyncOperation(
+    MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         cmdBuffer,
-        POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA,
+        PostSyncMode::ImmediateData,
         gpuAddress,
         immediateData,
         hwInfo,
@@ -47,8 +47,7 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
 
 template <typename GfxFamily>
 inline size_t RenderDispatcher<GfxFamily>::getSizeMonitorFence(const HardwareInfo &hwInfo) {
-    size_t size = MemorySynchronizationCommands<GfxFamily>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
-    return size;
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
 }
 
 template <typename GfxFamily>
@@ -63,7 +62,7 @@ inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffe
     args.pipeControlFlushEnable = true;
     args.textureCacheInvalidationEnable = true;
 
-    MemorySynchronizationCommands<GfxFamily>::addPipeControl(cmdBuffer, args);
+    MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdBuffer, args);
 }
 
 template <typename GfxFamily>
@@ -74,7 +73,7 @@ inline size_t RenderDispatcher<GfxFamily>::getSizeCacheFlush(const HardwareInfo 
 
 template <typename GfxFamily>
 inline size_t RenderDispatcher<GfxFamily>::getSizeTlbFlush() {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(true);
 }
 
 } // namespace NEO

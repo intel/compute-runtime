@@ -14,9 +14,11 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
+#include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/device_binary_format/patchtokens_tests.h"
 
 #include "platforms.h"
 
@@ -26,9 +28,9 @@ DG2TEST_F(Dg2UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithDg2ProductCo
     PatchTokensTestData::ValidEmptyProgram programTokens;
     PatchTokensTestData::ValidEmptyProgram programTokensWrongTokenVersion;
 
-    AheadOfTimeConfig aotConfig0{}, aotConfig1{};
-    aotConfig0.ProductConfig = AOT::DG2_G10_A0;
-    aotConfig1.ProductConfig = AOT::DG2_G10_B0;
+    NEO::HardwareIpVersion aotConfig0{}, aotConfig1{};
+    aotConfig0.value = AOT::DG2_G10_A0;
+    aotConfig1.value = AOT::DG2_G10_B0;
 
     std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig0);
     std::string anotherProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig1);

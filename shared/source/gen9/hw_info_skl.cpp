@@ -1,31 +1,20 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
-#include "shared/source/gen9/hw_cmds.h"
+#include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/gen9/hw_cmds_skl.h"
 #include "shared/source/helpers/constants.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 namespace NEO {
 
 const char *HwMapper<IGFX_SKYLAKE>::abbreviation = "skl";
-
-bool isSimulationSKL(unsigned short deviceId) {
-    switch (deviceId) {
-    case ISKL_GT0_DESK_DEVICE_F0_ID:
-    case ISKL_GT1_DESK_DEVICE_F0_ID:
-    case ISKL_GT2_DESK_DEVICE_F0_ID:
-    case ISKL_GT3_DESK_DEVICE_F0_ID:
-    case ISKL_GT4_DESK_DEVICE_F0_ID:
-        return true;
-    }
-    return false;
-};
 
 const PLATFORM SKL::platform = {
     IGFX_SKYLAKE,
@@ -47,8 +36,6 @@ const RuntimeCapabilityTable SKL::capabilityTable{
     0,                                             // sharedSystemMemCapabilities
     83.333,                                        // defaultProfilingTimerResolution
     MemoryConstants::pageSize,                     // requiredPreemptionSurfaceSize
-    &isSimulationSKL,                              // isSimulation
-    "core",                                        // platformType
     "",                                            // deviceName
     PreemptionMode::MidThread,                     // defaultPreemptionMode
     aub_stream::ENGINE_RCS,                        // defaultEngineType
@@ -101,25 +88,16 @@ void SKL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     featureTable->flags.ftrGpGpuThreadGroupLevelPreempt = true;
     featureTable->flags.ftrL3IACoherency = true;
     featureTable->flags.ftrGpGpuMidThreadLevelPreempt = true;
-    featureTable->flags.ftr3dMidBatchPreempt = true;
-    featureTable->flags.ftr3dObjectLevelPreempt = true;
-    featureTable->flags.ftrPerCtxtPreemptionGranularityControl = true;
     featureTable->flags.ftrPPGTT = true;
     featureTable->flags.ftrSVM = true;
     featureTable->flags.ftrIA32eGfxPTEs = true;
     featureTable->flags.ftrDisplayYTiling = true;
     featureTable->flags.ftrTranslationTable = true;
     featureTable->flags.ftrUserModeTranslationTable = true;
-    featureTable->flags.ftrEnableGuC = true;
     featureTable->flags.ftrFbc = true;
-    featureTable->flags.ftrFbc2AddressTranslation = true;
-    featureTable->flags.ftrFbcBlitterTracking = true;
-    featureTable->flags.ftrFbcCpuTracking = true;
     featureTable->flags.ftrTileY = true;
 
-    workaroundTable->flags.waEnablePreemptionGranularityControlByUMD = true;
     workaroundTable->flags.waSendMIFLUSHBeforeVFE = true;
-    workaroundTable->flags.waReportPerfCountUseGlobalContextID = true;
     workaroundTable->flags.waDisableLSQCROPERFforOCL = true;
     workaroundTable->flags.waMsaa8xTileYDepthPitchAlignment = true;
     workaroundTable->flags.waLosslessCompressionSurfaceStride = true;
@@ -127,7 +105,6 @@ void SKL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
     workaroundTable->flags.waEncryptedEdramOnlyPartials = true;
     workaroundTable->flags.waDisableEdramForDisplayRT = true;
-    workaroundTable->flags.waForcePcBbFullCfgRestore = true;
     workaroundTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 
     if ((1 << hwInfo->platform.usRevId) & 0x0eu) {

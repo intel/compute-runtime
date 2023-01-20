@@ -1,26 +1,33 @@
 components:
+  aub_stream:
+    branch: master
+    dest_dir: aub_stream
+    repository: https://github.com/intel/aubstream
+    revision: 65f512c3a5ca63449f0e7fcbd473db5c32a88ed2
+    type: git
   gmmlib:
     dest_dir: gmmlib
     type: git
     branch: gmmlib
-    revision: intel-gmmlib-22.1.3
+    revision: intel-gmmlib-22.3.0
     repository: https://github.com/intel/gmmlib.git
   igc:
     dest_dir: igc
     type: git
     branch: igc
-    revision: 624d2947c197d88ac1bdedbbd5d45fe6342d7bab
+    revision: d336f5fd32a32934d334c18214a9ebcbd4aa9753
     repository: https://github.com/intel/intelgraphicscompiler
   igsc:
     dest_dir: igsc
     type: git
     branch: igsc
-    revision: V0.6.0
+    revision: V0.8.4-1
     repository: https://github.com/intel/igsc.git
   infra:
     branch: master
     dest_dir: infra
-    revision: 00c4c0c1bb66bd1527fe569675dedfe5464ee72f
+    fetch_tags: true
+    revision: v4622
     type: git
   internal:
     branch: master
@@ -31,33 +38,45 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 1907-186
+    revision: 2008-529
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf
-    revision: c9a9f1c0d46f51b116cd9cb562205b20d33539ed
+    revision: 6fb5226219fa8b16dc6b67db06a8e7bc7c5ba8e4
     type: git
   level_zero:
     dest_dir: level_zero
     type: git
     branch: master
-    revision: v1.8.1
+    revision: v1.8.12
     repository: https://github.com/oneapi-src/level-zero
   libva:
     dest_dir: libva
     type: git
     branch: libva
-    revision: c9bb65b
+    revision: 2.2.0
     repository: https://github.com/intel/libva.git
+  metrics-discovery:
+    dest_dir: metrics/discovery
+    type: git
+    branch: metrics-discovery
+    revision: metrics-discovery-1.12.155
+    repository: https://github.com/intel/metrics-discovery.git
+  metrics-library:
+    dest_dir: metrics/library
+    type: git
+    branch: metrics-library
+    revision: metrics-library-1.0.114
+    repository: https://github.com/intel/metrics-library.git
   wdk:
     dest_dir: wdk
     type: git
     branch: wdk
-    revision: 4f190cb73994e6967c913fc0e08624fa31c0c14c-1902
+    revision: f34859c5264e211e2a9cdb35c79b0a4d1f6289a6-2005
   wsl:
     branch: wsl
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-1907
+converter: M-2008
 version: '1'

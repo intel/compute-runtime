@@ -14,8 +14,6 @@
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/string.h"
-#include "shared/source/os_interface/os_inc_base.h"
-#include "shared/source/os_interface/os_library.h"
 
 #include "cif/common/cif_main.h"
 #include "cif/import/library_api.h"
@@ -328,7 +326,7 @@ std::pair<int, std::vector<uint8_t>> OfflineLinker::translateToOutputFormat(cons
 
     tryToStoreBuildLog(igcOutput->GetBuildLog()->GetMemory<char>(), igcOutput->GetBuildLog()->GetSizeRaw());
 
-    const auto errorCode{igcOutput->Successful() ? OclocErrorCode::SUCCESS : OclocErrorCode::BUILD_PROGRAM_FAILURE};
+    const auto errorCode{igcOutput->Successful() && !outputFileContent.empty() ? OclocErrorCode::SUCCESS : OclocErrorCode::BUILD_PROGRAM_FAILURE};
     if (errorCode != OclocErrorCode::SUCCESS) {
         argHelper->printf("Error: Translation has failed! IGC returned empty output.\n");
     }

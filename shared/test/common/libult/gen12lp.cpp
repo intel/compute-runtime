@@ -8,12 +8,13 @@
 #include "shared/source/gen12lp/hw_cmds.h"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_l0_debugger.h"
 
 namespace NEO {
 
-typedef TGLLPFamily Family;
+typedef Gen12LpFamily Family;
 
-static auto gfxCore = IGFX_GEN12LP_CORE;
+constexpr auto gfxCore = IGFX_GEN12LP_CORE;
 
 extern CommandStreamReceiverCreateFunc commandStreamReceiverFactory[2 * IGFX_MAX_CORE];
 
@@ -29,6 +30,7 @@ struct enableGen12LP {
 };
 
 static enableGen12LP enable;
+static MockDebuggerL0HwPopulateFactory<gfxCore, Family> mockDebuggerGen12lp;
 
-template class UltCommandStreamReceiver<TGLLPFamily>;
+template class UltCommandStreamReceiver<Gen12LpFamily>;
 } // namespace NEO

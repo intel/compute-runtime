@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,12 +22,12 @@ struct CopyBufferRectHw
       public ::testing::TestWithParam<std::tuple<size_t, size_t, size_t, size_t, size_t, size_t, bool>> {
 
     void SetUp() override {
-        CommandEnqueueAUBFixture::SetUp();
+        CommandEnqueueAUBFixture::setUp();
         std::tie(srcOrigin0, srcOrigin1, srcOrigin2, dstOrigin0, dstOrigin1, dstOrigin2, copy3D) = GetParam();
     }
 
     void TearDown() override {
-        CommandEnqueueAUBFixture::TearDown();
+        CommandEnqueueAUBFixture::tearDown();
     }
 
     size_t srcOrigin0;
@@ -42,7 +42,7 @@ struct CopyBufferRectHw
 typedef CopyBufferRectHw AUBCopyBufferRect;
 
 HWTEST_P(AUBCopyBufferRect, WhenCopyingThenExpectationsMet) {
-    //3D UINT8 buffer 20x20x20
+    // 3D UINT8 buffer 20x20x20
     static const size_t rowPitch = 20;
     static const size_t slicePitch = rowPitch * rowPitch;
     static const size_t elementCount = slicePitch * rowPitch;
@@ -137,10 +137,10 @@ static size_t zero[] = {0};
 INSTANTIATE_TEST_CASE_P(AUBCopyBufferRect,
                         AUBCopyBufferRect,
                         ::testing::Combine(
-                            ::testing::Values(0, 3), //srcOrigin
+                            ::testing::Values(0, 3), // srcOrigin
                             ::testing::ValuesIn(zero),
                             ::testing::Values(0, 7),
-                            ::testing::Values(0, 3), //dstPrigin
+                            ::testing::Values(0, 3), // dstPrigin
                             ::testing::ValuesIn(zero),
                             ::testing::Values(0, 7),
                             ::testing::Values(true, false)));

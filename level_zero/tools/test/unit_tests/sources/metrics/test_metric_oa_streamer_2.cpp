@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/test_base.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/tools/source/metrics/metric_oa_source.h"

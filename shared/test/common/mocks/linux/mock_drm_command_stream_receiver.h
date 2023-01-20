@@ -1,19 +1,29 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
+#include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/test_macros/mock_method_macros.h"
 
 using namespace NEO;
 
 template <typename GfxFamily>
 class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily> {
   public:
+    using BaseClass = DrmCommandStreamReceiver<GfxFamily>;
+    using BaseClass::drm;
+    using BaseClass::exec;
+    using BaseClass::execObjectsStorage;
+    using BaseClass::residency;
+    using BaseClass::useContextForUserFenceWait;
+    using BaseClass::useUserFenceWait;
     using CommandStreamReceiver::activePartitions;
     using CommandStreamReceiver::clearColorAllocation;
     using CommandStreamReceiver::commandStream;
@@ -24,6 +34,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::getTagAllocation;
     using CommandStreamReceiver::globalFenceAllocation;
     using CommandStreamReceiver::latestSentTaskCount;
+    using CommandStreamReceiver::logicalStateHelper;
     using CommandStreamReceiver::makeResident;
     using CommandStreamReceiver::postSyncWriteOffset;
     using CommandStreamReceiver::tagAddress;
@@ -31,11 +42,6 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     using CommandStreamReceiver::useGpuIdleImplicitFlush;
     using CommandStreamReceiver::useNewResourceImplicitFlush;
     using CommandStreamReceiver::useNotifyEnableForPostSync;
-    using DrmCommandStreamReceiver<GfxFamily>::exec;
-    using DrmCommandStreamReceiver<GfxFamily>::residency;
-    using DrmCommandStreamReceiver<GfxFamily>::useContextForUserFenceWait;
-    using DrmCommandStreamReceiver<GfxFamily>::useUserFenceWait;
-    using DrmCommandStreamReceiver<GfxFamily>::execObjectsStorage;
     using CommandStreamReceiverHw<GfxFamily>::directSubmission;
     using CommandStreamReceiverHw<GfxFamily>::blitterDirectSubmission;
     using CommandStreamReceiverHw<GfxFamily>::CommandStreamReceiver::lastSentSliceCount;
@@ -58,7 +64,7 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
     void makeNonResident(GraphicsAllocation &gfxAllocation) override {
         makeNonResidentResult.called = true;
         makeNonResidentResult.allocation = &gfxAllocation;
-        DrmCommandStreamReceiver<GfxFamily>::makeNonResident(gfxAllocation);
+        BaseClass::makeNonResident(gfxAllocation);
     }
 
     struct MakeResidentNonResidentResult {
@@ -72,6 +78,10 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
         return this->submissionAggregator.get();
     }
 
+    ADDMETHOD(processResidency, SubmissionStatus, true, SubmissionStatus::SUCCESS, (const ResidencyContainer &allocationsForResidency, uint32_t handleId), (allocationsForResidency, handleId));
+
+    ADDMETHOD(exec, int, true, 0, (const BatchBuffer &batchBuffer, uint32_t vmHandleId, uint32_t drmContextId, uint32_t index), (batchBuffer, vmHandleId, drmContextId, index));
+
     void overrideSubmissionAggregator(SubmissionAggregator *newSubmissionsAggregator) {
         this->submissionAggregator.reset(newSubmissionsAggregator);
     }
@@ -84,40 +94,43 @@ class TestedDrmCommandStreamReceiver : public DrmCommandStreamReceiver<GfxFamily
         }
     }
 
+    void fillReusableAllocationsList() override {
+        fillReusableAllocationsListCalled++;
+    }
+
     struct WaitUserFenceResult {
         uint32_t called = 0u;
-        uint32_t waitValue = 0u;
+        TaskCountType waitValue = 0u;
         int returnValue = 0;
         bool callParent = true;
     };
 
     WaitUserFenceResult waitUserFenceResult;
 
-    int waitUserFence(uint32_t waitValue) override {
+    int waitUserFence(TaskCountType waitValue) override {
         waitUserFenceResult.called++;
         waitUserFenceResult.waitValue = waitValue;
 
         if (waitUserFenceResult.callParent) {
-            return DrmCommandStreamReceiver<GfxFamily>::waitUserFence(waitValue);
+            return BaseClass::waitUserFence(waitValue);
         } else {
             return waitUserFenceResult.returnValue;
         }
     }
 
-    int flushInternal(const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency) override {
-        if (callHwFlush) {
-            return DrmCommandStreamReceiver<GfxFamily>::flushInternal(batchBuffer, allocationsForResidency);
-        }
-        return 0;
-    }
+    ADDMETHOD(flushInternal, SubmissionStatus, true, SubmissionStatus::SUCCESS, (const BatchBuffer &batchBuffer, const ResidencyContainer &allocationsForResidency), (batchBuffer, allocationsForResidency));
 
     void readBackAllocation(void *source) override {
         latestReadBackAddress = source;
         DrmCommandStreamReceiver<GfxFamily>::readBackAllocation(source);
     }
 
+    void plugProxyDrm(DrmMock *proxyDrm) {
+        this->drm = proxyDrm;
+    }
+
     void *latestReadBackAddress = nullptr;
-    bool callHwFlush = true;
+    uint32_t fillReusableAllocationsListCalled = 0;
 };
 
 template <typename GfxFamily>

@@ -58,22 +58,22 @@ using MetricsLibraryApi::ValueType;
 struct MockMetricsLibraryApi {
 
     // Original api functions.
-    static StatusCode ML_STDCALL ContextCreate(ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle);         // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL ContextDelete(const ContextHandle_1_0 handle);                                                                  // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL GetParameter(const ParameterType parameter, ValueType *type, TypedValue_1_0 *value);                            // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL CommandBufferGet(const CommandBufferData_1_0 *data);                                                            // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL CommandBufferGetSize(const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size);                           // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL QueryCreate(const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle);                                    // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL QueryDelete(const QueryHandle_1_0 handle);                                                                      // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL OverrideCreate(const OverrideCreateData_1_0 *createData, OverrideHandle_1_0 *handle);                           // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL OverrideDelete(const OverrideHandle_1_0 handle);                                                                // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL MarkerCreate(const MarkerCreateData_1_0 *createData, MarkerHandle_1_0 *handle);                                 // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL MarkerDelete(const MarkerHandle_1_0 handle);                                                                    // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL ConfigurationCreate(const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle);            // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL ConfigurationActivate(const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData); // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL ConfigurationDeactivate(const ConfigurationHandle_1_0 handle);                                                  // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL ConfigurationDelete(const ConfigurationHandle_1_0 handle);                                                      // NOLINT(readability-identifier-naming)
-    static StatusCode ML_STDCALL GetData(GetReportData_1_0 *data);                                                                               // NOLINT(readability-identifier-naming)
+    static StatusCode ML_STDCALL contextCreate(ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle);
+    static StatusCode ML_STDCALL contextDelete(const ContextHandle_1_0 handle);
+    static StatusCode ML_STDCALL getParameter(const ParameterType parameter, ValueType *type, TypedValue_1_0 *value);
+    static StatusCode ML_STDCALL commandBufferGet(const CommandBufferData_1_0 *data);
+    static StatusCode ML_STDCALL commandBufferGetSize(const CommandBufferData_1_0 *data, CommandBufferSize_1_0 *size);
+    static StatusCode ML_STDCALL queryCreate(const QueryCreateData_1_0 *createData, QueryHandle_1_0 *handle);
+    static StatusCode ML_STDCALL queryDelete(const QueryHandle_1_0 handle);
+    static StatusCode ML_STDCALL overrideCreate(const OverrideCreateData_1_0 *createData, OverrideHandle_1_0 *handle);
+    static StatusCode ML_STDCALL overrideDelete(const OverrideHandle_1_0 handle);
+    static StatusCode ML_STDCALL markerCreate(const MarkerCreateData_1_0 *createData, MarkerHandle_1_0 *handle);
+    static StatusCode ML_STDCALL markerDelete(const MarkerHandle_1_0 handle);
+    static StatusCode ML_STDCALL configurationCreate(const ConfigurationCreateData_1_0 *createData, ConfigurationHandle_1_0 *handle);
+    static StatusCode ML_STDCALL configurationActivate(const ConfigurationHandle_1_0 handle, const ConfigurationActivateData_1_0 *activateData);
+    static StatusCode ML_STDCALL configurationDeactivate(const ConfigurationHandle_1_0 handle);
+    static StatusCode ML_STDCALL configurationDelete(const ConfigurationHandle_1_0 handle);
+    static StatusCode ML_STDCALL getData(GetReportData_1_0 *data);
 
     // Mocked api functions.
     MOCK_METHOD(StatusCode, MockContextCreate, (ClientType_1_0 clientType, ContextCreateData_1_0 *createData, ContextHandle_1_0 *handle));
@@ -143,11 +143,11 @@ struct Mock<MetricQuery> : public MetricQuery {
     MOCK_METHOD(ze_result_t, destroy, (), (override));
 };
 
-class MetricContextFixture : public ContextFixture {
+class MetricContextFixture : public DeviceFixture {
 
   protected:
-    void SetUp();
-    void TearDown();
+    void setUp();
+    void tearDown();
     void openMetricsAdapter();
     void openMetricsAdapterGroup();
 
@@ -170,8 +170,8 @@ class MetricContextFixture : public ContextFixture {
 class MetricMultiDeviceFixture : public MultiDeviceFixture {
 
   protected:
-    void SetUp();
-    void TearDown();
+    void setUp();
+    void tearDown();
     void openMetricsAdapter();
     void openMetricsAdapterSubDevice(uint32_t subDeviceIndex);
     void openMetricsAdapterDeviceAndSubDeviceNoCountVerify(uint32_t subDeviceIndex);

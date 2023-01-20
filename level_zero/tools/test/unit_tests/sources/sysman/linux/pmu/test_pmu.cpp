@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,15 +10,13 @@
 
 extern bool sysmanUltsEnable;
 
-using ::testing::Matcher;
-using ::testing::Return;
 namespace L0 {
 namespace ult {
 struct SysmanPmuFixture : public SysmanDeviceFixture {
   protected:
-    std::unique_ptr<Mock<MockPmuInterfaceImpForSysman>> pPmuInterface;
+    std::unique_ptr<MockPmuInterface> pPmuInterface;
     PmuInterface *pOriginalPmuInterface = nullptr;
-    std::unique_ptr<Mock<PmuFsAccess>> pFsAccess;
+    std::unique_ptr<MockPmuFsAccess> pFsAccess;
     FsAccess *pFsAccessOriginal = nullptr;
 
     void SetUp() override {
@@ -27,19 +25,11 @@ struct SysmanPmuFixture : public SysmanDeviceFixture {
         }
         SysmanDeviceFixture::SetUp();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
-        pFsAccess = std::make_unique<NiceMock<Mock<PmuFsAccess>>>();
+        pFsAccess = std::make_unique<MockPmuFsAccess>();
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
-        pPmuInterface = std::make_unique<NiceMock<Mock<MockPmuInterfaceImpForSysman>>>(pLinuxSysmanImp);
+        pPmuInterface = std::make_unique<MockPmuInterface>(pLinuxSysmanImp);
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
-        ON_CALL(*pFsAccess.get(), read(_, _))
-            .WillByDefault(::testing::Invoke(pFsAccess.get(), &Mock<PmuFsAccess>::readValSuccess));
-        ON_CALL(*pPmuInterface.get(), perfEventOpen(_, _, _, _, _))
-            .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImpForSysman>::mockedPerfEventOpenAndSuccessReturn));
-        ON_CALL(*pPmuInterface.get(), pmuRead(_, _, _))
-            .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImpForSysman>::mockedReadCountersForGroupSuccess));
-        ON_CALL(*pPmuInterface.get(), getErrorNo())
-            .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImpForSysman>::mockGetErrorNoSuccess));
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
@@ -115,24 +105,21 @@ TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenReadingGroupOfEventsUsingGroupFd
 }
 
 TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPmuInterfaceOpenAndPerfEventOpenFailsThenFailureIsReturned) {
-    ON_CALL(*pPmuInterface.get(), perfEventOpen(_, _, _, _, _))
-        .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImpForSysman>::mockedPerfEventOpenAndFailureReturn));
+    pPmuInterface->perfEventOpenResult = -1;
     uint64_t config = 10;
     EXPECT_EQ(-1, pLinuxSysmanImp->pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED));
 }
 
 TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenCallingPmuInterfaceOpenAndPerfEventOpenFailsAndErrNoSetBySyscallIsNotInvalidArgumentThenFailureIsReturned) {
-    ON_CALL(*pPmuInterface.get(), perfEventOpen(_, _, _, _, _))
-        .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImpForSysman>::mockedPerfEventOpenAndFailureReturn));
-    ON_CALL(*pPmuInterface.get(), getErrorNo())
-        .WillByDefault(::testing::Invoke(pPmuInterface.get(), &Mock<MockPmuInterfaceImpForSysman>::mockGetErrorNoFailure));
+    pPmuInterface->perfEventOpenResult = -1;
+    pPmuInterface->getErrorNoResult = EBADF;
     uint64_t config = 10;
     EXPECT_EQ(-1, pLinuxSysmanImp->pPmuInterface->pmuInterfaceOpen(config, -1, PERF_FORMAT_TOTAL_TIME_ENABLED));
 }
 
 TEST_F(SysmanPmuFixture, GivenValidPmuHandleWhenAndDomainErrorOccursThenDomainErrorIsReturnedBygetErrorNoFunction) {
     MockPmuInterfaceImpForSysman *pmuInterface = new MockPmuInterfaceImpForSysman(pLinuxSysmanImp);
-    log(-1.0); //Domain error injected
+    log(-1.0); // Domain error injected
     EXPECT_EQ(EDOM, pmuInterface->getErrorNo());
     delete pmuInterface;
 }

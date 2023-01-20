@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,12 +8,14 @@
 #pragma once
 
 #include <cinttypes>
-#include <cstdlib>
+#include <cstddef>
 #include <limits>
 
 namespace NEO {
 
 struct OsHandle {
+    virtual ~OsHandle() = default;
+
   protected:
     OsHandle() = default;
 };
@@ -26,14 +28,6 @@ enum class FragmentPosition {
     LEADING,
     MIDDLE,
     TRAILING
-};
-
-enum OverlapStatus {
-    FRAGMENT_NOT_OVERLAPING_WITH_ANY_OTHER = 0,
-    FRAGMENT_WITHIN_STORED_FRAGMENT,
-    FRAGMENT_WITH_EXACT_SIZE_AS_STORED_FRAGMENT,
-    FRAGMENT_OVERLAPING_AND_BIGGER_THEN_STORED_FRAGMENT,
-    FRAGMENT_NOT_CHECKED
 };
 
 enum class RequirementsStatus {

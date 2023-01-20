@@ -34,7 +34,7 @@ void MemoryImp::init() {
 MemoryImp::MemoryImp(OsSysman *pOsSysman, ze_device_handle_t handle) {
     uint32_t subdeviceId = 0;
     ze_bool_t onSubdevice = false;
-    SysmanDeviceImp::getSysmanDeviceInfo(handle, subdeviceId, onSubdevice);
+    SysmanDeviceImp::getSysmanDeviceInfo(handle, subdeviceId, onSubdevice, true);
     pOsMemory = OsMemory::create(pOsSysman, onSubdevice, subdeviceId);
     init();
 }

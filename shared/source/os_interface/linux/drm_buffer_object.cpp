@@ -7,6 +7,9 @@
 
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 
+#include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
@@ -15,19 +18,11 @@
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
-#include "shared/source/os_interface/linux/os_time_linux.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <errno.h>
-#include <fcntl.h>
-#include <map>
-#include <stdarg.h>
 #include <string.h>
 #include <sys/ioctl.h>
-#include <sys/mman.h>
-#include <sys/syscall.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 namespace NEO {
@@ -69,7 +64,7 @@ bool BufferObject::close() {
     PRINT_DEBUG_STRING(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on handle: BO-%d\n", this->handle);
 
     auto ioctlHelper = this->drm->getIoctlHelper();
-    int ret = ioctlHelper->ioctl(drm, DrmIoctl::GemClose, &close);
+    int ret = ioctlHelper->ioctl(DrmIoctl::GemClose, &close);
     if (ret != 0) {
         int err = errno;
         PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(GEM_CLOSE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
@@ -104,7 +99,7 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
     setTiling.stride = stride;
     auto ioctlHelper = this->drm->getIoctlHelper();
 
-    if (ioctlHelper->ioctl(drm, DrmIoctl::GemSetTiling, &setTiling) != 0) {
+    if (ioctlHelper->ioctl(DrmIoctl::GemSetTiling, &setTiling) != 0) {
         return false;
     }
 
@@ -125,7 +120,7 @@ void BufferObject::fillExecObject(ExecObject &execObject, OsContext *osContext, 
 }
 
 int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
-                       BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue) {
+                       BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, TaskCountType completionValue) {
     for (size_t i = 0; i < residencyCount; i++) {
         residency[i]->fillExecObject(execObjectsStorage[i], osContext, vmHandleId, drmContextId);
     }
@@ -144,7 +139,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
         printExecutionBuffer(execbuf, residencyCount, execObjectsStorage, residency);
     }
 
-    int ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);
+    int ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
 
     if (ret != 0) {
         int err = this->drm->getErrno();
@@ -154,7 +149,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
         }
 
         evictUnusedAllocations(false, true);
-        ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);
+        ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
     }
 
     if (ret != 0) {
@@ -164,7 +159,7 @@ int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bo
             return gpuHangDetected;
         }
 
-        ret = ioctlHelper->execBuffer(drm, &execbuf, completionGpuAddress, completionValue);
+        ret = ioctlHelper->execBuffer(&execbuf, completionGpuAddress, completionValue);
     }
 
     if (ret == 0) {

@@ -1,14 +1,16 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/test/common/test_macros/test.h"
+#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
+#include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 using namespace NEO;
 struct BcsTests : public Test<ClDeviceFixture> {
@@ -22,7 +24,7 @@ struct BcsTests : public Test<ClDeviceFixture> {
         Test<ClDeviceFixture>::TearDown();
     }
 
-    std::optional<uint32_t> flushBcsTask(CommandStreamReceiver *bcsCsr, const BlitProperties &blitProperties, bool blocking, Device &device) {
+    TaskCountType flushBcsTask(CommandStreamReceiver *bcsCsr, const BlitProperties &blitProperties, bool blocking, Device &device) {
         BlitPropertiesContainer container;
         container.push_back(blitProperties);
 

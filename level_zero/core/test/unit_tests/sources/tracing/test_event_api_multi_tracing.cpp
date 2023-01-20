@@ -25,7 +25,7 @@ struct {
 } event_create_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventCreateTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     event_create_args.hEventPool0 = generateRandomHandle<ze_event_pool_handle_t>();
@@ -259,7 +259,7 @@ struct {
 } event_destroy_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventDestroyTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     event_destroy_args.hEvent0 = generateRandomHandle<ze_event_handle_t>();
@@ -388,7 +388,7 @@ struct {
 } event_host_signal_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSignalTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     event_host_signal_args.hEvent0 = generateRandomHandle<ze_event_handle_t>();
@@ -519,7 +519,7 @@ struct {
 } event_host_synchronize_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostSynchronizeTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     event_host_synchronize_args.hEvent0 = generateRandomHandle<ze_event_handle_t>();
@@ -658,7 +658,7 @@ struct {
 } event_query_status_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventQueryStatusTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     event_query_status_args.hEvent0 = generateRandomHandle<ze_event_handle_t>();
@@ -787,7 +787,7 @@ struct {
 } event_reset_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventHostResetTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     event_reset_args.hEvent0 = generateRandomHandle<ze_event_handle_t>();
@@ -930,7 +930,7 @@ struct {
 } event_pool_create_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCreateTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     event_pool_create_args.hContext0 = generateRandomHandle<ze_context_handle_t>();
@@ -1217,7 +1217,7 @@ struct {
 } event_pool_destroy_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolDestroyTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     event_pool_destroy_args.hEventPool0 = generateRandomHandle<ze_event_pool_handle_t>();
@@ -1366,7 +1366,7 @@ static bool eventPoolGetIpcHandlesCompare(ze_ipc_event_pool_handle_t *phIpc0, ze
 }
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolGetIpcHandleTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     event_pool_get_ipc_handle_args.hEventPool0 = generateRandomHandle<ze_event_pool_handle_t>();
@@ -1530,7 +1530,7 @@ static bool eventPoolOpenIpcHandlesCompare(ze_ipc_event_pool_handle_t *phIpc0, z
 }
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolOpenIpcHandleTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     event_pool_open_ipc_handle_args.hContext0 = generateRandomHandle<ze_context_handle_t>();
@@ -1769,7 +1769,7 @@ struct {
 } event_pool_close_ipc_handle_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingEventPoolCloseIpcHandleTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     event_pool_close_ipc_handle_args.hEventPool0 = generateRandomHandle<ze_event_pool_handle_t>();
@@ -1902,7 +1902,7 @@ struct {
 } command_list_append_signal_event_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendSignalEventTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     command_list_append_signal_event_args.hCommandList0 = generateRandomHandle<ze_command_list_handle_t>();
@@ -2043,7 +2043,7 @@ struct {
 } command_list_append_wait_on_events_args;
 
 TEST_F(ZeApiTracingRuntimeMultipleArgumentsTests, WhenCallingCommandListAppendWaitOnEventsTracingWrapperWithMultiplePrologEpilogsThenReturnSuccess) {
-    ze_result_t result;
+    ze_result_t result = ZE_RESULT_SUCCESS;
 
     // initialize initial argument set
     command_list_append_wait_on_events_args.hCommandList0 = generateRandomHandle<ze_command_list_handle_t>();

@@ -10,9 +10,11 @@
 #include "gtest/gtest.h"
 #include <windows.h>
 
+#include <io.h>
 #include <signal.h>
 
 std::string lastTest("");
+static int newStdOut = -1;
 
 LONG WINAPI UltExceptionFilter(
     _In_ struct _EXCEPTION_POINTERS *exceptionInfo) {
@@ -23,6 +25,9 @@ LONG WINAPI UltExceptionFilter(
 
 void (*oldSigAbrt)(int) = nullptr;
 void handleSIGABRT(int sigNo) {
+    if (newStdOut != -1) {
+        _dup2(newStdOut, 1);
+    }
     std::cout << "SIGABRT on: " << lastTest << std::endl;
     signal(SIGABRT, oldSigAbrt);
     raise(sigNo);
@@ -30,6 +35,10 @@ void handleSIGABRT(int sigNo) {
 
 int setAbrt(bool enableAbrt) {
     std::cout << "enable SIGABRT handler: " << enableAbrt << std::endl;
+
+    if (newStdOut == -1) {
+        newStdOut = _dup(1);
+    }
 
     SetUnhandledExceptionFilter(&UltExceptionFilter);
     if (enableAbrt) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,8 +33,8 @@ struct EnqueueMapBufferTest : public ClDeviceFixture,
     }
 
     void SetUp() override {
-        ClDeviceFixture::SetUp();
-        CommandQueueFixture::SetUp(pClDevice, 0);
+        ClDeviceFixture::setUp();
+        CommandQueueFixture::setUp(pClDevice, 0);
         BufferDefaults::context = new MockContext;
 
         buffer = BufferHelper<BufferUseHostPtr<>>::create();
@@ -43,8 +43,8 @@ struct EnqueueMapBufferTest : public ClDeviceFixture,
     void TearDown() override {
         delete buffer;
         delete BufferDefaults::context;
-        CommandQueueFixture::TearDown();
-        ClDeviceFixture::TearDown();
+        CommandQueueFixture::tearDown();
+        ClDeviceFixture::tearDown();
     }
 
     cl_int retVal = CL_SUCCESS;
@@ -107,12 +107,12 @@ TEST_F(EnqueueMapBufferTest, GivenCmdqAndValidArgsWhenMappingBufferThenSuccessIs
 }
 
 TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWhenMappingBufferThenChangesArePropagatedToDeviceMemory) {
-    //size not aligned to cacheline size
+    // size not aligned to cacheline size
     int bufferSize = 20;
     void *ptrHost = malloc(bufferSize);
     char *charHostPtr = static_cast<char *>(ptrHost);
 
-    //first fill with data
+    // first fill with data
     for (int i = 0; i < bufferSize; i++) {
         charHostPtr[i] = 1;
     }
@@ -141,10 +141,10 @@ TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWhenMappingBufferThenChange
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(ptrResult, charHostPtr) << "Map Buffer should return host_pointer used during creation with CL_MEM_USE_HOST_PTR";
 
-    //check data
+    // check data
     for (int i = 0; i < bufferSize; i++) {
         EXPECT_EQ(charHostPtr[i], 1);
-        //change the data
+        // change the data
         charHostPtr[i] = 2;
     }
 
@@ -157,7 +157,7 @@ TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWhenMappingBufferThenChange
         nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //now map again and see if data propagated
+    // now map again and see if data propagated
     clEnqueueMapBuffer(
         pCmdQ,
         buffer,
@@ -170,7 +170,7 @@ TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWhenMappingBufferThenChange
         nullptr,
         &retVal);
 
-    //check data
+    // check data
     for (int i = 0; i < bufferSize; i++) {
         EXPECT_EQ(charHostPtr[i], 2);
     }
@@ -181,13 +181,13 @@ TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWhenMappingBufferThenChange
 }
 
 TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWithOffsetWhenMappingBufferThenChangesArePropagatedToDeviceMemory) {
-    //size not aligned to cacheline size
+    // size not aligned to cacheline size
     int bufferSize = 20;
     void *ptrHost = malloc(bufferSize);
     char *charHostPtr = static_cast<char *>(ptrHost);
     size_t offset = 4;
 
-    //first fill with data
+    // first fill with data
     for (int i = 0; i < bufferSize; i++) {
         charHostPtr[i] = 1;
     }
@@ -216,7 +216,7 @@ TEST_F(EnqueueMapBufferTest, GivenChangesInHostBufferWithOffsetWhenMappingBuffer
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_EQ(ptrResult, charHostPtr + offset) << "Map Buffer should return host_pointer used during creation with CL_MEM_USE_HOST_PTR";
 
-    //check data
+    // check data
     for (int i = (int)offset; i < (int)(bufferSize - (int)offset); i++) {
         EXPECT_EQ(charHostPtr[i], 1);
     }
@@ -291,7 +291,7 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
     MockCommandQueueHw<FamilyType> mockCmdQueue(context, pClDevice, nullptr);
 
     auto &commandStreamReceiver = mockCmdQueue.getGpgpuCommandStreamReceiver();
-    uint32_t taskCount = commandStreamReceiver.peekTaskCount();
+    TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(0u, taskCount);
 
     // enqueue something that can be finished...
@@ -314,16 +314,16 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
     EXPECT_NE(nullptr, ptrResult);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //no dc flush required at this point
+    // no dc flush required at this point
     EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
 
     taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(1u, taskCount);
 
     auto neoEvent = castToObject<Event>(mapEventReturned);
-    //if task count of csr is higher then event task count with proper dc flushing then we are fine
+    // if task count of csr is higher then event task count with proper dc flushing then we are fine
     EXPECT_EQ(1u, neoEvent->getCompletionStamp());
-    //this can't be completed as task count is not reached yet
+    // this can't be completed as task count is not reached yet
     EXPECT_FALSE(neoEvent->updateStatusAndCheckCompletion());
     EXPECT_TRUE(CL_COMMAND_MAP_BUFFER == neoEvent->getCommandType());
 
@@ -333,11 +333,11 @@ HWTEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBuffer
 
     clSetEventCallback(mapEventReturned, CL_COMPLETE, E2Clb::signalEv2, (void *)&callbackCalled);
 
-    //wait for events needs to flush DC as event requires this.
+    // wait for events needs to flush DC as event requires this.
     retVal = clWaitForEvents(1, &mapEventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    //wait for event do not sent flushTask
+    // wait for event do not sent flushTask
     EXPECT_EQ(1u, commandStreamReceiver.peekTaskCount());
     EXPECT_EQ(1u, mockCmdQueue.latestTaskCountWaited);
 
@@ -478,7 +478,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
     EXPECT_NE(nullptr, buffer);
 
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
-    uint32_t taskCount = commandStreamReceiver.peekTaskCount();
+    TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(0u, taskCount);
 
     // enqueue something that map buffer needs to wait for
@@ -487,7 +487,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
 
     auto ndRcompletionStamp = commandStreamReceiver.peekTaskCount();
 
-    //simulate that NDR is done and DC was flushed
+    // simulate that NDR is done and DC was flushed
     auto forcedLatestSentDC = ndRcompletionStamp + 1;
     *pTagMemory = forcedLatestSentDC;
 
@@ -509,14 +509,14 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
     EXPECT_EQ(1u, taskCount);
 
     auto neoEvent = castToObject<Event>(eventReturned);
-    //if task count of csr is higher then event task count with proper dc flushing then we are fine
+    // if task count of csr is higher then event task count with proper dc flushing then we are fine
     EXPECT_EQ(1u, neoEvent->getCompletionStamp());
     EXPECT_TRUE(neoEvent->updateStatusAndCheckCompletion());
 
-    //flush task was not called
+    // flush task was not called
     EXPECT_EQ(1u, commandStreamReceiver.peekLatestSentTaskCount());
 
-    //wait for events shouldn't call flush task
+    // wait for events shouldn't call flush task
     retVal = clWaitForEvents(1, &eventReturned);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -561,7 +561,7 @@ HWTEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsC
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     auto &commandStreamReceiver = mockCmdQueue.getGpgpuCommandStreamReceiver();
-    uint32_t taskCount = commandStreamReceiver.peekTaskCount();
+    TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(1u, taskCount);
 
     auto ptrResult = clEnqueueMapBuffer(

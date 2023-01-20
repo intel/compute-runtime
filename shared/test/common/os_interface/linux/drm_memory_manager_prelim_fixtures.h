@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,10 +25,10 @@ class DrmMemoryManagerLocalMemoryPrelimTest : public ::testing::Test {
 
         executionEnvironment = new ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setHwInfoAndInitHelpers(defaultHwInfo.get());
 
         mock = new DrmQueryMock(*executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]);
-        auto memoryInfo = new MockExtendedMemoryInfo();
+        auto memoryInfo = new MockExtendedMemoryInfo(*mock);
         mock->memoryInfo.reset(memoryInfo);
 
         auto &multiTileArchInfo = executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo()->gtSystemInfo.MultiTileArchInfo;
@@ -64,7 +64,7 @@ class DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest : public ::testing::Te
         const bool localMemoryEnabled = true;
         executionEnvironment = new ExecutionEnvironment;
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
 
         mock = new DrmMockCustomPrelim(*executionEnvironment->rootDeviceEnvironments[0]);
         executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
@@ -83,22 +83,22 @@ class DrmMemoryManagerLocalMemoryWithCustomPrelimMockTest : public ::testing::Te
 
 class DrmMemoryManagerFixturePrelim : public DrmMemoryManagerFixture {
   public:
-    void SetUp() override {
+    void setUp() {
         regionInfo.resize(2);
-        regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 1};
-        regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+        regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
+        regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
 
-        MemoryManagementFixture::SetUp();
+        MemoryManagementFixture::setUp();
         executionEnvironment = MockDevice::prepareExecutionEnvironment(defaultHwInfo.get(), numRootDevices - 1);
         mock = new DrmMockCustomPrelim(*executionEnvironment->rootDeviceEnvironments[0]);
-        mock->memoryInfo.reset(new MemoryInfo(regionInfo));
+        mock->memoryInfo.reset(new MemoryInfo(regionInfo, *mock));
 
-        DrmMemoryManagerFixture::SetUp(mock, true);
+        DrmMemoryManagerFixture::setUp(mock, true);
     }
 
-    void TearDown() override {
+    void tearDown() {
         mock->testIoctls();
-        DrmMemoryManagerFixture::TearDown();
+        DrmMemoryManagerFixture::tearDown();
     }
 
     std::vector<MemoryRegion> regionInfo;

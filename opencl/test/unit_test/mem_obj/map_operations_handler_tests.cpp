@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/map_operations_handler.h"
@@ -132,14 +133,14 @@ TEST_F(MapOperationsHandlerTests, givenReadOnlyOverlappingPtrWhenAddingThenRetur
 
 const std::tuple<void *, size_t, void *, size_t, bool> overlappingCombinations[] = {
     // mappedPtrStart, mappedPtrLength, requestPtrStart, requestPtrLength, expectOverlap
-    std::make_tuple((void *)5000, 50, (void *)4000, 1, false),  //requested before, non-overlapping
-    std::make_tuple((void *)5000, 50, (void *)4999, 10, true),  //requested before, overlapping inside
-    std::make_tuple((void *)5000, 50, (void *)4999, 100, true), //requested before, overlapping outside
-    std::make_tuple((void *)5000, 50, (void *)5001, 1, true),   //requested inside, overlapping inside
-    std::make_tuple((void *)5000, 50, (void *)5001, 100, true), //requested inside, overlapping outside
-    std::make_tuple((void *)5000, 50, (void *)6000, 1, false),  //requested after, non-overlapping
-    std::make_tuple((void *)5000, 50, (void *)5000, 1, true),   //requested on start, overlapping inside
-    std::make_tuple((void *)5000, 50, (void *)5000, 100, true), //requested on start, overlapping outside
+    std::make_tuple((void *)5000, 50, (void *)4000, 1, false),  // requested before, non-overlapping
+    std::make_tuple((void *)5000, 50, (void *)4999, 10, true),  // requested before, overlapping inside
+    std::make_tuple((void *)5000, 50, (void *)4999, 100, true), // requested before, overlapping outside
+    std::make_tuple((void *)5000, 50, (void *)5001, 1, true),   // requested inside, overlapping inside
+    std::make_tuple((void *)5000, 50, (void *)5001, 100, true), // requested inside, overlapping outside
+    std::make_tuple((void *)5000, 50, (void *)6000, 1, false),  // requested after, non-overlapping
+    std::make_tuple((void *)5000, 50, (void *)5000, 1, true),   // requested on start, overlapping inside
+    std::make_tuple((void *)5000, 50, (void *)5000, 100, true), // requested on start, overlapping outside
 };
 
 struct MapOperationsHandlerOverlapTests : public ::testing::WithParamInterface<std::tuple<void *, size_t, void *, size_t, bool>>,

@@ -5,11 +5,13 @@
  *
  */
 
+#include "shared/source/gen8/hw_cmds.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;

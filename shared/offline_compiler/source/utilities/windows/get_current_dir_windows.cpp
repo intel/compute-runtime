@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "windows.h"
+#include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include <string>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #include "shared/source/os_interface/linux/pmt_util.h"
 
-#include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/directory.h"
 
@@ -15,7 +14,6 @@
 
 #include <algorithm>
 #include <array>
-#include <cstring>
 #include <fcntl.h>
 #include <map>
 #include <sstream>

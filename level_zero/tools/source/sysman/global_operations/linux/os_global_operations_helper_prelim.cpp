@@ -11,17 +11,15 @@
 namespace L0 {
 void LinuxGlobalOperationsImp::getRepairStatus(zes_device_state_t *pState) {
     bool ifrStatus = false;
-    if (IGFX_PVC == pLinuxSysmanImp->getProductFamily()) {
+    if (IGFX_PVC == SysmanDeviceImp::getProductFamily(pDevice)) {
         auto pFwInterface = pLinuxSysmanImp->getFwUtilInterface();
         if (pFwInterface != nullptr) {
-            if (ZE_RESULT_SUCCESS == pFwInterface->fwDeviceInit()) {
-                auto result = pFwInterface->fwIfrApplied(ifrStatus);
-                if (result == ZE_RESULT_SUCCESS) {
-                    pState->repaired = ZES_REPAIR_STATUS_NOT_PERFORMED;
-                    if (ifrStatus) {
-                        pState->reset |= ZES_RESET_REASON_FLAG_REPAIR;
-                        pState->repaired = ZES_REPAIR_STATUS_PERFORMED;
-                    }
+            auto result = pFwInterface->fwIfrApplied(ifrStatus);
+            if (result == ZE_RESULT_SUCCESS) {
+                pState->repaired = ZES_REPAIR_STATUS_NOT_PERFORMED;
+                if (ifrStatus) {
+                    pState->reset |= ZES_RESET_REASON_FLAG_REPAIR;
+                    pState->repaired = ZES_REPAIR_STATUS_PERFORMED;
                 }
             }
         }

@@ -1,18 +1,20 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
@@ -43,7 +45,7 @@ class DrmPrelimMock : public DrmMock {
         customHwInfo = std::make_unique<NEO::HardwareInfo>(&inputHwInfo->platform, &inputHwInfo->featureTable,
                                                            &inputHwInfo->workaroundTable, &inputHwInfo->gtSystemInfo, inputHwInfo->capabilityTable);
         customHwInfo->gtSystemInfo.MaxDualSubSlicesSupported = 64;
-        rootDeviceEnvironment.setHwInfo(customHwInfo.get());
+        rootDeviceEnvironment.setHwInfoAndInitHelpers(customHwInfo.get());
         this->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*this);
         if (invokeQueryEngineInfo) {
             queryEngineInfo(); // NOLINT(clang-analyzer-optin.cplusplus.VirtualCall)
@@ -64,20 +66,20 @@ class DrmPrelimMock : public DrmMock {
 
         std::vector<DistanceInfo> distances(4);
         distances[0].engine = engines[0].engine;
-        distances[0].region = {I915_MEMORY_CLASS_DEVICE, 0};
+        distances[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
         distances[1].engine = engines[1].engine;
-        distances[1].region = {I915_MEMORY_CLASS_DEVICE, 1};
+        distances[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1};
         distances[2].engine = engines[2].engine;
-        distances[2].region = {I915_MEMORY_CLASS_DEVICE, 2};
+        distances[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2};
         distances[3].engine = engines[3].engine;
-        distances[3].region = {I915_MEMORY_CLASS_DEVICE, 3};
+        distances[3].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 3};
 
         std::vector<QueryItem> queryItems{distances.size()};
         for (auto i = 0u; i < distances.size(); i++) {
             queryItems[i].length = sizeof(drm_i915_query_engine_info);
         }
 
-        engineInfo = std::make_unique<EngineInfo>(this, customHwInfo.get(), 4, distances, queryItems, engines);
+        engineInfo = std::make_unique<EngineInfo>(this, 4, distances, queryItems, engines);
         return true;
     }
 
@@ -89,14 +91,14 @@ class DrmPrelimMock : public DrmMock {
 
         std::vector<DistanceInfo> distances(1);
         distances[0].engine = engines[0].engine;
-        distances[0].region = {I915_MEMORY_CLASS_DEVICE, 0};
+        distances[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
 
         std::vector<QueryItem> queryItems{distances.size()};
         for (auto i = 0u; i < distances.size(); i++) {
             queryItems[i].length = sizeof(drm_i915_query_engine_info);
         }
 
-        engineInfo = std::make_unique<EngineInfo>(this, customHwInfo.get(), 1, distances, queryItems, engines);
+        engineInfo = std::make_unique<EngineInfo>(this, 1, distances, queryItems, engines);
         return true;
     }
 
@@ -117,7 +119,7 @@ class MetricIpSamplingLinuxTestPrelim : public DeviceFixture,
                                         public ::testing::Test {
   public:
     void SetUp() override {
-        DeviceFixture::SetUp();
+        DeviceFixture::setUp();
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->osInterface = std::make_unique<NEO::OSInterface>();
         auto &osInterface = device->getOsInterface();
         osInterface.setDriverModel(std::make_unique<DrmPrelimMock>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment())));
@@ -126,7 +128,7 @@ class MetricIpSamplingLinuxTestPrelim : public DeviceFixture,
     }
 
     void TearDown() override {
-        DeviceFixture::TearDown();
+        DeviceFixture::tearDown();
     }
     std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = nullptr;
 };
@@ -271,7 +273,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenSupportedProductFamilyAndUnsuppo
 
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;
-    hwInfo->platform.usDeviceID = NEO::PVC_XL_IDS.front();
+    hwInfo->platform.usDeviceID = NEO::pvcXlDeviceIds.front();
     EXPECT_FALSE(metricIpSamplingOsInterface->isDependencyAvailable());
 }
 
@@ -280,7 +282,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenSupportedProductFamilyAndSupport
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;
 
-    for (auto deviceId : NEO::PVC_XT_IDS) {
+    for (const auto &deviceId : NEO::pvcXtDeviceIds) {
         hwInfo->platform.usDeviceID = deviceId;
         EXPECT_TRUE(metricIpSamplingOsInterface->isDependencyAvailable());
     }
@@ -290,7 +292,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenDriverOpenFailsWhenIsDependencyA
 
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;
-    hwInfo->platform.usDeviceID = NEO::PVC_XT_IDS.front();
+    hwInfo->platform.usDeviceID = NEO::pvcXtDeviceIds.front();
 
     auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
     VariableBackup<int> backupCsTimeStampFrequency(&drm->storedCsTimestampFrequency, 0);
@@ -303,7 +305,7 @@ HWTEST2_F(MetricIpSamplingLinuxTestPrelim, GivenIoctlHelperFailsWhenIsDependency
 
     auto hwInfo = neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->platform.eProductFamily = productFamily;
-    hwInfo->platform.usDeviceID = NEO::PVC_XT_IDS.front();
+    hwInfo->platform.usDeviceID = NEO::pvcXtDeviceIds.front();
 
     auto drm = static_cast<DrmPrelimMock *>(device->getOsInterface().getDriverModel()->as<NEO::Drm>());
 

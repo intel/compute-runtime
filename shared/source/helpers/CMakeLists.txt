@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,6 +12,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/addressing_mode_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/affinity_mask.h
     ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/api_gfx_core_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_defines.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_helper.cpp
@@ -29,6 +30,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/casts.h
     ${CMAKE_CURRENT_SOURCE_DIR}/common_types.h
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config.h
@@ -36,6 +39,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_aot_config_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config_bdw_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config_before_xe_hpc.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_hw_info_config_xe_hpc_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser.h
     ${CMAKE_CURRENT_SOURCE_DIR}/completion_stamp.h
@@ -46,11 +51,13 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/dirty_state_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/enable_product.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/engine_control.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_control.h
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/extendable_enum.h
     ${CMAKE_CURRENT_SOURCE_DIR}/file_io.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/file_io_load.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/file_io.h
     ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/flat_batch_buffer_helper.cpp
@@ -71,13 +78,11 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_bdw_to_icllp.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}hw_helper_extended.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h
-    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}hw_info_extended.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_ip_version.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_walk_order.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/interlocked_max.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties.cpp
@@ -94,11 +99,11 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}memory_properties_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/memory_properties_helpers_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/mt_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/neo_driver_version.h
     ${CMAKE_CURRENT_SOURCE_DIR}/non_copyable_or_moveable.h
     ${CMAKE_CURRENT_SOURCE_DIR}/options.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pause_on_gpu_properties.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/per_thread_data.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pipe_control_args.h
     ${CMAKE_CURRENT_SOURCE_DIR}/pipeline_select_args.h
@@ -110,11 +115,14 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/preprocessor.h
     ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}product_config_helper_extra.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/ptr_math.h
     ${CMAKE_CURRENT_SOURCE_DIR}/ray_tracing_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/register_offsets.h
     ${CMAKE_CURRENT_SOURCE_DIR}/registered_method_dispatcher.h
     ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/sleep.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/sleep.h
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address.h
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_bdw.inl
@@ -152,6 +160,13 @@ endif()
 if(SUPPORT_DG2_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
        ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_dg2_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_dg2_and_later.inl
+  )
+endif()
+
+if(SUPPORT_MTL_AND_LATER)
+  list(APPEND NEO_CORE_HELPERS
+       ${CMAKE_CURRENT_SOURCE_DIR}/compiler_aot_config_mtl_and_later.inl
   )
 endif()
 

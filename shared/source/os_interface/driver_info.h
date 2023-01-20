@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/helpers/debug_helpers.h"
+
 #include <cstdint>
 #include <limits>
 #include <string>
@@ -31,29 +33,44 @@ struct PhysicalDevicePciBusInfo {
     uint32_t pciFunction = invalidValue;
 };
 
-struct PhyicalDevicePciSpeedInfo {
+struct PhysicalDevicePciSpeedInfo {
     static constexpr int32_t unknown = -1;
     int32_t genVersion = unknown;
     int32_t width = unknown;
     int64_t maxBandwidth = unknown;
 };
 
+enum class DriverInfoType { UNKNOWN,
+                            WINDOWS,
+                            LINUX };
 class DriverInfo {
   public:
-    DriverInfo()
-        : pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue) {}
+    DriverInfo(DriverInfoType driverInfoType)
+        : driverInfoType(driverInfoType), pciBusInfo(PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue, PhysicalDevicePciBusInfo::invalidValue) {}
 
     static DriverInfo *create(const HardwareInfo *hwInfo, const OSInterface *osInterface);
 
     virtual ~DriverInfo() = default;
 
+    template <typename DerivedType>
+    DerivedType *as() {
+        UNRECOVERABLE_IF(DerivedType::driverInfoType != this->driverInfoType);
+        return static_cast<DerivedType *>(this);
+    }
+
+    template <typename DerivedType>
+    DerivedType *as() const {
+        UNRECOVERABLE_IF(DerivedType::driverInfoType != this->driverInfoType);
+        return static_cast<const DerivedType *>(this);
+    }
+
     virtual std::string getDeviceName(std::string defaultName) { return defaultName; }
     virtual std::string getVersion(std::string defaultVersion) { return defaultVersion; }
     virtual bool getMediaSharingSupport() { return true; }
-    virtual bool getImageSupport() { return true; }
     virtual PhysicalDevicePciBusInfo getPciBusInfo() { return pciBusInfo; }
 
   protected:
+    DriverInfoType driverInfoType;
     PhysicalDevicePciBusInfo pciBusInfo;
 };
 

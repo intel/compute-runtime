@@ -6,13 +6,16 @@
  */
 
 #pragma once
-#include "shared/source/memory_manager/graphics_allocation.h"
+
+#include "shared/source/memory_manager/allocation_type.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include <functional>
 
 namespace NEO {
 
 class MigrationSyncData;
+class GraphicsAllocation;
 
 class MultiGraphicsAllocation {
   public:

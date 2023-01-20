@@ -1,40 +1,30 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-
-#include "shared/source/command_stream/preemption_mode.h"
-#include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/memory_manager/gfx_partition.h"
-#include "shared/source/os_interface/driver_info.h"
-#include "shared/source/os_interface/os_context.h"
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/os_library.h"
-#include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
-#include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
-#include "shared/source/utilities/spinlock.h"
 
 #include "sku_info.h"
 
-#include <cstdint>
-#include <limits>
-#include <memory>
-#include <mutex>
+#include <atomic>
 
 struct _SYSTEM_INFO;
 typedef struct _SYSTEM_INFO SYSTEM_INFO;
 
 namespace NEO {
+class WddmResidencyLogger;
+enum PreemptionMode : uint32_t;
+struct OSMemory;
+class GfxPartition;
 class Gdi;
 class Gmm;
 class GmmMemory;
+class ProductHelper;
 class OsContextWin;
 class SettingsReader;
 class WddmAllocation;
@@ -70,13 +60,13 @@ class Wddm : public DriverModel {
     static Wddm *createWddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     bool init();
 
-    MOCKABLE_VIRTUAL bool evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim);
+    MOCKABLE_VIRTUAL bool evict(const D3DKMT_HANDLE *handleList, uint32_t numOfHandles, uint64_t &sizeToTrim, bool evictNeeded);
     MOCKABLE_VIRTUAL bool makeResident(const D3DKMT_HANDLE *handles, uint32_t count, bool cantTrimFurther, uint64_t *numberOfBytesToTrim, size_t totalSize);
     MOCKABLE_VIRTUAL bool mapGpuVirtualAddress(Gmm *gmm, D3DKMT_HANDLE handle, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_VIRTUAL_ADDRESS preferredAddress, D3DGPU_VIRTUAL_ADDRESS &gpuPtr);
     bool mapGpuVirtualAddress(AllocationStorageData *allocationStorageData);
-    MOCKABLE_VIRTUAL D3DGPU_VIRTUAL_ADDRESS reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size);
+    MOCKABLE_VIRTUAL D3DGPU_VIRTUAL_ADDRESS reserveGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS baseAddress, D3DGPU_VIRTUAL_ADDRESS minimumAddress, D3DGPU_VIRTUAL_ADDRESS maximumAddress, D3DGPU_SIZE_T size);
     MOCKABLE_VIRTUAL bool createContext(OsContextWin &osContext);
-    MOCKABLE_VIRTUAL void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext, const HardwareInfo &hwInfo);
+    MOCKABLE_VIRTUAL void applyAdditionalContextFlags(CREATECONTEXT_PVTDATA &privateData, OsContextWin &osContext);
     MOCKABLE_VIRTUAL void applyAdditionalMapGPUVAFields(D3DDDI_MAPGPUVIRTUALADDRESS &mapGPUVA, Gmm *gmm);
     MOCKABLE_VIRTUAL bool freeGpuVirtualAddress(D3DGPU_VIRTUAL_ADDRESS &gpuPtr, uint64_t size);
     MOCKABLE_VIRTUAL NTSTATUS createAllocation(const void *alignedCpuPtr, const Gmm *gmm, D3DKMT_HANDLE &outHandle, D3DKMT_HANDLE &outResourceHandle, uint64_t *outSharedHandle);
@@ -196,7 +186,7 @@ class Wddm : public DriverModel {
     PhysicalDevicePciBusInfo getPciBusInfo() const override;
 
     size_t getMaxMemAllocSize() const override;
-    bool isDriverAvaliable() override;
+    bool isDriverAvailable() override;
 
     static std::vector<std::unique_ptr<HwDeviceId>> discoverDevices(ExecutionEnvironment &executionEnvironment);
 
@@ -204,37 +194,15 @@ class Wddm : public DriverModel {
         return adapterBDF;
     }
 
-    PhyicalDevicePciSpeedInfo getPciSpeedInfo() const override;
+    PhysicalDevicePciSpeedInfo getPciSpeedInfo() const override;
+    bool buildTopologyMapping();
+
+    uint32_t getAdditionalAdapterInfoOptions() const {
+        return additionalAdapterInfoOptions;
+    }
 
   protected:
-    std::unique_ptr<HwDeviceIdWddm> hwDeviceId;
-    D3DKMT_HANDLE device = 0;
-    D3DKMT_HANDLE pagingQueue = 0;
-    D3DKMT_HANDLE pagingQueueSyncObject = 0;
-
-    uint64_t *pagingFenceAddress = nullptr;
-    std::atomic<std::uint64_t> currentPagingFenceValue{0};
-
-    // Adapter information
-    std::unique_ptr<PLATFORM> gfxPlatform;
-    std::unique_ptr<GT_SYSTEM_INFO> gtSystemInfo;
-    std::unique_ptr<FeatureTable> featureTable;
-    std::unique_ptr<WorkaroundTable> workaroundTable;
-    GMM_GFX_PARTITIONING gfxPartition{};
-    ADAPTER_BDF adapterBDF{};
-    uint64_t systemSharedMemory = 0;
-    uint64_t dedicatedVideoMemory = 0;
-    uint32_t maxRenderFrequency = 0;
-    uint32_t timestampFrequency = 0u;
-    bool instrumentationEnabled = false;
-    std::string deviceRegistryPath;
-    RootDeviceEnvironment &rootDeviceEnvironment;
-    unsigned int enablePreemptionRegValue = 1;
-
-    unsigned long hwContextId = 0;
-    uintptr_t maximumApplicationAddress = 0;
-    std::unique_ptr<GmmMemory> gmmMemory;
-    uintptr_t minAddress = 0;
+    bool translateTopologyInfo(TopologyMapping &mapping);
 
     Wddm(std::unique_ptr<HwDeviceIdWddm> &&hwDeviceId, RootDeviceEnvironment &rootDeviceEnvironment);
     MOCKABLE_VIRTUAL bool waitOnGPU(D3DKMT_HANDLE context);
@@ -245,13 +213,65 @@ class Wddm : public DriverModel {
     void getDeviceState();
     MOCKABLE_VIRTUAL void createPagingFenceLogger();
     bool setLowPriorityContextParam(D3DKMT_HANDLE contextHandle);
+    bool adjustEvictNeededParameter(bool evictNeeded) {
+        if (evictNeeded == false && platformSupportsEvictIfNecessary == false) {
+            evictNeeded = true;
+        }
+        if (forceEvictOnlyIfNecessary != -1) {
+            evictNeeded = !forceEvictOnlyIfNecessary;
+        }
+        return evictNeeded;
+    }
+    void setPlatformSupportEvictIfNecessaryFlag(const ProductHelper &productHelper);
+    void populateAdditionalAdapterInfoOptions(const ADAPTER_INFO_KMD &adapterInfo);
+    void populateIpVersion(HardwareInfo &hwInfo);
 
-    static GetSystemInfoFcn getSystemInfo;
+    GMM_GFX_PARTITIONING gfxPartition{};
+    ADAPTER_BDF adapterBDF{};
 
+    std::string deviceRegistryPath;
+
+    std::atomic<std::uint64_t> currentPagingFenceValue{0};
+
+    uint64_t systemSharedMemory = 0;
+    uint64_t dedicatedVideoMemory = 0;
+
+    // Adapter information
+    std::unique_ptr<PLATFORM> gfxPlatform;
+    std::unique_ptr<GT_SYSTEM_INFO> gtSystemInfo;
+    std::unique_ptr<FeatureTable> featureTable;
+    std::unique_ptr<WorkaroundTable> workaroundTable;
+
+    std::unique_ptr<HwDeviceIdWddm> hwDeviceId;
+    std::unique_ptr<GmmMemory> gmmMemory;
     std::unique_ptr<KmDafListener> kmDafListener;
     std::unique_ptr<WddmInterface> wddmInterface;
     std::unique_ptr<WddmResidentAllocationsContainer> temporaryResources;
     std::unique_ptr<WddmResidencyLogger> residencyLogger;
     std::unique_ptr<OSMemory> osMemory;
+
+    static GetSystemInfoFcn getSystemInfo;
+    RootDeviceEnvironment &rootDeviceEnvironment;
+
+    uint64_t *pagingFenceAddress = nullptr;
+
+    uintptr_t maximumApplicationAddress = 0;
+    uintptr_t minAddress = 0;
+
+    unsigned long hwContextId = 0;
+
+    D3DKMT_HANDLE device = 0;
+    D3DKMT_HANDLE pagingQueue = 0;
+    D3DKMT_HANDLE pagingQueueSyncObject = 0;
+
+    uint32_t maxRenderFrequency = 0;
+    uint32_t timestampFrequency = 0u;
+    uint32_t additionalAdapterInfoOptions = 0u;
+    int32_t forceEvictOnlyIfNecessary = -1;
+
+    unsigned int enablePreemptionRegValue = 1;
+
+    bool platformSupportsEvictIfNecessary = false;
+    bool instrumentationEnabled = false;
 };
 } // namespace NEO

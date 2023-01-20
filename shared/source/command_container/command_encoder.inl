@@ -8,12 +8,15 @@
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/definitions/mi_flush_args.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/preamble.h"
@@ -26,8 +29,10 @@
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/program/kernel_info.h"
 
 #include "encode_surface_state.inl"
+#include "encode_surface_state_args.h"
 
 #include <algorithm>
 
@@ -40,7 +45,7 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
                                                 uint32_t borderColorOffset,
                                                 const void *fnDynamicStateHeap,
                                                 BindlessHeapsHelper *bindlessHeapHelper,
-                                                const HardwareInfo &hwInfo) {
+                                                const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto sizeSamplerState = sizeof(SAMPLER_STATE) * samplerCount;
     auto borderColorSize = samplerStateOffset - borderColorOffset;
 
@@ -78,14 +83,14 @@ uint32_t EncodeStates<Family>::copySamplerState(IndirectHeap *dsh,
         samplerStateOffsetInDsh = static_cast<uint32_t>(samplerStateInDsh.surfaceStateOffset);
     }
 
+    auto &helper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto srcSamplerState = reinterpret_cast<const SAMPLER_STATE *>(ptrOffset(fnDynamicStateHeap, samplerStateOffset));
     SAMPLER_STATE state = {};
     for (uint32_t i = 0; i < samplerCount; i++) {
         state = srcSamplerState[i];
         state.setIndirectStatePointer(static_cast<uint32_t>(borderColorOffsetInDsh));
-
-        HwInfoConfig::get(hwInfo.platform.eProductFamily)->adjustSamplerState(&state, hwInfo);
-
+        helper.adjustSamplerState(&state, hwInfo);
         dstSamplerState[i] = state;
     }
 
@@ -145,13 +150,13 @@ void EncodeMathMMIO<Family>::encodeGreaterThanPredicate(CommandContainer &contai
 template <typename Family>
 void EncodeMathMMIO<Family>::encodeBitwiseAndVal(CommandContainer &container, uint32_t regOffset, uint32_t immVal, uint64_t dstAddress,
                                                  bool workloadPartition) {
-    EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R0, regOffset);
-    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R1, immVal, true);
-    EncodeMath<Family>::bitwiseAnd(container, AluRegisters::R_0,
-                                   AluRegisters::R_1,
-                                   AluRegisters::R_2);
+    EncodeSetMMIO<Family>::encodeREG(container, CS_GPR_R13, regOffset);
+    EncodeSetMMIO<Family>::encodeIMM(container, CS_GPR_R14, immVal, true);
+    EncodeMath<Family>::bitwiseAnd(container, AluRegisters::R_13,
+                                   AluRegisters::R_14,
+                                   AluRegisters::R_15);
     EncodeStoreMMIO<Family>::encode(*container.getCommandStream(),
-                                    CS_GPR_R2, dstAddress, workloadPartition);
+                                    CS_GPR_R15, dstAddress, workloadPartition);
 }
 
 /*
@@ -242,6 +247,31 @@ void EncodeMathMMIO<Family>::encodeAluAnd(MI_MATH_ALU_INST_INLINE *pAluParam,
     encodeAlu(pAluParam, firstOperandRegister, secondOperandRegister, AluRegisters::OPCODE_AND, finalResultRegister, AluRegisters::R_ACCU);
 }
 
+template <typename Family>
+void EncodeMathMMIO<Family>::encodeIncrementOrDecrement(LinearStream &cmdStream, AluRegisters operandRegister, IncrementOrDecrementOperation operationType) {
+    LriHelper<Family>::program(&cmdStream, CS_GPR_R7, 1, true);
+    LriHelper<Family>::program(&cmdStream, CS_GPR_R7 + 4, 0, true);
+
+    EncodeAluHelper<Family, 4> aluHelper;
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, operandRegister);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_7);
+    aluHelper.setNextAlu((operationType == IncrementOrDecrementOperation::Increment) ? AluRegisters::OPCODE_ADD
+                                                                                     : AluRegisters::OPCODE_SUB);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, operandRegister, AluRegisters::R_ACCU);
+
+    aluHelper.copyToCmdStream(cmdStream);
+}
+
+template <typename Family>
+void EncodeMathMMIO<Family>::encodeIncrement(LinearStream &cmdStream, AluRegisters operandRegister) {
+    encodeIncrementOrDecrement(cmdStream, operandRegister, IncrementOrDecrementOperation::Increment);
+}
+
+template <typename Family>
+void EncodeMathMMIO<Family>::encodeDecrement(LinearStream &cmdStream, AluRegisters operandRegister) {
+    encodeIncrementOrDecrement(cmdStream, operandRegister, IncrementOrDecrementOperation::Decrement);
+}
+
 /*
  * greaterThan() tests if firstOperandRegister is greater than
  * secondOperandRegister.
@@ -320,6 +350,19 @@ inline void EncodeSetMMIO<Family>::encodeIMM(LinearStream &cmdStream, uint32_t o
                                offset,
                                data,
                                remap);
+}
+
+template <typename Family>
+inline void EncodeStateBaseAddress<Family>::setSbaTrackingForL0DebuggerIfEnabled(bool trackingEnabled,
+                                                                                 Device &device,
+                                                                                 LinearStream &commandStream,
+                                                                                 STATE_BASE_ADDRESS &sbaCmd, bool useFirstLevelBB) {
+    if (!trackingEnabled) {
+        return;
+    }
+    NEO::Debugger::SbaAddresses sbaAddresses = {};
+    NEO::EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(sbaAddresses, sbaCmd);
+    device.getL0Debugger()->captureStateBaseAddress(commandStream, sbaAddresses, useFirstLevelBB);
 }
 
 template <typename Family>
@@ -467,7 +510,7 @@ size_t EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(IndirectHeap
 }
 
 template <typename Family>
-inline void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const HardwareInfo &hwInfo) {}
+inline void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const EncodeSurfaceStateArgs &args) {}
 
 template <typename Family>
 void EncodeSurfaceState<Family>::setImageAuxParamsForCCS(R_SURFACE_STATE *surfaceState, Gmm *gmm) {
@@ -514,8 +557,6 @@ void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &con
                                                                   sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock()));
         }
         container.nextIddInBlock = 0;
-
-        EncodeMediaInterfaceDescriptorLoad<Family>::encode(container);
     }
 
     iddOffset = container.nextIddInBlock;
@@ -656,11 +697,17 @@ void EncodeIndirectParams<Family>::setWorkDimIndirect(CommandContainer &containe
 }
 
 template <typename Family>
+bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
+    auto enableBindingTablePrefetech = isBindingTablePrefetchPreferred();
+    if (DebugManager.flags.ForceBtpPrefetchMode.get() != -1) {
+        enableBindingTablePrefetech = static_cast<bool>(DebugManager.flags.ForceBtpPrefetchMode.get());
+    }
+    return enableBindingTablePrefetech;
+}
+
+template <typename Family>
 void EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t samplerCount, uint32_t bindingTableEntryCount) {
     auto enablePrefetch = EncodeSurfaceState<Family>::doBindingTablePrefetch();
-    if (DebugManager.flags.ForceBtpPrefetchMode.get() != -1) {
-        enablePrefetch = static_cast<bool>(DebugManager.flags.ForceBtpPrefetchMode.get());
-    }
 
     if (enablePrefetch) {
         interfaceDescriptor.setSamplerCount(static_cast<typename INTERFACE_DESCRIPTOR_DATA::SAMPLER_COUNT>((samplerCount + 3) / 4));
@@ -672,10 +719,43 @@ void EncodeDispatchKernel<Family>::adjustBindingTablePrefetch(INTERFACE_DESCRIPT
 }
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const HardwareInfo &hwInfo) {}
+void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf) {}
 
 template <typename Family>
 constexpr bool EncodeDispatchKernel<Family>::shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool updateCurrent) { return false; }
+
+template <typename Family>
+size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor) {
+    using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
+    constexpr auto samplerStateSize = sizeof(typename Family::SAMPLER_STATE);
+    const auto numSamplers = kernelDescriptor.payloadMappings.samplerTable.numSamplers;
+    const auto additionalDshSize = additionalSizeRequiredDsh();
+    if (numSamplers == 0U) {
+        return alignUp(additionalDshSize, EncodeStates<Family>::alignInterfaceDescriptorData);
+    }
+
+    size_t size = kernelDescriptor.payloadMappings.samplerTable.tableOffset -
+                  kernelDescriptor.payloadMappings.samplerTable.borderColor;
+    size = alignUp(size, EncodeStates<Family>::alignIndirectStatePointer);
+
+    size += numSamplers * samplerStateSize;
+    size = alignUp(size, INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
+
+    if (additionalDshSize > 0) {
+        size += additionalDshSize;
+        size = alignUp(size, EncodeStates<Family>::alignInterfaceDescriptorData);
+    }
+
+    return size;
+}
+
+template <typename Family>
+size_t EncodeDispatchKernel<Family>::getSizeRequiredSsh(const KernelInfo &kernelInfo) {
+    using BINDING_TABLE_STATE = typename Family::BINDING_TABLE_STATE;
+    size_t requiredSshSize = kernelInfo.heapInfo.SurfaceStateHeapSize;
+    requiredSshSize = alignUp(requiredSshSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+    return requiredSshSize;
+}
 
 template <typename Family>
 void EncodeIndirectParams<Family>::setGlobalWorkSizeIndirect(CommandContainer &container, const NEO::CrossThreadDataOffset offsets[3], uint64_t crossThreadAddress, const uint32_t *lws) {
@@ -720,11 +800,6 @@ void EncodeSempahore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
                            compareData,
                            compareMode,
                            registerPollMode);
-}
-
-template <typename Family>
-inline size_t EncodeSempahore<Family>::getSizeMiSemaphoreWait() {
-    return sizeof(MI_SEMAPHORE_WAIT);
 }
 
 template <typename Family>
@@ -773,24 +848,96 @@ void EncodeAtomic<Family>::programMiAtomic(LinearStream &commandStream,
 }
 
 template <typename Family>
-void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(LinearStream *commandStream,
-                                                                  uint64_t address,
-                                                                  bool secondLevel) {
+void EncodeBatchBufferStartOrEnd<Family>::programConditionalDataMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress,
+                                                                                    uint32_t compareData, CompareOperation compareOperation, bool indirect) {
+    EncodeSetMMIO<Family>::encodeMEM(commandStream, CS_GPR_R7, compareAddress);
+    LriHelper<Family>::program(&commandStream, CS_GPR_R7 + 4, 0, true);
+
+    LriHelper<Family>::program(&commandStream, CS_GPR_R8, compareData, true);
+    LriHelper<Family>::program(&commandStream, CS_GPR_R8 + 4, 0, true);
+
+    programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::R_7, AluRegisters::R_8, compareOperation, indirect);
+}
+
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programConditionalDataRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint32_t compareReg,
+                                                                                    uint32_t compareData, CompareOperation compareOperation, bool indirect) {
+    EncodeSetMMIO<Family>::encodeREG(commandStream, CS_GPR_R7, compareReg);
+    LriHelper<Family>::program(&commandStream, CS_GPR_R7 + 4, 0, true);
+
+    LriHelper<Family>::program(&commandStream, CS_GPR_R8, compareData, true);
+    LriHelper<Family>::program(&commandStream, CS_GPR_R8 + 4, 0, true);
+
+    programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::R_7, AluRegisters::R_8, compareOperation, indirect);
+}
+
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programConditionalRegRegBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, AluRegisters compareReg0,
+                                                                                   AluRegisters compareReg1, CompareOperation compareOperation, bool indirect) {
+
+    programConditionalBatchBufferStartBase(commandStream, startAddress, compareReg0, compareReg1, compareOperation, indirect);
+}
+
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programConditionalBatchBufferStartBase(LinearStream &commandStream, uint64_t startAddress, AluRegisters regA, AluRegisters regB,
+                                                                                 CompareOperation compareOperation, bool indirect) {
+    EncodeAluHelper<Family, 4> aluHelper;
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, regA);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, regB);
+    aluHelper.setNextAlu(AluRegisters::OPCODE_SUB);
+
+    if ((compareOperation == CompareOperation::Equal) || (compareOperation == CompareOperation::NotEqual)) {
+        aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ZF);
+    } else {
+        UNRECOVERABLE_IF(compareOperation != CompareOperation::GreaterOrEqual);
+        aluHelper.setNextAlu(AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_CF);
+    }
+
+    aluHelper.copyToCmdStream(commandStream);
+
+    EncodeSetMMIO<Family>::encodeREG(commandStream, CS_PREDICATE_RESULT_2, CS_GPR_R7);
+
+    MiPredicateType predicateType = MiPredicateType::NoopOnResult2Clear; // Equal
+    if ((compareOperation == CompareOperation::NotEqual) || (compareOperation == CompareOperation::GreaterOrEqual)) {
+        predicateType = MiPredicateType::NoopOnResult2Set;
+    }
+
+    EncodeMiPredicate<Family>::encode(commandStream, predicateType);
+
+    programBatchBufferStart(&commandStream, startAddress, false, indirect, true);
+
+    EncodeMiPredicate<Family>::encode(commandStream, MiPredicateType::Disable);
+}
+
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(LinearStream *commandStream, uint64_t address, bool secondLevel, bool indirect, bool predicate) {
     MI_BATCH_BUFFER_START cmd = Family::cmdInitBatchBufferStart;
     if (secondLevel) {
         cmd.setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
     }
     cmd.setAddressSpaceIndicator(MI_BATCH_BUFFER_START::ADDRESS_SPACE_INDICATOR_PPGTT);
     cmd.setBatchBufferStartAddress(address);
+
+    appendBatchBufferStart(cmd, indirect, predicate);
+
     auto buffer = commandStream->getSpaceForCmd<MI_BATCH_BUFFER_START>();
     *buffer = cmd;
 }
 
 template <typename Family>
-void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferEnd(CommandContainer &container) {
+void EncodeBatchBufferStartOrEnd<Family>::appendBatchBufferStart(MI_BATCH_BUFFER_START &cmd, bool indirect, bool predicate) {
+}
+
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferEnd(LinearStream &commandStream) {
     MI_BATCH_BUFFER_END cmd = Family::cmdInitBatchBufferEnd;
-    auto buffer = container.getCommandStream()->getSpaceForCmd<MI_BATCH_BUFFER_END>();
+    auto buffer = commandStream.getSpaceForCmd<MI_BATCH_BUFFER_END>();
     *buffer = cmd;
+}
+
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferEnd(CommandContainer &container) {
+    programBatchBufferEnd(*container.getCommandStream());
 }
 
 template <typename Family>
@@ -887,4 +1034,24 @@ template <typename Family>
 void EncodeMemoryFence<Family>::encodeSystemMemoryFence(LinearStream &commandStream, const GraphicsAllocation *globalFenceAllocation, LogicalStateHelper *logicalStateHelper) {
 }
 
+template <typename Family>
+size_t EncodeKernelArgsBuffer<Family>::getKernelArgsBufferCmdsSize(const GraphicsAllocation *kernelArgsBufferAllocation, LogicalStateHelper *logicalStateHelper) {
+    return 0;
+}
+
+template <typename Family>
+void EncodeKernelArgsBuffer<Family>::encodeKernelArgsBufferCmds(const GraphicsAllocation *kernelArgsBufferAllocation, LogicalStateHelper *logicalStateHelper) {}
+
+template <typename Family>
+void EncodeMiPredicate<Family>::encode(LinearStream &cmdStream, [[maybe_unused]] MiPredicateType predicateType) {
+    if constexpr (Family::isUsingMiSetPredicate) {
+        using MI_SET_PREDICATE = typename Family::MI_SET_PREDICATE;
+        using PREDICATE_ENABLE = typename MI_SET_PREDICATE::PREDICATE_ENABLE;
+
+        auto miSetPredicate = Family::cmdInitSetPredicate;
+        miSetPredicate.setPredicateEnable(static_cast<PREDICATE_ENABLE>(predicateType));
+
+        *cmdStream.getSpaceForCmd<MI_SET_PREDICATE>() = miSetPredicate;
+    }
+}
 } // namespace NEO

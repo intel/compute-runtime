@@ -7,7 +7,9 @@
 
 #pragma once
 
-#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/os_interface/linux/cache_info.h"
@@ -45,7 +47,7 @@ class BufferObject {
     MOCKABLE_VIRTUAL int validateHostPtr(BufferObject *const boToPin[], size_t numberOfBos, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
 
     MOCKABLE_VIRTUAL int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
-                              BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, uint32_t completionValue);
+                              BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, TaskCountType completionValue);
 
     int bind(OsContext *osContext, uint32_t vmHandleId);
     int unbind(OsContext *osContext, uint32_t vmHandleId);
@@ -139,6 +141,9 @@ class BufferObject {
 
     static constexpr int gpuHangDetected{-7171};
 
+    uint32_t getOsContextId(OsContext *osContext);
+    std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
+
   protected:
     MOCKABLE_VIRTUAL MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded);
 
@@ -156,7 +161,6 @@ class BufferObject {
     bool requiresImmediateBinding = false;
     bool requiresExplicitResidency = false;
 
-    uint32_t getOsContextId(OsContext *osContext);
     MOCKABLE_VIRTUAL void fillExecObject(ExecObject &execObject, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId);
     void printBOBindingResult(OsContext *osContext, uint32_t vmHandleId, bool bind, int retVal);
 
@@ -168,7 +172,6 @@ class BufferObject {
     CacheRegion cacheRegion = CacheRegion::Default;
     CachePolicy cachePolicy = CachePolicy::WriteBack;
 
-    std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
     StackVec<uint32_t, 2> bindExtHandles;
 
     bool colourWithBind = false;

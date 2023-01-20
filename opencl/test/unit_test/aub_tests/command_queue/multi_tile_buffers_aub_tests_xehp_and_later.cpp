@@ -6,10 +6,8 @@
  */
 
 #include "shared/source/helpers/constants.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
-#include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
@@ -21,10 +19,10 @@ struct MultiTileBuffersXeHPAndLater : public MulticontextAubFixture, public ::te
     static constexpr uint32_t numTiles = 2;
 
     void SetUp() override {
-        MulticontextAubFixture::SetUp(numTiles, EnabledCommandStreamers::Single, false);
+        MulticontextAubFixture::setUp(numTiles, EnabledCommandStreamers::Single, false);
     }
     void TearDown() override {
-        MulticontextAubFixture::TearDown();
+        MulticontextAubFixture::tearDown();
     }
 };
 

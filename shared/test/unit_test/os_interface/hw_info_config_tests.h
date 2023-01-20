@@ -8,18 +8,23 @@
 #pragma once
 
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
+
+namespace NEO {
+class ProductHelper;
+class ExecutionEnvironment;
+} // namespace NEO
 
 using namespace NEO;
 
-struct HwInfoConfigTest : public ::testing::Test {
-    void SetUp() override {
-        pInHwInfo = *defaultHwInfo;
-        testPlatform = &pInHwInfo.platform;
-    }
+struct ProductHelperTest : public ::testing::Test {
+    ProductHelperTest();
+    ~ProductHelperTest() override;
+    void SetUp() override;
 
-    HardwareInfo pInHwInfo;
+    std::unique_ptr<ExecutionEnvironment> executionEnvironment;
+    HardwareInfo pInHwInfo{};
     HardwareInfo outHwInfo{};
-
+    ProductHelper *productHelper = nullptr;
     PLATFORM *testPlatform = nullptr;
 };

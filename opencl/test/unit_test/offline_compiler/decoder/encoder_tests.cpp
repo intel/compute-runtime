@@ -1,21 +1,27 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/offline_compiler/source/decoder/binary_decoder.h"
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/test/common/helpers/test_files.h"
 
+#include "opencl/test/unit_test/offline_compiler/environment.h"
+
 #include "gtest/gtest.h"
 #include "mock/mock_encoder.h"
 
+#include <array>
 #include <cstdint>
 #include <fstream>
 #include <sstream>
+
+extern Environment *gEnvironment;
 
 namespace NEO {
 
@@ -89,18 +95,22 @@ TEST(EncoderTests, GivenQuietModeFlagWhenParsingValidListOfParametersThenReturnV
 }
 
 TEST(EncoderTests, GivenMissingDumpFlagAndArgHelperOutputEnabledWhenParsingValidListOfParametersThenReturnValueIsZeroAndDefaultDirectoryIsNotUsedAsDumpPath) {
+    constexpr auto suppressMessages{false};
+    MockEncoder encoder{suppressMessages};
+
+    if (gEnvironment->productConfig.empty() || !encoder.getMockIga()->isValidPlatform()) {
+        GTEST_SKIP();
+    }
     const std::vector<std::string> args = {
         "ocloc",
         "asm",
         "-out",
         "test_files/binary_gen.bin",
         "-device",
-        "pvc"};
+        gEnvironment->productConfig.c_str(),
+    };
 
-    constexpr auto suppressMessages{false};
-    MockEncoder encoder{suppressMessages};
     encoder.mockArgHelper->hasOutput = true;
-    encoder.getMockIga()->isKnownPlatformReturnValue = true;
 
     ::testing::internal::CaptureStdout();
     const auto result = encoder.validateInput(args);

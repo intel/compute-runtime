@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/test/common/mocks/mock_compiler_interface_spirv.h"
 
+#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/test_files.h"
@@ -15,7 +16,7 @@
 namespace NEO {
 TranslationOutput::ErrorCode MockCompilerInterfaceSpirv::compile(const NEO::Device &device, const TranslationInput &input, TranslationOutput &output) {
     std::string kernelName;
-    retrieveBinaryKernelFilename(kernelName, KernelBinaryHelper::BUILT_INS + "_", ".gen");
+    retrieveBinaryKernelFilename(kernelName, KernelBinaryHelper::BUILT_INS + "_", ".bin");
 
     size_t size = 0;
     auto src = loadDataFromFile(

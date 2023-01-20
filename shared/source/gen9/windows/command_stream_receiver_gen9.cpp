@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-template class DeviceCommandStreamReceiver<SKLFamily>;
-template class WddmCommandStreamReceiver<SKLFamily>;
-template class CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<SKLFamily>>;
+template class DeviceCommandStreamReceiver<Gen9Family>;
+template class WddmCommandStreamReceiver<Gen9Family>;
+template class CommandStreamReceiverWithAUBDump<WddmCommandStreamReceiver<Gen9Family>>;
 } // namespace NEO

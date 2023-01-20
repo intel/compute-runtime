@@ -7,9 +7,12 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 using namespace NEO;
@@ -35,9 +38,10 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcWhenEncodeAdditionalWalkerFieldsThenPo
     auto &postSyncData = walkerCmd.getPostSync();
     auto hwInfo = *defaultHwInfo;
 
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true};
+    KernelDescriptor kernelDescriptor;
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
     for (auto &testInput : testInputs) {
-        for (auto &deviceId : PVC_XL_IDS) {
+        for (auto &deviceId : pvcXlDeviceIds) {
             hwInfo.platform.usDeviceID = deviceId;
             hwInfo.platform.usRevId = testInput.revisionId;
             DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(
@@ -56,8 +60,9 @@ PVCTEST_F(WalkerDispatchTestsPvc, givenPvcSupportsSystemMemoryFenceWhenNoSystemF
     auto hwInfo = *defaultHwInfo;
     hwInfo.platform.usRevId = 0x3;
 
-    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, false};
-    for (auto &deviceId : PVC_XL_IDS) {
+    KernelDescriptor kernelDescriptor;
+    EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, false, kernelDescriptor};
+    for (auto &deviceId : pvcXlDeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
 
         postSyncData.setSystemMemoryFenceRequest(true);

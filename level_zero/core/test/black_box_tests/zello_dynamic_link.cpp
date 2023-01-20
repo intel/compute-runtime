@@ -79,12 +79,11 @@ int lib_func_add5(int x) {
 }
 )===";
 
-extern bool verbose;
-bool verbose = false;
-
 int main(int argc, char *argv[]) {
+    const std::string blackBoxName = "Zello Dynamic Link";
     bool outputValidationSuccessful = true;
     verbose = isVerbose(argc, argv);
+    bool aubMode = isAubMode(argc, argv);
     bool circularDep = isCircularDepTest(argc, argv);
     int numModules = 2;
 
@@ -142,7 +141,7 @@ int main(int argc, char *argv[]) {
         std::cout << "reading export module for spirv\n";
     }
     std::string buildLog;
-    auto exportBinaryModule = compileToSpirV(const_cast<const char *>(exportModuleSrcValue), "", buildLog);
+    auto exportBinaryModule = compileToSpirV(exportModuleSrcValue, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -191,7 +190,7 @@ int main(int argc, char *argv[]) {
     if (verbose) {
         std::cout << "reading import module for spirv\n";
     }
-    auto importBinaryModule = compileToSpirV(const_cast<const char *>(importModuleSrcValue), "", buildLog);
+    auto importBinaryModule = compileToSpirV(importModuleSrcValue, "", buildLog);
     if (buildLog.size() > 0) {
         std::cout << "Build log " << buildLog;
     }
@@ -279,7 +278,7 @@ int main(int argc, char *argv[]) {
     if (verbose) {
         std::cout << "sync results from kernel\n";
     }
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint32_t>::max()));
+    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
 
     // Validate results
     int expectedResult = (((1 + 2) * 2) - 1);
@@ -309,6 +308,9 @@ int main(int argc, char *argv[]) {
         SUCCESS_OR_TERMINATE(zeModuleDestroy(exportModule2));
     }
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
-    std::cout << "\nZello Dynamic Link Results validation " << (outputValidationSuccessful ? "PASSED" : "FAILED") << "\n";
-    return 0;
+
+    printResult(aubMode, outputValidationSuccessful, blackBoxName);
+
+    outputValidationSuccessful = aubMode ? true : outputValidationSuccessful;
+    return (outputValidationSuccessful ? 0 : 1);
 }

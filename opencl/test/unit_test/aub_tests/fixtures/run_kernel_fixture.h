@@ -41,16 +41,16 @@ class RunKernelFixture : public CommandEnqueueAUBFixture {
     RunKernelFixture() {
     }
 
-    void SetUp() override {
-        CommandEnqueueAUBFixture::SetUp();
+    void setUp() {
+        CommandEnqueueAUBFixture::setUp();
     }
 
-    void TearDown() override {
-        CommandEnqueueAUBFixture::TearDown();
+    void tearDown() {
+        CommandEnqueueAUBFixture::tearDown();
     }
 
   protected:
-    Program *CreateProgramFromBinary( // NOLINT(readability-identifier-naming)
+    Program *createProgramFromBinary(
         const std::string &binaryFileName) {
         cl_int retVal = CL_SUCCESS;
 

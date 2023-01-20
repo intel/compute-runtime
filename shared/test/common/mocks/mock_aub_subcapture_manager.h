@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,7 +58,7 @@ class AubSubCaptureManagerMock : public AubSubCaptureManager {
         return toggleFileName;
     }
 
-    std::unique_lock<std::mutex> lock() const override {
+    [[nodiscard]] std::unique_lock<std::mutex> lock() const override {
         isLocked = true;
         return std::unique_lock<std::mutex>{mutex};
     }

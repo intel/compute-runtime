@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/aub_tests/fixtures/unified_memory_fixture.h"
 
@@ -18,7 +18,7 @@ class UnifiedMemoryCopyAubTest : public UnifiedMemoryAubFixture,
     std::vector<char> srcValues, dstValues;
 
     void SetUp() override {
-        UnifiedMemoryAubFixture::SetUp();
+        UnifiedMemoryAubFixture::setUp();
 
         srcMemoryType = std::get<0>(GetParam());
         dstMemoryType = std::get<1>(GetParam());
@@ -36,7 +36,7 @@ class UnifiedMemoryCopyAubTest : public UnifiedMemoryAubFixture,
     void TearDown() override {
         this->freeUSM(srcPtr, srcMemoryType);
         this->freeUSM(dstPtr, dstMemoryType);
-        UnifiedMemoryAubFixture::TearDown();
+        UnifiedMemoryAubFixture::tearDown();
     }
 };
 

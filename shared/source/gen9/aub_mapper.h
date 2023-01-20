@@ -10,13 +10,13 @@
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/helpers/constants.h"
 
-#include "engine_node.h"
+#include "aubstream/engine_node.h"
 
 namespace NEO {
-struct SKLFamily;
+struct Gen9Family;
 
 template <>
-struct AUBFamilyMapper<SKLFamily> {
+struct AUBFamilyMapper<Gen9Family> {
     enum { device = AubMemDump::DeviceValues::Skl };
 
     using AubTraits = AubMemDump::Traits<device, MemoryConstants::GfxAddressBits>;

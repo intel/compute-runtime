@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,15 +12,18 @@
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/utilities/containers_tests_helpers.h"
 
 struct InternalAllocationStorageTest : public MemoryAllocatorFixture,
                                        public ::testing::Test {
-    using MemoryAllocatorFixture::TearDown;
     void SetUp() override {
-        MemoryAllocatorFixture::SetUp();
+        MemoryAllocatorFixture::setUp();
         storage = csr->getInternalAllocationStorage();
+    }
+
+    void TearDown() override {
+        MemoryAllocatorFixture::tearDown();
     }
     InternalAllocationStorage *storage;
 };
@@ -50,26 +53,26 @@ TEST_F(InternalAllocationStorageTest, whenCleanAllocationListThenRemoveOnlyCompl
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation2), TEMPORARY_ALLOCATION);
     storage->storeAllocation(std::unique_ptr<GraphicsAllocation>(allocation3), TEMPORARY_ALLOCATION);
 
-    //head point to alloc 2, tail points to alloc3
+    // head point to alloc 2, tail points to alloc3
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation));
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation2));
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
     EXPECT_EQ(-1, verifyDListOrder(csr->getTemporaryAllocations().peekHead(), allocation, allocation2, allocation3));
 
-    //now remove element form the middle
+    // now remove element form the middle
     storage->cleanAllocationList(6, TEMPORARY_ALLOCATION);
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation));
     EXPECT_FALSE(csr->getTemporaryAllocations().peekContains(*allocation2));
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
     EXPECT_EQ(-1, verifyDListOrder(csr->getTemporaryAllocations().peekHead(), allocation, allocation3));
 
-    //now remove head
+    // now remove head
     storage->cleanAllocationList(11, TEMPORARY_ALLOCATION);
     EXPECT_FALSE(csr->getTemporaryAllocations().peekContains(*allocation));
     EXPECT_FALSE(csr->getTemporaryAllocations().peekContains(*allocation2));
     EXPECT_TRUE(csr->getTemporaryAllocations().peekContains(*allocation3));
 
-    //now remove tail
+    // now remove tail
     storage->cleanAllocationList(16, TEMPORARY_ALLOCATION);
     EXPECT_TRUE(csr->getTemporaryAllocations().peekIsEmpty());
 }
@@ -85,6 +88,10 @@ TEST_F(InternalAllocationStorageTest, whenAllocationIsStoredAsReusableButIsStill
     auto newAllocation = storage->obtainReusableAllocation(1, AllocationType::BUFFER);
     EXPECT_EQ(nullptr, newAllocation);
     storage->cleanAllocationList(2u, REUSABLE_ALLOCATION);
+}
+
+TEST_F(InternalAllocationStorageTest, whenGetDeferredAllocationsThenReturnDeferredAllocationsListFromInternalStorage) {
+    EXPECT_EQ(&csr->getDeferredAllocations(), &csr->getInternalAllocationStorage()->getDeferredAllocations());
 }
 
 TEST_F(InternalAllocationStorageTest, whenAllocationIsStoredAsTemporaryAndIsStillUsedThenCanBeObtained) {

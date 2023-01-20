@@ -1,24 +1,20 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
-#include "shared/source/direct_submission/windows/wddm_direct_submission.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/os_interface/windows/os_context_win.h"
-#include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/os_interface/windows/wddm/wddm_residency_logger.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/helpers/ult_hw_config.h"
-#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
-#include "shared/test/common/mocks/windows/mock_wddm_direct_submission.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
+#include "shared/test/unit_test/mocks/windows/mock_wddm_direct_submission.h"
 
 using namespace NEO;
 
@@ -63,8 +59,14 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThe
     EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffers[1].ringBuffer);
     EXPECT_NE(nullptr, wddmDirectSubmission->semaphores);
 
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    size_t expectedAllocationsCnt = 3;
+    if (gfxCoreHelper.isRelaxedOrderingSupported()) {
+        expectedAllocationsCnt += 2;
+    }
+
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
-    EXPECT_EQ(3u, wddm->makeResidentResult.handleCount);
+    EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 
     EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
 
@@ -94,8 +96,14 @@ HWTEST_F(WddmDirectSubmissionNoPreemptionTest, givenWddmWhenDirectIsInitializedA
     EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffers[1].ringBuffer);
     EXPECT_NE(nullptr, wddmDirectSubmission->semaphores);
 
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    size_t expectedAllocationsCnt = 3;
+    if (gfxCoreHelper.isRelaxedOrderingSupported()) {
+        expectedAllocationsCnt += 2;
+    }
+
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
-    EXPECT_EQ(3u, wddm->makeResidentResult.handleCount);
+    EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 
     EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
 
@@ -131,10 +139,15 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenExpectRin
 
     bool ret = wddmDirectSubmission.allocateResources();
     EXPECT_TRUE(ret);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    size_t expectedAllocationsCnt = 3;
+    if (gfxCoreHelper.isRelaxedOrderingSupported()) {
+        expectedAllocationsCnt += 2;
+    }
 
     EXPECT_EQ(1u, wddmMockInterface->createMonitoredFenceCalled);
     EXPECT_EQ(1u, wddm->makeResidentResult.called);
-    EXPECT_EQ(3u, wddm->makeResidentResult.handleCount);
+    EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesFenceCreationFailsThenExpectRingMonitorFenceNotCreatedAndAllocationsNotResident) {
@@ -170,11 +183,16 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesResidencyFail
 
     bool ret = wddmDirectSubmission.allocateResources();
     EXPECT_FALSE(ret);
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
+    size_t expectedAllocationsCnt = 3;
+    if (gfxCoreHelper.isRelaxedOrderingSupported()) {
+        expectedAllocationsCnt += 2;
+    }
 
     EXPECT_EQ(0u, wddmMockInterface->createMonitoredFenceCalled);
-    //expect 2 makeResident calls, due to fail on 1st and then retry (which also fails)
+    // expect 2 makeResident calls, due to fail on 1st and then retry (which also fails)
     EXPECT_EQ(2u, wddm->makeResidentResult.called);
-    EXPECT_EQ(3u, wddm->makeResidentResult.handleCount);
+    EXPECT_EQ(expectedAllocationsCnt, wddm->makeResidentResult.handleCount);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenGettingTagDataThenExpectContextMonitorFence) {

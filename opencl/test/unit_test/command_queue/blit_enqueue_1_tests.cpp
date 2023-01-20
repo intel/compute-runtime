@@ -1,24 +1,25 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/vec.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/compiler_interface/linker_mock.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
-#include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/compiler_interface/linker_mock.h"
-#include "shared/test/unit_test/utilities/base_object_utils.h"
+#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/utilities/base_object_utils.h"
 
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -113,7 +114,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenGpuHangOnFlushBcsAndBlitAuxTran
 
     auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
     ultBcsCsr->callBaseFlushBcsTask = false;
-    ultBcsCsr->flushBcsTaskReturnValue = std::nullopt;
+    ultBcsCsr->flushBcsTaskReturnValue = CompletionStamp::gpuHang;
 
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
 
@@ -219,12 +220,22 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructing
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenMiFlushDwIsFlushed) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
-    bcsCsr->flushTagUpdate();
+    EXPECT_EQ(SubmissionStatus::SUCCESS, bcsCsr->flushTagUpdate());
 
     auto cmdListBcs = getCmdList<FamilyType>(bcsCsr->getCS(0), 0);
 
     auto cmdFound = expectCommand<MI_FLUSH_DW>(cmdListBcs.begin(), cmdListBcs.end());
     EXPECT_NE(cmdFound, cmdListBcs.end());
+}
+
+HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenSetStallingCmdsFlag) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
+
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    EXPECT_EQ(SubmissionStatus::SUCCESS, bcsCsr->flushTagUpdate());
+
+    EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
 }
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructingCommandBufferThenSynchronizeBcsOutput) {
@@ -481,7 +492,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWithRequiredC
     size_t numBuffersToEstimate = 2;
     size_t dependencySize = numBuffersToEstimate * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<FamilyType>();
 
-    size_t cacheFlushSize = MemorySynchronizationCommands<FamilyType>::getSizeForPipeControlWithPostSyncOperation(hwInfo);
+    size_t cacheFlushSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
 
     setMockKernelArgs(std::array<Buffer *, 3>{{buffer0.get(), buffer1.get(), buffer2.get()}});
 
@@ -666,7 +677,7 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenGpuHangOnFlushBcsTaskAndBlitTra
 
     auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
     ultBcsCsr->callBaseFlushBcsTask = false;
-    ultBcsCsr->flushBcsTaskReturnValue = std::nullopt;
+    ultBcsCsr->flushBcsTaskReturnValue = CompletionStamp::gpuHang;
 
     UserEvent userEvent;
     cl_event waitlist[] = {&userEvent};
@@ -943,7 +954,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenDebugFlagSetWhenDis
 HWTEST_TEMPLATED_F(BlitEnqueueWithDebugCapabilityTests, givenGpuHangOnFlushBcsTaskAndDebugFlagSetWhenDispatchingBlitEnqueueThenOutOfResourcesIsReturned) {
     auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
     ultBcsCsr->callBaseFlushBcsTask = false;
-    ultBcsCsr->flushBcsTaskReturnValue = std::nullopt;
+    ultBcsCsr->flushBcsTaskReturnValue = CompletionStamp::gpuHang;
 
     buffer = createBuffer(1, false);
     buffer->forceDisallowCPUCopy = true;
@@ -1194,7 +1205,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueFlushTests, givenGpuHangOnFlushBcsTaskAndBlockedQu
     auto myUltBcsCsr = static_cast<MyUltCsr<FamilyType> *>(bcsCsr);
     myUltBcsCsr->flushCounter = &flushCounter;
     myUltBcsCsr->callBaseFlushBcsTask = false;
-    myUltBcsCsr->flushBcsTaskReturnValue = std::nullopt;
+    myUltBcsCsr->flushBcsTaskReturnValue = CompletionStamp::gpuHang;
 
     UserEvent userEvent;
     cl_event waitlist[] = {&userEvent};
@@ -1412,7 +1423,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
 
     auto offset = mockCmdQueue->getCS(0).getUsed();
 
-    //marker needs to program semaphore
+    // marker needs to program semaphore
     commandQueue->enqueueMarkerWithWaitList(0, nullptr, &outEvent1);
 
     auto cmdListQueue = getCmdList<FamilyType>(mockCmdQueue->getCS(0), offset);
@@ -1475,7 +1486,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
     auto ultGpgpuCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
     auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
 
-    //make sure we wait for both
+    // make sure we wait for both
     clWaitForEvents(1, &outEvent1);
     EXPECT_EQ(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
     EXPECT_EQ(ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount, ultGpgpuCsr->taskCount);
@@ -1503,7 +1514,7 @@ HWTEST_TEMPLATED_F(BlitEnqueueTaskCountTests, givenMarkerThatFollowsCopyOperatio
     auto ultGpgpuCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(gpgpuCsr);
     auto ultBcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(bcsCsr);
 
-    //make sure we wait for both
+    // make sure we wait for both
     clWaitForEvents(1, &outEvent2);
     EXPECT_EQ(ultBcsCsr->latestWaitForCompletionWithTimeoutTaskCount, ultBcsCsr->taskCount);
     EXPECT_EQ(ultGpgpuCsr->latestWaitForCompletionWithTimeoutTaskCount, ultGpgpuCsr->taskCount);

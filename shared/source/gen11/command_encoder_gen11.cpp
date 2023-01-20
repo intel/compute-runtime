@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,17 +11,19 @@
 
 #include "reg_configs_common.h"
 
-using Family = NEO::ICLFamily;
+using Family = NEO::Gen11Family;
 
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_bdw_and_later.inl"
 #include "shared/source/command_container/encode_compute_mode_bdw_and_later.inl"
 #include "shared/source/command_container/image_surface_state/compression_params_bdw_and_later.inl"
 
+#include "stream_properties.inl"
+
 namespace NEO {
 
 template <>
-bool EncodeSurfaceState<Family>::doBindingTablePrefetch() {
+bool EncodeSurfaceState<Family>::isBindingTablePrefetchPreferred() {
     return false;
 }
 
@@ -47,11 +49,13 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &h
 
 template <>
 void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties,
-                                                          const HardwareInfo &hwInfo, LogicalStateHelper *logicalStateHelper) {
+                                                          const RootDeviceEnvironment &rootDeviceEnvironment, LogicalStateHelper *logicalStateHelper) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
 
     if (properties.threadArbitrationPolicy.isDirty) {
-        MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(csr);
+        PipeControlArgs args;
+        args.csStallOnly = true;
+        MemorySynchronizationCommands<Family>::addSingleBarrier(csr, args);
 
         LriHelper<Family>::program(&csr,
                                    RowChickenReg4::address,
@@ -82,6 +86,7 @@ template struct EncodeAtomic<Family>;
 template struct EncodeSempahore<Family>;
 template struct EncodeBatchBufferStartOrEnd<Family>;
 template struct EncodeMiFlushDW<Family>;
+template struct EncodeMiPredicate<Family>;
 template struct EncodeMemoryPrefetch<Family>;
 template struct EncodeWA<Family>;
 template struct EncodeMiArbCheck<Family>;
@@ -90,4 +95,5 @@ template struct EncodeEnableRayTracing<Family>;
 template struct EncodeNoop<Family>;
 template struct EncodeStoreMemory<Family>;
 template struct EncodeMemoryFence<Family>;
+template struct EncodeKernelArgsBuffer<Family>;
 } // namespace NEO

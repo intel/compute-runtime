@@ -20,16 +20,18 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_launch_kernel_2.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_launch_kernel_3.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_memory.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_multipartition_prologue.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_signal_event.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_wait_on_events.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_blit.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_fill.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_append_multipartition_prologue.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}/test_cmdlist_memory_extension.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_memory_extension.cpp
 )
 
 if(TESTS_XEHP_AND_LATER)
   target_sources(${TARGET_NAME} PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_copy_event_xehp_and_later.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_fill_event_xehp_and_later.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_xehp_and_later.cpp
   )
 endif()

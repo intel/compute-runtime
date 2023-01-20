@@ -1,11 +1,16 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/source/sysman/sysman_imp.h"
+
+#include "shared/source/device/sub_device.h"
+#include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/sleep.h"
 
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -75,18 +80,24 @@ void SysmanDeviceImp::updateSubDeviceHandlesLocally() {
     }
 }
 
-void SysmanDeviceImp::getSysmanDeviceInfo(zes_device_handle_t hDevice, uint32_t &subdeviceId, ze_bool_t &onSubdevice) {
+void SysmanDeviceImp::getSysmanDeviceInfo(zes_device_handle_t hDevice, uint32_t &subdeviceId, ze_bool_t &onSubdevice, ze_bool_t useMultiArchEnabled) {
     NEO::Device *neoDevice = Device::fromHandle(hDevice)->getNEODevice();
-    onSubdevice = static_cast<ze_bool_t>(false);
-    if (NEO::HwHelper::getSubDevicesCount(&neoDevice->getHardwareInfo()) > 1) {
-        onSubdevice = static_cast<ze_bool_t>(true);
-    }
-    if (!neoDevice->isSubDevice()) {                                  // To get physical device or subdeviceIndex Index in case when the device does not support tile architecture is single tile device
-        UNRECOVERABLE_IF(neoDevice->getDeviceBitfield().count() != 1) // or the device is single tile device or AFFINITY_MASK only exposes single tile
+    onSubdevice = false;
+
+    // Check for root device with 1 sub-device case
+    if (!neoDevice->isSubDevice() && neoDevice->getDeviceBitfield().count() == 1) {
         subdeviceId = Math::log2(static_cast<uint32_t>(neoDevice->getDeviceBitfield().to_ulong()));
-    } else {
+        if ((NEO::GfxCoreHelper::getSubDevicesCount(&neoDevice->getHardwareInfo()) > 1) && useMultiArchEnabled) {
+            onSubdevice = true;
+        }
+    } else if (neoDevice->isSubDevice()) {
         subdeviceId = static_cast<NEO::SubDevice *>(neoDevice)->getSubDeviceIndex();
+        onSubdevice = true;
     }
+}
+
+PRODUCT_FAMILY SysmanDeviceImp::getProductFamily(Device *pDevice) {
+    return pDevice->getNEODevice()->getHardwareInfo().platform.eProductFamily;
 }
 
 ze_result_t SysmanDeviceImp::init() {
@@ -96,57 +107,6 @@ ze_result_t SysmanDeviceImp::init() {
     auto result = pOsSysman->init();
     if (ZE_RESULT_SUCCESS != result) {
         return result;
-    }
-    if (pPowerHandleContext) {
-        pPowerHandleContext->init(deviceHandles, hCoreDevice);
-    }
-    if (pFrequencyHandleContext) {
-        pFrequencyHandleContext->init(deviceHandles);
-    }
-    if (pFabricPortHandleContext) {
-        pFabricPortHandleContext->init();
-    }
-    if (pTempHandleContext) {
-        pTempHandleContext->init(deviceHandles);
-    }
-    if (pPci) {
-        pPci->init();
-    }
-    if (pStandbyHandleContext) {
-        pStandbyHandleContext->init(deviceHandles);
-    }
-    if (pEngineHandleContext) {
-        pEngineHandleContext->init();
-    }
-    if (pSchedulerHandleContext) {
-        pSchedulerHandleContext->init(deviceHandles);
-    }
-    if (pRasHandleContext) {
-        pRasHandleContext->init(deviceHandles);
-    }
-    if (pMemoryHandleContext) {
-        pMemoryHandleContext->init(deviceHandles);
-    }
-    if (pGlobalOperations) {
-        pGlobalOperations->init();
-    }
-    if (pEvents) {
-        pEvents->init();
-    }
-    if (pFanHandleContext) {
-        pFanHandleContext->init();
-    }
-    if (pFirmwareHandleContext) {
-        pFirmwareHandleContext->init();
-    }
-    if (pDiagnosticsHandleContext) {
-        pDiagnosticsHandleContext->init();
-    }
-    if (pPerformanceHandleContext) {
-        pPerformanceHandleContext->init(deviceHandles, hCoreDevice);
-    }
-    if (pEcc) {
-        pEcc->init();
     }
     return result;
 }
@@ -260,9 +220,4 @@ ze_result_t SysmanDeviceImp::deviceSetEccState(const zes_device_ecc_desc_t *newS
     return pEcc->setEccState(newState, pState);
 }
 
-namespace SysmanUtils {
-void sleep(int64_t seconds) {
-    std::this_thread::sleep_for(std::chrono::seconds(seconds));
-}
-} // namespace SysmanUtils
 } // namespace L0

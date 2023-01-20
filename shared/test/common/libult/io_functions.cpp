@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ uint32_t mockFreadCalled = 0;
 size_t mockFreadReturn = 0;
 uint32_t mockFwriteCalled = 0;
 size_t mockFwriteReturn = 0;
+bool mockVfptrinfUseStdioFunction = false;
 
 std::unordered_map<std::string, std::string> *mockableEnvValues = nullptr;
 

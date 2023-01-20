@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,14 @@ namespace L0 {
 ze_result_t WddmFrequencyImp::osFrequencyGetProperties(zes_freq_properties_t &properties) {
     readOverclockingInfo();
     uint32_t value = 0;
+    properties.onSubdevice = false;
+    properties.subdeviceId = 0;
+    properties.type = frequencyDomainNumber;
+    properties.isThrottleEventSupported = false;
+    properties.min = unsupportedProperty;
+    properties.max = unsupportedProperty;
+    properties.max = unsupportedProperty;
+    properties.canControl = false;
 
     std::vector<KmdSysman::RequestProperty> vRequests = {};
     std::vector<KmdSysman::ResponseProperty> vResponses = {};
@@ -36,43 +44,34 @@ ze_result_t WddmFrequencyImp::osFrequencyGetProperties(zes_freq_properties_t &pr
     request.requestId = KmdSysman::Requests::Frequency::CanControlFrequency;
     request.paramInfo = static_cast<uint32_t>(frequencyDomainNumber);
     vRequests.push_back(request);
-
     ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
 
     if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
         return status;
     }
 
-    properties.isThrottleEventSupported = false;
     if (vResponses[0].returnCode == ZE_RESULT_SUCCESS) {
         memcpy_s(&value, sizeof(uint32_t), vResponses[0].dataBuffer, sizeof(uint32_t));
         properties.isThrottleEventSupported = static_cast<ze_bool_t>(value);
     }
 
-    properties.min = unsupportedProperty;
     if (vResponses[1].returnCode == ZE_RESULT_SUCCESS) {
         value = 0;
         memcpy_s(&value, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
         properties.min = static_cast<double>(value);
     }
 
-    properties.max = unsupportedProperty;
     if (vResponses[2].returnCode == ZE_RESULT_SUCCESS) {
         value = 0;
         memcpy_s(&value, sizeof(uint32_t), vResponses[2].dataBuffer, sizeof(uint32_t));
         properties.max = static_cast<double>(value);
     }
 
-    properties.canControl = false;
     if (vResponses[3].returnCode == ZE_RESULT_SUCCESS) {
         value = 0;
         memcpy_s(&value, sizeof(uint32_t), vResponses[3].dataBuffer, sizeof(uint32_t));
         properties.canControl = (value == 1);
     }
-
-    properties.onSubdevice = false;
-    properties.subdeviceId = 0;
-    properties.type = frequencyDomainNumber;
 
     return ZE_RESULT_SUCCESS;
 }

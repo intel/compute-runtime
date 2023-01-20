@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/memory_manager/memory_banks.h"
+#include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"
 #include "shared/test/common/libult/linux/drm_query_mock.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
@@ -17,9 +19,7 @@
 using namespace NEO;
 
 TEST(MemoryInfoPrelim, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoThenMemoryInfoIsNotCreated) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -34,9 +34,7 @@ TEST(MemoryInfoPrelim, givenMemoryRegionQueryNotSupportedWhenQueryingMemoryInfoT
 }
 
 TEST(MemoryInfoPrelim, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNotCreated) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -65,9 +63,7 @@ TEST(MemoryInfoPrelim, givenMemoryRegionQueryWhenQueryingFailsThenMemoryInfoIsNo
 }
 
 TEST(MemoryInfoPrelim, givenNewMemoryInfoQuerySupportedWhenQueryingMemoryInfoThenMemoryInfoIsCreatedWithRegions) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -85,10 +81,8 @@ TEST(MemoryInfoPrelim, givenNewMemoryInfoQuerySupportedWhenQueryingMemoryInfoThe
 }
 
 struct DrmVmTestFixture {
-    void SetUp() { // NOLINT(readability-identifier-naming)
-        executionEnvironment = std::make_unique<ExecutionEnvironment>();
-        executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(NEO::defaultHwInfo.get());
+    void setUp() {
+        executionEnvironment = std::make_unique<MockExecutionEnvironment>();
         testHwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
         testHwInfo->gtSystemInfo.MultiTileArchInfo.IsValid = true;
         testHwInfo->gtSystemInfo.MultiTileArchInfo.TileCount = tileCount;
@@ -99,11 +93,11 @@ struct DrmVmTestFixture {
         testHwInfo->gtSystemInfo.MultiTileArchInfo.TileMask = 0b1111;
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
-        drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0], testHwInfo);
+        drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
         ASSERT_NE(nullptr, drm);
     }
 
-    void TearDown() {} // NOLINT(readability-identifier-naming)
+    void tearDown() {}
 
     DebugManagerStateRestore restorer;
     std::unique_ptr<ExecutionEnvironment> executionEnvironment;
@@ -184,7 +178,7 @@ struct MultiTileMemoryInfoFixture : public ::testing::Test {
     void SetUp() override {
         executionEnvironment = std::make_unique<ExecutionEnvironment>();
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->rootDeviceEnvironments[0]->setHwInfo(defaultHwInfo.get());
+        executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
         executionEnvironment->rootDeviceEnvironments[0]->initGmm();
 
         pHwInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
@@ -199,9 +193,9 @@ struct MultiTileMemoryInfoFixture : public ::testing::Test {
         multiTileArch.TileCount = tileCount;
         multiTileArch.TileMask = static_cast<uint8_t>(maxNBitValue(tileCount));
 
-        drm = std::make_unique<DrmQueryMock>(*rootDeviceEnvironment, rootDeviceEnvironment->getHardwareInfo());
+        drm = std::make_unique<DrmQueryMock>(*rootDeviceEnvironment);
 
-        memoryInfo = new MemoryInfo(regionInfo);
+        memoryInfo = new MemoryInfo(regionInfo, *drm);
         drm->memoryInfo.reset(memoryInfo);
         drm->queryEngineInfo();
     }
@@ -218,11 +212,11 @@ TEST_F(MultiTileMemoryInfoPrelimTest, givenMemoryInfoWithRegionsWhenGettingMemor
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(1);
     std::vector<MemoryRegion> regionInfo(3);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
     regionInfo[0].probedSize = 8 * GB;
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
     regionInfo[1].probedSize = 16 * GB;
-    regionInfo[2].region = {I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(1, 0)};
+    regionInfo[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(1, 0)};
     regionInfo[2].probedSize = 32 * GB;
 
     setupMemoryInfo(regionInfo, 2);
@@ -250,11 +244,11 @@ TEST_F(MultiTileMemoryInfoPrelimTest, givenDisabledLocalMemoryAndMemoryInfoWithR
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(0);
     std::vector<MemoryRegion> regionInfo(3);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
     regionInfo[0].probedSize = 8 * GB;
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
     regionInfo[1].probedSize = 16 * GB;
-    regionInfo[2].region = {I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(1, 0)};
+    regionInfo[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(1, 0)};
     regionInfo[2].probedSize = 32 * GB;
 
     setupMemoryInfo(regionInfo, 2);
@@ -276,32 +270,32 @@ TEST_F(MultiTileMemoryInfoPrelimTest, givenMemoryInfoWithRegionsWhenGettingMemor
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(1);
     std::vector<MemoryRegion> regionInfo(3);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
     regionInfo[0].probedSize = 8 * GB;
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(0, 0)};
     regionInfo[1].probedSize = 16 * GB;
-    regionInfo[2].region = {I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(1, 0)};
+    regionInfo[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, DrmMockHelper::getEngineOrMemoryInstanceValue(1, 0)};
     regionInfo[2].probedSize = 32 * GB;
 
     setupMemoryInfo(regionInfo, 2);
-    //route to tile1 banks
+    // route to tile1 banks
     DebugManager.flags.OverrideDrmRegion.set(1);
 
-    //system memory not affected
+    // system memory not affected
     auto regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::MainBank, *pHwInfo);
     EXPECT_EQ(regionInfo[0].region.memoryClass, regionClassAndInstance.memoryClass);
     EXPECT_EQ(regionInfo[0].region.memoryInstance, regionClassAndInstance.memoryInstance);
     auto regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::MainBank);
     EXPECT_EQ(8 * GB, regionSize);
 
-    //overrite route to tile 1
+    // overrite route to tile 1
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(0), *pHwInfo);
     EXPECT_EQ(regionInfo[2].region.memoryClass, regionClassAndInstance.memoryClass);
     EXPECT_EQ(regionInfo[2].region.memoryInstance, regionClassAndInstance.memoryInstance);
     regionSize = memoryInfo->getMemoryRegionSize(MemoryBanks::getBankForLocalMemory(0));
     EXPECT_EQ(16 * GB, regionSize);
 
-    //route to tile 0 banks
+    // route to tile 0 banks
     DebugManager.flags.OverrideDrmRegion.set(0);
 
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(1), *pHwInfo);
@@ -314,15 +308,17 @@ TEST_F(MultiTileMemoryInfoPrelimTest, givenMemoryInfoWithRegionsWhenGettingMemor
     DebugManager.flags.OverrideDrmRegion.set(-1);
     DebugManager.flags.ForceMemoryBankIndexOverride.set(1);
 
-    auto &helper = HwHelper::get(pHwInfo->platform.eRenderCoreFamily);
+    auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::getBankForLocalMemory(1), *pHwInfo);
-    if (helper.isBankOverrideRequired(*pHwInfo)) {
+    if (gfxCoreHelper.isBankOverrideRequired(*pHwInfo, productHelper)) {
         EXPECT_EQ(regionInfo[1].region.memoryInstance, regionClassAndInstance.memoryInstance);
     } else {
         EXPECT_EQ(regionInfo[2].region.memoryInstance, regionClassAndInstance.memoryInstance);
     }
 
-    //system memory not affected
+    // system memory not affected
     DebugManager.flags.OverrideDrmRegion.set(-1);
     DebugManager.flags.ForceMemoryBankIndexOverride.set(1);
     regionClassAndInstance = memoryInfo->getMemoryRegionClassAndInstance(MemoryBanks::MainBank, *pHwInfo);
@@ -333,7 +329,7 @@ TEST_F(MultiTileMemoryInfoPrelimTest, givenMemoryInfoWithoutRegionsWhenGettingMe
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableLocalMemory.set(1);
     std::vector<MemoryRegion> regionInfo(1);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
     regionInfo[0].probedSize = 8 * GB;
 
     setupMemoryInfo(regionInfo, 0);
@@ -349,7 +345,7 @@ TEST_F(MultiTileMemoryInfoPrelimTest, whenDebugVariablePrintMemoryRegionSizeIsSe
     DebugManager.flags.PrintMemoryRegionSizes.set(true);
 
     std::vector<MemoryRegion> regionInfo(1);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 1};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
     regionInfo[0].probedSize = 16 * GB;
 
     setupMemoryInfo(regionInfo, 0);
@@ -365,22 +361,21 @@ TEST_F(MultiTileMemoryInfoPrelimTest, whenDebugVariablePrintMemoryRegionSizeIsSe
 
 TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemWithExtensionsThenReturnCorrectValues) {
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[0].probedSize = 8 * GB;
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
 
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
-    ASSERT_NE(nullptr, memoryInfo);
-
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {regionInfo[0].region, regionInfo[1].region};
-    auto ret = memoryInfo->createGemExt(drm.get(), memClassInstance, 1024, handle, {});
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+
+    auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, {}, -1);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
     ASSERT_TRUE(drm->context.receivedCreateGemExt);
     EXPECT_EQ(1024u, drm->context.receivedCreateGemExt->size);
@@ -391,28 +386,56 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingleRegionThe
     DebugManager.flags.EnableLocalMemory.set(1);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[0].probedSize = 8 * GB;
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
 
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
-    ASSERT_NE(nullptr, memoryInfo);
-
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
+
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
     const auto &createExt = drm->context.receivedCreateGemExt;
     ASSERT_TRUE(createExt);
     ASSERT_EQ(1u, createExt->memoryRegions.size());
-    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[0].memoryClass);
+    EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[0].memoryClass);
     EXPECT_EQ(1024u, drm->context.receivedCreateGemExt->size);
+}
+
+TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithPairHandleThenReturnCorrectValues) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probedSize = 16 * GB;
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->context.setPairQueryValue = 1;
+    drm->context.setPairQueryReturn = 1;
+
+    uint32_t pairHandle = 0;
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, pairHandle, -1);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+
+    uint32_t handle = 0;
+    ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, pairHandle);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
 
 TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportWhenCreatingGemExtWithSingleRegionThenValidVmIdIsSet) {
@@ -421,23 +444,22 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportWhenCreatingGemExt
     DebugManager.flags.EnablePrivateBO.set(true);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[0].probedSize = 8 * GB;
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
 
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
-    ASSERT_NE(nullptr, memoryInfo);
-
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->setPerContextVMRequired(false);
 
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
     const auto &createExt = drm->context.receivedCreateGemExt;
@@ -452,23 +474,22 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndNoPrivateBOSupportWhenCreatingGemE
     DebugManager.flags.EnablePrivateBO.set(false);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[0].probedSize = 8 * GB;
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
 
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
-    ASSERT_NE(nullptr, memoryInfo);
-
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->setPerContextVMRequired(false);
 
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
     const auto &createExt = drm->context.receivedCreateGemExt;
@@ -482,23 +503,22 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportedAndIsPerContextV
     DebugManager.flags.EnablePrivateBO.set(true);
 
     std::vector<MemoryRegion> regionInfo(2);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[0].probedSize = 8 * GB;
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
 
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
-    ASSERT_NE(nullptr, memoryInfo);
-
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
     drm->setPerContextVMRequired(true);
 
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+
     uint32_t handle = 0;
-    auto ret = memoryInfo->createGemExtWithSingleRegion(drm.get(), 1, 1024, handle);
+    auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
     const auto &createExt = drm->context.receivedCreateGemExt;
@@ -511,38 +531,37 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithMultipleRegions
     DebugManager.flags.EnableLocalMemory.set(1);
 
     std::vector<MemoryRegion> regionInfo(5);
-    regionInfo[0].region = {I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
     regionInfo[0].probedSize = 8 * GB;
-    regionInfo[1].region = {I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
     regionInfo[1].probedSize = 16 * GB;
-    regionInfo[2].region = {I915_MEMORY_CLASS_DEVICE, 1};
+    regionInfo[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1};
     regionInfo[2].probedSize = 16 * GB;
-    regionInfo[3].region = {I915_MEMORY_CLASS_DEVICE, 2};
+    regionInfo[3].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2};
     regionInfo[3].probedSize = 16 * GB;
-    regionInfo[4].region = {I915_MEMORY_CLASS_DEVICE, 3};
+    regionInfo[4].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 3};
     regionInfo[4].probedSize = 16 * GB;
 
-    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo);
-    ASSERT_NE(nullptr, memoryInfo);
-
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
     uint32_t handle = 0;
     uint32_t memoryRegions = 0b1011;
-    auto ret = memoryInfo->createGemExtWithMultipleRegions(drm.get(), memoryRegions, 1024, handle);
+    auto ret = memoryInfo->createGemExtWithMultipleRegions(memoryRegions, 1024, handle);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
     const auto &createExt = drm->context.receivedCreateGemExt;
     ASSERT_TRUE(createExt);
     ASSERT_EQ(3u, createExt->memoryRegions.size());
-    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[0].memoryClass);
+    EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[0].memoryClass);
     EXPECT_EQ(0u, createExt->memoryRegions[0].memoryInstance);
-    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[1].memoryClass);
+    EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[1].memoryClass);
     EXPECT_EQ(1u, createExt->memoryRegions[1].memoryInstance);
-    EXPECT_EQ(I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[2].memoryClass);
+    EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[2].memoryClass);
     EXPECT_EQ(3u, createExt->memoryRegions[2].memoryInstance);
     EXPECT_EQ(1024u, drm->context.receivedCreateGemExt->size);
 }

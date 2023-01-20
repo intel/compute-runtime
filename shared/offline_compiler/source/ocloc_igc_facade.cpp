@@ -9,6 +9,7 @@
 
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
+#include "shared/source/compiler_interface/igc_platform_helper.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/hw_info.h"
@@ -79,17 +80,17 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
         return OclocErrorCode::OUT_OF_HOST_MEMORY;
     }
 
-    const auto compilerHwInfoConfig = CompilerHwInfoConfig::get(hwInfo.platform.eProductFamily);
+    const auto compilerProductHelper = CompilerProductHelper::get(hwInfo.platform.eProductFamily);
 
     auto copyHwInfo = hwInfo;
-    if (compilerHwInfoConfig) {
-        compilerHwInfoConfig->adjustHwInfoForIgc(copyHwInfo);
+    if (compilerProductHelper) {
+        compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
     }
 
-    IGC::PlatformHelper::PopulateInterfaceWith(*igcPlatform.get(), copyHwInfo.platform);
+    populateIgcPlatform(*igcPlatform, copyHwInfo);
     IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), copyHwInfo.gtSystemInfo);
 
-    populateWithFeatures(igcFtrWa.get(), hwInfo, compilerHwInfoConfig);
+    populateWithFeatures(igcFtrWa.get(), hwInfo, compilerProductHelper);
 
     initialized = true;
     return OclocErrorCode::SUCCESS;
@@ -136,22 +137,13 @@ CIF::RAII::UPtr_t<IGC::IgcFeaturesAndWorkaroundsTagOCL> OclocIgcFacade::getIgcFe
     return igcDeviceCtx->GetIgcFeaturesAndWorkaroundsHandle();
 }
 
-void OclocIgcFacade::populateWithFeatures(IGC::IgcFeaturesAndWorkaroundsTagOCL *handle, const HardwareInfo &hwInfo, const CompilerHwInfoConfig *compilerHwInfoConfig) const {
-    handle->SetFtrDesktop(hwInfo.featureTable.flags.ftrDesktop);
-    handle->SetFtrChannelSwizzlingXOREnabled(hwInfo.featureTable.flags.ftrChannelSwizzlingXOREnabled);
-    handle->SetFtrIVBM0M1Platform(hwInfo.featureTable.flags.ftrIVBM0M1Platform);
-    handle->SetFtrSGTPVSKUStrapPresent(hwInfo.featureTable.flags.ftrSGTPVSKUStrapPresent);
-    handle->SetFtr5Slice(hwInfo.featureTable.flags.ftr5Slice);
-
-    if (compilerHwInfoConfig) {
-        handle->SetFtrGpGpuMidThreadLevelPreempt(compilerHwInfoConfig->isMidThreadPreemptionSupported(hwInfo));
+void OclocIgcFacade::populateWithFeatures(IGC::IgcFeaturesAndWorkaroundsTagOCL *handle, const HardwareInfo &hwInfo, const CompilerProductHelper *compilerProductHelper) const {
+    if (compilerProductHelper) {
+        handle->SetFtrGpGpuMidThreadLevelPreempt(compilerProductHelper->isMidThreadPreemptionSupported(hwInfo));
     }
 
-    handle->SetFtrIoMmuPageFaulting(hwInfo.featureTable.flags.ftrIoMmuPageFaulting);
     handle->SetFtrWddm2Svm(hwInfo.featureTable.flags.ftrWddm2Svm);
     handle->SetFtrPooledEuEnabled(hwInfo.featureTable.flags.ftrPooledEuEnabled);
-
-    handle->SetFtrResourceStreamer(hwInfo.featureTable.flags.ftrResourceStreamer);
 }
 
 CIF::RAII::UPtr_t<CIF::Builtins::BufferLatest> OclocIgcFacade::createConstBuffer(const void *data, size_t size) {

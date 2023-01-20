@@ -7,19 +7,24 @@
 
 #include "level_zero/core/test/unit_tests/fixtures/multi_tile_fixture.h"
 
+#include "shared/source/command_container/implicit_scaling.h"
+#include "shared/source/os_interface/os_interface.h"
+
 #include "level_zero/core/source/context/context_imp.h"
 
 namespace L0 {
 namespace ult {
+MultiTileCommandListAppendLaunchKernelFixture::MultiTileCommandListAppendLaunchKernelFixture() : backup({&NEO::ImplicitScaling::apiSupport, true}) {}
+MultiTileImmediateCommandListAppendLaunchKernelFixture::MultiTileImmediateCommandListAppendLaunchKernelFixture() : backupApiSupport({&NEO::ImplicitScaling::apiSupport, true}), backupLocalMemory({&NEO::OSInterface::osEnableLocalMemory, true}) {}
 
-void MultiTileCommandListAppendLaunchFunctionFixture::SetUp() {
+void MultiTileCommandListAppendLaunchKernelFixture::setUp() {
     DebugManager.flags.EnableImplicitScaling.set(1);
 
     MultiDeviceFixture::numRootDevices = 1u;
     MultiDeviceFixture::numSubDevices = 4u;
 
-    MultiDeviceModuleFixture::SetUp();
-    createModuleFromBinary(0u);
+    MultiDeviceModuleFixture::setUp();
+    createModuleFromMockBinary(0u);
     createKernel(0u);
 
     device = driverHandle->devices[0];
@@ -35,21 +40,21 @@ void MultiTileCommandListAppendLaunchFunctionFixture::SetUp() {
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
-void MultiTileCommandListAppendLaunchFunctionFixture::TearDown() {
+void MultiTileCommandListAppendLaunchKernelFixture::tearDown() {
     commandList->destroy();
     contextImp->destroy();
 
-    MultiDeviceModuleFixture::TearDown();
+    MultiDeviceModuleFixture::tearDown();
 }
 
-void MultiTileImmediateCommandListAppendLaunchFunctionFixture::SetUp() {
+void MultiTileImmediateCommandListAppendLaunchKernelFixture::setUp() {
     DebugManager.flags.EnableImplicitScaling.set(1);
 
     MultiDeviceFixture::numRootDevices = 1u;
     MultiDeviceFixture::numSubDevices = 2u;
 
-    MultiDeviceModuleFixture::SetUp();
-    createModuleFromBinary(0u);
+    MultiDeviceModuleFixture::setUp();
+    createModuleFromMockBinary(0u);
     createKernel(0u);
 
     device = driverHandle->devices[0];
@@ -61,10 +66,10 @@ void MultiTileImmediateCommandListAppendLaunchFunctionFixture::SetUp() {
     contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
 }
 
-void MultiTileImmediateCommandListAppendLaunchFunctionFixture::TearDown() {
+void MultiTileImmediateCommandListAppendLaunchKernelFixture::tearDown() {
     contextImp->destroy();
 
-    MultiDeviceModuleFixture::TearDown();
+    MultiDeviceModuleFixture::tearDown();
 }
 
 } // namespace ult

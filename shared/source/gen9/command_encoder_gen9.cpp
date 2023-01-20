@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,14 @@
 #include "shared/source/gen9/hw_cmds_base.h"
 #include "shared/source/gen9/reg_configs.h"
 
-using Family = NEO::SKLFamily;
+using Family = NEO::Gen9Family;
 
 #include "shared/source/command_container/command_encoder.inl"
 #include "shared/source/command_container/command_encoder_bdw_and_later.inl"
 #include "shared/source/command_container/encode_compute_mode_bdw_and_later.inl"
 #include "shared/source/command_container/image_surface_state/compression_params_bdw_and_later.inl"
+
+#include "stream_properties.inl"
 
 namespace NEO {
 template <>
@@ -38,17 +40,19 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &h
 
 template <typename Family>
 void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, StateComputeModeProperties &properties,
-                                                          const HardwareInfo &hwInfo, LogicalStateHelper *logicalStateHelper) {
+                                                          const RootDeviceEnvironment &rootDeviceEnvironment, LogicalStateHelper *logicalStateHelper) {
     using PIPE_CONTROL = typename Family::PIPE_CONTROL;
     UNRECOVERABLE_IF(properties.threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent);
 
     if (properties.threadArbitrationPolicy.isDirty) {
-        MemorySynchronizationCommands<Family>::addPipeControlWithCSStallOnly(csr);
+        PipeControlArgs args;
+        args.csStallOnly = true;
+        MemorySynchronizationCommands<Family>::addSingleBarrier(csr, args);
 
-        LriHelper<SKLFamily>::program(&csr,
-                                      DebugControlReg2::address,
-                                      DebugControlReg2::getRegData(properties.threadArbitrationPolicy.value),
-                                      false);
+        LriHelper<Gen9Family>::program(&csr,
+                                       DebugControlReg2::address,
+                                       DebugControlReg2::getRegData(properties.threadArbitrationPolicy.value),
+                                       false);
     }
 }
 
@@ -67,6 +71,7 @@ template struct EncodeAtomic<Family>;
 template struct EncodeSempahore<Family>;
 template struct EncodeBatchBufferStartOrEnd<Family>;
 template struct EncodeMiFlushDW<Family>;
+template struct EncodeMiPredicate<Family>;
 template struct EncodeMemoryPrefetch<Family>;
 template struct EncodeWA<Family>;
 template struct EncodeMiArbCheck<Family>;
@@ -75,4 +80,5 @@ template struct EncodeEnableRayTracing<Family>;
 template struct EncodeNoop<Family>;
 template struct EncodeStoreMemory<Family>;
 template struct EncodeMemoryFence<Family>;
+template struct EncodeKernelArgsBuffer<Family>;
 } // namespace NEO

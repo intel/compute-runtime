@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,19 +41,11 @@ ze_result_t OsFirmware::getSupportedFwTypes(std::vector<std::string> &supportedF
     return ZE_RESULT_SUCCESS;
 }
 
-bool LinuxFirmwareImp::isFirmwareSupported(void) {
-    if (pFwInterface != nullptr) {
-        isFWInitalized = ((ZE_RESULT_SUCCESS == pFwInterface->fwDeviceInit()) ? true : false);
-        return this->isFWInitalized;
-    }
-    return false;
-}
-
 void LinuxFirmwareImp::osGetFwProperties(zes_firmware_properties_t *pProperties) {
     if (ZE_RESULT_SUCCESS != getFirmwareVersion(osFwType, pProperties)) {
-        strncpy_s(static_cast<char *>(pProperties->version), ZES_STRING_PROPERTY_SIZE, unknown.c_str(), ZES_STRING_PROPERTY_SIZE);
+        strncpy_s(static_cast<char *>(pProperties->version), ZES_STRING_PROPERTY_SIZE, unknown.c_str(), ZES_STRING_PROPERTY_SIZE - 1);
     }
-    pProperties->canControl = true; //Assuming that user has permission to flash the firmware
+    pProperties->canControl = true; // Assuming that user has permission to flash the firmware
 }
 
 ze_result_t LinuxFirmwareImp::osFirmwareFlash(void *pImage, uint32_t size) {

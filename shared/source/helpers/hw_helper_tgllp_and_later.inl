@@ -11,7 +11,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-inline bool HwHelperHw<GfxFamily>::isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const {
+inline bool GfxCoreHelperHw<GfxFamily>::isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const {
     auto fusedEuDispatchEnabled = !hwInfo.workaroundTable.flags.waDisableFusedThreadScheduling;
     fusedEuDispatchEnabled &= hwInfo.capabilityTable.fusedEuEnabled;
 
@@ -33,12 +33,12 @@ void LriHelper<GfxFamily>::program(LinearStream *cmdStream, uint32_t address, ui
 }
 
 template <typename GfxFamily>
-bool HwHelperHw<GfxFamily>::packedFormatsSupported() const {
+bool GfxCoreHelperHw<GfxFamily>::packedFormatsSupported() const {
     return true;
 }
 
 template <typename GfxFamily>
-size_t HwHelperHw<GfxFamily>::getMaxFillPaternSizeForCopyEngine() const {
+size_t GfxCoreHelperHw<GfxFamily>::getMaxFillPaternSizeForCopyEngine() const {
     return 4 * sizeof(uint32_t);
 }
 

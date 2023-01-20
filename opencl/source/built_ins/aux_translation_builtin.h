@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
@@ -82,12 +83,12 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
     static void dispatchPipeControl(LinearStream &linearStream, TimestampPacketDependencies *, const HardwareInfo &hwInfo) {
         PipeControlArgs args;
         args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(dcFlush, hwInfo);
-        MemorySynchronizationCommands<GfxFamily>::addPipeControl(linearStream, args);
+        MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(linearStream, args);
     }
 
     template <typename GfxFamily>
     static size_t getSizeForSinglePipeControl(size_t, const HardwareInfo &, bool) {
-        return MemorySynchronizationCommands<GfxFamily>::getSizeForSinglePipeControl();
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
     }
 
     template <typename GfxFamily>

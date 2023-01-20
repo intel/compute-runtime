@@ -52,6 +52,8 @@ set(NEO_CORE_COMMAND_STREAM
     ${CMAKE_CURRENT_SOURCE_DIR}/submission_status.h
     ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/submissions_aggregator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/tag_allocation_layout.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/task_count_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/tbx_command_stream_receiver_hw.h

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,24 +8,38 @@
 #include "shared/source/memory_manager/allocations_list.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/task_count_helper.h"
+#include "shared/source/device/device.h"
+#include "shared/source/os_interface/os_context.h"
 
-namespace NEO {
-
+namespace {
 struct ReusableAllocationRequirements {
     const void *requiredPtr;
     size_t requiredMinimalSize;
-    volatile uint32_t *csrTagAddress;
-    AllocationType allocationType;
+    volatile TagAddressType *csrTagAddress;
+    NEO::AllocationType allocationType;
     uint32_t contextId;
     uint32_t activeTileCount;
     uint32_t tagOffset;
 };
 
+bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::GraphicsAllocation *gfxAllocation) {
+    auto tagAddress = requirements->csrTagAddress;
+    auto taskCount = gfxAllocation->getTaskCount(requirements->contextId);
+    for (uint32_t count = 0; count < requirements->activeTileCount; count++) {
+        if (*tagAddress < taskCount) {
+            return false;
+        }
+        tagAddress = ptrOffset(tagAddress, requirements->tagOffset);
+    }
+
+    return true;
+}
+} // namespace
+
+namespace NEO {
 AllocationsList::AllocationsList(AllocationUsage allocationUsage)
     : allocationUsage(allocationUsage) {}
-
-AllocationsList::AllocationsList()
-    : allocationUsage(REUSABLE_ALLOCATION) {}
 
 std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, CommandStreamReceiver *commandStreamReceiver, AllocationType allocationType) {
     ReusableAllocationRequirements req;
@@ -73,18 +87,4 @@ void AllocationsList::freeAllGraphicsAllocations(Device *neoDevice) {
     }
     head = nullptr;
 }
-
-bool AllocationsList::checkTagAddressReady(ReusableAllocationRequirements *requirements, GraphicsAllocation *gfxAllocation) {
-    auto tagAddress = requirements->csrTagAddress;
-    auto taskCount = gfxAllocation->getTaskCount(requirements->contextId);
-    for (uint32_t count = 0; count < requirements->activeTileCount; count++) {
-        if (*tagAddress < taskCount) {
-            return false;
-        }
-        tagAddress = ptrOffset(tagAddress, requirements->tagOffset);
-    }
-
-    return true;
-}
-
 } // namespace NEO

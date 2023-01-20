@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -175,7 +175,7 @@ typedef enum _cl_function_id {
     \param[in] userData User-defined data pointer passed through
                         clCreateTracingHandleINTEL() function
 
-	Thread Safety: must be guaranteed by customer
+        Thread Safety: must be guaranteed by customer
 */
 typedef void (*cl_tracing_callback)(cl_function_id fid, cl_callback_data *callbackData, void *userData);
 

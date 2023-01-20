@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,9 +9,10 @@
 
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
+#include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/memory_manager/deferred_deleter.h"
-#include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_svm_manager.h"
 
@@ -19,6 +20,7 @@
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
+#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 
 #include "d3d_sharing_functions.h"
@@ -114,6 +116,10 @@ void MockContext::initializeWithDevices(const ClDeviceVector &devices, bool noSp
             if (pDevice->getRootDeviceIndex() == rootDeviceIndex) {
                 deviceBitfield |= pDevice->getDeviceBitfield();
             }
+            for (auto &engine : pDevice->getDevice().getAllEngines()) {
+                if (engine.commandStreamReceiver->getTagsMultiAllocation())
+                    engine.commandStreamReceiver->ensureTagAllocationForRootDeviceIndex(rootDeviceIndex);
+            }
         }
         deviceBitfields.insert({rootDeviceIndex, deviceBitfield});
     }
@@ -171,7 +177,7 @@ MockUnrestrictiveContextMultiGPU::MockUnrestrictiveContextMultiGPU() : MockConte
 }
 
 BcsMockContext::BcsMockContext(ClDevice *device) : MockContext(device) {
-    bcsOsContext.reset(OsContext::create(nullptr, 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, device->getDeviceBitfield())));
+    bcsOsContext.reset(OsContext::create(nullptr, device->getRootDeviceIndex(), 0, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, device->getDeviceBitfield())));
     bcsCsr.reset(createCommandStream(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield()));
     bcsCsr->setupContext(*bcsOsContext);
     bcsCsr->initializeTagAllocation();

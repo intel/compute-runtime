@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020 Intel Corporation
+# Copyright (C) 2020-2022 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -8,6 +8,8 @@ if(LIBGENL_FOUND)
   set(L0_SRCS_TOOLS_SYSMAN_LINUX_NL_API
       ${CMAKE_CURRENT_SOURCE_DIR}/nl_api.h
       ${CMAKE_CURRENT_SOURCE_DIR}/nl_api.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/iaf_nl_api.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/iaf_nl_api.cpp
   )
 endif()
 

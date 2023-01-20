@@ -12,7 +12,7 @@
 
 namespace NEO {
 
-struct BDW : public BDWFamily {
+struct BDW : public Gen8Family {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
     static const uint64_t defaultHardwareInfoConfig;

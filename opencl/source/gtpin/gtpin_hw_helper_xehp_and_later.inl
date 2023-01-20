@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-bool GTPinHwHelperHw<GfxFamily>::canUseSharedAllocation(const HardwareInfo &hwInfo) const {
+bool GTPinGfxCoreHelperHw<GfxFamily>::canUseSharedAllocation(const HardwareInfo &hwInfo) const {
     bool canUseSharedAllocation = true;
     if (DebugManager.flags.GTPinAllocateBufferInSharedMemory.get() != -1) {
         canUseSharedAllocation = !!DebugManager.flags.GTPinAllocateBufferInSharedMemory.get();

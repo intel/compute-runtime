@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2022 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/compiler_options_parser.h"
 
-#include "shared/source/compiler_interface/compiler_options/compiler_options_base.h"
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/helpers/hw_info.h"
 

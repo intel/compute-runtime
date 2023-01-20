@@ -12,8 +12,10 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/gmm_helper/resource_info.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
+#include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
@@ -85,7 +87,8 @@ bool tryWritePartitionLayoutWithinProcess(Wddm &wddm, GMM_GFX_PARTITIONING &part
 
 bool adjustGfxPartitionLayout(GMM_GFX_PARTITIONING &partitionLayout, uint64_t gpuAddressSpace, uintptr_t minAllowedAddress, Wddm &wddm, PRODUCT_FAMILY productFamily) {
     bool requiresRepartitioning = (gpuAddressSpace == maxNBitValue(47)) && wddm.getFeatureTable().flags.ftrCCSRing;
-    requiresRepartitioning |= HwInfoConfig::get(productFamily)->overrideGfxPartitionLayoutForWsl();
+    auto &productHelper = wddm.getRootDeviceEnvironment().getHelper<ProductHelper>();
+    requiresRepartitioning |= productHelper.overrideGfxPartitionLayoutForWsl();
     if (false == requiresRepartitioning) {
         return true;
     }
@@ -200,12 +203,18 @@ bool Wddm::configureDeviceAddressSpace() {
             return false;
         }
         if (gfxPartition.Standard64KB.Limit <= maxUsmSize) {
+            uintptr_t usmLowPartMax = gfxPartition.Heap32[0].Base;
+            for (const auto &usmMaxAddr : {gfxPartition.Standard.Base, gfxPartition.Standard64KB.Base, gfxPartition.TR.Base}) {
+                if (usmMaxAddr != 0) {
+                    usmLowPartMax = std::min(usmLowPartMax, usmMaxAddr);
+                }
+            }
             // reserved cpu address range splits USM into 2 partitions
             struct {
                 uint64_t minAddr;
                 uint64_t maxAddr;
-            } usmRanges[] = {{usmBase, gfxPartition.Heap32->Base},
-                             {gfxPartition.Standard64KB.Limit, maxUsmSize}};
+            } usmRanges[] = {{usmBase, usmLowPartMax},
+                             {alignUp(gfxPartition.Standard64KB.Limit, MemoryConstants::pageSize64k), maxUsmSize}};
 
             bool usmGpuRangeIsReserved = true;
             for (const auto &usmRange : usmRanges) {
