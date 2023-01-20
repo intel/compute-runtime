@@ -184,8 +184,6 @@ class MockGLSharingFunctions : public GLSharingFunctionsWindows {
     using GLSharingFunctionsWindows::isOpenGlExtensionSupported;
     using GLSharingFunctionsWindows::setSharedOCLContextState;
 
-    static bool SharingEnabled;
-
     static void OSAPI glGetIntegervTest(GLenum pname, GLint *data) {
         if (pname == GL_NUM_EXTENSIONS)
             *data = 2;
@@ -195,7 +193,6 @@ class MockGLSharingFunctions : public GLSharingFunctionsWindows {
     std::unique_ptr<GlDllHelper> dllParam = std::make_unique<GlDllHelper>();
     MockGLSharingFunctions() {
         GLSharingFunctionsWindows::initGLFunctions();
-        MockGLSharingFunctions::SharingEnabled = 1;
     }
 };
 } // namespace NEO

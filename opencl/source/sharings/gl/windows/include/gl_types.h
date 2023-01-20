@@ -13,6 +13,7 @@
 
 #define OSAPI WINAPI
 
-typedef uint32_t GLType;
-typedef HDC GLDisplay;
-typedef HGLRC GLContext;
+using GLType = uint32_t;
+using GLDisplay = HDC;
+using GLContext = HGLRC;
+using GLFunctionType = PROC(__stdcall *)(LPCSTR arg1);

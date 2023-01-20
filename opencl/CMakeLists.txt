@@ -33,8 +33,10 @@ endmacro()
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source/command_queue/definitions${BRANCH_DIR_SUFFIX})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source/mem_obj/definitions${BRANCH_DIR_SUFFIX})
-if(MSVC)
+if(WIN32)
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source/sharings/gl/windows/include)
+else()
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source/sharings/gl/linux/include)
 endif()
 
 set(NEO_DYNAMIC_LIB_NAME "igdrcl_dll") # single NEO dll

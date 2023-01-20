@@ -18,7 +18,7 @@
 
 namespace Os {
 extern const char *openglDllName;
-}
+} // namespace Os
 
 namespace NEO {
 struct GLMockReturnedValues;
@@ -44,10 +44,6 @@ struct GlDllHelper {
             UNRECOVERABLE_IF(glSetString == nullptr);
             glSetStringi = (*glDllLoad)["glSetStringi"];
             UNRECOVERABLE_IF(glSetStringi == nullptr);
-            setGLSetSharedOCLContextStateReturnedValue = (*glDllLoad)["setGLSetSharedOCLContextStateReturnedValue"];
-            UNRECOVERABLE_IF(setGLSetSharedOCLContextStateReturnedValue == nullptr);
-            getGLSetSharedOCLContextStateReturnedValue = (*glDllLoad)["getGLSetSharedOCLContextStateReturnedValue"];
-            UNRECOVERABLE_IF(getGLSetSharedOCLContextStateReturnedValue == nullptr);
             resetParam = (*glDllLoad)["resetParam"];
             UNRECOVERABLE_IF(resetParam == nullptr);
             getParam = (*glDllLoad)["getParam"];
@@ -63,9 +59,9 @@ struct GlDllHelper {
             loadTexture = (*glDllLoad)["loadTexture"];
             UNRECOVERABLE_IF(loadTexture == nullptr);
             getGlMockReturnedValues = (*glDllLoad)["getGlMockReturnedValues"];
-            UNRECOVERABLE_IF(getGlMockReturnedValues == nullptr);
             setGlMockReturnedValues = (*glDllLoad)["setGlMockReturnedValues"];
-            UNRECOVERABLE_IF(setGlMockReturnedValues == nullptr);
+            setGLSetSharedOCLContextStateReturnedValue = (*glDllLoad)["setGLSetSharedOCLContextStateReturnedValue"];
+            getGLSetSharedOCLContextStateReturnedValue = (*glDllLoad)["getGLSetSharedOCLContextStateReturnedValue"];
         }
     }
     ~GlDllHelper() {

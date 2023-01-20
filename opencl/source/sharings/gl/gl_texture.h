@@ -37,6 +37,7 @@ class GlTexture : GlSharing {
     static uint32_t getClObjectType(cl_GLenum glType, bool returnClGlObjectType);
 
     void releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) override;
+    void resolveGraphicsAllocationChange(osHandle currentSharedHandle, UpdateData *updateData) override;
 
     cl_GLenum target;
     cl_GLint miplevel;
