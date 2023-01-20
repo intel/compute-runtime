@@ -13,8 +13,4 @@ bool Device::isBlitSplitEnabled() {
     return true;
 }
 
-bool Device::isInitDeviceWithFirstSubmissionEnabled() {
-    return true;
-}
-
 } // namespace NEO

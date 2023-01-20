@@ -884,10 +884,6 @@ TEST(DeviceTest, whenCheckBlitSplitEnabledThenReturnsTrue) {
     EXPECT_TRUE(Device::isBlitSplitEnabled());
 }
 
-TEST(DeviceTest, whenCheckIsInitDeviceWithFirstSubmissionEnabledThenReturnsTrue) {
-    EXPECT_TRUE(Device::isInitDeviceWithFirstSubmissionEnabled());
-}
-
 TEST(PlatformsDestructor, whenGlobalPlatformsDestructorIsCalledThenGlobalPlatformsAreDestroyed) {
     EXPECT_NE(nullptr, platformsImpl);
     platformsDestructor();

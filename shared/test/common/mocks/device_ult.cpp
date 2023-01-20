@@ -14,8 +14,4 @@ bool Device::isBlitSplitEnabled() {
     return ultHwConfig.useBlitSplit;
 }
 
-bool Device::isInitDeviceWithFirstSubmissionEnabled() {
-    return ultHwConfig.useFirstSubmissionInitDevice;
-}
-
 } // namespace NEO

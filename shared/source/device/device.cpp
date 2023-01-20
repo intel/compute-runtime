@@ -388,7 +388,7 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         if (!defaultEngineAlreadySet) {
             defaultEngineIndex = deviceCsrIndex;
 
-            if (Device::isInitDeviceWithFirstSubmissionEnabled()) {
+            if (osContext->isDebuggableContext()) {
                 if (SubmissionStatus::SUCCESS != commandStreamReceiver->initializeDeviceWithFirstSubmission()) {
                     return false;
                 }
@@ -405,7 +405,6 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     if (engineUsage == EngineUsage::Regular) {
         addEngineToEngineGroup(engine);
     }
-
     commandStreamReceivers.push_back(std::move(commandStreamReceiver));
 
     return true;
