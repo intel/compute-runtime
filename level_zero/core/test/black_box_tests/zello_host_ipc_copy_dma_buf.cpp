@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "zello_common.h"
 #include "zello_ipc_common.h"
 
+#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
@@ -16,7 +17,7 @@
 
 int sv[CHILDPROCESSES][2];
 
-size_t allocSize = 4194304;
+size_t allocSize = 131072 + 7; // +7 to break alignment and make it harder
 
 inline void initializeProcess(ze_driver_handle_t &driverHandle,
                               ze_context_handle_t &context,
@@ -80,7 +81,7 @@ inline void initializeProcess(ze_driver_handle_t &driverHandle,
 }
 
 void runClient(int commSocket, uint32_t clientId) {
-    std::cout << "Client " << clientId << ", process ID: " << std::dec << getpid() << "\n";
+    std::cout << "Client " << clientId << ", process ID:::: " << std::dec << getpid() << "\n";
 
     ze_driver_handle_t driverHandle;
     ze_context_handle_t context;
@@ -95,47 +96,24 @@ void runClient(int commSocket, uint32_t clientId) {
     }
 
     // receive the IPC handle for the memory from the other process
-    char payload[ZE_MAX_IPC_HANDLE_SIZE];
-    int handle = recvmsgForIpcHandle(commSocket, payload);
+    ze_ipc_mem_handle_t ipcHandle;
+
+    int handle = recvmsgForIpcHandle(commSocket, ipcHandle.data);
     if (handle < 0) {
         std::cerr << "Failing to get IPC memory handle from server\n";
         std::terminate();
     }
 
-    // get a memory pointer to the BO associated with the dma_buf handle
-    ze_external_memory_import_fd_t importDesc = {};
-    importDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
-    importDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
-    importDesc.fd = handle;
+    memcpy(&ipcHandle, static_cast<void *>(&handle), sizeof(handle));
 
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
-    deviceDesc.pNext = &importDesc;
-
+    // get a memory pointer to the BO associated with the dma_buf handles
     void *zeIpcBuffer;
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, 0, 0, device, &zeIpcBuffer));
-
-    // get the size of the imported allocation
-    void *ipcPtr = nullptr;
-    size_t ipcSize = 0;
-    SUCCESS_OR_TERMINATE(zeMemGetAddressRange(context, zeIpcBuffer, &ipcPtr, &ipcSize));
-
-    // allocation may be bigger than the size requested originally by the exporter in case
-    // driver has made some alignment adjustments. In this case, allocSize = 4MB, so size
-    // should be the same.
-    if (ipcSize != allocSize) {
-        std::cerr << "Incorrect size returned for imported allocation\n";
-        std::terminate();
-    }
+    SUCCESS_OR_TERMINATE(zeMemOpenIpcHandle(context, device, ipcHandle, 0u, &zeIpcBuffer));
 
     // Copy from heap to IPC buffer memory
-    SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeIpcBuffer, heapBuffer, ipcSize,
-                                                       nullptr, 0, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
-    SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
-    SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+    memcpy(zeIpcBuffer, heapBuffer, allocSize);
 
-    SUCCESS_OR_TERMINATE(zeMemFree(context, zeIpcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemCloseIpcHandle(context, zeIpcBuffer));
     SUCCESS_OR_TERMINATE(zeCommandListDestroy(cmdList));
     SUCCESS_OR_TERMINATE(zeCommandQueueDestroy(cmdQueue));
     SUCCESS_OR_TERMINATE(zeContextDestroy(context));
@@ -144,7 +122,7 @@ void runClient(int commSocket, uint32_t clientId) {
 }
 
 void runServer(bool &validRet) {
-    std::cout << "Server process ID " << std::dec << getpid() << "\n";
+    std::cout << "Server process ID:::: " << std::dec << getpid() << "\n";
 
     ze_driver_handle_t driverHandle;
     ze_context_handle_t context;
@@ -154,8 +132,8 @@ void runServer(bool &validRet) {
     initializeProcess(driverHandle, context, device, cmdQueue, cmdList);
 
     void *zeBuffer = nullptr;
-    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &zeBuffer));
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &zeBuffer));
 
     for (uint32_t i = 0; i < CHILDPROCESSES; i++) {
         // Initialize the IPC buffer
@@ -168,28 +146,17 @@ void runServer(bool &validRet) {
         SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
         SUCCESS_OR_TERMINATE(zeCommandListReset(cmdList));
 
-        // get the fd handle
-        ze_external_memory_export_fd_t exportFd = {};
-        exportFd.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD;
-        exportFd.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+        // Get the IPC handle for the previously allocated pointer
+        ze_ipc_mem_handle_t ipcHandle;
+        SUCCESS_OR_TERMINATE(zeMemGetIpcHandle(context, zeBuffer, &ipcHandle));
 
-        ze_memory_allocation_properties_t allocProperties = {};
-        allocProperties.stype = ZE_STRUCTURE_TYPE_MEMORY_ALLOCATION_PROPERTIES;
-        allocProperties.pNext = &exportFd;
-
-        SUCCESS_OR_TERMINATE(zeMemGetAllocProperties(context, zeBuffer, &allocProperties, nullptr));
-
-        // transmit handle to the client
+        // Pass the IPC handle to the other process
+        int dmaBufFd;
+        memcpy(static_cast<void *>(&dmaBufFd), &ipcHandle, sizeof(dmaBufFd));
         int commSocket = sv[i][0];
-        char payload[ZE_MAX_IPC_HANDLE_SIZE];
-        if (sendmsgForIpcHandle(commSocket, static_cast<int>(exportFd.fd), payload) < 0) {
-            std::cerr << "Failing to send IPC event pool handle to client\n";
+        if (sendmsgForIpcHandle(commSocket, static_cast<int>(dmaBufFd), ipcHandle.data) < 0) {
+            std::cerr << "Failing to send IPC memory handle to client\n";
             std::terminate();
-        }
-
-        char *heapBuffer = new char[allocSize];
-        for (size_t i = 0; i < allocSize; ++i) {
-            heapBuffer[i] = static_cast<char>(i + 1);
         }
 
         // Wait for child to exit
@@ -201,7 +168,7 @@ void runServer(bool &validRet) {
         }
 
         void *validateBuffer = nullptr;
-        ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+        ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
         SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc,
                                               allocSize, 1, device, &validateBuffer));
 
@@ -218,6 +185,11 @@ void runServer(bool &validRet) {
         SUCCESS_OR_TERMINATE(zeCommandListClose(cmdList));
         SUCCESS_OR_TERMINATE(zeCommandQueueExecuteCommandLists(cmdQueue, 1, &cmdList, nullptr));
         SUCCESS_OR_TERMINATE(zeCommandQueueSynchronize(cmdQueue, std::numeric_limits<uint64_t>::max()));
+
+        char *heapBuffer = new char[allocSize];
+        for (size_t i = 0; i < allocSize; ++i) {
+            heapBuffer[i] = static_cast<char>(i + 1);
+        }
 
         char *ipcBuffer = static_cast<char *>(validateBuffer);
         for (uint32_t h = 0; h < allocSize; h++) {
@@ -240,7 +212,7 @@ void runServer(bool &validRet) {
 }
 
 int main(int argc, char *argv[]) {
-    const std::string blackBoxName = "Zello Export Import";
+    const std::string blackBoxName = "Zello IPC";
     verbose = isVerbose(argc, argv);
     bool outputValidationSuccessful;
 

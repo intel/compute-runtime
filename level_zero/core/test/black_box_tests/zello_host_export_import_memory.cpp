@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -108,12 +108,12 @@ void runClient(int commSocket, uint32_t clientId) {
     importDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
     importDesc.fd = handle;
 
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
-    deviceDesc.pNext = &importDesc;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    hostDesc.pNext = &importDesc;
 
     void *zeIpcBuffer;
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, 0, 0, device, &zeIpcBuffer));
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, 0, 0, &zeIpcBuffer));
 
     // get the size of the imported allocation
     void *ipcPtr = nullptr;
@@ -154,8 +154,8 @@ void runServer(bool &validRet) {
     initializeProcess(driverHandle, context, device, cmdQueue, cmdList);
 
     void *zeBuffer = nullptr;
-    ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
-    SUCCESS_OR_TERMINATE(zeMemAllocDevice(context, &deviceDesc, allocSize, allocSize, device, &zeBuffer));
+    ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+    SUCCESS_OR_TERMINATE(zeMemAllocHost(context, &hostDesc, allocSize, allocSize, &zeBuffer));
 
     for (uint32_t i = 0; i < CHILDPROCESSES; i++) {
         // Initialize the IPC buffer
@@ -201,7 +201,7 @@ void runServer(bool &validRet) {
         }
 
         void *validateBuffer = nullptr;
-        ze_host_mem_alloc_desc_t hostDesc = {ZE_STRUCTURE_TYPE_HOST_MEM_ALLOC_DESC};
+        ze_device_mem_alloc_desc_t deviceDesc = {ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC};
         SUCCESS_OR_TERMINATE(zeMemAllocShared(context, &deviceDesc, &hostDesc,
                                               allocSize, 1, device, &validateBuffer));
 
