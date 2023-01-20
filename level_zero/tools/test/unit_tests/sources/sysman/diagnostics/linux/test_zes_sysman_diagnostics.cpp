@@ -61,7 +61,6 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
     FsAccess *pFsAccessOld = nullptr;
     ProcfsAccess *pProcfsAccessOld = nullptr;
     EngineHandleContext *pEngineHandleContextOld = nullptr;
-    PRODUCT_FAMILY productFamily;
 
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -90,7 +89,6 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
             delete handle;
         }
         pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
-        productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     }
 
     void TearDown() override {
@@ -114,10 +112,7 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumDiagnosticTestSuitesThenZeroCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesCallSucceeds) {
-    if (productFamily != IGFX_PVC) {
-        mockDiagHandleCount = 0;
-    }
+HWTEST2_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumDiagnosticTestSuitesThenZeroCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesCallSucceeds, IsPVC) {
     std::vector<zes_diag_handle_t> diagnosticsHandle{};
     uint32_t count = 0;
 
@@ -138,26 +133,49 @@ TEST_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumDia
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, mockDiagHandleCount);
-    if (productFamily == IGFX_PVC) {
-        DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
-        pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
-        result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_EQ(count, mockDiagHandleCount);
+    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
 
-        testCount = count;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockDiagHandleCount);
 
-        diagnosticsHandle.resize(testCount);
-        result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &testCount, diagnosticsHandle.data());
+    testCount = count;
 
-        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-        EXPECT_NE(nullptr, diagnosticsHandle.data());
-        EXPECT_EQ(testCount, mockDiagHandleCount);
+    diagnosticsHandle.resize(testCount);
+    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &testCount, diagnosticsHandle.data());
 
-        pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-        delete ptestDiagnosticsImp;
-    }
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, diagnosticsHandle.data());
+    EXPECT_EQ(testCount, mockDiagHandleCount);
+
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
+    delete ptestDiagnosticsImp;
+}
+
+HWTEST2_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumDiagnosticTestSuitesThenZeroCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesCallSucceeds, IsNotPVC) {
+    mockDiagHandleCount = 0;
+    std::vector<zes_diag_handle_t> diagnosticsHandle{};
+    uint32_t count = 0;
+
+    ze_result_t result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockDiagHandleCount);
+
+    uint32_t testCount = count + 1;
+
+    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &testCount, nullptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(testCount, count);
+
+    diagnosticsHandle.resize(count);
+    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, diagnosticsHandle.data());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockDiagHandleCount);
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsPropertiesThenCallSucceeds) {
@@ -628,11 +646,31 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingReleaseResour
     pLinuxSysmanImp->releaseDeviceResources();
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->initDevice());
 }
-TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesSucceeds) {
+
+HWTEST2_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesSucceeds, IsPVC) {
     uint32_t count = 0;
-    if (productFamily != IGFX_PVC) {
-        mockDiagHandleCount = 0;
+    ze_result_t result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockDiagHandleCount);
+
+    for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
+        delete handle;
     }
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
+    pSysmanDeviceImp->pDiagnosticsHandleContext->supportedDiagTests.clear();
+
+    pLinuxSysmanImp->diagnosticsReset = false;
+    pLinuxSysmanImp->reInitSysmanDeviceResources();
+
+    count = 0;
+    result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockDiagHandleCount);
+}
+
+HWTEST2_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleAndHandleCountZeroWhenCallingReInitThenValidCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesSucceeds, IsNotPVC) {
+    uint32_t count = 0;
+    mockDiagHandleCount = 0;
     ze_result_t result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, mockDiagHandleCount);

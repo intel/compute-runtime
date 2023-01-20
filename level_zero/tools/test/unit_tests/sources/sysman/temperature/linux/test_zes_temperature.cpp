@@ -28,7 +28,6 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
     std::unique_ptr<MockTemperatureFsAccess> pFsAccess;
     FsAccess *pFsAccessOriginal = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
-    PRODUCT_FAMILY productFamily;
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOriginal;
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -66,8 +65,6 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
             pPmt->keyOffsetMap = keyOffsetMapEntry->second;
             pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
         }
-
-        productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
         getTempHandles(0);
     }
     void TearDown() override {
@@ -106,7 +103,7 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenComponentCountZeroWhenCallingZe
     EXPECT_EQ(count, handleComponentCountForTwoTileDevices);
 }
 
-TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureThenValidTemperatureReadingsRetrieved) {
+HWTEST2_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureThenValidTemperatureReadingsRetrieved, IsPVC) {
     auto handles = getTempHandles(handleComponentCountForTwoTileDevices);
     for (auto handle : handles) {
         zes_temp_properties_t properties = {};
@@ -121,14 +118,8 @@ TEST_F(SysmanMultiDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTempe
             EXPECT_EQ(temperature, static_cast<double>(gtMaxTemperature));
         }
         if (properties.type == ZES_TEMP_SENSORS_MEMORY) {
-            if (productFamily == IGFX_XE_HP_SDV) {
-                ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
-                EXPECT_EQ(temperature, static_cast<double>(std::max({memory0MaxTemperature, memory1MaxTemperature})));
-            }
-            if (productFamily == IGFX_PVC) {
-                ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
-                EXPECT_EQ(temperature, static_cast<double>(std::max({memory0MaxTemperature, memory1MaxTemperature, memory2MaxTemperature, memory3MaxTemperature})));
-            }
+            ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
+            EXPECT_EQ(temperature, static_cast<double>(std::max({memory0MaxTemperature, memory1MaxTemperature, memory2MaxTemperature, memory3MaxTemperature})));
         }
     }
 }
@@ -185,7 +176,6 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockTemperatureFsAccess> pFsAccess;
     FsAccess *pFsAccessOriginal = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
-    PRODUCT_FAMILY productFamily;
     std::map<uint32_t, L0::PlatformMonitoringTech *> pmtMapOriginal;
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -218,8 +208,6 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
             pPmt->keyOffsetMap = keyOffsetMapEntry->second;
             pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.emplace(deviceProperties.subdeviceId, pPmt);
         }
-
-        productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
         getTempHandles(0);
     }
     void TearDown() override {
@@ -403,46 +391,6 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenComponentCountZeroWhenCallingZetS
     EXPECT_EQ(count, handleComponentCountForSingleTileDevice);
 }
 
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenComponentCountZeroWhenCallingZetSysmanTemperatureGetThenZeroCountIsReturnedAndVerifySysmanTemperatureGetCallSucceeds, IsXEHP) {
-    uint32_t count = 0;
-    ze_result_t result = zesDeviceEnumTemperatureSensors(device->toHandle(), &count, NULL);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(count, handleComponentCountForSingleTileDevice);
-
-    uint32_t testcount = count + 1;
-    result = zesDeviceEnumTemperatureSensors(device->toHandle(), &testcount, NULL);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(testcount, handleComponentCountForSingleTileDevice);
-
-    count = 0;
-    std::vector<zes_temp_handle_t> handles(count, nullptr);
-    EXPECT_EQ(zesDeviceEnumTemperatureSensors(device->toHandle(), &count, handles.data()), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, handleComponentCountForSingleTileDevice);
-}
-
-HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureThenValidTemperatureReadingsRetrieved, IsXEHP) {
-    auto handles = getTempHandles(handleComponentCountForSingleTileDevice);
-    for (auto handle : handles) {
-        zes_temp_properties_t properties = {};
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetProperties(handle, &properties));
-        double temperature;
-        if (properties.type == ZES_TEMP_SENSORS_GLOBAL) {
-            ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
-            EXPECT_EQ(temperature, static_cast<double>(tileMaxTemperature));
-        }
-        if (properties.type == ZES_TEMP_SENSORS_GPU) {
-            ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
-            EXPECT_EQ(temperature, static_cast<double>(gtMaxTemperature));
-        }
-        if (properties.type == ZES_TEMP_SENSORS_MEMORY) {
-            if (productFamily == IGFX_XE_HP_SDV) {
-                ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
-                EXPECT_EQ(temperature, static_cast<double>(std::max({memory0MaxTemperature, memory1MaxTemperature})));
-            }
-        }
-    }
-}
-
 HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTemperatureThenValidTemperatureReadingsRetrieved, IsPVC) {
     auto handles = getTempHandles(handleComponentCountForSingleTileDevice);
     for (auto handle : handles) {
@@ -458,10 +406,8 @@ HWTEST2_F(SysmanDeviceTemperatureFixture, GivenValidTempHandleWhenGettingTempera
             EXPECT_EQ(temperature, static_cast<double>(gtMaxTemperature));
         }
         if (properties.type == ZES_TEMP_SENSORS_MEMORY) {
-            if (productFamily == IGFX_PVC) {
-                ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
-                EXPECT_EQ(temperature, static_cast<double>(std::max({memory0MaxTemperature, memory1MaxTemperature, memory2MaxTemperature, memory3MaxTemperature})));
-            }
+            ASSERT_EQ(ZE_RESULT_SUCCESS, zesTemperatureGetState(handle, &temperature));
+            EXPECT_EQ(temperature, static_cast<double>(std::max({memory0MaxTemperature, memory1MaxTemperature, memory2MaxTemperature, memory3MaxTemperature})));
         }
     }
 }

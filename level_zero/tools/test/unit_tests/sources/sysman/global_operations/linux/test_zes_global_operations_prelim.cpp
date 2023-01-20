@@ -27,7 +27,6 @@ class SysmanGlobalOperationsHelperFixture : public SysmanDeviceFixture {
     OsGlobalOperations *pOsGlobalOperationsPrev = nullptr;
     L0::GlobalOperations *pGlobalOperationsPrev = nullptr;
     L0::GlobalOperationsImp *pGlobalOperationsImp;
-    PRODUCT_FAMILY productFamily;
 
     void SetUp() override {
         if (!sysmanUltsEnable) {
@@ -51,7 +50,6 @@ class SysmanGlobalOperationsHelperFixture : public SysmanDeviceFixture {
         pGlobalOperationsImp = static_cast<L0::GlobalOperationsImp *>(pSysmanDeviceImp->pGlobalOperations);
         pOsGlobalOperationsPrev = pGlobalOperationsImp->pOsGlobalOperations;
         pGlobalOperationsImp->pOsGlobalOperations = nullptr;
-        productFamily = pLinuxSysmanImp->getDeviceHandle()->getNEODevice()->getHardwareInfo().platform.eProductFamily;
     }
 
     void TearDown() override {
@@ -71,28 +69,35 @@ class SysmanGlobalOperationsHelperFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateThenZesResetReasonFlagRepairedIsReturned) {
+HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateThenZesResetReasonFlagRepairedIsReturned, IsPVC) {
     pMockFwInterface->mockIfrStatus = true;
     zes_device_state_t deviceState;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
-    if (productFamily == IGFX_PVC) {
-        EXPECT_EQ(ZES_RESET_REASON_FLAG_REPAIR, deviceState.reset);
-        EXPECT_EQ(ZES_REPAIR_STATUS_PERFORMED, deviceState.repaired);
-    } else {
-        EXPECT_EQ(ZES_REPAIR_STATUS_UNSUPPORTED, deviceState.repaired);
-    }
+    EXPECT_EQ(ZES_RESET_REASON_FLAG_REPAIR, deviceState.reset);
+    EXPECT_EQ(ZES_REPAIR_STATUS_PERFORMED, deviceState.repaired);
 }
 
-TEST_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateAndFirmwareRepairStatusIsFalseThenZesResetReasonFlagRepairedIsNotReturned) {
+HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateThenZesResetReasonFlagRepairedIsReturned, IsNotPVC) {
+    pMockFwInterface->mockIfrStatus = true;
+    zes_device_state_t deviceState;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
+    EXPECT_EQ(ZES_REPAIR_STATUS_UNSUPPORTED, deviceState.repaired);
+}
+
+HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateAndFirmwareRepairStatusIsFalseThenZesResetReasonFlagRepairedIsNotReturned, IsPVC) {
     pMockFwInterface->mockIfrStatus = false;
     zes_device_state_t deviceState;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(0u, deviceState.reset);
-    if (productFamily == IGFX_PVC) {
-        EXPECT_EQ(ZES_REPAIR_STATUS_NOT_PERFORMED, deviceState.repaired);
-    } else {
-        EXPECT_EQ(ZES_REPAIR_STATUS_UNSUPPORTED, deviceState.repaired);
-    }
+    EXPECT_EQ(ZES_REPAIR_STATUS_NOT_PERFORMED, deviceState.repaired);
+}
+
+HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateAndFirmwareRepairStatusIsFalseThenZesResetReasonFlagRepairedIsNotReturned, IsNotPVC) {
+    pMockFwInterface->mockIfrStatus = false;
+    zes_device_state_t deviceState;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
+    EXPECT_EQ(0u, deviceState.reset);
+    EXPECT_EQ(ZES_REPAIR_STATUS_UNSUPPORTED, deviceState.repaired);
 }
 
 TEST_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateAndFirmwareRepairStatusFailsThenZesResetReasonFlagRepairedIsNotReturned) {

@@ -721,60 +721,6 @@ TEST_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenGettingBandwidthAndI
         pPmt->mockReadArgumentValue.push_back(0);
         pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNKNOWN); // Return Failure while reading VF1_VFID
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNKNOWN);
-
-        if (productFamily == IGFX_XE_HP_SDV) {
-            pPmt->mockReadArgumentValue.push_back(1);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
-            pPmt->mockReadArgumentValue.push_back(0);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF1_VFID
-            pPmt->mockReadArgumentValue.push_back(0);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNKNOWN); // Return Failure while reading VF0_HBM0_READ
-            EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNKNOWN);
-
-            pPmt->mockReadArgumentValue.push_back(1);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
-            pPmt->mockReadArgumentValue.push_back(0);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF1_VFID
-            pPmt->mockReadArgumentValue.push_back(vF0Hbm0ReadValue);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF0_HBM0_READ
-            pPmt->mockReadArgumentValue.push_back(vF0Hbm0WriteValue);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNKNOWN); // Return Failure while reading VF0_HBM0_Write
-            EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNKNOWN);
-
-            pPmt->mockReadArgumentValue.push_back(1);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
-            pPmt->mockReadArgumentValue.push_back(0);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF1_VFID
-            pPmt->mockReadArgumentValue.push_back(vF0Hbm0ReadValue);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF0_HBM0_READ
-            pPmt->mockReadArgumentValue.push_back(vF0Hbm0WriteValue);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF0_HBM0_Write
-            pPmt->mockReadArgumentValue.push_back(vF0Hbm1ReadValue);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF0_HBM1_READ
-            pPmt->mockReadArgumentValue.push_back(vF0Hbm1WriteValue);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF0_HBM1_Write
-            pPmt->mockReadArgumentValue.push_back(0);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNKNOWN); // Return Failure while reading VF0__TIMESTAMP_L
-            EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNKNOWN);
-
-            pPmt->mockReadArgumentValue.push_back(1);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success after reading VF0_VFID
-            pPmt->mockReadArgumentValue.push_back(0);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF1_VFID
-            pPmt->mockReadArgumentValue.push_back(vF0Hbm0ReadValue);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF0_HBM0_READ
-            pPmt->mockReadArgumentValue.push_back(vF0Hbm0WriteValue);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF0_HBM0_Write
-            pPmt->mockReadArgumentValue.push_back(vF0Hbm1ReadValue);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF0_HBM1_READ
-            pPmt->mockReadArgumentValue.push_back(vF0Hbm1WriteValue);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF0_HBM1_Write
-            pPmt->mockReadArgumentValue.push_back(vF0TimestampLValue);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_SUCCESS); // Return success while reading VF0__TIMESTAMP_L
-            pPmt->mockReadArgumentValue.push_back(0);
-            pPmt->mockReadValueReturnStatus.push_back(ZE_RESULT_ERROR_UNKNOWN); // Return Failure while reading VF0__TIMESTAMP_H
-            EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_ERROR_UNKNOWN);
-        }
     }
 }
 

@@ -344,54 +344,6 @@ HWTEST2_F(SysmanDevicePowerFixture, GivenValidPowerHandlesWhenCallingSetAndGetPo
     }
 }
 
-HWTEST2_F(SysmanDevicePowerFixture, GivenValidPowerHandlesWhenCallingSetAndGetPowerLimitExtThenLimitsSetEarlierAreRetrieved, IsXEHP) {
-    auto handles = getPowerHandles(powerHandleComponentCount);
-    for (auto handle : handles) {
-
-        uint32_t limitCount = 0;
-        const int32_t testLimit = 3000000;
-        const int32_t testInterval = 10;
-
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
-        EXPECT_EQ(limitCount, mockLimitCount);
-
-        limitCount++;
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, nullptr));
-        EXPECT_EQ(limitCount, mockLimitCount);
-
-        std::vector<zes_power_limit_ext_desc_t> allLimits(limitCount);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
-        for (uint32_t i = 0; i < limitCount; i++) {
-            if (allLimits[i].level == ZES_POWER_LEVEL_SUSTAINED) {
-                EXPECT_FALSE(allLimits[i].limitValueLocked);
-                EXPECT_TRUE(allLimits[i].enabledStateLocked);
-                EXPECT_FALSE(allLimits[i].intervalValueLocked);
-                EXPECT_EQ(ZES_POWER_SOURCE_ANY, allLimits[i].source);
-                EXPECT_EQ(ZES_LIMIT_UNIT_POWER, allLimits[i].limitUnit);
-                allLimits[i].limit = testLimit;
-                allLimits[i].interval = testInterval;
-            } else if (allLimits[i].level == ZES_POWER_LEVEL_PEAK) {
-                EXPECT_FALSE(allLimits[i].limitValueLocked);
-                EXPECT_TRUE(allLimits[i].enabledStateLocked);
-                EXPECT_TRUE(allLimits[i].intervalValueLocked);
-                EXPECT_EQ(ZES_POWER_SOURCE_ANY, allLimits[i].source);
-                EXPECT_EQ(ZES_LIMIT_UNIT_CURRENT, allLimits[i].limitUnit);
-                allLimits[i].limit = testLimit;
-            }
-        }
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerSetLimitsExt(handle, &limitCount, allLimits.data()));
-        EXPECT_EQ(ZE_RESULT_SUCCESS, zesPowerGetLimitsExt(handle, &limitCount, allLimits.data()));
-        for (uint32_t i = 0; i < limitCount; i++) {
-            if (allLimits[i].level == ZES_POWER_LEVEL_SUSTAINED) {
-                EXPECT_EQ(testInterval, allLimits[i].interval);
-            } else if (allLimits[i].level == ZES_POWER_LEVEL_PEAK) {
-                EXPECT_EQ(0, allLimits[i].interval);
-            }
-            EXPECT_EQ(testLimit, allLimits[i].limit);
-        }
-    }
-}
-
 TEST_F(SysmanDevicePowerFixture, GivenReadingSustainedPowerLimitNodeReturnErrorWhenSetOrGetPowerLimitsWhenHwmonInterfaceExistForSustainedPowerLimitEnabledThenProperErrorCodesReturned) {
     auto handles = getPowerHandles(powerHandleComponentCount);
 
