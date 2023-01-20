@@ -26,8 +26,8 @@ TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment)
     auto hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    auto compilerProductHelper = CompilerProductHelper::get(hwInfo.platform.eProductFamily);
-    compilerProductHelper->adjustHwInfoForIgc(hwInfo);
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    compilerProductHelper.adjustHwInfoForIgc(hwInfo);
     TargetDevice targetDevice = {};
 
     targetDevice.coreFamily = hwInfo.platform.eRenderCoreFamily;

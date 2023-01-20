@@ -1981,9 +1981,11 @@ TEST_F(ProgramTests, whenCreatingFromZebinThenAppendAllowZebinFlagToBuildOptions
     ZebinTestData::ValidEmptyProgram zebin;
 
     auto copyHwInfo = *defaultHwInfo;
-    auto compilerProductHelper = CompilerProductHelper::get(copyHwInfo.platform.eProductFamily);
+    MockExecutionEnvironment mockExecutionEnvironment{};
 
-    compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+    auto &compilerProductHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+
+    compilerProductHelper.adjustHwInfoForIgc(copyHwInfo);
 
     zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
 

@@ -74,6 +74,7 @@ struct DeviceImp : public Device {
     const NEO::GfxCoreHelper &getGfxCoreHelper() override;
     const L0GfxCoreHelper &getL0GfxCoreHelper() override;
     const NEO::ProductHelper &getProductHelper() override;
+    const NEO::CompilerProductHelper &getCompilerProductHelper() override;
     const NEO::HardwareInfo &getHwInfo() const override;
     NEO::OSInterface &getOsInterface() override;
     uint32_t getPlatformInfo() const override;

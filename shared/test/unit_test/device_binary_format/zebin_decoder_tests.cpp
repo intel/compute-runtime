@@ -69,8 +69,8 @@ TEST(ZebinValidateTargetTest, givenTargetDeviceCreatedUsingHelperFunctionWhenVal
     MockExecutionEnvironment executionEnvironment;
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto compilerProductHelper = CompilerProductHelper::get(hwInfo.platform.eProductFamily);
-    compilerProductHelper->adjustHwInfoForIgc(hwInfo);
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    compilerProductHelper.adjustHwInfoForIgc(hwInfo);
 
     auto targetDevice = getTargetDevice(rootDeviceEnvironment);
 

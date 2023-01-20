@@ -150,9 +150,9 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     drm->checkNonPersistentContextsSupport();
     drm->checkPreemptionSupport();
     bool preemption = drm->isPreemptionSupported();
-    auto compilerProductHelper = CompilerProductHelper::get(outHwInfo->platform.eProductFamily);
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
-                                                  compilerProductHelper->isMidThreadPreemptionSupported(*outHwInfo) && preemption,
+                                                  compilerProductHelper.isMidThreadPreemptionSupported(*outHwInfo) && preemption,
                                                   static_cast<bool>(outHwInfo->featureTable.flags.ftrGpGpuThreadGroupLevelPreempt) && preemption,
                                                   static_cast<bool>(outHwInfo->featureTable.flags.ftrGpGpuMidBatchPreempt) && preemption);
 

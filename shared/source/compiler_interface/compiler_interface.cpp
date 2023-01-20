@@ -452,7 +452,8 @@ IGC::IgcOclDeviceCtxTagOCL *CompilerInterface::getIgcDeviceCtx(const Device &dev
     populateIgcPlatform(*igcPlatform, *hwInfo);
     IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo, hwInfo->gtSystemInfo);
 
-    igcFtrWa->SetFtrGpGpuMidThreadLevelPreempt(CompilerProductHelper::get(hwInfo->platform.eProductFamily)->isMidThreadPreemptionSupported(*hwInfo));
+    auto &compilerProductHelper = device.getCompilerProductHelper();
+    igcFtrWa->SetFtrGpGpuMidThreadLevelPreempt(compilerProductHelper.isMidThreadPreemptionSupported(*hwInfo));
     igcFtrWa->SetFtrWddm2Svm(device.getHardwareInfo().featureTable.flags.ftrWddm2Svm);
     igcFtrWa->SetFtrPooledEuEnabled(device.getHardwareInfo().featureTable.flags.ftrPooledEuEnabled);
 

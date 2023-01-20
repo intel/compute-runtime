@@ -31,6 +31,7 @@ class SubDevice;
 struct PhysicalDevicePciBusInfo;
 class GfxCoreHelper;
 class ProductHelper;
+class CompilerProductHelper;
 
 struct SelectorCopyEngine : NonCopyableOrMovableClass {
     std::atomic<bool> isMainUsed = false;
@@ -153,6 +154,7 @@ class Device : public ReferenceTrackedObject<Device> {
     void getAdapterMask(uint32_t &nodeMask);
     const GfxCoreHelper &getGfxCoreHelper() const;
     const ProductHelper &getProductHelper() const;
+    const CompilerProductHelper &getCompilerProductHelper() const;
     uint32_t getNumberOfRegularContextsPerEngine() const { return numberOfRegularContextsPerEngine; }
 
     std::atomic<uint32_t> debugExecutionCounter = 0;

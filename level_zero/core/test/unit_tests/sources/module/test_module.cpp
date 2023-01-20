@@ -2264,9 +2264,9 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
     ZebinTestData::ValidEmptyProgram emptyProgram;
 
     auto copyHwInfo = device->getNEODevice()->getHardwareInfo();
-    auto compilerProductHelper = NEO::CompilerProductHelper::get(copyHwInfo.platform.eProductFamily);
+    auto &compilerProductHelper = device->getCompilerProductHelper();
 
-    compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+    compilerProductHelper.adjustHwInfoForIgc(copyHwInfo);
 
     emptyProgram.elfHeader->machine = copyHwInfo.platform.eProductFamily;
     L0::ModuleTranslationUnit moduleTuValid(this->device);
@@ -2317,9 +2317,9 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenAppendAllowZebinFla
     ZebinTestData::ValidEmptyProgram zebin;
 
     auto copyHwInfo = device->getNEODevice()->getHardwareInfo();
-    auto compilerProductHelper = NEO::CompilerProductHelper::get(copyHwInfo.platform.eProductFamily);
+    auto &compilerProductHelper = device->getCompilerProductHelper();
 
-    compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+    compilerProductHelper.adjustHwInfoForIgc(copyHwInfo);
 
     zebin.elfHeader->machine = copyHwInfo.platform.eProductFamily;
     L0::ModuleTranslationUnit moduleTu(this->device);
@@ -3638,9 +3638,9 @@ HWTEST_F(ModuleWithZebinTest, givenZebinWithKernelCallingExternalFunctionThenUpd
     ZebinTestData::ZebinWithExternalFunctionsInfo zebin;
 
     auto copyHwInfo = device->getHwInfo();
-    auto compilerProductHelper = NEO::CompilerProductHelper::get(copyHwInfo.platform.eProductFamily);
+    auto &compilerProductHelper = device->getCompilerProductHelper();
 
-    compilerProductHelper->adjustHwInfoForIgc(copyHwInfo);
+    compilerProductHelper.adjustHwInfoForIgc(copyHwInfo);
 
     zebin.setProductFamily(static_cast<uint16_t>(copyHwInfo.platform.eProductFamily));
 
