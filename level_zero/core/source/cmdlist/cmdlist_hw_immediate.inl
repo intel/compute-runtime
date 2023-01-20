@@ -662,9 +662,19 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(N
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMHostAlloc(NEO::SvmAllocationData *alloc, bool allocFound) {
+    return allocFound && (alloc->memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMDeviceAlloc(NEO::SvmAllocationData *alloc, bool allocFound) {
     return allocFound && (alloc->memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) &&
            alloc->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex())->storageInfo.getNumBanks() == 1;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMSharedAlloc(NEO::SvmAllocationData *alloc, bool allocFound) {
+    return allocFound && (alloc->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -739,6 +749,51 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkWaitEventsState(uint32_
     if (this->eventWaitlistSyncRequired()) {
         this->synchronizeEventList(numWaitEvents, waitEventList);
     }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+TransferType CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferType(NEO::SvmAllocationData *dstAlloc, bool dstFound, NEO::SvmAllocationData *srcAlloc, bool srcFound) {
+    const bool srcHostUSM = isSuitableUSMHostAlloc(srcAlloc, srcFound);
+    const bool srcDeviceUSM = isSuitableUSMDeviceAlloc(srcAlloc, srcFound) || isSuitableUSMSharedAlloc(srcAlloc, srcFound);
+    const bool srcHostNonUSM = srcAlloc == nullptr;
+
+    const bool dstHostUSM = isSuitableUSMHostAlloc(dstAlloc, dstFound);
+    const bool dstDeviceUSM = isSuitableUSMDeviceAlloc(dstAlloc, dstFound) || isSuitableUSMSharedAlloc(dstAlloc, dstFound);
+    const bool dstHostNonUSM = dstAlloc == nullptr;
+
+    TransferType retVal;
+
+    if (srcHostNonUSM && dstHostUSM) {
+        retVal = HOST_NON_USM_TO_HOST_USM;
+    }
+    if (srcHostNonUSM && dstDeviceUSM) {
+        retVal = HOST_NON_USM_TO_DEVICE_USM;
+    }
+    if (srcHostNonUSM && dstHostNonUSM) {
+        retVal = HOST_NON_USM_TO_HOST_NON_USM;
+    }
+
+    if (srcHostUSM && dstHostUSM) {
+        retVal = HOST_USM_TO_HOST_USM;
+    }
+    if (srcHostUSM && dstDeviceUSM) {
+        retVal = HOST_USM_TO_DEVICE_USM;
+    }
+    if (srcHostUSM && dstHostNonUSM) {
+        retVal = HOST_USM_TO_HOST_NON_USM;
+    }
+
+    if (srcDeviceUSM && dstHostUSM) {
+        retVal = DEVICE_USM_TO_HOST_USM;
+    }
+    if (srcDeviceUSM && dstDeviceUSM) {
+        retVal = DEVICE_USM_TO_DEVICE_USM;
+    }
+    if (srcDeviceUSM && dstHostNonUSM) {
+        retVal = DEVICE_USM_TO_HOST_NON_USM;
+    }
+
+    return retVal;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

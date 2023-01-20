@@ -142,11 +142,14 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     NEO::LogicalStateHelper *getLogicalStateHelper() const override;
 
     bool preferCopyThroughLockedPtr(NEO::SvmAllocationData *dstAlloc, bool dstFound, NEO::SvmAllocationData *srcAlloc, bool srcFound, size_t size);
+    bool isSuitableUSMHostAlloc(NEO::SvmAllocationData *alloc, bool allocFound);
     bool isSuitableUSMDeviceAlloc(NEO::SvmAllocationData *alloc, bool allocFound);
+    bool isSuitableUSMSharedAlloc(NEO::SvmAllocationData *alloc, bool allocFound);
     ze_result_t performCpuMemcpy(void *dstptr, const void *srcptr, size_t size, NEO::SvmAllocationData *dstAlloc, NEO::SvmAllocationData *srcAlloc, ze_event_handle_t hSignalEvent, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     void *obtainLockedPtrFromDevice(NEO::SvmAllocationData *alloc, void *ptr);
     bool waitForEventsFromHost();
     void checkWaitEventsState(uint32_t numWaitEvents, ze_event_handle_t *waitEventList);
+    TransferType getTransferType(NEO::SvmAllocationData *dstAlloc, bool dstFound, NEO::SvmAllocationData *srcAlloc, bool srcFound);
 
   protected:
     void printKernelsPrintfOutput(bool hangDetected);
