@@ -6,10 +6,14 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/engine_control.h"
+#include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/map_operation_type.h"
-#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/helpers/timestamp_packet_container.h"
+#include "shared/source/indirect_heap/indirect_heap_type.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/sku_info/sku_info_base.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/range.h"
@@ -25,26 +29,24 @@
 enum InternalMemoryType : uint32_t;
 
 namespace NEO {
-struct BuiltinOpParams;
-struct CsrSelectionArgs;
-class PrintfHandler;
-enum class WaitStatus;
 class BarrierCommand;
 class Buffer;
-class LinearStream;
 class ClDevice;
 class Context;
-class Device;
 class Event;
 class EventBuilder;
 class FlushStampTracker;
 class Image;
 class IndirectHeap;
 class Kernel;
-class MemObj;
+class LinearStream;
 class PerformanceCounters;
-struct CompletionStamp;
+class PrintfHandler;
+enum class WaitStatus;
+struct BuiltinOpParams;
+struct CsrSelectionArgs;
 struct MultiDispatchInfo;
+struct TimestampPacketDependencies;
 
 enum class QueuePriority {
     LOW,

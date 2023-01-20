@@ -37,6 +37,7 @@
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/utilities/lookup_array.h"
+#include "shared/source/utilities/tag_allocator.h"
 
 #include "opencl/source/accelerators/intel_accelerator.h"
 #include "opencl/source/accelerators/intel_motion_estimation.h"

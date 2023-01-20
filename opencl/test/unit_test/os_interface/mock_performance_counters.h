@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/commands/bxml_generator_glue.h"
 #include "shared/source/device/device.h"
 #include "shared/test/common/mocks/mock_device.h"
 

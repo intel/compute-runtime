@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

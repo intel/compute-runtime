@@ -6,8 +6,10 @@
  */
 
 #include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"

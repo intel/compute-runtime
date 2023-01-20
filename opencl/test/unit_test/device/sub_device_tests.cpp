@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/device/sub_device.h"
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

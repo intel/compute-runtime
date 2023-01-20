@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/constants.h"
+#include "shared/source/memory_manager/memory_manager.h"
 
 #include "opencl/source/api/api.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"

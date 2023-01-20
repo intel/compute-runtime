@@ -14,6 +14,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/helpers/timestamp_packet_size_control.h"
 #include "shared/source/utilities/tag_allocator.h"
 
@@ -76,24 +77,6 @@ class TimestampPackets : public TagTypeBase {
 
 static_assert(((4 * TimestampPacketSizeControl::preferredPacketCount) * sizeof(uint32_t)) == sizeof(TimestampPackets<uint32_t>),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
-
-class TimestampPacketContainer : public NonCopyableClass {
-  public:
-    TimestampPacketContainer() = default;
-    TimestampPacketContainer(TimestampPacketContainer &&) = default;
-    TimestampPacketContainer &operator=(TimestampPacketContainer &&) = default;
-    MOCKABLE_VIRTUAL ~TimestampPacketContainer();
-
-    const StackVec<TagNodeBase *, 32u> &peekNodes() const { return timestampPacketNodes; }
-    void add(TagNodeBase *timestampPacketNode);
-    void swapNodes(TimestampPacketContainer &timestampPacketContainer);
-    void assignAndIncrementNodesRefCounts(const TimestampPacketContainer &inputTimestampPacketContainer);
-    void makeResident(CommandStreamReceiver &commandStreamReceiver);
-    void moveNodesToNewContainer(TimestampPacketContainer &timestampPacketContainer);
-
-  protected:
-    StackVec<TagNodeBase *, 32u> timestampPacketNodes;
-};
 
 struct TimestampPacketDependencies : public NonCopyableClass {
     TimestampPacketContainer cacheFlushNodes;

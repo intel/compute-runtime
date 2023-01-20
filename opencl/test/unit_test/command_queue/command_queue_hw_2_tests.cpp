@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/mocks/mock_builtins.h"

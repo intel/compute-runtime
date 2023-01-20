@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"

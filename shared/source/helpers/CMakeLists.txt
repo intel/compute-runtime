@@ -27,7 +27,10 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/blit_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/blit_properties.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/blit_properties.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/blit_properties_container.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy.h
@@ -136,6 +139,8 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/surface_format_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_container.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/timestamp_packet_size_control.h
     ${CMAKE_CURRENT_SOURCE_DIR}/topology_map.h
     ${CMAKE_CURRENT_SOURCE_DIR}/uint16_avx2.h
     ${CMAKE_CURRENT_SOURCE_DIR}/uint16_sse4.h
