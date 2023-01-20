@@ -2888,6 +2888,28 @@ TEST(OfflineCompilerTest, givenInternalOptionsWhenCmdLineParsedThenOptionsAreApp
     EXPECT_TRUE(hasSubstr(internalOptions, std::string("myInternalOptions")));
 }
 
+TEST(OfflineCompilerTest, givenOptionsWhenCmdLineParsedThenOptionsAreAppendedToOptionsString) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-options",
+        "options1",
+        "-options",
+        "options2"};
+
+    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+    ASSERT_NE(nullptr, mockOfflineCompiler);
+
+    testing::internal::CaptureStdout();
+    mockOfflineCompiler->parseCommandLine(argv.size(), argv);
+    std::string output = testing::internal::GetCapturedStdout();
+
+    EXPECT_NE(0u, output.size());
+
+    std::string options = mockOfflineCompiler->options;
+    EXPECT_TRUE(hasSubstr(options, std::string("options1")));
+    EXPECT_TRUE(hasSubstr(options, std::string("options2")));
+}
+
 TEST(OfflineCompilerTest, givenInputOptionsAndInternalOptionsFilesWhenOfflineCompilerIsInitializedThenCorrectOptionsAreSetAndRemainAfterBuild) {
     auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
     ASSERT_NE(nullptr, mockOfflineCompiler);

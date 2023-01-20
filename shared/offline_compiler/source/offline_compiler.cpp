@@ -698,7 +698,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if ("-gen_file" == currArg) {
             useGenFile = true;
         } else if (("-options" == currArg) && hasMoreArgs) {
-            options = argv[argIndex + 1];
+            CompilerOptions::concatenateAppend(options, argv[argIndex + 1]);
             argIndex++;
         } else if (("-internal_options" == currArg) && hasMoreArgs) {
             CompilerOptions::concatenateAppend(internalOptions, argv[argIndex + 1]);
