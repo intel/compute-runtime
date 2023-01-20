@@ -128,7 +128,7 @@ int main(int argc, char *argv[]) {
         "id == 0\nid == 0\nid == 0\nid == 0\nid == 0\n"
         "id == 0\nid == 0\nid == 0\nid == 0\nid == 0\n"};
 
-    PrintfExecutionMode executionModes[] = {PrintfExecutionMode::CommandQueue};
+    PrintfExecutionMode executionModes[] = {PrintfExecutionMode::CommandQueue, PrintfExecutionMode::ImmSyncCmdList};
 
     for (auto mode : executionModes) {
         for (uint32_t i = 0; i < 2; i++) {
