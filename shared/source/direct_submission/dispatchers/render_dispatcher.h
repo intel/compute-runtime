@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 #include "shared/source/direct_submission/dispatchers/dispatcher.h"
 
 namespace NEO {
+
+struct RootDeviceEnvironment;
 
 template <typename GfxFamily>
 class RenderDispatcher : public Dispatcher<GfxFamily> {
@@ -25,7 +27,7 @@ class RenderDispatcher : public Dispatcher<GfxFamily> {
                                      bool dcFlushRequired);
     static size_t getSizeMonitorFence(const HardwareInfo &hwInfo);
 
-    static void dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo, uint64_t address);
+    static void dispatchCacheFlush(LinearStream &cmdBuffer, const RootDeviceEnvironment &rootDeviceEnvironment, uint64_t address);
     static void dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const HardwareInfo &hwInfo);
     static size_t getSizeCacheFlush(const HardwareInfo &hwInfo);
     static size_t getSizeTlbFlush();

@@ -134,13 +134,13 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
 
     walkerArgs.currentDispatchIndex = 0;
     for (auto &dispatchInfo : multiDispatchInfo) {
-        dispatchInfo.dispatchInitCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
+        dispatchInfo.dispatchInitCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getRootDeviceEnvironment());
         walkerArgs.isMainKernel = (dispatchInfo.getKernel() == mainKernel);
 
         dispatchKernelCommands(commandQueue, dispatchInfo, *commandStream, *dsh, *ioh, *ssh, walkerArgs);
 
         walkerArgs.currentDispatchIndex++;
-        dispatchInfo.dispatchEpilogueCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getHardwareInfo());
+        dispatchInfo.dispatchEpilogueCommands(*commandStream, walkerArgs.timestampPacketDependencies, commandQueue.getDevice().getRootDeviceEnvironment());
     }
 
     if (mainKernel->requiresCacheFlushCommand(commandQueue)) {
@@ -272,9 +272,8 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
     if (!commandQueue.isSpecial()) {
         auto address = commandQueue.getGpgpuCommandStreamReceiver().getDebugPauseStateGPUAddress();
         {
-            const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
             PipeControlArgs args;
-            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, commandQueue.getDevice().getRootDeviceEnvironment());
             MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
                 *commandStream,
                 PostSyncMode::ImmediateData,

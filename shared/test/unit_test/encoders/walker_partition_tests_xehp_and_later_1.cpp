@@ -8,11 +8,13 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/unit_test/encoders/walker_partition_fixture_xehp_and_later.h"
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
     testArgs.partitionCount = 16u;
-    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t gpuVirtualAddress = 0x8000123000;
@@ -103,7 +105,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
 
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]), pipeControl->getDcFlushEnable());
 
     parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
 
@@ -152,6 +154,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenWalkerPartitionWhenConst
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
 
@@ -159,7 +162,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
     uint64_t cmdBufferGpuAddress = 0x8000123000;
     uint64_t postSyncAddress = 0x8000456000;
     testArgs.workPartitionAllocationGpuVa = 0x8000444000;
-    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     auto walker = createWalker<FamilyType>(postSyncAddress);
 
@@ -194,7 +197,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
         ASSERT_NE(nullptr, pipeControl);
         parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
         EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]), pipeControl->getDcFlushEnable());
     }
     {
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -233,9 +236,10 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAndPreWalkerSyncWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
-    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     checkForProperCmdBufferAddressOffset = false;
     testArgs.synchronizeBeforeExecution = true;
@@ -295,7 +299,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
         ASSERT_NE(nullptr, pipeControl);
         parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
         EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]), pipeControl->getDcFlushEnable());
     }
     {
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -334,11 +338,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAndSynchronizationWithPostSyncsWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
     testArgs.semaphoreProgrammingRequired = true;
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
-    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -376,7 +381,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
         ASSERT_NE(nullptr, pipeControl);
         parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
         EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]), pipeControl->getDcFlushEnable());
     }
     {
         auto miSemaphoreWait = genCmdCast<WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -419,11 +424,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionAnd
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWithSelfCleanupWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
     testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
-    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -474,7 +480,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         ASSERT_NE(nullptr, pipeControl);
         parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
         EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]), pipeControl->getDcFlushEnable());
     }
     {
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -569,12 +575,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWithSelfCleanupAndCrossTileSyncDisabledWithFlagWhenConstructCommandBufferIsCalledThenStillProgramTheSync) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
     testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
-    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -625,7 +632,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         ASSERT_NE(nullptr, pipeControl);
         parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
         EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]), pipeControl->getDcFlushEnable());
     }
     {
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -720,12 +727,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWithSelfCleanupAndAtomicsForSelfCleanupWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
     testArgs.useAtomicsForSelfCleanup = true;
     testArgs.emitSelfCleanup = true;
     testArgs.staticPartitioning = true;
-    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -778,7 +786,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         ASSERT_NE(nullptr, pipeControl);
         parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
         EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]), pipeControl->getDcFlushEnable());
     }
     {
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -877,13 +885,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWithSlefCleanupAndCrossTileSyncDisabledWithFlagWhenUsingAtomicForSelfCleanupAndConstructCommandBufferIsCalledThenStillProgramTheSync) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.tileCount = 4u;
     testArgs.partitionCount = testArgs.tileCount;
     testArgs.emitSelfCleanup = true;
     testArgs.useAtomicsForSelfCleanup = true;
     testArgs.staticPartitioning = true;
-    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t cmdBufferGpuAddress = 0x8000123000;
@@ -936,7 +945,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
         ASSERT_NE(nullptr, pipeControl);
         parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
         EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
+        EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]), pipeControl->getDcFlushEnable());
     }
     {
         auto miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1035,12 +1044,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWit
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerPartitionWhenConstructCommandBufferIsCalledThenBatchBufferIsBeingProgrammed) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
     testArgs.crossTileAtomicSynchronization = false;
     testArgs.semaphoreProgrammingRequired = true;
     testArgs.tileCount = 4u;
     testArgs.partitionCount = 16u;
     testArgs.emitBatchBufferEnd = true;
-    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     checkForProperCmdBufferAddressOffset = false;
     uint64_t gpuVirtualAddress = 0x8000123000;
@@ -1129,7 +1139,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenDebugModesForWalkerParti
 
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]), pipeControl->getDcFlushEnable());
 
     parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
 
@@ -1258,6 +1268,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticWalkerPartitionWhe
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferredAndWalkerWithNonUniformStartWhenDynamicPartitionSelectedThenExpectReconfigureWparidToStatic) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
     WalkerPartition::COMPUTE_WALKER<FamilyType> walker;
     walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdStartingX(1u);
@@ -1274,7 +1285,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
     testArgs.staticPartitioning = staticPartitioning;
     testArgs.preferredStaticPartitioning = preferredStaticPartitioning;
     testArgs.workPartitionAllocationGpuVa = 0x800BADA55000;
-    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+    testArgs.dcFlushEnable = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     auto expectedCommandUsedSize = sizeof(WalkerPartition::LOAD_REGISTER_IMM<FamilyType>) +
                                    sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) * 2 +
@@ -1349,7 +1360,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenStaticPartitionIsPreferr
 
     auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
     EXPECT_TRUE(pipeControl->getCommandStreamerStallEnable());
-    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControl->getDcFlushEnable());
+    EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]), pipeControl->getDcFlushEnable());
     parsedOffset += sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>);
 
     miAtomic = genCmdCast<WalkerPartition::MI_ATOMIC<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));

@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/csr_deps.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
@@ -161,10 +162,11 @@ struct TimestampPacketHelper {
     template <typename GfxFamily, AuxTranslationDirection auxTranslationDirection>
     static void programSemaphoreForAuxTranslation(LinearStream &cmdStream,
                                                   const TimestampPacketDependencies *timestampPacketDependencies,
-                                                  const HardwareInfo &hwInfo) {
+                                                  const RootDeviceEnvironment &rootDeviceEnvironment) {
         auto &container = (auxTranslationDirection == AuxTranslationDirection::AuxToNonAux)
                               ? timestampPacketDependencies->auxToNonAuxNodes
                               : timestampPacketDependencies->nonAuxToAuxNodes;
+        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
 
         // cache flush after NDR, before NonAuxToAux
         if (auxTranslationDirection == AuxTranslationDirection::NonAuxToAux && timestampPacketDependencies->cacheFlushNodes.peekNodes().size() > 0) {
@@ -172,7 +174,7 @@ struct TimestampPacketHelper {
             auto cacheFlushTimestampPacketGpuAddress = getContextEndGpuAddress(*timestampPacketDependencies->cacheFlushNodes.peekNodes()[0]);
 
             PipeControlArgs args;
-            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+            args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment);
             MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
                 cmdStream, PostSyncMode::ImmediateData,
                 cacheFlushTimestampPacketGpuAddress, 0, hwInfo, args);

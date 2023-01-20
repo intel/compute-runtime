@@ -92,7 +92,7 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventWithTimeStampIsA
 
     uint32_t maxPackets = EventPacketsCount::eventPackets;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
+        maxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
     }
 
     auto itorSdi = findAll<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
@@ -293,7 +293,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenTimestampEventUsedInReset
 
     uint32_t maxPackets = EventPacketsCount::eventPackets;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
+        maxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
     }
     gpuAddress += ((maxPackets - 1) * event->getSinglePacketSize());
 
@@ -352,7 +352,7 @@ HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPip
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_CLEARED);
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
-            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd->getDcFlushEnable());
+            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
             postSyncFound = true;
         }
     }
@@ -419,7 +419,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_CLEARED);
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(gpuAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
-            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd->getDcFlushEnable());
+            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
             EXPECT_TRUE(cmd->getWorkloadPartitionIdOffsetEnable());
             postSyncFound++;
             gpuAddress += event->getSinglePacketSize() * commandList->partitionCount;

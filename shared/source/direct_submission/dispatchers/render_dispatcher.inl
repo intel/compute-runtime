@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,8 +51,8 @@ inline size_t RenderDispatcher<GfxFamily>::getSizeMonitorFence(const HardwareInf
 }
 
 template <typename GfxFamily>
-inline void RenderDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo, uint64_t address) {
-    MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(cmdBuffer, hwInfo);
+inline void RenderDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const RootDeviceEnvironment &rootDeviceEnvironment, uint64_t address) {
+    MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(cmdBuffer, rootDeviceEnvironment);
 }
 
 template <typename GfxFamily>

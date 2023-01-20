@@ -1714,7 +1714,7 @@ struct PauseOnGpuTests : public EnqueueKernelTest {
 
             EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
 
-            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControlCmd->getDcFlushEnable());
+            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, this->pDevice->getRootDeviceEnvironment()), pipeControlCmd->getDcFlushEnable());
 
             EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControlCmd->getPostSyncOperation());
 

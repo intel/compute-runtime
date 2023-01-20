@@ -430,9 +430,9 @@ struct MemorySynchronizationCommands {
     static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo);
     static void setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo);
 
-    static bool getDcFlushEnable(bool isFlushPreferred, const HardwareInfo &hwInfo);
+    static bool getDcFlushEnable(bool isFlushPreferred, const RootDeviceEnvironment &rootDeviceEnvironment);
 
-    static void addFullCacheFlush(LinearStream &commandStream, const HardwareInfo &hwInfo);
+    static void addFullCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setCacheFlushExtraProperties(PipeControlArgs &args);
 
     static size_t getSizeForBarrierWithPostSyncOperation(const HardwareInfo &hwInfo, bool tlbInvalidationRequired);

@@ -354,9 +354,9 @@ void MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronizationForDi
 }
 
 template <typename GfxFamily>
-bool MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(bool isFlushPreferred, const HardwareInfo &hwInfo) {
+bool MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(bool isFlushPreferred, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (isFlushPreferred) {
-        const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+        const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
         return productHelper.isDcFlushAllowed();
     }
     return false;
@@ -520,9 +520,9 @@ size_t MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush() {
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(LinearStream &commandStream, const HardwareInfo &hwInfo) {
+void MemorySynchronizationCommands<GfxFamily>::addFullCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
     PipeControlArgs args;
-    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo);
+    args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment);
     args.renderTargetCacheFlushEnable = true;
     args.instructionCacheInvalidateEnable = true;
     args.textureCacheInvalidationEnable = true;

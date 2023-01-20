@@ -1617,10 +1617,9 @@ ze_result_t DeviceImp::getFabricVertex(ze_fabric_vertex_handle_t *phVertex) {
 }
 
 uint32_t DeviceImp::getEventMaxPacketCount() const {
-    const auto &hardwareInfo = this->getHwInfo();
     auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
-    uint32_t basePackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hardwareInfo);
+    uint32_t basePackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(this->neoDevice->getRootDeviceEnvironment());
     if (this->isImplicitScalingCapable()) {
         basePackets *= static_cast<uint32_t>(neoDevice->getDeviceBitfield().count());
     }

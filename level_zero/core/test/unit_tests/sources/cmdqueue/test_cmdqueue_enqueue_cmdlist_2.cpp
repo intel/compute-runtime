@@ -313,7 +313,7 @@ struct PauseOnGpuFixture : public Test<ModuleFixture> {
         if ((static_cast<uint32_t>(requiredDebugPauseState) == pipeControlCmd->getImmediateData()) &&
             (debugPauseStateAddress == NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd))) {
             EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControlCmd->getDcFlushEnable());
+            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, this->device->getNEODevice()->getRootDeviceEnvironment()), pipeControlCmd->getDcFlushEnable());
             EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA, pipeControlCmd->getPostSyncOperation());
             return true;
         }

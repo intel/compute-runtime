@@ -175,7 +175,7 @@ HWTEST_F(EventPoolCreate, givenTimestampEventsThenEventSizeSufficientForAllKerne
 
     uint32_t maxPacketCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxPacketCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
+        maxPacketCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
     }
     uint32_t packetsSize = maxPacketCount *
                            static_cast<uint32_t>(NEO::TimestampPackets<typename FamilyType::TimestampPacketType>::getSinglePacketSize());
@@ -1012,7 +1012,7 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
     uint32_t *eventCompletionMemory = reinterpret_cast<uint32_t *>(event->getCompletionFieldHostAddress());
     uint32_t maxPacketsCount = EventPacketsCount::maxKernelSplit * NEO::TimestampPacketSizeControl::preferredPacketCount;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        maxPacketsCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
+        maxPacketsCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
     }
 
     for (uint32_t i = 0; i < maxPacketsCount; i++) {
@@ -2317,7 +2317,7 @@ HWTEST_F(EventSizeTests, whenCreatingEventPoolThenUseCorrectSizeAndAlignment) {
 
     uint32_t packetCount = EventPacketsCount::eventPackets;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        packetCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
+        packetCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
     }
 
     auto expectedAlignment = static_cast<uint32_t>(gfxCoreHelper.getTimestampPacketAllocatorAlignment());
@@ -2353,7 +2353,7 @@ HWTEST_F(EventSizeTests, givenDebugFlagwhenCreatingEventPoolThenUseCorrectSizeAn
 
     uint32_t packetCount = EventPacketsCount::eventPackets;
     if (l0GfxCoreHelper.useDynamicEventPacketsCount(hwInfo)) {
-        packetCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
+        packetCount = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
     }
 
     {
@@ -2734,7 +2734,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(expectedMaxKernelCount, eventPool->getMaxKernelCount());
 
         auto eventPoolMaxPackets = eventPool->getEventMaxPackets();
-        auto expectedPoolMaxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
+        auto expectedPoolMaxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
         if constexpr (multiTile == 1) {
             expectedPoolMaxPackets *= 2;
         }
@@ -2795,7 +2795,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         EXPECT_EQ(expectedMaxKernelCount, eventPool->getMaxKernelCount());
 
         auto eventPoolMaxPackets = eventPool->getEventMaxPackets();
-        auto expectedPoolMaxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
+        auto expectedPoolMaxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
 
         EXPECT_EQ(expectedPoolMaxPackets, eventPoolMaxPackets);
 
@@ -2821,8 +2821,6 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
 
     void testSignalAllPackets(uint32_t eventValueAfterSignal, uint32_t queryRetAfterPartialReset, ze_event_pool_flags_t flags, bool signalAll) {
         ze_result_t result = ZE_RESULT_SUCCESS;
-
-        auto &hwInfo = device->getHwInfo();
         auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
         ze_event_pool_desc_t eventPoolDesc = {
@@ -2836,7 +2834,7 @@ struct EventDynamicPacketUseFixture : public DeviceFixture {
         ASSERT_NE(nullptr, eventPool);
 
         auto eventPoolMaxPackets = eventPool->getEventMaxPackets();
-        auto expectedPoolMaxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo);
+        auto expectedPoolMaxPackets = l0GfxCoreHelper.getEventBaseMaxPacketCount(device->getNEODevice()->getRootDeviceEnvironment());
 
         EXPECT_EQ(expectedPoolMaxPackets, eventPoolMaxPackets);
 

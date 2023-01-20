@@ -195,6 +195,7 @@ class DirectSubmissionHw {
     LogicalStateHelper *logicalStateHelper = nullptr;
     MemoryOperationsHandler *memoryOperationHandler = nullptr;
     const HardwareInfo *hwInfo = nullptr;
+    const RootDeviceEnvironment &rootDeviceEnvironment;
     const GraphicsAllocation *globalFenceAllocation = nullptr;
     GraphicsAllocation *completionFenceAllocation = nullptr;
     GraphicsAllocation *semaphores = nullptr;

@@ -44,7 +44,7 @@ XE_HPC_CORETEST_F(ClGfxCoreHelperTestsXeHpcCore, WhenCheckingPreferenceForBlitte
 using GfxCoreHelperTestsXeHpcCore = Test<ClDeviceFixture>;
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenGfxCoreHelperwhenAskingForDcFlushThenReturnFalse) {
-    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo));
+    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, this->getRootDeviceEnvironment()));
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenLocalMemoryIsRequested) {

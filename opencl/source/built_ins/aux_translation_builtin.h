@@ -80,9 +80,9 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
     using RegisteredMethodDispatcherT = RegisteredMethodDispatcher<DispatchInfo::DispatchCommandMethodT,
                                                                    DispatchInfo::EstimateCommandsMethodT>;
     template <typename GfxFamily, bool dcFlush>
-    static void dispatchPipeControl(LinearStream &linearStream, TimestampPacketDependencies *, const HardwareInfo &hwInfo) {
+    static void dispatchPipeControl(LinearStream &linearStream, TimestampPacketDependencies *, const RootDeviceEnvironment &rootDeviceEnvironment) {
         PipeControlArgs args;
-        args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(dcFlush, hwInfo);
+        args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(dcFlush, rootDeviceEnvironment);
         MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(linearStream, args);
     }
 

@@ -12,6 +12,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
 using GfxCoreHelperTestGen8 = GfxCoreHelperTest;
@@ -48,9 +49,9 @@ using MemorySynchronizatiopCommandsTestsGen8 = ::testing::Test;
 GEN8TEST_F(MemorySynchronizatiopCommandsTestsGen8, WhenProgrammingCacheFlushThenExpectConstantCacheFieldSet) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     std::unique_ptr<uint8_t> buffer(new uint8_t[128]);
-
+    MockExecutionEnvironment mockExecutionEnvironment{};
     LinearStream stream(buffer.get(), 128);
-    MemorySynchronizationCommands<FamilyType>::addFullCacheFlush(stream, *defaultHwInfo);
+    MemorySynchronizationCommands<FamilyType>::addFullCacheFlush(stream, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
     PIPE_CONTROL *pipeControl = genCmdCast<PIPE_CONTROL *>(buffer.get());
     ASSERT_NE(nullptr, pipeControl);
     EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());

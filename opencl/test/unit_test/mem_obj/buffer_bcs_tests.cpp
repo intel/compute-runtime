@@ -591,7 +591,7 @@ void BcsBufferTests::waitForCacheFlushFromBcsTest(MockCommandQueueHw<FamilyType>
         auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*pipeControl);
         cacheFlushWriteAddress = NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControlCmd);
         if (cacheFlushWriteAddress != 0) {
-            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControlCmd->getDcFlushEnable());
+            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, this->bcsCsr->peekRootDeviceEnvironment()), pipeControlCmd->getDcFlushEnable());
             EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
             EXPECT_EQ(isCacheFlushForBcsRequired, 0u == pipeControlCmd->getImmediateData());
             break;
@@ -692,7 +692,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWhenReleasingMultipleBlockedEnque
     cmdQ->enqueueWriteBuffer(buffer.get(), false, 0, 1, hostPtr, nullptr, 1, waitlist0, nullptr);
     cmdQ->enqueueWriteBuffer(buffer.get(), false, 0, 1, hostPtr, nullptr, 1, waitlist1, nullptr);
 
-    auto pipeControlLookup = [](LinearStream &stream, size_t offset) {
+    auto pipeControlLookup = [](LinearStream &stream, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment) {
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(stream, offset);
 
@@ -705,7 +705,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWhenReleasingMultipleBlockedEnque
 
                 stallingPipeControlFound = true;
                 EXPECT_TRUE(pipeControlCmd->getCommandStreamerStallEnable());
-                EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), pipeControlCmd->getDcFlushEnable());
+                EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, rootDeviceEnvironment), pipeControlCmd->getDcFlushEnable());
                 break;
             }
         }
@@ -717,11 +717,11 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWhenReleasingMultipleBlockedEnque
     EXPECT_TRUE(cmdQ->getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired());
     userEvent0.setStatus(CL_COMPLETE);
     EXPECT_FALSE(cmdQ->getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired());
-    EXPECT_TRUE(pipeControlLookup(csrStream, 0));
+    EXPECT_TRUE(pipeControlLookup(csrStream, 0, device->getRootDeviceEnvironment()));
 
     auto csrOffset = csrStream.getUsed();
     userEvent1.setStatus(CL_COMPLETE);
-    EXPECT_FALSE(pipeControlLookup(csrStream, csrOffset));
+    EXPECT_FALSE(pipeControlLookup(csrStream, csrOffset, device->getRootDeviceEnvironment()));
     cmdQ->isQueueBlocked();
 }
 

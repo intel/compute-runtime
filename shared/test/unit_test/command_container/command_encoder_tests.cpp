@@ -192,7 +192,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenAtLeastXeHpPlatformWhenSe
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     rootDeviceEnvironment.initGmm();
-    bool dcFlush = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+    bool dcFlush = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, rootDeviceEnvironment);
 
     {
         WALKER_TYPE walkerCmd{};
@@ -233,7 +233,9 @@ HWTEST2_F(CommandEncoderTests, givenRequiredWorkGroupOrderWhenCallAdjustWalkOrde
 }
 
 HWTEST_F(CommandEncoderTests, givenDcFlushNotRequiredWhenGettingDcFlushValueThenReturnValueIsFalse) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     constexpr bool requiredFlag = false;
-    bool helperValue = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(requiredFlag, *defaultHwInfo);
+    bool helperValue = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(requiredFlag, rootDeviceEnvironment);
     EXPECT_FALSE(helperValue);
 }

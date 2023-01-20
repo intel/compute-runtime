@@ -105,7 +105,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(LinearStream *cmdStream,
     postSyncData.setDataportPipelineFlush(true);
 
     EncodeDispatchKernel<GfxFamily>::setupPostSyncMocs(*walkerCmd, rootDeviceEnvironment,
-                                                       MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, hwInfo));
+                                                       MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment));
 
     EncodeDispatchKernel<GfxFamily>::adjustTimestampPacket(*walkerCmd, hwInfo);
 

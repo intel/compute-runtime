@@ -2304,11 +2304,11 @@ HWTEST2_F(CommandStreamReceiverHwTest, givenSshHeapNotProvidedWhenFlushTaskPerfo
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenDcFlushFlagSetWhenGettingCsrFlagValueThenCsrValueMatchesHelperValue) {
-    auto &hwInfo = pDevice->getHardwareInfo();
+
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
 
     bool csrValue = commandStreamReceiver.getDcFlushSupport();
-    bool helperValue = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, hwInfo);
+    bool helperValue = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, pDevice->getRootDeviceEnvironment());
     EXPECT_EQ(helperValue, csrValue);
 }
 

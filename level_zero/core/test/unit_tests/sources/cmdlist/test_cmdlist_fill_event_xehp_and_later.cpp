@@ -539,7 +539,7 @@ void testMultiTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpected
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
     uint32_t expectedDcFlush = 0;
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getHwInfo())) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
         // 1st dc flush after cross-tile sync, 2nd dc flush for signal scope event
         expectedDcFlush = 2;
     }
@@ -742,7 +742,7 @@ HWTEST2_F(AppendFillMultiPacketEventTest,
 
     if (input.signalAllPackets) {
         uint32_t reminderPostSyncOps = 1;
-        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
             reminderPostSyncOps = 2;
         }
         arg.expectStoreDataImm = reminderPostSyncOps;
@@ -767,7 +767,7 @@ HWTEST2_F(AppendFillMultiPacketEventTest,
 
     if (input.signalAllPackets) {
         uint32_t reminderPostSyncOps = 1;
-        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
             reminderPostSyncOps = 2;
         }
         arg.expectStoreDataImm = reminderPostSyncOps;
@@ -787,7 +787,7 @@ HWTEST2_F(AppendFillMultiPacketEventTest,
 
     if (input.signalAllPackets) {
         uint32_t reminderPostSyncOps = 2;
-        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
             reminderPostSyncOps = 3;
         }
         arg.expectStoreDataImm = reminderPostSyncOps;
@@ -900,7 +900,7 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
     arg.expectedKernelCount = 2;
     arg.expectedWalkerPostSyncOp = 3;
     arg.expectedPostSyncPipeControls = 0;
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo())) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
         // last kernel uses 4 packets, in addition to kernel two packets, use 2 packets to two tile cache flush
         arg.expectedPacketsInUse = 6;
         // cache flush with event signal
@@ -931,7 +931,7 @@ HWTEST2_F(MultiTileAppendFillEventMultiPacketTest,
     arg.expectedKernelCount = 2;
     arg.expectedWalkerPostSyncOp = 3;
     arg.expectedPostSyncPipeControls = 0;
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo())) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
         // last kernel uses 4 packets, in addition to kernel two packets, use 2 packets to two tile cache flush
         arg.expectedPacketsInUse = 6;
         // cache flush with event signal
@@ -1015,7 +1015,7 @@ HWTEST2_F(MultiTileAppendFillEventSinglePacketTest,
     input.patternSize = patternSize;
 
     if (input.signalAllPackets) {
-        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo())) {
+        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
             constexpr uint32_t reminderPostSyncOps = 1;
             arg.expectStoreDataImm = reminderPostSyncOps;
             input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
@@ -1042,7 +1042,7 @@ HWTEST2_F(MultiTileAppendFillEventSinglePacketTest,
     input.patternSize = patternSize;
 
     if (input.signalAllPackets) {
-        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo())) {
+        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
             constexpr uint32_t reminderPostSyncOps = 1;
             arg.expectStoreDataImm = reminderPostSyncOps;
         }
@@ -1159,7 +1159,7 @@ using MultiTileAppendFillCompactL3EventTest = Test<AppendFillMultiPacketEventFix
 HWTEST2_F(MultiTileAppendFillCompactL3EventTest,
           givenMultiTileCmdListCallToAppendMemoryFillWhenPlatformNeedsDcFlushAndL3CompactTimestampEventThenRegisterPostSyncUsedOtherwiseUsesWalkerPostSyncProfiling,
           IsAtLeastXeHpCore) {
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
         arg.expectedPacketsInUse = 2;
         arg.expectedKernelCount = 1;
         arg.expectedWalkerPostSyncOp = 0;
@@ -1192,7 +1192,7 @@ HWTEST2_F(MultiTileAppendFillCompactL3EventTest,
 HWTEST2_F(MultiTileAppendFillCompactL3EventTest,
           givenMultiTileCmdListCallToAppendMemoryFillWhenPlatformNeedsDcFlushAndL3CompactImmediateEventThenPipeControlPostSyncUsedOtherwiseUsesWalkerPostSyncProfiling,
           IsAtLeastXeHpCore) {
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
         arg.expectedPacketsInUse = 2;
         arg.expectedKernelCount = 1;
         arg.expectedWalkerPostSyncOp = 0;

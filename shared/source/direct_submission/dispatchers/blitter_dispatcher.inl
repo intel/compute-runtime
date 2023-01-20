@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,9 @@ inline size_t BlitterDispatcher<GfxFamily>::getSizeMonitorFence(const HardwareIn
 }
 
 template <typename GfxFamily>
-inline void BlitterDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const HardwareInfo &hwInfo, uint64_t address) {
+inline void BlitterDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const RootDeviceEnvironment &rootDeviceEnvironment, uint64_t address) {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+
     dispatchTlbFlush(cmdBuffer, address, hwInfo);
 }
 

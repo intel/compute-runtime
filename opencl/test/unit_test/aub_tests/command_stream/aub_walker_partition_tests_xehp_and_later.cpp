@@ -13,6 +13,7 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/event/event.h"
@@ -971,6 +972,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenNonBlockingAtomicO
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicatedCommandBufferWhenItIsExecutedThenAtomicIsIncrementedEquallyToPartitionCountPlusOne) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
 
     auto streamCpuPointer = taskStream->getSpace(0);
@@ -992,7 +994,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, AubWalkerPartitionZeroTest, givenPredicatedCommandB
     testArgs.synchronizeBeforeExecution = false;
     testArgs.secondaryBatchBuffer = false;
     testArgs.emitSelfCleanup = false;
-    testArgs.dcFlushEnable = NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo);
+    testArgs.dcFlushEnable = NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     WalkerPartition::constructDynamicallyPartitionedCommandBuffer<FamilyType>(
         streamCpuPointer,

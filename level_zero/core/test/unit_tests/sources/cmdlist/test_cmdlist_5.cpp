@@ -611,7 +611,7 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendWaitEventsWith
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
     auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
 
-    if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
         EXPECT_NE(cmdList.end(), itor);
     } else {
         EXPECT_EQ(cmdList.end(), itor);
@@ -637,7 +637,7 @@ HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushThen
     auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
 
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo())) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
         itor--;
         EXPECT_NE(nullptr, genCmdCast<PIPE_CONTROL *>(*itor));
     } else {
@@ -668,7 +668,7 @@ HWTEST_F(CommandListCreate, givenCommandListWhenAppendWaitEventsWithDcFlushThenP
     auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
 
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo())) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
         itor--;
         EXPECT_NE(nullptr, genCmdCast<PIPE_CONTROL *>(*itor));
     } else {
@@ -699,7 +699,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     EXPECT_NE(nullptr, commandList->cmdQImmediate);
 
     size_t expectedUsed = 2 * sizeof(SEMAPHORE_WAIT) + sizeof(MI_BATCH_BUFFER_END);
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo())) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
         expectedUsed += sizeof(PIPE_CONTROL);
     }
     expectedUsed = alignUp(expectedUsed, 64);

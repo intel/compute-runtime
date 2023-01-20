@@ -338,7 +338,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     LinearStream parseDispatch;
     uint8_t buffer[256];
     parseDispatch.replaceBuffer(buffer, 256);
-    RenderDispatcher<FamilyType>::dispatchCacheFlush(parseDispatch, *directSubmission.hwInfo, 0ull);
+    RenderDispatcher<FamilyType>::dispatchCacheFlush(parseDispatch, pDevice->getRootDeviceEnvironment(), 0ull);
     auto expectedPipeControl = static_cast<PIPE_CONTROL *>(parseDispatch.getCpuBase());
     for (auto it = hwParse.pipeControlList.begin(); it != hwParse.pipeControlList.end(); it++) {
         auto pipeControl = genCmdCast<PIPE_CONTROL *>(*it);

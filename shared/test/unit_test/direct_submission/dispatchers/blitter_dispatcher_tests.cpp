@@ -64,7 +64,7 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingCacheFlushCmdThenDispa
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     size_t expectedSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
 
-    BlitterDispatcher<FamilyType>::dispatchCacheFlush(cmdBuffer, pDevice->getHardwareInfo(), 0ull);
+    BlitterDispatcher<FamilyType>::dispatchCacheFlush(cmdBuffer, pDevice->getRootDeviceEnvironment(), 0ull);
 
     EXPECT_EQ(expectedSize, cmdBuffer.getUsed());
 

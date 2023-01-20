@@ -340,7 +340,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenEventWithWaitScopeFlagDeviceWhenAppe
     auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
 
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getHwInfo())) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
         itor--;
         auto cmd = genCmdCast<PIPE_CONTROL *>(*itor);
 
@@ -526,7 +526,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenCommandBufferIsEmptyWhenAppendingWai
     commandList->commandContainer.getCommandStream()->getSpace(consumeSpace);
 
     size_t expectedConsumedSpace = sizeof(MI_SEMAPHORE_WAIT);
-    if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
         expectedConsumedSpace += sizeof(PIPE_CONTROL);
     }
 
@@ -558,14 +558,14 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenCommandBufferIsEmptyWhenAppendingWai
                                                       usedSpaceAfter));
 
     auto itorPC = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
         ASSERT_NE(cmdList.end(), itorPC);
         {
             auto cmd = genCmdCast<PIPE_CONTROL *>(*itorPC);
             ASSERT_NE(cmd, nullptr);
 
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd->getDcFlushEnable());
+            EXPECT_EQ(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
         }
     } else {
         EXPECT_EQ(cmdList.end(), itorPC);

@@ -460,7 +460,7 @@ HWTEST_F(CommandListAppendWaitOnMem, givenAppendWaitOnMemWithSignalEventAndHostS
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
             EXPECT_EQ(cmd->getImmediateData(), Event::STATE_SIGNALED);
             EXPECT_EQ(pipeControlAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*cmd));
-            EXPECT_EQ(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd->getDcFlushEnable());
+            EXPECT_EQ(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
             postSyncFound = true;
         }
     }
@@ -781,7 +781,7 @@ HWTEST_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeCont
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             EXPECT_EQ(cmd->getImmediateData(), data);
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_EQ(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd->getDcFlushEnable());
+            EXPECT_EQ(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
             postSyncFound = true;
         }
     }
@@ -829,7 +829,7 @@ HWTEST2_F(CommandListAppendWriteToMem, givenAppendWriteToMemWithScopeThenPipeCon
         if (cmd->getPostSyncOperation() == POST_SYNC_OPERATION::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA) {
             EXPECT_EQ(cmd->getImmediateData(), data);
             EXPECT_TRUE(cmd->getCommandStreamerStallEnable());
-            EXPECT_EQ(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo), cmd->getDcFlushEnable());
+            EXPECT_EQ(NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment()), cmd->getDcFlushEnable());
             uint64_t pcAddress = cmd->getAddress() | (static_cast<uint64_t>(cmd->getAddressHigh()) << 32);
             EXPECT_EQ(expectedGpuAddress, pcAddress);
             postSyncFound = true;

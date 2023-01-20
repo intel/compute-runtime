@@ -66,7 +66,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool platformSupportsRayTracing() const = 0;
     virtual bool isZebinAllowed(const NEO::Debugger *debugger) const = 0;
     virtual uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const = 0;
-    virtual uint32_t getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -98,7 +98,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool platformSupportsRayTracing() const override;
     bool isZebinAllowed(const NEO::Debugger *debugger) const override;
     uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const override;
-    uint32_t getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const override;
+    uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
   protected:
     L0GfxCoreHelperHw() = default;

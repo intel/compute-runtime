@@ -489,7 +489,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchFlushSectionThen
     bool ret = directSubmission.initialize(false, false);
     EXPECT_TRUE(ret);
 
-    Dispatcher::dispatchCacheFlush(directSubmission.ringCommandStream, *directSubmission.hwInfo, 0ull);
+    Dispatcher::dispatchCacheFlush(directSubmission.ringCommandStream, pDevice->getRootDeviceEnvironment(), 0ull);
     EXPECT_EQ(Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo), directSubmission.ringCommandStream.getUsed());
 }
 

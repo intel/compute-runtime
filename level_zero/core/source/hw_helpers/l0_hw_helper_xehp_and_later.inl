@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 
 #include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
@@ -41,9 +42,10 @@ uint32_t L0GfxCoreHelperHw<Family>::getEventMaxKernelCount(const NEO::HardwareIn
 }
 
 template <typename Family>
-uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::HardwareInfo &hwInfo) const {
+uint32_t L0GfxCoreHelperHw<Family>::getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     uint32_t basePackets = getEventMaxKernelCount(hwInfo);
-    if (NEO::MemorySynchronizationCommands<Family>::getDcFlushEnable(true, hwInfo)) {
+    if (NEO::MemorySynchronizationCommands<Family>::getDcFlushEnable(true, rootDeviceEnvironment)) {
         basePackets += L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo) ? 0 : 1;
     }
 

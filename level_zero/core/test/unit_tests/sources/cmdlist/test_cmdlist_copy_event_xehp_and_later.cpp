@@ -939,7 +939,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
 
     if (input.signalAllPackets) {
         uint32_t reminderPostSyncOps = 2;
-        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
             reminderPostSyncOps = 3;
         }
         arg.expectStoreDataImm = reminderPostSyncOps;
@@ -1060,7 +1060,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
 
     if (input.signalAllPackets) {
         uint32_t reminderPostSyncOps = 0;
-        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
             reminderPostSyncOps = 1;
         }
         arg.expectStoreDataImm = reminderPostSyncOps;
@@ -1084,7 +1084,7 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
 
     if (input.signalAllPackets) {
         uint32_t reminderPostSyncOps = 0;
-        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
             reminderPostSyncOps = 1;
         }
         arg.expectStoreDataImm = reminderPostSyncOps;
@@ -1202,7 +1202,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
     input.size = 0x100002345;
 
     if (input.signalAllPackets) {
-        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
             constexpr uint32_t reminderPostSyncOps = 1;
             arg.expectStoreDataImm = reminderPostSyncOps;
             input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();
@@ -1226,7 +1226,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterMultiPacket,
 
     if (input.signalAllPackets) {
         uint32_t reminderPostSyncOps = 2;
-        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
             reminderPostSyncOps = 3;
         }
         arg.expectStoreDataImm = reminderPostSyncOps;
@@ -1335,7 +1335,7 @@ HWTEST2_F(MultiTileAppendMemoryCopyXeHpAndLaterSinglePacket,
     input.size = 0x100002345;
 
     if (input.signalAllPackets) {
-        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *defaultHwInfo)) {
+        if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, input.device->getNEODevice()->getRootDeviceEnvironment())) {
             constexpr uint32_t reminderPostSyncOps = 1;
             arg.expectStoreDataImm = reminderPostSyncOps;
             input.storeDataImmOffset = arg.expectedPacketsInUse * testEvent->getSinglePacketSize();

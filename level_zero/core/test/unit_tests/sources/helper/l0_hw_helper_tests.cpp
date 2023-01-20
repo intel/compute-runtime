@@ -712,7 +712,7 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingMaxKernelAndMaxPac
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
     EXPECT_EQ(1u, l0GfxCoreHelper.getEventMaxKernelCount(hwInfo));
-    EXPECT_EQ(1u, l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo));
+    EXPECT_EQ(1u, l0GfxCoreHelper.getEventBaseMaxPacketCount(*executionEnvironment.rootDeviceEnvironments[0]));
 }
 
 template <int32_t usePipeControlMultiPacketEventSync, int32_t compactL3FlushEventPacket>
@@ -737,12 +737,12 @@ HWTEST2_F(L0GfxCoreHelperEventMultiKernelEnabledL3FlushCompactDisabledTest,
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 
     uint32_t expectedPacket = 3;
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, hwInfo)) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *executionEnvironment.rootDeviceEnvironments[0])) {
         expectedPacket++;
     }
 
     EXPECT_EQ(3u, l0GfxCoreHelper.getEventMaxKernelCount(hwInfo));
-    EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo));
+    EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(*executionEnvironment.rootDeviceEnvironments[0]));
 }
 
 using L0GfxCoreHelperEventMultiKernelEnabledL3FlushCompactEnabledTest = Test<L0GfxCoreHelperMultiPacketEventFixture<0, 1>>;
@@ -755,7 +755,7 @@ HWTEST2_F(L0GfxCoreHelperEventMultiKernelEnabledL3FlushCompactEnabledTest,
     uint32_t expectedPacket = 3;
 
     EXPECT_EQ(3u, l0GfxCoreHelper.getEventMaxKernelCount(hwInfo));
-    EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo));
+    EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(*executionEnvironment.rootDeviceEnvironments[0]));
 }
 
 using L0GfxCoreHelperEventMultiKernelDisabledL3FlushCompactDisabledTest = Test<L0GfxCoreHelperMultiPacketEventFixture<1, 0>>;
@@ -766,12 +766,12 @@ HWTEST2_F(L0GfxCoreHelperEventMultiKernelDisabledL3FlushCompactDisabledTest,
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 
     uint32_t expectedPacket = 1;
-    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, hwInfo)) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *executionEnvironment.rootDeviceEnvironments[0])) {
         expectedPacket++;
     }
 
     EXPECT_EQ(1u, l0GfxCoreHelper.getEventMaxKernelCount(hwInfo));
-    EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo));
+    EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(*executionEnvironment.rootDeviceEnvironments[0]));
 }
 
 using L0GfxCoreHelperEventMultiKernelDisabledL3FlushCompactEnabledTest = Test<L0GfxCoreHelperMultiPacketEventFixture<1, 1>>;
@@ -784,7 +784,7 @@ HWTEST2_F(L0GfxCoreHelperEventMultiKernelDisabledL3FlushCompactEnabledTest,
     uint32_t expectedPacket = 1;
 
     EXPECT_EQ(1u, l0GfxCoreHelper.getEventMaxKernelCount(hwInfo));
-    EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(hwInfo));
+    EXPECT_EQ(expectedPacket, l0GfxCoreHelper.getEventBaseMaxPacketCount(*executionEnvironment.rootDeviceEnvironments[0]));
 }
 
 TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultValueForSignalAllEventPacketThenReturnTrue) {

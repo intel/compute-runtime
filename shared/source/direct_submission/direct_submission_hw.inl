@@ -36,7 +36,7 @@ namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>
 DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmissionInputParams &inputParams)
-    : ringBuffers(RingBufferUse::initialRingBufferCount), osContext(inputParams.osContext), rootDeviceIndex(inputParams.rootDeviceIndex) {
+    : ringBuffers(RingBufferUse::initialRingBufferCount), osContext(inputParams.osContext), rootDeviceIndex(inputParams.rootDeviceIndex), rootDeviceEnvironment(inputParams.rootDeviceEnvironment) {
     memoryManager = inputParams.memoryManager;
     globalFenceAllocation = inputParams.globalFenceAllocation;
     logicalStateHelper = inputParams.logicalStateHelper;
@@ -79,7 +79,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     createDiagnostic();
     setPostSyncOffset();
 
-    dcFlushRequired = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, *hwInfo);
+    dcFlushRequired = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, inputParams.rootDeviceEnvironment);
     auto &gfxCoreHelper = inputParams.rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     relaxedOrderingEnabled = gfxCoreHelper.isRelaxedOrderingSupported();
 
@@ -525,7 +525,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::stopRingBuffer() {
     }
 
     void *flushPtr = ringCommandStream.getSpace(0);
-    Dispatcher::dispatchCacheFlush(ringCommandStream, *hwInfo, gpuVaForMiFlush);
+    Dispatcher::dispatchCacheFlush(ringCommandStream, this->rootDeviceEnvironment, gpuVaForMiFlush);
     if (disableMonitorFence) {
         TagData currentTagData = {};
         getTagAddressValue(currentTagData);
@@ -711,7 +711,7 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
     }
 
     if (!disableCacheFlush) {
-        Dispatcher::dispatchCacheFlush(ringCommandStream, *hwInfo, gpuVaForMiFlush);
+        Dispatcher::dispatchCacheFlush(ringCommandStream, this->rootDeviceEnvironment, gpuVaForMiFlush);
     }
 
     if (!disableMonitorFence) {
