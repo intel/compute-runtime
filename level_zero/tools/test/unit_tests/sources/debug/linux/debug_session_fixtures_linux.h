@@ -489,6 +489,7 @@ struct MockTileDebugSessionLinux : TileDebugSessionLinux {
     using DebugSessionImp::newlyStoppedThreads;
     using DebugSessionImp::resumeImp;
     using DebugSessionImp::sendInterrupts;
+    using DebugSessionImp::sipSupportsSlm;
     using DebugSessionImp::stateSaveAreaHeader;
     using DebugSessionImp::triggerEvents;
     using DebugSessionLinux::detached;

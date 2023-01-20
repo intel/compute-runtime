@@ -117,6 +117,32 @@ TEST(TileDebugSessionLinuxTest, GivenTileDebugSessionWhenReadingContextStateSave
     EXPECT_STREQ(header, data);
 }
 
+TEST(TileDebugSessionLinuxTest, GivenTileDebugSessionWhenReadingContextStateSaveAreaHeaderThenSlmSupportIsSetFromRootSession) {
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto rootSession = std::make_unique<MockDebugSessionLinux>(zet_debug_config_t{0x1234}, &deviceImp, 10);
+    rootSession->clientHandle = MockDebugSessionLinux::mockClientHandle;
+
+    auto session = std::make_unique<MockTileDebugSessionLinux>(zet_debug_config_t{0x1234}, &deviceImp, rootSession.get());
+    ASSERT_NE(nullptr, session);
+
+    const char *header = "cssa";
+    rootSession->stateSaveAreaHeader.assign(header, header + sizeof(header));
+    rootSession->sipSupportsSlm = false;
+
+    session->readStateSaveAreaHeader();
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    EXPECT_FALSE(session->sipSupportsSlm);
+
+    rootSession->sipSupportsSlm = true;
+    session->readStateSaveAreaHeader();
+    EXPECT_FALSE(session->stateSaveAreaHeader.empty());
+    EXPECT_TRUE(session->sipSupportsSlm);
+}
+
 template <bool BlockOnFence = false>
 struct TileAttachFixture : public DebugApiLinuxMultiDeviceFixture, public MockDebugSessionLinuxHelper {
     void setUp() {

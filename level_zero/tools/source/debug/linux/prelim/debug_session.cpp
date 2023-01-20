@@ -1951,6 +1951,7 @@ void TileDebugSessionLinux::readStateSaveAreaHeader() {
     if (header) {
         auto headerSize = rootDebugSession->stateSaveAreaHeader.size();
         this->stateSaveAreaHeader.assign(reinterpret_cast<const char *>(header), reinterpret_cast<const char *>(header) + headerSize);
+        this->sipSupportsSlm = rootDebugSession->sipSupportsSlm;
     }
 };
 
