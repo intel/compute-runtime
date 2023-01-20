@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -64,9 +64,9 @@ int configureCacheInfo(HardwareInfo *hwInfo) {
     return 0;
 }
 
-int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
+int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) {
     int ret = 0;
-    auto osInterface = rootDeviceEnvironemnt.osInterface.get();
+    auto osInterface = rootDeviceEnvironment.osInterface.get();
     Drm *drm = osInterface->getDriverModel()->as<Drm>();
 
     *outHwInfo = *inHwInfo;
@@ -140,7 +140,7 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     outHwInfo->capabilityTable.maxRenderFrequency = maxGpuFreq;
     outHwInfo->capabilityTable.ftrSvm = featureTable->flags.ftrSVM;
 
-    GfxCoreHelper &gfxCoreHelper = rootDeviceEnvironemnt.getHelper<GfxCoreHelper>();
+    GfxCoreHelper &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     outHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
     gfxCoreHelper.adjustDefaultEngineType(outHwInfo);

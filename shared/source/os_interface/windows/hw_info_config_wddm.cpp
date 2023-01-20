@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,9 +18,9 @@
 
 namespace NEO {
 
-int ProductHelper::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironemnt) {
-    auto &gfxCoreHelper = rootDeviceEnvironemnt.getHelper<GfxCoreHelper>();
-    auto &productHelper = rootDeviceEnvironemnt.getHelper<ProductHelper>();
+int ProductHelper::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto compilerProductHelper = CompilerProductHelper::get(outHwInfo->platform.eProductFamily);
     outHwInfo->capabilityTable.ftrSvm = outHwInfo->featureTable.flags.ftrSVM;
 
@@ -51,7 +51,7 @@ int ProductHelper::configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInf
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideEnableQuickKmdSleepForDirectSubmission.get(), kmdNotifyProperties.enableQuickKmdSleepForDirectSubmission);
     KmdNotifyHelper::overrideFromDebugVariable(DebugManager.flags.OverrideDelayQuickKmdSleepForDirectSubmissionMicroseconds.get(), kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
 
-    auto osInterface = rootDeviceEnvironemnt.osInterface.get();
+    auto osInterface = rootDeviceEnvironment.osInterface.get();
     // Product specific config
     int ret = configureHardwareCustom(outHwInfo, osInterface);
     if (ret != 0) {

@@ -16,7 +16,7 @@ struct HardwareInfo;
 struct RootDeviceEnvironment;
 
 namespace TestChecks {
-bool supportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironemnt);
+bool supportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironment);
 bool fullySupportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironment);
 bool supportsImages(const HardwareInfo &hardwareInfo);
 bool supportsImages(const std::unique_ptr<HardwareInfo> &pHardwareInfo);

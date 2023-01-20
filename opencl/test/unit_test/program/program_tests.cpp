@@ -2763,8 +2763,8 @@ struct SpecializationConstantCompilerInterfaceMock : public CompilerInterface {
     }
 };
 
-struct SpecializationConstantRootDeviceEnvironemnt : public RootDeviceEnvironment {
-    SpecializationConstantRootDeviceEnvironemnt(ExecutionEnvironment &executionEnvironment) : RootDeviceEnvironment(executionEnvironment) {
+struct SpecializationConstantRootDeviceEnvironment : public RootDeviceEnvironment {
+    SpecializationConstantRootDeviceEnvironment(ExecutionEnvironment &executionEnvironment) : RootDeviceEnvironment(executionEnvironment) {
         compilerInterface.reset(new SpecializationConstantCompilerInterfaceMock());
     }
     CompilerInterface *getCompilerInterface() override {

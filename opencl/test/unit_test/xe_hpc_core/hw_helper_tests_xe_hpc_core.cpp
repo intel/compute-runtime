@@ -27,7 +27,6 @@
 #include "hw_cmds_xe_hpc_core_base.h"
 
 using ClGfxCoreHelperTestsXeHpcCore = Test<ClDeviceFixture>;
-;
 
 XE_HPC_CORETEST_F(ClGfxCoreHelperTestsXeHpcCore, givenXeHpcThenAuxTranslationIsNotRequired) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();

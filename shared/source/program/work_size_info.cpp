@@ -17,18 +17,18 @@
 
 namespace NEO {
 
-WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const RootDeviceEnvironment &rootDeviceEnvironemnt, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion) {
+WorkSizeInfo::WorkSizeInfo(uint32_t maxWorkGroupSize, bool hasBarriers, uint32_t simdSize, uint32_t slmTotalSize, const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t numThreadsPerSubSlice, uint32_t localMemSize, bool imgUsed, bool yTiledSurface, bool disableEUFusion) {
     this->maxWorkGroupSize = maxWorkGroupSize;
     this->hasBarriers = hasBarriers;
     this->simdSize = simdSize;
     this->slmTotalSize = slmTotalSize;
-    this->coreFamily = rootDeviceEnvironemnt.getHardwareInfo()->platform.eRenderCoreFamily;
+    this->coreFamily = rootDeviceEnvironment.getHardwareInfo()->platform.eRenderCoreFamily;
     this->numThreadsPerSubSlice = numThreadsPerSubSlice;
     this->localMemSize = localMemSize;
     this->imgUsed = imgUsed;
     this->yTiledSurfaces = yTiledSurface;
 
-    setMinWorkGroupSize(rootDeviceEnvironemnt, disableEUFusion);
+    setMinWorkGroupSize(rootDeviceEnvironment, disableEUFusion);
 }
 
 void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
@@ -41,7 +41,7 @@ void WorkSizeInfo::setIfUseImg(const KernelInfo &kernelInfo) {
     }
 }
 
-void WorkSizeInfo::setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEnvironemnt, bool disableEUFusion) {
+void WorkSizeInfo::setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEnvironment, bool disableEUFusion) {
     minWorkGroupSize = 0;
     if (hasBarriers) {
         uint32_t maxBarriersPerHSlice = (coreFamily >= IGFX_GEN9_CORE) ? 32 : 16;
@@ -55,8 +55,8 @@ void WorkSizeInfo::setMinWorkGroupSize(const RootDeviceEnvironment &rootDeviceEn
         minWorkGroupSize = std::max(maxWorkGroupSize / ((localMemSize / slmTotalSize)), minWorkGroupSize);
     }
 
-    const auto &gfxCoreHelper = rootDeviceEnvironemnt.getHelper<GfxCoreHelper>();
-    if (gfxCoreHelper.isFusedEuDispatchEnabled(*rootDeviceEnvironemnt.getHardwareInfo(), disableEUFusion)) {
+    const auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    if (gfxCoreHelper.isFusedEuDispatchEnabled(*rootDeviceEnvironment.getHardwareInfo(), disableEUFusion)) {
         minWorkGroupSize *= 2;
     }
 }

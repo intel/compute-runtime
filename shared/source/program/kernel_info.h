@@ -29,7 +29,6 @@ class DispatchInfo;
 struct KernelArgumentType;
 class GraphicsAllocation;
 class MemoryManager;
-struct RootDeviceEnvironemnt;
 
 static const float YTilingRatioValue = 1.3862943611198906188344642429164f;
 
