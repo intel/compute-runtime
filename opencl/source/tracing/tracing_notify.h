@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7527,8 +7527,6 @@ class ClWaitForEventsTracer {
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
 
-#ifdef _WIN32
-
 class ClCreateFromGlBufferTracer {
   public:
     ClCreateFromGlBufferTracer() {}
@@ -8151,7 +8149,5 @@ class ClGetGlTextureInfoTracer {
     uint64_t correlationData[TRACING_MAX_HANDLE_COUNT];
     tracing_notify_state_t state = TRACING_NOTIFY_STATE_NOTHING_CALLED;
 };
-
-#endif
 
 } // namespace HostSideTracing

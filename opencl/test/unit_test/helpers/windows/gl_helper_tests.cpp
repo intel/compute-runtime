@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "opencl/source/helpers/windows/gl_helper.h"
+#include "opencl/source/helpers/gl_helper.h"
 #include "opencl/test/unit_test/helpers/windows/mock_function.h"
 
 #include "gtest/gtest.h"

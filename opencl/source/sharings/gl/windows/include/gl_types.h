@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 
 #define OSAPI WINAPI
 
-typedef uint32_t GLType;
-typedef HDC GLDisplay;
-typedef HGLRC GLContext;
+using GLType = uint32_t;
+using GLDisplay = HDC;
+using GLContext = HGLRC;
+using GLFunctionType = PROC(__stdcall *)(LPCSTR arg1);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ class GlArbSyncEvent;
 class GLSharingFunctions;
 class OSInterface;
 class OsContext;
+class DriverModel;
 
 typedef unsigned int OS_HANDLE;
 
@@ -51,6 +52,9 @@ class GLSharingFunctions : public SharingFunctions {
                                       cl_GLenum *formats,
                                       uint32_t *numImageFormats);
 
+    static std::unique_ptr<GLSharingFunctions> create();
+    virtual bool isHandleCompatible(const DriverModel &driverModel, uint32_t handle) const { return true; }
+    virtual bool isGlHdcHandleMissing(uint32_t handle) const { return false; }
     virtual GLboolean initGLFunctions() = 0;
     virtual bool isOpenGlSharingSupported() = 0;
 };
