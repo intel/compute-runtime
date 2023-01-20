@@ -240,14 +240,15 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
         const auto waitStatus = csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, completionStamp.taskCount);
         if (waitStatus == NEO::WaitStatus::GpuHang) {
+            this->printKernelsPrintfOutput(true);
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
         csr->getInternalAllocationStorage()->cleanAllocationList(completionStamp.taskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
+        this->printKernelsPrintfOutput(false);
     }
 
     this->cmdListCurrentStartOffset = commandStream->getUsed();
     this->containsAnyKernel = false;
-
     this->handlePostSubmissionState();
 
     if (NEO::DebugManager.flags.PauseOnEnqueue.get() != -1) {
@@ -737,6 +738,14 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkWaitEventsState(uint32_t numWaitEvents, ze_event_handle_t *waitEventList) {
     if (this->eventWaitlistSyncRequired()) {
         this->synchronizeEventList(numWaitEvents, waitEventList);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::printKernelsPrintfOutput(bool hangDetected) {
+    size_t size = this->printfKernelContainer.size();
+    for (size_t i = 0; i < size; i++) {
+        this->printfKernelContainer[i]->printPrintfOutput(hangDetected);
     }
 }
 

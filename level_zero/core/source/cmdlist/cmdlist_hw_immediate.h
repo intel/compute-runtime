@@ -149,6 +149,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void checkWaitEventsState(uint32_t numWaitEvents, ze_event_handle_t *waitEventList);
 
   protected:
+    void printKernelsPrintfOutput(bool hangDetected);
     std::atomic<bool> dependenciesPresent{false};
 };
 

@@ -14,6 +14,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
@@ -215,6 +216,63 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
 
     result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, commandList->getPrintfKernelContainer().size());
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToSynchronousImmCommandListThenPrintfBufferIsPrinted) {
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    commandList->isFlushTaskSubmissionEnabled = true;
+    Mock<Kernel> kernel;
+    commandList->getPrintfKernelContainer().push_back(&kernel);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, kernel.printPrintfOutputCalledTimes);
+    EXPECT_FALSE(kernel.hangDetectedPassedToPrintfOutput);
+    EXPECT_EQ(1u, commandList->getPrintfKernelContainer().size());
+    EXPECT_EQ(&kernel, commandList->getPrintfKernelContainer()[0]);
+
+    result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, kernel.printPrintfOutputCalledTimes);
+    EXPECT_FALSE(kernel.hangDetectedPassedToPrintfOutput);
+    EXPECT_EQ(1u, commandList->getPrintfKernelContainer().size());
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendToSynchronousImmCommandListHangsThenPrintfBufferIsPrinted) {
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    TaskCountType currentTaskCount = 33u;
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
+    csr.callBaseWaitForCompletionWithTimeout = false;
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    commandList->isFlushTaskSubmissionEnabled = true;
+    Mock<Kernel> kernel;
+    commandList->getPrintfKernelContainer().push_back(&kernel);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+    EXPECT_EQ(1u, kernel.printPrintfOutputCalledTimes);
+    EXPECT_TRUE(kernel.hangDetectedPassedToPrintfOutput);
+    EXPECT_EQ(1u, commandList->getPrintfKernelContainer().size());
+    EXPECT_EQ(&kernel, commandList->getPrintfKernelContainer()[0]);
+
+    result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+    EXPECT_EQ(2u, kernel.printPrintfOutputCalledTimes);
+    EXPECT_TRUE(kernel.hangDetectedPassedToPrintfOutput);
     EXPECT_EQ(1u, commandList->getPrintfKernelContainer().size());
 }
 
