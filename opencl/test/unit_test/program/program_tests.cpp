@@ -3714,3 +3714,75 @@ TEST(ProgramGenerateDefaultArgsMetadataTests, whenGeneratingDefaultMetadataForAr
     buildInfo.kernelInfoArray.clear();
     buildInfo.unpackedDeviceBinary.release();
 }
+
+std::array<std::pair<NEOImageType, std::string>, 12> imgTypes{
+    std::make_pair<>(NEOImageType::ImageTypeBuffer, "image1d_buffer_t"),
+    std::make_pair<>(NEOImageType::ImageType1D, "image1d_t"),
+    std::make_pair<>(NEOImageType::ImageType1DArray, "image1d_array_t"),
+    std::make_pair<>(NEOImageType::ImageType2DArray, "image2d_array_t"),
+    std::make_pair<>(NEOImageType::ImageType3D, "image3d_t"),
+    std::make_pair<>(NEOImageType::ImageType2DDepth, "image2d_depth_t"),
+    std::make_pair<>(NEOImageType::ImageType2DArrayDepth, "image2d_array_depth_t"),
+    std::make_pair<>(NEOImageType::ImageType2DMSAA, "image2d_msaa_t"),
+    std::make_pair<>(NEOImageType::ImageType2DMSAADepth, "image2d_msaa_depth_t"),
+    std::make_pair<>(NEOImageType::ImageType2DArrayMSAA, "image2d_array_msaa_t"),
+    std::make_pair<>(NEOImageType::ImageType2DArrayMSAADepth, "image2d_array_msaa_depth_t"),
+    std::make_pair<>(NEOImageType::ImageType2D, "image2d_t")};
+
+using ProgramGenerateDefaultArgsMetadataImagesTest = ::testing::TestWithParam<std::pair<NEOImageType, std::string>>;
+
+TEST_P(ProgramGenerateDefaultArgsMetadataImagesTest, whenGeneratingDefaultMetadataForImageArgThenSetProperCorrespondingTypeName) {
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+
+    const auto &rootDeviceIndex = device.getRootDeviceIndex();
+    auto &buildInfo = program.buildInfos[rootDeviceIndex];
+
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "some_kernel";
+    buildInfo.kernelInfoArray.push_back(&kernelInfo);
+
+    const auto &imgTypeTypenamePair = GetParam();
+
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
+    auto &arg = kernelInfo.kernelDescriptor.payloadMappings.explicitArgs[0];
+    arg.type = ArgDescriptor::ArgTImage;
+    arg.as<ArgDescImage>().imageType = imgTypeTypenamePair.first;
+
+    program.callGenerateDefaultExtendedArgsMetadataOnce(rootDeviceIndex);
+    EXPECT_EQ(1u, kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.size());
+    const auto &argMetadata = kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata[0];
+    EXPECT_STREQ(argMetadata.type.c_str(), imgTypeTypenamePair.second.c_str());
+
+    buildInfo.kernelInfoArray.clear();
+    buildInfo.unpackedDeviceBinary.release();
+}
+
+INSTANTIATE_TEST_CASE_P(
+    ProgramGenerateDefaultArgsMetadataImagesTestValues,
+    ProgramGenerateDefaultArgsMetadataImagesTest,
+    ::testing::ValuesIn(imgTypes));
+
+TEST(ProgramGenerateDefaultArgsMetadataTests, whenGeneratingDefaultMetadataForSamplerArgThenSetProperTypeName) {
+    MockClDevice device{new MockDevice()};
+    MockProgram program(toClDeviceVector(device));
+
+    const auto &rootDeviceIndex = device.getRootDeviceIndex();
+    auto &buildInfo = program.buildInfos[rootDeviceIndex];
+
+    KernelInfo kernelInfo;
+    kernelInfo.kernelDescriptor.kernelMetadata.kernelName = "some_kernel";
+    buildInfo.kernelInfoArray.push_back(&kernelInfo);
+
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.resize(1);
+    kernelInfo.kernelDescriptor.payloadMappings.explicitArgs.at(0).type = ArgDescriptor::ArgTSampler;
+
+    program.callGenerateDefaultExtendedArgsMetadataOnce(rootDeviceIndex);
+    EXPECT_EQ(1u, kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.size());
+
+    const auto &argMetadata = kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata[0];
+    EXPECT_STREQ("sampler_t", argMetadata.type.c_str());
+
+    buildInfo.kernelInfoArray.clear();
+    buildInfo.unpackedDeviceBinary.release();
+}
