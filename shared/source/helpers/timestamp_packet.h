@@ -78,16 +78,6 @@ class TimestampPackets : public TagTypeBase {
 static_assert(((4 * TimestampPacketSizeControl::preferredPacketCount) * sizeof(uint32_t)) == sizeof(TimestampPackets<uint32_t>),
               "This structure is consumed by GPU and has to follow specific restrictions for padding and size");
 
-struct TimestampPacketDependencies : public NonCopyableClass {
-    TimestampPacketContainer cacheFlushNodes;
-    TimestampPacketContainer previousEnqueueNodes;
-    TimestampPacketContainer barrierNodes;
-    TimestampPacketContainer auxToNonAuxNodes;
-    TimestampPacketContainer nonAuxToAuxNodes;
-
-    void moveNodesToNewContainer(TimestampPacketContainer &timestampPacketContainer);
-};
-
 struct TimestampPacketHelper {
     static uint64_t getContextEndGpuAddress(const TagNodeBase &timestampPacketNode) {
         return timestampPacketNode.getGpuAddress() + timestampPacketNode.getContextEndOffset();

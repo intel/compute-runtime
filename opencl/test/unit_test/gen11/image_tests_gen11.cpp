@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/image/image_surface_state.h"
 #include "shared/test/common/test_macros/test.h"
 

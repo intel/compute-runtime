@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"

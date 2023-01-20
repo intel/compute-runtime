@@ -13,6 +13,7 @@
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/surface.h"

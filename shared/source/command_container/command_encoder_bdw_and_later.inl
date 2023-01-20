@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/execution_environment/execution_environment.h"

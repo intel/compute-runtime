@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/stream_properties.h"

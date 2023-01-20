@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"

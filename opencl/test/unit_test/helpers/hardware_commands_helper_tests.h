@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 
 #include "shared/source/built_ins/built_ins.h"
-#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"

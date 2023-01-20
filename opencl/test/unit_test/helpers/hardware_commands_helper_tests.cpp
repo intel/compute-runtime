@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/helpers/hardware_commands_helper_tests.h"
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/engine_node_helper.h"

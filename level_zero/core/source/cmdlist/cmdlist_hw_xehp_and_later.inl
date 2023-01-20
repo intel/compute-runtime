@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"

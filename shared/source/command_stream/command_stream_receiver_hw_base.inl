@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/built_ins/sip.h"
-#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/linear_stream.h"

@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"

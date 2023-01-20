@@ -30,4 +30,14 @@ class TimestampPacketContainer : public NonCopyableClass {
     StackVec<TagNodeBase *, 32u> timestampPacketNodes;
 };
 
+struct TimestampPacketDependencies : public NonCopyableClass {
+    TimestampPacketContainer cacheFlushNodes;
+    TimestampPacketContainer previousEnqueueNodes;
+    TimestampPacketContainer barrierNodes;
+    TimestampPacketContainer auxToNonAuxNodes;
+    TimestampPacketContainer nonAuxToAuxNodes;
+
+    void moveNodesToNewContainer(TimestampPacketContainer &timestampPacketContainer);
+};
+
 } // namespace NEO

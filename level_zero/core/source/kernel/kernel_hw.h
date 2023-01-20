@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/cache_policy.h"

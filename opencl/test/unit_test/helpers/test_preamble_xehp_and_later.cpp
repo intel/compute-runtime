@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/helpers/hw_helper.h"

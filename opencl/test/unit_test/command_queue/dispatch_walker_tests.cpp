@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"

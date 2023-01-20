@@ -10,7 +10,7 @@
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/map_operation_type.h"
-#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/utilities/iflist.h"
 

@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
-#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"

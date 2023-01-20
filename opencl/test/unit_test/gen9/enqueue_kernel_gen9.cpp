@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/gen9/reg_configs.h"
 #include "shared/source/helpers/hw_helper.h"

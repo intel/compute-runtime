@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/wait_status.h"

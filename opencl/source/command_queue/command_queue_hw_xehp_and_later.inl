@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
+#include "shared/source/helpers/timestamp_packet.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/command_queue/command_queue_hw_base.inl"

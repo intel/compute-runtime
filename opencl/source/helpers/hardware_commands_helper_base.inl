@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
