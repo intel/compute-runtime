@@ -2026,7 +2026,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         commandContainer.addToResidencyContainer(&event->getAllocation(this->device));
         gpuAddr = event->getCompletionFieldGpuAddress(this->device);
         uint32_t packetsToWait = event->getPacketsInUse();
-
+        if (this->signalAllEventPackets) {
+            packetsToWait = event->getMaxPacketsCount();
+        }
         for (uint32_t i = 0u; i < packetsToWait; i++) {
             if (relaxedOrdering) {
                 NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(*commandContainer.getCommandStream(), 0, gpuAddr, eventStateClear,
@@ -2039,9 +2041,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
             }
 
             gpuAddr += event->getSinglePacketSize();
-        }
-        if (this->signalAllEventPackets) {
-            waitOnRemainingEventPackets(event);
         }
     }
 
@@ -2711,29 +2710,6 @@ void CommandListCoreFamily<gfxCoreFamily>::allocateKernelPrivateMemoryIfNeeded(K
         kernel->patchCrossthreadDataWithPrivateAllocation(privateMemoryGraphicsAllocation);
         this->commandContainer.addToResidencyContainer(privateMemoryGraphicsAllocation);
         this->ownedPrivateAllocations.push_back(privateMemoryGraphicsAllocation);
-    }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::waitOnRemainingEventPackets(Event *event) {
-    using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-
-    uint32_t packetUsed = event->getPacketsInUse();
-    uint32_t packetsRemaining = event->getMaxPacketsCount() - packetUsed;
-    if (packetsRemaining == 0) {
-        return;
-    }
-
-    uint64_t gpuAddress = event->getCompletionFieldGpuAddress(this->device);
-    size_t packetSize = event->getSinglePacketSize();
-    gpuAddress += packetSize * packetUsed;
-
-    for (uint32_t i = 0; i < packetsRemaining; i++) {
-        NEO::EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandContainer.getCommandStream(),
-                                                                   gpuAddress,
-                                                                   Event::STATE_CLEARED,
-                                                                   COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-        gpuAddress += packetSize;
     }
 }
 

@@ -300,7 +300,6 @@ struct CommandListCoreFamily : CommandListImp {
                compactL3FlushEvent(dcFlush);
     }
     void allocateKernelPrivateMemoryIfNeeded(Kernel *kernel, uint32_t sizePerHwThread);
-    void waitOnRemainingEventPackets(Event *event);
     CmdListEventOperation estimateEventPostSync(Event *event, uint32_t operations);
     void dispatchPostSyncCopy(uint64_t gpuAddress, uint32_t value, bool workloadPartition);
     void dispatchPostSyncCompute(uint64_t gpuAddress, uint32_t value, bool workloadPartition);
