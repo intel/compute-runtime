@@ -78,11 +78,16 @@ void WddmMemoryManager::unMapPhysicalToVirtualMemory(GraphicsAllocation *physica
     wddm->reserveGpuVirtualAddress(gpuRange, gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), bufferSize);
     physicalAllocation->setCpuPtrAndGpuAddress(nullptr, 0u);
     physicalAllocation->setReservedAddressRange(nullptr, 0u);
+    WddmAllocation *wddmAllocation = reinterpret_cast<WddmAllocation *>(physicalAllocation);
+    wddmAllocation->mappedPhysicalMemoryReservation = false;
 }
 
 bool WddmMemoryManager::mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAllocation, uint64_t gpuRange, size_t bufferSize) {
     WddmAllocation *wddmAllocation = reinterpret_cast<WddmAllocation *>(physicalAllocation);
-    wddmAllocation->mappedPhysicalMemoryReservation = mapGpuVirtualAddress(wddmAllocation, reinterpret_cast<void *>(gpuRange));
+    auto decanonizedAddress = getGmmHelper(physicalAllocation->getRootDeviceIndex())->decanonize(gpuRange);
+    wddmAllocation->mappedPhysicalMemoryReservation = mapGpuVirtualAddress(wddmAllocation, reinterpret_cast<void *>(decanonizedAddress));
+    physicalAllocation->setCpuPtrAndGpuAddress(nullptr, gpuRange);
+    physicalAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuRange), bufferSize);
     return wddmAllocation->mappedPhysicalMemoryReservation;
 }
 
@@ -823,6 +828,8 @@ AddressRange WddmMemoryManager::reserveGpuAddress(const void *requiredStartAddre
             break;
         }
     }
+    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[*reservedOnRootDeviceIndex]->getGmmHelper();
+    gpuVa = gmmHelper->canonize(gpuVa);
     return AddressRange{gpuVa, reservedSize};
 }
 

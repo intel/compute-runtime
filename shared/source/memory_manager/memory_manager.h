@@ -59,9 +59,16 @@ struct AddressRange {
     size_t size;
 };
 
+struct MemoryMappedRange {
+    const void *ptr;
+    size_t size;
+    struct PhysicalMemoryAllocation *mappedAllocation;
+};
+
 struct VirtualMemoryReservation {
     AddressRange virtualAddressRange;
     MemoryFlags flags;
+    std::map<void *, MemoryMappedRange *> mappedAllocations;
     struct PhysicalMemoryAllocation *mappedAllocation;
     uint32_t rootDeviceIndex;
 };

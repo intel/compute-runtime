@@ -720,6 +720,23 @@ ze_result_t ContextImp::activateMetricGroups(zet_device_handle_t hDevice,
     return L0::Device::fromHandle(hDevice)->activateMetricGroupsDeferred(count, phMetricGroups);
 }
 
+NEO::VirtualMemoryReservation *ContextImp::findSupportedVirtualReservation(const void *ptr, size_t size) {
+    void *address = const_cast<void *>(ptr);
+    auto allocation = this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().lower_bound(address);
+    if (allocation != this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().end()) {
+        if (ptr == allocation->first && ptrOffset(reinterpret_cast<uint64_t>(allocation->first), allocation->second->virtualAddressRange.size) >= ptrOffset(reinterpret_cast<uint64_t>(address), size)) {
+            return allocation->second;
+        }
+    }
+    if (allocation != this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().begin()) {
+        allocation--;
+        if (ptrOffset(allocation->first, allocation->second->virtualAddressRange.size) >= ptrOffset(address, size)) {
+            return allocation->second;
+        }
+    }
+    return nullptr;
+}
+
 ze_result_t ContextImp::reserveVirtualMem(const void *pStart,
                                           size_t size,
                                           void **pptr) {
@@ -741,7 +758,6 @@ ze_result_t ContextImp::reserveVirtualMem(const void *pStart,
     virtualMemoryReservation->flags.readWrite = false;
     virtualMemoryReservation->flags.readOnly = false;
     virtualMemoryReservation->flags.noAccess = true;
-    virtualMemoryReservation->mappedAllocation = nullptr;
     auto lock = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
     this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().insert(std::pair<void *, NEO::VirtualMemoryReservation *>(reinterpret_cast<void *>(virtualMemoryReservation->virtualAddressRange.address), virtualMemoryReservation));
     *pptr = reinterpret_cast<void *>(virtualMemoryReservation->virtualAddressRange.address);
@@ -761,6 +777,7 @@ ze_result_t ContextImp::freeVirtualMem(const void *ptr,
         this->driverHandle->getMemoryManager()->freeGpuAddress(virtualMemoryReservation->virtualAddressRange, virtualMemoryReservation->rootDeviceIndex);
         delete virtualMemoryReservation;
         this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().erase(it);
+        virtualMemoryReservation = nullptr;
         return ZE_RESULT_SUCCESS;
     } else {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -842,12 +859,10 @@ ze_result_t ContextImp::mapVirtualMem(const void *ptr,
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
-    std::map<void *, NEO::VirtualMemoryReservation *>::iterator virtualIt;
     NEO::VirtualMemoryReservation *virtualMemoryReservation = nullptr;
     auto lockVirtual = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
-    virtualIt = this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().find(const_cast<void *>(ptr));
-    if (virtualIt != this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().end()) {
-        virtualMemoryReservation = virtualIt->second;
+    virtualMemoryReservation = findSupportedVirtualReservation(ptr, size);
+    if (virtualMemoryReservation) {
         switch (access) {
         case ZE_MEMORY_ACCESS_ATTRIBUTE_NONE:
             virtualMemoryReservation->flags.readOnly = false;
@@ -867,8 +882,12 @@ ze_result_t ContextImp::mapVirtualMem(const void *ptr,
         default:
             return ZE_RESULT_ERROR_INVALID_ENUMERATION;
         }
-        if (virtualMemoryReservation->mappedAllocation != nullptr) {
-            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        if (virtualMemoryReservation->mappedAllocations.size() > 0) {
+            std::map<void *, NEO::MemoryMappedRange *>::iterator physicalMapIt;
+            physicalMapIt = virtualMemoryReservation->mappedAllocations.find(const_cast<void *>(ptr));
+            if (physicalMapIt != virtualMemoryReservation->mappedAllocations.end()) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+            }
         }
     } else {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
@@ -879,10 +898,14 @@ ze_result_t ContextImp::mapVirtualMem(const void *ptr,
         allocData.gpuAllocations.addAllocation(allocationNode->allocation);
         allocData.cpuAllocation = nullptr;
         allocData.device = allocationNode->device;
-        allocData.size = virtualMemoryReservation->virtualAddressRange.size;
+        allocData.size = size;
         allocData.pageSizeForAlignment = MemoryConstants::pageSize64k;
         allocData.setAllocId(this->driverHandle->svmAllocsManager->allocationsCounter++);
-        virtualMemoryReservation->mappedAllocation = allocationNode;
+        NEO::MemoryMappedRange *mappedRange = new NEO::MemoryMappedRange;
+        mappedRange->ptr = ptr;
+        mappedRange->size = size;
+        mappedRange->mappedAllocation = allocationNode;
+        virtualMemoryReservation->mappedAllocations.insert(std::pair<void *, NEO::MemoryMappedRange *>(const_cast<void *>(ptr), mappedRange));
         this->driverHandle->getSvmAllocsManager()->insertSVMAlloc(allocData);
         NEO::MemoryOperationsHandler *memoryOperationsIface = allocationNode->device->getRootDeviceEnvironment().memoryOperationsInterface.get();
         auto success = memoryOperationsIface->makeResident(allocationNode->device, ArrayRef<NEO::GraphicsAllocation *>(&allocationNode->allocation, 1));
@@ -895,18 +918,23 @@ ze_result_t ContextImp::mapVirtualMem(const void *ptr,
 ze_result_t ContextImp::unMapVirtualMem(const void *ptr,
                                         size_t size) {
 
-    std::map<void *, NEO::VirtualMemoryReservation *>::iterator it;
-    auto lock = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
-    it = this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().find(const_cast<void *>(ptr));
-    if (it != this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().end()) {
-        NEO::VirtualMemoryReservation *virtualMemoryReservation = this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().at(const_cast<void *>(ptr));
-        NEO::SvmAllocationData *allocData = this->driverHandle->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(virtualMemoryReservation->mappedAllocation->allocation->getGpuAddress()));
-        this->driverHandle->getSvmAllocsManager()->removeSVMAlloc(*allocData);
-        NEO::Device *device = virtualMemoryReservation->mappedAllocation->device;
-        NEO::CommandStreamReceiver *csr = device->getDefaultEngine().commandStreamReceiver;
-        NEO::OsContext *osContext = &csr->getOsContext();
-        this->driverHandle->getMemoryManager()->unMapPhysicalToVirtualMemory(virtualMemoryReservation->mappedAllocation->allocation, reinterpret_cast<uint64_t>(ptr), size, osContext, virtualMemoryReservation->rootDeviceIndex);
-        virtualMemoryReservation->mappedAllocation = nullptr;
+    NEO::VirtualMemoryReservation *virtualMemoryReservation = nullptr;
+    auto lockVirtual = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
+    virtualMemoryReservation = findSupportedVirtualReservation(ptr, size);
+    if (virtualMemoryReservation) {
+        std::map<void *, NEO::MemoryMappedRange *>::iterator physicalMapIt;
+        physicalMapIt = virtualMemoryReservation->mappedAllocations.find(const_cast<void *>(ptr));
+        if (physicalMapIt != virtualMemoryReservation->mappedAllocations.end()) {
+            NEO::PhysicalMemoryAllocation *physicalAllocation = physicalMapIt->second->mappedAllocation;
+            NEO::SvmAllocationData *allocData = this->driverHandle->getSvmAllocsManager()->getSVMAlloc(reinterpret_cast<void *>(physicalAllocation->allocation->getGpuAddress()));
+            this->driverHandle->getSvmAllocsManager()->removeSVMAlloc(*allocData);
+            NEO::Device *device = physicalAllocation->device;
+            NEO::CommandStreamReceiver *csr = device->getDefaultEngine().commandStreamReceiver;
+            NEO::OsContext *osContext = &csr->getOsContext();
+            this->driverHandle->getMemoryManager()->unMapPhysicalToVirtualMemory(physicalAllocation->allocation, reinterpret_cast<uint64_t>(ptr), size, osContext, virtualMemoryReservation->rootDeviceIndex);
+            delete physicalMapIt->second;
+            virtualMemoryReservation->mappedAllocations.erase(physicalMapIt);
+        }
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -914,11 +942,10 @@ ze_result_t ContextImp::unMapVirtualMem(const void *ptr,
 ze_result_t ContextImp::setVirtualMemAccessAttribute(const void *ptr,
                                                      size_t size,
                                                      ze_memory_access_attribute_t access) {
-    std::map<void *, NEO::VirtualMemoryReservation *>::iterator it;
-    auto lock = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
-    it = this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().find(const_cast<void *>(ptr));
-    if (it != this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().end()) {
-        NEO::VirtualMemoryReservation *virtualMemoryReservation = this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().at(const_cast<void *>(ptr));
+    NEO::VirtualMemoryReservation *virtualMemoryReservation = nullptr;
+    auto lockVirtual = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
+    virtualMemoryReservation = findSupportedVirtualReservation(ptr, size);
+    if (virtualMemoryReservation) {
         switch (access) {
         case ZE_MEMORY_ACCESS_ATTRIBUTE_NONE:
             virtualMemoryReservation->flags.readOnly = false;
@@ -948,11 +975,10 @@ ze_result_t ContextImp::getVirtualMemAccessAttribute(const void *ptr,
                                                      size_t size,
                                                      ze_memory_access_attribute_t *access,
                                                      size_t *outSize) {
-    std::map<void *, NEO::VirtualMemoryReservation *>::iterator it;
-    auto lock = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
-    it = this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().find(const_cast<void *>(ptr));
-    if (it != this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().end()) {
-        NEO::VirtualMemoryReservation *virtualMemoryReservation = this->driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().at(const_cast<void *>(ptr));
+    NEO::VirtualMemoryReservation *virtualMemoryReservation = nullptr;
+    auto lockVirtual = this->driverHandle->getMemoryManager()->lockVirtualMemoryReservationMap();
+    virtualMemoryReservation = findSupportedVirtualReservation(ptr, size);
+    if (virtualMemoryReservation) {
         if (virtualMemoryReservation->flags.readWrite) {
             *access = ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE;
         } else if (virtualMemoryReservation->flags.readOnly) {

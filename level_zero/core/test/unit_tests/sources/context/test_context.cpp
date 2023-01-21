@@ -129,6 +129,87 @@ TEST_F(MultiDeviceContextTests,
 }
 
 TEST_F(MultiDeviceContextTests,
+       whenMappingReservedMemoryOnPhysicalMemoryOnMultiDeviceThenSuccessReturned) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    driverHandle->devices[0]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+    driverHandle->devices[1]->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[1]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(driverHandle->devices[0], size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize * 2, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_GT(static_cast<int>(driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().size()), 0);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(driverHandle->devices[0], &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ze_physical_mem_handle_t secondHalfMem = {};
+    res = contextImp->createPhysicalMem(driverHandle->devices[1], &descMem, &secondHalfMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
+    size_t offset = 0;
+
+    std::vector<ze_memory_access_attribute_t> memoryAccessFlags = {
+        ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY,
+        ZE_MEMORY_ACCESS_ATTRIBUTE_NONE};
+
+    void *offsetAddr =
+        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+
+    for (auto accessFlags : memoryAccessFlags) {
+        res = contextImp->mapVirtualMem(ptr, pagesize, mem, offset, accessFlags);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = contextImp->mapVirtualMem(offsetAddr, pagesize, secondHalfMem, offset, accessFlags);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = contextImp->setVirtualMemAccessAttribute(ptr, pagesize, access);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = contextImp->setVirtualMemAccessAttribute(offsetAddr, pagesize, access);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        ze_memory_access_attribute_t outAccess = {};
+        size_t outSize = 0;
+        res = contextImp->getVirtualMemAccessAttribute(ptr, pagesize, &outAccess, &outSize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_EQ(pagesize * 2, outSize);
+        res = contextImp->getVirtualMemAccessAttribute(offsetAddr, pagesize, &outAccess, &outSize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_EQ(pagesize * 2, outSize);
+
+        res = contextImp->unMapVirtualMem(ptr, pagesize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = contextImp->unMapVirtualMem(offsetAddr, pagesize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    }
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroyPhysicalMem(secondHalfMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(MultiDeviceContextTests,
        whenAllocatingSharedMemoryWithDeviceNotDefinedForContextThenDeviceLostIsReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -1290,6 +1371,147 @@ TEST_F(ContextTest, whenCallingVirtualMemReserveWithPStartWithSuccessfulAllocati
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 }
 
+TEST_F(ContextTest, whenUsingOffsetsIntoReservedVirtualMemoryThenMappingIsSuccessful) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize * 2, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_GT(static_cast<int>(driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().size()), 0);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
+    size_t offset = 0;
+
+    std::vector<ze_memory_access_attribute_t> memoryAccessFlags = {
+        ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY,
+        ZE_MEMORY_ACCESS_ATTRIBUTE_NONE};
+
+    void *offsetAddr =
+        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+
+    for (auto accessFlags : memoryAccessFlags) {
+        res = contextImp->mapVirtualMem(offsetAddr, pagesize, mem, offset, accessFlags);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = contextImp->setVirtualMemAccessAttribute(offsetAddr, pagesize, access);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        ze_memory_access_attribute_t outAccess = {};
+        size_t outSize = 0;
+        res = contextImp->getVirtualMemAccessAttribute(offsetAddr, pagesize, &outAccess, &outSize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_EQ(pagesize * 2, outSize);
+
+        res = contextImp->unMapVirtualMem(offsetAddr, pagesize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    }
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
+TEST_F(ContextTest, whenUsingOffsetsIntoReservedVirtualMemoryWithMultiplePhysicalMemoryThenMappingIsSuccessful) {
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+
+    ze_result_t res = driverHandle->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]->memoryOperationsInterface =
+        std::make_unique<NEO::MockMemoryOperations>();
+
+    ContextImp *contextImp = static_cast<ContextImp *>(L0::Context::fromHandle(hContext));
+
+    void *pStart = 0x0;
+    size_t size = 4096u;
+    void *ptr = nullptr;
+    size_t pagesize = 0u;
+    res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    res = contextImp->reserveVirtualMem(pStart, pagesize * 2, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_GT(static_cast<int>(driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().size()), 0);
+
+    ze_physical_mem_desc_t descMem = {ZE_STRUCTURE_TYPE_PHYSICAL_MEM_DESC, nullptr, 0, pagesize};
+    ze_physical_mem_handle_t mem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    ze_physical_mem_handle_t secondHalfMem = {};
+    res = contextImp->createPhysicalMem(device, &descMem, &secondHalfMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    ze_memory_access_attribute_t access = {ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE};
+    size_t offset = 0;
+
+    std::vector<ze_memory_access_attribute_t> memoryAccessFlags = {
+        ZE_MEMORY_ACCESS_ATTRIBUTE_READWRITE, ZE_MEMORY_ACCESS_ATTRIBUTE_READONLY,
+        ZE_MEMORY_ACCESS_ATTRIBUTE_NONE};
+
+    void *offsetAddr =
+        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+
+    for (auto accessFlags : memoryAccessFlags) {
+        res = contextImp->mapVirtualMem(ptr, pagesize, mem, offset, accessFlags);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = contextImp->mapVirtualMem(offsetAddr, pagesize, secondHalfMem, offset, accessFlags);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = contextImp->setVirtualMemAccessAttribute(ptr, pagesize, access);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = contextImp->setVirtualMemAccessAttribute(offsetAddr, pagesize, access);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+        ze_memory_access_attribute_t outAccess = {};
+        size_t outSize = 0;
+        res = contextImp->getVirtualMemAccessAttribute(ptr, pagesize, &outAccess, &outSize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_EQ(pagesize * 2, outSize);
+        res = contextImp->getVirtualMemAccessAttribute(offsetAddr, pagesize, &outAccess, &outSize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_EQ(pagesize * 2, outSize);
+
+        res = contextImp->unMapVirtualMem(ptr, pagesize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        res = contextImp->unMapVirtualMem(offsetAddr, pagesize);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    }
+
+    res = contextImp->destroyPhysicalMem(mem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroyPhysicalMem(secondHalfMem);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->freeVirtualMem(ptr, pagesize * 2);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+}
+
 TEST_F(ContextTest, whenCallingVirtualMemoryReservationWhenOutOfMemoryThenOutOfMemoryReturned) {
     ze_context_handle_t hContext;
     ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
@@ -1419,7 +1641,7 @@ TEST_F(ContextTest, whenCallingMapVirtualMemoryWithInvalidValuesThenFailureRetur
     size_t pagesize = 0u;
     res = contextImp->queryVirtualMemPageSize(device, size, &pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-    res = contextImp->reserveVirtualMem(pStart, pagesize, &ptr);
+    res = contextImp->reserveVirtualMem(pStart, pagesize * 2, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_GT(static_cast<int>(driverHandle->getMemoryManager()->getVirtualMemoryReservationMap().size()), 0);
 
@@ -1439,7 +1661,18 @@ TEST_F(ContextTest, whenCallingMapVirtualMemoryWithInvalidValuesThenFailureRetur
     res = contextImp->mapVirtualMem(nullptr, pagesize, mem, offset, access);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
 
+    res = contextImp->mapVirtualMem(ptr, pagesize * 4, mem, offset, access);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
+    void *offsetAddr =
+        reinterpret_cast<void *>(reinterpret_cast<uint64_t>(ptr) + pagesize);
+    res = contextImp->mapVirtualMem(offsetAddr, pagesize * 2, mem, offset, access);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
+
     res = contextImp->unMapVirtualMem(nullptr, pagesize);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    res = contextImp->unMapVirtualMem(ptr, pagesize);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     res = contextImp->mapVirtualMem(ptr, 0u, mem, offset, access);
@@ -1462,7 +1695,7 @@ TEST_F(ContextTest, whenCallingMapVirtualMemoryWithInvalidValuesThenFailureRetur
     res = contextImp->destroyPhysicalMem(mem);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    res = contextImp->freeVirtualMem(ptr, pagesize);
+    res = contextImp->freeVirtualMem(ptr, pagesize * 2);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     res = contextImp->destroy();

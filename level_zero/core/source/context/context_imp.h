@@ -162,6 +162,7 @@ struct ContextImp : Context {
         this->deviceHandles.push_back(deviceHandle);
         this->numDevices = static_cast<uint32_t>(this->deviceHandles.size());
     }
+    NEO::VirtualMemoryReservation *findSupportedVirtualReservation(const void *ptr, size_t size);
 
   protected:
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);
