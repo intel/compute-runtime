@@ -500,10 +500,10 @@ ze_result_t ContextImp::getIpcMemHandle(const void *ptr,
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
 
-        IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
-        ipcData = {};
-        ipcData.handle = handle;
-        ipcData.type = static_cast<uint8_t>(Context::parseUSMType(allocData->memoryType));
+        memcpy_s(reinterpret_cast<void *>(pIpcHandle->data),
+                 sizeof(ze_ipc_mem_handle_t),
+                 &handle,
+                 sizeof(handle));
 
         return ZE_RESULT_SUCCESS;
     }
@@ -548,23 +548,15 @@ ze_result_t ContextImp::openIpcMemHandle(ze_device_handle_t hDevice,
                                          const ze_ipc_mem_handle_t &pIpcHandle,
                                          ze_ipc_memory_flags_t flags,
                                          void **ptr) {
-    const IpcMemoryData &ipcData = *reinterpret_cast<const IpcMemoryData *>(pIpcHandle.data);
-
-    uint64_t handle = ipcData.handle;
-    uint8_t type = ipcData.type;
-
-    NEO::AllocationType allocationType = NEO::AllocationType::UNKNOWN;
-    if (static_cast<ze_memory_type_t>(type) == ZE_MEMORY_TYPE_HOST) {
-        allocationType = NEO::AllocationType::BUFFER_HOST_MEMORY;
-    } else if (static_cast<ze_memory_type_t>(type) == ZE_MEMORY_TYPE_DEVICE) {
-        allocationType = NEO::AllocationType::BUFFER;
-    } else {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
+    uint64_t handle = 0u;
+    memcpy_s(&handle,
+             sizeof(handle),
+             pIpcHandle.data,
+             sizeof(handle));
 
     *ptr = getMemHandlePtr(hDevice,
                            handle,
-                           allocationType,
+                           NEO::AllocationType::BUFFER,
                            flags);
     if (nullptr == *ptr) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
