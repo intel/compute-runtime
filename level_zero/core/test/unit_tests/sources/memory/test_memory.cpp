@@ -3122,34 +3122,6 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 }
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenSharedAllocationPassedToGetAllignedAllocationUsingDevice1ThenAlignedAllocationWithPeerAllocationIsReturned,
-          IsAtLeastSkl) {
-    L0::Device *device0 = driverHandle->devices[0];
-    L0::Device *device1 = driverHandle->devices[1];
-
-    size_t size = 1024;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t result = context->allocSharedMem(device0->toHandle(),
-                                                 &deviceDesc,
-                                                 &hostDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
-
-    AlignedAllocationData outData = commandList->getAlignedAllocation(device1, ptr, size, false);
-    EXPECT_NE(outData.alignedAllocationPtr, 0u);
-
-    result = context->freeMem(ptr);
-    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
-}
-
-HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToGetAllignedAllocationUsingDevice0ThenAlignedAllocationWithPeerAllocationIsReturned,
           IsAtLeastSkl) {
     L0::Device *device0 = driverHandle->devices[0];
@@ -3167,34 +3139,6 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     commandList->initialize(device0, NEO::EngineGroupType::RenderCompute, 0u);
-
-    AlignedAllocationData outData = commandList->getAlignedAllocation(device0, ptr, size, false);
-    EXPECT_NE(outData.alignedAllocationPtr, 0u);
-
-    result = context->freeMem(ptr);
-    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
-}
-
-HWTEST2_F(MultipleDevicePeerAllocationTest,
-          givenSharedAllocationPassedToGetAllignedAllocationUsingDevice0ThenAlignedAllocationWithPeerAllocationIsReturned,
-          IsAtLeastSkl) {
-    L0::Device *device0 = driverHandle->devices[0];
-    L0::Device *device1 = driverHandle->devices[1];
-
-    size_t size = 1024;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t result = context->allocSharedMem(device1->toHandle(),
-                                                 &deviceDesc,
-                                                 &hostDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-
-    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
-    commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
 
     AlignedAllocationData outData = commandList->getAlignedAllocation(device0, ptr, size, false);
     EXPECT_NE(outData.alignedAllocationPtr, 0u);
@@ -3717,54 +3661,6 @@ TEST_F(MemoryTest, givenNoDeviceWhenAllocatingSharedMemoryThenDeviceInAllocation
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
-}
-
-TEST_F(MemoryTest, givenCallToMakeMemoryResidentWithInvalidPointerThenInvalidArgumentIsReturned) {
-    void *ptr = nullptr;
-    ze_result_t res = driverHandle->makeMemoryResident(device->getRootDeviceIndex(), ptr, 1);
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, res);
-}
-
-TEST_F(MemoryTest,
-       givenCallToMakeMemoryResidentWithDeviceMemoryThenAllocationIsNotAddedToVectorOfResidentAllocations) {
-    const size_t size = 4096;
-    void *ptr = nullptr;
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    ze_result_t res = context->allocDeviceMem(device->toHandle(),
-                                              &deviceDesc,
-                                              size,
-                                              0,
-                                              &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(context->getDriverHandle());
-    size_t previousSize = driverHandleImp->sharedMakeResidentAllocations.size();
-
-    res = driverHandle->makeMemoryResident(device->getRootDeviceIndex(), ptr, size);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    size_t currentSize = driverHandleImp->sharedMakeResidentAllocations.size();
-    EXPECT_EQ(previousSize, currentSize);
-
-    context->freeMem(ptr);
-}
-
-TEST_F(MemoryTest,
-       givenCallToMakeMemoryResidentWithHeapPointerThenSuccessIsReturned) {
-    size_t size = 4 * MemoryConstants::pageSize;
-    void *ptr = driverHandle->getMemoryManager()->allocateSystemMemory(size, MemoryConstants::pageSize);
-    ASSERT_NE(nullptr, ptr);
-
-    ze_result_t res = driverHandle->importExternalPointer(ptr, MemoryConstants::pageSize);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    res = driverHandle->makeMemoryResident(device->getRootDeviceIndex(), ptr, MemoryConstants::pageSize);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    res = driverHandle->releaseImportedPointer(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    driverHandle->getMemoryManager()->freeSystemMemory(ptr);
 }
 
 TEST_F(MemoryTest, givenCallToCheckMemoryAccessFromDeviceWithInvalidPointerThenInvalidArgumentIsReturned) {

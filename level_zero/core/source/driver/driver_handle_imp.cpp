@@ -617,25 +617,6 @@ NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,
     return alloc;
 }
 
-ze_result_t DriverHandleImp::makeMemoryResident(uint32_t rootDeviceIndex, void *ptr, size_t size) {
-    auto allocation = this->getDriverSystemMemoryAllocation(
-        ptr,
-        size,
-        rootDeviceIndex,
-        nullptr);
-    if (allocation == nullptr) {
-        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-    }
-
-    auto allocData = this->getSvmAllocsManager()->getSVMAlloc(ptr);
-    if (allocData && allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
-        std::lock_guard<std::mutex> lock(this->sharedMakeResidentAllocationsLock);
-        this->sharedMakeResidentAllocations.insert({ptr, allocation});
-    }
-
-    return ZE_RESULT_SUCCESS;
-}
-
 void *DriverHandleImp::importNTHandle(ze_device_handle_t hDevice, void *handle, NEO::AllocationType allocationType) {
     auto neoDevice = Device::fromHandle(hDevice)->getNEODevice();
 
