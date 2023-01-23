@@ -37,7 +37,6 @@ struct LuidDeviceTest : public ::testing::Test {
 };
 
 TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureThenLuidAndNodeMaskSetForWDDMDriverType) {
-    DebugManager.flags.EnableL0ReadLUIDExtension.set(true);
     NEO::MockDevice *neoDevice = nullptr;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     L0::Device *device = nullptr;
@@ -81,7 +80,6 @@ TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureThenLuidAndNodeMaskSetF
     EXPECT_EQ(lowLUID, (uint32_t)adapterLuid.LowPart);
     EXPECT_EQ(highLUID, (uint32_t)adapterLuid.HighPart);
     EXPECT_NE(deviceLuidProperties.nodeMask, (uint32_t)0);
-    DebugManager.flags.EnableL0ReadLUIDExtension.set(false);
 }
 
 } // namespace ult
