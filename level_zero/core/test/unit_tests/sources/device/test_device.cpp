@@ -1058,6 +1058,29 @@ TEST_F(DeviceTest, givenDeviceCachePropertiesThenAllPropertiesAreAssigned) {
     EXPECT_NE(deviceCacheProperties.cacheSize, deviceCachePropertiesBefore.cacheSize);
 }
 
+TEST_F(DeviceTest, givenDeviceWithSubDevicesWhenQueriedForCacheSizeThenValueIsMultiplied) {
+    ze_device_cache_properties_t deviceCacheProperties = {};
+
+    auto rootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
+    auto &hwInfo = *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
+    auto singleRootDeviceCacheSize = hwInfo.gtSystemInfo.L3CacheSizeInKb * KB;
+
+    hwInfo.gtSystemInfo.L3BankCount = 0u;
+    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
+
+    uint32_t count = 0;
+    ze_result_t res = device->getCacheProperties(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(count, 1u);
+
+    for (uint32_t subDevicesCount : {1, 2, 3}) {
+        hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = subDevicesCount;
+        res = device->getCacheProperties(&count, &deviceCacheProperties);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+        EXPECT_EQ(deviceCacheProperties.cacheSize, singleRootDeviceCacheSize * subDevicesCount);
+    }
+}
+
 TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenAllPropertiesAreAssigned) {
     ze_device_properties_t deviceProperties, devicePropertiesBefore;
     deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
