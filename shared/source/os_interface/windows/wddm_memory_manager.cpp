@@ -87,11 +87,11 @@ bool WddmMemoryManager::mapPhysicalToVirtualMemory(GraphicsAllocation *physicalA
 }
 
 GraphicsAllocation *WddmMemoryManager::allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     StorageInfo systemMemoryStorageInfo = {};
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr, allocationData.size, 0u,
-                                     CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, *hwInfo), false, systemMemoryStorageInfo, true);
+                                     CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper), false, systemMemoryStorageInfo, true);
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, 0, allocationData.size, nullptr,
@@ -110,11 +110,11 @@ GraphicsAllocation *WddmMemoryManager::allocateMemoryByKMD(const AllocationData 
     if (allocationData.size > getHugeGfxMemoryChunkSize(GfxMemoryAllocationMethod::AllocateByKmd)) {
         return allocateHugeGraphicsMemory(allocationData, false);
     }
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     StorageInfo systemMemoryStorageInfo = {};
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr, allocationData.size, 0u,
-                                     CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, *hwInfo), false, systemMemoryStorageInfo, true);
+                                     CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper), false, systemMemoryStorageInfo, true);
     auto allocation = std::make_unique<WddmAllocation>(allocationData.rootDeviceIndex,
                                                        1u, // numGmms
                                                        allocationData.type, nullptr, 0, allocationData.size, nullptr,
@@ -170,11 +170,10 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
                                                            0u, // shareable
                                                            maxOsContextCount);
 
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr,
                        sizeAligned, 0u,
-                       CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, *hwInfo),
+                       CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper),
                        allocationData.flags.preferCompressed,
                        allocationData.storageInfo,
                        allowLargePages);
@@ -244,13 +243,13 @@ GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const Allocati
         wddmAllocation->setDriverAllocatedCpuPtr(hostPtr);
     }
 
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     auto sizeRemaining = alignedSize;
     for (auto gmmId = 0u; gmmId < numGmms; ++gmmId) {
         auto size = sizeRemaining > chunkSize ? chunkSize : sizeRemaining;
         auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
                            static_cast<char *>(alignedPtr) + gmmId * chunkSize, size, 0u,
-                           CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!uncacheable, *hwInfo), false, {}, true);
+                           CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!uncacheable, productHelper), false, {}, true);
         wddmAllocation->setGmm(gmm, gmmId);
         sizeRemaining -= size;
     }
@@ -306,11 +305,10 @@ GraphicsAllocation *WddmMemoryManager::allocateSystemMemoryAndCreateGraphicsAllo
                                                            0u, // shareable
                                                            maxOsContextCount);
     wddmAllocation->setDriverAllocatedCpuPtr(pSysMem);
-
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
 
     gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), pSysMem, sizeAligned, 0u,
-                  CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, *hwInfo),
+                  CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper),
                   allocationData.flags.preferCompressed, allocationData.storageInfo, true);
 
     wddmAllocation->setDefaultGmm(gmm);
@@ -356,11 +354,10 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryForNonSvmHostPtr(co
     auto alignedPtr = alignDown(allocationData.hostPtr, MemoryConstants::pageSize);
     auto offsetInPage = ptrDiff(allocationData.hostPtr, alignedPtr);
     wddmAllocation->setAllocationOffset(offsetInPage);
-
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
 
     auto gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), alignedPtr, alignedSize, 0u,
-                       CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, *hwInfo), false, {}, true);
+                       CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper), false, {}, true);
 
     wddmAllocation->setDefaultGmm(gmm);
 
@@ -401,10 +398,9 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryWithHostPtr(const A
                                              maxOsContextCount);
         allocation->setAllocationOffset(offset);
 
-        auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
-
+        auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
         Gmm *gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), ptrAligned, sizeAligned, 0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), !!allocationData.flags.uncacheable, *hwInfo), false, {}, true);
+                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper), false, {}, true);
         allocation->setDefaultGmm(gmm);
         if (createWddmAllocation(allocation, reserve)) {
             return allocation;
@@ -450,11 +446,12 @@ GraphicsAllocation *WddmMemoryManager::allocate32BitGraphicsMemoryImpl(const All
     wddmAllocation->set32BitAllocation(true);
     wddmAllocation->setAllocationOffset(offset);
     wddmAllocation->allocInFrontWindowPool = allocationData.flags.use32BitFrontWindow;
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
 
     auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
     gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), ptrAligned, sizeAligned, 0u,
-                  CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, *hwInfo), false, {}, true);
+                  CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper), false, {}, true);
     wddmAllocation->setDefaultGmm(gmm);
 
     if (!createWddmAllocation(wddmAllocation.get(), nullptr)) {
@@ -689,7 +686,7 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
     uint32_t allocatedFragmentIndexes[maxFragmentsCount];
     uint32_t allocatedFragmentsCounter = 0;
 
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
 
     for (unsigned int i = 0; i < maxFragmentsCount; i++) {
         // If no fragment is present it means it already exists.
@@ -701,7 +698,7 @@ MemoryManager::AllocationStatus WddmMemoryManager::populateOsHandles(OsHandleSto
 
             osHandle->gmm = new Gmm(executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getGmmHelper(), handleStorage.fragmentStorageData[i].cpuPtr,
                                     handleStorage.fragmentStorageData[i].fragmentSize, 0u,
-                                    CacheSettingsHelper::getGmmUsageType(AllocationType::EXTERNAL_HOST_PTR, false, *hwInfo), false, {}, true);
+                                    CacheSettingsHelper::getGmmUsageType(AllocationType::EXTERNAL_HOST_PTR, false, productHelper), false, {}, true);
             allocatedFragmentIndexes[allocatedFragmentsCounter] = i;
             allocatedFragmentsCounter++;
         }
@@ -1055,6 +1052,8 @@ void createColouredGmms(GmmHelper *gmmHelper, WddmAllocation &allocation, const 
     18 pages is coloured to (5, 5, 4, 4).
 
     It was tested and doesn't require any debug*/
+    auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
+
     for (auto handleId = 0u; handleId < handles; handleId++) {
         auto currentSize = alignUp(remainingSize / (handles - handleId), MemoryConstants::pageSize64k);
         remainingSize -= currentSize;
@@ -1064,7 +1063,7 @@ void createColouredGmms(GmmHelper *gmmHelper, WddmAllocation &allocation, const 
                            nullptr,
                            currentSize,
                            0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, *gmmHelper->getHardwareInfo()),
+                           CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, productHelper),
                            compression,
                            limitedStorageInfo, true);
         allocation.setGmm(gmm, handleId);
@@ -1072,22 +1071,26 @@ void createColouredGmms(GmmHelper *gmmHelper, WddmAllocation &allocation, const 
 }
 
 void fillGmmsInAllocation(GmmHelper *gmmHelper, WddmAllocation *allocation, const StorageInfo &storageInfo) {
+    auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
+
     for (auto handleId = 0u; handleId < storageInfo.getNumBanks(); handleId++) {
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= static_cast<uint32_t>(1u << handleId);
         limitedStorageInfo.pageTablesVisibility &= static_cast<uint32_t>(1u << handleId);
         auto gmm = new Gmm(gmmHelper, nullptr, allocation->getAlignedSize(), 0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false, *gmmHelper->getHardwareInfo()), false, limitedStorageInfo, true);
+                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false, productHelper), false, limitedStorageInfo, true);
         allocation->setGmm(gmm, handleId);
     }
 }
 
 void splitGmmsInAllocation(GmmHelper *gmmHelper, WddmAllocation *wddmAllocation, size_t alignment, size_t chunkSize, StorageInfo &storageInfo) {
     auto sizeRemaining = wddmAllocation->getAlignedSize();
+    auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
+
     for (auto gmmId = 0u; gmmId < wddmAllocation->getNumGmms(); ++gmmId) {
         auto size = sizeRemaining > chunkSize ? chunkSize : sizeRemaining;
         auto gmm = new Gmm(gmmHelper, nullptr, size, alignment,
-                           CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), false, *gmmHelper->getHardwareInfo()), false, storageInfo, true);
+                           CacheSettingsHelper::getGmmUsageType(wddmAllocation->getAllocationType(), false, productHelper), false, storageInfo, true);
         wddmAllocation->setGmm(gmm, gmmId);
         sizeRemaining -= size;
     }
@@ -1106,7 +1109,7 @@ uint32_t getPriorityForAllocation(AllocationType allocationType) {
 
 GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex];
-    auto gmmHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper();
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
 
     std::unique_ptr<Gmm> gmm;
     size_t sizeAligned = 0;
@@ -1117,11 +1120,13 @@ GraphicsAllocation *WddmMemoryManager::allocatePhysicalLocalDeviceMemory(const A
     sizeAligned = alignUp(allocationData.size, alignment);
 
     if (singleBankAllocation) {
+        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+
         gmm = std::make_unique<Gmm>(gmmHelper,
                                     nullptr,
                                     sizeAligned,
                                     alignment,
-                                    CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, *rootDeviceEnvironment.getHardwareInfo()),
+                                    CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper),
                                     allocationData.flags.preferCompressed,
                                     allocationData.storageInfo,
                                     true);
@@ -1199,11 +1204,13 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryInDevicePool(const 
         sizeAligned = alignUp(allocationData.size, alignment);
 
         if (singleBankAllocation) {
+            auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+
             gmm = std::make_unique<Gmm>(gmmHelper,
                                         nullptr,
                                         sizeAligned,
                                         alignment,
-                                        CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, *rootDeviceEnvironment.getHardwareInfo()),
+                                        CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper),
                                         allocationData.flags.preferCompressed,
                                         allocationData.storageInfo,
                                         true);

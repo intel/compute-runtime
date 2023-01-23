@@ -571,11 +571,12 @@ bool DrmMemoryManager::mapPhysicalToVirtualMemory(GraphicsAllocation *physicalAl
 }
 
 GraphicsAllocation *DrmMemoryManager::allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
     StorageInfo systemMemoryStorageInfo = {};
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
+
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), nullptr,
-                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, *hwInfo), false, systemMemoryStorageInfo, true);
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper), false, systemMemoryStorageInfo, true);
     size_t bufferSize = allocationData.size;
 
     GemCreate create{};
@@ -600,11 +601,11 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalDeviceMemory(const Allocat
 }
 
 GraphicsAllocation *DrmMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     StorageInfo systemMemoryStorageInfo = {};
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr,
-                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, *hwInfo), false, systemMemoryStorageInfo, true);
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper), false, systemMemoryStorageInfo, true);
     size_t bufferSize = allocationData.size;
     uint64_t gpuRange = acquireGpuRange(bufferSize, allocationData.rootDeviceIndex, HeapIndex::HEAP_STANDARD64KB);
 
@@ -836,8 +837,8 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
                                            totalSize,
                                            MemoryPool::LocalMemory);
     drmAllocation->storageInfo = allocationData.storageInfo;
-
     auto gmmHelper = executionEnvironment.rootDeviceEnvironments[properties.rootDeviceIndex]->getGmmHelper();
+    auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
     for (i = 0u; i < handles.size(); i++) {
         auto bo = bos[i];
         StorageInfo limitedStorageInfo = allocationData.storageInfo;
@@ -846,7 +847,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
                            nullptr,
                            bo->peekSize(),
                            0u,
-                           CacheSettingsHelper::getGmmUsageType(drmAllocation->getAllocationType(), false, *gmmHelper->getHardwareInfo()),
+                           CacheSettingsHelper::getGmmUsageType(drmAllocation->getAllocationType(), false, productHelper),
                            false,
                            allocationData.storageInfo,
                            true);
@@ -1441,11 +1442,12 @@ void createColouredGmms(GmmHelper *gmmHelper, DrmAllocation &allocation, const S
         remainingSize -= currentSize;
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= (1u << (handleId % banksCnt));
+        auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
         auto gmm = new Gmm(gmmHelper,
                            nullptr,
                            currentSize,
                            0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, *gmmHelper->getHardwareInfo()),
+                           CacheSettingsHelper::getGmmUsageType(allocation.getAllocationType(), false, productHelper),
                            compression,
                            limitedStorageInfo,
                            true);
@@ -1455,12 +1457,13 @@ void createColouredGmms(GmmHelper *gmmHelper, DrmAllocation &allocation, const S
 
 void fillGmmsInAllocation(GmmHelper *gmmHelper, DrmAllocation *allocation, const StorageInfo &storageInfo) {
     auto alignedSize = alignUp(allocation->getUnderlyingBufferSize(), MemoryConstants::pageSize64k);
+    auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
     for (auto handleId = 0u; handleId < storageInfo.getNumBanks(); handleId++) {
         StorageInfo limitedStorageInfo = storageInfo;
         limitedStorageInfo.memoryBanks &= 1u << handleId;
         limitedStorageInfo.pageTablesVisibility &= 1u << handleId;
         auto gmm = new Gmm(gmmHelper, nullptr, alignedSize, 0u,
-                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false, *gmmHelper->getHardwareInfo()), false, limitedStorageInfo, true);
+                           CacheSettingsHelper::getGmmUsageType(allocation->getAllocationType(), false, productHelper), false, limitedStorageInfo, true);
         allocation->setGmm(gmm, handleId);
     }
 }
@@ -1521,7 +1524,6 @@ void DrmMemoryManager::cleanupBeforeReturn(const AllocationData &allocationData,
 }
 
 GraphicsAllocation *DrmMemoryManager::allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
     std::unique_ptr<Gmm> gmm;
     size_t sizeAligned = 0;
@@ -1531,11 +1533,12 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalLocalDeviceMemory(const Al
 
     sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
     if (createSingleHandle) {
+        auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
         gmm = std::make_unique<Gmm>(gmmHelper,
                                     nullptr,
                                     sizeAligned,
                                     0u,
-                                    CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, *hwInfo),
+                                    CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper),
                                     allocationData.flags.preferCompressed,
                                     allocationData.storageInfo,
                                     true);
@@ -1615,12 +1618,12 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
             sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
         }
         if (createSingleHandle) {
-
+            auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
             gmm = std::make_unique<Gmm>(gmmHelper,
                                         nullptr,
                                         sizeAligned,
                                         0u,
-                                        CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, *hwInfo),
+                                        CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper),
                                         allocationData.flags.preferCompressed,
                                         allocationData.storageInfo,
                                         true);

@@ -1333,8 +1333,6 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
         return static_cast<uint64_t>(DebugManager.flags.OverridePatIndex.get());
     }
 
-    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
-
     if (!this->vmBindPatIndexProgrammingSupported) {
         return CommonConstants::unsupportedPatIndex;
     }
@@ -1343,7 +1341,7 @@ uint64_t Drm::getPatIndex(Gmm *gmm, AllocationType allocationType, CacheRegion c
     auto &productHelper = rootDeviceEnvironment.getProductHelper();
 
     GMM_RESOURCE_INFO *resourceInfo = nullptr;
-    GMM_RESOURCE_USAGE_TYPE usageType = CacheSettingsHelper::getGmmUsageType(allocationType, false, *hwInfo);
+    GMM_RESOURCE_USAGE_TYPE usageType = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper);
     bool cachable = !CacheSettingsHelper::isUncachedType(usageType);
     bool compressed = false;
 

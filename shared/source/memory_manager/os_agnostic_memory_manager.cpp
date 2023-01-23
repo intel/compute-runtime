@@ -115,11 +115,12 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryWithAlignment
         auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
         if (gfxCoreHelper.compressedBuffersSupported(*pHwInfo) &&
             allocationData.flags.preferCompressed) {
+            auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
             auto gmm = std::make_unique<Gmm>(rootDeviceEnvironment.getGmmHelper(),
                                              allocationData.hostPtr,
                                              sizeAligned,
                                              alignment,
-                                             CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, *pHwInfo),
+                                             CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper),
                                              true,
                                              allocationData.storageInfo,
                                              true);
@@ -170,11 +171,12 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemory64kb(const Al
     if (memoryAllocation) {
         static_cast<MemoryAllocation *>(memoryAllocation)->overrideMemoryPool(MemoryPool::System64KBPages);
         if (memoryAllocation->getDefaultGmm() == nullptr) {
+            auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
             auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
                                              allocationData.hostPtr,
                                              allocationDataAlign.size,
                                              allocationDataAlign.alignment,
-                                             CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, *hwInfo),
+                                             CacheSettingsHelper::getGmmUsageType(memoryAllocation->getAllocationType(), !!allocationData.flags.uncacheable, productHelper),
                                              allocationData.flags.preferCompressed,
                                              allocationData.storageInfo, true);
             memoryAllocation->setDefaultGmm(gmm.release());
@@ -391,13 +393,12 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalLocalDeviceMemory(c
     std::unique_ptr<Gmm> gmm;
     size_t sizeAligned64k = 0;
     sizeAligned64k = alignUp(allocationData.size, MemoryConstants::pageSize64k);
-
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
                                 nullptr,
                                 sizeAligned64k,
                                 MemoryConstants::pageSize64k,
-                                CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, *hwInfo),
+                                CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper),
                                 allocationData.flags.preferCompressed,
                                 allocationData.storageInfo,
                                 true);
@@ -424,10 +425,10 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalLocalDeviceMemory(c
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
     status = AllocationStatus::Error;
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr,
-                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, *hwInfo),
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper),
                                      allocationData.flags.preferCompressed, allocationData.storageInfo, true);
 
     GraphicsAllocation *alloc = nullptr;
@@ -447,10 +448,10 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocatePhysicalDeviceMemory(const 
 }
 
 GraphicsAllocation *OsAgnosticMemoryManager::allocateMemoryByKMD(const AllocationData &allocationData) {
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
 
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
     auto gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(), allocationData.hostPtr,
-                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, *hwInfo),
+                                     allocationData.size, 0u, CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper),
                                      allocationData.flags.preferCompressed, allocationData.storageInfo, true);
 
     GraphicsAllocation *alloc = nullptr;
@@ -596,12 +597,13 @@ GraphicsAllocation *OsAgnosticMemoryManager::allocateGraphicsMemoryInDevicePool(
             sizeAligned64k = alignUp(allocationData.size, MemoryConstants::pageSize64k);
             if (DebugManager.flags.RenderCompressedBuffersEnabled.get() &&
                 allocationData.flags.preferCompressed) {
-                auto hwInfo = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHardwareInfo();
+                auto &productHelper = executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getHelper<ProductHelper>();
+
                 gmm = std::make_unique<Gmm>(executionEnvironment.rootDeviceEnvironments[allocationData.rootDeviceIndex]->getGmmHelper(),
                                             allocationData.hostPtr,
                                             sizeAligned64k,
                                             MemoryConstants::pageSize64k,
-                                            CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, *hwInfo),
+                                            CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper),
                                             true,
                                             allocationData.storageInfo,
                                             true);

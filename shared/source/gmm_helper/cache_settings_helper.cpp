@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 
 namespace NEO {
 
-GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType allocationType, bool forceUncached, const HardwareInfo &hwInfo) {
+GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType allocationType, bool forceUncached, const ProductHelper &productHelper) {
     if (DebugManager.flags.ForceUncachedGmmUsageType.get()) {
         if ((1llu << (static_cast<int64_t>(allocationType) - 1)) & DebugManager.flags.ForceUncachedGmmUsageType.get()) {
             forceUncached = true;
@@ -24,12 +24,11 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getGmmUsageType(AllocationType
     if (forceUncached || DebugManager.flags.ForceAllResourcesUncached.get()) {
         return getDefaultUsageTypeWithCachingDisabled(allocationType);
     } else {
-        return getDefaultUsageTypeWithCachingEnabled(allocationType, hwInfo);
+        return getDefaultUsageTypeWithCachingEnabled(allocationType, productHelper);
     }
 }
 
-GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const HardwareInfo &hwInfo) {
-    const auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
+GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCachingEnabled(AllocationType allocationType, const ProductHelper &productHelper) {
 
     switch (allocationType) {
     case AllocationType::IMAGE:
@@ -62,7 +61,7 @@ GMM_RESOURCE_USAGE_TYPE_ENUM CacheSettingsHelper::getDefaultUsageTypeWithCaching
         return GMM_RESOURCE_USAGE_OCL_BUFFER;
     case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
     case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
-        if (productHelper->isDcFlushAllowed()) {
+        if (productHelper.isDcFlushAllowed()) {
             return getDefaultUsageTypeWithCachingDisabled(allocationType);
         }
         return GMM_RESOURCE_USAGE_OCL_BUFFER;

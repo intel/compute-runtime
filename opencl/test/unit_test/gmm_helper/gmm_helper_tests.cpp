@@ -840,12 +840,11 @@ TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedThenSetThisHwInfoToGmmHelper) {
 TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::COUNT); i++) {
         auto allocationType = static_cast<AllocationType>(i);
 
         for (auto forceUncached : {true, false}) {
-            auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached, *defaultHwInfo);
+            auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, forceUncached, productHelper);
             auto expectedUsage = GMM_RESOURCE_USAGE_UNKNOWN;
 
             switch (allocationType) {
@@ -880,11 +879,13 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
 TEST(GmmTest, givenForceAllResourcesUncachedFlagSetWhenGettingUsageTypeThenReturnUncached) {
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceAllResourcesUncached.set(true);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::COUNT); i++) {
         auto allocationType = static_cast<AllocationType>(i);
 
-        auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, false, *defaultHwInfo);
+        auto usage = CacheSettingsHelper::getGmmUsageType(allocationType, false, productHelper);
         auto expectedUsage = GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED;
 
         if (allocationType == AllocationType::PREEMPTION) {
@@ -920,24 +921,31 @@ TEST(GmmTest, givenUsageTypeWhenAskingIfUncachableThenReturnCorrectValue) {
 TEST(GmmTest, givenInternalHeapOrLinearStreamWhenDebugFlagIsSetThenReturnUncachedType) {
     DebugManagerStateRestore restore;
     DebugManager.flags.DisableCachingForHeaps.set(true);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
-    auto usage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, false, *defaultHwInfo);
+    auto usage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, false, productHelper);
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, usage);
 
-    usage = CacheSettingsHelper::getGmmUsageType(AllocationType::LINEAR_STREAM, false, *defaultHwInfo);
+    usage = CacheSettingsHelper::getGmmUsageType(AllocationType::LINEAR_STREAM, false, productHelper);
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_SYSTEM_MEMORY_BUFFER_CACHELINE_MISALIGNED, usage);
 }
 
 TEST(GmmTest, givenConstSurfaceWhenDebugFlagIsSetThenReturnUncachedType) {
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceL1Caching.set(false);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED,
-              CacheSettingsHelper::getGmmUsageType(AllocationType::CONSTANT_SURFACE, false, *defaultHwInfo));
+              CacheSettingsHelper::getGmmUsageType(AllocationType::CONSTANT_SURFACE, false, productHelper));
 }
 
 TEST(GmmTest, givenUncachedDebugFlagMaskSetWhenAskingForUsageTypeThenReturnUncached) {
     DebugManagerStateRestore restore;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
     constexpr int64_t bufferMask = 1 << (static_cast<int64_t>(AllocationType::BUFFER) - 1);
     constexpr int64_t imageMask = 1 << (static_cast<int64_t>(AllocationType::IMAGE) - 1);
@@ -945,19 +953,20 @@ TEST(GmmTest, givenUncachedDebugFlagMaskSetWhenAskingForUsageTypeThenReturnUncac
     DebugManager.flags.ForceUncachedGmmUsageType.set(bufferMask | imageMask);
 
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED,
-              CacheSettingsHelper::getGmmUsageType(AllocationType::BUFFER, false, *defaultHwInfo));
+              CacheSettingsHelper::getGmmUsageType(AllocationType::BUFFER, false, productHelper));
 
     EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED,
-              CacheSettingsHelper::getGmmUsageType(AllocationType::IMAGE, false, *defaultHwInfo));
+              CacheSettingsHelper::getGmmUsageType(AllocationType::IMAGE, false, productHelper));
 
     EXPECT_NE(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED,
-              CacheSettingsHelper::getGmmUsageType(AllocationType::BUFFER_HOST_MEMORY, false, *defaultHwInfo));
+              CacheSettingsHelper::getGmmUsageType(AllocationType::BUFFER_HOST_MEMORY, false, productHelper));
 }
 
 TEST(GmmTest, givenAllocationForStatefulAccessWhenDebugFlagIsSetThenReturnUncachedType) {
     DebugManagerStateRestore restore;
     DebugManager.flags.DisableCachingForStatefulBufferAccess.set(true);
-
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     for (auto allocType : {AllocationType::BUFFER,
                            AllocationType::BUFFER_HOST_MEMORY,
                            AllocationType::EXTERNAL_HOST_PTR,
@@ -970,7 +979,7 @@ TEST(GmmTest, givenAllocationForStatefulAccessWhenDebugFlagIsSetThenReturnUncach
                            AllocationType::SVM_ZERO_COPY,
                            AllocationType::UNIFIED_SHARED_MEMORY}) {
 
-        EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, CacheSettingsHelper::getGmmUsageType(allocType, false, *defaultHwInfo));
+        EXPECT_EQ(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED, CacheSettingsHelper::getGmmUsageType(allocType, false, productHelper));
     }
 }
 

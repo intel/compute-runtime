@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,9 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
 
     args.stateBaseAddressCmd->setBindlessSamplerStateBaseAddressModifyEnable(true);
 
-    auto heapResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get(), *args.gmmHelper->getHardwareInfo());
+    auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().template getHelper<ProductHelper>();
+
+    auto heapResourceUsage = CacheSettingsHelper::getGmmUsageType(AllocationType::INTERNAL_HEAP, DebugManager.flags.DisableCachingForHeaps.get(), productHelper);
     auto heapMocsValue = args.gmmHelper->getMOCS(heapResourceUsage);
 
     args.stateBaseAddressCmd->setSurfaceStateMemoryObjectControlState(heapMocsValue);
