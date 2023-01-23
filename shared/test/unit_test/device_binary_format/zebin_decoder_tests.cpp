@@ -5570,15 +5570,14 @@ TEST(ValidateTargetDeviceTests, givenMismatchedGfxCoreWhenValidatingTargetDevice
 TEST(ValidateTargetDeviceTests, givenSteppingBiggerThanMaxHwRevisionWhenValidatingTargetDeviceThenReturnFalse) {
     TargetDevice targetDevice;
     targetDevice.maxPointerSizeInBytes = 8u;
-    auto aotConfigValue = 0x00001234u;
-    targetDevice.aotConfig.value = aotConfigValue;
+    targetDevice.coreFamily = renderCoreFamily;
 
     targetDevice.stepping = 2u;
     Elf::ZebinTargetFlags targetMetadata;
     targetMetadata.validateRevisionId = true;
     targetMetadata.maxHwRevisionId = 1u;
 
-    auto res = validateTargetDevice(targetDevice, Elf::EI_CLASS_64, IGFX_UNKNOWN, IGFX_UNKNOWN_CORE, static_cast<AOT::PRODUCT_CONFIG>(aotConfigValue), targetMetadata);
+    auto res = validateTargetDevice(targetDevice, Elf::EI_CLASS_64, IGFX_UNKNOWN, renderCoreFamily, AOT::UNKNOWN_ISA, targetMetadata);
     EXPECT_FALSE(res);
 }
 

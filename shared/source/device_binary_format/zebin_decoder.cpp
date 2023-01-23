@@ -48,14 +48,14 @@ bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ELF_IDENTIFIER_
         return false;
     }
 
-    if (gfxCore == IGFX_UNKNOWN_CORE && productFamily == IGFX_UNKNOWN && productConfig == AOT::UNKNOWN_ISA) {
+    if (productConfig != AOT::UNKNOWN_ISA) {
+        return targetDevice.aotConfig.value == productConfig;
+    }
+
+    if (gfxCore == IGFX_UNKNOWN_CORE && productFamily == IGFX_UNKNOWN) {
         return false;
     }
-    if (productConfig != AOT::UNKNOWN_ISA) {
-        if (targetDevice.aotConfig.value != productConfig) {
-            return false;
-        }
-    }
+
     if (gfxCore != IGFX_UNKNOWN_CORE) {
         if (targetDevice.coreFamily != gfxCore) {
             return false;
