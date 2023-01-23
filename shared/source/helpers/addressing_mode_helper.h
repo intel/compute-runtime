@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,10 +10,10 @@
 
 namespace NEO {
 struct KernelInfo;
-struct HardwareInfo;
+struct RootDeviceEnvironment;
 
 namespace AddressingModeHelper {
-bool failBuildProgramWithStatefulAccess(const HardwareInfo &hwInfo);
+bool failBuildProgramWithStatefulAccess(const RootDeviceEnvironment &rootDeviceEnvironment);
 bool containsStatefulAccess(const std::vector<KernelInfo *> &kernelInfos);
 
 } // namespace AddressingModeHelper

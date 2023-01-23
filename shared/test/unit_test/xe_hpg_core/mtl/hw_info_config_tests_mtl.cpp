@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hpg_core/hw_cmds_mtl.h"
@@ -155,7 +157,8 @@ MTLTEST_F(MtlProductHelper, givenMtlNotLpgWhenIsBFloat16ConversionSupportedIsCal
 
     HardwareIpVersion aotConfig = {0};
     aotConfig.architecture = notLpgArchitecture;
-    CompilerProductHelper::get(hwInfo.platform.eProductFamily)->setProductConfigForHwInfo(hwInfo, aotConfig);
+    auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+    compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
 
     EXPECT_TRUE(productHelper->isBFloat16ConversionSupported(hwInfo));
 }
@@ -168,7 +171,8 @@ MTLTEST_F(MtlProductHelper, givenMtlLpgWhenIsBFloat16ConversionSupportedIsCalled
     HardwareIpVersion aotConfig = {0};
     aotConfig.architecture = lpgArchitecture;
     aotConfig.release = lpgRelease;
-    CompilerProductHelper::get(hwInfo.platform.eProductFamily)->setProductConfigForHwInfo(hwInfo, aotConfig);
+    auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+    compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
 
     EXPECT_FALSE(productHelper->isBFloat16ConversionSupported(hwInfo));
 }

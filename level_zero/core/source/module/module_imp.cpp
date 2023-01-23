@@ -586,7 +586,7 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
 
     auto failBuildProgram = containsStatefulAccess &&
                             isUserKernel &&
-                            NEO::AddressingModeHelper::failBuildProgramWithStatefulAccess(hwInfo);
+                            NEO::AddressingModeHelper::failBuildProgramWithStatefulAccess(neoDevice->getRootDeviceEnvironment());
 
     if (failBuildProgram) {
         result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;

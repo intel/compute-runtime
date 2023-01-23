@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,18 +8,19 @@
 #include "addressing_mode_helper.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/program/kernel_info.h"
 
 namespace NEO::AddressingModeHelper {
 
-bool failBuildProgramWithStatefulAccess(const HardwareInfo &hwInfo) {
+bool failBuildProgramWithStatefulAccess(const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto failBuildProgram = false;
     if (NEO::DebugManager.flags.FailBuildProgramWithStatefulAccess.get() != -1) {
         failBuildProgram = static_cast<bool>(NEO::DebugManager.flags.FailBuildProgramWithStatefulAccess.get());
     }
 
-    const auto &compilerProductHelper = *CompilerProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     auto forceToStatelessRequired = compilerProductHelper.isForceToStatelessRequired();
 
     return failBuildProgram && forceToStatelessRequired;

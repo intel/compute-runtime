@@ -38,7 +38,7 @@ HWTEST_F(CompilerProductHelperFixture, WhenAdjustHwInfoForIgcIsCalledThenHwInfoN
 using IsBeforeXeHpc = IsBeforeGfxCore<IGFX_XE_HPC_CORE>;
 
 HWTEST2_F(CompilerProductHelperFixture, GivenProductBeforeXeHpcWhenIsForceToStatelessRequiredThenFalseIsReturned, IsBeforeXeHpc) {
-    auto &compilerProductHelper = *CompilerProductHelper::get(productFamily);
+    auto &compilerProductHelper = getHelper<CompilerProductHelper>();
     EXPECT_FALSE(compilerProductHelper.isForceToStatelessRequired());
 }
 

@@ -168,7 +168,7 @@ cl_int Program::build(
 
         auto failBuildProgram = (containsStatefulAccess &&
                                  isUserKernel &&
-                                 AddressingModeHelper::failBuildProgramWithStatefulAccess(clDevices[0]->getHardwareInfo()));
+                                 AddressingModeHelper::failBuildProgramWithStatefulAccess(clDevices[0]->getRootDeviceEnvironment()));
 
         if (failBuildProgram) {
             retVal = CL_BUILD_PROGRAM_FAILURE;

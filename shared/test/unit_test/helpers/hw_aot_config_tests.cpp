@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/unit_test/fixtures/product_config_fixture.h"
 
 using namespace NEO;
@@ -33,7 +34,9 @@ HWTEST2_P(ProductConfigHwInfoBadRevisionTests, givenAotConfigWithIncorrectRevisi
 HWTEST2_P(ProductConfigHwInfoTests, givenAotConfigWhenSetHwInfoGmdIdThenCorrectValueIsSet, IsAtLeastMtl) {
     HardwareIpVersion aotConfig = {0};
     aotConfig.value = productConfig;
-    CompilerProductHelper::get(productFamily)->setProductConfigForHwInfo(hwInfo, aotConfig);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &compilerProductHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+    compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
     EXPECT_EQ(hwInfo.ipVersion.architecture, aotConfig.architecture);
     EXPECT_EQ(hwInfo.ipVersion.release, aotConfig.release);
     EXPECT_EQ(hwInfo.ipVersion.revision, aotConfig.revision);
