@@ -39,7 +39,7 @@ TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithUnifiedAuxFlagsWhenCreatingT
     ASSERT_NE(nullptr, image.get());
 
     const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = context->getDevice(0)->getProductHelper();
     uint32_t expectedMapAuxGpuVaCalls = productHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
@@ -63,7 +63,7 @@ TYPED_TEST_P(D3DAuxTests, given2dSharableTextureWithUnifiedAuxFlagsWhenFailOnAux
     ASSERT_NE(nullptr, image.get());
 
     const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = context->getDevice(0)->getProductHelper();
     uint32_t expectedMapAuxGpuVaCalls = productHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
@@ -102,7 +102,7 @@ TYPED_TEST_P(D3DAuxTests, given2dNonSharableTextureWithUnifiedAuxFlagsWhenCreati
     ASSERT_NE(nullptr, image.get());
 
     const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = context->getDevice(0)->getProductHelper();
     uint32_t expectedMapAuxGpuVaCalls = productHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
@@ -123,7 +123,7 @@ TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenCreatingT
     ASSERT_NE(nullptr, image.get());
 
     const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = context->getDevice(0)->getProductHelper();
     uint32_t expectedMapAuxGpuVaCalls = productHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
@@ -144,7 +144,7 @@ TYPED_TEST_P(D3DAuxTests, given3dSharableTextureWithUnifiedAuxFlagsWhenFailOnAux
     ASSERT_NE(nullptr, image.get());
 
     const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = context->getDevice(0)->getProductHelper();
     uint32_t expectedMapAuxGpuVaCalls = productHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);
@@ -179,7 +179,7 @@ TYPED_TEST_P(D3DAuxTests, given3dNonSharableTextureWithUnifiedAuxFlagsWhenCreati
     ASSERT_NE(nullptr, image.get());
 
     const auto &hwInfo = context->getDevice(0)->getHardwareInfo();
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = context->getDevice(0)->getProductHelper();
     uint32_t expectedMapAuxGpuVaCalls = productHelper.isPageTableManagerSupported(hwInfo) ? 1 : 0;
 
     EXPECT_EQ(expectedMapAuxGpuVaCalls, mockMM->mapAuxGpuVACalled);

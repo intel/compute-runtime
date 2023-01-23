@@ -220,7 +220,7 @@ void GfxCoreHelperHw<Family>::setL1CachePolicy(bool useL1Cache, typename Family:
 }
 
 template <>
-void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const {
+void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     if (properties.allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER || properties.allocationType == AllocationType::COMMAND_BUFFER) {
         allocationData.flags.useSystemMemory = false;
     }
@@ -251,7 +251,9 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
     if (allocationData.flags.requiresCpuAccess && !allocationData.flags.useSystemMemory &&
         (allocationData.storageInfo.getMemoryBanks() > 1)) {
 
-        bool applyWa = ProductHelper::get(hwInfo.platform.eProductFamily)->isTilePlacementResourceWaRequired(hwInfo);
+        auto &productHeler = rootDeviceEnvironment.getHelper<ProductHelper>();
+        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+        bool applyWa = productHeler.isTilePlacementResourceWaRequired(hwInfo);
 
         if (applyWa) {
             allocationData.storageInfo.memoryBanks = 1; // force Tile0

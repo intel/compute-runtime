@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ class MockGfxCoreHelperWithLocalMemory : public GfxCoreHelperHw<GfxFamily> {
 
 template <typename GfxFamily>
 struct MockGfxCoreHelperHwWithSetIsLockable : public GfxCoreHelperHw<GfxFamily> {
-    void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const HardwareInfo &hwInfo) const override {
+    void setExtraAllocationData(AllocationData &allocationData, const AllocationProperties &properties, const RootDeviceEnvironment &rootDeviceEnvironment) const override {
         allocationData.storageInfo.isLockable = setIsLockable;
     }
     bool setIsLockable = true;

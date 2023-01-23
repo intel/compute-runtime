@@ -148,10 +148,12 @@ using Gen12lpCreateBufferTest = ::testing::Test;
 GEN12LPTEST_F(Gen12lpCreateBufferTest, WhenCreatingBufferWithCopyHostPtrThenDontUseBlitOperation) {
     uint32_t hostPtr = 0;
     auto rootDeviceIndex = 1u;
+
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.blitterOperationsSupported = true;
-
-    EXPECT_FALSE(ProductHelper::get(hwInfo.platform.eProductFamily)->isBlitterFullySupported(hwInfo));
+    MockExecutionEnvironment mockExecutionEnvironment{&hwInfo, false, 2};
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    EXPECT_FALSE(productHelper.isBlitterFullySupported(hwInfo));
     std::unique_ptr<MockClDevice> newDevice = std::make_unique<MockClDevice>(MockClDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, rootDeviceIndex));
     std::unique_ptr<BcsMockContext> newBcsMockContext = std::make_unique<BcsMockContext>(newDevice.get());
 

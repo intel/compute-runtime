@@ -838,7 +838,8 @@ TEST(GmmTest, givenHwInfoWhenDeviceIsCreatedThenSetThisHwInfoToGmmHelper) {
 }
 
 TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
-    const auto productHelper = ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
     for (uint32_t i = 0; i < static_cast<uint32_t>(AllocationType::COUNT); i++) {
         auto allocationType = static_cast<AllocationType>(i);
@@ -863,8 +864,8 @@ TEST(GmmTest, givenAllocationTypeWhenGettingUsageTypeThenReturnCorrectValue) {
                 break;
             case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
             case AllocationType::TIMESTAMP_PACKET_TAG_BUFFER:
-                expectedUsage = (forceUncached || productHelper->isDcFlushAllowed()) ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED
-                                                                                     : GMM_RESOURCE_USAGE_OCL_BUFFER;
+                expectedUsage = (forceUncached || productHelper.isDcFlushAllowed()) ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED
+                                                                                    : GMM_RESOURCE_USAGE_OCL_BUFFER;
                 break;
             default:
                 expectedUsage = forceUncached ? GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED : GMM_RESOURCE_USAGE_OCL_BUFFER;

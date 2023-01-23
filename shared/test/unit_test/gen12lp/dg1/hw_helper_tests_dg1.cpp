@@ -5,12 +5,14 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen12lp/hw_cmds_dg1.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
@@ -64,7 +66,7 @@ DG1TEST_F(GfxCoreHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationD
     AllocationProperties allocProperties(0, 1, AllocationType::BUFFER, {});
     allocData.storageInfo.isLockable = false;
     allocProperties.flags.shareable = false;
-    gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
+    gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, pDevice->getRootDeviceEnvironment());
     EXPECT_TRUE(allocData.storageInfo.isLockable);
 }
 
@@ -75,6 +77,6 @@ DG1TEST_F(GfxCoreHelperTestDg1, givenBufferAllocationTypeWhenSetExtraAllocationD
     AllocationProperties allocProperties(0, 1, AllocationType::BUFFER, {});
     allocData.storageInfo.isLockable = false;
     allocProperties.flags.shareable = true;
-    gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
+    gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, pDevice->getRootDeviceEnvironment());
     EXPECT_FALSE(allocData.storageInfo.isLockable);
 }

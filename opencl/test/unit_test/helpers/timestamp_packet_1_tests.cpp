@@ -184,7 +184,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
 
     size_t sizeForPipeControl = 0;
     const auto &hwInfo = device->getHardwareInfo();
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = device->getProductHelper();
     if (productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, mockCmdQHw->isOOQEnabled())) {
         sizeForPipeControl = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
     }

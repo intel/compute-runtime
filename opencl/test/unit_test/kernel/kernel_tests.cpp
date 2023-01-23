@@ -3142,7 +3142,7 @@ TEST_F(KernelTests, givenKernelWithSimdEqual1WhenKernelCreatedThenMaxWorgGroupSi
     auto deviceMaxWorkGroupSize = pDevice->getDeviceInfo().maxWorkGroupSize;
     auto deviceInfo = pClDevice->getDevice().getDeviceInfo();
 
-    auto &productHelper = *ProductHelper::get(kernel->getHardwareInfo().platform.eProductFamily);
+    auto &productHelper = pClDevice->getProductHelper();
     auto maxThreadsPerWG = productHelper.getMaxThreadsForWorkgroupInDSSOrSS(kernel->getHardwareInfo(), static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice), static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice));
 
     EXPECT_LT(kernel->getMaxKernelWorkGroupSize(), deviceMaxWorkGroupSize);

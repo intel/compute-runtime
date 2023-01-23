@@ -104,6 +104,6 @@ DG2TEST_F(GfxCoreHelperTests, givenAllocationTypeInternalHeapWhenSetExtraAllocat
     AllocationData allocData;
     allocData.flags.useSystemMemory = false;
 
-    gfxCoreHelper.setExtraAllocationData(allocData, singleTileAllocProperties, hwInfo);
+    gfxCoreHelper.setExtraAllocationData(allocData, singleTileAllocProperties, pDevice->getRootDeviceEnvironment());
     EXPECT_TRUE(allocData.flags.useSystemMemory);
 }

@@ -525,7 +525,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.crossRootDeviceAccess = properties.flags.crossRootDeviceAccess;
     allocationData.flags.useSystemMemory |= MemoryPropertiesHelper::useSystemMemoryForCrossRootDeviceAccess(properties.flags.crossRootDeviceAccess);
 
-    helper.setExtraAllocationData(allocationData, properties, hwInfo);
+    helper.setExtraAllocationData(allocationData, properties, rootDeviceEnvironment);
     allocationData.flags.useSystemMemory |= properties.flags.forceSystemMemory;
 
     overrideAllocationData(allocationData, properties);

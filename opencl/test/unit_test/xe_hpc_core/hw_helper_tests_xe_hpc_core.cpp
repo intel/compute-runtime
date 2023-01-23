@@ -767,7 +767,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportI
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZeroThenForceTile0) {
     DebugManagerStateRestore restore;
 
-    HardwareInfo hwInfo = *defaultHwInfo;
+    HardwareInfo &hwInfo = *pClDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto &productHelper = getHelper<ProductHelper>();
 
@@ -793,7 +793,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZ
                 allocData.flags.requiresCpuAccess = true;
                 allocData.storageInfo.memoryBanks = originalMask;
 
-                gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, hwInfo);
+                gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, pClDevice->getRootDeviceEnvironment());
 
                 bool applyWa = (isBdA0 || (debugFlag == 1));
                 applyWa &= (debugFlag != 0);
@@ -809,7 +809,6 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenAllocatingOnNonTileZ
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCommandBufferAllocationWhenSetExtraAllocationDataThenUseSystemLocalMemoryOnlyForImplicitScalingCommandBuffers) {
-    HardwareInfo hwInfo = *defaultHwInfo;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
 
     constexpr DeviceBitfield singleTileBitfield = 0b0100;
@@ -821,10 +820,10 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenCommandBufferAllocationWhenS
     AllocationData allocData;
     allocData.flags.useSystemMemory = false;
 
-    gfxCoreHelper.setExtraAllocationData(allocData, singleTileAllocProperties, hwInfo);
+    gfxCoreHelper.setExtraAllocationData(allocData, singleTileAllocProperties, pDevice->getRootDeviceEnvironment());
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 
-    gfxCoreHelper.setExtraAllocationData(allocData, allTilesAllocProperties, hwInfo);
+    gfxCoreHelper.setExtraAllocationData(allocData, allTilesAllocProperties, pDevice->getRootDeviceEnvironment());
     EXPECT_FALSE(allocData.flags.useSystemMemory);
 }
 

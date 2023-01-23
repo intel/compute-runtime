@@ -106,7 +106,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocati
         allocData.flags.useSystemMemory = true;
         allocData.flags.requiresCpuAccess = false;
 
-        gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, *defaultHwInfo);
+        gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, pDevice->getRootDeviceEnvironment());
 
         if (defaultHwInfo->featureTable.flags.ftrLocalMemory &&
             (allocProperties.allocationType == AllocationType::COMMAND_BUFFER ||

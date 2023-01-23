@@ -1062,9 +1062,9 @@ HWTEST_F(DeviceGetCapsTest, givenDisabledFtrPooledEuWhenCalculatingMaxEuPerSSThe
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto simdSizeUsed = gfxCoreHelper.getMinimalSIMDSize();
 
-    auto productHelper = ProductHelper::get(myHwInfo.platform.eProductFamily);
-    auto expectedMaxWGS = productHelper->getMaxThreadsForWorkgroupInDSSOrSS(myHwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice),
-                                                                            static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) *
+    auto &productHelper = device->getProductHelper();
+    auto expectedMaxWGS = productHelper.getMaxThreadsForWorkgroupInDSSOrSS(myHwInfo, static_cast<uint32_t>(deviceInfo.maxNumEUsPerSubSlice),
+                                                                           static_cast<uint32_t>(deviceInfo.maxNumEUsPerDualSubSlice)) *
                           simdSizeUsed;
 
     expectedMaxWGS = std::min(Math::prevPowerOfTwo(expectedMaxWGS), 1024u);
