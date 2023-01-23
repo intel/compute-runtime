@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -66,7 +66,7 @@ void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &com
         }
         this->lastMediaSamplerConfig = pipelineSelectArgs.mediaSamplerRequired;
         this->lastSystolicPipelineSelectMode = pipelineSelectArgs.systolicPipelineSelectMode;
-        this->streamProperties.pipelineSelect.setProperties(true, this->lastMediaSamplerConfig, this->lastSystolicPipelineSelectMode, hwInfo);
+        this->streamProperties.pipelineSelect.setProperties(true, this->lastMediaSamplerConfig, this->lastSystolicPipelineSelectMode, peekRootDeviceEnvironment());
     }
 }
 

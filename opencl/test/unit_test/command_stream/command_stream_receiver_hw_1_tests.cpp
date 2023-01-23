@@ -162,7 +162,7 @@ HWTEST_F(UltCommandStreamReceiverTest, givenPreambleSentAndThreadArbitrationPoli
 
     auto actualDifferenceForPreamble = policyChangedPreamble - policyNotChangedPreamble;
     auto actualDifferenceForFlush = policyChangedFlush - policyNotChangedFlush;
-    auto expectedDifference = EncodeComputeMode<FamilyType>::getCmdSizeForComputeMode(*defaultHwInfo, false, commandStreamReceiver.isRcs());
+    auto expectedDifference = EncodeComputeMode<FamilyType>::getCmdSizeForComputeMode(pDevice->getRootDeviceEnvironment(), false, commandStreamReceiver.isRcs());
     EXPECT_EQ(0u, actualDifferenceForPreamble);
     EXPECT_EQ(expectedDifference, actualDifferenceForFlush);
 }

@@ -611,7 +611,7 @@ bool ProductHelperHw<gfxProduct>::getStateBaseAddressPropertyBindingTablePoolBas
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-void ProductHelperHw<gfxProduct>::fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) const {
+void ProductHelperHw<gfxProduct>::fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport) const {
     propertiesSupport.globalAtomics = getStateBaseAddressPropertyGlobalAtomicsSupport();
     propertiesSupport.statelessMocs = getStateBaseAddressPropertyStatelessMocsSupport();
     propertiesSupport.bindingTablePoolBaseAddress = getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport();

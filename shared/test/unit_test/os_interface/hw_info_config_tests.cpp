@@ -525,7 +525,7 @@ HWTEST_F(ProductHelperTest, WhenFillingPipelineSelectPropertiesSupportThenExpect
 HWTEST_F(ProductHelperTest, WhenFillingStateBaseAddressPropertiesSupportThenExpectUseCorrectGetters) {
     StateBaseAddressPropertiesSupport stateBaseAddressPropertiesSupport = {};
 
-    productHelper->fillStateBaseAddressPropertiesSupportStructure(stateBaseAddressPropertiesSupport, pInHwInfo);
+    productHelper->fillStateBaseAddressPropertiesSupportStructure(stateBaseAddressPropertiesSupport);
     EXPECT_EQ(productHelper->getStateBaseAddressPropertyGlobalAtomicsSupport(), stateBaseAddressPropertiesSupport.globalAtomics);
     EXPECT_EQ(productHelper->getStateBaseAddressPropertyStatelessMocsSupport(), stateBaseAddressPropertiesSupport.statelessMocs);
     EXPECT_EQ(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport(), stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress);

@@ -51,7 +51,7 @@ void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &com
         PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, hwInfo);
         this->lastMediaSamplerConfig = pipelineSelectArgs.mediaSamplerRequired;
         this->lastSystolicPipelineSelectMode = pipelineSelectArgs.systolicPipelineSelectMode;
-        this->streamProperties.pipelineSelect.setProperties(true, this->lastMediaSamplerConfig, this->lastSystolicPipelineSelectMode, hwInfo);
+        this->streamProperties.pipelineSelect.setProperties(true, this->lastMediaSamplerConfig, this->lastSystolicPipelineSelectMode, peekRootDeviceEnvironment());
     }
 }
 

@@ -182,7 +182,7 @@ class ProductHelper {
     virtual void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) const = 0;
     virtual void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) const = 0;
     virtual void fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) const = 0;
-    virtual void fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) const = 0;
+    virtual void fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport) const = 0;
     virtual uint32_t getDefaultRevisionId() const = 0;
 
     virtual bool isMultiContextResourceDeferDeletionSupported() const = 0;
@@ -330,7 +330,7 @@ class ProductHelperHw : public ProductHelper {
     void fillScmPropertiesSupportStructure(StateComputeModePropertiesSupport &propertiesSupport) const override;
     void fillFrontEndPropertiesSupportStructure(FrontEndPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) const override;
     void fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) const override;
-    void fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) const override;
+    void fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport) const override;
     uint32_t getDefaultRevisionId() const override;
 
     bool isMultiContextResourceDeferDeletionSupported() const override;

@@ -333,7 +333,7 @@ struct EncodeStoreMMIO {
 
 template <typename GfxFamily>
 struct EncodeComputeMode {
-    static size_t getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs);
+    static size_t getCmdSizeForComputeMode(const RootDeviceEnvironment &rootDeviceEnvironment, bool hasSharedHandles, bool isRcs);
     static void programComputeModeCommandWithSynchronization(LinearStream &csr, StateComputeModeProperties &properties,
                                                              const PipelineSelectArgs &args, bool hasSharedHandles,
                                                              const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlush, LogicalStateHelper *logicalStateHelper);

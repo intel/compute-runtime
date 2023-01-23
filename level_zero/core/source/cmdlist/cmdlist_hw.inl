@@ -2348,7 +2348,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
     if (!containsAnyKernel) {
         requiredStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, true, -1, rootDeviceEnvironment);
-        requiredStreamState.pipelineSelect.setProperties(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, hwInfo);
+        requiredStreamState.pipelineSelect.setProperties(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
         if (this->stateComputeModeTracking) {
             requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
             finalStreamState = requiredStreamState;
@@ -2361,7 +2361,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
 
     auto logicalStateHelperBlock = !getLogicalStateHelper();
 
-    finalStreamState.pipelineSelect.setProperties(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, hwInfo);
+    finalStreamState.pipelineSelect.setProperties(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
     if (this->pipelineSelectStateTracking && finalStreamState.pipelineSelect.isDirty() && logicalStateHelperBlock) {
         NEO::PipelineSelectArgs pipelineSelectArgs;
         pipelineSelectArgs.systolicPipelineSelectMode = kernelAttributes.flags.usesSystolicPipelineSelectMode;

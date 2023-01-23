@@ -314,7 +314,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListFrontEndIfDirty(
 
     if (frontEndTrackingEnabled()) {
         csrState.frontEndState.setProperties(cmdListRequired.frontEndState);
-        csrState.frontEndState.setPropertySingleSliceDispatchCcsMode(ctx.engineInstanced, device->getHwInfo());
+        csrState.frontEndState.setPropertySingleSliceDispatchCcsMode(ctx.engineInstanced, device->getNEODevice()->getRootDeviceEnvironment());
 
         shouldProgramVfe |= csrState.frontEndState.isDirty();
     }
@@ -391,7 +391,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandL
     size_t estimatedSize = 0;
 
     csrStateCopy.frontEndState.setProperties(cmdListRequired.frontEndState);
-    csrStateCopy.frontEndState.setPropertySingleSliceDispatchCcsMode(engineInstanced, device->getHwInfo());
+    csrStateCopy.frontEndState.setPropertySingleSliceDispatchCcsMode(engineInstanced, device->getNEODevice()->getRootDeviceEnvironment());
     if (isFrontEndStateDirty || csrStateCopy.frontEndState.isDirty()) {
         estimatedSize += singleFrontEndCmdSize;
         isFrontEndStateDirty = false;
@@ -1191,7 +1191,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateScmCmdSizeForMultipleCommandLists(
     size_t estimatedSize = 0;
 
     bool isRcs = this->getCsr()->isRcs();
-    size_t singleScmCmdSize = NEO::EncodeComputeMode<GfxFamily>::getCmdSizeForComputeMode(device->getHwInfo(), false, isRcs);
+    size_t singleScmCmdSize = NEO::EncodeComputeMode<GfxFamily>::getCmdSizeForComputeMode(device->getNEODevice()->getRootDeviceEnvironment(), false, isRcs);
 
     csrStateCopy.stateComputeMode.setProperties(cmdListRequired.stateComputeMode);
     if (csrStateCopy.stateComputeMode.isDirty()) {

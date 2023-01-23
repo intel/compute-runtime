@@ -1581,7 +1581,7 @@ bool CommandStreamReceiverHw<GfxFamily>::hasSharedHandles() {
 
 template <typename GfxFamily>
 size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
-    return EncodeComputeMode<GfxFamily>::getCmdSizeForComputeMode(this->peekHwInfo(), hasSharedHandles(), isRcs());
+    return EncodeComputeMode<GfxFamily>::getCmdSizeForComputeMode(this->peekRootDeviceEnvironment(), hasSharedHandles(), isRcs());
 }
 
 template <typename GfxFamily>

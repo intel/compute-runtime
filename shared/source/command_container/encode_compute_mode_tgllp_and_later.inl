@@ -13,9 +13,10 @@
 namespace NEO {
 
 template <typename Family>
-size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs) {
+size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvironment &rootDeviceEnvironment, bool hasSharedHandles, bool isRcs) {
     size_t size = 0;
-    auto &productHelper = (*ProductHelper::get(hwInfo.platform.eProductFamily));
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
     std::ignore = isExtendedWARequired;
 

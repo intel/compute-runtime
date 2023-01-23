@@ -34,7 +34,7 @@ void EncodeSurfaceState<Family>::setFlagsForMediaCompression(R_SURFACE_STATE *su
     }
 }
 template <typename Family>
-size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs) {
+size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvironment &rootDeviceEnvironment, bool hasSharedHandles, bool isRcs) {
     return sizeof(typename Family::PIPE_CONTROL) + sizeof(typename Family::MI_LOAD_REGISTER_IMM);
 }
 

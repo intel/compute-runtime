@@ -132,9 +132,10 @@ void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUF
     }
 }
 
-void FrontEndProperties::setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice, const HardwareInfo &hwInfo) {
+void FrontEndProperties::setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (this->propertiesSupportLoaded == false) {
-        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
         productHelper.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport, hwInfo);
         this->propertiesSupportLoaded = true;
     }
@@ -165,10 +166,11 @@ void FrontEndProperties::clearIsDirty() {
     computeDispatchAllWalkerEnable.isDirty = false;
 }
 
-void PipelineSelectProperties::setProperties(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const HardwareInfo &hwInfo) {
+void PipelineSelectProperties::setProperties(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (this->propertiesSupportLoaded == false) {
-        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
-        productHelper.fillPipelineSelectPropertiesSupportStructure(this->pipelineSelectPropertiesSupport, hwInfo);
+        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+
+        productHelper.fillPipelineSelectPropertiesSupportStructure(this->pipelineSelectPropertiesSupport, *rootDeviceEnvironment.getHardwareInfo());
         this->propertiesSupportLoaded = true;
     }
 
@@ -208,10 +210,10 @@ void PipelineSelectProperties::clearIsDirty() {
 void StateBaseAddressProperties::setProperties(bool globalAtomics, int32_t statelessMocs, int64_t bindingTablePoolBaseAddress,
                                                int64_t surfaceStateBaseAddress, size_t surfaceStateSize,
                                                int64_t dynamicStateBaseAddress, size_t dynamicStateSize,
-                                               int64_t indirectObjectBaseAddress, size_t indirectObjectSize, const HardwareInfo &hwInfo) {
+                                               int64_t indirectObjectBaseAddress, size_t indirectObjectSize, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (this->propertiesSupportLoaded == false) {
-        auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
-        productHelper.fillStateBaseAddressPropertiesSupportStructure(this->stateBaseAddressPropertiesSupport, hwInfo);
+        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+        productHelper.fillStateBaseAddressPropertiesSupportStructure(this->stateBaseAddressPropertiesSupport);
         this->propertiesSupportLoaded = true;
     }
 

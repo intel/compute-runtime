@@ -35,7 +35,7 @@ void EncodeSurfaceState<Family>::setFlagsForMediaCompression(R_SURFACE_STATE *su
 }
 
 template <typename Family>
-size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const HardwareInfo &hwInfo, bool hasSharedHandles, bool isRcs) {
+size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvironment &rootDeviceEnvironment, bool hasSharedHandles, bool isRcs) {
     return 0u;
 }
 

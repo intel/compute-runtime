@@ -452,7 +452,7 @@ HWTEST2_F(CommandEncodeStatesTest, whenGetCmdSizeForComputeModeThenCorrectValueI
     if constexpr (TestTraits<gfxCoreFamily>::programComputeModeCommandProgramsNonCoherent) {
         expectedScmSize += sizeof(MI_LOAD_REGISTER_IMM);
     }
-    EXPECT_EQ(expectedScmSize, EncodeComputeMode<FamilyType>::getCmdSizeForComputeMode(*defaultHwInfo, false, false));
+    EXPECT_EQ(expectedScmSize, EncodeComputeMode<FamilyType>::getCmdSizeForComputeMode(this->pDevice->getRootDeviceEnvironment(), false, false));
 
     UltDeviceFactory deviceFactory{1, 0};
     auto &csr = deviceFactory.rootDevices[0]->getUltCommandStreamReceiver<FamilyType>();

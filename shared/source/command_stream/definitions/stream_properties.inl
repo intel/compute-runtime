@@ -60,7 +60,7 @@ struct FrontEndProperties {
 
     void setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment);
     void setProperties(const FrontEndProperties &properties);
-    void setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice, const HardwareInfo &hwInfo);
+    void setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment);
     bool isDirty() const;
 
   protected:
@@ -81,7 +81,7 @@ struct PipelineSelectProperties {
     StreamProperty mediaSamplerDopClockGate{};
     StreamProperty systolicMode{};
 
-    void setProperties(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const HardwareInfo &hwInfo);
+    void setProperties(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const RootDeviceEnvironment &rootDeviceEnvironment);
     void setProperties(const PipelineSelectProperties &properties);
     bool isDirty() const;
 
@@ -112,7 +112,7 @@ struct StateBaseAddressProperties {
     void setProperties(bool globalAtomics, int32_t statelessMocs, int64_t bindingTablePoolBaseAddress,
                        int64_t surfaceStateBaseAddress, size_t surfaceStateSize,
                        int64_t dynamicStateBaseAddress, size_t dynamicStateSize,
-                       int64_t indirectObjectBaseAddress, size_t indirectObjectSize, const HardwareInfo &hwInfo);
+                       int64_t indirectObjectBaseAddress, size_t indirectObjectSize, const RootDeviceEnvironment &rootDeviceEnvironment);
     void setProperties(const StateBaseAddressProperties &properties);
     bool isDirty() const;
 
