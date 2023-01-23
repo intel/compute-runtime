@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/os_interface/driver_info.h"
+
 #include "level_zero/tools/test/unit_tests/sources/sysman/ecc/linux/mock_ecc.h"
 
 extern bool sysmanUltsEnable;

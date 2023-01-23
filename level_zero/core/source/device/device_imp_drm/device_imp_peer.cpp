@@ -8,6 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/source/utilities/directory.h"
 

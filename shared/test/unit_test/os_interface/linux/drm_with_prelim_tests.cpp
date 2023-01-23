@@ -6,8 +6,10 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"

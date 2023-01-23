@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -100,6 +100,7 @@ set(NEO_CORE_OS_INTERFACE_WDDM
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager_${DRIVER_MODEL}.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_manager.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/wddm/um_km_data_temp_storage.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/um_km_data_translator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/um_km_data_translator.h
     ${CMAKE_CURRENT_SOURCE_DIR}/wddm/create_um_km_data_translator.cpp

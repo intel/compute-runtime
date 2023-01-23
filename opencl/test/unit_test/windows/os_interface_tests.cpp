@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"

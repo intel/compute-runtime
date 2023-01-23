@@ -7,6 +7,7 @@
 
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/i915.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock_helper.h"

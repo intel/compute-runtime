@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"

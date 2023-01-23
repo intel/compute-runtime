@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include <cinttypes>
 #include <string>

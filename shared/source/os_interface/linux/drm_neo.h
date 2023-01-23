@@ -7,17 +7,14 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/memory_manager/definitions/engine_limits.h"
-#include "shared/source/os_interface/driver_info.h"
-#include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
-#include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
-#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/utilities/stackvec.h"
 
-#include "aubstream/engine_node.h"
 #include "igfxfmid.h"
 
 #include <array>
@@ -32,17 +29,26 @@
 
 struct GT_SYSTEM_INFO;
 
+namespace aub_stream {
+enum EngineType : uint32_t;
+}
+
 namespace NEO {
 constexpr uint32_t contextPrivateParamBoost = 0x80000000;
 
 enum class AllocationType;
+enum class CachePolicy : uint32_t;
+enum class CacheRegion : uint16_t;
 enum class SubmissionStatus : uint32_t;
 
 class BufferObject;
 class DeviceFactory;
+class MemoryInfo;
 class OsContext;
 class OsContextLinux;
 class Gmm;
+struct CacheInfo;
+struct EngineInfo;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
 struct SystemInfo;

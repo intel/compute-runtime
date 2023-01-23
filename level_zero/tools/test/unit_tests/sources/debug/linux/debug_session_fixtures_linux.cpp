@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/test/unit_tests/sources/debug/linux/debug_session_fixtures_linux.h"
+
+#include "shared/source/os_interface/linux/engine_info.h"
 
 namespace L0 {
 namespace ult {

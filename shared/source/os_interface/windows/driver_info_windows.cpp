@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,8 @@
 #include "shared/source/os_interface/windows/debug_registry_reader.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
+
+#include <algorithm>
 
 std::string getCurrentLibraryPath() {
     std::string returnValue;

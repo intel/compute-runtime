@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/mock_compilers.h"

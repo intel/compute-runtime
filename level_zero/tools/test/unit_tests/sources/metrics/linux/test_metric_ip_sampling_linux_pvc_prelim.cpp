@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/sys_calls.h"

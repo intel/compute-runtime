@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "level_zero/tools/source/debug/linux/prelim/drm_helper.h"
 
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/engine_info.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include "level_zero/core/source/device/device.h"
 

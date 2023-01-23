@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/os_inc_base.h"
@@ -20,6 +21,7 @@
 
 #include <codecvt>
 #include <locale>
+#include <vector>
 
 namespace NEO {
 

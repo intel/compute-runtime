@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,7 @@
 #include "shared/source/os_interface/linux/allocator_helper.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/gfx_escape_wrapper.h"
+#include "shared/source/os_interface/windows/wddm/um_km_data_temp_storage.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "gmm_memory.h"

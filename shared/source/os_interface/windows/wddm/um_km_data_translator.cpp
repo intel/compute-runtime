@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 
+#include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/helpers/string.h"
 
 namespace NEO {
@@ -45,6 +46,10 @@ bool UmKmDataTranslator::translateGmmGfxPartitioningToInternalRepresentation(voi
 
 bool UmKmDataTranslator::translateGmmGfxPartitioningFromInternalRepresentation(GMM_GFX_PARTITIONING &dst, const void *src, size_t srcSize) {
     return (0 == memcpy_s(&dst, sizeof(GMM_GFX_PARTITIONING), src, srcSize));
+}
+
+std::unique_ptr<GmmHandleAllocator> UmKmDataTranslator::createGmmHandleAllocator() {
+    return {};
 }
 
 } // namespace NEO

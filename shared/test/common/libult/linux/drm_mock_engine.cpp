@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/os_interface/linux/i915.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/os_interface/linux/drm_mock_device_blob.h"
 

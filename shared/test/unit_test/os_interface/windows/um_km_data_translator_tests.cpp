@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/gmm_helper/client_context/gmm_handle_allocator.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
+#include "shared/source/os_interface/windows/wddm/um_km_data_temp_storage.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"

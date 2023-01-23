@@ -7,7 +7,9 @@
 
 #pragma once
 
+#include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 
 #include "level_zero/tools/source/sysman/scheduler/linux/os_scheduler_imp.h"
 

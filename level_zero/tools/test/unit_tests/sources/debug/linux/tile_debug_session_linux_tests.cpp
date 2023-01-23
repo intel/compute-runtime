@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/test_macros/test.h"
 

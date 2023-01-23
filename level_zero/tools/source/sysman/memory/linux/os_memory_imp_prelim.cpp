@@ -11,6 +11,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/i915.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/system_info.h"
 
 #include "level_zero/core/source/driver/driver_handle.h"

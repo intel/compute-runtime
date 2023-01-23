@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
