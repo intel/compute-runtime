@@ -12,7 +12,7 @@
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
-#include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -7,7 +7,7 @@
 if(TESTS_GEN11)
   set(IGDRCL_SRCS_tests_gen11
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-      ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_tests_gen11.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper_tests_gen11.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_gen11.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_kernel_gen11.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_media_kernel_gen11.cpp

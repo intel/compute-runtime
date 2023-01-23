@@ -31,7 +31,7 @@
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_blit_properties.h"
-#include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/helpers/cl_preemption_helper.h"
 #include "opencl/source/helpers/dispatch_info_builder.h"
 #include "opencl/source/helpers/enqueue_properties.h"

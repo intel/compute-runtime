@@ -8,7 +8,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
-#include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/source/helpers/cl_gfx_core_helper.h"
 
 namespace NEO {
 

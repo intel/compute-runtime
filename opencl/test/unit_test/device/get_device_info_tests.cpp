@@ -14,7 +14,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/cl_device/cl_device_info_map.h"
-#include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"

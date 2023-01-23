@@ -18,10 +18,10 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
-#include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
+#include "opencl/test/unit_test/mocks/mock_cl_gfx_core_helper.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "hw_cmds_xe_hpc_core_base.h"

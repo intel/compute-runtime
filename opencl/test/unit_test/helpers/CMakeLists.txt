@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -31,7 +31,7 @@ set(IGDRCL_SRCS_tests_helpers
 
 if(TESTS_XEHP_AND_LATER)
   list(APPEND IGDRCL_SRCS_tests_helpers
-       ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_tests_xehp_and_later.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper_tests_xehp_and_later.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/test_preamble_xehp_and_later.cpp
   )
 endif()

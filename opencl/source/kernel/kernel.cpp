@@ -48,7 +48,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/event/event.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
-#include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"

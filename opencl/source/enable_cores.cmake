@@ -1,12 +1,12 @@
 #
-# Copyright (C) 2018-2022 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(RUNTIME_SRCS_COREX_CPP_BASE
     buffer
-    cl_hw_helper
+    cl_gfx_core_helper
     command_queue
     gpgpu_walker
     hardware_commands_helper

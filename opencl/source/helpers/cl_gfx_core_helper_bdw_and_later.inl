@@ -5,7 +5,7 @@
  *
  */
 
-#include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/helpers/surface_formats.h"
 
 namespace NEO {

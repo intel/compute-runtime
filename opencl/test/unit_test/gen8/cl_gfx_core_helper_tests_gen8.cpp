@@ -11,9 +11,9 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
+#include "opencl/test/unit_test/mocks/mock_cl_gfx_core_helper.h"
 
 using namespace NEO;
 using ClGfxCoreHelperTestGen8 = Test<ClDeviceFixture>;

@@ -13,7 +13,7 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
+#include "opencl/test/unit_test/mocks/mock_cl_gfx_core_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 
 #include "hw_cmds_xe_hpg_core_base.h"

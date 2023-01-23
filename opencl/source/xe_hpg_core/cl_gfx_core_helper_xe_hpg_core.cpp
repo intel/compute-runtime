@@ -13,8 +13,8 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 
-#include "opencl/source/helpers/cl_hw_helper_base.inl"
-#include "opencl/source/helpers/cl_hw_helper_xehp_and_later.inl"
+#include "opencl/source/helpers/cl_gfx_core_helper_base.inl"
+#include "opencl/source/helpers/cl_gfx_core_helper_xehp_and_later.inl"
 #include "opencl/source/helpers/surface_formats.h"
 
 namespace NEO {
@@ -22,7 +22,7 @@ namespace NEO {
 using Family = XeHpgCoreFamily;
 static auto gfxCore = IGFX_XE_HPG_CORE;
 
-#include "opencl/source/helpers/cl_hw_helper_factory_init.inl"
+#include "opencl/source/helpers/cl_gfx_core_helper_factory_init.inl"
 
 template <>
 bool ClGfxCoreHelperHw<Family>::requiresNonAuxMode(const ArgDescPointer &argAsPtr) const {

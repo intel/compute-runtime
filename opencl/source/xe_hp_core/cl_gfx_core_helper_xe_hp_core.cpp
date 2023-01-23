@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,8 @@
 #include "shared/source/xe_hp_core/hw_cmds.h"
 
 #include "opencl/source/context/context.h"
-#include "opencl/source/helpers/cl_hw_helper_base.inl"
-#include "opencl/source/helpers/cl_hw_helper_xehp_and_later.inl"
+#include "opencl/source/helpers/cl_gfx_core_helper_base.inl"
+#include "opencl/source/helpers/cl_gfx_core_helper_xehp_and_later.inl"
 
 namespace NEO {
 

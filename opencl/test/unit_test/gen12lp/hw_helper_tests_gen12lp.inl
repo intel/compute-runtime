@@ -12,9 +12,9 @@
 #include "shared/test/common/libult/gen12lp/special_ult_helper_gen12lp.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 
-#include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_cl_hw_helper.h"
+#include "opencl/test/unit_test/mocks/mock_cl_gfx_core_helper.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 

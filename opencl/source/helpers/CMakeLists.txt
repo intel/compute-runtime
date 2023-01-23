@@ -10,11 +10,11 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/base_object.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_blit_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_bdw_and_later.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_factory_init.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper_bdw_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper_factory_init.inl
     ${CMAKE_CURRENT_SOURCE_DIR}${BRANCH_DIR_SUFFIX}cl_memory_properties_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_memory_properties_helpers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cl_memory_properties_helpers_base.inl
@@ -52,13 +52,13 @@ set(RUNTIME_SRCS_HELPERS_BASE
 
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND RUNTIME_SRCS_HELPERS_BASE
-       ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper_xehp_and_later.inl
   )
 endif()
 
 if(SUPPORT_PVC_AND_LATER)
-  list(APPEND RUNTIME_SRCS_HELPERS_BASE ${CMAKE_CURRENT_SOURCE_DIR}/cl_hw_helper_pvc_and_later.inl)
+  list(APPEND RUNTIME_SRCS_HELPERS_BASE ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper_pvc_and_later.inl)
 endif()
 
 set(RUNTIME_SRCS_HELPERS_WINDOWS

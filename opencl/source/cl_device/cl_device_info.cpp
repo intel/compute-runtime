@@ -18,7 +18,7 @@
 #include "opencl/source/cl_device/cl_device_get_cap.inl"
 #include "opencl/source/cl_device/cl_device_info_map.h"
 #include "opencl/source/cl_device/cl_device_vector.h"
-#include "opencl/source/helpers/cl_hw_helper.h"
+#include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/platform/platform.h"
 
