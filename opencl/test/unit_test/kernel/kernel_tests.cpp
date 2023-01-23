@@ -3430,3 +3430,21 @@ HWTEST2_F(KernelTest, GivenInlineSamplersWhenSettingInlineSamplerThenDshIsPatche
     EXPECT_EQ(SamplerState::MIN_MODE_FILTER_NEAREST, samplerState->getMinModeFilter());
     EXPECT_EQ(SamplerState::MAG_MODE_FILTER_NEAREST, samplerState->getMagModeFilter());
 }
+
+TEST(KernelTest, whenCallingGetEnqueuedLocalWorkSizeValuesThenReturnProperValuesFromKernelDescriptor) {
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(NEO::defaultHwInfo.get()));
+    MockKernelWithInternals kernel(*device);
+
+    std::array<uint32_t, 3> expectedELWS = {8u, 2u, 2u};
+    kernel.mockKernel->setCrossThreadData(expectedELWS.data(), static_cast<uint32_t>(sizeof(uint32_t) * expectedELWS.size()));
+
+    auto &eLWSOffsets = kernel.kernelInfo.kernelDescriptor.payloadMappings.dispatchTraits.enqueuedLocalWorkSize;
+    eLWSOffsets[0] = 0;
+    eLWSOffsets[1] = sizeof(uint32_t);
+    eLWSOffsets[2] = 2 * sizeof(uint32_t);
+
+    const auto &enqueuedLocalWorkSize = kernel.mockKernel->getEnqueuedLocalWorkSizeValues();
+    EXPECT_EQ(expectedELWS[0], *(enqueuedLocalWorkSize[0]));
+    EXPECT_EQ(expectedELWS[1], *(enqueuedLocalWorkSize[1]));
+    EXPECT_EQ(expectedELWS[2], *(enqueuedLocalWorkSize[2]));
+}

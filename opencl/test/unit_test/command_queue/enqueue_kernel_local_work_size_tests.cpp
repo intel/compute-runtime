@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,11 +68,6 @@ TEST_F(EnqueueKernelRequiredWorkSize, GivenUnspecifiedWorkGroupSizeWhenEnqueuein
     EXPECT_EQ(8u, *localWorkSizeVal[0]);
     EXPECT_EQ(2u, *localWorkSizeVal[1]);
     EXPECT_EQ(2u, *localWorkSizeVal[2]);
-
-    auto enqueuedLocalWorkSize = pKernel->getEnqueuedLocalWorkSizeValues();
-    EXPECT_EQ(8u, *enqueuedLocalWorkSize[0]);
-    EXPECT_EQ(2u, *enqueuedLocalWorkSize[1]);
-    EXPECT_EQ(2u, *enqueuedLocalWorkSize[2]);
 }
 
 // Fully specified
@@ -97,11 +92,6 @@ TEST_F(EnqueueKernelRequiredWorkSize, GivenRequiredWorkGroupSizeWhenEnqueueingKe
     EXPECT_EQ(8u, *localWorkSizeVal[0]);
     EXPECT_EQ(2u, *localWorkSizeVal[1]);
     EXPECT_EQ(2u, *localWorkSizeVal[2]);
-
-    auto enqueuedLocalWorkSize = pKernel->getEnqueuedLocalWorkSizeValues();
-    EXPECT_EQ(8u, *enqueuedLocalWorkSize[0]);
-    EXPECT_EQ(2u, *enqueuedLocalWorkSize[1]);
-    EXPECT_EQ(2u, *enqueuedLocalWorkSize[2]);
 }
 
 // Underspecified.  Won't permit.
