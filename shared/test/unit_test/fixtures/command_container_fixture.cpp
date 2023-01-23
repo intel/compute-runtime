@@ -18,7 +18,8 @@ void CommandEncodeStatesFixture::setUp() {
     cmdContainer->initialize(pDevice, nullptr, true);
     cmdContainer->setDirtyStateForAllHeaps(false);
     const auto &hwInfo = pDevice->getHardwareInfo();
-    cmdContainer->systolicModeSupport = ProductHelper::get(hwInfo.platform.eProductFamily)->isSystolicModeConfigurable(hwInfo);
+    auto &productHelper = pDevice->getProductHelper();
+    cmdContainer->systolicModeSupport = productHelper.isSystolicModeConfigurable(hwInfo);
 }
 
 void CommandEncodeStatesFixture::tearDown() {

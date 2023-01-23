@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,7 +63,7 @@ struct Gen12LpCoherencyRequirements : public ::testing::Test {
 
 GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesWhenGettingCmdSizeThenSizeIsCorrect) {
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
-    const auto &productHelper = *ProductHelper::get(device->getHardwareInfo().platform.eProductFamily);
+    const auto &productHelper = device->getProductHelper();
     if (productHelper.is3DPipelineSelectWARequired()) {
         cmdsSize += 2 * sizeof(PIPELINE_SELECT);
         if (SpecialUltHelperGen12lp::isPipeControlWArequired(device->getHardwareInfo().platform.eProductFamily)) {
@@ -90,7 +90,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesWhenGettingCmdSi
 
 GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesWhenGettingCmdSizeThenSizeIsCorrect) {
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
-    const auto &productHelper = *ProductHelper::get(device->getHardwareInfo().platform.eProductFamily);
+    const auto &productHelper = device->getProductHelper();
     if (productHelper.is3DPipelineSelectWARequired()) {
         cmdsSize += 2 * sizeof(PIPELINE_SELECT);
         if (SpecialUltHelperGen12lp::isPipeControlWArequired(device->getHardwareInfo().platform.eProductFamily)) {
@@ -118,7 +118,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesWhenGettingCmdSize
 GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesThenCoherencyCmdValuesAreCorrect) {
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE);
     auto cmdsSizeWABeginOffset = 0;
-    const auto &productHelper = *ProductHelper::get(device->getHardwareInfo().platform.eProductFamily);
+    const auto &productHelper = device->getProductHelper();
     if (productHelper.is3DPipelineSelectWARequired()) {
         cmdsSizeWABeginOffset += sizeof(PIPELINE_SELECT);
         cmdsSize += sizeof(PIPELINE_SELECT);
@@ -158,7 +158,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenNoSharedHandlesThenCoherencyCmd
 GEN12LPTEST_F(Gen12LpCoherencyRequirements, GivenSharedHandlesThenCoherencyCmdValuesAreCorrect) {
     auto cmdsSize = sizeof(STATE_COMPUTE_MODE) + sizeof(PIPE_CONTROL);
     auto cmdsSizeWABeginOffset = 0;
-    const auto &productHelper = *ProductHelper::get(device->getHardwareInfo().platform.eProductFamily);
+    const auto &productHelper = device->getProductHelper();
     if (productHelper.is3DPipelineSelectWARequired()) {
         cmdsSizeWABeginOffset += sizeof(PIPELINE_SELECT);
         cmdsSize += sizeof(PIPELINE_SELECT);

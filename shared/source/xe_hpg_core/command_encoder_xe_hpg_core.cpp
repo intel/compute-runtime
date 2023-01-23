@@ -72,8 +72,8 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
             break;
         }
     }
-
-    if (ProductHelper::get(hwInfo.platform.eProductFamily)->isAllocationSizeAdjustmentRequired(hwInfo)) {
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    if (productHelper.isAllocationSizeAdjustmentRequired(hwInfo)) {
         pInterfaceDescriptor->setPreferredSlmAllocationSize(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K);
     } else {
         pInterfaceDescriptor->setPreferredSlmAllocationSize(programmableIdPreferredSlmSize);

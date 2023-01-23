@@ -16,6 +16,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
@@ -98,7 +99,9 @@ GEN12LPTEST_F(CommandEncodeStatesTest, givenVariousEngineTypesWhenEncodeSbaThenA
         GenCmdList commands;
         CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed());
         auto itorLRI = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
-        if (ProductHelper::get(defaultHwInfo->platform.eProductFamily)->is3DPipelineSelectWARequired()) {
+        MockExecutionEnvironment mockExecutionEnvironment{};
+        auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+        if (productHelper.is3DPipelineSelectWARequired()) {
             EXPECT_NE(itorLRI, commands.end());
         } else {
             EXPECT_EQ(itorLRI, commands.end());

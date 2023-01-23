@@ -33,7 +33,7 @@ GEN12LPTEST_F(Gen12LpCommandEncodeTest, WhenDefaultEngineIsRcsAnd3DPipelineSelec
     auto oldCsr = device.getDefaultEngine().commandStreamReceiver;
     device.getDefaultEngine().commandStreamReceiver = csr.get();
 
-    auto &productHelper = *ProductHelper::get(device.getHardwareInfo().platform.eProductFamily);
+    const auto &productHelper = device.getProductHelper();
     if (productHelper.is3DPipelineSelectWARequired()) {
         EXPECT_EQ(2 * PreambleHelper<FamilyType>::getCmdSizeForPipelineSelect(device.getHardwareInfo()), EncodeWA<FamilyType>::getAdditionalPipelineSelectSize(device, csr->isRcs()));
     } else {

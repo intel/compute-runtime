@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,9 +17,9 @@ namespace NEO {
 template <>
 void EncodeSurfaceState<Family>::encodeExtraCacheSettings(R_SURFACE_STATE *surfaceState, const EncodeSurfaceStateArgs &args) {
     using L1_CACHE_POLICY = typename R_SURFACE_STATE::L1_CACHE_POLICY;
-    const auto &hwInfo = *args.gmmHelper->getHardwareInfo();
-    auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
-    auto cachePolicy = static_cast<L1_CACHE_POLICY>(productHelper->getL1CachePolicy(args.isDebuggerActive));
+    auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
+
+    auto cachePolicy = static_cast<L1_CACHE_POLICY>(productHelper.getL1CachePolicy(args.isDebuggerActive));
     if (DebugManager.flags.OverrideL1CacheControlInSurfaceState.get() != -1 &&
         DebugManager.flags.ForceAllResourcesUncached.get() == false) {
         cachePolicy = static_cast<L1_CACHE_POLICY>(DebugManager.flags.OverrideL1CacheControlInSurfaceState.get());

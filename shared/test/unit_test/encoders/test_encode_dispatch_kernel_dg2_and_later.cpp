@@ -89,8 +89,9 @@ HWTEST2_F(CommandEncodeStatesTestDg2AndLater, GivenVariousSlmTotalSizesAndSettin
 
     const std::array<REVID, 5> revs{REVISION_A0, REVISION_B, REVISION_C, REVISION_D, REVISION_K};
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &productHelper = pDevice->getRootDeviceEnvironment().getProductHelper();
     for (auto rev : revs) {
-        hwInfo.platform.usRevId = ProductHelper::get(productFamily)->getHwRevIdFromStepping(rev, hwInfo);
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(rev, hwInfo);
         verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
     }
 }

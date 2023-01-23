@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,8 +21,9 @@ HWTEST2_F(Gen12LpSamplerTest, givenTglLpSamplerWhenUsingDefaultFilteringAndAppen
     EXPECT_FALSE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
     auto state = FamilyType::cmdInitSamplerState;
+    auto &productHelper = getHelper<ProductHelper>();
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
-    ProductHelper::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&state, *defaultHwInfo);
+    productHelper.adjustSamplerState(&state, *defaultHwInfo);
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
 }
 
@@ -31,9 +32,10 @@ HWTEST2_F(Gen12LpSamplerTest, givenTglLpSamplerWhenForcingLowQualityFilteringAnd
     DebugManager.flags.ForceSamplerLowFilteringPrecision.set(true);
     EXPECT_TRUE(DebugManager.flags.ForceSamplerLowFilteringPrecision.get());
     typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
+    auto &productHelper = getHelper<ProductHelper>();
     auto state = FamilyType::cmdInitSamplerState;
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_DISABLE, state.getLowQualityFilter());
-    ProductHelper::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&state, *defaultHwInfo);
+    productHelper.adjustSamplerState(&state, *defaultHwInfo);
     EXPECT_EQ(SAMPLER_STATE::LOW_QUALITY_FILTER_ENABLE, state.getLowQualityFilter());
 }
 

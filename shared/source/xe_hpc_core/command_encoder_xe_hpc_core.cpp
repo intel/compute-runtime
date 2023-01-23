@@ -289,7 +289,7 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
         }
     }
 
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
     if ((slmSize == 0) && (productHelper.isAdjustProgrammableIdPreferredSlmSizeRequired(hwInfo))) {
         programmableIdPreferredSlmSize = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K;

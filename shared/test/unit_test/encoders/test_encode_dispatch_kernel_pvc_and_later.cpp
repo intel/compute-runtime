@@ -121,9 +121,10 @@ HWTEST2_F(CommandEncodeStatesTestHpc, GivenVariousSlmTotalSizesAndSettingRevIDTo
 
     const std::array<REVID, 5> revs{REVISION_A0, REVISION_B, REVISION_C, REVISION_D, REVISION_K};
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &productHelper = pDevice->getRootDeviceEnvironment().getProductHelper();
 
     for (auto rev : revs) {
-        hwInfo.platform.usRevId = ProductHelper::get(productFamily)->getHwRevIdFromStepping(rev, hwInfo);
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(rev, hwInfo);
         if ((hwInfo.platform.eProductFamily == IGFX_PVC) && (rev == REVISION_A0)) {
             verifyPreferredSlmValues<FamilyType>(valuesToTestForPvcAStep, pDevice->getRootDeviceEnvironment());
         } else {
