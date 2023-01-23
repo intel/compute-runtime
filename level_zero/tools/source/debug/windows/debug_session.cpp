@@ -13,7 +13,7 @@
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/windows/wddm_debug.h"
 
-#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
+#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper.h"
 
 #include "common/StateSaveAreaHeader.h"
 

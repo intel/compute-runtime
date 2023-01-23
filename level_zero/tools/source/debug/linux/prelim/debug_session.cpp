@@ -21,7 +21,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
-#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
+#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper.h"
 #include "level_zero/include/zet_intel_gpu_debug.h"
 #include "level_zero/tools/source/debug/linux/prelim/drm_helper.h"
 #include <level_zero/ze_api.h>

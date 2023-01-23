@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
-#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
+#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 
 #include "hw_cmds_xe_hpc_core_base.h"

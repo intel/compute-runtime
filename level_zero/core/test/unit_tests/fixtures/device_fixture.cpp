@@ -14,7 +14,7 @@
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 
-#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
+#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_context.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"

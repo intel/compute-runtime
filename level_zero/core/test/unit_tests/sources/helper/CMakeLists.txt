@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,7 +9,7 @@ target_sources(${TARGET_NAME} PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/api_specific_config_l0_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/error_code_helper_l0_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner_l0_tests.cpp
-               ${CMAKE_CURRENT_SOURCE_DIR}/l0_hw_helper_tests.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/l0_gfx_core_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/properties_parser_tests.cpp
 )
 add_subdirectories()

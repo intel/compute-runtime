@@ -38,7 +38,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle.h"
-#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
+#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/core/source/module/module_build_log.h"
 

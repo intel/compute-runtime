@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,7 +12,7 @@ if(TESTS_XE_HPG_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_image_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_module_xe_hpg_core.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_l0_hw_helper_xe_hpg_core.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_l0_gfx_core_helper_xe_hpg_core.cpp
   )
   add_subdirectoriesL0(${CMAKE_CURRENT_SOURCE_DIR} "*")
 endif()

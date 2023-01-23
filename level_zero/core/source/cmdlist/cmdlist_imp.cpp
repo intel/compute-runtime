@@ -19,7 +19,7 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/device/device_imp.h"
-#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
+#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 #include "igfxfmid.h"

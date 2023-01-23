@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,7 +11,7 @@ if(TESTS_GEN12LP)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_cmdlist_gen12lp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_gen12lp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_events_gen12lp.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_l0_hw_helper_gen12lp.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_l0_gfx_core_helper_gen12lp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_module_gen12lp.cpp
   )
 

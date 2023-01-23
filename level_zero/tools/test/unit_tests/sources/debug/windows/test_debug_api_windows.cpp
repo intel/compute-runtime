@@ -12,7 +12,7 @@
 #include "shared/test/common/mocks/windows/mock_wddm_eudebug.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
+#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/debug/debug_handlers.h"
 #include "level_zero/tools/source/debug/windows/debug_session.h"

@@ -21,7 +21,7 @@
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/event/event.h"
-#include "level_zero/core/source/hw_helpers/l0_hw_helper.h"
+#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/event_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
