@@ -151,7 +151,8 @@ HWTEST2_F(XeHpcComputeModeRequirements, giventhreadArbitrationPolicyWithoutShare
     setUpImpl<FamilyType>();
     using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
     auto startOffset = getCsrHw<FamilyType>()->commandStream.getUsed();
 

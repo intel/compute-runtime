@@ -331,7 +331,7 @@ HWTEST_F(PipeControlHelperTests, givenNotifyEnableArgumentIsTrueWhenHelperIsUsed
 
 HWTEST_F(PipeControlHelperTests, WhenIsDcFlushAllowedIsCalledThenCorrectResultIsReturned) {
     MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(false, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
     EXPECT_EQ(productHelper.isDcFlushAllowed(), MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
 }

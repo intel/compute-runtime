@@ -84,7 +84,9 @@ XE_HPC_CORETEST_F(GfxCoreHelperXeHpcCoreTest, givenXeHPCPlatformWhenCheckAssignE
     auto hwInfo = *defaultHwInfo;
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    EXPECT_EQ(gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo), ProductHelper::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported());
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+
+    EXPECT_EQ(gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo), productHelper.isAssignEngineRoundRobinSupported());
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {

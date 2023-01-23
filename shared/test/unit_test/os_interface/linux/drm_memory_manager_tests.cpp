@@ -5420,8 +5420,8 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenPatIndex
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     ASSERT_NE(nullptr, drmAllocation->getBO());
-
-    auto isVmBindPatIndexProgrammingSupported = ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported();
+    auto &productHelper = this->device->getProductHelper();
+    auto isVmBindPatIndexProgrammingSupported = productHelper.isVmBindPatIndexProgrammingSupported();
 
     EXPECT_EQ(isVmBindPatIndexProgrammingSupported, mock->isVmBindPatIndexProgrammingSupported());
 
@@ -5451,8 +5451,8 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenCompress
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     ASSERT_NE(nullptr, drmAllocation->getBO());
-
-    auto isVmBindPatIndexProgrammingSupported = ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported();
+    auto &productHelper = this->device->getProductHelper();
+    auto isVmBindPatIndexProgrammingSupported = productHelper.isVmBindPatIndexProgrammingSupported();
 
     if (isVmBindPatIndexProgrammingSupported) {
         auto mockClientContext = static_cast<MockGmmClientContextBase *>(executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->getGmmClientContext());

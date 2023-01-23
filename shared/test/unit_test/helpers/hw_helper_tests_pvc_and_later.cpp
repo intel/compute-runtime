@@ -203,7 +203,7 @@ HWTEST2_F(GfxCoreHelperTestCooperativeEngine, givenCooperativeContextSupportedWh
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = getHelper<ProductHelper>();
 
     uint32_t revisions[] = {REVISION_A0, REVISION_B};
     for (auto &revision : revisions) {

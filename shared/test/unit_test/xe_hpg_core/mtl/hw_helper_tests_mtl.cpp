@@ -40,7 +40,7 @@ using ProductHelperTestMtl = Test<DeviceFixture>;
 
 MTLTEST_F(ProductHelperTestMtl, givenMtlWhenCallIsAdjustWalkOrderAvailableThenReturnProperValue) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
-    const auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    const auto &productHelper = getHelper<ProductHelper>();
     unsigned int gmdReleases[] = {70, 71, 72, 73};
     defaultHwInfo->ipVersion.architecture = 12;
 
@@ -132,13 +132,13 @@ MTLTEST_F(ProductHelperTestMtl, givenMultitileConfigWhenConfiguringHwInfoThenEna
 MTLTEST_F(GfxCoreHelperTestMtl, givenMtlWhenSetForceNonCoherentThenNothingChanged) {
     using FORCE_NON_COHERENT = typename FamilyType::STATE_COMPUTE_MODE::FORCE_NON_COHERENT;
 
-    auto productHelper = ProductHelper::get(productFamily);
+    auto &productHelper = getHelper<ProductHelper>();
 
     auto stateComputeMode = FamilyType::cmdInitStateComputeMode;
     auto properties = StateComputeModeProperties{};
 
     properties.isCoherencyRequired.set(true);
-    productHelper->setForceNonCoherent(&stateComputeMode, properties);
+    productHelper.setForceNonCoherent(&stateComputeMode, properties);
     EXPECT_EQ(FORCE_NON_COHERENT::FORCE_NON_COHERENT_FORCE_DISABLED, stateComputeMode.getForceNonCoherent());
     EXPECT_EQ(0u, stateComputeMode.getMaskBits());
 }

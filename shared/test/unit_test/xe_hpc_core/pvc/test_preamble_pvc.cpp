@@ -65,7 +65,7 @@ PVCTEST_F(PreamblePipelineSelectState, givenRevisionBAndAboveWhenCallingProgramP
         {0x6, false},
         {0x7, false},
     };
-    auto &productHelper = *ProductHelper::get(hwInfo->platform.eProductFamily);
+    auto &productHelper = pDevice->getProductHelper();
     for (auto &testInput : testInputs) {
         LinearStream linearStream(&gfxAllocation);
         hwInfo->platform.usRevId = testInput.revId;

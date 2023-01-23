@@ -504,7 +504,7 @@ PVCTEST_F(EngineNodeHelperPvcTests, whenGetGpgpuEnginesThenReturnTwoCccsEnginesA
 PVCTEST_F(EngineNodeHelperPvcTests, givenNonTile0AccessWhenGettingIsBlitCopyRequiredForLocalMemoryThenProperValueIsReturned) {
 
     HardwareInfo hwInfo = *defaultHwInfo;
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = getHelper<ProductHelper>();
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.setAllocationType(AllocationType::BUFFER_HOST_MEMORY);

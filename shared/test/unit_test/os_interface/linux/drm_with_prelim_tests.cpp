@@ -563,7 +563,8 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationAndPlat
     DebugManager.flags.PrintDebugMessages.set(false);
     std::string output = testing::internal::GetCapturedStderr();
 
-    if (ProductHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily)->isPlatformQuerySupported()) {
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (productHelper.isPlatformQuerySupported()) {
         EXPECT_STRNE(output.c_str(), "");
     } else {
         EXPECT_STREQ(output.c_str(), "");

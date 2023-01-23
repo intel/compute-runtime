@@ -988,10 +988,10 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexProgrammingEnabledWhen
     csr->setupContext(*osContext);
 
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    auto productHelper = ProductHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
     bool closSupported = (gfxCoreHelper.getNumCacheRegions() > 0);
-    bool patIndexProgrammingSupported = productHelper->isVmBindPatIndexProgrammingSupported();
+    bool patIndexProgrammingSupported = productHelper.isVmBindPatIndexProgrammingSupported();
 
     uint64_t gpuAddress = 0x123000;
     size_t size = 1;
@@ -1047,9 +1047,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenPatIndexErrorAndUncachedDebugF
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    auto productHelper = ProductHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     bool closSupported = (gfxCoreHelper.getNumCacheRegions() > 0);
-    bool patIndexProgrammingSupported = productHelper->isVmBindPatIndexProgrammingSupported();
+    bool patIndexProgrammingSupported = productHelper.isVmBindPatIndexProgrammingSupported();
     if (!closSupported || !patIndexProgrammingSupported) {
         GTEST_SKIP();
     }
@@ -1073,9 +1073,9 @@ HWTEST_F(DrmMemoryOperationsHandlerBindTest, givenUncachedDebugFlagSetWhenVmBind
     auto osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor());
     csr->setupContext(*osContext);
 
-    auto productHelper = ProductHelper::get(executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->platform.eProductFamily);
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
-    if (!productHelper->isVmBindPatIndexProgrammingSupported()) {
+    if (!productHelper.isVmBindPatIndexProgrammingSupported()) {
         GTEST_SKIP();
     }
 
@@ -1263,13 +1263,11 @@ TEST(DrmResidencyHandlerTests, givenDebugFlagUseVmBindSetDefaultAndBindAvailable
     drm.context.vmBindQueryValue = 1;
     drm.context.vmBindQueryReturn = 0;
     EXPECT_FALSE(drm.bindAvailable);
-
-    auto hwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
-    auto productHelper = ProductHelper::get(hwInfo->platform.eProductFamily);
+    auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
     EXPECT_EQ(0u, drm.context.vmBindQueryCalled);
-    EXPECT_EQ(drm.isVmBindAvailable(), productHelper->isNewResidencyModelSupported());
-    EXPECT_EQ(drm.bindAvailable, productHelper->isNewResidencyModelSupported());
+    EXPECT_EQ(drm.isVmBindAvailable(), productHelper.isNewResidencyModelSupported());
+    EXPECT_EQ(drm.bindAvailable, productHelper.isNewResidencyModelSupported());
     EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
 }
 
@@ -1362,8 +1360,7 @@ TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndVmBindAvailable
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    auto hwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
-    auto productHelper = ProductHelper::get(hwInfo->platform.eProductFamily);
+    auto &productHelper = drm.getRootDeviceEnvironment().getHelper<ProductHelper>();
 
     drm.context.setPairQueryValue = 1;
     drm.context.setPairQueryReturn = 0;
@@ -1381,8 +1378,8 @@ TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableAndVmBindAvailable
     EXPECT_EQ(1u, drm.context.setPairQueryCalled);
 
     EXPECT_EQ(0u, drm.context.vmBindQueryCalled);
-    EXPECT_EQ(drm.isVmBindAvailable(), productHelper->isNewResidencyModelSupported());
-    EXPECT_EQ(drm.bindAvailable, productHelper->isNewResidencyModelSupported());
+    EXPECT_EQ(drm.isVmBindAvailable(), productHelper.isNewResidencyModelSupported());
+    EXPECT_EQ(drm.bindAvailable, productHelper.isNewResidencyModelSupported());
     EXPECT_EQ(1u, drm.context.vmBindQueryCalled);
 }
 

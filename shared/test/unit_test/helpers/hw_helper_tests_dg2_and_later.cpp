@@ -210,6 +210,7 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, givenGfxCoreHelperWhenCheckIsUpdateTaskC
 using ProductHelperTestDg2AndLater = ::testing::Test;
 
 HWTEST2_F(ProductHelperTestDg2AndLater, givenDg2AndLaterPlatformWhenAskedIfHeapInLocalMemThenTrueIsReturned, IsAtLeastXeHpgCore) {
-    const auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     EXPECT_TRUE(productHelper.heapInLocalMem(*defaultHwInfo));
 }

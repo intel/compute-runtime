@@ -361,7 +361,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceAsPostSy
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = pDevice->getProductHelper();
 
     VariableBackup<unsigned short> hwRevId{&hwInfo.platform.usRevId};
     hwRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hwInfo);
@@ -395,7 +395,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKern
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = pDevice->getProductHelper();
 
     unsigned short pvcRevB = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     VariableBackup<unsigned short> hwRevId(&hwInfo.platform.usRevId, pvcRevB);
@@ -431,7 +431,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenEven
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = pDevice->getProductHelper();
 
     unsigned short pvcRevB = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     VariableBackup<unsigned short> hwRevId(&hwInfo.platform.usRevId, pvcRevB);
@@ -467,7 +467,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKern
     DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.set(-1);
 
     auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = pDevice->getProductHelper();
 
     unsigned short pvcRevB = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     VariableBackup<unsigned short> hwRevId(&hwInfo.platform.usRevId, pvcRevB);
@@ -521,7 +521,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenCleanHeapsAndSlmNotChangedAndU
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDispatchSizeSmallerOrEqualToAvailableThreadCountWhenAdjustInterfaceDescriptorDataIsCalledThenThreadGroupDispatchSizeIsCorrectlySet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.gtSystemInfo.EUCount = 2u;
@@ -541,7 +541,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenMultipleTilesAndImplicitScalin
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableWalkerPartition.set(0);
-    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
     hwInfo.gtSystemInfo.EUCount = 32;
@@ -564,7 +564,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenMultipleTilesAndImplicitScalin
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsCorrectlySet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
@@ -587,7 +587,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupWh
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDifferentNumGrfWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsCorrectlySet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
@@ -616,7 +616,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAn
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     DebugManagerStateRestore restorer;
     DebugManager.flags.AdjustThreadGroupDispatchSize.set(0);
-    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
@@ -639,7 +639,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAn
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenIndivisibleDispatchSizeWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsCorrectlySet) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
@@ -656,7 +656,7 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenIndivisibleDispatchSizeWhenCal
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenThreadGroupCountZeroWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsSetToDefault) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
-    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &productHelper = pDevice->getProductHelper();
     auto hwInfo = pDevice->getHardwareInfo();
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 

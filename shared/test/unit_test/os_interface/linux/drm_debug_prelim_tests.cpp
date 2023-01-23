@@ -303,7 +303,8 @@ HWTEST_F(DrmDebugPrelimTest, givenAddedBindExtHandlesInBoWhenUnbindingThenExtens
     EXPECT_NE(0u, drm.context.receivedVmBind.value().extensions);
 
     bo.unbind(&osContext, 0);
-    if (ProductHelper::get(defaultHwInfo->platform.eProductFamily)->isVmBindPatIndexProgrammingSupported()) {
+    auto &productHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    if (productHelper.isVmBindPatIndexProgrammingSupported()) {
         EXPECT_NE(0u, drm.context.receivedVmUnbind.value().extensions);
     } else {
         EXPECT_EQ(0u, drm.context.receivedVmUnbind.value().extensions);

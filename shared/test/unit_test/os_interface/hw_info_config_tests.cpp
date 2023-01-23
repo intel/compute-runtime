@@ -647,7 +647,6 @@ HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsPlatformQueryNotSupportedTh
 
 HWTEST_F(ProductHelperTest, givenDebugFlagWhenCheckingIsResolveDependenciesByPipeControlsSupportedThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
-    auto productHelper = ProductHelper::get(pInHwInfo.platform.eProductFamily);
 
     // ResolveDependenciesViaPipeControls = -1 (default)
     EXPECT_FALSE(productHelper->isResolveDependenciesByPipeControlsSupported(pInHwInfo, false));

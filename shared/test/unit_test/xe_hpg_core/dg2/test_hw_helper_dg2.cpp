@@ -24,7 +24,7 @@ DG2TEST_F(GfxCoreHelperTestDg2, GivenDifferentSteppingWhenComputeSlmSizeIsCalled
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
 
-    const auto &productHelper = *ProductHelper::get(productFamily);
+    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
     auto hwInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     for (auto revision : revisions) {

@@ -52,10 +52,9 @@ HWTEST2_F(MockProductHelperTestLinux, givenDebugFlagSetWhenEnablingBlitterOperat
 }
 
 HWTEST2_F(MockProductHelperTestLinux, givenUnsupportedChipsetUniqueUUIDWhenGettingUuidThenReturnFalse, IsAtMostGen11) {
-    HardwareInfo hardwareInfo = *defaultHwInfo;
-    auto productHelper = ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     std::array<uint8_t, ProductHelper::uuidSize> id;
-    EXPECT_FALSE(productHelper->getUuid(nullptr, id));
+    EXPECT_FALSE(productHelper.getUuid(nullptr, id));
 }
 
 TEST_F(MockProductHelperTestLinux, GivenDummyConfigThenEdramIsDetected) {
@@ -353,9 +352,9 @@ TEST_F(MockProductHelperTestLinux, givenFailingGttSizeIoctlWhenInitializingHwInf
 }
 
 HWTEST2_F(MockProductHelperTestLinux, givenPlatformWithPlatformQuerySupportedWhenItIsCalledThenReturnTrue, IsAtLeastMtl) {
-    HardwareInfo hardwareInfo = *defaultHwInfo;
-    auto productHelper = ProductHelper::get(hardwareInfo.platform.eProductFamily);
-    EXPECT_TRUE(productHelper->isPlatformQuerySupported());
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+
+    EXPECT_TRUE(productHelper.isPlatformQuerySupported());
 }
 
 using HwConfigLinux = ::testing::Test;
