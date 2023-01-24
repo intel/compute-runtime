@@ -382,12 +382,16 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     }
 
     auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
-    if (programInfo.globalConstants.size != 0) {
-        this->globalConstBuffer = NEO::allocateGlobalsSurface(svmAllocsManager, *device->getNEODevice(), programInfo.globalConstants.size, true, programInfo.linkerInput.get(), programInfo.globalConstants.initData);
+    auto globalConstDataSize = programInfo.globalConstants.size + programInfo.globalConstants.zeroInitSize;
+    if (globalConstDataSize != 0) {
+        this->globalConstBuffer = NEO::allocateGlobalsSurface(svmAllocsManager, *device->getNEODevice(), globalConstDataSize,
+                                                              programInfo.globalConstants.zeroInitSize, true, programInfo.linkerInput.get(), programInfo.globalConstants.initData);
     }
 
-    if (programInfo.globalVariables.size != 0) {
-        this->globalVarBuffer = NEO::allocateGlobalsSurface(svmAllocsManager, *device->getNEODevice(), programInfo.globalVariables.size, false, programInfo.linkerInput.get(), programInfo.globalVariables.initData);
+    auto globalVariablesDataSize = programInfo.globalVariables.size + programInfo.globalVariables.zeroInitSize;
+    if (globalVariablesDataSize != 0) {
+        this->globalVarBuffer = NEO::allocateGlobalsSurface(svmAllocsManager, *device->getNEODevice(), globalVariablesDataSize,
+                                                            programInfo.globalVariables.zeroInitSize, false, programInfo.linkerInput.get(), programInfo.globalVariables.initData);
     }
 
     for (auto &kernelInfo : this->programInfo.kernelInfos) {

@@ -31,6 +31,7 @@ struct ProgramInfo {
     struct GlobalSurfaceInfo {
         const void *initData = nullptr;
         size_t size = 0U;
+        size_t zeroInitSize = 0U;
     };
 
     void prepareLinkerInputStorage();

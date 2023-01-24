@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -210,6 +210,11 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     static bool isDebugSurfaceAllocationType(AllocationType type) {
         return type == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
                type == AllocationType::DEBUG_SBA_TRACKING_BUFFER;
+    }
+
+    static bool isConstantOrGlobalSurfaceAllocationType(AllocationType type) {
+        return type == AllocationType::CONSTANT_SURFACE ||
+               type == AllocationType::GLOBAL_SURFACE;
     }
 
     static uint32_t getNumHandlesForKmdSharedAllocation(uint32_t numBanks);

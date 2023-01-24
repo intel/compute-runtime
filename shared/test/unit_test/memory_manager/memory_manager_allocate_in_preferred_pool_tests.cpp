@@ -1016,6 +1016,22 @@ TEST(MemoryManagerTest, givenDebugContextSaveAreaTypeWhenGetAllocationDataIsCall
     EXPECT_TRUE(allocData.flags.zeroMemory);
 }
 
+TEST(MemoryManagerTest, givenAllocationTypeConstantOrGlobalSurfaceWhenGetAllocationDataIsCalledThenZeroMemoryFlagIsSet) {
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties propertiesGlobal{mockRootDeviceIndex, 1, AllocationType::GLOBAL_SURFACE, mockDeviceBitfield};
+    AllocationProperties propertiesConstant{mockRootDeviceIndex, 1, AllocationType::CONSTANT_SURFACE, mockDeviceBitfield};
+    {
+        AllocationData allocData;
+        mockMemoryManager.getAllocationData(allocData, propertiesGlobal, nullptr, mockMemoryManager.createStorageInfoFromProperties(propertiesGlobal));
+        EXPECT_TRUE(allocData.flags.zeroMemory);
+    }
+    {
+        AllocationData allocData;
+        mockMemoryManager.getAllocationData(allocData, propertiesConstant, nullptr, mockMemoryManager.createStorageInfoFromProperties(propertiesConstant));
+        EXPECT_TRUE(allocData.flags.zeroMemory);
+    }
+}
+
 TEST(MemoryManagerTest, givenPropertiesWithOsContextWhenGetAllocationDataIsCalledThenOsContextIsSet) {
     AllocationData allocData;
     MockMemoryManager mockMemoryManager;
