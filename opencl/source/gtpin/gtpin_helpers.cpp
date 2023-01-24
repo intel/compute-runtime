@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 #include "opencl/source/api/api.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
-#include "opencl/source/gtpin/gtpin_hw_helper.h"
+#include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/mem_obj/buffer.h"
 

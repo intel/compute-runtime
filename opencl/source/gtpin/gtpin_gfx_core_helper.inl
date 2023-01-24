@@ -8,7 +8,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 
-#include "opencl/source/gtpin/gtpin_hw_helper.h"
+#include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 #include "opencl/source/kernel/kernel.h"
 
 namespace NEO {

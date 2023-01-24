@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2018-2021 Intel Corporation
+# Copyright (C) 2018-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,10 +10,10 @@ if(NOT DISABLED_GTPIN_SUPPORT)
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_callbacks.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_helpers.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_helpers.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_hw_helper.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_hw_helper.h
-      ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_hw_helper.inl
-      ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_hw_helper_bdw_and_later.inl
+      ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_gfx_core_helper.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_gfx_core_helper.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_gfx_core_helper.inl
+      ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_gfx_core_helper_bdw_and_later.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_init.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_init.h
       ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_notify.h
@@ -22,7 +22,7 @@ if(NOT DISABLED_GTPIN_SUPPORT)
 
   if(SUPPORT_XEHP_AND_LATER)
     list(APPEND RUNTIME_SRCS_GTPIN
-         ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_hw_helper_xehp_and_later.inl
+         ${CMAKE_CURRENT_SOURCE_DIR}/gtpin_gfx_core_helper_xehp_and_later.inl
     )
   endif()
 

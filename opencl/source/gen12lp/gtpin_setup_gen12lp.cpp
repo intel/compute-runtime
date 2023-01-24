@@ -10,9 +10,9 @@
 #include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/kernel/implicit_args.h"
 
-#include "opencl/source/gtpin/gtpin_hw_helper.h"
-#include "opencl/source/gtpin/gtpin_hw_helper.inl"
-#include "opencl/source/gtpin/gtpin_hw_helper_bdw_and_later.inl"
+#include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
+#include "opencl/source/gtpin/gtpin_gfx_core_helper.inl"
+#include "opencl/source/gtpin/gtpin_gfx_core_helper_bdw_and_later.inl"
 
 #include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
 

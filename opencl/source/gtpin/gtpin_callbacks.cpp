@@ -15,7 +15,7 @@
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/gtpin/gtpin_defs.h"
-#include "opencl/source/gtpin/gtpin_hw_helper.h"
+#include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/kernel/multi_device_kernel.h"

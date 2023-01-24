@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
-#include "opencl/source/gtpin/gtpin_hw_helper.h"
+#include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 
 namespace NEO {
 
