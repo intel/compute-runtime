@@ -25,8 +25,6 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/registry_reader_tests.h
                  ${CMAKE_CURRENT_SOURCE_DIR}/self_lib_win.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/um_km_data_translator_tests.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm20_tests.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm23_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_address_space_windows_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_command_stream_l0_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_kmdaf_listener_tests.cpp
@@ -34,11 +32,15 @@ if(WIN32)
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_residency_controller_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_special_heap_test.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_memory_reservation_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm_windows_tests.cpp
   )
 endif()
 
 if(WIN32 OR(UNIX AND NOT DISABLE_WDDM_LINUX))
   target_sources(neo_shared_tests PRIVATE
+                 ${IGDRCL_SRC_tests_wddm_interface}
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm20_tests.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/wddm23_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/gdi_interface_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_address_space_tests.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/wddm_mapper_tests.cpp

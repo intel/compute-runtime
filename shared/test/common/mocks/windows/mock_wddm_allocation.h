@@ -29,7 +29,7 @@ class MockWddmAllocation : public WddmAllocation {
         }
         gmms.resize(0);
     }
-    ~MockWddmAllocation() {
+    ~MockWddmAllocation() override {
         clearGmms();
     }
     void resizeGmms(size_t newSize) {

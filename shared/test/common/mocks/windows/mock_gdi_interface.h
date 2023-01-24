@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,7 +61,7 @@ class MockGdi : public Gdi {
         return 0;
     }
 
-    static NTSTATUS __stdcall destroyAllocation2Mock(IN D3DKMT_DESTROYALLOCATION2 *arg) {
+    static NTSTATUS __stdcall destroyAllocation2Mock(IN CONST D3DKMT_DESTROYALLOCATION2 *arg) {
         getDestroyArg() = *arg;
         return 0;
     }
@@ -140,7 +140,7 @@ class MockGdi : public Gdi {
         return waitFromCpu;
     }
 
-    static D3DKMT_CREATESYNCHRONIZATIONOBJECT2 getCreateSynchronizationObject2Arg() {
+    static D3DKMT_CREATESYNCHRONIZATIONOBJECT2 &getCreateSynchronizationObject2Arg() {
         static D3DKMT_CREATESYNCHRONIZATIONOBJECT2 createSynchronizationObject2;
         return createSynchronizationObject2;
     }
