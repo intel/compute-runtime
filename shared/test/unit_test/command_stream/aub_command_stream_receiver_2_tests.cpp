@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/hw_helper.h"
+#include "shared/source/memory_manager/page_table.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/aub_command_stream_receiver_fixture.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"

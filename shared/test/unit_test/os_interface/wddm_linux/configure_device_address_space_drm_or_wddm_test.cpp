@@ -15,6 +15,7 @@
 #include "shared/source/os_interface/windows/device_time_wddm.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
+#include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_memory_manager.h"
 #include "shared/test/common/helpers/default_hw_info.h"

@@ -16,6 +16,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/windows/os_context_win.h"
+#include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm_residency_controller.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

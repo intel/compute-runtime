@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/os_interface/os_memory.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "memory_properties_flags.h"
 
@@ -24,6 +25,9 @@
 #include <vector>
 
 namespace NEO {
+
+using SubDeviceIdsVec = StackVec<uint32_t, 4>;
+
 class MultiGraphicsAllocation;
 class PageFaultManager;
 class GfxPartition;

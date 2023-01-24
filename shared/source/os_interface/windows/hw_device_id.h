@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include <d3dkmthk.h>
@@ -17,7 +16,9 @@
 
 namespace NEO {
 class Gdi;
+class UmKmDataTranslator;
 struct OsEnvironment;
+
 class HwDeviceIdWddm : public HwDeviceId {
   public:
     static constexpr DriverModelType driverModelType = DriverModelType::WDDM;

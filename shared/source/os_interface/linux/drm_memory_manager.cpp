@@ -44,6 +44,7 @@
 #include <cstring>
 #include <iostream>
 #include <memory>
+#include <sys/ioctl.h>
 
 namespace NEO {
 

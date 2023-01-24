@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
+#include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/test/common/fixtures/memory_allocator_multi_device_fixture.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
 #include "shared/test/common/mocks/mock_wddm.h"

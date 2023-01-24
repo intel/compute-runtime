@@ -6,10 +6,10 @@
  */
 
 #pragma once
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
+#include "shared/source/os_interface/windows/sharedata_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/wddm_defs.h"
-
-#include "sku_info.h"
 
 #include <atomic>
 
@@ -17,27 +17,29 @@ struct _SYSTEM_INFO;
 typedef struct _SYSTEM_INFO SYSTEM_INFO;
 
 namespace NEO {
-class WddmResidencyLogger;
 enum PreemptionMode : uint32_t;
-struct OSMemory;
-class GfxPartition;
 class Gdi;
+class GfxPartition;
 class Gmm;
 class GmmMemory;
-class ProductHelper;
 class OsContextWin;
+class ProductHelper;
 class SettingsReader;
 class WddmAllocation;
 class WddmInterface;
 class WddmResidencyController;
+class WddmResidencyLogger;
 class WddmResidentAllocationsContainer;
 
 struct AllocationStorageData;
+struct FeatureTable;
 struct HardwareInfo;
 struct KmDafListener;
-struct RootDeviceEnvironment;
 struct MonitoredFence;
 struct OsHandleStorage;
+struct OSMemory;
+struct RootDeviceEnvironment;
+struct WorkaroundTable;
 
 enum class HeapIndex : uint32_t;
 
@@ -80,7 +82,7 @@ class Wddm : public DriverModel {
     MOCKABLE_VIRTUAL void *lockResource(const D3DKMT_HANDLE &handle, bool applyMakeResidentPriorToLock, size_t size);
     MOCKABLE_VIRTUAL void unlockResource(const D3DKMT_HANDLE &handle);
     MOCKABLE_VIRTUAL void kmDafLock(D3DKMT_HANDLE handle);
-    MOCKABLE_VIRTUAL bool isKmDafEnabled() const { return featureTable->flags.ftrKmdDaf; }
+    MOCKABLE_VIRTUAL bool isKmDafEnabled() const;
 
     MOCKABLE_VIRTUAL bool setAllocationPriority(const D3DKMT_HANDLE *handles, uint32_t allocationCount, uint32_t priority);
 

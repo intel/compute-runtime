@@ -21,6 +21,7 @@
 #include "shared/source/os_interface/windows/gdi_interface.h"
 #include "shared/source/os_interface/windows/gfx_escape_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/um_km_data_temp_storage.h"
+#include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "gmm_memory.h"

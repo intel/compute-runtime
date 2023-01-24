@@ -11,6 +11,7 @@
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/hardware_context_controller.h"
 #include "shared/source/helpers/neo_driver_version.h"
+#include "shared/source/memory_manager/page_table.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/aub_command_stream_receiver_fixture.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"

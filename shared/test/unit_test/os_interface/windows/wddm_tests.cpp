@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/driver_info.h"
+#include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"

@@ -22,8 +22,6 @@
 #include <memory>
 #include <mutex>
 #include <string>
-#include <sys/ioctl.h>
-#include <unistd.h>
 #include <unordered_map>
 #include <vector>
 

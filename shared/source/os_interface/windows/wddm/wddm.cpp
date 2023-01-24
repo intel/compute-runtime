@@ -893,6 +893,10 @@ void Wddm::kmDafLock(D3DKMT_HANDLE handle) {
     kmDafListener->notifyLock(featureTable->flags.ftrKmdDaf, getAdapter(), device, handle, 0, getGdi()->escape);
 }
 
+bool Wddm::isKmDafEnabled() const {
+    return featureTable->flags.ftrKmdDaf;
+}
+
 bool Wddm::setLowPriorityContextParam(D3DKMT_HANDLE contextHandle) {
     D3DKMT_SETCONTEXTSCHEDULINGPRIORITY contextPriority = {};
 
