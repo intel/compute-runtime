@@ -118,6 +118,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     uint32_t numSamplers,
     const uint32_t threadGroupCount,
     uint32_t threadsPerThreadGroup,
+    uint32_t simd,
     const Kernel &kernel,
     uint32_t bindingTablePrefetchSize,
     PreemptionMode preemptionMode,
@@ -149,6 +150,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendInterfaceDescriptorData(
     productHelper.updateIddCommand(&interfaceDescriptor, kernelDescriptor.kernelAttributes.numGrfRequired,
                                    kernelDescriptor.kernelAttributes.threadArbitrationPolicy);
 
+    EncodeDispatchKernel<GfxFamily>::adjustNumberOfThreadsInThreadGroup(interfaceDescriptor, simd, threadsPerThreadGroup);
     EncodeDispatchKernel<GfxFamily>::appendAdditionalIDDFields(&interfaceDescriptor, device.getRootDeviceEnvironment(), threadsPerThreadGroup,
                                                                slmTotalSize, SlmPolicy::SlmPolicyNone);
 
@@ -285,6 +287,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
         samplerCount,
         threadGroupCount,
         threadsPerThreadGroup,
+        simd,
         kernel,
         bindingTablePrefetchSize,
         preemptionMode,

@@ -791,4 +791,7 @@ uint32_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh() {
     return 0u;
 }
 
+template <typename Family>
+void EncodeDispatchKernel<Family>::adjustNumberOfThreadsInThreadGroup(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const uint32_t simd, uint32_t &threadsPerThreadGroup) {}
+
 } // namespace NEO
