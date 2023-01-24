@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/task_count_helper.h"
-#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/memory_manager/residency_container.h"
 #include "shared/source/unified_memory/unified_memory.h"

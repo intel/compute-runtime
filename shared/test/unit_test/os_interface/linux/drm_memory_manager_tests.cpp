@@ -35,6 +35,7 @@
 #include "gtest/gtest.h"
 
 #include <array>
+#include <fcntl.h>
 #include <memory>
 #include <vector>
 

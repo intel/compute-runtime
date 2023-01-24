@@ -1,12 +1,12 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/utilities/spinlock.h"
 

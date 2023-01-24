@@ -12,7 +12,6 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/cache_policy.h"
-#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "level_zero/core/source/device/device.h"

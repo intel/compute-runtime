@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
 #include "opencl/source/api/cl_types.h"

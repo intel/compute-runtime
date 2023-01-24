@@ -5,12 +5,17 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/os_interface/linux/drm_mock_device_blob.h"
 
 #include "gtest/gtest.h"
+
+DrmMockEngine::DrmMockEngine(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {
+    rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
+}
 
 void DrmMockEngine::handleQueryItem(QueryItem *queryItem) {
     if (queryItem->queryId == static_cast<uint64_t>(ioctlHelper->getDrmParamValue(DrmParam::QueryEngineInfo))) {

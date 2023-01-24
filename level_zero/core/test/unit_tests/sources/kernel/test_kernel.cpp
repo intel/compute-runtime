@@ -12,6 +12,7 @@
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
+#include "shared/source/kernel/implicit_args.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/kernel_info_from_patchtokens.h"

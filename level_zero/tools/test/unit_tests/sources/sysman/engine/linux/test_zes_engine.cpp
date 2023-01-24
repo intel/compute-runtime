@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/os_interface/linux/memory_info.h"
+
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
 #include "mock_engine.h"

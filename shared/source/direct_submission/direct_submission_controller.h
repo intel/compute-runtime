@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/task_count_helper.h"
-#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/device_bitfield.h"
 
 #include <array>
 #include <atomic>

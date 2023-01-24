@@ -8,18 +8,15 @@
 #pragma once
 #include "shared/source/command_stream/aub_subcapture_status.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
+#include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
-#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/blit_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
-#include "shared/test/common/mocks/mock_experimental_command_buffer.h"
 
 #include <map>
 #include <optional>

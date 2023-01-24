@@ -6,13 +6,14 @@
  */
 
 #pragma once
-#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/vec.h"
 
 #include <functional>
 
 namespace NEO {
 
+class Device;
 class GraphicsAllocation;
 
 enum class BlitOperationResult {

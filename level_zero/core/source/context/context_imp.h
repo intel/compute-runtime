@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/helpers/common_types.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/utilities/stackvec.h"
 

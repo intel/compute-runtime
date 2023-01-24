@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
@@ -321,9 +320,7 @@ class DrmMockEngine : public DrmMock {
     uint32_t i915QuerySuccessCount = std::numeric_limits<uint32_t>::max();
     uint32_t queryEngineInfoSuccessCount = std::numeric_limits<uint32_t>::max();
 
-    DrmMockEngine(RootDeviceEnvironment &rootDeviceEnvironment) : DrmMock(rootDeviceEnvironment) {
-        rootDeviceEnvironment.setHwInfoAndInitHelpers(defaultHwInfo.get());
-    }
+    DrmMockEngine(RootDeviceEnvironment &rootDeviceEnvironment);
 
     int handleRemainingRequests(DrmIoctl request, void *arg) override;
 

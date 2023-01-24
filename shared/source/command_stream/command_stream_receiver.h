@@ -9,7 +9,6 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/blit_properties_container.h"
-#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/utilities/spinlock.h"
@@ -20,6 +19,7 @@
 #include <functional>
 
 namespace NEO {
+enum class DebugPauseState : uint32_t;
 struct BatchBuffer;
 struct WaitParams;
 class SubmissionAggregator;

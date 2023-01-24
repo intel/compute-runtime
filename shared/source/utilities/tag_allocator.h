@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/helpers/common_types.h"
+#include "shared/source/helpers/device_bitfield.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/utilities/idlist.h"

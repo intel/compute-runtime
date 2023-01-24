@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
