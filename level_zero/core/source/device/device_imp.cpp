@@ -910,8 +910,7 @@ ze_result_t DeviceImp::getCacheProperties(uint32_t *pCount, ze_device_cache_prop
     }
 
     const auto &hardwareInfo = this->getHwInfo();
-    uint32_t subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(&hardwareInfo);
-    pCacheProperties[0].cacheSize = hardwareInfo.gtSystemInfo.L3CacheSizeInKb * subDeviceCount * KB;
+    pCacheProperties[0].cacheSize = hardwareInfo.gtSystemInfo.L3BankCount * 128 * KB;
     pCacheProperties[0].flags = 0;
 
     if (pCacheProperties->pNext) {
