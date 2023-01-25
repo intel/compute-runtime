@@ -174,11 +174,6 @@ bool ProductHelperHw<gfxProduct>::isBlitSplitEnqueueWARequired(const HardwareInf
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isInitDeviceWithFirstSubmissionRequired(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo &hwInfo) const {
     return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }

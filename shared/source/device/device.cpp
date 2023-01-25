@@ -381,18 +381,13 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
 
     commandStreamReceiver->createKernelArgsBufferAllocation();
 
-    if (preemptionMode == PreemptionMode::MidThread && !commandStreamReceiver->createPreemptionAllocation()) {
-        return false;
-    }
-
     if (isDefaultEngine) {
         bool defaultEngineAlreadySet = (allEngines.size() > defaultEngineIndex) && (allEngines[defaultEngineIndex].getEngineType() == engineType);
 
         if (!defaultEngineAlreadySet) {
             defaultEngineIndex = deviceCsrIndex;
 
-            if (osContext->isDebuggableContext() ||
-                this->isInitDeviceWithFirstSubmissionSupported(commandStreamReceiver->getType())) {
+            if (osContext->isDebuggableContext()) {
                 if (SubmissionStatus::SUCCESS != commandStreamReceiver->initializeDeviceWithFirstSubmission()) {
                     return false;
                 }
@@ -404,12 +399,15 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
         defaultBcsEngineIndex = deviceCsrIndex;
     }
 
+    if (preemptionMode == PreemptionMode::MidThread && !commandStreamReceiver->createPreemptionAllocation()) {
+        return false;
+    }
+
     EngineControl engine{commandStreamReceiver.get(), osContext};
     allEngines.push_back(engine);
     if (engineUsage == EngineUsage::Regular) {
         addEngineToEngineGroup(engine);
     }
-
     commandStreamReceivers.push_back(std::move(commandStreamReceiver));
 
     return true;
@@ -440,11 +438,6 @@ bool Device::isBcsSplitSupported() {
     }
 
     return bcsSplit;
-}
-
-bool Device::isInitDeviceWithFirstSubmissionSupported(CommandStreamReceiverType csrType) {
-    return getProductHelper().isInitDeviceWithFirstSubmissionRequired(getHardwareInfo()) &&
-           Device::isInitDeviceWithFirstSubmissionEnabled(csrType);
 }
 
 double Device::getPlatformHostTimerResolution() const {

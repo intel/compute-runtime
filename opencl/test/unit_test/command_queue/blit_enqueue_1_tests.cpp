@@ -238,17 +238,6 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenFlushTagUpdateThenSetStallingCmd
     EXPECT_TRUE(ultCsr->latestFlushedBatchBuffer.hasStallingCmds);
 }
 
-HWTEST_TEMPLATED_F(BlitAuxTranslationTests, whenInitializeDeviceWithFirstSubmissionThenMiFlushDwIsFlushed) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
-    EXPECT_EQ(SubmissionStatus::SUCCESS, bcsCsr->initializeDeviceWithFirstSubmission());
-
-    auto cmdListBcs = getCmdList<FamilyType>(bcsCsr->getCS(0), 0);
-
-    auto cmdFound = expectCommand<MI_FLUSH_DW>(cmdListBcs.begin(), cmdListBcs.end());
-    EXPECT_NE(cmdFound, cmdListBcs.end());
-}
-
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructingCommandBufferThenSynchronizeBcsOutput) {
     using XY_COPY_BLT = typename FamilyType::XY_COPY_BLT;
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
