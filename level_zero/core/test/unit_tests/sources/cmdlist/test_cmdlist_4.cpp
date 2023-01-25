@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"

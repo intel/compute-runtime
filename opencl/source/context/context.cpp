@@ -31,6 +31,7 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/source/sharings/sharing.h"
 #include "opencl/source/sharings/sharing_factory.h"
 
 #include "d3d_sharing_functions.h"

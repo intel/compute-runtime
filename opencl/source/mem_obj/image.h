@@ -6,10 +6,13 @@
  */
 
 #pragma once
+#include "shared/source/memory_manager/graphics_allocation.h"
+
 #include "opencl/source/helpers/surface_formats.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 
 namespace NEO {
+class Gmm;
 struct HardwareInfo;
 class Image;
 struct KernelInfo;

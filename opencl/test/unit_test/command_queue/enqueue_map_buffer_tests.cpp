@@ -11,6 +11,7 @@
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/command_queue/enqueue_map_buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"

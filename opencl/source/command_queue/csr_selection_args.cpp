@@ -7,6 +7,8 @@
 
 #include "opencl/source/command_queue/csr_selection_args.h"
 
+#include "shared/source/memory_manager/graphics_allocation.h"
+
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/source/mem_obj/image.h"
 

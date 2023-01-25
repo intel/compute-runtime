@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/hw_helper.h"

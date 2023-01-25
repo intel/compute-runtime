@@ -13,6 +13,7 @@
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

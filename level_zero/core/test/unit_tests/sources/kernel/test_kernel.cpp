@@ -49,6 +49,35 @@ void populatePointerKernelArg(ArgDescPointer &dst,
 namespace L0 {
 namespace ult {
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct WhiteBoxKernelHw : public KernelHw<gfxCoreFamily> {
+    using BaseClass = KernelHw<gfxCoreFamily>;
+    using BaseClass::BaseClass;
+    using ::L0::KernelImp::createPrintfBuffer;
+    using ::L0::KernelImp::crossThreadData;
+    using ::L0::KernelImp::crossThreadDataSize;
+    using ::L0::KernelImp::dynamicStateHeapData;
+    using ::L0::KernelImp::dynamicStateHeapDataSize;
+    using ::L0::KernelImp::groupSize;
+    using ::L0::KernelImp::kernelImmData;
+    using ::L0::KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
+    using ::L0::KernelImp::module;
+    using ::L0::KernelImp::numThreadsPerThreadGroup;
+    using ::L0::KernelImp::patchBindlessSurfaceState;
+    using ::L0::KernelImp::perThreadDataForWholeThreadGroup;
+    using ::L0::KernelImp::perThreadDataSize;
+    using ::L0::KernelImp::perThreadDataSizeForWholeThreadGroup;
+    using ::L0::KernelImp::printfBuffer;
+    using ::L0::KernelImp::requiredWorkgroupOrder;
+    using ::L0::KernelImp::residencyContainer;
+    using ::L0::KernelImp::surfaceStateHeapData;
+    using ::L0::KernelImp::unifiedMemoryControls;
+
+    void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {}
+
+    WhiteBoxKernelHw() : ::L0::KernelHw<gfxCoreFamily>(nullptr) {}
+};
+
 using KernelInitTest = Test<ModuleImmutableDataFixture>;
 
 TEST_F(KernelInitTest, givenKernelToInitWhenItHasUnknownArgThenUnknowKernelArgHandlerAssigned) {

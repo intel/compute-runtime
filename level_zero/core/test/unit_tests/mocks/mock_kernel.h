@@ -13,7 +13,6 @@
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
-#include "level_zero/core/source/kernel/kernel_hw.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/white_box.h"
@@ -71,34 +70,6 @@ struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
     void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {}
 
     WhiteBox() : ::L0::KernelImp(nullptr) {}
-};
-template <GFXCORE_FAMILY gfxCoreFamily>
-struct WhiteBoxKernelHw : public KernelHw<gfxCoreFamily> {
-    using BaseClass = KernelHw<gfxCoreFamily>;
-    using BaseClass::BaseClass;
-    using ::L0::KernelImp::createPrintfBuffer;
-    using ::L0::KernelImp::crossThreadData;
-    using ::L0::KernelImp::crossThreadDataSize;
-    using ::L0::KernelImp::dynamicStateHeapData;
-    using ::L0::KernelImp::dynamicStateHeapDataSize;
-    using ::L0::KernelImp::groupSize;
-    using ::L0::KernelImp::kernelImmData;
-    using ::L0::KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
-    using ::L0::KernelImp::module;
-    using ::L0::KernelImp::numThreadsPerThreadGroup;
-    using ::L0::KernelImp::patchBindlessSurfaceState;
-    using ::L0::KernelImp::perThreadDataForWholeThreadGroup;
-    using ::L0::KernelImp::perThreadDataSize;
-    using ::L0::KernelImp::perThreadDataSizeForWholeThreadGroup;
-    using ::L0::KernelImp::printfBuffer;
-    using ::L0::KernelImp::requiredWorkgroupOrder;
-    using ::L0::KernelImp::residencyContainer;
-    using ::L0::KernelImp::surfaceStateHeapData;
-    using ::L0::KernelImp::unifiedMemoryControls;
-
-    void evaluateIfRequiresGenerationOfLocalIdsByRuntime(const NEO::KernelDescriptor &kernelDescriptor) override {}
-
-    WhiteBoxKernelHw() : ::L0::KernelHw<gfxCoreFamily>(nullptr) {}
 };
 
 template <>

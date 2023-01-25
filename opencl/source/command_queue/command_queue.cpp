@@ -47,6 +47,7 @@
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/memory_manager/migration_controller.h"
 #include "opencl/source/program/printf_handler.h"
+#include "opencl/source/sharings/sharing.h"
 
 #include "CL/cl_ext.h"
 

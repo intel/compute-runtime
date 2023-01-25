@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"

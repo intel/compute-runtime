@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"

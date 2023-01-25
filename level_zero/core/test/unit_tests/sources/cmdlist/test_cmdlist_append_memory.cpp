@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/test_macros/hw_test.h"

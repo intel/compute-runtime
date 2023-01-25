@@ -9,6 +9,7 @@
 
 #include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/ptr_math.h"
 
 #include "opencl/source/event/event.h"
 #include "opencl/source/helpers/dispatch_info.h"

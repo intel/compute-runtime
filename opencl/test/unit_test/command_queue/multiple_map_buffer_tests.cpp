@@ -12,6 +12,7 @@
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

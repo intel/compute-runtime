@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
+#include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"

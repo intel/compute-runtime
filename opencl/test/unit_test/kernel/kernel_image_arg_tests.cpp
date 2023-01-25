@@ -15,6 +15,7 @@
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/kernel/kernel.h"
+#include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/fixtures/kernel_arg_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_image.h"

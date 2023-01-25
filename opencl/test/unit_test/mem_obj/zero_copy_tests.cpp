@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 

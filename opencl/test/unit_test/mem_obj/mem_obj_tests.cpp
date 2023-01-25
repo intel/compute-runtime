@@ -21,6 +21,7 @@
 #include "opencl/source/helpers/properties_helper.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/platform/platform.h"
+#include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"

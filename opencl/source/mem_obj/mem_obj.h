@@ -14,7 +14,6 @@
 #include "opencl/source/helpers/base_object.h"
 #include "opencl/source/helpers/destructor_callbacks.h"
 #include "opencl/source/helpers/properties_helper.h"
-#include "opencl/source/sharings/sharing.h"
 
 #include "memory_properties_flags.h"
 
@@ -22,6 +21,7 @@
 #include <vector>
 
 namespace NEO {
+class SharingHandler;
 struct MapInfo;
 class MapOperationsHandler;
 class ExecutionEnvironment;
@@ -123,7 +123,7 @@ class MemObj : public BaseObject<_cl_mem> {
 
     std::shared_ptr<SharingHandler> &getSharingHandler() { return sharingHandler; }
     SharingHandler *peekSharingHandler() const { return sharingHandler.get(); }
-    void setSharingHandler(SharingHandler *sharingHandler) { this->sharingHandler.reset(sharingHandler); }
+    void setSharingHandler(SharingHandler *sharingHandler);
     void setParentSharingHandler(std::shared_ptr<SharingHandler> &handler) { sharingHandler = handler; }
     unsigned int acquireCount = 0;
     Context *getContext() const { return context; }

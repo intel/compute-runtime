@@ -30,6 +30,7 @@
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/mem_obj_helper.h"
+#include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/fixtures/multi_root_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"

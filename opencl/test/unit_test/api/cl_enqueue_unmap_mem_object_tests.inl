@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 #include "opencl/test/unit_test/fixtures/buffer_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"

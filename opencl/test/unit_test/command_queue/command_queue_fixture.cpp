@@ -14,6 +14,7 @@
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/sharings/sharing.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 

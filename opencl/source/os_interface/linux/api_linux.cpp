@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj.h"
+#include "opencl/source/sharings/sharing.h"
 
 void NEO::MemObj::getOsSpecificMemObjectInfo(const cl_mem_info &paramName, size_t *srcParamSize, void **srcParam) {
     switch (paramName) {

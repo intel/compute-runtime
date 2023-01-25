@@ -25,6 +25,7 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/get_info_status_mapper.h"
 #include "opencl/source/helpers/mipmap.h"
+#include "opencl/source/sharings/sharing.h"
 
 #include <algorithm>
 
@@ -330,6 +331,11 @@ void *MemObj::getCpuAddressForMemoryTransfer() {
     }
     return ptrToReturn;
 }
+
+void MemObj::setSharingHandler(SharingHandler *sharingHandler) {
+    this->sharingHandler.reset(sharingHandler);
+}
+
 void MemObj::releaseAllocatedMapPtr() {
     if (allocatedMapPtr) {
         DEBUG_BREAK_IF(isValueSet(flags, CL_MEM_USE_HOST_PTR));

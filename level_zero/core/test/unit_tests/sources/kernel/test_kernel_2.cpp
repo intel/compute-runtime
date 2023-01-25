@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
@@ -16,6 +17,8 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
+#include "encode_surface_state_args.h"
 
 namespace L0 {
 #include "level_zero/core/source/kernel/patch_with_implicit_surface.inl"
