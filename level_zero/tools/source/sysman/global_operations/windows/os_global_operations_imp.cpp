@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/source/sysman/global_operations/windows/os_global_operations_imp.h"
+
+#include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 
 namespace L0 {
 

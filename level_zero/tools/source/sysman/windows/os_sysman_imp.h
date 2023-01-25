@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,16 +7,19 @@
 
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
-#include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/windows/wddm/wddm.h"
 
-#include "level_zero/core/source/device/device.h"
-#include "level_zero/tools/source/sysman/sysman_imp.h"
-#include "level_zero/tools/source/sysman/windows/kmd_sys.h"
-#include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
+#include "level_zero/tools/source/sysman/os_sysman.h"
+
+namespace NEO {
+class Wddm;
+}
 
 namespace L0 {
+
 class FirmwareUtil;
+class KmdSysManager;
+
+struct Device;
 
 class WddmSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:

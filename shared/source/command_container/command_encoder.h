@@ -9,9 +9,11 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/encode_alu_helper.h"
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
+#include "shared/source/kernel/kernel_execution_type.h"
 
 #include <list>
 
@@ -19,6 +21,7 @@ namespace NEO {
 struct EncodeSurfaceStateArgs;
 struct MiFlushArgs;
 struct PipeControlArgs;
+struct PipelineSelectArgs;
 enum class SlmPolicy;
 struct DispatchKernelEncoderI;
 struct RootDeviceEnvironment;

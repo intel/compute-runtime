@@ -8,9 +8,11 @@
 #pragma once
 
 #include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include <level_zero/ze_api.h>
 #include <level_zero/zet_api.h>

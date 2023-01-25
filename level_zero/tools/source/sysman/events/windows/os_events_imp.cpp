@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/events/windows/os_events_imp.h"
 
+#include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 #include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
 namespace L0 {

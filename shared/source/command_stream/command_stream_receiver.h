@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/blit_properties_container.h"

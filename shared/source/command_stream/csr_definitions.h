@@ -13,7 +13,6 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/queue_throttle.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
-#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/kernel/kernel_execution_type.h"
@@ -22,16 +21,6 @@
 
 namespace NEO {
 struct FlushStampTrackingObj;
-
-namespace CSRequirements {
-// cleanup section usually contains 1-2 pipeControls BB end and place for BB start
-// that makes 16 * 2 + 4 + 8 = 40 bytes
-// then command buffer is aligned to cacheline that can take up to 63 bytes
-// to be sure everything fits minimal size is at 2 x cacheline.
-
-inline constexpr auto minCommandQueueCommandStreamSize = 2 * MemoryConstants::cacheLineSize;
-inline constexpr auto csOverfetchSize = MemoryConstants::pageSize;
-} // namespace CSRequirements
 
 namespace TimeoutControls {
 inline constexpr int64_t maxTimeout = std::numeric_limits<int64_t>::max();

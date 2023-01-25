@@ -7,6 +7,8 @@
 
 #include "sysman/memory/windows/os_memory_imp.h"
 
+#include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
+
 template <typename I>
 std::string intToHex(I w, size_t hexLength = sizeof(I) << 1) {
     static const char *digits = "0123456789ABCDEF";

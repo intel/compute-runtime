@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "sysman/temperature/windows/os_temperature_imp.h"
+
+#include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 
 namespace L0 {
 

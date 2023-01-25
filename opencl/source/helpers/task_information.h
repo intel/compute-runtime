@@ -32,6 +32,8 @@ class TimestampPacketContainer;
 template <class T>
 class TagNode;
 
+enum PreemptionMode : uint32_t;
+
 struct KernelOperation {
   protected:
     struct ResourceCleaner {

@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/helpers/completion_stamp.h"
-#include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/map_operation_type.h"
 #include "shared/source/helpers/timestamp_packet_container.h"

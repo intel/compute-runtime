@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "sysman/fan/windows/os_fan_imp.h"
+
+#include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 
 namespace L0 {
 

@@ -7,6 +7,8 @@
 
 #pragma once
 
+#include "shared/source/command_stream/csr_definitions.h"
+
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 
 namespace NEO {
