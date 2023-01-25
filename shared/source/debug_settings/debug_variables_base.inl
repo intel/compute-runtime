@@ -342,7 +342,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, DirectSubmissionRelaxedOrderingQueueSizeLimit, -
 DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address of submitted command buffers")
 
 /*FEATURE FLAGS*/
-DECLARE_DEBUG_VARIABLE(bool, EnableL0ReadLUIDExtension, true, "Enables Support for L0 Extension for reading the LUID from WDDM.")
+DECLARE_DEBUG_VARIABLE(bool, EnableL0ReadLUIDExtension, false, "Enables Support for L0 Extension for reading the LUID from WDDM.")
 DECLARE_DEBUG_VARIABLE(bool, EnableL0EuCount, false, "Enables Support for L0 Extension for querying total nubmer of EUs.")
 DECLARE_DEBUG_VARIABLE(bool, USMEvictAfterMigration, false, "Evict USM allocation after implicit migration to GPU")
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")

@@ -77,14 +77,17 @@ class MockOsContextWin : public OsContextWin {
 using LuidDeviceTest = Test<DeviceFixture>;
 
 TEST_F(LuidDeviceTest, givenOsContextWinAndGetDeviceNodeMaskThenNodeMaskIsAtLeast1) {
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(true);
     auto luidMock = new MockDriverModelWDDMLUID(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
     auto defaultEngine = defaultHwInfo->capabilityTable.defaultEngineType;
     OsContextWin osContext(*luidMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::Regular}));
     EXPECT_GE(osContext.getDeviceNodeMask(), 1u);
     delete luidMock;
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(false);
 }
 
 TEST_F(LuidDeviceTest, givenOsContextWinAndGetLUIDArrayThenLUIDisValid) {
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(true);
     auto luidMock = new MockDriverModelWDDMLUID(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
     auto defaultEngine = defaultHwInfo->capabilityTable.defaultEngineType;
     OsContextWin osContext(*luidMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor({defaultEngine, EngineUsage::Regular}));
@@ -95,9 +98,11 @@ TEST_F(LuidDeviceTest, givenOsContextWinAndGetLUIDArrayThenLUIDisValid) {
     memcpy_s(&luid, sizeof(uint64_t), luidData.data(), sizeof(uint8_t) * luidData.size());
     EXPECT_NE(luid, (uint64_t)0);
     delete luidMock;
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(false);
 }
 
 TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureAndWDDMDriverTypeThenSuccessReturned) {
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(true);
     auto defaultEngine = defaultHwInfo->capabilityTable.defaultEngineType;
     auto luidMock = new MockDriverModelWDDMLUID(*neoDevice->executionEnvironment->rootDeviceEnvironments[0]);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
@@ -120,9 +125,11 @@ TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureAndWDDMDriverTypeThenSu
     EXPECT_EQ(lowLUID, (uint32_t)adapterLuid.LowPart);
     EXPECT_EQ(highLUID, (uint32_t)adapterLuid.HighPart);
     EXPECT_NE(deviceLuidProperties.nodeMask, (uint32_t)0);
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(false);
 }
 
 TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureAndDRMDriverTypeThenUnsupportedReturned) {
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(true);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -130,15 +137,18 @@ TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureAndDRMDriverTypeThenUns
     deviceProperties.pNext = &deviceLuidProperties;
     ze_result_t result = device->getProperties(&deviceProperties);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(false);
 }
 
 TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureAndAndNoOsInterfaceThenUninitReturned) {
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(true);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(nullptr);
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_device_luid_ext_properties_t deviceLuidProperties = {ZE_STRUCTURE_TYPE_DEVICE_LUID_EXT_PROPERTIES};
     deviceProperties.pNext = &deviceLuidProperties;
     ze_result_t result = device->getProperties(&deviceProperties);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNINITIALIZED);
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(false);
 }
 
 } // namespace ult
