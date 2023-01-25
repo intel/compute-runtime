@@ -2574,7 +2574,7 @@ struct CommandQueueOnSpecificEngineTests : ::testing::Test {
     template <typename GfxFamily, int rcsCount, int ccsCount, int bcsCount>
     class MockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
       public:
-        const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
+        const EngineInstancesContainer getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const override {
             EngineInstancesContainer result{};
             for (int i = 0; i < rcsCount; i++) {
                 result.push_back({aub_stream::ENGINE_RCS, EngineUsage::Regular});
@@ -2772,7 +2772,7 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenDebugFlagSetWhenCreatingCmdQueu
 
     class MyMockGfxCoreHelper : public GfxCoreHelperHw<FamilyType> {
       public:
-        const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
+        const EngineInstancesContainer getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const override {
             EngineInstancesContainer result{};
 
             result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});

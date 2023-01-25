@@ -296,9 +296,8 @@ bool Device::createEngines() {
         return createEngine(0, {engineInstancedType, EngineUsage::Regular});
     }
 
-    auto &hwInfo = getHardwareInfo();
     auto &gfxCoreHelper = getGfxCoreHelper();
-    auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
+    auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(getRootDeviceEnvironment());
 
     uint32_t deviceCsrIndex = 0;
     for (auto &engine : gpgpuEngines) {

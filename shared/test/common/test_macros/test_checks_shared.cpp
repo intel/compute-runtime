@@ -17,7 +17,7 @@ using namespace NEO;
 bool TestChecks::supportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-    auto engines = gfxCoreHelper.getGpgpuEngineInstances(*hwInfo);
+    auto engines = gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment);
     for (const auto &engine : engines) {
         if (engine.first == aub_stream::EngineType::ENGINE_BCS) {
             return hwInfo->capabilityTable.blitterOperationsSupported;
@@ -29,7 +29,7 @@ bool TestChecks::supportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironm
 bool TestChecks::fullySupportsBlitter(const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto hwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-    auto engines = gfxCoreHelper.getGpgpuEngineInstances(*hwInfo);
+    auto engines = gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment);
     for (const auto &engine : engines) {
         if (engine.first == aub_stream::EngineType::ENGINE_BCS) {
             auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();

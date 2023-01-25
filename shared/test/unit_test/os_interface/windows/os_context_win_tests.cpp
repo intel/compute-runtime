@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ struct OsContextWinTest : public WddmTestWithMockGdiDll {
         WddmTestWithMockGdiDll::SetUp();
         preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
         auto &gfxCoreHelper = this->rootDeviceEnvironment->getHelper<GfxCoreHelper>();
-        engineTypeUsage = gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0];
+        engineTypeUsage = gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0];
 
         init();
     }
@@ -75,7 +75,7 @@ struct OsContextWinTestNoCleanup : public WddmTestWithMockGdiDllNoCleanup {
         preemptionMode = PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo);
 
         auto &gfxCoreHelper = this->rootDeviceEnvironment->getHelper<GfxCoreHelper>();
-        engineTypeUsage = gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0];
+        engineTypeUsage = gfxCoreHelper.getGpgpuEngineInstances(*rootDeviceEnvironment)[0];
 
         init();
     }

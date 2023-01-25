@@ -37,7 +37,7 @@ GEN8TEST_F(GfxCoreHelperTestGen8, WhenAdjustingDefaultEngineTypeThenEngineTypeIs
 
 GEN8TEST_F(GfxCoreHelperTestGen8, whenGetGpgpuEnginesThenReturnThreeEngines) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(pDevice->getHardwareInfo());
+    auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(pDevice->getRootDeviceEnvironment());
     EXPECT_EQ(3u, gpgpuEngines.size());
     EXPECT_EQ(aub_stream::ENGINE_RCS, gpgpuEngines[0].first);
     EXPECT_EQ(aub_stream::ENGINE_RCS, gpgpuEngines[1].first);

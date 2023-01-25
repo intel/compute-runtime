@@ -72,7 +72,7 @@ TEST_F(DeviceTest, givenDeviceWhenAskedForSpecificEngineThenReturnIt) {
 
     MockClDevice mockClDevice{MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0)};
     auto &gfxCoreHelper = mockClDevice.getGfxCoreHelper();
-    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(mockClDevice.getRootDeviceEnvironment());
     for (uint32_t i = 0; i < engines.size(); i++) {
         auto &deviceEngine = mockClDevice.getEngine(engines[i].first, EngineUsage::Regular);
         EXPECT_EQ(deviceEngine.osContext->getEngineType(), engines[i].first);
@@ -90,7 +90,7 @@ TEST_F(DeviceTest, givenDebugVariableToAlwaysChooseEngineZeroWhenNotExistingEngi
     DebugManagerStateRestore restore;
     DebugManager.flags.OverrideInvalidEngineWithDefault.set(true);
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo);
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(pDevice->getRootDeviceEnvironment());
     auto &deviceEngine = pDevice->getEngine(engines[0].first, EngineUsage::Regular);
     auto &notExistingEngine = pDevice->getEngine(aub_stream::ENGINE_VCS, EngineUsage::Regular);
     EXPECT_EQ(&notExistingEngine, &deviceEngine);
@@ -272,7 +272,7 @@ TEST(DeviceCreation, givenDeviceWhenItIsCreatedThenOsContextIsRegistredInMemoryM
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo));
     auto memoryManager = device->getMemoryManager();
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto numEnginesForDevice = gfxCoreHelper.getGpgpuEngineInstances(hwInfo).size();
+    auto numEnginesForDevice = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment()).size();
     if (device->getNumGenericSubDevices() > 1) {
         numEnginesForDevice *= device->getNumGenericSubDevices();
         numEnginesForDevice += device->allEngines.size();
@@ -302,11 +302,8 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachOsContextHasU
     MockDevice *devices[] = {device1.get(), device2.get()};
 
     auto &registeredEngines = executionEnvironment->memoryManager->getRegisteredEngines();
-
-    auto &hwInfo = device1->getHardwareInfo();
     auto &gfxCoreHelper = device1->getGfxCoreHelper();
-
-    const auto &numGpgpuEngines = static_cast<uint32_t>(gfxCoreHelper.getGpgpuEngineInstances(hwInfo).size());
+    const auto &numGpgpuEngines = static_cast<uint32_t>(gfxCoreHelper.getGpgpuEngineInstances(device1->getRootDeviceEnvironment()).size());
 
     size_t numExpectedGenericEnginesPerDevice = numGpgpuEngines;
     size_t numExpectedEngineInstancedEnginesPerDevice = 0;
@@ -375,9 +372,9 @@ TEST(DeviceCreation, givenMultiRootDeviceWhenTheyAreCreatedThenEachDeviceHasSepe
         executionEnvironment->rootDeviceEnvironments[i]->initGmm();
         executionEnvironment->rootDeviceEnvironments[i]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
     }
-    auto hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
+
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-    const auto &numGpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo).size();
+    const auto &numGpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment->rootDeviceEnvironments[0]).size();
     auto device1 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
@@ -458,7 +455,7 @@ HWTEST_F(DeviceTest, givenDebugFlagWhenCreatingRootDeviceWithoutSubDevicesThenWo
 TEST(DeviceCreation, givenDeviceWhenCheckingGpgpuEnginesCountThenNumberGreaterThanZeroIsReturned) {
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<Device>(nullptr));
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    EXPECT_GT(gfxCoreHelper.getGpgpuEngineInstances(device->getHardwareInfo()).size(), 0u);
+    EXPECT_GT(gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment()).size(), 0u);
 }
 
 TEST(DeviceCreation, givenDeviceWhenCheckingParentDeviceThenCorrectValueIsReturned) {

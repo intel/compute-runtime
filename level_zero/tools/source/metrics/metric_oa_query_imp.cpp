@@ -244,7 +244,7 @@ void MetricsLibrary::getSubDeviceClientOptions(
 bool MetricsLibrary::createContext() {
     auto &device = metricSource.getDevice();
     const auto &gfxCoreHelper = device.getGfxCoreHelper();
-    const auto &asyncComputeEngines = gfxCoreHelper.getGpgpuEngineInstances(device.getHwInfo());
+    const auto &asyncComputeEngines = gfxCoreHelper.getGpgpuEngineInstances(device.getNEODevice()->getRootDeviceEnvironment());
     ContextCreateData_1_0 createData = {};
     ClientOptionsData_1_0 clientOptions[6] = {};
     ClientData_1_0 clientData = {};

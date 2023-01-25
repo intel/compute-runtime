@@ -653,9 +653,9 @@ struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
     }
 
     bool multiCcsDevice(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, uint32_t expectedNumCcs) {
-        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+
         auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-        auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
+        auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment);
 
         uint32_t numCcs = 0;
 

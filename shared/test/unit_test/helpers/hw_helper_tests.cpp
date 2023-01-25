@@ -1242,11 +1242,11 @@ HWTEST_F(GfxCoreHelperTest, givenGetRenderSurfaceStatePitchCalledThenCorrectValu
 }
 
 HWTEST_F(GfxCoreHelperTest, whenBlitterSupportIsDisabledThenDontExposeAnyBcsEngine) {
-    auto hwInfo = *defaultHwInfo;
+    auto &hwInfo = *this->pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.capabilityTable.blitterOperationsSupported = false;
     hwInfo.featureTable.ftrBcsInfo.set(0);
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto engineUsageTypes = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
+    auto engineUsageTypes = gfxCoreHelper.getGpgpuEngineInstances(*this->pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
     for (auto &engineUsageType : engineUsageTypes) {
         EXPECT_FALSE(EngineHelpers::isBcs(engineUsageType.first));
     }

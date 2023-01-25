@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,7 +57,7 @@ bool GfxCoreHelperHw<GfxFamily>::isAssignEngineRoundRobinSupported(const Hardwar
 }
 
 template <typename GfxFamily>
-const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
+const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return {
         {aub_stream::ENGINE_RCS, EngineUsage::Regular},
         {aub_stream::ENGINE_RCS, EngineUsage::LowPriority},

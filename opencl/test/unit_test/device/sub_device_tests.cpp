@@ -242,7 +242,7 @@ TEST(RootDevicesTest, givenRootDeviceWithoutSubdevicesWhenCreateEnginesThenDevic
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
     MockDevice device(executionEnvironment, 0);
     auto &gfxCoreHelper = device.getGfxCoreHelper();
-    auto &gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
+    auto &gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(device.getRootDeviceEnvironment());
 
     EXPECT_EQ(0u, device.allEngines.size());
     device.createEngines();
@@ -369,9 +369,8 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
 
     template <typename MockDeviceT>
     bool hasAllEngines(MockDeviceT *device) {
-        auto &hwInfo = device->getHardwareInfo();
         auto &gfxCoreHelper = device->getGfxCoreHelper();
-        auto &gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
+        auto &gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
 
         for (size_t i = 0; i < gpgpuEngines.size(); i++) {
             if (device->allEngines[i].getEngineType() != gpgpuEngines[i].first) {
@@ -383,9 +382,8 @@ struct EngineInstancedDeviceTests : public ::testing::Test {
     }
 
     bool multiCcsDevice(const RootDeviceEnvironment &rootDeviceEnvironment, uint32_t expectedNumCcs) {
-        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
         auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-        auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
+        auto gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(rootDeviceEnvironment);
 
         uint32_t numCcs = 0;
 
@@ -588,10 +586,8 @@ TEST_F(EngineInstancedDeviceTests, givenEngineInstancedSubDeviceWhenEngineCreati
     EXPECT_TRUE(createDevices(genericDevicesCount, ccsCount));
 
     auto subDevice = static_cast<MockSubDevice *>(rootDevice->getSubDevice(0));
-
-    auto &hwInfo = rootDevice->getHardwareInfo();
     auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
-    auto &gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
+    auto &gpgpuEngines = gfxCoreHelper.getGpgpuEngineInstances(rootDevice->getRootDeviceEnvironment());
 
     subDevice->engineInstanced = true;
     subDevice->failOnCreateEngine = true;

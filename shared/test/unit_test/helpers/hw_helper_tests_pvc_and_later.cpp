@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/mock_hw_info_config_hw.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 using GfxCoreHelperTestPvcAndLater = GfxCoreHelperTest;
@@ -185,7 +186,7 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, givenForceBCSForInternalCopyEngineVariab
 
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0));
     auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
+    auto &engines = gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment());
     EXPECT_GE(engines.size(), 9u);
 
     bool found = false;
@@ -199,7 +200,9 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, givenForceBCSForInternalCopyEngineVariab
 
 using GfxCoreHelperTestCooperativeEngine = GfxCoreHelperTestPvcAndLater;
 HWTEST2_F(GfxCoreHelperTestCooperativeEngine, givenCooperativeContextSupportedWhenGetEngineInstancesThenReturnCorrectAmountOfCooperativeCcs, IsXeHpcCore) {
-    HardwareInfo hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+
+    HardwareInfo &hwInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 2;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
@@ -212,7 +215,7 @@ HWTEST2_F(GfxCoreHelperTestCooperativeEngine, givenCooperativeContextSupportedWh
             continue;
         }
         hwInfo.platform.usRevId = hwRevId;
-        auto engineInstances = gfxCoreHelper.getGpgpuEngineInstances(hwInfo);
+        auto engineInstances = gfxCoreHelper.getGpgpuEngineInstances(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
         size_t ccsCount = 0u;
         size_t cooperativeCcsCount = 0u;
         for (auto &engineInstance : engineInstances) {

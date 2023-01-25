@@ -676,7 +676,7 @@ TEST(GetDeviceInfo, WhenQueryingGenericAddressSpaceSupportThenProperValueIsRetur
 template <typename GfxFamily, int ccsCount, int bcsCount>
 class MockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
   public:
-    const EngineInstancesContainer getGpgpuEngineInstances(const HardwareInfo &hwInfo) const override {
+    const EngineInstancesContainer getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const override {
         EngineInstancesContainer result{};
         for (int i = 0; i < ccsCount; i++) {
             result.push_back({static_cast<aub_stream::EngineType>(aub_stream::ENGINE_CCS + i), EngineUsage::Regular});

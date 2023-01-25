@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,7 +69,8 @@ bool GfxCoreHelperHw<GfxFamily>::isUpdateTaskCountFromWaitSupported() const {
 }
 
 template <typename GfxFamily>
-const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstances(const HardwareInfo &hwInfo) const {
+const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto defaultEngine = getChosenEngineType(hwInfo);
 
     EngineInstancesContainer engines;

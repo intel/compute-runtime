@@ -268,9 +268,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenGraphicsAllocationWhenMakeResidentC
 HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenMultipleInstancesInitializeTheirEnginesThenUniqueGlobalGttAddressesAreGenerated) {
     pDevice->executionEnvironment->rootDeviceEnvironments[0]->aubCenter.reset(new AubCenter());
 
-    auto &hwInfo = pDevice->getHardwareInfo();
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    auto engineInstance = gfxCoreHelper.getGpgpuEngineInstances(hwInfo)[0];
+    auto engineInstance = gfxCoreHelper.getGpgpuEngineInstances(pDevice->getRootDeviceEnvironment())[0];
     MockOsContext osContext(0, EngineDescriptorHelper::getDefaultDescriptor(engineInstance));
 
     auto aubCsr1 = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", true, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());

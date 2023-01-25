@@ -127,9 +127,8 @@ struct WddmResidencyControllerWithMockWddmTest : public WddmResidencyControllerT
         memoryManager = std::make_unique<MockWddmMemoryManager>(executionEnvironment);
 
         csr.reset(createCommandStream(executionEnvironment, 0u, 1));
-        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
         auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0],
                                                                                                                       preemptionMode));
         osContext->ensureContextInitialized();
 
@@ -165,9 +164,8 @@ struct WddmResidencyControllerWithGdiAndMemoryManagerTest : ::testing::Test {
 
         memoryManager = std::make_unique<MockWddmMemoryManager>(executionEnvironment);
         csr.reset(createCommandStream(executionEnvironment, 0u, 1));
-        auto hwInfo = executionEnvironment.rootDeviceEnvironments[0]->getHardwareInfo();
         auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
-        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*hwInfo)[0],
+        osContext = memoryManager->createAndRegisterOsContext(csr.get(), EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*executionEnvironment.rootDeviceEnvironments[0])[0],
                                                                                                                       PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
         osContext->ensureContextInitialized();
 

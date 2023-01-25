@@ -58,7 +58,7 @@ void MulticontextAubFixture::setUp(uint32_t numberOfTiles, EnabledCommandStreame
     auto &gfxCoreHelper = platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
     auto engineType = getChosenEngineType(localHwInfo);
     auto renderEngine = aub_stream::NUM_ENGINES;
-    for (auto &engine : gfxCoreHelper.getGpgpuEngineInstances(localHwInfo)) {
+    for (auto &engine : gfxCoreHelper.getGpgpuEngineInstances(*platform()->peekExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex])) {
         if (!EngineHelpers::isCcs(engine.first)) {
             renderEngine = engine.first;
             break;

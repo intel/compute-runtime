@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ struct CompressionXeHPAndLater : public AUBFixture,
 
         auto expectedEngine = static_cast<aub_stream::EngineType>(GetParam());
         bool engineSupported = false;
-        for (auto &engine : gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)) {
+        for (auto &engine : gfxCoreHelper.getGpgpuEngineInstances(device->getRootDeviceEnvironment())) {
             if (engine.first == expectedEngine) {
                 engineSupported = true;
                 break;

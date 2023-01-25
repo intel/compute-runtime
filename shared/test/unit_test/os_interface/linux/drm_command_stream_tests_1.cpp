@@ -176,7 +176,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamTest, givenDrmContextIdWhenFlushingThenSetIdT
 
     auto &gfxCoreHelper = csr->getGfxCoreHelper();
     osContext = std::make_unique<OsContextLinux>(*mock, csr->getRootDeviceIndex(), 1,
-                                                 EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*defaultHwInfo)[0],
+                                                 EngineDescriptorHelper::getDefaultDescriptor(gfxCoreHelper.getGpgpuEngineInstances(*csr->peekExecutionEnvironment().rootDeviceEnvironments[0])[0],
                                                                                               PreemptionHelper::getDefaultPreemptionMode(*defaultHwInfo)));
     osContext->ensureContextInitialized();
     csr->setupContext(*osContext);
