@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/os_interface/linux/i915.h"
 
 #include "opencl/source/sharings/va/va_sharing.h"
 
