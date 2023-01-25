@@ -454,7 +454,7 @@ void EncodeL3State<Family>::encode(CommandContainer &container, bool enableSLM) 
 }
 
 template <typename GfxFamily>
-void EncodeMiFlushDW<GfxFamily>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd, const HardwareInfo &hwInfo) {}
+void EncodeMiFlushDW<GfxFamily>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {}
 
 template <typename GfxFamily>
 void EncodeMiFlushDW<GfxFamily>::programMiFlushDwWA(LinearStream &commandStream) {}

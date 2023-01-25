@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -87,7 +87,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     if (auto kernelAllocation = kernelInfo.getGraphicsAllocation()) {
-        EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.KernelHeapSize, 0, hwInfo);
+        EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.KernelHeapSize, 0, commandQueue.getDevice().getRootDeviceEnvironment());
     }
 
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(

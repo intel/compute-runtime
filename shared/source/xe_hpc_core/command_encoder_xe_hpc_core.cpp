@@ -132,11 +132,14 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 }
 
 template <>
-void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const HardwareInfo &hwInfo) {
+void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using STATE_PREFETCH = typename Family::STATE_PREFETCH;
     constexpr uint32_t mocsIndexForL3 = (2 << 1);
 
-    bool prefetch = ProductHelper::get(hwInfo.platform.eProductFamily)->allowMemoryPrefetch(hwInfo);
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+
+    bool prefetch = productHelper.allowMemoryPrefetch(hwInfo);
 
     if (!prefetch) {
         return;
@@ -175,7 +178,7 @@ void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandSt
 }
 
 template <>
-size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const HardwareInfo &hwInfo) {
+size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (DebugManager.flags.EnableMemoryPrefetch.get() == 0) {
         return 0;
     }
@@ -187,7 +190,7 @@ size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const
 }
 
 template <>
-inline void EncodeMiFlushDW<Family>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd, const HardwareInfo &hwInfo) {
+inline void EncodeMiFlushDW<Family>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
     miFlushDwCmd->setFlushLlc(1);
 }
 

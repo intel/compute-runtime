@@ -36,10 +36,11 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenMiFlushDwIsProgrammedThenSetAn
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
     LinearStream linearStream(buffer, sizeof(buffer));
-
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     MiFlushArgs args;
     args.commandWithPostSync = true;
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, 0x1230000, 456, args, *defaultHwInfo);
+    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, 0x1230000, 456, args, productHelper);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
     EXPECT_EQ(0u, miFlushDwCmd->getFlushCcs());
     EXPECT_EQ(1u, miFlushDwCmd->getFlushLlc());
@@ -47,8 +48,9 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenMiFlushDwIsProgrammedThenSetAn
 
 XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenOffsetWhenProgrammingStatePrefetchThenSetCorrectGpuVa) {
     using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
+    MockExecutionEnvironment mockExecutionEnvironment{};
 
-    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &hwInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.platform.usRevId = 0b0011'1000; // [3:5] - BaseDie != A0
 
     uint8_t buffer[sizeof(STATE_PREFETCH) * 4] = {};
@@ -65,7 +67,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenOffsetWhenProgrammingStatePre
     uint32_t expectedCmdsCount = 3;
     uint32_t alignedSize = MemoryConstants::pageSize64k * expectedCmdsCount;
 
-    EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, alignedSize, gpuVaOffset, hwInfo);
+    EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, alignedSize, gpuVaOffset, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_EQ(sizeof(STATE_PREFETCH) * expectedCmdsCount, linearStream.getUsed());
 
     for (uint32_t i = 0; i < expectedCmdsCount; i++) {
@@ -76,8 +78,9 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenOffsetWhenProgrammingStatePre
 
 XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugVariableSetwhenProgramingStatePrefetchThenSetCorrectFields) {
     using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
+    MockExecutionEnvironment mockExecutionEnvironment{};
 
-    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &hwInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.platform.usRevId = 0b0011'1000; // [3:5] - BaseDie != A0
 
     uint8_t buffer[sizeof(STATE_PREFETCH) * 4] = {};
@@ -106,9 +109,9 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugVariableSetwhenProgramin
         uint32_t alignedSize = alignUp(expectedSize, MemoryConstants::pageSize64k);
         uint32_t expectedCmdsCount = std::max((alignedSize / static_cast<uint32_t>(MemoryConstants::pageSize64k)), 1u);
 
-        EXPECT_EQ(sizeof(STATE_PREFETCH) * expectedCmdsCount, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(expectedSize, hwInfo));
+        EXPECT_EQ(sizeof(STATE_PREFETCH) * expectedCmdsCount, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(expectedSize, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
 
-        EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, expectedSize, 0, hwInfo);
+        EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, expectedSize, 0, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(sizeof(STATE_PREFETCH) * expectedCmdsCount, linearStream.getUsed());
 
         for (uint32_t i = 0; i < expectedCmdsCount; i++) {
@@ -133,25 +136,26 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugVariableSetwhenProgramin
 
 XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenIsaAllocationWhenProgrammingPrefetchThenSetKernelInstructionPrefetchBit) {
     using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
+    MockExecutionEnvironment mockExecutionEnvironment{};
 
-    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &hwInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.platform.usRevId = 0b0011'1000; // [3:5] - BaseDie != A0
 
     uint8_t buffer[sizeof(STATE_PREFETCH)] = {};
     auto statePrefetchCmd = reinterpret_cast<STATE_PREFETCH *>(buffer);
 
-    EXPECT_EQ(sizeof(STATE_PREFETCH), EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(1, hwInfo));
+    EXPECT_EQ(sizeof(STATE_PREFETCH), EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(1, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
 
     AllocationType isaTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL};
 
-    for (uint32_t i = 0; i < 2; i++) {
+    for (auto &isaType : isaTypes) {
         memset(buffer, 0, sizeof(STATE_PREFETCH));
         LinearStream linearStream(buffer, sizeof(buffer));
 
-        const GraphicsAllocation allocation(0, isaTypes[i],
+        const GraphicsAllocation allocation(0, isaType,
                                             nullptr, 1234, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
 
-        EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 123, 0, hwInfo);
+        EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 123, 0, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(sizeof(STATE_PREFETCH), linearStream.getUsed());
 
         EXPECT_TRUE(statePrefetchCmd->getKernelInstructionPrefetch());
@@ -161,28 +165,29 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenIsaAllocationWhenProgrammingP
 XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgramPrefetchCalledThenDoPrefetchIfSetToOne) {
     using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
     DebugManagerStateRestore restore;
+    MockExecutionEnvironment mockExecutionEnvironment{};
 
-    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &hwInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.platform.usRevId = 0b0011'1000; // [3:5] - BaseDie != A0
 
     uint8_t buffer[sizeof(STATE_PREFETCH)] = {};
 
     AllocationType isaTypes[] = {AllocationType::KERNEL_ISA, AllocationType::KERNEL_ISA_INTERNAL};
 
-    for (uint32_t i = 0; i < 2; i++) {
+    for (auto &isaType : isaTypes) {
         memset(buffer, 0, sizeof(STATE_PREFETCH));
-        const GraphicsAllocation allocation(0, isaTypes[i],
+        const GraphicsAllocation allocation(0, isaType,
                                             nullptr, 1234, 0, 4096, MemoryPool::LocalMemory, MemoryManager::maxOsContextCount);
 
         LinearStream linearStream(buffer, sizeof(buffer));
 
         DebugManager.flags.EnableMemoryPrefetch.set(0);
-        EXPECT_EQ(0u, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(100, hwInfo));
-        EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 100, 0, hwInfo);
+        EXPECT_EQ(0u, EncodeMemoryPrefetch<FamilyType>::getSizeForMemoryPrefetch(100, *mockExecutionEnvironment.rootDeviceEnvironments[0]));
+        EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 100, 0, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(0u, linearStream.getUsed());
 
         DebugManager.flags.EnableMemoryPrefetch.set(1);
-        EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 123, 0, hwInfo);
+        EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 123, 0, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
         EXPECT_EQ(sizeof(STATE_PREFETCH), linearStream.getUsed());
         auto statePrefetchCmd = reinterpret_cast<STATE_PREFETCH *>(buffer);
         EXPECT_TRUE(statePrefetchCmd->getKernelInstructionPrefetch());
@@ -191,11 +196,12 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgramPrefet
 
 XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgrammingPrefetchThenSetParserStall) {
     using STATE_PREFETCH = typename FamilyType::STATE_PREFETCH;
+    MockExecutionEnvironment mockExecutionEnvironment{};
 
     DebugManagerStateRestore restore;
     DebugManager.flags.ForceCsStallForStatePrefetch.set(1);
 
-    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &hwInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
     hwInfo.platform.usRevId = 0b0010'1000; // [3:5] - BaseDie != A0
 
     const GraphicsAllocation allocation(0, AllocationType::BUFFER,
@@ -204,7 +210,7 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, givenDebugFlagSetWhenProgrammingPr
 
     LinearStream linearStream(buffer, sizeof(buffer));
 
-    EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 123, 0, hwInfo);
+    EncodeMemoryPrefetch<FamilyType>::programMemoryPrefetch(linearStream, allocation, 123, 0, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     auto statePrefetchCmd = reinterpret_cast<STATE_PREFETCH *>(buffer);
 

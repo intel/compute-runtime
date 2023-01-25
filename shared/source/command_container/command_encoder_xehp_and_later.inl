@@ -618,7 +618,7 @@ inline void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer 
 }
 
 template <typename Family>
-void EncodeMiFlushDW<Family>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd, const HardwareInfo &hwInfo) {
+void EncodeMiFlushDW<Family>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
     miFlushDwCmd->setFlushCcs(1);
     miFlushDwCmd->setFlushLlc(1);
 }

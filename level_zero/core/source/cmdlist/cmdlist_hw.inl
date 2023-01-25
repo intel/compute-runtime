@@ -1814,8 +1814,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingCopyCommand(Ev
         event->resetKernelCountAndPacketUsedCount();
     } else {
         NEO::MiFlushArgs args;
-        const auto &hwInfo = this->device->getHwInfo();
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args, hwInfo);
+        const auto &productHelper = this->device->getProductHelper();
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args, productHelper);
         dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, true, false, false);
     }
     appendWriteKernelTimestamp(event, beforeWalker, false, false);
@@ -1981,8 +1981,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     constexpr uint32_t eventStateClear = Event::State::STATE_CLEARED;
     bool dcFlushRequired = false;
 
-    const auto &hwInfo = this->device->getHwInfo();
-
     if (this->dcFlushSupport) {
         for (uint32_t i = 0; i < numEvents; i++) {
             auto event = Event::fromHandle(phEvent[i]);
@@ -1992,7 +1990,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     if (dcFlushRequired) {
         if (isCopyOnly()) {
             NEO::MiFlushArgs args;
-            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args, hwInfo);
+            const auto &productHelper = this->device->getProductHelper();
+            NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args, productHelper);
         } else {
             NEO::PipeControlArgs args;
             args.dcFlushEnable = true;
@@ -2146,11 +2145,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
         NEO::MiFlushArgs args;
         args.timeStampOperation = true;
         args.commandWithPostSync = true;
+        const auto &productHelper = this->device->getProductHelper();
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(),
                                                           reinterpret_cast<uint64_t>(dstptr),
                                                           0,
                                                           args,
-                                                          hwInfo);
+                                                          productHelper);
     } else {
         NEO::PipeControlArgs args;
 
@@ -2508,7 +2508,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
 
     if (isCopyOnly()) {
         NEO::MiFlushArgs args;
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args, this->device->getHwInfo());
+        const auto &productHelper = this->device->getProductHelper();
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args, productHelper);
     } else {
         appendComputeBarrierCommand();
     }
@@ -2675,8 +2676,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
     if (isCopyOnly()) {
         NEO::MiFlushArgs args;
         args.commandWithPostSync = true;
+        const auto &productHelper = this->device->getProductHelper();
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), gpuAddress,
-                                                          data, args, hwInfo);
+                                                          data, args, productHelper);
     } else {
         NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *commandContainer.getCommandStream(),
@@ -2715,16 +2717,16 @@ CmdListEventOperation CommandListCoreFamily<gfxCoreFamily>::estimateEventPostSyn
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCopy(uint64_t gpuAddress, uint32_t value, bool workloadPartition) {
-    const auto &hwInfo = this->device->getHwInfo();
 
     NEO::MiFlushArgs miFlushArgs;
     miFlushArgs.commandWithPostSync = true;
+    const auto &productHelper = this->device->getProductHelper();
     NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(
         *commandContainer.getCommandStream(),
         gpuAddress,
         value,
         miFlushArgs,
-        hwInfo);
+        productHelper);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

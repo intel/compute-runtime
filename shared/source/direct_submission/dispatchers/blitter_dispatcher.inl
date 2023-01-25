@@ -27,14 +27,15 @@ template <typename GfxFamily>
 inline void BlitterDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdBuffer,
                                                                uint64_t gpuAddress,
                                                                uint64_t immediateData,
-                                                               const HardwareInfo &hwInfo,
+                                                               const RootDeviceEnvironment &rootDeviceEnvironment,
                                                                bool useNotifyEnable,
                                                                bool partitionedWorkload,
                                                                bool dcFlushRequired) {
     MiFlushArgs args;
     args.commandWithPostSync = true;
     args.notifyEnable = useNotifyEnable;
-    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdBuffer, gpuAddress, immediateData, args, hwInfo);
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdBuffer, gpuAddress, immediateData, args, productHelper);
 }
 
 template <typename GfxFamily>
@@ -45,17 +46,17 @@ inline size_t BlitterDispatcher<GfxFamily>::getSizeMonitorFence(const HardwareIn
 
 template <typename GfxFamily>
 inline void BlitterDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuffer, const RootDeviceEnvironment &rootDeviceEnvironment, uint64_t address) {
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
 
-    dispatchTlbFlush(cmdBuffer, address, hwInfo);
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    dispatchTlbFlush(cmdBuffer, address, productHelper);
 }
 
 template <typename GfxFamily>
-inline void BlitterDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const HardwareInfo &hwInfo) {
+inline void BlitterDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const ProductHelper &productHelper) {
     MiFlushArgs args;
     args.tlbFlush = true;
     args.commandWithPostSync = true;
-    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdBuffer, address, 0ull, args, hwInfo);
+    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdBuffer, address, 0ull, args, productHelper);
 }
 
 template <typename GfxFamily>

@@ -36,6 +36,7 @@ struct HardwareInfo;
 struct KernelInfo;
 struct StateComputeModeProperties;
 struct KernelDescriptor;
+class ProductHelper;
 
 struct EncodeDispatchKernelArgs {
     uint64_t eventAddress = 0ull;
@@ -446,17 +447,17 @@ template <typename GfxFamily>
 struct EncodeMiFlushDW {
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
     static void programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData,
-                                 MiFlushArgs &args, const HardwareInfo &hwInfo);
+                                 MiFlushArgs &args, const ProductHelper &productHelper);
     static void programMiFlushDwWA(LinearStream &commandStream);
-    static void appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd, const HardwareInfo &hwInfo);
+    static void appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper);
     static size_t getMiFlushDwCmdSizeForDataWrite();
     static size_t getMiFlushDwWaSize();
 };
 
 template <typename GfxFamily>
 struct EncodeMemoryPrefetch {
-    static void programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const HardwareInfo &hwInfo);
-    static size_t getSizeForMemoryPrefetch(size_t size, const HardwareInfo &hwInfo);
+    static void programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getSizeForMemoryPrefetch(size_t size, const RootDeviceEnvironment &rootDeviceEnvironment);
 };
 
 template <typename GfxFamily>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,6 +65,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::ringBuffers;
     using BaseClass::ringCommandStream;
     using BaseClass::ringStart;
+    using BaseClass::rootDeviceEnvironment;
     using BaseClass::semaphoreData;
     using BaseClass::semaphoreGpuVa;
     using BaseClass::semaphorePtr;

@@ -186,7 +186,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     }
 
     // -1: default
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, *defaultHwInfo);
+    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, this->pDevice->getProductHelper());
     EXPECT_EQ(expectedDefaultSize, linearStream.getUsed());
     CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
 
@@ -208,7 +208,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
     commands.clear();
     DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiArbCheck);
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, *defaultHwInfo);
+    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, this->pDevice->getProductHelper());
     CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
     arbCheck = find<MI_ARB_CHECK *>(commands.begin(), commands.end());
     EXPECT_NE(commands.end(), arbCheck);
@@ -218,7 +218,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
     commands.clear();
     DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiFlush);
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, *defaultHwInfo);
+    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, this->pDevice->getProductHelper());
     CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
     auto miFlush = find<MI_FLUSH_DW *>(commands.begin(), commands.end());
     EXPECT_NE(commands.end(), miFlush);
@@ -228,7 +228,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
     commands.clear();
     DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::None);
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, *defaultHwInfo);
+    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, this->pDevice->getProductHelper());
     EXPECT_EQ(0u, linearStream.getUsed());
 }
 
@@ -658,7 +658,7 @@ HWTEST2_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlu
     auto miFlushBuffer = std::make_unique<MI_FLUSH_DW>();
     LinearStream linearStream(miFlushBuffer.get(), EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite());
 
-    BlitCommandsHelper<FamilyType>::dispatchPreBlitCommand(linearStream, *defaultHwInfo);
+    BlitCommandsHelper<FamilyType>::dispatchPreBlitCommand(linearStream, this->pDevice->getProductHelper());
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(linearStream);

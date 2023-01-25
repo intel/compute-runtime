@@ -987,13 +987,12 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncByMiFlushDw(
 
     uint64_t postSyncAddress = this->csr->getTagAllocation()->getGpuAddress();
     TaskCountType postSyncData = this->csr->peekTaskCount() + 1;
-    const auto &hwInfo = this->device->getHwInfo();
 
     NEO::MiFlushArgs args;
     args.commandWithPostSync = true;
     args.notifyEnable = this->csr->isUsedNotifyEnableForPostSync();
-
-    NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdStream, postSyncAddress, postSyncData, args, hwInfo);
+    const auto &productHelper = this->device->getProductHelper();
+    NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdStream, postSyncAddress, postSyncData, args, productHelper);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

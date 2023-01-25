@@ -11,6 +11,7 @@
 namespace NEO {
 
 struct RootDeviceEnvironment;
+class ProductHelper;
 
 template <typename GfxFamily>
 class BlitterDispatcher : public Dispatcher<GfxFamily> {
@@ -21,14 +22,14 @@ class BlitterDispatcher : public Dispatcher<GfxFamily> {
     static void dispatchMonitorFence(LinearStream &cmdBuffer,
                                      uint64_t gpuAddress,
                                      uint64_t immediateData,
-                                     const HardwareInfo &hwInfo,
+                                     const RootDeviceEnvironment &rootDeviceEnvironment,
                                      bool useNotifyEnable,
                                      bool partitionedWorkload,
                                      bool dcFlushRequired);
     static size_t getSizeMonitorFence(const HardwareInfo &hwInfo);
 
     static void dispatchCacheFlush(LinearStream &cmdBuffer, const RootDeviceEnvironment &rootDeviceEnvironment, uint64_t address);
-    static void dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const HardwareInfo &hwInfo);
+    static void dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const ProductHelper &productHelper);
     static size_t getSizeCacheFlush(const HardwareInfo &hwInfo);
     static size_t getSizeTlbFlush();
     static bool isMultiTileSynchronizationSupported() {

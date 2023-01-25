@@ -28,7 +28,7 @@ template <typename GfxFamily>
 inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdBuffer,
                                                               uint64_t gpuAddress,
                                                               uint64_t immediateData,
-                                                              const HardwareInfo &hwInfo,
+                                                              const RootDeviceEnvironment &rootDeviceEnvironment,
                                                               bool useNotifyEnable,
                                                               bool partitionedWorkload,
                                                               bool dcFlushRequired) {
@@ -36,6 +36,8 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
     args.dcFlushEnable = dcFlushRequired;
     args.workloadPartitionOffset = partitionedWorkload;
     args.notifyEnable = useNotifyEnable;
+
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         cmdBuffer,
         PostSyncMode::ImmediateData,
@@ -56,7 +58,7 @@ inline void RenderDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuf
 }
 
 template <typename GfxFamily>
-inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const HardwareInfo &hwInfo) {
+inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const ProductHelper &productHelper) {
     PipeControlArgs args;
     args.tlbInvalidation = true;
     args.pipeControlFlushEnable = true;

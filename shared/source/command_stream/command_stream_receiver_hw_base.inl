@@ -200,7 +200,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
         args.commandWithPostSync = true;
         args.notifyEnable = isUsedNotifyEnableForPostSync();
 
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStreamTask, postSyncAddress, postSyncData, args, hwInfo);
+        auto &productHelper = this->peekRootDeviceEnvironment().template getHelper<ProductHelper>();
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStreamTask, postSyncAddress, postSyncData, args, productHelper);
     }
 
     auto &commandStreamCSR = getCS(getRequiredCmdStreamSizeAligned(dispatchBcsFlags));
@@ -1179,11 +1180,11 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     this->initializeResources();
     this->initDirectSubmission();
 
-    const auto &hwInfo = this->peekHwInfo();
+    auto &productHelper = this->peekRootDeviceEnvironment().template getHelper<ProductHelper>();
     if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
         BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(),
                                                                   DebugPauseState::waitingForUserStartConfirmation,
-                                                                  DebugPauseState::hasUserStartConfirmation, hwInfo);
+                                                                  DebugPauseState::hasUserStartConfirmation, productHelper);
     }
 
     programEnginePrologue(commandStream);
@@ -1211,14 +1212,16 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
         if (blitProperties.outputTimestampPacket) {
             if (profilingEnabled) {
                 MiFlushArgs args;
-                EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, 0llu, newTaskCount, args, hwInfo);
+
+                EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, 0llu, newTaskCount, args, productHelper);
 
                 BlitCommandsHelper<GfxFamily>::encodeProfilingEndMmios(commandStream, *blitProperties.outputTimestampPacket);
             } else {
                 auto timestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*blitProperties.outputTimestampPacket);
                 MiFlushArgs args;
                 args.commandWithPostSync = true;
-                EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, timestampPacketGpuAddress, 0, args, hwInfo);
+
+                EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, timestampPacketGpuAddress, 0, args, productHelper);
             }
             makeResident(*blitProperties.outputTimestampPacket->getBaseGraphicsAllocation());
         }
@@ -1235,7 +1238,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
             MiFlushArgs args;
             args.commandWithPostSync = true;
             args.notifyEnable = isUsedNotifyEnableForPostSync();
-            EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, blitProperties.multiRootDeviceEventSync->getGpuAddress() + blitProperties.multiRootDeviceEventSync->getContextEndOffset(), std::numeric_limits<uint64_t>::max(), args, hwInfo);
+            EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, blitProperties.multiRootDeviceEventSync->getGpuAddress() + blitProperties.multiRootDeviceEventSync->getContextEndOffset(), std::numeric_limits<uint64_t>::max(), args, productHelper);
         }
     }
 
@@ -1249,14 +1252,14 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
         MiFlushArgs args;
         args.commandWithPostSync = true;
         args.notifyEnable = isUsedNotifyEnableForPostSync();
-        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount, args, hwInfo);
+        EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), newTaskCount, args, productHelper);
 
         MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), false, peekHwInfo());
     }
     if (PauseOnGpuProperties::pauseModeAllowed(DebugManager.flags.PauseOnBlitCopy.get(), taskCount, PauseOnGpuProperties::PauseMode::AfterWorkload)) {
         BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(commandStream, getDebugPauseStateGPUAddress(),
                                                                   DebugPauseState::waitingForUserEndConfirmation,
-                                                                  DebugPauseState::hasUserEndConfirmation, hwInfo);
+                                                                  DebugPauseState::hasUserEndConfirmation, productHelper);
     }
 
     void *endingCmdPtr = nullptr;
@@ -1322,11 +1325,11 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
     auto &commandStream = getCS(EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
     auto commandStreamStart = commandStream.getUsed();
 
-    const auto &hwInfo = this->peekHwInfo();
     MiFlushArgs args;
     args.commandWithPostSync = true;
     args.notifyEnable = isUsedNotifyEnableForPostSync();
-    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), taskCount + 1, args, hwInfo);
+    auto &productHelper = this->peekRootDeviceEnvironment().template getHelper<ProductHelper>();
+    EncodeMiFlushDW<GfxFamily>::programMiFlushDw(commandStream, tagAllocation->getGpuAddress(), taskCount + 1, args, productHelper);
 
     makeResident(*tagAllocation);
 

@@ -179,7 +179,8 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleNewResourcesSubmission() 
         auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
         auto tlbFlushCounter = osContextLinux->peekTlbFlushCounter();
 
-        Dispatcher::dispatchTlbFlush(this->ringCommandStream, this->gpuVaForMiFlush, *this->hwInfo);
+        auto &productHelper = this->rootDeviceEnvironment.template getHelper<ProductHelper>();
+        Dispatcher::dispatchTlbFlush(this->ringCommandStream, this->gpuVaForMiFlush, productHelper);
         osContextLinux->setTlbFlushed(tlbFlushCounter);
     }
 }

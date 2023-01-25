@@ -943,7 +943,7 @@ void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferEnd(CommandContainer
 
 template <typename Family>
 void EncodeMiFlushDW<Family>::programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData,
-                                               MiFlushArgs &args, const HardwareInfo &hwInfo) {
+                                               MiFlushArgs &args, const ProductHelper &productHelper) {
     programMiFlushDwWA(commandStream);
 
     auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();
@@ -956,7 +956,7 @@ void EncodeMiFlushDW<Family>::programMiFlushDw(LinearStream &commandStream, uint
     }
     miFlush.setNotifyEnable(args.notifyEnable);
     miFlush.setTlbInvalidate(args.tlbFlush);
-    appendMiFlushDw(&miFlush, hwInfo);
+    appendMiFlushDw(&miFlush, productHelper);
     *miFlushDwCmd = miFlush;
 }
 
@@ -966,10 +966,10 @@ size_t EncodeMiFlushDW<Family>::getMiFlushDwCmdSizeForDataWrite() {
 }
 
 template <typename Family>
-inline void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const HardwareInfo &hwInfo) {}
+inline void EncodeMemoryPrefetch<Family>::programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment) {}
 
 template <typename Family>
-inline size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const HardwareInfo &hwInfo) { return 0u; }
+inline size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) { return 0u; }
 
 template <typename Family>
 void EncodeMiArbCheck<Family>::program(LinearStream &commandStream) {

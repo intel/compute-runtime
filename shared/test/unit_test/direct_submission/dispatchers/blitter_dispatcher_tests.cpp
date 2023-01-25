@@ -37,7 +37,7 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingMonitorFenceCmdThenDis
 
     uint64_t expectedGpuAddress = 0x5100ull;
     uint64_t expectedValue = 0x1234ull;
-    BlitterDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, expectedGpuAddress, expectedValue, pDevice->getHardwareInfo(), false, false, false);
+    BlitterDispatcher<FamilyType>::dispatchMonitorFence(cmdBuffer, expectedGpuAddress, expectedValue, pDevice->getRootDeviceEnvironment(), false, false, false);
 
     EXPECT_EQ(expectedSize, cmdBuffer.getUsed());
 
@@ -78,7 +78,8 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingTlbFlushThenDispatchMi
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     size_t expectedSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
 
-    BlitterDispatcher<FamilyType>::dispatchTlbFlush(cmdBuffer, 0ull, *defaultHwInfo);
+    auto &productHelper = this->pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    BlitterDispatcher<FamilyType>::dispatchTlbFlush(cmdBuffer, 0ull, productHelper);
 
     EXPECT_EQ(expectedSize, cmdBuffer.getUsed());
 

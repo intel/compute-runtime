@@ -256,7 +256,7 @@ HWTEST2_F(BlitTests, givenGen12LpPlatformWhenDispatchPreBlitCommandThenMiFlushDw
     auto miFlushBuffer = std::make_unique<MI_FLUSH_DW>();
     LinearStream linearStream(miFlushBuffer.get(), EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite());
 
-    BlitCommandsHelper<FamilyType>::dispatchPreBlitCommand(linearStream, *defaultHwInfo);
+    BlitCommandsHelper<FamilyType>::dispatchPreBlitCommand(linearStream, this->pDevice->getProductHelper());
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(linearStream);
