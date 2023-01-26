@@ -137,16 +137,23 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (kernelDescriptor.kernelAttributes.flags.isInvalid) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    bool getDsh = false;
-    if constexpr (GfxFamily::supportsSampler) {
-        getDsh = device->getDeviceInfo().imageSupport;
-    }
+
+    NEO::IndirectHeap *ssh = nullptr;
+    NEO::IndirectHeap *dsh = nullptr;
+
     if (this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) {
+        const bool getDsh = NEO::EncodeDispatchKernel<GfxFamily>::isDshNeeded(device->getDeviceInfo());
+
         auto kernelInfo = kernelImmutableData->getKernelInfo();
 
         commandContainer.ensureHeapSizePrepared(
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor), getDsh);
+
+        ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+        if (getDsh) {
+            dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        }
     }
     commandListPerThreadScratchSize = std::max<uint32_t>(commandListPerThreadScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
     commandListPerThreadPrivateScratchSize = std::max<uint32_t>(commandListPerThreadPrivateScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
@@ -266,6 +273,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         eventAddress,                                             // eventAddress
         neoDevice,                                                // device
         kernel,                                                   // dispatchInterface
+        ssh,                                                      // surfaceStateHeap
+        dsh,                                                      // dynamicStateHeap
         reinterpret_cast<const void *>(threadGroupDimensions),    // threadGroupDimensions
         &additionalCommands,                                      // additionalCommands
         commandListPreemptionMode,                                // preemptionMode

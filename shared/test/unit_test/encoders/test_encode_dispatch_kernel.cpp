@@ -51,6 +51,11 @@ HWTEST_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenDispatchKernelThenWa
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
 
+    dispatchArgs.surfaceStateHeap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+    if (EncodeDispatchKernel<FamilyType>::isDshNeeded(pDevice->getDeviceInfo())) {
+        dispatchArgs.dynamicStateHeap = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+    }
+
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
 
     GenCmdList commands;
@@ -373,6 +378,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenDispa
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.surfaceStateHeap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+    dispatchArgs.dynamicStateHeap = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
 
@@ -929,7 +936,10 @@ HWTEST2_F(EncodeDispatchKernelTest, givenBindfulKernelWhenDispatchingKernelThenS
     auto usedBefore = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
-
+    dispatchArgs.surfaceStateHeap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+    if (EncodeDispatchKernel<FamilyType>::isDshNeeded(pDevice->getDeviceInfo())) {
+        dispatchArgs.dynamicStateHeap = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+    }
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
 
     auto usedAfter = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
@@ -1439,6 +1449,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, givenGlobalBindlessHeapsWhenDispatchin
         0,
         pDevice,
         dispatchInterface.get(),
+        nullptr,
+        nullptr,
         dims,
         nullptr,
         NEO::PreemptionMode::Disabled,
@@ -1488,6 +1500,8 @@ HWTEST_F(BindlessCommandEncodeStatesTest, givenBindlessModeDisabledelWithSampler
         0,
         pDevice,
         dispatchInterface.get(),
+        nullptr,
+        nullptr,
         dims,
         nullptr,
         NEO::PreemptionMode::Disabled,

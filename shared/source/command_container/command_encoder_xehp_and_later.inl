@@ -118,7 +118,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         kernelDescriptor.kernelAttributes.flags.usesImages) {
         container.prepareBindfulSsh();
         if (bindingTableStateCount > 0u) {
-            auto ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+            auto ssh = args.surfaceStateHeap;
+            if (ssh == nullptr) {
+                ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+            }
             bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
                 *ssh, bindingTableStateCount,
                 args.dispatchInterface->getSurfaceStateHeapData(),
@@ -132,17 +135,21 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     uint32_t samplerCount = 0;
 
-    if (args.device->getDeviceInfo().imageSupport) {
-        if constexpr (Family::supportsSampler) {
+    if constexpr (Family::supportsSampler) {
+        if (args.device->getDeviceInfo().imageSupport) {
+
             uint32_t samplerStateOffset = 0;
 
             if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0) {
-                auto heap = ApiSpecificConfig::getBindlessConfiguration() ? args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : container.getIndirectHeap(HeapType::DYNAMIC_STATE);
-                UNRECOVERABLE_IF(!heap);
+                auto dsHeap = args.dynamicStateHeap;
+                if (dsHeap == nullptr) {
+                    dsHeap = ApiSpecificConfig::getBindlessConfiguration() ? args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : container.getIndirectHeap(HeapType::DYNAMIC_STATE);
+                }
+                UNRECOVERABLE_IF(!dsHeap);
 
                 samplerCount = kernelDescriptor.payloadMappings.samplerTable.numSamplers;
                 samplerStateOffset = EncodeStates<Family>::copySamplerState(
-                    heap, kernelDescriptor.payloadMappings.samplerTable.tableOffset,
+                    dsHeap, kernelDescriptor.payloadMappings.samplerTable.tableOffset,
                     kernelDescriptor.payloadMappings.samplerTable.numSamplers, kernelDescriptor.payloadMappings.samplerTable.borderColor,
                     args.dispatchInterface->getDynamicStateHeapData(),
                     args.device->getBindlessHeapsHelper(), rootDeviceEnvironment);
@@ -494,6 +501,14 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
     if (inlineDataProgrammingRequired == true) {
         walkerCmd.setEmitInlineParameter(1);
     }
+}
+
+template <typename Family>
+inline bool EncodeDispatchKernel<Family>::isDshNeeded(const DeviceInfo &deviceInfo) {
+    if constexpr (Family::supportsSampler) {
+        return deviceInfo.imageSupport;
+    }
+    return false;
 }
 
 template <typename Family>

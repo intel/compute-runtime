@@ -18,30 +18,33 @@
 #include <list>
 
 namespace NEO {
+enum class SlmPolicy;
+
+class BindlessHeapsHelper;
+class Gmm;
+class GmmHelper;
+class IndirectHeap;
+class LogicalStateHelper;
+class ProductHelper;
+
+struct DeviceInfo;
+struct DispatchKernelEncoderI;
 struct EncodeSurfaceStateArgs;
+struct HardwareInfo;
+struct KernelDescriptor;
+struct KernelInfo;
 struct MiFlushArgs;
 struct PipeControlArgs;
 struct PipelineSelectArgs;
-enum class SlmPolicy;
-struct DispatchKernelEncoderI;
 struct RootDeviceEnvironment;
-
-class BindlessHeapsHelper;
-class GmmHelper;
-class LogicalStateHelper;
-class IndirectHeap;
-class LogicalStateHelper;
-class Gmm;
-struct HardwareInfo;
-struct KernelInfo;
 struct StateComputeModeProperties;
-struct KernelDescriptor;
-class ProductHelper;
 
 struct EncodeDispatchKernelArgs {
     uint64_t eventAddress = 0ull;
     Device *device = nullptr;
     DispatchKernelEncoderI *dispatchInterface = nullptr;
+    IndirectHeap *surfaceStateHeap = nullptr;
+    IndirectHeap *dynamicStateHeap = nullptr;
     const void *threadGroupDimensions = nullptr;
     std::list<void *> *additionalCommands = nullptr;
     PreemptionMode preemptionMode = PreemptionMode::Initial;
@@ -138,6 +141,7 @@ struct EncodeDispatchKernel {
     static size_t getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor);
     static size_t getSizeRequiredSsh(const KernelInfo &kernelInfo);
     inline static uint32_t additionalSizeRequiredDsh();
+    static bool isDshNeeded(const DeviceInfo &deviceInfo);
 };
 
 template <typename GfxFamily>

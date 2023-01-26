@@ -31,10 +31,13 @@ EncodeDispatchKernelArgs CommandEncodeStatesFixture::createDefaultDispatchKernel
                                                                                      DispatchKernelEncoderI *dispatchInterface,
                                                                                      const void *threadGroupDimensions,
                                                                                      bool requiresUncachedMocs) {
+
     EncodeDispatchKernelArgs args{
         0,                        // eventAddress
         device,                   // device
         dispatchInterface,        // dispatchInterface
+        nullptr,                  // surfaceStateHeap
+        nullptr,                  // dynamicStateHeap
         threadGroupDimensions,    // threadGroupDimensions
         nullptr,                  // additionalCommands
         PreemptionMode::Disabled, // preemptionMode

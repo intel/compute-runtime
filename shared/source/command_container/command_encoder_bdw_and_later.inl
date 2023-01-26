@@ -98,7 +98,10 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     if (!isBindlessKernel) {
         container.prepareBindfulSsh();
         if (bindingTableStateCount > 0u) {
-            auto ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+            auto ssh = args.surfaceStateHeap;
+            if (ssh == nullptr) {
+                ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+            }
             bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
                 *ssh, bindingTableStateCount,
                 args.dispatchInterface->getSurfaceStateHeapData(),
@@ -114,20 +117,22 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     uint32_t samplerCount = 0;
 
     if (kernelDescriptor.payloadMappings.samplerTable.numSamplers > 0) {
-        if (!ApiSpecificConfig::getBindlessConfiguration()) {
-            auto heap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
-            auto dshSizeRequired = NEO::EncodeDispatchKernel<Family>::getSizeRequiredDsh(kernelDescriptor);
-            if (heap->getAvailableSpace() <= dshSizeRequired) {
-                heap = container.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, heap->getMaxAvailableSpace(), 0);
-                UNRECOVERABLE_IF(!heap);
+        auto dsHeap = args.dynamicStateHeap;
+        if (dsHeap == nullptr) {
+            if (!ApiSpecificConfig::getBindlessConfiguration()) {
+                auto dsHeap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
+                auto dshSizeRequired = NEO::EncodeDispatchKernel<Family>::getSizeRequiredDsh(kernelDescriptor);
+                if (dsHeap->getAvailableSpace() <= dshSizeRequired) {
+                    dsHeap = container.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, dsHeap->getMaxAvailableSpace(), 0);
+                    UNRECOVERABLE_IF(!dsHeap);
+                }
             }
+            dsHeap = ApiSpecificConfig::getBindlessConfiguration() ? args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : container.getIndirectHeap(HeapType::DYNAMIC_STATE);
         }
-
-        auto heap = ApiSpecificConfig::getBindlessConfiguration() ? args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : container.getIndirectHeap(HeapType::DYNAMIC_STATE);
-        UNRECOVERABLE_IF(!heap);
+        UNRECOVERABLE_IF(!dsHeap);
 
         samplerCount = kernelDescriptor.payloadMappings.samplerTable.numSamplers;
-        samplerStateOffset = EncodeStates<Family>::copySamplerState(heap, kernelDescriptor.payloadMappings.samplerTable.tableOffset,
+        samplerStateOffset = EncodeStates<Family>::copySamplerState(dsHeap, kernelDescriptor.payloadMappings.samplerTable.tableOffset,
                                                                     kernelDescriptor.payloadMappings.samplerTable.numSamplers,
                                                                     kernelDescriptor.payloadMappings.samplerTable.borderColor,
                                                                     args.dispatchInterface->getDynamicStateHeapData(),
@@ -381,6 +386,11 @@ inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const Roo
 
 template <typename Family>
 void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment, const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy) {}
+
+template <typename Family>
+inline bool EncodeDispatchKernel<Family>::isDshNeeded(const DeviceInfo &deviceInfo) {
+    return true;
+}
 
 template <typename Family>
 inline void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {

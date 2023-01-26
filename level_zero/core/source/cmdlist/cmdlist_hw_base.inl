@@ -45,12 +45,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (kernelDescriptor.kernelAttributes.flags.isInvalid) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
+
+    NEO::IndirectHeap *ssh = nullptr;
+    NEO::IndirectHeap *dsh = nullptr;
+
     const auto kernelImmutableData = kernel->getImmutableData();
     if (this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) {
         auto kernelInfo = kernelImmutableData->getKernelInfo();
         commandContainer.ensureHeapSizePrepared(
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor), true);
+
+        ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+        dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
     }
     appendEventForProfiling(event, true);
     auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(),
@@ -136,6 +143,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         0,                                                      // eventAddress
         neoDevice,                                              // device
         kernel,                                                 // dispatchInterface
+        ssh,                                                    // surfaceStateHeap
+        dsh,                                                    // dynamicStateHeap
         reinterpret_cast<const void *>(threadGroupDimensions),  // threadGroupDimensions
         &additionalCommands,                                    // additionalCommands
         commandListPreemptionMode,                              // preemptionMode

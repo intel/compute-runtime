@@ -315,6 +315,9 @@ HWTEST2_F(CommandEncodeStatesTest, giveNumSamplersOneWhenDispatchKernelThensampl
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+    dispatchArgs.surfaceStateHeap = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE);
+    dispatchArgs.dynamicStateHeap = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
+
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
 
     GenCmdList commands;
