@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,10 +58,10 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         return nullptr;
     }
 
-    auto &hwInfo = device.getHardwareInfo();
+    auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     auto &productHelper = device.getProductHelper();
 
-    auto success = MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *gpuAllocation),
+    auto success = MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *gpuAllocation),
                                                                     device, gpuAllocation, 0, initData, size);
 
     UNRECOVERABLE_IF(!success);

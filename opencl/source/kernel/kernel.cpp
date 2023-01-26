@@ -751,13 +751,13 @@ void Kernel::substituteKernelHeap(void *newKernelHeap, size_t newKernelHeapSize)
 
     auto currentAllocationSize = pKernelInfo->kernelAllocation->getUnderlyingBufferSize();
     bool status = false;
-    auto &helper = clDevice.getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    auto &rootDeviceEnvironment = clDevice.getRootDeviceEnvironment();
+    auto &helper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     size_t isaPadding = helper.getPaddingForISAAllocation();
 
     if (currentAllocationSize >= newKernelHeapSize + isaPadding) {
-        auto &hwInfo = clDevice.getDevice().getHardwareInfo();
-        auto &productHelper = clDevice.getRootDeviceEnvironment().getHelper<ProductHelper>();
-        auto useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *pKernelInfo->getGraphicsAllocation());
+        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+        auto useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *pKernelInfo->getGraphicsAllocation());
         status = MemoryTransferHelper::transferMemoryToAllocation(useBlitter,
                                                                   clDevice.getDevice(), pKernelInfo->getGraphicsAllocation(), 0, newKernelHeap,
                                                                   static_cast<size_t>(newKernelHeapSize));

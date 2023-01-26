@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,9 @@ void DebuggerL0::initialize() {
 
     {
         auto &hwInfo = device->getHardwareInfo();
-        auto &gfxCoreHelper = device->getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+        auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
+
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
         NEO::AllocationProperties properties{device->getRootDeviceIndex(), true, MemoryConstants::pageSize64k,
                                              NEO::AllocationType::DEBUG_MODULE_AREA,
                                              false,
@@ -92,13 +94,13 @@ void DebuggerL0::initialize() {
         debugArea.scratchBegin = sizeof(DebugAreaHeader);
         debugArea.scratchEnd = MemoryConstants::pageSize64k - sizeof(DebugAreaHeader);
 
-        NEO::MemoryOperationsHandler *memoryOperationsIface = device->getRootDeviceEnvironment().memoryOperationsInterface.get();
+        NEO::MemoryOperationsHandler *memoryOperationsIface = rootDeviceEnvironment.memoryOperationsInterface.get();
         if (memoryOperationsIface) {
             memoryOperationsIface->makeResident(device, ArrayRef<NEO::GraphicsAllocation *>(&moduleDebugArea, 1));
         }
 
         const auto &productHelper = device->getProductHelper();
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *moduleDebugArea),
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *moduleDebugArea),
                                                               *device, moduleDebugArea, 0, &debugArea,
                                                               sizeof(DebugAreaHeader));
         if (gfxCoreHelper.disableL3CacheForDebug(hwInfo, productHelper)) {

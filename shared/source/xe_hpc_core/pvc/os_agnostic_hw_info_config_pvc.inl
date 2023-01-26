@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
+
 #include "aubstream/product_family.h"
 
 namespace NEO {
@@ -139,11 +141,12 @@ bool ProductHelperHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwIn
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
+bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const {
     if (!allocation.isAllocatedInLocalMemoryPool()) {
         return false;
     }
 
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed) {
         // Regular L3 WA
         return true;

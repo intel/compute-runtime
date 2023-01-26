@@ -8,6 +8,7 @@
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
@@ -470,9 +471,11 @@ bool ProductHelperHw<gfxProduct>::isBlitSplitEnqueueWARequired(const HardwareInf
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const {
+bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const {
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     return allocation.isAllocatedInLocalMemoryPool() &&
-           (ProductHelper::get(hwInfo.platform.eProductFamily)->getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed ||
+           (productHelper.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed ||
             !allocation.isAllocationLockable());
 }
 

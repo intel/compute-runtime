@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -119,7 +119,9 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
     uint32_t sipIndex = static_cast<uint32_t>(type);
     uint32_t rootDeviceIndex = device.getRootDeviceIndex();
 
-    if (device.getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->sipKernels[sipIndex].get() != nullptr) {
+    auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
+
+    if (rootDeviceEnvironment.sipKernels[sipIndex].get() != nullptr) {
         return true;
     }
 
@@ -140,10 +142,9 @@ bool SipKernel::initRawBinaryFromFileKernel(SipKernelType type, Device &device, 
             return false;
         }
 
-        auto &hwInfo = device.getHardwareInfo();
         auto &productHelper = device.getProductHelper();
 
-        MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
+        MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
                                                          device, sipAllocation, 0, alignedBuffer,
                                                          bytesRead);
 
@@ -191,7 +192,7 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
 
     uint32_t *sipKernelBinary = nullptr;
     size_t kernelBinarySize = 0u;
-    auto &hwInfo = device.getHardwareInfo();
+    auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     auto &gfxCoreHelper = device.getGfxCoreHelper();
 
     gfxCoreHelper.setSipKernelData(sipKernelBinary, kernelBinarySize);
@@ -204,7 +205,7 @@ bool SipKernel::initHexadecimalArraySipKernel(SipKernelType type, Device &device
         return false;
     }
     auto &productHelper = device.getProductHelper();
-    MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *sipAllocation),
+    MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *sipAllocation),
                                                      device, sipAllocation, 0, sipKernelBinary,
                                                      kernelBinarySize);
 

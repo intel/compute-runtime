@@ -145,9 +145,9 @@ cl_int Program::linkBinary(Device *pDevice, const void *constantsInitData, size_
             const auto &kernelInfo = kernelInfoArray[kernelId];
             auto &kernHeapInfo = kernelInfo->heapInfo;
             auto segmentId = &kernelInfo - &kernelInfoArray[0];
-            auto &hwInfo = pDevice->getHardwareInfo();
+            auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
             const auto &productHelper = pDevice->getProductHelper();
-            MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelInfo->getGraphicsAllocation()),
+            MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *kernelInfo->getGraphicsAllocation()),
                                                              *pDevice, kernelInfo->getGraphicsAllocation(), 0, isaSegmentsForPatching[segmentId].hostPointer,
                                                              static_cast<size_t>(kernHeapInfo.KernelHeapSize));
         }

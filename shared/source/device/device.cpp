@@ -894,7 +894,7 @@ void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
         uint32_t *dispatchGlobalsAsArray = reinterpret_cast<uint32_t *>(&dispatchGlobals);
         dispatchGlobalsAsArray[7] = 1;
 
-        MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(this->getHardwareInfo(), *dispatchGlobalsArrayAllocation),
+        MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(this->getRootDeviceEnvironment(), *dispatchGlobalsArrayAllocation),
                                                          *this,
                                                          dispatchGlobalsArrayAllocation,
                                                          tile * dispatchGlobalsStride,

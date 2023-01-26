@@ -145,7 +145,7 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
 
     ModuleBuildLog *moduleBuildLog = nullptr;
 
-    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(&device, moduleBuildLog, ModuleType::User));
+    auto module = std::make_unique<L0::ModuleImp>(&device, moduleBuildLog, ModuleType::User);
     ASSERT_NE(nullptr, module.get());
 
     auto linkerInput = std::make_unique<::WhiteBox<NEO::LinkerInput>>();
@@ -159,7 +159,8 @@ HWTEST_F(ModuleTest, givenBlitterAvailableWhenCopyingPatchedSegmentsThenIsaIsTra
     }
 
     auto &productHelper = device.getProductHelper();
-    if (productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *module->getKernelImmutableDataVector()[0]->getIsaGraphicsAllocation())) {
+    auto &rootDeviceEnvironment = device.getNEODevice()->getRootDeviceEnvironment();
+    if (productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *module->getKernelImmutableDataVector()[0]->getIsaGraphicsAllocation())) {
         EXPECT_EQ(zebinData->numOfKernels, blitterCalled);
     } else {
         EXPECT_EQ(0u, blitterCalled);

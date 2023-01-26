@@ -580,13 +580,13 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
     this->updateBuildLog(neoDevice);
     verifyDebugCapabilities();
 
-    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
     auto containsStatefulAccess = NEO::AddressingModeHelper::containsStatefulAccess(translationUnit->programInfo.kernelInfos);
     auto isUserKernel = (type == ModuleType::User);
 
     auto failBuildProgram = containsStatefulAccess &&
                             isUserKernel &&
-                            NEO::AddressingModeHelper::failBuildProgramWithStatefulAccess(neoDevice->getRootDeviceEnvironment());
+                            NEO::AddressingModeHelper::failBuildProgramWithStatefulAccess(rootDeviceEnvironment);
 
     if (failBuildProgram) {
         result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
@@ -638,7 +638,7 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
 
             if (!ki->isIsaCopiedToAllocation()) {
 
-                NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *ki->getIsaGraphicsAllocation()),
+                NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *ki->getIsaGraphicsAllocation()),
                                                                       *neoDevice, ki->getIsaGraphicsAllocation(), 0, ki->getKernelInfo()->heapInfo.pKernelHeap,
                                                                       static_cast<size_t>(ki->getKernelInfo()->heapInfo.KernelHeapSize));
 
@@ -841,7 +841,7 @@ ze_result_t ModuleImp::getDebugInfo(size_t *pDebugDataSize, uint8_t *pDebugData)
 
 void ModuleImp::copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching) {
     if (this->translationUnit->programInfo.linkerInput && this->translationUnit->programInfo.linkerInput->getTraits().requiresPatchingOfInstructionSegments) {
-        const auto &hwInfo = this->device->getNEODevice()->getHardwareInfo();
+        auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
         const auto &productHelper = this->device->getProductHelper();
 
         for (auto &kernelImmData : this->kernelImmDatas) {
@@ -855,14 +855,14 @@ void ModuleImp::copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSeg
             kernelImmData->getIsaGraphicsAllocation()->setAubWritable(true, std::numeric_limits<uint32_t>::max());
             auto segmentId = &kernelImmData - &this->kernelImmDatas[0];
 
-            NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *kernelImmData->getIsaGraphicsAllocation()),
+            NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *kernelImmData->getIsaGraphicsAllocation()),
                                                                   *device->getNEODevice(), kernelImmData->getIsaGraphicsAllocation(), 0, isaSegmentsForPatching[segmentId].hostPointer,
                                                                   isaSegmentsForPatching[segmentId].segmentSize);
 
             kernelImmData->setIsaCopiedToAllocation();
 
             if (device->getL0Debugger()) {
-                NEO::MemoryOperationsHandler *memoryOperationsIface = device->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get();
+                NEO::MemoryOperationsHandler *memoryOperationsIface = rootDeviceEnvironment.memoryOperationsInterface.get();
                 auto allocation = kernelImmData->getIsaGraphicsAllocation();
                 if (memoryOperationsIface) {
                     memoryOperationsIface->makeResident(device->getNEODevice(), ArrayRef<NEO::GraphicsAllocation *>(&allocation, 1));

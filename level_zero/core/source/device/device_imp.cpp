@@ -1110,7 +1110,8 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     neoDevice->incRefInternal();
 
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &gfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
 
     device->execEnvironment = (void *)neoDevice->getExecutionEnvironment();
     device->allocationsForReuse = std::make_unique<NEO::AllocationsList>();
@@ -1122,7 +1123,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     device->cacheReservation = CacheReservation::create(*device);
     device->maxNumHwThreads = NEO::GfxCoreHelper::getMaxThreadsForVfe(hwInfo);
 
-    auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
+    auto osInterface = rootDeviceEnvironment.osInterface.get();
     device->driverInfo.reset(NEO::DriverInfo::create(&hwInfo, osInterface));
 
     auto debugSurfaceSize = gfxCoreHelper.getSipKernelMaxDbgSurfaceSize(hwInfo);
@@ -1154,8 +1155,8 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     }
 
     if (debugSurface && stateSaveAreaHeader.size() > 0) {
-        const auto &productHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::ProductHelper>();
-        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *debugSurface),
+        const auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
+        NEO::MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *debugSurface),
                                                               *neoDevice, debugSurface, 0, stateSaveAreaHeader.data(),
                                                               stateSaveAreaHeader.size());
     }
@@ -1208,7 +1209,7 @@ Device *Device::create(DriverHandle *driverHandle, NEO::Device *neoDevice, bool 
     }
 
     if (device->getSourceLevelDebugger()) {
-        auto osInterface = neoDevice->getRootDeviceEnvironment().osInterface.get();
+        auto osInterface = rootDeviceEnvironment.osInterface.get();
         device->getSourceLevelDebugger()
             ->notifyNewDevice(osInterface ? osInterface->getDriverModel()->getDeviceHandle() : 0);
     }

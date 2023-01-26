@@ -52,10 +52,10 @@ void PrintfHandler::prepareDispatch(const MultiDispatchInfo &multiDispatchInfo) 
     kernel = multiDispatchInfo.peekMainKernel();
     printfSurface = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex, printfSurfaceSize, AllocationType::PRINTF_SURFACE, device.getDeviceBitfield()});
 
-    auto &hwInfo = device.getHardwareInfo();
+    auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     const auto &productHelper = device.getProductHelper();
 
-    MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface),
+    MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *printfSurface),
                                                      device, printfSurface, 0, printfSurfaceInitialDataSizePtr.get(),
                                                      sizeof(*printfSurfaceInitialDataSizePtr.get()));
 
@@ -81,18 +81,17 @@ void PrintfHandler::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 }
 
 bool PrintfHandler::printEnqueueOutput() {
-    auto &hwInfo = device.getHardwareInfo();
-
+    auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     auto usesStringMap = kernel->getDescriptor().kernelAttributes.usesStringMap();
     const auto &productHelper = device.getProductHelper();
     auto printfOutputBuffer = reinterpret_cast<const uint8_t *>(printfSurface->getUnderlyingBuffer());
     auto printfOutputSize = static_cast<uint32_t>(printfSurface->getUnderlyingBufferSize());
     std::unique_ptr<uint8_t[]> printfOutputDecompressed;
 
-    if (CompressionSelector::allowStatelessCompression() || productHelper.isBlitCopyRequiredForLocalMemory(hwInfo, *printfSurface)) {
+    if (CompressionSelector::allowStatelessCompression() || productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *printfSurface)) {
         printfOutputDecompressed = std::make_unique<uint8_t[]>(printfOutputSize);
         printfOutputBuffer = printfOutputDecompressed.get();
-        auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(device.getRootDeviceEnvironment(), device.getDeviceBitfield(), device.getSelectorCopyEngine(), true), EngineUsage::Regular);
+        auto &bcsEngine = device.getEngine(EngineHelpers::getBcsEngineType(rootDeviceEnvironment, device.getDeviceBitfield(), device.getSelectorCopyEngine(), true), EngineUsage::Regular);
 
         BlitPropertiesContainer blitPropertiesContainer;
         blitPropertiesContainer.push_back(

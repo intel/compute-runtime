@@ -135,7 +135,7 @@ class ProductHelper {
     virtual bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const = 0;
+    virtual bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const = 0;
     virtual bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const = 0;
     virtual bool isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const = 0;
@@ -282,7 +282,7 @@ class ProductHelperHw : public ProductHelper {
     bool isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const override;
     bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const override;
     bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const override;
-    bool isBlitCopyRequiredForLocalMemory(const HardwareInfo &hwInfo, const GraphicsAllocation &allocation) const override;
+    bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const override;
     bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const override;
     bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const override;
     bool isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const override;
