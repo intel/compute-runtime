@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/utilities/stackvec.h"
 
 namespace NEO {

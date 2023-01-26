@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/source/helpers/device_bitfield.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include "aubstream/engine_node.h"
 
@@ -31,7 +30,6 @@ enum class EngineUsage : uint32_t {
 };
 
 using EngineTypeUsage = std::pair<aub_stream::EngineType, EngineUsage>;
-using EngineInstancesContainer = StackVec<EngineTypeUsage, 32>;
 
 struct EngineDescriptor {
     EngineDescriptor() = delete;

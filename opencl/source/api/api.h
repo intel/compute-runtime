@@ -1,14 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-
-#include "opencl/extensions/public/cl_ext_private.h"
-#include "opencl/source/api/api_enter.h"
 #include "opencl/source/api/dispatch.h"
 
 #include "CL/cl.h"

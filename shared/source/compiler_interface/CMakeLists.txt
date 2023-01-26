@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -23,6 +23,7 @@ set(NEO_CORE_COMPILER_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/intermediate_representations.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linker.h
     ${CMAKE_CURRENT_SOURCE_DIR}/linker.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/tokenized_string.h
 )
 
 set_property(GLOBAL PROPERTY NEO_CORE_COMPILER_INTERFACE ${NEO_CORE_COMPILER_INTERFACE})

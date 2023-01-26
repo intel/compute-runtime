@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/built_ins/sip.h"
-#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/offline_compiler/source/offline_compiler.h"
-#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/utilities/const_stringref.h"
 

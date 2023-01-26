@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/csr_definitions.h"
+#include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/utilities/idlist.h"
 

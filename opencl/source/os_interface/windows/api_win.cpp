@@ -13,6 +13,7 @@
 #include "shared/source/utilities/api_intercept.h"
 
 #include "opencl/source/api/api.h"
+#include "opencl/source/api/api_enter.h"
 #include "opencl/source/api/dispatch.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"

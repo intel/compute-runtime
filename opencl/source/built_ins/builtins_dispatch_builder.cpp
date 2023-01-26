@@ -8,7 +8,6 @@
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 
 #include "shared/source/built_ins/built_ins.h"
-#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/debug_helpers.h"

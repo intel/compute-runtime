@@ -11,6 +11,7 @@
 #include "shared/source/helpers/definitions/engine_group_types.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/options.h"
+#include "shared/source/utilities/stackvec.h"
 
 #include "aubstream/aubstream.h"
 #include "igfxfmid.h"
@@ -42,6 +43,8 @@ struct RootDeviceEnvironment;
 struct PipeControlArgs;
 class ProductHelper;
 class GfxCoreHelper;
+
+using EngineInstancesContainer = StackVec<EngineTypeUsage, 32>;
 using GfxCoreHelperCreateFunctionType = std::unique_ptr<GfxCoreHelper> (*)();
 
 class GfxCoreHelper {

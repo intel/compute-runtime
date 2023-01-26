@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/compiler_interface/compiler_options.h"
+#include "shared/source/compiler_interface/tokenized_string.h"
 #include "shared/test/common/test_macros/test.h"
 
 TEST(CompilerOptions, WhenConcatenationLengthIsCalledThenReturnsSumOfLengthsAndSeperators) {

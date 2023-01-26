@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/program/kernel_info.h"

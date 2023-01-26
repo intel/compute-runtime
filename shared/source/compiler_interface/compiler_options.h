@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/source/utilities/const_stringref.h"
-#include "shared/source/utilities/stackvec.h"
 
 #include <algorithm>
 #include <functional>
@@ -181,8 +180,6 @@ bool contains(const char *options, ConstStringRef optionToFind);
 bool contains(const std::string &options, ConstStringRef optionToFind);
 
 std::string wrapInQuotes(const std::string &stringToWrap);
-using TokenizedString = StackVec<ConstStringRef, 32>;
-TokenizedString tokenize(ConstStringRef src, char sperator = ' ');
 
 void applyAdditionalInternalOptions(std::string &internalOptions);
 void applyAdditionalApiOptions(std::string &apiOptions);
