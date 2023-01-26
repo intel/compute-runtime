@@ -236,7 +236,7 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
 
-    if (this->isSyncModeQueue) {
+    if (this->isSyncModeQueue || this->printfKernelContainer.size() > 0u) {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
         const auto waitStatus = csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, completionStamp.taskCount);
         if (waitStatus == NEO::WaitStatus::GpuHang) {
@@ -816,6 +816,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::printKernelsPrintfOutput(boo
     for (size_t i = 0; i < size; i++) {
         this->printfKernelContainer[i]->printPrintfOutput(hangDetected);
     }
+    this->printfKernelContainer.clear();
 }
 
 } // namespace L0

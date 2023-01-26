@@ -227,7 +227,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToSynch
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
     commandList->isFlushTaskSubmissionEnabled = true;
     Mock<Kernel> kernel;
-    commandList->getPrintfKernelContainer().push_back(&kernel);
+    kernel.descriptor.kernelAttributes.flags.usesPrintf = true;
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -235,14 +235,38 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToSynch
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, kernel.printPrintfOutputCalledTimes);
     EXPECT_FALSE(kernel.hangDetectedPassedToPrintfOutput);
-    EXPECT_EQ(1u, commandList->getPrintfKernelContainer().size());
-    EXPECT_EQ(&kernel, commandList->getPrintfKernelContainer()[0]);
+    EXPECT_EQ(0u, commandList->getPrintfKernelContainer().size());
 
     result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(2u, kernel.printPrintfOutputCalledTimes);
     EXPECT_FALSE(kernel.hangDetectedPassedToPrintfOutput);
-    EXPECT_EQ(1u, commandList->getPrintfKernelContainer().size());
+    EXPECT_EQ(0u, commandList->getPrintfKernelContainer().size());
+}
+
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToAsynchronousImmCommandListThenPrintfBufferIsPrinted) {
+    ze_result_t returnValue;
+    ze_command_queue_desc_t queueDesc = {};
+    queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    commandList->isFlushTaskSubmissionEnabled = true;
+    Mock<Kernel> kernel;
+    kernel.descriptor.kernelAttributes.flags.usesPrintf = true;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, kernel.printPrintfOutputCalledTimes);
+    EXPECT_FALSE(kernel.hangDetectedPassedToPrintfOutput);
+    EXPECT_EQ(0u, commandList->getPrintfKernelContainer().size());
+
+    result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, kernel.printPrintfOutputCalledTimes);
+    EXPECT_FALSE(kernel.hangDetectedPassedToPrintfOutput);
+    EXPECT_EQ(0u, commandList->getPrintfKernelContainer().size());
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendToSynchronousImmCommandListHangsThenPrintfBufferIsPrinted) {
@@ -258,7 +282,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendToSynchro
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
     commandList->isFlushTaskSubmissionEnabled = true;
     Mock<Kernel> kernel;
-    commandList->getPrintfKernelContainer().push_back(&kernel);
+    kernel.descriptor.kernelAttributes.flags.usesPrintf = true;
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -266,14 +290,13 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendToSynchro
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
     EXPECT_EQ(1u, kernel.printPrintfOutputCalledTimes);
     EXPECT_TRUE(kernel.hangDetectedPassedToPrintfOutput);
-    EXPECT_EQ(1u, commandList->getPrintfKernelContainer().size());
-    EXPECT_EQ(&kernel, commandList->getPrintfKernelContainer()[0]);
+    EXPECT_EQ(0u, commandList->getPrintfKernelContainer().size());
 
     result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
     EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
     EXPECT_EQ(2u, kernel.printPrintfOutputCalledTimes);
     EXPECT_TRUE(kernel.hangDetectedPassedToPrintfOutput);
-    EXPECT_EQ(1u, commandList->getPrintfKernelContainer().size());
+    EXPECT_EQ(0u, commandList->getPrintfKernelContainer().size());
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDepletedButReallocated) {
