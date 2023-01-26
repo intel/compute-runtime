@@ -8,7 +8,6 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
@@ -59,9 +58,6 @@
 #include <algorithm>
 
 namespace L0 {
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-struct EncodeStateBaseAddress;
 
 inline ze_result_t parseErrorCode(NEO::CommandContainer::ErrorCode returnValue) {
     switch (returnValue) {
@@ -121,6 +117,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     this->ownedPrivateAllocations.clear();
     cmdListCurrentStartOffset = 0;
     this->returnPoints.clear();
+
+    currentSurfaceStateBaseAddress = -1;
+    currentDynamicStateBaseAddress = -1;
+    currentIndirectObjectBaseAddress = -1;
+    currentBindingTablePoolBaseAddress = -1;
+
+    currentSurfaceStateSize = std::numeric_limits<size_t>::max();
+    currentDynamicStateSize = std::numeric_limits<size_t>::max();
+    currentIndirectObjectSize = std::numeric_limits<size_t>::max();
+    currentBindingTablePoolSize = std::numeric_limits<size_t>::max();
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -144,6 +151,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->stateComputeModeTracking = L0GfxCoreHelper::enableStateComputeModeTracking(rootDeviceEnvironment);
     this->frontEndStateTracking = L0GfxCoreHelper::enableFrontEndStateTracking(rootDeviceEnvironment);
     this->pipelineSelectStateTracking = L0GfxCoreHelper::enablePipelineSelectStateTracking(rootDeviceEnvironment);
+    this->stateBaseAddressTracking = L0GfxCoreHelper::enableStateBaseAddressTracking(rootDeviceEnvironment);
     this->pipeControlMultiKernelEventSync = L0GfxCoreHelper::usePipeControlMultiKernelEventSync(hwInfo);
     this->compactL3FlushEventPacket = L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo);
     this->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
@@ -2324,16 +2332,60 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::updateStateBaseAddressStreamProperties(Kernel &kernel, bool updateRequiredState, bool captureBaseAddressState) {
+    KernelImp &kernelImp = static_cast<KernelImp &>(kernel);
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+
+    if (captureBaseAddressState) {
+        currentMocsState = static_cast<int32_t>(device->getMOCS(!kernelImp.getKernelRequiresUncachedMocs(), false) >> 1);
+
+        auto ssh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
+        currentSurfaceStateBaseAddress = ssh->getHeapGpuBase();
+        currentSurfaceStateSize = ssh->getHeapSizeInPages();
+
+        currentBindingTablePoolBaseAddress = currentSurfaceStateBaseAddress;
+        currentBindingTablePoolSize = currentSurfaceStateSize;
+
+        auto dsh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
+        if (dsh != nullptr) {
+            currentDynamicStateBaseAddress = dsh->getHeapGpuBase();
+            currentDynamicStateSize = dsh->getHeapSizeInPages();
+        }
+
+        auto ioh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT);
+        currentIndirectObjectBaseAddress = ioh->getHeapGpuBase();
+        currentIndirectObjectSize = ioh->getHeapSizeInPages();
+    }
+
+    auto sbaStreamState = &finalStreamState.stateBaseAddress;
+    if (updateRequiredState) {
+        sbaStreamState = &requiredStreamState.stateBaseAddress;
+    }
+
+    sbaStreamState->setProperties(kernelImp.getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics, currentMocsState,
+                                  currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
+                                  currentSurfaceStateBaseAddress, currentSurfaceStateSize,
+                                  currentDynamicStateBaseAddress, currentDynamicStateSize,
+                                  currentIndirectObjectBaseAddress, currentIndirectObjectSize,
+                                  rootDeviceEnvironment);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isCooperative) {
     using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
 
-    auto &hwInfo = device->getHwInfo();
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
 
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
+    bool captureBaseAddressState = containsAnyKernel;
     if (!containsAnyKernel) {
         requiredStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, true, -1, rootDeviceEnvironment);
         requiredStreamState.pipelineSelect.setProperties(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
+
+        if (!this->isFlushTaskSubmissionEnabled) {
+            updateStateBaseAddressStreamProperties(kernel, true, true);
+        }
+
         if (this->stateComputeModeTracking) {
             requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
             finalStreamState = requiredStreamState;
@@ -2342,6 +2394,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
             requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
         }
         containsAnyKernel = true;
+        captureBaseAddressState = false;
     }
 
     auto logicalStateHelperBlock = !getLogicalStateHelper();
@@ -2361,10 +2414,10 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
     if (finalStreamState.frontEndState.isDirty() && logicalStateHelperBlock) {
         if (isPatchingVfeStateAllowed) {
-            auto pVfeStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), hwInfo, engineGroupType);
-            auto pVfeState = new VFE_STATE_TYPE;
-            NEO::PreambleHelper<GfxFamily>::programVfeState(pVfeState, rootDeviceEnvironment, 0, 0, device->getMaxNumHwThreads(), finalStreamState, nullptr);
-            commandsToPatch.push_back({pVfeStateAddress, pVfeState, CommandToPatch::FrontEndState});
+            auto frontEndStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), device->getHwInfo(), engineGroupType);
+            auto frontEndStateCmd = new VFE_STATE_TYPE;
+            NEO::PreambleHelper<GfxFamily>::programVfeState(frontEndStateCmd, rootDeviceEnvironment, 0, 0, device->getMaxNumHwThreads(), finalStreamState, nullptr);
+            commandsToPatch.push_back({frontEndStateAddress, frontEndStateCmd, CommandToPatch::FrontEndState});
         }
         if (this->frontEndStateTracking) {
             auto &stream = *commandContainer.getCommandStream();
@@ -2388,6 +2441,10 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
 
         NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(
             *commandContainer.getCommandStream(), finalStreamState.stateComputeMode, pipelineSelectArgs, false, rootDeviceEnvironment, isRcs, this->dcFlushSupport, nullptr);
+    }
+
+    if (!this->isFlushTaskSubmissionEnabled) {
+        updateStateBaseAddressStreamProperties(kernel, false, captureBaseAddressState);
     }
 }
 
@@ -2665,9 +2722,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
     UNRECOVERABLE_IF(dstAllocationStruct.alloc == nullptr);
     commandContainer.addToResidencyContainer(dstAllocationStruct.alloc);
 
-    NEO::PipeControlArgs args;
-    args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(descriptor->writeScope, device->getNEODevice()->getRootDeviceEnvironment());
-    args.dcFlushEnable &= dstAllocationStruct.needsFlush;
     const uint64_t gpuAddress = static_cast<uint64_t>(dstAllocationStruct.alignedAllocationPtr);
 
     if (isCopyOnly()) {
@@ -2677,6 +2731,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
         NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), gpuAddress,
                                                           data, args, productHelper);
     } else {
+        NEO::PipeControlArgs args;
+        args.dcFlushEnable = getDcFlushRequired(!!descriptor->writeScope);
+        args.dcFlushEnable &= dstAllocationStruct.needsFlush;
+
         NEO::MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
             *commandContainer.getCommandStream(),
             NEO::PostSyncMode::ImmediateData,
@@ -2756,7 +2814,6 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
     }
 
     if (useLastPipeControl) {
-
         NEO::PipeControlArgs pipeControlArgs;
         pipeControlArgs.dcFlushEnable = getDcFlushRequired(signalScope);
         pipeControlArgs.workloadPartitionOffset = eventOperations.workPartitionOperation;
@@ -2797,7 +2854,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchEventRemainingPacketsPostSync
         uint64_t eventAddress = event->getCompletionFieldGpuAddress(device);
         eventAddress += event->getSinglePacketSize() * event->getPacketsInUse();
 
-        bool appendLastPipeControl = false;
+        constexpr bool appendLastPipeControl = false;
         dispatchPostSyncCommands(remainingPacketsOperation, eventAddress, Event::STATE_SIGNALED, appendLastPipeControl, event->isSignalScope());
     }
 }

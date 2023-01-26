@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/device/device_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -105,6 +106,14 @@ bool UnitTestHelper<GfxFamily>::getDisableFusionStateFromFrontEndCommand(const t
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::getComputeDispatchAllWalkerFromFrontEndCommand(const typename GfxFamily::VFE_STATE_TYPE &feCmd) {
     return false;
+}
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::expectNullDsh(const DeviceInfo &deviceInfo) {
+    if constexpr (GfxFamily::supportsSampler) {
+        return !deviceInfo.imageSupport;
+    }
+    return true;
 }
 
 } // namespace NEO

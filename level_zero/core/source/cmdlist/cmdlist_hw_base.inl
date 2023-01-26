@@ -46,11 +46,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
     const auto kernelImmutableData = kernel->getImmutableData();
-    if (this->immediateCmdListHeapSharing) {
+    if (this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) {
         auto kernelInfo = kernelImmutableData->getKernelInfo();
         commandContainer.ensureHeapSizePrepared(
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
-            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor));
+            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor), true);
     }
     appendEventForProfiling(event, true);
     auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(),

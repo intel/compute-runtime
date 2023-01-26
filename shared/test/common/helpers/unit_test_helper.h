@@ -16,6 +16,7 @@ namespace NEO {
 
 class CommandStreamReceiver;
 class LinearStream;
+struct DeviceInfo;
 struct KernelDescriptor;
 struct HardwareInfo;
 struct RootDeviceEnvironment;
@@ -93,6 +94,7 @@ struct UnitTestHelper {
     static bool getComputeDispatchAllWalkerFromFrontEndCommand(const typename GfxFamily::VFE_STATE_TYPE &feCmd);
     static bool getSystolicFlagValueFromPipelineSelectCommand(const typename GfxFamily::PIPELINE_SELECT &pipelineSelectCmd);
     static size_t getAdditionalDshSize();
+    static bool expectNullDsh(const DeviceInfo &deviceInfo);
 };
 
 } // namespace NEO

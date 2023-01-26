@@ -42,6 +42,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     static bool enableFrontEndStateTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static bool enablePipelineSelectStateTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static bool enableStateComputeModeTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
+    static bool enableStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     static bool enableImmediateCmdListHeapSharing(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool cmdlistSupport);
     static bool usePipeControlMultiKernelEventSync(const NEO::HardwareInfo &hwInfo);
     static bool useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwInfo);
@@ -63,6 +64,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool platformSupportsStateComputeModeTracking() const = 0;
     virtual bool platformSupportsFrontEndTracking() const = 0;
     virtual bool platformSupportsPipelineSelectTracking() const = 0;
+    virtual bool platformSupportsStateBaseAddressTracking() const = 0;
     virtual bool platformSupportsRayTracing() const = 0;
     virtual bool isZebinAllowed(const NEO::Debugger *debugger) const = 0;
     virtual uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const = 0;
@@ -95,6 +97,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool platformSupportsStateComputeModeTracking() const override;
     bool platformSupportsFrontEndTracking() const override;
     bool platformSupportsPipelineSelectTracking() const override;
+    bool platformSupportsStateBaseAddressTracking() const override;
     bool platformSupportsRayTracing() const override;
     bool isZebinAllowed(const NEO::Debugger *debugger) const override;
     uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const override;

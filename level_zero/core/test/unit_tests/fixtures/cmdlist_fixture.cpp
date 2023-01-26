@@ -146,6 +146,20 @@ void CmdListStateComputeModeStateFixture::setUp() {
     ModuleMutableCommandListFixture::setUp();
 }
 
+void CommandListStateBaseAddressFixture::setUp() {
+    DebugManager.flags.EnableStateBaseAddressTracking.set(1);
+    ModuleMutableCommandListFixture::setUp();
+
+    mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.numSamplers = 1;
+    mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.tableOffset = 16;
+    mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.borderColor = 0;
+    kernel->dynamicStateHeapData.reset(new uint8_t[512]);
+}
+
+uint32_t CommandListStateBaseAddressFixture::getMocs(bool l3On) {
+    return device->getMOCS(l3On, false) >> 1;
+}
+
 void ImmediateCmdListSharedHeapsFixture::setUp() {
     DebugManager.flags.EnableFlushTaskSubmission.set(1);
     DebugManager.flags.EnableImmediateCmdListHeapSharing.set(1);

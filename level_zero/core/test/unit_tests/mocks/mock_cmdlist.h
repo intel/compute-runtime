@@ -73,6 +73,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::requiredStreamState;
     using BaseClass::setupTimestampEventForMultiTile;
     using BaseClass::signalAllEventPackets;
+    using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
     using BaseClass::unifiedMemoryControls;
     using BaseClass::updateStreamProperties;
@@ -145,6 +146,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
     using BaseClass::signalAllEventPackets;
+    using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
 
     WhiteBox() : BaseClass(BaseClass::defaultNumIddsPerBlock) {}
@@ -155,6 +157,7 @@ struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreF
     using BaseClass = CommandListCoreFamilyImmediate<gfxCoreFamily>;
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::containsAnyKernel;
+    using BaseClass::finalStreamState;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::pipeControlMultiKernelEventSync;
@@ -169,6 +172,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::commandContainer;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::csr;
+    using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
     using BaseClass::getDcFlushRequired;
     using BaseClass::immediateCmdListHeapSharing;
@@ -177,7 +181,9 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::nonImmediateLogicalStateHelper;
     using BaseClass::partitionCount;
     using BaseClass::pipelineSelectStateTracking;
+    using BaseClass::requiredStreamState;
     using BaseClass::signalAllEventPackets;
+    using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
 
     WhiteBox(Device *device);

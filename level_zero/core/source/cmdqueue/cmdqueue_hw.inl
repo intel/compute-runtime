@@ -174,6 +174,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         this->programOneCmdListPipelineSelect(commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
         this->programOneCmdListFrontEndIfDirty(ctx, child, csrStateProperties, requiredStreamState, finalStreamState);
         this->programRequiredStateComputeModeForCommandList(commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
+        this->programRequiredStateBaseAddressForCommandList(commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
 
         this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
         this->programOneCmdListBatchBufferStart(commandList, child, ctx);
@@ -1210,6 +1211,22 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
                                                                                         false, device->getNEODevice()->getRootDeviceEnvironment(), isRcs, this->getCsr()->getDcFlushSupport(), nullptr);
     }
     csrState.stateComputeMode.setProperties(cmdListFinal.stateComputeMode);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForCommandList(CommandList *commandList,
+                                                                                  NEO::LinearStream &commandStream,
+                                                                                  NEO::StreamProperties &csrState,
+                                                                                  const NEO::StreamProperties &cmdListRequired,
+                                                                                  const NEO::StreamProperties &cmdListFinal) {
+
+    if (!this->stateBaseAddressTracking) {
+        return;
+    }
+
+    csrState.stateBaseAddress.setProperties(cmdListRequired.stateBaseAddress);
+
+    csrState.stateBaseAddress.setProperties(cmdListFinal.stateBaseAddress);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

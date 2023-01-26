@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,6 +37,7 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using CommandQueue::internalUsage;
     using CommandQueue::partitionCount;
     using CommandQueue::pipelineSelectStateTracking;
+    using CommandQueue::stateBaseAddressTracking;
     using CommandQueue::stateComputeModeTracking;
 
     WhiteBox(Device *device, NEO::CommandStreamReceiver *csr,
@@ -71,6 +72,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using L0::CommandQueue::partitionCount;
     using L0::CommandQueue::pipelineSelectStateTracking;
     using L0::CommandQueue::preemptionCmdSyncProgramming;
+    using L0::CommandQueue::stateBaseAddressTracking;
     using L0::CommandQueue::stateComputeModeTracking;
     using L0::CommandQueueImp::csr;
     using typename BaseClass::CommandListExecutionContext;

@@ -33,6 +33,11 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsPipelineSelectTracking() const {
 }
 
 template <typename Family>
+bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking() const {
+    return false;
+}
+
+template <typename Family>
 uint32_t L0GfxCoreHelperHw<Family>::getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const {
     uint32_t kernelCount = EventPacketsCount::maxKernelSplit;
     if (L0GfxCoreHelper::usePipeControlMultiKernelEventSync(hwInfo)) {

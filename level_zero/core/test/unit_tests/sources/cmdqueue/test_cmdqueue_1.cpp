@@ -1997,6 +1997,9 @@ TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenD
     bool expectedFrontEndTracking = l0GfxCoreHelper.platformSupportsFrontEndTracking();
     EXPECT_EQ(expectedFrontEndTracking, commandQueue->frontEndStateTracking);
 
+    bool expectedStateBaseAddressTracking = l0GfxCoreHelper.platformSupportsStateBaseAddressTracking();
+    EXPECT_EQ(expectedStateBaseAddressTracking, commandQueue->stateBaseAddressTracking);
+
     commandQueue->destroy();
 }
 

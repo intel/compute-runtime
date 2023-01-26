@@ -36,6 +36,11 @@ GEN9TEST_F(L0GfxCoreHelperTestGen9, GivenGen9WhenCheckingL0HelperForPipelineSele
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsPipelineSelectTracking());
 }
 
+GEN9TEST_F(L0GfxCoreHelperTestGen9, GivenGen9WhenCheckingL0HelperForStateBaseAddressTrackingSupportThenReturnFalse) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_FALSE(l0GfxCoreHelper.platformSupportsStateBaseAddressTracking());
+}
+
 GEN9TEST_F(L0GfxCoreHelperTestGen9, GivenGen9WhenCheckingL0HelperForRayTracingSupportThenReturnFalse) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsRayTracing());

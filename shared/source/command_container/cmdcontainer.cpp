@@ -331,12 +331,19 @@ IndirectHeap *CommandContainer::getIndirectHeap(HeapType heapType) {
     }
 }
 
-void CommandContainer::ensureHeapSizePrepared(size_t sshRequiredSize, size_t dshRequiredSize) {
-    auto lock = immediateCmdListCsr->obtainUniqueOwnership();
-    sharedSshCsrHeap = &immediateCmdListCsr->getIndirectHeap(HeapType::SURFACE_STATE, sshRequiredSize);
+void CommandContainer::ensureHeapSizePrepared(size_t sshRequiredSize, size_t dshRequiredSize, bool getDsh) {
+    if (immediateCmdListCsr) {
+        auto lock = immediateCmdListCsr->obtainUniqueOwnership();
+        sharedSshCsrHeap = &immediateCmdListCsr->getIndirectHeap(HeapType::SURFACE_STATE, sshRequiredSize);
 
-    if (dshRequiredSize > 0) {
-        sharedDshCsrHeap = &immediateCmdListCsr->getIndirectHeap(HeapType::DYNAMIC_STATE, dshRequiredSize);
+        if (getDsh) {
+            sharedDshCsrHeap = &immediateCmdListCsr->getIndirectHeap(HeapType::DYNAMIC_STATE, dshRequiredSize);
+        }
+    } else {
+        this->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sshRequiredSize, 0);
+        if (getDsh) {
+            this->getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, dshRequiredSize, 0);
+        }
     }
 }
 

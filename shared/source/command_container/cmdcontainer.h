@@ -119,7 +119,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool immediateCmdListSharedHeap(HeapType heapType) {
         return (heapSharingEnabled && (heapType == HeapType::DYNAMIC_STATE || heapType == HeapType::SURFACE_STATE));
     }
-    void ensureHeapSizePrepared(size_t sshRequiredSize, size_t dshRequiredSize);
+    void ensureHeapSizePrepared(size_t sshRequiredSize, size_t dshRequiredSize, bool getDsh);
 
     GraphicsAllocation *reuseExistingCmdBuffer();
     GraphicsAllocation *allocateCommandBuffer();

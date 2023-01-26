@@ -236,7 +236,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             args.isRcs};
         EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
         container.setDirtyStateForAllHeaps(false);
-        args.requiresUncachedMocs = false;
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {

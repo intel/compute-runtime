@@ -259,6 +259,7 @@ struct CommandListCoreFamily : CommandListImp {
 
     ze_result_t prepareIndirectParams(const ze_group_count_t *threadGroupDimensions);
     void updateStreamProperties(Kernel &kernel, bool isCooperative);
+    void updateStateBaseAddressStreamProperties(Kernel &kernel, bool updateRequiredState, bool captureBaseAddressState);
     void clearCommandsToPatch();
 
     size_t getTotalSizeForCopyRegion(const ze_copy_region_t *region, uint32_t pitch, uint32_t slicePitch);
@@ -307,7 +308,19 @@ struct CommandListCoreFamily : CommandListImp {
     void dispatchEventRemainingPacketsPostSyncOperation(Event *event);
     void dispatchEventPostSyncOperation(Event *event, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl);
 
+    int64_t currentSurfaceStateBaseAddress = -1;
+    int64_t currentDynamicStateBaseAddress = -1;
+    int64_t currentIndirectObjectBaseAddress = -1;
+    int64_t currentBindingTablePoolBaseAddress = -1;
+
+    size_t currentSurfaceStateSize = std::numeric_limits<size_t>::max();
+    size_t currentDynamicStateSize = std::numeric_limits<size_t>::max();
+    size_t currentIndirectObjectSize = std::numeric_limits<size_t>::max();
+    size_t currentBindingTablePoolSize = std::numeric_limits<size_t>::max();
     size_t cmdListCurrentStartOffset = 0;
+
+    int32_t currentMocsState = -1;
+
     bool containsAnyKernel = false;
     bool pipeControlMultiKernelEventSync = false;
     bool compactL3FlushEventPacket = false;

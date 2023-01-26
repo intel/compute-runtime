@@ -956,7 +956,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.recursiveLockCounter = 0;
 
-    cmdContainer.ensureHeapSizePrepared(0, 0);
+    cmdContainer.ensureHeapSizePrepared(0, 0, false);
     EXPECT_EQ(1u, ultCsr.recursiveLockCounter);
 
     EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
@@ -968,8 +968,14 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     EXPECT_NO_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 0));
     EXPECT_NO_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 0, 0));
 
-    cmdContainer.ensureHeapSizePrepared(4 * MemoryConstants::kiloByte, 4 * MemoryConstants::kiloByte);
+    cmdContainer.ensureHeapSizePrepared(0, 0, true);
     EXPECT_EQ(2u, ultCsr.recursiveLockCounter);
+
+    EXPECT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
+    EXPECT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE));
+
+    cmdContainer.ensureHeapSizePrepared(4 * MemoryConstants::kiloByte, 4 * MemoryConstants::kiloByte, true);
+    EXPECT_EQ(3u, ultCsr.recursiveLockCounter);
 
     auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
     EXPECT_NE(nullptr, dshHeap);
@@ -999,6 +1005,32 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
 
     EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 64), std::exception);
     EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 64, 64), std::exception);
+}
+
+HWTEST_F(CommandContainerTest, givenCmdContainerUsedInRegularCmdListWhenGettingHeapWithEnsuringSpaceThenExpectCorrectHeap) {
+    if (!pDevice->getDeviceInfo().imageSupport) {
+        GTEST_SKIP();
+    }
+
+    MyMockCommandContainer cmdContainer;
+
+    auto code = cmdContainer.initialize(pDevice, nullptr, true);
+    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, code);
+
+    cmdContainer.ensureHeapSizePrepared(0, 0, true);
+
+    auto dsh = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+    auto ssh = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+
+    EXPECT_NE(nullptr, dsh);
+    EXPECT_NE(nullptr, ssh);
+
+    dsh->getSpace(dsh->getAvailableSpace() - 64);
+
+    cmdContainer.ensureHeapSizePrepared(4 * MemoryConstants::kiloByte, 4 * MemoryConstants::kiloByte, false);
+
+    dsh = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+    EXPECT_EQ(64u, dsh->getAvailableSpace());
 }
 
 struct MockHeapHelper : public HeapHelper {

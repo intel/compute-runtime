@@ -30,6 +30,11 @@ bool L0GfxCoreHelperHw<Family>::platformSupportsPipelineSelectTracking() const {
 }
 
 template <typename Family>
+bool L0GfxCoreHelperHw<Family>::platformSupportsStateBaseAddressTracking() const {
+    return false;
+}
+
+template <typename Family>
 uint32_t L0GfxCoreHelperHw<Family>::getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const {
     return 1;
 }

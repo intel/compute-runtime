@@ -47,6 +47,14 @@ bool L0GfxCoreHelper::enableStateComputeModeTracking(const NEO::RootDeviceEnviro
     return l0GfxCoreHelper.platformSupportsStateComputeModeTracking();
 }
 
+bool L0GfxCoreHelper::enableStateBaseAddressTracking(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (NEO::DebugManager.flags.EnableStateBaseAddressTracking.get() != -1) {
+        return !!NEO::DebugManager.flags.EnableStateBaseAddressTracking.get();
+    }
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+    return l0GfxCoreHelper.platformSupportsStateBaseAddressTracking();
+}
+
 bool L0GfxCoreHelper::enableImmediateCmdListHeapSharing(const NEO::RootDeviceEnvironment &rootDeviceEnvironment, bool cmdlistSupport) {
     if (NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.get() != -1) {
         return !!NEO::DebugManager.flags.EnableImmediateCmdListHeapSharing.get();

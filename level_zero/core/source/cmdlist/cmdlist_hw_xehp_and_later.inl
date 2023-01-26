@@ -33,9 +33,6 @@
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-struct EncodeStateBaseAddress;
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
     return 4 * MemoryConstants::pageSize;
 }
@@ -140,15 +137,16 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (kernelDescriptor.kernelAttributes.flags.isInvalid) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
-    if (this->immediateCmdListHeapSharing) {
+    bool getDsh = false;
+    if constexpr (GfxFamily::supportsSampler) {
+        getDsh = device->getDeviceInfo().imageSupport;
+    }
+    if (this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) {
         auto kernelInfo = kernelImmutableData->getKernelInfo();
-        size_t dshSize = 0;
-        if constexpr (GfxFamily::supportsSampler) {
-            dshSize = NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor);
-        }
+
         commandContainer.ensureHeapSizePrepared(
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
-            dshSize);
+            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor), getDsh);
     }
     commandListPerThreadScratchSize = std::max<uint32_t>(commandListPerThreadScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
     commandListPerThreadPrivateScratchSize = std::max<uint32_t>(commandListPerThreadPrivateScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
@@ -245,11 +243,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    updateStreamProperties(*kernel, launchParams.isCooperative);
-
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();
     this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
+
+    updateStreamProperties(*kernel, launchParams.isCooperative);
 
     auto localMemSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().localMemSize);
     auto slmTotalSize = kernelImp->getSlmTotalSize();

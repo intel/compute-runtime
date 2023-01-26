@@ -2365,6 +2365,9 @@ TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDef
 
     bool expectedFrontEndTracking = l0GfxCoreHelper.platformSupportsFrontEndTracking();
     EXPECT_EQ(expectedFrontEndTracking, commandList->frontEndStateTracking);
+
+    bool expectedStateBaseAddressTracking = l0GfxCoreHelper.platformSupportsStateBaseAddressTracking();
+    EXPECT_EQ(expectedStateBaseAddressTracking, commandList->stateBaseAddressTracking);
 }
 
 } // namespace ult

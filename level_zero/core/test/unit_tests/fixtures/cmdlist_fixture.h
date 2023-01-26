@@ -120,6 +120,13 @@ struct CmdListLargeGrfFixture : public CmdListStateComputeModeStateFixture {
     void testBody();
 };
 
+struct CommandListStateBaseAddressFixture : public ModuleMutableCommandListFixture {
+    void setUp();
+    uint32_t getMocs(bool l3On);
+
+    DebugManagerStateRestore restorer;
+};
+
 struct ImmediateCmdListSharedHeapsFixture : public ModuleMutableCommandListFixture {
     void setUp();
 

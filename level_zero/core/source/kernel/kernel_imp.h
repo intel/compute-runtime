@@ -217,8 +217,8 @@ struct KernelImp : Kernel {
     uint32_t requiredWorkgroupOrder = 0u;
 
     bool kernelRequiresGenerationOfLocalIdsByRuntime = true;
-    uint32_t kernelRequiresUncachedMocsCount = false;
-    uint32_t kernelRequiresQueueUncachedMocsCount = false;
+    uint32_t kernelRequiresUncachedMocsCount = 0;
+    uint32_t kernelRequiresQueueUncachedMocsCount = 0;
     std::vector<bool> isArgUncached;
 
     uint32_t globalOffsets[3] = {};
