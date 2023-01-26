@@ -1357,7 +1357,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingComma
 
     auto itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itorPipeCtrl);
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getHardwareInfo())) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment())) {
         itorPipeCtrl++;
     }
     if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
@@ -1372,7 +1372,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, ProfilingCommandsTest, givenKernelWhenProfilingComma
 
     itorPipeCtrl++;
     itorPipeCtrl = find<typename FamilyType::PIPE_CONTROL *>(itorPipeCtrl, cmdList.end());
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getHardwareInfo())) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment())) {
         itorPipeCtrl++;
     }
     if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {

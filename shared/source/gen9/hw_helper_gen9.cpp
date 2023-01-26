@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,7 +37,7 @@ int32_t GfxCoreHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
 }
 
 template <>
-bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const HardwareInfo &hwInfo) { return true; }
+bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) { return true; }
 
 template <>
 bool GfxCoreHelperHw<Family>::isTimestampShiftRequired() const {

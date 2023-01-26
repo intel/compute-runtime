@@ -1146,7 +1146,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, GivenBlockingWh
 
     auto &commandStreamReceiver = commandQueue.getGpgpuCommandStreamReceiver();
 
-    size_t pipeControlCount = UltMemorySynchronizationCommands<FamilyType>::getExpectedPipeControlCount(pDevice->getHardwareInfo());
+    size_t pipeControlCount = UltMemorySynchronizationCommands<FamilyType>::getExpectedPipeControlCount(pDevice->getRootDeviceEnvironment());
 
     auto &commandStreamTask = commandQueue.getCS(1024);
 

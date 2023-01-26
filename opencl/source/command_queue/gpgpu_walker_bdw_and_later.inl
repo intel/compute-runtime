@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -71,7 +71,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
         PostSyncMode::ImmediateData,
         address,
         0,
-        *rootDeviceEnvironment.getHardwareInfo(),
+        rootDeviceEnvironment,
         args);
 
     EncodeDispatchKernel<GfxFamily>::adjustTimestampPacket(*walkerCmd, *rootDeviceEnvironment.getHardwareInfo());
@@ -80,7 +80,7 @@ void GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(
 template <typename GfxFamily>
 size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSKernel(bool reserveProfilingCmdsSpace, bool reservePerfCounters, CommandQueue &commandQueue, const Kernel *pKernel, const DispatchInfo &dispatchInfo) {
     size_t size = sizeof(typename GfxFamily::GPGPU_WALKER) + HardwareCommandsHelper<GfxFamily>::getSizeRequiredCS() +
-                  sizeof(PIPE_CONTROL) * (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(commandQueue.getDevice().getHardwareInfo()) ? 2 : 1);
+                  sizeof(PIPE_CONTROL) * (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(commandQueue.getDevice().getRootDeviceEnvironment()) ? 2 : 1);
     size += HardwareCommandsHelper<GfxFamily>::getSizeRequiredForCacheFlush(commandQueue, pKernel, 0U);
     size += PreemptionHelper::getPreemptionWaCsSize<GfxFamily>(commandQueue.getDevice());
     if (reserveProfilingCmdsSpace) {
@@ -112,13 +112,12 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsStart(
     // PIPE_CONTROL for global timestamp
     uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, GlobalStartTS);
     PipeControlArgs args;
-    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *commandStream,
         PostSyncMode::Timestamp,
         timeStampAddress,
         0llu,
-        hwInfo,
+        rootDeviceEnvironment,
         args);
 
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
@@ -146,13 +145,12 @@ void GpgpuWalkerHelper<GfxFamily>::dispatchProfilingCommandsEnd(
     // PIPE_CONTROL for global timestamp
     uint64_t timeStampAddress = hwTimeStamps.getGpuAddress() + offsetof(HwTimeStamps, GlobalEndTS);
     PipeControlArgs args;
-    const auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         *commandStream,
         PostSyncMode::Timestamp,
         timeStampAddress,
         0llu,
-        hwInfo,
+        rootDeviceEnvironment,
         args);
 
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();

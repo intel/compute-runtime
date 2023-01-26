@@ -614,7 +614,7 @@ template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSwitchRingBufferSection() {
     size_t size = Dispatcher::getSizeStartCommandBuffer();
     if (disableMonitorFence) {
-        size += Dispatcher::getSizeMonitorFence(*hwInfo);
+        size += Dispatcher::getSizeMonitorFence(rootDeviceEnvironment);
     }
     return size;
 }
@@ -626,7 +626,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd(bool relaxed
                   (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
                   MemoryConstants::cacheLineSize;
     if (disableMonitorFence) {
-        size += Dispatcher::getSizeMonitorFence(*hwInfo);
+        size += Dispatcher::getSizeMonitorFence(rootDeviceEnvironment);
     }
     if (this->relaxedOrderingEnabled && relaxedOrderingSchedulerRequired) {
         size += getSizeDispatchRelaxedOrderingQueueStall();
@@ -651,7 +651,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch(bool re
         size += Dispatcher::getSizeCacheFlush(*hwInfo);
     }
     if (!disableMonitorFence) {
-        size += Dispatcher::getSizeMonitorFence(*hwInfo);
+        size += Dispatcher::getSizeMonitorFence(rootDeviceEnvironment);
     }
 
     size += getSizeNewResourceHandler();

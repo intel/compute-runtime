@@ -134,7 +134,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     linearStreamSizeEstimate += this->computeDebuggerCmdsSize(ctx);
 
     if (ctx.isDispatchTaskCountPostSyncRequired) {
-        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getHwInfo(), false);
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getNEODevice()->getRootDeviceEnvironment(), false);
     }
 
     NEO::LinearStream child(nullptr);
@@ -411,7 +411,7 @@ void CommandQueueHw<gfxCoreFamily>::programPipelineSelectIfGpgpuDisabled(NEO::Li
     bool gpgpuEnabled = this->csr->getPreambleSetFlag();
     if (!gpgpuEnabled) {
         NEO::PipelineSelectArgs args = {false, false, false, false};
-        NEO::PreambleHelper<GfxFamily>::programPipelineSelect(&cmdStream, args, device->getHwInfo());
+        NEO::PreambleHelper<GfxFamily>::programPipelineSelect(&cmdStream, args, device->getNEODevice()->getRootDeviceEnvironment());
         this->csr->setPreambleSetFlag(true);
     }
 }
@@ -612,14 +612,14 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(),
                                                     this->device->getNEODevice()->debugExecutionCounter.load(),
                                                     NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getHwInfo(), false);
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getNEODevice()->getRootDeviceEnvironment(), false);
         linearStreamSizeEstimate += sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(),
                                                     this->device->getNEODevice()->debugExecutionCounter.load(),
                                                     NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getHwInfo(), false);
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getNEODevice()->getRootDeviceEnvironment(), false);
         linearStreamSizeEstimate += sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
     }
 
@@ -1006,7 +1006,6 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncRegular(
 
     uint64_t postSyncAddress = this->csr->getTagAllocation()->getGpuAddress();
     TaskCountType postSyncData = this->csr->peekTaskCount() + 1;
-    const auto &hwInfo = this->device->getHwInfo();
 
     NEO::PipeControlArgs args;
     args.dcFlushEnable = this->csr->getDcFlushSupport();
@@ -1017,7 +1016,7 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncRegular(
         NEO::PostSyncMode::ImmediateData,
         postSyncAddress,
         postSyncData,
-        hwInfo,
+        device->getNEODevice()->getRootDeviceEnvironment(),
         args);
 }
 
@@ -1126,7 +1125,7 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimatePipelineSelectCmdSize() {
     if (!this->pipelineSelectStateTracking) {
         bool gpgpuEnabled = csr->getPreambleSetFlag();
-        return !gpgpuEnabled * NEO::PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(device->getHwInfo());
+        return !gpgpuEnabled * NEO::PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(device->getNEODevice()->getRootDeviceEnvironment());
     }
     return 0;
 }
@@ -1140,7 +1139,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimatePipelineSelectCmdSizeForMultipleCo
         return 0;
     }
 
-    size_t singlePipelineSelectSize = NEO::PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(device->getHwInfo());
+    size_t singlePipelineSelectSize = NEO::PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(device->getNEODevice()->getRootDeviceEnvironment());
     size_t estimatedSize = 0;
 
     csrStateCopy.pipelineSelect.setProperties(cmdListRequired.pipelineSelect);
@@ -1172,7 +1171,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListPipelineSelect(CommandList 
             false,
             commandList->getSystolicModeSupport()};
 
-        NEO::PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, args, device->getHwInfo());
+        NEO::PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, args, device->getNEODevice()->getRootDeviceEnvironment());
         csr->setPreambleSetFlag(true);
     }
 

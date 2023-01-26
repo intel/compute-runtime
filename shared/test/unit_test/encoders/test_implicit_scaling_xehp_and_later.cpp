@@ -11,6 +11,8 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/unit_test/fixtures/implicit_scaling_fixture.h"
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests, GivenGetSizeWhenDispatchingCmdBufferThenConsumedSizeMatchEstimatedAndCmdBufferHasCorrectCmds) {
@@ -1010,14 +1012,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(this->pDevice->getRootDeviceEnvironment(),
                                                                         false,
                                                                         false);
     EXPECT_EQ(expectedSize, estimatedSize);
 
     PipeControlArgs flushArgs;
     flushArgs.dcFlushEnable = false;
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, false, false);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, this->pDevice->getRootDeviceEnvironment(), 0, 0, false, false);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 
@@ -1063,14 +1065,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(this->pDevice->getRootDeviceEnvironment(),
                                                                         true,
                                                                         false);
     EXPECT_EQ(expectedSize, estimatedSize);
 
     PipeControlArgs flushArgs;
     flushArgs.dcFlushEnable = true;
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, true, true);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, this->pDevice->getRootDeviceEnvironment(), 0, 0, true, true);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 
@@ -1119,14 +1121,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(this->pDevice->getRootDeviceEnvironment(),
                                                                         true,
                                                                         false);
     EXPECT_EQ(expectedSize, estimatedSize);
 
     PipeControlArgs flushArgs;
     flushArgs.dcFlushEnable = true;
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, true, true);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, this->pDevice->getRootDeviceEnvironment(), 0, 0, true, true);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 
@@ -1153,12 +1155,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
             givenPostSyncBarrierDispatchWhenApiNotRequiresSelfCleanupThenExpectPostSyncMinimalCommandBuffer) {
+
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using MI_ATOMIC = typename FamilyType::MI_ATOMIC;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
-    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(testHardwareInfo, false) +
+    MockExecutionEnvironment mockExecutionEnvironment{};
+
+    size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pDevice->getRootDeviceEnvironment(), false) +
                           sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection);
@@ -1166,7 +1171,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(this->pDevice->getRootDeviceEnvironment(),
                                                                         false,
                                                                         true);
     EXPECT_EQ(expectedSize, estimatedSize);
@@ -1175,7 +1180,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     flushArgs.dcFlushEnable = false;
     uint64_t postSyncAddress = 0xFF000A180F0;
     uint64_t postSyncValue = 0xFF00FF;
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, postSyncAddress, postSyncValue, false, false);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, this->pDevice->getRootDeviceEnvironment(), postSyncAddress, postSyncValue, false, false);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 
@@ -1192,7 +1197,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
         expectedSemaphores++;
     }
 
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(testHardwareInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(this->pDevice->getRootDeviceEnvironment())) {
         expectedPipeControls++;
         if (semaphoreAsAdditionalSync) {
             expectedSemaphores++;
@@ -1235,7 +1240,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     size_t expectedSize = sizeof(MI_STORE_DATA_IMM) +
-                          MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(testHardwareInfo, false) +
+                          MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pDevice->getRootDeviceEnvironment(), false) +
                           sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection) +
@@ -1246,7 +1251,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(this->pDevice->getRootDeviceEnvironment(),
                                                                         true,
                                                                         true);
     EXPECT_EQ(expectedSize, estimatedSize);
@@ -1255,7 +1260,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     flushArgs.dcFlushEnable = true;
     uint64_t postSyncAddress = 0xFF000A180F0;
     uint64_t postSyncValue = 0xFF00FF;
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, postSyncAddress, postSyncValue, true, true);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, this->pDevice->getRootDeviceEnvironment(), postSyncAddress, postSyncValue, true, true);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 
@@ -1274,7 +1279,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     if (semaphoreAsAdditionalSync) {
         expectedSemaphores++;
     }
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(testHardwareInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(this->pDevice->getRootDeviceEnvironment())) {
         expectedPipeControls++;
         if (semaphoreAsAdditionalSync) {
             expectedSemaphores++;
@@ -1319,7 +1324,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     testHardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
     size_t expectedSize = sizeof(MI_ATOMIC) +
-                          MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(testHardwareInfo, false) +
+                          MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pDevice->getRootDeviceEnvironment(), false) +
                           sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection) +
@@ -1330,7 +1335,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(this->pDevice->getRootDeviceEnvironment(),
                                                                         true,
                                                                         true);
     EXPECT_EQ(expectedSize, estimatedSize);
@@ -1339,7 +1344,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     flushArgs.dcFlushEnable = true;
     uint64_t postSyncAddress = 0xFF000A180F0;
     uint64_t postSyncValue = 0xFF00FF;
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, postSyncAddress, postSyncValue, true, true);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, this->pDevice->getRootDeviceEnvironment(), postSyncAddress, postSyncValue, true, true);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 
@@ -1355,7 +1360,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     if (semaphoreAsAdditionalSync) {
         expectedSemaphores++;
     }
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(testHardwareInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(this->pDevice->getRootDeviceEnvironment())) {
         expectedPipeControls++;
         if (semaphoreAsAdditionalSync) {
             expectedSemaphores++;
@@ -1407,14 +1412,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(this->pDevice->getRootDeviceEnvironment(),
                                                                         true,
                                                                         false);
     EXPECT_EQ(expectedSize, estimatedSize);
 
     PipeControlArgs flushArgs;
     flushArgs.dcFlushEnable = true;
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, true, true);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, this->pDevice->getRootDeviceEnvironment(), 0, 0, true, true);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 
@@ -1464,14 +1469,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(this->pDevice->getRootDeviceEnvironment(),
                                                                         false,
                                                                         false);
     EXPECT_EQ(expectedSize, estimatedSize);
 
     PipeControlArgs flushArgs;
     flushArgs.dcFlushEnable = true;
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, false, true);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, this->pDevice->getRootDeviceEnvironment(), 0, 0, false, true);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 
@@ -1523,14 +1528,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
 
-    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(testHardwareInfo,
+    estimatedSize = ImplicitScalingDispatch<FamilyType>::getBarrierSize(this->pDevice->getRootDeviceEnvironment(),
                                                                         true,
                                                                         false);
     EXPECT_EQ(expectedSize, estimatedSize);
 
     PipeControlArgs flushArgs;
     flushArgs.dcFlushEnable = true;
-    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, testHardwareInfo, 0, 0, true, true);
+    ImplicitScalingDispatch<FamilyType>::dispatchBarrierCommands(commandStream, twoTile, flushArgs, this->pDevice->getRootDeviceEnvironment(), 0, 0, true, true);
     totalBytesProgrammed = commandStream.getUsed();
     EXPECT_EQ(expectedSize, totalBytesProgrammed);
 

@@ -498,7 +498,7 @@ HWTEST_F(EnqueueHandlerTest, GivenCommandStreamWithoutKernelAndZeroSurfacesWhenE
     EXPECT_EQ(CL_SUCCESS, enqueueResult);
 
     auto requiredCmdStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(
-                                             pDevice->getHardwareInfo(), false),
+                                             pDevice->getRootDeviceEnvironment(), false),
                                          MemoryConstants::cacheLineSize);
 
     EXPECT_EQ(mockCmdQ->getCS(0).getUsed(), requiredCmdStreamSize);

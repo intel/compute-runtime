@@ -12,6 +12,7 @@
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -28,11 +29,14 @@ ADLPTEST_F(PreambleHelperTestsAdlp, givenSystolicPipelineSelectModeDisabledWhenP
     char streamBuffer[bufferSize];
     LinearStream stream(streamBuffer, bufferSize);
 
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     flags.pipelineSelectArgs.systolicPipelineSelectMode = false;
     flags.pipelineSelectArgs.systolicPipelineSelectSupport = PreambleHelper<FamilyType>::isSystolicModeConfigurable(ADLP::hwInfo);
 
-    PreambleHelper<FamilyType>::programPipelineSelect(&stream, flags.pipelineSelectArgs, ADLP::hwInfo);
+    PreambleHelper<FamilyType>::programPipelineSelect(&stream, flags.pipelineSelectArgs, rootDeviceEnvironment);
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(stream, 0);
 
@@ -59,12 +63,14 @@ ADLPTEST_F(PreambleHelperTestsAdlp, givenSystolicPipelineSelectModeEnabledWhenPr
 
     char streamBuffer[bufferSize];
     LinearStream stream(streamBuffer, bufferSize);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
     DispatchFlags flags = DispatchFlagsHelper::createDefaultDispatchFlags();
     flags.pipelineSelectArgs.systolicPipelineSelectMode = true;
     flags.pipelineSelectArgs.systolicPipelineSelectSupport = PreambleHelper<FamilyType>::isSystolicModeConfigurable(ADLP::hwInfo);
 
-    PreambleHelper<FamilyType>::programPipelineSelect(&stream, flags.pipelineSelectArgs, ADLP::hwInfo);
+    PreambleHelper<FamilyType>::programPipelineSelect(&stream, flags.pipelineSelectArgs, rootDeviceEnvironment);
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(stream, 0);
 

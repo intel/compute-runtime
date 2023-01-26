@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,11 +33,11 @@ uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool us
 template <>
 void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
                                                    const PipelineSelectArgs &pipelineSelectArgs,
-                                                   const HardwareInfo &hwInfo) {
+                                                   const RootDeviceEnvironment &rootDeviceEnvironment) {
 
     using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
 
-    if (MemorySynchronizationCommands<Family>::isBarrierlPriorToPipelineSelectWaRequired(hwInfo)) {
+    if (MemorySynchronizationCommands<Family>::isBarrierlPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
         PipeControlArgs args;
         args.renderTargetCacheFlushEnable = true;
         MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);

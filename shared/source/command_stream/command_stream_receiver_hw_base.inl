@@ -334,7 +334,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             PostSyncMode::ImmediateData,
             address,
             taskCount + 1,
-            hwInfo,
+            peekRootDeviceEnvironment(),
             args);
 
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
@@ -479,7 +479,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     // Reprogram state base address if required
     if (isStateBaseAddressDirty || sourceLevelDebuggerActive) {
         EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStreamCSR, this->peekRootDeviceEnvironment(), isRcs(), this->dcFlushSupport);
-        EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true, hwInfo, isRcs());
+        EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true, peekRootDeviceEnvironment(), isRcs());
 
         uint64_t newGSHbase = 0;
         GSBAFor32BitProgrammed = false;
@@ -542,7 +542,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             bindingTableBaseAddressRequired = false;
         }
 
-        EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false, hwInfo, isRcs());
+        EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false, peekRootDeviceEnvironment(), isRcs());
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGSHbase,
@@ -817,7 +817,6 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
 
         ResidencyContainer surfacesForSubmit;
         ResourcePackage resourcePackage;
-        const auto &hwInfo = peekHwInfo();
         void *currentPipeControlForNooping = nullptr;
         void *epiloguePipeControlLocation = nullptr;
 
@@ -830,7 +829,8 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
             auto lastTaskCount = primaryCmdBuffer->taskCount;
             auto lastPipeControlArgs = primaryCmdBuffer->epiloguePipeControlArgs;
 
-            auto pipeControlLocationSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, lastPipeControlArgs.tlbInvalidation);
+            auto &hwInfo = peekHwInfo();
+            auto pipeControlLocationSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), lastPipeControlArgs.tlbInvalidation);
 
             FlushStampUpdateHelper flushStampUpdateHelper;
             flushStampUpdateHelper.insert(primaryCmdBuffer->flushStamp->getStampReference());
@@ -898,7 +898,7 @@ inline bool CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions() {
                     PostSyncMode::ImmediateData,
                     getTagAllocation()->getGpuAddress(),
                     lastTaskCount,
-                    hwInfo,
+                    peekRootDeviceEnvironment(),
                     lastPipeControlArgs);
             }
 
@@ -1009,7 +1009,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPipelineSelect() 
          csrSizeRequestFlags.systolicPipelineSelectMode ||
          !isPreambleSent) &&
         !isPipelineSelectAlreadyProgrammed()) {
-        size += PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekHwInfo());
+        size += PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekRootDeviceEnvironment());
     }
     return size;
 }
@@ -1342,21 +1342,19 @@ template <typename GfxFamily>
 SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
     auto lock = obtainUniqueOwnership();
 
-    const auto &hwInfo = peekHwInfo();
-
     PipeControlArgs args;
     args.dcFlushEnable = this->dcFlushSupport;
     args.notifyEnable = isUsedNotifyEnableForPostSync();
     args.workloadPartitionOffset = isMultiTileOperationEnabled();
 
-    auto &commandStream = getCS(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, args.tlbInvalidation));
+    auto &commandStream = getCS(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), args.tlbInvalidation));
     auto commandStreamStart = commandStream.getUsed();
 
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(commandStream,
                                                                               PostSyncMode::ImmediateData,
                                                                               getTagAllocation()->getGpuAddress(),
                                                                               taskCount + 1,
-                                                                              hwInfo,
+                                                                              peekRootDeviceEnvironment(),
                                                                               args);
 
     makeResident(*tagAllocation);

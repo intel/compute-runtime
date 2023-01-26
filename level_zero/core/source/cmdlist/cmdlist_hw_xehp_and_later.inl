@@ -118,7 +118,7 @@ void programEventL3Flush(Event *event,
         NEO::PostSyncMode::ImmediateData,
         eventAddress,
         Event::STATE_SIGNALED,
-        commandContainer.getDevice()->getHardwareInfo(),
+        commandContainer.getDevice()->getRootDeviceEnvironment(),
         args);
 }
 
@@ -398,11 +398,10 @@ NEO::PipeControlArgs CommandListCoreFamily<gfxCoreFamily>::createBarrierFlags() 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::appendMultiTileBarrier(NEO::Device &neoDevice) {
     NEO::PipeControlArgs args = createBarrierFlags();
-    auto &hwInfo = neoDevice.getHardwareInfo();
     NEO::ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(*commandContainer.getCommandStream(),
                                                                      neoDevice.getDeviceBitfield(),
                                                                      args,
-                                                                     hwInfo,
+                                                                     neoDevice.getRootDeviceEnvironment(),
                                                                      0,
                                                                      0,
                                                                      !(cmdListType == CommandListType::TYPE_IMMEDIATE),
@@ -410,8 +409,8 @@ void CommandListCoreFamily<gfxCoreFamily>::appendMultiTileBarrier(NEO::Device &n
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileBarrier(const NEO::HardwareInfo &hwInfo) {
-    return NEO::ImplicitScalingDispatch<GfxFamily>::getBarrierSize(hwInfo,
+inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileBarrier(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+    return NEO::ImplicitScalingDispatch<GfxFamily>::getBarrierSize(rootDeviceEnvironment,
                                                                    !(cmdListType == CommandListType::TYPE_IMMEDIATE),
                                                                    false);
 }

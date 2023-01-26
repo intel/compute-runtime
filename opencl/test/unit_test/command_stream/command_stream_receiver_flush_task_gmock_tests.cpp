@@ -84,7 +84,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskGmockTests,
         --expectedCallsCount;
     }
 
-    size_t removePatchInfoDataCount = 4 * UltMemorySynchronizationCommands<FamilyType>::getExpectedPipeControlCount(pDevice->getHardwareInfo());
+    size_t removePatchInfoDataCount = 4 * UltMemorySynchronizationCommands<FamilyType>::getExpectedPipeControlCount(pDevice->getRootDeviceEnvironment());
 
     mockCsr->flushTask(commandStream,
                        0,

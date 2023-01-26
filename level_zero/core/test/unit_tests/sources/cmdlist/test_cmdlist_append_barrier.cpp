@@ -338,7 +338,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
                                   sizeof(MI_STORE_DATA_IMM) +
                                   sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
 
-    size_t postSyncSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getHwInfo(), false);
+    size_t postSyncSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), false);
 
     auto useSizeBefore = cmdListStream->getUsed();
     auto result = commandList->appendBarrier(eventHandle, 0, nullptr);
@@ -533,7 +533,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     constexpr size_t expectedSize = sizeBarrierCommands +
                                     2 * sizeof(uint32_t);
 
-    size_t estimatedSize = immediateCommandList->estimateBufferSizeMultiTileBarrier(device->getHwInfo());
+    size_t estimatedSize = immediateCommandList->estimateBufferSizeMultiTileBarrier(device->getNEODevice()->getRootDeviceEnvironment());
     size_t usedBeforeSize = cmdStream->getUsed();
 
     uint64_t startGpuAddress = cmdStream->getGpuBase() + usedBeforeSize;

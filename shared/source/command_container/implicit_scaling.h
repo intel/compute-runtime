@@ -18,6 +18,7 @@ namespace NEO {
 struct HardwareInfo;
 class LinearStream;
 struct PipeControlArgs;
+struct RootDeviceEnvironment;
 
 namespace ImplicitScaling {
 extern bool apiSupport;
@@ -59,13 +60,13 @@ struct ImplicitScalingDispatch {
 
     static bool &getPipeControlStallRequired();
 
-    static size_t getBarrierSize(const HardwareInfo &hwInfo,
+    static size_t getBarrierSize(const RootDeviceEnvironment &rootDeviceEnvironment,
                                  bool apiSelfCleanup,
                                  bool usePostSync);
     static void dispatchBarrierCommands(LinearStream &commandStream,
                                         const DeviceBitfield &devices,
                                         PipeControlArgs &flushArgs,
-                                        const HardwareInfo &hwInfo,
+                                        const RootDeviceEnvironment &rootDeviceEnvironment,
                                         uint64_t gpuAddress,
                                         uint64_t immediateData,
                                         bool apiSelfCleanup,

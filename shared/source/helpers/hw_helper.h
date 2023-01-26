@@ -419,13 +419,13 @@ struct MemorySynchronizationCommands {
     static void addSingleBarrier(LinearStream &commandStream, PipeControlArgs &args);
     static void setSingleBarrier(void *commandsBuffer, PipeControlArgs &args);
 
-    static void addBarrierWithPostSyncOperation(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, const HardwareInfo &hwInfo, PipeControlArgs &args);
-    static void setBarrierWithPostSyncOperation(void *&commandsBuffer, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, const HardwareInfo &hwInfo, PipeControlArgs &args);
+    static void addBarrierWithPostSyncOperation(LinearStream &commandStream, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, const RootDeviceEnvironment &rootDeviceEnvironment, PipeControlArgs &args);
+    static void setBarrierWithPostSyncOperation(void *&commandsBuffer, PostSyncMode postSyncMode, uint64_t gpuAddress, uint64_t immediateData, const RootDeviceEnvironment &rootDeviceEnvironment, PipeControlArgs &args);
 
     static void setPostSyncExtraProperties(PipeControlArgs &args, const HardwareInfo &hwInfo);
 
-    static void addBarrierWa(LinearStream &commandStream, uint64_t gpuAddress, const HardwareInfo &hwInfo);
-    static void setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const HardwareInfo &hwInfo);
+    static void addBarrierWa(LinearStream &commandStream, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void setBarrierWaFlags(void *barrierCmd);
 
@@ -438,16 +438,16 @@ struct MemorySynchronizationCommands {
     static void addFullCacheFlush(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setCacheFlushExtraProperties(PipeControlArgs &args);
 
-    static size_t getSizeForBarrierWithPostSyncOperation(const HardwareInfo &hwInfo, bool tlbInvalidationRequired);
-    static size_t getSizeForBarrierWa(const HardwareInfo &hwInfo);
+    static size_t getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment, bool tlbInvalidationRequired);
+    static size_t getSizeForBarrierWa(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForSingleBarrier(bool tlbInvalidationRequired);
     static size_t getSizeForSingleAdditionalSynchronizationForDirectSubmission(const HardwareInfo &hwInfo);
     static size_t getSizeForSingleAdditionalSynchronization(const HardwareInfo &hwInfo);
     static size_t getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo);
     static size_t getSizeForFullCacheFlush();
 
-    static bool isBarrierWaRequired(const HardwareInfo &hwInfo);
-    static bool isBarrierlPriorToPipelineSelectWaRequired(const HardwareInfo &hwInfo);
+    static bool isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static bool isBarrierlPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args);
 };
 

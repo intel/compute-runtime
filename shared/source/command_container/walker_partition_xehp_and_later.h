@@ -323,16 +323,16 @@ void programPostSyncPipeControlCommand(void *&inputAddress,
                                        uint32_t &totalBytesProgrammed,
                                        WalkerPartitionArgs &args,
                                        NEO::PipeControlArgs &flushArgs,
-                                       const NEO::HardwareInfo &hwInfo) {
+                                       const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
 
     NEO::MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(inputAddress,
                                                                                    NEO::PostSyncMode::ImmediateData,
                                                                                    args.postSyncGpuAddress,
                                                                                    args.postSyncImmediateValue,
-                                                                                   hwInfo,
+                                                                                   rootDeviceEnvironment,
                                                                                    flushArgs);
 
-    totalBytesProgrammed += static_cast<uint32_t>(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, flushArgs.tlbInvalidation));
+    totalBytesProgrammed += static_cast<uint32_t>(NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, flushArgs.tlbInvalidation));
 }
 
 template <typename GfxFamily>
@@ -777,14 +777,14 @@ uint64_t estimateSpaceRequiredInCommandBuffer(WalkerPartitionArgs &args) {
 
 template <typename GfxFamily>
 uint64_t computeBarrierControlSectionOffset(WalkerPartitionArgs &args,
-                                            const NEO::HardwareInfo &hwInfo) {
+                                            const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
     uint64_t offset = 0u;
     if (args.emitSelfCleanup) {
         offset += computeSelfCleanupSectionSize<GfxFamily>(args.useAtomicsForSelfCleanup);
     }
 
     if (args.usePostSync) {
-        offset += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
+        offset += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
     } else {
         offset += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
     }
@@ -796,8 +796,8 @@ uint64_t computeBarrierControlSectionOffset(WalkerPartitionArgs &args,
 
 template <typename GfxFamily>
 uint64_t estimateBarrierSpaceRequiredInCommandBuffer(WalkerPartitionArgs &args,
-                                                     const NEO::HardwareInfo &hwInfo) {
-    uint64_t size = computeBarrierControlSectionOffset<GfxFamily>(args, hwInfo) +
+                                                     const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+    uint64_t size = computeBarrierControlSectionOffset<GfxFamily>(args, rootDeviceEnvironment) +
                     sizeof(BarrierControlSection);
     if (args.emitSelfCleanup) {
         size += computeSelfCleanupEndSectionSize<GfxFamily>(barrierControlSectionFieldsForCleanupCount, args);
@@ -811,9 +811,9 @@ void constructBarrierCommandBuffer(void *cpuPointer,
                                    uint32_t &totalBytesProgrammed,
                                    WalkerPartitionArgs &args,
                                    NEO::PipeControlArgs &flushArgs,
-                                   const NEO::HardwareInfo &hwInfo) {
+                                   const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
     void *currentBatchBufferPointer = cpuPointer;
-    const auto controlSectionOffset = computeBarrierControlSectionOffset<GfxFamily>(args, hwInfo);
+    const auto controlSectionOffset = computeBarrierControlSectionOffset<GfxFamily>(args, rootDeviceEnvironment);
 
     const auto finalSyncTileCountField = gpuAddressOfAllocation + controlSectionOffset + offsetof(BarrierControlSection, finalSyncTileCount);
     if (args.emitSelfCleanup) {
@@ -821,7 +821,7 @@ void constructBarrierCommandBuffer(void *cpuPointer,
     }
 
     if (args.usePostSync) {
-        programPostSyncPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args, flushArgs, hwInfo);
+        programPostSyncPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, args, flushArgs, rootDeviceEnvironment);
     } else {
         programPipeControlCommand<GfxFamily>(currentBatchBufferPointer, totalBytesProgrammed, flushArgs);
     }

@@ -13,6 +13,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/fixtures/preamble_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/mem_obj/buffer.h"
@@ -42,8 +43,7 @@ HWTEST2_F(ProgramPipelineXeHPAndLater, whenCleanStateInPreambleIsSetAndProgramPi
 
     LinearStream &cs = linearStream;
     PipelineSelectArgs pipelineArgs;
-    auto hwInfo = pDevice->getHardwareInfo();
-    PreambleHelper<FamilyType>::programPipelineSelect(&cs, pipelineArgs, hwInfo);
+    PreambleHelper<FamilyType>::programPipelineSelect(&cs, pipelineArgs, pDevice->getRootDeviceEnvironment());
 
     parseCommands<FamilyType>(cs, 0);
     auto numPipeControl = getCommandsList<PIPE_CONTROL>().size();
@@ -59,8 +59,7 @@ HWTEST2_F(ProgramPipelineXeHPAndLater, givenDebugVariableWhenProgramPipelineSele
 
     LinearStream &cs = linearStream;
     PipelineSelectArgs pipelineArgs;
-    auto hwInfo = pDevice->getHardwareInfo();
-    PreambleHelper<FamilyType>::programPipelineSelect(&cs, pipelineArgs, hwInfo);
+    PreambleHelper<FamilyType>::programPipelineSelect(&cs, pipelineArgs, pDevice->getRootDeviceEnvironment());
 
     parseCommands<FamilyType>(linearStream);
 
@@ -120,7 +119,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, KernelCommandsXeHPAndLater, whenKernelSizeIsRequire
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, KernelCommandsXeHPAndLater, whenPipeControlForWaIsRequiredThenReturnFalse) {
     auto &hwInfo = pDevice->getHardwareInfo();
-    EXPECT_EQ(UnitTestHelper<FamilyType>::isPipeControlWArequired(hwInfo), MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hwInfo));
+    EXPECT_EQ(UnitTestHelper<FamilyType>::isPipeControlWArequired(hwInfo), MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment()));
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, KernelCommandsXeHPAndLater, whenMediaInterfaceDescriptorLoadIsRequiredThenDoNotProgramNonExistingCommand) {
@@ -550,13 +549,17 @@ using PipelineSelectTest = ::testing::Test;
 
 HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsWithinXeGfxFamily) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+
     PIPELINE_SELECT cmd = FamilyType::cmdInitPipelineSelect;
+
     LinearStream pipelineSelectStream(&cmd, sizeof(cmd));
 
     PipelineSelectArgs pipelineArgs = {};
     pipelineArgs.systolicPipelineSelectSupport = PreambleHelper<FamilyType>::isSystolicModeConfigurable(*defaultHwInfo);
 
-    PreambleHelper<FamilyType>::programPipelineSelect(&pipelineSelectStream, pipelineArgs, *defaultHwInfo);
+    PreambleHelper<FamilyType>::programPipelineSelect(&pipelineSelectStream, pipelineArgs, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits;
     if constexpr (FamilyType::isUsingMediaSamplerDopClockGate) {

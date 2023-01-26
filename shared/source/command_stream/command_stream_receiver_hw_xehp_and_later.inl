@@ -47,8 +47,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForL3Config() const { retur
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &commandStream, PipelineSelectArgs &pipelineSelectArgs) {
     if (csrSizeRequestFlags.mediaSamplerConfigChanged || csrSizeRequestFlags.systolicPipelineSelectMode || !isPreambleSent) {
-        auto &hwInfo = peekHwInfo();
-        PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, hwInfo);
+        PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, peekRootDeviceEnvironment());
         this->lastMediaSamplerConfig = pipelineSelectArgs.mediaSamplerRequired;
         this->lastSystolicPipelineSelectMode = pipelineSelectArgs.systolicPipelineSelectMode;
         this->streamProperties.pipelineSelect.setProperties(true, this->lastMediaSamplerConfig, this->lastSystolicPipelineSelectMode, peekRootDeviceEnvironment());
@@ -155,7 +154,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBeforeStateSip(Lin
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyncCommands() const {
     if (isMultiTileOperationEnabled()) {
-        return ImplicitScalingDispatch<GfxFamily>::getBarrierSize(peekHwInfo(),
+        return ImplicitScalingDispatch<GfxFamily>::getBarrierSize(peekRootDeviceEnvironment(),
                                                                   false,
                                                                   false);
     } else {
@@ -166,23 +165,22 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyn
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncCommands() const {
     if (isMultiTileOperationEnabled()) {
-        return ImplicitScalingDispatch<GfxFamily>::getBarrierSize(peekHwInfo(),
+        return ImplicitScalingDispatch<GfxFamily>::getBarrierSize(peekRootDeviceEnvironment(),
                                                                   false,
                                                                   true);
     } else {
-        return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekHwInfo(), false);
+        return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), false);
     }
 }
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommandsForBarrier(LinearStream &cmdStream) {
-    const auto &hwInfo = peekHwInfo();
     PipeControlArgs args;
     if (isMultiTileOperationEnabled()) {
         ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,
                                                                     this->deviceBitfield,
                                                                     args,
-                                                                    hwInfo,
+                                                                    peekRootDeviceEnvironment(),
                                                                     0,
                                                                     0,
                                                                     false,
@@ -195,7 +193,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommand
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsForBarrier(LinearStream &cmdStream, TagNodeBase &tagNode) {
     auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(tagNode);
-    const auto &hwInfo = peekHwInfo();
     PipeControlArgs args;
     args.dcFlushEnable = this->dcFlushSupport;
     if (isMultiTileOperationEnabled()) {
@@ -203,7 +200,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
         ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(cmdStream,
                                                                     this->deviceBitfield,
                                                                     args,
-                                                                    hwInfo,
+                                                                    peekRootDeviceEnvironment(),
                                                                     barrierTimestampPacketGpuAddress,
                                                                     0,
                                                                     false,
@@ -215,7 +212,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
             PostSyncMode::ImmediateData,
             barrierTimestampPacketGpuAddress,
             0,
-            hwInfo,
+            peekRootDeviceEnvironment(),
             args);
     }
 }

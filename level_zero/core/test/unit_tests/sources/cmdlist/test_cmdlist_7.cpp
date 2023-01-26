@@ -209,14 +209,13 @@ HWTEST2_F(CommandListCreate, givenSingleTileOnlyPlatformsWhenProgrammingMultiTil
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
 
     auto neoDevice = device->getNEODevice();
-    auto &hwInfo = neoDevice->getHardwareInfo();
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     ASSERT_NE(nullptr, commandList);
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    EXPECT_EQ(0u, commandList->estimateBufferSizeMultiTileBarrier(hwInfo));
+    EXPECT_EQ(0u, commandList->estimateBufferSizeMultiTileBarrier(neoDevice->getRootDeviceEnvironment()));
 
     auto cmdListStream = commandList->commandContainer.getCommandStream();
     size_t usedBefore = cmdListStream->getUsed();

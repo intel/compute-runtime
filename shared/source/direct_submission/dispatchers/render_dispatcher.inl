@@ -37,19 +37,18 @@ inline void RenderDispatcher<GfxFamily>::dispatchMonitorFence(LinearStream &cmdB
     args.workloadPartitionOffset = partitionedWorkload;
     args.notifyEnable = useNotifyEnable;
 
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
         cmdBuffer,
         PostSyncMode::ImmediateData,
         gpuAddress,
         immediateData,
-        hwInfo,
+        rootDeviceEnvironment,
         args);
 }
 
 template <typename GfxFamily>
-inline size_t RenderDispatcher<GfxFamily>::getSizeMonitorFence(const HardwareInfo &hwInfo) {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
+inline size_t RenderDispatcher<GfxFamily>::getSizeMonitorFence(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
 }
 
 template <typename GfxFamily>

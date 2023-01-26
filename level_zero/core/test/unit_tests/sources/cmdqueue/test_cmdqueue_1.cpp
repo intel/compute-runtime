@@ -535,7 +535,7 @@ HWTEST2_F(CommandQueueCreate, GivenDispatchTaskCountPostSyncRequiredWhenExecuteC
     commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
     auto estimatedSizeWithtBarrier = commandQueue->requiredSizeCalled;
 
-    auto sizeForBarrier = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getHwInfo(), false);
+    auto sizeForBarrier = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), false);
     EXPECT_GT(sizeForBarrier, 0u);
 
     EXPECT_EQ(estimatedSizeWithtBarrier, estimatedSizeWithoutBarrier + sizeForBarrier);

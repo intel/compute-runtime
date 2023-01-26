@@ -87,7 +87,7 @@ class BuiltInOp<EBuiltInOps::AuxTranslation> : public BuiltinDispatchInfoBuilder
     }
 
     template <typename GfxFamily>
-    static size_t getSizeForSinglePipeControl(size_t, const HardwareInfo &, bool) {
+    static size_t getSizeForSinglePipeControl(size_t, const RootDeviceEnvironment &rootDeviceEnvironment, bool) {
         return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
     }
 

@@ -269,7 +269,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
 
-    size_t tagUpdateSize = Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo);
+    size_t tagUpdateSize = Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment);
 
     size_t disabledSizeDispatch = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(disabledSizeDispatch, (regularSizeDispatch - tagUpdateSize));
@@ -2727,7 +2727,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenRelaxedOrderingSchedulerReq
                                  (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
                                  MemoryConstants::cacheLineSize;
     if (directSubmission.disableMonitorFence) {
-        expectedBaseEndSize += Dispatcher::getSizeMonitorFence(pDevice->getHardwareInfo());
+        expectedBaseEndSize += Dispatcher::getSizeMonitorFence(pDevice->getRootDeviceEnvironment());
     }
 
     EXPECT_EQ(expectedBaseEndSize + directSubmission.getSizeDispatchRelaxedOrderingQueueStall(), directSubmission.getSizeEnd(true));

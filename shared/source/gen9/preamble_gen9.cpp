@@ -35,7 +35,7 @@ uint32_t PreambleHelper<Family>::getL3Config(const HardwareInfo &hwInfo, bool us
 template <>
 void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
                                                    const PipelineSelectArgs &pipelineSelectArgs,
-                                                   const HardwareInfo &hwInfo) {
+                                                   const RootDeviceEnvironment &rootDeviceEnvironment) {
 
     typedef typename Family::PIPELINE_SELECT PIPELINE_SELECT;
 

@@ -1413,15 +1413,18 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     uint32_t totalBytesProgrammed = 0u;
     uint64_t gpuVirtualAddress = 0xFF0000;
 
-    auto expectedOffsetSectionSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(testHardwareInfo, false) +
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    auto expectedOffsetSectionSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) +
                                      sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
                                      sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
 
     auto expectedCommandUsedSize = expectedOffsetSectionSize +
                                    sizeof(BarrierControlSection);
 
-    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
-    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
+    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, rootDeviceEnvironment));
+    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, rootDeviceEnvironment));
 
     PipeControlArgs flushArgs;
     flushArgs.dcFlushEnable = false;
@@ -1430,14 +1433,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
                                                                totalBytesProgrammed,
                                                                testArgs,
                                                                flushArgs,
-                                                               testHardwareInfo);
+                                                               rootDeviceEnvironment);
 
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
     size_t parsedOffset = 0;
 
     size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(testHardwareInfo);
 
-    if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(testHardwareInfo)) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment)) {
         constexpr uint64_t zeroGpuAddress = 0;
         constexpr uint64_t zeroImmediateValue = 0;
         auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1500,8 +1503,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
     uint32_t totalBytesProgrammed = 0u;
     uint64_t gpuVirtualAddress = 0xFF0000;
 
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
     auto expectedOffsetSectionSize = sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>) +
-                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(testHardwareInfo, false) +
+                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) +
                                      sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
                                      sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
 
@@ -1511,8 +1517,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
                                    sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>) +
                                    sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
-    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
-    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
+    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, rootDeviceEnvironment));
+    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, rootDeviceEnvironment));
 
     PipeControlArgs flushArgs;
     flushArgs.dcFlushEnable = true;
@@ -1521,7 +1527,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
                                                                totalBytesProgrammed,
                                                                testArgs,
                                                                flushArgs,
-                                                               testHardwareInfo);
+                                                               rootDeviceEnvironment);
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
 
     size_t parsedOffset = 0;
@@ -1537,7 +1543,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(testHardwareInfo);
 
-    if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(testHardwareInfo)) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment)) {
         constexpr uint64_t zeroGpuAddress = 0;
         constexpr uint64_t zeroImmediateValue = 0;
         auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -1640,9 +1646,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     uint32_t totalBytesProgrammed = 0u;
     uint64_t gpuVirtualAddress = 0xFF0000;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
     auto expectedOffsetSectionSize = sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) +
-                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(testHardwareInfo, false) +
+                                     NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) +
                                      sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
                                      sizeof(WalkerPartition::BATCH_BUFFER_START<FamilyType>);
 
@@ -1652,8 +1660,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
                                    sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) +
                                    sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
-    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
-    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
+    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, rootDeviceEnvironment));
+    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, rootDeviceEnvironment));
 
     PipeControlArgs flushArgs;
     flushArgs.dcFlushEnable = true;
@@ -1662,7 +1670,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
                                                                totalBytesProgrammed,
                                                                testArgs,
                                                                flushArgs,
-                                                               testHardwareInfo);
+                                                               rootDeviceEnvironment);
 
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
 
@@ -1684,7 +1692,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests,
 
     size_t additionalSyncCmdSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(testHardwareInfo);
 
-    if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(testHardwareInfo)) {
+    if (NEO::MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment)) {
         constexpr uint64_t zeroGpuAddress = 0;
         constexpr uint64_t zeroImmediateValue = 0;
         auto pipeControl = genCmdCast<WalkerPartition::PIPE_CONTROL<FamilyType> *>(ptrOffset(cmdBuffer, parsedOffset));

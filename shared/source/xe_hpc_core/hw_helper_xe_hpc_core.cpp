@@ -198,7 +198,7 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
 }
 
 template <>
-bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const HardwareInfo &hwInfo) {
+bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.get() == 1) {
         return true;
     }

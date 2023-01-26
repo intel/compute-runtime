@@ -240,7 +240,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(hwInfo, false));
+        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(args.device->getRootDeviceEnvironment(), false));
         args.additionalCommands->push_back(commandBuffer);
 
         using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
@@ -330,7 +330,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     PreemptionHelper::applyPreemptionWaCmdsEnd<Family>(listCmdBufferStream, *args.device);
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(hwInfo, false));
+        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(args.device->getRootDeviceEnvironment(), false));
         args.additionalCommands->push_back(commandBuffer);
 
         using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
@@ -602,7 +602,6 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 
 template <typename Family>
 void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {
-    auto &hwInfo = container.getDevice()->getHardwareInfo();
 
     PipelineSelectArgs pipelineSelectArgs;
     pipelineSelectArgs.systolicPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
@@ -610,7 +609,7 @@ void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container
 
     PreambleHelper<Family>::programPipelineSelect(container.getCommandStream(),
                                                   pipelineSelectArgs,
-                                                  hwInfo);
+                                                  container.getDevice()->getRootDeviceEnvironment());
 }
 
 template <typename Family>
@@ -706,7 +705,7 @@ void EncodeSempahore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
 
 template <typename Family>
 inline void EncodeWA<Family>::encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args, bool is3DPipeline,
-                                                             const HardwareInfo &hwInfo, bool isRcs) {}
+                                                             const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs) {}
 
 template <typename Family>
 inline size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device, bool isRcs) {

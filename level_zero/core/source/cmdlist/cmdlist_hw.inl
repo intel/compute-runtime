@@ -2140,7 +2140,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
 
     appendEventForProfiling(signalEvent, true);
 
-    const auto &hwInfo = this->device->getHwInfo();
     if (isCopyOnly()) {
         NEO::MiFlushArgs args;
         args.timeStampOperation = true;
@@ -2159,7 +2158,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
             NEO::PostSyncMode::Timestamp,
             reinterpret_cast<uint64_t>(dstptr),
             0,
-            hwInfo,
+            this->device->getNEODevice()->getRootDeviceEnvironment(),
             args);
     }
 
@@ -2356,7 +2355,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
 
         NEO::PreambleHelper<GfxFamily>::programPipelineSelect(commandContainer.getCommandStream(),
                                                               pipelineSelectArgs,
-                                                              hwInfo);
+                                                              rootDeviceEnvironment);
     }
 
     finalStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, true, -1, rootDeviceEnvironment);
@@ -2667,7 +2666,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
     UNRECOVERABLE_IF(dstAllocationStruct.alloc == nullptr);
     commandContainer.addToResidencyContainer(dstAllocationStruct.alloc);
 
-    const auto &hwInfo = this->device->getHwInfo();
     NEO::PipeControlArgs args;
     args.dcFlushEnable = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(descriptor->writeScope, device->getNEODevice()->getRootDeviceEnvironment());
     args.dcFlushEnable &= dstAllocationStruct.needsFlush;
@@ -2685,7 +2683,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
             NEO::PostSyncMode::ImmediateData,
             gpuAddress,
             data,
-            hwInfo,
+            device->getNEODevice()->getRootDeviceEnvironment(),
             args);
     }
     return ZE_RESULT_SUCCESS;
@@ -2759,7 +2757,6 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
     }
 
     if (useLastPipeControl) {
-        const auto &hwInfo = this->device->getHwInfo();
 
         NEO::PipeControlArgs pipeControlArgs;
         pipeControlArgs.dcFlushEnable = getDcFlushRequired(signalScope);
@@ -2770,7 +2767,7 @@ void CommandListCoreFamily<gfxCoreFamily>::dispatchPostSyncCommands(const CmdLis
             NEO::PostSyncMode::ImmediateData,
             gpuAddress,
             value,
-            hwInfo,
+            device->getNEODevice()->getRootDeviceEnvironment(),
             pipeControlArgs);
     }
 }

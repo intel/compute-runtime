@@ -173,7 +173,6 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             break;
         }
         case CommandList::CommandToPatch::PauseOnEnqueuePipeControlStart: {
-            auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
             NEO::PipeControlArgs args;
             args.dcFlushEnable = csr->getDcFlushSupport();
@@ -184,12 +183,11 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 NEO::PostSyncMode::ImmediateData,
                 csr->getDebugPauseStateGPUAddress(),
                 static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserStartConfirmation),
-                hwInfo,
+                device->getNEODevice()->getRootDeviceEnvironment(),
                 args);
             break;
         }
         case CommandList::CommandToPatch::PauseOnEnqueuePipeControlEnd: {
-            auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
             NEO::PipeControlArgs args;
             args.dcFlushEnable = csr->getDcFlushSupport();
@@ -200,7 +198,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
                 NEO::PostSyncMode::ImmediateData,
                 csr->getDebugPauseStateGPUAddress(),
                 static_cast<uint64_t>(NEO::DebugPauseState::waitingForUserEndConfirmation),
-                hwInfo,
+                device->getNEODevice()->getRootDeviceEnvironment(),
                 args);
             break;
         }

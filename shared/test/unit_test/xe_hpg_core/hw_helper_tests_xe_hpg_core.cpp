@@ -17,6 +17,7 @@
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
 #include "hw_cmds_xe_hpg_core_base.h"
@@ -176,16 +177,17 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabl
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
-
-    HardwareInfo hardwareInfo = *defaultHwInfo;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &hardwareInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
-    EXPECT_TRUE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hardwareInfo));
+    EXPECT_TRUE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment));
 
     constexpr size_t bufferSize = 128u;
     uint8_t buffer[bufferSize];
     LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, hardwareInfo);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, rootDeviceEnvironment);
     EXPECT_EQ(sizeof(PIPE_CONTROL), cmdStream.getUsed());
 }
 
@@ -193,15 +195,17 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenDisablePipeControlFlagIsEnabl
     DebugManagerStateRestore restore;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
 
-    HardwareInfo hardwareInfo = *defaultHwInfo;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &hardwareInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
     hardwareInfo.featureTable.flags.ftrLocalMemory = false;
-    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hardwareInfo));
+    EXPECT_FALSE(MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment));
 
     constexpr size_t bufferSize = 128u;
     uint8_t buffer[bufferSize];
     LinearStream cmdStream(buffer, bufferSize);
-    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, hardwareInfo);
+    MemorySynchronizationCommands<FamilyType>::addBarrierWa(cmdStream, 0x1000, rootDeviceEnvironment);
     EXPECT_EQ(0u, cmdStream.getUsed());
 }
 
@@ -221,7 +225,9 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
     uint8_t buffer[bufferSize];
     LinearStream cmdStream(buffer, bufferSize);
 
-    HardwareInfo hardwareInfo = *defaultHwInfo;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto &hardwareInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     hardwareInfo.featureTable.flags.ftrLocalMemory = false;
 
     PipeControlArgs args;
@@ -231,7 +237,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
                                                                                PostSyncMode::ImmediateData,
                                                                                gpuAddress,
                                                                                immediateValue,
-                                                                               hardwareInfo,
+                                                                               rootDeviceEnvironment,
                                                                                args);
     EXPECT_EQ(sizeof(PIPE_CONTROL), cmdStream.getUsed());
 
@@ -258,7 +264,9 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
     uint8_t buffer[bufferSize];
     LinearStream cmdStream(buffer, bufferSize);
 
-    HardwareInfo hardwareInfo = *defaultHwInfo;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto &hardwareInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
 
     PipeControlArgs args;
@@ -268,7 +276,7 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
                                                                                PostSyncMode::ImmediateData,
                                                                                gpuAddress,
                                                                                immediateValue,
-                                                                               hardwareInfo,
+                                                                               rootDeviceEnvironment,
                                                                                args);
     EXPECT_EQ(sizeof(PIPE_CONTROL) * 2, cmdStream.getUsed());
 

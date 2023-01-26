@@ -69,16 +69,19 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     uint8_t buffer[128];
     uint64_t address = 0x1234567887654321;
-    HardwareInfo hardwareInfo = *defaultHwInfo;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &hardwareInfo = *mockExecutionEnvironment.rootDeviceEnvironments[0]->getMutableHardwareInfo();
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
     bool requiresMemorySynchronization = (MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(hardwareInfo) > 0) ? true : false;
 
     for (auto ftrLocalMemory : ::testing::Bool()) {
         LinearStream stream(buffer, 128);
         hardwareInfo.featureTable.flags.ftrLocalMemory = ftrLocalMemory;
 
-        MemorySynchronizationCommands<FamilyType>::addBarrierWa(stream, address, hardwareInfo);
+        MemorySynchronizationCommands<FamilyType>::addBarrierWa(stream, address, rootDeviceEnvironment);
 
-        if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(hardwareInfo) == false) {
+        if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment) == false) {
             EXPECT_EQ(0u, stream.getUsed());
             continue;
         }

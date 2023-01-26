@@ -130,7 +130,6 @@ struct TimestampPacketHelper {
         auto &container = (auxTranslationDirection == AuxTranslationDirection::AuxToNonAux)
                               ? timestampPacketDependencies->auxToNonAuxNodes
                               : timestampPacketDependencies->nonAuxToAuxNodes;
-        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
 
         // cache flush after NDR, before NonAuxToAux
         if (auxTranslationDirection == AuxTranslationDirection::NonAuxToAux && timestampPacketDependencies->cacheFlushNodes.peekNodes().size() > 0) {
@@ -141,7 +140,7 @@ struct TimestampPacketHelper {
             args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment);
             MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
                 cmdStream, PostSyncMode::ImmediateData,
-                cacheFlushTimestampPacketGpuAddress, 0, hwInfo, args);
+                cacheFlushTimestampPacketGpuAddress, 0, rootDeviceEnvironment, args);
         }
 
         for (auto &node : container.peekNodes()) {
@@ -150,11 +149,11 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily, AuxTranslationDirection auxTranslationDirection>
-    static size_t getRequiredCmdStreamSizeForAuxTranslationNodeDependency(size_t count, const HardwareInfo &hwInfo, bool cacheFlushForBcsRequired) {
+    static size_t getRequiredCmdStreamSizeForAuxTranslationNodeDependency(size_t count, const RootDeviceEnvironment &rootDeviceEnvironment, bool cacheFlushForBcsRequired) {
         size_t size = count * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<GfxFamily>();
 
         if (auxTranslationDirection == AuxTranslationDirection::NonAuxToAux && cacheFlushForBcsRequired) {
-            size += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
+            size += MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
         }
 
         return size;

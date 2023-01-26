@@ -523,7 +523,7 @@ HWTEST_F(DrmDirectSubmissionTest, givenDisabledMonitorFenceWhenDispatchSwitchRin
     auto *pipeControl = hwParse.getCommand<PIPE_CONTROL>();
 
     EXPECT_NE(pipeControl, nullptr);
-    EXPECT_EQ(directSubmission.getSizeSwitchRingBufferSection(), Dispatcher::getSizeStartCommandBuffer() + Dispatcher::getSizeMonitorFence(device->getHardwareInfo()));
+    EXPECT_EQ(directSubmission.getSizeSwitchRingBufferSection(), Dispatcher::getSizeStartCommandBuffer() + Dispatcher::getSizeMonitorFence(device->getRootDeviceEnvironment()));
 
     directSubmission.currentTagData.tagValue--;
 }

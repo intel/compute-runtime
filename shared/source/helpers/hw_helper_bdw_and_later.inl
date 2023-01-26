@@ -128,7 +128,7 @@ inline void MemorySynchronizationCommands<GfxFamily>::setBarrierExtraProperties(
 }
 
 template <typename GfxFamily>
-bool MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(const HardwareInfo &hwInfo) { return false; }
+bool MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) { return false; }
 
 template <typename GfxFamily>
 inline void MemorySynchronizationCommands<GfxFamily>::setBarrierWaFlags(void *barrierCmd) {

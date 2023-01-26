@@ -71,7 +71,7 @@ PVCTEST_F(PreamblePipelineSelectState, givenRevisionBAndAboveWhenCallingProgramP
         hwInfo->platform.usRevId = testInput.revId;
         pipelineArgs.systolicPipelineSelectSupport = productHelper.isSystolicModeConfigurable(*hwInfo);
 
-        PreambleHelper<FamilyType>::programPipelineSelect(&linearStream, pipelineArgs, *hwInfo);
+        PreambleHelper<FamilyType>::programPipelineSelect(&linearStream, pipelineArgs, pDevice->getRootDeviceEnvironment());
         parseCommands<FamilyType>(linearStream);
 
         auto itorCmd = find<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());

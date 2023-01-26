@@ -393,10 +393,9 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     EXPECT_EQ(2u, event->getPacketsInUse());
 
     auto gpuAddress = event->getGpuAddress(device) + event->getContextEndOffset();
-    auto &hwInfo = device->getNEODevice()->getHardwareInfo();
 
-    size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, false) +
-                          commandList->estimateBufferSizeMultiTileBarrier(hwInfo);
+    size_t expectedSize = NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), false) +
+                          commandList->estimateBufferSizeMultiTileBarrier(device->getNEODevice()->getRootDeviceEnvironment());
     size_t usedSize = cmdStream->getUsed();
     EXPECT_EQ(expectedSize, usedSize);
 

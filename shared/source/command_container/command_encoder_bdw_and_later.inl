@@ -253,7 +253,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     memcpy_s(iddPtr, sizeof(idd), &idd, sizeof(idd));
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
-        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(hwInfo, false));
+        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(args.device->getRootDeviceEnvironment(), false));
         args.additionalCommands->push_back(commandBuffer);
 
         using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
@@ -275,7 +275,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     args.partitionCount = 1;
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(hwInfo, false));
+        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(args.device->getRootDeviceEnvironment(), false));
         args.additionalCommands->push_back(commandBuffer);
 
         using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
@@ -401,7 +401,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
     auto &hwInfo = device.getHardwareInfo();
 
     if (args.container->isAnyHeapDirty()) {
-        EncodeWA<Family>::encodeAdditionalPipelineSelect(*args.container->getCommandStream(), {}, true, hwInfo, args.isRcs);
+        EncodeWA<Family>::encodeAdditionalPipelineSelect(*args.container->getCommandStream(), {}, true, device.getRootDeviceEnvironment(), args.isRcs);
     }
 
     auto gmmHelper = device.getGmmHelper();
@@ -438,7 +438,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
     StateBaseAddressHelper<Family>::programStateBaseAddressIntoCommandStream(stateBaseAddressHelperArgs,
                                                                              *args.container->getCommandStream());
 
-    EncodeWA<Family>::encodeAdditionalPipelineSelect(*args.container->getCommandStream(), {}, false, hwInfo, args.isRcs);
+    EncodeWA<Family>::encodeAdditionalPipelineSelect(*args.container->getCommandStream(), {}, false, device.getRootDeviceEnvironment(), args.isRcs);
 }
 
 template <typename Family>
@@ -466,7 +466,7 @@ size_t EncodeMiFlushDW<GfxFamily>::getMiFlushDwWaSize() {
 
 template <typename GfxFamily>
 inline void EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args, bool is3DPipeline,
-                                                                const HardwareInfo &hwInfo, bool isRcs) {}
+                                                                const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs) {}
 
 template <typename GfxFamily>
 inline size_t EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(Device &device, bool isRcs) {

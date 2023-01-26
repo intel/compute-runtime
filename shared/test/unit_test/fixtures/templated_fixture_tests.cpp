@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 namespace NEO {
@@ -77,7 +78,9 @@ HWTEST_TEMPLATED_F(DerivedTemplatedFixtureTests, whenExecutingTemplatedTestThenC
 struct TemplatedFixtureBaseTests : public ::testing::Test {
     template <typename T>
     void setUpT() {
-        capturedPipeControlWaRequiredInSetUp = MemorySynchronizationCommands<T>::isBarrierWaRequired(*defaultHwInfo);
+        MockExecutionEnvironment mockExecutionEnvironment{};
+        auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+        capturedPipeControlWaRequiredInSetUp = MemorySynchronizationCommands<T>::isBarrierWaRequired(rootDeviceEnvironment);
     }
 
     template <typename T>
@@ -87,7 +90,9 @@ struct TemplatedFixtureBaseTests : public ::testing::Test {
 };
 
 HWTEST_TEMPLATED_F(TemplatedFixtureBaseTests, whenExecutingTemplatedSetupThenTemplateTargetsCorrectPlatform) {
-    bool capturedPipeControlWaRequiredInTestBody = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(*defaultHwInfo);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    bool capturedPipeControlWaRequiredInTestBody = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(rootDeviceEnvironment);
 
     EXPECT_EQ(capturedPipeControlWaRequiredInTestBody, capturedPipeControlWaRequiredInSetUp);
 }

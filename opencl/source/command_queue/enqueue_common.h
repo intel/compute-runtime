@@ -536,7 +536,6 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(CommandS
     if (commandStream) {
         if (timestampPacketDependencies.cacheFlushNodes.peekNodes().size() > 0) {
             auto cacheFlushTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(*timestampPacketDependencies.cacheFlushNodes.peekNodes()[0]);
-            const auto &hwInfo = device->getHardwareInfo();
             PipeControlArgs args;
             args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, device->getRootDeviceEnvironment());
             MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
@@ -544,7 +543,7 @@ BlitProperties CommandQueueHw<GfxFamily>::processDispatchForBlitEnqueue(CommandS
                 PostSyncMode::ImmediateData,
                 cacheFlushTimestampPacketGpuAddress,
                 0,
-                hwInfo,
+                device->getRootDeviceEnvironment(),
                 args);
         }
     }
@@ -638,7 +637,6 @@ void CommandQueueHw<GfxFamily>::processDispatchForMarker(CommandQueue &commandQu
 template <typename GfxFamily>
 void CommandQueueHw<GfxFamily>::processSignalMultiRootDeviceNode(LinearStream *commandStream,
                                                                  TagNodeBase *node) {
-    const auto &hwInfo = getDevice().getHardwareInfo();
     PipeControlArgs args;
     args.dcFlushEnable = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, device->getRootDeviceEnvironment());
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
@@ -646,7 +644,7 @@ void CommandQueueHw<GfxFamily>::processSignalMultiRootDeviceNode(LinearStream *c
         PostSyncMode::ImmediateData,
         node->getGpuAddress() + node->getContextEndOffset(),
         std::numeric_limits<uint64_t>::max(),
-        hwInfo,
+        device->getRootDeviceEnvironment(),
         args);
 }
 template <typename GfxFamily>

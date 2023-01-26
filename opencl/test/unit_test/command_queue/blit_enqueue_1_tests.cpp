@@ -438,7 +438,6 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenDispatchi
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto &hwInfo = device->getHardwareInfo();
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     mockCmdQ->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCmdQ->overrideIsCacheFlushForBcsRequired.returnValue = false;
@@ -465,18 +464,18 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWhenDispatchi
 
     EXPECT_NE(firstDispatchInfo, lastDispatchInfo); // walker split
 
-    EXPECT_EQ(dependencySize, firstDispatchInfo->dispatchInitCommands.estimateCommandsSize(kernelObjects.size(), hwInfo, mockCmdQ->isCacheFlushForBcsRequired()));
-    EXPECT_EQ(0u, firstDispatchInfo->dispatchEpilogueCommands.estimateCommandsSize(kernelObjects.size(), hwInfo, mockCmdQ->isCacheFlushForBcsRequired()));
+    auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
+    EXPECT_EQ(dependencySize, firstDispatchInfo->dispatchInitCommands.estimateCommandsSize(kernelObjects.size(), rootDeviceEnvironment, mockCmdQ->isCacheFlushForBcsRequired()));
+    EXPECT_EQ(0u, firstDispatchInfo->dispatchEpilogueCommands.estimateCommandsSize(kernelObjects.size(), rootDeviceEnvironment, mockCmdQ->isCacheFlushForBcsRequired()));
 
-    EXPECT_EQ(0u, lastDispatchInfo->dispatchInitCommands.estimateCommandsSize(kernelObjects.size(), hwInfo, mockCmdQ->isCacheFlushForBcsRequired()));
-    EXPECT_EQ(dependencySize, lastDispatchInfo->dispatchEpilogueCommands.estimateCommandsSize(kernelObjects.size(), hwInfo, mockCmdQ->isCacheFlushForBcsRequired()));
+    EXPECT_EQ(0u, lastDispatchInfo->dispatchInitCommands.estimateCommandsSize(kernelObjects.size(), rootDeviceEnvironment, mockCmdQ->isCacheFlushForBcsRequired()));
+    EXPECT_EQ(dependencySize, lastDispatchInfo->dispatchEpilogueCommands.estimateCommandsSize(kernelObjects.size(), rootDeviceEnvironment, mockCmdQ->isCacheFlushForBcsRequired()));
 }
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWithRequiredCacheFlushWhenDispatchingThenEstimateCmdBufferSize) {
     using WALKER_TYPE = typename FamilyType::WALKER_TYPE;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto &hwInfo = device->getHardwareInfo();
     auto mockCmdQ = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     mockCmdQ->overrideIsCacheFlushForBcsRequired.enabled = true;
     mockCmdQ->overrideIsCacheFlushForBcsRequired.returnValue = true;
@@ -492,7 +491,8 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWithRequiredC
     size_t numBuffersToEstimate = 2;
     size_t dependencySize = numBuffersToEstimate * TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue<FamilyType>();
 
-    size_t cacheFlushSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(hwInfo, false);
+    auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
+    size_t cacheFlushSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false);
 
     setMockKernelArgs(std::array<Buffer *, 3>{{buffer0.get(), buffer1.get(), buffer2.get()}});
 
@@ -505,11 +505,11 @@ HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitAuxTranslationWithRequiredC
 
     EXPECT_NE(firstDispatchInfo, lastDispatchInfo); // walker split
 
-    EXPECT_EQ(dependencySize, firstDispatchInfo->dispatchInitCommands.estimateCommandsSize(kernelObjects.size(), hwInfo, mockCmdQ->isCacheFlushForBcsRequired()));
-    EXPECT_EQ(0u, firstDispatchInfo->dispatchEpilogueCommands.estimateCommandsSize(kernelObjects.size(), hwInfo, mockCmdQ->isCacheFlushForBcsRequired()));
+    EXPECT_EQ(dependencySize, firstDispatchInfo->dispatchInitCommands.estimateCommandsSize(kernelObjects.size(), rootDeviceEnvironment, mockCmdQ->isCacheFlushForBcsRequired()));
+    EXPECT_EQ(0u, firstDispatchInfo->dispatchEpilogueCommands.estimateCommandsSize(kernelObjects.size(), rootDeviceEnvironment, mockCmdQ->isCacheFlushForBcsRequired()));
 
-    EXPECT_EQ(0u, lastDispatchInfo->dispatchInitCommands.estimateCommandsSize(kernelObjects.size(), hwInfo, mockCmdQ->isCacheFlushForBcsRequired()));
-    EXPECT_EQ(dependencySize + cacheFlushSize, lastDispatchInfo->dispatchEpilogueCommands.estimateCommandsSize(kernelObjects.size(), hwInfo, mockCmdQ->isCacheFlushForBcsRequired()));
+    EXPECT_EQ(0u, lastDispatchInfo->dispatchInitCommands.estimateCommandsSize(kernelObjects.size(), rootDeviceEnvironment, mockCmdQ->isCacheFlushForBcsRequired()));
+    EXPECT_EQ(dependencySize + cacheFlushSize, lastDispatchInfo->dispatchEpilogueCommands.estimateCommandsSize(kernelObjects.size(), rootDeviceEnvironment, mockCmdQ->isCacheFlushForBcsRequired()));
 }
 
 HWTEST_TEMPLATED_F(BlitAuxTranslationTests, givenBlitTranslationWhenConstructingBlockedCommandBufferThenSynchronizeBarrier) {

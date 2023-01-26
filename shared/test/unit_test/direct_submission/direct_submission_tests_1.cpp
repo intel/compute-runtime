@@ -420,7 +420,7 @@ HWTEST_F(DirectSubmissionTest,
 
     EXPECT_TRUE(ret);
 
-    size_t tagUpdateSize = Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo);
+    size_t tagUpdateSize = Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment);
 
     size_t disabledSizeEnd = directSubmission.getSizeEnd(false);
     EXPECT_EQ(disabledSizeEnd, regularSizeEnd + tagUpdateSize);
@@ -502,7 +502,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchTagUpdateSection
     EXPECT_TRUE(ret);
     Dispatcher::dispatchMonitorFence(directSubmission.ringCommandStream, 0ull, 0ull, directSubmission.rootDeviceEnvironment, false, false, directSubmission.dcFlushRequired);
     EXPECT_NE(0x0u, directSubmission.ringCommandStream.getUsed());
-    EXPECT_EQ(Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo), directSubmission.ringCommandStream.getUsed());
+    EXPECT_EQ(Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment), directSubmission.ringCommandStream.getUsed());
 }
 
 HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenDispatchEndingSectionThenExpectCorrectSizeUsed) {
@@ -525,7 +525,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWhenGetDispatchSizeThenExpec
 
     size_t expectedSize = directSubmission.getSizeStartSection() +
                           Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
-                          Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
+                          Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment) +
                           directSubmission.getSizeSemaphoreSection(false);
 
     size_t actualSize = directSubmission.getSizeDispatch(false, false);
@@ -542,7 +542,7 @@ HWTEST_F(DirectSubmissionTest,
 
     size_t expectedSize = Dispatcher::getSizeStoreDwordCommand() +
                           Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
-                          Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
+                          Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment) +
                           directSubmission.getSizeSemaphoreSection(false);
     size_t actualSize = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(expectedSize, actualSize);
@@ -557,7 +557,7 @@ HWTEST_F(DirectSubmissionTest,
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     directSubmission.workloadMode = 2;
     size_t expectedSize = Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo) +
-                          Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
+                          Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment) +
                           directSubmission.getSizeSemaphoreSection(false);
     size_t actualSize = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(expectedSize, actualSize);
@@ -570,7 +570,7 @@ HWTEST_F(DirectSubmissionTest,
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
     directSubmission.disableCacheFlush = true;
     size_t expectedSize = directSubmission.getSizeStartSection() +
-                          Dispatcher::getSizeMonitorFence(*directSubmission.hwInfo) +
+                          Dispatcher::getSizeMonitorFence(directSubmission.rootDeviceEnvironment) +
                           directSubmission.getSizeSemaphoreSection(false);
 
     size_t actualSize = directSubmission.getSizeDispatch(false, false);

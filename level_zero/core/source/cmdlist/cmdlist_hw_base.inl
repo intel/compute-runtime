@@ -229,7 +229,7 @@ inline void CommandListCoreFamily<gfxCoreFamily>::appendMultiTileBarrier(NEO::De
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileBarrier(const NEO::HardwareInfo &hwInfo) {
+inline size_t CommandListCoreFamily<gfxCoreFamily>::estimateBufferSizeMultiTileBarrier(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
     return 0;
 }
 

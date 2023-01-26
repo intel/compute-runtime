@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -43,7 +43,7 @@ HWTEST_F(IOQWithTwoWalkers, GivenTwoCommandQueuesWhenEnqueuingKernelThenOnePipeC
 
     typedef typename FamilyType::PIPE_CONTROL PIPE_CONTROL;
 
-    auto waNeeded = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getHardwareInfo());
+    auto waNeeded = MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment());
 
     auto itorCmd = find<PIPE_CONTROL *>(itorWalker1, itorWalker2);
     ASSERT_NE(itorWalker2, itorCmd);

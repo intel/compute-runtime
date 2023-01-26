@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,11 +53,11 @@ size_t PreambleHelper<GfxFamily>::getAdditionalCommandsSize(const Device &device
 }
 
 template <typename GfxFamily>
-size_t PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(const HardwareInfo &hwInfo) {
+size_t PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(const RootDeviceEnvironment &rootDeviceEnvironment) {
     size_t size = 0;
     using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
     size += sizeof(PIPELINE_SELECT);
-    if (MemorySynchronizationCommands<GfxFamily>::isBarrierlPriorToPipelineSelectWaRequired(hwInfo)) {
+    if (MemorySynchronizationCommands<GfxFamily>::isBarrierlPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
         size += sizeof(PIPE_CONTROL);
     }
     return size;

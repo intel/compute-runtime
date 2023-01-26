@@ -241,10 +241,8 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
         EXPECT_EQ(expectToBeProgrammed, foundOne);
     };
 
-    auto hwInfo = device->getHardwareInfo();
-
     flushTask(false);
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierlPriorToPipelineSelectWaRequired(hwInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierlPriorToPipelineSelectWaRequired(device->getRootDeviceEnvironment())) {
         findCmd(true, false, true); // first time
     } else {
         findCmd(true, false, false); // first time

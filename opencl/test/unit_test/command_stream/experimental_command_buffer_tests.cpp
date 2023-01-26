@@ -93,7 +93,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     it = hwParserExCmdBuffer.cmdList.begin();
     GenCmdList::iterator end = hwParserExCmdBuffer.cmdList.end();
 
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getHardwareInfo())) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment())) {
         // 1st PIPE_CONTROL with CS Stall
         ASSERT_NE(end, it);
         pipeControl = genCmdCast<PIPE_CONTROL *>(*it);
@@ -127,7 +127,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_EQ(exAllocationGpuAddr, semaphoreCmd->getSemaphoreGraphicsAddress());
     EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD, semaphoreCmd->getCompareOperation());
 
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getHardwareInfo())) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment())) {
         // 3rd PIPE_CONTROL with CS stall
         it++;
         ASSERT_NE(end, it);
@@ -229,7 +229,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     hwParserExCmdBuffer.parseCommands<FamilyType>(*mockExCmdBuffer->currentStream, cmbBufferOffset);
     it = hwParserExCmdBuffer.cmdList.begin();
     GenCmdList::iterator end = hwParserExCmdBuffer.cmdList.end();
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getHardwareInfo())) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment())) {
         it++;
         if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
             it++;
@@ -245,7 +245,7 @@ HWTEST_F(MockExperimentalCommandBufferTest, givenEnabledExperimentalCmdBufferWhe
     EXPECT_EQ(PIPE_CONTROL::POST_SYNC_OPERATION_WRITE_TIMESTAMP, pipeControl->getPostSyncOperation());
     EXPECT_EQ(timeStampAddress, NEO::UnitTestHelper<FamilyType>::getPipeControlPostSyncAddress(*pipeControl));
     // omit SEMAPHORE_WAIT and 3rd PIPE_CONTROL
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getHardwareInfo())) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierWaRequired(pDevice->getRootDeviceEnvironment())) {
         it++;
         if (UnitTestHelper<FamilyType>::isAdditionalSynchronizationRequired()) {
             it++;

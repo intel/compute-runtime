@@ -280,7 +280,7 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
                 PostSyncMode::ImmediateData,
                 address,
                 static_cast<uint64_t>(confirmationTrigger),
-                hwInfo,
+                commandQueue.getDevice().getRootDeviceEnvironment(),
                 args);
         }
 

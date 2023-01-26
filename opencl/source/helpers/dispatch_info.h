@@ -27,7 +27,7 @@ class DispatchInfo {
 
   public:
     using DispatchCommandMethodT = void(LinearStream &commandStream, TimestampPacketDependencies *timestampPacketDependencies, const RootDeviceEnvironment &rootDeviceEnvironment);
-    using EstimateCommandsMethodT = size_t(size_t, const HardwareInfo &, bool);
+    using EstimateCommandsMethodT = size_t(size_t, const RootDeviceEnvironment &rootDeviceEnvironment, bool);
 
     DispatchInfo() = default;
     DispatchInfo(ClDevice *device, Kernel *kernel, uint32_t dim, const Vec3<size_t> &gws, const Vec3<size_t> &elws, const Vec3<size_t> &offset)

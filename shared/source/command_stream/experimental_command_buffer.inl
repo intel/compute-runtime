@@ -65,7 +65,7 @@ template <typename GfxFamily>
 size_t ExperimentalCommandBuffer::getTimeStampPipeControlSize() noexcept {
     // Two P_C for timestamps
     return 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(
-                   *commandStreamReceiver->peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->getHardwareInfo(), false);
+                   *commandStreamReceiver->peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()], false);
 }
 
 template <typename GfxFamily>
@@ -77,7 +77,7 @@ void ExperimentalCommandBuffer::addTimeStampPipeControl() {
         PostSyncMode::Timestamp,
         timeStampAddress,
         0llu,
-        *commandStreamReceiver->peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()]->getHardwareInfo(),
+        *commandStreamReceiver->peekExecutionEnvironment().rootDeviceEnvironments[commandStreamReceiver->getRootDeviceIndex()],
         args);
 
     // moving to next chunk

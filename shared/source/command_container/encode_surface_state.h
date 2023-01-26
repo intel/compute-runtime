@@ -64,7 +64,7 @@ struct EncodeSurfaceState {
 template <typename GfxFamily>
 struct EncodeWA {
     static void encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args, bool is3DPipeline,
-                                               const HardwareInfo &hwInfo, bool isRcs);
+                                               const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs);
     static size_t getAdditionalPipelineSelectSize(Device &device, bool isRcs);
 
     static void addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,

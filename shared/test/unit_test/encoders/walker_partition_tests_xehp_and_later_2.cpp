@@ -1375,6 +1375,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenDo
     testArgs.tileCount = 4u;
     testArgs.emitSelfCleanup = false;
 
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     uint32_t totalBytesProgrammed = 0u;
     uint64_t gpuVirtualAddress = 0xFF0000;
 
@@ -1385,8 +1387,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenDo
     auto expectedCommandUsedSize = expectedOffsetSectionSize +
                                    sizeof(BarrierControlSection);
 
-    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
-    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
+    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, rootDeviceEnvironment));
+    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, rootDeviceEnvironment));
 
     PipeControlArgs flushArgs;
     flushArgs.dcFlushEnable = false;
@@ -1395,7 +1397,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenDo
                                                                totalBytesProgrammed,
                                                                testArgs,
                                                                flushArgs,
-                                                               testHardwareInfo);
+                                                               rootDeviceEnvironment);
 
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
 
@@ -1442,7 +1444,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
 
     uint32_t totalBytesProgrammed = 0u;
     uint64_t gpuVirtualAddress = 0xFF0000;
-
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     auto expectedOffsetSectionSize = sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>) +
                                      sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>) +
                                      sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
@@ -1454,8 +1457,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
                                    sizeof(WalkerPartition::MI_STORE_DATA_IMM<FamilyType>) +
                                    sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
-    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
-    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
+    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, rootDeviceEnvironment));
+    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, rootDeviceEnvironment));
 
     PipeControlArgs flushArgs;
     flushArgs.dcFlushEnable = true;
@@ -1464,7 +1467,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
                                                                totalBytesProgrammed,
                                                                testArgs,
                                                                flushArgs,
-                                                               testHardwareInfo);
+                                                               rootDeviceEnvironment);
 
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
 
@@ -1559,7 +1562,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
 
     uint32_t totalBytesProgrammed = 0u;
     uint64_t gpuVirtualAddress = 0xFF0000;
-
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     auto expectedOffsetSectionSize = sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) +
                                      sizeof(WalkerPartition::PIPE_CONTROL<FamilyType>) +
                                      sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>) +
@@ -1571,8 +1575,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
                                    sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) +
                                    sizeof(WalkerPartition::MI_ATOMIC<FamilyType>) + sizeof(WalkerPartition::MI_SEMAPHORE_WAIT<FamilyType>);
 
-    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, testHardwareInfo));
-    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, testHardwareInfo));
+    EXPECT_EQ(expectedOffsetSectionSize, computeBarrierControlSectionOffset<FamilyType>(testArgs, rootDeviceEnvironment));
+    EXPECT_EQ(expectedCommandUsedSize, estimateBarrierSpaceRequiredInCommandBuffer<FamilyType>(testArgs, rootDeviceEnvironment));
 
     PipeControlArgs flushArgs;
     flushArgs.dcFlushEnable = true;
@@ -1581,7 +1585,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerPartitionTests, givenBarrierProgrammingWhenEm
                                                                totalBytesProgrammed,
                                                                testArgs,
                                                                flushArgs,
-                                                               testHardwareInfo);
+                                                               rootDeviceEnvironment);
 
     EXPECT_EQ(expectedCommandUsedSize, totalBytesProgrammed);
 

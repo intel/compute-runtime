@@ -184,13 +184,15 @@ uint32_t GfxCoreHelperHw<Family>::getMocsIndex(const GmmHelper &gmmHelper, bool 
 }
 
 template <>
-bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const HardwareInfo &hwInfo) {
-    return ProductHelper::get(hwInfo.platform.eProductFamily)->pipeControlWARequired(hwInfo);
+bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    return productHelper.pipeControlWARequired(hwInfo);
 }
 
 template <>
-bool MemorySynchronizationCommands<Family>::isBarrierlPriorToPipelineSelectWaRequired(const HardwareInfo &hwInfo) {
-    return MemorySynchronizationCommands<Family>::isBarrierWaRequired(hwInfo);
+bool MemorySynchronizationCommands<Family>::isBarrierlPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    return MemorySynchronizationCommands<Family>::isBarrierWaRequired(rootDeviceEnvironment);
 }
 
 template <>

@@ -33,7 +33,7 @@ struct PreambleHelper {
     static void programL3(LinearStream *pCommandStream, uint32_t l3Config);
     static void programPipelineSelect(LinearStream *pCommandStream,
                                       const PipelineSelectArgs &pipelineSelectArgs,
-                                      const HardwareInfo &hwInfo);
+                                      const RootDeviceEnvironment &rootDeviceEnvironment);
     static void programPreemption(LinearStream *pCommandStream, Device &device, GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
     static void addPipeControlBeforeVfeCmd(LinearStream *pCommandStream, const HardwareInfo *hwInfo, EngineGroupType engineGroupType);
     static void appendProgramVFEState(const RootDeviceEnvironment &rootDeviceEnvironment, const StreamProperties &streamProperties, void *cmd);
@@ -60,7 +60,7 @@ struct PreambleHelper {
     static size_t getKernelDebuggingCommandsSize(bool debuggingActive);
     static void programGenSpecificPreambleWorkArounds(LinearStream *pCommandStream, const HardwareInfo &hwInfo);
     static uint32_t getUrbEntryAllocationSize();
-    static size_t getCmdSizeForPipelineSelect(const HardwareInfo &hwInfo);
+    static size_t getCmdSizeForPipelineSelect(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSemaphoreDelayCommandSize();
     static uint32_t getScratchSizeValueToProgramMediaVfeState(uint32_t scratchSize);
 };

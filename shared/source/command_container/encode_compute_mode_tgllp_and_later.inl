@@ -28,7 +28,7 @@ size_t EncodeComputeMode<Family>::getCmdSizeForComputeMode(const RootDeviceEnvir
         size += MemorySynchronizationCommands<Family>::getSizeForSingleBarrier(false);
     }
     if (productHelper.is3DPipelineSelectWARequired() && isRcs) {
-        size += (2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(hwInfo));
+        size += (2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(rootDeviceEnvironment));
     }
     return size;
 }
@@ -38,7 +38,7 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
     LinearStream &csr, StateComputeModeProperties &properties, const PipelineSelectArgs &args,
     bool hasSharedHandles, const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlush, LogicalStateHelper *logicalStateHelper) {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, true, hwInfo, isRcs);
+    NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, true, rootDeviceEnvironment, isRcs);
 
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
@@ -57,7 +57,7 @@ inline void EncodeComputeMode<Family>::programComputeModeCommandWithSynchronizat
         MemorySynchronizationCommands<Family>::addSingleBarrier(csr, args);
     }
 
-    NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, false, hwInfo, isRcs);
+    NEO::EncodeWA<Family>::encodeAdditionalPipelineSelect(csr, args, false, rootDeviceEnvironment, isRcs);
 }
 
 template <typename Family>

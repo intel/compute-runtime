@@ -28,7 +28,7 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingPreemptionCmdThenDispa
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenAskingForMonitorFenceCmdSizeThenReturnExpectedNumberOfMiFlush) {
     size_t expectedSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
-    EXPECT_EQ(expectedSize, BlitterDispatcher<FamilyType>::getSizeMonitorFence(pDevice->getHardwareInfo()));
+    EXPECT_EQ(expectedSize, BlitterDispatcher<FamilyType>::getSizeMonitorFence(pDevice->getRootDeviceEnvironment()));
 }
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingMonitorFenceCmdThenDispatchMiFlushWithPostSync) {

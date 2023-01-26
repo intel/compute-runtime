@@ -26,7 +26,7 @@ namespace NEO {
 template <typename Family>
 void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
                                                    const PipelineSelectArgs &pipelineSelectArgs,
-                                                   const HardwareInfo &hwInfo) {
+                                                   const RootDeviceEnvironment &rootDeviceEnvironment) {
 
     using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
 

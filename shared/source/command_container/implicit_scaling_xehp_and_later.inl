@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_container/walker_partition_xehp_and_later.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
@@ -164,19 +165,19 @@ WalkerPartition::WalkerPartitionArgs prepareBarrierWalkerPartitionArgs(bool emit
 }
 
 template <typename GfxFamily>
-size_t ImplicitScalingDispatch<GfxFamily>::getBarrierSize(const HardwareInfo &hwInfo,
+size_t ImplicitScalingDispatch<GfxFamily>::getBarrierSize(const RootDeviceEnvironment &rootDeviceEnvironment,
                                                           bool apiSelfCleanup,
                                                           bool usePostSync) {
     WalkerPartition::WalkerPartitionArgs args = prepareBarrierWalkerPartitionArgs<GfxFamily>(apiSelfCleanup, usePostSync);
 
-    return static_cast<size_t>(WalkerPartition::estimateBarrierSpaceRequiredInCommandBuffer<GfxFamily>(args, hwInfo));
+    return static_cast<size_t>(WalkerPartition::estimateBarrierSpaceRequiredInCommandBuffer<GfxFamily>(args, rootDeviceEnvironment));
 }
 
 template <typename GfxFamily>
 void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &commandStream,
                                                                  const DeviceBitfield &devices,
                                                                  PipeControlArgs &flushArgs,
-                                                                 const HardwareInfo &hwInfo,
+                                                                 const RootDeviceEnvironment &rootDeviceEnvironment,
                                                                  uint64_t gpuAddress,
                                                                  uint64_t immediateData,
                                                                  bool apiSelfCleanup,
@@ -189,7 +190,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
     args.postSyncGpuAddress = gpuAddress;
     args.postSyncImmediateValue = immediateData;
 
-    auto barrierCommandsSize = getBarrierSize(hwInfo, args.emitSelfCleanup, args.usePostSync);
+    auto barrierCommandsSize = getBarrierSize(rootDeviceEnvironment, args.emitSelfCleanup, args.usePostSync);
     void *commandBuffer = commandStream.getSpace(barrierCommandsSize);
     uint64_t cmdBufferGpuAddress = commandStream.getGraphicsAllocation()->getGpuAddress() + commandStream.getUsed() - barrierCommandsSize;
 
@@ -198,7 +199,7 @@ void ImplicitScalingDispatch<GfxFamily>::dispatchBarrierCommands(LinearStream &c
                                                               totalProgrammedSize,
                                                               args,
                                                               flushArgs,
-                                                              hwInfo);
+                                                              rootDeviceEnvironment);
     UNRECOVERABLE_IF(totalProgrammedSize != barrierCommandsSize);
 }
 

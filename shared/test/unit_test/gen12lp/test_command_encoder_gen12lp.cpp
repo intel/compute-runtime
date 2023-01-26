@@ -161,9 +161,8 @@ GEN12LPTEST_F(Gen12lpCommandEncodeTest, givenBcsCommandsHelperWhenMiArbCheckWaRe
 GEN12LPTEST_F(CommandEncodeStatesTest, givenGen12LpPlatformWhenAdjustPipelineSelectIsCalledThenPipelineIsDispatched) {
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
 
-    auto &hwInfo = pDevice->getHardwareInfo();
     size_t barrierSize = 0;
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierlPriorToPipelineSelectWaRequired(hwInfo)) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierlPriorToPipelineSelectWaRequired(pDevice->getRootDeviceEnvironment())) {
         barrierSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
     }
 

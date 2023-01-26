@@ -31,7 +31,7 @@ size_t EncodeWA<Family>::getAdditionalPipelineSelectSize(Device &device, bool is
     size_t size = 0;
     const auto &productHelper = device.getProductHelper();
     if (isRcs && productHelper.is3DPipelineSelectWARequired()) {
-        size += 2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(device.getHardwareInfo());
+        size += 2 * PreambleHelper<Family>::getCmdSizeForPipelineSelect(device.getRootDeviceEnvironment());
     }
     return size;
 }
@@ -57,12 +57,12 @@ void EncodeComputeMode<Family>::programComputeModeCommand(LinearStream &csr, Sta
 
 template <>
 void EncodeWA<Family>::encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args,
-                                                      bool is3DPipeline, const HardwareInfo &hwInfo, bool isRcs) {
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+                                                      bool is3DPipeline, const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs) {
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     if (productHelper.is3DPipelineSelectWARequired() && isRcs) {
         PipelineSelectArgs pipelineSelectArgs = args;
         pipelineSelectArgs.is3DPipelineRequired = is3DPipeline;
-        PreambleHelper<Family>::programPipelineSelect(&stream, pipelineSelectArgs, hwInfo);
+        PreambleHelper<Family>::programPipelineSelect(&stream, pipelineSelectArgs, rootDeviceEnvironment);
     }
 }
 
@@ -100,7 +100,6 @@ void EncodeStoreMMIO<Family>::appendFlags(MI_STORE_REGISTER_MEM *storeRegMem, bo
 
 template <>
 void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container, const NEO::KernelDescriptor &kernelDescriptor) {
-    auto &hwInfo = container.getDevice()->getHardwareInfo();
 
     PipelineSelectArgs pipelineSelectArgs;
     pipelineSelectArgs.systolicPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
@@ -108,7 +107,7 @@ void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container
 
     PreambleHelper<Family>::programPipelineSelect(container.getCommandStream(),
                                                   pipelineSelectArgs,
-                                                  hwInfo);
+                                                  container.getDevice()->getRootDeviceEnvironment());
 }
 
 template struct EncodeDispatchKernel<Family>;

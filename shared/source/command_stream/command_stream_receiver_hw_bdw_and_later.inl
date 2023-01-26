@@ -41,7 +41,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const
     size_t size = 0;
     const auto &productHelper = getProductHelper();
     if (productHelper.is3DPipelineSelectWARequired()) {
-        size += (2 * PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekHwInfo()));
+        size += (2 * PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(peekRootDeviceEnvironment()));
     }
     size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL);
     return size;
@@ -60,9 +60,8 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForL3Config() const 
 template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::programPipelineSelect(LinearStream &commandStream, PipelineSelectArgs &pipelineSelectArgs) {
     if (csrSizeRequestFlags.mediaSamplerConfigChanged || csrSizeRequestFlags.systolicPipelineSelectMode || !isPreambleSent) {
-        auto &hwInfo = peekHwInfo();
         if (!isPipelineSelectAlreadyProgrammed()) {
-            PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, hwInfo);
+            PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, pipelineSelectArgs, peekRootDeviceEnvironment());
         }
         this->lastMediaSamplerConfig = pipelineSelectArgs.mediaSamplerRequired;
         this->lastSystolicPipelineSelectMode = pipelineSelectArgs.systolicPipelineSelectMode;
@@ -145,7 +144,7 @@ inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingNoPostSyn
 
 template <typename GfxFamily>
 inline size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForStallingPostSyncCommands() const {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekHwInfo(), false);
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), false);
 }
 
 template <typename GfxFamily>
@@ -157,7 +156,6 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingNoPostSyncCommand
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsForBarrier(LinearStream &cmdStream, TagNodeBase &tagNode) {
     auto barrierTimestampPacketGpuAddress = TimestampPacketHelper::getContextEndGpuAddress(tagNode);
-    const auto &hwInfo = peekHwInfo();
     PipeControlArgs args;
     args.dcFlushEnable = this->dcFlushSupport;
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(
@@ -165,7 +163,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programStallingPostSyncCommandsF
         PostSyncMode::ImmediateData,
         barrierTimestampPacketGpuAddress,
         0,
-        hwInfo,
+        peekRootDeviceEnvironment(),
         args);
 }
 
