@@ -384,7 +384,6 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
             NEO::computeWorkgroupSize2D(maxWorkGroupSize, retGroupSize, workItems, simd);
         }
     }
-
     *groupSizeX = static_cast<uint32_t>(retGroupSize[0]);
     *groupSizeY = static_cast<uint32_t>(retGroupSize[1]);
     *groupSizeZ = static_cast<uint32_t>(retGroupSize[2]);

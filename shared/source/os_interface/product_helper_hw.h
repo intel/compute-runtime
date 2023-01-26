@@ -156,6 +156,8 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getDefaultRevisionId() const override;
 
     bool isMultiContextResourceDeferDeletionSupported() const override;
+    bool isFusedEuDisabledForDpas(bool kernelHasDpasInstructions, const uint32_t *lws, const uint32_t *groupCount) const override;
+    bool isCalculationForDisablingEuFusionWithDpasNeeded() const override;
 
     ~ProductHelperHw() override = default;
 

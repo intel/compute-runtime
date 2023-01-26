@@ -2344,32 +2344,48 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isCooperative) {
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect) {
     if (this->isFlushTaskSubmissionEnabled) {
-        updateStreamPropertiesForFlushTaskDispatchFlags(kernel, isCooperative);
+        updateStreamPropertiesForFlushTaskDispatchFlags(kernel, isCooperative, threadGroupDimensions, isIndirect);
     } else {
-        updateStreamPropertiesForRegularCommandLists(kernel, isCooperative);
+        updateStreamPropertiesForRegularCommandLists(kernel, isCooperative, threadGroupDimensions, isIndirect);
     }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDispatchFlags(Kernel &kernel, bool isCooperative) {
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDispatchFlags(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect) {
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
+    bool fusedEuDisabled = kernelAttributes.flags.requiresDisabledEUFusion;
+    auto &productHelper = device->getProductHelper();
+    if (productHelper.isCalculationForDisablingEuFusionWithDpasNeeded()) {
+        if (threadGroupDimensions) {
+            uint32_t *groupCountPtr = nullptr;
+            uint32_t groupCount[3] = {};
+            if (!isIndirect) {
+                groupCount[0] = threadGroupDimensions->groupCountX;
+                groupCount[1] = threadGroupDimensions->groupCountY;
+                groupCount[2] = threadGroupDimensions->groupCountZ;
+                groupCountPtr = groupCount;
+            }
+            fusedEuDisabled |= productHelper.isFusedEuDisabledForDpas(kernelAttributes.flags.usesSystolicPipelineSelectMode, kernel.getGroupSize(), groupCountPtr);
+        }
+    }
 
     requiredStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, rootDeviceEnvironment);
 
-    requiredStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, rootDeviceEnvironment);
+    requiredStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, fusedEuDisabled, rootDeviceEnvironment);
 
     requiredStreamState.pipelineSelect.setPropertySystolicMode(kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative) {
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect) {
     using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
 
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
+
     KernelImp &kernelImp = static_cast<KernelImp &>(kernel);
 
     currentMocsState = static_cast<int32_t>(device->getMOCS(!kernelImp.getKernelRequiresUncachedMocs(), false) >> 1);
@@ -2391,8 +2407,23 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     currentIndirectObjectBaseAddress = ioh->getHeapGpuBase();
     currentIndirectObjectSize = ioh->getHeapSizeInPages();
 
+    bool fusedEuDisabled = kernelAttributes.flags.requiresDisabledEUFusion;
+    auto &productHelper = device->getProductHelper();
+    if (productHelper.isCalculationForDisablingEuFusionWithDpasNeeded()) {
+        if (threadGroupDimensions) {
+            uint32_t *groupCountPtr = nullptr;
+            uint32_t groupCount[3] = {};
+            if (!isIndirect) {
+                groupCount[0] = threadGroupDimensions->groupCountX;
+                groupCount[1] = threadGroupDimensions->groupCountY;
+                groupCount[2] = threadGroupDimensions->groupCountZ;
+                groupCountPtr = groupCount;
+            }
+            fusedEuDisabled |= productHelper.isFusedEuDisabledForDpas(kernelAttributes.flags.usesSystolicPipelineSelectMode, kernel.getGroupSize(), groupCountPtr);
+        }
+    }
     if (!containsAnyKernel) {
-        requiredStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, cmdListDefaultDisableOverdispatch, -1, rootDeviceEnvironment);
+        requiredStreamState.frontEndState.setProperties(isCooperative, fusedEuDisabled, cmdListDefaultDisableOverdispatch, -1, rootDeviceEnvironment);
         requiredStreamState.pipelineSelect.setProperties(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
 
         requiredStreamState.stateBaseAddress.setProperties(kernelImp.getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics, currentMocsState,
@@ -2425,7 +2456,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
                                                               rootDeviceEnvironment);
     }
 
-    finalStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, cmdListDefaultDisableOverdispatch, -1, rootDeviceEnvironment);
+    finalStreamState.frontEndState.setProperties(isCooperative, fusedEuDisabled, cmdListDefaultDisableOverdispatch, -1, rootDeviceEnvironment);
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
     if (finalStreamState.frontEndState.isDirty() && logicalStateHelperBlock) {
         if (isPatchingVfeStateAllowed) {

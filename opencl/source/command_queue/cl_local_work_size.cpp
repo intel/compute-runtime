@@ -96,6 +96,7 @@ WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo
     const auto &kernelInfo = dispatchInfo.getKernel()->getKernelInfo();
     auto numThreadsPerSubSlice = static_cast<uint32_t>(device.getSharedDeviceInfo().maxNumEUsPerSubSlice) *
                                  device.getSharedDeviceInfo().numThreadsPerEU;
+
     WorkSizeInfo wsInfo(dispatchInfo.getKernel()->getMaxKernelWorkGroupSize(),
                         kernelInfo.kernelDescriptor.kernelAttributes.usesBarriers(),
                         static_cast<uint32_t>(kernelInfo.getMaxSimdSize()),
@@ -106,6 +107,7 @@ WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo
                         false,
                         false,
                         kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion);
+
     wsInfo.setIfUseImg(kernelInfo);
 
     return wsInfo;

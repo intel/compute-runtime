@@ -43,6 +43,5 @@ template <>
 bool ProductHelperHw<gfxProduct>::isMultiContextResourceDeferDeletionSupported() const {
     return false;
 }
-
 template class ProductHelperHw<gfxProduct>;
 } // namespace NEO

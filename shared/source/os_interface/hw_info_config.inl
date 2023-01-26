@@ -736,4 +736,13 @@ bool ProductHelperHw<gfxProduct>::isMultiContextResourceDeferDeletionSupported()
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isFusedEuDisabledForDpas(bool kernelHasDpasInstructions, const uint32_t *lws, const uint32_t *groupCount) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isCalculationForDisablingEuFusionWithDpasNeeded() const {
+    return false;
+}
 } // namespace NEO

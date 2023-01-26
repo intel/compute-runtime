@@ -77,6 +77,8 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::stateComputeModeTracking;
     using BaseClass::unifiedMemoryControls;
     using BaseClass::updateStreamProperties;
+    using BaseClass::updateStreamPropertiesForFlushTaskDispatchFlags;
+    using BaseClass::updateStreamPropertiesForRegularCommandLists;
 
     WhiteBox() : ::L0::CommandListCoreFamily<gfxCoreFamily>(BaseClass::defaultNumIddsPerBlock) {}
 
