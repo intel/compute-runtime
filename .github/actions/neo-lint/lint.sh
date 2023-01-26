@@ -1,7 +1,7 @@
 #!/bin/bash
 
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -21,7 +21,7 @@ INPUT_IREGEX="${INPUT_IREGEX:-.*\.(cpp|h|inl)}"
     git fetch origin ${GITHUB_BASE_REF}
     git show
     set -x
-    git diff -U0 --no-color origin/${GITHUB_BASE_REF}..HEAD | clang-format-diff-11 -p1 -i -v -iregex ${INPUT_IREGEX}
+    git diff -U0 --no-color origin/${GITHUB_BASE_REF}..HEAD -- . ':!third_party' | clang-format-diff-11 -p1 -i -v -iregex ${INPUT_IREGEX}
     set +x
 )
 
