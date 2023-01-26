@@ -14,6 +14,7 @@ struct UltHwConfig {
     bool forceOsAgnosticMemoryManager = true;
     bool useWaitForTimestamps = false;
     bool useBlitSplit = false;
+    bool useFirstSubmissionInitDevice = false;
 
     bool csrFailInitDirectSubmission = false;
     bool csrBaseCallDirectSubmissionAvailable = false;
