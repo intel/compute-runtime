@@ -76,7 +76,8 @@ const RuntimeCapabilityTable MTL::capabilityTable{
     true,                                          // supportsMediaBlock
     false,                                         // p2pAccessSupported
     false,                                         // p2pAtomicAccessSupported
-    true                                           // fusedEuEnabled
+    true,                                          // fusedEuEnabled
+    true                                           // l0DebuggerSupported
 };
 
 WorkaroundTable MTL::workaroundTable = {};
