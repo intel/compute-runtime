@@ -207,7 +207,8 @@ void PipelineSelectProperties::clearIsDirty() {
     systolicMode.isDirty = false;
 }
 
-void StateBaseAddressProperties::setProperties(bool globalAtomics, int32_t statelessMocs, int64_t bindingTablePoolBaseAddress,
+void StateBaseAddressProperties::setProperties(bool globalAtomics, int32_t statelessMocs,
+                                               int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
                                                int64_t surfaceStateBaseAddress, size_t surfaceStateSize,
                                                int64_t dynamicStateBaseAddress, size_t dynamicStateSize,
                                                int64_t indirectObjectBaseAddress, size_t indirectObjectSize, const RootDeviceEnvironment &rootDeviceEnvironment) {
@@ -229,6 +230,7 @@ void StateBaseAddressProperties::setProperties(bool globalAtomics, int32_t state
 
     if (this->stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress) {
         this->bindingTablePoolBaseAddress.set(bindingTablePoolBaseAddress);
+        this->bindingTablePoolSize.set(bindingTablePoolSize);
     }
 
     this->surfaceStateBaseAddress.set(surfaceStateBaseAddress);
@@ -245,6 +247,7 @@ void StateBaseAddressProperties::setProperties(const StateBaseAddressProperties 
     globalAtomics.set(properties.globalAtomics.value);
     statelessMocs.set(properties.statelessMocs.value);
     bindingTablePoolBaseAddress.set(properties.bindingTablePoolBaseAddress.value);
+    bindingTablePoolSize.set(properties.bindingTablePoolSize.value);
 
     surfaceStateBaseAddress.set(properties.surfaceStateBaseAddress.value);
     surfaceStateSize.set(properties.surfaceStateSize.value);
@@ -255,7 +258,8 @@ void StateBaseAddressProperties::setProperties(const StateBaseAddressProperties 
 }
 
 bool StateBaseAddressProperties::isDirty() const {
-    return globalAtomics.isDirty || statelessMocs.isDirty || bindingTablePoolBaseAddress.isDirty ||
+    return globalAtomics.isDirty || statelessMocs.isDirty ||
+           bindingTablePoolBaseAddress.isDirty || bindingTablePoolSize.isDirty ||
            surfaceStateBaseAddress.isDirty || surfaceStateSize.isDirty ||
            dynamicStateBaseAddress.isDirty || dynamicStateSize.isDirty ||
            indirectObjectBaseAddress.isDirty || indirectObjectSize.isDirty;
@@ -265,6 +269,7 @@ void StateBaseAddressProperties::clearIsDirty() {
     globalAtomics.isDirty = false;
     statelessMocs.isDirty = false;
     bindingTablePoolBaseAddress.isDirty = false;
+    bindingTablePoolSize.isDirty = false;
     surfaceStateBaseAddress.isDirty = false;
     surfaceStateSize.isDirty = false;
     dynamicStateBaseAddress.isDirty = false;

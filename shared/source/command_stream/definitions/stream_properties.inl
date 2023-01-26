@@ -103,14 +103,16 @@ struct StateBaseAddressProperties {
     StreamProperty64 surfaceStateBaseAddress{};
     StreamProperty64 dynamicStateBaseAddress{};
     StreamProperty64 indirectObjectBaseAddress{};
+    StreamPropertySizeT bindingTablePoolSize{};
     StreamPropertySizeT surfaceStateSize{};
     StreamPropertySizeT dynamicStateSize{};
     StreamPropertySizeT indirectObjectSize{};
     StreamProperty globalAtomics{};
     StreamProperty statelessMocs{};
 
-    void setProperties(bool globalAtomics, int32_t statelessMocs, int64_t bindingTablePoolBaseAddress,
-                       int64_t surfaceStateBaseAddress, size_t surfaceStateSize,
+    void setProperties(bool globalAtomics, int32_t statelessMocs,
+                       int64_t bindingTablePoolBaseAddress, size_t surfaceStateSize,
+                       int64_t surfaceStateBaseAddress, size_t bindingTablePoolSize,
                        int64_t dynamicStateBaseAddress, size_t dynamicStateSize,
                        int64_t indirectObjectBaseAddress, size_t indirectObjectSize, const RootDeviceEnvironment &rootDeviceEnvironment);
     void setProperties(const StateBaseAddressProperties &properties);
