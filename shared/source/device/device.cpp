@@ -953,4 +953,16 @@ EngineControl &Device::getNextEngineForMultiRegularContextMode(aub_stream::Engin
 
     return allEngines[indexToAssign];
 }
+
+bool Device::isMultiRegularContextSelectionAllowed(aub_stream::EngineType engineType, EngineUsage engineUsage) const {
+    if (this->numberOfRegularContextsPerEngine <= 1 || getNumGenericSubDevices() > 1 || engineUsage != EngineUsage::Regular) {
+        return false;
+    }
+
+    if (engineType == aub_stream::EngineType::ENGINE_BCS && DebugManager.flags.EnableMultipleRegularContextForBcs.get() == 1) {
+        return true;
+    }
+
+    return EngineHelpers::isCcs(engineType);
+}
 } // namespace NEO

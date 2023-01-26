@@ -2763,48 +2763,147 @@ HWTEST_F(CommandQueueOnSpecificEngineTests, givenNotInitializedCcsOsContextWhenC
     EXPECT_TRUE(osContext.isInitialized());
 }
 
-HWTEST_F(CommandQueueOnSpecificEngineTests, givenDebugFlagSetWhenCreatingCmdQueueThenAssignNextRegularContext) {
-    DebugManagerStateRestore restore{};
-    DebugManager.flags.NumberOfRegularContextsPerEngine.set(4);
-    DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::ENGINE_CCS));
+struct CommandQueueCreateWithMultipleRegularContextsTests : public CommandQueueOnSpecificEngineTests {
+    void SetUp() override {
+        DebugManager.flags.NumberOfRegularContextsPerEngine.set(numberOfRegularContextsPerEngine);
+        DebugManager.flags.EnableMultipleRegularContextForBcs.set(1);
+        DebugManager.flags.NodeOrdinal.set(static_cast<int32_t>(aub_stream::EngineType::ENGINE_CCS));
 
-    MockExecutionEnvironment mockExecutionEnvironment{};
+        backupHwInfo = std::make_unique<VariableBackup<HardwareInfo>>(defaultHwInfo.get());
+        defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+        defaultHwInfo->featureTable.flags.ftrCCSNode = true;
 
-    class MyMockGfxCoreHelper : public GfxCoreHelperHw<FamilyType> {
-      public:
-        const EngineInstancesContainer getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const override {
-            EngineInstancesContainer result{};
+        CommandQueueOnSpecificEngineTests::SetUp();
 
-            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
-            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
-            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Regular});
-            result.push_back({aub_stream::ENGINE_CCS, EngineUsage::Internal});
+        context = std::make_unique<MockContext>();
 
-            return result;
+        uint32_t regularCcsCount = 0;
+        uint32_t regularBcsCount = 0;
+
+        device = static_cast<MockDevice *>(&context->getDevice(0)->getDevice());
+
+        for (auto &engine : device->getAllEngines()) {
+            if (engine.getEngineUsage() == EngineUsage::Regular) {
+                if (engine.getEngineType() == aub_stream::EngineType::ENGINE_CCS) {
+                    regularCcsCount++;
+                } else if (engine.getEngineType() == aub_stream::EngineType::ENGINE_BCS) {
+                    regularBcsCount++;
+                }
+            }
         }
 
-        EngineGroupType getEngineGroupType(aub_stream::EngineType engineType, EngineUsage engineUsage, const HardwareInfo &hwInfo) const override {
-            return EngineGroupType::Compute;
+        if (regularCcsCount < numberOfRegularContextsPerEngine - 1 || regularBcsCount < numberOfRegularContextsPerEngine - 1) {
+            GTEST_SKIP();
         }
-    };
 
-    auto raiiGfxCoreHelper = overrideGfxCoreHelper<FamilyType, MyMockGfxCoreHelper>(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
+        device->regularContextPerBcsEngineAssignmentHelper = 0;
 
-    MockContext context{};
-    auto &device = static_cast<MockDevice &>(context.getDevice(0)->getDevice());
-    EXPECT_EQ(0u, device.defaultEngineIndex);
+        auto &engineGroups = device->getAllEngines();
 
-    uint32_t expectedIndex = 0;
+        for (uint32_t i = 0; i < engineGroups.size(); i++) {
+            if (engineGroups[i].getEngineType() == aub_stream::EngineType::ENGINE_CCS && !computeOrdinalSet) {
+                computeOrdinal = i;
+                computeOrdinalSet = true;
+            } else if (engineGroups[i].getEngineType() == aub_stream::EngineType::ENGINE_BCS && !copyOrdinalSet) {
+                copyOrdinal = i;
+                copyOrdinalSet = true;
+            }
+        }
+    }
 
-    for (uint32_t i = 0; i < 8; i++) {
-        MockCommandQueueHw<FamilyType> queue(&context, context.getDevice(0), nullptr);
+    std::unique_ptr<VariableBackup<HardwareInfo>> backupHwInfo;
+    DebugManagerStateRestore restore;
+    std::unique_ptr<MockContext> context;
+    MockDevice *device = nullptr;
+    const uint32_t numberOfRegularContextsPerEngine = 5;
+    uint32_t computeOrdinal = 0;
+    uint32_t copyOrdinal = 0;
+    bool computeOrdinalSet = false;
+    bool copyOrdinalSet = false;
+};
+
+HWTEST_F(CommandQueueCreateWithMultipleRegularContextsTests, givenDebugFlagSetWhenCreatingCmdQueueThenAssignNextRegularCcsContext) {
+    constexpr uint32_t iterationCount = 3;
+
+    uint32_t expectedIndex = computeOrdinal;
+
+    // Default queue
+    for (uint32_t i = 0; i < (numberOfRegularContextsPerEngine * iterationCount); i++) {
+        MockCommandQueueHw<FamilyType> queue(context.get(), context->getDevice(0), nullptr);
         queue.initializeGpgpu();
 
-        EXPECT_EQ(queue.gpgpuEngine, &device.allEngines[expectedIndex]);
+        EXPECT_EQ(queue.gpgpuEngine, &device->allEngines[expectedIndex]);
 
         expectedIndex++;
-        if (expectedIndex == 3) {
-            expectedIndex = 0;
+        if (expectedIndex == (numberOfRegularContextsPerEngine - 1) + computeOrdinal) {
+            expectedIndex = computeOrdinal;
+        }
+    }
+
+    expectedIndex = computeOrdinal;
+    device->regularContextPerCcsEngineAssignmentHelper = 0;
+
+    cl_queue_properties queueProperties[] = {
+        CL_QUEUE_FAMILY_INTEL,
+        device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Compute),
+        CL_QUEUE_INDEX_INTEL,
+        0,
+        0,
+    };
+
+    // Explicit selection
+    for (uint32_t i = 0; i < (numberOfRegularContextsPerEngine * iterationCount); i++) {
+        MockCommandQueueHw<FamilyType> queue(context.get(), context->getDevice(0), queueProperties);
+
+        EXPECT_EQ(queue.gpgpuEngine, &device->allEngines[expectedIndex]);
+
+        expectedIndex++;
+        if (expectedIndex == (numberOfRegularContextsPerEngine - 1) + computeOrdinal) {
+            expectedIndex = computeOrdinal;
+        }
+    }
+}
+
+HWTEST_F(CommandQueueCreateWithMultipleRegularContextsTests, givenDebugFlagSetWhenCreatingCmdQueueThenAssignNextRegularBcsContext) {
+    DebugManager.flags.NodeOrdinal.set(-1);
+
+    constexpr uint32_t iterationCount = 3;
+
+    uint32_t expectedIndex = copyOrdinal;
+
+    // Default queue
+    for (uint32_t i = 0; i < (numberOfRegularContextsPerEngine * iterationCount); i++) {
+        MockCommandQueueHw<FamilyType> queue(context.get(), context->getDevice(0), nullptr);
+
+        EXPECT_EQ(queue.bcsEngines[0], &device->allEngines[expectedIndex]);
+
+        expectedIndex++;
+        if (expectedIndex == (numberOfRegularContextsPerEngine - 1) + copyOrdinal) {
+            expectedIndex = copyOrdinal;
+        }
+    }
+
+    expectedIndex = copyOrdinal;
+    device->regularContextPerBcsEngineAssignmentHelper = 0;
+
+    // Explicit selection
+
+    cl_queue_properties queueProperties[] = {
+        CL_QUEUE_FAMILY_INTEL,
+        device->getEngineGroupIndexFromEngineGroupType(EngineGroupType::Copy),
+        CL_QUEUE_INDEX_INTEL,
+        0,
+        0,
+    };
+
+    for (uint32_t i = 0; i < (numberOfRegularContextsPerEngine * iterationCount); i++) {
+        MockCommandQueueHw<FamilyType> queue(context.get(), context->getDevice(0), queueProperties);
+
+        EXPECT_EQ(queue.bcsEngines[0], &device->allEngines[expectedIndex]);
+
+        expectedIndex++;
+        if (expectedIndex == (numberOfRegularContextsPerEngine - 1) + copyOrdinal) {
+            expectedIndex = copyOrdinal;
         }
     }
 }

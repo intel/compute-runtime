@@ -62,6 +62,8 @@ class MockDevice : public RootDevice {
     using Device::getGlobalMemorySize;
     using Device::initializeCaps;
     using Device::isDebuggerActive;
+    using Device::regularContextPerBcsEngineAssignmentHelper;
+    using Device::regularContextPerCcsEngineAssignmentHelper;
     using Device::regularEngineGroups;
     using Device::rootCsrCreated;
     using Device::rtMemoryBackedBuffer;

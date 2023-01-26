@@ -156,6 +156,7 @@ class Device : public ReferenceTrackedObject<Device> {
     const ProductHelper &getProductHelper() const;
     const CompilerProductHelper &getCompilerProductHelper() const;
     uint32_t getNumberOfRegularContextsPerEngine() const { return numberOfRegularContextsPerEngine; }
+    bool isMultiRegularContextSelectionAllowed(aub_stream::EngineType engineType, EngineUsage engineUsage) const;
 
     std::atomic<uint32_t> debugExecutionCounter = 0;
 

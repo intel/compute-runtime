@@ -93,6 +93,9 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
     commandQueueProperties = getCmdQueueProperties<cl_command_queue_properties>(properties);
     flushStamp.reset(new FlushStampTracker(true));
 
+    storeProperties(properties);
+    processProperties(properties);
+
     if (device) {
         auto &hwInfo = device->getHardwareInfo();
         auto &gfxCoreHelper = device->getGfxCoreHelper();
@@ -122,9 +125,6 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
             device->getDevice().getL0Debugger()->notifyCommandQueueCreated(&device->getDevice());
         }
     }
-
-    storeProperties(properties);
-    processProperties(properties);
 }
 
 CommandQueue::~CommandQueue() {
@@ -181,8 +181,10 @@ void CommandQueue::initializeGpgpu() const {
                 !(getCmdQueueProperties<cl_queue_priority_khr>(propertiesVector.data(), CL_QUEUE_PRIORITY_KHR) & static_cast<cl_queue_priority_khr>(CL_QUEUE_PRIORITY_LOW_KHR)) &&
                 engineRoundRobinAvailable;
 
-            if (device->getDevice().getNumberOfRegularContextsPerEngine() > 1) {
-                this->gpgpuEngine = &device->getDevice().getNextEngineForMultiRegularContextMode(aub_stream::EngineType::ENGINE_CCS);
+            auto defaultEngineType = device->getDefaultEngine().getEngineType();
+
+            if (device->getDevice().isMultiRegularContextSelectionAllowed(defaultEngineType, EngineUsage::Regular)) {
+                this->gpgpuEngine = &device->getDevice().getNextEngineForMultiRegularContextMode(defaultEngineType);
             } else if (assignEngineRoundRobin) {
                 this->gpgpuEngine = &device->getDevice().getNextEngineForCommandQueue();
             } else {
@@ -325,7 +327,13 @@ void CommandQueue::constructBcsEngine(bool internalUsage) {
         auto bcsEngineType = EngineHelpers::getBcsEngineType(device->getRootDeviceEnvironment(), device->getDeviceBitfield(), selectorCopyEngine, internalUsage);
         auto bcsIndex = EngineHelpers::getBcsIndex(bcsEngineType);
         auto engineUsage = (internalUsage && gfxCoreHelper.preferInternalBcsEngine()) ? EngineUsage::Internal : EngineUsage::Regular;
-        bcsEngines[bcsIndex] = neoDevice.tryGetEngine(bcsEngineType, engineUsage);
+
+        if (neoDevice.isMultiRegularContextSelectionAllowed(bcsEngineType, engineUsage)) {
+            bcsEngines[bcsIndex] = &neoDevice.getNextEngineForMultiRegularContextMode(bcsEngineType);
+        } else {
+            bcsEngines[bcsIndex] = neoDevice.tryGetEngine(bcsEngineType, engineUsage);
+        }
+
         bcsEngineTypes.push_back(bcsEngineType);
         bcsInitialized = true;
         if (bcsEngines[bcsIndex]) {
@@ -1157,16 +1165,28 @@ void CommandQueue::overrideEngine(aub_stream::EngineType engineType, EngineUsage
     const EngineGroupType engineGroupType = gfxCoreHelper.getEngineGroupType(engineType, engineUsage, hwInfo);
     const bool isEngineCopyOnly = EngineHelper::isCopyOnlyEngineType(engineGroupType);
 
+    bool multiRegularContextAllowed = device->getDevice().isMultiRegularContextSelectionAllowed(engineType, engineUsage);
+
     if (isEngineCopyOnly) {
         std::fill(bcsEngines.begin(), bcsEngines.end(), nullptr);
-        bcsEngines[EngineHelpers::getBcsIndex(engineType)] = &device->getEngine(engineType, EngineUsage::Regular);
+        auto engineIndex = EngineHelpers::getBcsIndex(engineType);
+
+        if (multiRegularContextAllowed) {
+            bcsEngines[engineIndex] = &device->getDevice().getNextEngineForMultiRegularContextMode(engineType);
+        } else {
+            bcsEngines[engineIndex] = &device->getEngine(engineType, EngineUsage::Regular);
+        }
         bcsEngineTypes = {engineType};
         timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
         deferredTimestampPackets = std::make_unique<TimestampPacketContainer>();
         isCopyOnly = true;
         bcsInitialized = true;
     } else {
-        gpgpuEngine = &device->getEngine(engineType, engineUsage);
+        if (multiRegularContextAllowed) {
+            gpgpuEngine = &device->getDevice().getNextEngineForMultiRegularContextMode(engineType);
+        } else {
+            gpgpuEngine = &device->getEngine(engineType, engineUsage);
+        }
     }
 }
 
