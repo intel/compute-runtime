@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ bool UnitTestHelper<GfxFamily>::isAdditionalSynchronizationRequired() {
 }
 
 template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::isAdditionalMiSemaphoreWaitRequired(const HardwareInfo &hwInfo) {
+bool UnitTestHelper<GfxFamily>::isAdditionalMiSemaphoreWaitRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return false;
 }
 

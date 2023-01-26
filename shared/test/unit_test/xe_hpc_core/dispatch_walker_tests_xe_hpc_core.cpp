@@ -24,27 +24,28 @@ XE_HPC_CORETEST_F(WalkerDispatchTestsXeHpcCore, givenXeHpcWhenEncodeAdditionalWa
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     DebugManagerStateRestore debugRestorer;
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
-    auto hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
 
     KernelDescriptor kernelDescriptor;
     EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
     {
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
         EXPECT_FALSE(walkerCmd.getComputeDispatchAllWalkerEnable());
     }
 
     {
-        MockExecutionEnvironment mockExecutionEnvironment{};
-        const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
         uint32_t expectedValue = productHelper.isComputeDispatchAllWalkerEnableInComputeWalkerRequired(hwInfo);
         walkerArgs.kernelExecutionType = KernelExecutionType::Concurrent;
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
         EXPECT_EQ(expectedValue, walkerCmd.getComputeDispatchAllWalkerEnable());
     }
 
     {
         DebugManager.flags.ComputeDispatchAllWalkerEnableInComputeWalker.set(1);
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
         EXPECT_TRUE(walkerCmd.getComputeDispatchAllWalkerEnable());
     }
 }

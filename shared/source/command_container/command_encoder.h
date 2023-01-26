@@ -88,7 +88,7 @@ struct EncodeDispatchKernel {
 
     static void encode(CommandContainer &container, EncodeDispatchKernelArgs &args, LogicalStateHelper *logicalStateHelper);
 
-    static void encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs);
+    static void encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs);
 
     static void appendAdditionalIDDFields(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, const RootDeviceEnvironment &rootDeviceEnvironment,
                                           const uint32_t threadsPerThreadGroup, uint32_t slmTotalSize, SlmPolicy slmPolicy);

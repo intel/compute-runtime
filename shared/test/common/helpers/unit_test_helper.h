@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ class CommandStreamReceiver;
 class LinearStream;
 struct KernelDescriptor;
 struct HardwareInfo;
+struct RootDeviceEnvironment;
 
 template <typename GfxFamily>
 struct UnitTestHelper {
@@ -45,7 +46,7 @@ struct UnitTestHelper {
 
     static bool isAdditionalSynchronizationRequired();
 
-    static bool isAdditionalMiSemaphoreWaitRequired(const HardwareInfo &hwInfo);
+    static bool isAdditionalMiSemaphoreWaitRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static bool isAdditionalMiSemaphoreWait(const typename GfxFamily::MI_SEMAPHORE_WAIT &semaphoreWait);
 

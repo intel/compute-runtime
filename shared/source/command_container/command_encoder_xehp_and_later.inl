@@ -50,6 +50,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     using INLINE_DATA = typename Family::INLINE_DATA;
 
     const HardwareInfo &hwInfo = args.device->getHardwareInfo();
+    auto &rootDeviceEnvironment = args.device->getRootDeviceEnvironment();
 
     const auto &kernelDescriptor = args.dispatchInterface->getKernelDescriptor();
     auto sizeCrossThreadData = args.dispatchInterface->getCrossThreadDataSize();
@@ -103,7 +104,6 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                        hwInfo);
 
     auto &gfxCoreHelper = args.device->getGfxCoreHelper();
-
     auto slmSize = static_cast<SHARED_LOCAL_MEMORY_SIZE>(
         gfxCoreHelper.computeSlmValues(hwInfo, args.dispatchInterface->getSlmTotalSize()));
 
@@ -145,7 +145,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                     heap, kernelDescriptor.payloadMappings.samplerTable.tableOffset,
                     kernelDescriptor.payloadMappings.samplerTable.numSamplers, kernelDescriptor.payloadMappings.samplerTable.borderColor,
                     args.dispatchInterface->getDynamicStateHeapData(),
-                    args.device->getBindlessHeapsHelper(), args.device->getRootDeviceEnvironment());
+                    args.device->getBindlessHeapsHelper(), rootDeviceEnvironment);
                 if (ApiSpecificConfig::getBindlessConfiguration()) {
                     container.getResidencyContainer().push_back(args.device->getBindlessHeapsHelper()->getHeap(NEO::BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->getGraphicsAllocation());
                 }
@@ -279,7 +279,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         UNRECOVERABLE_IF(!(isAligned<TimestampDestinationAddressAlignment>(args.eventAddress)));
         postSync.setDestinationAddress(args.eventAddress);
 
-        EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, args.device->getRootDeviceEnvironment(), args.dcFlushEnable);
+        EncodeDispatchKernel<Family>::setupPostSyncMocs(walkerCmd, rootDeviceEnvironment, args.dcFlushEnable);
         EncodeDispatchKernel<Family>::adjustTimestampPacket(walkerCmd, hwInfo);
     }
 
@@ -293,7 +293,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     auto threadGroupCount = walkerCmd.getThreadGroupIdXDimension() * walkerCmd.getThreadGroupIdYDimension() * walkerCmd.getThreadGroupIdZDimension();
     EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(idd, *args.device, hwInfo, threadGroupCount, kernelDescriptor.kernelAttributes.numGrfRequired);
 
-    EncodeDispatchKernel<Family>::appendAdditionalIDDFields(&idd, args.device->getRootDeviceEnvironment(), threadsPerThreadGroup,
+    EncodeDispatchKernel<Family>::appendAdditionalIDDFields(&idd, rootDeviceEnvironment, threadsPerThreadGroup,
                                                             args.dispatchInterface->getSlmTotalSize(),
                                                             args.dispatchInterface->getSlmPolicy());
 
@@ -301,7 +301,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         args.isCooperative ? KernelExecutionType::Concurrent : KernelExecutionType::Default,
         args.isHostScopeSignalEvent && args.isKernelUsingSystemAllocation,
         kernelDescriptor};
-    EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
+    EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *args.device);
 
@@ -330,7 +330,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     PreemptionHelper::applyPreemptionWaCmdsEnd<Family>(listCmdBufferStream, *args.device);
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), args.device->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
-        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(args.device->getRootDeviceEnvironment(), false));
+        void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false));
         args.additionalCommands->push_back(commandBuffer);
 
         using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
@@ -356,7 +356,7 @@ inline void EncodeDispatchKernel<Family>::setupPostSyncMocs(WALKER_TYPE &walkerC
 }
 
 template <typename Family>
-inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
+inline void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
 }
 
 template <typename Family>

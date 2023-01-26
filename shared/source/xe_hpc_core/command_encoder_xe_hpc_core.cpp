@@ -221,9 +221,9 @@ void EncodeDispatchKernel<Family>::programBarrierEnable(INTERFACE_DESCRIPTOR_DAT
 }
 
 template <>
-void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const HardwareInfo &hwInfo, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
-
+void EncodeDispatchKernel<Family>::encodeAdditionalWalkerFields(const RootDeviceEnvironment &rootDeviceEnvironment, WALKER_TYPE &walkerCmd, const EncodeWalkerArgs &walkerArgs) {
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto programGlobalFenceAsPostSyncOperationInComputeWalker = productHelper.isGlobalFenceInCommandStreamRequired(hwInfo) &&
                                                                 walkerArgs.requiredSystemFence;
     int32_t overrideProgramSystemMemoryFence = DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get();

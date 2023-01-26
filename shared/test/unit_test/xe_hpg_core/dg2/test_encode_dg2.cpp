@@ -60,7 +60,8 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
     MockExecutionEnvironment executionEnvironment{};
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    auto hwInfo = *defaultHwInfo;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
     KernelDescriptor kernelDescriptor;
     EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
@@ -68,7 +69,7 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0
         for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
             hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
             hwInfo.platform.usDeviceID = deviceId;
-            EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
+            EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
 
             if (DG2::isG10(hwInfo) && revision < REVISION_B) {
                 EXPECT_TRUE(walkerCmd.getL3PrefetchDisable());

@@ -100,7 +100,7 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
         EXPECT_TRUE(memcmp(&expectedPipeControl, pPipeControl, sizeof(PIPE_CONTROL)) == 0);
 
         if (requiresMemorySynchronization) {
-            if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(hardwareInfo)) {
+            if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(rootDeviceEnvironment)) {
                 MI_SEMAPHORE_WAIT expectedMiSemaphoreWait;
                 EncodeSempahore<FamilyType>::programMiSemaphoreWait(&expectedMiSemaphoreWait, address,
                                                                     EncodeSempahore<FamilyType>::invalidHardwareTag,

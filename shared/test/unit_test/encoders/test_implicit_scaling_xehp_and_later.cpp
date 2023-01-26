@@ -1192,7 +1192,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t expectedPipeControls = 1u;
     size_t expectedSemaphores = 1u;
 
-    bool semaphoreAsAdditionalSync = UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(testHardwareInfo);
+    bool semaphoreAsAdditionalSync = UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(this->pDevice->getRootDeviceEnvironment());
     if (semaphoreAsAdditionalSync) {
         expectedSemaphores++;
     }
@@ -1275,7 +1275,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t expectedPipeControls = 1u;
     size_t expectedSemaphores = 3u;
 
-    bool semaphoreAsAdditionalSync = UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(testHardwareInfo);
+    bool semaphoreAsAdditionalSync = UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(this->pDevice->getRootDeviceEnvironment());
     if (semaphoreAsAdditionalSync) {
         expectedSemaphores++;
     }
@@ -1356,7 +1356,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t expectedPipeControls = 1u;
     size_t expectedSemaphores = 3u;
 
-    bool semaphoreAsAdditionalSync = UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(testHardwareInfo);
+    bool semaphoreAsAdditionalSync = UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(this->pDevice->getRootDeviceEnvironment());
     if (semaphoreAsAdditionalSync) {
         expectedSemaphores++;
     }

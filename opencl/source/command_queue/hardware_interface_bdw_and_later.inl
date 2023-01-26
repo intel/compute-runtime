@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -61,6 +61,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     WALKER_TYPE walkerCmd = GfxFamily::cmdInitGpgpuWalker;
     uint32_t dim = dispatchInfo.getDim();
     uint32_t simd = kernel.getKernelInfo().getMaxSimdSize();
+    auto &rootDeviceEnvironment = commandQueue.getDevice().getRootDeviceEnvironment();
 
     size_t globalOffsets[3] = {dispatchInfo.getOffset().x, dispatchInfo.getOffset().y, dispatchInfo.getOffset().z};
     size_t startWorkGroups[3] = {walkerArgs.startOfWorkgroups->x, walkerArgs.startOfWorkgroups->y, walkerArgs.startOfWorkgroups->z};
@@ -69,7 +70,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
 
     if (walkerArgs.currentTimestampPacketNodes && commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
         auto timestampPacketNode = walkerArgs.currentTimestampPacketNodes->peekNodes().at(walkerArgs.currentDispatchIndex);
-        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacketNode, commandQueue.getDevice().getRootDeviceEnvironment());
+        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacketNode, rootDeviceEnvironment);
     }
 
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
@@ -99,7 +100,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
                                                            false, false, 0u);
 
     EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), false, kernel.getKernelInfo().kernelDescriptor};
-    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(commandQueue.getDevice().getHardwareInfo(), walkerCmd, encodeWalkerArgs);
+    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
     *walkerCmdBuf = walkerCmd;
 }
 } // namespace NEO

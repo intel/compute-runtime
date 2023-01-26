@@ -78,16 +78,17 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     auto idd = &walkerCmd.getInterfaceDescriptor();
     auto &queueCsr = commandQueue.getGpgpuCommandStreamReceiver();
 
+    auto &rootDeviceEnvironment = commandQueue.getDevice().getRootDeviceEnvironment();
     if (walkerArgs.currentTimestampPacketNodes && queueCsr.peekTimestampPacketWriteEnabled()) {
         auto timestampPacket = walkerArgs.currentTimestampPacketNodes->peekNodes().at(walkerArgs.currentDispatchIndex);
-        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacket, commandQueue.getDevice().getRootDeviceEnvironment());
+        GpgpuWalkerHelper<GfxFamily>::setupTimestampPacket(&commandStream, &walkerCmd, timestampPacket, rootDeviceEnvironment);
     }
 
     auto isCcsUsed = EngineHelpers::isCcs(commandQueue.getGpgpuEngine().osContext->getEngineType());
 
     const auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     if (auto kernelAllocation = kernelInfo.getGraphicsAllocation()) {
-        EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.KernelHeapSize, 0, commandQueue.getDevice().getRootDeviceEnvironment());
+        EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(commandStream, *kernelAllocation, kernelInfo.heapInfo.KernelHeapSize, 0, rootDeviceEnvironment);
     }
 
     HardwareCommandsHelper<GfxFamily>::sendIndirectState(
@@ -119,7 +120,7 @@ inline void HardwareInterface<GfxFamily>::programWalker(
     }
     bool requiredSystemFence = kernelSystemAllocation && walkerArgs.event != nullptr;
     EncodeWalkerArgs encodeWalkerArgs{kernel.getExecutionType(), requiredSystemFence, kernelInfo.kernelDescriptor};
-    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, encodeWalkerArgs);
+    EncodeDispatchKernel<GfxFamily>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, encodeWalkerArgs);
 
     auto devices = queueCsr.getOsContext().getDeviceBitfield();
     auto partitionWalker = ImplicitScalingHelper::isImplicitScalingEnabled(devices, true);

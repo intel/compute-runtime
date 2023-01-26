@@ -541,7 +541,7 @@ HWTEST_F(TimestampPacketTests, givenBlockedEnqueueWithoutKernelWhenSubmittingThe
 
         auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
         auto expectedQueueSemaphoresCount = 1u;
-        if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo())) {
+        if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment())) {
             expectedQueueSemaphoresCount += 1;
         }
         EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
@@ -598,7 +598,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingMarkerWi
 
     auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
     auto expectedQueueSemaphoresCount = 1u;
-    if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo())) {
+    if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment())) {
         expectedQueueSemaphoresCount += 1;
     }
     EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
@@ -643,7 +643,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingBarrierW
 
     auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
     auto expectedQueueSemaphoresCount = 1u;
-    if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo())) {
+    if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment())) {
         expectedQueueSemaphoresCount += 1;
     }
     EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());

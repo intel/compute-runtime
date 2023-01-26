@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
@@ -23,6 +24,7 @@
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
+
 using namespace NEO;
 
 struct Dg2AndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
@@ -73,17 +75,19 @@ struct Dg2AndLaterDispatchWalkerBasicFixture : public LinearStreamFixture {
 using WalkerDispatchTestDg2AndLater = ::testing::Test;
 using Dg2AndLaterDispatchWalkerBasicTest = Test<Dg2AndLaterDispatchWalkerBasicFixture>;
 using matcherDG2AndLater = IsAtLeastXeHpgCore;
+
 HWTEST2_F(WalkerDispatchTestDg2AndLater, givenDebugVariableSetWhenProgramComputeWalkerThenApplyL3PrefetchAppropriately, matcherDG2AndLater) {
     using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
     DebugManagerStateRestore restore;
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
-    auto hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
 
     KernelDescriptor kernelDescriptor;
     EncodeWalkerArgs walkerArgs{KernelExecutionType::Default, true, kernelDescriptor};
     for (auto forceL3PrefetchForComputeWalker : {false, true}) {
         DebugManager.flags.ForceL3PrefetchForComputeWalker.set(forceL3PrefetchForComputeWalker);
-        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(hwInfo, walkerCmd, walkerArgs);
+        EncodeDispatchKernel<FamilyType>::encodeAdditionalWalkerFields(rootDeviceEnvironment, walkerCmd, walkerArgs);
         EXPECT_EQ(!forceL3PrefetchForComputeWalker, walkerCmd.getL3PrefetchDisable());
     }
 }

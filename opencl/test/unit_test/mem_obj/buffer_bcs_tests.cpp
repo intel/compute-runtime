@@ -599,7 +599,7 @@ void BcsBufferTests::waitForCacheFlushFromBcsTest(MockCommandQueueHw<FamilyType>
     }
 
     auto bcsSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserBcs.cmdList.begin(), hwParserBcs.cmdList.end());
-    size_t additionalSemaphores = UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 2 : 0;
+    size_t additionalSemaphores = UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment()) ? 2 : 0;
 
     if (isCacheFlushForBcsRequired) {
         EXPECT_NE(0u, cacheFlushWriteAddress);
@@ -666,10 +666,10 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
     auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
 
     if (cmdQ->isCacheFlushForBcsRequired()) {
-        EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 4u : 2u, semaphores.size());
+        EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment()) ? 4u : 2u, semaphores.size());
         EXPECT_EQ(pipeControlWriteAddress, genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[1]))->getSemaphoreGraphicsAddress());
     } else {
-        EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 3u : 1u, semaphores.size());
+        EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment()) ? 3u : 1u, semaphores.size());
         EXPECT_EQ(pipeControlWriteAddress, genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]))->getSemaphoreGraphicsAddress());
     }
 }
@@ -751,9 +751,9 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlocked
     auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(bcsHwParser.cmdList.begin(), bcsHwParser.cmdList.end());
 
     if (cmdQ->isCacheFlushForBcsRequired()) {
-        EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 4u : 2u, semaphores.size());
+        EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment()) ? 4u : 2u, semaphores.size());
     } else {
-        EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 3u : 1u, semaphores.size());
+        EXPECT_EQ(UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment()) ? 3u : 1u, semaphores.size());
     }
 
     cmdQ->isQueueBlocked();

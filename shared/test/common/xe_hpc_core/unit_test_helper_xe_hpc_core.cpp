@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/source/xe_hpc_core/hw_info.h"
@@ -58,8 +59,9 @@ bool UnitTestHelper<Family>::isAdditionalSynchronizationRequired() {
 }
 
 template <>
-bool UnitTestHelper<Family>::isAdditionalMiSemaphoreWaitRequired(const HardwareInfo &hwInfo) {
-    const auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+bool UnitTestHelper<Family>::isAdditionalMiSemaphoreWaitRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     auto programGlobalFenceAsMiMemFenceCommandInCommandStream = productHelper.isGlobalFenceInCommandStreamRequired(hwInfo);
     if (DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() != -1) {
         programGlobalFenceAsMiMemFenceCommandInCommandStream = !!DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get();

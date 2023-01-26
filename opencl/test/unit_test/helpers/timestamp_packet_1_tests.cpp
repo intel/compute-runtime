@@ -1449,12 +1449,12 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingToOoqThenDo
     hwParser.parseCommands<FamilyType>(*cmdQ.commandStream, 0);
 
     uint32_t semaphoresFound = 0;
-    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
-        if (genCmdCast<typename FamilyType::MI_SEMAPHORE_WAIT *>(*it)) {
+    for (auto &it : hwParser.cmdList) {
+        if (genCmdCast<typename FamilyType::MI_SEMAPHORE_WAIT *>(it)) {
             semaphoresFound++;
         }
     }
-    uint32_t expectedSemaphoresCount = (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 1 : 0);
+    uint32_t expectedSemaphoresCount = (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment()) ? 1 : 0);
     EXPECT_EQ(expectedSemaphoresCount, semaphoresFound);
 }
 
@@ -1475,12 +1475,12 @@ HWTEST_F(TimestampPacketTests, givenAlreadyAssignedNodeWhenEnqueueingWithOmitTim
     hwParser.parseCommands<FamilyType>(*cmdQ.commandStream, 0);
 
     uint32_t semaphoresFound = 0;
-    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); it++) {
-        if (genCmdCast<typename FamilyType::MI_SEMAPHORE_WAIT *>(*it)) {
+    for (auto &it : hwParser.cmdList) {
+        if (genCmdCast<typename FamilyType::MI_SEMAPHORE_WAIT *>(it)) {
             semaphoresFound++;
         }
     }
-    uint32_t expectedSemaphoresCount = (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getHardwareInfo()) ? 1 : 0);
+    uint32_t expectedSemaphoresCount = (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment()) ? 1 : 0);
     EXPECT_EQ(expectedSemaphoresCount, semaphoresFound);
 }
 
