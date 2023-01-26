@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "level_zero/core/source/xe_hpg_core/cmdlist_xe_hpg_core.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 namespace L0 {
@@ -61,5 +62,40 @@ HWTEST2_F(CommandListTests, givenDG2WithBSteppingWhenCreatingCommandListThenAddi
     EXPECT_TRUE(cmdSba->getDynamicStateBaseAddressModifyEnable());
     EXPECT_TRUE(cmdSba->getDynamicStateBufferSizeModifyEnable());
 }
+HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenLwsIsOddThenFesedEuIsDisabled, IsDG2) {
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
+    const ze_group_count_t launchKernelArgs = {3, 1, 1};
+    kernel.groupSize[0] = 7;
+    kernel.groupSize[1] = 1;
+    kernel.groupSize[2] = 1;
+    commandList->updateStreamProperties(kernel, false, &launchKernelArgs);
+    EXPECT_TRUE(commandList->finalStreamState.frontEndState.disableEUFusion.value);
+}
+HWTEST2_F(CommandListTests, GivenKernelWithDpasWhenLwsIsNonOddThenFesedEuIsNotDisabled, IsDG2) {
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    const_cast<NEO::KernelDescriptor *>(&kernel.getKernelDescriptor())->kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
+    const ze_group_count_t launchKernelArgs = {3, 1, 1};
+    kernel.groupSize[0] = 8;
+    kernel.groupSize[1] = 1;
+    kernel.groupSize[2] = 1;
+    commandList->updateStreamProperties(kernel, false, &launchKernelArgs);
+    EXPECT_FALSE(commandList->finalStreamState.frontEndState.disableEUFusion.value);
+}
+
 } // namespace ult
 } // namespace L0

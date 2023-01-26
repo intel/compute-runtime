@@ -1374,18 +1374,19 @@ HWTEST2_F(CommandListAppendLaunchKernel, GivenDebugToggleSetWhenUpdateStreamProp
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     // initial kernel with no policy preference
-    pCommandList->updateStreamProperties(kernel, false);
+    const ze_group_count_t launchKernelArgs = {};
+    pCommandList->updateStreamProperties(kernel, false, &launchKernelArgs);
     EXPECT_EQ(defaultThreadArbitrationPolicy, pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
 
     // policy changed to non-default state
     pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value = nonDefaultThreadArbitrationPolicy;
     // another kernel with no policy preference - do not update policy
-    pCommandList->updateStreamProperties(kernel, false);
+    pCommandList->updateStreamProperties(kernel, false, &launchKernelArgs);
     EXPECT_EQ(nonDefaultThreadArbitrationPolicy, pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
 
     // another kernel with no policy preference, this time with debug toggle set - update policy back to default value
     DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.set(true);
-    pCommandList->updateStreamProperties(kernel, false);
+    pCommandList->updateStreamProperties(kernel, false, &launchKernelArgs);
     EXPECT_EQ(defaultThreadArbitrationPolicy, pCommandList->finalStreamState.stateComputeMode.threadArbitrationPolicy.value);
 }
 

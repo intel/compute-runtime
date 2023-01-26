@@ -368,9 +368,12 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
 
+        bool requiresEuFusionDisable = kernelImmData->getDescriptor().kernelAttributes.flags.requiresDisabledEUFusion ||
+                                       neoDevice->getProductHelper().isFusedEuDisabledForDpas(kernelImmData->getDescriptor().kernelAttributes.flags.usesSystolicPipelineSelectMode, nullptr, nullptr);
+
         NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, kernelImmData->getDescriptor().kernelAttributes.usesBarriers(), simd, this->getSlmTotalSize(),
                                  neoDevice->getRootDeviceEnvironment(), numThreadsPerSubSlice, localMemSize,
-                                 usesImages, false, kernelImmData->getDescriptor().kernelAttributes.flags.requiresDisabledEUFusion);
+                                 usesImages, false, requiresEuFusionDisable);
         NEO::computeWorkgroupSizeND(wsInfo, retGroupSize, workItems, dim);
     } else {
         if (1U == dim) {
@@ -381,7 +384,6 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
             NEO::computeWorkgroupSize2D(maxWorkGroupSize, retGroupSize, workItems, simd);
         }
     }
-
     *groupSizeX = static_cast<uint32_t>(retGroupSize[0]);
     *groupSizeY = static_cast<uint32_t>(retGroupSize[1]);
     *groupSizeZ = static_cast<uint32_t>(retGroupSize[2]);
@@ -747,7 +749,12 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
 
             preferredGroupSizeProperties->preferredMultiple = this->kernelImmData->getKernelInfo()->getMaxSimdSize();
             auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
-            if (gfxCoreHelper.isFusedEuDispatchEnabled(this->module->getDevice()->getHwInfo(), kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion)) {
+            auto &productHelper = this->module->getDevice()->getProductHelper();
+
+            bool requiresEuFusionDisabled = kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion ||
+                                            productHelper.isFusedEuDisabledForDpas(kernelImmData->getDescriptor().kernelAttributes.flags.usesSystolicPipelineSelectMode, nullptr, nullptr);
+
+            if (gfxCoreHelper.isFusedEuDispatchEnabled(this->module->getDevice()->getHwInfo(), requiresEuFusionDisabled)) {
                 preferredGroupSizeProperties->preferredMultiple *= 2;
             }
         }

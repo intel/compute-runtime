@@ -17,6 +17,7 @@ if(TESTS_XE_HPG_CORE)
       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_tests_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/image_tests_xe_hpg_core.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/local_work_size_tests_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cl_device_caps_xe_hpg_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cmds_programming_xe_hpg_core.cpp
   )

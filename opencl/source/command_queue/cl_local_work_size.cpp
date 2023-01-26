@@ -97,6 +97,9 @@ WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo
     const auto &kernelInfo = dispatchInfo.getKernel()->getKernelInfo();
     auto numThreadsPerSubSlice = static_cast<uint32_t>(device.getSharedDeviceInfo().maxNumEUsPerSubSlice) *
                                  device.getSharedDeviceInfo().numThreadsPerEU;
+    bool requiresEuFusionDisabled = kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion ||
+                                    device.getProductHelper().isFusedEuDisabledForDpas(kernelInfo.kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode, nullptr, nullptr);
+
     WorkSizeInfo wsInfo(dispatchInfo.getKernel()->getMaxKernelWorkGroupSize(),
                         kernelInfo.kernelDescriptor.kernelAttributes.usesBarriers(),
                         static_cast<uint32_t>(kernelInfo.getMaxSimdSize()),
@@ -106,7 +109,8 @@ WorkSizeInfo createWorkSizeInfoFromDispatchInfo(const DispatchInfo &dispatchInfo
                         static_cast<uint32_t>(device.getSharedDeviceInfo().localMemSize),
                         false,
                         false,
-                        kernelInfo.kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion);
+                        requiresEuFusionDisabled);
+
     wsInfo.setIfUseImg(kernelInfo);
 
     return wsInfo;

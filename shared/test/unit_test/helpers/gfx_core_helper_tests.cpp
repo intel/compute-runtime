@@ -1459,3 +1459,7 @@ HWTEST_F(ProductHelperCommonTest, givenPatIndexAndAllocationTypeWhenCallOverride
     patIndex = 3u;
     EXPECT_EQ(patIndex, gfxCoreHelper.overridePatIndex(allocationType, patIndex));
 }
+HWTEST_F(ProductHelperCommonTest, givenHwHelperWhenIsFusedEuDisabledForDpasCalledThenFalseReturned) {
+    auto &gfxCoreHelper = getHelper<ProductHelper>();
+    EXPECT_FALSE(gfxCoreHelper.isFusedEuDisabledForDpas(true, nullptr, nullptr));
+}
