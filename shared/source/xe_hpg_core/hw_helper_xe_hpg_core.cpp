@@ -148,7 +148,7 @@ bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hw
     if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
         return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
     }
-    return false;
+    return this->isLocalMemoryEnabled(hwInfo);
 }
 
 template class GfxCoreHelperHw<Family>;

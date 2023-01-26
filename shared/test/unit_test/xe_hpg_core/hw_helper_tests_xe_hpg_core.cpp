@@ -294,5 +294,9 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+    if (gfxCoreHelper.isLocalMemoryEnabled(*defaultHwInfo)) {
+        EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+    } else {
+        EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+    }
 }
