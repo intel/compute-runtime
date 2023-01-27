@@ -2931,7 +2931,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
 
     uint32_t pattern = 1;
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 
     result = context->freeMem(ptr);
@@ -2957,7 +2957,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     commandList->initialize(device0, NEO::EngineGroupType::RenderCompute, 0u);
 
     uint32_t pattern = 1;
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = context->freeMem(ptr);
@@ -2984,7 +2984,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
 
     uint32_t pattern = 1;
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = context->freeMem(ptr);
@@ -3015,7 +3015,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
 
     uint32_t pattern = 1;
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = context->freeMem(ptr);
@@ -3042,7 +3042,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     commandList->initialize(device0, NEO::EngineGroupType::RenderCompute, 0u);
 
     uint32_t pattern = 1;
-    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr);
+    result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     result = context->freeMem(ptr);
@@ -3061,7 +3061,7 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
     commandList->initialize(device0, NEO::EngineGroupType::RenderCompute, 0u);
 
     uint32_t pattern = 1;
-    ze_result_t result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr);
+    ze_result_t result = commandList->appendBlitFill(ptr, &pattern, sizeof(pattern), size, nullptr, 0, nullptr, false);
     EXPECT_EQ(result, ZE_RESULT_ERROR_INVALID_ARGUMENT);
 
     delete[] ptr;

@@ -135,7 +135,7 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
                                            size_t dstRowPitch, size_t dstSlicePitch,
                                            const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                            Event *signalEvent,
-                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
+                                           uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
         if (signalEvent) {
             useEvents = true;
         } else {
@@ -150,7 +150,7 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
                                          uint32_t dstPitch, size_t dstOffset,
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          size_t srcOffset, Event *signalEvent,
-                                         uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override {
+                                         uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
         appendMemoryCopyKernel2dCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
@@ -161,14 +161,14 @@ class MockCommandListExtensionHw : public WhiteBox<::L0::CommandListCoreFamily<g
                                          const ze_copy_region_t *srcRegion, uint32_t srcPitch,
                                          uint32_t srcSlicePitch, size_t srcOffset,
                                          Event *signalEvent, uint32_t numWaitEvents,
-                                         ze_event_handle_t *phWaitEvents) override {
+                                         ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
         appendMemoryCopyKernel3dCalledTimes++;
         return ZE_RESULT_SUCCESS;
     }
     ze_result_t appendBlitFill(void *ptr, const void *pattern,
                                size_t patternSize, size_t size,
                                Event *signalEvent, uint32_t numWaitEvents,
-                               ze_event_handle_t *phWaitEvents) override {
+                               ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
         appendBlitFillCalledTimes++;
         if (signalEvent) {
             useEvents = true;

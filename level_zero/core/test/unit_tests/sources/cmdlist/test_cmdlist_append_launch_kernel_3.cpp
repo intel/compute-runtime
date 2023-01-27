@@ -47,7 +47,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenFunctionWhenBind
         ze_result_t returnValue;
         std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
         CmdListKernelLaunchParams launchParams = {};
-        commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams);
+        commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
 
         auto commandStream = commandList->commandContainer.getCommandStream();
 
@@ -95,7 +95,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenEventsWhenAppend
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
     auto result = commandList->appendLaunchKernel(
-        kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams);
+        kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
@@ -143,7 +143,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMult
     ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = context->allocDeviceMem(
         device->toHandle(), &deviceDesc, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
-    result = commandList->appendLaunchMultipleKernelsIndirect(1, &launchKernels, numLaunchArgs, nullptr, nullptr, 0, nullptr);
+    result = commandList->appendLaunchMultipleKernelsIndirect(1, &launchKernels, numLaunchArgs, nullptr, nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     *numLaunchArgs = 0;
     auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
@@ -172,7 +172,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandListAppendLaunchKernel, givenAppendLaunchMult
     ze_device_mem_alloc_desc_t deviceDesc = {};
     auto result = context->allocDeviceMem(
         device->toHandle(), &deviceDesc, 16384u, 4096u, reinterpret_cast<void **>(&numLaunchArgs));
-    result = commandList->appendLaunchMultipleKernelsIndirect(numKernels, launchKernels, numLaunchArgs, nullptr, nullptr, 0, nullptr);
+    result = commandList->appendLaunchMultipleKernelsIndirect(numKernels, launchKernels, numLaunchArgs, nullptr, nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     *numLaunchArgs = 2;
     auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
@@ -219,7 +219,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingL
     CmdListKernelLaunchParams launchParams = {};
     result = commandList0->appendLaunchKernel(
         kernel->toHandle(),
-        &groupCount, nullptr, 0, nullptr, launchParams);
+        &groupCount, nullptr, 0, nullptr, launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -246,7 +246,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingL
     CmdListKernelLaunchParams launchParams = {};
     result = commandList0->appendLaunchKernel(
         kernel->toHandle(),
-        &groupCount, nullptr, 1, nullptr, launchParams);
+        &groupCount, nullptr, 1, nullptr, launchParams, false);
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -271,7 +271,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingL
 
     result = commandList0->appendLaunchKernelIndirect(
         kernel->toHandle(),
-        &groupCount, nullptr, 0, nullptr);
+        &groupCount, nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -297,7 +297,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingL
 
     result = commandList0->appendLaunchKernelIndirect(
         kernel->toHandle(),
-        &groupCount, nullptr, 1, nullptr);
+        &groupCount, nullptr, 1, nullptr, false);
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -321,7 +321,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelUsingSyncBufferWhenAppendLau
         engineGroupType = gfxCoreHelper.getEngineGroupType(aub_stream::EngineType::ENGINE_CCS, EngineUsage::Cooperative, *defaultHwInfo);
     }
     pCommandList->initialize(device, engineGroupType, 0u);
-    auto result = pCommandList->appendLaunchCooperativeKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr);
+    auto result = pCommandList->appendLaunchCooperativeKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
@@ -527,7 +527,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenInvalidKernelWhenAppendingThenRetur
 
     ze_group_count_t groupCount{8, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
-    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0U, nullptr, launchParams);
+    returnValue = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
 }
 
@@ -568,7 +568,7 @@ HWTEST_F(CommandListAppendLaunchKernelWithImplicitArgs, givenIndirectDispatchWit
 
     result = commandList->appendLaunchKernelIndirect(kernel.toHandle(),
                                                      static_cast<ze_group_count_t *>(alloc),
-                                                     nullptr, 0, nullptr);
+                                                     nullptr, 0, nullptr, false);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
     auto heap = commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT);
     uint64_t pImplicitArgsGPUVA = heap->getGraphicsAllocation()->getGpuAddress() + getIndirectHeapOffsetForImplicitArgsBuffer<FamilyType>(kernel);

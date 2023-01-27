@@ -45,12 +45,12 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                    const ze_group_count_t *threadGroupDimensions,
                                    ze_event_handle_t hEvent, uint32_t numWaitEvents,
                                    ze_event_handle_t *phWaitEvents,
-                                   const CmdListKernelLaunchParams &launchParams) override;
+                                   const CmdListKernelLaunchParams &launchParams, bool relaxedOrderingDispatch) override;
 
     ze_result_t appendLaunchKernelIndirect(ze_kernel_handle_t kernelHandle,
                                            const ze_group_count_t *pDispatchArgumentsBuffer,
                                            ze_event_handle_t hEvent, uint32_t numWaitEvents,
-                                           ze_event_handle_t *phWaitEvents) override;
+                                           ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
 
     ze_result_t appendBarrier(ze_event_handle_t hSignalEvent,
                               uint32_t numWaitEvents,
@@ -61,7 +61,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                  size_t size,
                                  ze_event_handle_t hSignalEvent,
                                  uint32_t numWaitEvents,
-                                 ze_event_handle_t *phWaitEvents) override;
+                                 ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
 
     ze_result_t appendMemoryCopyRegion(void *dstPtr,
                                        const ze_copy_region_t *dstRegion,
@@ -73,13 +73,13 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                        uint32_t srcSlicePitch,
                                        ze_event_handle_t hSignalEvent,
                                        uint32_t numWaitEvents,
-                                       ze_event_handle_t *phWaitEvents) override;
+                                       ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
 
     ze_result_t appendMemoryFill(void *ptr, const void *pattern,
                                  size_t patternSize, size_t size,
                                  ze_event_handle_t hSignalEvent,
                                  uint32_t numWaitEvents,
-                                 ze_event_handle_t *phWaitEvents) override;
+                                 ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
 
     ze_result_t appendSignalEvent(ze_event_handle_t hEvent) override;
 
@@ -96,27 +96,27 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
     ze_result_t appendMemoryCopyFromContext(void *dstptr, ze_context_handle_t hContextSrc, const void *srcptr,
                                             size_t size, ze_event_handle_t hSignalEvent,
-                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) override;
+                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
 
     ze_result_t appendImageCopyFromMemory(ze_image_handle_t hDstImage,
                                           const void *srcPtr,
                                           const ze_image_region_t *pDstRegion,
                                           ze_event_handle_t hEvent,
                                           uint32_t numWaitEvents,
-                                          ze_event_handle_t *phWaitEvents) override;
+                                          ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
 
     ze_result_t appendImageCopyToMemory(void *dstPtr,
                                         ze_image_handle_t hSrcImage,
                                         const ze_image_region_t *pSrcRegion,
                                         ze_event_handle_t hEvent,
                                         uint32_t numWaitEvents,
-                                        ze_event_handle_t *phWaitEvents) override;
+                                        ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
 
     ze_result_t appendImageCopy(
         ze_image_handle_t dst, ze_image_handle_t src,
         ze_event_handle_t hEvent,
         uint32_t numWaitEvents,
-        ze_event_handle_t *phWaitEvents) override;
+        ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
 
     ze_result_t appendImageCopyRegion(ze_image_handle_t hDstImage,
                                       ze_image_handle_t hSrcImage,
@@ -124,7 +124,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                       const ze_image_region_t *pSrcRegion,
                                       ze_event_handle_t hEvent,
                                       uint32_t numWaitEvents,
-                                      ze_event_handle_t *phWaitEvents) override;
+                                      ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override;
 
     ze_result_t appendMemoryRangesBarrier(uint32_t numRanges,
                                           const size_t *pRangeSizes,
@@ -137,7 +137,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
                                               const ze_group_count_t *launchKernelArgs,
                                               ze_event_handle_t hSignalEvent,
                                               uint32_t numWaitEvents,
-                                              ze_event_handle_t *waitEventHandles) override;
+                                              ze_event_handle_t *waitEventHandles, bool relaxedOrderingDispatch) override;
 
     MOCKABLE_VIRTUAL ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies);
     ze_result_t executeCommandListImmediateWithFlushTaskImpl(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies, CommandQueue *cmdQ);
@@ -165,6 +165,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
   protected:
     void printKernelsPrintfOutput(bool hangDetected);
+    bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const;
     std::atomic<bool> dependenciesPresent{false};
 };
 

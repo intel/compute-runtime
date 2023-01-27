@@ -366,7 +366,7 @@ struct CommandListAppendLaunchKernelCompactL3FlushEventFixture : public ModuleFi
 
         ze_group_count_t groupCount{1, 1, 1};
         CmdListKernelLaunchParams launchParams = {};
-        result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams);
+        result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         EXPECT_EQ(arg.expectedPacketsInUse, event->getPacketsInUse());
         EXPECT_EQ(arg.expectedKernelCount, event->getKernelCount());
@@ -609,7 +609,7 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
         ze_group_count_t groupCount{1, 1, 1};
         CmdListKernelLaunchParams launchParams = {};
         size_t sizeBefore = cmdStream->getUsed();
-        result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams);
+        result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams, false);
         size_t sizeAfter = cmdStream->getUsed();
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 

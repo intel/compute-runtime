@@ -85,7 +85,7 @@ HWTEST2_F(CommandListAppendWaitOnEvent, givenImmediateCmdListWithDirectSubmissio
     ultCsr->directSubmission.reset(directSubmission);
 
     ze_event_handle_t hEventHandle = event->toHandle();
-    auto result = immCommandList->appendWaitOnEvents(1, &hEventHandle, true);
+    auto result = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(immCommandList.get())->addEventsToCmdList(1, &hEventHandle, true);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     auto usedSpaceAfter = immCommandList->commandContainer.getCommandStream()->getUsed();
@@ -669,7 +669,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     auto eventHandle = event->toHandle();
     ze_group_count_t group = {1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
-    commandListImmediate->appendLaunchKernel(kernel->toHandle(), &group, nullptr, 1, &eventHandle, launchParams);
+    commandListImmediate->appendLaunchKernel(kernel->toHandle(), &group, nullptr, 1, &eventHandle, launchParams, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
 }
@@ -679,7 +679,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
 
     auto eventHandle = event->toHandle();
     ze_group_count_t group = {1, 1, 1};
-    commandListImmediate->appendLaunchKernelIndirect(kernel->toHandle(), &group, nullptr, 1, &eventHandle);
+    commandListImmediate->appendLaunchKernelIndirect(kernel->toHandle(), &group, nullptr, 1, &eventHandle, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
 }
@@ -699,7 +699,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     auto eventHandle = event->toHandle();
     void *srcPtr = reinterpret_cast<void *>(0x1234);
     void *dstPtr = reinterpret_cast<void *>(0x2345);
-    commandListImmediate->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 1, &eventHandle);
+    commandListImmediate->appendMemoryCopy(dstPtr, srcPtr, 8, nullptr, 1, &eventHandle, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
 }
@@ -712,7 +712,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     void *dstPtr = reinterpret_cast<void *>(0x2345);
     ze_copy_region_t dstRegion = {};
     ze_copy_region_t srcRegion = {};
-    commandListImmediate->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 1, &eventHandle);
+    commandListImmediate->appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 1, &eventHandle, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
 }
@@ -727,7 +727,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
 
     int one = 1;
     commandListImmediate->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4096,
-                                           nullptr, 1u, &eventHandle);
+                                           nullptr, 1, &eventHandle, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
 
@@ -738,7 +738,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
 
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendWaitOnEvents(1u, &eventHandle, false);
+    commandListImmediate->appendWaitOnEvents(1, &eventHandle, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
 }
@@ -778,7 +778,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     ze_image_region_t dstRegion = {4, 4, 4, 2, 2, 2};
 
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendImageCopyRegion(imageDst->toHandle(), imageSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 1, &eventHandle);
+    commandListImmediate->appendImageCopyRegion(imageDst->toHandle(), imageSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 1, &eventHandle, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
 }
@@ -803,7 +803,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     std::unique_ptr<L0::Image> image(imagePtr);
 
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendImageCopyFromMemory(imagePtr->toHandle(), ptr, nullptr, nullptr, 1, &eventHandle);
+    commandListImmediate->appendImageCopyFromMemory(imagePtr->toHandle(), ptr, nullptr, nullptr, 1, &eventHandle, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
 }
@@ -828,7 +828,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
     std::unique_ptr<L0::Image> image(imagePtr);
 
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendImageCopyToMemory(ptr, imagePtr->toHandle(), nullptr, nullptr, 1, &eventHandle);
+    commandListImmediate->appendImageCopyToMemory(ptr, imagePtr->toHandle(), nullptr, nullptr, 1, &eventHandle, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
 }
@@ -852,7 +852,7 @@ HWTEST_TEMPLATED_F(TbxImmediateCommandListTest, givenTbxModeOnFlushTaskImmediate
 
     ze_group_count_t groupCount{1, 1, 1};
     auto eventHandle = event->toHandle();
-    commandListImmediate->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 1, &eventHandle);
+    commandListImmediate->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 1, &eventHandle, false);
 
     EXPECT_TRUE(ultCsr.downloadAllocationsCalled);
 }

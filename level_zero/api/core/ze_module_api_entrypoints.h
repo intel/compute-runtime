@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -147,7 +147,7 @@ ze_result_t zeCommandListAppendLaunchKernel(
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
     L0::CmdListKernelLaunchParams launchParams = {};
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernel(kernelHandle, launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, launchParams);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernel(kernelHandle, launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, launchParams, false);
 }
 
 ze_result_t zeCommandListAppendLaunchCooperativeKernel(
@@ -157,7 +157,7 @@ ze_result_t zeCommandListAppendLaunchCooperativeKernel(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchCooperativeKernel(kernelHandle, launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchCooperativeKernel(kernelHandle, launchKernelArgs, hSignalEvent, numWaitEvents, phWaitEvents, false);
 }
 
 ze_result_t zeCommandListAppendLaunchKernelIndirect(
@@ -167,7 +167,7 @@ ze_result_t zeCommandListAppendLaunchKernelIndirect(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernelIndirect(kernelHandle, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchKernelIndirect(kernelHandle, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents, false);
 }
 
 ze_result_t zeCommandListAppendLaunchMultipleKernelsIndirect(
@@ -179,7 +179,7 @@ ze_result_t zeCommandListAppendLaunchMultipleKernelsIndirect(
     ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents,
     ze_event_handle_t *phWaitEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendLaunchMultipleKernelsIndirect(numKernels, kernelHandles, pCountBuffer, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents);
+    return L0::CommandList::fromHandle(hCommandList)->appendLaunchMultipleKernelsIndirect(numKernels, kernelHandles, pCountBuffer, pLaunchArgumentsBuffer, hSignalEvent, numWaitEvents, phWaitEvents, false);
 }
 
 ze_result_t zeKernelGetName(

@@ -109,7 +109,7 @@ void testSingleTileAppendMemoryFillManyImmediateKernels(FillTestInput &input, Te
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(input.dstPtr, input.patternPtr,
-                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr);
+                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -189,7 +189,7 @@ void testSingleTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpecte
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(input.dstPtr, input.patternPtr,
-                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr);
+                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -270,7 +270,7 @@ void testSingleTileAppendMemoryFillManyKernelsAndL3Flush(FillTestInput &input, T
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(input.dstPtr, input.patternPtr,
-                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr);
+                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -348,7 +348,7 @@ void testSingleTileAppendMemoryFillSingleKernel(FillTestInput &input, TestExpect
 
     auto &commandContainer = commandList->commandContainer;
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    result = commandList->appendMemoryFill(array, &pattern, 1, size, event->toHandle(), 0, nullptr);
+    result = commandList->appendMemoryFill(array, &pattern, 1, size, event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -427,7 +427,7 @@ void testSingleTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, 
 
     auto &commandContainer = commandList->commandContainer;
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    result = commandList->appendMemoryFill(array, &pattern, 1, size, event->toHandle(), 0, nullptr);
+    result = commandList->appendMemoryFill(array, &pattern, 1, size, event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -535,7 +535,7 @@ void testMultiTileAppendMemoryFillManyKernels(FillTestInput &input, TestExpected
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(input.dstPtr, input.patternPtr,
-                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr);
+                                           input.patternSize, input.allocSize, event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -646,7 +646,7 @@ void testMultiTileAppendMemoryFillSingleKernelAndL3Flush(FillTestInput &input, T
 
     auto &commandContainer = commandList->commandContainer;
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
-    result = commandList->appendMemoryFill(array, &pattern, 1, size, event->toHandle(), 0, nullptr);
+    result = commandList->appendMemoryFill(array, &pattern, 1, size, event->toHandle(), 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 

@@ -313,7 +313,7 @@ HWTEST2_F(CommandListCreate,
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
-                                                 srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
+                                                 srcBuffer, &sr, width, 0, events[0], 1, &events[1], false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -375,7 +375,7 @@ HWTEST2_F(CommandListCreate,
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
-                                                 srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
+                                                 srcBuffer, &sr, width, 0, events[0], 1, &events[1], false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -432,7 +432,7 @@ HWTEST2_F(CommandListCreate,
     int one = 1;
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4096u,
-                                           events[0], 1u, &events[1]);
+                                           events[0], 1, &events[1], false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -491,7 +491,7 @@ HWTEST2_F(CommandListCreate,
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4096u,
-                                           events[0], 1u, &events[1]);
+                                           events[0], 1, &events[1], false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -546,7 +546,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithS
     int one = 1;
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
-                                           events[0], 1u, &events[1]);
+                                           events[0], 1, &events[1], false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     GenCmdList cmdList;
@@ -602,7 +602,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
 
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
-                                           events[0], 1u, &events[1]);
+                                           events[0], 1, &events[1], false);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
@@ -660,7 +660,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     int one = 1;
     size_t usedBefore = commandContainer.getCommandStream()->getUsed();
     result = commandList->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
-                                           events[0], 1u, &events[1]);
+                                           events[0], 1, &events[1], false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     size_t usedAfter = commandContainer.getCommandStream()->getUsed();
 
@@ -712,7 +712,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionWithSignalAndWa
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
     result = commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
-                                                 srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
+                                                 srcBuffer, &sr, width, 0, events[0], 1, &events[1], false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -745,7 +745,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionWithSignalAndIn
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
     result = commandList->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
-                                                 srcBuffer, &sr, width, 0, events[0], 1u, nullptr);
+                                                 srcBuffer, &sr, width, 0, events[0], 1, nullptr, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -777,7 +777,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryCopyRegionHasEmptyRegionW
     ze_copy_region_t sr = {0U, 0U, 0U, 0U, 0U, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, 0U, 0U, 0U};
     result = commandList->appendMemoryCopyRegion(dstBuffer, &dr, 0, 0,
-                                                 srcBuffer, &sr, 0, 0, events[0], 1u, &events[1]);
+                                                 srcBuffer, &sr, 0, 0, events[0], 1, &events[1], false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -820,7 +820,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
     result = commandList0->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
-                                                  srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
+                                                  srcBuffer, &sr, width, 0, events[0], 1, &events[1], false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -865,7 +865,7 @@ TEST_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSigna
 
     for (auto i = 0; i < 2000; i++) {
         ret = commandList0->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
-                                                   srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
+                                                   srcBuffer, &sr, width, 0, events[0], 1, &events[1], false);
     }
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
@@ -913,7 +913,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenMemoryCopyRegionWithSi
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
     auto result = commandList0->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
-                                                       srcBuffer, &sr, width, 0, events[0], 1u, &events[1]);
+                                                       srcBuffer, &sr, width, 0, events[0], 1, &events[1], false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
@@ -965,7 +965,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromI
 
     ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
     ze_image_region_t dstRegion = {4, 4, 4, 2, 2, 2};
-    returnValue = commandList0->appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr);
+    returnValue = commandList0->appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
@@ -1011,7 +1011,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyRegionFromI
 
     ze_image_region_t srcRegion = {4, 4, 4, 2, 2, 2};
     ze_image_region_t dstRegion = {2, 2, 2, 4, 4, 4};
-    returnValue = commandList0->appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr);
+    returnValue = commandList0->appendImageCopyRegion(imageHWDst->toHandle(), imageHWSrc->toHandle(), &dstRegion, &srcRegion, nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, returnValue);
 }
 
@@ -1055,7 +1055,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenCopyFromImageTo
     imageHWSrc->initialize(device, &desc);
     imageHWDst->initialize(device, &desc);
 
-    returnValue = commandList0->appendImageCopy(imageHWDst->toHandle(), imageHWSrc->toHandle(), nullptr, 0, nullptr);
+    returnValue = commandList0->appendImageCopy(imageHWDst->toHandle(), imageHWSrc->toHandle(), nullptr, 0, nullptr, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 }
 
@@ -1103,7 +1103,7 @@ HWTEST2_F(CommandListCreateWithBcs, givenImmediateCommandListWhenMemoryCopyRegio
     ze_copy_region_t sr = {0U, 0U, 0U, width, height, 0U};
     ze_copy_region_t dr = {0U, 0U, 0U, width, height, 0U};
     result = commandList0->appendMemoryCopyRegion(dstBuffer, &dr, width, 0,
-                                                  srcBuffer, &sr, width, 0, events[0], 1u, nullptr);
+                                                  srcBuffer, &sr, width, 0, events[0], 1, nullptr, false);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
 }
 
@@ -1186,7 +1186,7 @@ TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendBarrierThe
 
     EXPECT_EQ(eventObject->queryStatus(), ZE_RESULT_SUCCESS);
 
-    commandList->appendBarrier(nullptr, 0, nullptr);
+    commandList->appendBarrier(event, 0, nullptr);
 }
 
 TEST_F(CommandListCreate, whenCreatingImmCmdListWithASyncModeAndAppendEventResetThenUpdateTaskCountNeededFlagIsDisabled) {
