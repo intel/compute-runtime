@@ -7,14 +7,10 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/get_info.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
-#include "shared/source/utilities/api_intercept.h"
 
-#include "opencl/source/api/api.h"
 #include "opencl/source/api/api_enter.h"
-#include "opencl/source/api/dispatch.h"
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"

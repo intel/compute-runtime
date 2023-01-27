@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/os_interface/hw_info_config.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 

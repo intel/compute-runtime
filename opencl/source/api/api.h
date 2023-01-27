@@ -6,9 +6,8 @@
  */
 
 #pragma once
-#include "opencl/source/api/dispatch.h"
-
 #include "CL/cl.h"
+#include "CL/cl_ext.h"
 #include "CL/cl_gl.h"
 
 #ifdef __cplusplus

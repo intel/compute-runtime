@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #pragma once
 #include "opencl/source/sharings/d3d/d3d_sharing.h"
+
+#include "CL/cl_dx9_media_sharing.h"
 
 #include <map>
 

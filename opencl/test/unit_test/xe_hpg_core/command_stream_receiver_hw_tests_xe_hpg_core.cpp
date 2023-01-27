@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"

@@ -5,10 +5,6 @@
  *
  */
 
-#include "shared/source/helpers/get_info.h"
-
-#include "opencl/source/api/api.h"
-#include "opencl/source/api/dispatch.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/mem_obj/mem_obj.h"

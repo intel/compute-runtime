@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_time.h"
 
 namespace NEO {
+class Drm;
 
 class DeviceTimeDrm : public DeviceTime {
   public:

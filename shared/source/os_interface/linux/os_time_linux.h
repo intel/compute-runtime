@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_time.h"
 
 #include <memory>

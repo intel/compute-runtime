@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/scratch_space_controller_base.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 
 #include "opencl/source/helpers/cl_blit_properties.h"

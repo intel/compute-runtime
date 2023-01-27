@@ -5,53 +5,23 @@
  *
  */
 
-#include "shared/source/command_container/implicit_scaling.h"
-#include "shared/source/command_stream/wait_status.h"
-#include "shared/source/device/root_device.h"
-#include "shared/source/helpers/bindless_heaps_helper.h"
-#include "shared/source/helpers/hw_helper.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/preamble.h"
-#include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/os_interface/os_inc_base.h"
-#include "shared/source/os_interface/os_time.h"
+#include "shared/source/built_ins/sip.h"
 #include "shared/source/os_interface/windows/hw_device_id.h"
-#include "shared/source/os_interface/windows/os_context_win.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
-#include "shared/source/os_interface/windows/wddm/wddm_interface.h"
-#include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/helpers/mock_hw_info_config_hw.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
-#include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
-#include "shared/test/common/mocks/mock_driver_info.h"
-#include "shared/test/common/mocks/mock_driver_model.h"
-#include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/mock_os_context.h"
-#include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/mocks/mock_wddm.h"
-#include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/mocks/windows/mock_gdi_interface.h"
-#include "shared/test/common/test_macros/hw_test.h"
 
-#include "level_zero/core/source/cache/cache_reservation.h"
-#include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
-#include "level_zero/core/source/context/context_imp.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/core/source/driver/host_pointer_manager.h"
-#include "level_zero/core/source/image/image.h"
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_context.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_driver_handle.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 
 #include "gtest/gtest.h"
+
+using namespace NEO;
 
 namespace NEO {
 std::unique_ptr<HwDeviceIdWddm> createHwDeviceIdFromAdapterLuid(OsEnvironmentWin &osEnvironment, LUID adapterLuid, uint32_t adapterNodeOrdinal);

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"

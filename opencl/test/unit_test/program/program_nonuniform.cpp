@@ -1,15 +1,10 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver_hw.h"
-#include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/hash.h"
-#include "shared/source/helpers/ptr_math.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/kernel/kernel.h"
@@ -19,16 +14,11 @@
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
-#include "opencl/test/unit_test/program/program_from_binary.h"
-#include "opencl/test/unit_test/program/program_with_source.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
 
 #include "gtest/gtest.h"
-#include "program_tests.h"
 
-#include <map>
 #include <memory>
-#include <vector>
 
 using namespace NEO;
 

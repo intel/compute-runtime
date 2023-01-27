@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/command_stream/aub_command_stream_receiver_hw.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aux_translation.h"

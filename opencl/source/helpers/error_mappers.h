@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "CL/cl.h"
 
 template <typename Type>
 struct NullObjectErrorMapper {

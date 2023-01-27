@@ -8,8 +8,13 @@
 #pragma once
 #include "shared/source/helpers/debug_helpers.h"
 
-#include "opencl/source/api/dispatch.h"
 #include "opencl/source/sharings/sharing.h"
+
+#include <d3d10_1.h>
+
+#include <CL/cl.h>
+#include <d3d11.h>
+#include <d3d9.h>
 
 #include <map>
 #include <vector>
