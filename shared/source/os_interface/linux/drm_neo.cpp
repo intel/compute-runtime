@@ -1181,7 +1181,7 @@ bool Drm::hasPageFaultSupport() const {
         return !!DebugManager.flags.EnableRecoverablePageFaults.get();
     }
 
-    return false;
+    return pageFaultSupported;
 }
 
 unsigned int Drm::bindDrmContext(uint32_t drmContextId, uint32_t deviceIndex, aub_stream::EngineType engineType, bool engineInstancedDevice) {

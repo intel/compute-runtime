@@ -114,14 +114,6 @@ class DrmMock : public Drm {
         queryPageFaultSupportCalled = true;
     }
 
-    bool hasPageFaultSupport() const override {
-        if (DebugManager.flags.EnableRecoverablePageFaults.get() != -1) {
-            return !!DebugManager.flags.EnableRecoverablePageFaults.get();
-        }
-
-        return pageFaultSupported;
-    }
-
     uint32_t createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested) override {
         capturedCooperativeContextRequest = isCooperativeContextRequested;
         if (callBaseCreateDrmContext) {
