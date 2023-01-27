@@ -1278,17 +1278,20 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGettingIfRevisionSpecificBinar
 
 HWTEST2_F(GfxCoreHelperTest, givenDG2GfxCoreHelperWhenGettingIsPlatformFlushTaskEnabledThenTrueIsReturned, IsDG2) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_TRUE(gfxCoreHelper.isPlatformFlushTaskEnabled(*defaultHwInfo));
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper));
 }
 
 HWTEST2_F(GfxCoreHelperTest, givenPvcGfxCoreHelperWhenGettingIsPlatformFlushTaskEnabledThenTrueIsReturned, IsPVC) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_TRUE(gfxCoreHelper.isPlatformFlushTaskEnabled(*defaultHwInfo));
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper));
 }
 
 HWTEST2_F(GfxCoreHelperTest, givenAtMostGen12lpGfxCoreHelperWhenGettingIsPlatformFlushTaskEnabledThenFalseIsReturned, IsAtMostGen12lp) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_TRUE(gfxCoreHelper.isPlatformFlushTaskEnabled(*defaultHwInfo));
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper));
 }
 
 struct CoherentWANotNeeded {

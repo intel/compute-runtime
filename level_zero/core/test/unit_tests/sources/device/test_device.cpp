@@ -3579,7 +3579,7 @@ TEST_F(DeviceTest, givenValidDeviceWhenCallingReleaseResourcesThenResourcesRelea
 
 HWTEST_F(DeviceTest, givenCooperativeDispatchSupportedWhenQueryingPropertiesFlagsThenCooperativeKernelsAreSupported) {
     struct MockGfxCoreHelper : NEO::GfxCoreHelperHw<FamilyType> {
-        bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const override {
+        bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const override {
             return isCooperativeDispatchSupportedValue;
         }
         bool isCooperativeDispatchSupportedValue = true;

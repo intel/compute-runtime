@@ -102,7 +102,7 @@ class SyncBufferHandlerTest : public SyncBufferEnqueueHandlerTest {
         auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
                                                                 commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-        return gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getHardwareInfo());
+        return gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getRootDeviceEnvironment());
     }
 
     const cl_uint workDim = 1;

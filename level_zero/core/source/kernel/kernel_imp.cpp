@@ -402,7 +402,8 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
         dssCount = hardwareInfo.gtSystemInfo.SubSliceCount;
     }
 
-    auto &helper = module->getDevice()->getNEODevice()->getRootDeviceEnvironment().getHelper<NEO::GfxCoreHelper>();
+    auto &rootDeviceEnvironment = module->getDevice()->getNEODevice()->getRootDeviceEnvironment();
+    auto &helper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
     auto &descriptor = kernelImmData->getDescriptor();
     auto availableThreadCount = helper.calculateAvailableThreadCount(hardwareInfo, descriptor.kernelAttributes.numGrfRequired);
 
@@ -422,7 +423,7 @@ ze_result_t KernelImp::suggestMaxCooperativeGroupCount(uint32_t *totalGroupCount
                                                                barrierCount,
                                                                workDim,
                                                                localWorkSize);
-    *totalGroupCount = helper.adjustMaxWorkGroupCount(*totalGroupCount, engineGroupType, hardwareInfo, isEngineInstanced);
+    *totalGroupCount = helper.adjustMaxWorkGroupCount(*totalGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced);
     return ZE_RESULT_SUCCESS;
 }
 

@@ -115,9 +115,9 @@ class GfxCoreHelper {
     virtual bool packedFormatsSupported() const = 0;
     virtual bool isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isRcsAvailable(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const = 0;
+    virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
-                                             const HardwareInfo &hwInfo, bool isEngineInstanced) const = 0;
+                                             const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const = 0;
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
     virtual size_t getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
@@ -160,7 +160,7 @@ class GfxCoreHelper {
     virtual bool platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual size_t getBatchBufferEndSize() const = 0;
     virtual const void *getBatchBufferEndReference() const = 0;
-    virtual bool isPlatformFlushTaskEnabled(const NEO::HardwareInfo &hwInfo) const = 0;
+    virtual bool isPlatformFlushTaskEnabled(const NEO::ProductHelper &productHelper) const = 0;
     virtual uint32_t getMinimalScratchSpaceSize() const = 0;
     virtual bool copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getAmountOfAllocationsToFill() const = 0;
@@ -313,10 +313,10 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool isRcsAvailable(const HardwareInfo &hwInfo) const override;
 
-    bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const override;
+    bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
-                                     const HardwareInfo &hwInfo, bool isEngineInstanced) const override;
+                                     const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const override;
 
     size_t getMaxFillPaternSizeForCopyEngine() const override;
 
@@ -377,7 +377,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const override;
     size_t getBatchBufferEndSize() const override;
     const void *getBatchBufferEndReference() const override;
-    bool isPlatformFlushTaskEnabled(const NEO::HardwareInfo &hwInfo) const override;
+    bool isPlatformFlushTaskEnabled(const NEO::ProductHelper &productHelper) const override;
     uint32_t getMinimalScratchSpaceSize() const override;
     bool copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo) const override;
     uint32_t getAmountOfAllocationsToFill() const override;

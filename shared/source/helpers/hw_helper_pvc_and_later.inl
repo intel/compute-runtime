@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,8 +33,9 @@ bool GfxCoreHelperHw<Family>::isRcsAvailable(const HardwareInfo &hwInfo) const {
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const {
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+bool GfxCoreHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const {
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (productHelper.isCooperativeEngineSupported(hwInfo)) {
         if (engineGroupType == EngineGroupType::RenderCompute) {
             return false;
@@ -49,19 +50,21 @@ bool GfxCoreHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupTy
 
 template <>
 uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
-                                                          const HardwareInfo &hwInfo, bool isEngineInstanced) const {
+                                                          const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const {
     if ((DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.get()) ||
         (DebugManager.flags.OverrideMaxWorkGroupCount.get() != -1)) {
         return maxWorkGroupCount;
     }
-    if (!isCooperativeDispatchSupported(engineGroupType, hwInfo)) {
+    if (!isCooperativeDispatchSupported(engineGroupType, rootDeviceEnvironment)) {
         return 1u;
     }
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     bool requiresLimitation = productHelper.isCooperativeEngineSupported(hwInfo) &&
                               (engineGroupType != EngineGroupType::CooperativeCompute) &&
                               (!isEngineInstanced);
     if (requiresLimitation) {
+
         auto ccsCount = hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
         UNRECOVERABLE_IF(ccsCount == 0);
         return maxWorkGroupCount / ccsCount;

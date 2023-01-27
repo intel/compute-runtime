@@ -587,13 +587,13 @@ bool GfxCoreHelperHw<GfxFamily>::isRcsAvailable(const HardwareInfo &hwInfo) cons
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<GfxFamily>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return true;
 }
 
 template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
-                                                             const HardwareInfo &hwInfo, bool isEngineInstanced) const {
+                                                             const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const {
     return maxWorkGroupCount;
 }
 
@@ -684,8 +684,7 @@ const void *GfxCoreHelperHw<GfxFamily>::getBatchBufferEndReference() const {
     return reinterpret_cast<const void *>(&GfxFamily::cmdInitBatchBufferEnd);
 }
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isPlatformFlushTaskEnabled(const HardwareInfo &hwInfo) const {
-    const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+bool GfxCoreHelperHw<GfxFamily>::isPlatformFlushTaskEnabled(const ProductHelper &productHelper) const {
     return productHelper.isFlushTaskAllowed();
 }
 

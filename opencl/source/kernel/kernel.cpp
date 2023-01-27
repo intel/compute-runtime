@@ -1110,7 +1110,8 @@ void Kernel::getSuggestedLocalWorkSize(const cl_uint workDim, const size_t *glob
 
 uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *localWorkSize, const CommandQueue *commandQueue) const {
     auto &hardwareInfo = getHardwareInfo();
-    auto &helper = this->getDevice().getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    auto &rootDeviceEnvironment = this->getDevice().getRootDeviceEnvironment();
+    auto &helper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
 
     auto engineGroupType = helper.getEngineGroupType(commandQueue->getGpgpuEngine().getEngineType(),
                                                      commandQueue->getGpgpuEngine().getEngineUsage(), hardwareInfo);
@@ -1136,7 +1137,7 @@ uint32_t Kernel::getMaxWorkGroupCount(const cl_uint workDim, const size_t *local
                                                                 workDim,
                                                                 localWorkSize);
     auto isEngineInstanced = commandQueue->getGpgpuCommandStreamReceiver().getOsContext().isEngineInstanced();
-    maxWorkGroupCount = helper.adjustMaxWorkGroupCount(maxWorkGroupCount, engineGroupType, hardwareInfo, isEngineInstanced);
+    maxWorkGroupCount = helper.adjustMaxWorkGroupCount(maxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced);
     return maxWorkGroupCount;
 }
 

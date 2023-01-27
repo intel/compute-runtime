@@ -316,7 +316,7 @@ TEST_F(clEnqueueNDCountKernelTests, GivenQueueIncapableWhenEnqueuingNDCountKerne
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCommandQueue->getGpgpuEngine().getEngineType(),
                                                             pCommandQueue->getGpgpuEngine().getEngineUsage(), *::defaultHwInfo);
-    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, *::defaultHwInfo)) {
+    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getRootDeviceEnvironment())) {
         GTEST_SKIP();
     }
 
@@ -350,7 +350,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenAllArgsAreSetThenClEnqueueNDCountKernel
     auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
                                                             pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
+    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getRootDeviceEnvironment())) {
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
@@ -398,7 +398,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenNotAllArgsAreSetButSetKernelArgIsCalled
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
                                                             pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
+    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getRootDeviceEnvironment())) {
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 
@@ -446,7 +446,7 @@ TEST_F(EnqueueKernelTest, givenKernelWhenSetKernelArgIsCalledForEachArgButAtLeas
     auto &gfxCoreHelper = pClDevice->getGfxCoreHelper();
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pCmdQ2->getGpgpuEngine().getEngineType(),
                                                             pCmdQ2->getGpgpuEngine().getEngineUsage(), hardwareInfo);
-    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hardwareInfo)) {
+    if (!gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, pDevice->getRootDeviceEnvironment())) {
         pCmdQ2->getGpgpuEngine().osContext = pCmdQ2->getDevice().getEngine(aub_stream::ENGINE_CCS, EngineUsage::LowPriority).osContext;
     }
 

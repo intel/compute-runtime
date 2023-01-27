@@ -138,7 +138,9 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, WhenIsCooperativeDispatchSupportedThenCo
     };
 
     MockProductHelperHw<productFamily> productHelper;
-    auto hwInfo = *::defaultHwInfo;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     VariableBackup<ProductHelper *> productHelperFactoryBackup{&NEO::productHelperFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
     productHelperFactoryBackup = &productHelper;
 
@@ -151,7 +153,7 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, WhenIsCooperativeDispatchSupportedThenCo
             for (auto engineGroupType : {EngineGroupType::RenderCompute, EngineGroupType::Compute,
                                          EngineGroupType::CooperativeCompute}) {
 
-                auto isCooperativeDispatchSupported = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
+                auto isCooperativeDispatchSupported = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, rootDeviceEnvironment);
                 if (isCooperativeEngineSupported) {
                     switch (engineGroupType) {
                     case EngineGroupType::RenderCompute:

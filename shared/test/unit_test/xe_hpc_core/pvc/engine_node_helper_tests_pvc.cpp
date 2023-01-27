@@ -155,28 +155,31 @@ PVCTEST_F(EngineNodeHelperPvcTests, givenCccsDisabledWhenGetGpgpuEnginesCalledTh
 
 PVCTEST_F(EngineNodeHelperPvcTests, givenCCSEngineWhenCallingIsCooperativeDispatchSupportedThenTrueIsReturned) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto hwInfo = *defaultHwInfo;
+    auto &rootDeviceEnvironment = *pDevice->executionEnvironment->rootDeviceEnvironments[0];
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCS;
 
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pDevice->getDefaultEngine().getEngineType(),
                                                             pDevice->getDefaultEngine().getEngineUsage(), hwInfo);
-    auto retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
+    auto retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, rootDeviceEnvironment);
     EXPECT_TRUE(retVal);
 }
 
 PVCTEST_F(EngineNodeHelperPvcTests, givenCCCSEngineAndRevisionBWhenCallingIsCooperativeDispatchSupportedThenFalseIsReturned) {
     const auto &productHelper = getHelper<ProductHelper>();
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto hwInfo = *defaultHwInfo;
+    auto &rootDeviceEnvironment = *pDevice->executionEnvironment->rootDeviceEnvironments[0];
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+
     hwInfo.capabilityTable.defaultEngineType = aub_stream::ENGINE_CCCS;
 
     auto engineGroupType = gfxCoreHelper.getEngineGroupType(pDevice->getDefaultEngine().getEngineType(),
                                                             pDevice->getDefaultEngine().getEngineUsage(), hwInfo);
-    auto retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
+    auto retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, rootDeviceEnvironment);
     EXPECT_TRUE(retVal);
 
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
-    retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, hwInfo);
+    retVal = gfxCoreHelper.isCooperativeDispatchSupported(engineGroupType, rootDeviceEnvironment);
     EXPECT_FALSE(retVal);
 }
 
