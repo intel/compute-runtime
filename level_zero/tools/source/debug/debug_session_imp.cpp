@@ -47,7 +47,7 @@ void DebugSession::createEuThreads() {
                 tileIndex = Math::log2(static_cast<uint32_t>(connectedDevice->getNEODevice()->getDeviceBitfield().to_ulong()));
             }
 
-            for (uint32_t sliceID = 0; sliceID < hwInfo.gtSystemInfo.MaxSlicesSupported; sliceID++) {
+            for (uint32_t sliceID = 0; sliceID < NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo); sliceID++) {
                 for (uint32_t subsliceID = 0; subsliceID < numSubslicesPerSlice; subsliceID++) {
                     for (uint32_t euID = 0; euID < numEuPerSubslice; euID++) {
 
