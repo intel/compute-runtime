@@ -2105,6 +2105,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             dispatchEventPostSyncOperation(event, Event::STATE_SIGNALED, true, false, false);
 
             const auto &hwInfo = this->device->getHwInfo();
+            const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
             NEO::PipeControlArgs args;
             args.dcFlushEnable = getDcFlushRequired(event->isSignalScope());
             NEO::MemorySynchronizationCommands<GfxFamily>::setPostSyncExtraProperties(args,
@@ -2113,7 +2114,7 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfiling(Event *event,
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
 
             uint64_t baseAddr = event->getGpuAddress(this->device);
-            NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), baseAddr, false, hwInfo);
+            NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), baseAddr, false, rootDeviceEnvironment);
             bool workloadPartition = isTimestampEventForMultiTile(event);
             appendWriteKernelTimestamp(event, beforeWalker, true, workloadPartition);
         }
@@ -2638,13 +2639,13 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
                                                                data,
                                                                comparator);
 
-    const auto &hwInfo = this->device->getHwInfo();
+    const auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
     auto allocType = srcAllocationStruct.alloc->getAllocationType();
     bool isSystemMemoryUsed =
         (allocType == NEO::AllocationType::BUFFER_HOST_MEMORY) ||
         (allocType == NEO::AllocationType::EXTERNAL_HOST_PTR);
     if (isSystemMemoryUsed) {
-        NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), gpuAddress, true, hwInfo);
+        NEO::MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(*commandContainer.getCommandStream(), gpuAddress, true, rootDeviceEnvironment);
     }
 
     appendSignalEventPostWalker(signalEvent);

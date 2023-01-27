@@ -2716,7 +2716,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenRelaxedOrderingSchedulerReq
     }
 
     if (directSubmission.miMemFenceRequired) {
-        expectedBaseSemaphoreSectionSize += MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(pDevice->getHardwareInfo());
+        expectedBaseSemaphoreSectionSize += MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(pDevice->getRootDeviceEnvironment());
     }
 
     EXPECT_EQ(expectedBaseSemaphoreSectionSize + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::totalSize, directSubmission.getSizeSemaphoreSection(true));

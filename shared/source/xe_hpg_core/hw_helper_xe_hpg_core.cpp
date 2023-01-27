@@ -80,12 +80,12 @@ bool GfxCoreHelperHw<Family>::isBankOverrideRequired(const HardwareInfo &hwInfo,
 }
 
 template <>
-size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(const HardwareInfo &hwInfo) {
+size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return EncodeSempahore<Family>::getSizeMiSemaphoreWait();
 }
 
 template <>
-void MemorySynchronizationCommands<Family>::addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo) {
+void MemorySynchronizationCommands<Family>::addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
 
     EncodeSempahore<Family>::addMiSemaphoreWaitCommand(commandStream, gpuAddress, EncodeSempahore<Family>::invalidHardwareTag, MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);

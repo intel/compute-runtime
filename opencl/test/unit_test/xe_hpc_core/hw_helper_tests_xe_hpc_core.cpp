@@ -633,9 +633,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenDontProgramGlobalFenceAsMiMe
 
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    auto hardwareInfo = *defaultHwInfo;
-
-    EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(hardwareInfo));
+    EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenProgramGlobalFenceAsMiMemFenceCommandInCommandStreamWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
@@ -644,9 +642,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenProgramGlobalFenceAsMiMemFen
 
     using MI_MEM_FENCE = typename FamilyType::MI_MEM_FENCE;
 
-    auto hardwareInfo = *defaultHwInfo;
-
-    EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(hardwareInfo));
+    EXPECT_EQ(sizeof(MI_MEM_FENCE), MemorySynchronizationCommands<FamilyType>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenGfxCoreHelperWhenGettingThreadsPerEUConfigsThenCorrectConfigsAreReturned) {

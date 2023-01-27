@@ -232,7 +232,7 @@ void MemorySynchronizationCommands<GfxFamily>::setBarrierWithPostSyncOperation(
     MemorySynchronizationCommands<GfxFamily>::setSingleBarrier(commandsBuffer, postSyncMode, gpuAddress, immediateData, args);
     commandsBuffer = ptrOffset(commandsBuffer, getSizeForSingleBarrier(args.tlbInvalidation));
 
-    MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, false, hwInfo);
+    MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, false, rootDeviceEnvironment);
 }
 
 template <typename GfxFamily>
@@ -332,27 +332,26 @@ template <typename GfxFamily>
 void MemorySynchronizationCommands<GfxFamily>::setBarrierWa(void *&commandsBuffer, uint64_t gpuAddress, const RootDeviceEnvironment &rootDeviceEnvironment) {
     using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
 
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(rootDeviceEnvironment)) {
         PIPE_CONTROL cmd = GfxFamily::cmdInitPipeControl;
         MemorySynchronizationCommands<GfxFamily>::setBarrierWaFlags(&cmd);
         *reinterpret_cast<PIPE_CONTROL *>(commandsBuffer) = cmd;
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(PIPE_CONTROL));
 
-        MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, false, hwInfo);
+        MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(commandsBuffer, gpuAddress, false, rootDeviceEnvironment);
     }
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo) {
-    size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(hwInfo);
+void MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    size_t requiredSize = MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
     void *commandBuffer = commandStream.getSpace(requiredSize);
-    setAdditionalSynchronization(commandBuffer, gpuAddress, acquire, hwInfo);
+    setAdditionalSynchronization(commandBuffer, gpuAddress, acquire, rootDeviceEnvironment);
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo) {
-    MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, gpuAddress, acquire, hwInfo);
+void MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, gpuAddress, acquire, rootDeviceEnvironment);
 }
 
 template <typename GfxFamily>
@@ -371,40 +370,39 @@ size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(bool tl
 
 template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment, bool tlbInvalidationRequired) {
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+
     size_t size = getSizeForSingleBarrier(tlbInvalidationRequired) +
                   getSizeForBarrierWa(rootDeviceEnvironment) +
-                  getSizeForSingleAdditionalSynchronization(hwInfo);
+                  getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
     return size;
 }
 
 template <typename GfxFamily>
 size_t MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWa(const RootDeviceEnvironment &rootDeviceEnvironment) {
     size_t size = 0;
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     if (MemorySynchronizationCommands<GfxFamily>::isBarrierWaRequired(rootDeviceEnvironment)) {
         size = getSizeForSingleBarrier(false) +
-               getSizeForSingleAdditionalSynchronization(hwInfo);
+               getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
     }
     return size;
 }
 
 template <typename GfxFamily>
-void MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo) {
+void MemorySynchronizationCommands<GfxFamily>::setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment) {
 }
 
 template <typename GfxFamily>
-inline size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(const HardwareInfo &hwInfo) {
+inline size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return 0u;
 }
 
 template <typename GfxFamily>
-inline size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(const HardwareInfo &hwInfo) {
-    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(hwInfo);
+inline size_t MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
 }
 
 template <typename GfxFamily>
-inline size_t MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo) {
+inline size_t MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return 0u;
 }
 

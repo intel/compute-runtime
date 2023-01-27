@@ -448,7 +448,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
                                      NEO::EncodeMath<FamilyType>::streamCommandSize + sizeof(MI_STORE_REGISTER_MEM));
 
     size_t postBarrierSynchronization = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false) +
-                                        NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(device->getHwInfo());
+                                        NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(device->getNEODevice()->getRootDeviceEnvironment());
     size_t stopRegisters = timestampRegisters + postBarrierSynchronization;
 
     auto useSizeBefore = cmdListStream->getUsed();

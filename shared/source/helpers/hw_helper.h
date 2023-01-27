@@ -429,9 +429,9 @@ struct MemorySynchronizationCommands {
 
     static void setBarrierWaFlags(void *barrierCmd);
 
-    static void addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo);
-    static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo);
-    static void setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const HardwareInfo &hwInfo);
+    static void addAdditionalSynchronizationForDirectSubmission(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void addAdditionalSynchronization(LinearStream &commandStream, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static void setAdditionalSynchronization(void *&commandsBuffer, uint64_t gpuAddress, bool acquire, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static bool getDcFlushEnable(bool isFlushPreferred, const RootDeviceEnvironment &rootDeviceEnvironment);
 
@@ -441,9 +441,9 @@ struct MemorySynchronizationCommands {
     static size_t getSizeForBarrierWithPostSyncOperation(const RootDeviceEnvironment &rootDeviceEnvironment, bool tlbInvalidationRequired);
     static size_t getSizeForBarrierWa(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForSingleBarrier(bool tlbInvalidationRequired);
-    static size_t getSizeForSingleAdditionalSynchronizationForDirectSubmission(const HardwareInfo &hwInfo);
-    static size_t getSizeForSingleAdditionalSynchronization(const HardwareInfo &hwInfo);
-    static size_t getSizeForAdditonalSynchronization(const HardwareInfo &hwInfo);
+    static size_t getSizeForSingleAdditionalSynchronizationForDirectSubmission(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getSizeForSingleAdditionalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getSizeForAdditonalSynchronization(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForFullCacheFlush();
 
     static bool isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);

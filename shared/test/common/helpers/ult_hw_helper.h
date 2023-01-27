@@ -15,9 +15,8 @@ namespace NEO {
 template <typename GfxFamily>
 struct UltMemorySynchronizationCommands : MemorySynchronizationCommands<GfxFamily> {
     static size_t getExpectedPipeControlCount(const RootDeviceEnvironment &rootDeviceEnvironment) {
-        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
         return (MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false) -
-                MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(hwInfo)) /
+                MemorySynchronizationCommands<GfxFamily>::getSizeForAdditonalSynchronization(rootDeviceEnvironment)) /
                sizeof(typename GfxFamily::PIPE_CONTROL);
     }
 };

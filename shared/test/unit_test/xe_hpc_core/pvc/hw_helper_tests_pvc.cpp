@@ -12,6 +12,7 @@
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -61,7 +62,7 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenRevisionEnumAndPlatformFamilyTypeThenPrope
 PVCTEST_F(GfxCoreHelperTestsPvc, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     using MI_SEMAPHORE_WAIT = typename XeHpcCoreFamily::MI_SEMAPHORE_WAIT;
 
-    EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(*defaultHwInfo));
+    EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
 }
 
 PVCTEST_F(GfxCoreHelperTestsPvc, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
@@ -69,7 +70,7 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenDebugMemorySynchronizationCommandsWhenGett
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
     using MI_SEMAPHORE_WAIT = typename XeHpcCoreFamily::MI_SEMAPHORE_WAIT;
 
-    EXPECT_EQ(2 * sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(*defaultHwInfo));
+    EXPECT_EQ(2 * sizeof(MI_SEMAPHORE_WAIT), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
 }
 
 PVCTEST_F(GfxCoreHelperTestsPvc, givenRevisionIdWhenGetComputeUnitsUsedForScratchThenReturnValidValue) {
@@ -115,7 +116,11 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenMemorySynchronizationCommandsWhenAddingSyn
     };
 
     DebugManagerStateRestore debugRestorer;
-    auto hardwareInfo = *defaultHwInfo;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    auto &hardwareInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
     hardwareInfo.featureTable.flags.ftrLocalMemory = true;
     uint8_t buffer[128] = {};
@@ -127,9 +132,9 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenMemorySynchronizationCommandsWhenAddingSyn
             testInput.programGlobalFenceAsMiMemFenceCommandInCommandStream);
 
         LinearStream commandStream(buffer, 128);
-        auto synchronizationSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(hardwareInfo);
+        auto synchronizationSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleAdditionalSynchronization(rootDeviceEnvironment);
 
-        MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, false, hardwareInfo);
+        MemorySynchronizationCommands<FamilyType>::addAdditionalSynchronization(commandStream, gpuAddress, false, rootDeviceEnvironment);
 
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(commandStream);

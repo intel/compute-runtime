@@ -565,7 +565,7 @@ inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchSemaphoreSection(
     }
 
     if (miMemFenceRequired) {
-        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronizationForDirectSubmission(ringCommandStream, this->gpuVaForAdditionalSynchronizationWA, true, *hwInfo);
+        MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronizationForDirectSubmission(ringCommandStream, this->gpuVaForAdditionalSynchronizationWA, true, rootDeviceEnvironment);
     }
 
     dispatchPrefetchMitigation();
@@ -583,7 +583,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSemaphoreSection
     }
 
     if (miMemFenceRequired) {
-        semaphoreSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(*hwInfo);
+        semaphoreSize += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleAdditionalSynchronizationForDirectSubmission(rootDeviceEnvironment);
     }
 
     return semaphoreSize;
