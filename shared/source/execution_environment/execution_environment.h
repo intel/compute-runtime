@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,10 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
         debuggingEnabled = true;
     }
     bool isDebuggingEnabled() { return debuggingEnabled; }
+    void setMetricsEnabled(bool value) {
+        this->metricsEnabled = value;
+    }
+    bool areMetricsEnabled() { return this->metricsEnabled; }
     DirectSubmissionController *initializeDirectSubmissionController();
 
     std::unique_ptr<MemoryManager> memoryManager;
@@ -51,6 +55,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void adjustCcsCountImpl(RootDeviceEnvironment *rootDeviceEnvironment) const;
     void configureNeoEnvironment();
     bool debuggingEnabled = false;
+    bool metricsEnabled = false;
     std::unordered_map<uint32_t, uint32_t> rootDeviceNumCcsMap;
 };
 } // namespace NEO

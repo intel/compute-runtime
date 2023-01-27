@@ -53,6 +53,8 @@ void DriverImp::initialize(ze_result_t *result) {
         }
     }
 
+    executionEnvironment->setMetricsEnabled(envVariables.metrics);
+
     executionEnvironment->incRefInternal();
     auto neoDevices = NEO::DeviceFactory::createDevices(*executionEnvironment);
     executionEnvironment->decRefInternal();

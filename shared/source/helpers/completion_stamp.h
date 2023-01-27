@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/task_count_helper.h"
 
 #include <cstdint>
@@ -14,7 +15,6 @@
 
 namespace NEO {
 using FlushStamp = uint64_t;
-enum class SubmissionStatus : uint32_t;
 struct CompletionStamp {
     static TaskCountType getTaskCountFromSubmissionStatusError(SubmissionStatus submissionStatus);
 

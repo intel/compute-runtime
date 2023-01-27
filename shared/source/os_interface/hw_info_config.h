@@ -136,6 +136,7 @@ class ProductHelper {
     virtual bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const = 0;
+    virtual bool isInitDeviceWithFirstSubmissionRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const = 0;
     virtual bool isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const = 0;
@@ -280,6 +281,7 @@ class ProductHelperHw : public ProductHelper {
     bool isTimestampWaitSupportedForEvents() const override;
     bool isTilePlacementResourceWaRequired(const HardwareInfo &hwInfo) const override;
     bool isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const override;
+    bool isInitDeviceWithFirstSubmissionRequired(const HardwareInfo &hwInfo) const override;
     bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const override;
     bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const override;
     bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const override;
