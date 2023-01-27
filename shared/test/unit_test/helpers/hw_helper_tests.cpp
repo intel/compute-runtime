@@ -1167,8 +1167,8 @@ HWTEST_F(GfxCoreHelperTest, whenGettingNumberOfCacheRegionsThenReturnZero) {
 
 HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, whenCheckingForSmallKernelPreferenceThenFalseIsReturned) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(gfxCoreHelper.preferSmallWorkgroupSizeForKernel(0u, this->pDevice->getHardwareInfo()));
-    EXPECT_FALSE(gfxCoreHelper.preferSmallWorkgroupSizeForKernel(20000u, this->pDevice->getHardwareInfo()));
+    EXPECT_FALSE(gfxCoreHelper.preferSmallWorkgroupSizeForKernel(0u, this->pDevice->getRootDeviceEnvironment()));
+    EXPECT_FALSE(gfxCoreHelper.preferSmallWorkgroupSizeForKernel(20000u, this->pDevice->getRootDeviceEnvironment()));
 }
 
 HWTEST_F(GfxCoreHelperTest, whenSetCompressedFlagThenProperFlagSet) {

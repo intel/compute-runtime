@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/source/helpers/preamble.h"
@@ -115,8 +116,9 @@ uint32_t PreambleHelper<GfxFamily>::getScratchSizeValueToProgramMediaVfeState(ui
 }
 
 template <typename GfxFamily>
-bool PreambleHelper<GfxFamily>::isSystolicModeConfigurable(const HardwareInfo &hwInfo) {
-    const auto &productHelper = *NEO::ProductHelper::get(hwInfo.platform.eProductFamily);
+bool PreambleHelper<GfxFamily>::isSystolicModeConfigurable(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     return productHelper.isSystolicModeConfigurable(hwInfo);
 }
 

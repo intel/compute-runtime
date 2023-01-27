@@ -99,7 +99,7 @@ uint64_t GfxCoreHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, dou
 }
 
 template <typename GfxFamily>
-inline bool GfxCoreHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_t size, const HardwareInfo &hwInfo) const {
+inline bool GfxCoreHelperHw<GfxFamily>::preferSmallWorkgroupSizeForKernel(const size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return false;
 }
 

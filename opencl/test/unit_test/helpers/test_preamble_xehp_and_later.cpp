@@ -552,15 +552,15 @@ HWTEST2_F(PipelineSelectTest, WhenProgramPipelineSelectThenProperMaskIsSet, IsWi
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
 
     MockExecutionEnvironment mockExecutionEnvironment{};
-
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
     PIPELINE_SELECT cmd = FamilyType::cmdInitPipelineSelect;
 
     LinearStream pipelineSelectStream(&cmd, sizeof(cmd));
 
     PipelineSelectArgs pipelineArgs = {};
-    pipelineArgs.systolicPipelineSelectSupport = PreambleHelper<FamilyType>::isSystolicModeConfigurable(*defaultHwInfo);
+    pipelineArgs.systolicPipelineSelectSupport = PreambleHelper<FamilyType>::isSystolicModeConfigurable(rootDeviceEnvironment);
 
-    PreambleHelper<FamilyType>::programPipelineSelect(&pipelineSelectStream, pipelineArgs, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    PreambleHelper<FamilyType>::programPipelineSelect(&pipelineSelectStream, pipelineArgs, rootDeviceEnvironment);
 
     auto expectedMask = pipelineSelectEnablePipelineSelectMaskBits;
     if constexpr (FamilyType::isUsingMediaSamplerDopClockGate) {

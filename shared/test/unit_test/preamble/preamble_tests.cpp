@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -259,7 +259,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenGetScratchSpaceAddressOffsetForVfe
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, PreambleTest, WhenIsSystolicModeConfigurableThenReturnFalse) {
-    auto result = PreambleHelper<FamilyType>::isSystolicModeConfigurable(*defaultHwInfo);
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto result = PreambleHelper<FamilyType>::isSystolicModeConfigurable(rootDeviceEnvironment);
     EXPECT_FALSE(result);
 }
 

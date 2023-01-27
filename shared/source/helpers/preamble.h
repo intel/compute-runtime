@@ -53,7 +53,7 @@ struct PreambleHelper {
     static void programKernelDebugging(LinearStream *pCommandStream);
     static void programSemaphoreDelay(LinearStream *pCommandStream);
     static uint32_t getL3Config(const HardwareInfo &hwInfo, bool useSLM);
-    static bool isSystolicModeConfigurable(const HardwareInfo &hwInfo);
+    static bool isSystolicModeConfigurable(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getAdditionalCommandsSize(const Device &device);
     static std::vector<int32_t> getSupportedThreadArbitrationPolicies();
     static size_t getVFECommandsSize();
