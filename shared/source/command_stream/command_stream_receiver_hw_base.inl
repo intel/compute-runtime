@@ -1349,12 +1349,8 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
     args.notifyEnable = isUsedNotifyEnableForPostSync();
     args.workloadPartitionOffset = isMultiTileOperationEnabled();
 
-    auto dispatchSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, args.tlbInvalidation) + this->getCmdSizeForPrologue();
-
-    auto &commandStream = getCS(dispatchSize);
+    auto &commandStream = getCS(MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(hwInfo, args.tlbInvalidation));
     auto commandStreamStart = commandStream.getUsed();
-
-    this->programEnginePrologue(commandStream);
 
     MemorySynchronizationCommands<GfxFamily>::addBarrierWithPostSyncOperation(commandStream,
                                                                               PostSyncMode::ImmediateData,
@@ -1364,7 +1360,6 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
                                                                               args);
 
     makeResident(*tagAllocation);
-    makeResident(*commandStream.getGraphicsAllocation());
 
     auto submissionStatus = this->flushSmallTask(commandStream, commandStreamStart);
     this->latestFlushedTaskCount = taskCount.load();
@@ -1602,7 +1597,11 @@ void CommandStreamReceiverHw<GfxFamily>::createKernelArgsBufferAllocation() {
 
 template <typename GfxFamily>
 SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSubmission() {
-    return flushTagUpdate();
+    auto lock = obtainUniqueOwnership();
+
+    auto &commandStream = getCS(EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferEndSize());
+    auto commandStreamStart = commandStream.getUsed();
+    return this->flushSmallTask(commandStream, commandStreamStart);
 }
 
 template <typename GfxFamily>

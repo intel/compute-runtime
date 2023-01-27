@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -80,9 +79,6 @@ ze_result_t MetricIpSamplingLinuxImp::startMeasurement(uint32_t &notifyEveryNRep
     }
 
     DeviceImp &deviceImp = static_cast<DeviceImp &>(device);
-
-    auto csr = deviceImp.getNEODevice()->getDefaultEngine().commandStreamReceiver;
-    csr->waitForTaskCountWithKmdNotifyFallback(csr->peekTaskCount(), 0, false, NEO::QueueThrottle::MEDIUM);
 
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t euStallFdParameter = ioctlHelper->getEuStallFdParameter();
