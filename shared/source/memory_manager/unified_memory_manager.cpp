@@ -68,12 +68,24 @@ void SVMAllocsManager::SvmAllocationCache::trim(SVMAllocsManager *svmAllocsManag
 }
 
 SvmAllocationData *SVMAllocsManager::MapBasedAllocationTracker::get(const void *ptr) {
-    SvmAllocationContainer::iterator iter, end;
-    SvmAllocationData *svmAllocData;
-    if ((ptr == nullptr) || (allocations.size() == 0)) {
+    if (allocations.size() == 0) {
         return nullptr;
     }
-    end = allocations.end();
+    if (!ptr) {
+        return nullptr;
+    }
+
+    SvmAllocationContainer::iterator iter;
+    const SvmAllocationContainer::iterator end = allocations.end();
+    SvmAllocationData *svmAllocData;
+    // try faster find lookup if pointer is aligned to page
+    if (isAligned<MemoryConstants::pageSize>(ptr)) {
+        iter = allocations.find(ptr);
+        if (iter != end) {
+            return &iter->second;
+        }
+    }
+    // do additional check with lower bound as we may deal with pointer offset
     iter = allocations.lower_bound(ptr);
     if (((iter != end) && (iter->first != ptr)) ||
         (iter == end)) {

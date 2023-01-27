@@ -120,6 +120,64 @@ TEST_F(SVMLocalMemoryAllocatorTest, whenMultipleFreeSVMAllocDeferredThenFreedSub
     ASSERT_EQ(svmManager->getSVMAlloc(ptr2), nullptr);
 }
 
+TEST_F(SVMLocalMemoryAllocatorTest, whenPointerWithOffsetPassedThenProperDataRetrieved) {
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = device;
+
+    auto ptr = svmManager->createUnifiedMemoryAllocation(4096, unifiedMemoryProperties);
+    EXPECT_NE(nullptr, ptr);
+
+    auto offsetedPointer = ptrOffset(ptr, 4u);
+    auto usmAllocationData = svmManager->getSVMAlloc(ptr);
+    ASSERT_NE(nullptr, usmAllocationData);
+    auto usmAllocationData2 = svmManager->getSVMAlloc(offsetedPointer);
+    ASSERT_NE(nullptr, usmAllocationData2);
+    EXPECT_EQ(usmAllocationData2, usmAllocationData);
+    svmManager->freeSVMAlloc(ptr, true);
+}
+
+TEST_F(SVMLocalMemoryAllocatorTest, whenMultiplePointerWithOffsetPassedThenProperDataRetrieved) {
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory(new UltDeviceFactory(1, 2));
+    auto device = deviceFactory->rootDevices[0];
+    auto svmManager = std::make_unique<MockSVMAllocsManager>(device->getMemoryManager(), false);
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
+    unifiedMemoryProperties.device = device;
+
+    auto ptr = svmManager->createUnifiedMemoryAllocation(2048, unifiedMemoryProperties);
+    EXPECT_NE(nullptr, ptr);
+    auto ptr2 = svmManager->createUnifiedMemoryAllocation(2048, unifiedMemoryProperties);
+    EXPECT_NE(nullptr, ptr);
+
+    void *unalignedPointer = reinterpret_cast<void *>(0x1234);
+    MockGraphicsAllocation mockAllocation(unalignedPointer, 512u);
+    SvmAllocationData allocationData(1u);
+
+    allocationData.memoryType = InternalMemoryType::HOST_UNIFIED_MEMORY;
+    allocationData.size = mockAllocation.getUnderlyingBufferSize();
+    allocationData.gpuAllocations.addAllocation(&mockAllocation);
+    svmManager->SVMAllocs.insert(allocationData);
+
+    auto offsetedPointer = ptrOffset(ptr, 2048);
+    auto usmAllocationData = svmManager->getSVMAlloc(offsetedPointer);
+    EXPECT_EQ(nullptr, usmAllocationData);
+    offsetedPointer = ptrOffset(ptr2, 2048);
+    usmAllocationData = svmManager->getSVMAlloc(offsetedPointer);
+    EXPECT_EQ(nullptr, usmAllocationData);
+    usmAllocationData = svmManager->getSVMAlloc(unalignedPointer);
+    EXPECT_NE(nullptr, usmAllocationData);
+
+    svmManager->SVMAllocs.remove(allocationData);
+    svmManager->freeSVMAlloc(ptr, true);
+    svmManager->freeSVMAlloc(ptr2, true);
+}
+
 TEST_F(SVMLocalMemoryAllocatorTest, givenKmdMigratedSharedAllocationWhenPrefetchMemoryIsCalledForMultipleActivePartitionsThenPrefetchAllocationToSubDevices) {
     DebugManagerStateRestore restore;
     DebugManager.flags.UseKmdMigration.set(1);

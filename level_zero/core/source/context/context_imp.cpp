@@ -637,7 +637,7 @@ ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *allo
 ze_result_t ContextImp::getMemAllocProperties(const void *ptr,
                                               ze_memory_allocation_properties_t *pMemAllocProperties,
                                               ze_device_handle_t *phDevice) {
-    auto alloc = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
+    const auto alloc = driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     if (nullptr == alloc) {
         pMemAllocProperties->type = ZE_MEMORY_TYPE_UNKNOWN;
         return ZE_RESULT_SUCCESS;
@@ -656,7 +656,9 @@ ze_result_t ContextImp::getMemAllocProperties(const void *ptr,
             *phDevice = device->toHandle();
         }
     }
-
+    if (pMemAllocProperties->pNext == nullptr) {
+        return ZE_RESULT_SUCCESS;
+    }
     return handleAllocationExtensions(alloc->gpuAllocations.getDefaultGraphicsAllocation(),
                                       pMemAllocProperties->type,
                                       pMemAllocProperties->pNext,
