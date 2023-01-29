@@ -67,15 +67,15 @@ NAMEDDEVICE(0xA780, AdlsHwConfig, "Intel(R) UHD Graphics 770")
 DEVICE(0xA781, AdlsHwConfig)
 NAMEDDEVICE(0xA782, AdlsHwConfig, "Intel(R) UHD Graphics 730")
 DEVICE(0xA783, AdlsHwConfig)
-DEVICE(0xA788, AdlsHwConfig)
+NAMEDDEVICE(0xA788, AdlsHwConfig, "Intel(R) UHD Graphics")
 DEVICE(0xA789, AdlsHwConfig)
-DEVICE(0xA78B, AdlsHwConfig)
+NAMEDDEVICE(0xA78B, AdlsHwConfig, "Intel(R) UHD Graphics")
 #endif
 
 #ifdef SUPPORT_ADLN
 NAMEDDEVICE(0x46D0, AdlnHwConfig, "Intel(R) UHD Graphics")
 NAMEDDEVICE(0x46D1, AdlnHwConfig, "Intel(R) UHD Graphics")
-DEVICE(0x46D2, AdlnHwConfig)
+NAMEDDEVICE(0x46D2, AdlnHwConfig, "Intel(R) UHD Graphics")
 #endif
 
 #endif
