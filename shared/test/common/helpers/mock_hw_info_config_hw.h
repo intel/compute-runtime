@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     uint64_t getDeviceMemoryPhysicalSizeInBytes(const OSInterface *osIface, uint32_t subDeviceIndex) const override;
     uint32_t getDeviceMemoryMaxClkRate(const HardwareInfo &hwInfo, const OSInterface *osIface, uint32_t subDeviceIndex) const override;
     uint32_t getL1CachePolicy(bool isDebuggerActive) const override;
+    bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const override;
 
     bool use128MbEdram = false;
     bool enableMidThreadPreemption = false;
@@ -28,6 +29,7 @@ struct MockProductHelperHw : NEO::ProductHelperHw<productFamily> {
     bool enableMidBatchPreemption = false;
     bool failOnConfigureHardwareCustom = false;
     bool isCooperativeEngineSupportedValue = true;
+    bool returnedIsUnlockingLockedPtrNecessary = false;
     uint32_t returnedStepping = 0;
     uint32_t returnedL1CachePolicy = 0;
     uint32_t returnedL1CachePolicyIfDebugger = 0;

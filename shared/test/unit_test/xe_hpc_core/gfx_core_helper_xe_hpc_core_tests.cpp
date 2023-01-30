@@ -81,8 +81,9 @@ XE_HPC_CORETEST_F(ProductHelperTestXeHpcCore, givenProductHelperWhenCheckTimesta
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnTrue) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
 }
 
 XE_HPC_CORETEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallGetAmountOfAllocationsToFillThenReturnTrue) {

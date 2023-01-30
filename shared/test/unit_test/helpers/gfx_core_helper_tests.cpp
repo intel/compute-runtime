@@ -1349,7 +1349,8 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenAskingForRelaxedOrderingSuppor
 
 HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse, IsNotXeHpgOrXeHpcCore) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+    const auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
 }
 
 HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallGetAmountOfAllocationsToFillThenReturnFalse, IsNotXeHpcCore) {
@@ -1360,11 +1361,12 @@ HWTEST2_F(GfxCoreHelperTest, givenGfxCoreHelperWhenCallGetAmountOfAllocationsToF
 HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallCopyThroughLockedPtrEnabledThenReturnCorrectValue) {
     DebugManagerStateRestore restorer;
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    const auto &productHelper = getHelper<ProductHelper>();
     DebugManager.flags.ExperimentalCopyThroughLock.set(0);
-    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+    EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
 
     DebugManager.flags.ExperimentalCopyThroughLock.set(1);
-    EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+    EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo, productHelper));
 }
 
 HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenFlagSetAndCallGetAmountOfAllocationsToFillThenReturnCorrectValue) {

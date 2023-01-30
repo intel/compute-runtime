@@ -15,6 +15,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
+#include "shared/test/common/helpers/mock_hw_info_config_hw.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -295,11 +296,27 @@ XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore,
     EXPECT_EQ(immediateValue, pipeControl->getImmediateData());
 }
 
-XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnFalse) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    if (gfxCoreHelper.isLocalMemoryEnabled(*defaultHwInfo)) {
-        EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
-    } else {
-        EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(*defaultHwInfo));
+XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenGfxCoreHelperWhenCallCopyThroughLockedPtrEnabledThenReturnCorrectValue) {
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    MockProductHelperHw<IGFX_UNKNOWN> mockProductHelper;
+    {
+        hardwareInfo.featureTable.flags.ftrLocalMemory = false;
+        mockProductHelper.returnedIsUnlockingLockedPtrNecessary = false;
+        EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(hardwareInfo, mockProductHelper));
+    }
+    {
+        hardwareInfo.featureTable.flags.ftrLocalMemory = true;
+        mockProductHelper.returnedIsUnlockingLockedPtrNecessary = false;
+        EXPECT_TRUE(gfxCoreHelper.copyThroughLockedPtrEnabled(hardwareInfo, mockProductHelper));
+    }
+    {
+        hardwareInfo.featureTable.flags.ftrLocalMemory = false;
+        mockProductHelper.returnedIsUnlockingLockedPtrNecessary = true;
+        EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(hardwareInfo, mockProductHelper));
+    }
+    {
+        hardwareInfo.featureTable.flags.ftrLocalMemory = true;
+        mockProductHelper.returnedIsUnlockingLockedPtrNecessary = true;
+        EXPECT_FALSE(gfxCoreHelper.copyThroughLockedPtrEnabled(hardwareInfo, mockProductHelper));
     }
 }

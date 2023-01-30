@@ -696,7 +696,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
     }
 
     auto &gfxCoreHelper = this->device->getGfxCoreHelper();
-    if (gfxCoreHelper.copyThroughLockedPtrEnabled(this->device->getHwInfo())) {
+    if (gfxCoreHelper.copyThroughLockedPtrEnabled(this->device->getHwInfo(), this->device->getProductHelper())) {
         return (!cpuMemCopyInfo.srcAllocData && isSuitableUSMDeviceAlloc(cpuMemCopyInfo.dstAllocData) && cpuMemCopyInfo.size <= h2DThreshold) ||
                (!cpuMemCopyInfo.dstAllocData && isSuitableUSMDeviceAlloc(cpuMemCopyInfo.srcAllocData) && cpuMemCopyInfo.size <= d2HThreshold);
     }

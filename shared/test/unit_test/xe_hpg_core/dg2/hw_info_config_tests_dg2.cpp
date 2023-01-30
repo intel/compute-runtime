@@ -635,6 +635,5 @@ DG2TEST_F(ProductHelperTestDg2, givenDebugFlagWhenCheckingIsResolveDependenciesB
 }
 
 DG2TEST_F(ProductHelperTestDg2, givenProductHelperWhenCheckingIsBufferPoolAllocatorSupportedThenCorrectValueIsReturned) {
-
     EXPECT_TRUE(productHelper->isBufferPoolAllocatorSupported());
 }

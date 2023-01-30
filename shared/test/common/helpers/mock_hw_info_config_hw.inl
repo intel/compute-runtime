@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -63,4 +63,9 @@ uint32_t MockProductHelperHw<gfxProduct>::getL1CachePolicy(bool isDebuggerActive
         return this->returnedL1CachePolicyIfDebugger;
     }
     return this->returnedL1CachePolicy;
+}
+
+template <>
+bool MockProductHelperHw<gfxProduct>::isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const {
+    return this->returnedIsUnlockingLockedPtrNecessary;
 }

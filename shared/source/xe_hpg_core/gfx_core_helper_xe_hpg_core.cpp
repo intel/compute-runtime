@@ -145,11 +145,12 @@ bool GfxCoreHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &hwInfo,
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo) const {
+bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const {
     if (DebugManager.flags.ExperimentalCopyThroughLock.get() != -1) {
         return DebugManager.flags.ExperimentalCopyThroughLock.get() == 1;
     }
-    return this->isLocalMemoryEnabled(hwInfo);
+
+    return this->isLocalMemoryEnabled(hwInfo) && !productHelper.isUnlockingLockedPtrNecessary(hwInfo);
 }
 
 template class GfxCoreHelperHw<Family>;
