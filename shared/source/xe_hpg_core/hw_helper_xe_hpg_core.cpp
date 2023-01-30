@@ -44,11 +44,11 @@ uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
 }
 
 template <>
-void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
+void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper) {
     if (!pHwInfo->featureTable.flags.ftrCCSNode) {
         pHwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     }
-    if (ProductHelper::get(pHwInfo->platform.eProductFamily)->isDefaultEngineTypeAdjustmentRequired(*pHwInfo)) {
+    if (productHelper.isDefaultEngineTypeAdjustmentRequired(*pHwInfo)) {
         pHwInfo->capabilityTable.defaultEngineType = aub_stream::ENGINE_RCS;
     }
 }
@@ -97,13 +97,14 @@ const StackVec<uint32_t, 6> GfxCoreHelperHw<Family>::getThreadsPerEUConfigs() co
 }
 
 template <>
-std::string GfxCoreHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
+std::string GfxCoreHelperHw<Family>::getExtensions(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     std::string extensions;
     extensions += "cl_intel_create_buffer_with_properties ";
     extensions += "cl_intel_dot_accumulate ";
     extensions += "cl_intel_subgroup_local_block_io ";
 
-    auto &productHelper = *ProductHelper::get(hwInfo.platform.eProductFamily);
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto &productHelper = rootDeviceEnvironment.template getHelper<ProductHelper>();
     if (productHelper.isMatrixMultiplyAccumulateSupported(hwInfo)) {
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
         extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";

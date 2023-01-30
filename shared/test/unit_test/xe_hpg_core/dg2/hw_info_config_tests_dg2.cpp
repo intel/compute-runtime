@@ -115,13 +115,14 @@ DG2TEST_F(ProductHelperTestDg2, whenAdjustingDefaultEngineTypeThenSelectEngineTy
     auto hwInfo = *defaultHwInfo;
     hwInfo.featureTable.flags.ftrCCSNode = true;
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
     for (uint8_t revision : {REVISION_A0, REVISION_A1, REVISION_B, REVISION_C}) {
         for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
-            hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(revision, hwInfo);
+            hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
             hwInfo.platform.usDeviceID = deviceId;
             hwInfo.capabilityTable.defaultEngineType = defaultHwInfo->capabilityTable.defaultEngineType;
-            gfxCoreHelper.adjustDefaultEngineType(&hwInfo);
+            gfxCoreHelper.adjustDefaultEngineType(&hwInfo, productHelper);
             if (DG2::isG10(hwInfo) && revision < REVISION_B) {
                 EXPECT_EQ(aub_stream::ENGINE_RCS, hwInfo.capabilityTable.defaultEngineType);
             } else {

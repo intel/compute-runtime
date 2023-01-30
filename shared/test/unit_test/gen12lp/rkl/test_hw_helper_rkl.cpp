@@ -21,7 +21,7 @@ RKLTEST_F(GfxCoreHelperTestRkl, givenRklSteppingA0WhenAdjustDefaultEngineTypeCal
     hardwareInfo.featureTable.flags.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_A0, hardwareInfo);
 
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
@@ -32,7 +32,7 @@ RKLTEST_F(GfxCoreHelperTestRkl, givenRklSteppingBWhenAdjustDefaultEngineTypeCall
     hardwareInfo.featureTable.flags.ftrCCSNode = true;
     hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hardwareInfo);
 
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 

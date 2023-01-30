@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -18,10 +19,14 @@ using namespace NEO;
 using Gen9SamplerTest = ::testing::Test;
 
 GEN9TEST_F(Gen9SamplerTest, WhenAppendingSamplerStateParamsThenStateIsNotChanged) {
-    typedef typename FamilyType::SAMPLER_STATE SAMPLER_STATE;
+    using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+
     auto stateWithoutAppendedParams = FamilyType::cmdInitSamplerState;
     auto stateWithAppendedParams = FamilyType::cmdInitSamplerState;
     EXPECT_TRUE(memcmp(&stateWithoutAppendedParams, &stateWithAppendedParams, sizeof(SAMPLER_STATE)) == 0);
-    ProductHelper::get(defaultHwInfo->platform.eProductFamily)->adjustSamplerState(&stateWithAppendedParams, *defaultHwInfo);
+    productHelper.adjustSamplerState(&stateWithAppendedParams, *defaultHwInfo);
     EXPECT_TRUE(memcmp(&stateWithoutAppendedParams, &stateWithAppendedParams, sizeof(SAMPLER_STATE)) == 0);
 }

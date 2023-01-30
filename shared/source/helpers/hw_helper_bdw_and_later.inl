@@ -11,7 +11,7 @@
 namespace NEO {
 
 template <typename GfxFamily>
-void GfxCoreHelperHw<GfxFamily>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
+void GfxCoreHelperHw<GfxFamily>::adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper) {
 }
 
 template <typename GfxFamily>
@@ -71,7 +71,7 @@ EngineGroupType GfxCoreHelperHw<GfxFamily>::getEngineGroupType(aub_stream::Engin
 }
 
 template <typename GfxFamily>
-std::string GfxCoreHelperHw<GfxFamily>::getExtensions(const HardwareInfo &hwInfo) const {
+std::string GfxCoreHelperHw<GfxFamily>::getExtensions(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return "";
 }
 

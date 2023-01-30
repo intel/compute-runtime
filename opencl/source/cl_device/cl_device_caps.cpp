@@ -68,8 +68,9 @@ void ClDevice::setupFp64Flags() {
 
 void ClDevice::initializeCaps() {
     auto &hwInfo = getHardwareInfo();
-    auto &productHelper = getRootDeviceEnvironment().getHelper<ProductHelper>();
-    auto &gfxCoreHelper = getRootDeviceEnvironment().getHelper<GfxCoreHelper>();
+    auto &rootDeviceEnvironment = getRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto &sharedDeviceInfo = getSharedDeviceInfo();
     deviceExtensions.clear();
     deviceExtensions.append(deviceExtensionsList);
@@ -227,7 +228,7 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_khr_pci_bus_info ";
     }
 
-    deviceExtensions += gfxCoreHelper.getExtensions(hwInfo);
+    deviceExtensions += gfxCoreHelper.getExtensions(rootDeviceEnvironment);
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
 
     std::vector<std::string> exposedBuiltinKernelsVector;
@@ -327,7 +328,7 @@ void ClDevice::initializeCaps() {
     deviceInfo.image3DMaxHeight = gfxCoreHelper.getMax3dImageWidthOrHeight();
 
     // cl_khr_image2d_from_buffer
-    deviceInfo.imagePitchAlignment = gfxCoreHelper.getPitchAlignmentForImage(this->getRootDeviceEnvironment());
+    deviceInfo.imagePitchAlignment = gfxCoreHelper.getPitchAlignmentForImage(rootDeviceEnvironment);
     deviceInfo.imageBaseAddressAlignment = 4;
     deviceInfo.queueOnHostProperties = CL_QUEUE_PROFILING_ENABLE | CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE;
 
@@ -379,7 +380,7 @@ void ClDevice::initializeCaps() {
         getQueueFamilyName(properties.name, engineGroup.engineGroupType);
         deviceInfo.queueFamilyProperties.push_back(properties);
     }
-    auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
     const std::vector<uint32_t> &supportedThreadArbitrationPolicies = clGfxCoreHelper.getSupportedThreadArbitrationPolicies();
     deviceInfo.supportedThreadArbitrationPolicies.resize(supportedThreadArbitrationPolicies.size());
     for (size_t policy = 0u; policy < supportedThreadArbitrationPolicies.size(); policy++) {

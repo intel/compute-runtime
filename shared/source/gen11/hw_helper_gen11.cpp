@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDevice
 }
 
 template <>
-std::string GfxCoreHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
+std::string GfxCoreHelperHw<Family>::getExtensions(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return "cl_intel_subgroup_local_block_io ";
 }
 

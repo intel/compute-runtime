@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -22,14 +23,16 @@ using namespace NEO;
 using GfxCoreHelperTestMtl = GfxCoreHelperTest;
 
 MTLTEST_F(GfxCoreHelperTestMtl, givenVariousMtlReleasesWhenGetExtensionsIsCalledThenMatrixMultiplyAccumulateExtensionsAreCorrectlyReported) {
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto hwInfo = *defaultHwInfo;
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     unsigned int gmdReleases[] = {70, 71, 72, 73};
     hwInfo.ipVersion.architecture = 12;
 
     for (auto gmdRelease : gmdReleases) {
         hwInfo.ipVersion.release = gmdRelease;
-        auto extensions = gfxCoreHelper.getExtensions(hwInfo);
+        auto extensions = gfxCoreHelper.getExtensions(rootDeviceEnvironment);
 
         EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
         EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));

@@ -141,10 +141,10 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     outHwInfo->capabilityTable.maxRenderFrequency = maxGpuFreq;
     outHwInfo->capabilityTable.ftrSvm = featureTable->flags.ftrSVM;
 
-    GfxCoreHelper &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     outHwInfo->capabilityTable.ftrSupportsCoherency = false;
 
-    gfxCoreHelper.adjustDefaultEngineType(outHwInfo);
+    gfxCoreHelper.adjustDefaultEngineType(outHwInfo, *this);
     outHwInfo->capabilityTable.defaultEngineType = getChosenEngineType(*outHwInfo);
 
     drm->checkQueueSliceSupport();

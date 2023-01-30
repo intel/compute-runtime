@@ -28,7 +28,9 @@ GEN11TEST_F(GfxCoreHelperTestGen11, WhenGettingPitchAlignmentForImageThenCorrect
 GEN11TEST_F(GfxCoreHelperTestGen11, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
+    auto &productHelper = getHelper<ProductHelper>();
+
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper);
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
 }
 

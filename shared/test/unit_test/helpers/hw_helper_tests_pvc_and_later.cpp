@@ -41,7 +41,9 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, givenRenderEngineWhenRemapCalledThenUseC
     hardwareInfo.featureTable.flags.ftrCCSNode = false;
 
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
+    auto &productHelper = getHelper<ProductHelper>();
+
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper);
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
 
     EXPECT_EQ(aub_stream::EngineType::ENGINE_CCCS, EngineHelpers::remapEngineTypeToHwSpecific(aub_stream::EngineType::ENGINE_RCS, rootDeviceEnvironment));

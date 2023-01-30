@@ -636,7 +636,8 @@ struct EngineInstancedDeviceExecuteTests : public ::testing::Test {
         hwInfo->featureTable.flags.ftrCCSNode = (numCcs > 0);
 
         auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<NEO::GfxCoreHelper>();
-        gfxCoreHelper.adjustDefaultEngineType(hwInfo);
+        auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
+        gfxCoreHelper.adjustDefaultEngineType(hwInfo, productHelper);
 
         if (!multiCcsDevice(rootDeviceEnvironment, numCcs)) {
             return false;

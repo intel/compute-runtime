@@ -31,7 +31,8 @@ GEN8TEST_F(GfxCoreHelperTestGen8, WhenGettingPitchAlignmentForImageThenCorrectVa
 GEN8TEST_F(GfxCoreHelperTestGen8, WhenAdjustingDefaultEngineTypeThenEngineTypeIsSet) {
     auto engineType = hardwareInfo.capabilityTable.defaultEngineType;
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
+    auto &productHelper = getHelper<ProductHelper>();
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper);
     EXPECT_EQ(engineType, hardwareInfo.capabilityTable.defaultEngineType);
 }
 
@@ -59,5 +60,6 @@ GEN8TEST_F(MemorySynchronizatiopCommandsTestsGen8, WhenProgrammingCacheFlushThen
 
 using ProductHelperTestGen8 = Test<DeviceFixture>;
 GEN8TEST_F(ProductHelperTestGen8, givenHwInfosWhenIsMatrixMultiplyAccumulateSupportedThenReturnFalse) {
-    EXPECT_FALSE(ProductHelper::get(productFamily)->isMatrixMultiplyAccumulateSupported(*defaultHwInfo));
+    auto &productHelper = getHelper<ProductHelper>();
+    EXPECT_FALSE(productHelper.isMatrixMultiplyAccumulateSupported(*defaultHwInfo));
 }

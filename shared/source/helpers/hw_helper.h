@@ -55,7 +55,7 @@ class GfxCoreHelper {
     virtual uint32_t getComputeUnitsUsedForScratch(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t getMaxNumSamplers() const = 0;
-    virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo) = 0;
+    virtual void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper) = 0;
     virtual SipKernelType getSipKernelType(bool debuggingActive) const = 0;
     virtual bool isLocalMemoryEnabled(const HardwareInfo &hwInfo) const = 0;
     virtual bool is1MbAlignmentSupported(const HardwareInfo &hwInfo, bool isCompressionEnabled) const = 0;
@@ -89,7 +89,7 @@ class GfxCoreHelper {
     virtual const StackVec<size_t, 3> getDeviceSubGroupSizes() const = 0;
     virtual const StackVec<uint32_t, 6> getThreadsPerEUConfigs() const = 0;
     virtual bool getEnableLocalMemory(const HardwareInfo &hwInfo) const = 0;
-    virtual std::string getExtensions(const HardwareInfo &hwInfo) const = 0;
+    virtual std::string getExtensions(const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     static uint32_t getMaxThreadsForVfe(const HardwareInfo &hwInfo);
     virtual uint32_t getMetricsLibraryGenId() const = 0;
     virtual uint32_t getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const = 0;
@@ -219,7 +219,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t getMaxNumSamplers() const override;
 
-    void adjustDefaultEngineType(HardwareInfo *pHwInfo) override;
+    void adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper) override;
 
     SipKernelType getSipKernelType(bool debuggingActive) const override;
 
@@ -264,7 +264,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     bool getEnableLocalMemory(const HardwareInfo &hwInfo) const override;
 
-    std::string getExtensions(const HardwareInfo &hwInfo) const override;
+    std::string getExtensions(const RootDeviceEnvironment &rootDeviceEnvironment) const override;
 
     uint32_t getMetricsLibraryGenId() const override;
 

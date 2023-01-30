@@ -89,7 +89,9 @@ GEN12LPTEST_F(GfxCoreHelperTestGen12Lp, WhenAdjustingDefaultEngineTypeThenRcsIsS
     hardwareInfo.featureTable.flags.ftrCCSNode = false;
 
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo);
+    auto &productHelper = getHelper<ProductHelper>();
+
+    gfxCoreHelper.adjustDefaultEngineType(&hardwareInfo, productHelper);
     EXPECT_EQ(aub_stream::ENGINE_RCS, hardwareInfo.capabilityTable.defaultEngineType);
 }
 

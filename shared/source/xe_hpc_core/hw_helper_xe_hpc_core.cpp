@@ -110,7 +110,7 @@ EngineGroupType GfxCoreHelperHw<Family>::getEngineGroupType(aub_stream::EngineTy
 }
 
 template <>
-void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo) {
+void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo, const ProductHelper &productHelper) {
     if (!pHwInfo->featureTable.flags.ftrCCSNode) {
         pHwInfo->capabilityTable.defaultEngineType = aub_stream::EngineType::ENGINE_CCCS;
     }
@@ -274,7 +274,7 @@ uint32_t GfxCoreHelperHw<Family>::getNumCacheRegions() const {
 }
 
 template <>
-std::string GfxCoreHelperHw<Family>::getExtensions(const HardwareInfo &hwInfo) const {
+std::string GfxCoreHelperHw<Family>::getExtensions(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     std::string extensions;
 
     extensions += "cl_intel_create_buffer_with_properties ";
