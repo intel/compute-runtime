@@ -188,7 +188,7 @@ bool MetricIpSamplingLinuxImp::isNReportsAvailable() {
 bool MetricIpSamplingLinuxImp::isDependencyAvailable() {
 
     const auto &hardwareInfo = device.getNEODevice()->getHardwareInfo();
-    const auto &productHelper = *NEO::ProductHelper::get(hardwareInfo.platform.eProductFamily);
+    const auto &productHelper = device.getNEODevice()->getProductHelper();
 
     if (!productHelper.isIpSamplingSupported(hardwareInfo)) {
         return false;
