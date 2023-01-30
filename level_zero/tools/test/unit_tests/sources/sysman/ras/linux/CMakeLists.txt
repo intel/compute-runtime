@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -10,9 +10,7 @@ set(L0_TESTS_TOOLS_SYSMAN_RAS_LINUX
 
 if(NEO_ENABLE_i915_PRELIM_DETECTION)
   list(APPEND L0_TESTS_TOOLS_SYSMAN_RAS_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_ras_fabric_prelim.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/test_zes_ras_prelim.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/mock_fs_ras_fabric_prelim.h
        ${CMAKE_CURRENT_SOURCE_DIR}/mock_fs_ras_prelim.h
   )
 else()

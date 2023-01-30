@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,7 @@ class FabricPort : _zes_fabric_port_handle_t {
     virtual ze_result_t fabricPortSetConfig(const zes_fabric_port_config_t *pConfig) = 0;
     virtual ze_result_t fabricPortGetState(zes_fabric_port_state_t *pState) = 0;
     virtual ze_result_t fabricPortGetThroughput(zes_fabric_port_throughput_t *pThroughput) = 0;
+    virtual ze_result_t fabricPortGetErrorCounters(zes_fabric_port_error_counters_t *pErrors) = 0;
 
     inline zes_fabric_port_handle_t toZesHandle() { return this; }
 

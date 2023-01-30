@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -13,7 +13,6 @@ if(NEO_ENABLE_i915_PRELIM_DETECTION)
        ${CMAKE_CURRENT_SOURCE_DIR}/os_ras_imp_prelim.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/os_ras_imp_prelim.h
        ${CMAKE_CURRENT_SOURCE_DIR}/os_ras_imp_gt.cpp
-       ${CMAKE_CURRENT_SOURCE_DIR}/os_ras_imp_fabric.cpp
        ${CMAKE_CURRENT_SOURCE_DIR}/os_ras_imp_hbm.cpp
   )
 else()

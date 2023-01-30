@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,6 +51,10 @@ ze_result_t FabricPortImp::fabricPortSetConfig(const zes_fabric_port_config_t *p
 
 ze_result_t FabricPortImp::fabricPortGetState(zes_fabric_port_state_t *pState) {
     return pOsFabricPort->getState(pState);
+}
+
+ze_result_t FabricPortImp::fabricPortGetErrorCounters(zes_fabric_port_error_counters_t *pErrors) {
+    return pOsFabricPort->getErrorCounters(pErrors);
 }
 
 ze_result_t FabricPortImp::fabricPortGetThroughput(zes_fabric_port_throughput_t *pThroughput) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,10 +18,7 @@ void OsRas::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType,
     constexpr auto maxErrorTypes = 2;
     LinuxRasSourceGt::getSupportedRasErrorTypes(errorType, pOsSysman, deviceHandle);
     if (errorType.size() < maxErrorTypes) {
-        LinuxRasSourceFabric::getSupportedRasErrorTypes(errorType, pOsSysman, deviceHandle);
-        if (errorType.size() < maxErrorTypes) {
-            LinuxRasSourceHbm::getSupportedRasErrorTypes(errorType, pOsSysman, deviceHandle);
-        }
+        LinuxRasSourceHbm::getSupportedRasErrorTypes(errorType, pOsSysman, deviceHandle);
     }
 }
 
@@ -72,7 +69,6 @@ ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) 
 
 void LinuxRasImp::initSources() {
     rasSources.push_back(std::make_unique<L0::LinuxRasSourceGt>(pLinuxSysmanImp, osRasErrorType, isSubdevice, subdeviceId));
-    rasSources.push_back(std::make_unique<L0::LinuxRasSourceFabric>(pLinuxSysmanImp, osRasErrorType, subdeviceId));
     rasSources.push_back(std::make_unique<L0::LinuxRasSourceHbm>(pLinuxSysmanImp, osRasErrorType, subdeviceId));
 }
 

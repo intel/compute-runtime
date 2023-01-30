@@ -760,7 +760,7 @@ ze_result_t zesOverclockSetVFPointValues(
 ze_result_t zesFabricPortGetFabricErrorCounters(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_error_counters_t *pErrors) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+    return L0::FabricPort::fromHandle(hPort)->fabricPortGetErrorCounters(pErrors);
 }
 
 ze_result_t zesInit(

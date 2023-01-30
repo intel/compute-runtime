@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,10 @@ ze_result_t WddmFabricPortImp::getState(zes_fabric_port_state_t *pState) {
 }
 
 ze_result_t WddmFabricPortImp::getThroughput(zes_fabric_port_throughput_t *pThroughput) {
+    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+}
+
+ze_result_t WddmFabricPortImp::getErrorCounters(zes_fabric_port_error_counters_t *pErrors) {
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 

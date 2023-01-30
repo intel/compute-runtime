@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -88,22 +88,6 @@ class LinuxRasSourceGt : public LinuxRasSources {
     uint64_t totalEventCount = 0;
     bool isSubdevice = false;
     uint32_t subdeviceId = 0;
-};
-
-class LinuxRasSourceFabric : public LinuxRasSources {
-  public:
-    static ze_result_t getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle);
-    LinuxRasSourceFabric(OsSysman *pOsSysman, zes_ras_error_type_t type, uint32_t subDeviceId);
-    ~LinuxRasSourceFabric() override = default;
-
-    ze_result_t osRasGetState(zes_ras_state_t &state, ze_bool_t clear) override;
-
-  private:
-    LinuxSysmanImp *pLinuxSysmanImp = nullptr;
-    std::vector<std::string> errorNodes = {};
-    uint64_t baseComputeErrorCount = 0;
-    uint64_t getComputeErrorCount();
-    static void getNodes(std::vector<std::string> &nodes, uint32_t subdeviceId, LinuxSysmanImp *pSysmanImp, const zes_ras_error_type_t &type);
 };
 
 class LinuxRasSourceHbm : public LinuxRasSources {

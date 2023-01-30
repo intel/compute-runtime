@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,6 +35,7 @@ class FabricPortImp : public FabricPort, NEO::NonCopyableOrMovableClass {
     ze_result_t fabricPortSetConfig(const zes_fabric_port_config_t *pConfig) override;
     ze_result_t fabricPortGetState(zes_fabric_port_state_t *pState) override;
     ze_result_t fabricPortGetThroughput(zes_fabric_port_throughput_t *pThroughput) override;
+    ze_result_t fabricPortGetErrorCounters(zes_fabric_port_error_counters_t *pErrors) override;
 
     FabricPortImp() = delete;
     FabricPortImp(FabricDevice *pFabricDevice, uint32_t portNum);
