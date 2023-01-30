@@ -363,12 +363,7 @@ int32_t GfxCoreHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const {
-    return ProductHelper::get(hwInfo.platform.eProductFamily)->isAssignEngineRoundRobinSupported();
-}
-
-template <>
-bool GfxCoreHelperHw<Family>::isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const {
+bool GfxCoreHelperHw<Family>::isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const {
     constexpr uint64_t tile1Bitfield = 0b10;
 
     bool affectedEngine = (deviceBitfield.to_ulong() == tile1Bitfield) &&
@@ -376,7 +371,9 @@ bool GfxCoreHelperHw<Family>::isSubDeviceEngineSupported(const HardwareInfo &hwI
                            aub_stream::ENGINE_BCS1 == engineType ||
                            aub_stream::ENGINE_BCS3 == engineType);
 
-    return affectedEngine ? !ProductHelper::get(hwInfo.platform.eProductFamily)->isBcsReportWaRequired(hwInfo) : true;
+    auto &productHelper = rootDeviceEnvironment.template getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    return affectedEngine ? !productHelper.isBcsReportWaRequired(hwInfo) : true;
 }
 
 template <>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ template <>
 bool ImplicitScalingDispatch<Family>::pipeControlStallRequired = true;
 
 template <>
-bool ImplicitScalingDispatch<Family>::platformSupportsImplicitScaling(const HardwareInfo &hwInfo) {
+bool ImplicitScalingDispatch<Family>::platformSupportsImplicitScaling(const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (ApiSpecificConfig::getApiType() == ApiSpecificConfig::ApiType::OCL) {
         return true;
     } else {

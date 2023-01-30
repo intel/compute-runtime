@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 
 #include "gtest/gtest.h"
 
@@ -131,7 +132,7 @@ struct HardwareParse {
 
     template <typename FamilyType>
     int getNumberOfPipelineSelectsThatEnablePipelineSelect() {
-        typedef typename FamilyType::PIPELINE_SELECT PIPELINE_SELECT;
+        using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
         int numberOfGpgpuSelects = 0;
         int numberOf3dSelects = 0;
         auto itorCmd = find<PIPELINE_SELECT *>(cmdList.begin(), cmdList.end());
@@ -147,7 +148,8 @@ struct HardwareParse {
             }
             itorCmd = find<PIPELINE_SELECT *>(++itorCmd, cmdList.end());
         }
-        const auto &productHelper = *ProductHelper::get(defaultHwInfo->platform.eProductFamily);
+        MockExecutionEnvironment mockExecutionEnvironment{};
+        const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
         if (productHelper.is3DPipelineSelectWARequired()) {
             auto maximalNumberOf3dSelectsRequired = 2;
             EXPECT_LE(numberOf3dSelects, maximalNumberOf3dSelectsRequired);

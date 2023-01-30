@@ -182,11 +182,6 @@ bool ProductHelperHw<gfxProduct>::isImplicitScalingSupported(const HardwareInfo 
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isAssignEngineRoundRobinSupported() const {
-    return false;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const {
     return false;
 }

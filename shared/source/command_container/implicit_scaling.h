@@ -83,7 +83,7 @@ struct ImplicitScalingDispatch {
 
     static uint32_t getPostSyncOffset();
 
-    static bool platformSupportsImplicitScaling(const HardwareInfo &hwInfo);
+    static bool platformSupportsImplicitScaling(const RootDeviceEnvironment &rootDeviceEnvironment);
 
   private:
     static bool pipeControlStallRequired;

@@ -239,7 +239,7 @@ inline uint32_t ImplicitScalingDispatch<GfxFamily>::getPostSyncOffset() {
 }
 
 template <typename GfxFamily>
-inline bool ImplicitScalingDispatch<GfxFamily>::platformSupportsImplicitScaling(const HardwareInfo &hwInfo) {
+inline bool ImplicitScalingDispatch<GfxFamily>::platformSupportsImplicitScaling(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return false;
 }
 

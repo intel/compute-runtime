@@ -100,9 +100,10 @@ CommandQueue::CommandQueue(Context *context, ClDevice *device, const cl_queue_pr
         auto &hwInfo = device->getHardwareInfo();
         auto &gfxCoreHelper = device->getGfxCoreHelper();
         auto &productHelper = device->getProductHelper();
+        auto &rootDeviceEnvironment = device->getRootDeviceEnvironment();
 
         bcsAllowed = productHelper.isBlitterFullySupported(hwInfo) &&
-                     gfxCoreHelper.isSubDeviceEngineSupported(hwInfo, device->getDeviceBitfield(), aub_stream::EngineType::ENGINE_BCS);
+                     gfxCoreHelper.isSubDeviceEngineSupported(rootDeviceEnvironment, device->getDeviceBitfield(), aub_stream::EngineType::ENGINE_BCS);
 
         if (bcsAllowed || device->getDefaultEngine().commandStreamReceiver->peekTimestampPacketWriteEnabled()) {
             timestampPacketContainer = std::make_unique<TimestampPacketContainer>();
@@ -165,10 +166,8 @@ void CommandQueue::initializeGpgpu() const {
         static std::mutex mutex;
         std::lock_guard<std::mutex> lock(mutex);
         if (gpgpuEngine == nullptr) {
-            auto &hwInfo = device->getDevice().getHardwareInfo();
-            auto &gfxCoreHelper = device->getGfxCoreHelper();
-
-            auto engineRoundRobinAvailable = gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo) &&
+            auto &productHelper = device->getProductHelper();
+            auto engineRoundRobinAvailable = productHelper.isAssignEngineRoundRobinSupported() &&
                                              this->isAssignEngineRoundRobinEnabled();
 
             if (DebugManager.flags.EnableCmdQRoundRobindEngineAssign.get() != -1) {

@@ -113,7 +113,6 @@ class GfxCoreHelper {
     virtual bool useOnlyGlobalTimestamps() const = 0;
     virtual bool useSystemMemoryPlacementForISA(const HardwareInfo &hwInfo) const = 0;
     virtual bool packedFormatsSupported() const = 0;
-    virtual bool isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isRcsAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
@@ -125,7 +124,7 @@ class GfxCoreHelper {
     virtual bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const = 0;
     virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const = 0;
     virtual uint32_t getNumCacheRegions() const = 0;
-    virtual bool isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const = 0;
+    virtual bool isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const = 0;
     virtual uint32_t getPlanarYuvMaxHeight() const = 0;
     virtual size_t getPreemptionAllocationAlignment() const = 0;
     virtual std::unique_ptr<TagAllocatorBase> createTimestampPacketAllocator(const RootDeviceIndicesContainer &rootDeviceIndices, MemoryManager *memoryManager,
@@ -157,7 +156,7 @@ class GfxCoreHelper {
     virtual bool disableL3CacheForDebug(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
     virtual bool isRevisionSpecificBinaryBuiltinRequired() const = 0;
     virtual bool forceNonGpuCoherencyWA(bool requiresCoherency) const = 0;
-    virtual bool platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const = 0;
+    virtual bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual size_t getBatchBufferEndSize() const = 0;
     virtual const void *getBatchBufferEndReference() const = 0;
     virtual bool isPlatformFlushTaskEnabled(const NEO::ProductHelper &productHelper) const = 0;
@@ -332,7 +331,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t getNumCacheRegions() const override;
 
-    bool isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const override;
+    bool isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const override;
 
     uint32_t getPlanarYuvMaxHeight() const override;
 
@@ -353,9 +352,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     void applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const override;
 
     bool unTypedDataPortCacheFlushRequired() const override;
-
-    bool isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const override;
-
     bool isEngineTypeRemappingToHwSpecificRequired() const override;
 
     bool isSipKernelAsHexadecimalArrayPreferred() const override;
@@ -374,7 +370,7 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool disableL3CacheForDebug(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const override;
     bool isRevisionSpecificBinaryBuiltinRequired() const override;
     bool forceNonGpuCoherencyWA(bool requiresCoherency) const override;
-    bool platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const override;
+    bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     size_t getBatchBufferEndSize() const override;
     const void *getBatchBufferEndReference() const override;
     bool isPlatformFlushTaskEnabled(const NEO::ProductHelper &productHelper) const override;

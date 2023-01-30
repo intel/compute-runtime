@@ -119,7 +119,7 @@ struct EncodeDispatchKernel {
                                  bool inlineDataProgrammingRequired,
                                  bool isIndirect,
                                  uint32_t requiredWorkGroupOrder,
-                                 const HardwareInfo &hwInfo);
+                                 const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void programBarrierEnable(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, uint32_t value, const HardwareInfo &hwInfo);
 
@@ -131,7 +131,7 @@ struct EncodeDispatchKernel {
 
     static void setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush);
 
-    static void adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo);
+    static void adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void adjustNumberOfThreadsInThreadGroup(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const uint32_t simd, uint32_t &threadsPerThreadGroup);
 

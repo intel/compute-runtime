@@ -58,8 +58,9 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     auto sizePerThreadDataForWholeGroup = args.dispatchInterface->getPerThreadDataSizeForWholeThreadGroup();
     auto pImplicitArgs = args.dispatchInterface->getImplicitArgs();
 
-    const HardwareInfo &hwInfo = args.device->getHardwareInfo();
+    auto &hwInfo = args.device->getHardwareInfo();
     auto &gfxCoreHelper = args.device->getGfxCoreHelper();
+    auto &rootDeviceEnvironment = args.device->getRootDeviceEnvironment();
 
     LinearStream *listCmdBufferStream = container.getCommandStream();
 
@@ -239,7 +240,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                    false,
                                                    args.isIndirect,
                                                    args.dispatchInterface->getRequiredWorkgroupOrder(),
-                                                   hwInfo);
+                                                   rootDeviceEnvironment);
 
     cmd.setPredicateEnable(args.isPredicate);
 
@@ -331,7 +332,7 @@ void EncodeDispatchKernel<Family>::encodeThreadData(WALKER_TYPE &walkerCmd,
                                                     bool inlineDataProgrammingRequired,
                                                     bool isIndirect,
                                                     uint32_t requiredWorkGroupOrder,
-                                                    const HardwareInfo &hwInfo) {
+                                                    const RootDeviceEnvironment &rootDeviceEnvironment) {
 
     if (isIndirect) {
         walkerCmd.setIndirectParameterEnable(true);
@@ -556,7 +557,7 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::setupPostSyncMocs(WALKER_TYPE &walkerCmd, const RootDeviceEnvironment &rootDeviceEnvironment, bool dcFlush) {}
 
 template <typename Family>
-void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const HardwareInfo &hwInfo) {}
+void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {}
 
 template <typename Family>
 uint32_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh() {

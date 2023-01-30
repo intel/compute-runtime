@@ -725,7 +725,8 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, WhenCheckingSipWAThenFalseIsRetur
 XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportIsCheckedThenReturnFalse) {
     DebugManagerStateRestore restore;
 
-    HardwareInfo hwInfo = *defaultHwInfo;
+    auto &rootDeviceEnvironment = this->getRootDeviceEnvironment();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto &productHelper = getHelper<ProductHelper>();
 
@@ -741,7 +742,7 @@ XE_HPC_CORETEST_F(GfxCoreHelperTestsXeHpcCore, givenBdA0WhenBcsSubDeviceSupportI
                 for (uint32_t engineType = 0; engineType < static_cast<uint32_t>(aub_stream::EngineType::NUM_ENGINES); engineType++) {
                     auto engineTypeT = static_cast<aub_stream::EngineType>(engineType);
 
-                    bool result = gfxCoreHelper.isSubDeviceEngineSupported(hwInfo, DeviceBitfield(1llu << subDevice), engineTypeT);
+                    bool result = gfxCoreHelper.isSubDeviceEngineSupported(rootDeviceEnvironment, DeviceBitfield(1llu << subDevice), engineTypeT);
 
                     bool affectedEngine = ((subDevice == 1) &&
                                            (aub_stream::ENGINE_BCS == engineTypeT ||

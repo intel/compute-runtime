@@ -52,11 +52,6 @@ bool GfxCoreHelperHw<GfxFamily>::isUpdateTaskCountFromWaitSupported() const {
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename GfxFamily>
 const EngineInstancesContainer GfxCoreHelperHw<GfxFamily>::getGpgpuEngineInstances(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return {
         {aub_stream::ENGINE_RCS, EngineUsage::Regular},
@@ -151,7 +146,7 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getMaxScratchSize() const {
 }
 
 template <typename GfxFamily>
-inline bool GfxCoreHelperHw<GfxFamily>::platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const {
+inline bool GfxCoreHelperHw<GfxFamily>::platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
     return false;
 }
 

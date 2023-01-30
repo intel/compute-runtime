@@ -703,7 +703,7 @@ class MockGfxCoreHelper : public GfxCoreHelperHw<GfxFamily> {
         }
     }
 
-    bool isSubDeviceEngineSupported(const HardwareInfo &hwInfo, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const override {
+    bool isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const override {
         if ((deviceBitfield.to_ulong() == disableEngineSupportOnSubDevice) && (disabledSubDeviceEngineType == engineType)) {
             return false;
         }

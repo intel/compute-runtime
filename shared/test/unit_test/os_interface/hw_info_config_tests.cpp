@@ -313,6 +313,10 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfAllocationSizeAdjustmen
     EXPECT_FALSE(productHelper->isAllocationSizeAdjustmentRequired(pInHwInfo));
 }
 
+HWTEST_F(ProductHelperTest, WhenCheckAssignEngineRoundRobinSupportedThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isAssignEngineRoundRobinSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPrefetchDisablingIsRequiredThenFalseIsReturned) {
 
     EXPECT_FALSE(productHelper->isPrefetchDisablingRequired(pInHwInfo));

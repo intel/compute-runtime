@@ -3951,7 +3951,7 @@ struct MultiSubDeviceFixture : public DeviceFixture {
 using MultiSubDeviceTest = Test<MultiSubDeviceFixture<true, true, -1, -1>>;
 TEST_F(MultiSubDeviceTest, GivenApiSupportAndLocalMemoryEnabledWhenDeviceContainsSubDevicesThenItIsImplicitScalingCapable) {
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
-    if (gfxCoreHelper.platformSupportsImplicitScaling(neoDevice->getHardwareInfo())) {
+    if (gfxCoreHelper.platformSupportsImplicitScaling(neoDevice->getRootDeviceEnvironment())) {
         EXPECT_TRUE(device->isImplicitScalingCapable());
         EXPECT_EQ(neoDevice, deviceImp->getActiveDevice());
     } else {

@@ -993,8 +993,9 @@ HWTEST_F(EngineInstancedDeviceTests, whenCreateMultipleCommandQueuesThenEnginesA
 
     auto &hwInfo = rootDevice->getHardwareInfo();
     const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
+    const auto &productHelper = rootDevice->getProductHelper();
 
-    if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
+    if (!productHelper.isAssignEngineRoundRobinSupported()) {
         GTEST_SKIP();
     }
 
@@ -1039,8 +1040,9 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignBitfieldwWe
 
     auto &hwInfo = rootDevice->getHardwareInfo();
     const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
+    const auto &productHelper = rootDevice->getProductHelper();
 
-    if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
+    if (!productHelper.isAssignEngineRoundRobinSupported()) {
         GTEST_SKIP();
     }
 
@@ -1088,8 +1090,9 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1wWenCre
 
     auto &hwInfo = rootDevice->getHardwareInfo();
     const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
+    const auto &productHelper = rootDevice->getProductHelper();
 
-    if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
+    if (!productHelper.isAssignEngineRoundRobinSupported()) {
         GTEST_SKIP();
     }
 
@@ -1135,8 +1138,9 @@ HWTEST_F(EngineInstancedDeviceTests, givenCmdQRoundRobindEngineAssignNTo1AndCmdQ
 
     auto &hwInfo = rootDevice->getHardwareInfo();
     const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
+    const auto &productHelper = rootDevice->getProductHelper();
 
-    if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
+    if (!productHelper.isAssignEngineRoundRobinSupported()) {
         GTEST_SKIP();
     }
 
@@ -1182,9 +1186,9 @@ HWTEST_F(EngineInstancedDeviceTests, givenEnableCmdQRoundRobindEngineAssignDisab
     }
 
     auto &hwInfo = rootDevice->getHardwareInfo();
-    const auto &gfxCoreHelper = rootDevice->getGfxCoreHelper();
+    const auto &productHelper = rootDevice->getProductHelper();
 
-    if (!gfxCoreHelper.isAssignEngineRoundRobinSupported(hwInfo)) {
+    if (!productHelper.isAssignEngineRoundRobinSupported()) {
         GTEST_SKIP();
     }
 

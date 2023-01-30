@@ -202,7 +202,9 @@ XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenDisablePipeControlFlagIsEnab
 
 XE_HP_CORE_TEST_F(GfxCoreHelperTestXE_HP_CORE, givenXeHPAndLaterPlatformWhenCheckAssignEngineRoundRobinSupportedThenReturnFalse) {
     auto &gfxCoreHelper = GfxCoreHelperHw<FamilyType>::get();
-    EXPECT_FALSE(gfxCoreHelper.isAssignEngineRoundRobinSupported(*defaultHwInfo));
+    auto &productHelper = getHelper<ProductHelper>();
+
+    EXPECT_FALSE(productHelper.isAssignEngineRoundRobinSupported());
 }
 
 using ProductHelperTestXE_HP_CORE = Test<DeviceFixture>;

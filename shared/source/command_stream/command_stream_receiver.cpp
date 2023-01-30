@@ -80,7 +80,8 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     const auto &hwInfo = peekHwInfo();
     uint32_t subDeviceCount = static_cast<uint32_t>(deviceBitfield.count());
     auto &gfxCoreHelper = getGfxCoreHelper();
-    bool platformImplicitScaling = gfxCoreHelper.platformSupportsImplicitScaling(hwInfo);
+    auto &rootDeviceEnvironment = peekRootDeviceEnvironment();
+    bool platformImplicitScaling = gfxCoreHelper.platformSupportsImplicitScaling(rootDeviceEnvironment);
     if (NEO::ImplicitScalingHelper::isImplicitScalingEnabled(deviceBitfield, platformImplicitScaling) &&
         subDeviceCount > 1 &&
         DebugManager.flags.EnableStaticPartitioning.get() != 0) {

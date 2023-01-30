@@ -309,11 +309,13 @@ bool Device::createEngines() {
 }
 
 void Device::addEngineToEngineGroup(EngineControl &engine) {
-    const HardwareInfo &hardwareInfo = this->getHardwareInfo();
+    auto &hardwareInfo = this->getHardwareInfo();
     auto &gfxCoreHelper = getGfxCoreHelper();
+    auto &rootDeviceEnvironment = this->getRootDeviceEnvironment();
+
     const EngineGroupType engineGroupType = gfxCoreHelper.getEngineGroupType(engine.getEngineType(), engine.getEngineUsage(), hardwareInfo);
 
-    if (!gfxCoreHelper.isSubDeviceEngineSupported(hardwareInfo, getDeviceBitfield(), engine.getEngineType())) {
+    if (!gfxCoreHelper.isSubDeviceEngineSupported(rootDeviceEnvironment, getDeviceBitfield(), engine.getEngineType())) {
         return;
     }
 

@@ -150,11 +150,6 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getPlanarYuvMaxHeight() const {
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isAssignEngineRoundRobinSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename GfxFamily>
 aub_stream::MMIOList GfxCoreHelperHw<GfxFamily>::getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const {
     aub_stream::MMIOList mmioList;
 
@@ -212,8 +207,8 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getMaxScratchSize() const {
 }
 
 template <typename GfxFamily>
-inline bool GfxCoreHelperHw<GfxFamily>::platformSupportsImplicitScaling(const NEO::HardwareInfo &hwInfo) const {
-    return ImplicitScalingDispatch<GfxFamily>::platformSupportsImplicitScaling(hwInfo);
+inline bool GfxCoreHelperHw<GfxFamily>::platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const {
+    return ImplicitScalingDispatch<GfxFamily>::platformSupportsImplicitScaling(rootDeviceEnvironment);
 }
 
 template <typename GfxFamily>
