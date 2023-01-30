@@ -2053,10 +2053,15 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTy
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
 
+    void *hostPtr2;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, sz, 1u, &hostPtr2);
+
     NEO::SvmAllocationData *hostUSMAllocData;
     NEO::SvmAllocationData *hostNonUSMAllocData;
     NEO::SvmAllocationData *deviceUSMAllocData;
     NEO::SvmAllocationData *sharedUSMAllocData;
+    NEO::SvmAllocationData *notSpecifiedAllocData;
 
     const auto hostUSMFound = device->getDriverHandle()->findAllocationDataForRange(hostPtr, 1024, &hostUSMAllocData);
     EXPECT_TRUE(hostUSMFound);
@@ -2066,6 +2071,11 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTy
     EXPECT_TRUE(deviceUSMFound);
     const auto sharedUSMFound = device->getDriverHandle()->findAllocationDataForRange(sharedPtr, 1024, &sharedUSMAllocData);
     EXPECT_TRUE(sharedUSMFound);
+    const auto hostUSM2Found = device->getDriverHandle()->findAllocationDataForRange(hostPtr2, 1024, &notSpecifiedAllocData);
+    EXPECT_TRUE(hostUSM2Found);
+
+    notSpecifiedAllocData->memoryType = NOT_SPECIFIED;
+    EXPECT_EQ(TRANSFER_TYPE_UNKNOWN, cmdList.getTransferType(notSpecifiedAllocData, hostNonUSMAllocData));
 
     EXPECT_EQ(HOST_NON_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, hostNonUSMAllocData));
     EXPECT_EQ(HOST_NON_USM_TO_DEVICE_USM, cmdList.getTransferType(deviceUSMAllocData, hostNonUSMAllocData));
@@ -2083,6 +2093,36 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTy
     EXPECT_EQ(DEVICE_USM_TO_DEVICE_USM, cmdList.getTransferType(sharedUSMAllocData, sharedUSMAllocData));
     EXPECT_EQ(DEVICE_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, deviceUSMAllocData));
     EXPECT_EQ(DEVICE_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, sharedUSMAllocData));
+
+    context->freeMem(hostPtr2);
+}
+
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferThresholdThenReturnCorrectValue, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(TRANSFER_TYPE_UNKNOWN));
+    EXPECT_EQ(1 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_HOST_USM));
+    EXPECT_EQ(4 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_DEVICE_USM));
+    EXPECT_EQ(1 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_HOST_NON_USM));
+    EXPECT_EQ(200 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(HOST_USM_TO_HOST_USM));
+    EXPECT_EQ(50 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(HOST_USM_TO_DEVICE_USM));
+    EXPECT_EQ(500 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(HOST_USM_TO_HOST_NON_USM));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_USM));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(DEVICE_USM_TO_DEVICE_USM));
+    EXPECT_EQ(1 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_NON_USM));
+}
+
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndThresholdDebugFlagSetWhenGetTransferThresholdThenReturnCorrectValue, IsAtLeastSkl) {
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    EXPECT_EQ(4 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_DEVICE_USM));
+    EXPECT_EQ(1 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_NON_USM));
+
+    DebugManager.flags.ExperimentalH2DCpuCopyThreshold.set(5 * MemoryConstants::megaByte);
+    EXPECT_EQ(5 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_DEVICE_USM));
+
+    DebugManager.flags.ExperimentalD2HCpuCopyThreshold.set(6 * MemoryConstants::megaByte);
+    EXPECT_EQ(6 * MemoryConstants::megaByte, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_NON_USM));
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndNonUsmHostPtrWhenCopyH2DThenLockPtr, IsAtLeastSkl) {

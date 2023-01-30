@@ -817,7 +817,7 @@ TransferType CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferType(NEO:
     const bool dstDeviceUSM = isSuitableUSMDeviceAlloc(dstAlloc) || isSuitableUSMSharedAlloc(dstAlloc);
     const bool dstHostNonUSM = dstAlloc == nullptr;
 
-    TransferType retVal;
+    TransferType retVal = TRANSFER_TYPE_UNKNOWN;
 
     if (srcHostNonUSM && dstHostUSM) {
         retVal = HOST_NON_USM_TO_HOST_USM;
@@ -847,6 +847,52 @@ TransferType CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferType(NEO:
     }
     if (srcDeviceUSM && dstHostNonUSM) {
         retVal = DEVICE_USM_TO_HOST_NON_USM;
+    }
+
+    return retVal;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferThreshold(TransferType transferType) {
+    size_t retVal = 0u;
+
+    switch (transferType) {
+    case HOST_NON_USM_TO_HOST_USM:
+        retVal = 1 * MemoryConstants::megaByte;
+        break;
+    case HOST_NON_USM_TO_DEVICE_USM:
+        retVal = 4 * MemoryConstants::megaByte;
+        if (NEO::DebugManager.flags.ExperimentalH2DCpuCopyThreshold.get() != -1) {
+            retVal = NEO::DebugManager.flags.ExperimentalH2DCpuCopyThreshold.get();
+        }
+        break;
+    case HOST_NON_USM_TO_HOST_NON_USM:
+        retVal = 1 * MemoryConstants::megaByte;
+        break;
+    case HOST_USM_TO_HOST_USM:
+        retVal = 200 * MemoryConstants::kiloByte;
+        break;
+    case HOST_USM_TO_DEVICE_USM:
+        retVal = 50 * MemoryConstants::kiloByte;
+        break;
+    case HOST_USM_TO_HOST_NON_USM:
+        retVal = 500 * MemoryConstants::kiloByte;
+        break;
+    case DEVICE_USM_TO_HOST_USM:
+        retVal = 0u;
+        break;
+    case DEVICE_USM_TO_DEVICE_USM:
+        retVal = 0u;
+        break;
+    case DEVICE_USM_TO_HOST_NON_USM:
+        retVal = 1 * MemoryConstants::kiloByte;
+        if (NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get() != -1) {
+            retVal = NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get();
+        }
+        break;
+    default:
+        retVal = 0u;
+        break;
     }
 
     return retVal;

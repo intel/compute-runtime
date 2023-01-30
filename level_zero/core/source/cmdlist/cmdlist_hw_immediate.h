@@ -162,6 +162,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     bool waitForEventsFromHost();
     void checkWaitEventsState(uint32_t numWaitEvents, ze_event_handle_t *waitEventList);
     TransferType getTransferType(NEO::SvmAllocationData *dstAlloc, NEO::SvmAllocationData *srcAlloc);
+    size_t getTransferThreshold(TransferType transferType);
 
   protected:
     void printKernelsPrintfOutput(bool hangDetected);
