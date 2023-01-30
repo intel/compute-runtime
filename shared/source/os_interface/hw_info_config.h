@@ -139,6 +139,7 @@ class ProductHelper {
     virtual bool isInitDeviceWithFirstSubmissionRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const = 0;
+    virtual bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAssignEngineRoundRobinSupported() const = 0;
     virtual uint32_t getL1CachePolicy(bool isDebuggerActive) const = 0;
@@ -287,6 +288,7 @@ class ProductHelperHw : public ProductHelper {
     bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const override;
     bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const override;
     bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const override;
+    bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const override;
     bool isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const override;
     bool isAssignEngineRoundRobinSupported() const override;
     uint32_t getL1CachePolicy(bool isDebuggerActive) const override;

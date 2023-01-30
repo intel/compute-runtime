@@ -495,6 +495,11 @@ bool ProductHelperHw<gfxProduct>::isCpuCopyNecessary(const void *ptr, MemoryMana
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const { return false; }
 
 template <PRODUCT_FAMILY gfxProduct>
