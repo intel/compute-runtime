@@ -133,8 +133,6 @@ struct EncodeDispatchKernel {
 
     static void adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
 
-    static void adjustNumberOfThreadsInThreadGroup(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const uint32_t simd, uint32_t &threadsPerThreadGroup);
-
     static constexpr bool shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool updateCurrent);
 
     static size_t getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor);

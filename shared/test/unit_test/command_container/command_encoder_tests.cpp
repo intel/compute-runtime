@@ -248,18 +248,3 @@ HWTEST_F(CommandEncoderTests, givenDcFlushNotRequiredWhenGettingDcFlushValueThen
     bool helperValue = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(requiredFlag, rootDeviceEnvironment);
     EXPECT_FALSE(helperValue);
 }
-
-HWTEST_F(CommandEncoderTests, givenSimdSizeWhenCallingAdjustNumberOfThreadsInThreadGroupThenIddIsNotChanged) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-
-    uint32_t simd = 1u;
-    uint32_t threadsPerThreadGroup = 1u;
-    uint32_t expectedThreadsPerThreadGroup = 1u;
-    INTERFACE_DESCRIPTOR_DATA interfaceDescriptor = FamilyType::cmdInitInterfaceDescriptorData;
-    interfaceDescriptor.setNumberOfThreadsInGpgpuThreadGroup(threadsPerThreadGroup);
-
-    EncodeDispatchKernel<FamilyType>::adjustNumberOfThreadsInThreadGroup(interfaceDescriptor, simd, threadsPerThreadGroup);
-
-    EXPECT_EQ(expectedThreadsPerThreadGroup, interfaceDescriptor.getNumberOfThreadsInGpgpuThreadGroup());
-    EXPECT_EQ(expectedThreadsPerThreadGroup, threadsPerThreadGroup);
-}

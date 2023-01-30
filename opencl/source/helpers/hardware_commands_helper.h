@@ -48,7 +48,6 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
         uint32_t numSamplers,
         const uint32_t threadGroupCount,
         uint32_t numThreadsPerThreadGroup,
-        uint32_t simd,
         const Kernel &kernel,
         uint32_t bindingTablePrefetchSize,
         PreemptionMode preemptionMode,
