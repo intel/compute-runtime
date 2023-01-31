@@ -16,8 +16,4 @@ std::unique_ptr<BuiltinFunctionsLib> BuiltinFunctionsLib::create(Device *device,
     return std::unique_ptr<BuiltinFunctionsLib>(new BuiltinFunctionsLibImpl(device, builtins));
 }
 
-bool BuiltinFunctionsLibImpl::initBuiltinsAsyncEnabled() {
-    return true;
-}
-
 } // namespace L0

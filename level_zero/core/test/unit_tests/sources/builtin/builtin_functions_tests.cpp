@@ -8,8 +8,6 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/memory_management.h"
-#include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/mocks/mock_compiler_interface_spirv.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -28,27 +26,21 @@ class BuiltinFunctionsLibFixture : public DeviceFixture {
   public:
     struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
         using BuiltinFunctionsLibImpl::builtins;
-        using BuiltinFunctionsLibImpl::ensureInitCompletion;
         using BuiltinFunctionsLibImpl::getFunction;
         using BuiltinFunctionsLibImpl::imageBuiltins;
-        using BuiltinFunctionsLibImpl::initAsyncComplete;
-        MockBuiltinFunctionsLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {
-            mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
-        }
-        std::unique_ptr<BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName, bool asyncInit) override {
+        MockBuiltinFunctionsLibImpl(L0::Device *device, NEO::BuiltIns *builtInsLib) : BuiltinFunctionsLibImpl(device, builtInsLib) {}
+        std::unique_ptr<BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {
             std::unique_ptr<Kernel> mockKernel(new Mock<::L0::Kernel>());
+            std::unique_ptr<Module> mockModule(new Mock<Module>(device, nullptr));
 
-            return std::unique_ptr<BuiltinData>(new BuiltinData{mockModule.get(), std::move(mockKernel)});
+            return std::unique_ptr<BuiltinData>(new BuiltinData{std::move(mockModule), std::move(mockKernel)});
         }
-        std::unique_ptr<Module> mockModule;
     };
 
     void setUp() {
         DeviceFixture::setUp();
         mockDevicePtr = std::unique_ptr<MockDeviceForSpv<false, false>>(new MockDeviceForSpv<false, false>(device->getNEODevice(), device->getNEODevice()->getExecutionEnvironment(), driverHandle.get()));
         mockBuiltinFunctionsLibImpl.reset(new MockBuiltinFunctionsLibImpl(mockDevicePtr.get(), neoDevice->getBuiltIns()));
-        mockBuiltinFunctionsLibImpl->ensureInitCompletion();
-        EXPECT_TRUE(mockBuiltinFunctionsLibImpl->initAsyncComplete);
     }
     void tearDown() {
         mockBuiltinFunctionsLibImpl.reset();
@@ -113,37 +105,7 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenCallToBuiltinFunctionWithWrongIdThenE
         EXPECT_EQ(nullptr, mockBuiltinFunctionsLibImpl->builtins[builtId]);
     }
     uint32_t builtId = static_cast<uint32_t>(Builtin::COUNT) + 1;
-    EXPECT_THROW(mockBuiltinFunctionsLibImpl->initBuiltinKernel(static_cast<L0::Builtin>(builtId), false), std::exception);
-}
-
-HWTEST_F(TestBuiltinFunctionsLibImpl, whenCreateBuiltinFunctionsLibThenImmediateFillIsLoaded) {
-    struct MockBuiltinFunctionsLibImpl : public BuiltinFunctionsLibImpl {
-        using BuiltinFunctionsLibImpl::BuiltinFunctionsLibImpl;
-        using BuiltinFunctionsLibImpl::builtins;
-        using BuiltinFunctionsLibImpl::ensureInitCompletion;
-        using BuiltinFunctionsLibImpl::initAsyncComplete;
-    };
-
-    EXPECT_TRUE(mockBuiltinFunctionsLibImpl->initAsyncComplete);
-    VariableBackup<UltHwConfig> backup(&ultHwConfig);
-    ultHwConfig.useinitBuiltinsAsyncEnabled = true;
-    MockBuiltinFunctionsLibImpl lib(device, device->getNEODevice()->getBuiltIns());
-    EXPECT_FALSE(lib.initAsyncComplete);
-    lib.ensureInitCompletion();
-    EXPECT_TRUE(lib.initAsyncComplete);
-    for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
-        if (builtId == static_cast<uint32_t>(Builtin::FillBufferImmediate)) {
-            EXPECT_NE(nullptr, lib.builtins[builtId]);
-        } else {
-            EXPECT_EQ(nullptr, lib.builtins[builtId]);
-        }
-    }
-    uint32_t builtId = static_cast<uint32_t>(Builtin::COUNT) + 1;
-    EXPECT_THROW(lib.initBuiltinKernel(static_cast<L0::Builtin>(builtId), false), std::exception);
-
-    /* std::async may create a detached thread - completion of the scheduled task can be ensured,
-       but there is no way to ensure that actual OS thread exited and its resources are freed */
-    MemoryManagement::fastLeaksDetectionMode = MemoryManagement::LeakDetectionMode::TURN_OFF_LEAK_DETECTION;
+    EXPECT_THROW(mockBuiltinFunctionsLibImpl->initBuiltinKernel(static_cast<L0::Builtin>(builtId)), std::exception);
 }
 
 HWTEST_F(TestBuiltinFunctionsLibImpl, givenCompilerInterfaceWhenCreateDeviceAndImageSupportedThenBuiltinsImageFunctionsAreLoaded) {
@@ -204,7 +166,7 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenRebuildPrecompiledKernelsDebugFlagWhe
     MockDeviceForRebuildBuilins testDevice(device);
     testDevice.builtins.reset(new BuiltinFunctionsLibImpl(&testDevice, neoDevice->getBuiltIns()));
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
-        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId), false);
+        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId));
     }
 
     EXPECT_TRUE(testDevice.createModuleCalled);
@@ -237,7 +199,7 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, givenNotToRebuildPrecompiledKernelsDebugFl
     L0::Device *testDevicePtr = &testDevice;
     testDevice.builtins.reset(new BuiltinFunctionsLibImpl(testDevicePtr, neoDevice->getBuiltIns()));
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
-        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId), false);
+        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId));
     }
 
     EXPECT_TRUE(testDevice.createModuleCalled);
@@ -267,7 +229,7 @@ HWTEST_F(TestBuiltinFunctionsLibImpl, GivenBuiltinsWhenInitializingFunctionsThen
     L0::Device *testDevicePtr = &testDevice;
     testDevice.builtins.reset(new BuiltinFunctionsLibImpl(testDevicePtr, neoDevice->getBuiltIns()));
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(Builtin::COUNT); builtId++) {
-        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId), false);
+        testDevice.getBuiltinFunctionsLib()->initBuiltinKernel(static_cast<Builtin>(builtId));
     }
 
     EXPECT_EQ(ModuleType::Builtin, testDevice.typeCreated);
