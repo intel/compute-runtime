@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,11 +7,15 @@
 
 #pragma once
 
+#include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
 #include <string>
 #include <vector>
 
+namespace AOT {
+enum PRODUCT_CONFIG : uint32_t;
+}
 class OclocArgHelper;
 namespace NEO {
 namespace Ar {
@@ -38,9 +42,11 @@ Usage: ocloc concat <fat binary> <fat binary> ... [-out <concatenated fat binary
 )===";
 
   protected:
-    MOCKABLE_VIRTUAL Ar::Ar decodeAr(const std::vector<char> &arFile, std::string &outErrors, std::string &outWarnings);
-    ErrorCode parseArguments(const std::vector<std::string> &args);
     ErrorCode checkIfFatBinariesExist();
+    MOCKABLE_VIRTUAL Ar::Ar decodeAr(ArrayRef<const uint8_t> arFile, std::string &outErrors, std::string &outWarnings);
+    AOT::PRODUCT_CONFIG getAOTProductConfigFromBinary(ArrayRef<const uint8_t> binary, std::string &outErrors);
+    ErrorCode parseArguments(const std::vector<std::string> &args);
+    void printMsg(ConstStringRef fileName, const std::string &message);
 
     OclocArgHelper *argHelper;
     std::vector<std::string> fileNamesToConcat;

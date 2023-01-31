@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,9 +20,12 @@ class MockOclocConcat : public OclocConcat {
     using OclocConcat::fileNamesToConcat;
     using OclocConcat::parseArguments;
 
-    Ar::Ar decodeAr(const std::vector<char> &arFile, std::string &outErrors, std::string &outWarnings) override {
-        outErrors.append(decodeArErrorMessage.str());
-        return {};
+    Ar::Ar decodeAr(ArrayRef<const uint8_t> arFile, std::string &outErrors, std::string &outWarnings) override {
+        if (shouldFailDecodingAr) {
+            outErrors.append(decodeArErrorMessage.str());
+            return {};
+        }
+        return OclocConcat::decodeAr(arFile, outErrors, outWarnings);
     }
 
     bool shouldFailDecodingAr = false;

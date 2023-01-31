@@ -31,17 +31,20 @@ void setKernelMiscInfoPosition(ConstStringRef metadata, NEO::ProgramInfo &dst) {
     dst.kernelMiscInfoPos = metadata.str().find(Elf::ZebinKernelMetadata::Tags::kernelMiscInfo.str());
 }
 
+template bool isZebin<Elf::EI_CLASS_32>(ArrayRef<const uint8_t> binary);
+template bool isZebin<Elf::EI_CLASS_64>(ArrayRef<const uint8_t> binary);
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+bool isZebin(ArrayRef<const uint8_t> binary) {
+    auto fileHeader = Elf::decodeElfFileHeader<numBits>(binary);
+    return fileHeader != nullptr &&
+           (fileHeader->type == NEO::Elf::ET_REL ||
+            fileHeader->type == NEO::Elf::ET_ZEBIN_EXE);
+}
+
 template <>
 bool isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(const ArrayRef<const uint8_t> binary) {
-    auto isValidZebinHeader = [](auto header) {
-        return header != nullptr &&
-               (header->type == NEO::Elf::ET_REL ||
-                header->type == NEO::Elf::ET_ZEBIN_EXE);
-    };
-    return Elf::isElf<Elf::EI_CLASS_32>(binary)
-               ? isValidZebinHeader(Elf::decodeElfFileHeader<Elf::EI_CLASS_32>(binary))
-               : isValidZebinHeader(Elf::decodeElfFileHeader<Elf::EI_CLASS_64>(binary));
-}
+    return isZebin<Elf::EI_CLASS_64>(binary) || isZebin<Elf::EI_CLASS_32>(binary);
+};
 
 bool validateTargetDevice(const TargetDevice &targetDevice, Elf::ELF_IDENTIFIER_CLASS numBits, PRODUCT_FAMILY productFamily, GFXCORE_FAMILY gfxCore, AOT::PRODUCT_CONFIG productConfig, Elf::ZebinTargetFlags targetMetadata) {
     if (targetDevice.maxPointerSizeInBytes == 4 && static_cast<uint32_t>(numBits == Elf::EI_CLASS_64)) {

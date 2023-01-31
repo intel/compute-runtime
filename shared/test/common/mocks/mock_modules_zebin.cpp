@@ -248,4 +248,63 @@ ZebinCopyBufferSimdModule<numBits>::ZebinCopyBufferSimdModule(const NEO::Hardwar
     this->elfHeader = reinterpret_cast<NEO::Elf::ElfFileHeader<numBits> *>(storage.data());
 }
 
+size_t writeElfNote(ArrayRef<uint8_t> dst, ArrayRef<const uint8_t> desc, NEO::ConstStringRef name, uint32_t type) {
+    auto noteSize = sizeof(NEO::Elf::ElfNoteSection) + alignUp(desc.size(), 4U) + alignUp(name.size() + 1U, 4U);
+    UNRECOVERABLE_IF(dst.size() < noteSize)
+
+    memset(dst.begin(), 0, noteSize);
+    auto note = reinterpret_cast<NEO::Elf::ElfNoteSection *>(dst.begin());
+    note->descSize = static_cast<uint32_t>(desc.size());
+    note->nameSize = static_cast<uint32_t>(name.size() + 1U);
+    note->type = type;
+    auto noteName = ptrOffset(dst.begin(), sizeof(NEO::Elf::ElfNoteSection));
+    std::memcpy(noteName, name.begin(), name.size());
+    auto noteDesc = ptrOffset(noteName, note->nameSize);
+    std::memcpy(noteDesc, desc.begin(), desc.size());
+    return noteSize;
+}
+
+size_t writeIntelGTNote(ArrayRef<uint8_t> dst, NEO::Elf::IntelGTSectionType sectionType, ArrayRef<const uint8_t> desc) {
+    return writeElfNote(dst, desc, NEO::Elf::IntelGtNoteOwnerName, static_cast<uint32_t>(sectionType));
+}
+
+size_t writeIntelGTVersionNote(ArrayRef<uint8_t> dst, NEO::ConstStringRef version) {
+    std::vector<uint8_t> desc(version.length() + 1U, 0U);
+    std::memcpy(desc.data(), version.begin(), version.length());
+    return writeIntelGTNote(dst, NEO::Elf::ZebinVersion, {desc.data(), desc.size()});
+}
+
+std::vector<uint8_t> createIntelGTNoteSection(NEO::ConstStringRef version, AOT::PRODUCT_CONFIG productConfig) {
+    const size_t noteSectionSize = sizeof(NEO::Elf::ElfNoteSection) * 2 + 8U * 2 + alignUp(version.length() + 1, 4U) + sizeof(AOT::PRODUCT_CONFIG);
+    std::vector<uint8_t> intelGTNotesSection(noteSectionSize, 0);
+    size_t noteOffset = 0U;
+    noteOffset += writeIntelGTVersionNote(ArrayRef<uint8_t>(ptrOffset(intelGTNotesSection.data(), noteOffset), intelGTNotesSection.size() - noteOffset), version);
+
+    writeIntelGTNote(ArrayRef<uint8_t>(ptrOffset(intelGTNotesSection.data(), noteOffset), intelGTNotesSection.size() - noteOffset),
+                     NEO::Elf::IntelGTSectionType::ProductConfig,
+                     ArrayRef<const uint8_t>::fromAny(&productConfig, 1U));
+    return intelGTNotesSection;
+}
+
+std::vector<uint8_t> createIntelGTNoteSection(PRODUCT_FAMILY productFamily, GFXCORE_FAMILY coreFamily, NEO::Elf::ZebinTargetFlags flags, NEO::ConstStringRef version) {
+    const size_t noteSectionSize = sizeof(NEO::Elf::ElfNoteSection) * 4U + 4U * 8U + 3U * 4U + alignUp(version.length() + 1, 4U);
+    std::vector<uint8_t> intelGTNotes(noteSectionSize, 0);
+    size_t noteOffset = 0U;
+    noteOffset += writeIntelGTNote(ArrayRef<uint8_t>(ptrOffset(intelGTNotes.data(), noteOffset), intelGTNotes.size() - noteOffset),
+                                   NEO::Elf::ProductFamily,
+                                   ArrayRef<const uint8_t>::fromAny(&productFamily, 1U));
+
+    noteOffset += writeIntelGTNote(ArrayRef<uint8_t>(ptrOffset(intelGTNotes.data(), noteOffset), intelGTNotes.size() - noteOffset),
+                                   NEO::Elf::GfxCore,
+                                   ArrayRef<const uint8_t>::fromAny(&coreFamily, 1U));
+
+    noteOffset += writeIntelGTNote(ArrayRef<uint8_t>(ptrOffset(intelGTNotes.data(), noteOffset), intelGTNotes.size() - noteOffset),
+                                   NEO::Elf::TargetMetadata,
+                                   ArrayRef<const uint8_t>::fromAny(&flags.packed, 1U));
+
+    writeIntelGTVersionNote(ArrayRef<uint8_t>(ptrOffset(intelGTNotes.data(), noteOffset), intelGTNotes.size() - noteOffset),
+                            version);
+    return intelGTNotes;
+}
+
 }; // namespace ZebinTestData

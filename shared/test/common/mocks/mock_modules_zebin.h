@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -263,44 +263,6 @@ kernels:
 -)===";
 };
 
-inline std::vector<uint8_t> createIntelGTNoteSection(PRODUCT_FAMILY productFamily, GFXCORE_FAMILY coreFamily, NEO::Elf::ZebinTargetFlags flags, NEO::ConstStringRef version) {
-    std::array<NEO::Elf::ElfNoteSection, 4> notes = {{{8, 4, NEO::Elf::IntelGTSectionType::ProductFamily},
-                                                      {8, 4, NEO::Elf::IntelGTSectionType::GfxCore},
-                                                      {8, 4, NEO::Elf::IntelGTSectionType::TargetMetadata},
-                                                      {8, static_cast<uint32_t>(alignUp(version.length(), 4U)), NEO::Elf::IntelGTSectionType::ZebinVersion}}};
-
-    std::array<std::vector<uint8_t>, 4> descData;
-    descData[0].resize(4);
-    std::memcpy(descData[0].data(), &productFamily, 4);
-
-    descData[1].resize(4);
-    std::memcpy(descData[1].data(), &coreFamily, 4);
-
-    descData[2].resize(4);
-    std::memcpy(descData[2].data(), &flags.packed, 4);
-
-    descData[3].resize(notes[3].descSize);
-    std::memcpy(descData[3].data(), version.data(), notes[3].descSize);
-
-    size_t noteSectionSize = 0U;
-    for (auto &note : notes) {
-        noteSectionSize += sizeof(note) + note.descSize + note.nameSize;
-    }
-
-    std::vector<uint8_t> intelGTNotesSection(noteSectionSize);
-    auto intelGTNotes = intelGTNotesSection.data();
-    for (size_t i = 0; i < 4U; i++) {
-        auto &note = notes[i];
-        std::memcpy(intelGTNotes, &note, sizeof(NEO::Elf::ElfNoteSection));
-        intelGTNotes = ptrOffset(intelGTNotes, sizeof(NEO::Elf::ElfNoteSection));
-        std::memcpy(intelGTNotes, NEO::Elf::IntelGtNoteOwnerName.data(), note.nameSize);
-        intelGTNotes = ptrOffset(intelGTNotes, note.nameSize);
-        std::memcpy(intelGTNotes, descData[i].data(), note.descSize);
-        intelGTNotes = ptrOffset(intelGTNotes, note.descSize);
-    }
-    return intelGTNotesSection;
-}
-
 template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits>
 struct ZebinCopyBufferSimdModule {
     ZebinCopyBufferSimdModule(const NEO::HardwareInfo &hwInfo, uint8_t simdSize);
@@ -372,4 +334,8 @@ kernels:
 )===";
 };
 
+size_t writeElfNote(ArrayRef<uint8_t> dst, ArrayRef<const uint8_t> desc, NEO::ConstStringRef name, uint32_t type);
+size_t writeIntelGTNote(ArrayRef<uint8_t> dst, NEO::Elf::IntelGTSectionType sectionType, ArrayRef<const uint8_t> desc);
+std::vector<uint8_t> createIntelGTNoteSection(NEO::ConstStringRef version, AOT::PRODUCT_CONFIG productConfig);
+std::vector<uint8_t> createIntelGTNoteSection(PRODUCT_FAMILY productFamily, GFXCORE_FAMILY coreFamily, NEO::Elf::ZebinTargetFlags flags, NEO::ConstStringRef version);
 } // namespace ZebinTestData
