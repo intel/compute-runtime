@@ -162,7 +162,6 @@ struct ModuleImp : public Module {
     std::unique_ptr<ModuleTranslationUnit> translationUnit;
     ModuleBuildLog *moduleBuildLog = nullptr;
     NEO::GraphicsAllocation *exportedFunctionsSurface = nullptr;
-    uint32_t defaultMaxGroupSize = 0U;
     std::vector<std::unique_ptr<KernelImmutableData>> kernelImmDatas;
     NEO::Linker::RelocatedSymbolsMap symbols;
 
