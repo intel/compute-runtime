@@ -181,6 +181,8 @@ TEST_F(ModuleWithSLDTest, GivenNoDebugDataWhenInitializingModuleThenRelocatedDeb
                                                                       moduleBuildLog,
                                                                       ModuleType::User);
     module->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
+    auto mockTranslationUnit = toMockPtr(module->translationUnit.get());
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
@@ -203,6 +205,7 @@ TEST_F(ModuleWithSLDTest, GivenNoDebugDataWhenInitializingModuleThenRelocatedDeb
     result = module->initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
     EXPECT_EQ(nullptr, kernelInfo->kernelDescriptor.external.relocatedDebugData);
 }
 
@@ -222,6 +225,8 @@ TEST_F(ModuleWithSLDTest, GivenDebugDataWithSingleRelocationWhenInitializingModu
 
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::User);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
+    auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
@@ -252,6 +257,7 @@ TEST_F(ModuleWithSLDTest, GivenDebugDataWithSingleRelocationWhenInitializingModu
     result = moduleMock->initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
     EXPECT_EQ(nullptr, kernelInfo->kernelDescriptor.external.relocatedDebugData);
 }
 
@@ -271,6 +277,8 @@ TEST_F(ModuleWithSLDTest, GivenDebugDataWithMultipleRelocationsWhenInitializingM
 
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::User);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
+    auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
@@ -298,6 +306,7 @@ TEST_F(ModuleWithSLDTest, GivenDebugDataWithMultipleRelocationsWhenInitializingM
     result = moduleMock->initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
     EXPECT_NE(nullptr, kernelInfo->kernelDescriptor.external.relocatedDebugData);
 }
 
@@ -444,6 +453,8 @@ HWTEST_F(ModuleWithDebuggerL0MultiTileTest, GivenSubDeviceWhenCreatingModuleThen
 
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(subDevice0, moduleBuildLog, ModuleType::User);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(subDevice0);
+    auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
@@ -471,6 +482,7 @@ HWTEST_F(ModuleWithDebuggerL0MultiTileTest, GivenSubDeviceWhenCreatingModuleThen
     EXPECT_EQ(1u, debuggerL0Hw->notifyModuleCreateCount);
     EXPECT_EQ(subDevice0->getNEODevice(), debuggerL0Hw->notifyModuleLoadAllocationsCapturedDevice);
 
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
     EXPECT_EQ(1, memoryOperationsHandler->makeResidentCalledCount);
 }
 
@@ -488,6 +500,8 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithRelocationsWhenInitializing
 
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::User);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
+    auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
@@ -515,6 +529,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithRelocationsWhenInitializing
     EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->registerElfAndLinkCount);
     EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->notifyModuleCreateCount);
 
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
     EXPECT_NE(nullptr, kernelInfo->kernelDescriptor.external.relocatedDebugData.get());
     EXPECT_EQ(reinterpret_cast<char *>(kernelInfo->kernelDescriptor.external.relocatedDebugData.get()), getMockDebuggerL0Hw<FamilyType>()->lastReceivedElf);
 }
@@ -542,9 +557,11 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenBuiltinModuleWhenInitializingModuleThenM
     kernelMock.module = moduleMock.get();
     kernelMock.immutableData.kernelInfo = kernelInfo;
     kernelInfo->kernelDescriptor.payloadMappings.implicitArgs.systemThreadSurfaceAddress.bindful = 0;
+    kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
     moduleMock->kernelImmData = &kernelMock.immutableData;
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
-    kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
+    auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
 
     auto debugData = MockElfEncoder<>::createRelocateableDebugDataElf();
     kernelInfo->kernelDescriptor.external.debugData->vIsaSize = static_cast<uint32_t>(debugData.size());
@@ -557,6 +574,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenBuiltinModuleWhenInitializingModuleThenM
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->registerElfAndLinkCount);
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->notifyModuleCreateCount);
 
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
     EXPECT_NE(nullptr, kernelInfo->kernelDescriptor.external.relocatedDebugData.get());
     EXPECT_EQ(nullptr, getMockDebuggerL0Hw<FamilyType>()->lastReceivedElf);
 }
@@ -575,6 +593,8 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithoutRelocationsWhenInitializ
 
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::User);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
+    auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
@@ -608,6 +628,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithoutRelocationsWhenInitializ
     EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->registerElfAndLinkCount);
     EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->notifyModuleCreateCount);
 
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
     EXPECT_EQ(nullptr, kernelInfo->kernelDescriptor.external.relocatedDebugData.get());
     EXPECT_EQ(kernelInfo->kernelDescriptor.external.debugData->vIsa, getMockDebuggerL0Hw<FamilyType>()->lastReceivedElf);
 }
@@ -626,6 +647,8 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenInitializingModuleThenDoN
 
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::User);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
+    auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
@@ -642,6 +665,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenInitializingModuleThenDoN
 
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->registerElfCount);
     EXPECT_EQ(moduleMock->initialize(&moduleDesc, neoDevice), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->registerElfCount);
     EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->notifyModuleCreateCount);
 }
@@ -699,9 +723,12 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenZebinNoDebugDataWhenInitializing
 
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::User);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
+    auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
 
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->registerElfCount);
     EXPECT_EQ(moduleMock->initialize(&moduleDesc, neoDevice), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->registerElfCount);
     EXPECT_EQ(0u, getMockDebuggerL0Hw<FamilyType>()->notifyModuleCreateCount);
 }
@@ -779,6 +806,8 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNonZebinBinaryWhenDestroyModuleThenModul
 
     moduleMock->kernelImmData = &kernelMock.immutableData;
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
+    auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
 
     kernelInfo->kernelDescriptor.external.debugData = std::make_unique<NEO::DebugData>();
 
@@ -795,6 +824,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNonZebinBinaryWhenDestroyModuleThenModul
     kernelInfo->kernelDescriptor.external.debugData->genIsaSize = 0;
 
     EXPECT_EQ(moduleMock->initialize(&moduleDesc, neoDevice), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
     moduleMock->destroy();
     moduleMock.release();
     EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->notifyModuleDestroyCount);
@@ -814,6 +844,8 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenDestroyingModuleThenNotif
 
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, moduleBuildLog, ModuleType::User);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
+    auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
@@ -829,6 +861,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNoDebugDataWhenDestroyingModuleThenNotif
     moduleMock->translationUnit->programInfo.kernelInfos.push_back(kernelInfo);
 
     EXPECT_EQ(moduleMock->initialize(&moduleDesc, neoDevice), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
     moduleMock->destroy();
     moduleMock.release();
     EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->notifyModuleDestroyCount);
@@ -853,7 +886,6 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenModuleDebugHandleZeroWhenInitial
     auto kernelImmutableData = ::std::make_unique<KernelImmutableData>(device);
     kernelImmutableData->initialize(kernelInfo.get(), device, 0, nullptr, nullptr, false);
     std::unique_ptr<MockModule> moduleMock = std::make_unique<MockModule>(device, nullptr, ModuleType::User);
-    moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     moduleMock->kernelImmDatas.push_back(std::move(kernelImmutableData));
 
     auto zebin = ZebinTestData::ValidEmptyProgram<>();

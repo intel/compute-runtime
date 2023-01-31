@@ -51,9 +51,9 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
     struct MockModule : public L0::ModuleImp {
         using ModuleImp::allocatePrivateMemoryPerDispatch;
+        using ModuleImp::defaultMaxGroupSize;
         using ModuleImp::getKernelImmutableDataVector;
         using ModuleImp::kernelImmDatas;
-        using ModuleImp::maxGroupSize;
         using ModuleImp::translationUnit;
         using ModuleImp::type;
 
@@ -124,8 +124,8 @@ struct ModuleFixture : public DeviceFixture {
             return kernelImmDatas;
         }
 
-        static Module *create(L0::Device *device, const ze_module_desc_t *desc,
-                              ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result);
+        static L0::Module *create(L0::Device *device, const ze_module_desc_t *desc,
+                                  ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result);
     };
 
     void setUp();

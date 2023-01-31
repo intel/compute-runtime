@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -60,6 +61,27 @@ HWTEST2_F(GfxCoreHelperDg2AndLaterTest, GivenUseL1CacheAsFalseWhenCallSetL1Cache
     bool useL1Cache = false;
     helper.setL1CachePolicy(useL1Cache, &surfaceState, defaultHwInfo.get());
     EXPECT_NE(RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB, surfaceState.getL1CachePolicyL1CacheControl());
+}
+
+using GfxCoreHelperWithLargeGrf = ::testing::Test;
+HWTEST2_F(GfxCoreHelperWithLargeGrf, givenLargeGrfAndSimdSmallerThan32WhenCalculatingMaxWorkGroupSizeThenReturnHalfOfDeviceDefault, IsWithinXeGfxFamily) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto defaultMaxGroupSize = 42u;
+
+    NEO::KernelDescriptor kernelDescriptor{};
+
+    kernelDescriptor.kernelAttributes.simdSize = 16;
+    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+    EXPECT_EQ((defaultMaxGroupSize >> 1), gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
+
+    kernelDescriptor.kernelAttributes.simdSize = 32;
+    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
+
+    kernelDescriptor.kernelAttributes.simdSize = 16;
+    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
 }
 
 using PipeControlHelperTestsDg2AndLater = ::testing::Test;

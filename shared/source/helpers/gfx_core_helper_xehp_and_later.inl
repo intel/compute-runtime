@@ -12,6 +12,7 @@
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/kernel/grf_config.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "aubstream/engine_node.h"
@@ -133,6 +134,14 @@ uint32_t GfxCoreHelperHw<GfxFamily>::calculateAvailableThreadCount(const Hardwar
         return hwInfo.gtSystemInfo.ThreadCount / 2u;
     }
     return hwInfo.gtSystemInfo.ThreadCount;
+}
+
+template <typename GfxFamily>
+inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize) const {
+    if (kernelDescriptor.kernelAttributes.simdSize != 32 && kernelDescriptor.kernelAttributes.numGrfRequired == GrfConfig::LargeGrfNumber) {
+        defaultMaxGroupSize >>= 1;
+    }
+    return defaultMaxGroupSize;
 }
 
 template <typename GfxFamily>

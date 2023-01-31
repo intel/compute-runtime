@@ -90,6 +90,11 @@ uint32_t GfxCoreHelperHw<GfxFamily>::calculateAvailableThreadCount(const Hardwar
 }
 
 template <typename GfxFamily>
+inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize) const {
+    return defaultMaxGroupSize;
+}
+
+template <typename GfxFamily>
 uint64_t GfxCoreHelperHw<GfxFamily>::getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const {
     return static_cast<uint64_t>(timeStamp * frequency);
 }

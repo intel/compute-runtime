@@ -282,7 +282,11 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     Vec3<size_t> groupSize{groupSizeX, groupSizeY, groupSizeZ};
     auto itemsInGroup = Math::computeTotalElementsCount(groupSize);
 
-    if (itemsInGroup > module->getMaxGroupSize()) {
+    const NEO::KernelDescriptor &kernelDescriptor = kernelImmData->getDescriptor();
+    if (auto maxGroupSize = module->getMaxGroupSize(kernelDescriptor); itemsInGroup > maxGroupSize) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                              "Requested work-group size (%lu) exceeds maximum value (%u) for the kernel \"%s\" \n",
+                              itemsInGroup, maxGroupSize, kernelDescriptor.kernelMetadata.kernelName.c_str());
         DEBUG_BREAK_IF(true);
         return ZE_RESULT_ERROR_INVALID_GROUP_SIZE_DIMENSION;
     }
@@ -290,7 +294,6 @@ ze_result_t KernelImp::setGroupSize(uint32_t groupSizeX, uint32_t groupSizeY,
     this->groupSize[0] = groupSizeX;
     this->groupSize[1] = groupSizeY;
     this->groupSize[2] = groupSizeZ;
-    const NEO::KernelDescriptor &kernelDescriptor = kernelImmData->getDescriptor();
     for (uint32_t i = 0u; i < 3u; i++) {
         if (kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != 0 &&
             kernelDescriptor.kernelAttributes.requiredWorkgroupSize[i] != this->groupSize[i]) {
@@ -349,14 +352,15 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
                                         uint32_t globalSizeZ, uint32_t *groupSizeX,
                                         uint32_t *groupSizeY, uint32_t *groupSizeZ) {
     size_t retGroupSize[3] = {};
-    auto maxWorkGroupSize = module->getMaxGroupSize();
-    auto simd = kernelImmData->getDescriptor().kernelAttributes.simdSize;
+    const auto &kernelDescriptor = this->getImmutableData()->getDescriptor();
+    auto maxWorkGroupSize = module->getMaxGroupSize(kernelDescriptor);
+    auto simd = kernelDescriptor.kernelAttributes.simdSize;
     size_t workItems[3] = {globalSizeX, globalSizeY, globalSizeZ};
     uint32_t dim = (globalSizeY > 1U) ? 2 : 1U;
     dim = (globalSizeZ > 1U) ? 3 : dim;
 
     if (NEO::DebugManager.flags.EnableComputeWorkSizeND.get()) {
-        auto usesImages = getImmutableData()->getDescriptor().kernelAttributes.flags.usesImages;
+        auto usesImages = kernelDescriptor.kernelAttributes.flags.usesImages;
         auto neoDevice = module->getDevice()->getNEODevice();
         const auto &deviceInfo = neoDevice->getDeviceInfo();
         uint32_t numThreadsPerSubSlice = (uint32_t)deviceInfo.maxNumEUsPerSubSlice * deviceInfo.numThreadsPerEU;
@@ -367,9 +371,9 @@ ze_result_t KernelImp::suggestGroupSize(uint32_t globalSizeX, uint32_t globalSiz
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
 
-        NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, kernelImmData->getDescriptor().kernelAttributes.usesBarriers(), simd, this->getSlmTotalSize(),
+        NEO::WorkSizeInfo wsInfo(maxWorkGroupSize, kernelDescriptor.kernelAttributes.usesBarriers(), simd, this->getSlmTotalSize(),
                                  neoDevice->getRootDeviceEnvironment(), numThreadsPerSubSlice, localMemSize,
-                                 usesImages, false, kernelImmData->getDescriptor().kernelAttributes.flags.requiresDisabledEUFusion);
+                                 usesImages, false, kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion);
         NEO::computeWorkgroupSizeND(wsInfo, retGroupSize, workItems, dim);
     } else {
         if (1U == dim) {

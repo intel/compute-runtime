@@ -331,7 +331,7 @@ TEST_F(KernelImpSetGroupSizeTest, givenLocalIdGenerationByRuntimeDisabledWhenSet
     EXPECT_EQ(nullptr, mockKernel.perThreadDataForWholeThreadGroup);
 }
 
-TEST_F(KernelImpSetGroupSizeTest, givenIncorrectGroupSizeWhenSettingGroupSizeThenInvalidGroupSizeDimensionErrorIsReturned) {
+TEST_F(KernelImpSetGroupSizeTest, givenIncorrectGroupSizeDimensionWhenSettingGroupSizeThenInvalidGroupSizeDimensionErrorIsReturned) {
     Mock<Kernel> mockKernel;
     Mock<Module> mockModule(this->device, nullptr);
     for (auto i = 0u; i < 3u; i++) {
@@ -800,6 +800,8 @@ TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedIsaIsNotC
     std::unique_ptr<L0::ult::MockModule> moduleMock = std::make_unique<L0::ult::MockModule>(device, moduleBuildLog, ModuleType::Builtin);
     moduleMock->translationUnit = std::make_unique<MockModuleTranslationUnit>(device);
     moduleMock->translationUnit->programInfo.linkerInput = std::move(linkerInput);
+    auto mockTranslationUnit = toMockPtr(moduleMock->translationUnit.get());
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
 
     uint32_t kernelHeap = 0;
     auto kernelInfo = new KernelInfo();
@@ -821,6 +823,7 @@ TEST_F(KernelImmutableDataTests, givenInternalModuleWhenKernelIsCreatedIsaIsNotC
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     result = moduleMock->initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
     size_t expectedPreviouscopyMemoryToAllocationCalledTimes = previouscopyMemoryToAllocationCalledTimes;
 
     EXPECT_EQ(expectedPreviouscopyMemoryToAllocationCalledTimes, mockMemoryManager->copyMemoryToAllocationCalledTimes);
@@ -941,7 +944,7 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitialized
                                           ModuleType::User,
                                           32u,
                                           mockKernelImmutableData.get());
-    module->maxGroupSize = 10;
+    module->defaultMaxGroupSize = 10;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -983,7 +986,7 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndPatchTokenPointerSizeIsZ
                                           ModuleType::User,
                                           32u,
                                           mockKernelImmutableData.get());
-    module->maxGroupSize = 10;
+    module->defaultMaxGroupSize = 10;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1024,7 +1027,7 @@ HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIs
                                           ModuleType::User,
                                           32u,
                                           mockKernelImmutableData.get());
-    module->maxGroupSize = 10;
+    module->defaultMaxGroupSize = 10;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1066,7 +1069,7 @@ HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndRTStackAllocationFail
                                           ModuleType::User,
                                           32u,
                                           mockKernelImmutableData.get());
-    module->maxGroupSize = 10;
+    module->defaultMaxGroupSize = 10;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1109,7 +1112,7 @@ HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndRTDispatchGlobalsArra
                                           ModuleType::User,
                                           32u,
                                           mockKernelImmutableData.get());
-    module->maxGroupSize = 10;
+    module->defaultMaxGroupSize = 10;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1144,7 +1147,7 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsFalseThenRayTracingIsNotInitial
                                           ModuleType::User,
                                           32u,
                                           mockKernelImmutableData.get());
-    module->maxGroupSize = 10;
+    module->defaultMaxGroupSize = 10;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
@@ -1185,7 +1188,7 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatche
                                           ModuleType::User,
                                           32u,
                                           mockKernelImmutableData.get());
-    module->maxGroupSize = 10;
+    module->defaultMaxGroupSize = 10;
 
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());

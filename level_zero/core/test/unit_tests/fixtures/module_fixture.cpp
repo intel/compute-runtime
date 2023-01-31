@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include "gtest/gtest.h"
 
@@ -55,7 +57,8 @@ ModuleImmutableDataFixture::MockModule::MockModule(L0::Device *device,
                                                    L0::ModuleType type,
                                                    uint32_t perHwThreadPrivateMemorySize,
                                                    MockImmutableData *inMockKernelImmData) : ModuleImp(device, moduleBuildLog, type), mockKernelImmData(inMockKernelImmData) {
-    mockKernelImmData->setDevice(device);
+    this->mockKernelImmData->setDevice(device);
+    this->translationUnit.reset(new MockModuleTranslationUnit(this->translationUnit.get()));
 }
 
 void ModuleImmutableDataFixture::MockModule::checkIfPrivateMemoryPerDispatchIsNeeded() {
@@ -110,8 +113,8 @@ void ModuleImmutableDataFixture::tearDown() {
     DeviceFixture::tearDown();
 }
 
-Module *ModuleFixture::ProxyModuleImp::create(L0::Device *device, const ze_module_desc_t *desc,
-                                              ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result) {
+L0::Module *ModuleFixture::ProxyModuleImp::create(L0::Device *device, const ze_module_desc_t *desc,
+                                                  ModuleBuildLog *moduleBuildLog, ModuleType type, ze_result_t *result) {
     auto module = new ProxyModuleImp(device, moduleBuildLog, type);
 
     *result = module->initialize(desc, device->getNEODevice());

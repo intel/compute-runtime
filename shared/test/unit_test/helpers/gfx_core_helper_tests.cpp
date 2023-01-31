@@ -16,6 +16,7 @@
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -1434,6 +1435,25 @@ HWTEST_F(GfxCoreHelperTest, whenIsDynamicallyPopulatedisFalseThengetHighestEnabl
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto maxSlice = gfxCoreHelper.getHighestEnabledSlice(hwInfo);
     EXPECT_EQ(maxSlice, hwInfo.gtSystemInfo.MaxSlicesSupported);
+}
+
+HWTEST2_F(GfxCoreHelperTest, givenLargeGrfIsNotSupportedWhenCalculatingMaxWorkGroupSizeThenAlwaysReturnDeviceDefault, IsAtMostGen12lp) {
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto defaultMaxGroupSize = 42u;
+
+    NEO::KernelDescriptor kernelDescriptor{};
+
+    kernelDescriptor.kernelAttributes.simdSize = 16;
+    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
+
+    kernelDescriptor.kernelAttributes.simdSize = 32;
+    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
+
+    kernelDescriptor.kernelAttributes.simdSize = 16;
+    kernelDescriptor.kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.calculateMaxWorkGroupSize(kernelDescriptor, defaultMaxGroupSize));
 }
 
 HWTEST_F(GfxCoreHelperTest, whenIsDynamicallyPopulatedisTrueThengetHighestEnabledSliceReturnsHighestEnabledSliceInfo) {

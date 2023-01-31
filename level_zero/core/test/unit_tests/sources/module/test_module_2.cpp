@@ -299,6 +299,7 @@ TEST_F(ModuleTests, givenLargeGrfFlagSetWhenCreatingModuleThenOverrideInternalFl
     moduleDesc.inputSize = src.size();
 
     auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
     Module module(device, nullptr, ModuleType::User);
 
     module.translationUnit.reset(mockTranslationUnit);
@@ -306,6 +307,7 @@ TEST_F(ModuleTests, givenLargeGrfFlagSetWhenCreatingModuleThenOverrideInternalFl
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     result = module.initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
 
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-256-GRF-per-thread"), std::string::npos);
     EXPECT_EQ(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-128-GRF-per-thread"), std::string::npos);
@@ -328,6 +330,7 @@ TEST_F(ModuleTests, givenAutoGrfFlagSetWhenCreatingModuleThenOverrideInternalFla
     moduleDesc.inputSize = src.size();
 
     auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
     Module module(device, nullptr, ModuleType::User);
 
     module.translationUnit.reset(mockTranslationUnit);
@@ -335,6 +338,7 @@ TEST_F(ModuleTests, givenAutoGrfFlagSetWhenCreatingModuleThenOverrideInternalFla
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     result = module.initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
 
     EXPECT_NE(pMockCompilerInterface->receivedApiOptions.find("-cl-intel-enable-auto-large-GRF-mode"), std::string::npos);
     EXPECT_EQ(pMockCompilerInterface->receivedApiOptions.find("-cl-intel-256-GRF-per-thread"), std::string::npos);
@@ -357,6 +361,7 @@ TEST_F(ModuleTests, givenDefaultGrfFlagSetWhenCreatingModuleThenOverrideInternal
     moduleDesc.inputSize = src.size();
 
     auto mockTranslationUnit = new MockModuleTranslationUnit(device);
+    mockTranslationUnit->processUnpackedBinaryCallBase = false;
     Module module(device, nullptr, ModuleType::User);
 
     module.translationUnit.reset(mockTranslationUnit);
@@ -364,6 +369,7 @@ TEST_F(ModuleTests, givenDefaultGrfFlagSetWhenCreatingModuleThenOverrideInternal
     ze_result_t result = ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     result = module.initialize(&moduleDesc, neoDevice);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(mockTranslationUnit->processUnpackedBinaryCalled, 1u);
 
     EXPECT_EQ(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-256-GRF-per-thread"), std::string::npos);
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-128-GRF-per-thread"), std::string::npos);

@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/compiler_interface/external_functions.h"
+#include "shared/source/program/kernel_info.h"
 #include "shared/test/common/mocks/mock_cif.h"
 #include "shared/test/common/mocks/mock_compiler_interface.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
@@ -16,6 +18,52 @@
 #include "gtest/gtest.h"
 namespace L0 {
 namespace ult {
+
+struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
+    using BaseClass = L0::ModuleTranslationUnit;
+
+    MockModuleTranslationUnit(L0::Device *device) : BaseClass{device} {}
+
+    MockModuleTranslationUnit(L0::ModuleTranslationUnit *orig) : BaseClass{orig->device} {
+        std::swap(this->globalConstBuffer, orig->globalConstBuffer);
+        std::swap(this->globalVarBuffer, orig->globalVarBuffer);
+        std::swap(this->programInfo, orig->programInfo);
+        std::swap(this->options, orig->options);
+        std::swap(this->shouldSuppressRebuildWarning, orig->shouldSuppressRebuildWarning);
+        std::swap(this->buildLog, orig->buildLog);
+        std::swap(this->irBinary, orig->irBinary);
+        std::swap(this->irBinarySize, orig->irBinarySize);
+        std::swap(this->unpackedDeviceBinary, orig->unpackedDeviceBinary);
+        std::swap(this->unpackedDeviceBinarySize, orig->unpackedDeviceBinarySize);
+        std::swap(this->packedDeviceBinary, orig->packedDeviceBinary);
+        std::swap(this->packedDeviceBinarySize, orig->packedDeviceBinarySize);
+        std::swap(this->debugData, orig->debugData);
+        std::swap(this->debugDataSize, orig->debugDataSize);
+        std::swap(this->alignedvIsas, orig->alignedvIsas);
+        std::swap(this->specConstantsValues, orig->specConstantsValues);
+        std::swap(this->isBuiltIn, orig->isBuiltIn);
+    }
+
+    ADDMETHOD(processUnpackedBinary, ze_result_t, true, ZE_RESULT_SUCCESS, (), ());
+
+    ze_result_t compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) override {
+        if (unpackedDeviceBinarySize && unpackedDeviceBinary) {
+            return ZE_RESULT_SUCCESS;
+        } else {
+            return ModuleTranslationUnit::compileGenBinary(inputArgs, staticLink);
+        }
+    }
+
+    void setDummyKernelInfo() {
+        this->programInfo.kernelInfos.push_back(dummyKernelInfo.get());
+    }
+
+    std::unique_ptr<NEO::KernelInfo> dummyKernelInfo = {};
+};
+
+constexpr inline MockModuleTranslationUnit *toMockPtr(L0::ModuleTranslationUnit *tu) {
+    return static_cast<MockModuleTranslationUnit *>(tu);
+}
 
 template <>
 struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
@@ -30,11 +78,16 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::isFunctionSymbolExportEnabled;
     using BaseClass::isGlobalSymbolExportEnabled;
     using BaseClass::kernelImmDatas;
-    using BaseClass::maxGroupSize;
     using BaseClass::symbols;
     using BaseClass::translationUnit;
     using BaseClass::type;
     using BaseClass::unresolvedExternalsInfo;
+    uint32_t &maxGroupSize{BaseClass::defaultMaxGroupSize};
+
+    WhiteBox(Device *device, ModuleBuildLog *moduleBuildLog, ModuleType type)
+        : ::L0::ModuleImp{device, moduleBuildLog, type} {
+        this->translationUnit.reset(new MockModuleTranslationUnit{device});
+    }
 };
 
 using Module = WhiteBox<::L0::Module>;
@@ -50,30 +103,13 @@ struct Mock<Module> : public Module {
     ADDMETHOD_NOBASE(getFunctionPointer, ze_result_t, ZE_RESULT_SUCCESS, (const char *pKernelName, void **pfnFunction));
     ADDMETHOD_NOBASE(getNativeBinary, ze_result_t, ZE_RESULT_SUCCESS, (size_t * pSize, uint8_t *pModuleNativeBinary));
     ADDMETHOD_CONST_NOBASE(getKernelImmutableData, const L0::KernelImmutableData *, nullptr, (const char *kernelName));
-    ADDMETHOD_CONST_NOBASE(getMaxGroupSize, uint32_t, 256, ());
+    ADDMETHOD_CONST_NOBASE(getMaxGroupSize, uint32_t, 256, (const NEO::KernelDescriptor &));
     ADDMETHOD_NOBASE(getKernelNames, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t * pCount, const char **pNames));
     ADDMETHOD_NOBASE(performDynamicLink, ze_result_t, ZE_RESULT_SUCCESS,
                      (uint32_t numModules, ze_module_handle_t *phModules, ze_module_build_log_handle_t *phLinkLog));
     ADDMETHOD_NOBASE(getProperties, ze_result_t, ZE_RESULT_SUCCESS, (ze_module_properties_t * pModuleProperties));
     ADDMETHOD_NOBASE(getGlobalPointer, ze_result_t, ZE_RESULT_SUCCESS, (const char *pGlobalName, size_t *pSize, void **pPtr));
     ADDMETHOD_CONST_NOBASE(isDebugEnabled, bool, false, ());
-};
-
-struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
-    MockModuleTranslationUnit(L0::Device *device) : L0::ModuleTranslationUnit(device) {
-    }
-
-    ze_result_t processUnpackedBinary() override {
-        return ZE_RESULT_SUCCESS;
-    }
-
-    ze_result_t compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) override {
-        if (unpackedDeviceBinarySize && unpackedDeviceBinary) {
-            return ZE_RESULT_SUCCESS;
-        } else {
-            return ModuleTranslationUnit::compileGenBinary(inputArgs, staticLink);
-        }
-    }
 };
 
 struct MockModule : public L0::ModuleImp {
@@ -86,11 +122,13 @@ struct MockModule : public L0::ModuleImp {
     using ModuleImp::populateHostGlobalSymbolsMap;
     using ModuleImp::symbols;
     using ModuleImp::translationUnit;
+    uint32_t &maxGroupSize = ModuleImp::defaultMaxGroupSize;
 
     MockModule(L0::Device *device,
                L0::ModuleBuildLog *moduleBuildLog,
                L0::ModuleType type) : ModuleImp(device, moduleBuildLog, type) {
-        maxGroupSize = 32;
+        this->translationUnit.reset(new MockModuleTranslationUnit{device});
+        this->maxGroupSize = 32u;
     };
 
     ~MockModule() override = default;

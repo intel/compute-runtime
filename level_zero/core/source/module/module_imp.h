@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,9 +20,11 @@
 #include <string>
 
 namespace NEO {
+struct KernelDescriptor;
+
 namespace Debug {
 struct Segments;
-}
+} // namespace Debug
 } // namespace NEO
 namespace L0 {
 
@@ -115,7 +117,7 @@ struct ModuleImp : public Module {
 
     const std::vector<std::unique_ptr<KernelImmutableData>> &getKernelImmutableDataVector() const override { return kernelImmDatas; }
 
-    uint32_t getMaxGroupSize() const override { return maxGroupSize; }
+    uint32_t getMaxGroupSize(const NEO::KernelDescriptor &kernelDescriptor) const override;
 
     void createBuildOptions(const char *pBuildFlags, std::string &buildOptions, std::string &internalBuildOptions);
     bool moveOptLevelOption(std::string &dstOptionsSet, std::string &srcOptionSet);
@@ -160,7 +162,7 @@ struct ModuleImp : public Module {
     std::unique_ptr<ModuleTranslationUnit> translationUnit;
     ModuleBuildLog *moduleBuildLog = nullptr;
     NEO::GraphicsAllocation *exportedFunctionsSurface = nullptr;
-    uint32_t maxGroupSize = 0U;
+    uint32_t defaultMaxGroupSize = 0U;
     std::vector<std::unique_ptr<KernelImmutableData>> kernelImmDatas;
     NEO::Linker::RelocatedSymbolsMap symbols;
 

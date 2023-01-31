@@ -26,8 +26,10 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/kernel_helpers.h"
 #include "shared/source/helpers/string.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -367,7 +369,6 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     size_t slmAvailable = 0U;
     NEO::DeviceInfoKernelPayloadConstants deviceInfoConstants;
     slmAvailable = static_cast<size_t>(device->getDeviceInfo().localMemSize);
-    deviceInfoConstants.maxWorkGroupSize = static_cast<uint32_t>(device->getDeviceInfo().maxWorkGroupSize);
     deviceInfoConstants.computeUnitsUsedForScratch = static_cast<uint32_t>(device->getDeviceInfo().computeUnitsUsedForScratch);
     deviceInfoConstants.slmWindowSize = static_cast<uint32_t>(device->getDeviceInfo().localMemSize);
     if (NEO::requiresLocalMemoryWindowVA(programInfo)) {
@@ -390,6 +391,7 @@ ze_result_t ModuleTranslationUnit::processUnpackedBinary() {
     }
 
     for (auto &kernelInfo : this->programInfo.kernelInfos) {
+        deviceInfoConstants.maxWorkGroupSize = gfxCoreHelper.calculateMaxWorkGroupSize(kernelInfo->kernelDescriptor, static_cast<uint32_t>(device->getDeviceInfo().maxWorkGroupSize));
         kernelInfo->apply(deviceInfoConstants);
     }
 
@@ -617,7 +619,7 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
 
     registerElfInDebuggerL0();
 
-    this->maxGroupSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().maxWorkGroupSize);
+    this->defaultMaxGroupSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().maxWorkGroupSize);
 
     checkIfPrivateMemoryPerDispatchIsNeeded();
 
@@ -707,6 +709,10 @@ const KernelImmutableData *ModuleImp::getKernelImmutableData(const char *kernelN
         }
     }
     return nullptr;
+}
+
+uint32_t ModuleImp::getMaxGroupSize(const NEO::KernelDescriptor &kernelDescriptor) const {
+    return this->device->getGfxCoreHelper().calculateMaxWorkGroupSize(kernelDescriptor, this->defaultMaxGroupSize);
 }
 
 void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOptions, std::string &internalBuildOptions) {
