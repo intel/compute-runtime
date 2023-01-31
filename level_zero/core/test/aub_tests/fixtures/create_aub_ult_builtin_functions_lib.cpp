@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ std::unique_ptr<BuiltinFunctionsLib> BuiltinFunctionsLib::create(Device *device,
 }
 
 bool BuiltinFunctionsLibImpl::initBuiltinsAsyncEnabled() {
-    return true;
+    return false;
 }
 
 } // namespace L0

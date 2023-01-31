@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -39,7 +39,6 @@ if(DEFINED AUB_STREAM_PROJECT_NAME)
                  ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/mock.h
                  ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests/white_box.h
                  ${NEO_SOURCE_DIR}/level_zero/tools/test/unit_tests/sources/debug/debug_session_helper.cpp
-                 ${NEO_SOURCE_DIR}/level_zero/core/source/dll/create_builtin_functions_lib.cpp
                  ${NEO_SOURCE_DIR}/level_zero/core/source/dll/disallow_deferred_deleter.cpp
   )
 
