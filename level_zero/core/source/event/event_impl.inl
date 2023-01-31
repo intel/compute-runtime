@@ -295,6 +295,10 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         return ZE_RESULT_SUCCESS;
     }
 
+    if (NEO::DebugManager.flags.OverrideEventSynchronizeTimeout.get() != -1) {
+        timeout = NEO::DebugManager.flags.OverrideEventSynchronizeTimeout.get();
+    }
+
     if (timeout == 0) {
         return queryStatus();
     }

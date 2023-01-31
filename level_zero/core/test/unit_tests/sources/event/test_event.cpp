@@ -1265,6 +1265,20 @@ TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithNonZeroTimeoutAn
     EXPECT_EQ(ZE_RESULT_NOT_READY, result);
 }
 
+TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutNonZeroAndOverrideTimeoutSetAndStateInitialThenHostSynchronizeReturnsNotReady) {
+    DebugManagerStateRestore restore;
+    NEO::DebugManager.flags.OverrideEventSynchronizeTimeout.set(100);
+    std::chrono::high_resolution_clock::time_point waitStartTime, currentTime;
+    waitStartTime = std::chrono::high_resolution_clock::now();
+    ze_result_t result = event->hostSynchronize(0);
+    currentTime = std::chrono::high_resolution_clock::now();
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+
+    uint64_t timeDiff = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - waitStartTime).count();
+    uint64_t minTimeoutCheck = 80;
+    EXPECT_GT(timeDiff, minTimeoutCheck);
+}
+
 TEST_F(EventSynchronizeTest, givenCallToEventHostSynchronizeWithTimeoutZeroWhenStateSignaledThenHostSynchronizeReturnsSuccess) {
     uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
     *hostAddr = Event::STATE_SIGNALED;

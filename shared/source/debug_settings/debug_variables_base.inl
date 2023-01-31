@@ -227,6 +227,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceComputeWalkerPostSyncFlush, -1, "-1: defaul
 DECLARE_DEBUG_VARIABLE(int32_t, NumberOfRegularContextsPerEngine, -1, "-1: default, >0: Create more than 1 Regular contexts for the same engine")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableMultipleRegularContextForBcs, -1, "-1: default, 0: disabled, 1: Use NumberOfRegularContextsPerEngine to create multiple Regular contexts on the same engine")
 DECLARE_DEBUG_VARIABLE(int32_t, AppendAubStreamContextFlags, -1, "-1: default, >0: Append flags passed during HardwareContext creation.")
+DECLARE_DEBUG_VARIABLE(int64_t, OverrideEventSynchronizeTimeout, -1, "-1: default - user provided timeout value,  >0: timeout in nanoseconds")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
