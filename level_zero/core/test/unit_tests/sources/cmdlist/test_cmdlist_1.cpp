@@ -1112,6 +1112,7 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
+    ultCsr->registerClient();
 
     auto verifyFlags = [&ultCsr](ze_result_t result, bool dispatchFlag, bool bbFlag) {
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);

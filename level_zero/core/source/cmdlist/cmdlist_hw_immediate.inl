@@ -286,7 +286,12 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::waitForEventsFromHost() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const {
-    return (this->csr->directSubmissionRelaxedOrderingEnabled() && numWaitEvents > 0);
+    uint32_t minimalNumberOfClients = 2;
+    if (NEO::DebugManager.flags.DirectSubmissionRelaxedOrderingMinNumberOfClients.get() != -1) {
+        minimalNumberOfClients = static_cast<uint32_t>(NEO::DebugManager.flags.DirectSubmissionRelaxedOrderingMinNumberOfClients.get());
+    }
+
+    return (this->csr->directSubmissionRelaxedOrderingEnabled() && numWaitEvents > 0 && this->csr->getNumClients() >= minimalNumberOfClients);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

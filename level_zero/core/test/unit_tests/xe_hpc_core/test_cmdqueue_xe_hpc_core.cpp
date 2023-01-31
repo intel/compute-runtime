@@ -476,6 +476,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     context->allocHostMem(&hostDesc, size, alignment, &dstPtr);
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList0->csr);
     ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->registerClient();
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
@@ -534,6 +535,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     context->allocHostMem(&hostDesc, size, alignment, &dstPtr);
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList0->csr);
     ultCsr->recordFlusheBatchBuffer = true;
+    ultCsr->registerClient();
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
