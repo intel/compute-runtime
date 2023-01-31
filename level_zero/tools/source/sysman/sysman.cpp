@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@
 #include <vector>
 
 namespace L0 {
+bool sysmanInitFromCore = false;
 
 void DeviceImp::createSysmanHandle(bool isSubDevice) {
     if (static_cast<DriverHandleImp *>(driverHandle)->enableSysman && !isSubDevice) {
@@ -35,6 +36,8 @@ SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t coreDevice) {
         delete sysmanDevice;
         sysmanDevice = nullptr;
     }
+    sysmanInitFromCore = true;
+
     L0::DeviceImp *device = static_cast<DeviceImp *>(Device::fromHandle(coreDevice));
     for (auto &subDevice : device->subDevices) {
         static_cast<DeviceImp *>(subDevice)->setSysmanHandle(sysmanDevice);

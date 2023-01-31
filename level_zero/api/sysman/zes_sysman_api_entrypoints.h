@@ -7,10 +7,31 @@
 
 #pragma once
 #include "level_zero/core/source/driver/driver_handle.h"
+#include "level_zero/sysman/source/sysman_device.h"
+#include "level_zero/sysman/source/sysman_driver.h"
+#include "level_zero/sysman/source/sysman_driver_handle.h"
 
 #include "sysman/sysman.h"
 
 namespace L0 {
+ze_result_t zesInit(
+    zes_init_flags_t flags) {
+    return L0::Sysman::init(flags);
+}
+
+ze_result_t zesDriverGet(
+    uint32_t *pCount,
+    zes_driver_handle_t *phDrivers) {
+    return L0::Sysman::driverHandleGet(pCount, phDrivers);
+}
+
+ze_result_t zesDeviceGet(
+    zes_driver_handle_t hDriver,
+    uint32_t *pCount,
+    zes_device_handle_t *phDevices) {
+    return L0::Sysman::SysmanDriverHandle::fromHandle(hDriver)->getDevice(pCount, phDevices);
+}
+
 ze_result_t zesDeviceGetProperties(
     zes_device_handle_t hDevice,
     zes_device_properties_t *pProperties) {
@@ -761,24 +782,6 @@ ze_result_t zesFabricPortGetFabricErrorCounters(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_error_counters_t *pErrors) {
     return L0::FabricPort::fromHandle(hPort)->fabricPortGetErrorCounters(pErrors);
-}
-
-ze_result_t zesInit(
-    zes_init_flags_t flags) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t zesDeviceGet(
-    zes_driver_handle_t hDriver,
-    uint32_t *pCount,
-    zes_device_handle_t *phDevices) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
-}
-
-ze_result_t zesDriverGet(
-    uint32_t *pCount,
-    zes_driver_handle_t *phDrivers) {
-    return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
 ze_result_t zesDeviceSetOverclockWaiver(

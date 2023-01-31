@@ -23,6 +23,7 @@ struct Driver {
 ze_result_t init(ze_init_flags_t);
 ze_result_t driverHandleGet(uint32_t *pCount, ze_driver_handle_t *phDrivers);
 
+extern bool sysmanInitFromCore;
 extern uint32_t driverCount;
 extern _ze_driver_handle_t *GlobalDriverHandle;
 } // namespace L0
