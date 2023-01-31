@@ -18,6 +18,9 @@ using namespace NEO;
 
 using Dg2WddmTest = ::testing::Test;
 
+constexpr uint16_t REV_ID_A0 = 0;
+constexpr uint16_t REV_ID_B0 = 4;
+
 DG2TEST_F(Dg2WddmTest, givenG10A0WhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
     MockExecutionEnvironment executionEnvironment;
     RootDeviceEnvironment *rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
@@ -30,7 +33,6 @@ DG2TEST_F(Dg2WddmTest, givenG10A0WhenGettingLocalMemoryAccessModeThenCorrectValu
 
     wddm->gmmMemory.reset(gmmMemory);
 
-    constexpr uint16_t REV_ID_A0 = 0;
     rootDeviceEnvironment->getMutableHardwareInfo()->platform.usRevId = REV_ID_A0;
     rootDeviceEnvironment->getMutableHardwareInfo()->platform.usDeviceID = dg2G10DeviceIds[0];
 
@@ -66,7 +68,6 @@ DG2TEST_F(Dg2WddmTest, givenG10B0WhenGettingLocalMemoryAccessModeThenCorrectValu
     wddm->init();
     wddm->gmmMemory.reset(gmmMemory);
 
-    constexpr uint16_t REV_ID_B0 = 4;
     rootDeviceEnvironment->getMutableHardwareInfo()->platform.usRevId = REV_ID_B0;
     rootDeviceEnvironment->getMutableHardwareInfo()->platform.usDeviceID = dg2G10DeviceIds[0];
 
@@ -106,6 +107,7 @@ DG2TEST_F(Dg2WddmTest, givenG11WhenGettingLocalMemoryAccessModeThenCorrectValueI
     wddm->init();
     wddm->gmmMemory.reset(gmmMemory);
 
+    rootDeviceEnvironment->getMutableHardwareInfo()->platform.usRevId = REV_ID_B0;
     rootDeviceEnvironment->getMutableHardwareInfo()->platform.usDeviceID = dg2G11DeviceIds[0];
 
     MockWddmMemoryManager memoryManager = MockWddmMemoryManager(false, true, executionEnvironment);
@@ -144,6 +146,7 @@ DG2TEST_F(Dg2WddmTest, givenG12WhenGettingLocalMemoryAccessModeThenCorrectValueI
     wddm->init();
     wddm->gmmMemory.reset(gmmMemory);
 
+    rootDeviceEnvironment->getMutableHardwareInfo()->platform.usRevId = REV_ID_B0;
     rootDeviceEnvironment->getMutableHardwareInfo()->platform.usDeviceID = dg2G12DeviceIds[0];
 
     MockWddmMemoryManager memoryManager = MockWddmMemoryManager(false, true, executionEnvironment);
