@@ -665,7 +665,7 @@ ze_result_t OaMetricGroupImp::calculateMetricValues(const zet_metric_group_calcu
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s",
                               "INFO: The call is not supported for multiple devices\n"
                               "INFO: Please use zetMetricGroupCalculateMultipleMetricValuesExp instead\n");
-        return ZE_RESULT_ERROR_UNKNOWN;
+        return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
 
     const bool calculateCountOnly = *pMetricValueCount == 0;

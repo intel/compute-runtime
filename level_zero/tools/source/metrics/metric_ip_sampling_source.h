@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,6 +55,7 @@ typedef struct StallSumIpData {
 typedef std::map<uint64_t, StallSumIpData_t> StallSumIpDataMap_t;
 
 struct IpSamplingMetricGroupBase : public MetricGroup {
+    static constexpr uint32_t rawReportSize = 64u;
     bool activate() override { return true; }
     bool deactivate() override { return true; };
     ze_result_t metricQueryPoolCreate(
@@ -87,6 +88,10 @@ struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
     static std::unique_ptr<IpSamplingMetricGroupImp> create(IpSamplingMetricSourceImp &metricSource,
                                                             std::vector<IpSamplingMetricImp> &ipSamplingMetrics);
     IpSamplingMetricSourceImp &getMetricSource() { return metricSource; }
+    ze_result_t getCalculatedMetricCount(const uint8_t *pMultiMetricData, const size_t rawDataSize, uint32_t &metricValueCount, const uint32_t setIndex);
+    ze_result_t getCalculatedMetricValues(const zet_metric_group_calculation_type_t type, const size_t rawDataSize, const uint8_t *pMultiMetricData,
+                                          uint32_t &metricValueCount,
+                                          zet_typed_value_t *pCalculatedData, const uint32_t setIndex);
 
   private:
     std::vector<std::unique_ptr<IpSamplingMetricImp>> metrics = {};
@@ -97,6 +102,7 @@ struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
                                           zet_typed_value_t *pCalculatedData);
     bool stallIpDataMapUpdate(StallSumIpDataMap_t &, const uint8_t *pRawIpData);
     void stallSumIpDataToTypedValues(uint64_t ip, StallSumIpData_t &sumIpData, std::vector<zet_typed_value_t> &ipDataValues);
+    bool isMultiDeviceCaptureData(const size_t rawDataSize, const uint8_t *pRawData);
     IpSamplingMetricSourceImp &metricSource;
 };
 
@@ -134,6 +140,14 @@ struct IpSamplingMetricImp : public Metric {
 
   private:
     zet_metric_properties_t properties;
+};
+
+struct IpSamplingMetricDataHeader {
+    static constexpr uint32_t magicValue = 0xFEEDBCBA;
+    uint32_t magic;
+    uint32_t rawDataSize;
+    uint32_t setIndex;
+    uint32_t reserved1;
 };
 
 template <>

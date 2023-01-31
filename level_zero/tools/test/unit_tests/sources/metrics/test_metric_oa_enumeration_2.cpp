@@ -911,7 +911,7 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenCorrectRawDataHeaderWhenZetMetricG
     // Valid raw buffer for zetMetricGroupCalculateMultipleMetricValuesExp.
     uint32_t metricCount = 0;
     EXPECT_NE(metricsSetParams.QueryReportSize, rawResultsSize);
-    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults, &metricCount, nullptr), ZE_RESULT_ERROR_UNKNOWN);
+    EXPECT_EQ(zetMetricGroupCalculateMetricValues(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawResultsSize, rawResults, &metricCount, nullptr), ZE_RESULT_ERROR_INVALID_ARGUMENT);
     EXPECT_EQ(metricCount, 0u);
 }
 

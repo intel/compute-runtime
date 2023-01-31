@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,6 +30,7 @@ struct IpSamplingMetricStreamerImp : public IpSamplingMetricStreamerBase {
     ze_result_t readData(uint32_t maxReportCount, size_t *pRawDataSize, uint8_t *pRawData) override;
     ze_result_t close() override;
     Event::State getNotificationState() override;
+    uint32_t getMaxSupportedReportCount();
 
   protected:
     IpSamplingMetricSourceImp &ipSamplingSource;

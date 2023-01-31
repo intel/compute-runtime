@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/tools/source/metrics/metric_ip_sampling_source.h"
 #include <level_zero/zet_api.h>
 
 #include "gtest/gtest.h"
@@ -65,6 +66,19 @@ class MetricIpSamplingFixture : public MultiDeviceFixture,
 
 class MetricIpSamplingCalculateMetricsFixture : public MetricIpSamplingFixture {
   public:
+    void addHeader(uint8_t *rawDataOut, size_t rawDataOutSize, uint8_t *rawDataIn, size_t rawDataInSize, uint32_t setIndex) {
+
+        const auto expectedOutSize = sizeof(IpSamplingMetricDataHeader) + rawDataInSize;
+        if (expectedOutSize <= rawDataOutSize) {
+
+            auto header = reinterpret_cast<IpSamplingMetricDataHeader *>(rawDataOut);
+            header->magic = IpSamplingMetricDataHeader::magicValue;
+            header->rawDataSize = static_cast<uint32_t>(rawDataInSize);
+            header->setIndex = setIndex;
+            memcpy_s(rawDataOut + sizeof(IpSamplingMetricDataHeader), rawDataOutSize, rawDataIn, rawDataInSize);
+        }
+    }
+
     std::vector<MockStallRawIpData> rawDataVector = {{1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 1000, 0x01},
                                                      {1, 9, 8, 7, 6, 5, 4, 3, 2, 1, 1000, 0x02},
                                                      {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 1001, 0x000},

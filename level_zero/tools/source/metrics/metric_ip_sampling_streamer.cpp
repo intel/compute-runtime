@@ -13,6 +13,8 @@
 #include "level_zero/tools/source/metrics/os_metric_ip_sampling.h"
 #include <level_zero/zet_api.h>
 
+#include <string.h>
+
 namespace L0 {
 
 void IpSamplingMetricStreamerBase::attachEvent(ze_event_handle_t hNotificationEvent) {
@@ -100,6 +102,11 @@ Event::State IpSamplingMetricStreamerImp::getNotificationState() {
                : Event::State::STATE_INITIAL;
 }
 
+uint32_t IpSamplingMetricStreamerImp::getMaxSupportedReportCount() {
+    const auto unitReportSize = ipSamplingSource.getMetricOsInterface()->getUnitReportSize();
+    return ipSamplingSource.getMetricOsInterface()->getRequiredBufferSize(UINT32_MAX) / unitReportSize;
+}
+
 ze_result_t MultiDeviceIpSamplingMetricGroupImp::streamerOpen(
     zet_context_handle_t hContext,
     zet_device_handle_t hDevice,
@@ -134,15 +141,24 @@ ze_result_t MultiDeviceIpSamplingMetricGroupImp::streamerOpen(
 
 ze_result_t MultiDeviceIpSamplingMetricStreamerImp::readData(uint32_t maxReportCount, size_t *pRawDataSize, uint8_t *pRawData) {
 
-    if (*pRawDataSize == 0) {
-        return subDeviceStreamers[0]->readData(maxReportCount, pRawDataSize, pRawData);
-    }
-
+    const int32_t totalHeaderSize = static_cast<int32_t>(sizeof(IpSamplingMetricDataHeader) * subDeviceStreamers.size());
     // Find single report size
     size_t singleReportSize = 0;
     subDeviceStreamers[0]->readData(1, &singleReportSize, nullptr);
 
-    size_t calcRawDataSize = *pRawDataSize;
+    // Trim report count to the maximum possible report count
+    const uint32_t maxSupportedReportCount = subDeviceStreamers[0]->getMaxSupportedReportCount() *
+                                             static_cast<uint32_t>(subDeviceStreamers.size());
+    maxReportCount = std::min(maxSupportedReportCount, maxReportCount);
+
+    if (*pRawDataSize == 0) {
+        *pRawDataSize = singleReportSize * maxReportCount;
+        *pRawDataSize += totalHeaderSize;
+        return ZE_RESULT_SUCCESS;
+    }
+
+    // Remove header size from actual data size
+    size_t calcRawDataSize = std::max<int32_t>(0, static_cast<int32_t>(*pRawDataSize - totalHeaderSize));
 
     // Recalculate maximum possible report count for the raw data size
     calcRawDataSize = std::min(calcRawDataSize, singleReportSize * maxReportCount);
@@ -152,14 +168,28 @@ ze_result_t MultiDeviceIpSamplingMetricStreamerImp::readData(uint32_t maxReportC
 
     ze_result_t result = ZE_RESULT_SUCCESS;
 
-    for (auto &streamer : subDeviceStreamers) {
+    for (uint32_t index = 0; index < subDeviceStreamers.size(); index++) {
+        auto &streamer = subDeviceStreamers[index];
+
+        // Get header address
+        auto header = reinterpret_cast<IpSamplingMetricDataHeader *>(pCurrRawData);
+        pCurrRawData += sizeof(IpSamplingMetricDataHeader);
+
         result = streamer->readData(maxReportCount, &currRawDataSize, pCurrRawData);
         if (result != ZE_RESULT_SUCCESS) {
+            *pRawDataSize = 0;
             return result;
         }
 
+        // Update to header
+        memset(header, 0, sizeof(IpSamplingMetricDataHeader));
+        header->magic = IpSamplingMetricDataHeader::magicValue;
+        header->rawDataSize = static_cast<uint32_t>(currRawDataSize);
+        header->setIndex = index;
+
         calcRawDataSize -= currRawDataSize;
         pCurrRawData += currRawDataSize;
+
         // Check whether memory available for next read
         if (calcRawDataSize < singleReportSize) {
             break;

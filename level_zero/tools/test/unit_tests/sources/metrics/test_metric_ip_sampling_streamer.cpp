@@ -202,10 +202,8 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalle
         size_t rawSize = 0;
         EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 100, &rawSize, nullptr), ZE_RESULT_SUCCESS);
         EXPECT_NE(rawSize, 0u);
-        uint8_t rawData = 0;
-        rawSize = 256;
-        EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 50, &rawSize, &rawData), ZE_RESULT_SUCCESS);
-        EXPECT_EQ(rawSize, 256u);
+        std::vector<uint8_t> rawData(rawSize);
+        EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 50, &rawSize, rawData.data()), ZE_RESULT_SUCCESS);
         EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
     }
 }
@@ -231,9 +229,9 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalle
         size_t rawSize = 0;
         EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, UINT32_MAX, &rawSize, nullptr), ZE_RESULT_SUCCESS);
         EXPECT_NE(rawSize, 0u);
-        uint8_t rawData = 0;
-        rawSize = UINT32_MAX;
-        EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, UINT32_MAX, &rawSize, &rawData), ZE_RESULT_SUCCESS);
+        rawSize = 256;
+        std::vector<uint8_t> rawData(rawSize);
+        EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, UINT32_MAX, &rawSize, rawData.data()), ZE_RESULT_SUCCESS);
         EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
     }
 }
@@ -267,9 +265,8 @@ TEST_F(MetricIpSamplingStreamerTest, GivenReadDataFromKmdFailsWhenStreamerReadDa
         size_t rawSize = 0;
         EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 100, &rawSize, nullptr), ZE_RESULT_SUCCESS);
         EXPECT_NE(rawSize, 0u);
-        uint8_t rawData = 0;
-        rawSize = 256;
-        EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 50, &rawSize, &rawData),
+        std::vector<uint8_t> rawData(rawSize);
+        EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 50, &rawSize, rawData.data()),
                   osInterfaceVector[subDeviceIndex]->readDataReturn);
         EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
     }
@@ -441,11 +438,23 @@ TEST_F(MetricIpSamplingStreamerTest, GivenAllInputsAreCorrectWhenReadDataIsCalle
     std::vector<uint8_t> rawData = {};
     rawData.resize(rawSize);
     EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 75, &rawSize, rawData.data()), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(rawSize, osInterfaceVector[1]->fillDataSize + osInterfaceVector[2]->fillDataSize);
-    EXPECT_EQ(rawData[0], 2u);
-    EXPECT_EQ(rawData[osInterfaceVector[1]->fillDataSize - 1], 2u);
-    EXPECT_EQ(rawData[osInterfaceVector[1]->fillDataSize], 4u);
-    EXPECT_EQ(rawData[osInterfaceVector[1]->fillDataSize + osInterfaceVector[2]->fillDataSize - 1], 4u);
+    EXPECT_EQ(rawSize, osInterfaceVector[1]->fillDataSize + osInterfaceVector[2]->fillDataSize + sizeof(IpSamplingMetricDataHeader) * 2u);
+    auto header = reinterpret_cast<IpSamplingMetricDataHeader *>(rawData.data());
+    EXPECT_EQ(header->magic, IpSamplingMetricDataHeader::magicValue);
+    EXPECT_EQ(header->rawDataSize, osInterfaceVector[1]->fillDataSize);
+    EXPECT_EQ(header->setIndex, 0u);
+
+    const auto subDeviceDataOffset = sizeof(IpSamplingMetricDataHeader) + osInterfaceVector[1]->fillDataSize;
+    header = reinterpret_cast<IpSamplingMetricDataHeader *>(rawData.data() + subDeviceDataOffset);
+    EXPECT_EQ(header->magic, IpSamplingMetricDataHeader::magicValue);
+    EXPECT_EQ(header->rawDataSize, osInterfaceVector[2]->fillDataSize);
+    EXPECT_EQ(header->setIndex, 1u);
+
+    const auto rawDataStartOffset = sizeof(IpSamplingMetricDataHeader);
+    EXPECT_EQ(rawData[rawDataStartOffset], 2u);
+    EXPECT_EQ(rawData[rawDataStartOffset + osInterfaceVector[1]->fillDataSize - 1], 2u);
+    EXPECT_EQ(rawData[subDeviceDataOffset + rawDataStartOffset], 4u);
+    EXPECT_EQ(rawData[subDeviceDataOffset + rawDataStartOffset + osInterfaceVector[2]->fillDataSize - 1], 4u);
     EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
 }
 
@@ -487,9 +496,16 @@ TEST_F(MetricIpSamplingStreamerTest, GivenNotEnoughMemoryWhileReadingWhenReadDat
     rawSize = osInterfaceVector[1]->fillDataSize;
     rawData.resize(rawSize);
     EXPECT_EQ(zetMetricStreamerReadData(streamerHandle, 75, &rawSize, rawData.data()), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(rawSize, osInterfaceVector[1]->fillDataSize);
-    EXPECT_EQ(rawData[0], 2u);
-    EXPECT_EQ(rawData[osInterfaceVector[1]->fillDataSize - 1], 2u);
+    // Expect less than the fillDataSize, since Header size needs to be accounted for
+    EXPECT_LT(rawSize, osInterfaceVector[1]->fillDataSize);
+    const auto rawDataStartOffset = sizeof(IpSamplingMetricDataHeader);
+    EXPECT_EQ(rawData[rawDataStartOffset + 0], 2u);
+    const auto maxReportCount = (osInterfaceVector[1]->fillDataSize -
+                                 sizeof(IpSamplingMetricDataHeader) * 2) /
+                                osInterfaceVector[1]->getUnitReportSize();
+    const auto firstSubDevicelastUpdatedByteOffset = sizeof(IpSamplingMetricDataHeader) + maxReportCount * osInterfaceVector[1]->getUnitReportSize();
+    EXPECT_EQ(rawData[firstSubDevicelastUpdatedByteOffset - 1], 2u);
+    EXPECT_NE(rawData[firstSubDevicelastUpdatedByteOffset], 2u);
     EXPECT_EQ(zetMetricStreamerClose(streamerHandle), ZE_RESULT_SUCCESS);
 }
 

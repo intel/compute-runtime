@@ -157,9 +157,9 @@ ze_result_t MetricIpSamplingLinuxImp::readData(uint8_t *pRawData, size_t *pRawDa
 
 uint32_t MetricIpSamplingLinuxImp::getRequiredBufferSize(const uint32_t maxReportCount) {
 
-    uint32_t requiredBufferSize = getUnitReportSize() * maxReportCount;
     const auto hwInfo = device.getNEODevice()->getHardwareInfo();
-    return std::min(requiredBufferSize, maxDssBufferSize * hwInfo.gtSystemInfo.MaxDualSubSlicesSupported);
+    const auto maxSupportedReportCount = (maxDssBufferSize * hwInfo.gtSystemInfo.MaxDualSubSlicesSupported) / unitReportSize;
+    return std::min(maxSupportedReportCount, maxReportCount) * getUnitReportSize();
 }
 
 uint32_t MetricIpSamplingLinuxImp::getUnitReportSize() {
