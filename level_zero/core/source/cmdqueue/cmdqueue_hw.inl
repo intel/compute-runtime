@@ -59,20 +59,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::createFence(const ze_fence_desc_t *de
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandQueueHw<gfxCoreFamily>::destroy() {
-    if (commandStream.getCpuBase() != nullptr) {
-        commandStream.replaceGraphicsAllocation(nullptr);
-        commandStream.replaceBuffer(nullptr, 0);
-    }
-    buffers.destroy(this->getDevice());
-    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
-        device->getL0Debugger()->notifyCommandQueueDestroyed(device->getNEODevice());
-    }
-    delete this;
-    return ZE_RESULT_SUCCESS;
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     uint32_t numCommandLists,
     ze_command_list_handle_t *phCommandLists,

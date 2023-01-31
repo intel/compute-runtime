@@ -51,6 +51,16 @@ CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr
 
 ze_result_t CommandQueueImp::destroy() {
     this->csr->unregisterClient();
+
+    if (commandStream.getCpuBase() != nullptr) {
+        commandStream.replaceGraphicsAllocation(nullptr);
+        commandStream.replaceBuffer(nullptr, 0);
+    }
+    buffers.destroy(this->getDevice());
+    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
+        device->getL0Debugger()->notifyCommandQueueDestroyed(device->getNEODevice());
+    }
+
     delete this;
     return ZE_RESULT_SUCCESS;
 }
