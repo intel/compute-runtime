@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,7 @@ class MockOfflineCompiler : public OfflineCompiler {
     using OfflineCompiler::appendExtraInternalOptions;
     using OfflineCompiler::argHelper;
     using OfflineCompiler::cache;
+    using OfflineCompiler::compilerProductHelper;
     using OfflineCompiler::dbgHash;
     using OfflineCompiler::debugDataBinary;
     using OfflineCompiler::debugDataBinarySize;

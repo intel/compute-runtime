@@ -155,6 +155,7 @@ void RootDeviceEnvironment::initHelpers() {
     initProductHelper();
     initGfxCoreHelper();
     initApiGfxCoreHelper();
+    initCompilerProductHelper();
 }
 
 void RootDeviceEnvironment::initGfxCoreHelper() {
@@ -162,9 +163,15 @@ void RootDeviceEnvironment::initGfxCoreHelper() {
         gfxCoreHelper = GfxCoreHelper::create(this->getHardwareInfo()->platform.eRenderCoreFamily);
     }
 }
+
 void RootDeviceEnvironment::initProductHelper() {
     if (productHelper == nullptr) {
         productHelper = ProductHelper::create(this->getHardwareInfo()->platform.eProductFamily);
+    }
+}
+void RootDeviceEnvironment::initCompilerProductHelper() {
+    if (compilerProductHelper == nullptr) {
+        compilerProductHelper = CompilerProductHelper::create(this->getHardwareInfo()->platform.eProductFamily);
     }
 }
 
@@ -191,8 +198,8 @@ bool RootDeviceEnvironment::isNumberOfCcsLimited() const {
 template <typename HelperType>
 HelperType &RootDeviceEnvironment::getHelper() const {
     if constexpr (std::is_same_v<HelperType, CompilerProductHelper>) {
-        auto &compilerProductHelper = *CompilerProductHelper::get(this->getHardwareInfo()->platform.eProductFamily);
-        return compilerProductHelper;
+        UNRECOVERABLE_IF(compilerProductHelper == nullptr);
+        return *compilerProductHelper;
     } else if constexpr (std::is_same_v<HelperType, ProductHelper>) {
         UNRECOVERABLE_IF(productHelper == nullptr);
         return *productHelper;

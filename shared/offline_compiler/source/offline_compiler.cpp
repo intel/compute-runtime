@@ -425,7 +425,7 @@ std::string &OfflineCompiler::getBuildLog() {
     return buildLog;
 }
 
-int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceName, int deviceId) {
+int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceName, int deviceId, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper) {
     std::vector<PRODUCT_FAMILY> allSupportedProduct{ALL_SUPPORTED_PRODUCT_FAMILIES};
     std::transform(deviceName.begin(), deviceName.end(), deviceName.begin(), ::tolower);
 
@@ -441,7 +441,8 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceNam
             uint64_t config = hwInfoConfig ? hwInfoConfig : defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
             setHwInfoValuesFromConfig(config, hwInfo);
             hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
-
+            compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+            UNRECOVERABLE_IF(compilerProductHelper == nullptr);
             productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
             return SUCCESS;
         }
@@ -463,7 +464,7 @@ int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
     }
 
     if (productConfig != AOT::UNKNOWN_ISA) {
-        if (argHelper->getHwInfoForProductConfig(productConfig, hwInfo, hwInfoConfig)) {
+        if (argHelper->getHwInfoForProductConfig(productConfig, hwInfo, hwInfoConfig, std::move(compilerProductHelper))) {
             if (revisionId != -1) {
                 hwInfo.platform.usRevId = revisionId;
             }
@@ -496,7 +497,7 @@ int OfflineCompiler::initHardwareInfo(std::string deviceName) {
             return retVal;
         }
     }
-    retVal = initHardwareInfoForDeprecatedAcronyms(deviceName, deviceId);
+    retVal = initHardwareInfoForDeprecatedAcronyms(deviceName, deviceId, std::move(compilerProductHelper));
 
     return retVal;
 }
@@ -792,8 +793,7 @@ void OfflineCompiler::unifyExcludeIrFlags() {
 void OfflineCompiler::setStatelessToStatefulBufferOffsetFlag() {
     bool isStatelessToStatefulBufferOffsetSupported = true;
     if (!deviceName.empty()) {
-        const auto &compilerProductHelper = *CompilerProductHelper::get(hwInfo.platform.eProductFamily);
-        isStatelessToStatefulBufferOffsetSupported = compilerProductHelper.isStatelessToStatefulBufferOffsetSupported();
+        isStatelessToStatefulBufferOffsetSupported = compilerProductHelper->isStatelessToStatefulBufferOffsetSupported();
     }
     if (DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != -1) {
         isStatelessToStatefulBufferOffsetSupported = DebugManager.flags.EnableStatelessToStatefulBufferOffsetOpt.get() != 0;
@@ -804,14 +804,13 @@ void OfflineCompiler::setStatelessToStatefulBufferOffsetFlag() {
 }
 
 void OfflineCompiler::appendExtraInternalOptions(std::string &internalOptions) {
-    const auto &compilerProductHelper = *CompilerProductHelper::get(hwInfo.platform.eProductFamily);
-    if (compilerProductHelper.isForceToStatelessRequired() && !forceStatelessToStatefulOptimization) {
+    if (compilerProductHelper->isForceToStatelessRequired() && !forceStatelessToStatefulOptimization) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::greaterThan4gbBuffersRequired);
     }
-    if (compilerProductHelper.isForceEmuInt32DivRemSPRequired()) {
+    if (compilerProductHelper->isForceEmuInt32DivRemSPRequired()) {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::forceEmuInt32DivRemSP);
     }
-    CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(false));
+    CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper->getCachingPolicyOptions(false));
 }
 
 void OfflineCompiler::parseDebugSettings() {

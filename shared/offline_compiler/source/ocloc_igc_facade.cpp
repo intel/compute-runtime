@@ -80,12 +80,11 @@ int OclocIgcFacade::initialize(const HardwareInfo &hwInfo) {
         return OclocErrorCode::OUT_OF_HOST_MEMORY;
     }
 
-    const auto compilerProductHelper = CompilerProductHelper::get(hwInfo.platform.eProductFamily);
-
     populateIgcPlatform(*igcPlatform, hwInfo);
     IGC::GtSysInfoHelper::PopulateInterfaceWith(*igcGtSystemInfo.get(), hwInfo.gtSystemInfo);
 
-    populateWithFeatures(igcFtrWa.get(), hwInfo, compilerProductHelper);
+    auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    populateWithFeatures(igcFtrWa.get(), hwInfo, compilerProductHelper.get());
 
     initialized = true;
     return OclocErrorCode::SUCCESS;

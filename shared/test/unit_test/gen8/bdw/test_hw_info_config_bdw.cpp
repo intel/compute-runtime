@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/helpers/compiler_hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
@@ -122,5 +123,7 @@ BDWTEST_F(BdwProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
 
 using CompilerProductHelperHelperTestsBdw = ::testing::Test;
 BDWTEST_F(CompilerProductHelperHelperTestsBdw, givenBdwWhenIsStatelessToStatefulBufferOffsetSupportedIsCalledThenReturnsTrue) {
-    EXPECT_FALSE(CompilerProductHelper::get(productFamily)->isStatelessToStatefulBufferOffsetSupported());
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &compilerProductHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+    EXPECT_FALSE(compilerProductHelper.isStatelessToStatefulBufferOffsetSupported());
 }

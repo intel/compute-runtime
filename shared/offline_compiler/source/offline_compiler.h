@@ -100,7 +100,7 @@ All supported acronyms: %s.
 
     int initHardwareInfo(std::string deviceName);
     int initHardwareInfoForProductConfig(std::string deviceName);
-    int initHardwareInfoForDeprecatedAcronyms(std::string deviceName, int deviceId);
+    int initHardwareInfoForDeprecatedAcronyms(std::string deviceName, int deviceId, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper);
 
     std::string getStringWithinDelimiters(const std::string &src);
     int initialize(size_t numArgs, const std::vector<std::string> &allArgs, bool dumpFiles);
@@ -180,6 +180,7 @@ All supported acronyms: %s.
     std::unique_ptr<OclocIgcFacade> igcFacade{nullptr};
     std::unique_ptr<OclocFclFacade> fclFacade{nullptr};
     std::unique_ptr<CompilerCache> cache;
+    std::unique_ptr<CompilerProductHelper> compilerProductHelper;
     IGC::CodeType::CodeType_t preferredIntermediateRepresentation;
 
     OclocArgHelper *argHelper = nullptr;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,6 +20,10 @@
 #include <vector>
 
 constexpr auto *oclocStdoutLogName = "stdout.log";
+
+namespace NEO {
+class CompilerProductHelper;
+}
 
 struct Source {
     const uint8_t *data;
@@ -75,7 +79,7 @@ class OclocArgHelper {
                    uint64_t **lenOutputs, char ***nameOutputs);
     virtual ~OclocArgHelper();
     MOCKABLE_VIRTUAL bool fileExists(const std::string &filename) const;
-    bool getHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig);
+    bool getHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper);
     bool setAcronymForDeviceId(std::string &device);
     std::vector<std::string> headersToVectorOfStrings();
     MOCKABLE_VIRTUAL void readFileToVectorOfStrings(const std::string &filename, std::vector<std::string> &lines);

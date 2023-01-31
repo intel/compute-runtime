@@ -3015,8 +3015,7 @@ struct OfflineCompilerStatelessToStatefulTests : public ::testing::Test {
 };
 
 TEST_F(OfflineCompilerStatelessToStatefulTests, whenAppendExtraInternalOptionsThenInternalOptionsAreCorrect) {
-    const auto &compilerProductHelper = *CompilerProductHelper::get(mockOfflineCompiler->hwInfo.platform.eProductFamily);
-    if (!compilerProductHelper.isForceToStatelessRequired()) {
+    if (!mockOfflineCompiler->compilerProductHelper->isForceToStatelessRequired()) {
         GTEST_SKIP();
     }
     runTest();
@@ -3031,9 +3030,12 @@ class MockCompilerProductHelperHw : public CompilerProductHelperHw<productFamily
 };
 
 HWTEST2_F(OfflineCompilerStatelessToStatefulTests, givenMockWhenAppendExtraInternalOptionsThenInternalOptionsAreCorrect, MatchAny) {
-    MockCompilerProductHelperHw<productFamily> mockCompilerProductHelper;
-    VariableBackup<CompilerProductHelper *> backupMockProductHelper(&CompilerProductHelperFactory[productFamily], &mockCompilerProductHelper);
+
+    auto backup = std::unique_ptr<CompilerProductHelper>(new MockCompilerProductHelperHw<productFamily>());
+    this->mockOfflineCompiler->compilerProductHelper.swap(backup);
+
     runTest();
+    this->mockOfflineCompiler->compilerProductHelper.swap(backup);
 }
 
 TEST(OfflineCompilerTest, givenNonExistingFilenameWhenUsedToReadOptionsThenReadOptionsFromFileReturnsFalse) {

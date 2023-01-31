@@ -12,16 +12,25 @@
 
 #include "igfxfmid.h"
 
+#include <memory>
+
 namespace NEO {
 
 class CompilerProductHelper;
 struct HardwareInfo;
-extern CompilerProductHelper *CompilerProductHelperFactory[IGFX_MAX_PRODUCT];
+
+using CompilerProductHelperCreateFunctionType = std::unique_ptr<CompilerProductHelper> (*)();
+extern CompilerProductHelperCreateFunctionType compilerProductHelperFactory[IGFX_MAX_PRODUCT];
 
 class CompilerProductHelper {
   public:
-    static CompilerProductHelper *get(PRODUCT_FAMILY product) {
-        return CompilerProductHelperFactory[product];
+    static std::unique_ptr<CompilerProductHelper> create(PRODUCT_FAMILY product) {
+        if (product == IGFX_UNKNOWN) {
+            return nullptr;
+        }
+        auto createFunction = compilerProductHelperFactory[product];
+        auto compilerProductHelper = createFunction();
+        return compilerProductHelper;
     }
 
     virtual bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const = 0;
@@ -30,14 +39,19 @@ class CompilerProductHelper {
     virtual bool isForceToStatelessRequired() const = 0;
     virtual void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const = 0;
     virtual const char *getCachingPolicyOptions(bool isDebuggerActive) const = 0;
+
+    virtual ~CompilerProductHelper() = default;
+
+  protected:
+    CompilerProductHelper() = default;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
 class CompilerProductHelperHw : public CompilerProductHelper {
   public:
-    static CompilerProductHelper *get() {
-        static CompilerProductHelperHw<gfxProduct> instance;
-        return &instance;
+    static std::unique_ptr<CompilerProductHelper> create() {
+        auto compilerProductHelper = std::unique_ptr<CompilerProductHelper>(new CompilerProductHelperHw());
+        return compilerProductHelper;
     }
 
     bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const override;
@@ -47,17 +61,19 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const override;
     const char *getCachingPolicyOptions(bool isDebuggerActive) const override;
 
+    ~CompilerProductHelperHw() override = default;
+
   protected:
     CompilerProductHelperHw() = default;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
 struct EnableCompilerProductHelper {
-    typedef typename HwMapper<gfxProduct>::GfxProduct GfxProduct;
 
+    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     EnableCompilerProductHelper() {
-        CompilerProductHelper *pCompilerProductHelper = CompilerProductHelperHw<gfxProduct>::get();
-        CompilerProductHelperFactory[gfxProduct] = pCompilerProductHelper;
+        auto compilerProductHelperCreateFunction = CompilerProductHelperHw<gfxProduct>::create;
+        compilerProductHelperFactory[gfxProduct] = compilerProductHelperCreateFunction;
     }
 };
 

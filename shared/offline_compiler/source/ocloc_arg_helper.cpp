@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -156,7 +156,7 @@ std::unique_ptr<char[]> OclocArgHelper::loadDataFromFile(const std::string &file
     }
 }
 
-bool OclocArgHelper::getHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig) {
+bool OclocArgHelper::getHwInfoForProductConfig(uint32_t productConfig, NEO::HardwareInfo &hwInfo, uint64_t hwInfoConfig, std::unique_ptr<NEO::CompilerProductHelper> &&compilerProductHelper) {
     bool retVal = false;
     if (productConfig == AOT::UNKNOWN_ISA) {
         return retVal;
@@ -170,9 +170,9 @@ bool OclocArgHelper::getHwInfoForProductConfig(uint32_t productConfig, NEO::Hard
                 setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
             }
             NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
-
-            const auto &compilerProductHelper = *NEO::CompilerProductHelper::get(hwInfo.platform.eProductFamily);
-            compilerProductHelper.setProductConfigForHwInfo(hwInfo, deviceConfig.aotConfig);
+            compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+            UNRECOVERABLE_IF(compilerProductHelper == nullptr);
+            compilerProductHelper->setProductConfigForHwInfo(hwInfo, deviceConfig.aotConfig);
             hwInfo.platform.usDeviceID = deviceConfig.deviceIds->front();
 
             retVal = true;

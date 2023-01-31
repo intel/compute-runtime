@@ -102,6 +102,7 @@ bool Wddm::init() {
         (hardwareInfo->capabilityTable.instrumentationEnabled && instrumentationEnabled);
 
     rootDeviceEnvironment.initProductHelper();
+    rootDeviceEnvironment.initCompilerProductHelper();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     productHelper.adjustPlatformForProductFamily(hardwareInfo);
     rootDeviceEnvironment.initApiGfxCoreHelper();

@@ -34,6 +34,7 @@ class SWTagsManager;
 class ProductHelper;
 class GfxCoreHelper;
 class ApiGfxCoreHelper;
+class CompilerProductHelper;
 
 struct HardwareInfo;
 
@@ -72,6 +73,7 @@ struct RootDeviceEnvironment {
     void initHelpers();
     void initGfxCoreHelper();
     void initApiGfxCoreHelper();
+    void initCompilerProductHelper();
     template <typename HelperType>
     HelperType &getHelper() const;
     const ProductHelper &getProductHelper() const;
@@ -91,6 +93,7 @@ struct RootDeviceEnvironment {
     std::unique_ptr<ApiGfxCoreHelper> apiGfxCoreHelper;
     std::unique_ptr<GfxCoreHelper> gfxCoreHelper;
     std::unique_ptr<ProductHelper> productHelper;
+    std::unique_ptr<CompilerProductHelper> compilerProductHelper;
 
     ExecutionEnvironment &executionEnvironment;
 
