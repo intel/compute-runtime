@@ -757,7 +757,10 @@ bool Device::getUuid(std::array<uint8_t, ProductHelper::uuidSize> &uuid) {
     if (this->uuid.isValid) {
         uuid = this->uuid.id;
 
-        if (!isSubDevice() && deviceBitfield.count() == 1) {
+        auto hwInfo = getHardwareInfo();
+        auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
+
+        if (subDevicesCount > 1 && deviceBitfield.count() == 1) {
             // In case of no sub devices created (bits set in affinity mask == 1), return the UUID of enabled sub-device.
             uint32_t subDeviceIndex = Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()));
             uuid[ProductHelper::uuidSize - 1] = subDeviceIndex + 1;
