@@ -24,26 +24,6 @@ struct MockModuleTranslationUnit : public L0::ModuleTranslationUnit {
 
     MockModuleTranslationUnit(L0::Device *device) : BaseClass{device} {}
 
-    MockModuleTranslationUnit(L0::ModuleTranslationUnit *orig) : BaseClass{orig->device} {
-        std::swap(this->globalConstBuffer, orig->globalConstBuffer);
-        std::swap(this->globalVarBuffer, orig->globalVarBuffer);
-        std::swap(this->programInfo, orig->programInfo);
-        std::swap(this->options, orig->options);
-        std::swap(this->shouldSuppressRebuildWarning, orig->shouldSuppressRebuildWarning);
-        std::swap(this->buildLog, orig->buildLog);
-        std::swap(this->irBinary, orig->irBinary);
-        std::swap(this->irBinarySize, orig->irBinarySize);
-        std::swap(this->unpackedDeviceBinary, orig->unpackedDeviceBinary);
-        std::swap(this->unpackedDeviceBinarySize, orig->unpackedDeviceBinarySize);
-        std::swap(this->packedDeviceBinary, orig->packedDeviceBinary);
-        std::swap(this->packedDeviceBinarySize, orig->packedDeviceBinarySize);
-        std::swap(this->debugData, orig->debugData);
-        std::swap(this->debugDataSize, orig->debugDataSize);
-        std::swap(this->alignedvIsas, orig->alignedvIsas);
-        std::swap(this->specConstantsValues, orig->specConstantsValues);
-        std::swap(this->isBuiltIn, orig->isBuiltIn);
-    }
-
     ADDMETHOD(processUnpackedBinary, ze_result_t, true, ZE_RESULT_SUCCESS, (), ());
 
     ze_result_t compileGenBinary(NEO::TranslationInput inputArgs, bool staticLink) override {
@@ -82,7 +62,6 @@ struct WhiteBox<::L0::Module> : public ::L0::ModuleImp {
     using BaseClass::translationUnit;
     using BaseClass::type;
     using BaseClass::unresolvedExternalsInfo;
-    uint32_t &maxGroupSize{BaseClass::defaultMaxGroupSize};
 
     WhiteBox(Device *device, ModuleBuildLog *moduleBuildLog, ModuleType type)
         : ::L0::ModuleImp{device, moduleBuildLog, type} {
@@ -122,13 +101,11 @@ struct MockModule : public L0::ModuleImp {
     using ModuleImp::populateHostGlobalSymbolsMap;
     using ModuleImp::symbols;
     using ModuleImp::translationUnit;
-    uint32_t &maxGroupSize = ModuleImp::defaultMaxGroupSize;
 
     MockModule(L0::Device *device,
                L0::ModuleBuildLog *moduleBuildLog,
                L0::ModuleType type) : ModuleImp(device, moduleBuildLog, type) {
         this->translationUnit.reset(new MockModuleTranslationUnit{device});
-        this->maxGroupSize = 32u;
     };
 
     ~MockModule() override = default;
