@@ -18,6 +18,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_library.h"
 
+#include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_imp.h"
@@ -161,6 +162,9 @@ DriverHandleImp::~DriverHandleImp() {
     }
 
     for (auto &device : this->devices) {
+        if (device->getBuiltinFunctionsLib()) {
+            device->getBuiltinFunctionsLib()->ensureInitCompletion();
+        }
         delete device;
     }
 

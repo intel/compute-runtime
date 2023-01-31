@@ -17,10 +17,6 @@ namespace ult {
 
 struct MockBuiltinDataTimestamp : BuiltinFunctionsLibImpl::BuiltinData {
     using BuiltinFunctionsLibImpl::BuiltinData::BuiltinData;
-
-    ~MockBuiltinDataTimestamp() override {
-        module.release();
-    }
 };
 struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
 
@@ -57,7 +53,8 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
         auto builtInCode = builtInsLib->getBuiltinsLib().getBuiltinCode(builtin, builtInCodeType, *device->getNEODevice());
 
         [[maybe_unused]] ze_result_t res;
-        std::unique_ptr<Module> module;
+
+        Module *module;
         ze_module_handle_t moduleHandle;
         ze_module_desc_t moduleDesc = {};
         moduleDesc.format = builtInCode.type == BuiltInCodeType::Binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
@@ -65,8 +62,7 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
         moduleDesc.inputSize = builtInCode.resource.size();
         res = device->createModule(&moduleDesc, &moduleHandle, nullptr, ModuleType::Builtin);
         UNRECOVERABLE_IF(res != ZE_RESULT_SUCCESS);
-
-        module.reset(Module::fromHandle(moduleHandle));
+        module = Module::fromHandle(moduleHandle);
 
         std::unique_ptr<Kernel> kernel;
         ze_kernel_handle_t kernelHandle;
@@ -76,7 +72,7 @@ struct MockBuiltinFunctionsLibImplTimestamps : BuiltinFunctionsLibImpl {
         DEBUG_BREAK_IF(res != ZE_RESULT_SUCCESS);
 
         kernel.reset(Kernel::fromHandle(kernelHandle));
-        return std::unique_ptr<BuiltinData>(new MockBuiltinDataTimestamp{std::move(module), std::move(kernel)});
+        return std::unique_ptr<BuiltinData>(new MockBuiltinDataTimestamp{module, std::move(kernel)});
     }
 };
 
