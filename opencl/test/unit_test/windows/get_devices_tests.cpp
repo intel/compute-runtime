@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,10 +45,12 @@ HWTEST_F(PrepareDeviceEnvironmentsTests, givenRcsAndCcsNotSupportedWhenInitializ
     REQUIRE_64BIT_OR_SKIP();
 
     NEO::ExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1u);
     HardwareInfo hwInfo = *defaultHwInfo;
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getProductHelper();
 
-    auto productHelper = ProductHelper::get(hwInfo.platform.eProductFamily);
-    productHelper->configureHardwareCustom(&hwInfo, nullptr);
+    productHelper.configureHardwareCustom(&hwInfo, nullptr);
 
     bool expectedValue = false;
     if (hwInfo.featureTable.flags.ftrRcsNode || hwInfo.featureTable.flags.ftrCCSNode) {

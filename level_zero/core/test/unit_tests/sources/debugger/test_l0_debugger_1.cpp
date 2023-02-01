@@ -11,6 +11,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/mock_hw_info_config_hw.h"
+#include "shared/test/common/helpers/raii_hw_info_config.h"
 #include "shared/test/common/mocks/mock_gmm_helper.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -541,11 +542,9 @@ HWTEST2_F(L0DebuggerSimpleTest, givenUseCsrImmediateSubmissionDisabledCommandLis
 HWTEST2_F(L0DebuggerTest, givenDebuggerEnabledAndL1CachePolicyWBWhenAppendingThenDebugSurfaceHasCachePolicyWBP, IsAtLeastXeHpgCore) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
 
-    MockProductHelperHw<productFamily> productHelper;
-    VariableBackup<ProductHelper *> productHelperFactoryBackup{&NEO::productHelperFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
-    productHelperFactoryBackup = &productHelper;
-    productHelper.returnedL1CachePolicy = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB;
-    productHelper.returnedL1CachePolicyIfDebugger = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP;
+    NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    raii.mockProductHelper->returnedL1CachePolicy = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WB;
+    raii.mockProductHelper->returnedL1CachePolicyIfDebugger = RENDER_SURFACE_STATE::L1_CACHE_POLICY_WBP;
 
     Mock<::L0::Kernel> kernel;
     ze_result_t returnValue;

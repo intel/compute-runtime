@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/hw_info.h"
 
+#include <memory>
 #include <optional>
 
 namespace AOT {
@@ -37,7 +38,8 @@ class OSInterface;
 enum class DriverModelType;
 enum class AllocationType;
 
-extern ProductHelper *productHelperFactory[IGFX_MAX_PRODUCT];
+using ProductHelperCreateFunctionType = std::unique_ptr<ProductHelper> (*)();
+extern ProductHelperCreateFunctionType productHelperFactory[IGFX_MAX_PRODUCT];
 
 enum class UsmAccessCapabilities {
     Host = 0,
@@ -49,9 +51,12 @@ enum class UsmAccessCapabilities {
 
 class ProductHelper {
   public:
-    static ProductHelper *get(PRODUCT_FAMILY product) {
-        return productHelperFactory[product];
+    static std::unique_ptr<ProductHelper> create(PRODUCT_FAMILY product) {
+        auto productHelperCreateFunction = productHelperFactory[product];
+        auto productHelper = productHelperCreateFunction();
+        return productHelper;
     }
+
     static constexpr uint32_t uuidSize = 16u;
     static constexpr uint32_t luidSize = 8u;
     int configureHwInfoWddm(const HardwareInfo *inHwInfo, HardwareInfo *outHwInfo, const RootDeviceEnvironment &rootDeviceEnvironment);
@@ -188,9 +193,11 @@ class ProductHelper {
 
     virtual bool isMultiContextResourceDeferDeletionSupported() const = 0;
 
-    MOCKABLE_VIRTUAL ~ProductHelper() = default;
+    virtual ~ProductHelper() = default;
 
   protected:
+    ProductHelper() = default;
+
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     virtual void fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) const = 0;
 
@@ -201,10 +208,15 @@ class ProductHelper {
 template <PRODUCT_FAMILY gfxProduct>
 class ProductHelperHw : public ProductHelper {
   public:
-    static ProductHelper *get() {
-        static ProductHelperHw<gfxProduct> instance;
-        return &instance;
+    static std::unique_ptr<ProductHelper> create() {
+        auto productHelper = std::unique_ptr<ProductHelper>(new ProductHelperHw());
+
+        using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
+        productHelper->threadsPerEu = GfxProduct::threadsPerEu;
+
+        return productHelper;
     }
+
     int configureHardwareCustom(HardwareInfo *hwInfo, OSInterface *osIface) const override;
     void adjustPlatformForProductFamily(HardwareInfo *hwInfo) override;
     void adjustSamplerState(void *sampler, const HardwareInfo &hwInfo) const override;
@@ -337,6 +349,8 @@ class ProductHelperHw : public ProductHelper {
 
     bool isMultiContextResourceDeferDeletionSupported() const override;
 
+    ~ProductHelperHw() override = default;
+
   protected:
     ProductHelperHw() = default;
 
@@ -351,12 +365,12 @@ class ProductHelperHw : public ProductHelper {
 
 template <PRODUCT_FAMILY gfxProduct>
 struct EnableProductProductHelper {
-    typedef typename HwMapper<gfxProduct>::GfxProduct GfxProduct;
+
+    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
 
     EnableProductProductHelper() {
-        ProductHelper *pProductHelper = ProductHelperHw<gfxProduct>::get();
-        productHelperFactory[gfxProduct] = pProductHelper;
-        pProductHelper->threadsPerEu = GfxProduct::threadsPerEu;
+        auto productHelperCreateFunction = ProductHelperHw<gfxProduct>::create;
+        productHelperFactory[gfxProduct] = productHelperCreateFunction;
     }
 };
 

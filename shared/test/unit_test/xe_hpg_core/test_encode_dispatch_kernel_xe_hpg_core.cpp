@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/test//common/helpers/raii_hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -41,9 +42,7 @@ HWTEST2_F(CommandEncodeStatesTestXeHpgCore, givenRequiredWorkGroupOrderAndIsAdju
     MockExecutionEnvironment executionEnvironment{};
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
 
-    MockProductHelper<productFamily> productHelper{};
-    VariableBackup<ProductHelper *> productHelperFactoryBackup{&NEO::productHelperFactory[static_cast<size_t>(defaultHwInfo->platform.eProductFamily)]};
-    productHelperFactoryBackup = &productHelper;
+    RAIIProductHelperFactory<MockProductHelper<productFamily>> raii(rootDeviceEnvironment);
 
     WALKER_TYPE walkerCmd{};
     WALKER_TYPE walkerOnStart{};

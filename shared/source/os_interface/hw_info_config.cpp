@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,6 @@
 
 namespace NEO {
 
-ProductHelper *productHelperFactory[IGFX_MAX_PRODUCT] = {};
+ProductHelperCreateFunctionType productHelperFactory[IGFX_MAX_PRODUCT] = {};
 
 } // namespace NEO

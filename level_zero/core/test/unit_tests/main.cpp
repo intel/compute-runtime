@@ -272,7 +272,7 @@ int main(int argc, char **argv) {
 
     productFamily = hwInfoForTests.platform.eProductFamily;
     renderCoreFamily = hwInfoForTests.platform.eRenderCoreFamily;
-    uint32_t threadsPerEu = productHelperFactory[productFamily]->threadsPerEu;
+
     PLATFORM &platform = hwInfoForTests.platform;
     if (revId != -1) {
         platform.usRevId = revId;
@@ -281,6 +281,9 @@ int main(int argc, char **argv) {
     }
     uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
     setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
+
+    auto productHelper = ProductHelper::create(hwInfoForTests.platform.eProductFamily);
+    uint32_t threadsPerEu = productHelper->threadsPerEu;
 
     // set Gt and FeatureTable to initial state
     hardwareInfoSetup[productFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable, hwInfoConfig);

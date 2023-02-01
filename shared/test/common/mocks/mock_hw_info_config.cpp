@@ -432,6 +432,8 @@ struct UnknownProduct {
         static constexpr bool stateSip = false;
         static constexpr bool csrSurface = false;
     };
+
+    static const uint32_t threadsPerEu = 8;
 };
 
 template <>

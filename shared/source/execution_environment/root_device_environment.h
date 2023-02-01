@@ -68,7 +68,7 @@ struct RootDeviceEnvironment {
     void createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
     void limitNumberOfCcs(uint32_t numberOfCcs);
     bool isNumberOfCcsLimited() const;
-
+    void initProductHelper();
     void initHelpers();
     void initGfxCoreHelper();
     void initApiGfxCoreHelper();
@@ -90,6 +90,7 @@ struct RootDeviceEnvironment {
     std::unique_ptr<SWTagsManager> tagsManager;
     std::unique_ptr<ApiGfxCoreHelper> apiGfxCoreHelper;
     std::unique_ptr<GfxCoreHelper> gfxCoreHelper;
+    std::unique_ptr<ProductHelper> productHelper;
 
     ExecutionEnvironment &executionEnvironment;
 

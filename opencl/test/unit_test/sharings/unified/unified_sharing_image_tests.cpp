@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -129,7 +129,7 @@ HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndNoPag
     MemoryManagerReturningCompressedAllocations memoryManager{};
     VariableBackup<MemoryManager *> memoryManagerBackup{&this->context->memoryManager, &memoryManager};
     using ProductHelperNotSupportingPageTableManager = MockProductHelper<false>;
-    RAIIProductHelperFactory<ProductHelperNotSupportingPageTableManager> productHelperBackup{this->context->getDevice(0)->getHardwareInfo().platform.eProductFamily};
+    RAIIProductHelperFactory<ProductHelperNotSupportingPageTableManager> productHelperBackup{*this->context->getDevice(0)->getExecutionEnvironment()->rootDeviceEnvironments[0]};
 
     cl_mem_flags flags{};
     cl_int retVal{};
@@ -146,7 +146,7 @@ HWTEST_F(UnifiedSharingImageTestsWithMemoryManager, givenCompressedImageAndPageT
     MemoryManagerReturningCompressedAllocations memoryManager{};
     VariableBackup<MemoryManager *> memoryManagerBackup{&this->context->memoryManager, &memoryManager};
     using ProductHelperNotSupportingPageTableManager = MockProductHelper<true>;
-    RAIIProductHelperFactory<ProductHelperNotSupportingPageTableManager> productHelperBackup{this->context->getDevice(0)->getHardwareInfo().platform.eProductFamily};
+    RAIIProductHelperFactory<ProductHelperNotSupportingPageTableManager> productHelperBackup{*this->context->getDevice(0)->getExecutionEnvironment()->rootDeviceEnvironments[0]};
 
     cl_mem_flags flags{};
     cl_int retVal{};

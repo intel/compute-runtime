@@ -21,6 +21,7 @@
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/mock_hw_info_config_hw.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
+#include "shared/test/common/helpers/raii_hw_info_config.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -936,12 +937,10 @@ HWTEST2_F(DeviceTest, givenAllThreadArbitrationPoliciesWhenPassingSchedulingHint
 
     Mock<L0::DeviceImp> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
-    MockProductHelperHw<productFamily> productHelper;
-    productHelper.threadArbPolicies = {ThreadArbitrationPolicy::AgeBased,
-                                       ThreadArbitrationPolicy::RoundRobin,
-                                       ThreadArbitrationPolicy::RoundRobinAfterDependency};
-    VariableBackup<ProductHelper *> productHelperFactoryBackup{&NEO::productHelperFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
-    productHelperFactoryBackup = &productHelper;
+    NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*neoMockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    raii.mockProductHelper->threadArbPolicies = {ThreadArbitrationPolicy::AgeBased,
+                                                 ThreadArbitrationPolicy::RoundRobin,
+                                                 ThreadArbitrationPolicy::RoundRobinAfterDependency};
 
     ze_device_module_properties_t kernelProperties = {};
     kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
@@ -969,10 +968,8 @@ HWTEST2_F(DeviceTest, givenIncorrectThreadArbitrationPolicyWhenPassingScheduling
 
     Mock<L0::DeviceImp> deviceImp(neoMockDevice, neoMockDevice->getExecutionEnvironment());
 
-    MockProductHelperHw<productFamily> productHelper;
-    productHelper.threadArbPolicies = {ThreadArbitrationPolicy::NotPresent};
-    VariableBackup<ProductHelper *> productHelperFactoryBackup{&NEO::productHelperFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
-    productHelperFactoryBackup = &productHelper;
+    NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*neoMockDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    raii.mockProductHelper->threadArbPolicies = {ThreadArbitrationPolicy::NotPresent};
 
     ze_device_module_properties_t kernelProperties = {};
     kernelProperties.stype = ZE_STRUCTURE_TYPE_KERNEL_PROPERTIES;
@@ -1709,11 +1706,8 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtProper
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
 
-    auto hwInfo = *NEO::defaultHwInfo;
-    MockProductHelperHw<productFamily> productHelper;
-    VariableBackup<ProductHelper *> productHelperFactoryBackup{&NEO::productHelperFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
-    productHelperFactoryBackup = &productHelper;
-
+    NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*this->neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    auto &productHelper = device->getProductHelper();
     ze_device_memory_properties_t memProperties = {};
     ze_device_memory_ext_properties_t memExtProperties = {};
     memExtProperties.stype = ZE_STRUCTURE_TYPE_DEVICE_MEMORY_EXT_PROPERTIES;
@@ -1729,6 +1723,7 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesForMemoryExtProper
         ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6,
     };
 
+    auto &hwInfo = device->getHwInfo();
     auto bandwidthPerNanoSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, nullptr, 0) / 1000000000;
 
     EXPECT_EQ(memExtProperties.type, sysInfoMemType[hwInfo.gtSystemInfo.MemoryType]);
@@ -1744,11 +1739,8 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWith2LevelsOfPnext
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
 
-    auto hwInfo = *NEO::defaultHwInfo;
-    MockProductHelperHw<productFamily> productHelper;
-    VariableBackup<ProductHelper *> productHelperFactoryBackup{&NEO::productHelperFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
-    productHelperFactoryBackup = &productHelper;
-
+    NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    auto &productHelper = device->getProductHelper();
     ze_device_memory_properties_t memProperties = {};
     ze_base_properties_t baseProperties{};
     ze_device_memory_ext_properties_t memExtProperties = {};
@@ -1769,6 +1761,7 @@ HWTEST2_F(DeviceGetMemoryTests, whenCallingGetMemoryPropertiesWith2LevelsOfPnext
         ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6,
     };
 
+    auto &hwInfo = device->getHwInfo();
     auto bandwidthPerNanoSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, nullptr, 0) / 1000000000;
 
     EXPECT_EQ(memExtProperties.type, sysInfoMemType[hwInfo.gtSystemInfo.MemoryType]);
@@ -2140,9 +2133,7 @@ HWTEST2_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabled
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
     EXPECT_EQ(1u, count);
 
-    MockProductHelperHw<productFamily> productHelper;
-    VariableBackup<ProductHelper *> productHelperFactoryBackup{&NEO::productHelperFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
-    productHelperFactoryBackup = &productHelper;
+    NEO::RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(*device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[0]);
 
     ze_device_memory_properties_t memProperties = {};
     ze_device_memory_ext_properties_t memExtProperties = {};
@@ -2159,10 +2150,10 @@ HWTEST2_F(MultipleDevicesEnabledImplicitScalingTest, GivenImplicitScalingEnabled
         ZE_DEVICE_MEMORY_EXT_TYPE_GDDR6,
     };
 
-    auto bandwidthPerNanoSecond = productHelper.getDeviceMemoryMaxBandWidthInBytesPerSecond(hwInfo, nullptr, 0) / 1000000000;
+    auto bandwidthPerNanoSecond = raii.mockProductHelper->getDeviceMemoryMaxBandWidthInBytesPerSecond(device->getHwInfo(), nullptr, 0) / 1000000000;
 
     EXPECT_EQ(memExtProperties.type, sysInfoMemType[hwInfo.gtSystemInfo.MemoryType]);
-    EXPECT_EQ(memExtProperties.physicalSize, productHelper.getDeviceMemoryPhysicalSizeInBytes(nullptr, 0) * numSubDevices);
+    EXPECT_EQ(memExtProperties.physicalSize, raii.mockProductHelper->getDeviceMemoryPhysicalSizeInBytes(nullptr, 0) * numSubDevices);
     EXPECT_EQ(memExtProperties.readBandwidth, bandwidthPerNanoSecond * numSubDevices);
     EXPECT_EQ(memExtProperties.writeBandwidth, memExtProperties.readBandwidth);
     EXPECT_EQ(memExtProperties.bandwidthUnit, ZE_BANDWIDTH_UNIT_BYTES_PER_NANOSEC);
@@ -3520,8 +3511,9 @@ struct MultipleDevicesDifferentLocalMemorySupportTest : public MultipleDevicesTe
 
 struct MultipleDevicesDifferentFamilyAndLocalMemorySupportTest : public MultipleDevicesTest {
     void SetUp() override {
-        if ((NEO::ProductHelper::get(IGFX_SKYLAKE) == nullptr) ||
-            (NEO::ProductHelper::get(IGFX_KABYLAKE) == nullptr)) {
+
+        if ((NEO::ProductHelper::create(IGFX_SKYLAKE) == nullptr) ||
+            (NEO::ProductHelper::create(IGFX_KABYLAKE) == nullptr)) {
             GTEST_SKIP();
         }
 

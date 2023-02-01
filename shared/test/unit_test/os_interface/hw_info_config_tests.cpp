@@ -294,12 +294,6 @@ HWTEST_F(ProductHelperTest, WhenAllowRenderCompressionIsCalledThenTrueIsReturned
 HWTEST_F(ProductHelperTest, givenVariousDebugKeyValuesWhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
     DebugManagerStateRestore restore{};
 
-    struct MockProductHelper : ProductHelperHw<IGFX_UNKNOWN> {
-        using ProductHelper::getDefaultLocalMemoryAccessMode;
-    };
-    auto mockProductHelper = static_cast<MockProductHelper &>(*ProductHelper::get(productFamily));
-    EXPECT_EQ(mockProductHelper.getDefaultLocalMemoryAccessMode(pInHwInfo), mockProductHelper.getLocalMemoryAccessMode(pInHwInfo));
-
     DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
     EXPECT_EQ(LocalMemoryAccessMode::Default, productHelper->getLocalMemoryAccessMode(pInHwInfo));
     DebugManager.flags.ForceLocalMemoryAccessMode.set(1);

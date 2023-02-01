@@ -133,8 +133,7 @@ BindlessHeapsHelper *RootDeviceEnvironment::getBindlessHeapsHelper() const {
 }
 
 const ProductHelper &RootDeviceEnvironment::getProductHelper() const {
-    auto &productHelper = *ProductHelper::get(this->getHardwareInfo()->platform.eProductFamily);
-    return productHelper;
+    return *productHelper;
 }
 
 void RootDeviceEnvironment::createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield) {
@@ -153,6 +152,7 @@ CompilerInterface *RootDeviceEnvironment::getCompilerInterface() {
 }
 
 void RootDeviceEnvironment::initHelpers() {
+    initProductHelper();
     initGfxCoreHelper();
     initApiGfxCoreHelper();
 }
@@ -160,6 +160,11 @@ void RootDeviceEnvironment::initHelpers() {
 void RootDeviceEnvironment::initGfxCoreHelper() {
     if (gfxCoreHelper == nullptr) {
         gfxCoreHelper = GfxCoreHelper::create(this->getHardwareInfo()->platform.eRenderCoreFamily);
+    }
+}
+void RootDeviceEnvironment::initProductHelper() {
+    if (productHelper == nullptr) {
+        productHelper = ProductHelper::create(this->getHardwareInfo()->platform.eProductFamily);
     }
 }
 
@@ -189,8 +194,8 @@ HelperType &RootDeviceEnvironment::getHelper() const {
         auto &compilerProductHelper = *CompilerProductHelper::get(this->getHardwareInfo()->platform.eProductFamily);
         return compilerProductHelper;
     } else if constexpr (std::is_same_v<HelperType, ProductHelper>) {
-        auto &productHelper = *ProductHelper::get(this->getHardwareInfo()->platform.eProductFamily);
-        return productHelper;
+        UNRECOVERABLE_IF(productHelper == nullptr);
+        return *productHelper;
     } else {
         static_assert(std::is_same_v<HelperType, GfxCoreHelper>, "Only CompilerProductHelper, ProductHelper and GfxCoreHelper are supported");
         UNRECOVERABLE_IF(gfxCoreHelper == nullptr);

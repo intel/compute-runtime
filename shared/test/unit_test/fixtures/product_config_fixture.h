@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,10 +22,10 @@ struct ProductConfigTest : public T {
     void SetUp() override {
         T::SetUp();
         hwInfo = *NEO::defaultHwInfo;
-        productHelper = NEO::ProductHelper::get(productFamily);
+        productHelper = NEO::ProductHelper::create(productFamily);
     }
 
-    NEO::ProductHelper *productHelper = nullptr;
+    std::unique_ptr<NEO::ProductHelper> productHelper = nullptr;
     NEO::HardwareInfo hwInfo = {};
     AOT::PRODUCT_CONFIG productConfig = AOT::UNKNOWN_ISA;
 };

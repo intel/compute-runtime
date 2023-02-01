@@ -196,7 +196,7 @@ TYPED_TEST(SklHwInfoTests, givenGTSystemInfoTypeWhenConfigureHardwareCustomThenS
     TypeParam::setupHardwareInfo(&hwInfo, false);
     auto sliceCount = gtSystemInfo.SliceCount;
 
-    ProductHelper *productHelper = ProductHelper::get(PRODUCT_FAMILY::IGFX_SKYLAKE);
+    auto productHelper = ProductHelper::create(PRODUCT_FAMILY::IGFX_SKYLAKE);
 
     productHelper->configureHardwareCustom(&hwInfo, osInterface.get());
     EXPECT_EQ(gtSystemInfo.SliceCount, sliceCount);

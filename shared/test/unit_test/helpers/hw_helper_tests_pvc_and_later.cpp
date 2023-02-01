@@ -13,6 +13,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/helpers/mock_hw_info_config_hw.h"
+#include "shared/test/common/helpers/raii_hw_info_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -139,17 +140,13 @@ HWTEST2_F(GfxCoreHelperTestPvcAndLater, WhenIsCooperativeDispatchSupportedThenCo
         bool isRcsAvailableValue = true;
     };
 
-    MockProductHelperHw<productFamily> productHelper;
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    VariableBackup<ProductHelper *> productHelperFactoryBackup{&NEO::productHelperFactory[static_cast<size_t>(hwInfo.platform.eProductFamily)]};
-    productHelperFactoryBackup = &productHelper;
-
+    RAIIProductHelperFactory<MockProductHelperHw<productFamily>> raii(rootDeviceEnvironment);
     MockGfxCoreHelper gfxCoreHelper{};
 
     for (auto isCooperativeEngineSupported : ::testing::Bool()) {
-        productHelper.isCooperativeEngineSupportedValue = isCooperativeEngineSupported;
+        raii.mockProductHelper->isCooperativeEngineSupportedValue = isCooperativeEngineSupported;
         for (auto isRcsAvailable : ::testing::Bool()) {
             gfxCoreHelper.isRcsAvailableValue = isRcsAvailable;
             for (auto engineGroupType : {EngineGroupType::RenderCompute, EngineGroupType::Compute,

@@ -613,7 +613,9 @@ class MockProductHelperForRtKernels : public ProductHelperHw<IGFX_UNKNOWN> {
 };
 
 HWTEST_F(MidThreadPreemptionTests, givenKernelWithRayTracingWhenGettingPreemptionFlagsThenMidThreadPreemptionIsEnabledBasedOnProductHelperCapability) {
-    RAIIProductHelperFactory<MockProductHelperForRtKernels> productHelperBackup{defaultHwInfo->platform.eProductFamily};
+    MockExecutionEnvironment mockExecutionEnvironment{};
+
+    RAIIProductHelperFactory<MockProductHelperForRtKernels> productHelperBackup{*mockExecutionEnvironment.rootDeviceEnvironments[0]};
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     KernelDescriptor kernelDescriptor{};
