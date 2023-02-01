@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,62 @@
 
 namespace NEO {
 
-BufferObject::BufferObject(Drm *drm, uint64_t patIndex, int handle, size_t size, size_t maxOsContextCount) : drm(drm), refCount(1), handle(handle), size(size) {
+BufferObjectHandleWrapper BufferObjectHandleWrapper::acquireSharedOwnership() {
+    if (controlBlock == nullptr) {
+        controlBlock = new ControlBlock{1, 0};
+    }
+
+    std::lock_guard lock{controlBlock->blockMutex};
+    controlBlock->refCount++;
+
+    return BufferObjectHandleWrapper{boHandle, Ownership::Strong, controlBlock};
+}
+
+BufferObjectHandleWrapper BufferObjectHandleWrapper::acquireWeakOwnership() {
+    if (controlBlock == nullptr) {
+        controlBlock = new ControlBlock{1, 0};
+    }
+
+    std::lock_guard lock{controlBlock->blockMutex};
+    controlBlock->weakRefCount++;
+
+    return BufferObjectHandleWrapper{boHandle, Ownership::Weak, controlBlock};
+}
+
+BufferObjectHandleWrapper::~BufferObjectHandleWrapper() {
+    if (controlBlock == nullptr) {
+        return;
+    }
+
+    std::unique_lock lock{controlBlock->blockMutex};
+
+    if (ownership == Ownership::Strong) {
+        controlBlock->refCount--;
+    } else {
+        controlBlock->weakRefCount--;
+    }
+
+    if (controlBlock->refCount == 0 && controlBlock->weakRefCount == 0) {
+        lock.unlock();
+        delete controlBlock;
+    }
+}
+
+bool BufferObjectHandleWrapper::canCloseBoHandle() {
+    if (controlBlock == nullptr) {
+        return true;
+    }
+
+    std::lock_guard lock{controlBlock->blockMutex};
+    return controlBlock->refCount == 1;
+}
+
+BufferObject::BufferObject(Drm *drm, uint64_t patIndex, int handle, size_t size, size_t maxOsContextCount)
+    : BufferObject(drm, patIndex, BufferObjectHandleWrapper{handle}, size, maxOsContextCount) {}
+
+BufferObject::BufferObject(Drm *drm, uint64_t patIndex, BufferObjectHandleWrapper &&handle, size_t size, size_t maxOsContextCount)
+    : drm(drm), refCount(1), handle(std::move(handle)), size(size) {
+
     auto ioctlHelper = drm->getIoctlHelper();
     this->tilingMode = ioctlHelper->getDrmParamValue(DrmParam::TilingNone);
     this->lockedAddress = nullptr;
@@ -58,10 +113,15 @@ void BufferObject::setAddress(uint64_t address) {
 }
 
 bool BufferObject::close() {
-    GemClose close{};
-    close.handle = this->handle;
+    if (!this->handle.canCloseBoHandle()) {
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Skipped closing BO-%d - more shared users!\n", this->handle.getBoHandle());
+        return true;
+    }
 
-    PRINT_DEBUG_STRING(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on handle: BO-%d\n", this->handle);
+    GemClose close{};
+    close.handle = this->handle.getBoHandle();
+
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintBOCreateDestroyResult.get(), stdout, "Calling gem close on handle: BO-%d\n", this->handle.getBoHandle());
 
     auto ioctlHelper = this->drm->getIoctlHelper();
     int ret = ioctlHelper->ioctl(DrmIoctl::GemClose, &close);
@@ -72,7 +132,7 @@ bool BufferObject::close() {
         return false;
     }
 
-    this->handle = -1;
+    this->handle.setBoHandle(-1);
 
     return true;
 }
@@ -82,7 +142,7 @@ int BufferObject::wait(int64_t timeoutNs) {
         return 0;
     }
 
-    int ret = this->drm->waitHandle(this->handle, -1);
+    int ret = this->drm->waitHandle(this->handle.getBoHandle(), -1);
     UNRECOVERABLE_IF(ret != 0);
 
     return ret;
@@ -94,7 +154,7 @@ bool BufferObject::setTiling(uint32_t mode, uint32_t stride) {
     }
 
     GemSetTiling setTiling{};
-    setTiling.handle = this->handle;
+    setTiling.handle = this->handle.getBoHandle();
     setTiling.tilingMode = mode;
     setTiling.stride = stride;
     auto ioctlHelper = this->drm->getIoctlHelper();
@@ -116,7 +176,7 @@ void BufferObject::fillExecObject(ExecObject &execObject, OsContext *osContext, 
     const auto osContextId = drm->isPerContextVMRequired() ? osContext->getContextId() : 0;
 
     auto ioctlHelper = drm->getIoctlHelper();
-    ioctlHelper->fillExecObject(execObject, this->handle, this->gpuAddress, drmContextId, this->bindInfo[osContextId][vmHandleId], this->isMarkedForCapture());
+    ioctlHelper->fillExecObject(execObject, this->handle.getBoHandle(), this->gpuAddress, drmContextId, this->bindInfo[osContextId][vmHandleId], this->isMarkedForCapture());
 }
 
 int BufferObject::exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
@@ -179,19 +239,19 @@ void BufferObject::printBOBindingResult(OsContext *osContext, uint32_t vmHandleI
     if (retVal == 0) {
         if (bind) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stdout, "bind BO-%d to VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d\n",
-                               this->handle, vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
+                               this->handle.getBoHandle(), vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
         } else {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stdout, "unbind BO-%d from VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d\n",
-                               this->handle, vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
+                               this->handle.getBoHandle(), vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal);
         }
     } else {
         auto err = this->drm->getErrno();
         if (bind) {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "bind BO-%d to VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
-                               this->handle, vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+                               this->handle.getBoHandle(), vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
         } else {
             PRINT_DEBUG_STRING(DebugManager.flags.PrintBOBindingResult.get(), stderr, "unbind BO-%d from VM %u, drmVmId = %u, range: %llx - %llx, size: %lld, result: %d, errno: %d(%s)\n",
-                               this->handle, vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
+                               this->handle.getBoHandle(), vmHandleId, static_cast<const OsContextLinux *>(osContext)->getDrmVmIds().size() ? static_cast<const OsContextLinux *>(osContext)->getDrmVmIds()[vmHandleId] : 0, this->gpuAddress, ptrOffset(this->gpuAddress, this->size), this->size, retVal, err, strerror(err));
         }
     }
 }

@@ -488,11 +488,16 @@ ze_result_t ContextImp::getIpcMemHandle(const void *ptr,
                                         ze_ipc_mem_handle_t *pIpcHandle) {
     NEO::SvmAllocationData *allocData = this->driverHandle->svmAllocsManager->getSVMAlloc(ptr);
     if (allocData) {
+        auto *memoryManager = driverHandle->getMemoryManager();
+        auto *graphicsAllocation = allocData->gpuAllocations.getDefaultGraphicsAllocation();
+
         uint64_t handle = 0;
-        int ret = allocData->gpuAllocations.getDefaultGraphicsAllocation()->peekInternalHandle(this->driverHandle->getMemoryManager(), handle);
+        int ret = graphicsAllocation->peekInternalHandle(memoryManager, handle);
         if (ret < 0) {
             return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
         }
+
+        memoryManager->registerIpcExportedAllocation(graphicsAllocation);
 
         IpcMemoryData &ipcData = *reinterpret_cast<IpcMemoryData *>(pIpcHandle->data);
         ipcData = {};

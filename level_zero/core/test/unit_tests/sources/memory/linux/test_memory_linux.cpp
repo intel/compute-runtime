@@ -18,6 +18,9 @@
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
 
+#include <memory>
+#include <vector>
+
 namespace L0 {
 namespace ult {
 
@@ -99,10 +102,8 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
                                                                           MemoryPool::System4KBPages,
                                                                           canonizedGpuAddress);
         auto &drm = this->getDrm(0u);
-        MockBufferObject bo0(&drm);
-        MockBufferObject bo1(&drm);
-        alloc->bufferObjects[0] = &bo0;
-        alloc->bufferObjects[1] = &bo1;
+        alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{&drm}).get();
+        alloc->bufferObjects[1] = mockBos.emplace_back(new MockBufferObject{&drm}).get();
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -121,10 +122,8 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
                                                                           MemoryPool::System4KBPages,
                                                                           canonizedGpuAddress);
         auto &drm = this->getDrm(0u);
-        MockBufferObject bo0(&drm);
-        MockBufferObject bo1(&drm);
-        alloc->bufferObjects[0] = &bo0;
-        alloc->bufferObjects[1] = &bo1;
+        alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{&drm}).get();
+        alloc->bufferObjects[1] = mockBos.emplace_back(new MockBufferObject{&drm}).get();
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -150,10 +149,8 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
                                                                           MemoryPool::System4KBPages,
                                                                           canonizedGpuAddress);
         auto &drm = this->getDrm(0u);
-        MockBufferObject bo0(&drm);
-        MockBufferObject bo1(&drm);
-        alloc->bufferObjects[0] = &bo0;
-        alloc->bufferObjects[1] = &bo1;
+        alloc->bufferObjects[0] = mockBos.emplace_back(new MockBufferObject{&drm}).get();
+        alloc->bufferObjects[1] = mockBos.emplace_back(new MockBufferObject{&drm}).get();
         alloc->setGpuBaseAddress(0xabcd);
         return alloc;
     }
@@ -173,6 +170,7 @@ class MemoryManagerIpcImplicitScalingObtainFdMock : public NEO::DrmMemoryManager
     uint64_t sharedHandleAddress = 0x1234;
 
     bool failOnCreateGraphicsAllocationFromSharedHandle = false;
+    std::vector<std::unique_ptr<MockBufferObject>> mockBos;
 };
 
 struct MemoryExportImportObtainFdTest : public ::testing::Test {

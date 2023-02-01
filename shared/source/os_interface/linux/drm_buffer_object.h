@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,9 @@
 #include <array>
 #include <atomic>
 #include <cstddef>
+#include <mutex>
 #include <stdint.h>
+#include <utility>
 #include <vector>
 
 namespace NEO {
@@ -29,9 +31,59 @@ class DrmMemoryManager;
 class Drm;
 class OsContext;
 
+class BufferObjectHandleWrapper {
+  private:
+    struct ControlBlock {
+        int refCount{0};
+        int weakRefCount{0};
+        std::mutex blockMutex{};
+    };
+
+    enum class Ownership : std::uint8_t {
+        Weak = 0,
+        Strong = 1,
+    };
+
+  public:
+    explicit BufferObjectHandleWrapper(int boHandle) noexcept
+        : boHandle{boHandle} {}
+
+    BufferObjectHandleWrapper(BufferObjectHandleWrapper &&other) noexcept
+        : boHandle(std::exchange(other.boHandle, -1)), ownership(other.ownership), controlBlock(std::exchange(other.controlBlock, nullptr)) {}
+
+    ~BufferObjectHandleWrapper();
+
+    BufferObjectHandleWrapper(const BufferObjectHandleWrapper &) = delete;
+    BufferObjectHandleWrapper &operator=(const BufferObjectHandleWrapper &) = delete;
+    BufferObjectHandleWrapper &operator=(BufferObjectHandleWrapper &&) = delete;
+
+    BufferObjectHandleWrapper acquireSharedOwnership();
+    BufferObjectHandleWrapper acquireWeakOwnership();
+
+    bool canCloseBoHandle();
+
+    int getBoHandle() const {
+        return boHandle;
+    }
+
+    void setBoHandle(int handle) {
+        boHandle = handle;
+    }
+
+  protected:
+    BufferObjectHandleWrapper(int boHandle, Ownership ownership, ControlBlock *controlBlock)
+        : boHandle{boHandle}, ownership{ownership}, controlBlock{controlBlock} {}
+
+    int boHandle{};
+    Ownership ownership{Ownership::Strong};
+    ControlBlock *controlBlock{};
+};
+
 class BufferObject {
   public:
     BufferObject(Drm *drm, uint64_t patIndex, int handle, size_t size, size_t maxOsContextCount);
+    BufferObject(Drm *drm, uint64_t patIndex, BufferObjectHandleWrapper &&handle, size_t size, size_t maxOsContextCount);
+
     MOCKABLE_VIRTUAL ~BufferObject() = default;
 
     struct Deleter {
@@ -65,8 +117,26 @@ class BufferObject {
     }
     uint32_t getRefCount() const;
 
+    bool isBoHandleShared() const {
+        return boHandleShared;
+    }
+
+    void markAsSharedBoHandle() {
+        boHandleShared = true;
+    }
+
+    BufferObjectHandleWrapper acquireSharedOwnershipOfBoHandle() {
+        markAsSharedBoHandle();
+        return handle.acquireSharedOwnership();
+    }
+
+    BufferObjectHandleWrapper acquireWeakOwnershipOfBoHandle() {
+        markAsSharedBoHandle();
+        return handle.acquireWeakOwnership();
+    }
+
     size_t peekSize() const { return size; }
-    int peekHandle() const { return handle; }
+    int peekHandle() const { return handle.getBoHandle(); }
     const Drm *peekDrm() const { return drm; }
     uint64_t peekAddress() const { return gpuAddress; }
     void setAddress(uint64_t address);
@@ -105,7 +175,7 @@ class BufferObject {
         return rootDeviceIndex;
     }
     int getHandle() {
-        return handle;
+        return handle.getBoHandle();
     }
 
     void setCacheRegion(CacheRegion regionIndex) { cacheRegion = regionIndex; }
@@ -152,9 +222,10 @@ class BufferObject {
     std::atomic<uint32_t> refCount;
 
     uint32_t rootDeviceIndex = std::numeric_limits<uint32_t>::max();
-    int handle; // i915 gem object handle
+    BufferObjectHandleWrapper handle; // i915 gem object handle
     uint64_t size;
     bool isReused = false;
+    bool boHandleShared = false;
 
     uint32_t tilingMode;
     bool allowCapture = false;

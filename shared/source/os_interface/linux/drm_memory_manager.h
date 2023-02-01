@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 
 #include <limits>
 #include <map>
@@ -53,6 +54,8 @@ class DrmMemoryManager : public MemoryManager {
     // drm/i915 ioctl wrappers
     MOCKABLE_VIRTUAL uint32_t unreference(BufferObject *bo, bool synchronousDestroy);
 
+    void registerIpcExportedAllocation(GraphicsAllocation *graphicsAllocation) override;
+
     bool isValidateHostMemoryEnabled() const {
         return validateHostPtrMemory;
     }
@@ -87,6 +90,10 @@ class DrmMemoryManager : public MemoryManager {
     bool allowIndirectAllocationsAsPack(uint32_t rootDeviceIndex) override;
 
   protected:
+    void registerSharedBoHandleAllocation(DrmAllocation *drmAllocation);
+    BufferObjectHandleWrapper tryToGetBoHandleWrapperWithSharedOwnership(int boHandle);
+    void eraseSharedBoHandleWrapper(int boHandle);
+
     MOCKABLE_VIRTUAL BufferObject *findAndReferenceSharedBufferObject(int boHandle, uint32_t rootDeviceIndex);
     void eraseSharedBufferObject(BufferObject *bo);
     void pushSharedBufferObject(BufferObject *bo);
@@ -151,6 +158,7 @@ class DrmMemoryManager : public MemoryManager {
     std::vector<BufferObject *> sharingBufferObjects;
     std::mutex mtx;
 
+    std::map<int, BufferObjectHandleWrapper> sharedBoHandles;
     std::vector<std::vector<GraphicsAllocation *>> localMemAllocs;
     std::vector<GraphicsAllocation *> sysMemAllocs;
     std::mutex allocMutex;

@@ -189,7 +189,7 @@ uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDe
     }
 
     std::unique_lock<std::mutex> lock(mtx, std::defer_lock);
-    if (bo->peekIsReusableAllocation()) {
+    if (bo->peekIsReusableAllocation() || bo->isBoHandleShared()) {
         lock.lock();
     }
 
@@ -200,7 +200,13 @@ uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDe
             eraseSharedBufferObject(bo);
         }
 
+        int boHandle = bo->getHandle();
         bo->close();
+
+        if (bo->isBoHandleShared() && bo->getHandle() != boHandle) {
+            // Shared BO was closed - handle was invalidated. Remove weak reference from container.
+            eraseSharedBoHandleWrapper(boHandle);
+        }
 
         if (lock) {
             lock.unlock();
@@ -795,7 +801,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
             return nullptr;
         }
 
-        auto boHandle = openFd.handle;
+        auto boHandle = static_cast<int>(openFd.handle);
         BufferObject *bo = nullptr;
         if (reuseSharedAllocation) {
             bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
@@ -808,6 +814,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
             totalSize += size;
 
             auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::Default, CachePolicy::WriteBack, false);
+            auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle);
 
             bo = new (std::nothrow) BufferObject(&drm, patIndex, boHandle, size, maxOsContextCount);
             bo->setRootDeviceIndex(properties.rootDeviceIndex);
@@ -822,7 +829,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
     auto heapIndex = prefer57bitAddressing ? HeapIndex::HEAP_EXTENDED : HeapIndex::HEAP_STANDARD2MB;
     auto gpuRange = acquireGpuRange(totalSize, properties.rootDeviceIndex, heapIndex);
 
-    lock.unlock();
+    if (reuseSharedAllocation) {
+        lock.unlock();
+    }
 
     AllocationData allocationData;
     properties.size = totalSize;
@@ -862,7 +871,53 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromMultipleShared
         drmAllocation->getBufferObjectToModify(i) = bo;
     }
 
+    if (!reuseSharedAllocation) {
+        registerSharedBoHandleAllocation(drmAllocation);
+    }
+
     return drmAllocation;
+}
+
+void DrmMemoryManager::registerIpcExportedAllocation(GraphicsAllocation *graphicsAllocation) {
+    std::lock_guard lock{mtx};
+    registerSharedBoHandleAllocation(static_cast<DrmAllocation *>(graphicsAllocation));
+}
+
+void DrmMemoryManager::registerSharedBoHandleAllocation(DrmAllocation *drmAllocation) {
+    if (!drmAllocation) {
+        return;
+    }
+
+    auto &bos = drmAllocation->getBOs();
+
+    for (auto *bo : bos) {
+        if (bo == nullptr) {
+            continue;
+        }
+
+        auto foundHandleWrapperIt = sharedBoHandles.find(bo->getHandle());
+        if (foundHandleWrapperIt == std::end(sharedBoHandles)) {
+            sharedBoHandles.emplace(bo->getHandle(), bo->acquireWeakOwnershipOfBoHandle());
+        } else {
+            bo->markAsSharedBoHandle();
+        }
+    }
+}
+
+BufferObjectHandleWrapper DrmMemoryManager::tryToGetBoHandleWrapperWithSharedOwnership(int boHandle) {
+    auto foundHandleWrapperIt = sharedBoHandles.find(boHandle);
+    if (foundHandleWrapperIt == std::end(sharedBoHandles)) {
+        return BufferObjectHandleWrapper{boHandle};
+    }
+
+    return foundHandleWrapperIt->second.acquireSharedOwnership();
+}
+
+void DrmMemoryManager::eraseSharedBoHandleWrapper(int boHandle) {
+    auto foundHandleWrapperIt = sharedBoHandles.find(boHandle);
+    if (foundHandleWrapperIt != std::end(sharedBoHandles)) {
+        sharedBoHandles.erase(foundHandleWrapperIt);
+    }
 }
 
 GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(osHandle handle,
@@ -891,7 +946,7 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         return nullptr;
     }
 
-    auto boHandle = openFd.handle;
+    auto boHandle = static_cast<int>(openFd.handle);
     BufferObject *bo = nullptr;
     if (reuseSharedAllocation) {
         bo = findAndReferenceSharedBufferObject(boHandle, properties.rootDeviceIndex);
@@ -901,8 +956,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         size_t size = lseekFunction(handle, 0, SEEK_END);
 
         auto patIndex = drm.getPatIndex(nullptr, properties.allocationType, CacheRegion::Default, CachePolicy::WriteBack, false);
+        auto boHandleWrapper = reuseSharedAllocation ? BufferObjectHandleWrapper{boHandle} : tryToGetBoHandleWrapperWithSharedOwnership(boHandle);
 
-        bo = new (std::nothrow) BufferObject(&drm, patIndex, boHandle, size, maxOsContextCount);
+        bo = new (std::nothrow) BufferObject(&drm, patIndex, std::move(boHandleWrapper), size, maxOsContextCount);
 
         if (!bo) {
             return nullptr;
@@ -943,7 +999,9 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
         pushSharedBufferObject(bo);
     }
 
-    lock.unlock();
+    if (reuseSharedAllocation) {
+        lock.unlock();
+    }
 
     auto gmmHelper = getGmmHelper(properties.rootDeviceIndex);
     auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(reinterpret_cast<void *>(bo->peekAddress())));
@@ -976,6 +1034,11 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
 
         bo->setPatIndex(drm.getPatIndex(gmm, properties.allocationType, CacheRegion::Default, CachePolicy::WriteBack, false));
     }
+
+    if (!reuseSharedAllocation) {
+        registerSharedBoHandleAllocation(drmAllocation);
+    }
+
     return drmAllocation;
 }
 

@@ -79,6 +79,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::createAllocWithAlignmentFromUserptr;
     using DrmMemoryManager::createGraphicsAllocation;
     using DrmMemoryManager::createMultiHostAllocation;
+    using DrmMemoryManager::eraseSharedBoHandleWrapper;
     using DrmMemoryManager::eraseSharedBufferObject;
     using DrmMemoryManager::getDefaultDrmContextId;
     using DrmMemoryManager::getDrm;
@@ -96,11 +97,14 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::pinThreshold;
     using DrmMemoryManager::pushSharedBufferObject;
     using DrmMemoryManager::registerAllocationInOs;
+    using DrmMemoryManager::registerSharedBoHandleAllocation;
     using DrmMemoryManager::releaseGpuRange;
     using DrmMemoryManager::retrieveMmapOffsetForBufferObject;
     using DrmMemoryManager::setDomainCpu;
+    using DrmMemoryManager::sharedBoHandles;
     using DrmMemoryManager::sharingBufferObjects;
     using DrmMemoryManager::supportsMultiStorageResources;
+    using DrmMemoryManager::tryToGetBoHandleWrapperWithSharedOwnership;
     using DrmMemoryManager::unlockBufferObject;
     using DrmMemoryManager::unMapPhysicalToVirtualMemory;
     using DrmMemoryManager::waitOnCompletionFence;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ TEST(FileLogger, GivenLogAllocationMemoryPoolFlagThenLogsCorrectInfo) {
     allocation.setCpuPtrAndGpuAddress(&allocation, canonizedGpuAddress);
 
     MockBufferObject bo(&drm);
-    bo.handle = 4;
+    bo.handle.setBoHandle(4);
 
     allocation.bufferObjects[0] = &bo;
 
@@ -85,7 +85,7 @@ TEST(FileLogger, givenLogAllocationStdoutWhenLogAllocationThenLogToStdoutInstead
     allocation.setCpuPtrAndGpuAddress(&allocation, canonizedGpuAddress);
 
     MockBufferObject bo(&drm);
-    bo.handle = 4;
+    bo.handle.setBoHandle(4);
 
     allocation.bufferObjects[0] = &bo;
 

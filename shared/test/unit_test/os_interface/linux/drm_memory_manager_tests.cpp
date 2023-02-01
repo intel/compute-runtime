@@ -839,6 +839,66 @@ TEST_F(DrmMemoryManagerTest, GivenAllocationWhenClosingSharedHandleThenSucceeds)
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }
 
+TEST_F(DrmMemoryManagerTest, GivenNullptrDrmAllocationWhenTryingToRegisterItThenRegisterSharedBoHandleAllocationDoesNothing) {
+    ASSERT_TRUE(memoryManager->sharedBoHandles.empty());
+
+    memoryManager->registerSharedBoHandleAllocation(nullptr);
+    EXPECT_TRUE(memoryManager->sharedBoHandles.empty());
+}
+
+TEST_F(DrmMemoryManagerTest, GivenAllocationWhenTryingToRegisterIpcExportedThenItsBoIsMarkedAsSharedHandleAndHandleIsStored) {
+    mock->ioctl_expected.gemUserptr = 1;
+    mock->ioctl_expected.gemWait = 1;
+    mock->ioctl_expected.gemClose = 1;
+
+    ASSERT_TRUE(memoryManager->sharedBoHandles.empty());
+
+    auto alloc = static_cast<DrmAllocation *>(memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{rootDeviceIndex, MemoryConstants::pageSize}));
+    ASSERT_NE(nullptr, alloc);
+    EXPECT_NE(nullptr, alloc->getBO());
+
+    memoryManager->registerIpcExportedAllocation(alloc);
+    EXPECT_FALSE(memoryManager->sharedBoHandles.empty());
+
+    auto &bos = alloc->getBOs();
+    for (auto *bo : bos) {
+        if (bo) {
+            EXPECT_TRUE(bo->isBoHandleShared());
+            EXPECT_EQ(1u, memoryManager->sharedBoHandles.count(bo->getHandle()));
+        }
+    }
+
+    memoryManager->freeGraphicsMemory(alloc);
+    EXPECT_TRUE(memoryManager->sharedBoHandles.empty());
+}
+
+TEST_F(DrmMemoryManagerTest, GivenEmptySharedBoHandlesContainerWhenTryingToGetSharedOwnershipOfNonregisteredHandleThenCreateNewWrapper) {
+    ASSERT_TRUE(memoryManager->sharedBoHandles.empty());
+
+    const int someNonregisteredHandle{123};
+    auto boHandleWrapper = memoryManager->tryToGetBoHandleWrapperWithSharedOwnership(someNonregisteredHandle);
+    EXPECT_EQ(someNonregisteredHandle, boHandleWrapper.getBoHandle());
+    EXPECT_TRUE(memoryManager->sharedBoHandles.empty());
+}
+
+TEST_F(DrmMemoryManagerTest, GivenWrapperInBoHandlesContainerWhenTryingToGetSharedOwnershipOfWrappedHandleThenGetSharedOwnership) {
+    const int boHandle{27};
+    BufferObjectHandleWrapper boHandleWrapper{boHandle};
+
+    memoryManager->sharedBoHandles.emplace(boHandle, boHandleWrapper.acquireWeakOwnership());
+    ASSERT_EQ(1u, memoryManager->sharedBoHandles.count(boHandle));
+
+    {
+        auto newBoHandleWrapper = memoryManager->tryToGetBoHandleWrapperWithSharedOwnership(boHandle);
+        EXPECT_EQ(boHandle, newBoHandleWrapper.getBoHandle());
+        EXPECT_EQ(1u, memoryManager->sharedBoHandles.count(boHandle));
+        EXPECT_FALSE(newBoHandleWrapper.canCloseBoHandle());
+    }
+
+    EXPECT_EQ(1u, memoryManager->sharedBoHandles.count(boHandle));
+    EXPECT_TRUE(boHandleWrapper.canCloseBoHandle());
+}
+
 TEST_F(DrmMemoryManagerTest, GivenDeviceSharedAllocationWhichRequiresHostMapThenCorrectAlignmentReturned) {
     mock->ioctl_expected.primeFdToHandle = 1;
     mock->ioctl_expected.gemWait = 1;

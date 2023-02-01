@@ -181,6 +181,35 @@ TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCal
     EXPECT_EQ(expectedValue, idx);
 }
 
+TEST_F(DrmBufferObjectTest, whenPrintBOCreateDestroyResultFlagIsSetAndCloseIsCalledButHandleIsSharedThenDebugInfromationIsPrintedThatCloseIsSkipped) {
+    mock->ioctl_expected.total = 1;
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.PrintBOCreateDestroyResult.set(true);
+
+    {
+        MockBufferObjectHandleWrapper sharedBoHandleWrapper = bo->acquireSharedOwnershipOfBoHandle();
+        EXPECT_TRUE(bo->isBoHandleShared());
+
+        testing::internal::CaptureStdout();
+        bool result = bo->close();
+        EXPECT_EQ(true, result);
+
+        std::string output = testing::internal::GetCapturedStdout();
+        size_t idx = output.find("Skipped closing BO-");
+        size_t expectedValue = 0u;
+        EXPECT_EQ(expectedValue, idx);
+    }
+
+    testing::internal::CaptureStdout();
+    bool result = bo->close();
+    EXPECT_EQ(true, result);
+
+    std::string output = testing::internal::GetCapturedStdout();
+    size_t idx = output.find("Calling gem close on handle: BO-");
+    size_t expectedValue = 0;
+    EXPECT_EQ(expectedValue, idx);
+}
+
 TEST_F(DrmBufferObjectTest, whenPrintExecutionBufferIsSetToTrueThenMessageFoundInStdStream) {
     mock->ioctl_expected.total = 1;
     DebugManagerStateRestore restore;
@@ -619,4 +648,141 @@ TEST_F(DrmBufferObjectTest, whenBoRequiresExplicitResidencyThenTheCorrespondingQ
         bo.requireExplicitResidency(required);
         EXPECT_EQ(required, bo.isExplicitResidencyRequired());
     }
+}
+
+TEST(DrmBufferObjectHandleWrapperTest, GivenWrapperConstructedFromNonSharedHandleThenControlBlockIsNotCreatedAndInternalHandleIsStored) {
+    constexpr int boHandle{5};
+    MockBufferObjectHandleWrapper boHandleWrapper{boHandle};
+
+    EXPECT_EQ(nullptr, boHandleWrapper.controlBlock);
+    EXPECT_EQ(boHandle, boHandleWrapper.getBoHandle());
+}
+
+TEST(DrmBufferObjectHandleWrapperTest, GivenWrapperConstructedFromNonSharedHandleWhenAskingIfCanBeClosedThenReturnTrue) {
+    constexpr int boHandle{21};
+    MockBufferObjectHandleWrapper boHandleWrapper{boHandle};
+
+    EXPECT_TRUE(boHandleWrapper.canCloseBoHandle());
+}
+
+TEST(DrmBufferObjectHandleWrapperTest, GivenWrapperWhenSettingNewValueThenStoreIt) {
+    constexpr int boHandle{13};
+    MockBufferObjectHandleWrapper boHandleWrapper{boHandle};
+
+    boHandleWrapper.setBoHandle(-1);
+    EXPECT_EQ(-1, boHandleWrapper.getBoHandle());
+}
+
+TEST(DrmBufferObjectHandleWrapperTest, GivenWrapperConstructedFromNonSharedHandleWhenMakingItSharedThenControlBlockIsCreatedAndReferenceCounterIsValid) {
+    constexpr int boHandle{85};
+    MockBufferObjectHandleWrapper firstBoHandleWrapper{boHandle};
+    MockBufferObjectHandleWrapper secondBoHandleWrapper = firstBoHandleWrapper.acquireSharedOwnership();
+
+    ASSERT_NE(nullptr, firstBoHandleWrapper.controlBlock);
+    ASSERT_NE(nullptr, secondBoHandleWrapper.controlBlock);
+
+    EXPECT_EQ(firstBoHandleWrapper.controlBlock, secondBoHandleWrapper.controlBlock);
+    EXPECT_EQ(firstBoHandleWrapper.boHandle, secondBoHandleWrapper.boHandle);
+
+    EXPECT_EQ(2, firstBoHandleWrapper.controlBlock->refCount);
+}
+
+TEST(DrmBufferObjectHandleWrapperTest, GivenMoreThanOneSharedHandleWrapperWhenAskingIfHandleCanBeClosedThenReturnFalse) {
+    constexpr int boHandle{121};
+    MockBufferObjectHandleWrapper firstBoHandleWrapper{boHandle};
+    MockBufferObjectHandleWrapper secondBoHandleWrapper = firstBoHandleWrapper.acquireSharedOwnership();
+
+    EXPECT_FALSE(firstBoHandleWrapper.canCloseBoHandle());
+    EXPECT_FALSE(secondBoHandleWrapper.canCloseBoHandle());
+}
+
+TEST(DrmBufferObjectHandleWrapperTest, GivenControlBlockCreatedWhenOnlyOneReferenceLeftThenHandleCanBeClosed) {
+    constexpr int boHandle{121};
+    MockBufferObjectHandleWrapper firstBoHandleWrapper{boHandle};
+
+    {
+        MockBufferObjectHandleWrapper secondBoHandleWrapper = firstBoHandleWrapper.acquireSharedOwnership();
+
+        ASSERT_NE(nullptr, firstBoHandleWrapper.controlBlock);
+        ASSERT_NE(nullptr, secondBoHandleWrapper.controlBlock);
+
+        EXPECT_EQ(firstBoHandleWrapper.controlBlock, secondBoHandleWrapper.controlBlock);
+        EXPECT_EQ(2, firstBoHandleWrapper.controlBlock->refCount);
+    }
+
+    EXPECT_TRUE(firstBoHandleWrapper.canCloseBoHandle());
+}
+
+TEST(DrmBufferObjectHandleWrapperTest, GivenControlBlockCreatedWhenOnlyWeakReferencesLeftThenItIsNotDestroyed) {
+    constexpr int boHandle{777};
+    auto firstBoHandleWrapper = std::make_unique<MockBufferObjectHandleWrapper>(boHandle);
+    MockBufferObjectHandleWrapper weakHandleWrapper = firstBoHandleWrapper->acquireWeakOwnership();
+
+    ASSERT_NE(nullptr, firstBoHandleWrapper->controlBlock);
+    ASSERT_NE(nullptr, weakHandleWrapper.controlBlock);
+    EXPECT_EQ(firstBoHandleWrapper->controlBlock, weakHandleWrapper.controlBlock);
+
+    firstBoHandleWrapper.reset();
+
+    EXPECT_EQ(0, weakHandleWrapper.controlBlock->refCount);
+    EXPECT_EQ(1, weakHandleWrapper.controlBlock->weakRefCount);
+}
+
+TEST(DrmBufferObjectHandleWrapperTest, GivenControlBlockCreatedWhenWeakReferencesLeftAndOnlyOneStrongReferenceLeftThenHandleCanBeClosed) {
+    constexpr int boHandle{353};
+    MockBufferObjectHandleWrapper firstBoHandleWrapper{boHandle};
+    MockBufferObjectHandleWrapper firstWeakHandleWrapper = firstBoHandleWrapper.acquireWeakOwnership();
+    MockBufferObjectHandleWrapper secondWeakHandleWrapper = firstBoHandleWrapper.acquireWeakOwnership();
+
+    ASSERT_NE(nullptr, firstBoHandleWrapper.controlBlock);
+    ASSERT_NE(nullptr, firstWeakHandleWrapper.controlBlock);
+    ASSERT_NE(nullptr, secondWeakHandleWrapper.controlBlock);
+
+    EXPECT_EQ(firstBoHandleWrapper.controlBlock, firstWeakHandleWrapper.controlBlock);
+    EXPECT_EQ(firstBoHandleWrapper.controlBlock, secondWeakHandleWrapper.controlBlock);
+
+    EXPECT_EQ(1, firstBoHandleWrapper.controlBlock->refCount);
+    EXPECT_EQ(2, firstBoHandleWrapper.controlBlock->weakRefCount);
+
+    EXPECT_TRUE(firstBoHandleWrapper.canCloseBoHandle());
+}
+
+TEST(DrmBufferObjectHandleWrapperTest, GivenWrapperWhenConstructingMoreThanTwoSharedResourcesControlBlockRemainsTheSameAndReferenceCounterIsUpdatedOnCreationAndDestruction) {
+    constexpr int boHandle{85};
+    MockBufferObjectHandleWrapper firstBoHandleWrapper{boHandle};
+    MockBufferObjectHandleWrapper secondBoHandleWrapper = firstBoHandleWrapper.acquireSharedOwnership();
+
+    ASSERT_EQ(firstBoHandleWrapper.controlBlock, secondBoHandleWrapper.controlBlock);
+
+    auto controlBlock = firstBoHandleWrapper.controlBlock;
+    ASSERT_NE(nullptr, controlBlock);
+    EXPECT_EQ(2, controlBlock->refCount);
+
+    {
+        MockBufferObjectHandleWrapper thirdBoHandleWrapper = firstBoHandleWrapper.acquireSharedOwnership();
+        EXPECT_EQ(firstBoHandleWrapper.boHandle, thirdBoHandleWrapper.boHandle);
+
+        ASSERT_EQ(controlBlock, thirdBoHandleWrapper.controlBlock);
+        EXPECT_EQ(3, controlBlock->refCount);
+    }
+
+    EXPECT_EQ(2, controlBlock->refCount);
+}
+
+TEST(DrmBufferObjectHandleWrapperTest, GivenWrapperWhenMoveConstructingAnotherObjectThenInternalDataIsCleared) {
+    constexpr int boHandle{27};
+    MockBufferObjectHandleWrapper firstBoHandleWrapper{boHandle};
+    MockBufferObjectHandleWrapper secondBoHandleWrapper = firstBoHandleWrapper.acquireSharedOwnership();
+
+    auto oldControlBlock = firstBoHandleWrapper.controlBlock;
+    auto oldBoHandle = firstBoHandleWrapper.boHandle;
+
+    MockBufferObjectHandleWrapper anotherWrapper{std::move(firstBoHandleWrapper)};
+    EXPECT_EQ(oldControlBlock, anotherWrapper.controlBlock);
+    EXPECT_EQ(oldBoHandle, anotherWrapper.boHandle);
+
+    EXPECT_EQ(nullptr, firstBoHandleWrapper.controlBlock);
+    EXPECT_EQ(-1, firstBoHandleWrapper.boHandle);
+
+    EXPECT_EQ(2, secondBoHandleWrapper.controlBlock->refCount);
 }

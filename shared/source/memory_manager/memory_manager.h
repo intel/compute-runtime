@@ -196,6 +196,8 @@ class MemoryManager {
         return nullptr;
     }
 
+    virtual void registerIpcExportedAllocation(GraphicsAllocation *graphicsAllocation) {}
+
     MOCKABLE_VIRTUAL void *alignedMallocWrapper(size_t bytes, size_t alignment);
 
     MOCKABLE_VIRTUAL void alignedFreeWrapper(void *ptr);

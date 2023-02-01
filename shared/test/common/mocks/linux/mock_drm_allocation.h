@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,16 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 namespace NEO {
+
+class MockBufferObjectHandleWrapper : public BufferObjectHandleWrapper {
+  public:
+    using BufferObjectHandleWrapper::boHandle;
+    using BufferObjectHandleWrapper::BufferObjectHandleWrapper;
+    using BufferObjectHandleWrapper::controlBlock;
+
+    MockBufferObjectHandleWrapper(BufferObjectHandleWrapper &&rhs)
+        : BufferObjectHandleWrapper(std::move(rhs)) {}
+};
 
 class MockBufferObject : public BufferObject {
   public:
