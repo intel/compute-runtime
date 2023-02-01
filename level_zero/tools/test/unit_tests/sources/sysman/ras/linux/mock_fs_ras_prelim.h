@@ -33,6 +33,9 @@ constexpr uint64_t correctableEuErrorCountTile0 = 70u;
 constexpr uint64_t fatalEuErrorCountTile0 = 55u;
 constexpr uint64_t fatalEngineResetCountTile0 = 72u;
 constexpr uint64_t correctableSamplerErrorCountTile1 = 30u;
+constexpr uint64_t correctableGscSramEcc = 2u;
+constexpr uint64_t nonFatalGscAonParity = 2u;
+constexpr uint64_t nonFataGscSelfmBist = 3u;
 constexpr uint64_t fatalGucErrorCountTile1 = 40u;
 constexpr uint64_t fatalIdiParityErrorCountTile1 = 60u;
 constexpr uint64_t correctableGucErrorCountTile1 = 25u;
@@ -56,6 +59,15 @@ constexpr uint64_t initialUncorrectableNonComputeErrors = 8u;
 constexpr uint64_t initialUncorrectableComputeErrors = 10u;
 constexpr uint64_t initialCorrectableComputeErrors = 6u;
 constexpr uint64_t initialUncorrectableDriverErrors = 5u;
+
+constexpr uint64_t initialUncorrectableCacheErrorsTile0 = 2u;
+constexpr uint64_t initialEngineResetTile0 = 2u;
+constexpr uint64_t initialProgrammingErrorsTile0 = 7u;
+constexpr uint64_t initialUncorrectableNonComputeErrorsTile0 = 15u;
+constexpr uint64_t initialCorrectableNonComputeErrorsTile0 = 2u;
+constexpr uint64_t initialUncorrectableComputeErrorsTile0 = 10u;
+constexpr uint64_t initialCorrectableComputeErrorsTile0 = 6u;
+constexpr uint64_t initialUncorrectableDriverErrorsTile0 = 5u;
 constexpr uint64_t initialUncorrectableCacheErrorsTile1 = 1u;
 constexpr uint64_t initialEngineResetTile1 = 4u;
 constexpr uint64_t initialProgrammingErrorsTile1 = 5u;
@@ -129,6 +141,7 @@ struct MockRasPmuInterfaceImp : public PmuInterfaceImp {
         data[1] = timeStamp;
         data[2] = correctableGrfErrorCount;
         data[3] = correctableEuErrorCount;
+        data[4] = correctableGscSramEcc;
         return 0;
     }
 
@@ -145,7 +158,9 @@ struct MockRasPmuInterfaceImp : public PmuInterfaceImp {
         data[9] = fatalEuErrorCount;
         data[10] = socFatalMdfiEastCount;
         data[11] = socFatalPsfCsc0Count;
-        data[12] = fatalTlb;
+        data[12] = nonFatalGscAonParity;
+        data[13] = nonFataGscSelfmBist;
+        data[14] = fatalTlb;
         return 0;
     }
 
@@ -244,6 +259,7 @@ struct MockRasSysfsAccess : public SysfsAccess {
 
     ze_result_t mockReadSymLinkStatus = ZE_RESULT_SUCCESS;
     bool mockReadSymLinkResult = false;
+    bool isMultiTileArch = false;
 
     ze_result_t readSymLink(const std::string file, std::string &val) override {
 
@@ -266,7 +282,87 @@ struct MockRasSysfsAccess : public SysfsAccess {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
-    ze_result_t read(const std::string file, uint64_t &val) override {
+    ze_result_t multiTileSysfsRead(const std::string file, uint64_t &val) {
+        if (file.compare("gt/gt0/error_counter/correctable_eu_grf") == 0) {
+            val = 5u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/correctable_eu_ic") == 0) {
+            val = 1u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/fatal_eu_ic") == 0) {
+            val = 5u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/fatal_tlb") == 0) {
+            val = 2u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/engine_reset") == 0) {
+            val = 2u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt1/error_counter/correctable_sampler") == 0) {
+            val = 2u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt1/error_counter/fatal_guc") == 0) {
+            val = 6u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt1/error_counter/fatal_idi_parity") == 0) {
+            val = 1u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt1/error_counter/correctable_guc") == 0) {
+            val = 3u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt1/error_counter/engine_reset") == 0) {
+            val = 4u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/eu_attention") == 0) {
+            val = 7u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt1/error_counter/eu_attention") == 0) {
+            val = 5u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/soc_fatal_mdfi_east") == 0) {
+            val = 5u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/soc_fatal_psf_csc_0") == 0) {
+            val = 3u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt1/error_counter/soc_fatal_punit") == 0) {
+            val = 3u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt1/error_counter/soc_fatal_mdfi_west") == 0) {
+            val = 2u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/fatal_fpu") == 0) {
+            val = 2u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/fatal_l3_fabric") == 0) {
+            val = 3u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/driver_ggtt") == 0) {
+            val = 2u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/driver_rps") == 0) {
+            val = 2u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("error_counter/driver_object_migration") == 0) {
+            val = 1u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt1/error_counter/driver_engine_other") == 0) {
+            val = 3u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/gsc_correctable_sram_ecc") == 0) {
+            val = 2u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/gsc_nonfatal_aon_parity") == 0) {
+            val = 3u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/gsc_nonfatal_selfmbist") == 0) {
+            val = 4u;
+            return ZE_RESULT_SUCCESS;
+        }
+        return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+
+    ze_result_t sysfsRead(const std::string file, uint64_t &val) {
         if (file.compare("gt/gt0/error_counter/correctable_eu_grf") == 0) {
             val = 5u;
             return ZE_RESULT_SUCCESS;
@@ -335,6 +431,12 @@ struct MockRasSysfsAccess : public SysfsAccess {
             return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
+    }
+    ze_result_t read(const std::string file, uint64_t &val) override {
+        if (isMultiTileArch == true) {
+            return multiTileSysfsRead(file, val);
+        }
+        return sysfsRead(file, val);
     }
 };
 
@@ -427,6 +529,9 @@ struct MockRasFsAccess : public FsAccess {
             events.push_back("error-gt1--engine-reset");
             events.push_back("error-gt1--eu-attention");
             events.push_back("error-gt1--driver-engine-other");
+            events.push_back("error-gt0--gsc-correctable-sram-ecc");
+            events.push_back("error-gt0--gsc-nonfatal-aon-parity");
+            events.push_back("error-gt0--gsc-nonfatal-selfmbist");
             return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
