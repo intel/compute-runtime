@@ -12,7 +12,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/cache_policy.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"

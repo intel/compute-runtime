@@ -10,7 +10,7 @@
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/blit_commands_helper.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"

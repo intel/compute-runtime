@@ -12,7 +12,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/flush_stamp.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/memory_manager/allocations_list.h"

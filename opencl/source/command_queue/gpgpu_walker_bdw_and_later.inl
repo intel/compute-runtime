@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/simd_helper.h"
 #include "shared/source/utilities/hw_timestamps.h"

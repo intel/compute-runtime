@@ -9,7 +9,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/gen8/reg_configs.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/fixtures/preamble_fixture.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"

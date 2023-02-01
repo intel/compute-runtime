@@ -10,7 +10,7 @@
 #include "shared/source/device_binary_format/patchtokens_dumper.h"
 #include "shared/source/device_binary_format/patchtokens_validator.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 #include "shared/source/program/program_info_from_patchtokens.h"

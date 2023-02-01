@@ -8,7 +8,7 @@
 #include "shared/source/os_interface/windows/device_time_wddm.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"

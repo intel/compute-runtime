@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/program/kernel_info.h"
 
 #include "opencl/source/helpers/cl_gfx_core_helper.h"

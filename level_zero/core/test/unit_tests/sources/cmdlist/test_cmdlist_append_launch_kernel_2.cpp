@@ -7,7 +7,7 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/gen9/reg_configs.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/per_thread_data.h"
 #include "shared/source/indirect_heap/indirect_heap.h"

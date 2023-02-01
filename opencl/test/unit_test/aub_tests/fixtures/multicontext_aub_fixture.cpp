@@ -9,7 +9,7 @@
 
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/helpers/api_specific_config.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_device.h"

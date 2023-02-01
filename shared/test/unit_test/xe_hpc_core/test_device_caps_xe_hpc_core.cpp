@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/xe_hpc_core/hw_cmds.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"

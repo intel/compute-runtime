@@ -9,7 +9,7 @@
 
 #include "shared/source/device/sub_device.h"
 #include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/sleep.h"
 
 #include "level_zero/core/source/driver/driver.h"

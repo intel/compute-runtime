@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocation_type.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"

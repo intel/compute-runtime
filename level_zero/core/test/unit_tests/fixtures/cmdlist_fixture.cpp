@@ -8,7 +8,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 
 #include "shared/source/built_ins/sip.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 

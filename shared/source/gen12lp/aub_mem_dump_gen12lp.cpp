@@ -11,7 +11,7 @@
 #include "shared/source/gen12lp/aub_mapper.h"
 #include "shared/source/gen12lp/hw_cmds_base.h"
 #include "shared/source/helpers/completion_stamp.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 
 #include "config.h"
 #include "reg_configs_common.h"

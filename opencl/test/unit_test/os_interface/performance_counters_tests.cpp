@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/utilities/perf_counter.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"

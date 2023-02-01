@@ -9,7 +9,7 @@ if(TESTS_TGLLP)
 
   target_sources(neo_shared_tests PRIVATE
                  ${NEO_SHARED_tests_genlp12_tgllp}
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_helper_tgllp.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_gfx_core_helper_tgllp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests_tgllp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/ail_tests_tgllp.cpp
   )

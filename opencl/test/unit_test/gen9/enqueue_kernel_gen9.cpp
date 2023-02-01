@@ -8,7 +8,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/gen9/reg_configs.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/static_size3.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"

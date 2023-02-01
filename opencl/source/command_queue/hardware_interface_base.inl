@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"

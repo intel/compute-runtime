@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/gen12lp/hw_cmds.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/populate_factory.h"
 
 namespace NEO {

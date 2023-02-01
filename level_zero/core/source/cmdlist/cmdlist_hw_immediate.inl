@@ -13,7 +13,7 @@
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/completion_stamp.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"

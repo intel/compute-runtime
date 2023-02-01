@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"

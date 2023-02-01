@@ -13,7 +13,7 @@
 #include "shared/source/helpers/address_patch.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"

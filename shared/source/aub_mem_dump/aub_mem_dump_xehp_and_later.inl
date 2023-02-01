@@ -10,7 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/completion_stamp.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 
 #include "aub_mapper.h"
 #include "config.h"

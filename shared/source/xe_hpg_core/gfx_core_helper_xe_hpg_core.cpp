@@ -14,10 +14,10 @@ using Family = NEO::XeHpgCoreFamily;
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/extra_allocation_data_xehp_and_later.inl"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
-#include "shared/source/helpers/hw_helper_base.inl"
-#include "shared/source/helpers/hw_helper_dg2_and_later.inl"
-#include "shared/source/helpers/hw_helper_tgllp_and_later.inl"
-#include "shared/source/helpers/hw_helper_xehp_and_later.inl"
+#include "shared/source/helpers/gfx_core_helper_base.inl"
+#include "shared/source/helpers/gfx_core_helper_dg2_and_later.inl"
+#include "shared/source/helpers/gfx_core_helper_tgllp_and_later.inl"
+#include "shared/source/helpers/gfx_core_helper_xehp_and_later.inl"
 #include "shared/source/helpers/logical_state_helper.inl"
 
 namespace NEO {

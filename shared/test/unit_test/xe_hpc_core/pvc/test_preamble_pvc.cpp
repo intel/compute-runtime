@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/fixtures/preamble_fixture.h"

@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/cmd_buffer_validator.h"

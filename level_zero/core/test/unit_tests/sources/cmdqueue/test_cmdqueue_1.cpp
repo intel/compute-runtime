@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/command_stream/scratch_space_controller.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/variable_backup.h"

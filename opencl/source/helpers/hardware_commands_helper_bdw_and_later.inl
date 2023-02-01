@@ -7,7 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 
 #include "opencl/source/command_queue/command_queue.h"

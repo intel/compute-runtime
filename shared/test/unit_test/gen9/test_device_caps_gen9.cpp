@@ -7,7 +7,7 @@
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen9/hw_cmds.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"

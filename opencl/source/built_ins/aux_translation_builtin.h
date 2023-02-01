@@ -8,7 +8,7 @@
 #pragma once
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 

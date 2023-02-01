@@ -8,7 +8,7 @@
 #include "shared/source/aub/aub_helper.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/source/memory_manager/local_memory_usage.h"

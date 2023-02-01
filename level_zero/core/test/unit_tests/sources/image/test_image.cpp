@@ -7,7 +7,7 @@
 
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/resource_info.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"

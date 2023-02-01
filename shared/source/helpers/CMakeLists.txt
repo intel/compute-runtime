@@ -78,12 +78,12 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_bdw_and_later.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_bdw_to_icllp.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tgllp_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_bdw_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_bdw_to_icllp.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_ip_version.h
@@ -158,7 +158,7 @@ if(SUPPORT_XEHP_AND_LATER)
        ${CMAKE_CURRENT_SOURCE_DIR}/blit_commands_helper_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/extra_allocation_data_xehp_and_later.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/preamble_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/state_base_address_xehp_and_later.inl
   )
@@ -166,7 +166,7 @@ endif()
 
 if(SUPPORT_DG2_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_dg2_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_dg2_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_dg2_and_later.inl
   )
 endif()
@@ -179,7 +179,7 @@ endif()
 
 if(SUPPORT_PVC_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_pvc_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_pvc_and_later.inl
   )
 endif()
 

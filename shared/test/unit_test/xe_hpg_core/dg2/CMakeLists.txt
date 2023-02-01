@@ -23,7 +23,7 @@ if(TESTS_DG2)
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_dg2.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_helper_dg2.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_gfx_core_helper_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_dg2.cpp
   )
 

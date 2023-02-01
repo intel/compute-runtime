@@ -9,7 +9,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/wait_status.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"

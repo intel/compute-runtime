@@ -7,7 +7,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen12lp/hw_cmds_dg1.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"

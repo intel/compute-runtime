@@ -13,7 +13,7 @@
 #include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/helpers/hw_helper.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/implicit_args.h"

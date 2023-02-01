@@ -60,7 +60,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_gmm_resource_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_graphics_allocation.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_host_ptr_manager.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/mock_hw_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_gfx_core_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_hw_info_config.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_internal_allocation_storage.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_io_functions.h

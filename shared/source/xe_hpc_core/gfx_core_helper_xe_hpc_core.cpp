@@ -14,10 +14,10 @@ using Family = NEO::XeHpcCoreFamily;
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
-#include "shared/source/helpers/hw_helper_base.inl"
-#include "shared/source/helpers/hw_helper_dg2_and_later.inl"
-#include "shared/source/helpers/hw_helper_tgllp_and_later.inl"
-#include "shared/source/helpers/hw_helper_xehp_and_later.inl"
+#include "shared/source/helpers/gfx_core_helper_base.inl"
+#include "shared/source/helpers/gfx_core_helper_dg2_and_later.inl"
+#include "shared/source/helpers/gfx_core_helper_tgllp_and_later.inl"
+#include "shared/source/helpers/gfx_core_helper_xehp_and_later.inl"
 #include "shared/source/helpers/logical_state_helper.inl"
 
 namespace NEO {
@@ -453,7 +453,7 @@ bool GfxCoreHelperHw<Family>::isRelaxedOrderingSupported() const {
 
 } // namespace NEO
 
-#include "shared/source/helpers/hw_helper_pvc_and_later.inl"
+#include "shared/source/helpers/gfx_core_helper_pvc_and_later.inl"
 
 namespace NEO {
 template class GfxCoreHelperHw<Family>;
