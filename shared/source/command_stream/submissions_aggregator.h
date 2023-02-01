@@ -32,6 +32,7 @@ struct BatchBuffer {
                 size_t usedSize,
                 LinearStream *stream,
                 void *endCmdPtr,
+                uint32_t numCsrClients,
                 bool hasStallingCmds,
                 bool hasRelaxedOrderingDependencies);
     BatchBuffer() {}
@@ -50,6 +51,7 @@ struct BatchBuffer {
     // only used in drm csr in gem close worker active mode
     LinearStream *stream = nullptr;
     void *endCmdPtr = nullptr;
+    uint32_t numCsrClients = 0;
 
     bool hasStallingCmds = false;
     bool hasRelaxedOrderingDependencies = false;

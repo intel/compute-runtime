@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,7 @@ struct BatchBufferHelper {
             usedSize,                           // usedSize
             stream,                             // stream
             nullptr,                            // endCmdPtr
+            0,                                  // numCsrClients
             false,                              // hasStallingCmds
             false                               // hasRelaxedOrderingDependencies
         );

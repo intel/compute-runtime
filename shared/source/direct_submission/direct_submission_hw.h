@@ -167,6 +167,8 @@ class DirectSubmissionHw {
 
     virtual bool isCompleted(uint32_t ringBufferIndex) = 0;
 
+    void updateRelaxedOrderingQueueSize(uint32_t newSize);
+
     struct RingBufferUse {
         RingBufferUse() = default;
         RingBufferUse(FlushStamp completionFence, GraphicsAllocation *ringBuffer) : completionFence(completionFence), ringBuffer(ringBuffer){};
@@ -189,6 +191,7 @@ class DirectSubmissionHw {
     uint64_t semaphoreGpuVa = 0u;
     uint64_t gpuVaForMiFlush = 0u;
     uint64_t gpuVaForAdditionalSynchronizationWA = 0u;
+    uint64_t relaxedOrderingQueueSizeLimitValueVa = 0;
 
     OsContext &osContext;
     const uint32_t rootDeviceIndex;
@@ -212,6 +215,7 @@ class DirectSubmissionHw {
     uint32_t workloadModeOneExpectedValue = 0u;
     uint32_t activeTiles = 1u;
     uint32_t postSyncOffset = 0u;
+    uint32_t currentRelaxedOrderingQueueSize = 0;
     DirectSubmissionSfenceMode sfenceMode = DirectSubmissionSfenceMode::BeforeAndAfterSemaphore;
     volatile uint32_t reserved = 0u;
 

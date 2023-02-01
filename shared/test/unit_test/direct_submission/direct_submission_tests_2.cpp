@@ -940,7 +940,7 @@ struct DirectSubmissionRelaxedOrderingTests : public DirectSubmissionDispatchBuf
     bool verifyDynamicSchedulerProgramming(LinearStream &cs, uint64_t schedulerAllocationGpuVa, uint64_t semaphoreGpuVa, uint32_t semaphoreValue, size_t offset, size_t &endOffset);
 
     template <typename FamilyType>
-    bool verifyStaticSchedulerProgramming(GraphicsAllocation &schedulerAllocation, uint64_t deferredTaskListVa);
+    bool verifyStaticSchedulerProgramming(GraphicsAllocation &schedulerAllocation, uint64_t deferredTaskListVa, uint32_t expectedQueueSizeLimit);
 
     template <typename FamilyType>
     bool verifyMiPredicate(void *miPredicateCmd, MiPredicateType predicateType);
@@ -1215,7 +1215,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyConditionalDataRegBbStart(void 
 }
 
 template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(GraphicsAllocation &schedulerAllocation, uint64_t deferredTaskListVa) {
+bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(GraphicsAllocation &schedulerAllocation, uint64_t deferredTaskListVa, uint32_t expectedQueueSizeLimit) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
@@ -1482,13 +1482,8 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
         return false;
     }
 
-    uint32_t queueLimit = 4;
-    if (DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() != -1) {
-        queueLimit = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get());
-    }
-
     if (!verifyConditionalDataRegBbStart<FamilyType>(++arbCheck, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
-                                                     CS_GPR_R1, queueLimit, CompareOperation::GreaterOrEqual, false)) {
+                                                     CS_GPR_R1, expectedQueueSizeLimit, CompareOperation::GreaterOrEqual, false)) {
         return false;
     }
 
@@ -1684,7 +1679,71 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenDispatching
 
     EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
     EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
-                                                             directSubmission.deferredTasksListAllocation->getGpuAddress()));
+                                                             directSubmission.deferredTasksListAllocation->getGpuAddress(), 123));
+}
+
+HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNewNumberOfClientsWhenDispatchingWorkThenIncraseQueueSize, IsAtLeastXeHpcCore) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    directSubmission.initialize(true, false);
+
+    EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
+    EXPECT_EQ(RelaxedOrderingHelper::queueSizeMultiplier, directSubmission.currentRelaxedOrderingQueueSize);
+    EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
+                                                             directSubmission.deferredTasksListAllocation->getGpuAddress(), RelaxedOrderingHelper::queueSizeMultiplier));
+
+    const uint64_t expectedQueueSizeValueVa = directSubmission.relaxedOrderingSchedulerAllocation->getGpuAddress() +
+                                              RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::drainRequestSectionStart +
+                                              sizeof(typename FamilyType::MI_ARB_CHECK) +
+                                              RelaxedOrderingHelper::getQueueSizeLimitValueOffset<FamilyType>();
+
+    auto findStaticSchedulerUpdate = [&](LinearStream &cs, size_t offset, uint32_t expectedQueueSize) {
+        HardwareParse hwParse;
+        hwParse.parseCommands<FamilyType>(cs, offset);
+        hwParse.findHardwareCommands<FamilyType>();
+
+        bool success = false;
+
+        for (auto &it : hwParse.cmdList) {
+            if (auto sriCmd = genCmdCast<MI_STORE_DATA_IMM *>(it)) {
+                if (expectedQueueSizeValueVa == sriCmd->getAddress() && expectedQueueSize == sriCmd->getDataDword0()) {
+                    success = true;
+                    break;
+                }
+            }
+        }
+
+        return success;
+    };
+
+    auto offset = directSubmission.ringCommandStream.getUsed();
+
+    batchBuffer.hasRelaxedOrderingDependencies = false;
+    batchBuffer.numCsrClients = 2;
+    directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+
+    EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
+    EXPECT_EQ(RelaxedOrderingHelper::queueSizeMultiplier, directSubmission.currentRelaxedOrderingQueueSize);
+    EXPECT_FALSE(findStaticSchedulerUpdate(directSubmission.ringCommandStream, offset, RelaxedOrderingHelper::queueSizeMultiplier));
+
+    offset = directSubmission.ringCommandStream.getUsed();
+    batchBuffer.hasRelaxedOrderingDependencies = true;
+    batchBuffer.numCsrClients = 2;
+    directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+
+    EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
+    EXPECT_EQ(RelaxedOrderingHelper::queueSizeMultiplier * batchBuffer.numCsrClients, directSubmission.currentRelaxedOrderingQueueSize);
+    EXPECT_TRUE(findStaticSchedulerUpdate(directSubmission.ringCommandStream, offset, RelaxedOrderingHelper::queueSizeMultiplier * batchBuffer.numCsrClients));
+
+    offset = directSubmission.ringCommandStream.getUsed();
+    batchBuffer.numCsrClients = 4;
+    directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+
+    EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
+    EXPECT_EQ(RelaxedOrderingHelper::queueSizeMultiplier * batchBuffer.numCsrClients, directSubmission.currentRelaxedOrderingQueueSize);
+    EXPECT_TRUE(findStaticSchedulerUpdate(directSubmission.ringCommandStream, offset, RelaxedOrderingHelper::queueSizeMultiplier * batchBuffer.numCsrClients));
 }
 
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenDispatchStaticScheduler, IsAtLeastXeHpcCore) {
@@ -1703,7 +1762,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenDispatchStat
 
         EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
         EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
-                                                                 directSubmission.deferredTasksListAllocation->getGpuAddress()));
+                                                                 directSubmission.deferredTasksListAllocation->getGpuAddress(), RelaxedOrderingHelper::queueSizeMultiplier));
     }
 
     {

@@ -1072,6 +1072,29 @@ HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingTh
     driverHandle->releaseImportedPointer(dstPtr);
 }
 
+HWTEST2_F(CommandListCreate, whenDispatchingThenPassNumCsrClients, IsAtLeastXeHpcCore) {
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::RenderCompute, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    Mock<::L0::Kernel> kernel;
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->csr);
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    ultCsr->registerClient();
+    ultCsr->registerClient();
+
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(ultCsr->latestFlushedBatchBuffer.numCsrClients, ultCsr->getNumClients());
+}
+
 HWTEST2_F(CommandListCreate, givenDirectSubmissionAndImmCmdListWhenDispatchingThenPassRelaxedOrderingDependenciesInfo, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restore;
     DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);

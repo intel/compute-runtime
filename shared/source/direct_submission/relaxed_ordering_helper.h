@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,20 @@
 
 namespace NEO {
 namespace RelaxedOrderingHelper {
+
+static constexpr uint32_t queueSizeMultiplier = 4;
+
+template <typename GfxFamily>
+constexpr size_t getQueueSizeLimitValueOffset() {
+    using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+    using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;
+
+    constexpr size_t lriSize = sizeof(MI_LOAD_REGISTER_IMM);
+
+    static_assert(lriSize == (3 * sizeof(uint32_t)));
+
+    return (sizeof(MI_LOAD_REGISTER_REG) + sizeof(MI_LOAD_REGISTER_IMM) + (lriSize - sizeof(uint32_t)));
+}
 
 template <typename GfxFamily>
 constexpr size_t getSizeTaskStoreSection() {

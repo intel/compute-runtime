@@ -2463,6 +2463,38 @@ HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetStallingCmdsFlag)
     EXPECT_TRUE(ultCsr.latestFlushedBatchBuffer.hasStallingCmds);
 }
 
+HWTEST_F(CommandStreamReceiverHwTest, whenFlushTagUpdateThenSetPassNumClients) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ultCsr.recordFlusheBatchBuffer = true;
+
+    ultCsr.registerClient();
+    ultCsr.registerClient();
+
+    EXPECT_EQ(SubmissionStatus::SUCCESS, ultCsr.flushTagUpdate());
+
+    EXPECT_EQ(ultCsr.getNumClients(), ultCsr.latestFlushedBatchBuffer.numCsrClients);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, whenFlushTaskCalledThenSetPassNumClients) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.recordFlusheBatchBuffer = true;
+
+    commandStreamReceiver.registerClient();
+    commandStreamReceiver.registerClient();
+
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    nullptr,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+
+    EXPECT_EQ(commandStreamReceiver.getNumClients(), commandStreamReceiver.latestFlushedBatchBuffer.numCsrClients);
+}
+
 HWTEST_F(CommandStreamReceiverHwTest, givenVariousCsrModeWhenGettingTbxModeThenExpectOnlyWhenModeIsTbxOrTbxWithAub) {
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
 

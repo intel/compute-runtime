@@ -83,6 +83,8 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
     auto &gfxCoreHelper = inputParams.rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     relaxedOrderingEnabled = gfxCoreHelper.isRelaxedOrderingSupported();
 
+    this->currentRelaxedOrderingQueueSize = RelaxedOrderingHelper::queueSizeMultiplier;
+
     if (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() != -1) {
         relaxedOrderingEnabled = (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 1);
     }
@@ -201,17 +203,20 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
 
     // 5. Drain request section
     {
+        using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
+
         *schedulerCmdStream.getSpaceForCmd<typename GfxFamily::MI_ARB_CHECK>() = GfxFamily::cmdInitArbCheck;
 
-        uint32_t queueSizeLimit = 4;
         if (DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() != -1) {
-            queueSizeLimit = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get());
+            currentRelaxedOrderingQueueSize = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get());
         }
+
+        this->relaxedOrderingQueueSizeLimitValueVa = schedulerCmdStream.getCurrentGpuAddressPosition() + RelaxedOrderingHelper::getQueueSizeLimitValueOffset<GfxFamily>();
 
         EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(
             schedulerCmdStream,
             loopSectionStartAddress,
-            CS_GPR_R1, queueSizeLimit, CompareOperation::GreaterOrEqual, false);
+            CS_GPR_R1, currentRelaxedOrderingQueueSize, CompareOperation::GreaterOrEqual, false);
 
         EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataRegBatchBufferStart(
             schedulerCmdStream,
@@ -660,6 +665,14 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch(bool re
 }
 
 template <typename GfxFamily, typename Dispatcher>
+void DirectSubmissionHw<GfxFamily, Dispatcher>::updateRelaxedOrderingQueueSize(uint32_t newSize) {
+    this->currentRelaxedOrderingQueueSize = newSize;
+
+    EncodeStoreMemory<GfxFamily>::programStoreDataImm(this->ringCommandStream, this->relaxedOrderingQueueSizeLimitValueVa,
+                                                      this->currentRelaxedOrderingQueueSize, 0, false, false);
+}
+
+template <typename GfxFamily, typename Dispatcher>
 void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBuffer &batchBuffer) {
     void *currentPosition = ringCommandStream.getSpace(0);
 
@@ -708,6 +721,11 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
 
     if (this->relaxedOrderingEnabled && batchBuffer.hasRelaxedOrderingDependencies) {
         dispatchTaskStoreSection(batchBuffer.taskStartAddress);
+
+        uint32_t expectedQueueSize = batchBuffer.numCsrClients * RelaxedOrderingHelper::queueSizeMultiplier;
+        if (expectedQueueSize > this->currentRelaxedOrderingQueueSize && DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() == -1) {
+            updateRelaxedOrderingQueueSize(expectedQueueSize);
+        }
     }
 
     if (!disableCacheFlush) {
@@ -885,7 +903,7 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
             requiredMinimalSize += getSizeDispatchRelaxedOrderingQueueStall();
         }
         if (batchBuffer.hasRelaxedOrderingDependencies) {
-            requiredMinimalSize += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>();
+            requiredMinimalSize += RelaxedOrderingHelper::getSizeTaskStoreSection<GfxFamily>() + sizeof(typename GfxFamily::MI_STORE_DATA_IMM);
         }
     }
 

@@ -637,6 +637,31 @@ HWTEST_F(BcsTests, givenTaskStreamWhenFlushingThenStoreTaskStartAddress) {
     EXPECT_EQ((commandStream.getGpuBase() + commandStreamOffset), csr.latestFlushedBatchBuffer.taskStartAddress);
 }
 
+HWTEST_F(BcsTests, givenTaskStreamWhenFlushingThenPassNumClients) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.recordFlusheBatchBuffer = true;
+
+    cl_int retVal = CL_SUCCESS;
+    auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+
+    auto hostAllocationPtr = allocateAlignedMemory(MemoryConstants::pageSize, MemoryConstants::pageSize);
+    void *hostPtr = reinterpret_cast<void *>(hostAllocationPtr.get());
+
+    auto graphicsAllocation = buffer->getGraphicsAllocation(pDevice->getRootDeviceIndex());
+
+    auto blitProperties = BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                                          csr, graphicsAllocation, nullptr, hostPtr,
+                                                                          graphicsAllocation->getGpuAddress(), 0,
+                                                                          0, 0, {1, 1, 1}, 0, 0, 0, 0);
+
+    csr.registerClient();
+    csr.registerClient();
+
+    flushBcsTask(&csr, blitProperties, true, *pDevice);
+
+    EXPECT_EQ(csr.getNumClients(), csr.latestFlushedBatchBuffer.numCsrClients);
+}
+
 template <typename FamilyType>
 class MyMockCsr : public UltCommandStreamReceiver<FamilyType> {
   public:

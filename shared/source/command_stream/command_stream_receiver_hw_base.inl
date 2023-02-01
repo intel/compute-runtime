@@ -238,7 +238,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
 
     BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, 0, taskStartAddress, nullptr,
                             false, false, QueueThrottle::MEDIUM, NEO::QueueSliceCount::defaultSliceCount,
-                            streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, (submitCSR || dispatchBcsFlags.hasStallingCmds),
+                            streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, this->getNumClients(), (submitCSR || dispatchBcsFlags.hasStallingCmds),
                             dispatchBcsFlags.hasRelaxedOrderingDependencies};
 
     streamToSubmit.getGraphicsAllocation()->updateTaskCount(this->taskCount + 1, this->osContext->getContextId());
@@ -728,7 +728,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     auto &streamToSubmit = submitCommandStreamFromCsr ? commandStreamCSR : commandStreamTask;
     BatchBuffer batchBuffer{streamToSubmit.getGraphicsAllocation(), startOffset, chainedBatchBufferStartOffset, taskStartAddress, chainedBatchBuffer,
                             dispatchFlags.requiresCoherency, dispatchFlags.lowPriority, dispatchFlags.throttle, dispatchFlags.sliceCount,
-                            streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, (submitCSR || dispatchFlags.hasStallingCmds),
+                            streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, this->getNumClients(), (submitCSR || dispatchFlags.hasStallingCmds),
                             dispatchFlags.hasRelaxedOrderingDependencies};
     streamToSubmit.getGraphicsAllocation()->updateTaskCount(this->taskCount + 1, this->osContext->getContextId());
     streamToSubmit.getGraphicsAllocation()->updateResidencyTaskCount(this->taskCount + 1, this->osContext->getContextId());
@@ -1306,7 +1306,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     uint64_t taskStartAddress = commandStream.getGpuBase() + commandStreamStart;
 
     BatchBuffer batchBuffer{commandStream.getGraphicsAllocation(), commandStreamStart, 0, taskStartAddress, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
-                            commandStream.getUsed(), &commandStream, endingCmdPtr, false, false};
+                            commandStream.getUsed(), &commandStream, endingCmdPtr, this->getNumClients(), false, false};
 
     commandStream.getGraphicsAllocation()->updateTaskCount(newTaskCount, this->osContext->getContextId());
     commandStream.getGraphicsAllocation()->updateResidencyTaskCount(newTaskCount, this->osContext->getContextId());
@@ -1421,7 +1421,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream
 
     BatchBuffer batchBuffer{commandStreamTask.getGraphicsAllocation(), commandStreamStartTask, 0, taskStartAddress,
                             nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
-                            commandStreamTask.getUsed(), &commandStreamTask, endingCmdPtr, true, false};
+                            commandStreamTask.getUsed(), &commandStreamTask, endingCmdPtr, this->getNumClients(), true, false};
 
     this->latestSentTaskCount = taskCount + 1;
     auto submissionStatus = flushHandler(batchBuffer, getResidencyAllocations());
