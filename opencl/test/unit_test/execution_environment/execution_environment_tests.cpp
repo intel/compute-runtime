@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/os_time.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -124,6 +125,32 @@ TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCa
     EXPECT_TRUE(rootDeviceEnvironment->initAubCenterCalled);
     EXPECT_TRUE(rootDeviceEnvironment->localMemoryEnabledReceived);
     EXPECT_STREQ(rootDeviceEnvironment->aubFileNameReceived.c_str(), "test.aub");
+}
+
+TEST(RootDeviceEnvironment, whenCreatingRootDeviceEnvironmentThenCreateOsAgnosticOsTime) {
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    auto profilingTimerResolution = defaultHwInfo->capabilityTable.defaultProfilingTimerResolution;
+
+    auto rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment *>(executionEnvironment.rootDeviceEnvironments[0].get());
+
+    EXPECT_EQ(nullptr, rootDeviceEnvironment->osTime.get());
+    rootDeviceEnvironment->initOsTime();
+
+    uint64_t ts = 123;
+    EXPECT_TRUE(rootDeviceEnvironment->osTime->getCpuTime(&ts));
+    EXPECT_EQ(0u, ts);
+
+    EXPECT_EQ(0u, rootDeviceEnvironment->osTime->getHostTimerResolution());
+    EXPECT_EQ(0u, rootDeviceEnvironment->osTime->getCpuRawTimestamp());
+
+    TimeStampData tsData{1, 2};
+    EXPECT_TRUE(rootDeviceEnvironment->osTime->getCpuGpuTime(&tsData));
+    EXPECT_EQ(0u, tsData.CPUTimeinNS);
+    EXPECT_EQ(0u, tsData.GPUTimeStamp);
+
+    EXPECT_EQ(profilingTimerResolution, rootDeviceEnvironment->osTime->getDynamicDeviceTimerResolution(*defaultHwInfo));
+    EXPECT_EQ(static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(*defaultHwInfo)), rootDeviceEnvironment->osTime->getDynamicDeviceTimerClock(*defaultHwInfo));
 }
 
 TEST(RootDeviceEnvironment, givenUseAubStreamFalseWhenGetAubManagerIsCalledThenReturnNull) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,9 @@
 namespace NEO {
 
 std::unique_ptr<OSTime> OSTime::create(OSInterface *osInterface) {
-    if ((nullptr == osInterface) || (osInterface->getDriverModel()->getDriverModelType() == DriverModelType::DRM)) {
+    if (nullptr == osInterface) {
+        return std::make_unique<OSTime>(std::make_unique<DeviceTime>());
+    } else if (osInterface->getDriverModel()->getDriverModelType() == DriverModelType::DRM) {
         return OSTimeLinux::create(osInterface, std::make_unique<DeviceTimeDrm>(osInterface));
     } else {
         auto wddm = osInterface->getDriverModel()->as<Wddm>();

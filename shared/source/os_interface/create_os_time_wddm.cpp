@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,11 @@
 namespace NEO {
 
 std::unique_ptr<OSTime> OSTime::create(OSInterface *osInterface) {
-    return OSTimeWin::create(osInterface);
+    if (osInterface) {
+        return OSTimeWin::create(osInterface);
+    }
+
+    return std::make_unique<OSTime>(std::make_unique<DeviceTime>());
 }
 
 } // namespace NEO

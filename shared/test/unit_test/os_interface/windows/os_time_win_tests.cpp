@@ -74,14 +74,14 @@ TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuTimeThenReturnsSuccess) {
     auto osTime(OSTime::create(nullptr));
     auto error = osTime->getCpuTime(&time);
     EXPECT_TRUE(error);
-    EXPECT_NE(0u, time);
+    EXPECT_EQ(0u, time);
 }
 
-TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuGpuTimeThenReturnsError) {
+TEST(OSTimeWinTests, givenNoOSInterfaceWhenGetCpuGpuTimeThenReturnsSuccess) {
     TimeStampData CPUGPUTime = {0};
     auto osTime(OSTime::create(nullptr));
     auto success = osTime->getCpuGpuTime(&CPUGPUTime);
-    EXPECT_FALSE(success);
+    EXPECT_TRUE(success);
     EXPECT_EQ(0u, CPUGPUTime.CPUTimeinNS);
     EXPECT_EQ(0u, CPUGPUTime.GPUTimeStamp);
 }

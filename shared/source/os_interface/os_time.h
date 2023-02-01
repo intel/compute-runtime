@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,19 +25,20 @@ class OSTime;
 class DeviceTime {
   public:
     virtual ~DeviceTime() = default;
-    virtual bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) = 0;
-    virtual double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const = 0;
-    virtual uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const = 0;
+    virtual bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime);
+    virtual double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const;
+    virtual uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const;
 };
 
 class OSTime {
   public:
     static std::unique_ptr<OSTime> create(OSInterface *osInterface);
+    OSTime(std::unique_ptr<DeviceTime> deviceTime);
 
     virtual ~OSTime() = default;
-    virtual bool getCpuTime(uint64_t *timeStamp) = 0;
-    virtual double getHostTimerResolution() const = 0;
-    virtual uint64_t getCpuRawTimestamp() = 0;
+    virtual bool getCpuTime(uint64_t *timeStamp);
+    virtual double getHostTimerResolution() const;
+    virtual uint64_t getCpuRawTimestamp();
     OSInterface *getOSInterface() const {
         return osInterface;
     }
@@ -56,7 +57,7 @@ class OSTime {
     }
 
   protected:
-    OSTime() {}
+    OSTime() = default;
     OSInterface *osInterface = nullptr;
     std::unique_ptr<DeviceTime> deviceTime;
 };
