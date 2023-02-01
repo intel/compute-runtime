@@ -716,8 +716,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenContextIsCreatedThenCorrect
     context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, context);
-    GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(genFamily);
+    auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     EXPECT_EQ(ULT::platformInfo.gen_version, static_cast<gtpin::GTPIN_GEN_VERSION>(gtpinHelper.getGenVersion()));
 
     retVal = clReleaseContext(context);
@@ -2141,8 +2140,7 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     size_t offsetBTS1 = pKernel->getBindingTableOffset();
     EXPECT_NE(0u, offsetBTS1);
 
-    GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(genFamily);
+    auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     void *pSS1 = gtpinHelper.getSurfaceState(pKernel, 0);
     EXPECT_NE(nullptr, pSS1);
 
@@ -2461,7 +2459,7 @@ using GTPinTestsWithLocalMemory = Test<GTPinFixtureWithLocalMemory>;
 
 TEST_F(GTPinTestsWithLocalMemory, whenPlatformHasNoSvmSupportThenGtPinBufferCantBeAllocatedInSharedMemory) {
     DebugManager.flags.GTPinAllocateBufferInSharedMemory.set(-1);
-    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     auto canUseSharedAllocation = gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo());
     if (!pDevice->getHardwareInfo().capabilityTable.ftrSvm) {
         EXPECT_FALSE(canUseSharedAllocation);
@@ -2469,7 +2467,7 @@ TEST_F(GTPinTestsWithLocalMemory, whenPlatformHasNoSvmSupportThenGtPinBufferCant
 }
 
 HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinWithSupportForSharedAllocationWhenGtPinHelperFunctionsAreCalledThenCheckIfSharedAllocationCabBeUsed) {
-    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
         GTEST_SKIP();
     }
@@ -2509,7 +2507,7 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinWithSupportForSharedAllocationWhen
 }
 
 HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsCreatedThenAllocateBufferInSharedMemory) {
-    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
         GTEST_SKIP();
     }
@@ -2545,7 +2543,7 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuf
 }
 
 HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsAllocatedInSharedMemoryThenSetSurfaceStateForTheBufferAndMakeItResident) {
-    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo()) ||
         compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
@@ -2660,14 +2658,14 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBuf
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNotifyKernelSubmitThenMoveToAllocationDomainCalled) {
-    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(pDevice->getHardwareInfo().platform.eRenderCoreFamily);
+    auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
     if (!gtpinHelper.canUseSharedAllocation(pDevice->getHardwareInfo())) {
         GTEST_SKIP();
     }
     class MockGTPinGfxCoreHelperHw : public GTPinGfxCoreHelperHw<FamilyType> {
       public:
-        void *getSurfaceState(Kernel *pKernel, size_t bti) override {
-            return data;
+        void *getSurfaceState(Kernel *pKernel, size_t bti) const override {
+            return const_cast<void *>(static_cast<const void *>(data));
         }
         uint8_t data[128];
     };

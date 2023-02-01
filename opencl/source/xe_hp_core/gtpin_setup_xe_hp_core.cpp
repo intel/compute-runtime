@@ -21,7 +21,7 @@ typedef XeHpFamily Family;
 static const auto gfxFamily = IGFX_XE_HP_CORE;
 
 template <>
-uint32_t GTPinGfxCoreHelperHw<Family>::getGenVersion() {
+uint32_t GTPinGfxCoreHelperHw<Family>::getGenVersion() const {
     return gtpin::GTPIN_XEHP_CORE;
 }
 

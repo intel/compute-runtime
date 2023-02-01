@@ -42,6 +42,7 @@ struct RootDeviceEnvironment;
 struct SelectorCopyEngine;
 class GfxCoreHelper;
 class ProductHelper;
+class GTPinGfxCoreHelper;
 
 template <>
 struct OpenCLObjectMapper<_cl_device_id> {
@@ -132,6 +133,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     Platform *getPlatform() const;
     const GfxCoreHelper &getGfxCoreHelper() const;
     const ProductHelper &getProductHelper() const;
+    const GTPinGfxCoreHelper &getGTPinGfxCoreHelper() const;
 
   protected:
     void initializeCaps();

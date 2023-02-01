@@ -24,7 +24,7 @@ typedef Gen8Family Family;
 static const auto gfxFamily = IGFX_GEN8_CORE;
 
 template <>
-uint32_t GTPinGfxCoreHelperHw<Family>::getGenVersion() {
+uint32_t GTPinGfxCoreHelperHw<Family>::getGenVersion() const {
     return gtpin::GTPIN_GEN_8;
 }
 

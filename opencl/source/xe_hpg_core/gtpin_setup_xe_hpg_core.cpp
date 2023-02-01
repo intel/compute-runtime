@@ -32,7 +32,7 @@ struct GTPinEnableXeHpgCore {
 };
 
 template <>
-uint32_t GTPinGfxCoreHelperHw<Family>::getGenVersion() {
+uint32_t GTPinGfxCoreHelperHw<Family>::getGenVersion() const {
     return gtpin::GTPIN_XE_HPG_CORE;
 }
 

@@ -24,7 +24,7 @@ typedef Gen12LpFamily Family;
 static const auto gfxFamily = IGFX_GEN12LP_CORE;
 
 template <>
-uint32_t GTPinGfxCoreHelperHw<Family>::getGenVersion() {
+uint32_t GTPinGfxCoreHelperHw<Family>::getGenVersion() const {
     return gtpin::GTPIN_GEN_12_1;
 }
 

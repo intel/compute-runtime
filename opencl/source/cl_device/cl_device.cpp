@@ -19,6 +19,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
+#include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 #include "opencl/source/platform/platform.h"
 
@@ -274,6 +275,13 @@ const GfxCoreHelper &ClDevice::getGfxCoreHelper() const {
 
 const ProductHelper &ClDevice::getProductHelper() const {
     return device.getProductHelper();
+}
+
+const GTPinGfxCoreHelper &ClDevice::getGTPinGfxCoreHelper() const {
+    GFXCORE_FAMILY genFamily = this->getHardwareInfo().platform.eRenderCoreFamily;
+    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(genFamily);
+
+    return gtpinHelper;
 }
 
 } // namespace NEO
