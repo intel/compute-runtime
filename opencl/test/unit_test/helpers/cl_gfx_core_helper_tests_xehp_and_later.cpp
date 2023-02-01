@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/helpers/cl_gfx_core_helper.h"

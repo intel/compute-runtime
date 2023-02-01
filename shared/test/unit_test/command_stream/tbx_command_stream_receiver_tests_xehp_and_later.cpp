@@ -11,7 +11,7 @@
 #include "shared/source/memory_manager/physical_address_allocator.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/test_macros/hw_test.h"

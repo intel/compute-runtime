@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -15,7 +15,7 @@ if(TESTS_DG2)
                  ${CMAKE_CURRENT_SOURCE_DIR}/cache_policy_tests_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/compute_mode_tests_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/device_binary_format_ar_tests_dg2.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_dg2.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tests_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_tests_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_tests_dg2.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests_dg2.cpp

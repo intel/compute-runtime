@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/gfx_core_helper_tests.h"
 
 using GfxCoreHelperTestsXeHP = GfxCoreHelperTest;
 

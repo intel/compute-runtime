@@ -12,7 +12,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/mocks/mock_aub_center.h"
 #include "shared/test/common/mocks/mock_aub_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"

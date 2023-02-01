@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/gfx_core_helper_tests.h"
 
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/command_container/encode_surface_state.h"

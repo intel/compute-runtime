@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -18,7 +18,7 @@ if(TESTS_XE_HPC_CORE)
       ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/copy_engine_tests_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_tests_xe_hpc_core.cpp
-      ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_xe_hpc_core.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tests_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cl_device_caps_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cmds_programming_xe_hpc_core.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_platform_caps_xe_hpc_core.cpp

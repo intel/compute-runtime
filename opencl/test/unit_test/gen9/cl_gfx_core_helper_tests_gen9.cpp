@@ -7,7 +7,7 @@
 
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"

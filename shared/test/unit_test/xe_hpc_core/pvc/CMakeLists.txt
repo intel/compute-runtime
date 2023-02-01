@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -12,7 +12,7 @@ if(TESTS_PVC)
                  ${CMAKE_CURRENT_SOURCE_DIR}/dispatch_walker_tests_pvc.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/engine_node_helper_tests_pvc.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/excludes_xe_hpc_core_pvc.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_pvc.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tests_pvc.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_tests_pvc.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/product_config_helper_tests_pvc.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/product_config_tests_pvc.cpp

@@ -8,7 +8,7 @@
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/helpers/hw_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-#include "shared/test/common/helpers/hw_helper_tests.h"
+#include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"

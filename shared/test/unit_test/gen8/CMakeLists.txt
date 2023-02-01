@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,7 +9,7 @@ if(TESTS_GEN8)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/coherency_tests_gen8.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/command_encoder_tests_gen8.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_gen8.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tests_gen8.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/image_surface_state_tests_gen8.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_gen8.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests_gen8.cpp

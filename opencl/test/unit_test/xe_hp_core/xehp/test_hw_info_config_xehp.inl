@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/fixtures/device_fixture.h"
+#include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/hw_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test.h"
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -9,7 +9,7 @@ if(TESTS_XE_HP_SDV)
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
       ${CMAKE_CURRENT_SOURCE_DIR}/cache_flush_tests_xehp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/get_device_info_xehp.inl
-      ${CMAKE_CURRENT_SOURCE_DIR}/hw_helper_tests_xehp.inl
+      ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tests_xehp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_tests_xehp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/memory_manager_tests_xehp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/sampler_tests_xehp.inl
