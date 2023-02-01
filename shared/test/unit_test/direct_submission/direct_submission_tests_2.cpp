@@ -1482,7 +1482,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
         return false;
     }
 
-    uint32_t queueLimit = 2;
+    uint32_t queueLimit = 4;
     if (DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() != -1) {
         queueLimit = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get());
     }

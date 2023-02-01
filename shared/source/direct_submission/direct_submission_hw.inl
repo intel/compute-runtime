@@ -203,7 +203,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
     {
         *schedulerCmdStream.getSpaceForCmd<typename GfxFamily::MI_ARB_CHECK>() = GfxFamily::cmdInitArbCheck;
 
-        uint32_t queueSizeLimit = 2;
+        uint32_t queueSizeLimit = 4;
         if (DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() != -1) {
             queueSizeLimit = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get());
         }
