@@ -1493,7 +1493,10 @@ TEST_F(BuiltInTests, WhenJoiningPathThenPathsAreJoinedWithCorrectSeparator) {
 }
 
 TEST_F(BuiltInTests, GivenFileNameWhenGettingKernelFromEmbeddedStorageRegistryThenValidPtrIsReturnedForExisitngKernels) {
-    EmbeddedStorageRegistry storageRegistry;
+    class MockEmbeddedStorageRegistry : public EmbeddedStorageRegistry {
+        using EmbeddedStorageRegistry::EmbeddedStorageRegistry;
+    };
+    MockEmbeddedStorageRegistry storageRegistry;
 
     std::string resource = "__kernel";
     storageRegistry.store("kernel.cl", createBuiltinResource(resource.data(), resource.size() + 1));

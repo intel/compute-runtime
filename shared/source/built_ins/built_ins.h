@@ -111,14 +111,15 @@ struct EmbeddedStorageRegistry {
 
     const BuiltinResourceT *get(const std::string &name) const;
 
-    EmbeddedStorageRegistry() {
-        exists = true;
-    }
     ~EmbeddedStorageRegistry() {
         exists = false;
     }
 
-  private:
+  protected:
+    EmbeddedStorageRegistry() {
+        exists = true;
+    }
+
     using ResourcesContainer = std::unordered_map<std::string, BuiltinResourceT>;
     ResourcesContainer resources;
 };
