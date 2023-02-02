@@ -18,8 +18,10 @@
 
 namespace NEO {
 void GraphicsAllocation::setAllocationType(AllocationType allocationType) {
-    this->allocationType = allocationType;
-    fileLoggerInstance().logAllocation(this);
+    if (this->allocationType != allocationType) {
+        this->allocationType = allocationType;
+        fileLoggerInstance().logAllocation(this);
+    }
 }
 
 GraphicsAllocation::GraphicsAllocation(uint32_t rootDeviceIndex, size_t numGmms, AllocationType allocationType, void *cpuPtrIn, uint64_t canonizedGpuAddress,
