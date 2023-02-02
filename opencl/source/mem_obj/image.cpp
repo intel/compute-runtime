@@ -21,6 +21,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/memory_manager/migration_sync_data.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/cl_device/cl_device_get_cap.inl"
@@ -152,7 +153,9 @@ Image *Image::create(Context *context,
                                                             : imageWidth * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
     const auto hostPtrSlicePitch = getHostPtrSlicePitch(*imageDesc, hostPtrRowPitch, imageHeight);
 
-    auto &defaultGfxCoreHelper = context->getDevice(0)->getGfxCoreHelper();
+    auto defaultClDevice = context->getDevice(0);
+    auto defaultRootDeviceIndex = defaultClDevice->getRootDeviceIndex();
+    auto &defaultGfxCoreHelper = defaultClDevice->getGfxCoreHelper();
     imgInfo.linearStorage = defaultGfxCoreHelper.isLinearStoragePreferred(context->isSharedContext, Image::isImage1d(*imageDesc),
                                                                           memoryProperties.flags.forceLinearStorage);
 
@@ -162,7 +165,7 @@ Image *Image::create(Context *context,
         return nullptr;
     }
 
-    auto &clGfxCoreHelper = context->getDevice(0)->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+    auto &clGfxCoreHelper = defaultClDevice->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     bool preferCompression = MemObjHelper::isSuitableForCompression(!imgInfo.linearStorage, memoryProperties,
                                                                     *context, true);
     preferCompression &= clGfxCoreHelper.allowImageCompression(surfaceFormat->OCLImageFormat);
@@ -247,7 +250,6 @@ Image *Image::create(Context *context,
         multiGraphicsAllocation.addAllocation(allocationInfo.memory);
     }
 
-    auto defaultRootDeviceIndex = context->getDevice(0u)->getRootDeviceIndex();
     multiGraphicsAllocation.setMultiStorage(context->getRootDeviceIndices().size() > 1);
 
     Image *image = createImageHw(context, memoryProperties, flags, flagsIntel, imgInfo.size, hostPtrToSet, surfaceFormat->OCLImageFormat,
@@ -255,57 +257,58 @@ Image *Image::create(Context *context,
 
     setImageProperties(image, *imageDesc, imgInfo, parentImage, parentBuffer, hostPtrRowPitch, hostPtrSlicePitch, imageCount, hostPtrMinSize);
 
-    // transfer Memory if needed
-    bool isMemoryTransferred = false;
+    errcodeRet = CL_SUCCESS;
+    auto &defaultHwInfo = defaultClDevice->getHardwareInfo();
+    if (context->isProvidingPerformanceHints()) {
 
-    for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
-        errcodeRet = CL_SUCCESS;
-        auto &allocationInfo = allocationInfos[rootDeviceIndex];
-        auto &hwInfo = *memoryManager->peekExecutionEnvironment().rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
+        auto &allocationInfo = allocationInfos[defaultRootDeviceIndex];
 
-        if (context->isProvidingPerformanceHints()) {
-            providePerformanceHintForCreateImage(image, hwInfo, allocationInfo, context);
-        }
-        auto isMemoryTransferNeeded = !isMemoryTransferred && allocationInfo.transferNeeded;
-        if (isMemoryTransferNeeded) {
-            std::array<size_t, 3> copyOrigin = {{0, 0, 0}};
-            std::array<size_t, 3> copyRegion = {{imageWidth, imageHeight, std::max(imageDepth, imageCount)}};
-            if (imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
-                copyRegion = {imageWidth, imageCount, 1};
-            }
+        providePerformanceHintForCreateImage(image, defaultHwInfo, allocationInfo, context);
+    }
 
-            auto allocationInSystemMemory = MemoryPoolHelper::isSystemMemoryPool(allocationInfo.memory->getMemoryPool());
-            bool isCpuTransferPreferred = imgInfo.linearStorage && defaultGfxCoreHelper.isCpuImageTransferPreferred(hwInfo);
-            bool isCpuTransferPreferredInSystemMemory = imgInfo.linearStorage && allocationInSystemMemory;
-
-            if (isCpuTransferPreferredInSystemMemory) {
-                void *pDestinationAddress = allocationInfo.memory->getUnderlyingBuffer();
-                image->transferData(pDestinationAddress, imgInfo.rowPitch, imgInfo.slicePitch,
-                                    const_cast<void *>(hostPtr), hostPtrRowPitch, hostPtrSlicePitch,
-                                    copyRegion, copyOrigin);
-
-            } else if (isCpuTransferPreferred) {
-                void *pDestinationAddress = context->getMemoryManager()->lockResource(allocationInfo.memory);
-                image->transferData(pDestinationAddress, imgInfo.rowPitch, imgInfo.slicePitch,
-                                    const_cast<void *>(hostPtr), hostPtrRowPitch, hostPtrSlicePitch,
-                                    copyRegion, copyOrigin);
-                context->getMemoryManager()->unlockResource(allocationInfo.memory);
-
-            } else {
-                auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
-                if (isNV12Image(&image->getImageFormat())) {
-                    errcodeRet = image->writeNV12Planes(hostPtr, hostPtrRowPitch, rootDeviceIndex);
-                } else {
-                    errcodeRet = cmdQ->enqueueWriteImage(image, CL_TRUE, &copyOrigin[0], &copyRegion[0],
-                                                         hostPtrRowPitch, hostPtrSlicePitch,
-                                                         hostPtr, allocationInfo.mapAllocation, 0, nullptr, nullptr);
-                }
-            }
-            isMemoryTransferred = true;
-        }
-
+    for (auto &allocationInfo : allocationInfos) {
         if (allocationInfo.mapAllocation) {
             image->mapAllocations.addAllocation(allocationInfo.mapAllocation);
+        }
+    }
+    if (allocationInfos[defaultRootDeviceIndex].transferNeeded) {
+        auto memory = image->getGraphicsAllocation(defaultRootDeviceIndex);
+        std::array<size_t, 3> copyOrigin = {{0, 0, 0}};
+        std::array<size_t, 3> copyRegion = {{imageWidth, imageHeight, std::max(imageDepth, imageCount)}};
+        if (imageDesc->image_type == CL_MEM_OBJECT_IMAGE1D_ARRAY) {
+            copyRegion = {imageWidth, imageCount, 1};
+        }
+
+        auto allocationInSystemMemory = MemoryPoolHelper::isSystemMemoryPool(memory->getMemoryPool());
+        bool isCpuTransferPreferred = imgInfo.linearStorage && defaultGfxCoreHelper.isCpuImageTransferPreferred(defaultHwInfo);
+        bool isCpuTransferPreferredInSystemMemory = imgInfo.linearStorage && allocationInSystemMemory;
+
+        if (isCpuTransferPreferredInSystemMemory) {
+            void *pDestinationAddress = memory->getUnderlyingBuffer();
+            image->transferData(pDestinationAddress, imgInfo.rowPitch, imgInfo.slicePitch,
+                                const_cast<void *>(hostPtr), hostPtrRowPitch, hostPtrSlicePitch,
+                                copyRegion, copyOrigin);
+
+        } else if (isCpuTransferPreferred) {
+            void *pDestinationAddress = context->getMemoryManager()->lockResource(memory);
+            image->transferData(pDestinationAddress, imgInfo.rowPitch, imgInfo.slicePitch,
+                                const_cast<void *>(hostPtr), hostPtrRowPitch, hostPtrSlicePitch,
+                                copyRegion, copyOrigin);
+            context->getMemoryManager()->unlockResource(memory);
+
+        } else {
+            auto cmdQ = context->getSpecialQueue(defaultRootDeviceIndex);
+            if (isNV12Image(&image->getImageFormat())) {
+                errcodeRet = image->writeNV12Planes(hostPtr, hostPtrRowPitch, defaultRootDeviceIndex);
+            } else {
+                errcodeRet = cmdQ->enqueueWriteImage(image, CL_TRUE, &copyOrigin[0], &copyRegion[0],
+                                                     hostPtrRowPitch, hostPtrSlicePitch,
+                                                     hostPtr, image->getMapAllocation(defaultRootDeviceIndex), 0, nullptr, nullptr);
+            }
+        }
+        auto migrationSyncData = image->getMultiGraphicsAllocation().getMigrationSyncData();
+        if (migrationSyncData) {
+            migrationSyncData->setCurrentLocation(defaultRootDeviceIndex);
         }
     }
 

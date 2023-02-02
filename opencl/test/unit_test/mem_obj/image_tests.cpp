@@ -10,6 +10,7 @@
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/image/image_surface_state.h"
+#include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -1800,4 +1801,61 @@ TEST(ImageTest, givenMultiDeviceEnvironmentWhenReleaseImageFromBufferThenMainBuf
     EXPECT_EQ(1, buffer->getRefInternalCount());
 
     buffer->release();
+}
+
+TEST(ImageTest, givenHostPtrToCopyWhenImageIsCreatedWithMultiStorageThenMemoryIsPutInFirstDeviceInContext) {
+    REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
+
+    cl_int retVal = 0;
+    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_COPY_HOST_PTR;
+
+    cl_image_desc imageDesc{};
+    imageDesc.image_type = CL_MEM_OBJECT_IMAGE1D;
+    imageDesc.image_width = 4;
+    imageDesc.image_height = 1;
+    imageDesc.image_row_pitch = 4;
+
+    cl_image_format imageFormat = {};
+    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
+    imageFormat.image_channel_order = CL_R;
+
+    UltClDeviceFactory deviceFactory{2, 0};
+    {
+        cl_device_id deviceIds[] = {
+            deviceFactory.rootDevices[0],
+            deviceFactory.rootDevices[1]};
+        MockContext context{nullptr, nullptr};
+        context.initializeWithDevices(ClDeviceVector{deviceIds, 2}, false);
+
+        uint32_t data{};
+
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(
+            flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        std::unique_ptr<Image> image(
+            Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+                          flags, 0, surfaceFormat, &imageDesc, &data, retVal));
+        EXPECT_NE(nullptr, image);
+
+        EXPECT_EQ(2u, context.getRootDeviceIndices().size());
+        EXPECT_EQ(0u, image->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+    }
+    {
+        cl_device_id deviceIds[] = {
+            deviceFactory.rootDevices[1],
+            deviceFactory.rootDevices[0]};
+        MockContext context{nullptr, nullptr};
+        context.initializeWithDevices(ClDeviceVector{deviceIds, 2}, false);
+
+        uint32_t data{};
+
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(
+            flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        std::unique_ptr<Image> image(
+            Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+                          flags, 0, surfaceFormat, &imageDesc, &data, retVal));
+        EXPECT_NE(nullptr, image);
+
+        EXPECT_EQ(2u, context.getRootDeviceIndices().size());
+        EXPECT_EQ(1u, image->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+    }
 }
