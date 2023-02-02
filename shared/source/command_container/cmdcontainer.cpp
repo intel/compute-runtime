@@ -331,28 +331,51 @@ IndirectHeap *CommandContainer::getIndirectHeap(HeapType heapType) {
     }
 }
 
-IndirectHeap *CommandContainer::getCsrAlignedSize(HeapType heapType, size_t size, size_t alignment) {
-    void *ptr = immediateCmdListCsr->getIndirectHeapCurrentPtr(heapType);
-    size_t totalSize = size + ptrDiff(alignUp(ptr, alignment), ptr);
+IndirectHeap *CommandContainer::initIndirectHeapReservation(ReservedIndirectHeap *indirectHeapReservation, size_t size, size_t alignment, HeapType heapType) {
+    void *currentHeap = immediateCmdListCsr->getIndirectHeapCurrentPtr(heapType);
+    auto totalRequiredSize = size + ptrDiff(alignUp(currentHeap, alignment), currentHeap);
 
-    auto baseHeap = &immediateCmdListCsr->getIndirectHeap(heapType, totalSize);
+    auto baseHeap = &immediateCmdListCsr->getIndirectHeap(heapType, totalRequiredSize);
+
+    auto usedSize = baseHeap->getUsed();
+    void *heapCpuBase = baseHeap->getCpuBase();
+    auto consumedSize = usedSize + totalRequiredSize;
+
+    baseHeap->getSpace(totalRequiredSize);
+
+    indirectHeapReservation->replaceGraphicsAllocation(baseHeap->getGraphicsAllocation());
+    indirectHeapReservation->replaceBuffer(heapCpuBase, consumedSize);
+    indirectHeapReservation->getSpace(usedSize);
+    indirectHeapReservation->setHeapSizeInPages(baseHeap->getHeapSizeInPages());
 
     return baseHeap;
 }
 
-void CommandContainer::ensureHeapSizePrepared(size_t sshRequiredSize, size_t sshDefaultAlignment, size_t dshRequiredSize, size_t dshDefaultAlignment, bool getDsh) {
+void CommandContainer::reserveSpaceForDispatch(HeapReserveArguments &sshReserveArg, HeapReserveArguments &dshReserveArg, bool getDsh) {
+    size_t sshAlignment = sshReserveArg.alignment;
+    size_t dshAlignment = dshReserveArg.alignment;
+    if (sshReserveArg.size == 0) {
+        sshAlignment = 1;
+    }
+    if (dshReserveArg.size == 0) {
+        dshAlignment = 1;
+    }
     if (immediateCmdListCsr) {
         auto lock = immediateCmdListCsr->obtainUniqueOwnership();
-        sharedSshCsrHeap = getCsrAlignedSize(HeapType::SURFACE_STATE, sshRequiredSize, sshDefaultAlignment);
+        sharedSshCsrHeap = this->initIndirectHeapReservation(sshReserveArg.indirectHeapReservation, sshReserveArg.size, sshAlignment, HeapType::SURFACE_STATE);
 
         if (getDsh) {
-            sharedDshCsrHeap = getCsrAlignedSize(HeapType::DYNAMIC_STATE, dshRequiredSize, dshDefaultAlignment);
+            sharedDshCsrHeap = this->initIndirectHeapReservation(dshReserveArg.indirectHeapReservation, dshReserveArg.size, dshAlignment, HeapType::DYNAMIC_STATE);
         }
     } else {
-        this->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sshRequiredSize, sshDefaultAlignment);
+        this->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sshReserveArg.size, sshAlignment);
+
         if (getDsh) {
-            this->getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, dshRequiredSize, dshDefaultAlignment);
+            this->getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, dshReserveArg.size, dshAlignment);
         }
+        // private heaps can be accessed directly
+        sshReserveArg.indirectHeapReservation = nullptr;
+        dshReserveArg.indirectHeapReservation = nullptr;
     }
 }
 
@@ -453,6 +476,14 @@ void CommandContainer::storeAllocationAndFlushTagUpdate(GraphicsAllocation *allo
         getHeapHelper()->storeHeapAllocation(allocation);
     }
     this->immediateCmdListCsr->flushTagUpdate();
+}
+
+HeapReserveData::HeapReserveData() {
+    object = std::make_unique<NEO::ReservedIndirectHeap>(nullptr, false);
+    indirectHeapReservation = object.get();
+}
+
+HeapReserveData::~HeapReserveData() {
 }
 
 } // namespace NEO

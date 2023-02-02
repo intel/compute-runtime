@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,7 +30,7 @@ class IndirectHeap : public LinearStream {
 
   public:
     using Type = IndirectHeapType;
-    IndirectHeap(void *graphicsAllocation, size_t bufferSize) : BaseClass(graphicsAllocation, bufferSize){};
+    IndirectHeap(void *buffer, size_t bufferSize) : BaseClass(buffer, bufferSize){};
     IndirectHeap(GraphicsAllocation *graphicsAllocation) : BaseClass(graphicsAllocation) {}
     IndirectHeap(GraphicsAllocation *graphicsAllocation, bool canBeUtilizedAs4GbHeap)
         : BaseClass(graphicsAllocation), canBeUtilizedAs4GbHeap(canBeUtilizedAs4GbHeap) {}
@@ -42,7 +42,7 @@ class IndirectHeap : public LinearStream {
     void align(size_t alignment);
     uint64_t getHeapGpuStartOffset() const;
     uint64_t getHeapGpuBase() const;
-    uint32_t getHeapSizeInPages() const;
+    virtual uint32_t getHeapSizeInPages() const;
 
   protected:
     bool canBeUtilizedAs4GbHeap = false;
@@ -76,4 +76,27 @@ inline uint64_t IndirectHeap::getHeapGpuBase() const {
         return this->graphicsAllocation->getGpuAddress();
     }
 }
+
+class ReservedIndirectHeap : public IndirectHeap {
+  public:
+    ReservedIndirectHeap(void *buffer, size_t bufferSize) : IndirectHeap(buffer, bufferSize) {}
+    ReservedIndirectHeap(GraphicsAllocation *graphicsAllocation) : IndirectHeap(graphicsAllocation) {}
+    ReservedIndirectHeap(GraphicsAllocation *graphicsAllocation, bool canBeUtilizedAs4GbHeap)
+        : IndirectHeap(graphicsAllocation, canBeUtilizedAs4GbHeap) {}
+
+    // Disallow copy'ing
+    ReservedIndirectHeap(const ReservedIndirectHeap &) = delete;
+    ReservedIndirectHeap &operator=(const ReservedIndirectHeap &) = delete;
+
+    uint32_t getHeapSizeInPages() const override {
+        return parentHeapSizeInPages;
+    }
+    void setHeapSizeInPages(uint32_t value) {
+        parentHeapSizeInPages = value;
+    }
+
+  protected:
+    uint32_t parentHeapSizeInPages = 0;
+};
+
 } // namespace NEO

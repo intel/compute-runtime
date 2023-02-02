@@ -930,7 +930,17 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     auto containerDshHeapCoexisting = cmdContainerCoexisting.getIndirectHeap(HeapType::DYNAMIC_STATE);
     auto containerSshHeapCoexisting = cmdContainerCoexisting.getIndirectHeap(HeapType::SURFACE_STATE);
 
+    size_t dshAlignment = NEO::EncodeDispatchKernel<FamilyType>::getDefaultDshAlignment();
+    size_t sshAlignment = NEO::EncodeDispatchKernel<FamilyType>::getDefaultSshAlignment();
+
+    void *ptr = containerSshHeapCoexisting->getSpace(0);
+    size_t expectedSshAlignedSize = sshEstimated + ptrDiff(alignUp(ptr, sshAlignment), ptr);
+
+    size_t expectedDshAlignedSize = dshEstimated;
     if (dshPresent) {
+        ptr = containerDshHeapCoexisting->getSpace(0);
+        expectedDshAlignedSize += ptrDiff(alignUp(ptr, dshAlignment), ptr);
+
         EXPECT_EQ(csrDshHeap, containerDshHeapCoexisting);
     } else {
         EXPECT_EQ(nullptr, containerDshHeapCoexisting);
@@ -957,8 +967,8 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     }
     EXPECT_LT(0u, sshUsed);
 
-    EXPECT_GE(dshEstimated, dshUsed);
-    EXPECT_GE(sshEstimated, sshUsed);
+    EXPECT_GE(expectedDshAlignedSize, dshUsed);
+    EXPECT_GE(expectedSshAlignedSize, sshUsed);
 }
 
 } // namespace ult

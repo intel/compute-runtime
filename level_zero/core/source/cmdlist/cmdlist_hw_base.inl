@@ -53,15 +53,26 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     if (this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) {
         auto kernelInfo = kernelImmutableData->getKernelInfo();
 
-        commandContainer.ensureHeapSizePrepared(
+        auto &sshReserveConfig = commandContainer.getSurfaceStateHeapReserve();
+        NEO::HeapReserveArguments sshReserveArgs = {
+            sshReserveConfig.indirectHeapReservation,
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
-            NEO::EncodeDispatchKernel<GfxFamily>::getDefaultSshAlignment(),
-            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor, commandContainer.getNumIddPerBlock()),
-            NEO::EncodeDispatchKernel<GfxFamily>::getDefaultDshAlignment(), true);
+            NEO::EncodeDispatchKernel<GfxFamily>::getDefaultSshAlignment()};
 
-        ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
-        dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        auto &dshReserveConfig = commandContainer.getDynamicStateHeapReserve();
+        NEO::HeapReserveArguments dshReserveArgs = {
+            dshReserveConfig.indirectHeapReservation,
+            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor, commandContainer.getNumIddPerBlock()),
+            NEO::EncodeDispatchKernel<GfxFamily>::getDefaultDshAlignment()};
+
+        commandContainer.reserveSpaceForDispatch(
+            sshReserveArgs,
+            dshReserveArgs, true);
+
+        ssh = sshReserveArgs.indirectHeapReservation;
+        dsh = dshReserveArgs.indirectHeapReservation;
     }
+
     appendEventForProfiling(event, true);
     auto perThreadScratchSize = std::max<std::uint32_t>(this->getCommandListPerThreadScratchSize(),
                                                         kernel->getImmutableData()->getDescriptor().kernelAttributes.perThreadScratchSize[0]);

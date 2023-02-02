@@ -16,13 +16,14 @@
 #include <vector>
 
 namespace NEO {
-class HeapHelper;
+class AllocationsList;
 class CommandStreamReceiver;
 class Device;
 class GraphicsAllocation;
-class LinearStream;
-class AllocationsList;
+class HeapHelper;
 class IndirectHeap;
+class LinearStream;
+class ReservedIndirectHeap;
 
 using ResidencyContainer = std::vector<GraphicsAllocation *>;
 using CmdBufferContainer = std::vector<GraphicsAllocation *>;
@@ -38,6 +39,21 @@ namespace CSRequirements {
 inline constexpr auto minCommandQueueCommandStreamSize = 2 * MemoryConstants::cacheLineSize;
 inline constexpr auto csOverfetchSize = MemoryConstants::pageSize;
 } // namespace CSRequirements
+
+struct HeapReserveData {
+    HeapReserveData();
+    virtual ~HeapReserveData();
+    ReservedIndirectHeap *indirectHeapReservation = nullptr;
+
+  protected:
+    std::unique_ptr<ReservedIndirectHeap> object;
+};
+
+struct HeapReserveArguments {
+    ReservedIndirectHeap *indirectHeapReservation = nullptr;
+    size_t size = 0;
+    size_t alignment = 0;
+};
 
 class CommandContainer : public NonCopyableOrMovableClass {
   public:
@@ -119,7 +135,8 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool immediateCmdListSharedHeap(HeapType heapType) {
         return (heapSharingEnabled && (heapType == HeapType::DYNAMIC_STATE || heapType == HeapType::SURFACE_STATE));
     }
-    void ensureHeapSizePrepared(size_t sshRequiredSize, size_t sshDefaultAlignment, size_t dshRequiredSize, size_t dshDefaultAlignment, bool getDsh);
+
+    void reserveSpaceForDispatch(HeapReserveArguments &sshReserveArg, HeapReserveArguments &dshReserveArg, bool getDsh);
 
     GraphicsAllocation *reuseExistingCmdBuffer();
     GraphicsAllocation *allocateCommandBuffer();
@@ -128,6 +145,13 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     void fillReusableAllocationLists();
     void storeAllocationAndFlushTagUpdate(GraphicsAllocation *allocation);
+
+    HeapReserveData &getSurfaceStateHeapReserve() {
+        return surfaceStateHeapReserveData;
+    }
+    HeapReserveData &getDynamicStateHeapReserve() {
+        return dynamicStateHeapReserveData;
+    }
 
     HeapContainer sshAllocations;
     uint64_t currentLinearStreamStartOffset = 0u;
@@ -141,9 +165,11 @@ class CommandContainer : public NonCopyableOrMovableClass {
     size_t getTotalCmdBufferSize();
     IndirectHeap *getHeapWithRequiredSize(HeapType heapType, size_t sizeRequired, size_t alignment, bool allowGrow);
     void createAndAssignNewHeap(HeapType heapType, size_t size);
-    IndirectHeap *getCsrAlignedSize(HeapType heapType, size_t size, size_t alignment);
+    IndirectHeap *initIndirectHeapReservation(ReservedIndirectHeap *indirectHeapReservation, size_t size, size_t alignment, HeapType heapType);
     GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
     std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];
+    HeapReserveData dynamicStateHeapReserveData;
+    HeapReserveData surfaceStateHeapReserveData;
 
     CmdBufferContainer cmdBufferAllocations;
     ResidencyContainer residencyContainer;

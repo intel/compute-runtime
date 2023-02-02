@@ -937,12 +937,29 @@ TEST_F(CommandContainerTest, GivenCmdContainerWhenContainerIsInitializedThenSurf
 
 HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWithoutEnsuringSpaceThenExpectNullptrReturnedOrUnrecoverable) {
     MyMockCommandContainer cmdContainer;
-    cmdContainer.enableHeapSharing();
-    cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
-    cmdContainer.immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
+    auto &containerSshReserve = cmdContainer.getSurfaceStateHeapReserve();
+    EXPECT_NE(nullptr, containerSshReserve.indirectHeapReservation);
+    auto &containerDshReserve = cmdContainer.getDynamicStateHeapReserve();
+    EXPECT_NE(nullptr, containerDshReserve.indirectHeapReservation);
+
+    NEO::ReservedIndirectHeap reservedSsh(nullptr, false);
+    NEO::ReservedIndirectHeap reservedDsh(nullptr, false);
+
+    auto sshHeapPtr = &reservedSsh;
+    auto dshHeapPtr = &reservedDsh;
+
+    HeapReserveArguments sshReserveArgs = {sshHeapPtr, 0, 0};
+    HeapReserveArguments dshReserveArgs = {dshHeapPtr, 0, 0};
 
     const size_t dshAlign = NEO::EncodeDispatchKernel<FamilyType>::getDefaultDshAlignment();
     const size_t sshAlign = NEO::EncodeDispatchKernel<FamilyType>::getDefaultSshAlignment();
+
+    sshReserveArgs.alignment = sshAlign;
+    dshReserveArgs.alignment = dshAlign;
+
+    cmdContainer.enableHeapSharing();
+    cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
+    cmdContainer.immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
 
     cmdContainer.setNumIddPerBlock(1);
     auto code = cmdContainer.initialize(pDevice, nullptr, true);
@@ -960,11 +977,17 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.recursiveLockCounter = 0;
 
-    cmdContainer.ensureHeapSizePrepared(0, sshAlign, 0, dshAlign, false);
+    sshReserveArgs.size = 0;
+    dshReserveArgs.size = 0;
+    cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, false);
     EXPECT_EQ(1u, ultCsr.recursiveLockCounter);
 
     EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
+    EXPECT_EQ(nullptr, reservedDsh.getCpuBase());
+
     EXPECT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE));
+    EXPECT_NE(nullptr, reservedSsh.getCpuBase());
+    EXPECT_EQ(cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE)->getCpuBase(), reservedSsh.getCpuBase());
 
     EXPECT_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, 0), std::exception);
     EXPECT_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, 0, 0), std::exception);
@@ -972,7 +995,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     EXPECT_NO_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 0));
     EXPECT_NO_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 0, 0));
 
-    cmdContainer.ensureHeapSizePrepared(0, sshAlign, 0, dshAlign, true);
+    cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, true);
     EXPECT_EQ(2u, ultCsr.recursiveLockCounter);
 
     ASSERT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
@@ -986,23 +1009,53 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     size_t initSshSize = sizeUsedSsh;
 
     constexpr size_t misAlignedSize = 3;
-    cmdContainer.ensureHeapSizePrepared(misAlignedSize, sshAlign, misAlignedSize, dshAlign, true);
+    sshReserveArgs.size = misAlignedSize;
+    dshReserveArgs.size = misAlignedSize;
+    cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, true);
     EXPECT_EQ(3u, ultCsr.recursiveLockCounter);
 
     auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
     EXPECT_NE(nullptr, dshHeap);
 
-    sshHeap->getSpace(misAlignedSize);
-    dshHeap->getSpace(misAlignedSize);
+    EXPECT_EQ(sshHeapPtr->getCpuBase(), sshReserveArgs.indirectHeapReservation->getCpuBase());
+    EXPECT_EQ(dshHeapPtr->getCpuBase(), dshReserveArgs.indirectHeapReservation->getCpuBase());
 
-    cmdContainer.ensureHeapSizePrepared(sshAlign, sshAlign, dshAlign, dshAlign, true);
+    EXPECT_EQ(sshHeap->getCpuBase(), sshReserveArgs.indirectHeapReservation->getCpuBase());
+    EXPECT_EQ(dshHeap->getCpuBase(), dshReserveArgs.indirectHeapReservation->getCpuBase());
+    EXPECT_EQ(sshHeap->getHeapSizeInPages(), sshReserveArgs.indirectHeapReservation->getHeapSizeInPages());
+    EXPECT_EQ(dshHeap->getHeapSizeInPages(), dshReserveArgs.indirectHeapReservation->getHeapSizeInPages());
+    EXPECT_EQ(sshHeap->getGraphicsAllocation(), sshReserveArgs.indirectHeapReservation->getGraphicsAllocation());
+    EXPECT_EQ(dshHeap->getGraphicsAllocation(), dshReserveArgs.indirectHeapReservation->getGraphicsAllocation());
+
+    sshHeapPtr->getSpace(misAlignedSize);
+    dshHeapPtr->getSpace(misAlignedSize);
+
+    EXPECT_EQ(0u, sshHeapPtr->getAvailableSpace());
+    EXPECT_EQ(0u, dshHeapPtr->getAvailableSpace());
+
+    sshReserveArgs.size = sshAlign;
+    dshReserveArgs.size = dshAlign;
+    cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, true);
     EXPECT_EQ(4u, ultCsr.recursiveLockCounter);
 
-    sshHeap->align(sshAlign);
-    sshHeap->getSpace(sshAlign);
+    EXPECT_EQ(sshHeapPtr->getCpuBase(), sshReserveArgs.indirectHeapReservation->getCpuBase());
+    EXPECT_EQ(dshHeapPtr->getCpuBase(), dshReserveArgs.indirectHeapReservation->getCpuBase());
 
-    dshHeap->align(dshAlign);
-    dshHeap->getSpace(dshAlign);
+    sshHeapPtr->align(sshAlign);
+    sshHeapPtr->getSpace(sshAlign);
+
+    dshHeapPtr->align(dshAlign);
+    dshHeapPtr->getSpace(dshAlign);
+
+    EXPECT_EQ(0u, sshHeapPtr->getAvailableSpace());
+    EXPECT_EQ(0u, dshHeapPtr->getAvailableSpace());
+
+    EXPECT_EQ(sshHeap->getCpuBase(), sshReserveArgs.indirectHeapReservation->getCpuBase());
+    EXPECT_EQ(dshHeap->getCpuBase(), dshReserveArgs.indirectHeapReservation->getCpuBase());
+    EXPECT_EQ(sshHeap->getHeapSizeInPages(), sshReserveArgs.indirectHeapReservation->getHeapSizeInPages());
+    EXPECT_EQ(dshHeap->getHeapSizeInPages(), dshReserveArgs.indirectHeapReservation->getHeapSizeInPages());
+    EXPECT_EQ(sshHeap->getGraphicsAllocation(), sshReserveArgs.indirectHeapReservation->getGraphicsAllocation());
+    EXPECT_EQ(dshHeap->getGraphicsAllocation(), dshReserveArgs.indirectHeapReservation->getGraphicsAllocation());
 
     sizeUsedDsh = dshHeap->getUsed();
     sizeUsedSsh = sshHeap->getUsed();
@@ -1010,7 +1063,11 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     EXPECT_EQ(2 * sshAlign + initSshSize, sizeUsedSsh);
     EXPECT_EQ(2 * dshAlign, sizeUsedDsh);
 
-    cmdContainer.ensureHeapSizePrepared(4 * MemoryConstants::kiloByte, sshAlign, 4 * MemoryConstants::kiloByte, dshAlign, true);
+    constexpr size_t nonZeroSshSize = 4 * MemoryConstants::kiloByte;
+    constexpr size_t nonZeroDshSize = 4 * MemoryConstants::kiloByte;
+    sshReserveArgs.size = nonZeroSshSize;
+    dshReserveArgs.size = nonZeroDshSize;
+    cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, true);
     EXPECT_EQ(5u, ultCsr.recursiveLockCounter);
 
     dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
@@ -1018,14 +1075,33 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
     EXPECT_NE(nullptr, sshHeap);
 
+    EXPECT_EQ(sshHeap->getCpuBase(), sshReserveArgs.indirectHeapReservation->getCpuBase());
+    EXPECT_EQ(dshHeap->getCpuBase(), dshReserveArgs.indirectHeapReservation->getCpuBase());
+    EXPECT_EQ(sshHeap->getHeapSizeInPages(), sshReserveArgs.indirectHeapReservation->getHeapSizeInPages());
+    EXPECT_EQ(dshHeap->getHeapSizeInPages(), dshReserveArgs.indirectHeapReservation->getHeapSizeInPages());
+    EXPECT_EQ(sshHeap->getGraphicsAllocation(), sshReserveArgs.indirectHeapReservation->getGraphicsAllocation());
+    EXPECT_EQ(dshHeap->getGraphicsAllocation(), dshReserveArgs.indirectHeapReservation->getGraphicsAllocation());
+
     sizeUsedDsh = dshHeap->getUsed();
     sizeUsedSsh = sshHeap->getUsed();
 
-    void *dshPtr = cmdContainer.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, 64);
-    void *sshPtr = cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 64);
+    size_t sizeReserveUsedDsh = reservedDsh.getUsed();
+    size_t sizeReserveUsedSsh = reservedSsh.getUsed();
 
-    EXPECT_EQ(ptrOffset(dshHeap->getCpuBase(), sizeUsedDsh), dshPtr);
-    EXPECT_EQ(ptrOffset(sshHeap->getCpuBase(), sizeUsedSsh), sshPtr);
+    EXPECT_EQ(sizeUsedDsh, sizeReserveUsedDsh + nonZeroDshSize);
+    EXPECT_EQ(sizeUsedSsh, sizeReserveUsedSsh + nonZeroSshSize);
+
+    EXPECT_EQ(nonZeroDshSize, reservedDsh.getAvailableSpace());
+    EXPECT_EQ(nonZeroSshSize, reservedSsh.getAvailableSpace());
+
+    EXPECT_EQ(sizeUsedDsh, reservedDsh.getMaxAvailableSpace());
+    EXPECT_EQ(sizeUsedSsh, reservedSsh.getMaxAvailableSpace());
+
+    void *dshReservePtr = reservedDsh.getSpace(64);
+    void *sshReservePtr = reservedSsh.getSpace(64);
+
+    EXPECT_EQ(ptrOffset(reservedDsh.getCpuBase(), sizeReserveUsedDsh), dshReservePtr);
+    EXPECT_EQ(ptrOffset(reservedSsh.getCpuBase(), sizeReserveUsedSsh), sshReservePtr);
 
     auto alignedHeapDsh = cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, 128, 128);
     auto alignedHeapSsh = cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 128, 128);
@@ -1052,24 +1128,203 @@ HWTEST_F(CommandContainerTest, givenCmdContainerUsedInRegularCmdListWhenGettingH
     const size_t sshAlign = NEO::EncodeDispatchKernel<FamilyType>::getDefaultSshAlignment();
 
     MyMockCommandContainer cmdContainer;
+    constexpr size_t zeroSize = 0;
+    NEO::ReservedIndirectHeap reservedSsh(nullptr, zeroSize);
+    NEO::ReservedIndirectHeap reservedDsh(nullptr, zeroSize);
+
+    auto sshHeapPtr = &reservedSsh;
+    auto dshHeapPtr = &reservedDsh;
+
+    HeapReserveArguments sshReserveArgs = {sshHeapPtr, 0, sshAlign};
+    HeapReserveArguments dshReserveArgs = {dshHeapPtr, 0, dshAlign};
 
     auto code = cmdContainer.initialize(pDevice, nullptr, true);
     EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, code);
 
-    cmdContainer.ensureHeapSizePrepared(0, sshAlign, 0, dshAlign, true);
+    cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, true);
+
+    EXPECT_EQ(nullptr, sshReserveArgs.indirectHeapReservation);
+    EXPECT_EQ(nullptr, dshReserveArgs.indirectHeapReservation);
 
     auto dsh = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
     auto ssh = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+
+    EXPECT_EQ(0u, reservedDsh.getAvailableSpace());
+    EXPECT_EQ(0u, reservedSsh.getAvailableSpace());
 
     EXPECT_NE(nullptr, dsh);
     EXPECT_NE(nullptr, ssh);
 
     dsh->getSpace(dsh->getAvailableSpace() - 64);
 
-    cmdContainer.ensureHeapSizePrepared(4 * MemoryConstants::kiloByte, sshAlign, 4 * MemoryConstants::kiloByte, dshAlign, false);
+    constexpr size_t nonZeroSize = 4 * MemoryConstants::kiloByte;
+    sshReserveArgs.size = nonZeroSize;
+    dshReserveArgs.size = nonZeroSize;
+    sshReserveArgs.indirectHeapReservation = sshHeapPtr;
+    dshReserveArgs.indirectHeapReservation = dshHeapPtr;
+    cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, true);
 
     dsh = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
-    EXPECT_EQ(64u, dsh->getAvailableSpace());
+    EXPECT_EQ(dsh->getMaxAvailableSpace(), dsh->getAvailableSpace());
+
+    EXPECT_EQ(nullptr, sshReserveArgs.indirectHeapReservation);
+    EXPECT_EQ(nullptr, dshReserveArgs.indirectHeapReservation);
+}
+
+HWTEST_F(CommandContainerTest, givenCmdContainerUsingPrivateHeapsWhenGettingReserveHeapThenExpectReserveNullified) {
+    const bool dshSupport = pDevice->getDeviceInfo().imageSupport;
+    MyMockCommandContainer cmdContainer;
+    NEO::ReservedIndirectHeap reservedSsh(nullptr);
+    NEO::ReservedIndirectHeap reservedDsh(nullptr);
+
+    auto sshHeapPtr = &reservedSsh;
+    auto dshHeapPtr = &reservedDsh;
+
+    const size_t dshAlign = NEO::EncodeDispatchKernel<FamilyType>::getDefaultDshAlignment();
+    const size_t sshAlign = NEO::EncodeDispatchKernel<FamilyType>::getDefaultSshAlignment();
+
+    HeapReserveArguments sshReserveArgs = {sshHeapPtr, 0, sshAlign};
+    HeapReserveArguments dshReserveArgs = {dshHeapPtr, 0, dshAlign};
+
+    auto code = cmdContainer.initialize(pDevice, nullptr, true);
+    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, code);
+
+    constexpr size_t nonZeroSshSize = 4 * MemoryConstants::kiloByte;
+    constexpr size_t nonZeroDshSize = 4 * MemoryConstants::kiloByte + 64;
+    sshReserveArgs.size = nonZeroSshSize;
+    dshReserveArgs.size = nonZeroDshSize;
+
+    cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, dshSupport);
+
+    if (dshSupport) {
+        auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+        ASSERT_NE(nullptr, dshHeap);
+        EXPECT_EQ(nullptr, dshReserveArgs.indirectHeapReservation);
+    }
+
+    auto sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    ASSERT_NE(nullptr, sshHeap);
+    EXPECT_EQ(nullptr, sshReserveArgs.indirectHeapReservation);
+}
+
+HWTEST_F(CommandContainerTest,
+         givenCmdContainerUsesSharedHeapsWhenGettingSpaceAfterMisalignedHeapCurrentPointerAndAlignmentIsProvidedThenExpectToProvideAlignmentPaddingToReserveHeap) {
+    const bool dshSupport = pDevice->getDeviceInfo().imageSupport;
+    MyMockCommandContainer cmdContainer;
+    NEO::ReservedIndirectHeap reservedSsh(nullptr, false);
+    NEO::ReservedIndirectHeap reservedDsh(nullptr, false);
+
+    auto sshHeapPtr = &reservedSsh;
+    auto dshHeapPtr = &reservedDsh;
+
+    constexpr size_t dshExampleAlignment = 64;
+    constexpr size_t sshExampleAlignment = 64;
+
+    HeapReserveArguments sshReserveArgs = {sshHeapPtr, 0, sshExampleAlignment};
+    HeapReserveArguments dshReserveArgs = {dshHeapPtr, 0, dshExampleAlignment};
+
+    cmdContainer.enableHeapSharing();
+    cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
+    cmdContainer.immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
+
+    cmdContainer.setNumIddPerBlock(1);
+
+    auto code = cmdContainer.initialize(pDevice, nullptr, true);
+    EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, code);
+
+    constexpr size_t misalignedSize = 11;
+    sshReserveArgs.size = misalignedSize;
+    dshReserveArgs.size = misalignedSize;
+    cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, dshSupport);
+
+    size_t oldUsedDsh = 0;
+    if (dshSupport) {
+        auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+        ASSERT_NE(nullptr, dshHeap);
+
+        size_t sizeUsedDsh = dshHeap->getUsed();
+        size_t sizeReserveUsedDsh = reservedDsh.getUsed();
+        EXPECT_EQ(sizeUsedDsh, sizeReserveUsedDsh + misalignedSize);
+        EXPECT_EQ(misalignedSize, reservedDsh.getAvailableSpace());
+        EXPECT_EQ(sizeUsedDsh, reservedDsh.getMaxAvailableSpace());
+
+        void *dshReservePtr = reservedDsh.getSpace(8);
+        EXPECT_EQ(ptrOffset(reservedDsh.getCpuBase(), sizeReserveUsedDsh), dshReservePtr);
+
+        oldUsedDsh = sizeUsedDsh;
+    }
+
+    size_t oldUsedSsh = 0;
+    auto sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    ASSERT_NE(nullptr, sshHeap);
+
+    size_t sizeUsedSsh = sshHeap->getUsed();
+    size_t sizeReserveUsedSsh = reservedSsh.getUsed();
+    EXPECT_EQ(sizeUsedSsh, sizeReserveUsedSsh + misalignedSize);
+    EXPECT_EQ(misalignedSize, reservedSsh.getAvailableSpace());
+    EXPECT_EQ(sizeUsedSsh, reservedSsh.getMaxAvailableSpace());
+
+    void *sshReservePtr = reservedSsh.getSpace(8);
+    EXPECT_EQ(ptrOffset(reservedSsh.getCpuBase(), sizeReserveUsedSsh), sshReservePtr);
+
+    oldUsedSsh = sizeUsedSsh;
+
+    constexpr size_t zeroSize = 0;
+    sshReserveArgs.size = zeroSize;
+    dshReserveArgs.size = zeroSize;
+    cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, dshSupport);
+    if (dshSupport) {
+        auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+        ASSERT_NE(nullptr, dshHeap);
+
+        size_t sizeUsedDsh = dshHeap->getUsed();
+        size_t sizeReserveUsedDsh = reservedDsh.getUsed();
+        EXPECT_EQ(oldUsedDsh, sizeUsedDsh);
+        EXPECT_EQ(zeroSize, reservedDsh.getAvailableSpace());
+        EXPECT_EQ(sizeReserveUsedDsh, reservedDsh.getMaxAvailableSpace());
+    }
+
+    sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    ASSERT_NE(nullptr, sshHeap);
+
+    sizeUsedSsh = sshHeap->getUsed();
+    sizeReserveUsedSsh = reservedSsh.getUsed();
+    EXPECT_EQ(oldUsedSsh, sizeUsedSsh);
+    EXPECT_EQ(zeroSize, reservedSsh.getAvailableSpace());
+    EXPECT_EQ(sizeReserveUsedSsh, reservedSsh.getMaxAvailableSpace());
+
+    sshReserveArgs.size = misalignedSize;
+    dshReserveArgs.size = misalignedSize;
+    cmdContainer.reserveSpaceForDispatch(sshReserveArgs, dshReserveArgs, dshSupport);
+    if (dshSupport) {
+        auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+        ASSERT_NE(nullptr, dshHeap);
+
+        size_t alignedDshSize = alignUp(misalignedSize, dshExampleAlignment);
+
+        size_t sizeUsedDsh = dshHeap->getUsed();
+        size_t sizeReserveUsedDsh = reservedDsh.getUsed();
+        EXPECT_EQ(sizeUsedDsh, sizeReserveUsedDsh + alignedDshSize);
+        EXPECT_EQ(alignedDshSize, reservedDsh.getAvailableSpace());
+        EXPECT_EQ(sizeUsedDsh, reservedDsh.getMaxAvailableSpace());
+
+        void *dshReservePtr = reservedDsh.getSpace(4);
+        EXPECT_EQ(ptrOffset(reservedDsh.getCpuBase(), sizeReserveUsedDsh), dshReservePtr);
+    }
+
+    sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    ASSERT_NE(nullptr, sshHeap);
+
+    size_t alignedSshSize = alignUp(misalignedSize, sshExampleAlignment);
+
+    sizeUsedSsh = sshHeap->getUsed();
+    sizeReserveUsedSsh = reservedSsh.getUsed();
+    EXPECT_EQ(sizeUsedSsh, sizeReserveUsedSsh + alignedSshSize);
+    EXPECT_EQ(alignedSshSize, reservedSsh.getAvailableSpace());
+    EXPECT_EQ(sizeUsedSsh, reservedSsh.getMaxAvailableSpace());
+
+    sshReservePtr = reservedSsh.getSpace(4);
+    EXPECT_EQ(ptrOffset(reservedSsh.getCpuBase(), sizeReserveUsedSsh), sshReservePtr);
 }
 
 struct MockHeapHelper : public HeapHelper {

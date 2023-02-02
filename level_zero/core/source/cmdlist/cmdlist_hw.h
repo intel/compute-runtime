@@ -324,6 +324,7 @@ struct CommandListCoreFamily : CommandListImp {
     bool containsAnyKernel = false;
     bool pipeControlMultiKernelEventSync = false;
     bool compactL3FlushEventPacket = false;
+    bool dynamicHeapRequired = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

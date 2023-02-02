@@ -142,19 +142,29 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     NEO::IndirectHeap *dsh = nullptr;
 
     if (this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) {
-        const bool getDsh = NEO::EncodeDispatchKernel<GfxFamily>::isDshNeeded(device->getDeviceInfo());
         auto kernelInfo = kernelImmutableData->getKernelInfo();
 
-        commandContainer.ensureHeapSizePrepared(
+        auto &sshReserveConfig = commandContainer.getSurfaceStateHeapReserve();
+        NEO::HeapReserveArguments sshReserveArgs = {
+            sshReserveConfig.indirectHeapReservation,
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
-            NEO::EncodeDispatchKernel<GfxFamily>::getDefaultSshAlignment(),
-            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor, 0),
-            NEO::EncodeDispatchKernel<GfxFamily>::getDefaultDshAlignment(), getDsh);
+            NEO::EncodeDispatchKernel<GfxFamily>::getDefaultSshAlignment()};
 
-        ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
-        if (getDsh) {
-            dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        NEO::HeapReserveArguments dshReserveArgs = {};
+        if (this->dynamicHeapRequired) {
+            auto &dshReserveConfig = commandContainer.getDynamicStateHeapReserve();
+            dshReserveArgs = {
+                dshReserveConfig.indirectHeapReservation,
+                NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor, 0),
+                NEO::EncodeDispatchKernel<GfxFamily>::getDefaultDshAlignment()};
         }
+
+        commandContainer.reserveSpaceForDispatch(
+            sshReserveArgs,
+            dshReserveArgs, this->dynamicHeapRequired);
+
+        ssh = sshReserveArgs.indirectHeapReservation;
+        dsh = dshReserveArgs.indirectHeapReservation;
     }
     commandListPerThreadScratchSize = std::max<uint32_t>(commandListPerThreadScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[0]);
     commandListPerThreadPrivateScratchSize = std::max<uint32_t>(commandListPerThreadPrivateScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
