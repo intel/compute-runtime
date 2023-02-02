@@ -518,8 +518,12 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
         HardwareParse csHwParser;
         csHwParser.parseCommands<FamilyType>(pCmdQ1->getGpgpuCommandStreamReceiver().getCS(0));
         auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
-
-        EXPECT_EQ(0u, semaphores.size());
+        if (pCmdQ1->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS) &&
+            pCmdQ1->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS)->peekTaskCount() > 0) {
+            EXPECT_EQ(1u, semaphores.size());
+        } else {
+            EXPECT_EQ(0u, semaphores.size());
+        }
     }
     buffer->release();
 }

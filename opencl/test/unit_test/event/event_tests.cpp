@@ -264,6 +264,27 @@ TEST(Event, givenReadyEventsOnWaitlistWhenCheckingUserEventDependeciesThenFalseI
     EXPECT_FALSE(userEventDependencies);
 }
 
+TEST_F(EventTest, givenBcsStateWhenCheckingIsBcsEventAndEngineTypeThenCorrectValuesAreReturned) {
+    MockEvent<Event> event(pCmdQ, 0, 0, 0);
+    {
+        event.bcsState.engineType = aub_stream::EngineType::NUM_ENGINES;
+        EXPECT_FALSE(event.isBcsEvent());
+        EXPECT_EQ(aub_stream::EngineType::NUM_ENGINES, event.getBcsEngineType());
+    }
+    {
+        event.bcsState.engineType = aub_stream::EngineType::ENGINE_BCS;
+        event.bcsState.taskCount = 0u;
+        EXPECT_FALSE(event.isBcsEvent());
+        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, event.getBcsEngineType());
+    }
+    {
+        event.bcsState.engineType = aub_stream::EngineType::ENGINE_BCS1;
+        event.bcsState.taskCount = 1u;
+        EXPECT_TRUE(event.isBcsEvent());
+        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, event.getBcsEngineType());
+    }
+}
+
 TEST_F(EventTest, WhenGettingClEventCommandExecutionStatusThenCorrectSizeIsReturned) {
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 1, 5);
     cl_int eventStatus = -1;
