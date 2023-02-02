@@ -7,10 +7,10 @@
 
 #include "shared/source/gen9/hw_cmds.h"
 
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_base.inl"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_skl_to_icllp.inl"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper_skl_to_tgllp.inl"
 #include "level_zero/core/source/helpers/l0_populate_factory.h"
-#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper_base.inl"
-#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper_skl_to_icllp.inl"
-#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper_skl_to_tgllp.inl"
 
 namespace L0 {
 

@@ -7,8 +7,8 @@
 
 #include "shared/source/xe_hp_core/hw_cmds.h"
 
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/helpers/l0_populate_factory.h"
-#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper.h"
 
 namespace NEO {
 

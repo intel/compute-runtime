@@ -23,7 +23,7 @@
 #include "shared/source/xe_hp_core/hw_info.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
-#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/kernel/kernel_imp.h"
 #include "level_zero/core/source/module/module.h"
 

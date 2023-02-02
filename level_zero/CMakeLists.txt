@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -206,7 +206,7 @@ if(BUILD_WITH_L0)
     include_directories(${LevelZero_INCLUDE_DIRS})
   endif()
   include_directories(${NEO_SOURCE_DIR}/level_zero/api/experimental${BRANCH_DIR_SUFFIX})
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/hw_helpers${BRANCH_DIR_SUFFIX})
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/gfx_core_helpers${BRANCH_DIR_SUFFIX})
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist/cmdlist_extended${BRANCH_DIR_SUFFIX})
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdqueue/cmdqueue_extended${BRANCH_DIR_SUFFIX})
   include_directories("${CMAKE_CURRENT_SOURCE_DIR}")

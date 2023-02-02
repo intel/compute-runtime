@@ -10,7 +10,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/event/event.h"
-#include "level_zero/core/source/hw_helpers/l0_gfx_core_helper.h"
+#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 
 namespace L0 {
 

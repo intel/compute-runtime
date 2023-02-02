@@ -55,9 +55,9 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/event/event_impl.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/fence/fence.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/fence/fence.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_gfx_core_helper_base.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_gfx_core_helper.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_gfx_core_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helpers/l0_gfx_core_helper_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helpers/l0_gfx_core_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helpers/l0_gfx_core_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel${BRANCH_DIR_SUFFIX}kernel_ext.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel/kernel.h
@@ -102,13 +102,13 @@ endif()
 
 if(SUPPORT_GEN9 OR SUPPORT_GEN11)
   list(APPEND L0_RUNTIME_SOURCES
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_gfx_core_helper_skl_to_icllp.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helpers/l0_gfx_core_helper_skl_to_icllp.inl
   )
 endif()
 
 if(SUPPORT_GEN9 OR SUPPORT_GEN11 OR SUPPORT_GEN12LP)
   list(APPEND L0_RUNTIME_SOURCES
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_gfx_core_helper_skl_to_tgllp.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helpers/l0_gfx_core_helper_skl_to_tgllp.inl
   )
 endif()
 
@@ -116,19 +116,19 @@ if(SUPPORT_XEHP_AND_LATER)
   list(APPEND L0_RUNTIME_SOURCES
        ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_xehp_and_later.inl
        ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_xe_hp_core_and_later.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_gfx_core_helper_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helpers/l0_gfx_core_helper_xehp_and_later.inl
   )
 endif()
 
 if(SUPPORT_GEN12LP OR SUPPORT_XE_HP_CORE OR SUPPORT_XE_HPG_CORE)
   list(APPEND L0_RUNTIME_SOURCES
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_gfx_core_helper_tgllp_to_dg2.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helpers/l0_gfx_core_helper_tgllp_to_dg2.inl
   )
 endif()
 
 if(SUPPORT_PVC_AND_LATER)
   list(APPEND L0_RUNTIME_SOURCES
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_helpers/l0_gfx_core_helper_pvc_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helpers/l0_gfx_core_helper_pvc_and_later.inl
   )
 endif()
 
