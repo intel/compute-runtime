@@ -710,7 +710,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = false;
     sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = false;
 
-    sbaProperties.setPropertiesAll(true, -1, 1, 1, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(true, -1, 1, -1, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_FALSE(sbaProperties.isDirty());
 
     EXPECT_EQ(-1, sbaProperties.globalAtomics.value);
@@ -719,7 +719,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     EXPECT_EQ(static_cast<size_t>(-1), sbaProperties.bindingTablePoolSize.value);
 
     sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = true;
-    sbaProperties.setPropertiesAll(true, -1, 0, 0, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(true, -1, 0, -1, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_TRUE(sbaProperties.globalAtomics.isDirty);
     EXPECT_FALSE(sbaProperties.statelessMocs.isDirty);
@@ -732,7 +732,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     EXPECT_EQ(static_cast<size_t>(-1), sbaProperties.bindingTablePoolSize.value);
 
     sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = false;
-    sbaProperties.setPropertiesAll(false, 1, 1, 1, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(false, 1, 1, -1, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_FALSE(sbaProperties.globalAtomics.isDirty);
     EXPECT_TRUE(sbaProperties.statelessMocs.isDirty);
@@ -761,7 +761,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     sbaProperties.setPropertiesAll(true, 1, 2, 2, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_FALSE(sbaProperties.isDirty());
 
-    sbaProperties.setPropertiesAll(false, 0, 3, 2, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(false, 0, 3, 2, -1, -1, -1, -1, -1 - 1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_TRUE(sbaProperties.isDirty());
 
     EXPECT_EQ(0, sbaProperties.globalAtomics.value);
@@ -776,6 +776,9 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     EXPECT_EQ(0, sbaProperties.statelessMocs.value);
     EXPECT_EQ(3, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(3u, sbaProperties.bindingTablePoolSize.value);
+
+    sbaProperties.setPropertiesAll(false, 0, 3, -1, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    EXPECT_FALSE(sbaProperties.isDirty());
 
     MockStateBaseAddressProperties copySbaProperties{};
 
@@ -892,6 +895,13 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
 
     sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, 40, 50, 60, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_FALSE(sbaProperties.isDirty());
+
+    EXPECT_FALSE(sbaProperties.surfaceStateBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.surfaceStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.dynamicStateBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.dynamicStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
+    EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
 }
 
 TEST(StreamPropertiesTests, givenGlobalAtomicsStateBaseAddressPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {

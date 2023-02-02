@@ -942,7 +942,7 @@ HWTEST2_F(CommandListStateBaseAddressTest,
     auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
     auto ioSize = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
 
-    auto statlessMocs = device->getMOCS(true, false) >> 1;
+    auto statlessMocs = getMocs(true);
 
     auto &requiredState = commandList->requiredStreamState.stateBaseAddress;
     auto &finalState = commandList->finalStreamState.stateBaseAddress;
@@ -1132,7 +1132,7 @@ HWTEST2_F(CommandListStateBaseAddressTest,
     auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
     auto ioSize = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
 
-    auto statlessMocs = device->getMOCS(true, false) >> 1;
+    auto statlessMocs = getMocs(true);
 
     EXPECT_EQ(static_cast<int32_t>(statlessMocs), csrState.statelessMocs.value);
 
@@ -1449,6 +1449,177 @@ HWTEST2_F(CommandListStateBaseAddressTest,
 
     EXPECT_EQ(csrState.globalAtomics.value, finalState.globalAtomics.value);
     EXPECT_EQ(csrState.statelessMocs.value, finalState.statelessMocs.value);
+}
+
+HWTEST2_F(CommandListStateBaseAddressTest,
+          givenStateBaseAddressTrackingWhenRegularCmdListAppendUncachedKernelFirstAndExecuteAndImmediateCmdListAppendUncachedKerneThenMocsStateIsUpdatedInCsr,
+          IsAtLeastSkl) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    EXPECT_TRUE(commandList->stateBaseAddressTracking);
+    EXPECT_TRUE(commandListImmediate->stateBaseAddressTracking);
+
+    kernel->kernelRequiresUncachedMocsCount++;
+
+    auto &cmdStream = *commandList->commandContainer.getCommandStream();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    size_t usedBefore = cmdStream.getUsed();
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t usedAfter = cmdStream.getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream.getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
+
+    auto sbaList = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, sbaList.size());
+
+    uint32_t uncachedStatlessMocs = getMocs(false);
+
+    auto &requiredState = commandList->requiredStreamState.stateBaseAddress;
+    auto &finalState = commandList->finalStreamState.stateBaseAddress;
+    auto &csrState = commandQueue->getCsr()->getStreamProperties().stateBaseAddress;
+
+    EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), requiredState.statelessMocs.value);
+    EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), finalState.statelessMocs.value);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), csrState.statelessMocs.value);
+
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), csrState.statelessMocs.value);
+}
+
+HWTEST2_F(CommandListStateBaseAddressTest,
+          givenStateBaseAddressTrackingWhenRegularCmdListAppendCachedKernelFirstAndExecuteAndImmediateCmdListAppendUncachedKerneThenMocsStateIsUpdatedInCsr,
+          IsAtLeastSkl) {
+    EXPECT_TRUE(commandList->stateBaseAddressTracking);
+    EXPECT_TRUE(commandListImmediate->stateBaseAddressTracking);
+
+    kernel->kernelRequiresUncachedMocsCount = 0;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t uncachedStatlessMocs = getMocs(false);
+    uint32_t cachedStatlessMocs = getMocs(true);
+
+    auto &requiredState = commandList->requiredStreamState.stateBaseAddress;
+    auto &finalState = commandList->finalStreamState.stateBaseAddress;
+    auto &csrState = commandQueue->getCsr()->getStreamProperties().stateBaseAddress;
+
+    EXPECT_EQ(static_cast<int32_t>(cachedStatlessMocs), requiredState.statelessMocs.value);
+    EXPECT_EQ(static_cast<int32_t>(cachedStatlessMocs), finalState.statelessMocs.value);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<int32_t>(cachedStatlessMocs), csrState.statelessMocs.value);
+
+    kernel->kernelRequiresUncachedMocsCount = 1;
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), csrState.statelessMocs.value);
+}
+
+HWTEST2_F(CommandListStateBaseAddressTest,
+          givenStateBaseAddressTrackingWhenImmediateCmdListAppendUncachedKerneAndRegularCmdListAppendCachedKernelAndExecuteThenMocsStateIsUpdatedInCsr,
+          IsAtLeastSkl) {
+    EXPECT_TRUE(commandList->stateBaseAddressTracking);
+    EXPECT_TRUE(commandListImmediate->stateBaseAddressTracking);
+
+    uint32_t uncachedStatlessMocs = getMocs(false);
+    uint32_t cachedStatlessMocs = getMocs(true);
+
+    auto &requiredState = commandList->requiredStreamState.stateBaseAddress;
+    auto &finalState = commandList->finalStreamState.stateBaseAddress;
+    auto &csrState = commandQueue->getCsr()->getStreamProperties().stateBaseAddress;
+
+    kernel->kernelRequiresUncachedMocsCount = 1;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), csrState.statelessMocs.value);
+
+    kernel->kernelRequiresUncachedMocsCount = 0;
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<int32_t>(cachedStatlessMocs), requiredState.statelessMocs.value);
+    EXPECT_EQ(static_cast<int32_t>(cachedStatlessMocs), finalState.statelessMocs.value);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<int32_t>(cachedStatlessMocs), csrState.statelessMocs.value);
+}
+
+HWTEST2_F(CommandListStateBaseAddressTest,
+          givenStateBaseAddressTrackingWhenImmediateCmdListAppendCachedKerneAndRegularCmdListAppendUncachedKernelAndExecuteThenMocsStateIsUpdatedInCsr,
+          IsAtLeastSkl) {
+    EXPECT_TRUE(commandList->stateBaseAddressTracking);
+    EXPECT_TRUE(commandListImmediate->stateBaseAddressTracking);
+
+    uint32_t uncachedStatlessMocs = getMocs(false);
+    uint32_t cachedStatlessMocs = getMocs(true);
+
+    auto &requiredState = commandList->requiredStreamState.stateBaseAddress;
+    auto &finalState = commandList->finalStreamState.stateBaseAddress;
+    auto &csrState = commandQueue->getCsr()->getStreamProperties().stateBaseAddress;
+
+    kernel->kernelRequiresUncachedMocsCount = 0;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<int32_t>(cachedStatlessMocs), csrState.statelessMocs.value);
+
+    kernel->kernelRequiresUncachedMocsCount = 1;
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), requiredState.statelessMocs.value);
+    EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), finalState.statelessMocs.value);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(static_cast<int32_t>(uncachedStatlessMocs), csrState.statelessMocs.value);
 }
 
 } // namespace ult

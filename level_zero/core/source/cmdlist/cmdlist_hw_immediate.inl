@@ -70,6 +70,12 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::updateDispatchFlagsWithRequi
 
     const auto &requiredPipelineSelect = this->requiredStreamState.pipelineSelect;
     dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = requiredPipelineSelect.systolicMode.value == 1;
+    if (this->containsStatelessUncachedResource) {
+        dispatchFlags.l3CacheSettings = NEO::L3CachingSettings::l3CacheOff;
+        this->containsStatelessUncachedResource = false;
+    } else {
+        dispatchFlags.l3CacheSettings = NEO::L3CachingSettings::l3CacheOn;
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -103,7 +109,7 @@ NEO::CompletionStamp CommandListCoreFamilyImmediate<gfxCoreFamily>::flushRegular
         this->isSyncModeQueue,                                       // dcFlush
         this->getCommandListSLMEnable(),                             // useSLM
         this->isSyncModeQueue,                                       // guardCommandBufferWithPipeControl
-        false,                                                       // GSBA32BitRequired
+        false,                                                       // gsba32BitRequired
         false,                                                       // requiresCoherency
         false,                                                       // lowPriority
         true,                                                        // implicitFlush

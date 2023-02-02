@@ -131,7 +131,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
-    this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();
+    bool uncachedMocsKernel = isKernelUncachedMocsRequired(kernelImp->getKernelRequiresUncachedMocs());
     this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
 
     NEO::Device *neoDevice = device->getNEODevice();
@@ -166,7 +166,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         launchParams.isIndirect,                                // isIndirect
         launchParams.isPredicate,                               // isPredicate
         false,                                                  // isTimestampEvent
-        this->containsStatelessUncachedResource,                // requiresUncachedMocs
+        uncachedMocsKernel,                                     // requiresUncachedMocs
         false,                                                  // useGlobalAtomics
         internalUsage,                                          // isInternal
         launchParams.isCooperative,                             // isCooperative
@@ -178,7 +178,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     };
 
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());
-    this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
+    if (!this->isFlushTaskSubmissionEnabled) {
+        this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
+    }
 
     if (neoDevice->getDebugger() && !this->immediateCmdListHeapSharing) {
         auto *ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);

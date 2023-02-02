@@ -188,7 +188,8 @@ struct CommandQueueHw : public CommandQueueImp {
                                                               NEO::StreamProperties &csrState,
                                                               const NEO::StreamProperties &cmdListRequired,
                                                               const NEO::StreamProperties &cmdListFinal);
-    inline void programRequiredStateBaseAddressForCommandList(CommandList *commandList,
+    inline void programRequiredStateBaseAddressForCommandList(CommandListExecutionContext &ctx,
+                                                              CommandList *commandList,
                                                               NEO::LinearStream &commandStream,
                                                               NEO::StreamProperties &csrState,
                                                               const NEO::StreamProperties &cmdListRequired,

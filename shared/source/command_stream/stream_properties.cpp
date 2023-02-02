@@ -408,17 +408,18 @@ void StateBaseAddressProperties::setPropertiesAll(bool globalAtomics, int32_t st
 void StateBaseAddressProperties::setProperties(const StateBaseAddressProperties &properties) {
     clearIsDirty();
 
-    globalAtomics.set(properties.globalAtomics.value);
-    statelessMocs.set(properties.statelessMocs.value);
-    bindingTablePoolBaseAddress.set(properties.bindingTablePoolBaseAddress.value);
-    bindingTablePoolSize.set(properties.bindingTablePoolSize.value);
+    this->globalAtomics.set(properties.globalAtomics.value);
+    this->statelessMocs.set(properties.statelessMocs.value);
 
-    surfaceStateBaseAddress.set(properties.surfaceStateBaseAddress.value);
-    surfaceStateSize.set(properties.surfaceStateSize.value);
-    dynamicStateBaseAddress.set(properties.dynamicStateBaseAddress.value);
-    dynamicStateSize.set(properties.dynamicStateSize.value);
-    indirectObjectBaseAddress.set(properties.indirectObjectBaseAddress.value);
-    indirectObjectSize.set(properties.indirectObjectSize.value);
+    this->bindingTablePoolBaseAddress.set(properties.bindingTablePoolBaseAddress.value);
+    this->bindingTablePoolSize.set(properties.bindingTablePoolSize.value);
+
+    this->surfaceStateBaseAddress.set(properties.surfaceStateBaseAddress.value);
+    this->surfaceStateSize.set(properties.surfaceStateSize.value);
+    this->dynamicStateBaseAddress.set(properties.dynamicStateBaseAddress.value);
+    this->dynamicStateSize.set(properties.dynamicStateSize.value);
+    this->indirectObjectBaseAddress.set(properties.indirectObjectBaseAddress.value);
+    this->indirectObjectSize.set(properties.indirectObjectSize.value);
 }
 
 bool StateBaseAddressProperties::isDirty() const {

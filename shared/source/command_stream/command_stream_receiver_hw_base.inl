@@ -491,9 +491,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (mocsIndex != latestSentStatelessMocsConfig) {
         isStateBaseAddressDirty = true;
         latestSentStatelessMocsConfig = mocsIndex;
-
-        this->streamProperties.stateBaseAddress.setPropertyStatelessMocs(mocsIndex);
     }
+    this->streamProperties.stateBaseAddress.setPropertyStatelessMocs(mocsIndex);
 
     if (this->isGlobalAtomicsProgrammingRequired(dispatchFlags.useGlobalAtomics) && (this->isMultiOsContextCapable() || dispatchFlags.areMultipleSubDevicesInContext)) {
         isStateBaseAddressDirty = true;
@@ -1649,18 +1648,18 @@ void CommandStreamReceiverHw<GfxFamily>::handleFrontEndStateTransition(DispatchF
         lastKernelExecutionType = streamProperties.frontEndState.computeDispatchAllWalkerEnable.value == 1 ? KernelExecutionType::Concurrent : KernelExecutionType::Default;
     }
 
-    if (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotApplicable && lastAdditionalKernelExecInfo != dispatchFlags.additionalKernelExecInfo &&
-        feSupportFlags.disableOverdispatch) {
+    if (feSupportFlags.disableOverdispatch &&
+        (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotApplicable && lastAdditionalKernelExecInfo != dispatchFlags.additionalKernelExecInfo)) {
         setMediaVFEStateDirty(true);
     }
 
-    if (dispatchFlags.kernelExecutionType != KernelExecutionType::NotApplicable && lastKernelExecutionType != dispatchFlags.kernelExecutionType &&
-        feSupportFlags.computeDispatchAllWalker) {
+    if (feSupportFlags.computeDispatchAllWalker &&
+        (dispatchFlags.kernelExecutionType != KernelExecutionType::NotApplicable && lastKernelExecutionType != dispatchFlags.kernelExecutionType)) {
         setMediaVFEStateDirty(true);
     }
 
-    if ((streamProperties.frontEndState.disableEUFusion.value == -1 || dispatchFlags.disableEUFusion != !!streamProperties.frontEndState.disableEUFusion.value) &&
-        feSupportFlags.disableEuFusion) {
+    if (feSupportFlags.disableEuFusion &&
+        (streamProperties.frontEndState.disableEUFusion.value == -1 || dispatchFlags.disableEUFusion != !!streamProperties.frontEndState.disableEUFusion.value)) {
         setMediaVFEStateDirty(true);
     }
 }
@@ -1674,10 +1673,10 @@ void CommandStreamReceiverHw<GfxFamily>::handlePipelineSelectStateTransition(Dis
         this->lastSystolicPipelineSelectMode = !!streamProperties.pipelineSelect.systolicMode.value;
     }
 
-    csrSizeRequestFlags.mediaSamplerConfigChanged =
-        (this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired)) && this->pipelineSupportFlags.mediaSamplerDopClockGate;
-    csrSizeRequestFlags.systolicPipelineSelectMode =
-        (this->lastSystolicPipelineSelectMode != !!dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode) && this->pipelineSupportFlags.systolicMode;
+    csrSizeRequestFlags.mediaSamplerConfigChanged = this->pipelineSupportFlags.mediaSamplerDopClockGate &&
+                                                    (this->lastMediaSamplerConfig != static_cast<int8_t>(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired));
+    csrSizeRequestFlags.systolicPipelineSelectMode = this->pipelineSupportFlags.systolicMode &&
+                                                     (this->lastSystolicPipelineSelectMode != dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode);
 }
 
 template <typename GfxFamily>

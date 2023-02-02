@@ -262,7 +262,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
-    this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();
+    bool uncachedMocsKernel = isKernelUncachedMocsRequired(kernelImp->getKernelRequiresUncachedMocs());
     this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
 
     updateStreamProperties(*kernel, launchParams.isCooperative, threadGroupDimensions, launchParams.isIndirect);
@@ -293,7 +293,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         launchParams.isIndirect,                                  // isIndirect
         launchParams.isPredicate,                                 // isPredicate
         isTimestampEvent,                                         // isTimestampEvent
-        this->containsStatelessUncachedResource,                  // requiresUncachedMocs
+        uncachedMocsKernel,                                       // requiresUncachedMocs
         kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, // useGlobalAtomics
         internalUsage,                                            // isInternal
         launchParams.isCooperative,                               // isCooperative
@@ -304,7 +304,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         this->dcFlushSupport                                      // dcFlushEnable
     };
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());
-    this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
+    if (!this->isFlushTaskSubmissionEnabled) {
+        this->containsStatelessUncachedResource = dispatchKernelArgs.requiresUncachedMocs;
+    }
 
     if (compactEvent) {
         appendEventForProfilingAllWalkers(compactEvent, false, true);

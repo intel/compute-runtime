@@ -25,6 +25,10 @@ class LogicalStateHelper;
 
 namespace L0 {
 enum class Builtin : uint32_t;
+
+struct Event;
+struct EventPool;
+
 #pragma pack(1)
 struct EventData {
     uint64_t address;
@@ -59,9 +63,6 @@ struct CmdListEventOperation {
     uint32_t operationCount = 0;
     bool workPartitionOperation = false;
 };
-
-struct EventPool;
-struct Event;
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct CommandListCoreFamily : CommandListImp {
@@ -309,6 +310,13 @@ struct CommandListCoreFamily : CommandListImp {
     void dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value, bool useLastPipeControl, bool signalScope);
     void dispatchEventRemainingPacketsPostSyncOperation(Event *event);
     void dispatchEventPostSyncOperation(Event *event, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl);
+    bool isKernelUncachedMocsRequired(bool kernelState) {
+        this->containsStatelessUncachedResource |= kernelState;
+        if (this->stateBaseAddressTracking) {
+            return false;
+        }
+        return this->containsStatelessUncachedResource;
+    }
 
     static constexpr int32_t cmdListDefaultEngineInstancedDevice = NEO::StreamProperty::initValue;
     static constexpr bool cmdListDefaultCoherency = false;

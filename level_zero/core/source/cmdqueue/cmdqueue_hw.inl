@@ -170,7 +170,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         this->programOneCmdListPipelineSelect(commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
         this->programOneCmdListFrontEndIfDirty(ctx, child, csrStateProperties, requiredStreamState, finalStreamState);
         this->programRequiredStateComputeModeForCommandList(commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
-        this->programRequiredStateBaseAddressForCommandList(commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
+        this->programRequiredStateBaseAddressForCommandList(ctx, commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
 
         this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
         this->programOneCmdListBatchBufferStart(commandList, child, ctx);
@@ -1210,7 +1210,8 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForCommandList(CommandList *commandList,
+void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForCommandList(CommandListExecutionContext &ctx,
+                                                                                  CommandList *commandList,
                                                                                   NEO::LinearStream &commandStream,
                                                                                   NEO::StreamProperties &csrState,
                                                                                   const NEO::StreamProperties &cmdListRequired,
