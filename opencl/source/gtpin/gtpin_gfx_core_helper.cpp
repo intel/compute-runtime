@@ -8,9 +8,15 @@
 #include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 
 namespace NEO {
-GTPinGfxCoreHelper *gtpinGfxCoreHelperFactory[IGFX_MAX_CORE] = {};
+GTPinGfxCoreHelperCreateFunctionType gtpinGfxCoreHelperFactory[IGFX_MAX_CORE] = {};
 
-GTPinGfxCoreHelper &GTPinGfxCoreHelper::get(GFXCORE_FAMILY gfxCore) {
-    return *gtpinGfxCoreHelperFactory[gfxCore];
+std::unique_ptr<GTPinGfxCoreHelper> GTPinGfxCoreHelper::create(GFXCORE_FAMILY gfxCore) {
+    auto createFunction = gtpinGfxCoreHelperFactory[gfxCore];
+    if (createFunction == nullptr) {
+        return nullptr;
+    }
+    auto gtpinGfxCoreHelper = createFunction();
+    return gtpinGfxCoreHelper;
 }
+
 } // namespace NEO

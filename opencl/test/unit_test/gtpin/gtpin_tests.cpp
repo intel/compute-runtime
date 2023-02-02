@@ -57,7 +57,7 @@ using namespace gtpin;
 
 namespace NEO {
 extern std::deque<gtpinkexec_t> kernelExecQueue;
-extern GTPinGfxCoreHelper *gtpinGfxCoreHelperFactory[IGFX_MAX_CORE];
+extern GTPinGfxCoreHelperCreateFunctionType gtpinGfxCoreHelperFactory[IGFX_MAX_CORE];
 } // namespace NEO
 
 namespace ULT {
@@ -2262,10 +2262,14 @@ TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(GTPinTests, WhenGettingGtPinGfxCoreHelperThenValidPointerIsReturned) {
+TEST_F(GTPinTests, WhenCreateGtPinGfxCoreHelperThenValidPointerIsReturned) {
     GFXCORE_FAMILY genFamily = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    GTPinGfxCoreHelper *pGTPinHelper = &GTPinGfxCoreHelper::get(genFamily);
+    auto pGTPinHelper = GTPinGfxCoreHelper::create(genFamily);
     EXPECT_NE(nullptr, pGTPinHelper);
+}
+
+TEST(GTPinTestsCreate, WhenCreateGtPinGfxCoreHelperWithUnknownCoreThenNullptrIsReturned) {
+    EXPECT_EQ(nullptr, GTPinGfxCoreHelper::create(IGFX_UNKNOWN_CORE));
 }
 
 TEST(GTPinOfflineTests, givenGtPinInDisabledStateWhenCallbacksFromEnqueuePathAreCalledThenNothingHappens) {
@@ -2481,29 +2485,31 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinWithSupportForSharedAllocationWhen
         mutable bool canUseSharedAllocationCalled = false;
     };
 
-    const auto family = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    MockGTPinGfxCoreHelperHw mockGTPinGfxCoreHelperHw;
-    VariableBackup<GTPinGfxCoreHelper *> gtpinGfxCoreHelperBackup{&gtpinGfxCoreHelperFactory[family], &mockGTPinGfxCoreHelperHw};
+    auto backup = std::unique_ptr<GTPinGfxCoreHelper>(new MockGTPinGfxCoreHelperHw());
+    auto *mockGTPinGfxCoreHelperHw = static_cast<MockGTPinGfxCoreHelperHw *>(backup.get());
+    pDevice->gtpinGfxCoreHelper.swap(backup);
 
     resource_handle_t resource = nullptr;
     cl_context ctxt = (cl_context)((Context *)pContext);
 
-    mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled = false;
+    mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled = false;
     gtpinCreateBuffer((gtpin::context_handle_t)ctxt, 256, &resource);
-    EXPECT_TRUE(mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled);
+    EXPECT_TRUE(mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled);
 
-    mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled = false;
+    mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled = false;
     uint8_t *address = nullptr;
     gtpinMapBuffer((gtpin::context_handle_t)ctxt, resource, &address);
-    EXPECT_TRUE(mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled);
+    EXPECT_TRUE(mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled);
 
-    mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled = false;
+    mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled = false;
     gtpinUnmapBuffer((gtpin::context_handle_t)ctxt, resource);
-    EXPECT_TRUE(mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled);
+    EXPECT_TRUE(mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled);
 
-    mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled = false;
+    mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled = false;
     gtpinFreeBuffer((gtpin::context_handle_t)ctxt, resource);
-    EXPECT_TRUE(mockGTPinGfxCoreHelperHw.canUseSharedAllocationCalled);
+    EXPECT_TRUE(mockGTPinGfxCoreHelperHw->canUseSharedAllocationCalled);
+
+    pDevice->gtpinGfxCoreHelper.swap(backup);
 }
 
 HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtPinBufferIsCreatedThenAllocateBufferInSharedMemory) {
@@ -2680,9 +2686,10 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNot
     };
     static std::unique_ptr<SvmAllocationData> allocDataHandle;
     static std::unique_ptr<MockGraphicsAllocation> mockGAHandle;
-    const auto family = pDevice->getHardwareInfo().platform.eRenderCoreFamily;
-    MockGTPinGfxCoreHelperHw mockGTPinGfxCoreHelperHw;
-    VariableBackup<GTPinGfxCoreHelper *> gtpinGfxCoreHelperBackup{&gtpinGfxCoreHelperFactory[family], &mockGTPinGfxCoreHelperHw};
+
+    auto backup = std::unique_ptr<GTPinGfxCoreHelper>(new MockGTPinGfxCoreHelperHw());
+    pDevice->gtpinGfxCoreHelper.swap(backup);
+
     gtpinCallbacks.onContextCreate = onContextCreate;
     gtpinCallbacks.onContextDestroy = onContextDestroy;
     gtpinCallbacks.onKernelCreate = onKernelCreate;
@@ -2712,6 +2719,8 @@ HWTEST_F(GTPinTestsWithLocalMemory, givenGtPinCanUseSharedAllocationWhenGtpinNot
     mockCmdQueue.device = nullptr;
     mockGAHandle.reset();
     allocDataHandle.reset();
+
+    pDevice->gtpinGfxCoreHelper.swap(backup);
 }
 
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenGtpinRemoveCommandQueueIsCalledThenAllKernelsFromCmdQueueAreRemoved) {

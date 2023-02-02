@@ -135,11 +135,14 @@ class ClDevice : public BaseObject<_cl_device_id> {
     const ProductHelper &getProductHelper() const;
     const GTPinGfxCoreHelper &getGTPinGfxCoreHelper() const;
 
+    std::unique_ptr<GTPinGfxCoreHelper> gtpinGfxCoreHelper;
+
   protected:
     void initializeCaps();
     void initializeExtensionsWithVersion();
     void initializeOpenclCAllVersions();
     void initializeOsSpecificCaps();
+    void initGTPinHelper();
     void setupFp64Flags();
     const std::string getClDeviceName() const;
 
@@ -147,7 +150,6 @@ class ClDevice : public BaseObject<_cl_device_id> {
     ClDevice &rootClDevice;
     std::vector<std::unique_ptr<ClDevice>> subDevices;
     cl_platform_id platformId;
-
     std::string name;
     std::unique_ptr<DriverInfo> driverInfo;
     unsigned int enabledClVersion = 0u;

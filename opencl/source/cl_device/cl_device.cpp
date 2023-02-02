@@ -32,7 +32,9 @@ ClDevice::ClDevice(Device &device, ClDevice &rootClDevice, Platform *platform) :
     name.reserve(100);
     auto osInterface = getRootDeviceEnvironment().osInterface.get();
     driverInfo.reset(DriverInfo::create(&device.getHardwareInfo(), osInterface));
+    initGTPinHelper();
     initializeCaps();
+
     OpenClCFeaturesContainer emptyOpenClCFeatures;
     compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(deviceInfo.deviceExtensions, emptyOpenClCFeatures);
     compilerExtensionsWithFeatures = convertEnabledExtensionsToCompilerInternalOptions(deviceInfo.deviceExtensions, deviceInfo.openclCFeatures);
@@ -197,6 +199,10 @@ bool ClDevice::arePipesSupported() const {
     return device.getHardwareInfo().capabilityTable.supportsPipes;
 }
 
+void ClDevice::initGTPinHelper() {
+    gtpinGfxCoreHelper = GTPinGfxCoreHelper::create(this->getRootDeviceEnvironment().getHardwareInfo()->platform.eRenderCoreFamily);
+}
+
 cl_command_queue_capabilities_intel ClDevice::getQueueFamilyCapabilitiesAll() {
     return CL_QUEUE_CAPABILITY_CREATE_SINGLE_QUEUE_EVENTS_INTEL |
            CL_QUEUE_CAPABILITY_CREATE_CROSS_QUEUE_EVENTS_INTEL |
@@ -278,10 +284,7 @@ const ProductHelper &ClDevice::getProductHelper() const {
 }
 
 const GTPinGfxCoreHelper &ClDevice::getGTPinGfxCoreHelper() const {
-    GFXCORE_FAMILY genFamily = this->getHardwareInfo().platform.eRenderCoreFamily;
-    GTPinGfxCoreHelper &gtpinHelper = GTPinGfxCoreHelper::get(genFamily);
-
-    return gtpinHelper;
+    return *gtpinGfxCoreHelper;
 }
 
 } // namespace NEO
