@@ -108,6 +108,10 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenIsLinearStoragePreferredThenRe
     }
 }
 
+TEST(ClGfxCoreHelperTestCreate, WhenClGfxCoreHelperIsCalledWithUnknownGfxCoreThenNullptrIsReturned) {
+    EXPECT_EQ(nullptr, ClGfxCoreHelper::create(IGFX_UNKNOWN_CORE));
+}
+
 using ClGfxCoreHelperTest = Test<ClDeviceFixture>;
 HWTEST_F(ClGfxCoreHelperTest, givenKernelInfoWhenCheckingRequiresAuxResolvesThenCorrectValuesAreReturned) {
     auto &clGfxCoreHelper = getHelper<ClGfxCoreHelper>();

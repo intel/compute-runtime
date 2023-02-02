@@ -25,6 +25,10 @@ HWTEST_F(CompilerProductHelperFixture, WhenIsMidThreadPreemptionIsSupportedIsCal
     EXPECT_TRUE(compilerProductHelper.isMidThreadPreemptionSupported(hwInfo));
 }
 
+TEST(CompilerProductHelperTest, WhenCompilerProductHelperCreateIsCalledWithUnknownProductThenNullptrIsReturned) {
+    EXPECT_EQ(nullptr, CompilerProductHelper::create(IGFX_UNKNOWN));
+}
+
 using IsBeforeXeHpc = IsBeforeGfxCore<IGFX_XE_HPC_CORE>;
 
 HWTEST2_F(CompilerProductHelperFixture, GivenProductBeforeXeHpcWhenIsForceToStatelessRequiredThenFalseIsReturned, IsBeforeXeHpc) {

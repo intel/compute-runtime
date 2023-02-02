@@ -29,6 +29,10 @@
 
 #include <numeric>
 
+TEST(GfxCoreHelperTestCreate, WhenGfxCoreHelperIsCalledWithUnknownGfxCoreThenNullptrIsReturned) {
+    EXPECT_EQ(nullptr, GfxCoreHelper::create(IGFX_UNKNOWN_CORE));
+}
+
 TEST(GfxCoreHelperSimpleTest, givenDebugVariableWhenAskingForCompressionThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
     HardwareInfo localHwInfo = *defaultHwInfo;

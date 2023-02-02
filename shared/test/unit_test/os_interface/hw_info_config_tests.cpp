@@ -37,6 +37,10 @@ void ProductHelperTest::SetUp() {
     testPlatform = &pInHwInfo.platform;
 }
 
+TEST(ProductHelperTestCreate, WhenProductHelperCreateIsCalledWithUnknownProductThenNullptrIsReturned) {
+    EXPECT_EQ(nullptr, ProductHelper::create(IGFX_UNKNOWN));
+}
+
 HWTEST_F(ProductHelperTest, givenDebugFlagSetWhenAskingForHostMemCapabilitesThenReturnCorrectValue) {
     DebugManagerStateRestore restore;
 

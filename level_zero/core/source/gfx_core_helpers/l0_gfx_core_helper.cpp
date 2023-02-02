@@ -19,6 +19,9 @@ createL0GfxCoreHelperFunctionType l0GfxCoreHelperFactory[IGFX_MAX_CORE] = {};
 
 std::unique_ptr<L0GfxCoreHelper> L0GfxCoreHelper::create(GFXCORE_FAMILY gfxCore) {
     auto createL0GfxCoreHelperFunc = l0GfxCoreHelperFactory[gfxCore];
+    if (createL0GfxCoreHelperFunc == nullptr) {
+        return nullptr;
+    }
     auto l0GfxCoreHelper = createL0GfxCoreHelperFunc();
     return l0GfxCoreHelper;
 }

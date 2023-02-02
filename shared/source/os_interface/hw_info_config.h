@@ -53,6 +53,9 @@ class ProductHelper {
   public:
     static std::unique_ptr<ProductHelper> create(PRODUCT_FAMILY product) {
         auto productHelperCreateFunction = productHelperFactory[product];
+        if (productHelperCreateFunction == nullptr) {
+            return nullptr;
+        }
         auto productHelper = productHelperCreateFunction();
         return productHelper;
     }

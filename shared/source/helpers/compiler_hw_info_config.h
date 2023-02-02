@@ -25,10 +25,10 @@ extern CompilerProductHelperCreateFunctionType compilerProductHelperFactory[IGFX
 class CompilerProductHelper {
   public:
     static std::unique_ptr<CompilerProductHelper> create(PRODUCT_FAMILY product) {
-        if (product == IGFX_UNKNOWN) {
+        auto createFunction = compilerProductHelperFactory[product];
+        if (createFunction == nullptr) {
             return nullptr;
         }
-        auto createFunction = compilerProductHelperFactory[product];
         auto compilerProductHelper = createFunction();
         return compilerProductHelper;
     }
