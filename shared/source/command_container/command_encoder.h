@@ -136,8 +136,6 @@ struct EncodeDispatchKernel {
 
     static void adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment);
 
-    static constexpr bool shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool updateCurrent);
-
     static size_t getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor, uint32_t iddCount);
     static size_t getSizeRequiredSsh(const KernelInfo &kernelInfo);
     inline static size_t additionalSizeRequiredDsh(uint32_t iddCount);

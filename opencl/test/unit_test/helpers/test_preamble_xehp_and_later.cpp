@@ -374,46 +374,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenMultE
     EXPECT_TRUE(stateBaseAddress->getDisableSupportForMultiGpuPartialWritesForStatelessMessages());
 }
 
-struct MultiGpuGlobalAtomicsTest : public XeHpCommandStreamReceiverFlushTaskTests,
-                                   public ::testing::WithParamInterface<std::tuple<bool, bool, bool, bool>> {
-};
-
-HWCMDTEST_P(IGFX_XE_HP_CORE, MultiGpuGlobalAtomicsTest, givenFlushingCommandStreamReceiverThenDisableSupportForMultiGpuAtomicsForStatelessAccessesIsSetCorrectly) {
-    bool isMultiOsContextCapable, useGlobalAtomics, areMultipleSubDevicesInContext, enableMultiGpuAtomicsOptimization;
-    std::tie(isMultiOsContextCapable, useGlobalAtomics, areMultipleSubDevicesInContext, enableMultiGpuAtomicsOptimization) = GetParam();
-
-    DebugManagerStateRestore stateRestore;
-    DebugManager.flags.EnableMultiGpuAtomicsOptimization.set(enableMultiGpuAtomicsOptimization);
-    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.multiOsContextCapable = isMultiOsContextCapable;
-    flushTaskFlags.useGlobalAtomics = useGlobalAtomics;
-    flushTaskFlags.areMultipleSubDevicesInContext = areMultipleSubDevicesInContext;
-
-    flushTask(commandStreamReceiver, false, 0, false, false);
-    HardwareParse hwParserCsr;
-    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
-    hwParserCsr.findHardwareCommands<FamilyType>();
-    ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
-    auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
-
-    auto enabled = isMultiOsContextCapable;
-    if (enableMultiGpuAtomicsOptimization) {
-        enabled = useGlobalAtomics && (enabled || areMultipleSubDevicesInContext);
-    }
-
-    EXPECT_EQ(!enabled, stateBaseAddress->getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
-}
-
-INSTANTIATE_TEST_CASE_P(MultiGpuGlobalAtomics,
-                        MultiGpuGlobalAtomicsTest,
-                        ::testing::Combine(
-                            ::testing::Bool(),
-                            ::testing::Bool(),
-                            ::testing::Bool(),
-                            ::testing::Bool()));
-
 HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpCommandStreamReceiverFlushTaskTests, givenDebugKeysThatOverrideMultiGpuSettingWhenStateBaseAddressIsProgrammedThenValuesMatch) {
     DebugManagerStateRestore restorer;
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;

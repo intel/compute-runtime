@@ -220,8 +220,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         }
     }
 
-    if (shouldUpdateGlobalAtomics(container.lastSentUseGlobalAtomics, args.useGlobalAtomics, args.partitionCount > 1) ||
-        container.isAnyHeapDirty() ||
+    if (container.isAnyHeapDirty() ||
         args.requiresUncachedMocs) {
 
         PipeControlArgs syncArgs;

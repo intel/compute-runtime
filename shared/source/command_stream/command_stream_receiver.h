@@ -427,6 +427,7 @@ class CommandStreamReceiver {
     StreamProperties streamProperties{};
     FrontEndPropertiesSupport feSupportFlags{};
     PipelineSelectPropertiesSupport pipelineSupportFlags{};
+    StateBaseAddressPropertiesSupport sbaSupportFlags{};
 
     uint64_t totalMemoryUsed = 0u;
 

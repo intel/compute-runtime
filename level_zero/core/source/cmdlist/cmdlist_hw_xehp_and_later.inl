@@ -281,27 +281,27 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
-        eventAddress,                                             // eventAddress
-        neoDevice,                                                // device
-        kernel,                                                   // dispatchInterface
-        ssh,                                                      // surfaceStateHeap
-        dsh,                                                      // dynamicStateHeap
-        reinterpret_cast<const void *>(threadGroupDimensions),    // threadGroupDimensions
-        &additionalCommands,                                      // additionalCommands
-        commandListPreemptionMode,                                // preemptionMode
-        this->partitionCount,                                     // partitionCount
-        launchParams.isIndirect,                                  // isIndirect
-        launchParams.isPredicate,                                 // isPredicate
-        isTimestampEvent,                                         // isTimestampEvent
-        uncachedMocsKernel,                                       // requiresUncachedMocs
-        kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, // useGlobalAtomics
-        internalUsage,                                            // isInternal
-        launchParams.isCooperative,                               // isCooperative
-        isHostSignalScopeEvent,                                   // isHostScopeSignalEvent
-        isKernelUsingSystemAllocation,                            // isKernelUsingSystemAllocation
-        cmdListType == CommandListType::TYPE_IMMEDIATE,           // isKernelDispatchedFromImmediateCmdList
-        engineGroupType == NEO::EngineGroupType::RenderCompute,   // isRcs
-        this->dcFlushSupport                                      // dcFlushEnable
+        eventAddress,                                           // eventAddress
+        neoDevice,                                              // device
+        kernel,                                                 // dispatchInterface
+        ssh,                                                    // surfaceStateHeap
+        dsh,                                                    // dynamicStateHeap
+        reinterpret_cast<const void *>(threadGroupDimensions),  // threadGroupDimensions
+        &additionalCommands,                                    // additionalCommands
+        commandListPreemptionMode,                              // preemptionMode
+        this->partitionCount,                                   // partitionCount
+        launchParams.isIndirect,                                // isIndirect
+        launchParams.isPredicate,                               // isPredicate
+        isTimestampEvent,                                       // isTimestampEvent
+        uncachedMocsKernel,                                     // requiresUncachedMocs
+        cmdListDefaultGlobalAtomics,                            // useGlobalAtomics
+        internalUsage,                                          // isInternal
+        launchParams.isCooperative,                             // isCooperative
+        isHostSignalScopeEvent,                                 // isHostScopeSignalEvent
+        isKernelUsingSystemAllocation,                          // isKernelUsingSystemAllocation
+        cmdListType == CommandListType::TYPE_IMMEDIATE,         // isKernelDispatchedFromImmediateCmdList
+        engineGroupType == NEO::EngineGroupType::RenderCompute, // isRcs
+        this->dcFlushSupport                                    // dcFlushEnable
     };
     NEO::EncodeDispatchKernel<GfxFamily>::encode(commandContainer, dispatchKernelArgs, getLogicalStateHelper());
     if (!this->isFlushTaskSubmissionEnabled) {

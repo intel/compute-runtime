@@ -74,15 +74,6 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
 }
 
 template <>
-constexpr bool EncodeDispatchKernel<Family>::shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool predicate) {
-    if (predicate && currentVal != refVal) {
-        currentVal = refVal;
-        return true;
-    }
-    return false;
-}
-
-template <>
 void adjustL3ControlField<Family>(void *l3ControlBuffer) { ; }
 
 template void flushGpuCache<Family>(LinearStream *commandStream, const Range<L3Range> &ranges, uint64_t postSyncAddress, const HardwareInfo &hwInfo);

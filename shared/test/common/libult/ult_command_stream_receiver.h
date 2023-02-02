@@ -42,6 +42,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::getScratchSpaceController;
     using BaseClass::handleFrontEndStateTransition;
     using BaseClass::handlePipelineSelectStateTransition;
+    using BaseClass::handleStateBaseAddressStateTransition;
     using BaseClass::indirectHeap;
     using BaseClass::iohState;
     using BaseClass::isBlitterDirectSubmissionEnabled;
@@ -120,6 +121,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::requiredScratchSize;
     using BaseClass::CommandStreamReceiver::resourcesInitialized;
     using BaseClass::CommandStreamReceiver::samplerCacheFlushRequired;
+    using BaseClass::CommandStreamReceiver::sbaSupportFlags;
     using BaseClass::CommandStreamReceiver::scratchSpaceController;
     using BaseClass::CommandStreamReceiver::stallingCommandsOnNextFlushRequired;
     using BaseClass::CommandStreamReceiver::submissionAggregator;

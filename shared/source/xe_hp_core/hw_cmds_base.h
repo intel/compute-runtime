@@ -53,12 +53,10 @@ struct XeHpCore {
 
     struct StateBaseAddressStateSupport {
         static constexpr bool globalAtomics = true;
-        static constexpr bool statelessMocs = true;
         static constexpr bool bindingTablePoolBaseAddress = true;
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool modeSelected = true;
         static constexpr bool mediaSamplerDopClockGate = true;
         static constexpr bool systolicMode = true;
     };

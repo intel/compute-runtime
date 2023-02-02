@@ -257,6 +257,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::pageTableManagerInitialized;
     using CommandStreamReceiver::postSyncWriteOffset;
     using CommandStreamReceiver::requiredScratchSize;
+    using CommandStreamReceiver::sbaSupportFlags;
     using CommandStreamReceiver::streamProperties;
     using CommandStreamReceiver::tagAddress;
     using CommandStreamReceiver::taskCount;

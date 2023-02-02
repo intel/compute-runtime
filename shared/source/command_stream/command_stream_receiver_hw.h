@@ -185,10 +185,10 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     bool checkPlatformSupportsGpuIdleImplicitFlush() const;
     void configurePostSyncWriteOffset();
     void unregisterDirectSubmissionFromController();
-    constexpr bool isGlobalAtomicsProgrammingRequired(bool currentValue) const;
     void createKernelArgsBufferAllocation() override;
-    void handleFrontEndStateTransition(DispatchFlags &dispatchFlags);
-    void handlePipelineSelectStateTransition(DispatchFlags &dispatchFlags);
+    void handleFrontEndStateTransition(const DispatchFlags &dispatchFlags);
+    void handlePipelineSelectStateTransition(const DispatchFlags &dispatchFlags);
+    void handleStateBaseAddressStateTransition(const DispatchFlags &dispatchFlags, bool &isStateBaseAddressDirty);
 
     HeapDirtyState dshState;
     HeapDirtyState iohState;

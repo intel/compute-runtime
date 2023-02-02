@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -70,11 +70,6 @@ size_t CommandStreamReceiverHw<Family>::getCmdSizeForPerDssBackedBuffer(const Ha
 
 template <>
 void CommandStreamReceiverHw<Family>::addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags) {}
-
-template <>
-constexpr bool CommandStreamReceiverHw<Family>::isGlobalAtomicsProgrammingRequired(bool currentValue) const {
-    return currentValue != this->lastSentUseGlobalAtomics;
-}
 
 template <>
 void BlitCommandsHelper<Family>::appendClearColor(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {

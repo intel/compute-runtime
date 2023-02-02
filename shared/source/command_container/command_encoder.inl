@@ -728,9 +728,6 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCRIPTOR_DATA &interfaceDescriptor, const Device &device, const HardwareInfo &hwInfo, const uint32_t threadGroupCount, const uint32_t numGrf) {}
 
 template <typename Family>
-constexpr bool EncodeDispatchKernel<Family>::shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool updateCurrent) { return false; }
-
-template <typename Family>
 size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor, uint32_t iddCount) {
     using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
     constexpr auto samplerStateSize = sizeof(typename Family::SAMPLER_STATE);

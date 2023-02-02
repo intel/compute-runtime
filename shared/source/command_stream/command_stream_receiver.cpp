@@ -92,6 +92,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     auto &productHelper = getProductHelper();
     productHelper.fillFrontEndPropertiesSupportStructure(feSupportFlags, hwInfo);
     productHelper.fillPipelineSelectPropertiesSupportStructure(pipelineSupportFlags, hwInfo);
+    productHelper.fillStateBaseAddressPropertiesSupportStructure(sbaSupportFlags);
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {
@@ -530,8 +531,12 @@ void CommandStreamReceiver::initProgrammingFlags() {
     lastSentL3Config = 0;
     lastMediaSamplerConfig = -1;
     lastPreemptionMode = PreemptionMode::Initial;
+
     latestSentStatelessMocsConfig = CacheSettings::unknownMocs;
+    this->streamProperties.stateBaseAddress.statelessMocs = {};
+
     lastSentUseGlobalAtomics = false;
+    this->streamProperties.stateBaseAddress.globalAtomics = {};
 }
 
 void CommandStreamReceiver::programForAubSubCapture(bool wasActiveInPreviousEnqueue, bool isActive) {

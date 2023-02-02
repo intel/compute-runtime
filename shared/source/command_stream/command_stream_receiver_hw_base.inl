@@ -480,38 +480,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     auto isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
 
-    auto mocsIndex = latestSentStatelessMocsConfig;
-
-    if (dispatchFlags.l3CacheSettings != L3CachingSettings::NotApplicable) {
-        auto l3On = dispatchFlags.l3CacheSettings != L3CachingSettings::l3CacheOff;
-        auto l1On = dispatchFlags.l3CacheSettings == L3CachingSettings::l3AndL1On;
-        mocsIndex = gfxCoreHelper.getMocsIndex(*device.getGmmHelper(), l3On, l1On);
-    }
-
-    if (mocsIndex != latestSentStatelessMocsConfig) {
-        isStateBaseAddressDirty = true;
-        latestSentStatelessMocsConfig = mocsIndex;
-    }
-    this->streamProperties.stateBaseAddress.setPropertyStatelessMocs(mocsIndex);
-
-    if (this->isGlobalAtomicsProgrammingRequired(dispatchFlags.useGlobalAtomics) && (this->isMultiOsContextCapable() || dispatchFlags.areMultipleSubDevicesInContext)) {
-        isStateBaseAddressDirty = true;
-        lastSentUseGlobalAtomics = dispatchFlags.useGlobalAtomics;
-
-        this->streamProperties.stateBaseAddress.setPropertyGlobalAtomics(lastSentUseGlobalAtomics, rootDeviceEnvironment, false);
-    }
+    handleStateBaseAddressStateTransition(dispatchFlags, isStateBaseAddressDirty);
 
     bool debuggingEnabled = device.getDebugger() != nullptr;
     bool sourceLevelDebuggerActive = device.getSourceLevelDebugger() != nullptr ? true : false;
-
-    auto memoryCompressionState = lastMemoryCompressionState;
-    if (dispatchFlags.memoryCompressionState != MemoryCompressionState::NotApplicable) {
-        memoryCompressionState = dispatchFlags.memoryCompressionState;
-    }
-    if (memoryCompressionState != lastMemoryCompressionState) {
-        isStateBaseAddressDirty = true;
-        lastMemoryCompressionState = memoryCompressionState;
-    }
 
     // Reprogram state base address if required
     if (isStateBaseAddressDirty || sourceLevelDebuggerActive) {
@@ -546,13 +518,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             ssh,                                          // ssh
             device.getGmmHelper(),                        // gmmHelper
             &hwInfo,                                      // hwInfo
-            mocsIndex,                                    // statelessMocsIndex
-            memoryCompressionState,                       // memoryCompressionState
+            this->latestSentStatelessMocsConfig,          // statelessMocsIndex
+            this->lastMemoryCompressionState,             // memoryCompressionState
             true,                                         // setInstructionStateBaseAddress
             true,                                         // setGeneralStateBaseAddress
             false,                                        // useGlobalHeapsBaseAddress
             isMultiOsContextCapable(),                    // isMultiOsContextCapable
-            dispatchFlags.useGlobalAtomics,               // useGlobalAtomics
+            this->lastSentUseGlobalAtomics,               // useGlobalAtomics
             dispatchFlags.areMultipleSubDevicesInContext, // areMultipleSubDevicesInContext
             false,                                        // overrideSurfaceStateBaseAddress
             debuggingEnabled || device.isDebuggerActive() // isDebuggerActive
@@ -1626,11 +1598,6 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForComputeMode() {
 }
 
 template <typename GfxFamily>
-constexpr bool CommandStreamReceiverHw<GfxFamily>::isGlobalAtomicsProgrammingRequired(bool currentVal) const {
-    return false;
-}
-
-template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::createKernelArgsBufferAllocation() {
 }
 
@@ -1640,7 +1607,7 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::initializeDeviceWithFirstSu
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::handleFrontEndStateTransition(DispatchFlags &dispatchFlags) {
+void CommandStreamReceiverHw<GfxFamily>::handleFrontEndStateTransition(const DispatchFlags &dispatchFlags) {
     if (streamProperties.frontEndState.disableOverdispatch.value != -1) {
         lastAdditionalKernelExecInfo = streamProperties.frontEndState.disableOverdispatch.value == 1 ? AdditionalKernelExecInfo::DisableOverdispatch : AdditionalKernelExecInfo::NotSet;
     }
@@ -1665,7 +1632,7 @@ void CommandStreamReceiverHw<GfxFamily>::handleFrontEndStateTransition(DispatchF
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::handlePipelineSelectStateTransition(DispatchFlags &dispatchFlags) {
+void CommandStreamReceiverHw<GfxFamily>::handlePipelineSelectStateTransition(const DispatchFlags &dispatchFlags) {
     if (streamProperties.pipelineSelect.mediaSamplerDopClockGate.value != -1) {
         this->lastMediaSamplerConfig = static_cast<int8_t>(streamProperties.pipelineSelect.mediaSamplerDopClockGate.value);
     }
@@ -1683,6 +1650,50 @@ template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::directSubmissionRelaxedOrderingEnabled() const {
     return ((directSubmission.get() && directSubmission->isRelaxedOrderingEnabled()) ||
             (blitterDirectSubmission.get() && blitterDirectSubmission->isRelaxedOrderingEnabled()));
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::handleStateBaseAddressStateTransition(const DispatchFlags &dispatchFlags, bool &isStateBaseAddressDirty) {
+    auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
+
+    if (this->streamProperties.stateBaseAddress.statelessMocs.value != -1) {
+        this->latestSentStatelessMocsConfig = static_cast<uint32_t>(this->streamProperties.stateBaseAddress.statelessMocs.value);
+    }
+    auto mocsIndex = this->latestSentStatelessMocsConfig;
+    if (dispatchFlags.l3CacheSettings != L3CachingSettings::NotApplicable) {
+        auto l3On = dispatchFlags.l3CacheSettings != L3CachingSettings::l3CacheOff;
+        auto l1On = dispatchFlags.l3CacheSettings == L3CachingSettings::l3AndL1On;
+
+        auto &gfxCoreHelper = getGfxCoreHelper();
+        mocsIndex = gfxCoreHelper.getMocsIndex(*rootDeviceEnvironment.getGmmHelper(), l3On, l1On);
+    }
+    if (mocsIndex != this->latestSentStatelessMocsConfig) {
+        isStateBaseAddressDirty = true;
+        this->latestSentStatelessMocsConfig = mocsIndex;
+    }
+    this->streamProperties.stateBaseAddress.setPropertyStatelessMocs(mocsIndex);
+
+    auto memoryCompressionState = this->lastMemoryCompressionState;
+    if (dispatchFlags.memoryCompressionState != MemoryCompressionState::NotApplicable) {
+        memoryCompressionState = dispatchFlags.memoryCompressionState;
+    }
+    if (memoryCompressionState != this->lastMemoryCompressionState) {
+        isStateBaseAddressDirty = true;
+        this->lastMemoryCompressionState = memoryCompressionState;
+    }
+
+    if (this->sbaSupportFlags.globalAtomics) {
+        if (this->streamProperties.stateBaseAddress.globalAtomics.value != -1) {
+            this->lastSentUseGlobalAtomics = !!this->streamProperties.stateBaseAddress.globalAtomics.value;
+        }
+
+        bool globalAtomics = (this->isMultiOsContextCapable() || dispatchFlags.areMultipleSubDevicesInContext) && dispatchFlags.useGlobalAtomics;
+        if (this->lastSentUseGlobalAtomics != globalAtomics) {
+            isStateBaseAddressDirty = true;
+            this->lastSentUseGlobalAtomics = globalAtomics;
+        }
+        this->streamProperties.stateBaseAddress.setPropertyGlobalAtomics(globalAtomics, rootDeviceEnvironment, false);
+    }
 }
 
 } // namespace NEO

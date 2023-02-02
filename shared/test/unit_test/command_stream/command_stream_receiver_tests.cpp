@@ -27,6 +27,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/batch_buffer_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/dispatch_flags_helper.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
@@ -2317,6 +2318,215 @@ HWTEST_F(CommandStreamReceiverTest, givenDshDirtyStateWhenUpdatingStateWithNewHe
     EXPECT_FALSE(check);
 }
 
+HWTEST_F(CommandStreamReceiverTest, givenFrontEndStateNotInitedWhenTransitionFrontEndPropertiesThenExpectCorrectValuesStored) {
+    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.feSupportFlags.computeDispatchAllWalker = false;
+    commandStreamReceiver.feSupportFlags.disableEuFusion = false;
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.feSupportFlags.disableOverdispatch = true;
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::NotApplicable;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.feSupportFlags.disableOverdispatch = false;
+    commandStreamReceiver.lastAdditionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.feSupportFlags.computeDispatchAllWalker = true;
+    dispatchFlags.kernelExecutionType = KernelExecutionType::NotApplicable;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    dispatchFlags.kernelExecutionType = KernelExecutionType::Default;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    dispatchFlags.kernelExecutionType = KernelExecutionType::Concurrent;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.feSupportFlags.computeDispatchAllWalker = false;
+    commandStreamReceiver.lastKernelExecutionType = KernelExecutionType::Default;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.feSupportFlags.disableEuFusion = true;
+    dispatchFlags.disableEUFusion = false;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.streamProperties.frontEndState.disableEUFusion.value = 0;
+    dispatchFlags.disableEUFusion = true;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    dispatchFlags.disableEUFusion = false;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    commandStreamReceiver.feSupportFlags.disableEuFusion = false;
+    commandStreamReceiver.streamProperties.frontEndState.disableEUFusion.value = -1;
+    dispatchFlags.disableEUFusion = false;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenFrontEndStateInitedWhenTransitionFrontEndPropertiesThenExpectCorrectValuesStored) {
+    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.feSupportFlags.computeDispatchAllWalker = false;
+    commandStreamReceiver.feSupportFlags.disableEuFusion = false;
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.feSupportFlags.disableOverdispatch = true;
+
+    commandStreamReceiver.streamProperties.frontEndState.disableOverdispatch.value = 0;
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.streamProperties.frontEndState.disableOverdispatch.value = 1;
+    dispatchFlags.additionalKernelExecInfo = AdditionalKernelExecInfo::NotSet;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.feSupportFlags.disableOverdispatch = false;
+    commandStreamReceiver.feSupportFlags.computeDispatchAllWalker = true;
+
+    commandStreamReceiver.streamProperties.frontEndState.computeDispatchAllWalkerEnable.value = 0;
+    dispatchFlags.kernelExecutionType = KernelExecutionType::Default;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.getMediaVFEStateDirty());
+
+    dispatchFlags.kernelExecutionType = KernelExecutionType::Concurrent;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+
+    commandStreamReceiver.streamProperties.frontEndState.computeDispatchAllWalkerEnable.value = 1;
+    dispatchFlags.kernelExecutionType = KernelExecutionType::Default;
+    commandStreamReceiver.handleFrontEndStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.getMediaVFEStateDirty());
+    commandStreamReceiver.setMediaVFEStateDirty(false);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenPipelineSelectStateNotInitedWhenTransitionPipelineSelectPropertiesThenExpectCorrectValuesStored) {
+    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = false;
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
+
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = false;
+    commandStreamReceiver.lastMediaSamplerConfig = -1;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
+    commandStreamReceiver.lastMediaSamplerConfig = 0;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = false;
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = true;
+
+    commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = false;
+    commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = true;
+    commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+}
+
+HWTEST_F(CommandStreamReceiverTest,
+         givenPipelineSelectStateInitedWhenTransitionPipelineSelectPropertiesThenExpectCorrectValuesStored) {
+    auto dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = false;
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = true;
+
+    commandStreamReceiver.streamProperties.pipelineSelect.mediaSamplerDopClockGate.value = 1;
+    commandStreamReceiver.lastMediaSamplerConfig = -1;
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.streamProperties.pipelineSelect.mediaSamplerDopClockGate.value = 0;
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.streamProperties.pipelineSelect.mediaSamplerDopClockGate.value = 0;
+    commandStreamReceiver.lastMediaSamplerConfig = 1;
+    dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.mediaSamplerConfigChanged);
+
+    commandStreamReceiver.pipelineSupportFlags.mediaSamplerDopClockGate = false;
+    commandStreamReceiver.pipelineSupportFlags.systolicMode = true;
+
+    commandStreamReceiver.streamProperties.pipelineSelect.systolicMode.value = 1;
+    commandStreamReceiver.lastSystolicPipelineSelectMode = false;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+
+    commandStreamReceiver.streamProperties.pipelineSelect.systolicMode.value = 0;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = true;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_TRUE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+
+    commandStreamReceiver.streamProperties.pipelineSelect.systolicMode.value = 0;
+    commandStreamReceiver.lastSystolicPipelineSelectMode = true;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = false;
+    commandStreamReceiver.handlePipelineSelectStateTransition(dispatchFlags);
+    EXPECT_FALSE(commandStreamReceiver.csrSizeRequestFlags.systolicPipelineSelectMode);
+}
+
 using CommandStreamReceiverHwTest = Test<CommandStreamReceiverFixture>;
 
 HWTEST2_F(CommandStreamReceiverHwTest, givenSshHeapNotProvidedWhenFlushTaskPerformedThenSbaProgammedSurfaceBaseAddressToZero, IsAtLeastXeHpCore) {
@@ -2643,3 +2853,70 @@ HWTEST_F(CommandStreamReceiverHwTest, givenNullPtrAsMultiRootDeviceSyncNodeWhenF
     }
     EXPECT_FALSE(nodeAddressFound);
 }
+
+struct MultiGpuGlobalAtomicsTest : public CommandStreamReceiverHwTest,
+                                   public ::testing::WithParamInterface<std::tuple<bool, bool, bool, bool>> {
+};
+
+HWCMDTEST_P(IGFX_XE_HP_CORE, MultiGpuGlobalAtomicsTest, givenFlushingCommandStreamReceiverThenDisableSupportForMultiGpuAtomicsForStatelessAccessesIsSetCorrectly) {
+    bool isMultiOsContextCapable, useGlobalAtomics, areMultipleSubDevicesInContext, enableMultiGpuAtomicsOptimization;
+    std::tie(isMultiOsContextCapable, useGlobalAtomics, areMultipleSubDevicesInContext, enableMultiGpuAtomicsOptimization) = GetParam();
+
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.EnableMultiGpuAtomicsOptimization.set(enableMultiGpuAtomicsOptimization);
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.sbaSupportFlags.globalAtomics = true;
+
+    commandStreamReceiver.multiOsContextCapable = isMultiOsContextCapable;
+    flushTaskFlags.useGlobalAtomics = useGlobalAtomics;
+    flushTaskFlags.areMultipleSubDevicesInContext = areMultipleSubDevicesInContext;
+
+    commandStreamReceiver.flushTask(
+        commandStream,
+        0,
+        &dsh,
+        &ioh,
+        &ssh,
+        taskLevel,
+        flushTaskFlags,
+        *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    hwParserCsr.findHardwareCommands<FamilyType>();
+    ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
+    auto stateBaseAddress = static_cast<STATE_BASE_ADDRESS *>(hwParserCsr.cmdStateBaseAddress);
+
+    auto enabled = isMultiOsContextCapable;
+    if (enableMultiGpuAtomicsOptimization) {
+        enabled = useGlobalAtomics && (enabled || areMultipleSubDevicesInContext);
+    }
+
+    EXPECT_EQ(!enabled, stateBaseAddress->getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
+
+    auto offset = commandStreamReceiver.getCS(0).getUsed();
+    commandStreamReceiver.flushTask(
+        commandStream,
+        offset,
+        &dsh,
+        &ioh,
+        &ssh,
+        taskLevel,
+        flushTaskFlags,
+        *pDevice);
+
+    hwParserCsr.cmdList.clear();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.getCS(0), offset);
+    stateBaseAddress = hwParserCsr.getCommand<STATE_BASE_ADDRESS>();
+    EXPECT_EQ(nullptr, stateBaseAddress);
+}
+
+INSTANTIATE_TEST_CASE_P(MultiGpuGlobalAtomics,
+                        MultiGpuGlobalAtomicsTest,
+                        ::testing::Combine(
+                            ::testing::Bool(),
+                            ::testing::Bool(),
+                            ::testing::Bool(),
+                            ::testing::Bool()));
