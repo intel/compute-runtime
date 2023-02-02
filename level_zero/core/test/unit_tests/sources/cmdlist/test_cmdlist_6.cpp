@@ -814,7 +814,9 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
         expectedSbaCount++;
     }
 
-    bool dshPresent = hwInfo.capabilityTable.supportsImages || NEO::UnitTestHelper<FamilyType>::getAdditionalDshSize() > 0;
+    auto &cmdContainer = commandListImmediate->commandContainer;
+
+    bool dshPresent = hwInfo.capabilityTable.supportsImages || NEO::UnitTestHelper<FamilyType>::getAdditionalDshSize(cmdContainer.getNumIddPerBlock()) > 0;
 
     if (dshPresent) {
         mockKernelImmData->kernelInfo->kernelDescriptor.payloadMappings.samplerTable.numSamplers = 2;
@@ -838,7 +840,6 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     EXPECT_TRUE(commandListImmediate->isFlushTaskSubmissionEnabled);
     EXPECT_TRUE(commandListImmediate->immediateCmdListHeapSharing);
 
-    auto &cmdContainer = commandListImmediate->commandContainer;
     EXPECT_EQ(1u, cmdContainer.getNumIddPerBlock());
     EXPECT_TRUE(cmdContainer.immediateCmdListSharedHeap(HeapType::DYNAMIC_STATE));
     EXPECT_TRUE(cmdContainer.immediateCmdListSharedHeap(HeapType::SURFACE_STATE));
@@ -899,7 +900,7 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     }
     EXPECT_LT(0u, sshUsed);
 
-    size_t dshEstimated = NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernel->getKernelDescriptor());
+    size_t dshEstimated = NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernel->getKernelDescriptor(), cmdContainer.getNumIddPerBlock());
     size_t sshEstimated = NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredSsh(*kernel->getImmutableData()->getKernelInfo());
 
     EXPECT_GE(dshEstimated, dshUsed);

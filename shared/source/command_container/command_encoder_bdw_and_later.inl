@@ -120,14 +120,14 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         auto dsHeap = args.dynamicStateHeap;
         if (dsHeap == nullptr) {
             if (!ApiSpecificConfig::getBindlessConfiguration()) {
-                auto dsHeap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
-                auto dshSizeRequired = NEO::EncodeDispatchKernel<Family>::getSizeRequiredDsh(kernelDescriptor);
+                dsHeap = container.getIndirectHeap(HeapType::DYNAMIC_STATE);
+                auto dshSizeRequired = NEO::EncodeDispatchKernel<Family>::getSizeRequiredDsh(kernelDescriptor, container.getNumIddPerBlock());
                 if (dsHeap->getAvailableSpace() <= dshSizeRequired) {
-                    dsHeap = container.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, dsHeap->getMaxAvailableSpace(), 0);
-                    UNRECOVERABLE_IF(!dsHeap);
+                    dsHeap = container.getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, dsHeap->getMaxAvailableSpace(), NEO::EncodeDispatchKernel<Family>::getDefaultDshAlignment());
                 }
+            } else {
+                dsHeap = args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH);
             }
-            dsHeap = ApiSpecificConfig::getBindlessConfiguration() ? args.device->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH) : container.getIndirectHeap(HeapType::DYNAMIC_STATE);
         }
         UNRECOVERABLE_IF(!dsHeap);
 
@@ -187,7 +187,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     uint32_t numIDD = 0u;
-    void *iddPtr = getInterfaceDescriptor(container, numIDD);
+    void *iddPtr = getInterfaceDescriptor(container, args.dynamicStateHeap, numIDD);
 
     auto slmSizeNew = args.dispatchInterface->getSlmTotalSize();
     bool dirtyHeaps = container.isAnyHeapDirty();
@@ -226,7 +226,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     if (numIDD == 0 || flush) {
-        EncodeMediaInterfaceDescriptorLoad<Family>::encode(container);
+        EncodeMediaInterfaceDescriptorLoad<Family>::encode(container, args.dynamicStateHeap);
     }
 
     cmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));
@@ -291,10 +291,19 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 }
 
 template <typename Family>
-void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &container) {
+void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &container, IndirectHeap *childDsh) {
     using MEDIA_STATE_FLUSH = typename Family::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename Family::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
-    auto heapBase = ApiSpecificConfig::getBindlessConfiguration() ? container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()->getUnderlyingBuffer() : container.getIndirectHeap(HeapType::DYNAMIC_STATE)->getCpuBase();
+    void *heapBase = nullptr;
+    if (childDsh != nullptr) {
+        heapBase = childDsh->getCpuBase();
+    } else {
+        if (ApiSpecificConfig::getBindlessConfiguration()) {
+            heapBase = container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::GLOBAL_DSH)->getGraphicsAllocation()->getUnderlyingBuffer();
+        } else {
+            heapBase = container.getIndirectHeap(HeapType::DYNAMIC_STATE)->getCpuBase();
+        }
+    }
 
     auto mediaStateFlush = container.getCommandStream()->getSpaceForCmd<MEDIA_STATE_FLUSH>();
     *mediaStateFlush = Family::cmdInitMediaStateFlush;
@@ -570,8 +579,8 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {}
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh() {
-    return sizeof(typename Family::INTERFACE_DESCRIPTOR_DATA);
+size_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh(uint32_t iddCount) {
+    return iddCount * sizeof(typename Family::INTERFACE_DESCRIPTOR_DATA);
 }
 
 } // namespace NEO

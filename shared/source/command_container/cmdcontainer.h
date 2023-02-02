@@ -119,7 +119,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool immediateCmdListSharedHeap(HeapType heapType) {
         return (heapSharingEnabled && (heapType == HeapType::DYNAMIC_STATE || heapType == HeapType::SURFACE_STATE));
     }
-    void ensureHeapSizePrepared(size_t sshRequiredSize, size_t dshRequiredSize, bool getDsh);
+    void ensureHeapSizePrepared(size_t sshRequiredSize, size_t sshDefaultAlignment, size_t dshRequiredSize, size_t dshDefaultAlignment, bool getDsh);
 
     GraphicsAllocation *reuseExistingCmdBuffer();
     GraphicsAllocation *allocateCommandBuffer();
@@ -141,6 +141,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     size_t getTotalCmdBufferSize();
     IndirectHeap *getHeapWithRequiredSize(HeapType heapType, size_t sizeRequired, size_t alignment, bool allowGrow);
     void createAndAssignNewHeap(HeapType heapType, size_t size);
+    IndirectHeap *getCsrAlignedSize(HeapType heapType, size_t size, size_t alignment);
     GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
     std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];
 

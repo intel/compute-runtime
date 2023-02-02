@@ -572,6 +572,14 @@ GraphicsAllocation *CommandStreamReceiver::allocateDebugSurface(size_t size) {
     return debugSurface;
 }
 
+void *CommandStreamReceiver::getIndirectHeapCurrentPtr(IndirectHeapType heapType) const {
+    auto heap = indirectHeap[heapType];
+    if (heap) {
+        return heap->getSpace(0);
+    }
+    return nullptr;
+}
+
 IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType,
                                                      size_t minRequiredSize) {
     DEBUG_BREAK_IF(static_cast<uint32_t>(heapType) >= arrayCount(indirectHeap));

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@ using CommandEncodeStatesTest = Test<CommandEncodeStatesFixture>;
 
 HWTEST2_F(CommandEncodeStatesTest, givenCommandContainerWhenEncodingMediaDescriptorThenUsedSizeDidNotIncreased, IsAtLeastXeHpCore) {
     auto sizeBefore = cmdContainer->getCommandStream()->getUsed();
-    EncodeMediaInterfaceDescriptorLoad<FamilyType>::encode(*cmdContainer.get());
+    EncodeMediaInterfaceDescriptorLoad<FamilyType>::encode(*cmdContainer.get(), nullptr);
     auto sizeAfter = cmdContainer->getCommandStream()->getUsed();
     EXPECT_EQ(sizeBefore, sizeAfter);
 }

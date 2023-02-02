@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -93,8 +93,8 @@ bool UnitTestHelper<GfxFamily>::getSystolicFlagValueFromPipelineSelectCommand(co
 }
 
 template <typename GfxFamily>
-size_t UnitTestHelper<GfxFamily>::getAdditionalDshSize() {
-    return sizeof(typename GfxFamily::INTERFACE_DESCRIPTOR_DATA);
+size_t UnitTestHelper<GfxFamily>::getAdditionalDshSize(uint32_t iddCount) {
+    return iddCount * sizeof(typename GfxFamily::INTERFACE_DESCRIPTOR_DATA);
 }
 
 } // namespace NEO

@@ -99,7 +99,7 @@ struct EncodeDispatchKernel {
     static void setGrfInfo(INTERFACE_DESCRIPTOR_DATA *pInterfaceDescriptor, uint32_t numGrf, const size_t &sizeCrossThreadData,
                            const size_t &sizePerThreadData, const HardwareInfo &hwInfo);
 
-    static void *getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset);
+    static void *getInterfaceDescriptor(CommandContainer &container, IndirectHeap *childDsh, uint32_t &iddOffset);
 
     static bool isRuntimeLocalIdsGenerationRequired(uint32_t activeChannels,
                                                     const size_t *lws,
@@ -138,10 +138,15 @@ struct EncodeDispatchKernel {
 
     static constexpr bool shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool updateCurrent);
 
-    static size_t getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor);
+    static size_t getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor, uint32_t iddCount);
     static size_t getSizeRequiredSsh(const KernelInfo &kernelInfo);
-    inline static uint32_t additionalSizeRequiredDsh();
+    inline static size_t additionalSizeRequiredDsh(uint32_t iddCount);
     static bool isDshNeeded(const DeviceInfo &deviceInfo);
+    static size_t getDefaultDshAlignment();
+    static constexpr size_t getDefaultSshAlignment() {
+        using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
+        return BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE;
+    }
 };
 
 template <typename GfxFamily>
@@ -298,7 +303,7 @@ template <typename GfxFamily>
 struct EncodeMediaInterfaceDescriptorLoad {
     using INTERFACE_DESCRIPTOR_DATA = typename GfxFamily::INTERFACE_DESCRIPTOR_DATA;
 
-    static void encode(CommandContainer &container);
+    static void encode(CommandContainer &container, IndirectHeap *childDsh);
 };
 
 template <typename GfxFamily>

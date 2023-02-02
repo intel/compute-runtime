@@ -628,7 +628,7 @@ void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container
 }
 
 template <typename Family>
-inline void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &container) {
+inline void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer &container, IndirectHeap *childDsh) {
 }
 
 template <typename Family>
@@ -801,7 +801,7 @@ template <typename Family>
 void EncodeDispatchKernel<Family>::adjustWalkOrder(WALKER_TYPE &walkerCmd, uint32_t requiredWorkGroupOrder, const RootDeviceEnvironment &rootDeviceEnvironment) {}
 
 template <typename Family>
-uint32_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh() {
+size_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh(uint32_t iddCount) {
     return 0u;
 }
 

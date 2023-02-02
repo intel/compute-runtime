@@ -52,9 +52,12 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     const auto kernelImmutableData = kernel->getImmutableData();
     if (this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) {
         auto kernelInfo = kernelImmutableData->getKernelInfo();
+
         commandContainer.ensureHeapSizePrepared(
             NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredSsh(*kernelInfo),
-            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor), true);
+            NEO::EncodeDispatchKernel<GfxFamily>::getDefaultSshAlignment(),
+            NEO::EncodeDispatchKernel<GfxFamily>::getSizeRequiredDsh(kernelDescriptor, commandContainer.getNumIddPerBlock()),
+            NEO::EncodeDispatchKernel<GfxFamily>::getDefaultDshAlignment(), true);
 
         ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
         dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);

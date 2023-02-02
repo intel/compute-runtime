@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,7 +122,7 @@ bool UnitTestHelper<GfxFamily>::getSystolicFlagValueFromPipelineSelectCommand(co
 }
 
 template <typename GfxFamily>
-size_t UnitTestHelper<GfxFamily>::getAdditionalDshSize() {
+size_t UnitTestHelper<GfxFamily>::getAdditionalDshSize(uint32_t iddCount) {
     return 0;
 }
 

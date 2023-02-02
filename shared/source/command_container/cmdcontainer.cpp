@@ -331,18 +331,27 @@ IndirectHeap *CommandContainer::getIndirectHeap(HeapType heapType) {
     }
 }
 
-void CommandContainer::ensureHeapSizePrepared(size_t sshRequiredSize, size_t dshRequiredSize, bool getDsh) {
+IndirectHeap *CommandContainer::getCsrAlignedSize(HeapType heapType, size_t size, size_t alignment) {
+    void *ptr = immediateCmdListCsr->getIndirectHeapCurrentPtr(heapType);
+    size_t totalSize = size + ptrDiff(alignUp(ptr, alignment), ptr);
+
+    auto baseHeap = &immediateCmdListCsr->getIndirectHeap(heapType, totalSize);
+
+    return baseHeap;
+}
+
+void CommandContainer::ensureHeapSizePrepared(size_t sshRequiredSize, size_t sshDefaultAlignment, size_t dshRequiredSize, size_t dshDefaultAlignment, bool getDsh) {
     if (immediateCmdListCsr) {
         auto lock = immediateCmdListCsr->obtainUniqueOwnership();
-        sharedSshCsrHeap = &immediateCmdListCsr->getIndirectHeap(HeapType::SURFACE_STATE, sshRequiredSize);
+        sharedSshCsrHeap = getCsrAlignedSize(HeapType::SURFACE_STATE, sshRequiredSize, sshDefaultAlignment);
 
         if (getDsh) {
-            sharedDshCsrHeap = &immediateCmdListCsr->getIndirectHeap(HeapType::DYNAMIC_STATE, dshRequiredSize);
+            sharedDshCsrHeap = getCsrAlignedSize(HeapType::DYNAMIC_STATE, dshRequiredSize, dshDefaultAlignment);
         }
     } else {
-        this->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sshRequiredSize, 0);
+        this->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sshRequiredSize, sshDefaultAlignment);
         if (getDsh) {
-            this->getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, dshRequiredSize, 0);
+            this->getHeapWithRequiredSizeAndAlignment(HeapType::DYNAMIC_STATE, dshRequiredSize, dshDefaultAlignment);
         }
     }
 }

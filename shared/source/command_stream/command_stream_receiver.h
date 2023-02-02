@@ -187,6 +187,7 @@ class CommandStreamReceiver {
     IndirectHeap &getIndirectHeap(IndirectHeapType heapType, size_t minRequiredSize);
     void allocateHeapMemory(IndirectHeapType heapType, size_t minRequiredSize, IndirectHeap *&indirectHeap);
     void releaseIndirectHeap(IndirectHeapType heapType);
+    void *getIndirectHeapCurrentPtr(IndirectHeapType heapType) const;
 
     virtual enum CommandStreamReceiverType getType() const = 0;
     void setExperimentalCmdBuffer(std::unique_ptr<ExperimentalCommandBuffer> &&cmdBuffer);

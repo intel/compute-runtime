@@ -546,16 +546,23 @@ template <typename Family>
 void EncodeSurfaceState<Family>::encodeImplicitScalingParams(const EncodeSurfaceStateArgs &args) {}
 
 template <typename Family>
-void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, uint32_t &iddOffset) {
+void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, IndirectHeap *childDsh, uint32_t &iddOffset) {
 
     if (container.nextIddInBlock == container.getNumIddPerBlock()) {
         if (ApiSpecificConfig::getBindlessConfiguration()) {
             container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
             container.setIddBlock(container.getDevice()->getBindlessHeapsHelper()->getSpaceInHeap(sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock(), BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH));
         } else {
-            container.getIndirectHeap(HeapType::DYNAMIC_STATE)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
-            container.setIddBlock(container.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE,
-                                                                  sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock()));
+            void *heapPointer = nullptr;
+            size_t heapSize = sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock();
+            if (childDsh != nullptr) {
+                childDsh->align(EncodeStates<Family>::alignInterfaceDescriptorData);
+                heapPointer = childDsh->getSpace(heapSize);
+            } else {
+                container.getIndirectHeap(HeapType::DYNAMIC_STATE)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
+                heapPointer = container.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, heapSize);
+            }
+            container.setIddBlock(heapPointer);
         }
         container.nextIddInBlock = 0;
     }
@@ -726,25 +733,25 @@ template <typename Family>
 constexpr bool EncodeDispatchKernel<Family>::shouldUpdateGlobalAtomics(bool &currentVal, bool refVal, bool updateCurrent) { return false; }
 
 template <typename Family>
-size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor) {
+size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &kernelDescriptor, uint32_t iddCount) {
     using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
     constexpr auto samplerStateSize = sizeof(typename Family::SAMPLER_STATE);
     const auto numSamplers = kernelDescriptor.payloadMappings.samplerTable.numSamplers;
-    const auto additionalDshSize = additionalSizeRequiredDsh();
+    const auto additionalDshSize = additionalSizeRequiredDsh(iddCount);
     if (numSamplers == 0U) {
-        return alignUp(additionalDshSize, EncodeStates<Family>::alignInterfaceDescriptorData);
+        return alignUp(additionalDshSize, EncodeDispatchKernel<Family>::getDefaultDshAlignment());
     }
 
     size_t size = kernelDescriptor.payloadMappings.samplerTable.tableOffset -
                   kernelDescriptor.payloadMappings.samplerTable.borderColor;
-    size = alignUp(size, EncodeStates<Family>::alignIndirectStatePointer);
+    size = alignUp(size, EncodeDispatchKernel<Family>::getDefaultDshAlignment());
 
     size += numSamplers * samplerStateSize;
     size = alignUp(size, INTERFACE_DESCRIPTOR_DATA::SAMPLERSTATEPOINTER_ALIGN_SIZE);
 
     if (additionalDshSize > 0) {
         size += additionalDshSize;
-        size = alignUp(size, EncodeStates<Family>::alignInterfaceDescriptorData);
+        size = alignUp(size, EncodeDispatchKernel<Family>::getDefaultDshAlignment());
     }
 
     return size;
@@ -752,10 +759,14 @@ size_t EncodeDispatchKernel<Family>::getSizeRequiredDsh(const KernelDescriptor &
 
 template <typename Family>
 size_t EncodeDispatchKernel<Family>::getSizeRequiredSsh(const KernelInfo &kernelInfo) {
-    using BINDING_TABLE_STATE = typename Family::BINDING_TABLE_STATE;
     size_t requiredSshSize = kernelInfo.heapInfo.SurfaceStateHeapSize;
-    requiredSshSize = alignUp(requiredSshSize, BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
+    requiredSshSize = alignUp(requiredSshSize, EncodeDispatchKernel<Family>::getDefaultSshAlignment());
     return requiredSshSize;
+}
+
+template <typename Family>
+size_t EncodeDispatchKernel<Family>::getDefaultDshAlignment() {
+    return EncodeStates<Family>::alignIndirectStatePointer;
 }
 
 template <typename Family>

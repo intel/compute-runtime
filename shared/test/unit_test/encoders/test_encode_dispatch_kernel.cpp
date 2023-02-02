@@ -800,7 +800,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneWhenHeapI
 
     auto dshBeforeFlush = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
     auto &kernelDescriptor = dispatchInterface->getKernelDescriptor();
-    dshBeforeFlush->getSpace(dshBeforeFlush->getAvailableSpace() - NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelDescriptor));
+    dshBeforeFlush->getSpace(dshBeforeFlush->getAvailableSpace() - NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelDescriptor, cmdContainer->getNumIddPerBlock()));
     auto cpuBaseBeforeFlush = dshBeforeFlush->getCpuBase();
 
     EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
@@ -853,7 +853,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneAndNextID
 
     auto dshBeforeFlush = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
     auto &kernelDescriptor = dispatchInterface->getKernelDescriptor();
-    auto sizeRequiredMinusIDD = dshBeforeFlush->getAvailableSpace() - NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelDescriptor) + sizeof(INTERFACE_DESCRIPTOR_DATA);
+    auto sizeRequiredMinusIDD = dshBeforeFlush->getAvailableSpace() - NEO::EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelDescriptor, cmdContainer->getNumIddPerBlock()) + sizeof(INTERFACE_DESCRIPTOR_DATA);
     dshBeforeFlush->getSpace(sizeRequiredMinusIDD);
     auto cpuBaseBeforeFlush = dshBeforeFlush->getCpuBase();
     auto usedBefore = cmdContainer->getIndirectHeap(HeapType::SURFACE_STATE)->getUsed();
@@ -1526,12 +1526,12 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThen
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
 
-    size_t additionalSize = UnitTestHelper<FamilyType>::getAdditionalDshSize();
+    size_t additionalSize = UnitTestHelper<FamilyType>::getAdditionalDshSize(cmdContainer->getNumIddPerBlock());
     size_t expectedSize = alignUp(additionalSize, EncodeStates<FamilyType>::alignInterfaceDescriptorData);
 
     // no samplers
     kernelInfo.kernelDescriptor.payloadMappings.samplerTable.numSamplers = 0;
-    size_t size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo.kernelDescriptor);
+    size_t size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo.kernelDescriptor, cmdContainer->getNumIddPerBlock());
     EXPECT_EQ(expectedSize, size);
 
     // two samplers, no border color state
@@ -1549,7 +1549,7 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThen
         expectedSize = alignedSamplers;
     }
 
-    size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo.kernelDescriptor);
+    size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo.kernelDescriptor, cmdContainer->getNumIddPerBlock());
     EXPECT_EQ(expectedSize, size);
 
     // three samplers, border color state
@@ -1565,7 +1565,7 @@ HWTEST_F(CommandEncodeStatesTest, givenKernelInfoWhenGettingRequiredDshSpaceThen
     } else {
         expectedSize = alignedSamplers;
     }
-    size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo.kernelDescriptor);
+    size = EncodeDispatchKernel<FamilyType>::getSizeRequiredDsh(kernelInfo.kernelDescriptor, cmdContainer->getNumIddPerBlock());
     EXPECT_EQ(expectedSize, size);
 }
 

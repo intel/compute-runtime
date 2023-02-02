@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, WhenProgrammingThenMediaInt
     using MEDIA_STATE_FLUSH = typename FamilyType::MEDIA_STATE_FLUSH;
     using MEDIA_INTERFACE_DESCRIPTOR_LOAD = typename FamilyType::MEDIA_INTERFACE_DESCRIPTOR_LOAD;
 
-    EncodeMediaInterfaceDescriptorLoad<FamilyType>::encode(*cmdContainer.get());
+    EncodeMediaInterfaceDescriptorLoad<FamilyType>::encode(*cmdContainer.get(), nullptr);
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());
 

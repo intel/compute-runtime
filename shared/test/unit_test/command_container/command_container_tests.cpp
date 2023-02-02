@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/heap_helper.h"
@@ -940,6 +941,9 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     cmdContainer.immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
 
+    const size_t dshAlign = NEO::EncodeDispatchKernel<FamilyType>::getDefaultDshAlignment();
+    const size_t sshAlign = NEO::EncodeDispatchKernel<FamilyType>::getDefaultSshAlignment();
+
     cmdContainer.setNumIddPerBlock(1);
     auto code = cmdContainer.initialize(pDevice, nullptr, true);
     EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, code);
@@ -956,7 +960,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.recursiveLockCounter = 0;
 
-    cmdContainer.ensureHeapSizePrepared(0, 0, false);
+    cmdContainer.ensureHeapSizePrepared(0, sshAlign, 0, dshAlign, false);
     EXPECT_EQ(1u, ultCsr.recursiveLockCounter);
 
     EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
@@ -968,22 +972,54 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     EXPECT_NO_THROW(cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 0));
     EXPECT_NO_THROW(cmdContainer.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, 0, 0));
 
-    cmdContainer.ensureHeapSizePrepared(0, 0, true);
+    cmdContainer.ensureHeapSizePrepared(0, sshAlign, 0, dshAlign, true);
     EXPECT_EQ(2u, ultCsr.recursiveLockCounter);
 
-    EXPECT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
-    EXPECT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE));
+    ASSERT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE));
+    ASSERT_NE(nullptr, cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE));
 
-    cmdContainer.ensureHeapSizePrepared(4 * MemoryConstants::kiloByte, 4 * MemoryConstants::kiloByte, true);
+    auto sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+    EXPECT_NE(nullptr, sshHeap);
+
+    size_t sizeUsedDsh = 0;
+    size_t sizeUsedSsh = sshHeap->getUsed();
+    size_t initSshSize = sizeUsedSsh;
+
+    constexpr size_t misAlignedSize = 3;
+    cmdContainer.ensureHeapSizePrepared(misAlignedSize, sshAlign, misAlignedSize, dshAlign, true);
     EXPECT_EQ(3u, ultCsr.recursiveLockCounter);
 
     auto dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
     EXPECT_NE(nullptr, dshHeap);
-    auto sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
+
+    sshHeap->getSpace(misAlignedSize);
+    dshHeap->getSpace(misAlignedSize);
+
+    cmdContainer.ensureHeapSizePrepared(sshAlign, sshAlign, dshAlign, dshAlign, true);
+    EXPECT_EQ(4u, ultCsr.recursiveLockCounter);
+
+    sshHeap->align(sshAlign);
+    sshHeap->getSpace(sshAlign);
+
+    dshHeap->align(dshAlign);
+    dshHeap->getSpace(dshAlign);
+
+    sizeUsedDsh = dshHeap->getUsed();
+    sizeUsedSsh = sshHeap->getUsed();
+
+    EXPECT_EQ(2 * sshAlign + initSshSize, sizeUsedSsh);
+    EXPECT_EQ(2 * dshAlign, sizeUsedDsh);
+
+    cmdContainer.ensureHeapSizePrepared(4 * MemoryConstants::kiloByte, sshAlign, 4 * MemoryConstants::kiloByte, dshAlign, true);
+    EXPECT_EQ(5u, ultCsr.recursiveLockCounter);
+
+    dshHeap = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
+    EXPECT_NE(nullptr, dshHeap);
+    sshHeap = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
     EXPECT_NE(nullptr, sshHeap);
 
-    size_t sizeUsedDsh = dshHeap->getUsed();
-    size_t sizeUsedSsh = sshHeap->getUsed();
+    sizeUsedDsh = dshHeap->getUsed();
+    sizeUsedSsh = sshHeap->getUsed();
 
     void *dshPtr = cmdContainer.getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, 64);
     void *sshPtr = cmdContainer.getHeapSpaceAllowGrow(HeapType::SURFACE_STATE, 64);
@@ -1012,12 +1048,15 @@ HWTEST_F(CommandContainerTest, givenCmdContainerUsedInRegularCmdListWhenGettingH
         GTEST_SKIP();
     }
 
+    const size_t dshAlign = NEO::EncodeDispatchKernel<FamilyType>::getDefaultDshAlignment();
+    const size_t sshAlign = NEO::EncodeDispatchKernel<FamilyType>::getDefaultSshAlignment();
+
     MyMockCommandContainer cmdContainer;
 
     auto code = cmdContainer.initialize(pDevice, nullptr, true);
     EXPECT_EQ(CommandContainer::ErrorCode::SUCCESS, code);
 
-    cmdContainer.ensureHeapSizePrepared(0, 0, true);
+    cmdContainer.ensureHeapSizePrepared(0, sshAlign, 0, dshAlign, true);
 
     auto dsh = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
     auto ssh = cmdContainer.getIndirectHeap(HeapType::SURFACE_STATE);
@@ -1027,7 +1066,7 @@ HWTEST_F(CommandContainerTest, givenCmdContainerUsedInRegularCmdListWhenGettingH
 
     dsh->getSpace(dsh->getAvailableSpace() - 64);
 
-    cmdContainer.ensureHeapSizePrepared(4 * MemoryConstants::kiloByte, 4 * MemoryConstants::kiloByte, false);
+    cmdContainer.ensureHeapSizePrepared(4 * MemoryConstants::kiloByte, sshAlign, 4 * MemoryConstants::kiloByte, dshAlign, false);
 
     dsh = cmdContainer.getIndirectHeap(HeapType::DYNAMIC_STATE);
     EXPECT_EQ(64u, dsh->getAvailableSpace());
