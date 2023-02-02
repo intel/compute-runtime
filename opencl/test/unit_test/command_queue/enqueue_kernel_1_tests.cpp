@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/preamble.h"

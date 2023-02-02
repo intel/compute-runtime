@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"

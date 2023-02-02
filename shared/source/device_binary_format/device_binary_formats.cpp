@@ -8,7 +8,7 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/hw_info_config.h"

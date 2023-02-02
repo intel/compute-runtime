@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 
 namespace NEO {

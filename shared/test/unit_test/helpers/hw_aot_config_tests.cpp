@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/helpers/compiler_hw_info_config.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/unit_test/fixtures/product_config_fixture.h"
 

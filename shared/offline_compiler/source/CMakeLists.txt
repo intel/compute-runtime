@@ -40,13 +40,13 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}/product_config.inl
     ${NEO_SHARED_DIRECTORY}/dll/devices/product_config_base.inl
     ${NEO_SHARED_DIRECTORY}/helpers/abort.cpp
-    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config.h
-    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config.cpp
-    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_base.inl
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper.h
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper.cpp
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper_base.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_aot_config_bdw_and_later.inl
-    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_bdw_and_later.inl
-    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_before_xe_hpc.inl
-    ${NEO_SHARED_DIRECTORY}/helpers/compiler_hw_info_config_xe_hpc_and_later.inl
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper_bdw_and_later.inl
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper_before_xe_hpc.inl
+    ${NEO_SHARED_DIRECTORY}/helpers/compiler_product_helper_xe_hpc_and_later.inl
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.cpp
     ${NEO_SHARED_DIRECTORY}/helpers/compiler_options_parser.h
     ${NEO_SHARED_DIRECTORY}/helpers/cache_policy.h
@@ -154,7 +154,7 @@ macro(macro_for_each_platform)
     foreach(BRANCH ${BRANCH_DIR_LIST})
       foreach(SRC_FILE ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}/definitions${BRANCH_DIR_SUFFIX}hw_info_setup_${PLATFORM_IT_LOWER}.inl
                 ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}hw_info_${PLATFORM_IT_LOWER}.cpp
-                ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}compiler_hw_info_config_${PLATFORM_IT_LOWER}.inl
+                ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}compiler_product_helper_${PLATFORM_IT_LOWER}.inl
                 ${NEO_SOURCE_DIR}/shared/source${BRANCH}${CORE_TYPE_LOWER}${BRANCH_DIR}enable_compiler_product_helper_${PLATFORM_IT_LOWER}.cpp
         )
         if(EXISTS ${SRC_FILE})
