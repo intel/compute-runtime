@@ -212,6 +212,10 @@ Kernel *BuiltinFunctionsLibImpl::getImageFunction(ImageBuiltin func) {
 std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) {
     using BuiltInCodeType = NEO::BuiltinCode::ECodeType;
 
+    if (!NEO::EmbeddedStorageRegistry::exists) {
+        return nullptr;
+    }
+
     StackVec<BuiltInCodeType, 2> supportedTypes{};
     if (!NEO::DebugManager.flags.RebuildPrecompiledKernels.get()) {
         supportedTypes.push_back(BuiltInCodeType::Binary);

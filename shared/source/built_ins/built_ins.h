@@ -98,6 +98,8 @@ class FileStorage : public Storage {
 };
 
 struct EmbeddedStorageRegistry {
+    inline static bool exists = false;
+
     static EmbeddedStorageRegistry &getInstance() {
         static EmbeddedStorageRegistry gsr;
         return gsr;
@@ -108,6 +110,13 @@ struct EmbeddedStorageRegistry {
     }
 
     const BuiltinResourceT *get(const std::string &name) const;
+
+    EmbeddedStorageRegistry() {
+        exists = true;
+    }
+    ~EmbeddedStorageRegistry() {
+        exists = false;
+    }
 
   private:
     using ResourcesContainer = std::unordered_map<std::string, BuiltinResourceT>;
