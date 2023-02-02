@@ -21,6 +21,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
+#include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include "opencl/source/cl_device/cl_device.h"
@@ -183,19 +184,17 @@ Buffer *Buffer::create(Context *context,
 }
 
 bool inline copyHostPointer(Buffer *buffer,
+                            Device &device,
                             size_t size,
                             void *hostPtr,
-                            GraphicsAllocation *memory,
-                            GraphicsAllocation *mapAllocation,
-                            uint32_t rootDeviceIndex,
-                            bool isCompressionEnabled,
                             bool implicitScalingEnabled,
                             cl_int &errcodeRet) {
+    auto rootDeviceIndex = device.getRootDeviceIndex();
+    auto memory = buffer->getGraphicsAllocation(rootDeviceIndex);
+    auto isCompressionEnabled = memory->isCompressionEnabled();
     const bool isLocalMemory = !MemoryPoolHelper::isSystemMemoryPool(memory->getMemoryPool());
     const bool gpuCopyRequired = isCompressionEnabled || isLocalMemory;
     if (gpuCopyRequired) {
-        auto context = buffer->getContext();
-        auto &device = context->getDevice(0u)->getDevice();
         auto &hwInfo = device.getHardwareInfo();
         auto &productHelper = device.getProductHelper();
 
@@ -226,7 +225,9 @@ bool inline copyHostPointer(Buffer *buffer,
             }
 
             if (blitMemoryToAllocationResult != BlitOperationResult::Success) {
+                auto context = buffer->getContext();
                 auto cmdQ = context->getSpecialQueue(rootDeviceIndex);
+                auto mapAllocation = buffer->getMapAllocation(rootDeviceIndex);
                 if (CL_SUCCESS != cmdQ->enqueueWriteBuffer(buffer, CL_TRUE, buffer->getOffset(), size, hostPtr, mapAllocation, 0, nullptr, nullptr)) {
                     errcodeRet = CL_OUT_OF_RESOURCES;
                     return false;
@@ -279,17 +280,11 @@ Buffer *Buffer::create(Context *context,
         if (CL_SUCCESS == poolAllocRet) {
             const bool needsCopy = copyHostPtr;
             if (needsCopy) {
-                for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
-                    auto graphicsAllocation = bufferFromPool->getGraphicsAllocation(rootDeviceIndex);
-                    auto mapAllocation = bufferFromPool->getMapAllocation(rootDeviceIndex);
-                    bool isCompressionEnabled = graphicsAllocation->isCompressionEnabled();
+                for (auto &clDevice : context->getDevices()) {
                     if (copyHostPointer(bufferFromPool,
+                                        clDevice->getDevice(),
                                         size,
                                         hostPtr,
-                                        graphicsAllocation,
-                                        mapAllocation,
-                                        rootDeviceIndex,
-                                        isCompressionEnabled,
                                         implicitScalingEnabled,
                                         poolAllocRet)) {
                         break;
@@ -501,8 +496,6 @@ Buffer *Buffer::create(Context *context,
             ", GPU address: ", allocationInfo.memory->getGpuAddress(),
             ", memoryPool: ", getMemoryPoolString(allocationInfo.memory));
 
-    bool copyExecuted = false;
-
     for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
         auto &allocationInfo = allocationInfos[rootDeviceIndex];
         if (useHostPtr) {
@@ -524,17 +517,21 @@ Buffer *Buffer::create(Context *context,
             pBuffer->mapAllocations.addAllocation(allocationInfo.mapAllocation);
         }
         pBuffer->setHostPtrMinSize(size);
-
-        if (allocationInfo.copyMemoryFromHostPtr && !copyExecuted) {
-            copyExecuted = copyHostPointer(pBuffer,
-                                           size,
-                                           hostPtr,
-                                           allocationInfo.memory,
-                                           allocationInfo.mapAllocation,
-                                           rootDeviceIndex,
-                                           isCompressionEnabled,
-                                           implicitScalingEnabled,
-                                           errcodeRet);
+    }
+    if (allocationInfo.copyMemoryFromHostPtr) {
+        for (auto &clDevice : context->getDevices()) {
+            if (copyHostPointer(pBuffer,
+                                clDevice->getDevice(),
+                                size,
+                                hostPtr,
+                                implicitScalingEnabled,
+                                errcodeRet)) {
+                auto migrationSyncData = pBuffer->getMultiGraphicsAllocation().getMigrationSyncData();
+                if (migrationSyncData) {
+                    migrationSyncData->setCurrentLocation(clDevice->getRootDeviceIndex());
+                }
+                break;
+            }
         }
     }
 

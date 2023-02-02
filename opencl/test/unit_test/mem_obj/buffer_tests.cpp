@@ -12,6 +12,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
+#include "shared/source/memory_manager/migration_sync_data.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/fixtures/memory_management_fixture.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
@@ -2188,6 +2189,42 @@ TEST(MultiRootDeviceBufferTest2, WhenBufferIsCreatedThenSecondAndSubsequentAlloc
     EXPECT_EQ(2u, memoryManager->createGraphicsAllocationFromExistingStorageCalled);
     EXPECT_EQ(memoryManager->allocationsFromExistingStorage[0], buffer->getMultiGraphicsAllocation().getGraphicsAllocation(1u));
     EXPECT_EQ(memoryManager->allocationsFromExistingStorage[1], buffer->getMultiGraphicsAllocation().getGraphicsAllocation(2u));
+}
+
+TEST(MultiRootDeviceBufferTest2, givenHostPtrToCopyWhenBufferIsCreatedWithMultiStorageThenMemoryIsPutInFirstDeviceInContext) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(true);
+    UltClDeviceFactory deviceFactory{2, 0};
+    {
+        cl_device_id deviceIds[] = {
+            deviceFactory.rootDevices[0],
+            deviceFactory.rootDevices[1]};
+        MockContext context{nullptr, nullptr};
+        context.initializeWithDevices(ClDeviceVector{deviceIds, 2}, false);
+        cl_int retVal = 0;
+
+        uint32_t data{};
+
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_COPY_HOST_PTR, sizeof(data), &data, retVal));
+
+        EXPECT_EQ(2u, context.getRootDeviceIndices().size());
+        EXPECT_EQ(0u, buffer->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+    }
+    {
+        cl_device_id deviceIds[] = {
+            deviceFactory.rootDevices[1],
+            deviceFactory.rootDevices[0]};
+        MockContext context{nullptr, nullptr};
+        context.initializeWithDevices(ClDeviceVector{deviceIds, 2}, false);
+        cl_int retVal = 0;
+
+        uint32_t data{};
+
+        std::unique_ptr<Buffer> buffer(Buffer::create(&context, CL_MEM_COPY_HOST_PTR, sizeof(data), &data, retVal));
+
+        EXPECT_EQ(2u, context.getRootDeviceIndices().size());
+        EXPECT_EQ(1u, buffer->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
+    }
 }
 
 TEST_F(MultiRootDeviceBufferTest, givenBufferWhenGetSurfaceSizeCalledWithoutAlignSizeForAuxTranslationThenCorrectValueReturned) {
