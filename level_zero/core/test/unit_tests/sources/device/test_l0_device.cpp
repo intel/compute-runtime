@@ -4257,7 +4257,10 @@ TEST(DeviceReturnSubDevicesAsApiDevicesTest, GivenReturnSubDevicesAsApiDevicesIs
     uint32_t count = 0;
     std::vector<ze_device_handle_t> hDevices;
     EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, nullptr), ZE_RESULT_SUCCESS);
-    EXPECT_EQ(count, 5u);
+
+    // mask is "0,1.1,2", but with ReturnSubDevicesAsApiDevices 1.1
+    // is not valid, so expected count is 2.
+    EXPECT_EQ(count, 2u);
 
     hDevices.resize(count);
     EXPECT_EQ(multiDeviceFixture.driverHandle->getDevice(&count, hDevices.data()), ZE_RESULT_SUCCESS);

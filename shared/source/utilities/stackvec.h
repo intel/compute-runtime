@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <limits>
+#include <tuple>
 #include <vector>
 
 template <size_t OnStackCapacity>
@@ -479,4 +480,6 @@ bool operator!=(const StackVec<T, LhsStackCaps> &lhs,
     return false == (lhs == rhs);
 }
 
-using RootDeviceIndicesContainer = StackVec<uint32_t, 16>;
+constexpr size_t MaxRootDeviceIndices = 16;
+using RootDeviceIndicesContainer = StackVec<uint32_t, MaxRootDeviceIndices>;
+using RootDeviceIndicesMap = StackVec<std::tuple<uint32_t, uint32_t>, MaxRootDeviceIndices>;

@@ -147,7 +147,33 @@ void ExecutionEnvironment::parseAffinityMask() {
         return;
     }
 
-    const uint32_t numRootDevices = static_cast<uint32_t>(rootDeviceEnvironments.size());
+    bool exposeSubDevicesAsApiDevices = false;
+    if (NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get() != -1) {
+        exposeSubDevicesAsApiDevices = NEO::DebugManager.flags.ReturnSubDevicesAsApiDevices.get();
+    }
+
+    uint32_t numRootDevices = static_cast<uint32_t>(rootDeviceEnvironments.size());
+
+    RootDeviceIndicesMap mapOfIndexes;
+    // Reserve at least for a size equal to rootDeviceEnvironments.size() times four,
+    // which is enough for typical configurations
+    size_t reservedSizeForIndices = numRootDevices * 4;
+    mapOfIndexes.reserve(reservedSizeForIndices);
+    if (exposeSubDevicesAsApiDevices) {
+        uint32_t currentDeviceIndex = 0;
+        for (uint32_t currentRootDevice = 0u; currentRootDevice < static_cast<uint32_t>(rootDeviceEnvironments.size()); currentRootDevice++) {
+            auto hwInfo = rootDeviceEnvironments[currentRootDevice]->getHardwareInfo();
+            auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
+            uint32_t currentSubDevice = 0;
+            mapOfIndexes[currentDeviceIndex++] = std::make_tuple(currentRootDevice, currentSubDevice);
+            for (currentSubDevice = 1; currentSubDevice < subDevicesCount; currentSubDevice++) {
+                mapOfIndexes[currentDeviceIndex++] = std::make_tuple(currentRootDevice, currentSubDevice);
+            }
+        }
+
+        numRootDevices = currentDeviceIndex;
+        UNRECOVERABLE_IF(numRootDevices > reservedSizeForIndices);
+    }
 
     std::vector<AffinityMaskHelper> affinityMaskHelper(numRootDevices);
 
@@ -157,6 +183,27 @@ void ExecutionEnvironment::parseAffinityMask() {
         auto subEntries = StringHelpers::split(entry, ".");
         uint32_t rootDeviceIndex = StringHelpers::toUint32t(subEntries[0]);
 
+        // tiles as devices
+        if (exposeSubDevicesAsApiDevices) {
+            if (rootDeviceIndex > numRootDevices) {
+                continue;
+            }
+
+            // ReturnSubDevicesAsApiDevices not supported with AllowSingleTileEngineInstancedSubDevices
+            // so ignore X.Y
+            if (subEntries.size() > 1) {
+                continue;
+            }
+
+            std::tuple<uint32_t, uint32_t> indexKey = mapOfIndexes[rootDeviceIndex];
+            auto deviceIndex = std::get<0>(indexKey);
+            auto tileIndex = std::get<1>(indexKey);
+            affinityMaskHelper[deviceIndex].enableGenericSubDevice(tileIndex);
+
+            continue;
+        }
+
+        // cards as devices
         if (rootDeviceIndex < numRootDevices) {
             auto hwInfo = rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
             auto subDevicesCount = GfxCoreHelper::getSubDevicesCount(hwInfo);
