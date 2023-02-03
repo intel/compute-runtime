@@ -485,6 +485,21 @@ TEST_F(ProgramUpdateBuildLogTest, GivenNonEmptyBuildLogWhenUpdatingBuildLogThenB
     EXPECT_STREQ(expectedBuildLog.c_str(), program->buildInfos[0].buildLog.c_str());
 }
 
+TEST_F(ProgramUpdateBuildLogTest, GivenNullTerminatedBuildLogWhenUpdatingBuildLogTwiceThenCorrectBuildLogIsSet) {
+    std::string buildLogMessage1("build log update 1");
+    std::string buildLogMessage2("build log update 2");
+    const std::string expectedBuildLog = buildLogMessage1 + "\n" + buildLogMessage2;
+
+    program->buildInfos[0].buildLog = "";
+    const char nullChar = '\0';
+    buildLogMessage1 += nullChar;
+    program->updateBuildLog(0, buildLogMessage1.c_str(), buildLogMessage1.size());
+    buildLogMessage2 += nullChar;
+    program->updateBuildLog(0, buildLogMessage2.c_str(), buildLogMessage2.size());
+
+    EXPECT_STREQ(expectedBuildLog.c_str(), program->buildInfos[0].buildLog.c_str());
+}
+
 TEST_F(ProgramFromBinaryTest, givenProgramWhenItIsBeingBuildThenItContainsGraphicsAllocationInKernelInfo) {
     pProgram->build(pProgram->getDevices(), nullptr, true);
     auto kernelInfo = pProgram->getKernelInfo(size_t(0), rootDeviceIndex);

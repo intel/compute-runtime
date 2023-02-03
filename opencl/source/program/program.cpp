@@ -278,7 +278,8 @@ cl_int Program::getSource(std::string &binary) const {
 
 void Program::updateBuildLog(uint32_t rootDeviceIndex, const char *pErrorString,
                              size_t errorStringSize) {
-    ConstStringRef errorString(pErrorString, errorStringSize);
+    auto isTerminator = [](char c) { return c == '\0'; };
+    auto errorString = ConstStringRef(pErrorString, errorStringSize).trimEnd(isTerminator);
     if (errorString.empty()) {
         return;
     }
