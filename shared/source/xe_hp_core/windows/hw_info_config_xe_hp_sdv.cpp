@@ -17,7 +17,7 @@
 
 constexpr static auto gfxProduct = IGFX_XE_HP_SDV;
 
-#include "shared/source/xe_hp_core/os_agnostic_hw_info_config_xe_hp_core.inl"
+#include "shared/source/xe_hp_core/os_agnostic_product_helper_xe_hp_core.inl"
 
 namespace NEO {
 template <>

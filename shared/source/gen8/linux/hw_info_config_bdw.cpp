@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@
 
 constexpr static auto gfxProduct = IGFX_BROADWELL;
 
-#include "shared/source/gen8/bdw/os_agnostic_hw_info_config_bdw.inl"
+#include "shared/source/gen8/bdw/os_agnostic_product_helper_bdw.inl"
 
 namespace NEO {
 

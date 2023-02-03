@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,12 +10,17 @@
 namespace NEO {
 template <>
 AOT::PRODUCT_CONFIG ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
-    return AOT::APL;
+    return AOT::SKL;
 }
 
 template <>
 std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
-    return aub_stream::ProductFamily::Bxt;
+    return aub_stream::ProductFamily::Skl;
 };
+
+template <>
+uint32_t ProductHelperHw<gfxProduct>::getDefaultRevisionId() const {
+    return 9u;
+}
 
 } // namespace NEO

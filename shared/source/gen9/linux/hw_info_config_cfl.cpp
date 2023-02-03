@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,7 +13,7 @@
 
 constexpr static auto gfxProduct = IGFX_COFFEELAKE;
 
-#include "shared/source/gen9/cfl/os_agnostic_hw_info_config_cfl.inl"
+#include "shared/source/gen9/cfl/os_agnostic_product_helper_cfl.inl"
 
 namespace NEO {
 template <>

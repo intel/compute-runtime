@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,8 +21,8 @@ namespace NEO {
 #include "shared/source/os_interface/linux/hw_info_config_mtl_and_later.inl"
 } // namespace NEO
 
-#include "shared/source/xe_hpg_core/mtl/os_agnostic_hw_info_config_mtl.inl"
-#include "shared/source/xe_hpg_core/os_agnostic_hw_info_config_xe_hpg_core.inl"
+#include "shared/source/xe_hpg_core/mtl/os_agnostic_product_helper_mtl.inl"
+#include "shared/source/xe_hpg_core/os_agnostic_product_helper_xe_hpg_core.inl"
 
 namespace NEO {
 template <>

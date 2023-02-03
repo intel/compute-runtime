@@ -16,8 +16,8 @@
 
 constexpr static auto gfxProduct = IGFX_ROCKETLAKE;
 
-#include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
-#include "shared/source/gen12lp/rkl/os_agnostic_hw_info_config_rkl.inl"
+#include "shared/source/gen12lp/os_agnostic_product_helper_gen12lp.inl"
+#include "shared/source/gen12lp/rkl/os_agnostic_product_helper_rkl.inl"
 namespace NEO {
 
 template <>

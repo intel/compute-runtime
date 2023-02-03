@@ -18,8 +18,8 @@
 
 constexpr static auto gfxProduct = IGFX_ALDERLAKE_P;
 
-#include "shared/source/gen12lp/adlp/os_agnostic_hw_info_config_adlp.inl"
-#include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
+#include "shared/source/gen12lp/adlp/os_agnostic_product_helper_adlp.inl"
+#include "shared/source/gen12lp/os_agnostic_product_helper_gen12lp.inl"
 namespace NEO {
 
 template <>

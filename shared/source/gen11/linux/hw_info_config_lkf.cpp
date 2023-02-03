@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include "platforms.h"
 
 constexpr static auto gfxProduct = IGFX_LAKEFIELD;
-#include "shared/source/gen11/lkf/os_agnostic_hw_info_config_lkf.inl"
+#include "shared/source/gen11/lkf/os_agnostic_product_helper_lkf.inl"
 namespace NEO {
 
 template <>

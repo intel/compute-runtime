@@ -19,10 +19,10 @@
 
 constexpr static auto gfxProduct = IGFX_DG2;
 
-#include "shared/source/xe_hpg_core/dg2/os_agnostic_hw_info_config_dg2.inl"
-#include "shared/source/xe_hpg_core/os_agnostic_hw_info_config_xe_hpg_core.inl"
+#include "shared/source/xe_hpg_core/dg2/os_agnostic_product_helper_dg2.inl"
+#include "shared/source/xe_hpg_core/os_agnostic_product_helper_xe_hpg_core.inl"
 
-#include "os_agnostic_hw_info_config_dg2_extra.inl"
+#include "os_agnostic_product_helper_dg2_extra.inl"
 #include "windows_hw_info_config_dg2_extra.inl"
 
 namespace NEO {

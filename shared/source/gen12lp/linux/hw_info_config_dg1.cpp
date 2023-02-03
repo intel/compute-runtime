@@ -16,8 +16,8 @@
 
 constexpr static auto gfxProduct = IGFX_DG1;
 
-#include "shared/source/gen12lp/dg1/os_agnostic_hw_info_config_dg1.inl"
-#include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
+#include "shared/source/gen12lp/dg1/os_agnostic_product_helper_dg1.inl"
+#include "shared/source/gen12lp/os_agnostic_product_helper_gen12lp.inl"
 namespace NEO {
 
 template <>

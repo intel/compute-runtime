@@ -16,8 +16,8 @@
 
 constexpr static auto gfxProduct = IGFX_TIGERLAKE_LP;
 
-#include "shared/source/gen12lp/os_agnostic_hw_info_config_gen12lp.inl"
-#include "shared/source/gen12lp/tgllp/os_agnostic_hw_info_config_tgllp.inl"
+#include "shared/source/gen12lp/os_agnostic_product_helper_gen12lp.inl"
+#include "shared/source/gen12lp/tgllp/os_agnostic_product_helper_tgllp.inl"
 
 namespace NEO {
 
