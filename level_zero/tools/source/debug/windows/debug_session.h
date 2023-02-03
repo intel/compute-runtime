@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 
 #include "level_zero/core/source/device/device.h"
@@ -18,6 +17,10 @@
 
 #include <atomic>
 #include <unordered_set>
+
+namespace NEO {
+class Wddm;
+}
 
 namespace L0 {
 

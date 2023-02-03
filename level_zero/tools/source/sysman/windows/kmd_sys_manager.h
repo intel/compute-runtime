@@ -7,8 +7,8 @@
 
 #pragma once
 
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include "level_zero/tools/source/sysman/windows/kmd_sys.h"
 #include "level_zero/ze_api.h"
@@ -16,6 +16,10 @@
 
 #include <string>
 #include <vector>
+
+namespace NEO {
+class Wddm;
+}
 
 namespace L0 {
 class KmdSysManager {

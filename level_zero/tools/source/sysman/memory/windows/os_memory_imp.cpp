@@ -7,6 +7,8 @@
 
 #include "sysman/memory/windows/os_memory_imp.h"
 
+#include "shared/source/os_interface/windows/wddm/wddm.h"
+
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 
 template <typename I>

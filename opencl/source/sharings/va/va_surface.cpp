@@ -7,7 +7,6 @@
 
 #include "opencl/source/sharings/va/va_surface.h"
 
-#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/allocation_properties.h"

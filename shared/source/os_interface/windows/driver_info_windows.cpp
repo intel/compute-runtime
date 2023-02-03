@@ -7,10 +7,8 @@
 
 #include "shared/source/os_interface/windows/driver_info_windows.h"
 
-#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/debug_registry_reader.h"
 #include "shared/source/os_interface/windows/sys_calls.h"
-#include "shared/source/os_interface/windows/wddm/wddm.h"
 
 #include <algorithm>
 

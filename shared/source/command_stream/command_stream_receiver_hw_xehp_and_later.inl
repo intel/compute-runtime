@@ -9,7 +9,6 @@
 #include "shared/source/command_stream/command_stream_receiver_hw_base.inl"
 #include "shared/source/command_stream/device_command_stream.h"
 #include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
-#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/kernel/grf_config.h"
 #include "shared/source/os_interface/hw_info_config.h"

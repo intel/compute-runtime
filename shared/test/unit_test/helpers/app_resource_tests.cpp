@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,16 +7,12 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/app_resource_defines.h"
 #include "shared/source/helpers/app_resource_helper.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/string.h"
+#include "shared/source/memory_manager/definitions/storage_info.h"
 #include "shared/test/common/fixtures/mock_execution_environment_gmm_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/test.h"
 
 using MockExecutionEnvironmentTagTest = Test<NEO::MockExecutionEnvironmentGmmFixture>;

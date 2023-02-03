@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,14 +7,10 @@
 
 #include "unified_buffer.h"
 
-#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/helpers/get_info.h"
-#include "shared/source/memory_manager/memory_manager.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/mem_obj/buffer.h"
-
-#include "config.h"
 
 using namespace NEO;
 

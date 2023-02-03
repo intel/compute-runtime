@@ -1,14 +1,11 @@
 /*
- * Copyright (C) 2018-2020 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "opencl/source/helpers/mipmap.h"
-
-#include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/gmm_helper/resource_info.h"
 
 #include "opencl/source/mem_obj/image.h"
 

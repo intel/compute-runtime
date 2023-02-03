@@ -7,6 +7,8 @@
 
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 
+#include "shared/source/os_interface/windows/wddm/wddm.h"
+
 #include "gfxEscape.h"
 
 namespace L0 {

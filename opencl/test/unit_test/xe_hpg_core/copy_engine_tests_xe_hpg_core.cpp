@@ -5,11 +5,10 @@
  *
  */
 
-#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
-#include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/helpers/timestamp_packet_container.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -22,8 +21,6 @@
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-
-#include "hw_cmds_xe_hpg_core_base.h"
 
 using namespace NEO;
 

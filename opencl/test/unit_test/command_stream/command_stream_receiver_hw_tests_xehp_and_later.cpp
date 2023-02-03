@@ -10,9 +10,6 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
-#include "shared/source/gmm_helper/gmm.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -31,17 +28,16 @@
 
 #include "opencl/source/command_queue/command_queue_hw.h"
 #include "opencl/source/command_queue/resource_barrier.h"
+#include "opencl/source/event/user_event.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_command_queue.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
-#include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
 
 #include "gtest/gtest.h"
-#include "reg_configs_common.h"
 
 using namespace NEO;
 
