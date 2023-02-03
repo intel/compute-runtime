@@ -23,7 +23,6 @@ struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
         dummyKernel = std::unique_ptr<WhiteBox<::L0::Kernel>>(new Mock<::L0::Kernel>());
         dummyModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
         dummyKernel->module = dummyModule.get();
-        mockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
     }
     void initBuiltinKernel(L0::Builtin func) override {
         auto builtId = static_cast<uint32_t>(func);
@@ -41,7 +40,6 @@ struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
 
     std::unique_ptr<WhiteBox<::L0::Kernel>> dummyKernel;
     std::unique_ptr<Module> dummyModule;
-    std::unique_ptr<Module> mockModule;
 
     Kernel *getFunction(Builtin func) override {
         return dummyKernel.get();
@@ -53,8 +51,9 @@ struct MockBuiltinFunctionsLibImpl : BuiltinFunctionsLibImpl {
 
     std::unique_ptr<BuiltinData> loadBuiltIn(NEO::EBuiltInOps::Type builtin, const char *builtInName) override {
         std::unique_ptr<Kernel> mockKernel(new Mock<::L0::Kernel>());
+        std::unique_ptr<Module> mockModule(new Mock<Module>(device, nullptr));
 
-        return std::unique_ptr<BuiltinData>(new BuiltinData{mockModule.get(), std::move(mockKernel)});
+        return std::unique_ptr<BuiltinData>(new BuiltinData{std::move(mockModule), std::move(mockKernel)});
     }
 };
 } // namespace ult

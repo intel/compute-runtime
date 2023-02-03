@@ -331,7 +331,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
             neoDevice->incRefInternal();
             execEnvironment = device->getExecEnvironment();
             driverHandle = device->getDriverHandle();
-            tmpMockBultinLib = new MockBuiltinFunctionsForQueryKernelTimestamps{this, device->getNEODevice()->getBuiltIns()};
+            tmpMockBultinLib = new MockBuiltinFunctionsForQueryKernelTimestamps{nullptr, nullptr};
         }
         MockBuiltinFunctionsForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
             return tmpMockBultinLib;
@@ -416,7 +416,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenCommandListWhenAppendQueryKernelTime
             neoDevice->incRefInternal();
             execEnvironment = device->getExecEnvironment();
             driverHandle = device->getDriverHandle();
-            tmpMockBultinLib = new MockBuiltinFunctionsForQueryKernelTimestamps{this, device->getNEODevice()->getBuiltIns()};
+            tmpMockBultinLib = new MockBuiltinFunctionsForQueryKernelTimestamps{nullptr, nullptr};
         }
         MockBuiltinFunctionsForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
             return tmpMockBultinLib;
@@ -500,7 +500,7 @@ HWTEST2_F(AppendQueryKernelTimestamps, givenEventWhenAppendQueryIsCalledThenSetA
             neoDevice->incRefInternal();
             execEnvironment = device->getExecEnvironment();
             driverHandle = device->getDriverHandle();
-            tmpMockBultinLib = std::make_unique<MockBuiltinFunctionsForQueryKernelTimestamps>(this, device->getNEODevice()->getBuiltIns());
+            tmpMockBultinLib = std::make_unique<MockBuiltinFunctionsForQueryKernelTimestamps>(this, nullptr);
         }
         MockBuiltinFunctionsForQueryKernelTimestamps *getBuiltinFunctionsLib() override {
             return tmpMockBultinLib.get();
