@@ -137,7 +137,7 @@ class CompilerInterface {
     [[nodiscard]] MOCKABLE_VIRTUAL std::unique_lock<SpinLock> lock() {
         return std::unique_lock<SpinLock>{spinlock};
     }
-    std::unique_ptr<CompilerCache> cache = nullptr;
+    std::unique_ptr<CompilerCache> cache;
 
     using igcDevCtxUptr = CIF::RAII::UPtr_t<IGC::IgcOclDeviceCtxTagOCL>;
     using fclDevCtxUptr = CIF::RAII::UPtr_t<IGC::FclOclDeviceCtxTagOCL>;

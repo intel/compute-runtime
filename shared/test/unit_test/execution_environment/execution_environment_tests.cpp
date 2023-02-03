@@ -27,35 +27,12 @@
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/utilities/destructor_counted.h"
 
-#include "opencl/source/cl_device/cl_device.h"
-#include "opencl/test/unit_test/mocks/mock_async_event_handler.h"
-#include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"
-#include "opencl/test/unit_test/mocks/mock_platform.h"
-
 using namespace NEO;
 
 TEST(ExecutionEnvironment, givenDefaultConstructorWhenItIsCalledThenExecutionEnvironmentHasInitialRefCountZero) {
     ExecutionEnvironment environment;
     EXPECT_EQ(0, environment.getRefInternalCount());
     EXPECT_EQ(0, environment.getRefApiCount());
-}
-
-TEST(ExecutionEnvironment, givenPlatformWhenItIsConstructedThenItCretesExecutionEnvironmentWithOneRefCountInternal) {
-    auto executionEnvironment = new ExecutionEnvironment();
-    EXPECT_EQ(0, executionEnvironment->getRefInternalCount());
-
-    std::unique_ptr<Platform> platform(new Platform(*executionEnvironment));
-    EXPECT_EQ(executionEnvironment, platform->peekExecutionEnvironment());
-    EXPECT_EQ(1, executionEnvironment->getRefInternalCount());
-}
-
-TEST(ExecutionEnvironment, givenPlatformAndExecutionEnvironmentWithRefCountsWhenPlatformIsDestroyedThenExecutionEnvironmentIsNotDeleted) {
-    auto executionEnvironment = new ExecutionEnvironment();
-    std::unique_ptr<Platform> platform(new Platform(*executionEnvironment));
-    executionEnvironment->incRefInternal();
-    platform.reset();
-    EXPECT_EQ(1, executionEnvironment->getRefInternalCount());
-    executionEnvironment->decRefInternal();
 }
 
 TEST(ExecutionEnvironment, WhenCreatingDevicesThenThoseDevicesAddRefcountsToExecutionEnvironment) {
@@ -71,33 +48,6 @@ TEST(ExecutionEnvironment, WhenCreatingDevicesThenThoseDevicesAddRefcountsToExec
     EXPECT_EQ(expectedRefCounts, executionEnvironment->getRefInternalCount());
 }
 
-TEST(ExecutionEnvironment, givenDeviceThatHaveRefferencesAfterPlatformIsDestroyedThenDeviceIsStillUsable) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateMultipleSubDevices.set(1);
-    auto executionEnvironment = new ExecutionEnvironment();
-    std::unique_ptr<Platform> platform(new Platform(*executionEnvironment));
-    platform->initialize(DeviceFactory::createDevices(*executionEnvironment));
-    auto device = platform->getClDevice(0);
-    EXPECT_EQ(1, device->getRefInternalCount());
-    device->incRefInternal();
-    platform.reset(nullptr);
-    EXPECT_EQ(1, device->getRefInternalCount());
-
-    int32_t expectedRefCount = 1 + device->getNumSubDevices();
-
-    EXPECT_EQ(expectedRefCount, executionEnvironment->getRefInternalCount());
-
-    device->decRefInternal();
-}
-
-TEST(ExecutionEnvironment, givenPlatformWhenItIsCreatedThenItCreatesMemoryManagerInExecutionEnvironment) {
-    auto executionEnvironment = new ExecutionEnvironment();
-    Platform platform(*executionEnvironment);
-    prepareDeviceEnvironments(*executionEnvironment);
-    platform.initialize(DeviceFactory::createDevices(*executionEnvironment));
-    EXPECT_NE(nullptr, executionEnvironment->memoryManager);
-}
-
 TEST(ExecutionEnvironment, givenMemoryManagerIsNotInitializedInExecutionEnvironmentWhenCreatingDevicesThenEmptyDeviceVectorIsReturned) {
     class FailedInitializeMemoryManagerExecutionEnvironment : public MockExecutionEnvironment {
         bool initializeMemoryManager() override { return false; }
@@ -110,11 +60,12 @@ TEST(ExecutionEnvironment, givenMemoryManagerIsNotInitializedInExecutionEnvironm
 }
 
 TEST(ExecutionEnvironment, givenDeviceWhenItIsDestroyedThenMemoryManagerIsStillAvailable) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->initializeMemoryManager();
-    std::unique_ptr<Device> device(Device::create<RootDevice>(executionEnvironment, 0u));
+    MockExecutionEnvironment executionEnvironment{};
+    executionEnvironment.incRefInternal();
+    executionEnvironment.initializeMemoryManager();
+    std::unique_ptr<Device> device(Device::create<RootDevice>(&executionEnvironment, 0u));
     device.reset(nullptr);
-    EXPECT_NE(nullptr, executionEnvironment->memoryManager);
+    EXPECT_NE(nullptr, executionEnvironment.memoryManager);
 }
 
 TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsReceivesCorrectInputParams) {
@@ -157,16 +108,16 @@ TEST(RootDeviceEnvironment, givenUseAubStreamFalseWhenGetAubManagerIsCalledThenR
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.UseAubStream.set(false);
 
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), false, 1u};
+    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::CSR_AUB);
     auto aubManager = rootDeviceEnvironment->aubCenter->getAubManager();
     EXPECT_EQ(nullptr, aubManager);
 }
 
 TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCalledThenItIsInitalizedOnce) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+    MockExecutionEnvironment executionEnvironment{defaultHwInfo.get(), false, 1u};
+    auto rootDeviceEnvironment = executionEnvironment.rootDeviceEnvironments[0].get();
     rootDeviceEnvironment->initAubCenter(false, "", CommandStreamReceiverType::CSR_AUB);
     auto currentAubCenter = rootDeviceEnvironment->aubCenter.get();
     EXPECT_NE(nullptr, currentAubCenter);
@@ -194,7 +145,8 @@ TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetWhenInitializ
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableDirectSubmissionController.set(1);
 
-    auto controller = platform()->peekExecutionEnvironment()->initializeDirectSubmissionController();
+    MockExecutionEnvironment executionEnvironment{};
+    auto controller = executionEnvironment.initializeDirectSubmissionController();
 
     EXPECT_NE(controller, nullptr);
 }
@@ -203,7 +155,8 @@ TEST(ExecutionEnvironment, givenSetCsrFlagSetWhenInitializeDirectSubmissionContr
     DebugManagerStateRestore restorer;
     DebugManager.flags.SetCommandStreamReceiver.set(1);
 
-    auto controller = platform()->peekExecutionEnvironment()->initializeDirectSubmissionController();
+    MockExecutionEnvironment executionEnvironment{};
+    auto controller = executionEnvironment.initializeDirectSubmissionController();
 
     EXPECT_EQ(controller, nullptr);
 }
@@ -212,7 +165,8 @@ TEST(ExecutionEnvironment, givenEnableDirectSubmissionControllerSetZeroWhenIniti
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableDirectSubmissionController.set(0);
 
-    auto controller = platform()->peekExecutionEnvironment()->initializeDirectSubmissionController();
+    MockExecutionEnvironment executionEnvironment{};
+    auto controller = executionEnvironment.initializeDirectSubmissionController();
 
     EXPECT_EQ(controller, nullptr);
 }
@@ -283,9 +237,9 @@ TEST(ExecutionEnvironment, givenEnvVarUsedInCalConfigAlsoSetByAppWhenCreateExecu
 }
 
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenItIsInitalized) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->initializeMemoryManager();
-    EXPECT_NE(nullptr, executionEnvironment->memoryManager);
+    MockExecutionEnvironment executionEnvironment{};
+    executionEnvironment.initializeMemoryManager();
+    EXPECT_NE(nullptr, executionEnvironment.memoryManager);
 }
 static_assert(sizeof(ExecutionEnvironment) == sizeof(std::unique_ptr<HardwareInfo>) +
                                                   sizeof(std::vector<RootDeviceEnvironment>) +
@@ -346,17 +300,18 @@ TEST(ExecutionEnvironment, givenExecutionEnvironmentWithVariousMembersWhenItIsDe
 }
 
 TEST(ExecutionEnvironment, givenMultipleRootDevicesWhenTheyAreCreatedThenReuseMemoryManager) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    executionEnvironment->prepareRootDeviceEnvironments(2);
-    for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
-        executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-        executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+    ExecutionEnvironment executionEnvironment{};
+    executionEnvironment.incRefInternal();
+    executionEnvironment.prepareRootDeviceEnvironments(2);
+    for (auto i = 0u; i < executionEnvironment.rootDeviceEnvironments.size(); i++) {
+        executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+        executionEnvironment.rootDeviceEnvironments[i]->initGmm();
     }
-    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(executionEnvironment, 0u));
+    std::unique_ptr<MockDevice> device(Device::create<MockDevice>(&executionEnvironment, 0u));
     auto &commandStreamReceiver = device->getGpgpuCommandStreamReceiver();
     auto memoryManager = device->getMemoryManager();
 
-    std::unique_ptr<MockDevice> device2(Device::create<MockDevice>(executionEnvironment, 1u));
+    std::unique_ptr<MockDevice> device2(Device::create<MockDevice>(&executionEnvironment, 1u));
     EXPECT_NE(&commandStreamReceiver, &device2->getGpgpuCommandStreamReceiver());
     EXPECT_EQ(memoryManager, device2->getMemoryManager());
 }
@@ -428,19 +383,19 @@ class DefaultDriverModelMock : public DriverModel {
 
 TEST(ExecutionEnvironment, givenRootDeviceWhenPrepareForCleanupThenIsDriverAvailableIsCalled) {
     VariableBackup<uint64_t> varBackup = &isDriverAvailableCounter;
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
+    ExecutionEnvironment executionEnvironment{};
 
     std::unique_ptr<OSInterface> osInterface = std::make_unique<OSInterface>();
     osInterface->setDriverModel(std::make_unique<DriverModelMock>(DriverModelType::UNKNOWN));
 
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::move(osInterface);
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::move(osInterface);
 
-    executionEnvironment->prepareForCleanup();
+    executionEnvironment.prepareForCleanup();
 
     EXPECT_EQ(1u, isDriverAvailableCounter);
 
-    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<DefaultDriverModelMock>(DriverModelType::UNKNOWN));
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<DefaultDriverModelMock>(DriverModelType::UNKNOWN));
 }
 
 TEST(ExecutionEnvironment, givenUnproperSetCsrFlagValueWhenInitializingMemoryManagerThenCreateDefaultMemoryManager) {
@@ -487,21 +442,4 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
 
         EXPECT_EQ(expectedOsContextCount + expectedOsContextCountForCcs, MemoryManager::maxOsContextCount);
     }
-}
-
-TEST(ClExecutionEnvironment, WhenExecutionEnvironmentIsDeletedThenAsyncEventHandlerThreadIsDestroyed) {
-    auto executionEnvironment = new MockClExecutionEnvironment();
-    MockHandler *mockAsyncHandler = new MockHandler();
-
-    executionEnvironment->asyncEventsHandler.reset(mockAsyncHandler);
-    EXPECT_EQ(mockAsyncHandler, executionEnvironment->getAsyncEventsHandler());
-
-    mockAsyncHandler->openThread();
-    delete executionEnvironment;
-    EXPECT_TRUE(MockAsyncEventHandlerGlobals::destructorCalled);
-}
-
-TEST(ClExecutionEnvironment, WhenExecutionEnvironmentIsCreatedThenAsyncEventHandlerIsCreated) {
-    auto executionEnvironment = std::make_unique<ClExecutionEnvironment>();
-    EXPECT_NE(nullptr, executionEnvironment->getAsyncEventsHandler());
 }
