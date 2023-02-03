@@ -855,8 +855,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
     dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = systolicPipelineSelectMode;
 
-    dispatchFlags.disableEUFusion = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion ||
-                                    device->getProductHelper().isFusedEuDisabledForDpas(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode, *kernel->getLocalWorkSizeValues().data(), *kernel->getNumWorkGroupsValues().data());
+    dispatchFlags.disableEUFusion = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion;
 
     const bool isHandlingBarrier = getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
 

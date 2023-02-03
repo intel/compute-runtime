@@ -18,7 +18,6 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/ult_command_stream_receiver_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"

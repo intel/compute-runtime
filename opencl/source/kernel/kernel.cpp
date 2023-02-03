@@ -567,7 +567,6 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
     size_t maxWorkgroupSize;
     const auto &hwInfo = clDevice.getHardwareInfo();
     auto &gfxCoreHelper = clDevice.getGfxCoreHelper();
-    auto &productHelper = clDevice.getProductHelper();
     auto &clGfxCoreHelper = clDevice.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
@@ -598,8 +597,7 @@ cl_int Kernel::getWorkGroupInfo(cl_kernel_work_group_info paramName,
 
     case CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE:
         preferredWorkGroupSizeMultiple = kernelInfo.getMaxSimdSize();
-        if (gfxCoreHelper.isFusedEuDispatchEnabled(hwInfo, kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion) &&
-            !productHelper.isFusedEuDisabledForDpas(kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode, nullptr, nullptr)) {
+        if (gfxCoreHelper.isFusedEuDispatchEnabled(hwInfo, kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion)) {
             preferredWorkGroupSizeMultiple *= 2;
         }
         srcSize = sizeof(preferredWorkGroupSizeMultiple);

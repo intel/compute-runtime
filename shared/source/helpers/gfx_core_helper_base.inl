@@ -723,4 +723,5 @@ template <typename gfxProduct>
 bool GfxCoreHelperHw<gfxProduct>::isRelaxedOrderingSupported() const {
     return false;
 }
+
 } // namespace NEO

@@ -217,24 +217,23 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamProp
     auto &productHelper = device->getProductHelper();
     int32_t expectedDispatchAllWalkerEnable = productHelper.isComputeDispatchAllWalkerEnableInCfeStateRequired(device->getHwInfo()) ? 0 : -1;
 
-    const ze_group_count_t launchKernelArgs = {};
-    pCommandList->updateStreamProperties(defaultKernel, false, &launchKernelArgs);
+    pCommandList->updateStreamProperties(defaultKernel, false);
 
     EXPECT_EQ(expectedDispatchAllWalkerEnable, pCommandList->requiredStreamState.frontEndState.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(expectedDispatchAllWalkerEnable, pCommandList->finalStreamState.frontEndState.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
     pCommandList->reset();
 
-    pCommandList->updateStreamProperties(cooperativeKernel, true, &launchKernelArgs);
-    pCommandList->updateStreamProperties(cooperativeKernel, true, &launchKernelArgs);
+    pCommandList->updateStreamProperties(cooperativeKernel, true);
+    pCommandList->updateStreamProperties(cooperativeKernel, true);
     expectedDispatchAllWalkerEnable = expectedDispatchAllWalkerEnable != -1 ? 1 : expectedDispatchAllWalkerEnable;
     EXPECT_EQ(expectedDispatchAllWalkerEnable, pCommandList->requiredStreamState.frontEndState.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(expectedDispatchAllWalkerEnable, pCommandList->finalStreamState.frontEndState.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
     pCommandList->reset();
 
-    pCommandList->updateStreamProperties(defaultKernel, false, &launchKernelArgs);
-    pCommandList->updateStreamProperties(cooperativeKernel, true, &launchKernelArgs);
+    pCommandList->updateStreamProperties(defaultKernel, false);
+    pCommandList->updateStreamProperties(cooperativeKernel, true);
     expectedDispatchAllWalkerEnable = expectedDispatchAllWalkerEnable != -1 ? 0 : expectedDispatchAllWalkerEnable;
     EXPECT_EQ(expectedDispatchAllWalkerEnable, pCommandList->requiredStreamState.frontEndState.computeDispatchAllWalkerEnable.value);
     expectedDispatchAllWalkerEnable = expectedDispatchAllWalkerEnable != -1 ? 1 : expectedDispatchAllWalkerEnable;
@@ -243,18 +242,18 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsWhenUpdateStreamProp
     EXPECT_EQ(expectedCommandsToPatch, pCommandList->commandsToPatch.size());
     pCommandList->reset();
 
-    pCommandList->updateStreamProperties(cooperativeKernel, true, &launchKernelArgs);
-    pCommandList->updateStreamProperties(defaultKernel, false, &launchKernelArgs);
-    pCommandList->updateStreamProperties(cooperativeKernel, true, &launchKernelArgs);
+    pCommandList->updateStreamProperties(cooperativeKernel, true);
+    pCommandList->updateStreamProperties(defaultKernel, false);
+    pCommandList->updateStreamProperties(cooperativeKernel, true);
     EXPECT_EQ(expectedDispatchAllWalkerEnable, pCommandList->requiredStreamState.frontEndState.computeDispatchAllWalkerEnable.value);
     EXPECT_EQ(expectedDispatchAllWalkerEnable, pCommandList->finalStreamState.frontEndState.computeDispatchAllWalkerEnable.value);
     expectedCommandsToPatch = expectedCommandsToPatch != 0 ? 2 : 0;
     EXPECT_EQ(expectedCommandsToPatch, pCommandList->commandsToPatch.size());
     pCommandList->reset();
 
-    pCommandList->updateStreamProperties(defaultKernel, false, &launchKernelArgs);
-    pCommandList->updateStreamProperties(defaultKernel, false, &launchKernelArgs);
-    pCommandList->updateStreamProperties(cooperativeKernel, true, &launchKernelArgs);
+    pCommandList->updateStreamProperties(defaultKernel, false);
+    pCommandList->updateStreamProperties(defaultKernel, false);
+    pCommandList->updateStreamProperties(cooperativeKernel, true);
     expectedDispatchAllWalkerEnable = expectedDispatchAllWalkerEnable != -1 ? 0 : expectedDispatchAllWalkerEnable;
     EXPECT_EQ(expectedDispatchAllWalkerEnable, pCommandList->requiredStreamState.frontEndState.computeDispatchAllWalkerEnable.value);
     expectedDispatchAllWalkerEnable = expectedDispatchAllWalkerEnable != -1 ? 1 : expectedDispatchAllWalkerEnable;
@@ -284,15 +283,14 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenVariousKernelsAndPatchingDisallowe
     auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    const ze_group_count_t launchKernelArgs = {};
-    pCommandList->updateStreamProperties(defaultKernel, false, &launchKernelArgs);
-    pCommandList->updateStreamProperties(cooperativeKernel, true, &launchKernelArgs);
+    pCommandList->updateStreamProperties(defaultKernel, false);
+    pCommandList->updateStreamProperties(cooperativeKernel, true);
     EXPECT_EQ(0u, pCommandList->commandsToPatch.size());
     pCommandList->reset();
 
     DebugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
-    pCommandList->updateStreamProperties(defaultKernel, false, &launchKernelArgs);
-    pCommandList->updateStreamProperties(cooperativeKernel, true, &launchKernelArgs);
+    pCommandList->updateStreamProperties(defaultKernel, false);
+    pCommandList->updateStreamProperties(cooperativeKernel, true);
 
     const auto &productHelper = device->getProductHelper();
     size_t expectedCmdsToPatch = productHelper.isComputeDispatchAllWalkerEnableInCfeStateRequired(device->getHwInfo()) ? 1 : 0;

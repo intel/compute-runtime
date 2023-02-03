@@ -138,7 +138,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
 
     std::list<void *> additionalCommands;
 
-    updateStreamProperties(*kernel, launchParams.isCooperative, threadGroupDimensions);
+    updateStreamProperties(*kernel, launchParams.isCooperative);
     NEO::EncodeDispatchKernelArgs dispatchKernelArgs{
         0,                                                      // eventAddress
         neoDevice,                                              // device

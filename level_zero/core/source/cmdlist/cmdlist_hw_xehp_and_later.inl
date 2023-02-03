@@ -254,7 +254,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     this->containsStatelessUncachedResource |= kernelImp->getKernelRequiresUncachedMocs();
     this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
 
-    updateStreamProperties(*kernel, launchParams.isCooperative, threadGroupDimensions);
+    updateStreamProperties(*kernel, launchParams.isCooperative);
 
     auto localMemSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().localMemSize);
     auto slmTotalSize = kernelImp->getSlmTotalSize();

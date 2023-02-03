@@ -2371,21 +2371,15 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStateBaseAddressStreamPropertie
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions) {
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isCooperative) {
     using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
 
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
 
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
     bool captureBaseAddressState = containsAnyKernel;
-    bool fusedEuDisabled = kernelAttributes.flags.requiresDisabledEUFusion;
-    auto &productHelper = device->getProductHelper();
-    if (threadGroupDimensions) {
-        uint32_t groupCount[3] = {threadGroupDimensions->groupCountX, threadGroupDimensions->groupCountY, threadGroupDimensions->groupCountZ};
-        fusedEuDisabled |= productHelper.isFusedEuDisabledForDpas(kernelAttributes.flags.usesSystolicPipelineSelectMode, kernel.getGroupSize(), groupCount);
-    }
     if (!containsAnyKernel) {
-        requiredStreamState.frontEndState.setProperties(isCooperative, fusedEuDisabled, true, -1, rootDeviceEnvironment);
+        requiredStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, true, -1, rootDeviceEnvironment);
         requiredStreamState.pipelineSelect.setProperties(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
 
         if (!this->isFlushTaskSubmissionEnabled) {
@@ -2416,7 +2410,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
                                                               rootDeviceEnvironment);
     }
 
-    finalStreamState.frontEndState.setProperties(isCooperative, fusedEuDisabled, true, -1, rootDeviceEnvironment);
+    finalStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, true, -1, rootDeviceEnvironment);
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
     if (finalStreamState.frontEndState.isDirty() && logicalStateHelperBlock) {
         if (isPatchingVfeStateAllowed) {

@@ -195,7 +195,6 @@ class ProductHelper {
     virtual uint32_t getDefaultRevisionId() const = 0;
 
     virtual bool isMultiContextResourceDeferDeletionSupported() const = 0;
-    virtual bool isFusedEuDisabledForDpas(bool kernelHasDpasInstructions, const uint32_t *lws, const uint32_t *groupCount) const = 0;
 
     virtual ~ProductHelper() = default;
 
@@ -352,7 +351,6 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getDefaultRevisionId() const override;
 
     bool isMultiContextResourceDeferDeletionSupported() const override;
-    bool isFusedEuDisabledForDpas(bool kernelHasDpasInstructions, const uint32_t *lws, const uint32_t *groupCount) const override;
 
     ~ProductHelperHw() override = default;
 

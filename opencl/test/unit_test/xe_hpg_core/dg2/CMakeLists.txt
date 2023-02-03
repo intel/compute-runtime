@@ -13,7 +13,6 @@ if(TESTS_DG2)
   set(IGDRCL_SRCS_tests_xe_hpg_core_dg2
       ${IGDRCL_SRCS_tests_xe_hpg_core_dg2_excludes}
       ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
-      ${CMAKE_CURRENT_SOURCE_DIR}/command_queue_tests_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/buffer_pool_alloc_tests_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/get_device_info_dg2.cpp
       ${CMAKE_CURRENT_SOURCE_DIR}/test_cmds_programming_dg2.cpp

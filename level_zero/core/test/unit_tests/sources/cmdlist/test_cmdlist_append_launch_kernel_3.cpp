@@ -372,12 +372,11 @@ HWTEST2_F(CommandListAppendLaunchKernel, whenUpdateStreamPropertiesIsCalledThenR
     const auto &productHelper = device->getProductHelper();
     int32_t expectedDisableOverdispatch = productHelper.isDisableOverdispatchAvailable(*defaultHwInfo) ? 1 : -1;
 
-    const ze_group_count_t launchKernelArgs = {};
-    pCommandList->updateStreamProperties(kernel, false, &launchKernelArgs);
+    pCommandList->updateStreamProperties(kernel, false);
     EXPECT_EQ(expectedDisableOverdispatch, pCommandList->requiredStreamState.frontEndState.disableOverdispatch.value);
     EXPECT_EQ(expectedDisableOverdispatch, pCommandList->finalStreamState.frontEndState.disableOverdispatch.value);
 
-    pCommandList->updateStreamProperties(kernel, false, &launchKernelArgs);
+    pCommandList->updateStreamProperties(kernel, false);
     EXPECT_EQ(expectedDisableOverdispatch, pCommandList->requiredStreamState.frontEndState.disableOverdispatch.value);
     EXPECT_EQ(expectedDisableOverdispatch, pCommandList->finalStreamState.frontEndState.disableOverdispatch.value);
 }

@@ -258,7 +258,7 @@ struct CommandListCoreFamily : CommandListImp {
                                           const CmdListKernelLaunchParams &launchParams);
 
     ze_result_t prepareIndirectParams(const ze_group_count_t *threadGroupDimensions);
-    void updateStreamProperties(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions);
+    void updateStreamProperties(Kernel &kernel, bool isCooperative);
     void updateStateBaseAddressStreamProperties(Kernel &kernel, bool updateRequiredState, bool captureBaseAddressState);
     void clearCommandsToPatch();
 

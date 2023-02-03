@@ -235,21 +235,5 @@ template <>
 std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
     return aub_stream::ProductFamily::Dg2;
 };
-template <>
-bool ProductHelperHw<gfxProduct>::isFusedEuDisabledForDpas(bool kernelHasDpasInstructions, const uint32_t *lws, const uint32_t *groupCount) const {
-    if (!kernelHasDpasInstructions) {
-        return false;
-    } else if (lws == nullptr || groupCount == nullptr) {
-        return true;
-    } else if (size_t lwsCount = lws[0] * lws[1] * lws[2]; lwsCount > 1 && (lwsCount & 1) != 0) {
-        return true;
-    } else if (lwsCount > 1) {
-        return false;
-    } else if ((groupCount[0] & 1) != 0) {
-        return true;
-    } else {
-        return false;
-    }
-}
 
 } // namespace NEO
