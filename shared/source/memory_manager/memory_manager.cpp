@@ -491,8 +491,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.multiOsContextCapable = properties.flags.multiOsContextCapable;
     allocationData.usmInitialPlacement = properties.usmInitialPlacement;
 
-    if (GraphicsAllocation::isDebugSurfaceAllocationType(properties.allocationType) ||
-        GraphicsAllocation::isConstantOrGlobalSurfaceAllocationType(properties.allocationType)) {
+    if (GraphicsAllocation::isDebugSurfaceAllocationType(properties.allocationType)) {
         allocationData.flags.zeroMemory = 1;
     }
 

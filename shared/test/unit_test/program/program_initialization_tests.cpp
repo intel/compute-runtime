@@ -31,7 +31,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     initData.resize(64, 7U);
     GraphicsAllocation *alloc = nullptr;
 
-    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), 0u, true /* constant */, nullptr /* linker input */, initData.data());
+    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), true /* constant */, nullptr /* linker input */, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
@@ -39,7 +39,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     EXPECT_EQ(AllocationType::CONSTANT_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
-    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), 0u, false /* constant */, nullptr /* linker input */, initData.data());
+    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), false /* constant */, nullptr /* linker input */, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
@@ -47,7 +47,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     EXPECT_EQ(AllocationType::GLOBAL_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
-    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), 0u, true /* constant */, &emptyLinkerInput, initData.data());
+    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), true /* constant */, &emptyLinkerInput, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
@@ -55,7 +55,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
     EXPECT_EQ(AllocationType::CONSTANT_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
-    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), 0u, false /* constant */, &emptyLinkerInput, initData.data());
+    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), false /* constant */, &emptyLinkerInput, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
@@ -77,7 +77,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenM
     initData.resize(64, 7U);
     GraphicsAllocation *alloc = nullptr;
 
-    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), 0u, true /* constant */, &linkerInputExportGlobalConstants, initData.data());
+    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), true /* constant */, &linkerInputExportGlobalConstants, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(MemoryConstants::pageSize64k, alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
@@ -86,21 +86,21 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenM
     EXPECT_EQ(DEVICE_UNIFIED_MEMORY, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(alloc->getGpuAddress()))->memoryType);
     svmAllocsManager.freeSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress())));
 
-    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), 0u, true /* constant */, &linkerInputExportGlobalVariables, initData.data());
+    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), true /* constant */, &linkerInputExportGlobalVariables, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress()))));
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
-    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), 0u, false /* constant */, &linkerInputExportGlobalConstants, initData.data());
+    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), false /* constant */, &linkerInputExportGlobalConstants, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(alloc->getGpuAddress()))));
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
-    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), 0u, false /* constant */, &linkerInputExportGlobalVariables, initData.data());
+    alloc = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), false /* constant */, &linkerInputExportGlobalVariables, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(MemoryConstants::pageSize64k, alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
@@ -120,28 +120,28 @@ TEST(AllocateGlobalSurfaceTest, GivenNullSvmAllocsManagerWhenGlobalsAreExportedT
     initData.resize(64, 7U);
     GraphicsAllocation *alloc = nullptr;
 
-    alloc = allocateGlobalsSurface(nullptr, device, initData.size(), 0u, true /* constant */, &linkerInputExportGlobalConstants, initData.data());
+    alloc = allocateGlobalsSurface(nullptr, device, initData.size(), true /* constant */, &linkerInputExportGlobalConstants, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_EQ(AllocationType::CONSTANT_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
-    alloc = allocateGlobalsSurface(nullptr, device, initData.size(), 0u, true /* constant */, &linkerInputExportGlobalVariables, initData.data());
+    alloc = allocateGlobalsSurface(nullptr, device, initData.size(), true /* constant */, &linkerInputExportGlobalVariables, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_EQ(AllocationType::CONSTANT_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
-    alloc = allocateGlobalsSurface(nullptr, device, initData.size(), 0u, false /* constant */, &linkerInputExportGlobalConstants, initData.data());
+    alloc = allocateGlobalsSurface(nullptr, device, initData.size(), false /* constant */, &linkerInputExportGlobalConstants, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
     EXPECT_EQ(AllocationType::GLOBAL_SURFACE, alloc->getAllocationType());
     device.getMemoryManager()->freeGraphicsMemory(alloc);
 
-    alloc = allocateGlobalsSurface(nullptr, device, initData.size(), 0u, false /* constant */, &linkerInputExportGlobalVariables, initData.data());
+    alloc = allocateGlobalsSurface(nullptr, device, initData.size(), false /* constant */, &linkerInputExportGlobalVariables, initData.data());
     ASSERT_NE(nullptr, alloc);
     ASSERT_EQ(initData.size(), alloc->getUnderlyingBufferSize());
     EXPECT_EQ(0, memcmp(alloc->getUnderlyingBuffer(), initData.data(), initData.size()));
@@ -160,28 +160,28 @@ TEST(AllocateGlobalSurfaceTest, WhenGlobalsAreNotExportedAndAllocationFailsThenG
     initData.resize(64, 7U);
     GraphicsAllocation *alloc = nullptr;
 
-    alloc = allocateGlobalsSurface(&mockSvmAllocsManager, device, initData.size(), 0u, true /* constant */, nullptr /* linker input */, initData.data());
+    alloc = allocateGlobalsSurface(&mockSvmAllocsManager, device, initData.size(), true /* constant */, nullptr /* linker input */, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(&mockSvmAllocsManager, device, initData.size(), 0u, false /* constant */, nullptr /* linker input */, initData.data());
+    alloc = allocateGlobalsSurface(&mockSvmAllocsManager, device, initData.size(), false /* constant */, nullptr /* linker input */, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(&mockSvmAllocsManager, device, initData.size(), 0u, true /* constant */, &emptyLinkerInput, initData.data());
+    alloc = allocateGlobalsSurface(&mockSvmAllocsManager, device, initData.size(), true /* constant */, &emptyLinkerInput, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(&mockSvmAllocsManager, device, initData.size(), 0u, false /* constant */, &emptyLinkerInput, initData.data());
+    alloc = allocateGlobalsSurface(&mockSvmAllocsManager, device, initData.size(), false /* constant */, &emptyLinkerInput, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(nullptr /* svmAllocsManager */, device, initData.size(), 0u, true /* constant */, nullptr /* linker input */, initData.data());
+    alloc = allocateGlobalsSurface(nullptr /* svmAllocsManager */, device, initData.size(), true /* constant */, nullptr /* linker input */, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(nullptr /* svmAllocsManager */, device, initData.size(), 0u, false /* constant */, nullptr /* linker input */, initData.data());
+    alloc = allocateGlobalsSurface(nullptr /* svmAllocsManager */, device, initData.size(), false /* constant */, nullptr /* linker input */, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(nullptr /* svmAllocsManager */, device, initData.size(), 0u, true /* constant */, &emptyLinkerInput, initData.data());
+    alloc = allocateGlobalsSurface(nullptr /* svmAllocsManager */, device, initData.size(), true /* constant */, &emptyLinkerInput, initData.data());
     EXPECT_EQ(nullptr, alloc);
 
-    alloc = allocateGlobalsSurface(nullptr /* svmAllocsManager */, device, initData.size(), 0u, false /* constant */, &emptyLinkerInput, initData.data());
+    alloc = allocateGlobalsSurface(nullptr /* svmAllocsManager */, device, initData.size(), false /* constant */, &emptyLinkerInput, initData.data());
     EXPECT_EQ(nullptr, alloc);
 }
 
@@ -215,7 +215,7 @@ TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitter
             device.getExecutionEnvironment()->rootDeviceEnvironments[0]->getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
             MockSVMAllocsManager svmAllocsManager(device.getMemoryManager(), false);
 
-            auto pAllocation = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), 0u, true /* constant */,
+            auto pAllocation = allocateGlobalsSurface(&svmAllocsManager, device, initData.size(), true /* constant */,
                                                       nullptr /* linker input */, initData.data());
             ASSERT_NE(nullptr, pAllocation);
             EXPECT_EQ(nullptr, svmAllocsManager.getSVMAlloc(reinterpret_cast<void *>(static_cast<uintptr_t>(pAllocation->getGpuAddress()))));
@@ -228,39 +228,4 @@ TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitter
             device.getMemoryManager()->freeGraphicsMemory(pAllocation);
         }
     }
-}
-
-TEST(AllocateGlobalSurfaceTest, whenAllocatingGlobalSurfaceWithNonZeroZeroInitSizeThenTransferOnlyInitDataToAllocation) {
-    MockDevice device{};
-    WhiteBox<LinkerInput> emptyLinkerInput;
-    emptyLinkerInput.traits.exportsGlobalConstants = true;
-    std::vector<uint8_t> initData;
-    initData.resize(64, 7u);
-    std::fill(initData.begin() + 32, initData.end(), 16u); // this data should not be transfered
-    GraphicsAllocation *alloc = nullptr;
-    size_t zeroInitSize = 32u;
-
-    alloc = allocateGlobalsSurface(nullptr, device, initData.size(), zeroInitSize, true, &emptyLinkerInput, initData.data());
-    ASSERT_NE(nullptr, alloc);
-    EXPECT_EQ(64u, alloc->getUnderlyingBufferSize());
-
-    auto dataPtr = reinterpret_cast<uint8_t *>(alloc->getUnderlyingBuffer());
-    EXPECT_EQ(0, memcmp(dataPtr, initData.data(), 32u));
-    EXPECT_NE(0, memcmp(dataPtr + 32, initData.data() + 32, 32u));
-    device.getMemoryManager()->freeGraphicsMemory(alloc);
-}
-
-TEST(AllocateGlobalSurfaceTest, whenAllocatingGlobalSurfaceWithZeroInitSizeGreaterThanZeroAndInitDataSizeSetToZeroThenDoNotTransferMemoryToAllocation) {
-    MockDevice device{};
-    auto memoryManager = std::make_unique<MockMemoryManager>(*device.getExecutionEnvironment());
-    device.injectMemoryManager(memoryManager.release());
-    ASSERT_EQ(0u, static_cast<MockMemoryManager *>(device.getMemoryManager())->copyMemoryToAllocationBanksCalled);
-    size_t totalSize = 64u, zeroInitSize = 64u;
-
-    GraphicsAllocation *alloc = nullptr;
-    alloc = allocateGlobalsSurface(nullptr, device, totalSize, zeroInitSize, true, nullptr, nullptr);
-    ASSERT_NE(nullptr, alloc);
-    EXPECT_EQ(0u, static_cast<MockMemoryManager *>(device.getMemoryManager())->copyMemoryToAllocationBanksCalled);
-
-    device.getMemoryManager()->freeGraphicsMemory(alloc);
 }

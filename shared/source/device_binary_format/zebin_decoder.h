@@ -30,9 +30,7 @@ struct ZebinSections {
     StackVec<SectionHeaderData *, 32> textKernelSections;
     StackVec<SectionHeaderData *, 1> zeInfoSections;
     StackVec<SectionHeaderData *, 1> globalDataSections;
-    StackVec<SectionHeaderData *, 1> globalZeroInitDataSections;
     StackVec<SectionHeaderData *, 1> constDataSections;
-    StackVec<SectionHeaderData *, 1> constZeroInitDataSections;
     StackVec<SectionHeaderData *, 1> constDataStringSections;
     StackVec<SectionHeaderData *, 1> symtabSections;
     StackVec<SectionHeaderData *, 1> spirvSections;

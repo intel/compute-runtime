@@ -255,15 +255,14 @@ cl_int Program::processProgramInfo(ProgramInfo &src, const ClDevice &clDevice) {
 
     kernelInfoArray = std::move(src.kernelInfos);
     auto svmAllocsManager = context ? context->getSVMAllocsManager() : nullptr;
-    auto globalConstDataSize = src.globalConstants.size + src.globalConstants.zeroInitSize;
-    if (globalConstDataSize != 0) {
-        buildInfos[rootDeviceIndex].constantSurface = allocateGlobalsSurface(svmAllocsManager, clDevice.getDevice(), globalConstDataSize, src.globalConstants.zeroInitSize, true, linkerInput, src.globalConstants.initData);
+    if (src.globalConstants.size != 0) {
+        buildInfos[rootDeviceIndex].constantSurface = allocateGlobalsSurface(svmAllocsManager, clDevice.getDevice(), src.globalConstants.size, true, linkerInput, src.globalConstants.initData);
     }
 
-    auto globalVariablesDataSize = src.globalVariables.size + src.globalVariables.zeroInitSize;
-    buildInfos[rootDeviceIndex].globalVarTotalSize = globalVariablesDataSize;
-    if (globalVariablesDataSize != 0) {
-        buildInfos[rootDeviceIndex].globalSurface = allocateGlobalsSurface(svmAllocsManager, clDevice.getDevice(), globalVariablesDataSize, src.globalVariables.zeroInitSize, false, linkerInput, src.globalVariables.initData);
+    buildInfos[rootDeviceIndex].globalVarTotalSize = src.globalVariables.size;
+
+    if (src.globalVariables.size != 0) {
+        buildInfos[rootDeviceIndex].globalSurface = allocateGlobalsSurface(svmAllocsManager, clDevice.getDevice(), src.globalVariables.size, false, linkerInput, src.globalVariables.initData);
         if (clDevice.areOcl21FeaturesEnabled() == false) {
             buildInfos[rootDeviceIndex].globalVarTotalSize = 0u;
         }

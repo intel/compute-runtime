@@ -38,10 +38,6 @@ SegmentType LinkerInput::getSegmentForSection(ConstStringRef name) {
         return NEO::SegmentType::GlobalStrings;
     } else if (name.startsWith(NEO::Elf::SpecialSectionNames::text.data())) {
         return NEO::SegmentType::Instructions;
-    } else if (name == NEO::Elf::SectionsNamesZebin::dataConstZeroInit) {
-        return NEO::SegmentType::GlobalConstantsZeroInit;
-    } else if (name == NEO::Elf::SectionsNamesZebin::dataGlobalZeroInit) {
-        return NEO::SegmentType::GlobalVariablesZeroInit;
     }
     return NEO::SegmentType::Unknown;
 }
@@ -290,7 +286,7 @@ LinkingStatus Linker::link(const SegmentInfo &globalVariablesSegInfo, const Segm
                            ExternalFunctionsT &externalFunctions) {
     bool success = data.isValid();
     auto initialUnresolvedExternalsCount = outUnresolvedExternals.size();
-    success = success && processRelocations(globalVariablesSegInfo, globalConstantsSegInfo, exportedFunctionsSegInfo, globalStringsSegInfo, instructionsSegments, constantsInitDataSize, variablesInitDataSize);
+    success = success && processRelocations(globalVariablesSegInfo, globalConstantsSegInfo, exportedFunctionsSegInfo, globalStringsSegInfo, instructionsSegments);
     if (!success) {
         return LinkingStatus::Error;
     }
@@ -310,12 +306,11 @@ LinkingStatus Linker::link(const SegmentInfo &globalVariablesSegInfo, const Segm
 }
 
 bool Linker::processRelocations(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions, const SegmentInfo &globalStrings,
-                                const PatchableSegments &instructionsSegments, size_t globalConstantsInitDataSize, size_t globalVariablesInitDataSize) {
+                                const PatchableSegments &instructionsSegments) {
     relocatedSymbols.reserve(data.getSymbols().size());
-    for (const auto &[symbolName, symbolInfo] : data.getSymbols()) {
+    for (auto &symbol : data.getSymbols()) {
         const SegmentInfo *seg = nullptr;
-        uintptr_t gpuAddress = symbolInfo.offset;
-        switch (symbolInfo.segment) {
+        switch (symbol.second.segment) {
         default:
             DEBUG_BREAK_IF(true);
             return false;
@@ -331,21 +326,13 @@ bool Linker::processRelocations(const SegmentInfo &globalVariables, const Segmen
         case SegmentType::Instructions:
             seg = &exportedFunctions;
             break;
-        case SegmentType::GlobalConstantsZeroInit:
-            seg = &globalConstants;
-            gpuAddress += globalConstantsInitDataSize;
-            break;
-        case SegmentType::GlobalVariablesZeroInit:
-            seg = &globalVariables;
-            gpuAddress += globalVariablesInitDataSize;
-            break;
         }
-        if (gpuAddress + symbolInfo.size > seg->segmentSize) {
+        uintptr_t gpuAddress = seg->gpuAddress + symbol.second.offset;
+        if (symbol.second.offset + symbol.second.size > seg->segmentSize) {
             DEBUG_BREAK_IF(true);
             return false;
         }
-        gpuAddress += seg->gpuAddress;
-        relocatedSymbols[symbolName] = {symbolInfo, gpuAddress};
+        relocatedSymbols[symbol.first] = {symbol.second, gpuAddress};
     }
     localRelocatedSymbols.reserve(data.getLocalSymbols().size());
     for (auto &localSymbol : data.getLocalSymbols()) {
@@ -438,10 +425,10 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
                                GraphicsAllocation *globalVariablesSeg, GraphicsAllocation *globalConstantsSeg,
                                std::vector<UnresolvedExternal> &outUnresolvedExternals, Device *pDevice,
                                const void *constantsInitData, size_t constantsInitDataSize, const void *variablesInitData, size_t variablesInitDataSize) {
-    std::vector<uint8_t> constantsData(globalConstantsSegInfo.segmentSize, 0u);
-    memcpy_s(constantsData.data(), constantsData.size(), constantsInitData, constantsInitDataSize);
-    std::vector<uint8_t> variablesData(globalVariablesSegInfo.segmentSize, 0u);
-    memcpy_s(variablesData.data(), variablesData.size(), variablesInitData, variablesInitDataSize);
+    std::vector<uint8_t> constantsInitDataCopy(constantsInitDataSize);
+    memcpy_s(constantsInitDataCopy.data(), constantsInitDataCopy.size(), constantsInitData, constantsInitDataSize);
+    std::vector<uint8_t> variablesInitDataCopy(variablesInitDataSize);
+    memcpy_s(variablesInitDataCopy.data(), variablesInitDataCopy.size(), variablesInitData, variablesInitDataSize);
     bool isAnySymbolRelocated = false;
 
     for (const auto &relocation : data.getDataRelocations()) {
@@ -452,26 +439,22 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
         }
         uint64_t srcGpuAddressAs64Bit = symbolIt->second.gpuAddress;
 
-        ArrayRef<uint8_t> dst{};
+        std::vector<uint8_t> *dst = nullptr;
         const void *initData = nullptr;
         if (SegmentType::GlobalConstants == relocation.relocationSegment) {
-            dst = {constantsData.data(), constantsInitDataSize};
+            dst = &constantsInitDataCopy;
             initData = constantsInitData;
-        } else if (SegmentType::GlobalConstantsZeroInit == relocation.relocationSegment) {
-            dst = {constantsData.data() + constantsInitDataSize, constantsData.size() - constantsInitDataSize};
         } else if (SegmentType::GlobalVariables == relocation.relocationSegment) {
-            dst = {variablesData.data(), variablesInitDataSize};
+            dst = &variablesInitDataCopy;
             initData = variablesInitData;
-        } else if (SegmentType::GlobalVariablesZeroInit == relocation.relocationSegment) {
-            dst = {variablesData.data() + variablesInitDataSize, variablesData.size() - variablesInitDataSize};
         } else {
             outUnresolvedExternals.push_back(UnresolvedExternal{relocation});
             continue;
         }
-        UNRECOVERABLE_IF(dst.empty());
+        UNRECOVERABLE_IF(nullptr == dst);
 
         auto relocType = (LinkerInput::Traits::PointerSize::Ptr32bit == data.getTraits().pointerSize) ? RelocationInfo::Type::AddressLow : relocation.type;
-        bool invalidOffset = relocation.offset + addressSizeInBytes(relocType) > dst.size();
+        bool invalidOffset = relocation.offset + addressSizeInBytes(relocType) > dst->size();
         DEBUG_BREAK_IF(invalidOffset);
         if (invalidOffset) {
             outUnresolvedExternals.push_back(UnresolvedExternal{relocation});
@@ -483,15 +466,15 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
         switch (relocType) {
         default:
             UNRECOVERABLE_IF(RelocationInfo::Type::Address != relocType);
-            patchIncrement<uint64_t>(dst.begin(), static_cast<size_t>(relocation.offset), initData, incrementValue);
+            patchIncrement<uint64_t>(dst->data(), static_cast<size_t>(relocation.offset), initData, incrementValue);
             break;
         case RelocationInfo::Type::AddressLow:
             incrementValue = incrementValue & 0xffffffff;
-            patchIncrement<uint32_t>(dst.begin(), static_cast<size_t>(relocation.offset), initData, incrementValue);
+            patchIncrement<uint32_t>(dst->data(), static_cast<size_t>(relocation.offset), initData, incrementValue);
             break;
         case RelocationInfo::Type::AddressHigh:
             incrementValue = (incrementValue >> 32) & 0xffffffff;
-            patchIncrement<uint32_t>(dst.begin(), static_cast<size_t>(relocation.offset), initData, incrementValue);
+            patchIncrement<uint32_t>(dst->data(), static_cast<size_t>(relocation.offset), initData, incrementValue);
             break;
         }
     }
@@ -501,11 +484,11 @@ void Linker::patchDataSegments(const SegmentInfo &globalVariablesSegInfo, const 
         auto &productHelper = pDevice->getProductHelper();
         if (globalConstantsSeg) {
             bool useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *globalConstantsSeg);
-            MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, globalConstantsSeg, 0, constantsData.data(), constantsData.size());
+            MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, globalConstantsSeg, 0, constantsInitDataCopy.data(), constantsInitDataCopy.size());
         }
         if (globalVariablesSeg) {
             bool useBlitter = productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *globalVariablesSeg);
-            MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, globalVariablesSeg, 0, variablesData.data(), variablesData.size());
+            MemoryTransferHelper::transferMemoryToAllocation(useBlitter, *pDevice, globalVariablesSeg, 0, variablesInitDataCopy.data(), variablesInitDataCopy.size());
         }
     }
 }
@@ -650,10 +633,6 @@ void Linker::resolveBuiltins(Device *pDevice, UnresolvedExternals &outUnresolved
 
 template <typename PatchSizeT>
 void Linker::patchIncrement(void *dstBegin, size_t relocationOffset, const void *initData, uint64_t incrementValue) {
-    if (nullptr == initData) {
-        *(reinterpret_cast<PatchSizeT *>(dstBegin) + relocationOffset) = static_cast<PatchSizeT>(incrementValue);
-        return;
-    }
     auto initValue = ptrOffset(initData, relocationOffset);
     PatchSizeT value = 0;
     memcpy_s(&value, sizeof(PatchSizeT), initValue, sizeof(PatchSizeT));

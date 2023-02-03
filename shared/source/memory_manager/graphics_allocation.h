@@ -212,11 +212,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                type == AllocationType::DEBUG_SBA_TRACKING_BUFFER;
     }
 
-    static bool isConstantOrGlobalSurfaceAllocationType(AllocationType type) {
-        return type == AllocationType::CONSTANT_SURFACE ||
-               type == AllocationType::GLOBAL_SURFACE;
-    }
-
     static uint32_t getNumHandlesForKmdSharedAllocation(uint32_t numBanks);
 
     void *getReservedAddressPtr() const {

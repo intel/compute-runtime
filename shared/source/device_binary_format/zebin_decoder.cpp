@@ -278,15 +278,6 @@ DecodeError extractZebinSections(NEO::Elf::Elf<numBits> &elf, ZebinSections<numB
         case NEO::Elf::SHT_NULL:
             // ignoring intentionally, inactive section, probably UNDEF
             continue;
-        case NEO::Elf::SHT_NOBITS:
-            if (sectionName == NEO::Elf::SectionsNamesZebin::dataConstZeroInit) {
-                out.constZeroInitDataSections.push_back(&elfSectionHeader);
-            } else if (sectionName == NEO::Elf::SectionsNamesZebin::dataGlobalZeroInit) {
-                out.globalZeroInitDataSections.push_back(&elfSectionHeader);
-            } else {
-                outWarning.append("DeviceBinaryFormat::Zebin : unhandled SHT_NOBITS section : " + sectionName.str() + " currently supports only : " + NEO::Elf::SectionsNamesZebin::dataConstZeroInit.str() + " and " + NEO::Elf::SectionsNamesZebin::dataGlobalZeroInit.str() + ".\n");
-            }
-            break;
         }
     }
 
@@ -337,9 +328,7 @@ template <Elf::ELF_IDENTIFIER_CLASS numBits>
 DecodeError validateZebinSectionsCount(const ZebinSections<numBits> &sections, std::string &outErrReason, std::string &outWarning) {
     bool valid = validateZebinSectionsCountAtMost(sections.zeInfoSections, NEO::Elf::SectionsNamesZebin::zeInfo, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.globalDataSections, NEO::Elf::SectionsNamesZebin::dataGlobal, 1U, outErrReason, outWarning);
-    valid &= validateZebinSectionsCountAtMost(sections.globalZeroInitDataSections, NEO::Elf::SectionsNamesZebin::dataGlobalZeroInit, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.constDataSections, NEO::Elf::SectionsNamesZebin::dataConst, 1U, outErrReason, outWarning);
-    valid &= validateZebinSectionsCountAtMost(sections.constZeroInitDataSections, NEO::Elf::SectionsNamesZebin::dataConstZeroInit, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.constDataStringSections, NEO::Elf::SectionsNamesZebin::dataConstString, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.symtabSections, NEO::Elf::SectionsNamesZebin::symtab, 1U, outErrReason, outWarning);
     valid &= validateZebinSectionsCountAtMost(sections.spirvSections, NEO::Elf::SectionsNamesZebin::spv, 1U, outErrReason, outWarning);
@@ -717,17 +706,9 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
         dst.globalVariables.size = zebinSections.globalDataSections[0]->data.size();
     }
 
-    if (false == zebinSections.globalZeroInitDataSections.empty()) {
-        dst.globalVariables.zeroInitSize = static_cast<size_t>(zebinSections.globalZeroInitDataSections[0]->header->size);
-    }
-
     if (false == zebinSections.constDataSections.empty()) {
         dst.globalConstants.initData = zebinSections.constDataSections[0]->data.begin();
         dst.globalConstants.size = zebinSections.constDataSections[0]->data.size();
-    }
-
-    if (false == zebinSections.constZeroInitDataSections.empty()) {
-        dst.globalConstants.zeroInitSize = static_cast<size_t>(zebinSections.constZeroInitDataSections[0]->header->size);
     }
 
     if (false == zebinSections.constDataStringSections.empty()) {

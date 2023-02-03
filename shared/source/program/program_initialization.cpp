@@ -19,7 +19,7 @@
 
 namespace NEO {
 
-GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAllocManager, NEO::Device &device, size_t totalSize, size_t zeroInitSize, bool constant,
+GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAllocManager, NEO::Device &device, size_t size, bool constant,
                                            LinkerInput *const linkerInput, const void *initData) {
     bool globalsAreExported = false;
     GraphicsAllocation *gpuAllocation = nullptr;
@@ -37,7 +37,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         subDeviceBitfields.insert({rootDeviceIndex, deviceBitfield});
         NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, subDeviceBitfields);
         unifiedMemoryProperties.device = &device;
-        auto ptr = svmAllocManager->createUnifiedMemoryAllocation(totalSize, unifiedMemoryProperties);
+        auto ptr = svmAllocManager->createUnifiedMemoryAllocation(size, unifiedMemoryProperties);
         DEBUG_BREAK_IF(ptr == nullptr);
         if (ptr == nullptr) {
             return nullptr;
@@ -49,7 +49,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         auto allocationType = constant ? AllocationType::CONSTANT_SURFACE : AllocationType::GLOBAL_SURFACE;
         gpuAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex,
                                                                                          true, // allocateMemory
-                                                                                         totalSize, allocationType,
+                                                                                         size, allocationType,
                                                                                          false, // isMultiStorageAllocation
                                                                                          deviceBitfield});
     }
@@ -61,13 +61,11 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
     auto &rootDeviceEnvironment = device.getRootDeviceEnvironment();
     auto &productHelper = device.getProductHelper();
 
-    bool isOnlyBssData = (totalSize == zeroInitSize);
-    if (false == isOnlyBssData) {
-        auto initSize = totalSize - zeroInitSize;
-        auto success = MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *gpuAllocation),
-                                                                        device, gpuAllocation, 0, initData, initSize);
-        UNRECOVERABLE_IF(!success);
-    }
+    auto success = MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *gpuAllocation),
+                                                                    device, gpuAllocation, 0, initData, size);
+
+    UNRECOVERABLE_IF(!success);
+
     return gpuAllocation;
 }
 

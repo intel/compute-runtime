@@ -43,10 +43,8 @@ namespace SectionsNamesZebin {
 inline constexpr ConstStringRef textPrefix = ".text.";
 inline constexpr ConstStringRef functions = ".text.Intel_Symbol_Table_Void_Program";
 inline constexpr ConstStringRef dataConst = ".data.const";
-inline constexpr ConstStringRef dataConstZeroInit = ".bss.const";
 inline constexpr ConstStringRef dataGlobalConst = ".data.global_const";
 inline constexpr ConstStringRef dataGlobal = ".data.global";
-inline constexpr ConstStringRef dataGlobalZeroInit = ".bss.global";
 inline constexpr ConstStringRef dataConstString = ".data.const.string";
 inline constexpr ConstStringRef symtab = ".symtab";
 inline constexpr ConstStringRef relTablePrefix = ".rel.";

@@ -152,8 +152,6 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_GTPIN_INFO, NEO::Elf::SectionsNamesZebin::gtpinInfo, std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_VISA_ASM, NEO::Elf::SectionsNamesZebin::vIsaAsmPrefix.str() + "someKernel", std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_MISC, NEO::Elf::SectionsNamesZebin::buildOptions, std::string{});
-    elfEncoder.appendSection(NEO::Elf::SHT_NOBITS, NEO::Elf::SectionsNamesZebin::dataConstZeroInit.str(), std::string{});
-    elfEncoder.appendSection(NEO::Elf::SHT_NOBITS, NEO::Elf::SectionsNamesZebin::dataGlobalZeroInit.str(), std::string{});
 
     elfEncoder.appendSection(NEO::Elf::SHT_REL, NEO::Elf::SpecialSectionNames::relPrefix.str() + "someKernel", std::string{});
     elfEncoder.appendSection(NEO::Elf::SHT_RELA, NEO::Elf::SpecialSectionNames::relaPrefix.str() + "someKernel", std::string{});
@@ -179,8 +177,6 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     ASSERT_EQ(1U, sections.symtabSections.size());
     ASSERT_EQ(1U, sections.spirvSections.size());
     ASSERT_EQ(1U, sections.buildOptionsSection.size());
-    ASSERT_EQ(1U, sections.constZeroInitDataSections.size());
-    ASSERT_EQ(1U, sections.globalZeroInitDataSections.size());
 
     auto stringSection = decodedElf.sectionHeaders[decodedElf.elfFileHeader->shStrNdx];
     const char *strings = stringSection.data.toArrayRef<const char>().begin();
@@ -192,8 +188,6 @@ TEST(ExtractZebinSections, GivenKnownSectionsThenCapturesThemProperly) {
     EXPECT_STREQ(NEO::Elf::SectionsNamesZebin::zeInfo.data(), strings + sections.zeInfoSections[0]->header->name);
     EXPECT_STREQ(NEO::Elf::SectionsNamesZebin::symtab.data(), strings + sections.symtabSections[0]->header->name);
     EXPECT_STREQ(NEO::Elf::SectionsNamesZebin::spv.data(), strings + sections.spirvSections[0]->header->name);
-    EXPECT_STREQ(NEO::Elf::SectionsNamesZebin::dataConstZeroInit.data(), strings + sections.constZeroInitDataSections[0]->header->name);
-    EXPECT_STREQ(NEO::Elf::SectionsNamesZebin::dataGlobalZeroInit.data(), strings + sections.globalZeroInitDataSections[0]->header->name);
 }
 
 TEST(ExtractZebinSections, GivenMispelledConstDataSectionThenAllowItButEmitError) {
@@ -239,25 +233,6 @@ TEST(ExtractZebinSections, GivenUnknownMiscSectionThenEmitWarning) {
     EXPECT_EQ(NEO::DecodeError::Success, decodeError);
     EXPECT_TRUE(errors.empty()) << errors;
     const auto expectedWarning = "DeviceBinaryFormat::Zebin : unhandled SHT_ZEBIN_MISC section : " + unknownMiscSectionName.str() + " currently supports only : " + NEO::Elf::SectionsNamesZebin::buildOptions.str() + ".\n";
-    EXPECT_STREQ(expectedWarning.c_str(), warnings.c_str());
-}
-
-TEST(ExtractZebinSections, GivenUnknownElfNobitsSectionThenEmitWarning) {
-    NEO::Elf::ElfEncoder<> elfEncoder;
-    ConstStringRef unknownNobitsSectionName = "unknown_bss_section";
-    elfEncoder.appendSection(NEO::Elf::SHT_NOBITS, unknownNobitsSectionName, std::string{});
-    auto encodedElf = elfEncoder.encode();
-    std::string elferrors;
-    std::string elfwarnings;
-    auto decodedElf = NEO::Elf::decodeElf(encodedElf, elferrors, elfwarnings);
-
-    NEO::ZebinSections sections;
-    std::string errors;
-    std::string warnings;
-    auto decodeError = NEO::extractZebinSections(decodedElf, sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::Success, decodeError);
-    EXPECT_TRUE(errors.empty()) << errors;
-    auto expectedWarning = "DeviceBinaryFormat::Zebin : unhandled SHT_NOBITS section : " + unknownNobitsSectionName.str() + " currently supports only : .bss.const and .bss.global.\n";
     EXPECT_STREQ(expectedWarning.c_str(), warnings.c_str());
 }
 
@@ -350,28 +325,6 @@ TEST(ValidateZebinSectionsCount, GivenTwoIntelGTNoteSectionsThenFail) {
     auto err = NEO::validateZebinSectionsCount(sections, errors, warnings);
     EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
     EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of .note.intelgt.compat section, got : 2\n", errors.c_str());
-    EXPECT_TRUE(warnings.empty()) << warnings;
-}
-
-TEST(ValidateZebinSectionsCount, GivenMoreThanOneConstZeroInitDataSectionThenFail) {
-    NEO::ZebinSections sections;
-    std::string errors;
-    std::string warnings;
-    sections.constZeroInitDataSections.resize(2);
-    auto err = NEO::validateZebinSectionsCount(sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of .bss.const section, got : 2\n", errors.c_str());
-    EXPECT_TRUE(warnings.empty()) << warnings;
-}
-
-TEST(ValidateZebinSectionsCount, GivenMoreThanOneGlobalZeroInitDataSectionThenFail) {
-    NEO::ZebinSections sections;
-    std::string errors;
-    std::string warnings;
-    sections.globalZeroInitDataSections.resize(2);
-    auto err = NEO::validateZebinSectionsCount(sections, errors, warnings);
-    EXPECT_EQ(NEO::DecodeError::InvalidBinary, err);
-    EXPECT_STREQ("DeviceBinaryFormat::Zebin : Expected at most 1 of .bss.global section, got : 2\n", errors.c_str());
     EXPECT_TRUE(warnings.empty()) << warnings;
 }
 
@@ -2592,51 +2545,6 @@ TEST(DecodeSingleDeviceBinaryZebin, GivenConstDataSectionThenSetsUpInitDataAndSi
     EXPECT_EQ(0, memcmp(programInfo.globalConstants.initData, data, sizeof(data)));
     EXPECT_EQ(0U, programInfo.globalVariables.size);
     EXPECT_EQ(nullptr, programInfo.globalVariables.initData);
-}
-
-TEST(DecodeSingleDeviceBinaryZebin, GivenConstZeroInitDataSectionThenSetUpZeroInitSizeBasedOnHeaderData) {
-    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
-    ZebinTestData::ValidEmptyProgram zebin;
-    const uint8_t mockData[0x10]{0u}; // note that BSS section does not store any data in ELF
-    auto &bssConstHeader = zebin.appendSection(NEO::Elf::SHT_NOBITS, NEO::Elf::SectionsNamesZebin::dataConstZeroInit, mockData);
-    bssConstHeader.size = 16u;
-
-    NEO::ProgramInfo programInfo;
-    NEO::SingleDeviceBinary singleBinary;
-    singleBinary.deviceBinary = zebin.storage;
-    std::string errors;
-    std::string warnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_TRUE(warnings.empty()) << warnings;
-    EXPECT_TRUE(errors.empty()) << errors;
-    EXPECT_EQ(16u, programInfo.globalConstants.zeroInitSize);
-    EXPECT_EQ(nullptr, programInfo.globalConstants.initData);
-    EXPECT_EQ(0u, programInfo.globalConstants.size);
-}
-
-TEST(DecodeSingleDeviceBinaryZebin, GivenGlobalZeroInitDataSectionThenSetUpZeroInitSizeBasedOnHeaderData) {
-    NEO::MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::GfxCoreHelper>();
-    ZebinTestData::ValidEmptyProgram zebin;
-    const uint8_t mockData[0x10]{0u}; // note that BSS section does not store any data in ELF
-    auto &bssGlobalHeader = zebin.appendSection(NEO::Elf::SHT_NOBITS, NEO::Elf::SectionsNamesZebin::dataGlobalZeroInit, mockData);
-    bssGlobalHeader.size = 16u;
-
-    NEO::ProgramInfo programInfo;
-    NEO::SingleDeviceBinary singleBinary;
-    singleBinary.deviceBinary = zebin.storage;
-    std::string errors;
-    std::string warnings;
-    auto error = NEO::decodeSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(programInfo, singleBinary, errors, warnings, gfxCoreHelper);
-    EXPECT_EQ(NEO::DecodeError::Success, error);
-    EXPECT_TRUE(warnings.empty()) << warnings;
-    EXPECT_TRUE(errors.empty()) << errors;
-
-    EXPECT_EQ(16u, programInfo.globalVariables.zeroInitSize);
-    EXPECT_EQ(nullptr, programInfo.globalVariables.initData);
-    EXPECT_EQ(0u, programInfo.globalVariables.size);
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenConstDataStringsSectionThenSetsUpInitDataAndSize) {

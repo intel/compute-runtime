@@ -287,8 +287,6 @@ TEST(LinkerInputTests, WhenGettingSegmentForSectionNameThenCorrectSegmentIsRetur
     auto segmentConstString = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataConstString.str());
     auto segmentInstructions = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::textPrefix.str());
     auto segmentInstructions2 = NEO::LinkerInput::getSegmentForSection(".text.abc");
-    auto segmentGlobalZeroInit = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataGlobalZeroInit.str());
-    auto segmentGlobalConstZeroInit = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataConstZeroInit.str());
 
     EXPECT_EQ(NEO::SegmentType::GlobalConstants, segmentConst);
     EXPECT_EQ(NEO::SegmentType::GlobalConstants, segmentGlobalConst);
@@ -296,8 +294,6 @@ TEST(LinkerInputTests, WhenGettingSegmentForSectionNameThenCorrectSegmentIsRetur
     EXPECT_EQ(NEO::SegmentType::GlobalStrings, segmentConstString);
     EXPECT_EQ(NEO::SegmentType::Instructions, segmentInstructions);
     EXPECT_EQ(NEO::SegmentType::Instructions, segmentInstructions2);
-    EXPECT_EQ(NEO::SegmentType::GlobalVariablesZeroInit, segmentGlobalZeroInit);
-    EXPECT_EQ(NEO::SegmentType::GlobalConstantsZeroInit, segmentGlobalConstZeroInit);
 }
 
 TEST(LinkerInputTests, WhenGettingSegmentForUnknownSectionNameThenUnknownSegmentIsReturned) {
@@ -1697,146 +1693,6 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThenThe
     }
 }
 
-TEST(LinkerTests, givenValidSymbolsAndRelocationsToBssDataSectionsWhenPatchingDataSegmentsThenTheyAreProperlyPatched) {
-    uint64_t initGlobalConstantData[] = {0x1234};  //<- const1 - initValue should be ignored
-    uint64_t initGlobalVariablesData[] = {0x4321}; // <- var1 - initValue should be ignored
-
-    uint64_t constantsSegmentData[2]{0};       // size 2 * uint64_t - contains also bss at the end
-    uint64_t globalVariablesSegmentData[2]{0}; // size 2 * uint64_t - contains also bss at the end
-
-    NEO::MockGraphicsAllocation globalConstantsPatchableSegment{constantsSegmentData, sizeof(constantsSegmentData)};
-    NEO::MockGraphicsAllocation globalVariablesPatchableSegment{globalVariablesSegmentData, sizeof(globalVariablesSegmentData)};
-    globalConstantsPatchableSegment.gpuAddress = 0xA0000000;
-    globalVariablesPatchableSegment.gpuAddress = 0xB0000000;
-
-    NEO::Linker::SegmentInfo globalConstantsSegmentInfo, globalVariablesSegmentInfo;
-    globalConstantsSegmentInfo.gpuAddress = static_cast<uintptr_t>(globalConstantsPatchableSegment.getGpuAddress());
-    globalConstantsSegmentInfo.segmentSize = globalConstantsPatchableSegment.getUnderlyingBufferSize();
-
-    globalVariablesSegmentInfo.gpuAddress = static_cast<uintptr_t>(globalVariablesPatchableSegment.getGpuAddress());
-    globalVariablesSegmentInfo.segmentSize = globalVariablesPatchableSegment.getUnderlyingBufferSize();
-
-    auto setUpInstructionSeg = [](std::vector<uint8_t> &instrData, NEO::Linker::PatchableSegments &patchableInstrSeg) -> void {
-        uint64_t initData = 0x77777777;
-        instrData.resize(8, static_cast<uint8_t>(initData));
-
-        auto &emplaced = patchableInstrSeg.emplace_back();
-        emplaced.hostPointer = instrData.data();
-        emplaced.segmentSize = instrData.size();
-    };
-    NEO::Linker::PatchableSegments patchableInstructionSegments;
-    std::vector<uint8_t> instructionsData1, instructionsData2;
-    setUpInstructionSeg(instructionsData1, patchableInstructionSegments);
-    setUpInstructionSeg(instructionsData2, patchableInstructionSegments);
-
-    WhiteBox<NEO::LinkerInput> linkerInput;
-    linkerInput.traits.requiresPatchingOfInstructionSegments = true;
-
-    auto &var1 = linkerInput.symbols["var1"];
-    var1.segment = SegmentType::GlobalVariables;
-    var1.offset = 0U;
-    var1.size = 8U;
-
-    auto &bssVar = linkerInput.symbols["bssVar"];
-    bssVar.segment = SegmentType::GlobalVariablesZeroInit;
-    bssVar.offset = 0U;
-    bssVar.size = 8U;
-
-    auto &const1 = linkerInput.symbols["const1"];
-    const1.segment = SegmentType::GlobalConstants;
-    const1.offset = 0U;
-    const1.size = 8U;
-
-    auto &bssConst = linkerInput.symbols["bssConst"];
-    bssConst.segment = SegmentType::GlobalConstantsZeroInit;
-    bssConst.offset = 0U;
-    bssConst.size = 8U;
-
-    /*
-    Segments:
-    Const:
-    0x00    0x1000 <- const 1
-    0x08    0x0 <- bss
-
-    Var:
-    0x00    0x4000 <- var 1
-    0x08    0x0 <- bss
-
-    Instructions:
-    0x0     0x0 <- will be patched with bss.const
-    0x08    0x0 <- will be patched with bss.global
-
-    1. Patch bss data from const segment with var 1
-       Patch bss data from global variables segment with const 1
-    2. Patch const 2 with symbol pointing to bss in const (patched in step 1).
-       Patch var 2 with symbol pointing to bss in variables (patched in step 1).
-    */
-
-    // Relocations for step 1.
-    // bssConst[0] = &var1
-    {
-        NEO::LinkerInput::RelocationInfo relocation;
-        relocation.offset = 0U;
-        relocation.relocationSegment = NEO::SegmentType::GlobalConstantsZeroInit;
-        relocation.symbolName = "var1";
-        relocation.type = NEO::LinkerInput::RelocationInfo::Type::Address;
-        linkerInput.dataRelocations.push_back(relocation);
-    }
-    // bssGlobal[0] = &const1
-    {
-        NEO::LinkerInput::RelocationInfo relocation;
-        relocation.offset = 0U;
-        relocation.relocationSegment = NEO::SegmentType::GlobalVariablesZeroInit;
-        relocation.symbolName = "const1";
-        relocation.type = NEO::LinkerInput::RelocationInfo::Type::Address;
-        linkerInput.dataRelocations.push_back(relocation);
-    }
-    // Relocation for step 2.
-    // instructions[0] = &bssConst
-    {
-        NEO::LinkerInput::RelocationInfo relocation;
-        relocation.offset = 0U;
-        relocation.relocationSegment = NEO::SegmentType::Instructions;
-        relocation.symbolName = "bssConst";
-        relocation.type = NEO::LinkerInput::RelocationInfo::Type::Address;
-        linkerInput.textRelocations.push_back({relocation});
-    }
-    // instructions[1] = &bssVar
-    {
-        NEO::LinkerInput::RelocationInfo relocation;
-        relocation.offset = 0U;
-        relocation.relocationSegment = NEO::SegmentType::Instructions;
-        relocation.symbolName = "bssVar";
-        relocation.type = NEO::LinkerInput::RelocationInfo::Type::Address;
-        linkerInput.textRelocations.push_back({relocation});
-    }
-
-    NEO::Linker linker(linkerInput);
-    auto device = std::unique_ptr<NEO::MockDevice>(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get()));
-    NEO::Linker::UnresolvedExternals unresolvedExternals;
-    NEO::Linker::KernelDescriptorsT kernelDescriptors;
-    NEO::Linker::ExternalFunctionsT externalFunctions;
-    auto linkResult = linker.link(globalVariablesSegmentInfo, globalConstantsSegmentInfo, {}, {},
-                                  &globalVariablesPatchableSegment, &globalConstantsPatchableSegment, patchableInstructionSegments,
-                                  unresolvedExternals, device.get(), initGlobalConstantData, sizeof(initGlobalConstantData),
-                                  initGlobalVariablesData, sizeof(initGlobalVariablesData), kernelDescriptors, externalFunctions);
-    EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
-    EXPECT_EQ(0U, unresolvedExternals.size());
-
-    auto globalConstantsSegmentAddr = reinterpret_cast<uint64_t *>(globalConstantsPatchableSegment.getUnderlyingBuffer());
-    auto globalVariableSegmentAddr = reinterpret_cast<uint64_t *>(globalVariablesPatchableSegment.getUnderlyingBuffer());
-
-    auto var1Addr = globalVariablesPatchableSegment.getGpuAddress();
-    auto const1Addr = globalConstantsPatchableSegment.getGpuAddress();
-    auto bssConstAddrr = globalConstantsPatchableSegment.getGpuAddress() + sizeof(initGlobalConstantData);
-    auto bssVarAddr = globalVariablesPatchableSegment.getGpuAddress() + sizeof(initGlobalVariablesData);
-
-    EXPECT_EQ(var1Addr, *(globalConstantsSegmentAddr + 1));
-    EXPECT_EQ(const1Addr, *(globalVariableSegmentAddr + 1));
-    EXPECT_EQ(bssConstAddrr, *(reinterpret_cast<uint64_t *>(instructionsData1.data())));
-    EXPECT_EQ(bssVarAddr, *(reinterpret_cast<uint64_t *>(instructionsData2.data())));
-}
-
 TEST(LinkerTests, givenInvalidSymbolWhenPatchingDataSegmentsThenRelocationIsUnresolved) {
     uint64_t initGlobalConstantData[3] = {};
     uint64_t initGlobalVariablesData[3] = {};
@@ -1929,10 +1785,7 @@ TEST(LinkerTests, givenInvalidRelocationSegmentWhenPatchingDataSegmentsThenReloc
     NEO::Linker::UnresolvedExternals unresolvedExternals;
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
     NEO::Linker::ExternalFunctionsT externalFunctions;
-
-    NEO::Linker::SegmentInfo globalSegment;
-    globalSegment.segmentSize = 8u;
-    auto linkResult = linker.link(globalSegment, {}, {}, {},
+    auto linkResult = linker.link({}, {}, {}, {},
                                   nullptr, nullptr, {},
                                   unresolvedExternals, device.get(), nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
     EXPECT_EQ(NEO::LinkingStatus::LinkedPartially, linkResult);
@@ -2873,7 +2726,7 @@ TEST(LinkerTest, givenLocalFuncSymbolsWhenProcessingRelocationsThenLocalSymbolsA
     emplacedOther.gpuAddress = 0x2000;
     emplacedOther.kernelName = "other_kernel";
 
-    auto res = linker.processRelocations(gVariables, gConstants, expFuncs, gStrings, insSegments, 0u, 0u);
+    auto res = linker.processRelocations(gVariables, gConstants, expFuncs, gStrings, insSegments);
     EXPECT_TRUE(res);
     EXPECT_EQ(1u, linker.localRelocatedSymbols.size());
     const auto &localRelocatedSymbolInfo = linker.localRelocatedSymbols.at(kernelName);

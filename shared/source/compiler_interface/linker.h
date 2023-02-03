@@ -28,10 +28,8 @@ struct ProgramInfo;
 enum class SegmentType : uint32_t {
     Unknown,
     GlobalConstants,
-    GlobalConstantsZeroInit,
     GlobalStrings,
     GlobalVariables,
-    GlobalVariablesZeroInit,
     Instructions,
 };
 
@@ -195,7 +193,7 @@ struct Linker {
 
     struct SegmentInfo {
         uintptr_t gpuAddress = std::numeric_limits<uintptr_t>::max();
-        size_t segmentSize = 0u;
+        size_t segmentSize = std::numeric_limits<size_t>::max();
     };
 
     struct PatchableSegment {
@@ -249,7 +247,7 @@ struct Linker {
     RelocatedSymbolsMap relocatedSymbols;
     LocalsRelocatedSymbolsMap localRelocatedSymbols;
 
-    bool processRelocations(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions, const SegmentInfo &globalStrings, const PatchableSegments &instructionsSegments, size_t globalConstantsInitDataSize, size_t globalVariablesInitDataSize);
+    bool processRelocations(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions, const SegmentInfo &globalStrings, const PatchableSegments &instructionsSegments);
 
     void patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals, const KernelDescriptorsT &kernelDescriptors);
 
