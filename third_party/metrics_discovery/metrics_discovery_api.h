@@ -37,7 +37,7 @@ SPDX-License-Identifier: MIT
 //////////////////////////////////////////////////////////////////////////////////
 // API build number:
 //////////////////////////////////////////////////////////////////////////////////
-#define MD_API_BUILD_NUMBER_CURRENT 155
+#define MD_API_BUILD_NUMBER_CURRENT 160
 
 namespace MetricsDiscovery
 {
@@ -299,6 +299,7 @@ namespace MetricsDiscovery
         SAMPLING_TYPE_OA_EVENT   = 0x00000002,
         SAMPLING_TYPE_GPU_QUERY  = 0x00000004,
         SAMPLING_TYPE_DMA_BUFFER = 0x00000008, // Possible future extension for media
+        SAMPLING_TYPE_OAM_TIMER  = 0x00000010,
         SAMPLING_TYPE_ALL        = 0x0000ffff,
     } TSamplingType;
 

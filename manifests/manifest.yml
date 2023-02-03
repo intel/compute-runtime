@@ -60,7 +60,7 @@ components:
     dest_dir: metrics/discovery
     type: git
     branch: metrics-discovery
-    revision: metrics-discovery-1.12.155
+    revision: metrics-discovery-1.12.160
     repository: https://github.com/intel/metrics-discovery.git
   metrics-library:
     dest_dir: metrics/library
