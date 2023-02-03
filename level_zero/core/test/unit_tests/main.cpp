@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
 #include "shared/source/helpers/hw_info.h"

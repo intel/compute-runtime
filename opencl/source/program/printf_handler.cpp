@@ -8,7 +8,6 @@
 #include "printf_handler.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_properties.h"

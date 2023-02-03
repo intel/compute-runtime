@@ -8,7 +8,6 @@
 #include "shared/source/built_ins/built_ins.h"
 
 #include "shared/source/built_ins/sip.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/debug_helpers.h"

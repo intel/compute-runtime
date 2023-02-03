@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_builtinslib.h"
 #include "shared/test/common/mocks/mock_device.h"

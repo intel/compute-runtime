@@ -7,7 +7,6 @@
 
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/preemption_mode.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/debugger/debugger.h"
 #include "shared/source/device/device.h"

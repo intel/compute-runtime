@@ -7,7 +7,6 @@
 
 #include "opencl/source/program/create.inl"
 
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/external_functions.h"
 
 #include "opencl/source/program/program.h"

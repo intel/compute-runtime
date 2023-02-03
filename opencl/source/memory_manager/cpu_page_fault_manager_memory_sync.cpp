@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/page_fault_manager/cpu_page_fault_manager.h"

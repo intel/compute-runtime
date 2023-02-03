@@ -7,7 +7,6 @@
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"

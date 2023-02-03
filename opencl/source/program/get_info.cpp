@@ -7,7 +7,6 @@
 
 #include "shared/source/helpers/get_info.h"
 
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"

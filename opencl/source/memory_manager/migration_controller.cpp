@@ -8,7 +8,6 @@
 #include "opencl/source/memory_manager/migration_controller.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
 

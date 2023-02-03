@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/source/built_ins/sip.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 
 #include "ocl_igc_interface/fcl_ocl_device_ctx.h"

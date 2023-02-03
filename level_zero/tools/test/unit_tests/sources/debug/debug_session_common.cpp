@@ -7,7 +7,6 @@
 
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
 
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/mocks/mock_sip.h"
 

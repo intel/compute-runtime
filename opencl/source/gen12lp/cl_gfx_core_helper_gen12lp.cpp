@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/gen12lp/hw_cmds.h"
 #include "shared/source/helpers/populate_factory.h"
 

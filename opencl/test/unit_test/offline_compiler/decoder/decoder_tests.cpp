@@ -6,7 +6,6 @@
  */
 
 #include "shared/offline_compiler/source/decoder/translate_platform_base.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/test_files.h"

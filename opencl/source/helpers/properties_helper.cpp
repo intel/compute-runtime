@@ -8,7 +8,6 @@
 #include "opencl/source/helpers/properties_helper.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/memory_manager.h"

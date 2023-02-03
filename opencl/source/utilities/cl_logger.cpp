@@ -7,7 +7,6 @@
 
 #include "opencl/source/utilities/cl_logger.h"
 
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/ptr_math.h"
 

@@ -7,7 +7,6 @@
 
 #include "shared/test/common/libult/global_environment.h"
 
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_inc_base.h"
 

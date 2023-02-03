@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/test_files.h"

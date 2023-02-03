@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"

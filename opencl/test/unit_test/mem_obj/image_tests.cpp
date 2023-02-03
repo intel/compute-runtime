@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/image/image_surface_state.h"

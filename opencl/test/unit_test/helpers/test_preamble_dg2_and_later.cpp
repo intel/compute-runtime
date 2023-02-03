@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/kernel/implicit_args.h"

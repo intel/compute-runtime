@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/command_stream/linear_stream.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/indirect_heap/indirect_heap.h"

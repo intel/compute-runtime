@@ -7,7 +7,6 @@
 
 #include "opencl/source/kernel/image_transformer.h"
 
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/kernel/implicit_args.h"

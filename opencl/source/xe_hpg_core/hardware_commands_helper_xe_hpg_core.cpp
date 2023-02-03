@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/helpers/cache_flush_xehp_and_later.inl"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 

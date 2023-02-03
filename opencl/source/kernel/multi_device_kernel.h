@@ -6,7 +6,7 @@
  */
 
 #pragma once
-#include "shared/source/compiler_interface/compiler_cache.h"
+
 #include "shared/source/compiler_interface/external_functions.h"
 
 #include "opencl/source/helpers/base_object.h"

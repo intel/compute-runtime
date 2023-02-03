@@ -7,8 +7,6 @@
 
 #include "opencl/source/helpers/dispatch_info.h"
 
-#include "shared/source/compiler_interface/compiler_cache.h"
-
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/mem_obj/mem_obj.h"
 

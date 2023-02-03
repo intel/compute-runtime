@@ -5,8 +5,6 @@
  *
  */
 
-#include "shared/source/compiler_interface/compiler_cache.h"
-
 #include "opencl/source/command_queue/command_queue.h"
 
 namespace NEO {

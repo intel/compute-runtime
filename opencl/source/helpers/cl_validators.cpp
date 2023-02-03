@@ -7,8 +7,6 @@
 
 #include "opencl/source/helpers/cl_validators.h"
 
-#include "shared/source/compiler_interface/compiler_cache.h"
-
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/context/context.h"

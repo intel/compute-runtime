@@ -8,7 +8,6 @@
 #include "program.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
-#include "shared/source/compiler_interface/compiler_cache.h"
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
