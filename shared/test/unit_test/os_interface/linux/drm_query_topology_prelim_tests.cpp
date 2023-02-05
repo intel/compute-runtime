@@ -328,12 +328,17 @@ TEST(DrmQueryTest, WhenCallingQueryPageFaultSupportThenReturnFalseByDefault) {
 TEST(DrmQueryTest, givenPageFaultSupportEnabledWhenCallingQueryPageFaultSupportThenReturnCorrectValue) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    const auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
     for (bool hasPageFaultSupport : {false, true}) {
         drm.context.hasPageFaultQueryValue = hasPageFaultSupport;
         drm.queryPageFaultSupport();
 
-        EXPECT_EQ(hasPageFaultSupport, drm.hasPageFaultSupport());
+        if (productHelper.isPageFaultSupported()) {
+            EXPECT_EQ(hasPageFaultSupport, drm.hasPageFaultSupport());
+        } else {
+            EXPECT_FALSE(drm.hasPageFaultSupport());
+        }
     }
 }
 

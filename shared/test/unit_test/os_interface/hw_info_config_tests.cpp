@@ -391,6 +391,11 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfBlitterForImagesIsSuppo
     EXPECT_FALSE(productHelper->isBlitterForImagesSupported());
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPageFaultIsSupportedThenReturnFalse) {
+
+    EXPECT_FALSE(productHelper->isPageFaultSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenTrueIsReturned) {
 
     EXPECT_TRUE(productHelper->isTile64With3DSurfaceOnBCSSupported(pInHwInfo));

@@ -336,6 +336,11 @@ bool ProductHelperHw<gfxProduct>::isBlitterForImagesSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isPageFaultSupported() const {
+    return false;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isDcFlushAllowed() const {
     return true;
 }
