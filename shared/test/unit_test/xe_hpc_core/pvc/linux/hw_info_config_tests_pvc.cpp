@@ -72,6 +72,12 @@ PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIfPatIndexProgrammin
     EXPECT_TRUE(productHelper->isVmBindPatIndexProgrammingSupported());
 }
 
+HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfPageFaultIsSupportedThenReturnFalse, IGFX_PVC);
+
+PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isPageFaultSupported());
+}
+
 PVCTEST_F(PvcProductHelperLinux, givenAotConfigWhenSetHwInfoRevisionIdForPvcThenCorrectValueIsSet) {
     auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     for (const auto &config : AOT_PVC::productConfigs) {

@@ -1168,6 +1168,10 @@ bool Drm::queryTopology(const HardwareInfo &hwInfo, QueryTopologyData &topologyD
 }
 
 void Drm::queryPageFaultSupport() {
+    const auto &productHelper = this->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    if (!productHelper.isPageFaultSupported()) {
+        return;
+    }
 
     if (const auto paramId = ioctlHelper->getHasPageFaultParamId(); paramId) {
         int support = 0;

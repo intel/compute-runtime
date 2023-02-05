@@ -116,6 +116,7 @@ class ProductHelper {
     virtual bool is3DPipelineSelectWARequired() const = 0;
     virtual bool isStorageInfoAdjustmentRequired() const = 0;
     virtual bool isBlitterForImagesSupported() const = 0;
+    virtual bool isPageFaultSupported() const = 0;
     virtual bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isDcFlushAllowed() const = 0;
     virtual uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const = 0;
@@ -272,6 +273,7 @@ class ProductHelperHw : public ProductHelper {
     bool is3DPipelineSelectWARequired() const override;
     bool isStorageInfoAdjustmentRequired() const override;
     bool isBlitterForImagesSupported() const override;
+    bool isPageFaultSupported() const override;
     bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const override;
     bool isDcFlushAllowed() const override;
     uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const override;

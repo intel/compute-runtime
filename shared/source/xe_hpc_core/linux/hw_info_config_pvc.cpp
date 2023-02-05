@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -73,6 +73,11 @@ uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecon
     const uint64_t numberOfHbmStacksPerTile = 4u;
     const uint64_t memoryBusWidth = 128u;
     return memoryMaxClkRateInMhz * 1000 * 1000 * numberOfHbmStacksPerTile * memoryBusWidth / 8;
+}
+
+template <>
+bool ProductHelperHw<gfxProduct>::isPageFaultSupported() const {
+    return true;
 }
 
 } // namespace NEO
