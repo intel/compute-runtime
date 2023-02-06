@@ -204,6 +204,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
             isTimestampEvent = event->isUsingContextEndOffset();
             eventAddress = event->getPacketAddress(this->device);
         }
+        if (kernel->getPrintfBufferAllocation() != nullptr) {
+            event->setKernelForPrintf(kernel);
+        }
     }
 
     bool isKernelUsingSystemAllocation = false;
