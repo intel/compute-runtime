@@ -93,7 +93,7 @@ struct BcsSplit {
             engineCount--;
         }
 
-        cmdList->addEventsToCmdList(static_cast<uint32_t>(this->cmdQs.size()), eventHandles.data(), true);
+        cmdList->addEventsToCmdList(static_cast<uint32_t>(this->cmdQs.size()), eventHandles.data(), hasRelaxedOrderingDependencies);
         cmdList->appendEventForProfilingAllWalkers(this->events.marker[markerEventIndex], false, true);
 
         if (hSignalEvent) {
