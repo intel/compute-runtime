@@ -1454,6 +1454,24 @@ TEST(CommandStreamReceiverSimpleTest, givenPrintfTagAllocationAddressFlagEnabled
     EXPECT_TRUE(hasSubstr(output, std::string(expectedStr)));
 }
 
+TEST(CommandStreamReceiverSimpleTest, whenInitializeTagAllocationThenBarrierCountAddressAreSet) {
+    DeviceBitfield deviceBitfield(1);
+    auto osContext = std::unique_ptr<OsContext>(OsContext::create(nullptr, 0, 0,
+                                                                  EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular})));
+
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    csr.setupContext(*osContext);
+
+    csr.initializeTagAllocation();
+
+    EXPECT_EQ(csr.getBarrierCountTagAddress(), ptrOffset(csr.getTagAddress(), TagAllocationLayout::barrierCountOffset));
+    EXPECT_EQ(csr.getBarrierCountGpuAddress(), ptrOffset(csr.getTagAllocation()->getGpuAddress(), TagAllocationLayout::barrierCountOffset));
+}
+
 TEST(CommandStreamReceiverSimpleTest, givenGpuIdleImplicitFlushCheckDisabledWhenGpuIsIdleThenReturnFalse) {
     MockExecutionEnvironment executionEnvironment;
     executionEnvironment.prepareRootDeviceEnvironments(1);

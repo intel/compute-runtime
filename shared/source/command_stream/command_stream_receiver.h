@@ -132,7 +132,11 @@ class CommandStreamReceiver {
         return tagsMultiAllocation;
     }
     MultiGraphicsAllocation &createTagsMultiAllocation();
+
+    TaskCountType getNextBarrierCount() { return this->barrierCount.fetch_add(1u); }
     volatile TagAddressType *getTagAddress() const { return tagAddress; }
+    volatile TagAddressType *getBarrierCountTagAddress() const { return this->barrierCountTagAddress; }
+    uint64_t getBarrierCountGpuAddress() const;
     uint64_t getDebugPauseStateGPUAddress() const;
 
     virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; }
@@ -424,6 +428,7 @@ class CommandStreamReceiver {
     uint64_t totalMemoryUsed = 0u;
 
     volatile TagAddressType *tagAddress = nullptr;
+    volatile TagAddressType *barrierCountTagAddress = nullptr;
     volatile DebugPauseState *debugPauseStateAddress = nullptr;
     SpinLock debugPauseStateLock;
     static void *asyncDebugBreakConfirmation(void *arg);
@@ -445,6 +450,7 @@ class CommandStreamReceiver {
     OsContext *osContext = nullptr;
     TaskCountType *completionFenceValuePointer = nullptr;
 
+    std::atomic<TaskCountType> barrierCount{0};
     // current taskLevel.  Used for determining if a PIPE_CONTROL is needed.
     std::atomic<TaskCountType> taskLevel{0};
     std::atomic<TaskCountType> latestSentTaskCount{0};

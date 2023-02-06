@@ -743,6 +743,8 @@ bool CommandStreamReceiver::initializeTagAllocation() {
         userPauseConfirmation = Thread::create(CommandStreamReceiver::asyncDebugBreakConfirmation, reinterpret_cast<void *>(this));
     }
 
+    this->barrierCountTagAddress = ptrOffset(this->tagAddress, TagAllocationLayout::barrierCountOffset);
+
     return true;
 }
 
@@ -1009,7 +1011,7 @@ TaskCountType CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionS
         return 0;
     }
 }
-
+uint64_t CommandStreamReceiver::getBarrierCountGpuAddress() const { return ptrOffset(this->tagAllocation->getGpuAddress(), TagAllocationLayout::barrierCountOffset); }
 uint64_t CommandStreamReceiver::getDebugPauseStateGPUAddress() const { return tagAllocation->getGpuAddress() + TagAllocationLayout::debugPauseStateAddressOffset; }
 uint64_t CommandStreamReceiver::getCompletionAddress() const {
     uint64_t completionFenceAddress = castToUint64(const_cast<TagAddressType *>(tagAddress));

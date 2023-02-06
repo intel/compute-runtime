@@ -2036,6 +2036,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
         }
     }
 
+    if (this->cmdListType == TYPE_IMMEDIATE && isCopyOnly()) {
+        NEO::MiFlushArgs args;
+        args.commandWithPostSync = true;
+        const auto &productHelper = this->device->getProductHelper();
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), this->csr->getBarrierCountGpuAddress(), this->csr->getNextBarrierCount() + 1, args, productHelper);
+        commandContainer.addToResidencyContainer(this->csr->getTagAllocation());
+    }
+
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::CallNameEndTag>(
             *commandContainer.getCommandStream(),
@@ -2563,8 +2571,18 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendBarrier(ze_event_handle_
 
     if (isCopyOnly()) {
         NEO::MiFlushArgs args;
+        uint64_t gpuAddress = 0u;
+        TaskCountType value = 0u;
+
+        if (this->cmdListType == TYPE_IMMEDIATE) {
+            args.commandWithPostSync = true;
+            gpuAddress = this->csr->getBarrierCountGpuAddress();
+            value = this->csr->getNextBarrierCount() + 1;
+            commandContainer.addToResidencyContainer(this->csr->getTagAllocation());
+        }
+
         const auto &productHelper = this->device->getProductHelper();
-        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), 0, 0, args, productHelper);
+        NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(*commandContainer.getCommandStream(), gpuAddress, value, args, productHelper);
     } else {
         appendComputeBarrierCommand();
     }
