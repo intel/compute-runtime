@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
 #include <level_zero/ze_api.h>

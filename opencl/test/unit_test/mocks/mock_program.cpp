@@ -11,6 +11,7 @@
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/hash.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/program/program_info_from_patchtokens.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/ult_limits.h"

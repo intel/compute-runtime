@@ -18,6 +18,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 
 #include <bitset>

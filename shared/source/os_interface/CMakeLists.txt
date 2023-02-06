@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -41,6 +41,7 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/performance_counters.h
     ${CMAKE_CURRENT_SOURCE_DIR}/print.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/os_inc_base.h
     ${CMAKE_CURRENT_SOURCE_DIR}/sys_calls_common.h
 )

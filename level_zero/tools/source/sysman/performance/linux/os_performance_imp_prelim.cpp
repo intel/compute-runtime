@@ -8,6 +8,7 @@
 #include "level_zero/tools/source/sysman/performance/linux/os_performance_imp_prelim.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include <cmath>
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 #include "level_zero/tools/source/sysman/os_sysman.h"
 
 #include "performance_imp.h"
+
+#include <algorithm>
 
 namespace L0 {
 

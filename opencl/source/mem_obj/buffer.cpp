@@ -16,6 +16,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"

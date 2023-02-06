@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/memory_properties_helpers.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

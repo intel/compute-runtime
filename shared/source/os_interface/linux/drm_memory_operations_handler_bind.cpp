@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler_bind.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"

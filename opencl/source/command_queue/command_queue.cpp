@@ -20,6 +20,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet.h"

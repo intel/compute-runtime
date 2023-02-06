@@ -8,6 +8,7 @@
 #include "user_event.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/command_stream/wait_status.h"
 #include "shared/source/device/device.h"
 
 #include "opencl/source/command_queue/command_queue.h"

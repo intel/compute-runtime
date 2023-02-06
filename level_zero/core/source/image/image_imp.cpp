@@ -8,6 +8,7 @@
 #include "level_zero/core/source/image/image_imp.h"
 
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/device/device.h"

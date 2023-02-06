@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/multi_graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"

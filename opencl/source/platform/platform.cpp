@@ -16,6 +16,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
 
 #include "opencl/source/api/api.h"

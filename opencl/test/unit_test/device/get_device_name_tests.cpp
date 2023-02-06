@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 

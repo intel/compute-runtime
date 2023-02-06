@@ -20,6 +20,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/heap_assigner.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"

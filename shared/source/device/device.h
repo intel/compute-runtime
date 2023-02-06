@@ -15,6 +15,8 @@
 #include "shared/source/os_interface/performance_counters.h"
 #include "shared/source/utilities/reference_tracked_object.h"
 
+#include <array>
+
 namespace NEO {
 class BindlessHeapsHelper;
 class BuiltIns;

@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/test/unit_test/mocks/mock_cl_execution_environment.h"

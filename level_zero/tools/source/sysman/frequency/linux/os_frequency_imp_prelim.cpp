@@ -9,6 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include "igfxfmid.h"
 #include "sysman/linux/os_sysman_imp.h"

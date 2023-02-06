@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "opencl/source/helpers/surface_formats.h"

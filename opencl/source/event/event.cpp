@@ -14,6 +14,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/get_info.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/mt_helpers.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"

@@ -12,6 +12,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"

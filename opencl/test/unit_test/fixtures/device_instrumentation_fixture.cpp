@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/fixtures/device_instrumentation_fixture.h"
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/execution_environment_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
