@@ -100,6 +100,7 @@ class ProductHelper {
     virtual bool allowCompression(const HardwareInfo &hwInfo) const = 0;
     virtual LocalMemoryAccessMode getLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     virtual bool isAllocationSizeAdjustmentRequired(const HardwareInfo &hwInfo) const = 0;
+    virtual int getProductMaxPreferredSlmSize(const HardwareInfo &hwInfo, int preferredEnumValue) const = 0;
     virtual bool isPrefetchDisablingRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isNewResidencyModelSupported() const = 0;
     virtual bool isDirectSubmissionSupported(const HardwareInfo &hwInfo) const = 0;
@@ -208,5 +209,4 @@ class ProductHelper {
   public:
     uint32_t threadsPerEu = 0u;
 };
-
 } // namespace NEO

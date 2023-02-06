@@ -66,19 +66,19 @@ void EncodeDispatchKernel<Family>::appendAdditionalIDDFields(INTERFACE_DESCRIPTO
     }};
 
     auto programmableIdPreferredSlmSize = PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K;
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    programmableIdPreferredSlmSize = static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(productHelper.getProductMaxPreferredSlmSize(hwInfo, programmableIdPreferredSlmSize));
     for (auto &range : ranges) {
         if (slmSize <= range.upperLimit) {
             programmableIdPreferredSlmSize = range.valueToProgram;
             break;
         }
     }
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     if (productHelper.isAllocationSizeAdjustmentRequired(hwInfo)) {
         pInterfaceDescriptor->setPreferredSlmAllocationSize(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K);
     } else {
         pInterfaceDescriptor->setPreferredSlmAllocationSize(programmableIdPreferredSlmSize);
     }
-
     if (DebugManager.flags.OverridePreferredSlmAllocationSizePerDss.get() != -1) {
         auto toProgram =
             static_cast<PREFERRED_SLM_ALLOCATION_SIZE>(DebugManager.flags.OverridePreferredSlmAllocationSizePerDss.get());
