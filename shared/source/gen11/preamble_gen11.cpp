@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/gen11/hw_cmds_base.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/preamble_bdw_and_later.inl"

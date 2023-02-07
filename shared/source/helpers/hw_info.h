@@ -146,12 +146,6 @@ struct HardwareInfo {
     uint8_t reserved[4]{}; // to keep optimal alignment
 };
 
-template <PRODUCT_FAMILY product>
-struct HwMapper {};
-
-template <GFXCORE_FAMILY gfxFamily>
-struct GfxFamilyMapper {};
-
 // Global table of hardware prefixes
 extern bool familyEnabled[IGFX_MAX_CORE];
 extern const char *hardwarePrefix[IGFX_MAX_PRODUCT];
@@ -172,11 +166,4 @@ void setHwInfoValuesFromConfig(const uint64_t hwInfoConfig, HardwareInfo &hwInfo
 bool parseHwInfoConfigString(const std::string &hwInfoConfigStr, uint64_t &hwInfoConfig);
 aub_stream::EngineType getChosenEngineType(const HardwareInfo &hwInfo);
 
-// Utility conversion
-template <PRODUCT_FAMILY productFamily>
-struct ToGfxCoreFamily {
-    static const GFXCORE_FAMILY gfxCoreFamily =
-        static_cast<GFXCORE_FAMILY>(NEO::HwMapper<productFamily>::gfxFamily);
-    static constexpr GFXCORE_FAMILY get() { return gfxCoreFamily; }
-};
 } // namespace NEO

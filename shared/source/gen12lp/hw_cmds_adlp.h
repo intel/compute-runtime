@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/helpers/hw_info.h"
 namespace NEO {
 
 struct ADLP : public Gen12LpFamily {

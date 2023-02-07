@@ -1,11 +1,12 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/source/device/device_imp.h"

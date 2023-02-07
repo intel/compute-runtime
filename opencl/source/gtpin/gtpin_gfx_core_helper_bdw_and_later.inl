@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include "opencl/source/gtpin/gtpin_gfx_core_helper.h"
 

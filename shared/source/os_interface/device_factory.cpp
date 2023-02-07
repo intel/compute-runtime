@@ -14,6 +14,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/aub_memory_operations_handler.h"

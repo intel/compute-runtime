@@ -8,7 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/stream_properties.h"
-#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/unified_memory/unified_memory.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"

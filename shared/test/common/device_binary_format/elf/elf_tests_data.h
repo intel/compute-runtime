@@ -11,6 +11,7 @@
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 
 #include "patch_list.h"

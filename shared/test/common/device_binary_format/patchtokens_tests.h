@@ -10,6 +10,7 @@
 #include "shared/source/device_binary_format/patchtokens_decoder.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 

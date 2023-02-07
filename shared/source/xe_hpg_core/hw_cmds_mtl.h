@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
+
 namespace NEO {
 
 struct MTL : public XeHpgCoreFamily {

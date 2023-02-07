@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/gen8/hw_cmds_base.h"
+#include "shared/source/helpers/hw_info.h"
 
 #include <string>
 

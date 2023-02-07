@@ -7,10 +7,13 @@
 
 #pragma once
 
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 
+#include "gtest/gtest.h"
 #include "test_traits_common.h"
 
 using namespace NEO;

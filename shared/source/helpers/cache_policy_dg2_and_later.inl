@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/cache_policy_base.inl"
-#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/hw_mapper.h"
 
 namespace NEO {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 

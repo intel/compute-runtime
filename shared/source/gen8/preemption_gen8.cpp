@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/preemption.inl"
 #include "shared/source/gen8/hw_cmds_base.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/register_offsets.h"
 
 namespace NEO {

@@ -87,6 +87,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_ip_version.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/hw_mapper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_walk_order.h
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kernel_helpers.h

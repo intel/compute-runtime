@@ -16,6 +16,7 @@
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
 
+#include <atomic>
 #include <vector>
 
 struct UnifiedMemoryControls;
