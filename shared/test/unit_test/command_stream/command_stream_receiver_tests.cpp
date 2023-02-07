@@ -1470,6 +1470,9 @@ TEST(CommandStreamReceiverSimpleTest, whenInitializeTagAllocationThenBarrierCoun
 
     EXPECT_EQ(csr.getBarrierCountTagAddress(), ptrOffset(csr.getTagAddress(), TagAllocationLayout::barrierCountOffset));
     EXPECT_EQ(csr.getBarrierCountGpuAddress(), ptrOffset(csr.getTagAllocation()->getGpuAddress(), TagAllocationLayout::barrierCountOffset));
+    EXPECT_EQ(csr.peekBarrierCount(), 0u);
+    EXPECT_EQ(csr.getNextBarrierCount(), 0u);
+    EXPECT_EQ(csr.peekBarrierCount(), 1u);
 }
 
 TEST(CommandStreamReceiverSimpleTest, givenGpuIdleImplicitFlushCheckDisabledWhenGpuIsIdleThenReturnFalse) {

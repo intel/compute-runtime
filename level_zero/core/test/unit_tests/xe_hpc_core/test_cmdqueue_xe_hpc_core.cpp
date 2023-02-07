@@ -798,6 +798,69 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
     context->freeMem(dstPtr);
 }
 
+HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAppendingMemoryCopyAfterBarrierThenSuccessIsReturnedAndMiSemaphoresProgrammed, IsXeHpcCore) {
+    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.SplitBcsCopy.set(1);
+    DebugManager.flags.EnableFlushTaskSubmission.set(0);
+
+    ze_result_t returnValue;
+    auto hwInfo = *NEO::defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = 0b111111111;
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    auto testNeoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo);
+    auto testL0Device = std::unique_ptr<L0::Device>(L0::Device::create(driverHandle.get(), testNeoDevice, false, &returnValue));
+
+    ze_command_queue_desc_t desc = {};
+    desc.ordinal = static_cast<uint32_t>(testNeoDevice->getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::Copy));
+
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               testL0Device.get(),
+                                                                               &desc,
+                                                                               false,
+                                                                               NEO::EngineGroupType::Copy,
+                                                                               returnValue));
+    ASSERT_NE(nullptr, commandList0);
+    EXPECT_EQ(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size(), 4u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getTaskCount(), 0u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 0u);
+
+    constexpr size_t alignment = 4096u;
+    constexpr size_t size = 8 * MemoryConstants::megaByte;
+    void *srcPtr;
+    void *dstPtr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    context->allocDeviceMem(device->toHandle(),
+                            &deviceDesc,
+                            size, alignment, &srcPtr);
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    context->allocHostMem(&hostDesc, size, alignment, &dstPtr);
+    commandList0->csr->getNextBarrierCount();
+
+    auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[2])->getTaskCount(), 1u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[3])->getTaskCount(), 1u);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, commandList0->commandContainer.getCommandStream()->getCpuBase(), commandList0->commandContainer.getCommandStream()->getUsed()));
+
+    auto itor = cmdList.begin();
+    for (uint32_t i = 0u; i < static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs.size() * 2; ++i) {
+        itor = find<MI_SEMAPHORE_WAIT *>(itor, cmdList.end());
+        EXPECT_NE(cmdList.end(), itor);
+    }
+
+    context->freeMem(srcPtr);
+    context->freeMem(dstPtr);
+}
+
 HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhenAllocateNewEventsForSplitThenEventsAreManagedProperly, IsXeHpcCore) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
 
