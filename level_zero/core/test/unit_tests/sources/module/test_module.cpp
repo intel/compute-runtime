@@ -2276,7 +2276,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
     ++emptyProgram.elfHeader->machine;
     L0::ModuleTranslationUnit moduleTuInvalid(this->device);
     result = moduleTuInvalid.createFromNativeBinary(reinterpret_cast<const char *>(emptyProgram.storage.data()), emptyProgram.storage.size());
-    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NATIVE_BINARY, result);
+    EXPECT_EQ(ZE_RESULT_ERROR_MODULE_BUILD_FAILURE, result);
 }
 
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPackedTargetDeviceBinary) {

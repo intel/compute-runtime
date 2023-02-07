@@ -289,7 +289,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
     }
     if (singleDeviceBinary.intermediateRepresentation.empty() && singleDeviceBinary.deviceBinary.empty()) {
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "%s\n", decodeErrors.c_str());
-        return ZE_RESULT_ERROR_INVALID_NATIVE_BINARY;
+        return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
     } else {
         this->irBinary = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.intermediateRepresentation.begin()), singleDeviceBinary.intermediateRepresentation.size());
         this->irBinarySize = singleDeviceBinary.intermediateRepresentation.size();
@@ -331,7 +331,7 @@ ze_result_t ModuleTranslationUnit::createFromNativeBinary(const char *input, siz
         return buildFromSpirV(this->irBinary.get(), static_cast<uint32_t>(this->irBinarySize), this->options.c_str(), "", nullptr);
     } else {
         if (processUnpackedBinary() != ZE_RESULT_SUCCESS) {
-            return ZE_RESULT_ERROR_INVALID_NATIVE_BINARY;
+            return ZE_RESULT_ERROR_MODULE_BUILD_FAILURE;
         }
         return ZE_RESULT_SUCCESS;
     }
