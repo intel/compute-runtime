@@ -698,21 +698,27 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
         return true;
     }
 
-    size_t h2DThreshold = 2 * MemoryConstants::megaByte;
-    size_t d2HThreshold = 1 * MemoryConstants::kiloByte;
-    if (NEO::DebugManager.flags.ExperimentalH2DCpuCopyThreshold.get() != -1) {
-        h2DThreshold = NEO::DebugManager.flags.ExperimentalH2DCpuCopyThreshold.get();
-    }
-    if (NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get() != -1) {
-        d2HThreshold = NEO::DebugManager.flags.ExperimentalD2HCpuCopyThreshold.get();
+    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
+    if (!gfxCoreHelper.copyThroughLockedPtrEnabled(this->device->getHwInfo(), this->device->getProductHelper())) {
+        return false;
     }
 
-    auto &gfxCoreHelper = this->device->getGfxCoreHelper();
-    if (gfxCoreHelper.copyThroughLockedPtrEnabled(this->device->getHwInfo(), this->device->getProductHelper())) {
-        return (!cpuMemCopyInfo.srcAllocData && isSuitableUSMDeviceAlloc(cpuMemCopyInfo.dstAllocData) && cpuMemCopyInfo.size <= h2DThreshold) ||
-               (!cpuMemCopyInfo.dstAllocData && isSuitableUSMDeviceAlloc(cpuMemCopyInfo.srcAllocData) && cpuMemCopyInfo.size <= d2HThreshold);
+    const TransferType transferType = getTransferType(cpuMemCopyInfo.dstAllocData, cpuMemCopyInfo.srcAllocData);
+    const size_t transferThreshold = getTransferThreshold(transferType);
+
+    bool cpuMemCopyEnabled = false;
+
+    switch (transferType) {
+    case HOST_NON_USM_TO_DEVICE_USM:
+    case DEVICE_USM_TO_HOST_NON_USM:
+        cpuMemCopyEnabled = true;
+        break;
+    default:
+        cpuMemCopyEnabled = false;
+        break;
     }
-    return false;
+
+    return cpuMemCopyEnabled && cpuMemCopyInfo.size <= transferThreshold;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
