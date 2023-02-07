@@ -251,7 +251,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
     using CommandStreamReceiver::dispatchMode;
     using CommandStreamReceiver::feSupportFlags;
     using CommandStreamReceiver::globalFenceAllocation;
-    using CommandStreamReceiver::heapStorageReqiuresRecyclingTag;
+    using CommandStreamReceiver::heapStorageRequiresRecyclingTag;
     using CommandStreamReceiver::isPreambleSent;
     using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::mediaVfeStateDirty;

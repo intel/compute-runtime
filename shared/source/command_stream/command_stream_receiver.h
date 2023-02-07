@@ -492,7 +492,7 @@ class CommandStreamReceiver {
     bool GSBAFor32BitProgrammed = false;
     bool GSBAStateDirty = true;
     bool bindingTableBaseAddressRequired = false;
-    bool heapStorageReqiuresRecyclingTag = false;
+    bool heapStorageRequiresRecyclingTag = false;
     bool mediaVfeStateDirty = true;
     bool lastVmeSubslicesConfig = false;
     bool stallingCommandsOnNextFlushRequired = false;

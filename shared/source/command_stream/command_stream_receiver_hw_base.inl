@@ -308,7 +308,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     const auto &hwInfo = peekHwInfo();
     auto &gfxCoreHelper = getGfxCoreHelper();
 
-    if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl || this->heapStorageReqiuresRecyclingTag) {
+    if (dispatchFlags.blocking || dispatchFlags.dcFlush || dispatchFlags.guardCommandBufferWithPipeControl || this->heapStorageRequiresRecyclingTag) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
             // for ImmediateDispatch we will send this right away, therefore this pipe control will close the level
             // for BatchedSubmissions it will be nooped and only last ppc in batch will be emitted.
@@ -322,7 +322,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             }
         }
 
-        this->heapStorageReqiuresRecyclingTag = false;
+        this->heapStorageRequiresRecyclingTag = false;
         epiloguePipeControlLocation = ptrOffset(commandStreamTask.getCpuBase(), commandStreamTask.getUsed());
 
         if ((dispatchFlags.outOfOrderExecutionAllowed || timestampPacketWriteEnabled) &&

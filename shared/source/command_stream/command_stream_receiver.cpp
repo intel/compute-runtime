@@ -592,7 +592,7 @@ IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType
     if (heap && heap->getAvailableSpace() < minRequiredSize && heapMemory) {
         internalAllocationStorage->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapMemory), REUSABLE_ALLOCATION);
         heapMemory = nullptr;
-        this->heapStorageReqiuresRecyclingTag = true;
+        this->heapStorageRequiresRecyclingTag = true;
     }
 
     if (!heapMemory) {
