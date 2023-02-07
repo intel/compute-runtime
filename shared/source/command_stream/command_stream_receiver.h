@@ -134,6 +134,7 @@ class CommandStreamReceiver {
     MultiGraphicsAllocation &createTagsMultiAllocation();
 
     TaskCountType getNextBarrierCount() { return this->barrierCount.fetch_add(1u); }
+    TaskCountType peekBarrierCount() const { return this->barrierCount.load(); }
     volatile TagAddressType *getTagAddress() const { return tagAddress; }
     volatile TagAddressType *getBarrierCountTagAddress() const { return this->barrierCountTagAddress; }
     uint64_t getBarrierCountGpuAddress() const;

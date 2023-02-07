@@ -37,6 +37,7 @@ struct BcsSplit {
         BcsSplit &bcsSplit;
 
         std::vector<EventPool *> pools;
+        std::vector<Event *> barrier;
         std::vector<Event *> subcopy;
         std::vector<Event *> marker;
         size_t createdFromLatestPool = 0u;
@@ -68,12 +69,23 @@ struct BcsSplit {
         }
 
         auto markerEventIndex = this->events.obtainForSplit(Context::fromHandle(cmdList->hContext), MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
+
+        auto barrierRequired = cmdList->isBarrierRequired();
+        if (barrierRequired) {
+            cmdList->appendSignalEvent(this->events.barrier[markerEventIndex]->toHandle());
+        }
+
         auto subcopyEventIndex = markerEventIndex * this->cmdQs.size();
         StackVec<ze_event_handle_t, 4> eventHandles;
 
         auto totalSize = size;
         auto engineCount = this->cmdQs.size();
         for (size_t i = 0; i < this->cmdQs.size(); i++) {
+            if (barrierRequired) {
+                auto barrierEventHandle = this->events.barrier[markerEventIndex]->toHandle();
+                cmdList->addEventsToCmdList(1u, &barrierEventHandle, hasRelaxedOrderingDependencies);
+            }
+
             auto localSize = totalSize / engineCount;
             auto localDstPtr = ptrOffset(dstptr, size - totalSize);
             auto localSrcPtr = ptrOffset(srcptr, size - totalSize);

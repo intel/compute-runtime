@@ -910,6 +910,11 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferThreshold(Trans
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isBarrierRequired() {
+    return *this->csr->getBarrierCountTagAddress() < this->csr->peekBarrierCount();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamilyImmediate<gfxCoreFamily>::printKernelsPrintfOutput(bool hangDetected) {
     size_t size = this->printfKernelContainer.size();
     for (size_t i = 0; i < size; i++) {

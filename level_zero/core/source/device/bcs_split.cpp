@@ -74,6 +74,7 @@ size_t BcsSplit::Events::obtainForSplit(Context *context, size_t maxEventCountIn
         auto ret = this->marker[i]->queryStatus();
         if (ret == ZE_RESULT_SUCCESS) {
             this->marker[i]->reset();
+            this->barrier[i]->reset();
             for (size_t j = 0; j < this->bcsSplit.cmdQs.size(); j++) {
                 this->subcopy[i * this->bcsSplit.cmdQs.size() + j]->reset();
             }
@@ -85,7 +86,12 @@ size_t BcsSplit::Events::obtainForSplit(Context *context, size_t maxEventCountIn
 }
 
 size_t BcsSplit::Events::allocateNew(Context *context, size_t maxEventCountInPool) {
-    const size_t neededEvents = this->bcsSplit.cmdQs.size() + 1;
+    /* Internal events needed for split:
+     *  - event per subcopy to signal completion of given subcopy (vector of subcopy events),
+     *  - 1 event to signal completion of entire split (vector of marker events),
+     *  - 1 event to handle barrier (vector of barrier events).
+     */
+    const size_t neededEvents = this->bcsSplit.cmdQs.size() + 2;
 
     if (this->pools.empty() ||
         this->createdFromLatestPool + neededEvents > maxEventCountInPool) {
@@ -105,6 +111,8 @@ size_t BcsSplit::Events::allocateNew(Context *context, size_t maxEventCountInPoo
     desc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
     for (size_t i = 0; i < neededEvents; i++) {
         desc.index = static_cast<uint32_t>(this->createdFromLatestPool++);
+
+        // Marker event is the only one of internal split events that will be read from host, so create it at the end with appended scope flag.
         if (i == neededEvents - 1) {
             desc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
         }
@@ -112,8 +120,13 @@ size_t BcsSplit::Events::allocateNew(Context *context, size_t maxEventCountInPoo
         ze_event_handle_t hEvent;
         pool->createEvent(&desc, &hEvent);
 
+        // Last event, created with host scope flag, is marker event.
         if (i == neededEvents - 1) {
             this->marker.push_back(Event::fromHandle(hEvent));
+
+            // One event to handle barrier and others to handle subcopy completion.
+        } else if (i == neededEvents - 2) {
+            this->barrier.push_back(Event::fromHandle(hEvent));
         } else {
             this->subcopy.push_back(Event::fromHandle(hEvent));
         }
@@ -130,6 +143,10 @@ void BcsSplit::Events::releaseResources() {
         subcopyEvent->destroy();
     }
     subcopy.clear();
+    for (auto &barrierEvent : this->barrier) {
+        barrierEvent->destroy();
+    }
+    barrier.clear();
     for (auto &pool : this->pools) {
         pool->destroy();
     }

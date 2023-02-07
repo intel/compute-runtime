@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/built_ins/sip.h"
-#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -703,71 +702,6 @@ HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissi
 
     auto result = commandList->appendBarrier(nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendBarrierThenIncrementBarrierCountAndDispatchBarrierTagUpdate, IsAtLeastSkl) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
-    ze_command_queue_desc_t queueDesc = {};
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Copy, returnValue));
-    EXPECT_EQ(commandList->csr->getNextBarrierCount(), 0u);
-
-    auto result = commandList->appendBarrier(nullptr, 0, nullptr);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(commandList->csr->getNextBarrierCount(), 2u);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
-    auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
-    if (EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize()) {
-        itor++;
-    }
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_FLUSH_DW *>(*itor);
-    EXPECT_EQ(cmd->getPostSyncOperation(), MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD);
-    EXPECT_EQ(cmd->getDestinationAddress(), commandList->csr->getBarrierCountGpuAddress());
-    EXPECT_EQ(cmd->getImmediateData(), 2u);
-}
-
-HWTEST2_F(CommandListCreate, givenImmediateCopyOnlyCmdListWhenAppendWaitOnEventsThenIncrementBarrierCountAndDispatchBarrierTagUpdate, IsAtLeastSkl) {
-    using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-
-    ze_command_queue_desc_t queueDesc = {};
-    ze_result_t returnValue = ZE_RESULT_SUCCESS;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Copy, returnValue));
-    EXPECT_EQ(commandList->csr->getNextBarrierCount(), 0u);
-
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-    eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
-
-    ze_result_t result = ZE_RESULT_SUCCESS;
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
-    auto eventHandle = event->toHandle();
-
-    result = commandList->appendWaitOnEvents(1u, &eventHandle, false);
-    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(commandList->csr->getNextBarrierCount(), 2u);
-
-    GenCmdList cmdList;
-    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
-    auto itor = find<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
-    if (EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize()) {
-        itor++;
-    }
-    EXPECT_NE(cmdList.end(), itor);
-    auto cmd = genCmdCast<MI_FLUSH_DW *>(*itor);
-    EXPECT_EQ(cmd->getPostSyncOperation(), MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD);
-    EXPECT_EQ(cmd->getDestinationAddress(), commandList->csr->getBarrierCountGpuAddress());
-    EXPECT_EQ(cmd->getImmediateData(), 2u);
 }
 
 HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenUseCsrImmediateSubmissionDisabledForImmediateWhenAppendBarrierWithEventThenSuccessIsReturned) {
