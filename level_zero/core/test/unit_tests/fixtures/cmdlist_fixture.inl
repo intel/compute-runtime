@@ -448,10 +448,8 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateRegularImmediate() {
     size_t csrUsedAfter = csrStream.getUsed();
 
     auto &immediateCmdListRequiredState = commandListImmediate->getRequiredStreamState();
-    auto &immediateCmdListFinalState = commandListImmediate->getFinalStreamState();
 
     EXPECT_EQ(1, immediateCmdListRequiredState.pipelineSelect.systolicMode.value);
-    EXPECT_EQ(1, immediateCmdListFinalState.pipelineSelect.systolicMode.value);
 
     currentBuffer = ptrOffset(immediateCmdListStream.getCpuBase(), sizeBefore);
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
@@ -483,7 +481,6 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     void *currentBuffer = nullptr;
 
     auto &immediateCmdListRequiredState = commandListImmediate->getRequiredStreamState();
-    auto &immediateCmdListFinalState = commandListImmediate->getFinalStreamState();
 
     auto &immediateCmdListStream = *commandListImmediate->commandContainer.getCommandStream();
 
@@ -510,7 +507,6 @@ void CmdListPipelineSelectStateFixture::testBodyShareStateImmediateRegular() {
     size_t csrUsedAfter = csrStream.getUsed();
 
     EXPECT_EQ(1, immediateCmdListRequiredState.pipelineSelect.systolicMode.value);
-    EXPECT_EQ(1, immediateCmdListFinalState.pipelineSelect.systolicMode.value);
 
     currentBuffer = ptrOffset(immediateCmdListStream.getCpuBase(), sizeBefore);
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,

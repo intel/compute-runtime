@@ -1683,14 +1683,11 @@ HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsr
     size_t csrUsedAfter = csrStream.getUsed();
 
     auto &immediateCmdListRequiredState = commandListImmediate->getRequiredStreamState();
-    auto &immediateCmdListFinalState = commandListImmediate->getFinalStreamState();
 
     if (fePropertiesSupport.disableEuFusion) {
         EXPECT_EQ(1, immediateCmdListRequiredState.frontEndState.disableEUFusion.value);
-        EXPECT_EQ(1, immediateCmdListFinalState.frontEndState.disableEUFusion.value);
     } else {
         EXPECT_EQ(-1, immediateCmdListRequiredState.frontEndState.disableEUFusion.value);
-        EXPECT_EQ(-1, immediateCmdListFinalState.frontEndState.disableEUFusion.value);
     }
 
     cmdList.clear();
@@ -1754,14 +1751,11 @@ HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsr
     size_t csrUsedAfter = csrStream.getUsed();
 
     auto &immediateCmdListRequiredState = commandListImmediate->getRequiredStreamState();
-    auto &immediateCmdListFinalState = commandListImmediate->getFinalStreamState();
 
     if (fePropertiesSupport.disableEuFusion) {
         EXPECT_EQ(1, immediateCmdListRequiredState.frontEndState.disableEUFusion.value);
-        EXPECT_EQ(1, immediateCmdListFinalState.frontEndState.disableEUFusion.value);
     } else {
         EXPECT_EQ(-1, immediateCmdListRequiredState.frontEndState.disableEUFusion.value);
-        EXPECT_EQ(-1, immediateCmdListFinalState.frontEndState.disableEUFusion.value);
     }
 
     GenCmdList cmdList;

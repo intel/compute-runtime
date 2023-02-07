@@ -19,6 +19,11 @@
 
 using namespace NEO;
 
+struct MockStateComputeModeProperties : public StateComputeModeProperties {
+    using StateComputeModeProperties::propertiesSupportLoaded;
+    using StateComputeModeProperties::scmPropertiesSupport;
+};
+
 struct MockFrontEndProperties : public FrontEndProperties {
     using FrontEndProperties::frontEndPropertiesSupport;
     using FrontEndProperties::propertiesSupportLoaded;
@@ -266,6 +271,137 @@ TEST(StreamPropertiesTests, givenOtherPipelineSelectPropertiesStructWhenSetPrope
     verifySettingPropertiesFromOtherStruct<PipelineSelectProperties, getAllPipelineSelectProperties>();
 }
 
+TEST(StreamPropertiesTests, givenCoherencyStateAndDevicePreemptionComputeModePropertiesWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.scmPropertiesSupport.coherencyRequired = false;
+    scmProperties.scmPropertiesSupport.devicePreemptionMode = false;
+
+    bool coherencyRequired = false;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
+    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, rootDeviceEnvironment);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.isCoherencyRequired.value);
+    EXPECT_EQ(-1, scmProperties.devicePreemptionMode.value);
+
+    scmProperties.scmPropertiesSupport.coherencyRequired = true;
+    scmProperties.scmPropertiesSupport.devicePreemptionMode = true;
+    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, rootDeviceEnvironment);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
+    EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
+
+    devicePreemptionMode = PreemptionMode::Initial;
+    scmProperties.setProperties(coherencyRequired, -1, -1, devicePreemptionMode, rootDeviceEnvironment);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
+    EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
+
+    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, rootDeviceEnvironment);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
+    EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
+
+    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, rootDeviceEnvironment);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
+    EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
+
+    coherencyRequired = true;
+    devicePreemptionMode = PreemptionMode::MidThread;
+    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, rootDeviceEnvironment);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.isCoherencyRequired.value);
+    EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
+
+    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, rootDeviceEnvironment);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.isCoherencyRequired.value);
+    EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
+}
+
+TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePropertiesWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.scmPropertiesSupport.largeGrfMode = false;
+    scmProperties.scmPropertiesSupport.threadArbitrationPolicy = false;
+
+    int32_t grfNumber = 128;
+    int32_t threadArbitration = 1;
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.largeGrfMode.value);
+    EXPECT_EQ(-1, scmProperties.threadArbitrationPolicy.value);
+
+    scmProperties.scmPropertiesSupport.largeGrfMode = true;
+    scmProperties.scmPropertiesSupport.threadArbitrationPolicy = true;
+    scmProperties.setProperties(false, static_cast<uint32_t>(grfNumber), threadArbitration, PreemptionMode::Initial, rootDeviceEnvironment);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.largeGrfMode.value);
+    EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
+
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.largeGrfMode.value);
+    EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
+
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.largeGrfMode.value);
+    EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
+
+    grfNumber = 256;
+    threadArbitration = 2;
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.largeGrfMode.value);
+    EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
+
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(1, scmProperties.largeGrfMode.value);
+    EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
+}
+
+TEST(StreamPropertiesTests, givenForceDebugDefaultThreadArbitrationStateComputeModePropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
+    DebugManagerStateRestore restorer;
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto defaultThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
+
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.scmPropertiesSupport.threadArbitrationPolicy = true;
+
+    constexpr int32_t grfNumber = -1;
+    constexpr int32_t requestedThreadArbitration = ThreadArbitrationPolicy::RoundRobinAfterDependency;
+    int32_t threadArbitration = requestedThreadArbitration;
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.largeGrfMode.value);
+    EXPECT_EQ(requestedThreadArbitration, scmProperties.threadArbitrationPolicy.value);
+
+    DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.set(true);
+    threadArbitration = ThreadArbitrationPolicy::NotPresent;
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    if (defaultThreadArbitrationPolicy == requestedThreadArbitration) {
+        EXPECT_FALSE(scmProperties.isDirty());
+    } else {
+        EXPECT_TRUE(scmProperties.isDirty());
+    }
+    EXPECT_EQ(-1, scmProperties.largeGrfMode.value);
+    EXPECT_EQ(defaultThreadArbitrationPolicy, scmProperties.threadArbitrationPolicy.value);
+}
+
 TEST(StreamPropertiesTests, givenSingleDispatchCcsFrontEndPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
@@ -293,6 +429,88 @@ TEST(StreamPropertiesTests, givenSingleDispatchCcsFrontEndPropertyWhenSettingPro
     feProperties.setPropertySingleSliceDispatchCcsMode(engineInstancedDevice, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
     EXPECT_TRUE(feProperties.singleSliceDispatchCcsMode.isDirty);
     EXPECT_EQ(engineInstancedDevice, feProperties.singleSliceDispatchCcsMode.value);
+}
+
+TEST(StreamPropertiesTests, givenDisableOverdispatchFrontEndPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    MockFrontEndProperties feProperties{};
+    feProperties.propertiesSupportLoaded = true;
+    feProperties.frontEndPropertiesSupport.disableOverdispatch = false;
+
+    bool disableOverdispatch = false;
+    feProperties.setPropertyDisableOverdispatch(disableOverdispatch, rootDeviceEnvironment);
+    EXPECT_FALSE(feProperties.isDirty());
+    EXPECT_EQ(-1, feProperties.disableOverdispatch.value);
+
+    feProperties.frontEndPropertiesSupport.disableOverdispatch = true;
+    feProperties.setProperties(false, false, disableOverdispatch, -1, rootDeviceEnvironment);
+    EXPECT_TRUE(feProperties.isDirty());
+    EXPECT_EQ(0, feProperties.disableOverdispatch.value);
+
+    feProperties.setPropertyDisableOverdispatch(disableOverdispatch, rootDeviceEnvironment);
+    EXPECT_FALSE(feProperties.isDirty());
+    EXPECT_EQ(0, feProperties.disableOverdispatch.value);
+
+    feProperties.setPropertyDisableOverdispatch(disableOverdispatch, rootDeviceEnvironment);
+    EXPECT_FALSE(feProperties.isDirty());
+    EXPECT_EQ(0, feProperties.disableOverdispatch.value);
+
+    disableOverdispatch = true;
+    feProperties.setPropertyDisableOverdispatch(disableOverdispatch, rootDeviceEnvironment);
+    EXPECT_TRUE(feProperties.isDirty());
+    EXPECT_EQ(1, feProperties.disableOverdispatch.value);
+
+    feProperties.setPropertyDisableOverdispatch(disableOverdispatch, rootDeviceEnvironment);
+    EXPECT_FALSE(feProperties.isDirty());
+    EXPECT_EQ(1, feProperties.disableOverdispatch.value);
+}
+
+TEST(StreamPropertiesTests, givenComputeDispatchAllWalkerEnableAndDisableEuFusionFrontEndPropertiesWhenSettingPropertiesAndCheckIfSupportedThenExpectCorrectState) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    MockFrontEndProperties feProperties{};
+    feProperties.propertiesSupportLoaded = true;
+    feProperties.frontEndPropertiesSupport.disableEuFusion = false;
+    feProperties.frontEndPropertiesSupport.computeDispatchAllWalker = false;
+
+    bool disableEuFusion = false;
+    bool isCooperativeKernel = false;
+    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion, rootDeviceEnvironment);
+    EXPECT_FALSE(feProperties.isDirty());
+    EXPECT_EQ(-1, feProperties.disableEUFusion.value);
+    EXPECT_EQ(-1, feProperties.computeDispatchAllWalkerEnable.value);
+
+    feProperties.frontEndPropertiesSupport.disableEuFusion = true;
+    feProperties.frontEndPropertiesSupport.computeDispatchAllWalker = true;
+    feProperties.setProperties(isCooperativeKernel, disableEuFusion, false, -1, rootDeviceEnvironment);
+    EXPECT_TRUE(feProperties.isDirty());
+    EXPECT_EQ(0, feProperties.disableEUFusion.value);
+    EXPECT_EQ(0, feProperties.computeDispatchAllWalkerEnable.value);
+
+    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion, rootDeviceEnvironment);
+    EXPECT_FALSE(feProperties.isDirty());
+    EXPECT_EQ(0, feProperties.disableEUFusion.value);
+    EXPECT_EQ(0, feProperties.computeDispatchAllWalkerEnable.value);
+
+    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion, rootDeviceEnvironment);
+    EXPECT_FALSE(feProperties.isDirty());
+    EXPECT_EQ(0, feProperties.disableEUFusion.value);
+    EXPECT_EQ(0, feProperties.computeDispatchAllWalkerEnable.value);
+
+    disableEuFusion = true;
+    isCooperativeKernel = true;
+    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion, rootDeviceEnvironment);
+    EXPECT_TRUE(feProperties.isDirty());
+    EXPECT_EQ(1, feProperties.disableEUFusion.value);
+    EXPECT_EQ(1, feProperties.computeDispatchAllWalkerEnable.value);
+
+    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion, rootDeviceEnvironment);
+    EXPECT_FALSE(feProperties.isDirty());
+    EXPECT_EQ(1, feProperties.disableEUFusion.value);
+    EXPECT_EQ(1, feProperties.computeDispatchAllWalkerEnable.value);
 }
 
 TEST(StreamPropertiesTests, whenSettingPipelineSelectPropertiesThenCorrectValueIsSet) {
@@ -348,6 +566,42 @@ TEST(StreamPropertiesTests, givenModeSelectPipelineSelectPropertyNotSupportedWhe
 
     // expect clean as changed modeSelected is not supported
     EXPECT_FALSE(pipeProperties.isDirty());
+}
+
+TEST(StreamPropertiesTests, givenSystolicModePipelineSelectPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+
+    MockPipelineSelectProperties pipeProperties{};
+    pipeProperties.propertiesSupportLoaded = true;
+    pipeProperties.pipelineSelectPropertiesSupport.systolicMode = false;
+
+    bool systolicMode = false;
+    pipeProperties.setPropertySystolicMode(systolicMode, rootDeviceEnvironment);
+    EXPECT_FALSE(pipeProperties.isDirty());
+    EXPECT_EQ(-1, pipeProperties.systolicMode.value);
+
+    pipeProperties.pipelineSelectPropertiesSupport.systolicMode = true;
+    pipeProperties.setPropertySystolicMode(systolicMode, rootDeviceEnvironment);
+    EXPECT_TRUE(pipeProperties.isDirty());
+    EXPECT_EQ(0, pipeProperties.systolicMode.value);
+
+    pipeProperties.setPropertySystolicMode(systolicMode, rootDeviceEnvironment);
+    EXPECT_FALSE(pipeProperties.isDirty());
+    EXPECT_EQ(0, pipeProperties.systolicMode.value);
+
+    systolicMode = true;
+    pipeProperties.setPropertySystolicMode(systolicMode, rootDeviceEnvironment);
+    EXPECT_TRUE(pipeProperties.isDirty());
+    EXPECT_EQ(1, pipeProperties.systolicMode.value);
+
+    pipeProperties.setPropertySystolicMode(systolicMode, rootDeviceEnvironment);
+    EXPECT_FALSE(pipeProperties.isDirty());
+    EXPECT_EQ(1, pipeProperties.systolicMode.value);
+
+    pipeProperties.setPropertySystolicMode(systolicMode, rootDeviceEnvironment);
+    EXPECT_FALSE(pipeProperties.isDirty());
+    EXPECT_EQ(1, pipeProperties.systolicMode.value);
 }
 
 TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingPropertyAndCheckIfDirtyThenExpectCleanStateForNotSupportedAndDirtyForSupported) {

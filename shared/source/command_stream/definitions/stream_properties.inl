@@ -31,6 +31,8 @@ struct StateComputeModeProperties {
 
     void setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode, const RootDeviceEnvironment &rootDeviceEnvironment);
     void setProperties(const StateComputeModeProperties &properties);
+    void setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy, const RootDeviceEnvironment &rootDeviceEnvironment);
+    void setPropertiesCoherencyDevicePreemption(bool requiresCoherency, PreemptionMode devicePreemptionMode, const RootDeviceEnvironment &rootDeviceEnvironment);
     bool isDirty() const;
 
   protected:
@@ -40,6 +42,13 @@ struct StateComputeModeProperties {
     void setPropertiesExtra();
     void setPropertiesExtra(const StateComputeModeProperties &properties);
     void clearIsDirtyExtra();
+    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
+
+    void setCoherencyProperty(bool requiresCoherency);
+    void setDevicePreemptionProperty(PreemptionMode devicePreemptionMode);
+    void setGrfNumberProperty(uint32_t numGrfRequired);
+    void setThreadArbitrationProperty(int32_t threadArbitrationPolicy,
+                                      const RootDeviceEnvironment &rootDeviceEnvironment);
 
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
     bool propertiesSupportLoaded = false;
@@ -58,13 +67,16 @@ struct FrontEndProperties {
     StreamProperty disableOverdispatch{};
     StreamProperty singleSliceDispatchCcsMode{};
 
-    void setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment);
+    void setProperties(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment);
     void setProperties(const FrontEndProperties &properties);
     void setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment);
+    void setPropertyDisableOverdispatch(bool disableOverdispatch, const RootDeviceEnvironment &rootDeviceEnvironment);
+    void setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(bool isCooperativeKernel, bool disableEuFusion, const RootDeviceEnvironment &rootDeviceEnvironment);
     bool isDirty() const;
 
   protected:
     void clearIsDirty();
+    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
 
     FrontEndPropertiesSupport frontEndPropertiesSupport = {};
     bool propertiesSupportLoaded = false;
@@ -83,10 +95,12 @@ struct PipelineSelectProperties {
 
     void setProperties(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const RootDeviceEnvironment &rootDeviceEnvironment);
     void setProperties(const PipelineSelectProperties &properties);
+    void setPropertySystolicMode(bool systolicMode, const RootDeviceEnvironment &rootDeviceEnvironment);
     bool isDirty() const;
 
   protected:
     void clearIsDirty();
+    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
 
     PipelineSelectPropertiesSupport pipelineSelectPropertiesSupport = {};
     bool propertiesSupportLoaded = false;

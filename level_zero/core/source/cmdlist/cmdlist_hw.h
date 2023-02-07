@@ -259,7 +259,8 @@ struct CommandListCoreFamily : CommandListImp {
 
     ze_result_t prepareIndirectParams(const ze_group_count_t *threadGroupDimensions);
     void updateStreamProperties(Kernel &kernel, bool isCooperative);
-    void updateStateBaseAddressStreamProperties(Kernel &kernel, bool updateRequiredState, bool captureBaseAddressState);
+    void updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative);
+    void updateStreamPropertiesForFlushTaskDispatchFlags(Kernel &kernel, bool isCooperative);
     void clearCommandsToPatch();
 
     size_t getTotalSizeForCopyRegion(const ze_copy_region_t *region, uint32_t pitch, uint32_t slicePitch);
@@ -307,6 +308,9 @@ struct CommandListCoreFamily : CommandListImp {
     void dispatchPostSyncCommands(const CmdListEventOperation &eventOperations, uint64_t gpuAddress, uint32_t value, bool useLastPipeControl, bool signalScope);
     void dispatchEventRemainingPacketsPostSyncOperation(Event *event);
     void dispatchEventPostSyncOperation(Event *event, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl);
+
+    static constexpr bool cmdListDefaultCoherency = false;
+    static constexpr bool cmdListDefaultDisableOverdispatch = true;
 
     int64_t currentSurfaceStateBaseAddress = -1;
     int64_t currentDynamicStateBaseAddress = -1;

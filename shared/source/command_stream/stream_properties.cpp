@@ -18,26 +18,12 @@ using namespace NEO;
 
 void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode,
                                                const RootDeviceEnvironment &rootDeviceEnvironment) {
-
-    if (this->propertiesSupportLoaded == false) {
-        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        productHelper.fillScmPropertiesSupportStructure(this->scmPropertiesSupport);
-        this->propertiesSupportLoaded = true;
-    }
-
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    initSupport(rootDeviceEnvironment);
     clearIsDirty();
 
-    if (this->scmPropertiesSupport.coherencyRequired) {
-        int32_t isCoherencyRequired = (requiresCoherency ? 1 : 0);
-        this->isCoherencyRequired.set(isCoherencyRequired);
-    }
-
-    if (this->scmPropertiesSupport.largeGrfMode &&
-        (this->largeGrfMode.value == -1 || numGrfRequired != GrfConfig::NotApplicable)) {
-        int32_t largeGrfMode = (numGrfRequired == GrfConfig::LargeGrfNumber ? 1 : 0);
-        this->largeGrfMode.set(largeGrfMode);
-    }
+    setCoherencyProperty(requiresCoherency);
+    setGrfNumberProperty(numGrfRequired);
+    setThreadArbitrationProperty(threadArbitrationPolicy, rootDeviceEnvironment);
 
     int32_t zPassAsyncComputeThreadLimit = -1;
     if (DebugManager.flags.ForceZPassAsyncComputeThreadLimit.get() != -1) {
@@ -54,23 +40,7 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
     if (pixelAsyncComputeThreadLimit != -1 && this->scmPropertiesSupport.pixelAsyncComputeThreadLimit) {
         this->pixelAsyncComputeThreadLimit.set(pixelAsyncComputeThreadLimit);
     }
-
-    bool setDefaultThreadArbitrationPolicy = (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) &&
-                                             (NEO::DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.get() ||
-                                              (this->threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent));
-    if (setDefaultThreadArbitrationPolicy) {
-        threadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
-    }
-    if (DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
-        threadArbitrationPolicy = DebugManager.flags.OverrideThreadArbitrationPolicy.get();
-    }
-    if (this->scmPropertiesSupport.threadArbitrationPolicy) {
-        this->threadArbitrationPolicy.set(threadArbitrationPolicy);
-    }
-
-    if (this->scmPropertiesSupport.devicePreemptionMode) {
-        this->devicePreemptionMode.set(static_cast<int32_t>(devicePreemptionMode));
-    }
+    setDevicePreemptionProperty(devicePreemptionMode);
 
     setPropertiesExtra();
 }
@@ -104,14 +74,81 @@ void StateComputeModeProperties::clearIsDirty() {
     clearIsDirtyExtra();
 }
 
-void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (this->propertiesSupportLoaded == false) {
+void StateComputeModeProperties::setCoherencyProperty(bool requiresCoherency) {
+    if (this->scmPropertiesSupport.coherencyRequired) {
+        int32_t isCoherencyRequired = (requiresCoherency ? 1 : 0);
+        this->isCoherencyRequired.set(isCoherencyRequired);
+    }
+}
+void StateComputeModeProperties::setDevicePreemptionProperty(PreemptionMode devicePreemptionMode) {
+    if (this->scmPropertiesSupport.devicePreemptionMode) {
+        this->devicePreemptionMode.set(static_cast<int32_t>(devicePreemptionMode));
+    }
+}
 
+void StateComputeModeProperties::setGrfNumberProperty(uint32_t numGrfRequired) {
+    if (this->scmPropertiesSupport.largeGrfMode &&
+        (this->largeGrfMode.value == -1 || numGrfRequired != GrfConfig::NotApplicable)) {
+        int32_t largeGrfMode = (numGrfRequired == GrfConfig::LargeGrfNumber ? 1 : 0);
+        this->largeGrfMode.set(largeGrfMode);
+    }
+}
+
+void StateComputeModeProperties::setThreadArbitrationProperty(int32_t threadArbitrationPolicy,
+                                                              const RootDeviceEnvironment &rootDeviceEnvironment) {
+    bool setDefaultThreadArbitrationPolicy = (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) &&
+                                             (NEO::DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.get() ||
+                                              (this->threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent));
+    if (setDefaultThreadArbitrationPolicy) {
+        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+        threadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
+    }
+    if (DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
+        threadArbitrationPolicy = DebugManager.flags.OverrideThreadArbitrationPolicy.get();
+    }
+    if (this->scmPropertiesSupport.threadArbitrationPolicy) {
+        this->threadArbitrationPolicy.set(threadArbitrationPolicy);
+    }
+}
+
+void StateComputeModeProperties::initSupport(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (this->propertiesSupportLoaded == false) {
+        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+        productHelper.fillScmPropertiesSupportStructure(this->scmPropertiesSupport);
+        this->propertiesSupportLoaded = true;
+    }
+}
+
+void StateComputeModeProperties::setPropertiesCoherencyDevicePreemption(bool requiresCoherency, PreemptionMode devicePreemptionMode, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    initSupport(rootDeviceEnvironment);
+
+    this->isCoherencyRequired.isDirty = false;
+    this->devicePreemptionMode.isDirty = false;
+    setCoherencyProperty(requiresCoherency);
+    setDevicePreemptionProperty(devicePreemptionMode);
+}
+
+void StateComputeModeProperties::setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    initSupport(rootDeviceEnvironment);
+
+    this->threadArbitrationPolicy.isDirty = false;
+    this->largeGrfMode.isDirty = false;
+
+    setGrfNumberProperty(numGrfRequired);
+    setThreadArbitrationProperty(threadArbitrationPolicy, rootDeviceEnvironment);
+}
+
+void FrontEndProperties::initSupport(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (this->propertiesSupportLoaded == false) {
         auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
         auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
         productHelper.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport, hwInfo);
         this->propertiesSupportLoaded = true;
     }
+}
+
+void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    initSupport(rootDeviceEnvironment);
 
     clearIsDirty();
 
@@ -120,7 +157,7 @@ void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUF
     }
 
     if (this->frontEndPropertiesSupport.disableEuFusion) {
-        this->disableEUFusion.set(disableEUFusion);
+        this->disableEUFusion.set(disableEuFusion);
     }
 
     if (this->frontEndPropertiesSupport.disableOverdispatch) {
@@ -133,15 +170,35 @@ void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEUF
 }
 
 void FrontEndProperties::setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (this->propertiesSupportLoaded == false) {
-        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-        productHelper.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport, hwInfo);
-        this->propertiesSupportLoaded = true;
-    }
+    initSupport(rootDeviceEnvironment);
+
     this->singleSliceDispatchCcsMode.isDirty = false;
     if (this->frontEndPropertiesSupport.singleSliceDispatchCcsMode) {
         this->singleSliceDispatchCcsMode.set(engineInstancedDevice);
+    }
+}
+
+void FrontEndProperties::setPropertyDisableOverdispatch(bool disableOverdispatch, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    initSupport(rootDeviceEnvironment);
+
+    this->disableOverdispatch.isDirty = false;
+    if (this->frontEndPropertiesSupport.disableOverdispatch) {
+        this->disableOverdispatch.set(disableOverdispatch);
+    }
+}
+
+void FrontEndProperties::setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(bool isCooperativeKernel, bool disableEuFusion, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    initSupport(rootDeviceEnvironment);
+
+    this->computeDispatchAllWalkerEnable.isDirty = false;
+    this->disableEUFusion.isDirty = false;
+
+    if (this->frontEndPropertiesSupport.computeDispatchAllWalker) {
+        this->computeDispatchAllWalkerEnable.set(isCooperativeKernel);
+    }
+
+    if (this->frontEndPropertiesSupport.disableEuFusion) {
+        this->disableEUFusion.set(disableEuFusion);
     }
 }
 
@@ -166,14 +223,17 @@ void FrontEndProperties::clearIsDirty() {
     computeDispatchAllWalkerEnable.isDirty = false;
 }
 
-void PipelineSelectProperties::setProperties(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void PipelineSelectProperties::initSupport(const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (this->propertiesSupportLoaded == false) {
         auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
         productHelper.fillPipelineSelectPropertiesSupportStructure(this->pipelineSelectPropertiesSupport, *rootDeviceEnvironment.getHardwareInfo());
         this->propertiesSupportLoaded = true;
     }
+}
 
+void PipelineSelectProperties::setProperties(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    initSupport(rootDeviceEnvironment);
     clearIsDirty();
 
     if (this->pipelineSelectPropertiesSupport.modeSelected) {
@@ -183,6 +243,16 @@ void PipelineSelectProperties::setProperties(bool modeSelected, bool mediaSample
     if (this->pipelineSelectPropertiesSupport.mediaSamplerDopClockGate) {
         this->mediaSamplerDopClockGate.set(mediaSamplerDopClockGate);
     }
+
+    if (this->pipelineSelectPropertiesSupport.systolicMode) {
+        this->systolicMode.set(systolicMode);
+    }
+}
+
+void PipelineSelectProperties::setPropertySystolicMode(bool systolicMode, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    initSupport(rootDeviceEnvironment);
+
+    this->systolicMode.isDirty = false;
 
     if (this->pipelineSelectPropertiesSupport.systolicMode) {
         this->systolicMode.set(systolicMode);

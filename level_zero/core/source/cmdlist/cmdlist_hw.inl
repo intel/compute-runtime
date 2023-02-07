@@ -164,6 +164,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     if (this->isFlushTaskSubmissionEnabled) {
         commandContainer.setFlushTaskUsedForImmediate(this->isFlushTaskSubmissionEnabled);
         commandContainer.setNumIddPerBlock(1);
+
+        requiredStreamState.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->device->getNEODevice()->getPreemptionMode(), rootDeviceEnvironment);
+        requiredStreamState.frontEndState.setPropertyDisableOverdispatch(cmdListDefaultDisableOverdispatch, rootDeviceEnvironment);
     }
 
     if (this->immediateCmdListHeapSharing) {
@@ -2341,69 +2344,72 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::prepareIndirectParams(const ze
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::updateStateBaseAddressStreamProperties(Kernel &kernel, bool updateRequiredState, bool captureBaseAddressState) {
-    KernelImp &kernelImp = static_cast<KernelImp &>(kernel);
-    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
-
-    if (captureBaseAddressState) {
-        currentMocsState = static_cast<int32_t>(device->getMOCS(!kernelImp.getKernelRequiresUncachedMocs(), false) >> 1);
-
-        auto ssh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
-        currentSurfaceStateBaseAddress = ssh->getHeapGpuBase();
-        currentSurfaceStateSize = ssh->getHeapSizeInPages();
-
-        currentBindingTablePoolBaseAddress = currentSurfaceStateBaseAddress;
-        currentBindingTablePoolSize = currentSurfaceStateSize;
-
-        auto dsh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
-        if (dsh != nullptr) {
-            currentDynamicStateBaseAddress = dsh->getHeapGpuBase();
-            currentDynamicStateSize = dsh->getHeapSizeInPages();
-        }
-
-        auto ioh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT);
-        currentIndirectObjectBaseAddress = ioh->getHeapGpuBase();
-        currentIndirectObjectSize = ioh->getHeapSizeInPages();
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isCooperative) {
+    if (this->isFlushTaskSubmissionEnabled) {
+        updateStreamPropertiesForFlushTaskDispatchFlags(kernel, isCooperative);
+    } else {
+        updateStreamPropertiesForRegularCommandLists(kernel, isCooperative);
     }
-
-    auto sbaStreamState = &finalStreamState.stateBaseAddress;
-    if (updateRequiredState) {
-        sbaStreamState = &requiredStreamState.stateBaseAddress;
-    }
-
-    sbaStreamState->setProperties(kernelImp.getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics, currentMocsState,
-                                  currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
-                                  currentSurfaceStateBaseAddress, currentSurfaceStateSize,
-                                  currentDynamicStateBaseAddress, currentDynamicStateSize,
-                                  currentIndirectObjectBaseAddress, currentIndirectObjectSize,
-                                  rootDeviceEnvironment);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel, bool isCooperative) {
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDispatchFlags(Kernel &kernel, bool isCooperative) {
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
+
+    requiredStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, rootDeviceEnvironment);
+
+    requiredStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, rootDeviceEnvironment);
+
+    requiredStreamState.pipelineSelect.setPropertySystolicMode(kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative) {
     using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
 
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
-
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
-    bool captureBaseAddressState = containsAnyKernel;
+    KernelImp &kernelImp = static_cast<KernelImp &>(kernel);
+
+    currentMocsState = static_cast<int32_t>(device->getMOCS(!kernelImp.getKernelRequiresUncachedMocs(), false) >> 1);
+
+    auto ssh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
+    currentSurfaceStateBaseAddress = ssh->getHeapGpuBase();
+    currentSurfaceStateSize = ssh->getHeapSizeInPages();
+
+    currentBindingTablePoolBaseAddress = currentSurfaceStateBaseAddress;
+    currentBindingTablePoolSize = currentSurfaceStateSize;
+
+    auto dsh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
+    if (dsh != nullptr) {
+        currentDynamicStateBaseAddress = dsh->getHeapGpuBase();
+        currentDynamicStateSize = dsh->getHeapSizeInPages();
+    }
+
+    auto ioh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT);
+    currentIndirectObjectBaseAddress = ioh->getHeapGpuBase();
+    currentIndirectObjectSize = ioh->getHeapSizeInPages();
+
     if (!containsAnyKernel) {
-        requiredStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, true, -1, rootDeviceEnvironment);
+        requiredStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, cmdListDefaultDisableOverdispatch, -1, rootDeviceEnvironment);
         requiredStreamState.pipelineSelect.setProperties(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
 
-        if (!this->isFlushTaskSubmissionEnabled) {
-            updateStateBaseAddressStreamProperties(kernel, true, true);
-        }
+        requiredStreamState.stateBaseAddress.setProperties(kernelImp.getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics, currentMocsState,
+                                                           currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
+                                                           currentSurfaceStateBaseAddress, currentSurfaceStateSize,
+                                                           currentDynamicStateBaseAddress, currentDynamicStateSize,
+                                                           currentIndirectObjectBaseAddress, currentIndirectObjectSize,
+                                                           rootDeviceEnvironment);
 
         if (this->stateComputeModeTracking) {
-            requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
+            requiredStreamState.stateComputeMode.setProperties(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
             finalStreamState = requiredStreamState;
         } else {
             finalStreamState = requiredStreamState;
-            requiredStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
+            requiredStreamState.stateComputeMode.setProperties(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
         }
         containsAnyKernel = true;
-        captureBaseAddressState = false;
     }
 
     auto logicalStateHelperBlock = !getLogicalStateHelper();
@@ -2419,7 +2425,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
                                                               rootDeviceEnvironment);
     }
 
-    finalStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, true, -1, rootDeviceEnvironment);
+    finalStreamState.frontEndState.setProperties(isCooperative, kernelAttributes.flags.requiresDisabledEUFusion, cmdListDefaultDisableOverdispatch, -1, rootDeviceEnvironment);
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
     if (finalStreamState.frontEndState.isDirty() && logicalStateHelperBlock) {
         if (isPatchingVfeStateAllowed) {
@@ -2452,9 +2458,12 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
             *commandContainer.getCommandStream(), finalStreamState.stateComputeMode, pipelineSelectArgs, false, rootDeviceEnvironment, isRcs, this->dcFlushSupport, nullptr);
     }
 
-    if (!this->isFlushTaskSubmissionEnabled) {
-        updateStateBaseAddressStreamProperties(kernel, false, captureBaseAddressState);
-    }
+    finalStreamState.stateBaseAddress.setProperties(kernelImp.getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics, currentMocsState,
+                                                    currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
+                                                    currentSurfaceStateBaseAddress, currentSurfaceStateSize,
+                                                    currentDynamicStateBaseAddress, currentDynamicStateSize,
+                                                    currentIndirectObjectBaseAddress, currentIndirectObjectSize,
+                                                    rootDeviceEnvironment);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
