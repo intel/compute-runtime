@@ -7,6 +7,7 @@
 
 #include "shared/test/common/test_macros/test.h"
 
+#include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/context_fixture.h"

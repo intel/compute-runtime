@@ -19,7 +19,6 @@
 #include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/helpers/queue_helpers.h"
-#include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/program/printf_handler.h"
 
 #include <memory>

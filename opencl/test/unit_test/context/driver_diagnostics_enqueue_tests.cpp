@@ -9,6 +9,7 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 
+#include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/event/user_event.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/test/unit_test/context/driver_diagnostics_tests.h"

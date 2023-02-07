@@ -15,6 +15,7 @@
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
+#include "opencl/source/mem_obj/mem_obj.h"
 
 namespace NEO {
 

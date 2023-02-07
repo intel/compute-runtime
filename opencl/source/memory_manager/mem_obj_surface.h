@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,28 +8,18 @@
 #pragma once
 #include "shared/source/memory_manager/surface.h"
 
-#include "opencl/source/mem_obj/mem_obj.h"
-
 namespace NEO {
+
+class MemObj;
 
 class MemObjSurface : public Surface {
   public:
-    MemObjSurface(MemObj *memObj) : Surface(memObj->getMultiGraphicsAllocation().isCoherent()), memObj(memObj) {
-        memObj->incRefInternal();
-    }
-    ~MemObjSurface() override {
-        memObj->decRefInternal();
-        memObj = nullptr;
-    };
+    MemObjSurface(MemObj *memObj);
+    ~MemObjSurface() override;
 
-    void makeResident(CommandStreamReceiver &csr) override {
-        DEBUG_BREAK_IF(!memObj);
-        csr.makeResident(*memObj->getGraphicsAllocation(csr.getRootDeviceIndex()));
-    }
+    void makeResident(CommandStreamReceiver &csr) override;
 
-    Surface *duplicate() override {
-        return new MemObjSurface(this->memObj);
-    };
+    Surface *duplicate() override;
 
   protected:
     class MemObj *memObj;

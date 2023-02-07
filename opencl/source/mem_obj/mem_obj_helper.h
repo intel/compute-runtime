@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,12 +11,13 @@
 #include "shared/source/memory_manager/unified_memory_manager.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
-#include "opencl/source/mem_obj/mem_obj.h"
 
 #include "CL/cl.h"
 #include "memory_properties_flags.h"
 
 namespace NEO {
+
+class Context;
 
 class MemObjHelper {
   public:

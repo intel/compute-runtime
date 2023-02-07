@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,6 @@
 
 #pragma once
 
-#include "opencl/source/mem_obj/mem_obj.h"
 #include "opencl/source/sharings/sharing.h"
 #include "opencl/source/sharings/unified/unified_sharing_types.h"
 

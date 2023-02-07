@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2020 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #pragma once
 
 #include "opencl/source/sharings/unified/unified_sharing.h"
+
+#include "CL/cl.h"
 
 namespace NEO {
 class Buffer;
