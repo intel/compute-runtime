@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds_dg1.h"
+#include "shared/source/gen12lp/hw_info_dg1.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"

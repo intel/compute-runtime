@@ -7,6 +7,7 @@
 
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gen12lp/hw_cmds_adlp.h"
+#include "shared/source/gen12lp/hw_info_adlp.h"
 #include "shared/test/common/fixtures/command_stream_receiver_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"

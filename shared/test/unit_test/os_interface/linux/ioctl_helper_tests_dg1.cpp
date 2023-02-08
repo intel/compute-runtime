@@ -7,6 +7,7 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gen12lp/hw_cmds_dg1.h"
+#include "shared/source/gen12lp/hw_info_dg1.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

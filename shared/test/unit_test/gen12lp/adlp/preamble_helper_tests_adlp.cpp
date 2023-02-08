@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gen12lp/hw_cmds_adlp.h"
+#include "shared/source/gen12lp/hw_info_adlp.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"

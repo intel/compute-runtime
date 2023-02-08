@@ -7,10 +7,10 @@
 
 #pragma once
 #include "shared/source/commands/bxml_generator_glue.h"
-#include "shared/source/gen12lp/hw_info.h"
 #include "shared/source/helpers/debug_helpers.h"
 
 #include <cstring>
+#include <igfxfmid.h>
 #include <type_traits>
 
 template <class T>

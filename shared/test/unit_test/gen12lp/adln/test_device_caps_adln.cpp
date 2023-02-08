@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds_adln.h"
+#include "shared/source/gen12lp/hw_info_adln.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"

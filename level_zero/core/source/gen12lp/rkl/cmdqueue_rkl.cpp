@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds_rkl.h"
+#include "shared/source/gen12lp/hw_info_rkl.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.inl"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw_base.inl"

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds_adlp.h"
+#include "shared/source/gen12lp/hw_info_adlp.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/helpers/pipeline_select_helper.h"

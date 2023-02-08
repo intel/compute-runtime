@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds_tgllp.h"
+#include "shared/source/gen12lp/hw_info_tgllp.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"

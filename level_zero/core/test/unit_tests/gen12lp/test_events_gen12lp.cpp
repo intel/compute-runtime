@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/gen12lp/hw_info.h"
 #include "shared/test/common/mocks/mock_timestamp_packet.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 
