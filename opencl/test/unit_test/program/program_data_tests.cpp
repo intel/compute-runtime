@@ -550,20 +550,6 @@ TEST_F(ProgramDataTest, GivenProgramWith32bitPointerOptWhenProgramScopeGlobalPoi
     prog->setGlobalSurface(nullptr);
 }
 
-TEST_F(ProgramDataTest, givenSymbolTablePatchTokenThenLinkerInputIsCreated) {
-    SPatchFunctionTableInfo token;
-    token.Token = PATCH_TOKEN_PROGRAM_SYMBOL_TABLE;
-    token.Size = static_cast<uint32_t>(sizeof(SPatchFunctionTableInfo));
-    token.NumEntries = 0;
-
-    pProgramPatchList = &token;
-    programPatchListSize = token.Size;
-
-    buildAndDecodeProgramPatchList();
-
-    EXPECT_NE(nullptr, pProgram->getLinkerInput(pContext->getDevice(0)->getRootDeviceIndex()));
-}
-
 TEST(ProgramLinkBinaryTest, whenLinkerInputEmptyThenLinkSuccessful) {
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));

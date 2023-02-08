@@ -317,3 +317,28 @@ TEST(PopulateProgramInfoFromPatchtokensTests, givenProgramWithKernelWhenKernelHa
     EXPECT_STREQ("hostNameOne", programInfo.globalsDeviceToHostNameMap["deviceNameOne"].c_str());
     EXPECT_STREQ("hostNameTwo", programInfo.globalsDeviceToHostNameMap["deviceNameTwo"].c_str());
 }
+
+TEST(PopulateProgramInfoFromPatchtokensTests, whenProgramDoesNotRequireAllocatingSurfaceForGlobalsOrConstantsThenDoNotAddSymbolForIt) {
+    PatchTokensTestData::ValidProgramWithConstantSurfaceAndPointer programFromTokensWithConstantSurface; // no global variables surface allocation
+    PatchTokensTestData::ValidProgramWithGlobalSurfaceAndPointer prorgamFromTokensWithGlobalSurface;     // no constants surface allocation
+
+    constexpr NEO::ConstStringRef globalConstantsSymbolName = "globalConstants";
+    constexpr NEO::ConstStringRef globalVariablesSymbolName = "globalVariables";
+    {
+        NEO::ProgramInfo programInfo;
+        NEO::populateProgramInfo(programInfo, programFromTokensWithConstantSurface);
+        ASSERT_NE(nullptr, programInfo.linkerInput);
+        const auto &symbols = programInfo.linkerInput->getSymbols();
+        EXPECT_EQ(1U, symbols.size());
+        EXPECT_EQ(symbols.end(), symbols.find(globalVariablesSymbolName.data()));
+    }
+    {
+        NEO::ProgramInfo programInfo;
+        NEO::populateProgramInfo(programInfo, prorgamFromTokensWithGlobalSurface);
+        ASSERT_NE(nullptr, programInfo.linkerInput);
+        ASSERT_EQ(1U, programInfo.linkerInput->getDataRelocations().size());
+        const auto &symbols = programInfo.linkerInput->getSymbols();
+        EXPECT_EQ(1U, symbols.size());
+        EXPECT_EQ(symbols.end(), symbols.find(globalConstantsSymbolName.data()));
+    }
+}
