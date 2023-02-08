@@ -1616,7 +1616,7 @@ ze_result_t DebugSessionLinux::readMemory(ze_device_thread_t thread, const zet_d
 }
 
 ze_result_t DebugSessionLinux::readDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) {
-    ze_result_t status;
+    ze_result_t status = ZE_RESULT_SUCCESS;
 
     bool isa = tryReadIsa(connectedDevice->getNEODevice()->getDeviceBitfield(), desc, size, buffer, status);
     if (isa) {
@@ -1658,7 +1658,7 @@ ze_result_t DebugSessionLinux::writeMemory(ze_device_thread_t thread, const zet_
 }
 
 ze_result_t DebugSessionLinux::writeDefaultMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, const void *buffer) {
-    ze_result_t status;
+    ze_result_t status = ZE_RESULT_SUCCESS;
 
     auto deviceBitfield = connectedDevice->getNEODevice()->getDeviceBitfield();
 
