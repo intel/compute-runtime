@@ -12,7 +12,6 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/kernel/kernel.h"
-#include "level_zero/core/source/module/module.h"
 
 namespace NEO {
 const char *getAdditionalBuiltinAsString(EBuiltInOps::Type builtin) {
@@ -24,13 +23,9 @@ namespace L0 {
 
 BuiltinFunctionsLibImpl::BuiltinData::~BuiltinData() {
     func.reset();
-    module.reset();
 }
 BuiltinFunctionsLibImpl::BuiltinData::BuiltinData() = default;
-BuiltinFunctionsLibImpl::BuiltinData::BuiltinData(std::unique_ptr<L0::Module> &&mod, std::unique_ptr<L0::Kernel> &&ker) {
-    module = std::move(mod);
-    func = std::move(ker);
-}
+BuiltinFunctionsLibImpl::BuiltinData::BuiltinData(Module *module, std::unique_ptr<L0::Kernel> &&ker) : module(module), func(std::move(ker)) {}
 std::unique_lock<BuiltinFunctionsLib::MutexType> BuiltinFunctionsLib::obtainUniqueOwnership() {
     return std::unique_lock<BuiltinFunctionsLib::MutexType>(this->ownershipMutex);
 }
@@ -185,9 +180,17 @@ void BuiltinFunctionsLibImpl::initBuiltinImageKernel(ImageBuiltin func) {
     imageBuiltins[builtId] = loadBuiltIn(builtin, builtinName);
 }
 
+BuiltinFunctionsLibImpl::BuiltinFunctionsLibImpl(Device *device, NEO::BuiltIns *builtInsLib) : device(device), builtInsLib(builtInsLib) {
+    if (initBuiltinsAsyncEnabled()) {
+        this->initAsyncComplete = false;
+        this->initAsync = std::async(std::launch::async, &BuiltinFunctionsLibImpl::initBuiltinKernel, this, Builtin::FillBufferImmediate);
+    }
+}
+
 Kernel *BuiltinFunctionsLibImpl::getFunction(Builtin func) {
     auto builtId = static_cast<uint32_t>(func);
 
+    this->ensureInitCompletion();
     if (builtins[builtId].get() == nullptr) {
         initBuiltinKernel(func);
     }
@@ -198,6 +201,7 @@ Kernel *BuiltinFunctionsLibImpl::getFunction(Builtin func) {
 Kernel *BuiltinFunctionsLibImpl::getImageFunction(ImageBuiltin func) {
     auto builtId = static_cast<uint32_t>(func);
 
+    this->ensureInitCompletion();
     if (imageBuiltins[builtId].get() == nullptr) {
         initBuiltinImageKernel(func);
     }
@@ -227,27 +231,46 @@ std::unique_ptr<BuiltinFunctionsLibImpl::BuiltinData> BuiltinFunctionsLibImpl::l
         }
     }
 
-    [[maybe_unused]] ze_result_t res;
-    std::unique_ptr<Module> module;
-    ze_module_handle_t moduleHandle;
-    ze_module_desc_t moduleDesc = {};
-    moduleDesc.format = builtinCode.type == BuiltInCodeType::Binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
-    moduleDesc.pInputModule = reinterpret_cast<uint8_t *>(&builtinCode.resource[0]);
-    moduleDesc.inputSize = builtinCode.resource.size();
-    res = device->createModule(&moduleDesc, &moduleHandle, nullptr, ModuleType::Builtin);
-    UNRECOVERABLE_IF(res != ZE_RESULT_SUCCESS);
+    if (builtinCode.resource.empty() || !NEO::EmbeddedStorageRegistry::exists) {
+        return nullptr;
+    }
 
-    module.reset(Module::fromHandle(moduleHandle));
+    [[maybe_unused]] ze_result_t res;
+
+    if (this->modules.size() <= builtin) {
+        this->modules.resize(builtin + 1u);
+    }
+
+    if (this->modules[builtin].get() == nullptr) {
+        std::unique_ptr<Module> module;
+        ze_module_handle_t moduleHandle;
+        ze_module_desc_t moduleDesc = {};
+        moduleDesc.format = builtinCode.type == BuiltInCodeType::Binary ? ZE_MODULE_FORMAT_NATIVE : ZE_MODULE_FORMAT_IL_SPIRV;
+        moduleDesc.pInputModule = reinterpret_cast<uint8_t *>(&builtinCode.resource[0]);
+        moduleDesc.inputSize = builtinCode.resource.size();
+        res = device->createModule(&moduleDesc, &moduleHandle, nullptr, ModuleType::Builtin);
+        UNRECOVERABLE_IF(res != ZE_RESULT_SUCCESS);
+
+        module.reset(Module::fromHandle(moduleHandle));
+        this->modules[builtin] = std::move(module);
+    }
 
     std::unique_ptr<Kernel> kernel;
     ze_kernel_handle_t kernelHandle;
     ze_kernel_desc_t kernelDesc = {};
     kernelDesc.pKernelName = builtInName;
-    res = module->createKernel(&kernelDesc, &kernelHandle);
+    res = this->modules[builtin]->createKernel(&kernelDesc, &kernelHandle);
     DEBUG_BREAK_IF(res != ZE_RESULT_SUCCESS);
 
     kernel.reset(Kernel::fromHandle(kernelHandle));
-    return std::unique_ptr<BuiltinData>(new BuiltinData{std::move(module), std::move(kernel)});
+    return std::unique_ptr<BuiltinData>(new BuiltinData{modules[builtin].get(), std::move(kernel)});
+}
+
+void BuiltinFunctionsLibImpl::ensureInitCompletion() {
+    if (!this->initAsyncComplete) {
+        this->initAsync.wait();
+        this->initAsyncComplete = true;
+    }
 }
 
 } // namespace L0

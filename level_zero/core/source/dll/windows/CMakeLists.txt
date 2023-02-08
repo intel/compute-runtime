@@ -1,11 +1,12 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
 set(L0_SRCS_DLL_WINDOWS
     ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+    ${CMAKE_CURRENT_SOURCE_DIR}/create_builtin_functions_lib_windows.cpp
     ${NEO_SOURCE_DIR}/level_zero/tools/source/debug/windows/debug_session_windows_helper.cpp
 )
 

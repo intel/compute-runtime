@@ -9,11 +9,6 @@
 
 namespace L0 {
 
-std::unique_ptr<BuiltinFunctionsLib> BuiltinFunctionsLib::create(Device *device,
-                                                                 NEO::BuiltIns *builtins) {
-    return std::unique_ptr<BuiltinFunctionsLib>(new BuiltinFunctionsLibImpl(device, builtins));
-}
-
 bool BuiltinFunctionsLibImpl::initBuiltinsAsyncEnabled() {
     return false;
 }
