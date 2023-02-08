@@ -46,6 +46,7 @@ struct IpcEventPoolData {
     size_t numEvents = 0;
     uint32_t rootDeviceIndex = 0;
     uint32_t maxEventPackets = 0;
+    uint32_t numDevices = 0;
     bool isDeviceEventPoolAllocation = false;
     bool isHostVisibleEventPoolAllocation = false;
 };

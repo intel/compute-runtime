@@ -223,6 +223,7 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     poolData.isDeviceEventPoolAllocation = this->isDeviceEventPoolAllocation;
     poolData.isHostVisibleEventPoolAllocation = this->isHostVisibleEventPoolAllocation;
     poolData.maxEventPackets = this->getEventMaxPackets();
+    poolData.numDevices = static_cast<uint32_t>(this->devices.size());
 
     int retCode = this->eventPoolAllocations->getDefaultGraphicsAllocation()->peekInternalHandle(this->context->getDriverHandle()->getMemoryManager(), poolData.handle);
     return retCode == 0 ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
@@ -237,13 +238,27 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     auto eventPool = std::make_unique<EventPool>(&desc);
     eventPool->isDeviceEventPoolAllocation = poolData.isDeviceEventPoolAllocation;
     eventPool->isHostVisibleEventPoolAllocation = poolData.isHostVisibleEventPoolAllocation;
+    ze_device_handle_t *deviceHandlesUsed = deviceHandles;
 
     UNRECOVERABLE_IF(numDevices == 0);
     auto device = Device::fromHandle(*deviceHandles);
     auto neoDevice = device->getNEODevice();
     NEO::osHandle osHandle = static_cast<NEO::osHandle>(poolData.handle);
 
-    eventPool->initializeSizeParameters(numDevices, deviceHandles, *driver, neoDevice->getRootDeviceEnvironment());
+    if (poolData.numDevices == 1) {
+        for (uint32_t i = 0; i < numDevices; i++) {
+            auto deviceStruct = Device::fromHandle(deviceHandles[i]);
+            auto neoDeviceIteration = deviceStruct->getNEODevice();
+            if (neoDeviceIteration->getRootDeviceIndex() == poolData.rootDeviceIndex) {
+                *deviceHandlesUsed = deviceHandles[i];
+                neoDevice = neoDeviceIteration;
+                break;
+            }
+        }
+        numDevices = 1;
+    }
+
+    eventPool->initializeSizeParameters(numDevices, deviceHandlesUsed, *driver, neoDevice->getRootDeviceEnvironment());
     if (eventPool->getEventMaxPackets() != poolData.maxEventPackets) {
         PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(),
                            stderr,
@@ -280,26 +295,28 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     eventPool->eventPoolAllocations->addAllocation(alloc);
     eventPool->eventPoolPtr = reinterpret_cast<void *>(alloc->getUnderlyingBuffer());
     for (uint32_t i = 0; i < numDevices; i++) {
-        eventPool->devices.push_back(Device::fromHandle(deviceHandles[i]));
+        eventPool->devices.push_back(Device::fromHandle(deviceHandlesUsed[i]));
     }
     eventPool->isImportedIpcPool = true;
 
-    for (auto currDeviceIndex : context->rootDeviceIndices) {
-        if (currDeviceIndex == poolData.rootDeviceIndex) {
-            continue;
-        }
+    if (numDevices > 1) {
+        for (auto currDeviceIndex : context->rootDeviceIndices) {
+            if (currDeviceIndex == poolData.rootDeviceIndex) {
+                continue;
+            }
 
-        unifiedMemoryProperties.rootDeviceIndex = currDeviceIndex;
-        unifiedMemoryProperties.flags.isUSMHostAllocation = true;
-        unifiedMemoryProperties.flags.forceSystemMemory = true;
-        unifiedMemoryProperties.flags.allocateMemory = false;
-        auto graphicsAllocation = memoryManager->createGraphicsAllocationFromExistingStorage(unifiedMemoryProperties,
-                                                                                             eventPool->eventPoolPtr,
-                                                                                             eventPool->getAllocation());
-        if (!graphicsAllocation) {
-            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            unifiedMemoryProperties.rootDeviceIndex = currDeviceIndex;
+            unifiedMemoryProperties.flags.isUSMHostAllocation = true;
+            unifiedMemoryProperties.flags.forceSystemMemory = true;
+            unifiedMemoryProperties.flags.allocateMemory = false;
+            auto graphicsAllocation = memoryManager->createGraphicsAllocationFromExistingStorage(unifiedMemoryProperties,
+                                                                                                 eventPool->eventPoolPtr,
+                                                                                                 eventPool->getAllocation());
+            if (!graphicsAllocation) {
+                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+            }
+            eventPool->eventPoolAllocations->addAllocation(graphicsAllocation);
         }
-        eventPool->eventPoolAllocations->addAllocation(graphicsAllocation);
     }
 
     *eventPoolHandle = eventPool.release();
