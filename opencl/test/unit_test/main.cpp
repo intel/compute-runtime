@@ -289,7 +289,7 @@ int main(int argc, char **argv) {
     hardwareInfoSetup[productFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfoForTests.gtSystemInfo;
 
-    // and adjust dynamic values if not secified
+    // and adjust dynamic values if not specified
     sliceCount = sliceCount > 0 ? sliceCount : gtSystemInfo.SliceCount;
     subSlicePerSliceCount = subSlicePerSliceCount > 0 ? subSlicePerSliceCount : (gtSystemInfo.SubSliceCount / sliceCount);
     euPerSubSlice = euPerSubSlice > 0 ? euPerSubSlice : gtSystemInfo.MaxEuPerSubSlice;
