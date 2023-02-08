@@ -15,12 +15,13 @@
 namespace NEO::AddressingModeHelper {
 
 bool failBuildProgramWithStatefulAccess(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    auto failBuildProgram = false;
+    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+
+    auto failBuildProgram = compilerProductHelper.failBuildProgramWithStatefulAccessPreference();
     if (NEO::DebugManager.flags.FailBuildProgramWithStatefulAccess.get() != -1) {
         failBuildProgram = static_cast<bool>(NEO::DebugManager.flags.FailBuildProgramWithStatefulAccess.get());
     }
 
-    const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     auto forceToStatelessRequired = compilerProductHelper.isForceToStatelessRequired();
 
     return failBuildProgram && forceToStatelessRequired;

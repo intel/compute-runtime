@@ -1,15 +1,17 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/context/context.h"
 #include "opencl/source/program/program.h"
@@ -18,7 +20,17 @@
 
 using namespace NEO;
 
-typedef api_tests clBuildProgramTests;
+struct clBuildProgramTests : public api_tests {
+    void SetUp() override {
+        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+        api_tests::setUp();
+    }
+    void TearDown() override {
+        api_tests::tearDown();
+    }
+
+    DebugManagerStateRestore restore;
+};
 
 namespace ULT {
 
@@ -108,6 +120,49 @@ TEST_F(clBuildProgramTests, GivenBinaryAsInputWhenCreatingProgramWithSourceThenP
         nullptr);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clReleaseProgram(pProgram);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+HWTEST2_F(clBuildProgramTests, GivenFailBuildProgramAndBinaryAsInputWhenCreatingProgramWithSourceThenProgramBuildFails, IsAtLeastXeHpcCore) {
+
+    DebugManager.flags.FailBuildProgramWithStatefulAccess.set(1);
+
+    cl_program pProgram = nullptr;
+    cl_int binaryStatus = CL_SUCCESS;
+
+    constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
+    auto zebinData = std::make_unique<ZebinTestData::ZebinCopyBufferSimdModule<numBits>>(pDevice->getHardwareInfo(), 16);
+    const auto &src = zebinData->storage;
+
+    ASSERT_NE(nullptr, src.data());
+    ASSERT_NE(0u, src.size());
+
+    const unsigned char *binaries[1] = {reinterpret_cast<const unsigned char *>(src.data())};
+    const size_t binarySize = src.size();
+
+    pProgram = clCreateProgramWithBinary(
+        pContext,
+        1,
+        &testedClDevice,
+        &binarySize,
+        binaries,
+        &binaryStatus,
+        &retVal);
+
+    EXPECT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = clBuildProgram(
+        pProgram,
+        1,
+        &testedClDevice,
+        nullptr,
+        nullptr,
+        nullptr);
+
+    EXPECT_EQ(CL_BUILD_PROGRAM_FAILURE, retVal);
 
     retVal = clReleaseProgram(pProgram);
     EXPECT_EQ(CL_SUCCESS, retVal);

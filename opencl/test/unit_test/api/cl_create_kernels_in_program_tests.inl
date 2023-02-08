@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,8 @@ using namespace NEO;
 
 struct clCreateKernelsInProgramTests : public api_tests {
     void SetUp() override {
+        DebugManager.flags.FailBuildProgramWithStatefulAccess.set(0);
+
         api_tests::SetUp();
 
         constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
@@ -59,6 +61,7 @@ struct clCreateKernelsInProgramTests : public api_tests {
     cl_program program = nullptr;
     cl_kernel kernel = nullptr;
     std::unique_ptr<char[]> pBinary = nullptr;
+    DebugManagerStateRestore restore;
 };
 
 TEST_F(clCreateKernelsInProgramTests, GivenValidParametersWhenCreatingKernelObjectsThenKernelsAndSuccessAreReturned) {

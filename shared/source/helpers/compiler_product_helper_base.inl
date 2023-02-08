@@ -27,4 +27,9 @@ const char *CompilerProductHelperHw<gfxProduct>::getCachingPolicyOptions(bool is
     return L1CachePolicyHelper<gfxProduct>::getCachingPolicyOptions(isDebuggerActive);
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithStatefulAccessPreference() const {
+    return false;
+}
+
 } // namespace NEO
