@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,10 @@
 
 #pragma once
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/default_hw_info.h"
-#include "shared/test/common/test_macros/hw_test.h"
+
+#include "gtest/gtest.h"
 
 namespace NEO {
 class ProductHelper;

@@ -37,6 +37,7 @@
 
 #include "common/StateSaveAreaHeader.h"
 
+#include <fcntl.h>
 #include <fstream>
 #include <type_traits>
 

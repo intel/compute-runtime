@@ -5,9 +5,12 @@
  *
  */
 
+#include "shared/source/gen12lp/hw_cmds_adln.h"
+#include "shared/source/gen12lp/hw_info_gen12lp.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
 
 using namespace NEO;

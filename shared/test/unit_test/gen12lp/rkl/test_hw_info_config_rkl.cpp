@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds_rkl.h"
+#include "shared/source/gen12lp/hw_info_gen12lp.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"

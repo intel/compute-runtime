@@ -11,8 +11,6 @@
 #include "sysman/fabric_port/fabric_port_imp.h"
 #include "sysman/fabric_port/os_fabric_port.h"
 
-#include <string>
-
 namespace L0 {
 
 class WddmFabricDeviceImp : public OsFabricDevice, NEO::NonCopyableOrMovableClass {

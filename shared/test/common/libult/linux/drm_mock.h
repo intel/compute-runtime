@@ -6,7 +6,6 @@
  */
 
 #pragma once
-
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
@@ -15,7 +14,6 @@
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
 #include <cstdio>
-#include <fcntl.h>
 #include <fstream>
 #include <limits.h>
 #include <map>

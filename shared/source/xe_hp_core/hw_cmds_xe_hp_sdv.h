@@ -1,12 +1,14 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/xe_hp_core/hw_cmds_base.h"
+
 namespace NEO {
 struct XE_HP_SDV : public XeHpFamily {
     static const PLATFORM platform;

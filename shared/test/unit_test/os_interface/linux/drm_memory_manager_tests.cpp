@@ -10,15 +10,12 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/surface_format_info.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
-#include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
-#include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/fixtures/memory_allocator_multi_device_fixture.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
@@ -32,6 +29,7 @@
 #include "shared/test/common/os_interface/linux/drm_mock_cache_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
+#include "drm/i915_drm.h"
 #include "gtest/gtest.h"
 
 #include <array>

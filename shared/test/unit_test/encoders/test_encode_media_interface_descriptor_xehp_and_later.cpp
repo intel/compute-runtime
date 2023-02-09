@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
 using namespace NEO;

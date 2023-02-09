@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/os_interface/windows/hw_info_config_win_tests.h"
 
 using namespace NEO;

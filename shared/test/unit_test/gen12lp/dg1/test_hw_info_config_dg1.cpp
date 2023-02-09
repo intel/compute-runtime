@@ -14,6 +14,7 @@
 #include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
 
 #include "aubstream/product_family.h"
+#include "hw_cmds.h"
 #include "platforms.h"
 
 using namespace NEO;

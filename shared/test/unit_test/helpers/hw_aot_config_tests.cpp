@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/product_config_fixture.h"
 
 using namespace NEO;

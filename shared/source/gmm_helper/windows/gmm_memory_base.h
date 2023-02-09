@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,8 +7,6 @@
 
 #pragma once
 #include "shared/source/gmm_helper/gmm_lib.h"
-
-#include <memory>
 
 namespace NEO {
 class GmmClientContext;
