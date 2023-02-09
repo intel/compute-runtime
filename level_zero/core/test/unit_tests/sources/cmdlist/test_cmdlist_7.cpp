@@ -2073,20 +2073,23 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTy
 
     EXPECT_EQ(HOST_NON_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, hostNonUSMAllocData));
     EXPECT_EQ(HOST_NON_USM_TO_DEVICE_USM, cmdList.getTransferType(deviceUSMAllocData, hostNonUSMAllocData));
-    EXPECT_EQ(HOST_NON_USM_TO_DEVICE_USM, cmdList.getTransferType(sharedUSMAllocData, hostNonUSMAllocData));
+    EXPECT_EQ(HOST_NON_USM_TO_SHARED_USM, cmdList.getTransferType(sharedUSMAllocData, hostNonUSMAllocData));
     EXPECT_EQ(HOST_NON_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, hostNonUSMAllocData));
 
     EXPECT_EQ(HOST_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, hostUSMAllocData));
     EXPECT_EQ(HOST_USM_TO_DEVICE_USM, cmdList.getTransferType(deviceUSMAllocData, hostUSMAllocData));
-    EXPECT_EQ(HOST_USM_TO_DEVICE_USM, cmdList.getTransferType(sharedUSMAllocData, hostUSMAllocData));
+    EXPECT_EQ(HOST_USM_TO_SHARED_USM, cmdList.getTransferType(sharedUSMAllocData, hostUSMAllocData));
     EXPECT_EQ(HOST_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, hostUSMAllocData));
 
     EXPECT_EQ(DEVICE_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, deviceUSMAllocData));
-    EXPECT_EQ(DEVICE_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, sharedUSMAllocData));
     EXPECT_EQ(DEVICE_USM_TO_DEVICE_USM, cmdList.getTransferType(deviceUSMAllocData, deviceUSMAllocData));
-    EXPECT_EQ(DEVICE_USM_TO_DEVICE_USM, cmdList.getTransferType(sharedUSMAllocData, sharedUSMAllocData));
+    EXPECT_EQ(DEVICE_USM_TO_SHARED_USM, cmdList.getTransferType(sharedUSMAllocData, deviceUSMAllocData));
     EXPECT_EQ(DEVICE_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, deviceUSMAllocData));
-    EXPECT_EQ(DEVICE_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, sharedUSMAllocData));
+
+    EXPECT_EQ(SHARED_USM_TO_HOST_USM, cmdList.getTransferType(hostUSMAllocData, sharedUSMAllocData));
+    EXPECT_EQ(SHARED_USM_TO_DEVICE_USM, cmdList.getTransferType(deviceUSMAllocData, sharedUSMAllocData));
+    EXPECT_EQ(SHARED_USM_TO_SHARED_USM, cmdList.getTransferType(sharedUSMAllocData, sharedUSMAllocData));
+    EXPECT_EQ(SHARED_USM_TO_HOST_NON_USM, cmdList.getTransferType(hostNonUSMAllocData, sharedUSMAllocData));
 
     context->freeMem(hostPtr2);
 }
@@ -2095,15 +2098,26 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTh
     MockCommandListImmediateHw<gfxCoreFamily> cmdList;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     EXPECT_EQ(0u, cmdList.getTransferThreshold(TRANSFER_TYPE_UNKNOWN));
+
     EXPECT_EQ(1 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_HOST_USM));
     EXPECT_EQ(4 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_DEVICE_USM));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(HOST_NON_USM_TO_SHARED_USM));
     EXPECT_EQ(1 * MemoryConstants::megaByte, cmdList.getTransferThreshold(HOST_NON_USM_TO_HOST_NON_USM));
+
     EXPECT_EQ(200 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(HOST_USM_TO_HOST_USM));
     EXPECT_EQ(50 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(HOST_USM_TO_DEVICE_USM));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(HOST_USM_TO_SHARED_USM));
     EXPECT_EQ(500 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(HOST_USM_TO_HOST_NON_USM));
+
     EXPECT_EQ(0u, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_USM));
     EXPECT_EQ(0u, cmdList.getTransferThreshold(DEVICE_USM_TO_DEVICE_USM));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(DEVICE_USM_TO_SHARED_USM));
     EXPECT_EQ(1 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_NON_USM));
+
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(SHARED_USM_TO_HOST_USM));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(SHARED_USM_TO_DEVICE_USM));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(SHARED_USM_TO_SHARED_USM));
+    EXPECT_EQ(0u, cmdList.getTransferThreshold(SHARED_USM_TO_HOST_NON_USM));
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndThresholdDebugFlagSetWhenGetTransferThresholdThenReturnCorrectValue, IsAtLeastSkl) {
