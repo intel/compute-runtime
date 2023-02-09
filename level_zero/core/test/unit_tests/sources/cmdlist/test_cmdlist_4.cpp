@@ -252,40 +252,7 @@ class CommandListImmediateFlushTaskTests : public DeviceFixture {
 };
 
 using CommandListImmediateFlushTaskComputeTests = Test<CommandListImmediateFlushTaskTests>;
-HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenDG2CommandListIsInititalizedThenByDefaultFlushTaskSubmissionEnabled, IsDG2) {
-    ze_command_queue_desc_t queueDesc = {};
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
-
-    EXPECT_EQ(true, commandList->isFlushTaskSubmissionEnabled);
-}
-
-HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenMTLCommandListIsInititalizedThenByDefaultFlushTaskSubmissionDisabled, IsMTL) {
-    ze_command_queue_desc_t queueDesc = {};
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
-
-    EXPECT_EQ(false, commandList->isFlushTaskSubmissionEnabled);
-}
-
-HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenXeHPCommandListIsInititalizedThenByDefaultFlushTaskSubmissionEnabled, IsXEHP) {
-    ze_command_queue_desc_t queueDesc = {};
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
-
-    EXPECT_EQ(true, commandList->isFlushTaskSubmissionEnabled);
-}
-
-using MatchXeHpc = IsGfxCore<IGFX_XE_HPC_CORE>;
-HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenXeHPCCommandListIsInititalizedThenByDefaultFlushTaskSubmissionEnabled, MatchXeHpc) {
-    ze_command_queue_desc_t queueDesc = {};
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));
-
-    EXPECT_EQ(true, commandList->isFlushTaskSubmissionEnabled);
-}
-
-HWTEST2_F(CommandListImmediateFlushTaskComputeTests, givenCommandListIsInititalizedThenByDefaultFlushTaskSubmissionDisabled, IsAtMostGen12lp) {
+HWTEST_F(CommandListImmediateFlushTaskComputeTests, givenImmediateCommandListIsInititalizedThenByDefaultFlushTaskSubmissionEnabled) {
     ze_command_queue_desc_t queueDesc = {};
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::Compute, returnValue));

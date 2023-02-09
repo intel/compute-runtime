@@ -1278,19 +1278,7 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGettingIfRevisionSpecificBinar
     EXPECT_FALSE(gfxCoreHelper.isRevisionSpecificBinaryBuiltinRequired());
 }
 
-HWTEST2_F(GfxCoreHelperTest, givenDG2GfxCoreHelperWhenGettingIsPlatformFlushTaskEnabledThenTrueIsReturned, IsDG2) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper));
-}
-
-HWTEST2_F(GfxCoreHelperTest, givenPvcGfxCoreHelperWhenGettingIsPlatformFlushTaskEnabledThenTrueIsReturned, IsPVC) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_TRUE(gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper));
-}
-
-HWTEST2_F(GfxCoreHelperTest, givenAtMostGen12lpGfxCoreHelperWhenGettingIsPlatformFlushTaskEnabledThenFalseIsReturned, IsAtMostGen12lp) {
+HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenGettingIsPlatformFlushTaskEnabledThenTrueIsReturned) {
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto &productHelper = getHelper<ProductHelper>();
     EXPECT_TRUE(gfxCoreHelper.isPlatformFlushTaskEnabled(productHelper));

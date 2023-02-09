@@ -22,11 +22,6 @@ bool ProductHelperHw<gfxProduct>::isDcFlushAllowed() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isFlushTaskAllowed() const {
-    return true;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isTimestampWaitSupportedForEvents() const {
     return true;
 }
