@@ -226,10 +226,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         additionalCommands.pop_front();
     }
 
-    if (event != nullptr && kernel->getPrintfBufferAllocation() != nullptr) {
-        event->setKernelForPrintf(kernel);
-    }
-
     return ZE_RESULT_SUCCESS;
 }
 

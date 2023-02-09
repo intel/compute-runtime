@@ -26,7 +26,6 @@
 #include "level_zero/core/test/unit_tests/fixtures/multi_tile_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 namespace L0 {
@@ -249,126 +248,6 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingL
         kernel->toHandle(),
         &groupCount, nullptr, 1, nullptr, launchParams, false);
     ASSERT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
-}
-
-HWTEST2_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhenAppendingLaunchKernelIndirectThenKernelIsStoredOnEvent, IsAtLeastSkl) {
-    Mock<Module> module(this->device, nullptr);
-    Mock<::L0::Kernel> kernel;
-
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = 1;
-
-    kernel.module = &module;
-    kernel.descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel.createPrintfBuffer();
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-
-    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
-
-    ze_group_count_t groupCount{1, 1, 1};
-    auto result = commandList->appendLaunchKernelIndirect(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    ASSERT_NE(nullptr, event->getKernelForPrintf());
-}
-
-HWTEST2_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAppendingLaunchKernelIndirectThenKernelIsNotStoredOnEvent, IsAtLeastSkl) {
-    Mock<Module> module(this->device, nullptr);
-    Mock<::L0::Kernel> kernel;
-
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = 1;
-
-    kernel.module = &module;
-    kernel.descriptor.kernelAttributes.flags.usesPrintf = false;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-
-    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
-
-    ze_group_count_t groupCount{1, 1, 1};
-    auto result = commandList->appendLaunchKernelIndirect(kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, false);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    ASSERT_EQ(nullptr, event->getKernelForPrintf());
-}
-
-HWTEST2_F(CommandListAppendLaunchKernel, givenNonemptyAllocPrintfBufferKernelWhenAppendingLaunchKernelWithParamThenKernelIsStoredOnEvent, IsAtLeastSkl) {
-    Mock<Module> module(this->device, nullptr);
-    Mock<::L0::Kernel> kernel;
-
-    ze_result_t returnValue;
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = 1;
-
-    kernel.module = &module;
-    kernel.descriptor.kernelAttributes.flags.usesPrintf = true;
-    kernel.createPrintfBuffer();
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-
-    CmdListKernelLaunchParams launchParams = {};
-    launchParams.isCooperative = false;
-    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
-
-    ze_group_count_t groupCount{1, 1, 1};
-
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-
-    auto result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    ASSERT_NE(nullptr, event->getKernelForPrintf());
-}
-
-HWTEST2_F(CommandListAppendLaunchKernel, givenEmptyAllocPrintfBufferKernelWhenAppendingLaunchKernelWithParamThenKernelIsNotStoredOnEvent, IsAtLeastSkl) {
-    Mock<Module> module(this->device, nullptr);
-    Mock<::L0::Kernel> kernel;
-
-    ze_result_t returnValue;
-    ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
-    eventPoolDesc.count = 1;
-
-    kernel.module = &module;
-    kernel.descriptor.kernelAttributes.flags.usesPrintf = false;
-
-    ze_event_desc_t eventDesc = {};
-    eventDesc.index = 0;
-
-    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
-
-    CmdListKernelLaunchParams launchParams = {};
-    launchParams.isCooperative = false;
-    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
-
-    ze_group_count_t groupCount{1, 1, 1};
-
-    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-    pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
-
-    auto result = pCommandList->appendLaunchKernelWithParams(&kernel, &groupCount, event.get(), launchParams);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-
-    ASSERT_EQ(nullptr, event->getKernelForPrintf());
 }
 
 HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendingLaunchKernelIndirectThenKernelIsExecutedOnImmediateCmdQ, IsAtLeastSkl) {

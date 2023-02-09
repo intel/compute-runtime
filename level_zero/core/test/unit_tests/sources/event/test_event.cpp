@@ -28,8 +28,6 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 #include <algorithm>
 #include <atomic>
@@ -2927,36 +2925,6 @@ TEST_F(EventTests, GivenResetAllPacketsFalseWhenResetPacketsThenKernelCountAndPa
     EXPECT_EQ(0u, event->getPacketsInUse());
     EXPECT_EQ(event->gpuStartTimestamp, 0u);
     EXPECT_EQ(event->gpuEndTimestamp, 0u);
-}
-
-TEST_F(EventTests, givenCallToEventQueryStatusWithKernelPointerReturnsCounter) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
-    Mock<Module> mockModule(this->device, nullptr);
-    Mock<Kernel> mockKernel;
-    mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
-    mockKernel.module = &mockModule;
-
-    event->setKernelForPrintf(&mockKernel);
-    EXPECT_NE(nullptr, event->getKernelForPrintf());
-
-    constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
-    event->hostSynchronize(timeout);
-    EXPECT_EQ(1u, mockKernel.printPrintfOutputCalledTimes);
-}
-
-TEST_F(EventTests, givenCallToEventQueryStatusWithNullKernelPointerReturnsCounter) {
-    auto event = std::make_unique<MockEventCompletion>(eventPool.get(), 1u, device);
-    Mock<Module> mockModule(this->device, nullptr);
-    Mock<Kernel> mockKernel;
-    mockKernel.descriptor.kernelAttributes.flags.usesPrintf = true;
-    mockKernel.module = &mockModule;
-
-    event->setKernelForPrintf(nullptr);
-    EXPECT_EQ(nullptr, event->getKernelForPrintf());
-
-    constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
-    event->hostSynchronize(timeout);
-    EXPECT_EQ(0u, mockKernel.printPrintfOutputCalledTimes);
 }
 
 TEST_F(EventSynchronizeTest, whenEventSetCsrThenCorrectCsrSet) {

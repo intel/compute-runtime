@@ -13,7 +13,6 @@
 
 #include "level_zero/core/source/event/event_imp.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-#include "level_zero/core/source/kernel/kernel.h"
 #include "level_zero/tools/source/metrics/metric.h"
 
 namespace L0 {
@@ -309,10 +308,6 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
     while (true) {
         ret = queryStatus();
         if (ret == ZE_RESULT_SUCCESS) {
-            if (this->getKernelForPrintf() != nullptr) {
-                static_cast<Kernel *>(this->getKernelForPrintf())->printPrintfOutput(true);
-                this->setKernelForPrintf(nullptr);
-            }
             return ret;
         }
 
