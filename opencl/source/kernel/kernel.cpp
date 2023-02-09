@@ -148,7 +148,6 @@ void Kernel::patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, Grap
 }
 
 cl_int Kernel::initialize() {
-    this->kernelHasIndirectAccess = false;
     auto pClDevice = &getDevice();
     auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
     reconfigureKernel();
@@ -281,10 +280,15 @@ cl_int Kernel::initialize() {
     slmSizes.resize(numArgs);
 
     this->setInlineSamplers();
-
-    this->kernelHasIndirectAccess |= kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
-                                     kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
-                                     kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic;
+    if (kernelDescriptor.kernelAttributes.binaryFormat != NEO::DeviceBinaryFormat::Zebin) {
+        this->kernelHasIndirectAccess = true;
+    } else {
+        this->kernelHasIndirectAccess = kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
+                                        kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
+                                        kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic ||
+                                        kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess ||
+                                        NEO::KernelHelper::isAnyArgumentPtrByValue(kernelDescriptor);
+    }
 
     provideInitializationHints();
     // resolve the new kernel info to account for kernel handlers

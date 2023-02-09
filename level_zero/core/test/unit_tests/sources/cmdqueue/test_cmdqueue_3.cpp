@@ -424,6 +424,8 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
 
     createKernel();
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+    kernel->kernelHasIndirectAccess = true;
+
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -486,6 +488,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
 
     createKernel();
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+    kernel->kernelHasIndirectAccess = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -548,6 +551,7 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
 
     createKernel();
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+    kernel->kernelHasIndirectAccess = true;
     EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->overrideAllocateAsPackReturn = 1u;

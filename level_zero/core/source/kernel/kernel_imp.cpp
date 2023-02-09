@@ -924,9 +924,15 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     residencyContainer.insert(residencyContainer.end(), kernelImmData->getResidencyContainer().begin(),
                               kernelImmData->getResidencyContainer().end());
 
-    kernelHasIndirectAccess = kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
-                              kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
-                              kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic;
+    if (kernelAttributes.binaryFormat != NEO::DeviceBinaryFormat::Zebin) {
+        kernelHasIndirectAccess = true;
+    } else {
+        kernelHasIndirectAccess = kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
+                                  kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
+                                  kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic ||
+                                  kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess ||
+                                  NEO::KernelHelper::isAnyArgumentPtrByValue(kernelDescriptor);
+    }
 
     if (this->usesRayTracing()) {
         uint32_t bvhLevels = NEO::RayTracingHelper::maxBvhLevels;
@@ -1060,9 +1066,9 @@ Kernel *Kernel::create(uint32_t productFamily, Module *module,
 }
 
 bool KernelImp::hasIndirectAllocationsAllowed() const {
-    return (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
-            unifiedMemoryControls.indirectHostAllocationsAllowed ||
-            unifiedMemoryControls.indirectSharedAllocationsAllowed);
+    return this->kernelHasIndirectAccess && (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
+                                             unifiedMemoryControls.indirectHostAllocationsAllowed ||
+                                             unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
 uint32_t KernelImp::getSlmTotalSize() const {

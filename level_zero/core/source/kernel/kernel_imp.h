@@ -225,7 +225,7 @@ struct KernelImp : Kernel {
 
     ze_cache_config_flags_t cacheConfigFlags = 0u;
 
-    bool kernelHasIndirectAccess = true;
+    bool kernelHasIndirectAccess = false;
 
     std::unique_ptr<NEO::ImplicitArgs> pImplicitArgs;
 

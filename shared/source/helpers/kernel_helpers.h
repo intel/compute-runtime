@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,6 +34,8 @@ struct KernelHelper {
         return perHwThreadPrivateScratchSize * computeUnitsUsedForScratch;
     }
     static ErrorCode checkIfThereIsSpaceForScratchOrPrivate(KernelDescriptor::KernelAttributes attributes, Device *device);
+
+    static bool isAnyArgumentPtrByValue(const KernelDescriptor &kernelDescriptor);
 };
 
 } // namespace NEO
