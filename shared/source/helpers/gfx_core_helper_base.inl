@@ -683,4 +683,14 @@ template <typename gfxProduct>
 bool GfxCoreHelperHw<gfxProduct>::isRelaxedOrderingSupported() const {
     return false;
 }
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::adjustMaxWorkGroupSize(const uint32_t numGrf, const uint32_t simd, const uint32_t defaultMaxGroupSize) const {
+    return defaultMaxGroupSize;
+}
+
+template <typename GfxFamily>
+uint32_t GfxCoreHelperHw<GfxFamily>::getMinimalGrfSize() const {
+    return 128u;
+}
 } // namespace NEO

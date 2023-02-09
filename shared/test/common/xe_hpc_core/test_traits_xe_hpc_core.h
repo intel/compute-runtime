@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,4 +29,5 @@ struct TestTraits<IGFX_XE_HPC_CORE> {
     static constexpr bool isUnTypedDataPortCacheFlushSupported = true;
     static constexpr bool imagesSupported = false;
     static constexpr bool isPipeControlExtendedPriorToNonPipelinedStateCommandSupported = true;
+    static constexpr bool largeGrfModeInStateComputeModeSupported = true;
 };

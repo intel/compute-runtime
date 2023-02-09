@@ -104,6 +104,7 @@ class GfxCoreHelper {
     virtual bool isWaDisableRccRhwoOptimizationRequired() const = 0;
     virtual bool isAdditionalFeatureFlagRequired(const FeatureTable *featureTable) const = 0;
     virtual uint32_t getMinimalSIMDSize() const = 0;
+    virtual uint32_t getMinimalGrfSize() const = 0;
     virtual bool isOffsetToSkipSetFFIDGPWARequired(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
     virtual bool isFusedEuDispatchEnabled(const HardwareInfo &hwInfo, bool disableEUFusionForKernel) const = 0;
     virtual uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const = 0;
@@ -119,6 +120,7 @@ class GfxCoreHelper {
     virtual bool isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
                                              const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const = 0;
+    virtual uint32_t adjustMaxWorkGroupSize(const uint32_t numGrf, const uint32_t simd, const uint32_t defaultMaxGroupSize) const = 0;
     virtual size_t getMaxFillPaternSizeForCopyEngine() const = 0;
     virtual size_t getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
@@ -298,6 +300,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t getMinimalSIMDSize() const override;
 
+    uint32_t getMinimalGrfSize() const override;
+
     uint64_t getGpuTimeStampInNS(uint64_t timeStamp, double frequency) const override;
 
     uint32_t getGlobalTimeStampBits() const override;
@@ -320,6 +324,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
 
     uint32_t adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
                                      const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const override;
+
+    uint32_t adjustMaxWorkGroupSize(const uint32_t numGrf, const uint32_t simd, const uint32_t defaultMaxGroupSize) const override;
 
     size_t getMaxFillPaternSizeForCopyEngine() const override;
 
