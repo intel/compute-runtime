@@ -39,21 +39,16 @@ void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependenci
             continue;
         }
 
-        const auto sameRootDevice = event->getCommandQueue()->getClDevice().getRootDeviceIndex() == currentCsr.getRootDeviceIndex();
+        auto sameRootDevice = event->getCommandQueue()->getClDevice().getRootDeviceIndex() == currentCsr.getRootDeviceIndex();
         if (!sameRootDevice) {
             continue;
         }
 
-        CommandStreamReceiver *dependentCsr;
-        if (event->isBcsEvent()) {
-            dependentCsr = event->getCommandQueue()->getBcsCommandStreamReceiver(event->getBcsEngineType());
-        } else {
-            dependentCsr = &event->getCommandQueue()->getGpgpuCommandStreamReceiver();
-        }
-        const auto sameCsr = (dependentCsr == &currentCsr);
-        const auto pushDependency = (CsrDependencies::DependenciesType::OnCsr == depsType && sameCsr) ||
-                                    (CsrDependencies::DependenciesType::OutOfCsr == depsType && !sameCsr) ||
-                                    (CsrDependencies::DependenciesType::All == depsType);
+        auto &dependentCsr = event->getCommandQueue()->getGpgpuCommandStreamReceiver();
+        auto sameCsr = (&dependentCsr == &currentCsr);
+        bool pushDependency = (CsrDependencies::DependenciesType::OnCsr == depsType && sameCsr) ||
+                              (CsrDependencies::DependenciesType::OutOfCsr == depsType && !sameCsr) ||
+                              (CsrDependencies::DependenciesType::All == depsType);
 
         if (pushDependency) {
             csrDeps.timestampPacketContainer.push_back(timestampPacketContainer);
@@ -61,9 +56,9 @@ void EventsRequest::fillCsrDependenciesForTimestampPacketContainer(CsrDependenci
             if (!sameCsr) {
                 const auto &productHelper = event->getCommandQueue()->getDevice().getProductHelper();
                 if (productHelper.isDcFlushAllowed()) {
-                    if (!dependentCsr->isLatestTaskCountFlushed()) {
-                        flushDependentCsr(*dependentCsr, csrDeps);
-                        currentCsr.makeResident(*dependentCsr->getTagAllocation());
+                    if (!dependentCsr.isLatestTaskCountFlushed()) {
+                        flushDependentCsr(dependentCsr, csrDeps);
+                        currentCsr.makeResident(*dependentCsr.getTagAllocation());
                     }
                 }
             }

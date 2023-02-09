@@ -23,10 +23,9 @@
 #include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/command_queue/hardware_interface_helper.h"
 #include "opencl/test/unit_test/helpers/timestamp_packet_tests.h"
-#include "opencl/test/unit_test/mocks/mock_event.h"
 #include "opencl/test/unit_test/mocks/mock_mdi.h"
 #include "opencl/test/unit_test/mocks/mock_platform.h"
-#include "opencl/test/unit_test/test_macros/test_checks_ocl.h"
+
 using namespace NEO;
 
 HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStreamSizeThenAddPipeControl) {
@@ -1283,44 +1282,6 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesRe
         }
     }
     EXPECT_EQ(1u, semaphoresFound); // total number of semaphores found in cmdList
-}
-
-HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesResolvedViaPipeControlsIfEventOnBlitThenStillProgramSemaphores) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
-    DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.set(1);
-    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-
-    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-
-    REQUIRE_FULL_BLITTER_OR_SKIP(*device->getExecutionEnvironment()->rootDeviceEnvironments[mockRootDeviceIndex]);
-    MockCommandQueueHw<FamilyType> cmdQ1(context, device.get(), nullptr);
-    ASSERT_NE(nullptr, cmdQ1.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS));
-    auto &cmdStream = device->getUltCommandStreamReceiver<FamilyType>().getCS(0);
-    const cl_uint eventsOnWaitlist = 1;
-
-    MockEvent<Event> event(&cmdQ1, 0, 0, 0);
-    event.bcsState.engineType = aub_stream::EngineType::ENGINE_BCS;
-    event.bcsState.taskCount = 1u;
-    MockTimestampPacketContainer timestamp(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
-    event.addTimestampPacketNodes(timestamp);
-
-    cl_event waitlist[] = {&event};
-    ASSERT_EQ(cmdQ1.enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr), CL_SUCCESS);
-
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(cmdStream, 0u);
-
-    uint32_t semaphoresFound = 0;
-
-    for (auto it = hwParser.cmdList.begin(); it != hwParser.cmdList.end(); ++it) {
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*it);
-        if (semaphoreCmd) {
-            ++semaphoresFound;
-            verifySemaphore(semaphoreCmd, timestamp.getNode(0), 0);
-        }
-    }
-    EXPECT_EQ(1u, semaphoresFound);
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndDependenciesResolvedViaPipeControlsAndSingleIOQWhenEnqueueKernelThenDoNotProgramSemaphoresButProgramPipeControlBeforeGpgpuWalker) {
