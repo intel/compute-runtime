@@ -36,21 +36,34 @@ bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
         this->engines = NEO::DebugManager.flags.SplitBcsMask.get();
     }
 
-    ze_command_queue_desc_t splitDesc;
-    memcpy(&splitDesc, desc, sizeof(ze_command_queue_desc_t));
-    splitDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    StackVec<NEO::CommandStreamReceiver *, 4u> csrs;
 
     for (uint32_t i = 0; i < NEO::bcsInfoMaskSize; i++) {
         if (this->engines.test(i)) {
             auto engineType = (i == 0u ? aub_stream::EngineType::ENGINE_BCS : aub_stream::EngineType::ENGINE_BCS1 + i - 1);
-            auto csr = this->device.getNEODevice()->getNearestGenericSubDevice(0u)->getEngine(static_cast<aub_stream::EngineType>(engineType), NEO::EngineUsage::Regular).commandStreamReceiver;
-
-            ze_result_t result;
-            auto commandQueue = CommandQueue::create(productFamily, &device, csr, &splitDesc, true, false, result);
-            UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
-
-            this->cmdQs.push_back(commandQueue);
+            auto engine = this->device.getNEODevice()->getNearestGenericSubDevice(0u)->tryGetEngine(static_cast<aub_stream::EngineType>(engineType), NEO::EngineUsage::Regular);
+            if (!engine) {
+                continue;
+            }
+            auto csr = engine->commandStreamReceiver;
+            csrs.push_back(csr);
         }
+    }
+
+    if (csrs.size() != this->engines.count()) {
+        return false;
+    }
+
+    ze_command_queue_desc_t splitDesc;
+    memcpy(&splitDesc, desc, sizeof(ze_command_queue_desc_t));
+    splitDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    for (const auto &csr : csrs) {
+        ze_result_t result;
+        auto commandQueue = CommandQueue::create(productFamily, &device, csr, &splitDesc, true, false, result);
+        UNRECOVERABLE_IF(result != ZE_RESULT_SUCCESS);
+
+        this->cmdQs.push_back(commandQueue);
     }
 
     return true;
