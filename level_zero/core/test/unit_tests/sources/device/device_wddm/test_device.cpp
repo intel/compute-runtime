@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/windows/hw_device_id.h"
 #include "shared/source/os_interface/windows/os_environment_win.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mock_gdi/mock_gdi.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_wddm.h"
@@ -36,6 +37,7 @@ struct LuidDeviceTest : public ::testing::Test {
 };
 
 TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureThenLuidAndNodeMaskSetForWDDMDriverType) {
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(true);
     NEO::MockDevice *neoDevice = nullptr;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
     L0::Device *device = nullptr;
@@ -79,6 +81,7 @@ TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureThenLuidAndNodeMaskSetF
     EXPECT_EQ(lowLUID, (uint32_t)adapterLuid.LowPart);
     EXPECT_EQ(highLUID, (uint32_t)adapterLuid.HighPart);
     EXPECT_NE(deviceLuidProperties.nodeMask, (uint32_t)0);
+    DebugManager.flags.EnableL0ReadLUIDExtension.set(false);
 }
 
 } // namespace ult
