@@ -32,16 +32,6 @@ target_sources(${TARGET_NAME} PRIVATE
                ${NEO_SHARED_TEST_DIRECTORY}/common/tests_configuration.h
 )
 
-if(WIN32)
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${NEO_SOURCE_DIR}/level_zero/core/source/dll/windows/create_builtin_functions_lib_windows.cpp
-  )
-else()
-  target_sources(${TARGET_NAME} PRIVATE
-                 ${NEO_SOURCE_DIR}/level_zero/core/source/dll/linux/create_builtin_functions_lib_linux.cpp
-  )
-endif()
-
 target_sources(${TARGET_NAME} PRIVATE
                $<TARGET_OBJECTS:${L0_MOCKABLE_LIB_NAME}>
                $<TARGET_OBJECTS:neo_libult_common>

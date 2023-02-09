@@ -42,6 +42,7 @@ HWTEST_F(BuiltInTestL0, givenDeviceWithUnregisteredBinaryBuiltinWhenGettingBuilt
     pDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId += 0xdead;
     L0::BuiltinFunctionsLibImpl builtinFunctionsLib{&deviceL0, pDevice->getBuiltIns()};
     for (uint32_t builtId = 0; builtId < static_cast<uint32_t>(L0::Builtin::COUNT); builtId++) {
+        deviceL0.formatForModule = {};
         ASSERT_NE(nullptr, builtinFunctionsLib.getFunction(static_cast<L0::Builtin>(builtId)));
         EXPECT_EQ(ZE_MODULE_FORMAT_NATIVE, deviceL0.formatForModule);
     }
