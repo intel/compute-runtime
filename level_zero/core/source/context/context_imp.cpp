@@ -366,12 +366,6 @@ ze_result_t ContextImp::freeMem(const void *ptr, bool blocking) {
     }
 
     this->driverHandle->svmAllocsManager->freeSVMAlloc(const_cast<void *>(ptr), blocking);
-
-    {
-        std::lock_guard<std::mutex> lock(this->driverHandle->sharedMakeResidentAllocationsLock);
-        this->driverHandle->sharedMakeResidentAllocations.erase(const_cast<void *>(ptr));
-    }
-
     return ZE_RESULT_SUCCESS;
 }
 
