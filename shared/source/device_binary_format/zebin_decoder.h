@@ -28,6 +28,7 @@ template <Elf::ELF_IDENTIFIER_CLASS numBits = Elf::EI_CLASS_64>
 struct ZebinSections {
     using SectionHeaderData = typename NEO::Elf::Elf<numBits>::SectionHeaderAndData;
     StackVec<SectionHeaderData *, 32> textKernelSections;
+    StackVec<SectionHeaderData *, 32> gtpinInfoSections;
     StackVec<SectionHeaderData *, 1> zeInfoSections;
     StackVec<SectionHeaderData *, 1> globalDataSections;
     StackVec<SectionHeaderData *, 1> globalZeroInitDataSections;
@@ -103,6 +104,9 @@ NEO::DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std:
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 ArrayRef<const uint8_t> getKernelHeap(ConstStringRef &kernelName, Elf::Elf<numBits> &elf, const ZebinSections<numBits> &zebinSections);
+
+template <Elf::ELF_IDENTIFIER_CLASS numBits>
+ArrayRef<const uint8_t> getKernelGtpinInfo(ConstStringRef &kernelName, Elf::Elf<numBits> &elf, const ZebinSections<numBits> &zebinSections);
 
 NEO::DecodeError decodeZeInfo(ProgramInfo &dst, ConstStringRef zeInfo, std::string &outErrReason, std::string &outWarning);
 
