@@ -155,7 +155,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
     void createLogicalStateHelper() override {}
     NEO::LogicalStateHelper *getLogicalStateHelper() const override;
 
-    bool preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo);
+    bool preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents);
     bool isSuitableUSMHostAlloc(NEO::SvmAllocationData *alloc);
     bool isSuitableUSMDeviceAlloc(NEO::SvmAllocationData *alloc);
     bool isSuitableUSMSharedAlloc(NEO::SvmAllocationData *alloc);

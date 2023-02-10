@@ -395,7 +395,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
     CpuMemCopyInfo cpuMemCopyInfo(dstptr, srcptr, size);
     this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcptr), size, &cpuMemCopyInfo.srcAllocData);
     this->device->getDriverHandle()->findAllocationDataForRange(dstptr, size, &cpuMemCopyInfo.dstAllocData);
-    if (preferCopyThroughLockedPtr(cpuMemCopyInfo)) {
+    if (preferCopyThroughLockedPtr(cpuMemCopyInfo, numWaitEvents, phWaitEvents)) {
         ret = performCpuMemcpy(cpuMemCopyInfo, hSignalEvent, numWaitEvents, phWaitEvents);
         if (ret == ZE_RESULT_SUCCESS || ret == ZE_RESULT_ERROR_DEVICE_LOST) {
             return ret;
@@ -707,7 +707,7 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::flushImmediate(ze_res
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo) {
+bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(CpuMemCopyInfo &cpuMemCopyInfo, uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
     if (NEO::DebugManager.flags.ExperimentalForceCopyThroughLock.get() == 1) {
         return true;
     }
@@ -723,6 +723,21 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
     bool cpuMemCopyEnabled = false;
 
     switch (transferType) {
+    case HOST_USM_TO_DEVICE_USM: {
+        if (this->dependenciesPresent) {
+            cpuMemCopyEnabled = false;
+            break;
+        }
+        bool allEventsCompleted = true;
+        for (uint32_t i = 0; i < numWaitEvents; i++) {
+            if (!Event::fromHandle(phWaitEvents[i])->isAlreadyCompleted()) {
+                allEventsCompleted = false;
+                break;
+            }
+        }
+        cpuMemCopyEnabled = allEventsCompleted;
+        break;
+    }
     case HOST_NON_USM_TO_DEVICE_USM:
     case DEVICE_USM_TO_HOST_NON_USM:
         cpuMemCopyEnabled = true;
