@@ -70,9 +70,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::updateDispatchFlagsWithRequi
     dispatchFlags.threadArbitrationPolicy = requiredStateComputeMode.threadArbitrationPolicy.value;
 
     const auto &requiredPipelineSelect = this->requiredStreamState.pipelineSelect;
-    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = requiredPipelineSelect.systolicMode.value != -1
-                                                                      ? !!requiredPipelineSelect.systolicMode.value
-                                                                      : false;
+    dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = requiredPipelineSelect.systolicMode.value == 1;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

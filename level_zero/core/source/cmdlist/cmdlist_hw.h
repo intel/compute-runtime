@@ -313,6 +313,9 @@ struct CommandListCoreFamily : CommandListImp {
     static constexpr int32_t cmdListDefaultEngineInstancedDevice = NEO::StreamProperty::initValue;
     static constexpr bool cmdListDefaultCoherency = false;
     static constexpr bool cmdListDefaultDisableOverdispatch = true;
+    static constexpr bool cmdListDefaultPipelineSelectModeSelected = true;
+    static constexpr bool cmdListDefaultMediaSamplerClockGate = false;
+    static constexpr bool cmdListDefaultGlobalAtomics = false;
 
     int64_t currentSurfaceStateBaseAddress = NEO::StreamProperty64::initValue;
     int64_t currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;

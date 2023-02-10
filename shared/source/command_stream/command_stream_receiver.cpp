@@ -526,7 +526,7 @@ void CommandStreamReceiver::initProgrammingFlags() {
     lastSentL3Config = 0;
     lastMediaSamplerConfig = -1;
     lastPreemptionMode = PreemptionMode::Initial;
-    latestSentStatelessMocsConfig = 0;
+    latestSentStatelessMocsConfig = CacheSettings::unknownMocs;
     lastSentUseGlobalAtomics = false;
 }
 

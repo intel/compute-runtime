@@ -277,6 +277,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     typedef typename GfxFamily::PIPE_CONTROL PIPE_CONTROL;
     typedef typename GfxFamily::STATE_BASE_ADDRESS STATE_BASE_ADDRESS;
 
+    auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
+
     int64_t bindingTablePoolBaseAddress = -1;
     size_t bindingTablePoolSize = std::numeric_limits<size_t>::max();
     int64_t surfaceStateBaseAddress = -1;
@@ -344,7 +346,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             PostSyncMode::ImmediateData,
             address,
             taskCount + 1,
-            peekRootDeviceEnvironment(),
+            rootDeviceEnvironment,
             args);
 
         DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "taskCount", peekTaskCount());
@@ -374,7 +376,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     auto requiresCoherency = gfxCoreHelper.forceNonGpuCoherencyWA(dispatchFlags.requiresCoherency);
     this->streamProperties.stateComputeMode.setPropertiesAll(requiresCoherency, dispatchFlags.numGrfRequired,
-                                                             dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode(), peekRootDeviceEnvironment());
+                                                             dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode(), rootDeviceEnvironment);
 
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
@@ -457,10 +459,14 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (dshDirty) {
         dynamicStateBaseAddress = dsh->getHeapGpuBase();
         dynamicStateSize = dsh->getHeapSizeInPages();
+
+        this->streamProperties.stateBaseAddress.setPropertiesDynamicState(dynamicStateBaseAddress, dynamicStateSize);
     }
     if (iohDirty) {
         indirectObjectBaseAddress = ioh->getHeapGpuBase();
         indirectObjectSize = ioh->getHeapSizeInPages();
+
+        this->streamProperties.stateBaseAddress.setPropertiesIndirectState(indirectObjectBaseAddress, indirectObjectSize);
     }
     if (sshDirty) {
         surfaceStateBaseAddress = ssh->getHeapGpuBase();
@@ -468,6 +474,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
         bindingTablePoolBaseAddress = surfaceStateBaseAddress;
         bindingTablePoolSize = surfaceStateSize;
+
+        this->streamProperties.stateBaseAddress.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize,
+                                                                          surfaceStateBaseAddress, surfaceStateSize, rootDeviceEnvironment);
     }
 
     auto isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
@@ -483,18 +492,16 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     if (mocsIndex != latestSentStatelessMocsConfig) {
         isStateBaseAddressDirty = true;
         latestSentStatelessMocsConfig = mocsIndex;
+
+        this->streamProperties.stateBaseAddress.setPropertyStatelessMocs(mocsIndex, rootDeviceEnvironment);
     }
 
     if (this->isGlobalAtomicsProgrammingRequired(dispatchFlags.useGlobalAtomics) && (this->isMultiOsContextCapable() || dispatchFlags.areMultipleSubDevicesInContext)) {
         isStateBaseAddressDirty = true;
         lastSentUseGlobalAtomics = dispatchFlags.useGlobalAtomics;
-    }
 
-    this->streamProperties.stateBaseAddress.setPropertiesAll(dispatchFlags.useGlobalAtomics, mocsIndex,
-                                                             bindingTablePoolBaseAddress, bindingTablePoolSize,
-                                                             surfaceStateBaseAddress, surfaceStateSize,
-                                                             dynamicStateBaseAddress, dynamicStateSize,
-                                                             indirectObjectBaseAddress, indirectObjectSize, this->peekRootDeviceEnvironment());
+        this->streamProperties.stateBaseAddress.setPropertyGlobalAtomics(lastSentUseGlobalAtomics, rootDeviceEnvironment, false);
+    }
 
     bool debuggingEnabled = device.getDebugger() != nullptr;
     bool sourceLevelDebuggerActive = device.getSourceLevelDebugger() != nullptr ? true : false;
@@ -510,9 +517,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     // Reprogram state base address if required
     if (isStateBaseAddressDirty || sourceLevelDebuggerActive) {
-        this->latestSentStatelessMocsConfig = static_cast<uint32_t>(this->streamProperties.stateBaseAddress.statelessMocs.value);
-        EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStreamCSR, this->peekRootDeviceEnvironment(), isRcs(), this->dcFlushSupport);
-        EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true, peekRootDeviceEnvironment(), isRcs());
+        EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStreamCSR, rootDeviceEnvironment, isRcs(), this->dcFlushSupport);
+        EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true, rootDeviceEnvironment, isRcs());
 
         uint64_t newGSHbase = 0;
         GSBAFor32BitProgrammed = false;
@@ -575,7 +581,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             bindingTableBaseAddressRequired = false;
         }
 
-        EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false, peekRootDeviceEnvironment(), isRcs());
+        EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false, rootDeviceEnvironment, isRcs());
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
             collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGSHbase,
