@@ -523,11 +523,11 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenDispatchInterfaceWhen
 
     StreamProperties streamProperties{};
     auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
-    streamProperties.stateComputeMode.setProperties(false, 128, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
-    streamProperties.stateComputeMode.setProperties(false, 128, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
+    streamProperties.stateComputeMode.setPropertiesAll(false, 128, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
+    streamProperties.stateComputeMode.setPropertiesAll(false, 128, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
     EXPECT_FALSE(streamProperties.stateComputeMode.isDirty());
 
-    streamProperties.stateComputeMode.setProperties(false, 256, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
+    streamProperties.stateComputeMode.setPropertiesAll(false, 256, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
     EXPECT_TRUE(streamProperties.stateComputeMode.isDirty());
 }
 

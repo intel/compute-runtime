@@ -310,21 +310,23 @@ struct CommandListCoreFamily : CommandListImp {
     void dispatchEventRemainingPacketsPostSyncOperation(Event *event);
     void dispatchEventPostSyncOperation(Event *event, uint32_t value, bool omitFirstOperation, bool useMax, bool useLastPipeControl);
 
+    static constexpr int32_t cmdListDefaultEngineInstancedDevice = NEO::StreamProperty::initValue;
     static constexpr bool cmdListDefaultCoherency = false;
     static constexpr bool cmdListDefaultDisableOverdispatch = true;
 
-    int64_t currentSurfaceStateBaseAddress = -1;
-    int64_t currentDynamicStateBaseAddress = -1;
-    int64_t currentIndirectObjectBaseAddress = -1;
-    int64_t currentBindingTablePoolBaseAddress = -1;
+    int64_t currentSurfaceStateBaseAddress = NEO::StreamProperty64::initValue;
+    int64_t currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;
+    int64_t currentIndirectObjectBaseAddress = NEO::StreamProperty64::initValue;
+    int64_t currentBindingTablePoolBaseAddress = NEO::StreamProperty64::initValue;
 
-    size_t currentSurfaceStateSize = std::numeric_limits<size_t>::max();
-    size_t currentDynamicStateSize = std::numeric_limits<size_t>::max();
-    size_t currentIndirectObjectSize = std::numeric_limits<size_t>::max();
-    size_t currentBindingTablePoolSize = std::numeric_limits<size_t>::max();
+    size_t currentSurfaceStateSize = NEO::StreamPropertySizeT::initValue;
+    size_t currentDynamicStateSize = NEO::StreamPropertySizeT::initValue;
+    size_t currentIndirectObjectSize = NEO::StreamPropertySizeT::initValue;
+    size_t currentBindingTablePoolSize = NEO::StreamPropertySizeT::initValue;
+
     size_t cmdListCurrentStartOffset = 0;
 
-    int32_t currentMocsState = -1;
+    int32_t currentMocsState = NEO::StreamProperty::initValue;
 
     bool containsAnyKernel = false;
     bool pipeControlMultiKernelEventSync = false;

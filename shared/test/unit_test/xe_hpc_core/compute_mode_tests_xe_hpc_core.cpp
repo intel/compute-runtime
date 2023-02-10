@@ -187,8 +187,8 @@ HWTEST2_F(XeHpcComputeModeRequirements, giventhreadArbitrationPolicyWithoutShare
         EXPECT_EQ(expectToBeProgrammed, foundOne);
     };
 
-    getCsrHw<FamilyType>()->streamProperties.stateComputeMode.setProperties(flags.requiresCoherency, flags.numGrfRequired,
-                                                                            flags.threadArbitrationPolicy, PreemptionMode::Disabled, device->getRootDeviceEnvironment());
+    getCsrHw<FamilyType>()->streamProperties.stateComputeMode.setPropertiesAll(flags.requiresCoherency, flags.numGrfRequired,
+                                                                               flags.threadArbitrationPolicy, PreemptionMode::Disabled, device->getRootDeviceEnvironment());
 
     flushTask(true);
     findCmd(productHelper.isThreadArbitrationPolicyReportedWithScm()); // first time

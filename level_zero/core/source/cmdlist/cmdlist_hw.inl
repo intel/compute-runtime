@@ -118,15 +118,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     cmdListCurrentStartOffset = 0;
     this->returnPoints.clear();
 
-    currentSurfaceStateBaseAddress = -1;
-    currentDynamicStateBaseAddress = -1;
-    currentIndirectObjectBaseAddress = -1;
-    currentBindingTablePoolBaseAddress = -1;
+    currentSurfaceStateBaseAddress = NEO::StreamProperty64::initValue;
+    currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;
+    currentIndirectObjectBaseAddress = NEO::StreamProperty64::initValue;
+    currentBindingTablePoolBaseAddress = NEO::StreamProperty64::initValue;
 
-    currentSurfaceStateSize = std::numeric_limits<size_t>::max();
-    currentDynamicStateSize = std::numeric_limits<size_t>::max();
-    currentIndirectObjectSize = std::numeric_limits<size_t>::max();
-    currentBindingTablePoolSize = std::numeric_limits<size_t>::max();
+    currentSurfaceStateSize = NEO::StreamPropertySizeT::initValue;
+    currentDynamicStateSize = NEO::StreamPropertySizeT::initValue;
+    currentIndirectObjectSize = NEO::StreamPropertySizeT::initValue;
+    currentBindingTablePoolSize = NEO::StreamPropertySizeT::initValue;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -165,8 +165,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         commandContainer.setFlushTaskUsedForImmediate(this->isFlushTaskSubmissionEnabled);
         commandContainer.setNumIddPerBlock(1);
 
-        requiredStreamState.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->device->getNEODevice()->getPreemptionMode(), rootDeviceEnvironment);
-        requiredStreamState.frontEndState.setPropertyDisableOverdispatch(cmdListDefaultDisableOverdispatch, rootDeviceEnvironment);
+        requiredStreamState.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->device->getNEODevice()->getPreemptionMode(), rootDeviceEnvironment, true);
+        requiredStreamState.frontEndState.setPropertiesDisableOverdispatchEngineInstanced(cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, rootDeviceEnvironment, true);
     }
 
     if (this->immediateCmdListHeapSharing) {
@@ -2423,29 +2423,29 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         }
     }
     if (!containsAnyKernel) {
-        requiredStreamState.frontEndState.setProperties(isCooperative, fusedEuDisabled, cmdListDefaultDisableOverdispatch, -1, rootDeviceEnvironment);
-        requiredStreamState.pipelineSelect.setProperties(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
+        requiredStreamState.frontEndState.setPropertiesAll(isCooperative, fusedEuDisabled, cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, rootDeviceEnvironment);
+        requiredStreamState.pipelineSelect.setPropertiesAll(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
 
-        requiredStreamState.stateBaseAddress.setProperties(kernelImp.getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics, currentMocsState,
-                                                           currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
-                                                           currentSurfaceStateBaseAddress, currentSurfaceStateSize,
-                                                           currentDynamicStateBaseAddress, currentDynamicStateSize,
-                                                           currentIndirectObjectBaseAddress, currentIndirectObjectSize,
-                                                           rootDeviceEnvironment);
+        requiredStreamState.stateBaseAddress.setPropertiesAll(kernelImp.getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics, currentMocsState,
+                                                              currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
+                                                              currentSurfaceStateBaseAddress, currentSurfaceStateSize,
+                                                              currentDynamicStateBaseAddress, currentDynamicStateSize,
+                                                              currentIndirectObjectBaseAddress, currentIndirectObjectSize,
+                                                              rootDeviceEnvironment);
 
         if (this->stateComputeModeTracking) {
-            requiredStreamState.stateComputeMode.setProperties(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
+            requiredStreamState.stateComputeMode.setPropertiesAll(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
             finalStreamState = requiredStreamState;
         } else {
             finalStreamState = requiredStreamState;
-            requiredStreamState.stateComputeMode.setProperties(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
+            requiredStreamState.stateComputeMode.setPropertiesAll(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
         }
         containsAnyKernel = true;
     }
 
     auto logicalStateHelperBlock = !getLogicalStateHelper();
 
-    finalStreamState.pipelineSelect.setProperties(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
+    finalStreamState.pipelineSelect.setPropertiesAll(true, false, kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
     if (this->pipelineSelectStateTracking && finalStreamState.pipelineSelect.isDirty() && logicalStateHelperBlock) {
         NEO::PipelineSelectArgs pipelineSelectArgs;
         pipelineSelectArgs.systolicPipelineSelectMode = kernelAttributes.flags.usesSystolicPipelineSelectMode;
@@ -2456,7 +2456,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
                                                               rootDeviceEnvironment);
     }
 
-    finalStreamState.frontEndState.setProperties(isCooperative, fusedEuDisabled, cmdListDefaultDisableOverdispatch, -1, rootDeviceEnvironment);
+    finalStreamState.frontEndState.setPropertiesAll(isCooperative, fusedEuDisabled, cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, rootDeviceEnvironment);
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
     if (finalStreamState.frontEndState.isDirty() && logicalStateHelperBlock) {
         if (isPatchingVfeStateAllowed) {
@@ -2478,7 +2478,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         }
     }
 
-    finalStreamState.stateComputeMode.setProperties(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
+    finalStreamState.stateComputeMode.setPropertiesAll(false, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
     if (finalStreamState.stateComputeMode.isDirty() && logicalStateHelperBlock) {
         bool isRcs = (this->engineGroupType == NEO::EngineGroupType::RenderCompute);
         NEO::PipelineSelectArgs pipelineSelectArgs;
@@ -2489,12 +2489,12 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
             *commandContainer.getCommandStream(), finalStreamState.stateComputeMode, pipelineSelectArgs, false, rootDeviceEnvironment, isRcs, this->dcFlushSupport, nullptr);
     }
 
-    finalStreamState.stateBaseAddress.setProperties(kernelImp.getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics, currentMocsState,
-                                                    currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
-                                                    currentSurfaceStateBaseAddress, currentSurfaceStateSize,
-                                                    currentDynamicStateBaseAddress, currentDynamicStateSize,
-                                                    currentIndirectObjectBaseAddress, currentIndirectObjectSize,
-                                                    rootDeviceEnvironment);
+    finalStreamState.stateBaseAddress.setPropertiesAll(kernelImp.getKernelDescriptor().kernelAttributes.flags.useGlobalAtomics, currentMocsState,
+                                                       currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
+                                                       currentSurfaceStateBaseAddress, currentSurfaceStateSize,
+                                                       currentDynamicStateBaseAddress, currentDynamicStateSize,
+                                                       currentIndirectObjectBaseAddress, currentIndirectObjectSize,
+                                                       rootDeviceEnvironment);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

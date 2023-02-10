@@ -373,8 +373,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     handlePipelineSelectStateTransition(dispatchFlags);
 
     auto requiresCoherency = gfxCoreHelper.forceNonGpuCoherencyWA(dispatchFlags.requiresCoherency);
-    this->streamProperties.stateComputeMode.setProperties(requiresCoherency, dispatchFlags.numGrfRequired,
-                                                          dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode(), peekRootDeviceEnvironment());
+    this->streamProperties.stateComputeMode.setPropertiesAll(requiresCoherency, dispatchFlags.numGrfRequired,
+                                                             dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode(), peekRootDeviceEnvironment());
 
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
@@ -490,11 +490,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         lastSentUseGlobalAtomics = dispatchFlags.useGlobalAtomics;
     }
 
-    this->streamProperties.stateBaseAddress.setProperties(dispatchFlags.useGlobalAtomics, mocsIndex,
-                                                          bindingTablePoolBaseAddress, bindingTablePoolSize,
-                                                          surfaceStateBaseAddress, surfaceStateSize,
-                                                          dynamicStateBaseAddress, dynamicStateSize,
-                                                          indirectObjectBaseAddress, indirectObjectSize, this->peekRootDeviceEnvironment());
+    this->streamProperties.stateBaseAddress.setPropertiesAll(dispatchFlags.useGlobalAtomics, mocsIndex,
+                                                             bindingTablePoolBaseAddress, bindingTablePoolSize,
+                                                             surfaceStateBaseAddress, surfaceStateSize,
+                                                             dynamicStateBaseAddress, dynamicStateSize,
+                                                             indirectObjectBaseAddress, indirectObjectSize, this->peekRootDeviceEnvironment());
 
     bool debuggingEnabled = device.getDebugger() != nullptr;
     bool sourceLevelDebuggerActive = device.getSourceLevelDebugger() != nullptr ? true : false;
@@ -1115,7 +1115,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
 
         auto isCooperative = dispatchFlags.kernelExecutionType == KernelExecutionType::Concurrent;
         auto disableOverdispatch = (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotSet);
-        streamProperties.frontEndState.setProperties(isCooperative, dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced(), peekRootDeviceEnvironment());
+        streamProperties.frontEndState.setPropertiesAll(isCooperative, dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced(), peekRootDeviceEnvironment());
 
         auto &gfxCoreHelper = getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), hwInfo);

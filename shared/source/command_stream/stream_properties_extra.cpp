@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,12 +9,19 @@
 
 using namespace NEO;
 
-void StateComputeModeProperties::setPropertiesExtra() {
+void StateComputeModeProperties::setPropertiesExtraPerContext() {
 }
+void StateComputeModeProperties::setPropertiesExtraPerKernel() {
+}
+
 void StateComputeModeProperties::setPropertiesExtra(const StateComputeModeProperties &properties) {
 }
+
 bool StateComputeModeProperties::isDirtyExtra() const {
     return false;
 }
-void StateComputeModeProperties::clearIsDirtyExtra() {
+
+void StateComputeModeProperties::clearIsDirtyExtraPerContext() {
+}
+void StateComputeModeProperties::clearIsDirtyExtraPerKernel() {
 }

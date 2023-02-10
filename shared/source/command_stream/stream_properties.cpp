@@ -16,8 +16,8 @@
 
 using namespace NEO;
 
-void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode,
-                                               const RootDeviceEnvironment &rootDeviceEnvironment) {
+void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode,
+                                                  const RootDeviceEnvironment &rootDeviceEnvironment) {
     initSupport(rootDeviceEnvironment);
     clearIsDirty();
 
@@ -42,7 +42,8 @@ void StateComputeModeProperties::setProperties(bool requiresCoherency, uint32_t 
     }
     setDevicePreemptionProperty(devicePreemptionMode);
 
-    setPropertiesExtra();
+    setPropertiesExtraPerContext();
+    setPropertiesExtraPerKernel();
 }
 
 void StateComputeModeProperties::setProperties(const StateComputeModeProperties &properties) {
@@ -71,7 +72,8 @@ void StateComputeModeProperties::clearIsDirty() {
     threadArbitrationPolicy.isDirty = false;
     devicePreemptionMode.isDirty = false;
 
-    clearIsDirtyExtra();
+    clearIsDirtyExtraPerContext();
+    clearIsDirtyExtraPerKernel();
 }
 
 void StateComputeModeProperties::setCoherencyProperty(bool requiresCoherency) {
@@ -119,13 +121,22 @@ void StateComputeModeProperties::initSupport(const RootDeviceEnvironment &rootDe
     }
 }
 
-void StateComputeModeProperties::setPropertiesCoherencyDevicePreemption(bool requiresCoherency, PreemptionMode devicePreemptionMode, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void StateComputeModeProperties::setPropertiesCoherencyDevicePreemption(bool requiresCoherency, PreemptionMode devicePreemptionMode, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState) {
     initSupport(rootDeviceEnvironment);
 
-    this->isCoherencyRequired.isDirty = false;
-    this->devicePreemptionMode.isDirty = false;
+    if (!clearDirtyState) {
+        this->isCoherencyRequired.isDirty = false;
+        this->devicePreemptionMode.isDirty = false;
+        clearIsDirtyExtraPerContext();
+    }
     setCoherencyProperty(requiresCoherency);
     setDevicePreemptionProperty(devicePreemptionMode);
+    setPropertiesExtraPerContext();
+    if (clearDirtyState) {
+        this->isCoherencyRequired.isDirty = false;
+        this->devicePreemptionMode.isDirty = false;
+        clearIsDirtyExtraPerContext();
+    }
 }
 
 void StateComputeModeProperties::setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy, const RootDeviceEnvironment &rootDeviceEnvironment) {
@@ -133,9 +144,11 @@ void StateComputeModeProperties::setPropertiesGrfNumberThreadArbitration(uint32_
 
     this->threadArbitrationPolicy.isDirty = false;
     this->largeGrfMode.isDirty = false;
+    clearIsDirtyExtraPerKernel();
 
     setGrfNumberProperty(numGrfRequired);
     setThreadArbitrationProperty(threadArbitrationPolicy, rootDeviceEnvironment);
+    setPropertiesExtraPerKernel();
 }
 
 void FrontEndProperties::initSupport(const RootDeviceEnvironment &rootDeviceEnvironment) {
@@ -147,7 +160,7 @@ void FrontEndProperties::initSupport(const RootDeviceEnvironment &rootDeviceEnvi
     }
 }
 
-void FrontEndProperties::setProperties(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void FrontEndProperties::setPropertiesAll(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment) {
     initSupport(rootDeviceEnvironment);
 
     clearIsDirty();
@@ -178,12 +191,24 @@ void FrontEndProperties::setPropertySingleSliceDispatchCcsMode(int32_t engineIns
     }
 }
 
-void FrontEndProperties::setPropertyDisableOverdispatch(bool disableOverdispatch, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void FrontEndProperties::setPropertiesDisableOverdispatchEngineInstanced(bool disableOverdispatch, int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState) {
     initSupport(rootDeviceEnvironment);
 
-    this->disableOverdispatch.isDirty = false;
+    if (!clearDirtyState) {
+        this->disableOverdispatch.isDirty = false;
+        this->singleSliceDispatchCcsMode.isDirty = false;
+    }
+
     if (this->frontEndPropertiesSupport.disableOverdispatch) {
         this->disableOverdispatch.set(disableOverdispatch);
+    }
+    if (this->frontEndPropertiesSupport.singleSliceDispatchCcsMode) {
+        this->singleSliceDispatchCcsMode.set(engineInstancedDevice);
+    }
+
+    if (clearDirtyState) {
+        this->disableOverdispatch.isDirty = false;
+        this->singleSliceDispatchCcsMode.isDirty = false;
     }
 }
 
@@ -232,7 +257,7 @@ void PipelineSelectProperties::initSupport(const RootDeviceEnvironment &rootDevi
     }
 }
 
-void PipelineSelectProperties::setProperties(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void PipelineSelectProperties::setPropertiesAll(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const RootDeviceEnvironment &rootDeviceEnvironment) {
     initSupport(rootDeviceEnvironment);
     clearIsDirty();
 
@@ -246,6 +271,27 @@ void PipelineSelectProperties::setProperties(bool modeSelected, bool mediaSample
 
     if (this->pipelineSelectPropertiesSupport.systolicMode) {
         this->systolicMode.set(systolicMode);
+    }
+}
+
+void PipelineSelectProperties::setPropertiesModeSelectedMediaSamplerClockGate(bool modeSelected, bool mediaSamplerDopClockGate, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState) {
+    initSupport(rootDeviceEnvironment);
+
+    if (!clearDirtyState) {
+        this->modeSelected.isDirty = false;
+        this->mediaSamplerDopClockGate.isDirty = false;
+    }
+
+    if (this->pipelineSelectPropertiesSupport.modeSelected) {
+        this->modeSelected.set(modeSelected);
+    }
+    if (this->pipelineSelectPropertiesSupport.mediaSamplerDopClockGate) {
+        this->mediaSamplerDopClockGate.set(mediaSamplerDopClockGate);
+    }
+
+    if (clearDirtyState) {
+        this->modeSelected.isDirty = false;
+        this->mediaSamplerDopClockGate.isDirty = false;
     }
 }
 
@@ -277,17 +323,74 @@ void PipelineSelectProperties::clearIsDirty() {
     systolicMode.isDirty = false;
 }
 
-void StateBaseAddressProperties::setProperties(bool globalAtomics, int32_t statelessMocs,
-                                               int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
-                                               int64_t surfaceStateBaseAddress, size_t surfaceStateSize,
-                                               int64_t dynamicStateBaseAddress, size_t dynamicStateSize,
-                                               int64_t indirectObjectBaseAddress, size_t indirectObjectSize, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void StateBaseAddressProperties::initSupport(const RootDeviceEnvironment &rootDeviceEnvironment) {
     if (this->propertiesSupportLoaded == false) {
         auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
         productHelper.fillStateBaseAddressPropertiesSupportStructure(this->stateBaseAddressPropertiesSupport);
         this->propertiesSupportLoaded = true;
     }
+}
 
+void StateBaseAddressProperties::setPropertiesSurfaceState(int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
+                                                           int64_t surfaceStateBaseAddress, size_t surfaceStateSize, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    initSupport(rootDeviceEnvironment);
+
+    this->bindingTablePoolBaseAddress.isDirty = false;
+    this->bindingTablePoolSize.isDirty = false;
+    this->surfaceStateBaseAddress.isDirty = false;
+    this->surfaceStateSize.isDirty = false;
+
+    if (this->stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress) {
+        this->bindingTablePoolBaseAddress.set(bindingTablePoolBaseAddress);
+        this->bindingTablePoolSize.set(bindingTablePoolSize);
+    }
+    this->surfaceStateBaseAddress.set(surfaceStateBaseAddress);
+    this->surfaceStateSize.set(surfaceStateSize);
+}
+
+void StateBaseAddressProperties::setPropertiesDynamicState(int64_t dynamicStateBaseAddress, size_t dynamicStateSize) {
+    this->dynamicStateBaseAddress.isDirty = false;
+    this->dynamicStateSize.isDirty = false;
+    this->dynamicStateBaseAddress.set(dynamicStateBaseAddress);
+    this->dynamicStateSize.set(dynamicStateSize);
+}
+
+void StateBaseAddressProperties::setPropertiesIndirectState(int64_t indirectObjectBaseAddress, size_t indirectObjectSize) {
+    this->indirectObjectBaseAddress.isDirty = false;
+    this->indirectObjectSize.isDirty = false;
+    this->indirectObjectBaseAddress.set(indirectObjectBaseAddress);
+    this->indirectObjectSize.set(indirectObjectSize);
+}
+
+void StateBaseAddressProperties::setPropertyStatelessMocs(int32_t statelessMocs, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    initSupport(rootDeviceEnvironment);
+
+    this->statelessMocs.isDirty = false;
+    if (this->stateBaseAddressPropertiesSupport.statelessMocs) {
+        this->statelessMocs.set(statelessMocs);
+    }
+}
+
+void StateBaseAddressProperties::setPropertyGlobalAtomics(bool globalAtomics, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState) {
+    initSupport(rootDeviceEnvironment);
+
+    if (!clearDirtyState) {
+        this->globalAtomics.isDirty = false;
+    }
+    if (this->stateBaseAddressPropertiesSupport.globalAtomics) {
+        this->globalAtomics.set(globalAtomics);
+    }
+    if (clearDirtyState) {
+        this->globalAtomics.isDirty = false;
+    }
+}
+
+void StateBaseAddressProperties::setPropertiesAll(bool globalAtomics, int32_t statelessMocs,
+                                                  int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
+                                                  int64_t surfaceStateBaseAddress, size_t surfaceStateSize,
+                                                  int64_t dynamicStateBaseAddress, size_t dynamicStateSize,
+                                                  int64_t indirectObjectBaseAddress, size_t indirectObjectSize, const RootDeviceEnvironment &rootDeviceEnvironment) {
+    initSupport(rootDeviceEnvironment);
     clearIsDirty();
 
     if (this->stateBaseAddressPropertiesSupport.globalAtomics) {

@@ -1049,8 +1049,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandStreamReceiverFlushTaskTests, GivenPreambleSe
     auto expectedUsed = csrCS.getUsed() + sizeNeeded;
     expectedUsed = alignUp(expectedUsed, MemoryConstants::cacheLineSize);
 
-    commandStreamReceiver.streamProperties.stateComputeMode.setProperties(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
-                                                                          flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled, pDevice->getRootDeviceEnvironment());
+    commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(flushTaskFlags.requiresCoherency, flushTaskFlags.numGrfRequired,
+                                                                             flushTaskFlags.threadArbitrationPolicy, PreemptionMode::Disabled, pDevice->getRootDeviceEnvironment());
     commandStreamReceiver.flushTask(commandStream, 0, &dsh, &ioh, &ssh, taskLevel, flushTaskFlags, *pDevice);
 
     // Verify that we didn't grab a new CS buffer
