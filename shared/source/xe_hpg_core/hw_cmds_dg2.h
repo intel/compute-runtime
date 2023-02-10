@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,12 @@
 #include <algorithm>
 
 namespace NEO {
+
+constexpr uint16_t REV_ID_A0 = 0;
+constexpr uint16_t REV_ID_A1 = 1;
+constexpr uint16_t REV_ID_B0 = 4;
+constexpr uint16_t REV_ID_B1 = 5;
+constexpr uint16_t REV_ID_C0 = 8;
 
 struct DG2 : public XeHpgCoreFamily {
     static const PLATFORM platform;

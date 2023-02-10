@@ -8,6 +8,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/windows/wddm_memory_operations_handler.h"
+#include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 #include "shared/test/common/mocks/mock_wddm.h"
 #include "shared/test/common/mocks/windows/mock_gmm_memory_base.h"
 #include "shared/test/common/os_interface/windows/gdi_dll_fixture.h"
@@ -17,9 +18,6 @@
 using namespace NEO;
 
 using Dg2WddmTest = ::testing::Test;
-
-constexpr uint16_t REV_ID_A0 = 0;
-constexpr uint16_t REV_ID_B0 = 4;
 
 DG2TEST_F(Dg2WddmTest, givenG10A0WhenGettingLocalMemoryAccessModeThenCorrectValueIsReturned) {
     MockExecutionEnvironment executionEnvironment;
