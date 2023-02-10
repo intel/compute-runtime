@@ -670,7 +670,7 @@ TEST_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesThenSourc
     pProgram->release();
 }
 
-HWTEST2_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesAndWithDummyKernelThenDoNotSetFallbackRequired, IsICLLPOrTGLLP) {
+HWTEST_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesAndWithDummyKernelThenDoNotSetFallbackRequired) {
 
     VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
     ailConfigurationTable[productFamily] = nullptr;

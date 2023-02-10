@@ -10,23 +10,23 @@
 
 namespace NEO {
 
-using AILTestsIcllp = ::testing::Test;
+using AILBaseTests = ::testing::Test;
 
-HWTEST2_F(AILTestsIcllp, whenKernelSourceIsANGenDummyKernelThenDoEnforcePatchtokensFormat, IsICLLP) {
+HWTEST2_F(AILBaseTests, whenKernelSourceIsANGenDummyKernelThenDoEnforcePatchtokensFormat, IsAtLeastSkl) {
     std::string dummyKernelSource{"kernel void _(){}"};
     bool enforceRebuildToCTNI = false;
 
-    AILConfigurationHw<IGFX_ICELAKE_LP> ail;
+    AILConfigurationHw<productFamily> ail;
     ail.forceFallbackToPatchtokensIfRequired(dummyKernelSource, enforceRebuildToCTNI);
 
     EXPECT_TRUE(enforceRebuildToCTNI);
 }
 
-HWTEST2_F(AILTestsIcllp, whenKernelSourceIsNotANGenDummyKernelThenDoNotEnforcePatchtokensFormat, IsICLLP) {
+HWTEST2_F(AILBaseTests, whenKernelSourceIsNotANGenDummyKernelThenDoNotEnforcePatchtokensFormat, IsAtLeastSkl) {
     std::string dummyKernelSource{"kernel void copybuffer(__global int* a, __global int* b){ //some code }"};
     bool enforceRebuildToCTNI = false;
 
-    AILConfigurationHw<IGFX_ICELAKE_LP> ail;
+    AILConfigurationHw<productFamily> ail;
     ail.forceFallbackToPatchtokensIfRequired(dummyKernelSource, enforceRebuildToCTNI);
 
     EXPECT_FALSE(enforceRebuildToCTNI);
