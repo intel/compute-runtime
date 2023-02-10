@@ -217,6 +217,12 @@ uint32_t DrmMemoryManager::unreference(NEO::BufferObject *bo, bool synchronousDe
     return r;
 }
 
+uint64_t DrmMemoryManager::acquireGpuRangeWithBaseAddress(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex, uint64_t base) {
+    auto gfxPartition = getGfxPartition(rootDeviceIndex);
+    auto gmmHelper = getGmmHelper(rootDeviceIndex);
+    return gmmHelper->canonize(gfxPartition->heapAllocateWithBaseAddress(heapIndex, size, base));
+}
+
 uint64_t DrmMemoryManager::acquireGpuRange(size_t &size, uint32_t rootDeviceIndex, HeapIndex heapIndex) {
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     auto gmmHelper = getGmmHelper(rootDeviceIndex);
@@ -1320,20 +1326,21 @@ uint32_t DrmMemoryManager::getRootDeviceIndex(const Drm *drm) {
     return CommonConstants::unspecifiedDeviceIndex;
 }
 
-AddressRange DrmMemoryManager::reserveGpuAddress(const void *requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
+AddressRange DrmMemoryManager::reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
     uint64_t gpuVa = 0u;
     *reservedOnRootDeviceIndex = 0;
-    if (requiredStartAddress) {
-        return AddressRange{0, 0};
-    }
+    size_t allocatedSize = 0;
     for (auto rootDeviceIndex : rootDeviceIndices) {
-        gpuVa = acquireGpuRange(size, rootDeviceIndex, HeapIndex::HEAP_STANDARD);
+        auto gmmHelper = executionEnvironment.rootDeviceEnvironments[*reservedOnRootDeviceIndex]->getGmmHelper();
+        uint64_t baseAddress = gmmHelper->decanonize(requiredStartAddress);
+        gpuVa = acquireGpuRangeWithBaseAddress(size, rootDeviceIndex, HeapIndex::HEAP_STANDARD, baseAddress);
         if (gpuVa != 0u) {
             *reservedOnRootDeviceIndex = rootDeviceIndex;
+            allocatedSize = size;
             break;
         }
     }
-    return AddressRange{gpuVa, size};
+    return AddressRange{gpuVa, allocatedSize};
 }
 
 void DrmMemoryManager::freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) {

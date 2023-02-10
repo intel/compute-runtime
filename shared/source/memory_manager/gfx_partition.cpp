@@ -143,6 +143,10 @@ uint64_t GfxPartition::Heap::allocateWithCustomAlignment(size_t &sizeToAllocate,
     return alloc->allocateWithCustomAlignment(sizeToAllocate, alignment);
 }
 
+uint64_t GfxPartition::Heap::allocateWithBaseAddress(size_t &sizeToAllocate, uint64_t base) {
+    return alloc->allocateWithCustomAlignmentAndBasePtr(sizeToAllocate, 0u, base, true);
+}
+
 void GfxPartition::Heap::free(uint64_t ptr, size_t size) {
     alloc->free(ptr, size);
 }
