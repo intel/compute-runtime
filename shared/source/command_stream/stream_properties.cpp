@@ -261,9 +261,7 @@ void PipelineSelectProperties::setPropertiesAll(bool modeSelected, bool mediaSam
     initSupport(rootDeviceEnvironment);
     clearIsDirty();
 
-    if (this->pipelineSelectPropertiesSupport.modeSelected) {
-        this->modeSelected.set(modeSelected);
-    }
+    this->modeSelected.set(modeSelected);
 
     if (this->pipelineSelectPropertiesSupport.mediaSamplerDopClockGate) {
         this->mediaSamplerDopClockGate.set(mediaSamplerDopClockGate);
@@ -282,9 +280,8 @@ void PipelineSelectProperties::setPropertiesModeSelectedMediaSamplerClockGate(bo
         this->mediaSamplerDopClockGate.isDirty = false;
     }
 
-    if (this->pipelineSelectPropertiesSupport.modeSelected) {
-        this->modeSelected.set(modeSelected);
-    }
+    this->modeSelected.set(modeSelected);
+
     if (this->pipelineSelectPropertiesSupport.mediaSamplerDopClockGate) {
         this->mediaSamplerDopClockGate.set(mediaSamplerDopClockGate);
     }
@@ -362,13 +359,9 @@ void StateBaseAddressProperties::setPropertiesIndirectState(int64_t indirectObje
     this->indirectObjectSize.set(indirectObjectSize);
 }
 
-void StateBaseAddressProperties::setPropertyStatelessMocs(int32_t statelessMocs, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    initSupport(rootDeviceEnvironment);
-
+void StateBaseAddressProperties::setPropertyStatelessMocs(int32_t statelessMocs) {
     this->statelessMocs.isDirty = false;
-    if (this->stateBaseAddressPropertiesSupport.statelessMocs) {
-        this->statelessMocs.set(statelessMocs);
-    }
+    this->statelessMocs.set(statelessMocs);
 }
 
 void StateBaseAddressProperties::setPropertyGlobalAtomics(bool globalAtomics, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState) {
@@ -397,9 +390,7 @@ void StateBaseAddressProperties::setPropertiesAll(bool globalAtomics, int32_t st
         this->globalAtomics.set(globalAtomics);
     }
 
-    if (this->stateBaseAddressPropertiesSupport.statelessMocs) {
-        this->statelessMocs.set(statelessMocs);
-    }
+    this->statelessMocs.set(statelessMocs);
 
     if (this->stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress) {
         this->bindingTablePoolBaseAddress.set(bindingTablePoolBaseAddress);

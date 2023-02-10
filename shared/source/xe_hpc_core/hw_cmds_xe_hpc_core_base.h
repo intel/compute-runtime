@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -37,12 +37,10 @@ struct XeHpcCore {
 
     struct StateBaseAddressStateSupport {
         static constexpr bool globalAtomics = false;
-        static constexpr bool statelessMocs = true;
         static constexpr bool bindingTablePoolBaseAddress = true;
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool modeSelected = true;
         static constexpr bool mediaSamplerDopClockGate = false;
         static constexpr bool systolicMode = true;
     };

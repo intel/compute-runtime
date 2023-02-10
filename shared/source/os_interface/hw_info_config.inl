@@ -616,12 +616,6 @@ bool ProductHelperHw<gfxProduct>::getStateBaseAddressPropertyGlobalAtomicsSuppor
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::getStateBaseAddressPropertyStatelessMocsSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::StateBaseAddressStateSupport::statelessMocs;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::StateBaseAddressStateSupport::bindingTablePoolBaseAddress;
@@ -630,7 +624,6 @@ bool ProductHelperHw<gfxProduct>::getStateBaseAddressPropertyBindingTablePoolBas
 template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport) const {
     propertiesSupport.globalAtomics = getStateBaseAddressPropertyGlobalAtomicsSupport();
-    propertiesSupport.statelessMocs = getStateBaseAddressPropertyStatelessMocsSupport();
     propertiesSupport.bindingTablePoolBaseAddress = getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport();
 }
 
@@ -697,12 +690,6 @@ void ProductHelperHw<gfxProduct>::fillFrontEndPropertiesSupportStructure(FrontEn
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::getPipelineSelectPropertyModeSelectedSupport() const {
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-    return GfxProduct::PipelineSelectStateSupport::modeSelected;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::getPipelineSelectPropertyMediaSamplerDopClockGateSupport() const {
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     return GfxProduct::PipelineSelectStateSupport::mediaSamplerDopClockGate;
@@ -716,7 +703,6 @@ bool ProductHelperHw<gfxProduct>::getPipelineSelectPropertySystolicModeSupport()
 
 template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::fillPipelineSelectPropertiesSupportStructure(PipelineSelectPropertiesSupport &propertiesSupport, const HardwareInfo &hwInfo) const {
-    propertiesSupport.modeSelected = getPipelineSelectPropertyModeSelectedSupport();
     propertiesSupport.mediaSamplerDopClockGate = getPipelineSelectPropertyMediaSamplerDopClockGateSupport();
     propertiesSupport.systolicMode = isSystolicModeConfigurable(hwInfo);
 }

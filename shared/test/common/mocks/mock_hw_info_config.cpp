@@ -419,12 +419,10 @@ struct UnknownProduct {
 
     struct StateBaseAddressStateSupport {
         static constexpr bool globalAtomics = false;
-        static constexpr bool statelessMocs = false;
         static constexpr bool bindingTablePoolBaseAddress = false;
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool modeSelected = false;
         static constexpr bool mediaSamplerDopClockGate = false;
         static constexpr bool systolicMode = false;
     };

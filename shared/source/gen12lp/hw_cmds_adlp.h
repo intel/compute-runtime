@@ -28,7 +28,6 @@ struct ADLP : public Gen12LpFamily {
     static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
 
     struct PipelineSelectStateSupport {
-        static constexpr bool modeSelected = true;
         static constexpr bool mediaSamplerDopClockGate = true;
         static constexpr bool systolicMode = true;
     };

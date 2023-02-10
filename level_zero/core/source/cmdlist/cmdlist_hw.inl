@@ -2450,7 +2450,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         requiredStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, fusedEuDisabled, rootDeviceEnvironment);
         requiredStreamState.pipelineSelect.setPropertySystolicMode(kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
 
-        requiredStreamState.stateBaseAddress.setPropertyStatelessMocs(currentMocsState, rootDeviceEnvironment);
+        requiredStreamState.stateBaseAddress.setPropertyStatelessMocs(currentMocsState);
         requiredStreamState.stateBaseAddress.setPropertiesSurfaceState(currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
                                                                        currentSurfaceStateBaseAddress, currentSurfaceStateSize, rootDeviceEnvironment);
         if (checkDsh) {
@@ -2518,7 +2518,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
             *commandContainer.getCommandStream(), finalStreamState.stateComputeMode, pipelineSelectArgs, false, rootDeviceEnvironment, isRcs, this->dcFlushSupport, nullptr);
     }
 
-    finalStreamState.stateBaseAddress.setPropertyStatelessMocs(currentMocsState, rootDeviceEnvironment);
+    finalStreamState.stateBaseAddress.setPropertyStatelessMocs(currentMocsState);
     if (checkSsh) {
         finalStreamState.stateBaseAddress.setPropertiesSurfaceState(currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
                                                                     currentSurfaceStateBaseAddress, currentSurfaceStateSize, rootDeviceEnvironment);

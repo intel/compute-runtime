@@ -530,7 +530,6 @@ HWTEST_F(ProductHelperTest, WhenFillingPipelineSelectPropertiesSupportThenExpect
     PipelineSelectPropertiesSupport pipelineSelectPropertiesSupport = {};
 
     productHelper->fillPipelineSelectPropertiesSupportStructure(pipelineSelectPropertiesSupport, pInHwInfo);
-    EXPECT_EQ(productHelper->getPipelineSelectPropertyModeSelectedSupport(), pipelineSelectPropertiesSupport.modeSelected);
     EXPECT_EQ(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport(), pipelineSelectPropertiesSupport.mediaSamplerDopClockGate);
     EXPECT_EQ(productHelper->isSystolicModeConfigurable(pInHwInfo), pipelineSelectPropertiesSupport.systolicMode);
 }
@@ -540,7 +539,6 @@ HWTEST_F(ProductHelperTest, WhenFillingStateBaseAddressPropertiesSupportThenExpe
 
     productHelper->fillStateBaseAddressPropertiesSupportStructure(stateBaseAddressPropertiesSupport);
     EXPECT_EQ(productHelper->getStateBaseAddressPropertyGlobalAtomicsSupport(), stateBaseAddressPropertiesSupport.globalAtomics);
-    EXPECT_EQ(productHelper->getStateBaseAddressPropertyStatelessMocsSupport(), stateBaseAddressPropertiesSupport.statelessMocs);
     EXPECT_EQ(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport(), stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress);
 }
 

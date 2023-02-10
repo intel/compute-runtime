@@ -179,14 +179,12 @@ class ProductHelper {
     virtual bool getScmPropertyDevicePreemptionModeSupport() const = 0;
 
     virtual bool getStateBaseAddressPropertyGlobalAtomicsSupport() const = 0;
-    virtual bool getStateBaseAddressPropertyStatelessMocsSupport() const = 0;
     virtual bool getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const = 0;
 
     virtual bool getPreemptionDbgPropertyPreemptionModeSupport() const = 0;
     virtual bool getPreemptionDbgPropertyStateSipSupport() const = 0;
     virtual bool getPreemptionDbgPropertyCsrSurfaceSupport() const = 0;
 
-    virtual bool getPipelineSelectPropertyModeSelectedSupport() const = 0;
     virtual bool getPipelineSelectPropertyMediaSamplerDopClockGateSupport() const = 0;
     virtual bool getPipelineSelectPropertySystolicModeSupport() const = 0;
 

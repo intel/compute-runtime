@@ -86,7 +86,6 @@ struct FrontEndProperties {
 };
 
 struct PipelineSelectPropertiesSupport {
-    bool modeSelected = false;
     bool mediaSamplerDopClockGate = false;
     bool systolicMode = false;
 };
@@ -112,7 +111,6 @@ struct PipelineSelectProperties {
 
 struct StateBaseAddressPropertiesSupport {
     bool globalAtomics = false;
-    bool statelessMocs = false;
     bool bindingTablePoolBaseAddress = false;
 };
 
@@ -137,7 +135,7 @@ struct StateBaseAddressProperties {
                                    int64_t surfaceStateBaseAddress, size_t surfaceStateSize, const RootDeviceEnvironment &rootDeviceEnvironment);
     void setPropertiesDynamicState(int64_t dynamicStateBaseAddress, size_t dynamicStateSize);
     void setPropertiesIndirectState(int64_t indirectObjectBaseAddress, size_t indirectObjectSize);
-    void setPropertyStatelessMocs(int32_t statelessMocs, const RootDeviceEnvironment &rootDeviceEnvironment);
+    void setPropertyStatelessMocs(int32_t statelessMocs);
     void setPropertyGlobalAtomics(bool globalAtomics, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState);
     void setProperties(const StateBaseAddressProperties &properties);
     bool isDirty() const;

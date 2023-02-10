@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,12 +48,10 @@ struct Gen11 {
 
     struct StateBaseAddressStateSupport {
         static constexpr bool globalAtomics = false;
-        static constexpr bool statelessMocs = true;
         static constexpr bool bindingTablePoolBaseAddress = false;
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool modeSelected = true;
         static constexpr bool mediaSamplerDopClockGate = true;
         static constexpr bool systolicMode = false;
     };

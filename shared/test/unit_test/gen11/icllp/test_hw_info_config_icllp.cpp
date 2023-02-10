@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -112,7 +112,6 @@ ICLLPTEST_F(IcllpProductHelper, givenProductHelperWhenGetCommandsStreamPropertie
     EXPECT_FALSE(productHelper->getScmPropertyDevicePreemptionModeSupport());
 
     EXPECT_FALSE(productHelper->getStateBaseAddressPropertyGlobalAtomicsSupport());
-    EXPECT_TRUE(productHelper->getStateBaseAddressPropertyStatelessMocsSupport());
     EXPECT_FALSE(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
 
     EXPECT_TRUE(productHelper->getFrontEndPropertyScratchSizeSupport());
@@ -127,7 +126,6 @@ ICLLPTEST_F(IcllpProductHelper, givenProductHelperWhenGetCommandsStreamPropertie
     EXPECT_FALSE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_FALSE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_TRUE(productHelper->getPipelineSelectPropertyModeSelectedSupport());
     EXPECT_TRUE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
     EXPECT_FALSE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }

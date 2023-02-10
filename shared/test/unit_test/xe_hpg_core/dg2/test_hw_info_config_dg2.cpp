@@ -67,7 +67,6 @@ DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
     EXPECT_FALSE(productHelper->getScmPropertyDevicePreemptionModeSupport());
 
     EXPECT_FALSE(productHelper->getStateBaseAddressPropertyGlobalAtomicsSupport());
-    EXPECT_TRUE(productHelper->getStateBaseAddressPropertyStatelessMocsSupport());
     EXPECT_TRUE(productHelper->getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport());
 
     EXPECT_TRUE(productHelper->getFrontEndPropertyScratchSizeSupport());
@@ -82,7 +81,6 @@ DG2TEST_F(Dg2ProductHelper, givenProductHelperWhenGetCommandsStreamPropertiesSup
     EXPECT_TRUE(productHelper->getFrontEndPropertyDisableOverDispatchSupport());
     EXPECT_TRUE(productHelper->getFrontEndPropertySingleSliceDispatchCcsModeSupport());
 
-    EXPECT_TRUE(productHelper->getPipelineSelectPropertyModeSelectedSupport());
     EXPECT_FALSE(productHelper->getPipelineSelectPropertyMediaSamplerDopClockGateSupport());
     EXPECT_TRUE(productHelper->getPipelineSelectPropertySystolicModeSupport());
 }

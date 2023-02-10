@@ -49,12 +49,10 @@ struct Gen8 {
 
     struct StateBaseAddressStateSupport {
         static constexpr bool globalAtomics = false;
-        static constexpr bool statelessMocs = true;
         static constexpr bool bindingTablePoolBaseAddress = false;
     };
 
     struct PipelineSelectStateSupport {
-        static constexpr bool modeSelected = true;
         static constexpr bool mediaSamplerDopClockGate = false;
         static constexpr bool systolicMode = false;
     };

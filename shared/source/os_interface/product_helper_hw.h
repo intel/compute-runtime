@@ -138,14 +138,12 @@ class ProductHelperHw : public ProductHelper {
     bool getScmPropertyDevicePreemptionModeSupport() const override;
 
     bool getStateBaseAddressPropertyGlobalAtomicsSupport() const override;
-    bool getStateBaseAddressPropertyStatelessMocsSupport() const override;
     bool getStateBaseAddressPropertyBindingTablePoolBaseAddressSupport() const override;
 
     bool getPreemptionDbgPropertyPreemptionModeSupport() const override;
     bool getPreemptionDbgPropertyStateSipSupport() const override;
     bool getPreemptionDbgPropertyCsrSurfaceSupport() const override;
 
-    bool getPipelineSelectPropertyModeSelectedSupport() const override;
     bool getPipelineSelectPropertyMediaSamplerDopClockGateSupport() const override;
     bool getPipelineSelectPropertySystolicModeSupport() const override;
 

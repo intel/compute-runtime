@@ -493,7 +493,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         isStateBaseAddressDirty = true;
         latestSentStatelessMocsConfig = mocsIndex;
 
-        this->streamProperties.stateBaseAddress.setPropertyStatelessMocs(mocsIndex, rootDeviceEnvironment);
+        this->streamProperties.stateBaseAddress.setPropertyStatelessMocs(mocsIndex);
     }
 
     if (this->isGlobalAtomicsProgrammingRequired(dispatchFlags.useGlobalAtomics) && (this->isMultiOsContextCapable() || dispatchFlags.areMultipleSubDevicesInContext)) {
