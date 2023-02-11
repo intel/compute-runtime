@@ -1081,7 +1081,7 @@ void IoctlHelperXe::xeShowBindTable() {
 #endif
 }
 
-uint32_t IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) {
+int IoctlHelperXe::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) {
     struct drm_xe_engine_create create = {};
     uint32_t drmContextId = 0;
     struct drm_xe_engine_class_instance *currentEngine = nullptr;

@@ -119,7 +119,7 @@ class IoctlHelper {
     virtual bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const;
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo);
 
-    virtual uint32_t createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex);
+    virtual int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex);
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data);
 
     void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture);

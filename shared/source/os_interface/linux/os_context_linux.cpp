@@ -31,7 +31,7 @@ OsContextLinux::OsContextLinux(Drm &drm, uint32_t rootDeviceIndex, uint32_t cont
     : OsContext(rootDeviceIndex, contextId, engineDescriptor),
       drm(drm) {}
 
-void OsContextLinux::initializeContext() {
+bool OsContextLinux::initializeContext() {
     auto hwInfo = drm.getRootDeviceEnvironment().getHardwareInfo();
     auto defaultEngineType = getChosenEngineType(*hwInfo);
 
@@ -50,6 +50,9 @@ void OsContextLinux::initializeContext() {
         if (deviceBitfield.test(deviceIndex)) {
             auto drmVmId = drm.getVirtualMemoryAddressSpace(deviceIndex);
             auto drmContextId = drm.getIoctlHelper()->createDrmContext(drm, *this, drmVmId, deviceIndex);
+            if (drmContextId < 0) {
+                return false;
+            }
 
             this->drmContextIds.push_back(drmContextId);
 
@@ -63,6 +66,7 @@ void OsContextLinux::initializeContext() {
             }
         }
     }
+    return true;
 }
 
 bool OsContextLinux::isDirectSubmissionSupported(const HardwareInfo &hwInfo) const {

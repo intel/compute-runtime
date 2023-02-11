@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,7 +39,7 @@ class OsContextWin : public OsContext {
     uint32_t getDeviceNodeMask();
 
   protected:
-    void initializeContext() override;
+    bool initializeContext() override;
 
     WddmResidencyController residencyController;
     HardwareQueue hardwareQueue;

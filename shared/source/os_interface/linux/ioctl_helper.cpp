@@ -82,12 +82,16 @@ void IoctlHelper::logExecBuffer(const ExecBuffer &execBuffer, std::stringstream 
            << " }\n";
 }
 
-uint32_t IoctlHelper::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) {
+int IoctlHelper::createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex) {
 
     const auto numberOfCCS = drm.getRootDeviceEnvironment().getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled;
     const bool debuggableContext = drm.isContextDebugSupported() && drm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled() && !osContext.isInternalEngine();
     const bool debuggableContextCooperative = debuggableContext && numberOfCCS > 0;
     auto drmContextId = drm.createDrmContext(drmVmId, drm.isVmBindAvailable(), osContext.isCooperativeEngine() || debuggableContextCooperative);
+    if (drmContextId < 0) {
+        return drmContextId;
+    }
+
     if (drm.areNonPersistentContextsSupported()) {
         drm.setNonPersistentContext(drmContextId);
     }

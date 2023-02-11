@@ -215,7 +215,9 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
         osContext.setUmdPowerHintValue(driverHandleImp->powerHint);
         osContext.reInitializeContext();
     }
+
     csr->initializeResources();
+
     csr->initDirectSubmission();
     return commandQueue;
 }

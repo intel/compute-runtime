@@ -266,15 +266,19 @@ void CommandStreamReceiver::fillReusableAllocationsList() {
     }
 }
 
-void CommandStreamReceiver::initializeResources() {
+bool CommandStreamReceiver::initializeResources() {
     if (!resourcesInitialized) {
         auto lock = obtainUniqueOwnership();
         if (!resourcesInitialized) {
-            osContext->ensureContextInitialized();
+            if (!osContext->ensureContextInitialized()) {
+                return false;
+            }
             this->fillReusableAllocationsList();
             this->resourcesInitialized = true;
         }
     }
+
+    return true;
 }
 
 MemoryManager *CommandStreamReceiver::getMemoryManager() const {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
 
     bool isImmediateContextInitializationEnabled(bool isDefaultEngine) const;
     bool isInitialized() const { return contextInitialized; }
-    void ensureContextInitialized();
+    bool ensureContextInitialized();
 
     uint32_t getContextId() const { return contextId; }
     uint32_t getNumSupportedDevices() const { return numSupportedDevices; }
@@ -57,7 +57,7 @@ class OsContext : public ReferenceTrackedObject<OsContext> {
     uint32_t getRootDeviceIndex() { return rootDeviceIndex; }
 
   protected:
-    virtual void initializeContext() {}
+    virtual bool initializeContext() { return true; }
 
     const uint32_t rootDeviceIndex;
     const uint32_t contextId;

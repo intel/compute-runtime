@@ -45,7 +45,7 @@ bool OsContext::isImmediateContextInitializationEnabled(bool isDefaultEngine) co
     return false;
 }
 
-void OsContext::ensureContextInitialized() {
+bool OsContext::ensureContextInitialized() {
     std::call_once(contextInitializedFlag, [this] {
         if (DebugManager.flags.PrintOsContextInitializations.get()) {
             printf("OsContext initialization: contextId=%d usage=%s type=%s isRootDevice=%d\n",
@@ -55,9 +55,13 @@ void OsContext::ensureContextInitialized() {
                    static_cast<int>(rootDevice));
         }
 
-        initializeContext();
-        contextInitialized = true;
+        if (!initializeContext()) {
+            contextInitialized = false;
+        } else {
+            contextInitialized = true;
+        }
     });
+    return contextInitialized;
 }
 
 bool OsContext::isDirectSubmissionAvailable(const HardwareInfo &hwInfo, bool &submitOnInit) {

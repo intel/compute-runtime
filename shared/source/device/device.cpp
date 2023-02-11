@@ -370,7 +370,9 @@ bool Device::createEngine(uint32_t deviceCsrIndex, EngineTypeUsage engineTypeUsa
     auto osContext = executionEnvironment->memoryManager->createAndRegisterOsContext(commandStreamReceiver.get(), engineDescriptor);
     commandStreamReceiver->setupContext(*osContext);
     if (osContext->isImmediateContextInitializationEnabled(isDefaultEngine)) {
-        commandStreamReceiver->initializeResources();
+        if (!commandStreamReceiver->initializeResources()) {
+            return false;
+        }
     }
 
     if (!commandStreamReceiver->initializeTagAllocation()) {

@@ -53,8 +53,6 @@ bool RootDevice::createEngines() {
 }
 
 void RootDevice::initializeRootCommandStreamReceiver() {
-    rootCsrCreated = true;
-
     std::unique_ptr<CommandStreamReceiver> rootCommandStreamReceiver(createCommandStream(*executionEnvironment, rootDeviceIndex, getDeviceBitfield()));
 
     auto &hwInfo = getHardwareInfo();
@@ -67,6 +65,7 @@ void RootDevice::initializeRootCommandStreamReceiver() {
 
     rootCommandStreamReceiver->setupContext(*osContext);
     rootCommandStreamReceiver->initializeResources();
+    rootCsrCreated = true;
     rootCommandStreamReceiver->initializeTagAllocation();
     rootCommandStreamReceiver->createGlobalFenceAllocation();
     rootCommandStreamReceiver->createWorkPartitionAllocation(*this);

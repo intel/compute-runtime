@@ -108,7 +108,7 @@ TEST(DrmQueryTest, givenCreateContextWithAccessCountersWhenDrmContextIsCreatedTh
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
 
     auto ret = drm.createDrmContext(0, false, false);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
 
     EXPECT_TRUE(drm.receivedContextCreateFlags & I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS);
 
@@ -130,6 +130,15 @@ TEST(DrmQueryTest, givenCreateContextWithAccessCountersWhenDrmContextIsCreatedTh
     EXPECT_EQ(static_cast<uint8_t>(DrmPrelimHelper::getContextAcgValues()[1]), paramAcc->granularity);
 }
 
+TEST(DrmQueryTest, GivenDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    pDrm->storedRetVal = -1;
+    EXPECT_EQ(-1, pDrm->createDrmContext(1, false, false));
+    pDrm->storedRetVal = 0;
+    delete pDrm;
+}
+
 TEST(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThenProgramAccessCountersWithSpecifiedTriggeringThreshold) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.CreateContextWithAccessCounters.set(0);
@@ -141,7 +150,7 @@ TEST(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThe
         DebugManager.flags.AccessCountersTrigger.set(threshold);
 
         auto ret = drm.createDrmContext(0, false, false);
-        EXPECT_EQ(0u, ret);
+        EXPECT_EQ(0, ret);
 
         EXPECT_TRUE(drm.receivedContextCreateFlags & I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS);
 
@@ -175,7 +184,7 @@ TEST(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThe
         DebugManager.flags.AccessCountersGranularity.set(granularity);
 
         auto ret = drm.createDrmContext(0, false, false);
-        EXPECT_EQ(0u, ret);
+        EXPECT_EQ(0, ret);
 
         EXPECT_TRUE(drm.receivedContextCreateFlags & I915_CONTEXT_CREATE_FLAGS_USE_EXTENSIONS);
 

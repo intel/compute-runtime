@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -166,13 +166,35 @@ TEST_F(DeferredOsContextCreationTests, givenBlitterEngineWhenCreatingOsContextTh
     expectImmediateContextCreation(engineTypeUsageBlitter, false);
 }
 
+TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledAndReturnsErrorThenOsContextIsNotInitialized) {
+    struct MyOsContext : OsContext {
+        MyOsContext(uint32_t contextId,
+                    const EngineDescriptor &engineDescriptor) : OsContext(0, contextId, engineDescriptor) {}
+
+        bool initializeContext() override {
+            initializeContextCalled++;
+            return false;
+        }
+
+        size_t initializeContextCalled = 0u;
+    };
+
+    MyOsContext osContext{0, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsageRegular)};
+    EXPECT_FALSE(osContext.isInitialized());
+
+    osContext.ensureContextInitialized();
+    EXPECT_FALSE(osContext.isInitialized());
+    EXPECT_EQ(1u, osContext.initializeContextCalled);
+}
+
 TEST_F(DeferredOsContextCreationTests, givenEnsureContextInitializeCalledMultipleTimesWhenOsContextIsCreatedThenInitializeOnlyOnce) {
     struct MyOsContext : OsContext {
         MyOsContext(uint32_t contextId,
                     const EngineDescriptor &engineDescriptor) : OsContext(0, contextId, engineDescriptor) {}
 
-        void initializeContext() override {
+        bool initializeContext() override {
             initializeContextCalled++;
+            return true;
         }
 
         size_t initializeContextCalled = 0u;

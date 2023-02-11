@@ -51,7 +51,7 @@ class OsContextLinux : public OsContext {
     }
 
   protected:
-    void initializeContext() override;
+    bool initializeContext() override;
 
     std::atomic<uint32_t> tlbFlushCounter{0};
     std::atomic<uint32_t> lastFlushedTlbFlushCounter{0};
