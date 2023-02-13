@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/transfer_direction.h"
+
 #include "opencl/source/api/cl_types.h"
 
 namespace NEO {
@@ -13,13 +15,6 @@ class MultiGraphicsAllocation;
 class GraphicsAllocation;
 class Image;
 class Buffer;
-
-enum class TransferDirection {
-    HostToHost,
-    HostToLocal,
-    LocalToHost,
-    LocalToLocal,
-};
 
 struct CsrSelectionArgs {
     struct Resource {
@@ -70,22 +65,6 @@ struct CsrSelectionArgs {
     static void processResource(const MultiGraphicsAllocation &multiGfxAlloc, uint32_t rootDeviceIndex, Resource &outResource);
 
     static void processResource(const GraphicsAllocation &gfxAlloc, uint32_t rootDeviceIndex, Resource &outResource);
-
-    static inline TransferDirection createTransferDirection(bool srcLocal, bool dstLocal) {
-        if (srcLocal) {
-            if (dstLocal) {
-                return TransferDirection::LocalToLocal;
-            } else {
-                return TransferDirection::LocalToHost;
-            }
-        } else {
-            if (dstLocal) {
-                return TransferDirection::HostToLocal;
-            } else {
-                return TransferDirection::HostToHost;
-            }
-        }
-    }
 };
 
 } // namespace NEO

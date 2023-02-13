@@ -2501,26 +2501,28 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::getTotalSizeForCopyRegion(co
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size) {
+bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size, NEO::TransferDirection &directionOut) {
     NEO::SvmAllocationData *srcAllocData = nullptr;
     NEO::SvmAllocationData *dstAllocData = nullptr;
     bool srcAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(const_cast<void *>(srcPtr), size, &srcAllocData);
     bool dstAllocFound = this->device->getDriverHandle()->findAllocationDataForRange(dstPtr, size, &dstAllocData);
 
     if (srcAllocFound && dstAllocFound) {
-        return this->isAppendSplitNeeded(dstAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool(), srcAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool(), size);
+        return this->isAppendSplitNeeded(dstAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool(), srcAllocData->gpuAllocations.getDefaultGraphicsAllocation()->getMemoryPool(), size, directionOut);
     }
 
     return false;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size) {
+inline bool CommandListCoreFamily<gfxCoreFamily>::isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size, NEO::TransferDirection &directionOut) {
     constexpr size_t minimalSizeForBcsSplit = 4 * MemoryConstants::megaByte;
+
+    directionOut = NEO::createTransferDirection(!NEO::MemoryPoolHelper::isSystemMemoryPool(srcPool), !NEO::MemoryPoolHelper::isSystemMemoryPool(dstPool));
 
     return this->isBcsSplitNeeded &&
            size >= minimalSizeForBcsSplit &&
-           (NEO::MemoryPoolHelper::isSystemMemoryPool(dstPool) || NEO::MemoryPoolHelper::isSystemMemoryPool(srcPool));
+           directionOut != NEO::TransferDirection::LocalToLocal;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

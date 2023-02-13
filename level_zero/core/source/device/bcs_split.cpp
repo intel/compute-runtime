@@ -66,6 +66,26 @@ bool BcsSplit::setupDevice(uint32_t productFamily, bool internalUsage, const ze_
         this->cmdQs.push_back(commandQueue);
     }
 
+    if (NEO::DebugManager.flags.SplitBcsMaskH2D.get() > 0) {
+        this->h2dEngines = NEO::DebugManager.flags.SplitBcsMaskH2D.get();
+    }
+    if (NEO::DebugManager.flags.SplitBcsMaskD2H.get() > 0) {
+        this->d2hEngines = NEO::DebugManager.flags.SplitBcsMaskD2H.get();
+    }
+
+    uint32_t cmdQIndex = 0u;
+    for (uint32_t i = 0; i < NEO::bcsInfoMaskSize; i++) {
+        if (this->engines.test(i)) {
+            if (this->h2dEngines.test(i)) {
+                this->h2dCmdQs.push_back(this->cmdQs[cmdQIndex]);
+            }
+            if (this->d2hEngines.test(i)) {
+                this->d2hCmdQs.push_back(this->cmdQs[cmdQIndex]);
+            }
+            cmdQIndex++;
+        }
+    }
+
     return true;
 }
 
@@ -78,8 +98,20 @@ void BcsSplit::releaseResources() {
             cmdQ->destroy();
         }
         cmdQs.clear();
+        d2hCmdQs.clear();
+        h2dCmdQs.clear();
         this->events.releaseResources();
     }
+}
+
+std::vector<CommandQueue *> &BcsSplit::getCmdQsForSplit(NEO::TransferDirection direction) {
+    if (direction == NEO::TransferDirection::HostToLocal) {
+        return this->h2dCmdQs;
+    } else if (direction == NEO::TransferDirection::LocalToHost) {
+        return this->d2hCmdQs;
+    }
+
+    return this->cmdQs;
 }
 
 size_t BcsSplit::Events::obtainForSplit(Context *context, size_t maxEventCountInPool) {

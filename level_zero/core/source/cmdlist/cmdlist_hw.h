@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/command_stream/transfer_direction.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/vec.h"
@@ -264,8 +265,8 @@ struct CommandListCoreFamily : CommandListImp {
     void clearCommandsToPatch();
 
     size_t getTotalSizeForCopyRegion(const ze_copy_region_t *region, uint32_t pitch, uint32_t slicePitch);
-    bool isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size);
-    bool isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size);
+    bool isAppendSplitNeeded(void *dstPtr, const void *srcPtr, size_t size, NEO::TransferDirection &directionOut);
+    bool isAppendSplitNeeded(NEO::MemoryPool dstPool, NEO::MemoryPool srcPool, size_t size, NEO::TransferDirection &directionOut);
 
     void applyMemoryRangesBarrier(uint32_t numRanges, const size_t *pRangeSizes,
                                   const void **pRanges);

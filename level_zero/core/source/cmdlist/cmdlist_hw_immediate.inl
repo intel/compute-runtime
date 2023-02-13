@@ -393,10 +393,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopy(
 
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
-    auto isSplitNeeded = this->isAppendSplitNeeded(dstptr, srcptr, size);
+    NEO::TransferDirection direction;
+    auto isSplitNeeded = this->isAppendSplitNeeded(dstptr, srcptr, size, direction);
     if (isSplitNeeded) {
         relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1); // split generates more than 1 event
-        ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, true, relaxedOrderingDispatch, [&](void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, void *, const void *>(this, dstptr, srcptr, size, hSignalEvent, numWaitEvents, phWaitEvents, true, relaxedOrderingDispatch, direction, [&](void *dstptrParam, const void *srcptrParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             return CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(dstptrParam, srcptrParam, sizeParam, hSignalEventParam, 0u, nullptr, relaxedOrderingDispatch);
         });
     } else {
@@ -429,10 +430,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendMemoryCopyRegio
 
     relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(numWaitEvents);
 
-    auto isSplitNeeded = this->isAppendSplitNeeded(dstPtr, srcPtr, this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch));
+    NEO::TransferDirection direction;
+    auto isSplitNeeded = this->isAppendSplitNeeded(dstPtr, srcPtr, this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch), direction);
     if (isSplitNeeded) {
         relaxedOrderingDispatch = isRelaxedOrderingDispatchAllowed(1); // split generates more than 1 event
-        ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, uint32_t, uint32_t>(this, dstRegion->originX, srcRegion->originX, dstRegion->width, hSignalEvent, numWaitEvents, phWaitEvents, true, relaxedOrderingDispatch, [&](uint32_t dstOriginXParam, uint32_t srcOriginXParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, uint32_t, uint32_t>(this, dstRegion->originX, srcRegion->originX, dstRegion->width, hSignalEvent, numWaitEvents, phWaitEvents, true, relaxedOrderingDispatch, direction, [&](uint32_t dstOriginXParam, uint32_t srcOriginXParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             ze_copy_region_t dstRegionLocal = {};
             ze_copy_region_t srcRegionLocal = {};
             memcpy(&dstRegionLocal, dstRegion, sizeof(ze_copy_region_t));
@@ -508,7 +510,8 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
 
     ze_result_t ret;
 
-    auto isSplitNeeded = this->isAppendSplitNeeded(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool(), size);
+    NEO::TransferDirection direction;
+    auto isSplitNeeded = this->isAppendSplitNeeded(dstAllocation->getMemoryPool(), srcAllocation->getMemoryPool(), size, direction);
 
     bool relaxedOrdering = false;
 
@@ -516,11 +519,11 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::appendPageFaultCopy(N
         relaxedOrdering = isRelaxedOrderingDispatchAllowed(1); // split generates more than 1 event
         uintptr_t dstAddress = static_cast<uintptr_t>(dstAllocation->getGpuAddress());
         uintptr_t srcAddress = static_cast<uintptr_t>(srcAllocation->getGpuAddress());
-        ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, uintptr_t, uintptr_t>(this, dstAddress, srcAddress, size, nullptr, 0u, nullptr, false, relaxedOrdering, [&](uintptr_t dstAddressParam, uintptr_t srcAddressParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
+        ret = static_cast<DeviceImp *>(this->device)->bcsSplit.appendSplitCall<gfxCoreFamily, uintptr_t, uintptr_t>(this, dstAddress, srcAddress, size, nullptr, 0u, nullptr, false, relaxedOrdering, direction, [&](uintptr_t dstAddressParam, uintptr_t srcAddressParam, size_t sizeParam, ze_event_handle_t hSignalEventParam) {
             this->appendMemoryCopyBlit(dstAddressParam, dstAllocation, 0u,
                                        srcAddressParam, srcAllocation, 0u,
                                        sizeParam);
-            return this->appendSignalEvent(hSignalEventParam);
+            return CommandListCoreFamily<gfxCoreFamily>::appendSignalEvent(hSignalEventParam);
         });
     } else {
         ret = CommandListCoreFamily<gfxCoreFamily>::appendPageFaultCopy(dstAllocation, srcAllocation, size, flushHost);
