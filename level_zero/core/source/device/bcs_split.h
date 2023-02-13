@@ -59,14 +59,12 @@ struct BcsSplit {
                                 K srcptr,
                                 size_t size,
                                 ze_event_handle_t hSignalEvent,
+                                uint32_t numWaitEvents,
+                                ze_event_handle_t *phWaitEvents,
                                 bool performMigration,
                                 bool hasRelaxedOrderingDependencies,
                                 std::function<ze_result_t(T, K, size_t, ze_event_handle_t)> appendCall) {
         ze_result_t result = ZE_RESULT_SUCCESS;
-
-        if (hSignalEvent) {
-            cmdList->appendEventForProfilingAllWalkers(Event::fromHandle(hSignalEvent), true, true);
-        }
 
         auto markerEventIndex = this->events.obtainForSplit(Context::fromHandle(cmdList->hContext), MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
 
@@ -84,6 +82,11 @@ struct BcsSplit {
             if (barrierRequired) {
                 auto barrierEventHandle = this->events.barrier[markerEventIndex]->toHandle();
                 cmdList->addEventsToCmdList(1u, &barrierEventHandle, hasRelaxedOrderingDependencies, false);
+            }
+
+            cmdList->addEventsToCmdList(numWaitEvents, phWaitEvents, hasRelaxedOrderingDependencies, false);
+            if (hSignalEvent && i == 0u) {
+                cmdList->appendEventForProfilingAllWalkers(Event::fromHandle(hSignalEvent), true, true);
             }
 
             auto localSize = totalSize / engineCount;
