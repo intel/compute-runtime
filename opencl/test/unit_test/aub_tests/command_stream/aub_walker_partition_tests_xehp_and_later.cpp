@@ -9,6 +9,7 @@
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/timestamp_packet.h"
+#include "shared/source/utilities/io_functions.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -195,7 +196,7 @@ struct AubWalkerPartitionTest : public AubWalkerPartitionFixture,
                            dispatchParamters.localWorkSize[2],
                            partitionType,
                            partitionCount);
-                    fflush(stdout);
+                    IoFunctions::fflushPtr(stdout);
                     goodWorkingSizeGenerated = true;
                 }
             };

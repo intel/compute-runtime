@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@ inline FILE *mockFopen(const char *filename, const char *mode) {
 
 inline int mockVfptrinf(FILE *stream, const char *format, va_list arg) {
     mockVfptrinfCalled++;
-    if (mockVfptrinfUseStdioFunction) {
+    if (stream == stdout || stream == stderr || mockVfptrinfUseStdioFunction) {
         return vfprintf(stream, format, arg);
     }
     return 0x10;
@@ -83,6 +83,13 @@ inline size_t mockFread(void *ptr, size_t size, size_t count, FILE *stream) {
 inline size_t mockFwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream) {
     mockFwriteCalled++;
     return mockFwriteReturn;
+}
+
+inline int mockFflush(FILE *stream) {
+    if (stream == stdout || stream == stderr)
+        return fflush(stream);
+
+    return 0;
 }
 
 } // namespace IoFunctions

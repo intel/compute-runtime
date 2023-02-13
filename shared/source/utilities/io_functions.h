@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ using ftellFuncPtr = decltype(&ftell);
 using rewindFuncPtr = decltype(&rewind);
 using freadFuncPtr = decltype(&fread);
 using fwriteFuncPtr = decltype(&fwrite);
+using fflushFuncPtr = decltype(&fflush);
 
 extern fopenFuncPtr fopenPtr;
 extern vfprintfFuncPtr vfprintfPtr;
@@ -31,6 +32,7 @@ extern ftellFuncPtr ftellPtr;
 extern rewindFuncPtr rewindPtr;
 extern freadFuncPtr freadPtr;
 extern fwriteFuncPtr fwritePtr;
+extern fflushFuncPtr fflushPtr;
 
 inline int fprintf(FILE *fileDesc, char const *const formatStr, ...) {
     va_list args;

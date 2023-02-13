@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/string.h"
+#include "shared/source/utilities/io_functions.h"
 
 #include <cstdint>
 #include <memory>
@@ -37,13 +38,13 @@ extern FileLogger<globalDebugFunctionalityLevel> &fileLoggerInstance();
 
 template <typename StreamT, typename... Args>
 void flushDebugStream(StreamT stream, Args &&...args) {
-    fflush(stream);
+    IoFunctions::fflushPtr(stream);
 }
 
 template <typename... Args>
 void printDebugString(bool showDebugLogs, Args &&...args) {
     if (showDebugLogs) {
-        fprintf(std::forward<Args>(args)...);
+        IoFunctions::fprintf(std::forward<Args>(args)...);
         flushDebugStream(args...);
     }
 }

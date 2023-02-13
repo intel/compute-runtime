@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,6 +18,7 @@ ftellFuncPtr ftellPtr = &mockFtell;
 rewindFuncPtr rewindPtr = &mockRewind;
 freadFuncPtr freadPtr = &mockFread;
 fwriteFuncPtr fwritePtr = &mockFwrite;
+fflushFuncPtr fflushPtr = &mockFflush;
 
 uint32_t mockFopenCalled = 0;
 FILE *mockFopenReturned = reinterpret_cast<FILE *>(0x40);

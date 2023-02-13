@@ -142,7 +142,6 @@ TEST(EuThread, GivenThreadStateStoppedWhenVerifyingStopWithEvenCounterThenFalseR
 }
 
 TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateStoppedAndVerifyingStopWithEvenCounterThenErrorMessageIsPrinted) {
-
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR);
 
@@ -215,7 +214,6 @@ TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateStoppedAndVerifyingStopWithOd
 }
 
 TEST(EuThread, GivenEnabledErrorLogsWhenThreadStateRunningAndVerifyingStopWithOddCounterEqualToPreviousThenErrorMessageIsPrinted) {
-
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DebuggerLogBitmask.set(NEO::DebugVariables::DEBUGGER_LOG_BITMASK::LOG_ERROR);
 
