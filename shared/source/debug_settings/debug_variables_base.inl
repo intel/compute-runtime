@@ -349,6 +349,7 @@ DECLARE_DEBUG_VARIABLE(bool, DirectSubmissionPrintBuffers, false, "Print address
 /*FEATURE FLAGS*/
 DECLARE_DEBUG_VARIABLE(bool, EnableL0ReadLUIDExtension, false, "Enables Support for L0 Extension for reading the LUID from WDDM.")
 DECLARE_DEBUG_VARIABLE(bool, EnableL0EuCount, false, "Enables Support for L0 Extension for querying total nubmer of EUs.")
+DECLARE_DEBUG_VARIABLE(bool, EnableL0DeviceIpVersion, false, "Enables support for L0 extension for querying device IP version")
 DECLARE_DEBUG_VARIABLE(bool, USMEvictAfterMigration, false, "Evict USM allocation after implicit migration to GPU")
 DECLARE_DEBUG_VARIABLE(bool, EnableNV12, true, "Enables NV12 extension")
 DECLARE_DEBUG_VARIABLE(bool, EnablePackedYuv, true, "Enables cl_packed_yuv extension")
@@ -366,6 +367,7 @@ DECLARE_DEBUG_VARIABLE(bool, ForceSamplerLowFilteringPrecision, false, "Force Lo
 DECLARE_DEBUG_VARIABLE(bool, EngineInstancedSubDevices, false, "Create subdevices assigned to specific engine")
 DECLARE_DEBUG_VARIABLE(bool, AllowSingleTileEngineInstancedSubDevices, false, "Create subdevices assigned to specific engine on single tile config")
 DECLARE_DEBUG_VARIABLE(bool, EnablePrivateBO, false, "Enable PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE extension creating VM_PRIVATE BOs")
+DECLARE_DEBUG_VARIABLE(bool, UseDeprecatedClDeviceIpVersion, false, "When enabled, the deprecated ip version scheme distinguishing between families and integrated devices will be queried in OCL")
 DECLARE_DEBUG_VARIABLE(int32_t, ReturnSubDevicesAsApiDevices, -1, "Expose each subdevice as a separate device during clGetDeviceIDs or zeDeviceGet API call")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceRunAloneContext, -1, "Control creation of run-alone HW context, -1:default, 0:disable, 1:enable")
 DECLARE_DEBUG_VARIABLE(int32_t, AddClGlSharing, -1, "Add cl-gl extension")

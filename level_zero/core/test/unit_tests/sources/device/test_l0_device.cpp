@@ -1242,6 +1242,37 @@ TEST_F(DeviceTest, GivenDebugApiUsedSetWhenGettingDevicePropertiesThenSubslicesP
     EXPECT_EQ(16u, deviceProperties.numSubslicesPerSlice);
 }
 
+TEST_F(DeviceTest, givenDeviceIpVersionWhenGetDevicePropertiesAndDebugFlagEnabledThenCorrectResultIsReturned) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableL0DeviceIpVersion.set(true);
+
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_device_ip_version_ext_t zeDeviceIpVersion = {ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT};
+    zeDeviceIpVersion.ipVersion = std::numeric_limits<uint32_t>::max();
+    deviceProperties.pNext = &zeDeviceIpVersion;
+
+    auto &productHelper = device->getProductHelper();
+    auto expectedIpVersion = static_cast<uint32_t>(productHelper.getProductConfigFromHwInfo(device->getHwInfo()));
+
+    device->getProperties(&deviceProperties);
+    EXPECT_NE(std::numeric_limits<uint32_t>::max(), zeDeviceIpVersion.ipVersion);
+    EXPECT_EQ(expectedIpVersion, zeDeviceIpVersion.ipVersion);
+}
+
+TEST_F(DeviceTest, givenDeviceIpVersionWhenGetDevicePropertiesAndDebugIpDeviceFlagDisabledButSomeOtherExtIsEnabledThenCorrectResultIsReturned) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableL0DeviceIpVersion.set(false);
+    DebugManager.flags.EnableL0EuCount.set(true);
+
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_device_ip_version_ext_t zeDeviceIpVersion = {ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT};
+    zeDeviceIpVersion.ipVersion = std::numeric_limits<uint32_t>::max();
+    deviceProperties.pNext = &zeDeviceIpVersion;
+
+    device->getProperties(&deviceProperties);
+    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), zeDeviceIpVersion.ipVersion);
+}
+
 TEST_F(DeviceTest, givenCallToDevicePropertiesThenMaximumMemoryToBeAllocatedIsCorrectlyReturned) {
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     deviceProperties.maxMemAllocSize = 0;

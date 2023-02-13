@@ -829,36 +829,37 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
         name.assign(driverInfo->getDeviceName(name).c_str());
     }
     memcpy_s(pDeviceProperties->name, ZE_MAX_DEVICE_NAME, name.c_str(), name.length() + 1);
-    if (NEO::DebugManager.flags.EnableL0ReadLUIDExtension.get()) {
-        if (pDeviceProperties->pNext) {
-            ze_base_properties_t *extendedProperties = reinterpret_cast<ze_base_properties_t *>(pDeviceProperties->pNext);
-            if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_LUID_EXT_PROPERTIES) {
-                ze_device_luid_ext_properties_t *deviceLuidProperties =
-                    reinterpret_cast<ze_device_luid_ext_properties_t *>(extendedProperties);
+
+    ze_base_properties_t *extendedProperties = reinterpret_cast<ze_base_properties_t *>(pDeviceProperties->pNext);
+    bool anySupportedExt = NEO::DebugManager.flags.EnableL0ReadLUIDExtension.get() || NEO::DebugManager.flags.EnableL0EuCount.get() ||
+                           NEO::DebugManager.flags.EnableL0DeviceIpVersion.get();
+
+    if (anySupportedExt) {
+        while (extendedProperties) {
+            if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_LUID_EXT_PROPERTIES && NEO::DebugManager.flags.EnableL0ReadLUIDExtension.get()) {
+                ze_device_luid_ext_properties_t *deviceLuidProperties = reinterpret_cast<ze_device_luid_ext_properties_t *>(extendedProperties);
                 deviceLuidProperties->nodeMask = queryDeviceNodeMask();
                 ze_result_t result = queryDeviceLuid(deviceLuidProperties);
                 if (result != ZE_RESULT_SUCCESS) {
                     return result;
                 }
-            }
-        }
-    }
-
-    if (NEO::DebugManager.flags.EnableL0EuCount.get()) {
-        if (pDeviceProperties->pNext) {
-            ze_base_desc_t *extendedDesc = reinterpret_cast<ze_base_desc_t *>(pDeviceProperties->pNext);
-            if (extendedDesc->stype == ZE_STRUCTURE_TYPE_EU_COUNT_EXT) {
-                ze_eu_count_ext_t *zeEuCountDesc = reinterpret_cast<ze_eu_count_ext_t *>(extendedDesc);
+            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EU_COUNT_EXT && NEO::DebugManager.flags.EnableL0EuCount.get()) {
+                ze_eu_count_ext_t *zeEuCountDesc = reinterpret_cast<ze_eu_count_ext_t *>(extendedProperties);
                 uint32_t numTotalEUs = hardwareInfo.gtSystemInfo.MaxEuPerSubSlice * hardwareInfo.gtSystemInfo.SubSliceCount * hardwareInfo.gtSystemInfo.SliceCount;
 
                 if (isImplicitScalingCapable()) {
                     numTotalEUs *= neoDevice->getNumGenericSubDevices();
                 }
                 zeEuCountDesc->numTotalEUs = numTotalEUs;
+            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT && NEO::DebugManager.flags.EnableL0DeviceIpVersion.get()) {
+                ze_device_ip_version_ext_t *zeDeviceIpVersion = reinterpret_cast<ze_device_ip_version_ext_t *>(extendedProperties);
+                NEO::Device *activeDevice = getActiveDevice();
+                auto &productHelper = activeDevice->getProductHelper();
+                zeDeviceIpVersion->ipVersion = static_cast<uint32_t>(productHelper.getProductConfigFromHwInfo(hardwareInfo));
             }
+            extendedProperties = static_cast<ze_base_properties_t *>(extendedProperties->pNext);
         }
     }
-
     return ZE_RESULT_SUCCESS;
 }
 

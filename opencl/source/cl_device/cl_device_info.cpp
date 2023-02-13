@@ -7,6 +7,7 @@
 
 #include "opencl/source/cl_device/cl_device_info.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/root_device_environment.h"
@@ -250,8 +251,13 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = deviceInfo.supportedThreadArbitrationPolicies.size() * sizeof(cl_uint);
         break;
     case CL_DEVICE_IP_VERSION_INTEL: {
-        auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-        param.uint = clGfxCoreHelper.getDeviceIpVersion(getHardwareInfo());
+        if (DebugManager.flags.UseDeprecatedClDeviceIpVersion.get()) {
+            auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+            param.uint = clGfxCoreHelper.getDeviceIpVersion(getHardwareInfo());
+        } else {
+            auto &productHelper = device.getProductHelper();
+            param.uint = static_cast<cl_version>(productHelper.getProductConfigFromHwInfo(getHardwareInfo()));
+        }
         src = &param.uint;
         retSize = srcSize = sizeof(cl_version);
         break;

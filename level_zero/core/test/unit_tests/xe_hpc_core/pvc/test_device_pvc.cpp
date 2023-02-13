@@ -17,6 +17,8 @@
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/xe_hpc_core/xe_hpc_core_test_l0_fixtures.h"
 
+#include "platforms.h"
+
 namespace L0 {
 namespace ult {
 
@@ -58,6 +60,56 @@ PVCTEST_F(DeviceTestPvc, GivenPvcWhenGettingPhysicalEuSimdWidthThenReturn16) {
     ze_device_properties_t properties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     device->getProperties(&properties);
     EXPECT_EQ(16u, properties.physicalEUSimdWidth);
+}
+
+PVCTEST_F(DeviceTestPvc, givenPvcXlDeviceIdAndRevIdWhenGetDeviceIpVersion) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableL0DeviceIpVersion.set(true);
+
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_device_ip_version_ext_t zeDeviceIpVersion = {ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT};
+    zeDeviceIpVersion.ipVersion = std::numeric_limits<uint32_t>::max();
+    deviceProperties.pNext = &zeDeviceIpVersion;
+    std::vector<std::pair<uint32_t, AOT::PRODUCT_CONFIG>> pvcValues = {
+        {0x0, AOT::PVC_XL_A0},
+        {0x1, AOT::PVC_XL_A0P}};
+
+    for (const auto &deviceId : pvcXlDeviceIds) {
+        for (const auto &[revId, config] : pvcValues) {
+            device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usDeviceID = deviceId;
+            device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId = revId;
+            device->getProperties(&deviceProperties);
+
+            EXPECT_NE(std::numeric_limits<uint32_t>::max(), zeDeviceIpVersion.ipVersion);
+            EXPECT_EQ(config, zeDeviceIpVersion.ipVersion);
+        }
+    }
+}
+
+PVCTEST_F(DeviceTestPvc, givenPvcXtDeviceIdAndRevIdWhenGetDeviceIpVersion) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableL0DeviceIpVersion.set(true);
+
+    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_device_ip_version_ext_t zeDeviceIpVersion = {ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT};
+    zeDeviceIpVersion.ipVersion = std::numeric_limits<uint32_t>::max();
+    deviceProperties.pNext = &zeDeviceIpVersion;
+    std::vector<std::pair<uint32_t, AOT::PRODUCT_CONFIG>> pvcValues = {
+        {0x3, AOT::PVC_XT_A0},
+        {0x5, AOT::PVC_XT_B0},
+        {0x6, AOT::PVC_XT_B1},
+        {0x7, AOT::PVC_XT_C0}};
+
+    for (const auto &deviceId : pvcXtDeviceIds) {
+        for (const auto &[revId, config] : pvcValues) {
+            device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usDeviceID = deviceId;
+            device->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId = revId;
+            device->getProperties(&deviceProperties);
+
+            EXPECT_NE(std::numeric_limits<uint32_t>::max(), zeDeviceIpVersion.ipVersion);
+            EXPECT_EQ(config, zeDeviceIpVersion.ipVersion);
+        }
+    }
 }
 
 } // namespace ult

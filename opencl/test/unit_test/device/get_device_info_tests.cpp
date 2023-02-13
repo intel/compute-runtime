@@ -1114,8 +1114,14 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
         case CL_DEVICE_IP_VERSION_INTEL: {
             auto pDeviceIpVersion = reinterpret_cast<cl_version *>(object.get());
             auto &hwInfo = device.getHardwareInfo();
-            auto &clGfxCoreHelper = device.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
-            EXPECT_EQ(clGfxCoreHelper.getDeviceIpVersion(hwInfo), *pDeviceIpVersion);
+
+            if (DebugManager.flags.UseDeprecatedClDeviceIpVersion.get()) {
+                auto &clGfxCoreHelper = device.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
+                EXPECT_EQ(clGfxCoreHelper.getDeviceIpVersion(hwInfo), *pDeviceIpVersion);
+            } else {
+                auto &productHelper = device.getProductHelper();
+                EXPECT_EQ(static_cast<cl_version>(productHelper.getProductConfigFromHwInfo(hwInfo)), *pDeviceIpVersion);
+            }
             EXPECT_EQ(sizeof(cl_version), sizeReturned);
             break;
         }
@@ -1167,17 +1173,22 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
     }
 
     cl_device_info param;
+    DebugManagerStateRestore restorer;
 };
 
-TEST_P(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedOnClDeviceThenReturnCorrectAttributeValue) {
+TEST_P(DeviceAttributeQueryTest, givenDeprecatedDeviceIpVersionWhenVerifyDeviceAttributeThenCorrectResultsAreReturned) {
+    DebugManager.flags.UseDeprecatedClDeviceIpVersion.set(true);
     auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    ASSERT_EQ(0u, pClDevice->getNumGenericSubDevices());
+    verifyDeviceAttribute(*pClDevice);
+}
 
+TEST_P(DeviceAttributeQueryTest, givenNewDeviceIpVersionWhenVerifyDeviceAttributeThenCorrectResultsAreReturned) {
+    DebugManager.flags.UseDeprecatedClDeviceIpVersion.set(false);
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     verifyDeviceAttribute(*pClDevice);
 }
 
 TEST_P(DeviceAttributeQueryTest, givenGetDeviceInfoWhenDeviceAttributeIsQueriedOnRootDeviceAndSubDevicesThenReturnCorrectAttributeValues) {
-    DebugManagerStateRestore restorer;
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
 
