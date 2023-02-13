@@ -58,7 +58,7 @@ ModuleImmutableDataFixture::MockModule::MockModule(L0::Device *device,
                                                    uint32_t perHwThreadPrivateMemorySize,
                                                    MockImmutableData *inMockKernelImmData) : ModuleImp(device, moduleBuildLog, type), mockKernelImmData(inMockKernelImmData) {
     this->mockKernelImmData->setDevice(device);
-    this->translationUnit.reset(new MockModuleTranslationUnit(this->device));
+    this->translationUnit.reset(new MockModuleTranslationUnit(this->translationUnit.get()));
 }
 
 void ModuleImmutableDataFixture::MockModule::checkIfPrivateMemoryPerDispatchIsNeeded() {

@@ -2362,17 +2362,17 @@ kernels:
     zebin.elfHeader->machine = this->device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
 
     MockModule mockModule{this->device, nullptr, ModuleType::User};
-    auto maxWorkGroupSize = static_cast<uint32_t>(this->neoDevice->deviceInfo.maxWorkGroupSize);
+    mockModule.maxGroupSize = static_cast<uint32_t>(this->device->getDeviceInfo().maxWorkGroupSize);
     auto mockTU = mockModule.translationUnit.get();
     auto result = mockTU->createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size());
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     auto &defaultKernelDescriptor = mockTU->programInfo.kernelInfos[0]->kernelDescriptor;
     auto &reducedKernelDescriptor = mockTU->programInfo.kernelInfos[1]->kernelDescriptor;
-    EXPECT_EQ(mockModule.getMaxGroupSize(defaultKernelDescriptor), maxWorkGroupSize);
-    EXPECT_EQ(mockModule.getMaxGroupSize(reducedKernelDescriptor), (maxWorkGroupSize >> 1));
+    EXPECT_EQ(mockModule.getMaxGroupSize(defaultKernelDescriptor), mockModule.maxGroupSize);
+    EXPECT_EQ(mockModule.getMaxGroupSize(reducedKernelDescriptor), (mockModule.maxGroupSize >> 1));
 
-    uint32_t groupSize[3] = {8, 4, (maxWorkGroupSize >> 5)}; // default max WGS
+    uint32_t groupSize[3] = {8, 4, (mockModule.maxGroupSize >> 5)}; // default max WGS
     Mock<Kernel> defaultKernel;
     defaultKernel.module = &mockModule;
     defaultKernel.descriptor.kernelAttributes = defaultKernelDescriptor.kernelAttributes;
@@ -2409,15 +2409,15 @@ kernels:
     zebin.elfHeader->machine = this->device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
 
     MockModule mockModule{this->device, nullptr, ModuleType::User};
-    auto maxWorkGroupSize = static_cast<uint32_t>(this->neoDevice->deviceInfo.maxWorkGroupSize);
+    mockModule.maxGroupSize = static_cast<uint32_t>(device->getDeviceInfo().maxWorkGroupSize);
     auto mockTU = mockModule.translationUnit.get();
     auto result = mockTU->createFromNativeBinary(reinterpret_cast<const char *>(zebin.storage.data()), zebin.storage.size());
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     auto &defaultKernelDescriptor = mockTU->programInfo.kernelInfos[0]->kernelDescriptor;
     auto &reducedKernelDescriptor = mockTU->programInfo.kernelInfos[1]->kernelDescriptor;
-    EXPECT_EQ(mockModule.getMaxGroupSize(defaultKernelDescriptor), maxWorkGroupSize);
-    EXPECT_EQ(mockModule.getMaxGroupSize(reducedKernelDescriptor), (maxWorkGroupSize >> 1));
+    EXPECT_EQ(mockModule.getMaxGroupSize(defaultKernelDescriptor), mockModule.maxGroupSize);
+    EXPECT_EQ(mockModule.getMaxGroupSize(reducedKernelDescriptor), (mockModule.maxGroupSize >> 1));
 
     uint32_t groupSize[3] = {0u, 0u, 0u};
     Mock<Kernel> defaultKernel;
@@ -2425,18 +2425,18 @@ kernels:
     defaultKernel.descriptor.kernelAttributes = defaultKernelDescriptor.kernelAttributes;
     EXPECT_EQ(ZE_RESULT_SUCCESS, defaultKernel.suggestGroupSize(4096u, 4096u, 4096u, &groupSize[0], &groupSize[1], &groupSize[2]));
     EXPECT_GT(groupSize[0] * groupSize[1] * groupSize[2], 0u);
-    EXPECT_LE(groupSize[0] * groupSize[1] * groupSize[2], maxWorkGroupSize);
+    EXPECT_LE(groupSize[0] * groupSize[1] * groupSize[2], mockModule.maxGroupSize);
 
     groupSize[0] = groupSize[1] = groupSize[2] = 0u;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, defaultKernel.suggestGroupSize(maxWorkGroupSize, 1u, 1u, &groupSize[0], &groupSize[1], &groupSize[2]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, defaultKernel.suggestGroupSize(mockModule.maxGroupSize, 1u, 1u, &groupSize[0], &groupSize[1], &groupSize[2]));
     EXPECT_GT(groupSize[0] * groupSize[1] * groupSize[2], 0u);
-    EXPECT_LE(groupSize[0] * groupSize[1] * groupSize[2], maxWorkGroupSize);
+    EXPECT_LE(groupSize[0] * groupSize[1] * groupSize[2], mockModule.maxGroupSize);
 
     groupSize[0] = groupSize[1] = groupSize[2] = 0u;
     Mock<Kernel> reducedKernel;
     reducedKernel.module = &mockModule;
     reducedKernel.descriptor.kernelAttributes = reducedKernelDescriptor.kernelAttributes;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, reducedKernel.suggestGroupSize(maxWorkGroupSize, 1u, 1u, &groupSize[0], &groupSize[1], &groupSize[2]));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, reducedKernel.suggestGroupSize(mockModule.maxGroupSize, 1u, 1u, &groupSize[0], &groupSize[1], &groupSize[2]));
     EXPECT_GT(groupSize[0] * groupSize[1] * groupSize[2], 0u);
     EXPECT_LE(groupSize[0] * groupSize[1] * groupSize[2], mockModule.getMaxGroupSize(reducedKernelDescriptor));
 
@@ -3412,6 +3412,8 @@ TEST_F(ModuleTests, givenConstDataStringSectionWhenLinkingModuleThenSegmentIsPat
 TEST_F(ModuleTests, givenImplicitArgsRelocationAndStackCallsWhenLinkingBuiltinModuleThenSegmentIsNotPatchedAndImplicitArgsAreNotRequired) {
     auto pModule = std::make_unique<WhiteBox<Module>>(device, nullptr, ModuleType::Builtin);
 
+    pModule->maxGroupSize = 32;
+
     char data[64]{};
     auto kernelInfo = new KernelInfo();
     kernelInfo->heapInfo.KernelHeapSize = 64;
@@ -3452,6 +3454,7 @@ TEST_F(ModuleTests, givenFullyLinkedModuleAndSlmSizeExceedingLocalMemorySizeWhen
     DebugManager.flags.PrintDebugMessages.set(true);
 
     auto pModule = std::make_unique<WhiteBox<Module>>(device, nullptr, ModuleType::Builtin);
+    pModule->maxGroupSize = 32;
 
     char data[64]{};
     std::unique_ptr<KernelInfo> kernelInfo = std::make_unique<KernelInfo>();
@@ -3498,6 +3501,7 @@ TEST_F(ModuleTests, givenFullyLinkedModuleWhenCreatingKernelThenDebugMsgOnPrivat
     DebugManager.flags.PrintDebugMessages.set(true);
 
     auto pModule = std::make_unique<WhiteBox<Module>>(device, nullptr, ModuleType::Builtin);
+    pModule->maxGroupSize = 32;
 
     char data[64]{};
     std::unique_ptr<KernelInfo> kernelInfo = std::make_unique<KernelInfo>();

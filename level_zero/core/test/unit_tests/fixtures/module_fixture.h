@@ -51,6 +51,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
     struct MockModule : public L0::ModuleImp {
         using ModuleImp::allocatePrivateMemoryPerDispatch;
+        using ModuleImp::defaultMaxGroupSize;
         using ModuleImp::getKernelImmutableDataVector;
         using ModuleImp::kernelImmDatas;
         using ModuleImp::translationUnit;

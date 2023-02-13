@@ -624,6 +624,8 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
 
     registerElfInDebuggerL0();
 
+    this->defaultMaxGroupSize = static_cast<uint32_t>(neoDevice->getDeviceInfo().maxWorkGroupSize);
+
     checkIfPrivateMemoryPerDispatchIsNeeded();
 
     linkageSuccessful = this->linkBinary();
@@ -715,7 +717,7 @@ const KernelImmutableData *ModuleImp::getKernelImmutableData(const char *kernelN
 }
 
 uint32_t ModuleImp::getMaxGroupSize(const NEO::KernelDescriptor &kernelDescriptor) const {
-    return this->device->getGfxCoreHelper().calculateMaxWorkGroupSize(kernelDescriptor, static_cast<uint32_t>(this->device->getDeviceInfo().maxWorkGroupSize));
+    return this->device->getGfxCoreHelper().calculateMaxWorkGroupSize(kernelDescriptor, this->defaultMaxGroupSize);
 }
 
 void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOptions, std::string &internalBuildOptions) {
