@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -65,7 +65,7 @@ ze_result_t zeCommandListAppendWaitOnEvents(
     ze_command_list_handle_t hCommandList,
     uint32_t numEvents,
     ze_event_handle_t *phEvents) {
-    return L0::CommandList::fromHandle(hCommandList)->appendWaitOnEvents(numEvents, phEvents, false);
+    return L0::CommandList::fromHandle(hCommandList)->appendWaitOnEvents(numEvents, phEvents, false, true);
 }
 
 ze_result_t zeEventHostSignal(

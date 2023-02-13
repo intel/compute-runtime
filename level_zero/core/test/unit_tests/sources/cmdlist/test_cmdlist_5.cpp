@@ -610,7 +610,7 @@ HWTEST_F(CommandListCreate, givenCommandListWithCopyOnlyWhenAppendWaitEventsWith
     event.signalScope = 0;
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     auto eventHandle = event.toHandle();
-    commandList->appendWaitOnEvents(1, &eventHandle, false);
+    commandList->appendWaitOnEvents(1, &eventHandle, false, true);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -634,7 +634,7 @@ HWTEST_F(CommandListCreate, givenCommandListyWhenAppendWaitEventsWithDcFlushThen
     event.signalScope = 0;
     event.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     auto eventHandle = event.toHandle();
-    commandList->appendWaitOnEvents(1, &eventHandle, false);
+    commandList->appendWaitOnEvents(1, &eventHandle, false, true);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -665,7 +665,7 @@ HWTEST_F(CommandListCreate, givenCommandListWhenAppendWaitEventsWithDcFlushThenP
     event2.waitScope = ZE_EVENT_SCOPE_FLAG_HOST;
     ze_event_handle_t events[] = {&event, &event2};
 
-    commandList->appendWaitOnEvents(2, events, false);
+    commandList->appendWaitOnEvents(2, events, false, true);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -717,7 +717,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     ze_event_handle_t events[] = {&event, &event2};
 
     size_t startOffset = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events, false);
+    commandList->appendWaitOnEvents(2, events, false, true);
     size_t endOffset = commandContainer.getCommandStream()->getUsed();
 
     size_t usedBufferSize = (endOffset - startOffset);
@@ -763,7 +763,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     ze_event_handle_t events[] = {&event, &event2};
 
     size_t startOffset = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events, false);
+    commandList->appendWaitOnEvents(2, events, false, true);
     size_t endOffset = commandContainer.getCommandStream()->getUsed();
 
     size_t usedBufferSize = (endOffset - startOffset);
@@ -803,7 +803,7 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnly
     ze_event_handle_t events[] = {&event, &event2};
 
     auto used = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events, false);
+    commandList->appendWaitOnEvents(2, events, false, true);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandContainer.getCommandStream()->getCpuBase(), 0), commandContainer.getCommandStream()->getUsed()));
@@ -834,7 +834,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhe
     ze_event_handle_t events[] = {&event, &event2};
 
     auto used = commandContainer.getCommandStream()->getUsed();
-    commandList->appendWaitOnEvents(2, events, false);
+    commandList->appendWaitOnEvents(2, events, false, true);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
@@ -866,7 +866,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndTbxCsrWithCopyOnlyImmediateComm
     event2.waitScope = 0;
     ze_event_handle_t events[] = {&event, &event2};
 
-    auto ret = commandList->appendWaitOnEvents(2, events, false);
+    auto ret = commandList->appendWaitOnEvents(2, events, false, true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
 }
 
