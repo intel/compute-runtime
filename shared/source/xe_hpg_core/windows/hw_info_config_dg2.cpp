@@ -41,7 +41,7 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 
 template <>
 bool ProductHelperHw<gfxProduct>::isMultiContextResourceDeferDeletionSupported() const {
-    return true;
+    return false;
 }
 
 template class ProductHelperHw<gfxProduct>;
