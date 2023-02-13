@@ -15,6 +15,7 @@ using Family = NEO::XeHpFamily;
 #include "shared/source/helpers/extra_allocation_data_xehp_and_later.inl"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/gfx_core_helper_base.inl"
+#include "shared/source/helpers/gfx_core_helper_bdw_to_dg2.inl"
 #include "shared/source/helpers/gfx_core_helper_tgllp_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_xehp_and_later.inl"
 #include "shared/source/helpers/logical_state_helper.inl"
@@ -150,6 +151,13 @@ bool GfxCoreHelperHw<Family>::unTypedDataPortCacheFlushRequired() const {
 template <>
 bool GfxCoreHelperHw<Family>::disableL3CacheForDebug(const HardwareInfo &) const {
     return true;
+}
+template <>
+uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const {
+    if (grfCount > GrfConfig::DefaultGrfNumber) {
+        return hwInfo.gtSystemInfo.ThreadCount / 2u;
+    }
+    return hwInfo.gtSystemInfo.ThreadCount;
 }
 
 template class GfxCoreHelperHw<Family>;

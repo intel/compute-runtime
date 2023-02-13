@@ -68,14 +68,6 @@ size_t GfxCoreHelperHw<Family>::getMaxBarrierRegisterPerSlice() const {
 }
 
 template <typename Family>
-size_t GfxCoreHelperHw<Family>::getPaddingForISAAllocation() const {
-    if (DebugManager.flags.ForceExtendedKernelIsaSize.get() >= 1) {
-        return 512 + (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedKernelIsaSize.get());
-    }
-    return 512;
-}
-
-template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::getPitchAlignmentForImage(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     return 4u;
 }
@@ -88,11 +80,6 @@ uint32_t GfxCoreHelperHw<Family>::getMaxNumSamplers() const {
 template <typename Family>
 const AubMemDump::LrcaHelper &GfxCoreHelperHw<Family>::getCsTraits(aub_stream::EngineType engineType) const {
     return *AUBFamilyMapper<Family>::csTraits[engineType];
-}
-
-template <typename Family>
-bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
-    return false;
 }
 
 template <typename GfxFamily>
@@ -570,29 +557,8 @@ bool GfxCoreHelperHw<GfxFamily>::useSystemMemoryPlacementForISA(const HardwareIn
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <typename GfxFamily>
 bool MemorySynchronizationCommands<GfxFamily>::isBarrierlPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return false;
-}
-
-template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isRcsAvailable(const HardwareInfo &hwInfo) const {
-    return true;
-}
-
-template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    return true;
-}
-
-template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
-                                                             const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const {
-    return maxWorkGroupCount;
 }
 
 template <typename GfxFamily>
@@ -631,11 +597,6 @@ void GfxCoreHelperHw<GfxFamily>::applyAdditionalCompressionSettings(Gmm &gmm, bo
 template <typename GfxFamily>
 void GfxCoreHelperHw<GfxFamily>::applyRenderCompressionFlag(Gmm &gmm, uint32_t isCompressed) const {
     gmm.resourceParams.Flags.Info.RenderCompressed = isCompressed;
-}
-
-template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isEngineTypeRemappingToHwSpecificRequired() const {
-    return false;
 }
 
 template <typename GfxFamily>

@@ -15,6 +15,7 @@ using Family = NEO::XeHpgCoreFamily;
 #include "shared/source/helpers/extra_allocation_data_xehp_and_later.inl"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
 #include "shared/source/helpers/gfx_core_helper_base.inl"
+#include "shared/source/helpers/gfx_core_helper_bdw_to_dg2.inl"
 #include "shared/source/helpers/gfx_core_helper_dg2_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_tgllp_and_later.inl"
 #include "shared/source/helpers/gfx_core_helper_xehp_and_later.inl"
@@ -151,6 +152,13 @@ bool GfxCoreHelperHw<Family>::copyThroughLockedPtrEnabled(const HardwareInfo &hw
     }
 
     return this->isLocalMemoryEnabled(hwInfo) && !productHelper.isUnlockingLockedPtrNecessary(hwInfo);
+}
+template <>
+uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const {
+    if (grfCount > GrfConfig::DefaultGrfNumber) {
+        return hwInfo.gtSystemInfo.ThreadCount / 2u;
+    }
+    return hwInfo.gtSystemInfo.ThreadCount;
 }
 
 template class GfxCoreHelperHw<Family>;

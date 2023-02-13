@@ -129,14 +129,6 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getMocsIndex(const GmmHelper &gmmHelper, bo
 }
 
 template <typename GfxFamily>
-uint32_t GfxCoreHelperHw<GfxFamily>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const {
-    if (grfCount > GrfConfig::DefaultGrfNumber) {
-        return hwInfo.gtSystemInfo.ThreadCount / 2u;
-    }
-    return hwInfo.gtSystemInfo.ThreadCount;
-}
-
-template <typename GfxFamily>
 inline uint32_t GfxCoreHelperHw<GfxFamily>::calculateMaxWorkGroupSize(const KernelDescriptor &kernelDescriptor, uint32_t defaultMaxGroupSize) const {
     if (kernelDescriptor.kernelAttributes.simdSize != 32 && kernelDescriptor.kernelAttributes.numGrfRequired == GrfConfig::LargeGrfNumber) {
         defaultMaxGroupSize >>= 1;

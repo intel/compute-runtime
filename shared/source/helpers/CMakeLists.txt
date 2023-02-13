@@ -82,7 +82,9 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_bdw_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_bdw_to_dg2.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_bdw_to_icllp.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_pvc_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tgllp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_info.h

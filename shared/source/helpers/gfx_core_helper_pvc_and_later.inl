@@ -10,7 +10,7 @@
 
 namespace NEO {
 
-template <>
+template <typename Family>
 bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwInfo) const {
     if ((DebugManager.flags.ProgramGlobalFenceAsMiMemFenceCommandInCommandStream.get() == 0) &&
         (DebugManager.flags.ProgramGlobalFenceAsPostSyncOperationInComputeWalker.get() == 0) &&
@@ -20,19 +20,19 @@ bool GfxCoreHelperHw<Family>::isFenceAllocationRequired(const HardwareInfo &hwIn
     return true;
 }
 
-template <>
+template <typename Family>
 bool GfxCoreHelperHw<Family>::isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const {
     return !hwInfo.capabilityTable.supportsImages;
 }
 
-template <>
+template <typename Family>
 bool GfxCoreHelperHw<Family>::isRcsAvailable(const HardwareInfo &hwInfo) const {
     auto defaultEngine = getChosenEngineType(hwInfo);
     return (defaultEngine == aub_stream::EngineType::ENGINE_RCS) ||
            (defaultEngine == aub_stream::EngineType::ENGINE_CCCS) || hwInfo.featureTable.flags.ftrRcsNode;
 }
 
-template <>
+template <typename Family>
 bool GfxCoreHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupType engineGroupType, const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
@@ -48,7 +48,7 @@ bool GfxCoreHelperHw<Family>::isCooperativeDispatchSupported(const EngineGroupTy
     return true;
 }
 
-template <>
+template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupCount, const EngineGroupType engineGroupType,
                                                           const RootDeviceEnvironment &rootDeviceEnvironment, bool isEngineInstanced) const {
     if ((DebugManager.flags.ForceTheoreticalMaxWorkGroupCount.get()) ||
@@ -72,12 +72,12 @@ uint32_t GfxCoreHelperHw<Family>::adjustMaxWorkGroupCount(uint32_t maxWorkGroupC
     return maxWorkGroupCount;
 }
 
-template <>
+template <typename Family>
 bool GfxCoreHelperHw<Family>::isEngineTypeRemappingToHwSpecificRequired() const {
     return true;
 }
 
-template <>
+template <typename Family>
 size_t GfxCoreHelperHw<Family>::getPaddingForISAAllocation() const {
     if (DebugManager.flags.ForceExtendedKernelIsaSize.get() >= 1) {
         return 0xE00 + (MemoryConstants::pageSize * DebugManager.flags.ForceExtendedKernelIsaSize.get());
@@ -85,7 +85,7 @@ size_t GfxCoreHelperHw<Family>::getPaddingForISAAllocation() const {
     return 0xE00;
 }
 
-template <>
+template <typename Family>
 uint32_t GfxCoreHelperHw<Family>::calculateAvailableThreadCount(const HardwareInfo &hwInfo, uint32_t grfCount) const {
     auto maxThreadsPerEuCount = 1024u / grfCount;
     return maxThreadsPerEuCount * hwInfo.gtSystemInfo.EUCount;
