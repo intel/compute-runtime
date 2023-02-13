@@ -15,6 +15,9 @@ void CsrDependencies::makeResident(CommandStreamReceiver &commandStreamReceiver)
     for (auto &timestampPacketContainer : timestampPacketContainer) {
         timestampPacketContainer->makeResident(commandStreamReceiver);
     }
+    for (auto &timestampPacketContainer : multiRootTimeStampSyncContainer) {
+        timestampPacketContainer->makeResident(commandStreamReceiver);
+    }
 }
 
 void CsrDependencies::copyNodesToNewContainer(TimestampPacketContainer &newTimestampPacketContainer) {
