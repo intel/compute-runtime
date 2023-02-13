@@ -65,7 +65,7 @@ TEST_F(MemoryManagerGetAlloctionDataTests, givenForceSystemMemoryFlagWhenAllocat
     }
 }
 
-TEST_F(MemoryManagerGetAlloctionDataTests, givenMultiRootDeviceIndexAllocationPropertiesWhenAllocationDataIsQueriedThenUseSystemMemoryFlagsIsSet) {
+TEST_F(MemoryManagerGetAlloctionDataTests, givenMultiRootDeviceIndexAllocationPropertiesWhenAllocationDataIsQueriedThenUseSystemMemoryFlagsIsNotSet) {
     {
         AllocationData allocData;
         AllocationProperties properties(mockRootDeviceIndex, true, 10, AllocationType::BUFFER, false, mockDeviceBitfield);
@@ -74,7 +74,7 @@ TEST_F(MemoryManagerGetAlloctionDataTests, givenMultiRootDeviceIndexAllocationPr
         MockMemoryManager mockMemoryManager;
         mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
 
-        EXPECT_TRUE(allocData.flags.useSystemMemory);
+        EXPECT_FALSE(allocData.flags.useSystemMemory);
         EXPECT_TRUE(allocData.flags.crossRootDeviceAccess);
     }
 
@@ -86,7 +86,7 @@ TEST_F(MemoryManagerGetAlloctionDataTests, givenMultiRootDeviceIndexAllocationPr
         MockMemoryManager mockMemoryManager;
         mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
 
-        EXPECT_TRUE(allocData.flags.useSystemMemory);
+        EXPECT_FALSE(allocData.flags.useSystemMemory);
         EXPECT_TRUE(allocData.flags.crossRootDeviceAccess);
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using namespace NEO;
 
 TEST(MemoryPropertiesHelperTests, whenQueryingUseSystemMemoryForCrossRootDeviceAccessThenReturnTrueForMultiRootDeviceContexts) {
     for (auto multiRootDevice : {false, true}) {
-        EXPECT_EQ(multiRootDevice, MemoryPropertiesHelper::useSystemMemoryForCrossRootDeviceAccess(multiRootDevice));
+        EXPECT_FALSE(MemoryPropertiesHelper::useSystemMemoryForCrossRootDeviceAccess(multiRootDevice));
     }
 }
 
@@ -32,9 +32,9 @@ TEST(MemoryPropertiesHelperTests, givenAllocateBuffersInLocalMemoryForMultiRootD
     }
 }
 
-TEST(MemoryPropertiesHelperTests, whenQueryingUseMultiStorageForCrossRootDeviceAccessThenReturnFalseForMultiRootDeviceContexts) {
+TEST(MemoryPropertiesHelperTests, whenQueryingUseMultiStorageForCrossRootDeviceAccessThenReturnTrueForMultiRootDeviceContexts) {
     for (auto multiRootDevice : {false, true}) {
-        EXPECT_FALSE(MemoryPropertiesHelper::useMultiStorageForCrossRootDeviceAccess(multiRootDevice));
+        EXPECT_EQ(multiRootDevice, MemoryPropertiesHelper::useMultiStorageForCrossRootDeviceAccess(multiRootDevice));
     }
 }
 
