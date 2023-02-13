@@ -13,6 +13,6 @@ using Dg2ProductHelperWindows = ProductHelperTestWindows;
 
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenCheckingIsMultiContextResourceDeferDeletionSupportedThenReturnFalse, IGFX_DG2);
 
-HWTEST2_F(Dg2ProductHelperWindows, givenProductHelperWhenCheckingIsMultiContextResourceDeferDeletionSupportedThenReturnTrue, IsDG2) {
-    EXPECT_TRUE(productHelper->isMultiContextResourceDeferDeletionSupported());
+HWTEST2_F(Dg2ProductHelperWindows, givenProductHelperWhenCheckingIsMultiContextResourceDeferDeletionSupportedThenReturnFalse, IsDG2) {
+    EXPECT_FALSE(productHelper->isMultiContextResourceDeferDeletionSupported());
 }
