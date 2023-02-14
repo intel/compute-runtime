@@ -8,7 +8,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
-#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
@@ -19,7 +18,6 @@
 #include "shared/test/common/helpers/ult_hw_config.inl"
 #include "shared/test/common/libult/global_environment.h"
 #include "shared/test/common/libult/signal_utils.h"
-#include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_sip.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
@@ -28,7 +26,6 @@
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
 #include "opencl/source/platform/platform.h"
-#include "opencl/test/unit_test/mocks/mock_program.h"
 #include "opencl/test/unit_test/ult_config_listener.h"
 
 #include "hw_cmds_default.h"

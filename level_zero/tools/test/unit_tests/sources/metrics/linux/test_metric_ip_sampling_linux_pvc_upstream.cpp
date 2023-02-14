@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/test_macros/hw_test.h"
 

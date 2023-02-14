@@ -9,9 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
-#include <algorithm>
 #include <bitset>
-#include <iterator>
 #include <limits>
 
 namespace NEO {

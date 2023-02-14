@@ -14,9 +14,7 @@
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/heap_assigner.h"
 #include "shared/source/helpers/hw_info.h"
@@ -27,9 +25,6 @@
 #include "shared/source/memory_manager/host_ptr_manager.h"
 #include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/memory_manager/residency.h"
-#include "shared/source/os_interface/os_memory.h"
-
-#include <cassert>
 
 namespace NEO {
 struct OsHandleOsAgnostic : OsHandle {

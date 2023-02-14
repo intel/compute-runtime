@@ -9,9 +9,6 @@
 
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
-#include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
-
-#include <algorithm>
 
 namespace NEO {
 
@@ -56,15 +53,9 @@ struct PVC : public XeHpcCoreFamily {
     static constexpr uint8_t pvcBaseDieRevMask = 0b111000; // [3:5]
     static constexpr uint8_t pvcBaseDieA0Masked = 0;       // [3:5] == 0
 
-    static bool isXl(const HardwareInfo &hwInfo) {
-        auto it = std::find(pvcXlDeviceIds.begin(), pvcXlDeviceIds.end(), hwInfo.platform.usDeviceID);
-        return it != pvcXlDeviceIds.end();
-    }
+    static bool isXl(const HardwareInfo &hwInfo);
 
-    static bool isXt(const HardwareInfo &hwInfo) {
-        auto it = std::find(pvcXtDeviceIds.begin(), pvcXtDeviceIds.end(), hwInfo.platform.usDeviceID);
-        return it != pvcXtDeviceIds.end();
-    }
+    static bool isXt(const HardwareInfo &hwInfo);
 
     static bool isXlA0(const HardwareInfo &hwInfo) {
         auto revId = hwInfo.platform.usRevId & pvcSteppingBits;

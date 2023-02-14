@@ -1,26 +1,22 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/xe_hpg_core/hw_info_xe_hpg_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/extensions/public/cl_ext_private.h"
-#include "opencl/source/api/api.h"
 #include "opencl/source/mem_obj/buffer.h"
-#include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
 #include "opencl/test/unit_test/fixtures/simple_arg_kernel_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
-
-#include "hw_cmds_xe_hpg_core_base.h"
 
 using namespace NEO;
 

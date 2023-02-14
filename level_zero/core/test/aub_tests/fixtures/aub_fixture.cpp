@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/tests_configuration.h"
 

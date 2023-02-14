@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,19 +10,15 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/i915.h"
-#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "test_files_setup.h"
 
-#include <algorithm>
 #include <cstdint>
-#include <cstdio>
 #include <cstring>
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <iostream>
 #include <poll.h>
-#include <stdio.h>
 #include <string.h>
 #include <sys/ioctl.h>
 #include <system_error>

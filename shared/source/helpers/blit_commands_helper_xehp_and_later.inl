@@ -7,6 +7,7 @@
 
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/blit_commands_helper_base.inl"
 #include "shared/source/helpers/local_memory_access_modes.h"
 

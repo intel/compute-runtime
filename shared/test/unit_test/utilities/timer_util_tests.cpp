@@ -1,16 +1,13 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/utilities/timer_util.h"
-#include "shared/test/common/test_macros/test.h"
 
 #include "gtest/gtest.h"
-
-#include <algorithm>
 
 using namespace NEO;
 

@@ -10,6 +10,8 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/utilities/logger.h"
 
+#include <algorithm>
+
 namespace NEO {
 
 bool operator<(const HeapChunk &hc1, const HeapChunk &hc2) {

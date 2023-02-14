@@ -27,6 +27,7 @@
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/hash.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/neo_driver_version.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"

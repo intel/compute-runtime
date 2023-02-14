@@ -7,6 +7,7 @@
 
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/xe_hpg_core/hw_info.h"
+#include "shared/source/xe_hpg_core/hw_info_xe_hpg_core.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"

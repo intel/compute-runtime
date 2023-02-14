@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen12lp/hw_cmds.h"
+#include "shared/source/gmm_helper/resource_info.h"
 
 using Family = NEO::Gen12LpFamily;
 

@@ -70,9 +70,9 @@ macro(macro_for_each_platform)
         list(APPEND CORE_SRCS_${CORE_TYPE}_H_BASE ${SRC_FILE})
       endif()
 
-      set(SRC_FILE ${PATH_TO_CORE}${PLATFORM_IT_LOWER}${BRANCH_DIR_SUFFIX}hw_cmds_${PLATFORM_IT_LOWER}.cpp)
+      set(SRC_FILE ${PATH_TO_CORE}hw_cmds_${PLATFORM_IT_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
-        list(APPEND CORE_SRCS_${CORE_TYPE}_H_BASE ${SRC_FILE})
+        list(APPEND CORE_SRCS_${CORE_TYPE}_CPP_BASE ${SRC_FILE})
       endif()
 
       set(SRC_FILE ${PATH_TO_CORE}linux/hw_info_extra_${PLATFORM_IT_LOWER}.cpp)
@@ -138,6 +138,11 @@ macro(macro_for_each_platform)
       set(SRC_FILE ${PATH_TO_CORE}${PLATFORM_IT_LOWER}/definitions${BRANCH_DIR_SUFFIX}device_ids_configs_${PLATFORM_IT_LOWER}.h)
       if(EXISTS ${SRC_FILE})
         list(APPEND CORE_SRCS_${CORE_TYPE}_H_BASE ${SRC_FILE})
+      endif()
+
+      set(SRC_FILE ${PATH_TO_CORE}${PLATFORM_IT_LOWER}/definitions${BRANCH_DIR_SUFFIX}device_ids_configs_${PLATFORM_IT_LOWER}.cpp)
+      if(EXISTS ${SRC_FILE})
+        list(APPEND CORE_SRCS_${CORE_TYPE}_CPP_BASE ${SRC_FILE})
       endif()
 
       set(SRC_FILE ${PATH_TO_CORE}hw_info_${PLATFORM_IT_LOWER}.cpp)
