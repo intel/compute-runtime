@@ -189,12 +189,15 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
             }
             commandContainer.setDirtyStateForAllHeaps(false);
 
-            requiredStreamState.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->device->getNEODevice()->getPreemptionMode(), rootDeviceEnvironment, true);
+            if (this->stateComputeModeTracking) {
+                requiredStreamState.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->device->getNEODevice()->getPreemptionMode(), rootDeviceEnvironment, true);
+                finalStreamState.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->device->getNEODevice()->getPreemptionMode(), rootDeviceEnvironment, true);
+            }
+
             requiredStreamState.frontEndState.setPropertiesDisableOverdispatchEngineInstanced(cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, rootDeviceEnvironment, true);
             requiredStreamState.pipelineSelect.setPropertiesModeSelectedMediaSamplerClockGate(cmdListDefaultPipelineSelectModeSelected, cmdListDefaultMediaSamplerClockGate, rootDeviceEnvironment, true);
             requiredStreamState.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, rootDeviceEnvironment, true);
 
-            finalStreamState.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->device->getNEODevice()->getPreemptionMode(), rootDeviceEnvironment, true);
             finalStreamState.frontEndState.setPropertiesDisableOverdispatchEngineInstanced(cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, rootDeviceEnvironment, true);
             finalStreamState.pipelineSelect.setPropertiesModeSelectedMediaSamplerClockGate(cmdListDefaultPipelineSelectModeSelected, cmdListDefaultMediaSamplerClockGate, rootDeviceEnvironment, true);
             finalStreamState.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, rootDeviceEnvironment, true);
@@ -2500,7 +2503,11 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         }
     }
 
-    finalStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, rootDeviceEnvironment);
+    if (this->stateComputeModeTracking) {
+        finalStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, rootDeviceEnvironment);
+    } else {
+        finalStreamState.stateComputeMode.setPropertiesAll(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
+    }
     if (finalStreamState.stateComputeMode.isDirty() && logicalStateHelperBlock) {
         bool isRcs = (this->engineGroupType == NEO::EngineGroupType::RenderCompute);
         NEO::PipelineSelectArgs pipelineSelectArgs;
