@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,5 +31,6 @@ int munmap(void *addr, size_t size);
 ssize_t read(int fd, void *buf, size_t count);
 int fcntl(int fd, int cmd);
 int fcntl(int fd, int cmd, int arg);
+char *realpath(const char *path, char *buf);
 } // namespace SysCalls
 } // namespace NEO

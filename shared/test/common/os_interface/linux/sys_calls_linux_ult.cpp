@@ -54,6 +54,7 @@ int (*sysCallsIoctl)(int fileDescriptor, unsigned long int request, void *arg) =
 int (*sysCallsPoll)(struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) = nullptr;
 ssize_t (*sysCallsRead)(int fd, void *buf, size_t count) = nullptr;
 int (*sysCallsFstat)(int fd, struct stat *buf) = nullptr;
+char *(*sysCallsRealpath)(const char *path, char *buf) = nullptr;
 
 int close(int fileDescriptor) {
     closeFuncCalled++;
@@ -217,6 +218,13 @@ int fcntl(int fd, int cmd, int arg) {
     }
 
     return 0;
+}
+
+char *realpath(const char *path, char *buf) {
+    if (sysCallsRealpath != nullptr) {
+        return sysCallsRealpath(path, buf);
+    }
+    return nullptr;
 }
 
 } // namespace SysCalls

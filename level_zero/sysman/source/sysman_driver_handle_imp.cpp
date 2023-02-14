@@ -22,7 +22,7 @@
 namespace L0 {
 namespace Sysman {
 
-struct SysmanDriverHandleImp *GlobalDriver;
+struct SysmanDriverHandleImp *GlobalSysmanDriver;
 
 SysmanDriverHandleImp::SysmanDriverHandleImp() = default;
 
@@ -32,7 +32,9 @@ ze_result_t SysmanDriverHandleImp::initialize(NEO::ExecutionEnvironment &executi
             continue;
         }
         auto pSysmanDevice = SysmanDevice::create(executionEnvironment, rootDeviceIndex);
-        this->sysmanDevices.push_back(pSysmanDevice);
+        if (pSysmanDevice != nullptr) {
+            this->sysmanDevices.push_back(pSysmanDevice);
+        }
     }
 
     if (this->sysmanDevices.size() == 0) {
@@ -54,8 +56,8 @@ SysmanDriverHandle *SysmanDriverHandle::create(NEO::ExecutionEnvironment &execut
         return nullptr;
     }
 
-    GlobalDriver = driverHandle;
-
+    GlobalSysmanDriver = driverHandle;
+    *returnValue = res;
     return driverHandle;
 }
 

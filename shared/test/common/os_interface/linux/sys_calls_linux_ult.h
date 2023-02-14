@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,6 +21,7 @@ extern int (*sysCallsIoctl)(int fileDescriptor, unsigned long int request, void 
 extern int (*sysCallsPoll)(struct pollfd *pollFd, unsigned long int numberOfFds, int timeout);
 extern ssize_t (*sysCallsRead)(int fd, void *buf, size_t count);
 extern int (*sysCallsFstat)(int fd, struct stat *buf);
+extern char *(*sysCallsRealpath)(const char *path, char *buf);
 
 extern const char *drmVersion;
 constexpr int fakeFileDescriptor = 123;

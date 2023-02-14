@@ -20,14 +20,13 @@
 
 namespace L0 {
 namespace Sysman {
-_ze_driver_handle_t *GlobalDriverHandle;
+_ze_driver_handle_t *GlobalSysmanDriverHandle;
 uint32_t driverCount = 1;
 
 void SysmanDriverImp::initialize(ze_result_t *result) {
     *result = ZE_RESULT_ERROR_UNINITIALIZED;
 
     if (sysmanInitFromCore) {
-        // Sysman is already initialized while zeInit
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s", "Sysman Initialization already happened via zeInit\n");
         return;
@@ -54,10 +53,7 @@ void SysmanDriverImp::initialize(ze_result_t *result) {
             rootDeviceIndex++;
         }
 
-        GlobalDriverHandle = SysmanDriverHandle::create(*executionEnvironment, result);
-        if (GlobalDriverHandle != nullptr) {
-            *result = ZE_RESULT_SUCCESS;
-        }
+        GlobalSysmanDriverHandle = SysmanDriverHandle::create(*executionEnvironment, result);
     } else {
         NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
                               "%s\n", "No devices found");
@@ -77,13 +73,6 @@ ze_result_t SysmanDriverImp::driverInit(zes_init_flags_t flags) {
     return initStatus;
 }
 
-SysmanDriverImp::~SysmanDriverImp() {
-    if (GlobalDriverHandle != nullptr) {
-        delete GlobalDriverHandle;
-        GlobalDriverHandle = nullptr;
-    }
-}
-
 ze_result_t driverHandleGet(uint32_t *pCount, zes_driver_handle_t *phDriverHandles) {
     if (*pCount == 0) {
         *pCount = driverCount;
@@ -99,7 +88,7 @@ ze_result_t driverHandleGet(uint32_t *pCount, zes_driver_handle_t *phDriverHandl
     }
 
     for (uint32_t i = 0; i < *pCount; i++) {
-        phDriverHandles[i] = GlobalDriverHandle;
+        phDriverHandles[i] = GlobalSysmanDriverHandle;
     }
 
     return ZE_RESULT_SUCCESS;

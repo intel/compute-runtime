@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -98,6 +98,10 @@ int fcntl(int fd, int cmd) {
 }
 int fcntl(int fd, int cmd, int arg) {
     return ::fcntl(fd, cmd, arg);
+}
+
+char *realpath(const char *path, char *buf) {
+    return ::realpath(path, buf);
 }
 
 } // namespace SysCalls

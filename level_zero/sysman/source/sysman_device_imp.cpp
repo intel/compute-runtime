@@ -19,14 +19,21 @@ namespace Sysman {
 SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex)
     : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {
     this->executionEnvironment->incRefInternal();
+    pOsSysman = OsSysman::create(this);
+    UNRECOVERABLE_IF(nullptr == pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
     executionEnvironment->decRefInternal();
+    freeResource(pOsSysman);
 }
 
 ze_result_t SysmanDeviceImp::init() {
-    return ZE_RESULT_SUCCESS;
+    auto result = pOsSysman->init();
+    if (ZE_RESULT_SUCCESS != result) {
+        return result;
+    }
+    return result;
 }
 
 } // namespace Sysman

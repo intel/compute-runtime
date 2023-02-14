@@ -18,7 +18,6 @@ class SysmanDriverImp : public SysmanDriver {
     ze_result_t driverInit(zes_init_flags_t flags) override;
 
     void initialize(ze_result_t *result) override;
-    ~SysmanDriverImp() override;
 
   protected:
     std::once_flag initDriverOnce;

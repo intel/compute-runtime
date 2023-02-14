@@ -20,7 +20,7 @@ struct SysmanDriverHandleImp : SysmanDriverHandle {
     uint32_t numDevices = 0;
 };
 
-extern struct SysmanDriverHandleImp *GlobalDriver;
+extern struct SysmanDriverHandleImp *GlobalSysmanDriver;
 
 } // namespace Sysman
 } // namespace L0

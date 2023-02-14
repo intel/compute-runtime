@@ -1,0 +1,150 @@
+/*
+ * Copyright (C) 2020-2023 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#pragma once
+
+#include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
+
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/sysman/source/linux/fs_access.h"
+#include "level_zero/sysman/source/linux/os_sysman_imp.h"
+#include "level_zero/sysman/source/sysman_device.h"
+#include "level_zero/sysman/source/sysman_driver_handle_imp.h"
+
+#include "gtest/gtest.h"
+
+using namespace NEO;
+
+namespace L0 {
+namespace ult {
+constexpr int mockFd = 0;
+class SysmanMockDrm : public Drm {
+  public:
+    SysmanMockDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {
+        setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
+    }
+};
+
+class PublicLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
+  public:
+    using LinuxSysmanImp::mapOfSubDeviceIdToPmtObject;
+    using LinuxSysmanImp::pFsAccess;
+    using LinuxSysmanImp::pProcfsAccess;
+    using LinuxSysmanImp::pSysfsAccess;
+};
+
+class SysmanDeviceFixture : public ::testing::Test {
+  public:
+    void SetUp() override {
+        VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
+            std::string str = "/sys/devices/pci0000:00/0000:00:02.0";
+            buf = const_cast<char *>(str.c_str());
+            return buf;
+        });
+
+        VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+            std::string str = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128";
+            std::memcpy(buf, str.c_str(), str.size());
+            return static_cast<int>(str.size());
+        });
+        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+        hwInfo.capabilityTable.levelZeroSupported = true;
+        execEnv = new NEO::ExecutionEnvironment();
+        execEnv->prepareRootDeviceEnvironments(numRootDevices);
+        for (auto i = 0u; i < execEnv->rootDeviceEnvironments.size(); i++) {
+            execEnv->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
+            execEnv->rootDeviceEnvironments[i]->osInterface = std::make_unique<NEO::OSInterface>();
+            execEnv->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::make_unique<SysmanMockDrm>(*execEnv->rootDeviceEnvironments[i]));
+        }
+
+        driverHandle = std::make_unique<L0::Sysman::SysmanDriverHandleImp>();
+        driverHandle->initialize(*execEnv);
+        pSysmanDevice = driverHandle->sysmanDevices[0];
+
+        pSysmanDeviceImp = static_cast<L0::Sysman::SysmanDeviceImp *>(pSysmanDevice);
+        pOsSysman = pSysmanDeviceImp->pOsSysman;
+        pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
+    }
+    void TearDown() override {
+    }
+
+    L0::Sysman::SysmanDevice *pSysmanDevice = nullptr;
+    L0::Sysman::SysmanDeviceImp *pSysmanDeviceImp = nullptr;
+    L0::Sysman::OsSysman *pOsSysman = nullptr;
+    PublicLinuxSysmanImp *pLinuxSysmanImp = nullptr;
+    NEO::ExecutionEnvironment *execEnv = nullptr;
+    std::unique_ptr<L0::Sysman::SysmanDriverHandleImp> driverHandle;
+    L0::Sysman::SysmanDevice *device = nullptr;
+    const uint32_t numRootDevices = 1u;
+};
+
+class SysmanMultiDeviceFixture : public ::testing::Test {
+  public:
+    void SetUp() override {
+        VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
+            std::string str = "/sys/devices/pci0000:00/0000:00:02.0";
+            buf = const_cast<char *>(str.c_str());
+            return buf;
+        });
+
+        VariableBackup<decltype(NEO::SysCalls::sysCallsReadlink)> mockReadLink(&NEO::SysCalls::sysCallsReadlink, [](const char *path, char *buf, size_t bufsize) -> int {
+            std::string str = "../../devices/pci0000:37/0000:37:01.0/0000:38:00.0/0000:39:01.0/0000:3a:00.0/drm/renderD128";
+            std::memcpy(buf, str.c_str(), str.size());
+            return static_cast<int>(str.size());
+        });
+
+        NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+        hwInfo.capabilityTable.levelZeroSupported = true;
+        execEnv = new NEO::ExecutionEnvironment();
+        execEnv->prepareRootDeviceEnvironments(numRootDevices);
+        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        for (auto i = 0u; i < execEnv->rootDeviceEnvironments.size(); i++) {
+            execEnv->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
+            execEnv->rootDeviceEnvironments[i]->osInterface = std::make_unique<NEO::OSInterface>();
+            execEnv->rootDeviceEnvironments[i]->osInterface->setDriverModel(std::make_unique<SysmanMockDrm>(*execEnv->rootDeviceEnvironments[i]));
+        }
+
+        driverHandle = std::make_unique<L0::Sysman::SysmanDriverHandleImp>();
+        driverHandle->initialize(*execEnv);
+        pSysmanDevice = driverHandle->sysmanDevices[0];
+
+        pSysmanDeviceImp = static_cast<L0::Sysman::SysmanDeviceImp *>(pSysmanDevice);
+        pOsSysman = pSysmanDeviceImp->pOsSysman;
+        pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
+    }
+    void TearDown() override {
+    }
+
+    L0::Sysman::SysmanDevice *pSysmanDevice = nullptr;
+    L0::Sysman::SysmanDeviceImp *pSysmanDeviceImp = nullptr;
+    L0::Sysman::OsSysman *pOsSysman = nullptr;
+    PublicLinuxSysmanImp *pLinuxSysmanImp = nullptr;
+    NEO::ExecutionEnvironment *execEnv = nullptr;
+    std::unique_ptr<L0::Sysman::SysmanDriverHandleImp> driverHandle;
+    L0::Sysman::SysmanDevice *device = nullptr;
+    const uint32_t numRootDevices = 4u;
+    const uint32_t numSubDevices = 2u;
+    DebugManagerStateRestore restorer;
+};
+
+class PublicFsAccess : public L0::Sysman::FsAccess {
+  public:
+    using FsAccess::accessSyscall;
+    using FsAccess::statSyscall;
+};
+
+class PublicSysfsAccess : public L0::Sysman::SysfsAccess {
+  public:
+    using SysfsAccess::accessSyscall;
+};
+
+} // namespace ult
+} // namespace L0

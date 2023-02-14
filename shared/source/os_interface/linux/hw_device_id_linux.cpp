@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,15 @@
 
 namespace NEO {
 
+void HwDeviceIdDrm::closeFileDescriptor() {
+    if (fileDescriptor > 0) {
+        SysCalls::close(fileDescriptor);
+        fileDescriptor = -1;
+    }
+}
+
 HwDeviceIdDrm::~HwDeviceIdDrm() {
-    SysCalls::close(fileDescriptor);
+    closeFileDescriptor();
 }
 
 } // namespace NEO

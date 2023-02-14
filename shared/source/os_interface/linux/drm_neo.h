@@ -102,6 +102,7 @@ class Drm : public DriverModel {
 
     MOCKABLE_VIRTUAL void checkPreemptionSupport();
     inline int getFileDescriptor() const { return hwDeviceId->getFileDescriptor(); }
+    inline void closeFileDescriptor() const { return hwDeviceId->closeFileDescriptor(); }
     ADAPTER_BDF getAdapterBDF() const {
         return adapterBDF;
     }
