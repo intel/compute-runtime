@@ -73,18 +73,12 @@ DG2TEST_F(CommandQueueHwTest, GivenKernelWithDpasAndOddWorkGroupWhenenqueueNonBl
     EventsRequest eventsRequest(0, nullptr, nullptr);
     EventBuilder eventBuilder;
     LinearStream commandStream;
-    const_cast<NEO::KernelDescriptor &>(pKernel->getDescriptor()).payloadMappings.dispatchTraits.localWorkSize[0] = 0;
-    const_cast<NEO::KernelDescriptor &>(pKernel->getDescriptor()).payloadMappings.dispatchTraits.localWorkSize[1] = 4;
-    const_cast<NEO::KernelDescriptor &>(pKernel->getDescriptor()).payloadMappings.dispatchTraits.localWorkSize[2] = 8;
-    const_cast<NEO::KernelDescriptor &>(pKernel->getDescriptor()).payloadMappings.dispatchTraits.numWorkGroups[0] = 12;
-    const_cast<NEO::KernelDescriptor &>(pKernel->getDescriptor()).payloadMappings.dispatchTraits.numWorkGroups[1] = 16;
-    const_cast<NEO::KernelDescriptor &>(pKernel->getDescriptor()).payloadMappings.dispatchTraits.numWorkGroups[2] = 20;
-
-    pKernel->setLocalWorkSizeValues(3, 7, 1);
-    pKernel->setNumWorkGroupsValues(5, 1, 1);
+    DispatchInfo &dispatchInfo = *multiDispatchInfo.begin();
+    dispatchInfo.setLWS({3, 7, 1});
+    dispatchInfo.setNumberOfWorkgroups({5, 1, 1});
 
     bool blocking = false;
-    const_cast<NEO::KernelDescriptor &>(pKernel->getDescriptor()).kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
+    pKernel->setSystolicPipelineSelectMode(true);
     cmdQ.template enqueueNonBlocked<CL_COMMAND_NDRANGE_KERNEL>(nullptr, 0, commandStream, commandStream.getUsed(), blocking, true, multiDispatchInfo, enqueueProperties, timestampPacketDependencies, eventsRequest, eventBuilder, 0, nullptr);
     EXPECT_TRUE(csr->disableEuFusionPassed);
 }

@@ -855,9 +855,10 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
     dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = systolicPipelineSelectMode;
-
+    uint32_t lws[3] = {static_cast<uint32_t>(multiDispatchInfo.begin()->getLocalWorkgroupSize().x), static_cast<uint32_t>(multiDispatchInfo.begin()->getLocalWorkgroupSize().y), static_cast<uint32_t>(multiDispatchInfo.begin()->getLocalWorkgroupSize().z)};
+    uint32_t groupCount[3] = {static_cast<uint32_t>(multiDispatchInfo.begin()->getNumberOfWorkgroups().x), static_cast<uint32_t>(multiDispatchInfo.begin()->getNumberOfWorkgroups().y), static_cast<uint32_t>(multiDispatchInfo.begin()->getNumberOfWorkgroups().z)};
     dispatchFlags.disableEUFusion = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion ||
-                                    device->getProductHelper().isFusedEuDisabledForDpas(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode, *kernel->getLocalWorkSizeValues().data(), *kernel->getNumWorkGroupsValues().data());
+                                    device->getProductHelper().isFusedEuDisabledForDpas(systolicPipelineSelectMode, lws, groupCount);
 
     const bool isHandlingBarrier = getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
 
