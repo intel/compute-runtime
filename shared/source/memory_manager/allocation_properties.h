@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,10 +26,9 @@ struct AllocationProperties {
             uint32_t isUSMHostAllocation : 1;
             uint32_t isUSMDeviceAllocation : 1;
             uint32_t use32BitFrontWindow : 1;
-            uint32_t crossRootDeviceAccess : 1;
             uint32_t forceSystemMemory : 1;
             uint32_t preferCompressed : 1;
-            uint32_t reserved : 17;
+            uint32_t reserved : 18;
         } flags;
         uint32_t allFlags = 0;
     };
@@ -109,10 +108,9 @@ struct AllocationData {
             uint32_t resource48Bit : 1;
             uint32_t isUSMHostAllocation : 1;
             uint32_t use32BitFrontWindow : 1;
-            uint32_t crossRootDeviceAccess : 1;
             uint32_t isUSMDeviceMemory : 1;
             uint32_t zeroMemory : 1;
-            uint32_t reserved : 15;
+            uint32_t reserved : 16;
         } flags;
         uint32_t allFlags = 0;
     };

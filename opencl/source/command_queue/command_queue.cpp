@@ -1350,10 +1350,6 @@ void CommandQueue::clearLastBcsPackets() {
 }
 
 void CommandQueue::migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpParams &operationParams, CommandStreamReceiver &csr) {
-    if (!DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.get()) {
-        return;
-    }
-
     for (auto argMemObj : {operationParams.srcMemObj, operationParams.dstMemObj}) {
         if (argMemObj) {
             auto memObj = argMemObj->getHighestRootMemObj();

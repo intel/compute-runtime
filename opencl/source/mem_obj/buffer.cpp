@@ -405,7 +405,6 @@ Buffer *Buffer::create(Context *context,
             AllocationProperties allocProperties = MemoryPropertiesHelper::getAllocationProperties(rootDeviceIndex, memoryProperties,
                                                                                                    allocationInfo.allocateMemory, size, allocationInfo.allocationType, context->areMultiStorageAllocationsPreferred(),
                                                                                                    *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex), context->isSingleDeviceContext());
-            allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
             allocProperties.flags.preferCompressed = compressionEnabled;
             allocProperties.makeDeviceBufferLockable = bufferCreateArgs.makeAllocationLockable;
 
@@ -434,7 +433,6 @@ Buffer *Buffer::create(Context *context,
                                                                                                    true, // allocateMemory
                                                                                                    size, allocationInfo.allocationType, context->areMultiStorageAllocationsPreferred(),
                                                                                                    *hwInfo, context->getDeviceBitfieldForAllocation(rootDeviceIndex), context->isSingleDeviceContext());
-            allocProperties.flags.crossRootDeviceAccess = context->getRootDeviceIndices().size() > 1;
             allocationInfo.memory = memoryManager->allocateGraphicsMemoryWithProperties(allocProperties);
         }
 
@@ -467,11 +465,13 @@ Buffer *Buffer::create(Context *context,
         }
     }
 
-    multiGraphicsAllocation.setMultiStorage(MemoryPropertiesHelper::useMultiStorageForCrossRootDeviceAccess(context->getRootDeviceIndices().size() > 1));
-
     auto rootDeviceIndex = context->getDevice(0u)->getRootDeviceIndex();
     auto &allocationInfo = allocationInfos[rootDeviceIndex];
-    auto memoryStorage = multiGraphicsAllocation.getDefaultGraphicsAllocation()->getUnderlyingBuffer();
+    auto allocation = allocationInfo.memory;
+    auto memoryStorage = allocation->getUnderlyingBuffer();
+    if (context->getRootDeviceIndices().size() > 1) {
+        multiGraphicsAllocation.setMultiStorage(true);
+    }
 
     auto pBuffer = createBufferHw(context,
                                   memoryProperties,

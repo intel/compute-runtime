@@ -929,7 +929,6 @@ struct BcsCrossDeviceMigrationTests : public ::testing::Test {
         defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
 
         DebugManager.flags.EnableBlitterForEnqueueOperations.set(true);
-        DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(true);
 
         deviceFactory = std::make_unique<UltClDeviceFactory>(2, 0);
         auto device1 = deviceFactory->rootDevices[0];

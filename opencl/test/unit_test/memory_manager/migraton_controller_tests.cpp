@@ -238,9 +238,6 @@ TEST_F(MigrationControllerTests, givenWaitForTimestampsEnabledWhenHandleMigratio
 }
 
 TEST_F(MigrationControllerTests, whenMemoryMigrationForMemoryObjectIsAlreadyInProgressThenDoEarlyReturn) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(1);
-
     std::unique_ptr<Buffer> pBuffer(BufferHelper<>::create(&context));
 
     ASSERT_TRUE(pBuffer->getMultiGraphicsAllocation().requiresMigrations());

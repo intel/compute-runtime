@@ -33,9 +33,5 @@ class MemoryPropertiesHelper {
     static GraphicsAllocation::UsmInitialPlacement getUSMInitialPlacement(const MemoryProperties &memoryProperties);
 
     static void setUSMInitialPlacement(AllocationProperties &allocationProperties, GraphicsAllocation::UsmInitialPlacement initialPlacement);
-
-    static bool useSystemMemoryForCrossRootDeviceAccess(bool multiRootDevice);
-
-    static bool useMultiStorageForCrossRootDeviceAccess(bool multiRootDevice);
 };
 } // namespace NEO

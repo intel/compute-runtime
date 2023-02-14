@@ -937,44 +937,6 @@ TEST(OsAgnosticMemoryManager, givenHostPointerRequiringCopyWhenAllocateGraphicsM
     alignedFree(hostPtr);
 }
 
-TEST(OsAgnosticMemoryManager, givenEnabledCrossRootDeviceAccessFlagWhenAllocateGraphicsMemoryForImageFromHostPtrIsCalledThenGraphicsAllocationIsReturned) {
-    ExecutionEnvironment *executionEnvironment = platform()->peekExecutionEnvironment();
-    MockMemoryManager memoryManager(false, false, *executionEnvironment);
-
-    ImageDescriptor imgDesc = {};
-    imgDesc.imageWidth = 4;
-    imgDesc.imageHeight = 1;
-    imgDesc.imageType = ImageType::Image1D;
-
-    cl_image_format imageFormat = {};
-    imageFormat.image_channel_data_type = CL_UNSIGNED_INT8;
-    imageFormat.image_channel_order = CL_RGBA;
-
-    cl_mem_flags flags = CL_MEM_READ_WRITE | CL_MEM_USE_HOST_PTR;
-    auto surfaceFormat = Image::getSurfaceFormatFromTable(flags, &imageFormat, defaultHwInfo->capabilityTable.supportsOcl21Features);
-
-    auto imgInfo = MockGmm::initImgInfo(imgDesc, 0, &surfaceFormat->surfaceFormat);
-    imgInfo.rowPitch = imgDesc.imageWidth * 4;
-    imgInfo.slicePitch = imgInfo.rowPitch * imgDesc.imageHeight;
-    imgInfo.size = imgInfo.slicePitch;
-    imgInfo.linearStorage = true;
-
-    auto hostPtr = alignedMalloc(imgDesc.imageWidth * imgDesc.imageHeight * 4, MemoryConstants::pageSize);
-
-    AllocationData allocationData;
-    allocationData.imgInfo = &imgInfo;
-    allocationData.hostPtr = hostPtr;
-    allocationData.size = imgInfo.size;
-    allocationData.flags.crossRootDeviceAccess = true;
-
-    auto imageAllocation = memoryManager.allocateGraphicsMemoryForImageFromHostPtr(allocationData);
-    ASSERT_NE(nullptr, imageAllocation);
-    EXPECT_EQ(hostPtr, imageAllocation->getUnderlyingBuffer());
-
-    memoryManager.freeGraphicsMemory(imageAllocation);
-    alignedFree(hostPtr);
-}
-
 TEST(OsAgnosticMemoryManager, givenDefaultMemoryManagerAndUnifiedAuxCapableAllocationWhenMappingThenReturnFalse) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.initGmm();

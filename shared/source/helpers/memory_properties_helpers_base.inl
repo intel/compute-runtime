@@ -64,12 +64,4 @@ void MemoryPropertiesHelper::setUSMInitialPlacement(AllocationProperties &alloca
     allocationProperties.usmInitialPlacement = initialPlacement;
 }
 
-bool MemoryPropertiesHelper::useSystemMemoryForCrossRootDeviceAccess(bool multiRootDevice) {
-    return multiRootDevice && !DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.get();
-}
-
-bool MemoryPropertiesHelper::useMultiStorageForCrossRootDeviceAccess(bool multiRootDevice) {
-    return multiRootDevice && DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.get();
-}
-
 } // namespace NEO

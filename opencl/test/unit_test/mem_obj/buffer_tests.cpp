@@ -2192,8 +2192,6 @@ TEST(MultiRootDeviceBufferTest2, WhenBufferIsCreatedThenSecondAndSubsequentAlloc
 }
 
 TEST(MultiRootDeviceBufferTest2, givenHostPtrToCopyWhenBufferIsCreatedWithMultiStorageThenMemoryIsPutInFirstDeviceInContext) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(true);
     UltClDeviceFactory deviceFactory{2, 0};
     {
         cl_device_id deviceIds[] = {

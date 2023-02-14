@@ -357,7 +357,6 @@ DECLARE_DEBUG_VARIABLE(bool, EnableAsyncEventsHandler, true, "Enables async even
 DECLARE_DEBUG_VARIABLE(bool, EnableForcePin, true, "Enables early pinning for memory object")
 DECLARE_DEBUG_VARIABLE(bool, EnableComputeWorkSizeND, true, "Enables different algorithm to compute local work size")
 DECLARE_DEBUG_VARIABLE(bool, EnableMultiRootDeviceContexts, true, "Enables support for multi root device contexts")
-DECLARE_DEBUG_VARIABLE(bool, AllocateBuffersInLocalMemoryForMultiRootDeviceContexts, true, "Enables support for buffers in local memory for multi root device contexts")
 DECLARE_DEBUG_VARIABLE(bool, EnableComputeWorkSizeSquared, false, "Enables algorithm to compute the most squared work group as possible")
 DECLARE_DEBUG_VARIABLE(bool, EnableExtendedVaFormats, false, "Enable more formats in cl-va sharing")
 DECLARE_DEBUG_VARIABLE(bool, EnableFormatQuery, true, "Enable sharing format querying")

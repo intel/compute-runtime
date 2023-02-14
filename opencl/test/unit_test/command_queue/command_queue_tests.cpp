@@ -1697,36 +1697,7 @@ TEST(CommandQueue, givenImageToBufferClCommandWhenCallingBlitEnqueueAllowedThenR
     EXPECT_FALSE(queue.blitEnqueueAllowed(args));
 }
 
-TEST(CommandQueue, whenDontAllocateBuffersInLocalMemoryForMultiRootDeviceContextsThenMultiGraphicsAllocationsDontRequireMigrations) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(0);
-
-    MockDefaultContext context{true};
-    MockCommandQueue queue(&context, context.getDevice(1), 0, false);
-    MockCommandStreamReceiver csr(*context.getDevice(1)->getExecutionEnvironment(), context.getDevice(1)->getRootDeviceIndex(), 1);
-
-    ASSERT_TRUE(context.getRootDeviceIndices().size() > 1);
-
-    std::unique_ptr<Buffer> srcBuffer(BufferHelper<>::create(&context));
-    size_t size = MemoryConstants::kiloByte;
-    auto dstPtr = alignedMalloc(size, MemoryConstants::cacheLineSize);
-
-    BuiltinOpParams operationParams;
-    operationParams.srcMemObj = srcBuffer.get();
-    operationParams.dstPtr = dstPtr;
-    operationParams.size = {size, 0, 0};
-
-    EXPECT_FALSE(srcBuffer->getMultiGraphicsAllocation().requiresMigrations());
-
-    queue.migrateMultiGraphicsAllocationsIfRequired(operationParams, csr);
-
-    alignedFree(dstPtr);
-}
-
-TEST(CommandQueue, givenAllocateBuffersInLocalMemoryForMultiRootDeviceContextsWhenMultiStorageIsNotSetThenDontRequireMigrations) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(1);
-
+TEST(CommandQueue, givenBufferWhenMultiStorageIsNotSetThenDontRequireMigrations) {
     MockDefaultContext context{true};
     MockCommandQueue queue(&context, context.getDevice(1), 0, false);
     MockCommandStreamReceiver csr(*context.getDevice(1)->getExecutionEnvironment(), context.getDevice(1)->getRootDeviceIndex(), 1);
@@ -1750,10 +1721,7 @@ TEST(CommandQueue, givenAllocateBuffersInLocalMemoryForMultiRootDeviceContextsWh
     alignedFree(dstPtr);
 }
 
-TEST(CommandQueue, givenAllocateBuffersInLocalMemoryForMultiRootDeviceContextsWhenMultiGraphicsAllocationsRequireMigrationsThenMigrateTheAllocations) {
-    DebugManagerStateRestore restorer;
-    DebugManager.flags.AllocateBuffersInLocalMemoryForMultiRootDeviceContexts.set(1);
-
+TEST(CommandQueue, givenBuffersInLocalMemoryWhenMultiGraphicsAllocationsRequireMigrationsThenMigrateTheAllocations) {
     MockDefaultContext context{true};
     ASSERT_TRUE(context.getNumDevices() > 1);
     ASSERT_TRUE(context.getRootDeviceIndices().size() > 1);
