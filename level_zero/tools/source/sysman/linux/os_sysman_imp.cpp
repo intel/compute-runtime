@@ -12,6 +12,7 @@
 #include "shared/source/helpers/sleep.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/linux/system_info.h"
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
@@ -51,6 +52,7 @@ ze_result_t LinuxSysmanImp::init() {
 
     DEBUG_BREAK_IF(nullptr == pPmuInterface);
 
+    getMemoryType();
     return createPmtHandles();
 }
 
@@ -470,6 +472,20 @@ ze_result_t LinuxSysmanImp::osColdReset() {
         }
     }
     return ZE_RESULT_ERROR_DEVICE_LOST; // incase the reset fails inform upper layers.
+}
+
+uint32_t LinuxSysmanImp::getMemoryType() {
+    if (isMemTypeRetrieved == false) {
+        auto pDrm = &getDrm();
+        if (pDrm->querySystemInfo()) {
+            auto memSystemInfo = pDrm->getSystemInfo();
+            if (memSystemInfo != nullptr) {
+                memType = memSystemInfo->getMemoryType();
+                isMemTypeRetrieved = true;
+            }
+        }
+    }
+    return memType;
 }
 
 OsSysman *OsSysman::create(SysmanDeviceImp *pParentSysmanDeviceImp) {

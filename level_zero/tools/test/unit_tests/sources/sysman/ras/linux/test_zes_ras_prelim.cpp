@@ -21,9 +21,11 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
     std::unique_ptr<MockRasSysfsAccess> pSysfsAccess;
     std::unique_ptr<MockRasPmuInterfaceImp> pPmuInterface;
     std::unique_ptr<MockRasFwInterface> pRasFwUtilInterface;
+    std::unique_ptr<MockRasNeoDrm> pDrm;
     MemoryManager *pMemoryManagerOriginal = nullptr;
     std::unique_ptr<MockMemoryManagerInRasSysman> pMemoryManager;
     FsAccess *pFsAccessOriginal = nullptr;
+    Drm *pOriginalDrm = nullptr;
     SysfsAccess *pSysfsAccessOriginal = nullptr;
     PmuInterface *pOriginalPmuInterface = nullptr;
     FirmwareUtil *pFwUtilOriginal = nullptr;
@@ -41,15 +43,20 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
         pFsAccess = std::make_unique<MockRasFsAccess>();
         pSysfsAccess = std::make_unique<MockRasSysfsAccess>();
         pRasFwUtilInterface = std::make_unique<MockRasFwInterface>();
+        pDrm = std::make_unique<MockRasNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
+        pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperPrelim20>(*pDrm));
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pSysfsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pFwUtilOriginal = pLinuxSysmanImp->pFwUtilInterface;
+        pOriginalDrm = pLinuxSysmanImp->pDrm;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
         pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+        pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+        pLinuxSysmanImp->pDrm = pDrm.get();
 
         for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
             delete handle;
@@ -74,6 +81,7 @@ struct SysmanRasFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilOriginal;
+        pLinuxSysmanImp->pDrm = pOriginalDrm;
         SysmanDeviceFixture::TearDown();
     }
     std::vector<zes_ras_handle_t> getRasHandles(uint32_t count) {
@@ -145,7 +153,6 @@ TEST_F(SysmanRasFixture, GivenValidOsSysmanPointerWhenRetrievingSupportedRasErro
 }
 
 TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAreAbsentThenZeroHandlesAreCreated) {
-
     pFsAccess->mockReadDirectoryWithoutRasEvents = true;
 
     pLinuxSysmanImp->pFwUtilInterface = nullptr;
@@ -153,7 +160,6 @@ TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEven
         delete handle;
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     uint32_t count = 0;
     ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -164,6 +170,50 @@ TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEven
     EXPECT_EQ(testcount, 0u);
 }
 
+TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAndHbmAreAbsentThenZeroHandlesAreCreated) {
+    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_LPDDR4);
+    pRasFwUtilInterface->mockMemorySuccess = true;
+    pFsAccess->mockReadDirectoryWithoutRasEvents = true;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 0u);
+}
+
+TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfHbmAndFwInterfaceArePresentThenSuccessIsReturned) {
+    pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2);
+    pRasFwUtilInterface->mockMemorySuccess = true;
+
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, mockHandleCount);
+}
+
+TEST_F(SysmanRasFixture, GivenValidSysmanHandleWhenRetrievingRasHandlesIfRasEventsAreAbsentAndQuerySystemInfoSucceedsButMemSysInfoIsNullThenZeroHandlesAreCreated) {
+    pFsAccess->mockReadDirectoryWithoutRasEvents = true;
+    pDrm->mockQuerySystemInfoReturnValue.push_back(true);
+
+    pLinuxSysmanImp->pFwUtilInterface = nullptr;
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    uint32_t count = 0;
+    ze_result_t result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(count, 0u);
+}
+
 TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateForGtThenSuccessIsReturned) {
 
     pPmuInterface->mockPmuReadCorrectable = true;
@@ -172,7 +222,6 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateForGtThenSuc
         delete handle;
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCount);
     bool correctable = true;
     for (auto handle : handles) {
@@ -209,7 +258,6 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateForGtAfterCl
     }
 
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCount);
     bool correctable = true;
     ze_bool_t clear = 0;
@@ -272,7 +320,6 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateForHbmThenSu
     }
 
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
 
     auto handles = getRasHandles(mockHandleCount);
     bool correctable = true;
@@ -297,7 +344,6 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGeStateForHbmWithCl
         delete handle;
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCount);
     bool correctable = true;
     ze_bool_t clear = 0;
@@ -346,7 +392,6 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
         delete handle;
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
         zes_ras_state_t state = {};
@@ -362,7 +407,6 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
         delete handle;
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
         zes_ras_state_t state = {};
@@ -400,7 +444,6 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesGetRasStateForGtInterf
         delete handle;
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
         zes_ras_state_t state = {};
@@ -417,7 +460,6 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesGetRasStateAndFirmware
         delete handle;
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
         zes_ras_state_t state = {};
@@ -463,7 +505,6 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
         delete handle;
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
         zes_ras_state_t state = {};
@@ -479,7 +520,6 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
         delete handle;
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
         zes_ras_state_t state = {};
@@ -495,7 +535,6 @@ TEST_F(SysmanRasFixture, GivenValidRasHandleWhenCallingzesRasGetStateForGtInterf
         delete handle;
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCount);
     for (auto handle : handles) {
         zes_ras_state_t state = {};
@@ -530,10 +569,12 @@ struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
     MemoryManager *pMemoryManagerOriginal = nullptr;
     std::unique_ptr<MockMemoryManagerInRasSysman> pMemoryManager;
     std::unique_ptr<MockRasFwInterface> pRasFwUtilInterface;
+    std::unique_ptr<MockRasNeoDrm> pDrm;
     FsAccess *pFsAccessOriginal = nullptr;
     SysfsAccess *pSysfsAccessOriginal = nullptr;
     PmuInterface *pOriginalPmuInterface = nullptr;
     FirmwareUtil *pFwUtilOriginal = nullptr;
+    Drm *pOriginalDrm = nullptr;
     std::vector<ze_device_handle_t> deviceHandles;
 
     void SetUp() override {
@@ -545,6 +586,8 @@ struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pMemoryManager = std::make_unique<MockMemoryManagerInRasSysman>(*neoDevice->getExecutionEnvironment());
         pMemoryManager->localMemorySupported[0] = true;
         device->getDriverHandle()->setMemoryManager(pMemoryManager.get());
+        pDrm = std::make_unique<MockRasNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
+        pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperPrelim20>(*pDrm));
         pFsAccess = std::make_unique<MockRasFsAccess>();
         pSysfsAccess = std::make_unique<MockRasSysfsAccess>();
         pRasFwUtilInterface = std::make_unique<MockRasFwInterface>();
@@ -552,11 +595,14 @@ struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pSysfsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pFwUtilOriginal = pLinuxSysmanImp->pFwUtilInterface;
+        pOriginalDrm = pLinuxSysmanImp->pDrm;
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess.get();
         pLinuxSysmanImp->pFwUtilInterface = pRasFwUtilInterface.get();
         pPmuInterface = std::make_unique<MockRasPmuInterfaceImp>(pLinuxSysmanImp);
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
+        pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+        pLinuxSysmanImp->pDrm = pDrm.get();
 
         pFsAccess->mockReadDirectoryForMultiDevice = true;
 
@@ -583,6 +629,7 @@ struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilOriginal;
+        pLinuxSysmanImp->pDrm = pOriginalDrm;
         SysmanMultiDeviceFixture::TearDown();
     }
     std::vector<zes_ras_handle_t> getRasHandles(uint32_t count) {
@@ -591,7 +638,7 @@ struct SysmanRasMultiDeviceFixture : public SysmanMultiDeviceFixture {
         return handles;
     }
 };
-TEST_F(SysmanMultiDeviceFixture, GivenValidSysmanHandleWithMultiDeviceWhenRetrievingRasHandlesThenSuccessIsReturned) {
+TEST_F(SysmanRasMultiDeviceFixture, GivenValidSysmanHandleWithMultiDeviceWhenRetrievingRasHandlesThenSuccessIsReturned) {
     RasHandleContext *pRasHandleContext = new RasHandleContext(pSysmanDeviceImp->pOsSysman);
     uint32_t count = 0;
     ze_result_t result = pRasHandleContext->rasGet(&count, nullptr);
@@ -638,7 +685,6 @@ TEST_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGeStateF
         delete handle;
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCountForSubDevice);
     uint32_t handleIndex = 0u;
     for (auto handle : handles) {
@@ -692,7 +738,6 @@ TEST_F(SysmanRasMultiDeviceFixture, GivenValidRasHandleWhenCallingzesRasGeStateF
         delete handle;
     }
     pSysmanDeviceImp->pRasHandleContext->handleList.clear();
-    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
     auto handles = getRasHandles(mockHandleCountForSubDevice);
     uint32_t handleIndex = 0u;
 

@@ -6,6 +6,9 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/system_info.h"
+
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
@@ -13,6 +16,8 @@
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp_prelim.h"
 #include "level_zero/tools/source/sysman/ras/ras.h"
 #include "level_zero/tools/source/sysman/ras/ras_imp.h"
+
+#include "drm/intel_hwconfig_types.h"
 
 using namespace NEO;
 namespace L0 {
@@ -649,6 +654,40 @@ struct MockRasFwInterface : public FirmwareUtil {
     ADDMETHOD_NOBASE(fwGetEccConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint8_t * currentState, uint8_t *pendingState));
     ADDMETHOD_NOBASE(fwSetEccConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint8_t newState, uint8_t *currentState, uint8_t *pendingState));
     ADDMETHOD_NOBASE_VOIDRETURN(fwGetMemoryHealthIndicator, (zes_mem_health_t * health));
+};
+
+struct MockRasNeoDrm : public Drm {
+    using Drm::ioctlHelper;
+    uint32_t mockMemoryType = INTEL_HWCONFIG_MEMORY_TYPE_HBM2e;
+    const int mockFd = 33;
+    std::vector<bool> mockQuerySystemInfoReturnValue{};
+    bool isRepeated = false;
+    bool mockReturnEmptyRegions = false;
+    MockRasNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
+
+    void setMemoryType(uint32_t memory) {
+        mockMemoryType = memory;
+    }
+
+    std::vector<uint8_t> getMemoryRegionsReturnsEmpty() {
+        return {};
+    }
+
+    bool querySystemInfo() override {
+        bool returnValue = true;
+        if (!mockQuerySystemInfoReturnValue.empty()) {
+            returnValue = mockQuerySystemInfoReturnValue.front();
+            if (isRepeated != true) {
+                mockQuerySystemInfoReturnValue.erase(mockQuerySystemInfoReturnValue.begin());
+            }
+            return returnValue;
+        }
+
+        uint32_t hwBlob[] = {INTEL_HWCONFIG_MAX_MEMORY_CHANNELS, 1, 8, INTEL_HWCONFIG_MEMORY_TYPE, 0, mockMemoryType};
+        std::vector<uint8_t> inputBlobData(reinterpret_cast<uint8_t *>(hwBlob), reinterpret_cast<uint8_t *>(hwBlob) + sizeof(hwBlob));
+        this->systemInfo.reset(new SystemInfo(inputBlobData));
+        return returnValue;
+    }
 };
 
 class PublicLinuxRasImp : public L0::LinuxRasImp {

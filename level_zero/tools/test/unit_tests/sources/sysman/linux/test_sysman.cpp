@@ -15,6 +15,8 @@
 #include "level_zero/tools/source/sysman/ras/ras_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
+#include "drm/intel_hwconfig_types.h"
+
 namespace NEO {
 namespace SysCalls {
 extern bool allowFakeDevicePath;
@@ -633,10 +635,11 @@ TEST_F(SysmanDeviceFixture, GivenValidEnumeratedHandlesWhenReleaseIsCalledThenHa
 
     count = 0;
     RasImp *pRas = new RasImp(pSysmanDeviceImp->pRasHandleContext->pOsSysman, ZES_RAS_ERROR_TYPE_CORRECTABLE, device->toHandle());
+    pLinuxSysmanImp->memType = INTEL_HWCONFIG_MEMORY_TYPE_LPDDR4;
     pSysmanDeviceImp->pRasHandleContext->handleList.push_back(pRas);
     result = zesDeviceEnumRasErrorSets(device->toHandle(), &count, NULL);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(count, 3u);
+    EXPECT_EQ(count, 1u);
 
     pLinuxSysmanImp->releaseSysmanDeviceResources();
 

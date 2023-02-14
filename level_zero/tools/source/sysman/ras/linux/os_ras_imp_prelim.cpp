@@ -8,17 +8,31 @@
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp_prelim.h"
 
 #include "shared/source/helpers/string.h"
+#include "shared/source/os_interface/linux/system_info.h"
 
 #include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
+#include "drm/intel_hwconfig_types.h"
+
 namespace L0 {
+
+static bool isMemoryTypeHbm(LinuxSysmanImp *pLinuxSysmanImp) {
+    uint32_t memType = pLinuxSysmanImp->getMemoryType();
+    if (memType == INTEL_HWCONFIG_MEMORY_TYPE_HBM2e || memType == INTEL_HWCONFIG_MEMORY_TYPE_HBM2) {
+        return true;
+    }
+    return false;
+}
 
 void OsRas::getSupportedRasErrorTypes(std::set<zes_ras_error_type_t> &errorType, OsSysman *pOsSysman, ze_device_handle_t deviceHandle) {
 
     constexpr auto maxErrorTypes = 2;
     LinuxRasSourceGt::getSupportedRasErrorTypes(errorType, pOsSysman, deviceHandle);
     if (errorType.size() < maxErrorTypes) {
-        LinuxRasSourceHbm::getSupportedRasErrorTypes(errorType, pOsSysman, deviceHandle);
+        auto pLinuxSysmanImp = static_cast<LinuxSysmanImp *>(pOsSysman);
+        if (isMemoryTypeHbm(pLinuxSysmanImp) == true) {
+            LinuxRasSourceHbm::getSupportedRasErrorTypes(errorType, pOsSysman, deviceHandle);
+        }
     }
 }
 
@@ -69,7 +83,9 @@ ze_result_t LinuxRasImp::osRasGetState(zes_ras_state_t &state, ze_bool_t clear) 
 
 void LinuxRasImp::initSources() {
     rasSources.push_back(std::make_unique<L0::LinuxRasSourceGt>(pLinuxSysmanImp, osRasErrorType, isSubdevice, subdeviceId));
-    rasSources.push_back(std::make_unique<L0::LinuxRasSourceHbm>(pLinuxSysmanImp, osRasErrorType, subdeviceId));
+    if (isMemoryTypeHbm(pLinuxSysmanImp) == true) {
+        rasSources.push_back(std::make_unique<L0::LinuxRasSourceHbm>(pLinuxSysmanImp, osRasErrorType, subdeviceId));
+    }
 }
 
 LinuxRasImp::LinuxRasImp(OsSysman *pOsSysman, zes_ras_error_type_t type, ze_bool_t onSubdevice, uint32_t subdeviceId) : osRasErrorType(type), isSubdevice(onSubdevice), subdeviceId(subdeviceId) {

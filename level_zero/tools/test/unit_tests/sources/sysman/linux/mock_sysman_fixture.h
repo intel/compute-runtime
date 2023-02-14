@@ -38,6 +38,7 @@ class SysmanMockDrm : public Drm {
 class PublicLinuxSysmanImp : public L0::LinuxSysmanImp {
   public:
     using LinuxSysmanImp::mapOfSubDeviceIdToPmtObject;
+    using LinuxSysmanImp::memType;
     using LinuxSysmanImp::pDrm;
     using LinuxSysmanImp::pFsAccess;
     using LinuxSysmanImp::pFwUtilInterface;

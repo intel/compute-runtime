@@ -6,6 +6,10 @@
  */
 
 #pragma once
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/system_info.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "level_zero/tools/source/sysman/events/events_imp.h"
@@ -13,6 +17,9 @@
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
 
+#include "drm/intel_hwconfig_types.h"
+
+using namespace NEO;
 namespace L0 {
 namespace ult {
 
@@ -225,6 +232,40 @@ struct MockEventsFwInterface : public FirmwareUtil {
     ADDMETHOD_NOBASE(fwSetEccConfig, ze_result_t, ZE_RESULT_SUCCESS, (uint8_t newState, uint8_t *currentState, uint8_t *pendingState));
     ADDMETHOD_NOBASE_VOIDRETURN(getDeviceSupportedFwTypes, (std::vector<std::string> & fwTypes));
     ADDMETHOD_NOBASE_VOIDRETURN(fwGetMemoryHealthIndicator, (zes_mem_health_t * health));
+};
+
+struct MockEventNeoDrm : public Drm {
+    using Drm::ioctlHelper;
+    uint32_t mockMemoryType = INTEL_HWCONFIG_MEMORY_TYPE_HBM2e;
+    const int mockFd = 33;
+    std::vector<bool> mockQuerySystemInfoReturnValue{};
+    bool isRepeated = false;
+    bool mockReturnEmptyRegions = false;
+    MockEventNeoDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {}
+
+    void setMemoryType(uint32_t memory) {
+        mockMemoryType = memory;
+    }
+
+    std::vector<uint8_t> getMemoryRegionsReturnsEmpty() {
+        return {};
+    }
+
+    bool querySystemInfo() override {
+        bool returnValue = true;
+        if (!mockQuerySystemInfoReturnValue.empty()) {
+            returnValue = mockQuerySystemInfoReturnValue.front();
+            if (isRepeated != true) {
+                mockQuerySystemInfoReturnValue.erase(mockQuerySystemInfoReturnValue.begin());
+            }
+            return returnValue;
+        }
+
+        uint32_t hwBlob[] = {INTEL_HWCONFIG_MAX_MEMORY_CHANNELS, 1, 8, INTEL_HWCONFIG_MEMORY_TYPE, 0, mockMemoryType};
+        std::vector<uint8_t> inputBlobData(reinterpret_cast<uint8_t *>(hwBlob), reinterpret_cast<uint8_t *>(hwBlob) + sizeof(hwBlob));
+        this->systemInfo.reset(new SystemInfo(inputBlobData));
+        return returnValue;
+    }
 };
 
 class PublicLinuxEventsImp : public L0::LinuxEventsImp {

@@ -20,6 +20,8 @@ constexpr int drmDeviceFd = 0;
 class SysmanEventsFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<MockEventsFsAccess> pFsAccess;
+    std::unique_ptr<MockEventNeoDrm> pDrm;
+    Drm *pOriginalDrm = nullptr;
     FsAccess *pFsAccessOriginal = nullptr;
     OsEvents *pOsEventsPrev = nullptr;
     L0::EventsImp *pEventsImp;
@@ -38,6 +40,10 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;
         pFsAccess = std::make_unique<MockEventsFsAccess>();
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
+        pDrm = std::make_unique<MockEventNeoDrm>(const_cast<NEO::RootDeviceEnvironment &>(neoDevice->getRootDeviceEnvironment()));
+        pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperPrelim20>(*pDrm));
+        pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
+        pLinuxSysmanImp->pDrm = pDrm.get();
 
         pSysfsAccessOriginal = pLinuxSysmanImp->pSysfsAccess;
         pSysfsAccess = std::make_unique<MockEventsSysfsAccess>();
@@ -81,6 +87,7 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
         pEventsImp = nullptr;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+        pLinuxSysmanImp->pDrm = pOriginalDrm;
 
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         SysmanDeviceFixture::TearDown();

@@ -16,6 +16,7 @@
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
 #include "level_zero/tools/source/sysman/linux/udev/udev_lib.h"
+#include "level_zero/tools/source/sysman/sysman_const.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <linux/pci_regs.h>
@@ -58,6 +59,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     ze_device_handle_t getCoreDeviceHandle() override;
     SysmanDeviceImp *getSysmanDeviceImp();
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
+    uint32_t getMemoryType();
     static std::string getPciRootPortDirectoryPath(std::string realPciPath);
     void releasePmtObject();
     ze_result_t createPmtHandles();
@@ -94,8 +96,10 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     L0::UdevLib *pUdevLib = nullptr;
     std::map<uint32_t, L0::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
     ze_result_t initLocalDeviceAndDrmHandles();
+    uint32_t memType = unknownMemoryType;
 
   private:
+    bool isMemTypeRetrieved = false;
     LinuxSysmanImp() = delete;
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
     static const std::string deviceDir;
