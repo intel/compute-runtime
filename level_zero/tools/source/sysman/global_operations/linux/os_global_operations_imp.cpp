@@ -11,6 +11,8 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/ioctl_helper.h"
 #include "shared/source/os_interface/linux/pci_path.h"
 
 #include "level_zero/core/source/device/device_imp.h"
@@ -448,11 +450,17 @@ ze_result_t LinuxGlobalOperationsImp::scanProcessesState(std::vector<zes_process
 }
 
 void LinuxGlobalOperationsImp::getWedgedStatus(zes_device_state_t *pState) {
-    uint32_t valWedged = 0;
-    if (ZE_RESULT_SUCCESS == pFsAccess->read(ueventWedgedFile, valWedged)) {
-        if (valWedged != 0) {
-            pState->reset |= ZES_RESET_REASON_FLAG_WEDGED;
-        }
+    NEO::GemContextCreateExt gcc{};
+    auto pDrm = &pLinuxSysmanImp->getDrm();
+    // Device is said to be in wedged if context creation returns EIO.
+    auto ret = pDrm->getIoctlHelper()->ioctl(NEO::DrmIoctl::GemContextCreateExt, &gcc);
+    if (ret == 0) {
+        pDrm->destroyDrmContext(gcc.contextId);
+        return;
+    }
+
+    if (pDrm->getErrno() == EIO) {
+        pState->reset |= ZES_RESET_REASON_FLAG_WEDGED;
     }
 }
 ze_result_t LinuxGlobalOperationsImp::deviceGetState(zes_device_state_t *pState) {

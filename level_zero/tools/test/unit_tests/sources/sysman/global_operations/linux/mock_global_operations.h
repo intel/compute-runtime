@@ -6,6 +6,9 @@
  */
 
 #pragma once
+#include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
+
 #include "level_zero/tools/source/sysman/global_operations/global_operations_imp.h"
 #include "level_zero/tools/source/sysman/global_operations/linux/os_global_operations_imp.h"
 
@@ -460,17 +463,6 @@ struct MockGlobalOperationsFsAccess : public FsAccess {
         return readResult;
     }
 
-    uint32_t mockReadUIntVal = 0;
-    ze_result_t read(const std::string file, uint32_t &val) override {
-        if (file.compare(ueventWedgedFile) == 0) {
-            val = mockReadUIntVal;
-            readResult = ZE_RESULT_SUCCESS;
-        } else {
-            readResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-        }
-        return readResult;
-    }
-
     ze_result_t mockWriteError = ZE_RESULT_SUCCESS;
     ze_result_t writeResult = ZE_RESULT_SUCCESS;
     ze_result_t write(const std::string file, const std::string val) override {
@@ -549,6 +541,17 @@ struct MockGlobalOpsLinuxSysmanImp : public LinuxSysmanImp {
     void setMockInitDeviceError(ze_result_t result) {
         mockInitDeviceError = result;
     }
+};
+
+class DrmGlobalOpsMock : public DrmMock {
+  public:
+    using DrmMock::DrmMock;
+    int ioctlRetVal = 0;
+    int ioctlErrno = 0;
+    int ioctl(DrmIoctl request, void *arg) override {
+        return ioctlRetVal;
+    }
+    int getErrno() override { return ioctlErrno; }
 };
 
 class PublicLinuxGlobalOperationsImp : public L0::LinuxGlobalOperationsImp {

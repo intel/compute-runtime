@@ -6,7 +6,6 @@
  */
 
 #include "shared/test/common/helpers/ult_hw_config.h"
-#include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
@@ -123,6 +122,10 @@ class SysmanGlobalOperationsFixture : public SysmanDeviceFixture {
         SysmanDeviceFixture::TearDown();
     }
     void initGlobalOps() {
+        auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+        auto pDrm = std::make_unique<DrmGlobalOpsMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+        VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
+        pLinuxSysmanImp->pDrm = pDrm.get();
         zes_device_state_t deviceState;
         EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     }
@@ -718,14 +721,34 @@ TEST_F(SysmanGlobalOperationsFixture, GivenValidDeviceHandleWhileReadingNonExist
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenDeviceIsWedgedWhenCallingGetDeviceStateThenZesResetReasonFlagWedgedIsReturned) {
-    pFsAccess->mockReadUIntVal = 1;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto pDrm = std::make_unique<DrmGlobalOpsMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    pDrm->ioctlRetVal = -1;
+    pDrm->ioctlErrno = EIO;
+    VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
+    pLinuxSysmanImp->pDrm = pDrm.get();
     zes_device_state_t deviceState;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(ZES_RESET_REASON_FLAG_WEDGED, deviceState.reset);
 }
 
 TEST_F(SysmanGlobalOperationsFixture, GivenDeviceIsNotWedgedWhenCallingGetDeviceStateThenZeroIsReturned) {
-    pFsAccess->mockReadUIntVal = 0;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto pDrm = std::make_unique<DrmGlobalOpsMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
+    pLinuxSysmanImp->pDrm = pDrm.get();
+    zes_device_state_t deviceState;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
+    EXPECT_EQ(0u, deviceState.reset);
+}
+
+TEST_F(SysmanGlobalOperationsFixture, GivenGemCreateIoctlFailsWithEINVALWhenCallingGetDeviceStateThenVerifyResetIsNotNeeded) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto pDrm = std::make_unique<DrmGlobalOpsMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    pDrm->ioctlRetVal = -1;
+    pDrm->ioctlErrno = EINVAL;
+    VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
+    pLinuxSysmanImp->pDrm = pDrm.get();
     zes_device_state_t deviceState;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(0u, deviceState.reset);
@@ -957,6 +980,10 @@ TEST(SysmanGlobalOperationsTest, GivenNotExisitingPciPathWhenPrepareDeviceEnviro
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenCallingDeviceGetStateThenSuccessResultIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto pDrm = std::make_unique<DrmGlobalOpsMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
+    pLinuxSysmanImp->pDrm = pDrm.get();
     zes_device_state_t deviceState;
     ze_result_t result = zesDeviceGetState(device, &deviceState);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);

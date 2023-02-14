@@ -72,6 +72,10 @@ class SysmanGlobalOperationsHelperFixture : public SysmanDeviceFixture {
 HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateThenZesResetReasonFlagRepairedIsReturned, IsPVC) {
     pMockFwInterface->mockIfrStatus = true;
     zes_device_state_t deviceState;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto pDrm = std::make_unique<DrmGlobalOpsMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
+    pLinuxSysmanImp->pDrm = pDrm.get();
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(ZES_RESET_REASON_FLAG_REPAIR, deviceState.reset);
     EXPECT_EQ(ZES_REPAIR_STATUS_PERFORMED, deviceState.repaired);
@@ -79,6 +83,10 @@ HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingG
 
 HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateThenZesResetReasonFlagRepairedIsReturned, IsNotPVC) {
     pMockFwInterface->mockIfrStatus = true;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto pDrm = std::make_unique<DrmGlobalOpsMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
+    pLinuxSysmanImp->pDrm = pDrm.get();
     zes_device_state_t deviceState;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(ZES_REPAIR_STATUS_UNSUPPORTED, deviceState.repaired);
@@ -86,6 +94,10 @@ HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingG
 
 HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateAndFirmwareRepairStatusIsFalseThenZesResetReasonFlagRepairedIsNotReturned, IsPVC) {
     pMockFwInterface->mockIfrStatus = false;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto pDrm = std::make_unique<DrmGlobalOpsMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
+    pLinuxSysmanImp->pDrm = pDrm.get();
     zes_device_state_t deviceState;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(0u, deviceState.reset);
@@ -94,6 +106,10 @@ HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingG
 
 HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateAndFirmwareRepairStatusIsFalseThenZesResetReasonFlagRepairedIsNotReturned, IsNotPVC) {
     pMockFwInterface->mockIfrStatus = false;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto pDrm = std::make_unique<DrmGlobalOpsMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
+    pLinuxSysmanImp->pDrm = pDrm.get();
     zes_device_state_t deviceState;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(0u, deviceState.reset);
@@ -102,6 +118,10 @@ HWTEST2_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingG
 
 TEST_F(SysmanGlobalOperationsHelperFixture, GivenDeviceIsRepairedWhenCallingGetDeviceStateAndFirmwareRepairStatusFailsThenZesResetReasonFlagRepairedIsNotReturned) {
     pMockFwInterface->mockIfrError = ZE_RESULT_ERROR_UNKNOWN;
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto pDrm = std::make_unique<DrmGlobalOpsMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    VariableBackup<NEO::Drm *> backup(&pLinuxSysmanImp->pDrm);
+    pLinuxSysmanImp->pDrm = pDrm.get();
     zes_device_state_t deviceState;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceGetState(device, &deviceState));
     EXPECT_EQ(0u, deviceState.reset);
