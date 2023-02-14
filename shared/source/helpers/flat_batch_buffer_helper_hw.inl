@@ -29,7 +29,7 @@ GraphicsAllocation *FlatBatchBufferHelperHw<GfxFamily>::flattenBatchBuffer(uint3
 
     size_t indirectPatchCommandsSize = 0u;
     std::vector<PatchInfoData> indirectPatchInfo;
-    std::unique_ptr<char> indirectPatchCommands(getIndirectPatchCommands(indirectPatchCommandsSize, indirectPatchInfo));
+    std::unique_ptr<char[]> indirectPatchCommands(getIndirectPatchCommands(indirectPatchCommandsSize, indirectPatchInfo));
 
     if (dispatchMode == DispatchMode::ImmediateDispatch) {
         if (batchBuffer.chainedBatchBuffer) {
@@ -158,7 +158,7 @@ char *FlatBatchBufferHelperHw<GfxFamily>::getIndirectPatchCommands(size_t &indir
 
     uint64_t stiCommandOffset = 0;
     std::vector<PatchInfoData> patchInfoCopy = patchInfoCollection;
-    std::unique_ptr<char> buffer(new char[indirectPatchCommandsSize]);
+    std::unique_ptr<char[]> buffer(new char[indirectPatchCommandsSize]);
     LinearStream indirectPatchCommandStream(buffer.get(), indirectPatchCommandsSize);
     patchInfoCollection.clear();
 

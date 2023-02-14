@@ -842,7 +842,7 @@ HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenXeHpWhenRayTracingEnable
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     auto cmdSize = commandStreamReceiver.getCmdSizeForPerDssBackedBuffer(pDevice->getHardwareInfo());
     EXPECT_EQ(0u, cmdSize);
-    std::unique_ptr<char> buffer(new char[cmdSize]);
+    std::unique_ptr<char[]> buffer(new char[cmdSize]);
 
     LinearStream cs(buffer.get(), cmdSize);
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
@@ -857,7 +857,7 @@ HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionEnabledWh
 
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     constexpr size_t cmdSize = 256;
-    std::unique_ptr<char> buffer(new char[cmdSize]);
+    std::unique_ptr<char[]> buffer(new char[cmdSize]);
     LinearStream cs(buffer.get(), cmdSize);
 
     commandStreamReceiver.staticWorkPartitioningEnabled = true;
@@ -878,7 +878,7 @@ HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionDisabledW
 
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     constexpr size_t cmdSize = 256;
-    std::unique_ptr<char> buffer(new char[cmdSize]);
+    std::unique_ptr<char[]> buffer(new char[cmdSize]);
     LinearStream cs(buffer.get(), cmdSize);
 
     commandStreamReceiver.staticWorkPartitioningEnabled = false;
@@ -902,7 +902,7 @@ HWTEST2_F(CommandStreamReceiverHwTestXeHPAndLater, givenStaticPartitionEnabledWh
 
     MockCsrHw<FamilyType> commandStreamReceiver(*pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
     constexpr size_t cmdSize = 256;
-    std::unique_ptr<char> buffer(new char[cmdSize]);
+    std::unique_ptr<char[]> buffer(new char[cmdSize]);
     MockGraphicsAllocation allocation(buffer.get(), cmdSize);
     allocation.gpuAddress = 0xFF000;
     LinearStream cs(buffer.get(), cmdSize);

@@ -170,7 +170,7 @@ HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenAddGucS
     auto aubCsr = aubExecutionEnvironment->template getCsr<AUBCommandStreamReceiverHw<FamilyType>>();
     LinearStream cs(aubExecutionEnvironment->commandBuffer);
 
-    std::unique_ptr<char> batchBuffer(new char[1024]);
+    std::unique_ptr<char[]> batchBuffer(new char[1024]);
     aubCsr->addGUCStartMessage(static_cast<uint64_t>(reinterpret_cast<std::uintptr_t>(batchBuffer.get())));
 
     auto &patchInfoCollection = aubCsr->getFlatBatchBufferHelper().getPatchInfoCollection();
@@ -192,20 +192,20 @@ HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenForcedB
     CommandChunk chunk2;
     CommandChunk chunk3;
 
-    std::unique_ptr<char> commands1(new char[0x100u]);
+    std::unique_ptr<char[]> commands1(new char[0x100u]);
     commands1.get()[0] = 0x1;
     chunk1.baseAddressCpu = chunk1.baseAddressGpu = reinterpret_cast<uint64_t>(commands1.get());
     chunk1.startOffset = 0u;
     chunk1.endOffset = 0x50u;
 
-    std::unique_ptr<char> commands2(new char[0x100u]);
+    std::unique_ptr<char[]> commands2(new char[0x100u]);
     commands2.get()[0] = 0x2;
     chunk2.baseAddressCpu = chunk2.baseAddressGpu = reinterpret_cast<uint64_t>(commands2.get());
     chunk2.startOffset = 0u;
     chunk2.endOffset = 0x50u;
     aubCsr->getFlatBatchBufferHelper().registerBatchBufferStartAddress(reinterpret_cast<uint64_t>(commands2.get() + 0x40), reinterpret_cast<uint64_t>(commands1.get()));
 
-    std::unique_ptr<char> commands3(new char[0x100u]);
+    std::unique_ptr<char[]> commands3(new char[0x100u]);
     commands3.get()[0] = 0x3;
     chunk3.baseAddressCpu = chunk3.baseAddressGpu = reinterpret_cast<uint64_t>(commands3.get());
     chunk3.startOffset = 0u;
@@ -454,7 +454,7 @@ HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenGetIndi
     size_t indirectPatchCommandsSize = 0u;
     std::vector<PatchInfoData> indirectPatchInfo;
 
-    std::unique_ptr<char> commandBuffer(aubCsr->getFlatBatchBufferHelper().getIndirectPatchCommands(indirectPatchCommandsSize, indirectPatchInfo));
+    std::unique_ptr<char[]> commandBuffer(aubCsr->getFlatBatchBufferHelper().getIndirectPatchCommands(indirectPatchCommandsSize, indirectPatchInfo));
     EXPECT_EQ(0u, indirectPatchCommandsSize);
     EXPECT_EQ(0u, indirectPatchInfo.size());
 }
@@ -476,7 +476,7 @@ HWTEST_F(FlatBatchBufferHelperAubTests, givenAubCommandStreamReceiverWhenGetIndi
     size_t indirectPatchCommandsSize = 0u;
     std::vector<PatchInfoData> indirectPatchInfo;
 
-    std::unique_ptr<char> commandBuffer(aubCsr->getFlatBatchBufferHelper().getIndirectPatchCommands(indirectPatchCommandsSize, indirectPatchInfo));
+    std::unique_ptr<char[]> commandBuffer(aubCsr->getFlatBatchBufferHelper().getIndirectPatchCommands(indirectPatchCommandsSize, indirectPatchInfo));
     EXPECT_EQ(4u, indirectPatchInfo.size());
     EXPECT_EQ(2u * sizeof(MI_STORE_DATA_IMM), indirectPatchCommandsSize);
 }
@@ -491,7 +491,7 @@ HWTEST_F(FlatBatchBufferHelperAubTests, GivenAubCommandStreamReceiverWhenGetIndi
     size_t indirectPatchCommandsSize = 0u;
     std::vector<PatchInfoData> indirectPatchInfo;
 
-    std::unique_ptr<char> commandBuffer(aubCsr->getFlatBatchBufferHelper().getIndirectPatchCommands(indirectPatchCommandsSize, indirectPatchInfo));
+    std::unique_ptr<char[]> commandBuffer(aubCsr->getFlatBatchBufferHelper().getIndirectPatchCommands(indirectPatchCommandsSize, indirectPatchInfo));
     ASSERT_EQ(sizeof(MI_STORE_DATA_IMM), indirectPatchCommandsSize);
     ASSERT_EQ(2u, indirectPatchInfo.size());
 
@@ -510,7 +510,7 @@ HWTEST_F(FlatBatchBufferHelperAubTests, GivenAubCommandStreamReceiverWhenGetIndi
     size_t indirectPatchCommandsSize = 0u;
     std::vector<PatchInfoData> indirectPatchInfo;
 
-    std::unique_ptr<char> commandBuffer(aubCsr->getFlatBatchBufferHelper().getIndirectPatchCommands(indirectPatchCommandsSize, indirectPatchInfo));
+    std::unique_ptr<char[]> commandBuffer(aubCsr->getFlatBatchBufferHelper().getIndirectPatchCommands(indirectPatchCommandsSize, indirectPatchInfo));
     ASSERT_EQ(sizeof(MI_STORE_DATA_IMM), indirectPatchCommandsSize);
     ASSERT_EQ(2u, indirectPatchInfo.size());
 

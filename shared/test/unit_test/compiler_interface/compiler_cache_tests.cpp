@@ -157,10 +157,10 @@ TEST(CompilerCacheHashTests, GivenCompilingOptionsWhenGettingCacheThenCorrectCac
                                                         std::string("--some --options"),
                                                         std::string("--some --different --options")}};
 
-    std::unique_ptr<char> buf1(new char[bufSize]);
-    std::unique_ptr<char> buf2(new char[bufSize]);
-    std::unique_ptr<char> buf3(new char[bufSize]);
-    std::unique_ptr<char> buf4(new char[bufSize]);
+    std::unique_ptr<char[]> buf1(new char[bufSize]);
+    std::unique_ptr<char[]> buf2(new char[bufSize]);
+    std::unique_ptr<char[]> buf3(new char[bufSize]);
+    std::unique_ptr<char[]> buf4(new char[bufSize]);
 
     ArrayRef<char> src;
     ArrayRef<char> apiOptions;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,7 +48,7 @@ TEST_F(ClSetEventCallbackTests, GivenValidEventWhenSettingEventCallbackThenSucce
 }
 
 TEST_F(ClSetEventCallbackTests, GivenInvalidEventWhenSettingEventCallbackThenInvalidEventErrorIsReturned) {
-    std::unique_ptr<char> event(new char[sizeof(Event)]);
+    std::unique_ptr<char[]> event(new char[sizeof(Event)]);
     memset(event.get(), 0, sizeof(Event));
     retVal = clSetEventCallback(reinterpret_cast<cl_event>(event.get()), CL_COMPLETE, eventCallBack, nullptr);
     EXPECT_EQ(CL_INVALID_EVENT, retVal);

@@ -48,7 +48,7 @@ HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenGen12AndLaterWhenRayTraci
     AllocationProperties properties(pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::SCRATCH_SURFACE, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
     commandStreamReceiver.perDssBackedBuffer = allocation;
-    std::unique_ptr<char> buffer(new char[cmdSize]);
+    std::unique_ptr<char[]> buffer(new char[cmdSize]);
     LinearStream cs(buffer.get(), cmdSize);
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.usePerDssBackedBuffer = true;
@@ -156,7 +156,7 @@ HWTEST2_F(CommandStreamReceiverHwTestDg2AndLater, givenGen12AndLaterWhenRayTraci
     AllocationProperties properties(pDevice->getRootDeviceIndex(), MemoryConstants::pageSize, AllocationType::SCRATCH_SURFACE, pDevice->getDeviceBitfield());
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(properties);
     commandStreamReceiver.perDssBackedBuffer = allocation;
-    std::unique_ptr<char> buffer(new char[cmdSize]);
+    std::unique_ptr<char[]> buffer(new char[cmdSize]);
     LinearStream cs(buffer.get(), cmdSize);
     DispatchFlags dispatchFlags = DispatchFlagsHelper::createDefaultDispatchFlags();
     dispatchFlags.usePerDssBackedBuffer = true;

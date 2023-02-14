@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ TEST(CompilerCache, GivenDefaultClCacheConfigThenValuesAreProperlyPopulated) {
 TEST(CompilerCacheTests, GivenExistingConfigWhenLoadingFromCacheThenBinaryIsLoaded) {
     NEO::CompilerCache cache(NEO::getDefaultCompilerCacheConfig());
     static const char *hash = "SOME_HASH";
-    std::unique_ptr<char> data(new char[32]);
+    std::unique_ptr<char[]> data(new char[32]);
     for (size_t i = 0; i < 32; i++)
         data.get()[i] = static_cast<char>(i);
 
