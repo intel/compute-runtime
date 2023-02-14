@@ -98,13 +98,8 @@ TEST_F(DriverVersionTest, WhenGettingDriverVersionThenExpectedDriverVersionIsRet
     ze_result_t res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
-    uint32_t versionMajor = static_cast<uint32_t>((properties.driverVersion & 0xFF000000) >> 24);
-    uint32_t versionMinor = static_cast<uint32_t>((properties.driverVersion & 0x00FF0000) >> 16);
-    uint32_t versionBuild = static_cast<uint32_t>(properties.driverVersion & 0x0000FFFF);
-
-    EXPECT_EQ(static_cast<uint32_t>(strtoul(L0_PROJECT_VERSION_MAJOR, NULL, 10)), versionMajor);
-    EXPECT_EQ(static_cast<uint32_t>(strtoul(L0_PROJECT_VERSION_MINOR, NULL, 10)), versionMinor);
-    EXPECT_EQ(static_cast<uint32_t>(strtoul(NEO_VERSION_BUILD, NULL, 10)), versionBuild);
+    auto expectedDriverVersion = static_cast<uint32_t>(DriverHandleImp::initialDriverVersionValue + strtoul(NEO_VERSION_BUILD, NULL, 10));
+    EXPECT_EQ(expectedDriverVersion, properties.driverVersion);
 }
 
 TEST_F(DriverVersionTest, givenCallToGetDriverPropertiesThenUuidIsSet) {
@@ -116,15 +111,12 @@ TEST_F(DriverVersionTest, givenCallToGetDriverPropertiesThenUuidIsSet) {
     uint64_t uuid = 0u;
     memcpy_s(&uuid, sizeof(uuid), properties.uuid.id, sizeof(uuid));
 
-    uint32_t uniqueId = static_cast<uint32_t>((uuid & 0xFFFFFFFF00000000) >> 32);
-    uint32_t versionMajor = static_cast<uint32_t>((uuid & 0xFF000000) >> 24);
-    uint32_t versionMinor = static_cast<uint32_t>((uuid & 0x00FF0000) >> 16);
-    uint32_t versionBuild = static_cast<uint32_t>(uuid & 0x0000FFFF);
-
+    auto uniqueId = static_cast<uint32_t>((uuid & 0xFFFFFFFF00000000) >> 32);
     EXPECT_NE(0u, uniqueId);
-    EXPECT_EQ(static_cast<uint32_t>(strtoul(L0_PROJECT_VERSION_MAJOR, NULL, 10)), versionMajor);
-    EXPECT_EQ(static_cast<uint32_t>(strtoul(L0_PROJECT_VERSION_MINOR, NULL, 10)), versionMinor);
-    EXPECT_EQ(static_cast<uint32_t>(strtoul(NEO_VERSION_BUILD, NULL, 10)), versionBuild);
+
+    auto driverVersion = static_cast<uint32_t>(uuid & 0xFFFFFFFF);
+    auto expectedDriverVersion = static_cast<uint32_t>(DriverHandleImp::initialDriverVersionValue + strtoul(NEO_VERSION_BUILD, NULL, 10));
+    EXPECT_EQ(expectedDriverVersion, driverVersion);
 }
 
 TEST_F(DriverVersionTest, whenCallingGetDriverPropertiesRepeatedlyThenTheSameUuidIsReturned) {
@@ -132,19 +124,6 @@ TEST_F(DriverVersionTest, whenCallingGetDriverPropertiesRepeatedlyThenTheSameUui
     ze_driver_properties_t properties;
     ze_result_t res = driverHandle->getProperties(&properties);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-
-    uint64_t uuid = 0u;
-    memcpy_s(&uuid, sizeof(uuid), properties.uuid.id, sizeof(uuid));
-
-    uint32_t uniqueId = static_cast<uint32_t>((uuid & 0xFFFFFFFF00000000) >> 32);
-    uint32_t versionMajor = static_cast<uint32_t>((uuid & 0xFF000000) >> 24);
-    uint32_t versionMinor = static_cast<uint32_t>((uuid & 0x00FF0000) >> 16);
-    uint32_t versionBuild = static_cast<uint32_t>(uuid & 0x0000FFFF);
-
-    EXPECT_NE(0u, uniqueId);
-    EXPECT_EQ(static_cast<uint32_t>(strtoul(L0_PROJECT_VERSION_MAJOR, NULL, 10)), versionMajor);
-    EXPECT_EQ(static_cast<uint32_t>(strtoul(L0_PROJECT_VERSION_MINOR, NULL, 10)), versionMinor);
-    EXPECT_EQ(static_cast<uint32_t>(strtoul(NEO_VERSION_BUILD, NULL, 10)), versionBuild);
 
     for (uint32_t i = 0; i < 32; i++) {
         ze_driver_properties_t newProperties;

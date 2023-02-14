@@ -106,13 +106,8 @@ ze_result_t DriverHandleImp::getApiVersion(ze_api_version_t *version) {
 }
 
 ze_result_t DriverHandleImp::getProperties(ze_driver_properties_t *properties) {
-    uint32_t versionMajor = static_cast<uint32_t>(strtoul(L0_PROJECT_VERSION_MAJOR, NULL, 10));
-    uint32_t versionMinor = static_cast<uint32_t>(strtoul(L0_PROJECT_VERSION_MINOR, NULL, 10));
     uint32_t versionBuild = static_cast<uint32_t>(strtoul(NEO_VERSION_BUILD, NULL, 10));
-
-    properties->driverVersion = ((versionMajor << 24) & 0xFF000000) |
-                                ((versionMinor << 16) & 0x00FF0000) |
-                                (versionBuild & 0x0000FFFF);
+    properties->driverVersion = DriverHandleImp::initialDriverVersionValue + versionBuild;
 
     uint64_t uniqueId = (properties->driverVersion) | (uuidTimestamp & 0xFFFFFFFF00000000);
     memcpy_s(properties->uuid.id, sizeof(uniqueId), &uniqueId, sizeof(uniqueId));
