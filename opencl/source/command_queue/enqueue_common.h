@@ -439,6 +439,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     if (migratedMemory) {
         computeCommandStreamReceiver.flushBatchedSubmissions();
+        computeCommandStreamReceiver.flushTagUpdate();
     }
 
     return CL_SUCCESS;

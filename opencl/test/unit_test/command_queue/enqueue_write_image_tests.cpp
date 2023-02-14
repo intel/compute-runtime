@@ -734,11 +734,14 @@ HWTEST_F(EnqueueWriteImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueWr
     auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdQ1->getGpgpuCommandStreamReceiver());
 
     EXPECT_FALSE(ultCsr.flushBatchedSubmissionsCalled);
+    auto currentTaskCount = ultCsr.peekTaskCount();
     EXPECT_EQ(MigrationSyncData::locationUndefined, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     EnqueueWriteImageHelper<>::enqueueWriteImage(pCmdQ1, pImage, CL_FALSE);
 
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     EXPECT_TRUE(ultCsr.flushBatchedSubmissionsCalled);
+    EXPECT_TRUE(ultCsr.flushTagUpdateCalled);
+    EXPECT_LT(currentTaskCount, ultCsr.peekTaskCount());
     pCmdQ1->finish();
     pCmdQ1->release();
     pImage->release();

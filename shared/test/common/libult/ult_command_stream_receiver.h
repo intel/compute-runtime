@@ -281,6 +281,11 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
         return CommandStreamReceiverHw<GfxFamily>::flushBatchedSubmissions();
     }
+    SubmissionStatus flushTagUpdate() override {
+        flushTagUpdateCalled = true;
+        return CommandStreamReceiverHw<GfxFamily>::flushTagUpdate();
+    }
+
     void initProgrammingFlags() override {
         CommandStreamReceiverHw<GfxFamily>::initProgrammingFlags();
         initProgrammingFlagsCalled = true;
@@ -395,6 +400,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     std::atomic_bool downloadAllocationCalled = false;
     std::atomic_bool downloadAllocationsCalled = false;
     bool flushBatchedSubmissionsCalled = false;
+    bool flushTagUpdateCalled = false;
     bool initProgrammingFlagsCalled = false;
     bool multiOsContextCapable = false;
     bool memoryCompressionEnabled = false;

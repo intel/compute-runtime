@@ -28,9 +28,7 @@ void MigrationController::handleMigration(Context &context, CommandStreamReceive
     if (migrationSyncData->getCurrentLocation() != targetRootDeviceIndex) {
         migrateMemory(context, *memoryManager, memObj, targetRootDeviceIndex);
     }
-    if (!context.getSpecialQueue(targetRootDeviceIndex)->isWaitForTimestampsEnabled()) {
-        migrationSyncData->signalUsage(targetCsr.getTagAddress(), targetCsr.peekTaskCount() + 1);
-    }
+    migrationSyncData->signalUsage(targetCsr.getTagAddress(), targetCsr.peekTaskCount() + 1);
 }
 
 void MigrationController::migrateMemory(Context &context, MemoryManager &memoryManager, MemObj *memObj, uint32_t targetRootDeviceIndex) {

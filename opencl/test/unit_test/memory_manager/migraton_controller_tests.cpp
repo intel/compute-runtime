@@ -216,7 +216,7 @@ TEST_F(MigrationControllerTests, whenHandleMigrationThenProperTagAddressAndTaskC
     EXPECT_EQ(pCsr0->peekTaskCount() + 1, migrationSyncData->latestTaskCountUsed);
 }
 
-TEST_F(MigrationControllerTests, givenWaitForTimestampsEnabledWhenHandleMigrationIsCalledThenDontSignalTaskCountBasedUsage) {
+TEST_F(MigrationControllerTests, givenWaitForTimestampsEnabledWhenHandleMigrationIsCalledThenSignalTaskCountBasedUsage) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableTimestampWaitForQueues.set(4);
 
@@ -234,7 +234,7 @@ TEST_F(MigrationControllerTests, givenWaitForTimestampsEnabledWhenHandleMigratio
 
     MigrationController::handleMigration(context, *pCsr0, pBuffer.get());
 
-    EXPECT_EQ(0u, migrationSyncData->signalUsageCalled);
+    EXPECT_EQ(1u, migrationSyncData->signalUsageCalled);
 }
 
 TEST_F(MigrationControllerTests, whenMemoryMigrationForMemoryObjectIsAlreadyInProgressThenDoEarlyReturn) {

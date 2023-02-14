@@ -364,11 +364,14 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenNonBlockedEnqueueRea
     auto &ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> &>(pCmdQ1->getGpgpuCommandStreamReceiver());
 
     EXPECT_FALSE(ultCsr.flushBatchedSubmissionsCalled);
+    auto currentTaskCount = ultCsr.peekTaskCount();
     EXPECT_EQ(MigrationSyncData::locationUndefined, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ1, pImage, CL_FALSE);
 
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     EXPECT_TRUE(ultCsr.flushBatchedSubmissionsCalled);
+    EXPECT_TRUE(ultCsr.flushTagUpdateCalled);
+    EXPECT_LT(currentTaskCount, ultCsr.peekTaskCount());
     pCmdQ1->finish();
     pCmdQ1->release();
     pImage->release();
@@ -424,6 +427,8 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
 
     EXPECT_FALSE(ultCsr1.flushBatchedSubmissionsCalled);
     EXPECT_FALSE(ultCsr2.flushBatchedSubmissionsCalled);
+    auto currentTaskCount1 = ultCsr1.peekTaskCount();
+    auto currentTaskCount2 = ultCsr2.peekTaskCount();
     EXPECT_EQ(MigrationSyncData::locationUndefined, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ1, pImage, CL_FALSE,
                                                EnqueueReadImageTraits::origin,
@@ -438,7 +443,9 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
 
     EXPECT_EQ(0u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     EXPECT_TRUE(ultCsr1.flushBatchedSubmissionsCalled);
+    EXPECT_TRUE(ultCsr1.flushTagUpdateCalled);
     EXPECT_FALSE(ultCsr2.flushBatchedSubmissionsCalled);
+    EXPECT_LT(currentTaskCount1, ultCsr1.peekTaskCount());
     pCmdQ1->finish();
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ2, pImage, CL_FALSE,
@@ -454,6 +461,8 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
 
     EXPECT_EQ(1u, pImage->getMultiGraphicsAllocation().getMigrationSyncData()->getCurrentLocation());
     EXPECT_TRUE(ultCsr2.flushBatchedSubmissionsCalled);
+    EXPECT_TRUE(ultCsr2.flushTagUpdateCalled);
+    EXPECT_LT(currentTaskCount2, ultCsr2.peekTaskCount());
     pCmdQ2->finish();
 
     EnqueueReadImageHelper<>::enqueueReadImage(pCmdQ1, pImage, CL_FALSE,
