@@ -734,6 +734,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMHostAlloc(NEO::
 template <GFXCORE_FAMILY gfxCoreFamily>
 bool CommandListCoreFamilyImmediate<gfxCoreFamily>::isSuitableUSMDeviceAlloc(NEO::SvmAllocationData *alloc) {
     return alloc && (alloc->memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY) &&
+           alloc->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex()) &&
            alloc->gpuAllocations.getGraphicsAllocation(this->device->getRootDeviceIndex())->storageInfo.getNumBanks() == 1;
 }
 
