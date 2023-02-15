@@ -69,6 +69,27 @@ void AILConfigurationHw<IGFX_DG2>::modifyKernelIfRequired(std::string &kernelsSo
     }
 }
 
+template <>
+inline void AILConfigurationHw<IGFX_DG2>::forceFallbackToPatchtokensIfRequired(const std::string &kernelSources, bool &requiresFallback) {
+    std::string_view dummyKernelSource{"kernel void _(){}"};
+    if (sourcesContain(kernelSources, dummyKernelSource)) {
+        requiresFallback = true;
+    }
+
+    for (const auto &name : {"Wondershare Filmora 11",
+                             "perf_check",
+                             "tlb_player_gui",
+                             "Wondershare Filmora",
+                             "Resolve",
+                             "ArcControlAssist",
+                             "ArcControl"}) {
+        if (processName == name) {
+            requiresFallback = true;
+            break;
+        }
+    }
+}
+
 template class AILConfigurationHw<IGFX_DG2>;
 
 } // namespace NEO

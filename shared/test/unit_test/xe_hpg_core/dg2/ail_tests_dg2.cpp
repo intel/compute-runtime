@@ -36,6 +36,32 @@ HWTEST2_F(AILTestsDg2, givenApplicationNamesThatRequireAILWhenApplyExtThenCorrec
     }
 }
 
+HWTEST2_F(AILTestsDg2, givenApplicationNamesThatRequirAILWhenCheckingIfPatchtokenFallbackIsRequiredThenIsCorrectResult, IsDG2) {
+    class AILMock : public AILConfigurationHw<productFamily> {
+      public:
+        using AILConfiguration::processName;
+    };
+
+    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
+    AILMock ail;
+    ailConfigurationTable[productFamily] = &ail;
+
+    for (const auto &name : {"perf_check",
+                             "tlb_player_gui",
+                             "Wondershare Filmora",
+                             "Wondershare Filmora 11",
+                             "Resolve",
+                             "ArcControlAssist",
+                             "ArcControl"}) {
+        ail.processName = name;
+
+        bool fallbackRequired;
+        ail.forceFallbackToPatchtokensIfRequired("", fallbackRequired);
+
+        EXPECT_TRUE(fallbackRequired);
+    }
+}
+
 HWTEST2_F(AILTestsDg2, givenFixesForApplicationsWhenModifyKernelIfRequiredIsCalledThenReturnCorrectResults, IsDG2) {
 
     class AILMock : public AILConfigurationHw<productFamily> {
