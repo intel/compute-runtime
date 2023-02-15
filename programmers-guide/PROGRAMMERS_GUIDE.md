@@ -1,6 +1,6 @@
 <!---
 
-Copyright (C) 2022 Intel Corporation
+Copyright (C) 2022-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -15,3 +15,4 @@ This document provides the architectural design followed in the Intel(R) Graphic
 ### [Implicit scaling](IMPLICIT_SCALING.md)
 ### [Immediate Commandlist](IMMEDIATE_COMMANDLIST.md)
 ### [System Memory Allocations in Level Zero](SYSTEM_MEMORY_ALLOCATIONS.md)
+### [Module Symbols and Linking in Level Zero](MODULE_SYMBOL_SUPPORT.md)
