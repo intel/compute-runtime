@@ -67,6 +67,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     auto lockCSR = this->csr->obtainUniqueOwnership();
 
+    if (this->clientId == std::numeric_limits<uint32_t>::max()) {
+        this->clientId = this->csr->registerClient();
+    }
+
     auto ctx = CommandListExecutionContext{phCommandLists,
                                            numCommandLists,
                                            csr->getPreemptionMode(),

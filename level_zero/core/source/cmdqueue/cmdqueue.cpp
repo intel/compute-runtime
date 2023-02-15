@@ -50,7 +50,9 @@ CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr
 }
 
 ze_result_t CommandQueueImp::destroy() {
-    this->csr->unregisterClient();
+    if (this->clientId != std::numeric_limits<uint32_t>::max()) {
+        this->csr->unregisterClient();
+    }
 
     if (commandStream.getCpuBase() != nullptr) {
         commandStream.replaceGraphicsAllocation(nullptr);
@@ -215,7 +217,6 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
     }
     csr->initializeResources();
     csr->initDirectSubmission();
-    csr->registerClient();
     return commandQueue;
 }
 

@@ -58,9 +58,13 @@ struct CommandQueue : _ze_command_queue_handle_t {
 
     bool peekIsCopyOnlyCommandQueue() const { return this->isCopyOnlyCommandQueue; }
 
+    uint32_t getClientId() { return this->clientId; }
+    void setClientId(uint32_t value) { this->clientId = value; }
+
   protected:
     bool frontEndTrackingEnabled() const;
 
+    uint32_t clientId = std::numeric_limits<uint32_t>::max();
     uint32_t partitionCount = 1;
     uint32_t activeSubDevices = 1;
     bool preemptionCmdSyncProgramming = true;

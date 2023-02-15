@@ -203,6 +203,10 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     auto csr = static_cast<CommandQueueImp *>(cmdQ)->getCsr();
     auto lockCSR = csr->obtainUniqueOwnership();
 
+    if (cmdQ->getClientId() == std::numeric_limits<uint32_t>::max()) {
+        cmdQ->setClientId(csr->registerClient());
+    }
+
     std::unique_lock<std::mutex> lockForIndirect;
     if (this->hasIndirectAllocationsAllowed()) {
         cmdQ->handleIndirectAllocationResidency(this->getUnifiedMemoryControls(), lockForIndirect, performMigration);

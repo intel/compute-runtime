@@ -730,7 +730,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     queueDesc.ordinal = 0;
     queueDesc.index = 0;
     device->createCommandListImmediate(&queueDesc, &cmdListHandle);
-    EXPECT_EQ(static_cast<CommandQueueImp *>(CommandList::fromHandle(cmdListHandle)->cmdQImmediate)->getCsr()->getNumClients(), 1u);
+    EXPECT_EQ(static_cast<CommandQueueImp *>(CommandList::fromHandle(cmdListHandle)->cmdQImmediate)->getCsr()->getNumClients(), 0u);
 
     EXPECT_FALSE(static_cast<L0::CommandListCoreFamilyImmediate<gfxCoreFamily> *>(CommandList::fromHandle(cmdListHandle))->waitForEventsFromHost());
 

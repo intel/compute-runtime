@@ -375,8 +375,8 @@ class CommandStreamReceiver {
     uint32_t getNumClients() {
         return this->numClients.load();
     }
-    void registerClient() {
-        this->numClients++;
+    uint32_t registerClient() {
+        return this->numClients.fetch_add(1u);
     }
     void unregisterClient() {
         this->numClients--;

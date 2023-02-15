@@ -583,6 +583,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenFlushTaskSubmissionEnabledAndSplitBcsC
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList0->csr);
     ultCsr->recordFlusheBatchBuffer = true;
     ultCsr->registerClient();
+    ultCsr->registerClient();
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
@@ -639,12 +640,13 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenRelaxedOrderingNotAllowedWhenDispatchS
     context->allocHostMem(&hostDesc, size, alignment, &dstPtr);
     auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList0->csr);
     ultCsr->recordFlusheBatchBuffer = true;
-    EXPECT_EQ(1u, ultCsr->getNumClients());
+    EXPECT_EQ(0u, ultCsr->getNumClients());
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
     ultCsr->directSubmission.reset(directSubmission);
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    EXPECT_EQ(1u, ultCsr->getNumClients());
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[0])->getTaskCount(), 0u);
     EXPECT_EQ(static_cast<CommandQueueImp *>(static_cast<DeviceImp *>(testL0Device.get())->bcsSplit.cmdQs[1])->getTaskCount(), 0u);
