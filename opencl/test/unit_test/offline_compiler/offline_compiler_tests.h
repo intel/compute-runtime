@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,6 +12,8 @@
 #include "shared/offline_compiler/source/offline_compiler.h"
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_argument_helper.h"
+
+#include "gtest/gtest.h"
 
 #include <cstdint>
 #include <memory>

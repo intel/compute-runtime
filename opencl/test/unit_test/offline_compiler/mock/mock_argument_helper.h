@@ -10,8 +10,6 @@
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/source/helpers/string.h"
 
-#include "gtest/gtest.h"
-
 #include <algorithm>
 #include <map>
 #include <optional>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,9 +13,9 @@
 namespace NEO {
 
 template <typename GfxFamily>
-class LogicalStateHelperMock : public GfxFamily::LogicalStateHelperHw {
+class LogicalStateHelperMock : public LogicalStateHelper {
   public:
-    LogicalStateHelperMock() : GfxFamily::LogicalStateHelperHw() {
+    LogicalStateHelperMock() : LogicalStateHelper() {
     }
 
     void writeStreamInline(LinearStream &linearStream, bool pipelinedState) override {

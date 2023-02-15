@@ -8,8 +8,6 @@
 #pragma once
 #include "shared/source/memory_manager/deferrable_deletion.h"
 
-#include "gtest/gtest.h"
-
 namespace NEO {
 class MockDeferrableDeletion : public DeferrableDeletion {
   public:

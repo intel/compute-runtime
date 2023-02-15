@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "test/unit_tests/mocks/mock_cmdlist.h"
 #include "test_api_tracing_common.h"
 
 namespace L0 {

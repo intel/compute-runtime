@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,9 @@
 #include "shared/source/commands/bxml_generator_glue.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/xe_hp_core/hw_info.h"
+
+#include <cstring>
+#include <type_traits>
 
 template <class T>
 struct CmdParse;

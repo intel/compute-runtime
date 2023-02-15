@@ -1,16 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/file_io.h"
-#include "shared/test/common/helpers/test_files.h"
-
-#include "gtest/gtest.h"
-
 #include <memory>
 #include <string>
 

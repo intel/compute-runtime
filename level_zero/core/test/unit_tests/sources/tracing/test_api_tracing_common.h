@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,19 +7,15 @@
 
 #pragma once
 #include "level_zero/core/source/device/device_imp.h"
-#include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_driver.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 #include "level_zero/experimental/source/tracing/tracing.h"
 #include "level_zero/experimental/source/tracing/tracing_imp.h"
 #include <level_zero/zet_api.h>
 
-#include <array>
+#include <gtest/gtest.h>
+
 #include <iostream>
 
 namespace L0 {

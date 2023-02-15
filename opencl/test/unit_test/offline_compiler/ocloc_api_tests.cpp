@@ -7,6 +7,7 @@
 
 #include "shared/offline_compiler/source/decoder/helper.h"
 #include "shared/offline_compiler/source/ocloc_api.h"
+#include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_concat.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/offline_compiler/source/queries.h"

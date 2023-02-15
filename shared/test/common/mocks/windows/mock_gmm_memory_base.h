@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,7 +12,6 @@
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
 #include "gmm_memory.h"
-#include "gtest/gtest.h"
 
 namespace NEO {
 

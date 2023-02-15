@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
-
-#include "gtest/gtest.h"
 
 // clang-format off
 using namespace NEO;

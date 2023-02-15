@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,6 @@
 #pragma once
 
 #include "shared/source/command_stream/aub_command_stream_receiver.h"
-#include "shared/test/common/test_macros/mock_method_macros.h"
-
-#include "gtest/gtest.h"
 
 #include <vector>
 

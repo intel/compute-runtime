@@ -7,9 +7,14 @@
 
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
 
+#include "shared/source/helpers/file_io.h"
+#include "shared/test/common/helpers/test_files.h"
+
 #include "opencl/source/program/create.inl"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"
+
+#include "gtest/gtest.h"
 
 namespace NEO {
 void ProgramFixture::createProgramWithSource(Context *pContext,

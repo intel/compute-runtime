@@ -10,6 +10,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -19,9 +20,10 @@
 
 #include "opencl/extensions/public/cl_ext_private.h"
 #include "opencl/source/cl_device/cl_device.h"
-#include "opencl/source/helpers/cl_memory_properties_helpers.h"
 #include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/multicontext_aub_fixture.h"
+
+#include "gtest/gtest.h"
 
 using namespace NEO;
 

@@ -7,6 +7,8 @@
 
 #include "shared/test/common/mocks/mock_deferrable_deletion.h"
 
+#include "gtest/gtest.h"
+
 namespace NEO {
 bool MockDeferrableDeletion::apply() {
     applyCalled++;

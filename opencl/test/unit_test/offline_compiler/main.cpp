@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/test_files.h"
@@ -15,6 +17,9 @@
 #include "environment.h"
 #include "limits.h"
 #include "test_files_setup.h"
+
+#include <fstream>
+#include <igfxfmid.h>
 
 #ifdef WIN32
 const char *fSeparator = "\\";

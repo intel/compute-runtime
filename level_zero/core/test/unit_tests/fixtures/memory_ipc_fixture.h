@@ -8,27 +8,15 @@
 #pragma once
 
 #include "shared/source/gmm_helper/gmm_helper.h"
-#include "shared/source/helpers/file_io.h"
-#include "shared/source/helpers/string.h"
-#include "shared/source/memory_manager/memory_operations_status.h"
-#include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
-#include "shared/test/common/mocks/ult_device_factory.h"
 
-#include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/core/source/driver/host_pointer_manager.h"
-#include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-#include "level_zero/core/source/module/module.h"
-#include "level_zero/core/source/module/module_imp.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
-#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 #include "gtest/gtest.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #pragma once
 
 #include "opencl/test/unit_test/offline_compiler/mock/mock_offline_compiler.h"
+
+#include "gtest/gtest.h"
 
 namespace NEO {
 struct OclocProductConfigTests : public ::testing::TestWithParam<std::tuple<AOT::PRODUCT_CONFIG, PRODUCT_FAMILY>> {

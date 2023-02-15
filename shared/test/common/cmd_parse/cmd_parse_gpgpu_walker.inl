@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "gtest/gtest.h"
 // clang-format off
 using namespace NEO;
 using GPGPU_WALKER                    = GenStruct::GPGPU_WALKER;

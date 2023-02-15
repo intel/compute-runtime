@@ -13,6 +13,7 @@
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
+#include "shared/test/common/mocks/ult_device_factory.h"
 
 #include "level_zero/core/source/context/context_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/memory_ipc_fixture.h"
