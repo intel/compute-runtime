@@ -785,6 +785,7 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
     MockCommandQueueHw<gfxCoreFamily> mockCommandQueue(device, device->getNEODevice()->getDefaultEngine().commandStreamReceiver, &desc);
     commandList->cmdQImmediate = &mockCommandQueue;
+    commandList->commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
 
     ze_group_count_t groupCount = {3, 2, 1};
     CmdListKernelLaunchParams launchParams = {};

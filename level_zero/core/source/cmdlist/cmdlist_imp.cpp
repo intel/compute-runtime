@@ -167,7 +167,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 
         commandList->isBcsSplitNeeded = deviceImp->bcsSplit.setupDevice(productFamily, internalUsage, desc, csr);
         commandList->commandContainer.setImmediateCmdListCsr(csr);
-        commandList->commandContainer.fillReusableAllocationLists();
 
         if (commandList->isWaitForEventsFromHostEnabled()) {
             commandList->numThreads = NEO::SysCalls::getNumThreads();

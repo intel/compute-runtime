@@ -422,6 +422,10 @@ GraphicsAllocation *CommandContainer::allocateCommandBuffer() {
 }
 
 void CommandContainer::fillReusableAllocationLists() {
+    if (this->immediateReusableAllocationList) {
+        return;
+    }
+
     this->immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
     const auto &hardwareInfo = device->getHardwareInfo();
     auto &gfxCoreHelper = device->getGfxCoreHelper();

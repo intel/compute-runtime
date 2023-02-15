@@ -873,6 +873,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaun
     cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
     cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
     returnValue = cmdList.appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, false);
@@ -888,6 +889,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenImmediateCommandListWhenAppendLaun
     cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
     cmdList.csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.commandContainer.setImmediateCmdListCsr(device->getNEODevice()->getDefaultEngine().commandStreamReceiver);
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
     returnValue = cmdList.appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, false);

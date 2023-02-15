@@ -1093,6 +1093,7 @@ HWTEST2_F(CommandListStateBaseAddressTest,
           givenStateBaseAddressTrackingWhenImmediateCmdListAppendKernelChangesHeapsAndExecuteThenFinalBaseAddressStateIsStoredInCsr,
           IsAtLeastSkl) {
     NEO::DebugManager.flags.DisableResourceRecycling.set(true);
+    NEO::DebugManager.flags.SetAmountOfReusableAllocations.set(0u);
 
     NEO::StateBaseAddressPropertiesSupport sbaPropertiesSupport = {};
     auto &productHelper = device->getProductHelper();

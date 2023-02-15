@@ -1003,9 +1003,24 @@ HWTEST2_F(CreateCommandListXeHpcTest, whenDestroyImmediateCommandListThenGlobalA
     EXPECT_FALSE(static_cast<DeviceImp *>(device)->allocationsForReuse->peekIsEmpty());
 }
 
-HWTEST2_F(CreateCommandListXeHpcTest, whenFlagDisabledAndCreateImmediateCommandListThenAllocationListEmpty, IsXeHpcCore) {
+HWTEST2_F(CreateCommandListXeHpcTest, whenFlagEnabledAndCreateImmediateCommandListThenAllocationListEmpty, IsXeHpcCore) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.SetAmountOfReusableAllocations.set(0);
+    DebugManager.flags.SetAmountOfReusableAllocations.set(2);
+    const ze_command_queue_desc_t desc = {};
+    bool internalEngine = true;
+
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily,
+                                                                              device,
+                                                                              &desc,
+                                                                              internalEngine,
+                                                                              NEO::EngineGroupType::RenderCompute,
+                                                                              returnValue));
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_TRUE(static_cast<DeviceImp *>(device)->allocationsForReuse->peekIsEmpty());
+}
+
+HWTEST2_F(CreateCommandListXeHpcTest, whenCreateImmediateCommandListThenAllocationListEmpty, IsXeHpcCore) {
     const ze_command_queue_desc_t desc = {};
     bool internalEngine = true;
 
