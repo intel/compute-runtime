@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/gen12lp/cmdlist_gen12lp.h"
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
@@ -339,6 +339,90 @@ HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierWithInvalidAd
 
     commandList->destroy();
     context->freeMem(ranges);
+}
+
+using CommandListGen12LpStateComputeModeTrackingTest = Test<ModuleMutableCommandListFixture>;
+
+GEN12LPTEST_F(CommandListGen12LpStateComputeModeTrackingTest,
+              givenPlatformDisabledStateComputeModeTrackingWhenCommandListCreatedAndKernelAppendedThenStreamPropertiesCorrectlyTransitionAndStateComputeModeCommandDispatched) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+
+    auto &productHelper = getHelper<ProductHelper>();
+    StateComputeModePropertiesSupport scmPropertiesSupport;
+    productHelper.fillScmPropertiesSupportStructure(scmPropertiesSupport);
+
+    ASSERT_FALSE(commandList->stateComputeModeTracking);
+
+    auto &cmdlistRequiredState = commandList->getRequiredStreamState();
+    auto &cmdListFinalState = commandList->getFinalStreamState();
+    auto &commandListStream = *commandList->commandContainer.getCommandStream();
+
+    EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.devicePreemptionMode.value);
+    EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.isCoherencyRequired.value);
+    EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.largeGrfMode.value);
+    EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.threadArbitrationPolicy.value);
+
+    EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.devicePreemptionMode.value);
+    EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.isCoherencyRequired.value);
+    EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.largeGrfMode.value);
+    EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.threadArbitrationPolicy.value);
+
+    const ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    GenCmdList cmdList;
+    std::vector<GenCmdList::iterator> stateComputeModeList;
+    size_t sizeBefore = 0;
+    size_t sizeAfter = 0;
+    auto result = ZE_RESULT_SUCCESS;
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    mockKernelImmData->kernelDescriptor->kernelAttributes.threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobin;
+
+    sizeBefore = commandListStream.getUsed();
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    sizeAfter = commandListStream.getUsed();
+
+    if (scmPropertiesSupport.devicePreemptionMode) {
+        int32_t expectedPreemption = static_cast<int32_t>(device->getDevicePreemptionMode());
+        EXPECT_EQ(expectedPreemption, cmdlistRequiredState.stateComputeMode.devicePreemptionMode.value);
+        EXPECT_EQ(expectedPreemption, cmdListFinalState.stateComputeMode.devicePreemptionMode.value);
+    } else {
+        EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.devicePreemptionMode.value);
+        EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.devicePreemptionMode.value);
+    }
+
+    if (scmPropertiesSupport.coherencyRequired) {
+        EXPECT_EQ(0, cmdlistRequiredState.stateComputeMode.isCoherencyRequired.value);
+        EXPECT_EQ(0, cmdListFinalState.stateComputeMode.isCoherencyRequired.value);
+    } else {
+        EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.isCoherencyRequired.value);
+        EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.isCoherencyRequired.value);
+    }
+
+    if (scmPropertiesSupport.largeGrfMode) {
+        EXPECT_EQ(0, cmdlistRequiredState.stateComputeMode.largeGrfMode.value);
+        EXPECT_EQ(0, cmdListFinalState.stateComputeMode.largeGrfMode.value);
+    } else {
+        EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.largeGrfMode.value);
+        EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.largeGrfMode.value);
+    }
+
+    if (scmPropertiesSupport.threadArbitrationPolicy) {
+        EXPECT_EQ(1, cmdlistRequiredState.stateComputeMode.threadArbitrationPolicy.value);
+        EXPECT_EQ(1, cmdListFinalState.stateComputeMode.threadArbitrationPolicy.value);
+    } else {
+        EXPECT_EQ(-1, cmdlistRequiredState.stateComputeMode.threadArbitrationPolicy.value);
+        EXPECT_EQ(-1, cmdListFinalState.stateComputeMode.threadArbitrationPolicy.value);
+    }
+
+    auto currentBuffer = ptrOffset(commandListStream.getCpuBase(), sizeBefore);
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
+                                                      currentBuffer,
+                                                      (sizeAfter - sizeBefore)));
+    stateComputeModeList = findAll<STATE_COMPUTE_MODE *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, stateComputeModeList.size());
 }
 
 } // namespace ult
