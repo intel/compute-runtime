@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/mocks/mock_gmm.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/source/platform/platform.h"

@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
 
 using namespace NEO;

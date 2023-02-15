@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,12 +7,14 @@
 
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/ptr_math.h"
+#include "shared/source/xe_hpg_core/hw_cmds_xe_hpg_core_base.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_os_context.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/command_stream/compute_mode_tests.h"
 
 #include "test_traits_common.h"

@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/aub_tests/fixtures/aub_fixture.h"
 #include "opencl/test/unit_test/fixtures/hello_world_kernel_fixture.h"

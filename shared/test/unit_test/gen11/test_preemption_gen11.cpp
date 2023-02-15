@@ -8,9 +8,11 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/gen11/hw_cmds_base.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
 
 #include "patch_shared.h"

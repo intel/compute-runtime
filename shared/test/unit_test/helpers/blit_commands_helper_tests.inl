@@ -13,7 +13,8 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
-#include "shared/test/common/test_macros/hw_test.h"
+
+#include "gtest/gtest.h"
 
 using namespace NEO;
 

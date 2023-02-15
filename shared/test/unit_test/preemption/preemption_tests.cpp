@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
 
 #include "gtest/gtest.h"

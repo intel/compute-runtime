@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,10 @@
 #pragma once
 
 #include "shared/source/command_stream/preemption_mode.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/test_macros/hw_test.h"
+
+#include "gtest/gtest.h"
 
 #include <cinttypes>
 #include <memory>

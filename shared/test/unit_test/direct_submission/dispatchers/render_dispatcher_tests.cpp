@@ -10,6 +10,7 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/unit_test/direct_submission/dispatchers/dispatcher_fixture.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"

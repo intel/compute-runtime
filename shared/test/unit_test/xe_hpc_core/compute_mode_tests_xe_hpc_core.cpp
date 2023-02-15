@@ -10,6 +10,7 @@
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/command_stream/compute_mode_tests.h"
 
 using namespace NEO;

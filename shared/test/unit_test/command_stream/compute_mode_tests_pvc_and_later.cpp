@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/command_stream/compute_mode_tests.h"
 
 using namespace NEO;

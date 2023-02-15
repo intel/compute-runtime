@@ -6,7 +6,9 @@
  */
 
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/gen11/hw_cmds_base.h"
 #include "shared/source/image/image_surface_state.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/mem_obj/image.h"

@@ -9,7 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/ptr_math.h"
-#include "shared/test/common/test_macros/test.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/mem_obj/image.h"
 #include "opencl/test/unit_test/aub_tests/fixtures/image_aub_fixture.h"

@@ -22,6 +22,8 @@
 #include "shared/test/common/mocks/windows/mock_wddm_allocation.h"
 #include "shared/test/common/os_interface/windows/ult_dxcore_factory.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
+#include "shared/test/common/test_macros/hw_test.h"
+
 namespace NEO {
 namespace SysCalls {
 extern const wchar_t *currentLibraryPath;

@@ -7,6 +7,8 @@
 
 #include "shared/source/helpers/simd_helper.h"
 
+#include "gtest/gtest.h"
+
 namespace NEO {
 
 template <typename WALKER_TYPE>

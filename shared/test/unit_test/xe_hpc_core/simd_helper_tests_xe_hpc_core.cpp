@@ -5,7 +5,9 @@
  *
  */
 
-#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
+#include "shared/source/xe_hpc_core/hw_info_xe_hpc_core.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/helpers/simd_helper_tests_pvc_and_later.inl"
 
 using namespace NEO;

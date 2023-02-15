@@ -6,9 +6,12 @@
  */
 
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/gen12lp/hw_cmds_base.h"
+#include "shared/source/gen12lp/hw_info_gen12lp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/unit_test/fixtures/preemption_fixture.h"
 
 using namespace NEO;
