@@ -44,8 +44,6 @@ class HeapAllocator {
 
     uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment);
 
-    uint64_t allocateWithCustomAlignmentAndBasePtr(size_t &sizeToAllocate, size_t alignment, uint64_t base, bool growableAddresses);
-
     void free(uint64_t ptr, size_t size);
 
     uint64_t getLeftSize() const {

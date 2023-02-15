@@ -796,7 +796,7 @@ ze_result_t ContextImp::reserveVirtualMem(const void *pStart,
         return ZE_RESULT_ERROR_UNSUPPORTED_SIZE;
     }
     NEO::VirtualMemoryReservation *virtualMemoryReservation = new NEO::VirtualMemoryReservation;
-    virtualMemoryReservation->virtualAddressRange = this->driverHandle->getMemoryManager()->reserveGpuAddress(reinterpret_cast<uint64_t>(pStart), size, this->driverHandle->rootDeviceIndices, &virtualMemoryReservation->rootDeviceIndex);
+    virtualMemoryReservation->virtualAddressRange = this->driverHandle->getMemoryManager()->reserveGpuAddress(pStart, size, this->driverHandle->rootDeviceIndices, &virtualMemoryReservation->rootDeviceIndex);
     if (pStart != 0x0) {
         if (virtualMemoryReservation->virtualAddressRange.address != reinterpret_cast<uint64_t>(pStart)) {
             delete virtualMemoryReservation;

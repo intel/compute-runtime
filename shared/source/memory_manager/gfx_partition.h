@@ -71,10 +71,6 @@ class GfxPartition {
         return getHeap(heapIndex).allocateWithCustomAlignment(size, alignment);
     }
 
-    MOCKABLE_VIRTUAL uint64_t heapAllocateWithBaseAddress(HeapIndex heapIndex, size_t &size, uint64_t base) {
-        return getHeap(heapIndex).allocateWithBaseAddress(size, base);
-    }
-
     MOCKABLE_VIRTUAL void heapFree(HeapIndex heapIndex, uint64_t ptr, size_t size) {
         getHeap(heapIndex).free(ptr, size);
     }
@@ -116,7 +112,6 @@ class GfxPartition {
         uint64_t getLimit() const { return size ? base + size - 1 : 0; }
         uint64_t allocate(size_t &size);
         uint64_t allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment);
-        uint64_t allocateWithBaseAddress(size_t &sizeToAllocate, uint64_t base);
         void free(uint64_t ptr, size_t size);
 
       protected:

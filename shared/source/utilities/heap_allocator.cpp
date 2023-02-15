@@ -19,10 +19,6 @@ bool operator<(const HeapChunk &hc1, const HeapChunk &hc2) {
 }
 
 uint64_t HeapAllocator::allocateWithCustomAlignment(size_t &sizeToAllocate, size_t alignment) {
-    return allocateWithCustomAlignmentAndBasePtr(sizeToAllocate, alignment, 0u, false);
-}
-
-uint64_t HeapAllocator::allocateWithCustomAlignmentAndBasePtr(size_t &sizeToAllocate, size_t alignment, uint64_t base, bool growableAddresses) {
     if (alignment == 0) {
         alignment = this->allocationAlignment;
     }
@@ -42,8 +38,9 @@ uint64_t HeapAllocator::allocateWithCustomAlignmentAndBasePtr(size_t &sizeToAllo
     for (;;) {
         size_t sizeOfFreedChunk = 0;
         uint64_t ptrReturn = getFromFreedChunks(sizeToAllocate, freedChunks, sizeOfFreedChunk, alignment);
+
         if (ptrReturn == 0llu) {
-            if (sizeToAllocate > sizeThreshold || growableAddresses) {
+            if (sizeToAllocate > sizeThreshold) {
                 const uint64_t misalignment = alignUp(pLeftBound, alignment) - pLeftBound;
                 if (pLeftBound + misalignment + sizeToAllocate <= pRightBound) {
                     if (misalignment) {
@@ -68,16 +65,14 @@ uint64_t HeapAllocator::allocateWithCustomAlignmentAndBasePtr(size_t &sizeToAllo
         }
 
         if (ptrReturn != 0llu) {
-            if (base == ptrReturn || base == 0) {
-                if (sizeOfFreedChunk > 0) {
-                    availableSize -= sizeOfFreedChunk;
-                    sizeToAllocate = sizeOfFreedChunk;
-                } else {
-                    availableSize -= sizeToAllocate;
-                }
-                DEBUG_BREAK_IF(!isAligned(ptrReturn, alignment));
-                return ptrReturn;
+            if (sizeOfFreedChunk > 0) {
+                availableSize -= sizeOfFreedChunk;
+                sizeToAllocate = sizeOfFreedChunk;
+            } else {
+                availableSize -= sizeToAllocate;
             }
+            DEBUG_BREAK_IF(!isAligned(ptrReturn, alignment));
+            return ptrReturn;
         }
 
         if (defragmentCount == 1)

@@ -528,22 +528,22 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType
     return memoryAllocation;
 }
 
-AddressRange OsAgnosticMemoryManager::reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
+AddressRange OsAgnosticMemoryManager::reserveGpuAddress(const void *requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
     uint64_t gpuVa = 0u;
     *reservedOnRootDeviceIndex = 0;
-    size_t allocatedSize = 0;
+    if (requiredStartAddress) {
+        return AddressRange{0, 0};
+    }
     for (auto rootDeviceIndex : rootDeviceIndices) {
         auto gfxPartition = getGfxPartition(rootDeviceIndex);
         auto gmmHelper = getGmmHelper(rootDeviceIndex);
-        uint64_t baseAddress = gmmHelper->decanonize(requiredStartAddress);
-        gpuVa = gmmHelper->canonize(gfxPartition->heapAllocateWithBaseAddress(HeapIndex::HEAP_STANDARD, size, baseAddress));
+        gpuVa = gmmHelper->canonize(gfxPartition->heapAllocate(HeapIndex::HEAP_STANDARD, size));
         if (gpuVa != 0u) {
             *reservedOnRootDeviceIndex = rootDeviceIndex;
-            allocatedSize = size;
             break;
         }
     }
-    return AddressRange{gpuVa, allocatedSize};
+    return AddressRange{gpuVa, size};
 }
 
 void OsAgnosticMemoryManager::freeGpuAddress(AddressRange addressRange, uint32_t rootDeviceIndex) {

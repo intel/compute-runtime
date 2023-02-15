@@ -816,13 +816,13 @@ bool WddmMemoryManager::createWddmAllocation(WddmAllocation *allocation, void *r
     return mapGpuVirtualAddress(allocation, requiredGpuPtr);
 }
 
-AddressRange WddmMemoryManager::reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
+AddressRange WddmMemoryManager::reserveGpuAddress(const void *requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
     uint64_t gpuVa = 0u;
     *reservedOnRootDeviceIndex = 0;
     size_t reservedSize = 0;
     for (auto rootDeviceIndex : rootDeviceIndices) {
         auto gfxPartition = getGfxPartition(rootDeviceIndex);
-        gpuVa = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(requiredStartAddress, gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), size);
+        gpuVa = getWddm(rootDeviceIndex).reserveGpuVirtualAddress(reinterpret_cast<uint64_t>(requiredStartAddress), gfxPartition->getHeapMinimalAddress(HeapIndex::HEAP_STANDARD64KB), gfxPartition->getHeapLimit(HeapIndex::HEAP_STANDARD64KB), size);
         if (gpuVa != 0u) {
             *reservedOnRootDeviceIndex = rootDeviceIndex;
             reservedSize = size;

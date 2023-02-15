@@ -631,7 +631,7 @@ TEST_F(WddmMemoryManagerSimpleTest, givenWddmMemoryManagerWhenGpuAddressIsReserv
     RootDeviceIndicesContainer rootDevices;
     rootDevices.push_back(0);
     uint32_t rootDeviceIndexReserved = 1;
-    auto addressRange = memoryManager->reserveGpuAddress(0ull, MemoryConstants::pageSize64k, rootDevices, &rootDeviceIndexReserved);
+    auto addressRange = memoryManager->reserveGpuAddress(nullptr, MemoryConstants::pageSize64k, rootDevices, &rootDeviceIndexReserved);
     auto gmmHelper = memoryManager->getGmmHelper(0);
     EXPECT_EQ(0u, rootDeviceIndexReserved);
     EXPECT_NE(0u, gmmHelper->decanonize(addressRange.address));
