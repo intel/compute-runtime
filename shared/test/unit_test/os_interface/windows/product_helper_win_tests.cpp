@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/unit_test/os_interface/windows/hw_info_config_win_tests.h"
+#include "shared/test/unit_test/os_interface/windows/product_helper_win_tests.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"

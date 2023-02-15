@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
+#include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
 
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -443,4 +443,9 @@ HWTEST2_F(HwConfigLinux, givenSliceCountWhenConfigureHwInfoDrmThenProperInitiali
     for (uint32_t i = 0; i < sliceCount; i++) {
         EXPECT_TRUE(outHwInfo.gtSystemInfo.SliceInfo[i].Enabled);
     }
+}
+
+HWTEST2_F(ProductHelperTest, givenProductHelperWhenIsPlatformQueryNotSupportedThenReturnFalse, IsAtLeastMtl) {
+
+    EXPECT_TRUE(productHelper->isPlatformQuerySupported());
 }

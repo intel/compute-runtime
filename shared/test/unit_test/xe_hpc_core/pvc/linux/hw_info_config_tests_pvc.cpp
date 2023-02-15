@@ -17,7 +17,7 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/xe_hpc_core/pvc/product_configs_pvc.h"
 #include "shared/test/unit_test/fixtures/product_config_fixture.h"
-#include "shared/test/unit_test/os_interface/linux/hw_info_config_linux_tests.h"
+#include "shared/test/unit_test/os_interface/linux/product_helper_linux_tests.h"
 
 using namespace NEO;
 
