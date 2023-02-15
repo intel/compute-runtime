@@ -50,7 +50,7 @@ CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr
 }
 
 ze_result_t CommandQueueImp::destroy() {
-    if (this->clientId != std::numeric_limits<uint32_t>::max()) {
+    if (this->clientId != CommandQueue::clientNotRegistered) {
         this->csr->unregisterClient();
     }
 
