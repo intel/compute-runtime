@@ -1721,10 +1721,17 @@ TEST(CommandQueue, givenBufferWhenMultiStorageIsNotSetThenDontRequireMigrations)
     alignedFree(dstPtr);
 }
 
-TEST(CommandQueue, givenBuffersInLocalMemoryWhenMultiGraphicsAllocationsRequireMigrationsThenMigrateTheAllocations) {
+using MultiRootDeviceCommandQueueTest = ::testing::Test;
+HWTEST2_F(MultiRootDeviceCommandQueueTest, givenBuffersInLocalMemoryWhenMultiGraphicsAllocationsRequireMigrationsThenMigrateTheAllocations, IsAtLeastGen12lp) {
     MockDefaultContext context{true};
     ASSERT_TRUE(context.getNumDevices() > 1);
     ASSERT_TRUE(context.getRootDeviceIndices().size() > 1);
+
+    auto memoryManager = static_cast<MockMemoryManager *>(context.getMemoryManager());
+    for (auto &rootDeviceIndex : context.getRootDeviceIndices()) {
+
+        memoryManager->localMemorySupported[rootDeviceIndex] = true;
+    }
 
     auto sourceRootDeviceIndex = context.getDevice(0)->getRootDeviceIndex();
     EXPECT_EQ(0u, sourceRootDeviceIndex);

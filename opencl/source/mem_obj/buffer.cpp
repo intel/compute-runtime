@@ -470,7 +470,7 @@ Buffer *Buffer::create(Context *context,
     auto allocation = allocationInfo.memory;
     auto memoryStorage = allocation->getUnderlyingBuffer();
     if (context->getRootDeviceIndices().size() > 1) {
-        multiGraphicsAllocation.setMultiStorage(true);
+        multiGraphicsAllocation.setMultiStorage(!MemoryPoolHelper::isSystemMemoryPool(allocation->getMemoryPool()));
     }
 
     auto pBuffer = createBufferHw(context,
@@ -669,7 +669,7 @@ Buffer *Buffer::createSubBuffer(cl_mem_flags flags,
 uint64_t Buffer::setArgStateless(void *memory, uint32_t patchSize, uint32_t rootDeviceIndex, bool set32BitAddressing) {
     // Subbuffers have offset that graphicsAllocation is not aware of
     auto graphicsAllocation = multiGraphicsAllocation.getGraphicsAllocation(rootDeviceIndex);
-    uintptr_t addressToPatch = ((set32BitAddressing) ? static_cast<uintptr_t>(graphicsAllocation->getGpuAddressToPatch()) : static_cast<uintptr_t>(graphicsAllocation->getGpuAddress())) + this->offset;
+    auto addressToPatch = ((set32BitAddressing) ? graphicsAllocation->getGpuAddressToPatch() : graphicsAllocation->getGpuAddress()) + this->offset;
     DEBUG_BREAK_IF(!(graphicsAllocation->isLocked() || (addressToPatch != 0) || (graphicsAllocation->getGpuBaseAddress() != 0) ||
                      (this->getCpuAddress() == nullptr && graphicsAllocation->peekSharedHandle())));
 

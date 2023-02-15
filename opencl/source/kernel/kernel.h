@@ -465,7 +465,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
 
     void *patchBufferOffset(const ArgDescPointer &argAsPtr, void *svmPtr, GraphicsAllocation *svmAlloc);
 
-    void patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const ArgDescPointer &arg);
+    void patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const ArgDescPointer &arg);
 
     void provideInitializationHints();
 

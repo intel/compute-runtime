@@ -2813,7 +2813,7 @@ TEST(KernelTest, givenKernelWithPatchInfoCollectionEnabledWhenPatchWithImplicitS
     kernel.kernelInfo.addArgBuffer(0, 0, sizeof(void *));
     uint64_t crossThreadData = 0;
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
-    kernel.mockKernel->patchWithImplicitSurface(&crossThreadData, mockAllocation, kernel.kernelInfo.argAsPtr(0));
+    kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
     EXPECT_EQ(1u, kernel.mockKernel->getPatchInfoDataList().size());
 }
 
@@ -2823,7 +2823,7 @@ TEST(KernelTest, givenKernelWithPatchInfoCollecitonEnabledAndArgumentWithInvalid
     MockGraphicsAllocation mockAllocation;
     kernel.kernelInfo.addArgBuffer(0, undefined<CrossThreadDataOffset>, sizeof(void *));
     uint64_t crossThreadData = 0;
-    kernel.mockKernel->patchWithImplicitSurface(&crossThreadData, mockAllocation, kernel.kernelInfo.argAsPtr(0));
+    kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
 }
 
@@ -2837,7 +2837,7 @@ TEST(KernelTest, givenKernelWithPatchInfoCollectionEnabledAndValidArgumentWhenPa
     kernel.kernelInfo.addArgBuffer(0, 0, sizeof(void *));
     uint64_t crossThreadData = 0;
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
-    kernel.mockKernel->patchWithImplicitSurface(&crossThreadData, mockAllocation, kernel.kernelInfo.argAsPtr(0));
+    kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
     EXPECT_EQ(1u, kernel.mockKernel->getPatchInfoDataList().size());
 }
 
@@ -2848,7 +2848,7 @@ TEST(KernelTest, givenKernelWithPatchInfoCollectionDisabledWhenPatchWithImplicit
     kernel.kernelInfo.addArgBuffer(0, 0, sizeof(void *));
     uint64_t crossThreadData = 0;
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
-    kernel.mockKernel->patchWithImplicitSurface(&crossThreadData, mockAllocation, kernel.kernelInfo.argAsPtr(0));
+    kernel.mockKernel->patchWithImplicitSurface(castToUint64(&crossThreadData), mockAllocation, kernel.kernelInfo.argAsPtr(0));
     EXPECT_EQ(0u, kernel.mockKernel->getPatchInfoDataList().size());
 }
 

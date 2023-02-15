@@ -2713,7 +2713,7 @@ TEST_F(MemoryManagerMultiRootDeviceTests, WhenAllocatingGlobalSurfaceThenItHasCo
     if (device1->getMemoryManager()->isLimitedRange(expectedRootDeviceIndex)) {
         device1->getMemoryManager()->freeGraphicsMemory(allocation);
     } else {
-        context->getSVMAllocsManager()->freeSVMAlloc(allocation->getUnderlyingBuffer());
+        context->getSVMAllocsManager()->freeSVMAlloc(reinterpret_cast<void *>(allocation->getGpuAddress()));
     }
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -185,7 +185,7 @@ TEST_F(CloneKernelTest, givenArgLocalWhenCloningKernelThenKernelInfoIsCorrect) {
 }
 
 TEST_F(CloneKernelTest, givenArgBufferWhenCloningKernelThenKernelInfoIsCorrect) {
-    pKernelInfo->addArgBuffer(0, 0x20, sizeof(void *));
+    pKernelInfo->addArgBuffer(0, 0x20, sizeof(uint64_t));
 
     auto buffer = clUniquePtr(Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal));
     cl_mem memObj = buffer.get();
@@ -220,14 +220,14 @@ TEST_F(CloneKernelTest, givenArgBufferWhenCloningKernelThenKernelInfoIsCorrect) 
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
         EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
 
-        auto pKernelArg = (cl_mem *)(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
-                                     pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
-        EXPECT_EQ(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddressToPatch(), reinterpret_cast<uint64_t>(*pKernelArg));
+        auto pKernelArg = reinterpret_cast<uint64_t *>(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
+                                                       pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
+        EXPECT_EQ(buffer->getGraphicsAllocation(rootDeviceIndex)->getGpuAddressToPatch(), *pKernelArg);
     }
 }
 
 TEST_F(CloneKernelTest, givenArgPipeWhenCloningKernelThenKernelInfoIsCorrect) {
-    pKernelInfo->addArgPipe(0, 0x20, sizeof(void *));
+    pKernelInfo->addArgPipe(0, 0x20, sizeof(uint64_t));
     auto pipe = clUniquePtr(Pipe::create(context.get(), 0, 1, 20, nullptr, retVal));
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -260,9 +260,9 @@ TEST_F(CloneKernelTest, givenArgPipeWhenCloningKernelThenKernelInfoIsCorrect) {
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).isPatched);
     EXPECT_EQ(pSourceKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId, pClonedKernel[rootDeviceIndex]->getKernelArgInfo(0).allocId);
 
-    auto pKernelArg = (cl_mem *)(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
-                                 pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
-    EXPECT_EQ(pipe->getGraphicsAllocation(rootDeviceIndex)->getGpuAddressToPatch(), reinterpret_cast<uint64_t>(*pKernelArg));
+    auto pKernelArg = reinterpret_cast<uint64_t *>(pClonedKernel[rootDeviceIndex]->getCrossThreadData() +
+                                                   pClonedKernel[rootDeviceIndex]->getKernelInfo().getArgDescriptorAt(0).as<ArgDescPointer>().stateless);
+    EXPECT_EQ(pipe->getGraphicsAllocation(rootDeviceIndex)->getGpuAddressToPatch(), *pKernelArg);
 }
 
 TEST_F(CloneKernelTest, givenArgImageWhenCloningKernelThenKernelInfoIsCorrect) {

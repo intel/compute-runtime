@@ -127,13 +127,12 @@ inline void patch(const SrcT &src, void *dst, CrossThreadDataOffset dstOffsetByt
     }
 }
 
-void Kernel::patchWithImplicitSurface(void *ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const ArgDescPointer &arg) {
+void Kernel::patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, GraphicsAllocation &allocation, const ArgDescPointer &arg) {
     if ((nullptr != crossThreadData) && isValidOffset(arg.stateless)) {
         auto pp = ptrOffset(crossThreadData, arg.stateless);
-        uintptr_t addressToPatch = reinterpret_cast<uintptr_t>(ptrToPatchInCrossThreadData);
-        patchWithRequiredSize(pp, arg.pointerSize, addressToPatch);
+        patchWithRequiredSize(pp, arg.pointerSize, ptrToPatchInCrossThreadData);
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-            PatchInfoData patchInfoData(addressToPatch, 0u, PatchInfoAllocationType::KernelArg, reinterpret_cast<uint64_t>(crossThreadData), arg.stateless, PatchInfoAllocationType::IndirectObjectHeap, arg.pointerSize);
+            PatchInfoData patchInfoData(ptrToPatchInCrossThreadData, 0u, PatchInfoAllocationType::KernelArg, reinterpret_cast<uint64_t>(crossThreadData), arg.stateless, PatchInfoAllocationType::IndirectObjectHeap, arg.pointerSize);
             this->patchInfoDataList.push_back(patchInfoData);
         }
     }
@@ -227,18 +226,18 @@ cl_int Kernel::initialize() {
 
     if (isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress.stateless)) {
         DEBUG_BREAK_IF(program->getConstantSurface(rootDeviceIndex) == nullptr);
-        uintptr_t constMemory = isBuiltIn ? (uintptr_t)program->getConstantSurface(rootDeviceIndex)->getUnderlyingBuffer() : (uintptr_t)program->getConstantSurface(rootDeviceIndex)->getGpuAddressToPatch();
+        uint64_t constMemory = isBuiltIn ? castToUint64(program->getConstantSurface(rootDeviceIndex)->getUnderlyingBuffer()) : program->getConstantSurface(rootDeviceIndex)->getGpuAddressToPatch();
 
         const auto &arg = kernelDescriptor.payloadMappings.implicitArgs.globalConstantsSurfaceAddress;
-        patchWithImplicitSurface(reinterpret_cast<void *>(constMemory), *program->getConstantSurface(rootDeviceIndex), arg);
+        patchWithImplicitSurface(constMemory, *program->getConstantSurface(rootDeviceIndex), arg);
     }
 
     if (isValidOffset(kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress.stateless)) {
         DEBUG_BREAK_IF(program->getGlobalSurface(rootDeviceIndex) == nullptr);
-        uintptr_t globalMemory = isBuiltIn ? (uintptr_t)program->getGlobalSurface(rootDeviceIndex)->getUnderlyingBuffer() : (uintptr_t)program->getGlobalSurface(rootDeviceIndex)->getGpuAddressToPatch();
+        uint64_t globalMemory = isBuiltIn ? castToUint64(program->getGlobalSurface(rootDeviceIndex)->getUnderlyingBuffer()) : program->getGlobalSurface(rootDeviceIndex)->getGpuAddressToPatch();
 
         const auto &arg = kernelDescriptor.payloadMappings.implicitArgs.globalVariablesSurfaceAddress;
-        patchWithImplicitSurface(reinterpret_cast<void *>(globalMemory), *program->getGlobalSurface(rootDeviceIndex), arg);
+        patchWithImplicitSurface(globalMemory, *program->getGlobalSurface(rootDeviceIndex), arg);
     }
 
     // Patch Surface State Heap
@@ -364,7 +363,7 @@ cl_int Kernel::patchPrivateSurface() {
         }
 
         const auto &privateMemoryAddress = kernelDescriptor.payloadMappings.implicitArgs.privateMemoryAddress;
-        patchWithImplicitSurface(reinterpret_cast<void *>(privateSurface->getGpuAddressToPatch()), *privateSurface, privateMemoryAddress);
+        patchWithImplicitSurface(privateSurface->getGpuAddressToPatch(), *privateSurface, privateMemoryAddress);
     }
     return CL_SUCCESS;
 }

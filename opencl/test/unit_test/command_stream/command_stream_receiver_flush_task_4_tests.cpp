@@ -938,6 +938,10 @@ struct BcsCrossDeviceMigrationTests : public ::testing::Test {
         cl_device_id devices[] = {device1, device2};
 
         context = std::make_unique<MockContext>(ClDeviceVector(devices, 2), false);
+        auto memoryManager = static_cast<MockMemoryManager *>(context->getMemoryManager());
+        for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
+            memoryManager->localMemorySupported[rootDeviceIndex] = true;
+        }
     }
 
     void TearDown() override {

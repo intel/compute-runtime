@@ -2164,16 +2164,29 @@ TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedThenBufferGraphicsAllocatio
     EXPECT_EQ(expectedRootDeviceIndex, graphicsAllocation->getRootDeviceIndex());
 }
 
-TEST_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedThenBufferMultiGraphicsAllocationIsCreatedInSystemMemoryPool) {
+HWTEST2_F(MultiRootDeviceBufferTest, WhenBufferIsCreatedThenBufferMultiGraphicsAllocationIsCreatedInLocalMemoryPool, IsAtLeastGen12lp) {
     cl_int retVal = 0;
 
     std::unique_ptr<Buffer> buffer1(Buffer::create(context.get(), 0, MemoryConstants::pageSize, nullptr, retVal));
 
-    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(1u)->getMemoryPool()));
-    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(2u)->getMemoryPool()));
+    EXPECT_FALSE(MemoryPoolHelper::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(1u)->getMemoryPool()));
+    EXPECT_FALSE(MemoryPoolHelper::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(2u)->getMemoryPool()));
+    EXPECT_TRUE(buffer1->getMultiGraphicsAllocation().requiresMigrations());
 }
 
-TEST(MultiRootDeviceBufferTest2, WhenBufferIsCreatedThenSecondAndSubsequentAllocationsAreCreatedFromExisitingStorage) {
+HWTEST2_F(MultiRootDeviceBufferTest, givenDisableLocalMemoryWhenBufferIsCreatedThenBufferMultiGraphicsAllocationsDontNeedMigrations, IsAtLeastGen12lp) {
+    cl_int retVal = 0;
+    MockDefaultContext context;
+
+    std::unique_ptr<Buffer> buffer1(Buffer::create(&context, 0, MemoryConstants::pageSize, nullptr, retVal));
+
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(1u)->getMemoryPool()));
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(buffer1->getMultiGraphicsAllocation().getGraphicsAllocation(2u)->getMemoryPool()));
+    EXPECT_FALSE(buffer1->getMultiGraphicsAllocation().requiresMigrations());
+}
+
+using MultiRootDeviceBufferTest2 = ::testing::Test;
+HWTEST2_F(MultiRootDeviceBufferTest2, WhenBufferIsCreatedThenSecondAndSubsequentAllocationsAreCreatedFromExisitingStorage, IsAtLeastGen12lp) {
     cl_int retVal = 0;
     MockDefaultContext context;
     auto memoryManager = static_cast<MockMemoryManager *>(context.getMemoryManager());
@@ -2191,8 +2204,13 @@ TEST(MultiRootDeviceBufferTest2, WhenBufferIsCreatedThenSecondAndSubsequentAlloc
     EXPECT_EQ(memoryManager->allocationsFromExistingStorage[1], buffer->getMultiGraphicsAllocation().getGraphicsAllocation(2u));
 }
 
-TEST(MultiRootDeviceBufferTest2, givenHostPtrToCopyWhenBufferIsCreatedWithMultiStorageThenMemoryIsPutInFirstDeviceInContext) {
+HWTEST2_F(MultiRootDeviceBufferTest2, givenHostPtrToCopyWhenBufferIsCreatedWithMultiStorageThenMemoryIsPutInFirstDeviceInContext, IsAtLeastGen12lp) {
     UltClDeviceFactory deviceFactory{2, 0};
+    auto memoryManager = static_cast<MockMemoryManager *>(deviceFactory.rootDevices[0]->getMemoryManager());
+    for (auto &rootDeviceIndex : {0, 1}) {
+        memoryManager->localMemorySupported[rootDeviceIndex] = true;
+    }
+
     {
         cl_device_id deviceIds[] = {
             deviceFactory.rootDevices[0],

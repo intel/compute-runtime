@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,6 +31,9 @@ class MultiRootDeviceFixture : public ::testing::Test {
         mockMemoryManager = static_cast<MockMemoryManager *>(device1->getMemoryManager());
 
         ASSERT_EQ(mockMemoryManager, device1->getMemoryManager());
+        for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
+            mockMemoryManager->localMemorySupported[rootDeviceIndex] = true;
+        }
     }
 
     const uint32_t expectedRootDeviceIndex = 1;
@@ -52,6 +55,9 @@ class MultiRootDeviceWithSubDevicesFixture : public ::testing::Test {
         context.reset(new MockContext(ClDeviceVector(devices, 3), false));
         mockMemoryManager = static_cast<MockMemoryManager *>(device1->getMemoryManager());
         ASSERT_EQ(mockMemoryManager, device1->getMemoryManager());
+        for (auto &rootDeviceIndex : context->getRootDeviceIndices()) {
+            mockMemoryManager->localMemorySupported[rootDeviceIndex] = true;
+        }
     }
 
     const uint32_t expectedRootDeviceIndex = 1;

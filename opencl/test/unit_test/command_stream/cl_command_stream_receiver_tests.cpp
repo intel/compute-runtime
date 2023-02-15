@@ -80,6 +80,8 @@ using CommandStreamReceiverMultiRootDeviceTest = MultiRootDeviceFixture;
 TEST_F(CommandStreamReceiverMultiRootDeviceTest, WhenCreatingCommandStreamGraphicsAllocationsThenTheyHaveCorrectRootDeviceIndex) {
     auto commandStreamReceiver = &device1->getGpgpuCommandStreamReceiver();
 
+    mockMemoryManager->localMemorySupported[1] = false;
+
     ASSERT_NE(nullptr, commandStreamReceiver);
     EXPECT_EQ(expectedRootDeviceIndex, commandStreamReceiver->getRootDeviceIndex());
 
