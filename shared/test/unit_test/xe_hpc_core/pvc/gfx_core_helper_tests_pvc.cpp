@@ -157,4 +157,54 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenMemorySynchronizationCommandsWhenAddingSyn
         }
     }
 }
+
+PVCTEST_F(GfxCoreHelperTestsPvc, GivenCooperativeEngineSupportedAndNotUsedWhenAdjustMaxWorkGroupCountIsCalledThenSmallerValueIsReturned) {
+
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
+    const auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
+
+    hwInfo.capabilityTable.defaultEngineType = aub_stream::EngineType::ENGINE_CCS;
+    hwInfo.featureTable.flags.ftrRcsNode = false;
+
+    auto tilePartsForConcurrentKernels = PVC::numberOfpartsInTileForConcurrentKernels;
+    auto passedMaxWorkGroupCount = 1024;
+
+    uint32_t revisions[] = {REVISION_A0, REVISION_B};
+    for (auto &revision : revisions) {
+        auto hwRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
+        if (hwRevId == CommonConstants::invalidStepping) {
+            continue;
+        }
+        hwInfo.platform.usRevId = hwRevId;
+
+        for (auto isEngineInstanced : ::testing::Bool()) {
+            for (auto isRcsEnabled : ::testing::Bool()) {
+                hwInfo.featureTable.flags.ftrRcsNode = isRcsEnabled;
+                for (auto engineGroupType : {EngineGroupType::RenderCompute, EngineGroupType::Compute, EngineGroupType::CooperativeCompute}) {
+                    if (productHelper.isCooperativeEngineSupported(hwInfo)) {
+                        bool disallowDispatch = (engineGroupType == EngineGroupType::RenderCompute) ||
+                                                ((engineGroupType == EngineGroupType::Compute) && isRcsEnabled);
+                        bool applyLimitation = !isEngineInstanced &&
+                                               (engineGroupType != EngineGroupType::CooperativeCompute);
+                        if (disallowDispatch) {
+                            EXPECT_EQ(1u, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
+                        } else if (applyLimitation) {
+                            hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 4;
+                            EXPECT_EQ(passedMaxWorkGroupCount / tilePartsForConcurrentKernels, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
+                            hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled = 16;
+                            EXPECT_EQ(passedMaxWorkGroupCount / hwInfo.gtSystemInfo.CCSInfo.NumberOfCCSEnabled, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
+                        } else {
+                            EXPECT_EQ(passedMaxWorkGroupCount / tilePartsForConcurrentKernels, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
+                        }
+                    } else {
+                        EXPECT_EQ(passedMaxWorkGroupCount / tilePartsForConcurrentKernels, gfxCoreHelper.adjustMaxWorkGroupCount(passedMaxWorkGroupCount, engineGroupType, rootDeviceEnvironment, isEngineInstanced));
+                    }
+                }
+            }
+        }
+    }
+}
 } // namespace NEO
