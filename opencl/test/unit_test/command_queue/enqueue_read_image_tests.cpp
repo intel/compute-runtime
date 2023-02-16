@@ -483,9 +483,14 @@ HWTEST_F(EnqueueReadImageTest, givenMultiRootDeviceImageWhenEnqueueReadImageIsCa
     pImage->release();
 }
 
-HWTEST_F(EnqueueReadImageTest, givenImageFromBufferThatRequiresMigrationWhenEnqueueReadImageThenBufferObjectIsTakenForMigration) {
+HWTEST2_F(EnqueueReadImageTest, givenImageFromBufferThatRequiresMigrationWhenEnqueueReadImageThenBufferObjectIsTakenForMigration, IsAtLeastGen12lp) {
 
     MockDefaultContext context{true};
+
+    auto memoryManager = static_cast<MockMemoryManager *>(context.getMemoryManager());
+    for (auto &rootDeviceIndex : context.getRootDeviceIndices()) {
+        memoryManager->localMemorySupported[rootDeviceIndex] = true;
+    }
 
     auto pCmdQ1 = createCommandQueue(context.getDevice(0), nullptr, &context);
 
@@ -494,8 +499,6 @@ HWTEST_F(EnqueueReadImageTest, givenImageFromBufferThatRequiresMigrationWhenEnqu
 
     cl_mem clBuffer = pBuffer;
     imageDesc.mem_object = clBuffer;
-
-    const_cast<MultiGraphicsAllocation &>(pBuffer->getMultiGraphicsAllocation()).setMultiStorage(true);
 
     EXPECT_TRUE(pBuffer->getMultiGraphicsAllocation().requiresMigrations());
     auto pImage = Image2dHelper<>::create(&context, &imageDesc);

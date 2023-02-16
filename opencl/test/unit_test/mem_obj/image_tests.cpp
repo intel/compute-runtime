@@ -1802,7 +1802,8 @@ TEST(ImageTest, givenMultiDeviceEnvironmentWhenReleaseImageFromBufferThenMainBuf
     buffer->release();
 }
 
-TEST(ImageTest, givenHostPtrToCopyWhenImageIsCreatedWithMultiStorageThenMemoryIsPutInFirstDeviceInContext) {
+using MultiRootDeviceImageTest = ::testing::Test;
+HWTEST2_F(MultiRootDeviceImageTest, givenHostPtrToCopyWhenImageIsCreatedWithMultiStorageThenMemoryIsPutInFirstDeviceInContext, IsAtLeastGen12lp) {
     REQUIRE_IMAGES_OR_SKIP(defaultHwInfo);
 
     cl_int retVal = 0;
@@ -1819,6 +1820,10 @@ TEST(ImageTest, givenHostPtrToCopyWhenImageIsCreatedWithMultiStorageThenMemoryIs
     imageFormat.image_channel_order = CL_R;
 
     UltClDeviceFactory deviceFactory{2, 0};
+    auto memoryManager = static_cast<MockMemoryManager *>(deviceFactory.rootDevices[0]->getMemoryManager());
+    for (auto &rootDeviceIndex : {0, 1}) {
+        memoryManager->localMemorySupported[rootDeviceIndex] = true;
+    }
     {
         cl_device_id deviceIds[] = {
             deviceFactory.rootDevices[0],

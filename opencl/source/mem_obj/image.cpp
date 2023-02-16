@@ -248,7 +248,9 @@ Image *Image::create(Context *context,
         multiGraphicsAllocation.addAllocation(allocationInfo.memory);
     }
 
-    multiGraphicsAllocation.setMultiStorage(context->getRootDeviceIndices().size() > 1);
+    if (context->getRootDeviceIndices().size() > 1) {
+        multiGraphicsAllocation.setMultiStorage(!MemoryPoolHelper::isSystemMemoryPool(allocationInfos[defaultRootDeviceIndex].memory->getMemoryPool()));
+    }
 
     Image *image = createImageHw(context, memoryProperties, flags, flagsIntel, imgInfo.size, hostPtrToSet, surfaceFormat->OCLImageFormat,
                                  imageDescriptor, allocationInfos[defaultRootDeviceIndex].zeroCopyAllowed, std::move(multiGraphicsAllocation), false, 0, 0, surfaceFormat);
