@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,7 +46,6 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
 
     ze_result_t init() override;
 
-    L0::UdevLib *getUdevLibHandle();
     PmuInterface *getPmuInterface();
     FirmwareUtil *getFwUtilInterface();
     FsAccess &getFsAccess();

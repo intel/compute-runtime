@@ -11,15 +11,11 @@
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
 
 extern bool sysmanUltsEnable;
-namespace NEO {
-extern std::map<std::string, std::vector<std::string>> directoryFilesMap;
-} // namespace NEO
 
 namespace L0 {
 namespace ult {
 
 constexpr uint32_t mockHandleCount = 2u;
-constexpr int fabricDeviceFd = 10;
 constexpr int drmDeviceFd = 0;
 class SysmanEventsFixture : public SysmanDeviceFixture {
   protected:
@@ -85,6 +81,7 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
         pEventsImp = nullptr;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccessOriginal;
         pLinuxSysmanImp->pFsAccess = pFsAccessOriginal;
+
         pLinuxSysmanImp->pPmuInterface = pOriginalPmuInterface;
         SysmanDeviceFixture::TearDown();
     }
@@ -101,49 +98,15 @@ TEST_F(SysmanEventsFixture, whenRegisteringInvalidEventsThenErrorIsReturned) {
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ENUMERATION, pLinuxEventsImp->eventRegister(events));
 }
 
-TEST_F(SysmanEventsFixture, whenRegisteringEmptyEventsThenRegisteredEventsAreCleared) {
-    zes_event_type_flags_t events = (ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_DEVICE_DETACH);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxEventsImp->eventRegister(events));
-    EXPECT_EQ(pLinuxEventsImp->registeredEvents, events);
-    events = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxEventsImp->eventRegister(events));
-    EXPECT_EQ(pLinuxEventsImp->registeredEvents, 0u);
-}
-
-TEST_F(SysmanEventsFixture, GivenLibUdevLibraryNotFoundWhenListeningForEventsThenEventListenIsNotSuccess) {
-    auto pUdevLibBackup = pLinuxEventsImp->pUdevLib;
-    pLinuxEventsImp->pUdevLib = nullptr;
-    zes_event_type_flags_t pEvents;
-    EXPECT_FALSE(pLinuxEventsImp->listenSystemEvents(pEvents, 1000u));
-    pLinuxEventsImp->pUdevLib = pUdevLibBackup;
-}
-
-TEST_F(SysmanEventsFixture,
-       GivenValidDeviceHandleAndListeningForEventsWhenEventGenerationSourceDeviceIsNotDrmAndPlatformThenEventListenReturnFalse) {
-    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
-    auto pMockFwInterface = new MockEventsFwInterface;
-    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
-
+TEST_F(SysmanEventsFixture, GivenValidSysmanHandleWhenEventsAreClearedThenDeviceListenReturnsNoEvents) {
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
-    });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
 
-    // Step 1: Initialize a mocked udev lib object for this test case
     auto pUdevLibLocal = new UdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
@@ -151,492 +114,166 @@ TEST_F(SysmanEventsFixture,
     pUdevLibLocal->getEventGenerationSourceDeviceResult = 20;
     pUdevLibLocal->getEventPropertyValueResult = "1";
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
-    // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
-    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    zes_event_type_flags_t events = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), events));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[2];
     phDevices[0] = device->toHandle();
+    phDevices[1] = device->toHandle();
     uint32_t numDeviceEvents = 0;
-    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[2];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 2u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(0u, numDeviceEvents);
-
-    // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-    delete pMockFwInterface;
+    L0::osSysmanDriverDestructor();
 }
 
-TEST_F(SysmanEventsFixture,
-       GivenValidDeviceHandleAndListeningForEventsWhenNoEventIsRegisteredThenEventListenReturnFalse) {
+TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsFailureWhenlisteningForResetRequiredEventThenDeviceListenReturnsNoEvents) {
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return -1;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
 
-    // Step 1: Initialize a mocked udev lib object for this test case
     auto pUdevLibLocal = new UdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 10;
+    pUdevLibLocal->getEventGenerationSourceDeviceResult = 20;
     pUdevLibLocal->getEventPropertyValueResult = "1";
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
-    // Step 4: Call APIs for validation
-    pLinuxEventsImp->registeredEvents = 0;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[2];
+    phDevices[0] = device->toHandle();
+    phDevices[1] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[2];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 2u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+    L0::osSysmanDriverDestructor();
+}
+
+TEST_F(SysmanEventsFixture, GivenValidSysmanHandleWhenDeviceEventListenIsInvokedThenVerifyEventListenReturnsFalse) {
+    zes_event_type_flags_t events;
+    EXPECT_FALSE(pSysmanDeviceImp->deviceEventListen(events, 1000u));
+}
+
+TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundWhenListeningForEventsThenEventListenIsNotSuccess) {
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    auto pLinuxEventsImp = new PublicLinuxEventsUtil();
+    auto pLinuxEventsUtilOld = pPublicLinuxSysmanDriverImp->pLinuxEventsUtil;
+    VariableBackup<L0::LinuxEventsUtil *> eventsUtilBackup(&pPublicLinuxSysmanDriverImp->pLinuxEventsUtil);
+    pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsImp;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+
+    pLinuxEventsImp->pUdevLib = nullptr;
+
     zes_event_type_flags_t pEvents;
-    uint64_t timeout = 1u;
-    EXPECT_TRUE(pLinuxEventsImp->listenSystemEvents(pEvents, timeout));
-
-    // Step 5: Cleanup
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
+    std::vector<zes_event_type_flags_t> registeredEvents;
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    EXPECT_FALSE(pLinuxEventsImp->listenSystemEvents(&pEvents, 1u, registeredEvents, phDevices, 1000u));
+    delete[] phDevices;
+    pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsUtilOld;
+    L0::osSysmanDriverDestructor();
+    delete pLinuxEventsImp;
 }
 
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleAndListeningEventsWhenNullEventTypeIsReceivedThenEventListenAPIReturnsNoEvent) {
+TEST_F(SysmanEventsFixture, GivenNoEventsAreRegisteredWhenListeningForEventsThenVerifyListenSystemEventsReturnsFalse) {
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return -1;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
 
-    // Step 1: Initialize a mocked udev lib object for this test case
     auto pUdevLibLocal = new UdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
-    pUdevLibLocal->getEventTypeResult = nullptr;
-
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
-
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
-
-    // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH));
-    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
-    phDevices[0] = device->toHandle();
-    uint32_t numDeviceEvents = 0;
-    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(0u, numDeviceEvents);
-
-    // Step 5: Cleanup
-    delete[] phDevices;
-    delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-}
-
-TEST_F(SysmanEventsFixture,
-       GivenValidDeviceHandleAndListeningForEventsWhenUdevCallToAllocateDeviceFailsThenEventListenReturnFalse) {
-    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
-    auto pMockFwInterface = new MockEventsFwInterface;
-    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
-
-    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
-        return 0;
-    });
-
-    // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
-    pUdevLibLocal->allocateDeviceToReceiveDataResult = nullptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 10;
+    pUdevLibLocal->getEventGenerationSourceDeviceResult = 20;
     pUdevLibLocal->getEventPropertyValueResult = "1";
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
-    // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+    auto pLinuxEventsImp = new PublicLinuxEventsUtil();
+    auto pLinuxEventsUtilOld = pPublicLinuxSysmanDriverImp->pLinuxEventsUtil;
+    VariableBackup<L0::LinuxEventsUtil *> eventsUtilBackup(&pPublicLinuxSysmanDriverImp->pLinuxEventsUtil);
+    pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsImp;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), 0));
+
+    zes_event_type_flags_t pEvents;
+    std::vector<zes_event_type_flags_t> registeredEvents;
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    EXPECT_FALSE(pLinuxEventsImp->listenSystemEvents(&pEvents, 1u, registeredEvents, phDevices, 1000u));
+    delete[] phDevices;
+    pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsUtilOld;
+    L0::osSysmanDriverDestructor();
+    delete pLinuxEventsImp;
+}
+
+TEST_F(SysmanEventsFixture, GivenOsSysmanDriverAsNullWhenListeningForEventsThenVerifyEventListenIsNotSuccess) {
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = nullptr;
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
     zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(0u, numDeviceEvents);
-
-    // Step 5: Cleanup
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-    delete pMockFwInterface;
+    L0::osSysmanDriverDestructor();
 }
 
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
-    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
-    auto pMockFwInterface = new MockEventsFwInterface;
-    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+TEST_F(SysmanEventsFixture, GivenOsSysmanDriverAsNullWhenRegisteringForEventsThenVerifyEventListenIsNotSuccess) {
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = nullptr;
+    zes_event_type_flags_t events = 0;
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDeviceEventRegister(device->toHandle(), events));
+    L0::osSysmanDriverDestructor();
+}
 
-    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
-        return 0;
-    });
-
-    // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
-    int a = 0;
-    void *ptr = &a; // Initialize a void pointer with dummy data
-    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
-
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
-
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
-
-    // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+TEST_F(SysmanEventsFixture, GivenOsSysmanDriverAsNullWhenCallingDriverEventListenExThenVerifyEventListenIsNotSuccess) {
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = nullptr;
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
     zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(1u, numDeviceEvents);
-    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED, pDeviceEvents[0]);
-
-    // Step 5: Cleanup
+    EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, zesDriverEventListenEx(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-    delete pMockFwInterface;
-}
-
-TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenEventRegisterIsCalledThenSuccessIsReturned) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
-}
-
-TEST_F(SysmanEventsFixture,
-       GivenValidDeviceHandleWhenListeningForResetRequiredEventsAndIfUeventReceivedWithWrongPropertyValueThenEventListenAPIReturnsWithinTimeout) {
-    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
-    auto pMockFwInterface = new MockEventsFwInterface;
-    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
-
-    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
-        return 0;
-    });
-
-    // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
-    int a = 0;
-    void *ptr = &a; // Initialize a void pointer with dummy data
-    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "0";
-
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
-
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
-
-    // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
-    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
-    phDevices[0] = device->toHandle();
-    uint32_t numDeviceEvents = 0;
-    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(0u, numDeviceEvents);
-
-    // Step 5: Cleanup
-    delete[] phDevices;
-    delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-    delete pMockFwInterface;
-}
-
-TEST_F(SysmanEventsFixture,
-       GivenValidDeviceHandleWhenListeningForResetRequiredEventsAndIfDrmEventReceivedButChangeEventNotReceivedThenEventListenAPIReturnsWithinTimeout) {
-    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
-    auto pMockFwInterface = new MockEventsFwInterface;
-    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
-
-    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
-        return 0;
-    });
-
-    // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
-    int a = 0;
-    void *ptr = &a; // Initialize a void pointer with dummy data
-    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventTypeResult = "add"; // In order to receive RESET_REQUIRED event type must be "change"
-    pUdevLibLocal->getEventPropertyValueResult = "1";
-
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
-
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
-
-    // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
-    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
-    phDevices[0] = device->toHandle();
-    uint32_t numDeviceEvents = 0;
-    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(0u, numDeviceEvents);
-
-    // Step 5: Cleanup
-    delete[] phDevices;
-    delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-    delete pMockFwInterface;
-}
-
-TEST_F(SysmanEventsFixture,
-       GivenValidDeviceHandleWhenListeningForResetRequiredEventsAndIfUeventReceivedWithNullPropertyValueThenEventListenAPIReturnsWithinTimeout) {
-    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
-    auto pMockFwInterface = new MockEventsFwInterface;
-    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
-
-    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
-        return 0;
-    });
-
-    // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
-    int a = 0;
-    void *ptr = &a; // Initialize a void pointer with dummy data
-    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = nullptr;
-
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
-
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
-
-    // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
-    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
-    phDevices[0] = device->toHandle();
-    uint32_t numDeviceEvents = 0;
-    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(0u, numDeviceEvents);
-
-    // Step 5: Cleanup
-    delete[] phDevices;
-    delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-    delete pMockFwInterface;
-}
-
-HWTEST2_F(SysmanEventsFixture,
-          GivenValidDeviceHandleWhenListeningForResetRequiredEventsAfterInFieldRepairAndIfUeventReceivedWithNullPropertyValueThenEventListenAPIReturnsResetEvent, IsPVC) {
-    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
-    auto pMockFwInterface = new MockEventsFwInterface;
-    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
-
-    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
-        return 0;
-    });
-
-    // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
-    int a = 0;
-    void *ptr = &a; // Initialize a void pointer with dummy data
-    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = nullptr;
-
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
-
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
-
-    // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
-    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
-    phDevices[0] = device->toHandle();
-    uint32_t numDeviceEvents = 0;
-    pMockFwInterface->mockIfrStatus = true;
-    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(1u, numDeviceEvents);
-    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED, pDeviceEvents[0]);
-
-    // Step 5: Cleanup
-    delete[] phDevices;
-    delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-    delete pMockFwInterface;
+    L0::osSysmanDriverDestructor();
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForCurrentlyUnsupportedEventsThenEventListenAPIWaitForTimeoutIfEventNotReceived) {
@@ -654,85 +291,246 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForCurrentlyUnsup
     delete[] pDeviceEvents;
 }
 
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForFabricPortHealthEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+TEST_F(SysmanEventsFixture,
+       GivenValidDeviceHandleAndListeningForEventsWhenEventGenerationSourceDeviceIsNotDrmAndPlatformThenEventListenReturnFalse) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return 1;
     });
-
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
-    NEO::directoryFilesMap.insert({"/sys/devices/pci0000:00/0000:00:02.0", {"i915.iaf.31"}});
 
     // Step 1: Initialize a mocked udev lib object for this test case
     auto pUdevLibLocal = new UdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = fabricDeviceFd;
-    pUdevLibLocal->getEventPropertyValueResult = "PORT_CHANGE";
+    pUdevLibLocal->getEventGenerationSourceDeviceResult = 20;
+    pUdevLibLocal->getEventPropertyValueResult = "1";
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+
+    // Step 5: Cleanup
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+    L0::osSysmanDriverDestructor();
+    delete pMockFwInterface;
+}
+
+TEST_F(SysmanEventsFixture,
+       GivenValidDeviceHandleAndListeningForEventsWhenNoEventIsRegisteredThenVerifyNoEventsAreReturned) {
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
+        buf->st_rdev = 0;
+        return 0;
+    });
+
+    auto pUdevLibLocal = new UdevLibMock();
+    int a = 0;
+    void *ptr = &a; // Initialize a void pointer with dummy data
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
+    pUdevLibLocal->getEventGenerationSourceDeviceResult = 20;
+    pUdevLibLocal->getEventPropertyValueResult = "1";
+
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
+
+    zes_device_handle_t *phDevices = new zes_device_handle_t[2];
+    phDevices[0] = device->toHandle();
+    phDevices[1] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[2];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 2u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+    L0::osSysmanDriverDestructor();
+}
+
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleAndListeningEventsWhenNullEventTypeIsReceivedThenEventListenAPIReturnsNoEvent) {
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return drmDeviceFd;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
+        buf->st_rdev = 0;
+        return 0;
+    });
+
+    // Step 1: Initialize a mocked udev lib object for this test case
+    auto pUdevLibLocal = new UdevLibMock();
+    int a = 0;
+    void *ptr = &a; // Initialize a void pointer with dummy data
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
+    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
+    pUdevLibLocal->getEventPropertyValueResult = "1";
+    pUdevLibLocal->getEventTypeResult = nullptr;
+
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
+    // Step 4: Call APIs for validation
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+
+    // Step 5: Cleanup
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+    L0::osSysmanDriverDestructor();
+}
+
+TEST_F(SysmanEventsFixture,
+       GivenValidDeviceHandleAndListeningForEventsWhenUdevCallToAllocateDeviceFailsThenEventListenReturnFalse) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return drmDeviceFd;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
+        buf->st_rdev = 0;
+        return 0;
+    });
+
+    // Step 1: Initialize a mocked udev lib object for this test case
+    auto pUdevLibLocal = new UdevLibMock();
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = nullptr;
+    pUdevLibLocal->getEventGenerationSourceDeviceResult = 10;
+    pUdevLibLocal->getEventPropertyValueResult = "1";
+
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
+
+    // Step 4: Call APIs for validation
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+
+    // Step 5: Cleanup
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+    L0::osSysmanDriverDestructor();
+    delete pMockFwInterface;
+}
+
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return drmDeviceFd;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
+        buf->st_rdev = 0;
+        return 0;
+    });
+
+    // Step 1: Initialize a mocked udev lib object for this test case
+    auto pUdevLibLocal = new UdevLibMock();
+    int a = 0;
+    void *ptr = &a; // Initialize a void pointer with dummy data
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
+    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
+    pUdevLibLocal->getEventPropertyValueResult = "1";
+
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
+
+    // Step 4: Call APIs for validation
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
     zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(1u, numDeviceEvents);
-    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH, pDeviceEvents[0]);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED, pDeviceEvents[0]);
 
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-    NEO::directoryFilesMap.clear();
+    L0::osSysmanDriverDestructor();
+    delete pMockFwInterface;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenEventRegisterIsCalledThenSuccessIsReturned) {
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
 }
 
 TEST_F(SysmanEventsFixture,
-       GivenValidDeviceWhenListeningForFabricEventsAndPlatformEventReceivedButPortChangeEventNotReceivedThenEventListenAPIWaitForTimeout) {
+       GivenValidDeviceHandleWhenListeningForResetRequiredEventsAndIfUeventReceivedWithWrongPropertyValueThenEventListenAPIReturnsWithinTimeout) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return 1;
     });
-
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
-    NEO::directoryFilesMap.insert({"/sys/devices/pci0000:00/0000:00:02.0", {"msi_irqs", "iaf.31"}});
 
     // Step 1: Initialize a mocked udev lib object for this test case
     auto pUdevLibLocal = new UdevLibMock();
@@ -740,18 +538,17 @@ TEST_F(SysmanEventsFixture,
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
     pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "PORT_CHANGE_DUMMY"; // Fabric event will be considered only when Event property is PORT_CHANGE
+    pUdevLibLocal->getEventPropertyValueResult = "0";
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
@@ -762,34 +559,26 @@ TEST_F(SysmanEventsFixture,
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-    NEO::directoryFilesMap.clear();
+    L0::osSysmanDriverDestructor();
+    delete pMockFwInterface;
 }
 
 TEST_F(SysmanEventsFixture,
-       GivenValidDeviceWhenListeningForFabricEventsAndPlatformEventReceivedButEventPropertyIsIncorrectThenEventListenAPIWaitForTimeout) {
+       GivenValidDeviceHandleWhenListeningForResetRequiredEventsAndIfDrmEventReceivedButChangeEventNotReceivedThenEventListenAPIReturnsWithinTimeout) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return 1;
     });
-
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
-    NEO::directoryFilesMap.insert({"/sys/devices/pci0000:00/0000:00:02.0", {"msi_irqs", "iaf.31"}});
 
     // Step 1: Initialize a mocked udev lib object for this test case
     auto pUdevLibLocal = new UdevLibMock();
@@ -797,18 +586,18 @@ TEST_F(SysmanEventsFixture,
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
     pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "PORT_CHANEE"; // Fabric event will be considered only when Event property is PORT_CHANGE
+    pUdevLibLocal->getEventTypeResult = "add"; // In order to receive RESET_REQUIRED event type must be "change"
+    pUdevLibLocal->getEventPropertyValueResult = "1";
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
@@ -819,34 +608,26 @@ TEST_F(SysmanEventsFixture,
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-    NEO::directoryFilesMap.clear();
+    L0::osSysmanDriverDestructor();
+    delete pMockFwInterface;
 }
 
 TEST_F(SysmanEventsFixture,
-       GivenValidDeviceWhenListeningForFabricEventsAndPlatformEventReceivedButEventPropertyIsNullThenEventListenAPIWaitForTimeout) {
+       GivenValidDeviceHandleWhenListeningForResetRequiredEventsAndIfUeventReceivedWithNullPropertyValueThenEventListenAPIReturnsWithinTimeout) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return 1;
     });
-
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
-    NEO::directoryFilesMap.insert({"/sys/devices/pci0000:00/0000:00:02.0", {"msi_irqs", "iaf.31"}});
 
     // Step 1: Initialize a mocked udev lib object for this test case
     auto pUdevLibLocal = new UdevLibMock();
@@ -854,18 +635,17 @@ TEST_F(SysmanEventsFixture,
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
     pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = nullptr; // Fabric event will be considered only when Event property is PORT_CHANGE
+    pUdevLibLocal->getEventPropertyValueResult = nullptr;
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
@@ -876,85 +656,42 @@ TEST_F(SysmanEventsFixture,
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-    NEO::directoryFilesMap.clear();
+    L0::osSysmanDriverDestructor();
+    delete pMockFwInterface;
 }
 
-TEST_F(SysmanEventsFixture,
-       GivenValidDeviceWhenListeningForFabricEventsAndPlatformEventReceivedButEventTypeIsWrongThenEventListenAPIWaitForTimeout) {
+HWTEST2_F(SysmanEventsFixture,
+          GivenValidDeviceHandleWhenListeningForResetRequiredEventsAfterInFieldRepairAndIfUeventReceivedWithNullPropertyValueThenEventListenAPIReturnsResetEvent, IsPVC) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return 1;
     });
-
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
-    NEO::directoryFilesMap.insert({"/sys/devices/pci0000:00/0000:00:02.0", {"msi_irqs", "iaf.31"}});
-
-    // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
-    int a = 0;
-    void *ptr = &a; // Initialize a void pointer with dummy data
-    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventTypeResult = "add";                  // FABRIC_PORT Event will be received only if EventType is "change"
-    pUdevLibLocal->getEventPropertyValueResult = "PORT_CHANGE"; // Fabric event will be considered only when Event property is PORT_CHANGE
-
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
-
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
 
     // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
+    pMockFwInterface->mockIfrStatus = true;
     zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(0u, numDeviceEvents);
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED, pDeviceEvents[0]);
 
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-    NEO::directoryFilesMap.clear();
-}
-
-TEST_F(SysmanEventsFixture, GivenFabricDeviceAttemptedToBeLookedIntoWrongDirectoryWhenReadingFabricDeviceStatsThenUnsupportedFeatureReturned) {
-    std::string devicePciPath = "myDir";
-    struct stat iafStat;
-    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pLinuxEventsImp->readFabricDeviceStats(devicePciPath, iafStat));
-}
-
-TEST_F(SysmanEventsFixture, GivenFabricDeviceOpenFailedWhenReadingFabricDeviceStatsThenErrorReturned) {
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return -1;
-    });
-    NEO::directoryFilesMap.insert({"/sys/devices/pci0000:00/0000:00:02.0", {"msi_irqs", "iaf.31"}});
-    std::string devicePciPath = "/sys/devices/pci0000:00/0000:00:02.0";
-    struct stat iafStat;
-    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, pLinuxEventsImp->readFabricDeviceStats(devicePciPath, iafStat));
-    NEO::directoryFilesMap.clear();
+    delete pMockFwInterface;
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
@@ -962,18 +699,10 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEv
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
 
@@ -986,13 +715,12 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEv
     pUdevLibLocal->getEventPropertyValueResult = "1";
     pUdevLibLocal->getEventTypeResult = "remove";
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
@@ -1007,9 +735,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEv
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
+    L0::osSysmanDriverDestructor();
 }
 
 TEST_F(SysmanEventsFixture,
@@ -1018,18 +744,10 @@ TEST_F(SysmanEventsFixture,
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
 
@@ -1042,13 +760,12 @@ TEST_F(SysmanEventsFixture,
     pUdevLibLocal->getEventPropertyValueResult = "1";
     pUdevLibLocal->getEventTypeResult = "change"; // ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH will be received only if EventType is "remove"
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
@@ -1062,9 +779,7 @@ TEST_F(SysmanEventsFixture,
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
+    L0::osSysmanDriverDestructor();
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
@@ -1072,18 +787,10 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
 
@@ -1096,13 +803,12 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
     pUdevLibLocal->getEventPropertyValueResult = "1";
     pUdevLibLocal->getEventTypeResult = "add";
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH));
@@ -1117,9 +823,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
+    L0::osSysmanDriverDestructor();
 }
 
 TEST_F(SysmanEventsFixture,
@@ -1128,18 +832,10 @@ TEST_F(SysmanEventsFixture,
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
 
@@ -1152,13 +848,12 @@ TEST_F(SysmanEventsFixture,
     pUdevLibLocal->getEventPropertyValueResult = "1";
     pUdevLibLocal->getEventTypeResult = "change"; // ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH will be received only if EventType is "add"
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH));
@@ -1172,9 +867,7 @@ TEST_F(SysmanEventsFixture,
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
+    L0::osSysmanDriverDestructor();
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEventsThenEventListenExAPIReturnsAfterReceivingEventWithinTimeout) {
@@ -1182,18 +875,10 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
 
@@ -1206,13 +891,12 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
     pUdevLibLocal->getEventPropertyValueResult = "1";
     pUdevLibLocal->getEventTypeResult = "add";
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH));
@@ -1227,31 +911,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
-}
-
-TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEventsThenEventListenExAPIWaitForTimeoutIfEventNotReceived) {
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH));
-
-    pFsAccess->mockReadValZero = true;
-
-    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
-    phDevices[0] = device->toHandle();
-    uint32_t numDeviceEvents = 0;
-    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListenEx(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(0u, numDeviceEvents);
-
-    pFsAccess->mockReadValZero = false;
-    pFsAccess->mockFileNotFoundError = true;
-
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(0u, numDeviceEvents);
-
-    delete[] phDevices;
-    delete[] pDeviceEvents;
+    L0::osSysmanDriverDestructor();
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForMemHealthEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
@@ -1259,18 +919,10 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForMemHealthEvent
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
 
@@ -1282,13 +934,12 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForMemHealthEvent
     pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
     pUdevLibLocal->getEventPropertyValueResult = "1";
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_MEM_HEALTH));
@@ -1303,9 +954,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForMemHealthEvent
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
+    L0::osSysmanDriverDestructor();
 }
 
 TEST_F(SysmanEventsFixture,
@@ -1314,18 +963,10 @@ TEST_F(SysmanEventsFixture,
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
 
@@ -1337,13 +978,12 @@ TEST_F(SysmanEventsFixture,
     pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
     pUdevLibLocal->getEventPropertyValueResult = "0"; // getEventPropertyValue must return 1 in order to assure that MEM_HEALTH event is there
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_MEM_HEALTH));
@@ -1357,9 +997,7 @@ TEST_F(SysmanEventsFixture,
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
+    L0::osSysmanDriverDestructor();
 }
 
 TEST_F(SysmanEventsFixture,
@@ -1368,18 +1006,10 @@ TEST_F(SysmanEventsFixture,
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
 
@@ -1392,13 +1022,12 @@ TEST_F(SysmanEventsFixture,
     pUdevLibLocal->getEventTypeResult = "add";        // In order to receive MEM_HEALTH event type must be "change"
     pUdevLibLocal->getEventPropertyValueResult = "1"; // getEventPropertyValue must return 1 in order to assure that MEM_HEALTH event is there
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_MEM_HEALTH));
@@ -1412,9 +1041,7 @@ TEST_F(SysmanEventsFixture,
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
+    L0::osSysmanDriverDestructor();
 }
 
 TEST_F(SysmanEventsFixture,
@@ -1423,18 +1050,10 @@ TEST_F(SysmanEventsFixture,
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        if (strcmp(pathname, "i915.iaf.31/iaf_fabric_id") == 0) {
-            return fabricDeviceFd;
-        } else {
-            return drmDeviceFd;
-        }
+        return drmDeviceFd;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        if (fd == fabricDeviceFd) {
-            buf->st_rdev = 10;
-        } else {
-            buf->st_rdev = 0;
-        }
+        buf->st_rdev = 0;
         return 0;
     });
 
@@ -1446,13 +1065,12 @@ TEST_F(SysmanEventsFixture,
     pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
     pUdevLibLocal->getEventPropertyValueResult = nullptr; // getEventPropertyValue must return 1 in order to assure that MEM_HEALTH event is there
 
-    // Step 2: Create a new PublicLinuxEventsImp, where we will attach the above created Udev Lib object
-    auto pPublicLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
-    pPublicLinuxEventsImp->pUdevLib = pUdevLibLocal;
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
 
-    // Step 3: Backup original pOsEvent created during set up
-    auto pOsEventOriginal = pEventsImp->pOsEvents;
-    pEventsImp->pOsEvents = static_cast<OsEvents *>(pPublicLinuxEventsImp);
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
 
     // Step 4: Call APIs for validation
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_MEM_HEALTH));
@@ -1466,9 +1084,7 @@ TEST_F(SysmanEventsFixture,
     // Step 5: Cleanup
     delete[] phDevices;
     delete[] pDeviceEvents;
-    pEventsImp->pOsEvents = pOsEventOriginal;
-    delete pUdevLibLocal;
-    delete pPublicLinuxEventsImp;
+    L0::osSysmanDriverDestructor();
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventAndTotalErrorsCrossesThresholdThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
@@ -1515,9 +1131,6 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(1u, numDeviceEvents);
     EXPECT_EQ(ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS, pDeviceEvents[0]);
-    numDeviceEvents = 0;
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(0u, numDeviceEvents);
     numDeviceEvents = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
@@ -1622,6 +1235,40 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasUncorrectab
     EXPECT_EQ(0u, numDeviceEvents);
     delete[] phDevices;
     delete[] pDeviceEvents;
+}
+
+TEST_F(SysmanEventsFixture, GivenRasGetStateReturnsFailureWhenListeningForRasUncorrectableErrorsCrossingTotalThresholdEventThenEventListenAPIReturnsNoEvents) {
+    pFsAccess->mockListDirectoryResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+    pMockFwInterface->fwGetMemoryErrorCountResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS));
+    for (const auto &handle : pSysmanDeviceImp->pRasHandleContext->handleList) {
+        delete handle;
+    }
+    pSysmanDeviceImp->pRasHandleContext->handleList.clear();
+    pSysmanDeviceImp->pRasHandleContext->init(deviceHandles);
+    auto handles = getRasHandles(mockHandleCount);
+    for (auto handle : handles) {
+        zes_ras_properties_t properties = {};
+        EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasGetProperties(handle, &properties));
+        if (properties.type == ZES_RAS_ERROR_TYPE_UNCORRECTABLE) {
+            zes_ras_config_t setConfig = {};
+            setConfig.totalThreshold = 0;
+            memset(setConfig.detailedThresholds.category, 0, sizeof(setConfig.detailedThresholds.category));
+            EXPECT_EQ(ZE_RESULT_SUCCESS, zesRasSetConfig(handle, &setConfig));
+        }
+    }
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+    delete pMockFwInterface;
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForRasCorrectableErrorsCrossingTotalThresholdEventThenEventListenAPIWaitForTimeoutIfEventNotReceived) {
@@ -1732,6 +1379,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForUnsupportedEve
     phDevices[0] = device->toHandle();
     uint32_t numDeviceEvents = 0;
     zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(0u, numDeviceEvents);
     delete[] phDevices;

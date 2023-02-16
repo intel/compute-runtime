@@ -377,6 +377,19 @@ TEST_F(SysmanDeviceFixture, GivenValidEnumeratedHandlesWhenReleaseIsCalledThenHa
     EXPECT_EQ(count, 0u);
 }
 
+TEST_F(SysmanDeviceFixture, GivenDriverEventsUtilAsNullWhenSysmanDriverDestructorIsCalledThenVerifyNoExceptionOccured) {
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    auto pUdevLib = new UdevLibMock();
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLib;
+
+    delete pPublicLinuxSysmanDriverImp->pLinuxEventsUtil;
+    pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = nullptr;
+    EXPECT_NO_THROW(L0::osSysmanDriverDestructor());
+}
+
 TEST_F(SysmanMultiDeviceFixture, GivenValidDeviceHandleHavingSubdevicesWhenValidatingSysmanHandlesForSubdevicesThenSysmanHandleForSubdeviceWillBeSameAsSysmanHandleForDevice) {
     ze_device_handle_t hSysman = device->toHandle();
     auto pSysmanDeviceOriginal = static_cast<DeviceImp *>(device)->getSysmanHandle();

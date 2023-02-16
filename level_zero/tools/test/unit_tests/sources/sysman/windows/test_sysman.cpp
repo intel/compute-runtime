@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,6 +45,11 @@ TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenGettingFwUtilInterfaceAndG
 
     EXPECT_EQ(pWddmSysmanImp->getFwUtilInterface(), nullptr);
     pWddmSysmanImp->pFwUtilInterface = pFwUtilInterfaceOld;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenGetOsInterfaceIsInvokedThenVerifyThatOsInterfaceIsValid) {
+    auto osInterface = pSysmanDeviceImp->deviceGetOsInterface();
+    EXPECT_EQ(pWddmSysmanImp, osInterface);
 }
 
 } // namespace ult

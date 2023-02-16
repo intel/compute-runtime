@@ -7,6 +7,8 @@
 
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/sysman/source/sysman_driver_handle_imp.h"
+#include "level_zero/tools/source/sysman/os_sysman_driver.h"
+#include "level_zero/tools/source/sysman/sysman.h"
 
 #include <windows.h>
 
@@ -21,6 +23,10 @@ BOOL APIENTRY DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
         if (Sysman::GlobalSysmanDriver != nullptr) {
             delete Sysman::GlobalSysmanDriver;
             Sysman::GlobalSysmanDriver = nullptr;
+        }
+        if (GlobalOsSysmanDriver != nullptr) {
+            delete GlobalOsSysmanDriver;
+            GlobalOsSysmanDriver = nullptr;
         }
     }
     return TRUE;
