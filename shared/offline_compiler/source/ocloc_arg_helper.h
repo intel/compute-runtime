@@ -12,7 +12,6 @@
 #include "shared/source/utilities/const_stringref.h"
 
 #include <algorithm>
-#include <cctype>
 #include <fstream>
 #include <map>
 #include <memory>

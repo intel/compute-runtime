@@ -6,16 +6,12 @@
  */
 
 #pragma once
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
-#include "shared/source/os_interface/windows/windows_wrapper.h"
 
 #include <d3dkmthk.h>
 
-#include <map>
-#include <mutex>
 #include <vector>
 
 namespace NEO {

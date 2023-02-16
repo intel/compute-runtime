@@ -10,8 +10,6 @@
 
 #include "External/Common/GmmPageTableMgr.h"
 
-#include <functional>
-
 namespace NEO {
 class Gmm;
 class GmmClientContext;

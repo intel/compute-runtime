@@ -8,6 +8,7 @@
 #include "zello_common.h"
 
 #include <bitset>
+#include <cstring>
 #include <sstream>
 
 void executeMemoryTransferAndValidate(ze_context_handle_t &context, ze_device_handle_t &device,

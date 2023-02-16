@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,6 @@
 #pragma once
 
 #include <bitset>
-#include <cstddef>
 #include <cstdint>
 
 namespace NEO {

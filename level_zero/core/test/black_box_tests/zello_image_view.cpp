@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "zello_common.h"
 #include "zello_compile.h"
+
+#include <cstring>
 
 const char *readNV12Module = R"===(
     __kernel void

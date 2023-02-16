@@ -7,6 +7,8 @@
 
 #include "zello_common.h"
 
+#include <cstring>
+
 typedef ze_result_t (*pFnzexDriverImportExternalPointer)(ze_driver_handle_t, void *, size_t);
 typedef ze_result_t (*pFnzexDriverReleaseImportedPointer)(ze_driver_handle_t, void *);
 typedef ze_result_t (*pFnzexDriverGetHostPointerBaseAddress)(ze_driver_handle_t, void *, void **);

@@ -10,7 +10,6 @@
 #include <level_zero/ze_api.h>
 
 #include <memory>
-#include <set>
 #include <vector>
 
 struct _ze_module_handle_t {};

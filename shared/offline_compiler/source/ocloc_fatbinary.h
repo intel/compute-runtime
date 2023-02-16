@@ -11,8 +11,6 @@
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
 #include "shared/source/utilities/const_stringref.h"
 
-#include "igfxfmid.h"
-
 #include <cstdint>
 #include <string>
 #include <vector>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@
 #include "level_zero/tools/source/sysman/os_sysman.h"
 #include <level_zero/zes_api.h>
 
-#include <string>
 #include <vector>
 
 namespace L0 {

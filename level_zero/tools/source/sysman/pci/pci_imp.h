@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,6 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/memory_manager/memory_manager.h"
-
-#include "level_zero/core/source/device/device.h"
-#include <level_zero/zet_api.h>
 
 #include "os_pci.h"
 #include "pci.h"

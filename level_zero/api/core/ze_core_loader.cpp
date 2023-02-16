@@ -1,17 +1,28 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/api/extensions/public/ze_exp_ext.h"
-#include "level_zero/experimental/source/tracing/tracing_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_barrier_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_cmdlist_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_cmdqueue_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_copy_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_device_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_driver_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_event_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_fence_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_global_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_image_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_memory_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_module_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_residency_imp.h"
+#include "level_zero/experimental/source/tracing/tracing_sampler_imp.h"
 #include "level_zero/source/inc/ze_intel_gpu.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/ze_ddi.h>
-#include <level_zero/zet_api.h>
-#include <level_zero/zet_ddi.h>
 
 #include "ze_core_all_api_entrypoints.h"
 #include "ze_ddi_tables.h"

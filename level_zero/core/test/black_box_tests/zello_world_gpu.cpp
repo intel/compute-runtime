@@ -1,11 +1,13 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "zello_common.h"
+
+#include <cstring>
 
 void executeGpuKernelAndValidate(ze_context_handle_t &context, ze_device_handle_t &device, bool &outputValidationSuccessful) {
     ze_command_queue_handle_t cmdQueue;

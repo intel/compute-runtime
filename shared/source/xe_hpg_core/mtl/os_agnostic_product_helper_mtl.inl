@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_type.h"
 
 #include "aubstream/product_family.h"

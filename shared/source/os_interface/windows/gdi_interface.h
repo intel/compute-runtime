@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,11 +8,9 @@
 #pragma once
 #include "shared/source/os_interface/os_library.h"
 #include "shared/source/os_interface/windows/d3dkmthk_wrapper.h"
-#include "shared/source/os_interface/windows/os_inc.h"
 #include "shared/source/os_interface/windows/thk_wrapper.h"
 
 #include <memory>
-#include <string>
 
 namespace NEO {
 

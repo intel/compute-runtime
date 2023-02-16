@@ -18,7 +18,6 @@
 #include "memory_properties_flags.h"
 
 #include <cstdint>
-#include <cstring>
 #include <map>
 #include <mutex>
 #include <unordered_map>

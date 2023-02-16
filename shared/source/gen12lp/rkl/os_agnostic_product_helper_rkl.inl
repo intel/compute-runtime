@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/gfx_core_helper.h"
+
 namespace NEO {
 template <>
 uint32_t ProductHelperHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {

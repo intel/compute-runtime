@@ -20,8 +20,10 @@
 #include <functional>
 
 namespace NEO {
+
 enum class DebugPauseState : uint32_t;
 struct BatchBuffer;
+struct HardwareInfo;
 struct WaitParams;
 class SubmissionAggregator;
 class FlushStampTracker;

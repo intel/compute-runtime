@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
 #include <mutex>

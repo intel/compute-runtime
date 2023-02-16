@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,10 +8,8 @@
 #pragma once
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 
-#include "helper.h"
 #include "iga_wrapper.h"
 
-#include <sstream>
 #include <string>
 #include <vector>
 

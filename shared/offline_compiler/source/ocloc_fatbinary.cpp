@@ -17,6 +17,7 @@
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/source/os_interface/os_library.h"
 
 #include "igfxfmid.h"
 #include "platforms.h"

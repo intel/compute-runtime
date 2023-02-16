@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,6 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/kernel/kernel_objects_for_aux_translation.h"
 #include "opencl/source/kernel/multi_device_kernel.h"
-#include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/mocks/mock_program.h"

@@ -8,6 +8,7 @@
 #include "zello_common.h"
 
 #include <bitset>
+#include <cstring>
 #include <iomanip>
 
 bool verbose;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "opencl/test/unit_test/offline_compiler/ocloc_product_config_tests.h"
 
 #include "shared/source/helpers/product_config_helper.h"
+#include "shared/source/os_interface/os_library.h"
 
 namespace NEO {
 TEST_P(OclocProductConfigTests, GivenProductConfigValuesWhenInitHardwareInfoThenCorrectValuesAreSet) {

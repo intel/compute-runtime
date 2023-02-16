@@ -8,7 +8,6 @@
 #pragma once
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
-#include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
 #include "gmock/gmock.h"
 

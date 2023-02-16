@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/helpers/gfx_core_helper.h"
+
 #include "aubstream/product_family.h"
 
 namespace NEO {

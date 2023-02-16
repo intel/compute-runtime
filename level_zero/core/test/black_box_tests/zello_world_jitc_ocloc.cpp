@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,8 @@
 
 #include "zello_common.h"
 #include "zello_compile.h"
+
+#include <cstring>
 
 const char *moduleSrc = R"===(
 __kernel void kernel_copy(__global char *dst, __global char *src){

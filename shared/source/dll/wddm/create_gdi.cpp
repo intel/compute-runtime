@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/os_interface/windows/gdi_interface.h"
+#include "shared/source/os_interface/windows/os_inc.h"
 
 namespace NEO {
 

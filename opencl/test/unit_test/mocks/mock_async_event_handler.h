@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,6 @@
 
 #include <atomic>
 #include <iterator>
-#include <memory>
-#include <mutex>
 #include <vector>
 
 using namespace NEO;

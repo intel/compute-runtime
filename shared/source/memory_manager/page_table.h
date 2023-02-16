@@ -1,20 +1,16 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/helpers/basic_math.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
 
 #include <array>
-#include <atomic>
 #include <cinttypes>
 #include <functional>
-#include <memory>
-#include <vector>
 
 namespace NEO {
 

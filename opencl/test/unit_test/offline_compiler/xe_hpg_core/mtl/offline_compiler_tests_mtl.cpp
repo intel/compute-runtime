@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/os_interface/os_library.h"
+
 #include "opencl/test/unit_test/offline_compiler/ocloc_fatbinary_tests.h"
 
 namespace NEO {

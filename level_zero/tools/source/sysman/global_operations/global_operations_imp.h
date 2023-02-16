@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,13 +8,10 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include <level_zero/zet_api.h>
-
 #include "global_operations.h"
 #include "os_global_operations.h"
 
 #include <mutex>
-#include <vector>
 
 namespace L0 {
 

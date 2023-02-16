@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "shared/source/utilities/stackvec.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 
-#include <memory>
 #include <string>
 #include <vector>
 

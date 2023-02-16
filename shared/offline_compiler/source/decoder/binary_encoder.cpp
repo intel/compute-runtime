@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hash.h"
+#include "shared/source/os_interface/os_library.h"
 
 #include "CL/cl.h"
 #include "helper.h"

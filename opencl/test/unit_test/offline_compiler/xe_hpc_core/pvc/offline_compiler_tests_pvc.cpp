@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/xe_hpc_core/pvc/product_configs_pvc.h"
 
 #include "opencl/test/unit_test/offline_compiler/ocloc_fatbinary_tests.h"

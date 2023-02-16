@@ -6,9 +6,6 @@
  */
 
 #pragma once
-
-#include "shared/source/os_interface/os_thread.h"
-
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
 #include "level_zero/core/source/module/module.h"
 

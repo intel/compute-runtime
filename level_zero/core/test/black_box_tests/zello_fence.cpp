@@ -10,6 +10,7 @@
 #include "zello_common.h"
 #include "zello_compile.h"
 
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>

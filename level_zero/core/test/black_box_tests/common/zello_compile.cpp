@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,8 @@
 #include "zello_compile.h"
 
 #include "ocloc_api.h"
+
+#include <cstring>
 
 std::vector<uint8_t> compileToSpirV(const std::string &src, const std::string &options, std::string &outCompilerLog) {
     std::vector<uint8_t> ret;

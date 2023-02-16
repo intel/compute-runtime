@@ -22,6 +22,7 @@
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/validators.h"
+#include "shared/source/os_interface/os_library.h"
 
 #include "platforms.h"
 

@@ -14,6 +14,7 @@
 #include "shared/test/common/helpers/variable_backup.h"
 
 #include "opencl/source/command_queue/command_queue.h"
+#include "opencl/source/platform/platform.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_context.h"
 #include "opencl/test/unit_test/test_macros/test_checks_ocl.h"

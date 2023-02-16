@@ -1,13 +1,11 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/source/device/device.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
-#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/context/context.h"

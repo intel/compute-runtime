@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,6 @@
 #include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
-#include <map>
 #include <mutex>
 #include <vector>
 

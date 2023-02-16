@@ -11,6 +11,7 @@
 #include "zello_compile.h"
 
 #include <array>
+#include <cstring>
 #include <iostream>
 #include <numeric>
 #ifdef WIN32

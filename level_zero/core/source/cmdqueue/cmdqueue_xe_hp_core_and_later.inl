@@ -6,10 +6,8 @@
  */
 
 #include "shared/source/command_container/encode_surface_state.h"
-#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"

@@ -7,7 +7,6 @@
 
 #pragma once
 #include "shared/source/device/device.h"
-#include "shared/source/helpers/hash.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/program/kernel_info.h"

@@ -1,16 +1,13 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #pragma once
-#include "shared/source/os_interface/os_library.h"
-
 #include "igfxfmid.h"
 
-#include <exception>
 #include <memory>
 #include <sstream>
 #include <string>

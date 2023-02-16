@@ -13,7 +13,6 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 
-#include <cinttypes>
 #include <mutex>
 #include <string>
 #include <vector>

@@ -16,8 +16,6 @@
 
 #include <gtest/gtest.h>
 
-#include <iostream>
-
 namespace L0 {
 
 extern struct APITracerContextImp *pGlobalAPITracerContextImp;

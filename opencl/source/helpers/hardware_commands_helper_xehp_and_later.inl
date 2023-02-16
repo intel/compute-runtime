@@ -11,10 +11,8 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/l3_range.h"
 #include "shared/source/helpers/pipe_control_args.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/kernel/implicit_args.h"
 
-#include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/command_queue/command_queue.h"
 #include "opencl/source/helpers/hardware_commands_helper.h"
 #include "opencl/source/kernel/kernel.h"

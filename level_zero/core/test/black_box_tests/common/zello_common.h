@@ -9,7 +9,6 @@
 
 #include <level_zero/ze_api.h>
 
-#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <limits>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,6 @@
 #include "shared/source/os_interface/windows/dxgi_wrapper.h"
 #include "shared/source/os_interface/windows/wddm/adapter_factory.h"
 
-#include <memory>
 #include <vector>
 
 namespace NEO {

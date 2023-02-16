@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,6 @@
 
 #include "CL/cl_ext.h"
 #include <CL/cl.h>
-#include <CL/cl_ext.h>
 
 namespace NEO {
 

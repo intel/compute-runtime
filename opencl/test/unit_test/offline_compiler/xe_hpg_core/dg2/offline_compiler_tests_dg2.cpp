@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/os_interface/os_library.h"
 #include "shared/test/common/xe_hpg_core/dg2/product_configs_dg2.h"
 
 #include "opencl/test/unit_test/offline_compiler/ocloc_fatbinary_tests.h"

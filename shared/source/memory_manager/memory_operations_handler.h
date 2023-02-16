@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,6 @@
 #pragma once
 #include "shared/source/memory_manager/memory_operations_status.h"
 #include "shared/source/utilities/arrayref.h"
-
-#include <vector>
 
 namespace NEO {
 class Device;

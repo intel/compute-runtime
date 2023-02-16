@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,6 @@
 #include "level_zero/experimental/source/tracing/tracing_residency_imp.h"
 #include "level_zero/experimental/source/tracing/tracing_sampler_imp.h"
 #include <level_zero/ze_api.h>
-#include <level_zero/ze_ddi.h>
 
 #include "ze_ddi_tables.h"
 
@@ -31,7 +30,6 @@
 #include <chrono>
 #include <list>
 #include <mutex>
-#include <thread>
 #include <vector>
 
 extern ze_gpu_driver_dditable_t driver_ddiTable;

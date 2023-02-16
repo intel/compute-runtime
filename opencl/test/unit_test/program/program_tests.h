@@ -13,8 +13,6 @@
 
 #include "gtest/gtest.h"
 
-#include <vector>
-
 class ProgramTests : public NEO::ClDeviceFixture,
                      public ::testing::Test,
                      public NEO::ContextFixture {

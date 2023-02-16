@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,7 @@
 #include "zello_common.h"
 #include "zello_compile.h"
 
+#include <cstring>
 #include <fstream>
 #include <iostream>
 #include <memory>
