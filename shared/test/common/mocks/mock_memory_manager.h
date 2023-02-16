@@ -250,6 +250,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     bool forceFailureInPrimaryAllocation = false;
     bool singleFailureInPrimaryAllocation = false;
     bool forceFailureInAllocationWithHostPointer = false;
+    bool singleFailureInAllocationWithHostPointer = false;
     bool isMockHostMemoryManager = false;
     bool deferAllocInUse = false;
     bool isMockEventPoolCreateMemoryManager = false;

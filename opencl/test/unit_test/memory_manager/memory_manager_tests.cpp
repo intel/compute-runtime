@@ -2706,6 +2706,11 @@ class MemoryManagerWithFailure : public MockMemoryManager {
         recentlyPassedDeviceBitfield = properties.subDevicesBitfield;
         return nullptr;
     }
+
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptr) override {
+        recentlyPassedDeviceBitfield = properties.subDevicesBitfield;
+        return nullptr;
+    }
 };
 
 TEST(MemoryManagerTest, whenMemoryManagerReturnsNullptrThenAllocateGlobalsSurfaceAlsoReturnsNullptr) {

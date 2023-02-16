@@ -844,6 +844,32 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryWithUseHostPtrFlagThenExternalHostP
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
+TEST_F(MemoryTest, givenNoSupportForDualStorageSharedMemoryWhenAllocatingSharedMemoryWithUseHostPtrFlagThenExternalHostPtrIsSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(0);
+
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    hostDesc.flags = ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR;
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_NE(nullptr, allocData);
+    EXPECT_EQ(allocData->allocationFlagsProperty.hostptr, 0x1234u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
 TEST_F(MemoryTest, whenAllocatingHostMemoryWithUseHostPtrFlagThenExternalHostPtrIsSet) {
     size_t size = 10;
     size_t alignment = 1u;
@@ -1338,7 +1364,7 @@ TEST_F(FreeExtTests,
 }
 
 TEST_F(FreeExtTests,
-       whenallocMemFailsWithDeferredFreeAllocationThenMemoryFreed) {
+       whenAllocMemFailsWithDeferredFreeAllocationThenMemoryFreed) {
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -1359,7 +1385,9 @@ TEST_F(FreeExtTests,
     EXPECT_EQ(1u, memManager->deferFreeCallsMade);
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
+
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
 
     void *ptr2 = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -1370,6 +1398,8 @@ TEST_F(FreeExtTests,
     EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = false;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = false;
+
     result = context->allocHostMem(&hostDesc,
                                    size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1383,6 +1413,8 @@ TEST_F(FreeExtTests,
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
+
     result = context->allocDeviceMem(device,
                                      &deviceDesc,
                                      size, alignment, &ptr2);
@@ -1390,6 +1422,8 @@ TEST_F(FreeExtTests,
     EXPECT_EQ(0u, memManager->numDeferFreeAllocs());
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = false;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = false;
+
     result = context->allocHostMem(&hostDesc,
                                    size, alignment, &ptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1403,6 +1437,8 @@ TEST_F(FreeExtTests,
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
+
     result = context->allocSharedMem(device->toHandle(),
                                      &deviceDesc,
                                      &hostDesc,
@@ -1412,7 +1448,7 @@ TEST_F(FreeExtTests,
 }
 
 TEST_F(FreeExtTests,
-       whenallocMemFailsWithDeferredFreeAllocationThenMemoryFreedAndRetrySucceeds) {
+       whenAllocMemFailsWithDeferredFreeAllocationThenMemoryFreedAndRetrySucceeds) {
     size_t size = 1024;
     size_t alignment = 1u;
     void *ptr = nullptr;
@@ -1433,8 +1469,11 @@ TEST_F(FreeExtTests,
     EXPECT_EQ(1u, memManager->deferFreeCallsMade);
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->deferAllocInUse = false;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->isMockHostMemoryManager = true;
+
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->singleFailureInPrimaryAllocation = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->singleFailureInAllocationWithHostPointer = true;
 
     void *ptr2 = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -1454,6 +1493,8 @@ TEST_F(FreeExtTests,
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->singleFailureInPrimaryAllocation = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->singleFailureInAllocationWithHostPointer = true;
 
     result = context->allocDeviceMem(device,
                                      &deviceDesc,
@@ -1471,6 +1512,8 @@ TEST_F(FreeExtTests,
 
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInPrimaryAllocation = true;
     static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->singleFailureInPrimaryAllocation = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->forceFailureInAllocationWithHostPointer = true;
+    static_cast<MockMemoryManager *>(driverHandle->getMemoryManager())->singleFailureInAllocationWithHostPointer = true;
 
     result = context->allocSharedMem(device->toHandle(),
                                      &deviceDesc,
@@ -3919,8 +3962,8 @@ TEST_F(MemoryBitfieldTest, givenDeviceWithValidBitfieldWhenAllocatingDeviceMemor
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, ptr);
 }
-TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemoryThenPassProperBitfield) {
 
+TEST(MemoryBitfieldTests, givenDeviceWithValidBitfieldWhenAllocatingSharedMemoryThenPassProperBitfield) {
     DebugManagerStateRestore restorer;
     size_t size = 10;
     size_t alignment = 1u;

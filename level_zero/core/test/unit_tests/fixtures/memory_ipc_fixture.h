@@ -470,6 +470,10 @@ class MemoryManagerOpenIpcMock : public MemoryManagerIpcMock {
     MemoryManagerOpenIpcMock(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerIpcMock(executionEnvironment) {}
 
     NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+        return allocateGraphicsMemoryWithProperties(properties, nullptr);
+    }
+
+    NEO::GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *externalPtr) override {
         auto ptr = reinterpret_cast<void *>(sharedHandleAddress++);
         auto gmmHelper = getGmmHelper(0);
         auto canonizedGpuAddress = gmmHelper->canonize(castToUint64(ptr));

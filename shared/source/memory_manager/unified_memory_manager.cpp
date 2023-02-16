@@ -244,6 +244,9 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     size_t pageSizeForAlignment = MemoryConstants::pageSize64k;
     size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
 
+    auto externalPtr = reinterpret_cast<void *>(memoryProperties.allocationFlags.hostptr);
+    bool useExternalHostPtrForCpu = externalPtr != nullptr;
+
     bool compressionEnabled = false;
     AllocationType allocationType = getGraphicsAllocationTypeAndCompressionPreference(memoryProperties, compressionEnabled);
 
@@ -259,7 +262,7 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
     }
 
     AllocationProperties unifiedMemoryProperties{rootDeviceIndex,
-                                                 true,
+                                                 !useExternalHostPtrForCpu, // allocateMemory
                                                  alignedSize,
                                                  allocationType,
                                                  false,
@@ -281,14 +284,16 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
         }
     } else if (memoryProperties.memoryType == InternalMemoryType::HOST_UNIFIED_MEMORY) {
         unifiedMemoryProperties.flags.isUSMHostAllocation = true;
+    } else {
+        unifiedMemoryProperties.flags.isUSMHostAllocation = useExternalHostPtrForCpu;
     }
 
-    GraphicsAllocation *unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties);
+    GraphicsAllocation *unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties, externalPtr);
     if (!unifiedMemoryAllocation) {
         if (memoryProperties.memoryType == InternalMemoryType::DEVICE_UNIFIED_MEMORY &&
             this->usmDeviceAllocationsCacheEnabled) {
             this->trimUSMDeviceAllocCache();
-            unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties);
+            unifiedMemoryAllocation = memoryManager->allocateGraphicsMemoryWithProperties(unifiedMemoryProperties, externalPtr);
         }
         if (!unifiedMemoryAllocation) {
             return nullptr;
@@ -308,7 +313,11 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
 
     std::unique_lock<std::shared_mutex> lock(mtx);
     this->SVMAllocs.insert(allocData);
-    return reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
+
+    auto retPtr = reinterpret_cast<void *>(unifiedMemoryAllocation->getGpuAddress());
+    UNRECOVERABLE_IF(useExternalHostPtrForCpu && (externalPtr != retPtr));
+
+    return retPtr;
 }
 
 void *SVMAllocsManager::createSharedUnifiedMemoryAllocation(size_t size,

@@ -93,10 +93,17 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(cons
     if (isMockHostMemoryManager) {
         allocateGraphicsMemoryWithPropertiesCount++;
         if (forceFailureInAllocationWithHostPointer) {
+            if (singleFailureInAllocationWithHostPointer) {
+                forceFailureInAllocationWithHostPointer = false;
+            }
+
             return nullptr;
         }
+
         return NEO::MemoryManager::allocateGraphicsMemoryWithProperties(properties, ptr);
     }
+
+    recentlyPassedDeviceBitfield = properties.subDevicesBitfield;
     return OsAgnosticMemoryManager::allocateGraphicsMemoryWithProperties(properties, ptr);
 }
 
