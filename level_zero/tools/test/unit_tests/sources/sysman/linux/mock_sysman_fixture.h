@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/os_interface.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/firmware_util/mock_fw_util_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_procfs_access_fixture.h"
@@ -73,11 +74,20 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccess;
 
+        if (GlobalOsSysmanDriver == nullptr) {
+            GlobalOsSysmanDriver = L0::OsSysmanDriver::create();
+        }
+
         pSysmanDeviceImp->init();
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
+        }
+
+        if (GlobalOsSysmanDriver != nullptr) {
+            delete GlobalOsSysmanDriver;
+            GlobalOsSysmanDriver = nullptr;
         }
 
         DeviceFixture::tearDown();
@@ -122,12 +132,21 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
         pLinuxSysmanImp->pFwUtilInterface = pFwUtilInterface;
         pLinuxSysmanImp->pSysfsAccess = pSysfsAccess;
         pLinuxSysmanImp->pProcfsAccess = pProcfsAccess;
+
+        if (GlobalOsSysmanDriver == nullptr) {
+            GlobalOsSysmanDriver = L0::OsSysmanDriver::create();
+        }
+
         pSysmanDeviceImp->init();
         subDeviceCount = numSubDevices;
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
+        }
+        if (GlobalOsSysmanDriver != nullptr) {
+            delete GlobalOsSysmanDriver;
+            GlobalOsSysmanDriver = nullptr;
         }
         unsetenv("ZES_ENABLE_SYSMAN");
         MultiDeviceFixture::tearDown();
@@ -151,6 +170,25 @@ class PublicFsAccess : public L0::FsAccess {
 class PublicSysfsAccess : public L0::SysfsAccess {
   public:
     using SysfsAccess::accessSyscall;
+};
+
+class UdevLibMock : public UdevLib {
+  public:
+    UdevLibMock() = default;
+
+    ADDMETHOD_NOBASE(registerEventsFromSubsystemAndGetFd, int, 5, (std::vector<std::string> & subsystemList));
+    ADDMETHOD_NOBASE(getEventGenerationSourceDevice, dev_t, 0, (void *dev));
+    ADDMETHOD_NOBASE(getEventType, const char *, "change", (void *dev));
+    ADDMETHOD_NOBASE(getEventPropertyValue, const char *, "MOCK", (void *dev, const char *key));
+    ADDMETHOD_NOBASE(allocateDeviceToReceiveData, void *, (void *)(0x12345678), ());
+    ADDMETHOD_NOBASE_VOIDRETURN(dropDeviceReference, (void *dev));
+};
+
+class PublicLinuxSysmanDriverImp : public L0::LinuxSysmanDriverImp {
+  public:
+    PublicLinuxSysmanDriverImp() : LinuxSysmanDriverImp() {}
+    using LinuxSysmanDriverImp::pLinuxEventsUtil;
+    using LinuxSysmanDriverImp::pUdevLib;
 };
 
 } // namespace ult

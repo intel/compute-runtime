@@ -90,13 +90,6 @@ FirmwareUtil *LinuxSysmanImp::getFwUtilInterface() {
     return pFwUtilInterface;
 }
 
-L0::UdevLib *LinuxSysmanImp::getUdevLibHandle() {
-    if (pUdevLib == nullptr) {
-        pUdevLib = UdevLib::create();
-    }
-    return pUdevLib;
-}
-
 FsAccess &LinuxSysmanImp::getFsAccess() {
     UNRECOVERABLE_IF(nullptr == pFsAccess);
     return *pFsAccess;

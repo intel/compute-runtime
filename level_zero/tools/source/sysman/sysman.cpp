@@ -7,11 +7,13 @@
 
 #include "level_zero/tools/source/sysman/sysman.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/sleep.h"
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
+#include "level_zero/tools/source/sysman/os_sysman_driver.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
 
 #include <cstring>
@@ -19,6 +21,8 @@
 
 namespace L0 {
 bool sysmanInitFromCore = false;
+
+struct OsSysmanDriver *GlobalOsSysmanDriver = nullptr;
 
 void DeviceImp::createSysmanHandle(bool isSubDevice) {
     if (static_cast<DriverHandleImp *>(driverHandle)->enableSysman && !isSubDevice) {
@@ -42,6 +46,10 @@ SysmanDevice *SysmanDeviceHandleContext::init(ze_device_handle_t coreDevice) {
     for (auto &subDevice : device->subDevices) {
         static_cast<DeviceImp *>(subDevice)->setSysmanHandle(sysmanDevice);
     }
+
+    if (GlobalOsSysmanDriver == nullptr) {
+        GlobalOsSysmanDriver = L0::OsSysmanDriver::create();
+    }
     return sysmanDevice;
 }
 
@@ -59,24 +67,14 @@ ze_result_t DriverHandleImp::sysmanEventsListen(
     zes_device_handle_t *phDevices,
     uint32_t *pNumDeviceEvents,
     zes_event_type_flags_t *pEvents) {
-    bool gotSysmanEvent = false;
-    memset(pEvents, 0, count * sizeof(zes_event_type_flags_t));
-    auto timeToExitLoop = L0::steadyClock::now() + std::chrono::milliseconds(timeout);
-    do {
-        for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
-            gotSysmanEvent = L0::SysmanDevice::fromHandle(phDevices[devIndex])->deviceEventListen(pEvents[devIndex], timeout);
-            if (gotSysmanEvent) {
-                *pNumDeviceEvents = 1;
-                break;
-            }
-        }
-        if (gotSysmanEvent) {
-            break;
-        }
-        NEO::sleep(std::chrono::milliseconds(10)); // Sleep for 10 milliseconds before next check of events
-    } while ((L0::steadyClock::now() <= timeToExitLoop));
 
-    return ZE_RESULT_SUCCESS;
+    if (GlobalOsSysmanDriver == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                              "%s", "Os Sysman Driver Not initialized\n");
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+
+    return GlobalOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
 }
 
 ze_result_t DriverHandleImp::sysmanEventsListenEx(
@@ -85,24 +83,13 @@ ze_result_t DriverHandleImp::sysmanEventsListenEx(
     zes_device_handle_t *phDevices,
     uint32_t *pNumDeviceEvents,
     zes_event_type_flags_t *pEvents) {
-    bool gotSysmanEvent = false;
-    memset(pEvents, 0, count * sizeof(zes_event_type_flags_t));
-    auto timeToExitLoop = L0::steadyClock::now() + std::chrono::duration<uint64_t, std::milli>(timeout);
-    do {
-        for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
-            gotSysmanEvent = L0::SysmanDevice::fromHandle(phDevices[devIndex])->deviceEventListen(pEvents[devIndex], timeout);
-            if (gotSysmanEvent) {
-                *pNumDeviceEvents = 1;
-                break;
-            }
-        }
-        if (gotSysmanEvent) {
-            break;
-        }
-        NEO::sleep(std::chrono::milliseconds(10)); // Sleep for 10 milliseconds before next check of events
-    } while ((L0::steadyClock::now() <= timeToExitLoop));
 
-    return ZE_RESULT_SUCCESS;
+    if (GlobalOsSysmanDriver == nullptr) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                              "%s", "Os Sysman Driver Not initialized\n");
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return GlobalOsSysmanDriver->eventsListen(timeout, count, phDevices, pNumDeviceEvents, pEvents);
 }
 
 ze_result_t SysmanDevice::performanceGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_perf_handle_t *phPerformance) {

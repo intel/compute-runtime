@@ -11,6 +11,7 @@
 #include "level_zero/tools/source/sysman/events/events_imp.h"
 #include "level_zero/tools/source/sysman/events/linux/os_events_imp_prelim.h"
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
 
 namespace L0 {
 namespace ult {
@@ -58,6 +59,7 @@ struct MockEventsFsAccess : public FsAccess {
     bool mockReadValOne = false;
     bool mockReadValZero = false;
     bool mockFileNotFoundError = false;
+    ze_result_t mockListDirectoryResult = ZE_RESULT_SUCCESS;
 
     ze_result_t getValReturnValAsOne(const std::string file, uint32_t &val) {
         if (file.compare(ueventWedgedFile) == 0) {
@@ -109,6 +111,10 @@ struct MockEventsFsAccess : public FsAccess {
     }
 
     ze_result_t listDirectory(const std::string directory, std::vector<std::string> &events) override {
+        if (mockListDirectoryResult != ZE_RESULT_SUCCESS) {
+            return mockListDirectoryResult;
+        }
+
         if (directory.compare(eventsDir) == 0) {
             events.push_back("error--correctable-eu-grf");
             events.push_back("error--engine-reset");
@@ -200,18 +206,6 @@ struct MockEventsSysfsAccess : public SysfsAccess {
     MockEventsSysfsAccess() = default;
 };
 
-class UdevLibMock : public UdevLib {
-  public:
-    UdevLibMock() = default;
-
-    ADDMETHOD_NOBASE(registerEventsFromSubsystemAndGetFd, int, 5, (std::vector<std::string> & subsystemList));
-    ADDMETHOD_NOBASE(getEventGenerationSourceDevice, dev_t, 0, (void *dev));
-    ADDMETHOD_NOBASE(getEventType, const char *, "change", (void *dev));
-    ADDMETHOD_NOBASE(getEventPropertyValue, const char *, "MOCK", (void *dev, const char *key));
-    ADDMETHOD_NOBASE(allocateDeviceToReceiveData, void *, (void *)(0x12345678), ());
-    ADDMETHOD_NOBASE_VOIDRETURN(dropDeviceReference, (void *dev));
-};
-
 struct MockEventsFwInterface : public FirmwareUtil {
     bool mockIfrStatus = false;
     ze_result_t fwIfrApplied(bool &ifrStatus) override {
@@ -236,11 +230,13 @@ struct MockEventsFwInterface : public FirmwareUtil {
 class PublicLinuxEventsImp : public L0::LinuxEventsImp {
   public:
     PublicLinuxEventsImp(OsSysman *pOsSysman) : LinuxEventsImp(pOsSysman) {}
-    using LinuxEventsImp::checkIfFabricPortStatusChanged;
-    using LinuxEventsImp::listenSystemEvents;
-    using LinuxEventsImp::pUdevLib;
-    using LinuxEventsImp::readFabricDeviceStats;
-    using LinuxEventsImp::registeredEvents;
+};
+
+class PublicLinuxEventsUtil : public L0::LinuxEventsUtil {
+  public:
+    PublicLinuxEventsUtil() : LinuxEventsUtil() {}
+    using LinuxEventsUtil::listenSystemEvents;
+    using LinuxEventsUtil::pUdevLib;
 };
 
 } // namespace ult

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,8 +89,11 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t deviceGetEccState(zes_device_ecc_properties_t *pState) = 0;
     virtual ze_result_t deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) = 0;
     virtual bool deviceEventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) = 0;
+    virtual OsSysman *deviceGetOsInterface() = 0;
     virtual ~SysmanDevice() = default;
 };
+
+extern struct OsSysmanDriver *GlobalOsSysmanDriver;
 
 class SysmanDeviceHandleContext {
   public:

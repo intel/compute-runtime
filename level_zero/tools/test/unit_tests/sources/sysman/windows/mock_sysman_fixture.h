@@ -14,6 +14,7 @@
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
+#include "level_zero/tools/source/sysman/windows/os_sysman_driver_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/mocks/mock_sysman_env_vars.h"
 
 #include "gmock/gmock.h"
@@ -48,12 +49,22 @@ class SysmanDeviceFixture : public DeviceFixture, public SysmanEnabledFixture {
         pSysmanDeviceImp = static_cast<SysmanDeviceImp *>(pSysmanDevice);
         pOsSysman = pSysmanDeviceImp->pOsSysman;
         pWddmSysmanImp = static_cast<PublicWddmSysmanImp *>(pOsSysman);
+
+        if (GlobalOsSysmanDriver == nullptr) {
+            GlobalOsSysmanDriver = L0::OsSysmanDriver::create();
+        }
     }
 
     void TearDown() override {
         if (!sysmanUltsEnable) {
             GTEST_SKIP();
         }
+
+        if (GlobalOsSysmanDriver != nullptr) {
+            delete GlobalOsSysmanDriver;
+            GlobalOsSysmanDriver = nullptr;
+        }
+
         SysmanEnabledFixture::TearDown();
         DeviceFixture::tearDown();
     }
