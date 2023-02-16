@@ -13,7 +13,6 @@
 
 #include "gtest/gtest.h"
 
-#include <cinttypes>
 #include <memory>
 #include <type_traits>
 #include <unordered_map>

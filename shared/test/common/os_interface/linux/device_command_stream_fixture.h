@@ -6,15 +6,11 @@
  */
 
 #pragma once
-#include "shared/source/helpers/aligned_memory.h"
-#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/linux/mock_drm_wrappers.h"
-
-#include "aubstream/engine_node.h"
 
 #include <atomic>
 #include <cstdint>

@@ -8,6 +8,7 @@
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/linux/i915.h"
 
 #include "gtest/gtest.h"

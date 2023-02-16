@@ -9,29 +9,22 @@
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/command_stream/tag_allocation_layout.h"
-#include "shared/source/direct_submission/linux/drm_direct_submission.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_command_stream.h"
-#include "shared/source/os_interface/linux/drm_engine_mapper.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
-
-#include <cstdlib>
-#include <cstring>
 
 namespace NEO {
 

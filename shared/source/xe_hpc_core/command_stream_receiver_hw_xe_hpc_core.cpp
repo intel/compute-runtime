@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/xe_hpc_core/hw_cmds_xe_hpc_core_base.h"
 #include "shared/source/xe_hpc_core/hw_info.h"

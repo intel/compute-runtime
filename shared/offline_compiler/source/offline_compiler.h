@@ -11,7 +11,6 @@
 #include "shared/offline_compiler/source/ocloc_fcl_facade.h"
 #include "shared/offline_compiler/source/ocloc_igc_facade.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/os_library.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 

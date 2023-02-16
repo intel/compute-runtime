@@ -9,25 +9,17 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/encode_surface_state.h"
-#include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/mt_helpers.h"
-#include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/helpers/state_base_address_bdw_and_later.inl"
-#include "shared/source/os_interface/os_context.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist.h"
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.h"
 #include "level_zero/core/source/device/device.h"
-#include "level_zero/core/source/fence/fence.h"
 #include "level_zero/tools/source/metrics/metric.h"
-
-#include <limits>
 
 namespace L0 {
 

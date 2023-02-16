@@ -13,7 +13,6 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/image/image_surface_state.h"
-#include "shared/source/os_interface/hw_info_config.h"
 
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/helpers/surface_formats.h"

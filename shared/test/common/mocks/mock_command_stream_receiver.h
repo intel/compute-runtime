@@ -12,13 +12,11 @@
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/helpers/flat_batch_buffer_helper_hw.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/surface.h"
-#include "shared/source/os_interface/os_context.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
 

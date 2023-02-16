@@ -6,8 +6,6 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/xe_hpg_core/hw_cmds.h"
 
 #include "encode_surface_state_args.h"

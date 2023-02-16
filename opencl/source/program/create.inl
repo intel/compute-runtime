@@ -6,7 +6,6 @@
  */
 
 #include "shared/source/ail/ail_configuration.h"
-#include "shared/source/device/device.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string_helpers.h"
 

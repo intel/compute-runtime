@@ -10,6 +10,7 @@
 #include "shared/source/memory_manager/os_agnostic_memory_manager.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/cl_device/cl_device.h"

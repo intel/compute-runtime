@@ -6,15 +6,10 @@
  */
 
 #pragma once
-
-#include "shared/source/aub/aub_center.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
 #include "shared/source/execution_environment/execution_environment.h"
-#include "shared/source/helpers/hw_info.h"
-
-#include <string>
 
 namespace NEO {
 

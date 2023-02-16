@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/built_ins/built_ins.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/engine_node_helper.h"
@@ -15,7 +14,6 @@
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
-#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/program/sync_buffer_handler.h"
@@ -25,7 +23,6 @@
 
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/command_queue/command_queue_hw.h"
-#include "opencl/source/command_queue/gpgpu_walker.h"
 #include "opencl/source/command_queue/hardware_interface.h"
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/event/user_event.h"
@@ -43,7 +40,6 @@
 #include "opencl/source/utilities/cl_logger.h"
 
 #include <algorithm>
-#include <new>
 
 namespace NEO {
 struct RootDeviceEnvironment;

@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"

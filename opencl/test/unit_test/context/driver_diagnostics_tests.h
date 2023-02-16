@@ -11,15 +11,12 @@
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/test_checks_shared.h"
 
-#include "opencl/source/command_queue/cl_local_work_size.h"
 #include "opencl/source/context/context.h"
 #include "opencl/source/kernel/kernel.h"
-#include "opencl/source/mem_obj/buffer.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"
 #include "opencl/test/unit_test/fixtures/image_fixture.h"
 #include "opencl/test/unit_test/fixtures/platform_fixture.h"
 #include "opencl/test/unit_test/fixtures/program_fixture.h"
-#include "opencl/test/unit_test/mocks/mock_buffer.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 #include "opencl/test/unit_test/mocks/mock_kernel.h"
 

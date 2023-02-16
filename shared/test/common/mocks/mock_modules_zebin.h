@@ -11,7 +11,6 @@
 #include "shared/source/device_binary_format/zebin_decoder.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/helpers/ptr_math.h"
 #include "shared/source/utilities/const_stringref.h"
 
 #include "igfxfmid.h"

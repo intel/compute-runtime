@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_stream/preemption.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"

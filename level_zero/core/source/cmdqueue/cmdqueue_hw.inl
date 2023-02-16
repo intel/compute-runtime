@@ -10,30 +10,24 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
-#include "shared/source/command_stream/thread_arbitration_policy.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/definitions/mi_flush_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/memory_manager/residency_container.h"
-#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
-#include "shared/source/page_fault_manager/cpu_page_fault_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
@@ -44,11 +38,9 @@
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/fence/fence.h"
 #include "level_zero/core/source/helpers/error_code_helper_l0.h"
-#include "level_zero/tools/source/metrics/metric.h"
 
 #include <algorithm>
 #include <limits>
-#include <thread>
 
 namespace L0 {
 template <GFXCORE_FAMILY gfxCoreFamily>

@@ -10,7 +10,6 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include "opencl/source/cl_device/cl_device.h"

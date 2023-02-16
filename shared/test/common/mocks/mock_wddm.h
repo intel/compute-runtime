@@ -8,7 +8,6 @@
 #pragma once
 
 #include "shared/source/helpers/constants.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/host_ptr_defines.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm_residency_allocations_container.h"

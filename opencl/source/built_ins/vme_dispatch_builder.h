@@ -11,7 +11,6 @@
 #include "shared/source/helpers/basic_math.h"
 
 #include "opencl/source/accelerators/intel_accelerator.h"
-#include "opencl/source/accelerators/intel_motion_estimation.h"
 #include "opencl/source/built_ins/built_in_ops_vme.h"
 #include "opencl/source/built_ins/builtins_dispatch_builder.h"
 #include "opencl/source/cl_device/cl_device.h"

@@ -16,8 +16,6 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/local_id_gen.h"
-#include "shared/source/helpers/ptr_math.h"
-#include "shared/source/helpers/string.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/kernel/implicit_args.h"
@@ -26,8 +24,6 @@
 #include "opencl/source/context/context.h"
 #include "opencl/source/helpers/dispatch_info.h"
 #include "opencl/source/kernel/kernel.h"
-
-#include <cstring>
 
 namespace NEO {
 

@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/definitions/engine_group_types.h"
@@ -14,8 +13,6 @@
 #include "shared/source/helpers/ptr_math.h"
 
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
-
-#include <limits>
 
 namespace L0 {
 
