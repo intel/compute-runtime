@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
 
     uint8_t constData[8] = {0x1};
     uint8_t varData[8] = {0x2};
-    uint8_t kernelISA[8] = {0x3};
+    uint8_t kernelISA[12] = {0x3};
     uint8_t stringData[8] = {0x4};
 
     uint8_t debugInfo[0x30] = {0x22};
@@ -159,6 +159,9 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
         EXPECT_EQ(zebin.sectionHeaders[i].header->flags, debugZebin.sectionHeaders[i].header->flags);
 
         const auto &sectionHeader = debugZebin.sectionHeaders[i].header;
+
+        EXPECT_TRUE(isAligned<8>(sectionHeader->offset));
+
         const auto &sectionData = debugZebin.sectionHeaders[i].data;
         const auto sectionName = debugZebin.getSectionName(i);
         auto refSectionName = NEO::ConstStringRef(sectionName);

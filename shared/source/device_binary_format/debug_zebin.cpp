@@ -49,7 +49,7 @@ std::vector<uint8_t> createDebugZebin(ArrayRef<const uint8_t> zebinBin, const Se
 }
 
 void DebugZebinCreator::createDebugZebin() {
-    ElfEncoder<EI_CLASS_64> elfEncoder(false, false, 4);
+    ElfEncoder<EI_CLASS_64> elfEncoder(false, false, 8);
     auto &header = elfEncoder.getElfFileHeader();
     header.machine = zebin.elfFileHeader->machine;
     header.flags = zebin.elfFileHeader->flags;
