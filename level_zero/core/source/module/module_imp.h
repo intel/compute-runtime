@@ -23,9 +23,9 @@
 namespace NEO {
 struct KernelDescriptor;
 
-namespace Debug {
+namespace Zebin::Debug {
 struct Segments;
-} // namespace Debug
+} // namespace Zebin::Debug
 } // namespace NEO
 namespace L0 {
 
@@ -149,7 +149,7 @@ struct ModuleImp : public Module {
     void copyPatchedSegments(const NEO::Linker::PatchableSegments &isaSegmentsForPatching);
     void verifyDebugCapabilities();
     void checkIfPrivateMemoryPerDispatchIsNeeded() override;
-    NEO::Debug::Segments getZebinSegments();
+    NEO::Zebin::Debug::Segments getZebinSegments();
     void passDebugData();
     void createDebugZebin();
     void registerElfInDebuggerL0();

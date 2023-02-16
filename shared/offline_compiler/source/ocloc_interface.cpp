@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -167,7 +167,7 @@ int link(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
 };
 
 int disassemble(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
-    const auto binaryFormat = ZebinManipulator::getBinaryFormatForDisassemble(argHelper, args);
+    const auto binaryFormat = Zebin::Manipulator::getBinaryFormatForDisassemble(argHelper, args);
     auto decode = [&args](auto &decoder) -> int {
         int retVal = decoder.validateInput(args);
         if (decoder.showHelp) {
@@ -177,21 +177,21 @@ int disassemble(OclocArgHelper *argHelper, const std::vector<std::string> &args)
         return (retVal == OclocErrorCode::SUCCESS) ? decoder.decode() : retVal;
     };
 
-    if (binaryFormat == ZebinManipulator::BinaryFormats::PatchTokens) {
+    if (binaryFormat == Zebin::Manipulator::BinaryFormats::PatchTokens) {
         BinaryDecoder disasm(argHelper);
         return decode(disasm);
 
-    } else if (binaryFormat == ZebinManipulator::BinaryFormats::Zebin32b) {
-        ZebinManipulator::ZebinDecoder<Elf::EI_CLASS_32> decoder(argHelper);
+    } else if (binaryFormat == Zebin::Manipulator::BinaryFormats::Zebin32b) {
+        Zebin::Manipulator::ZebinDecoder<Elf::EI_CLASS_32> decoder(argHelper);
         return decode(decoder);
     } else {
-        ZebinManipulator::ZebinDecoder<Elf::EI_CLASS_64> decoder(argHelper);
+        Zebin::Manipulator::ZebinDecoder<Elf::EI_CLASS_64> decoder(argHelper);
         return decode(decoder);
     }
 }
 
 int assemble(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
-    const auto binaryFormat = ZebinManipulator::getBinaryFormatForAssemble(argHelper, args);
+    const auto binaryFormat = Zebin::Manipulator::getBinaryFormatForAssemble(argHelper, args);
     auto encode = [&args](auto &encoder) -> int {
         int retVal = encoder.validateInput(args);
         if (encoder.showHelp) {
@@ -200,14 +200,14 @@ int assemble(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
         }
         return (retVal == OclocErrorCode::SUCCESS) ? encoder.encode() : retVal;
     };
-    if (binaryFormat == ZebinManipulator::BinaryFormats::PatchTokens) {
+    if (binaryFormat == Zebin::Manipulator::BinaryFormats::PatchTokens) {
         BinaryEncoder assembler(argHelper);
         return encode(assembler);
-    } else if (binaryFormat == ZebinManipulator::BinaryFormats::Zebin32b) {
-        ZebinManipulator::ZebinEncoder<Elf::EI_CLASS_32> encoder(argHelper);
+    } else if (binaryFormat == Zebin::Manipulator::BinaryFormats::Zebin32b) {
+        Zebin::Manipulator::ZebinEncoder<Elf::EI_CLASS_32> encoder(argHelper);
         return encode(encoder);
     } else {
-        ZebinManipulator::ZebinEncoder<Elf::EI_CLASS_64> encoder(argHelper);
+        Zebin::Manipulator::ZebinEncoder<Elf::EI_CLASS_64> encoder(argHelper);
         return encode(encoder);
     }
 }

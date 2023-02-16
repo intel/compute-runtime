@@ -11,7 +11,8 @@
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/source/device_binary_format/ar/ar_decoder.h"
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
-#include "shared/source/device_binary_format/zebin_decoder.h"
+#include "shared/source/device_binary_format/elf/elf_decoder.h"
+#include "shared/source/device_binary_format/zebin/zebin_decoder.h"
 
 namespace NEO {
 OclocConcat::ErrorCode OclocConcat::initialize(const std::vector<std::string> &args) {
@@ -69,15 +70,15 @@ void OclocConcat::printMsg(ConstStringRef fileName, const std::string &message) 
 }
 
 AOT::PRODUCT_CONFIG OclocConcat::getAOTProductConfigFromBinary(ArrayRef<const uint8_t> binary, std::string &outErrors) {
-    std::vector<Elf::IntelGTNote> intelGTNotes;
-    if (NEO::isZebin<Elf::EI_CLASS_64>(binary)) {
+    std::vector<Zebin::Elf::IntelGTNote> intelGTNotes;
+    if (Zebin::isZebin<Elf::EI_CLASS_64>(binary)) {
         std::string warnings;
-        auto elf = Elf::decodeElf(binary, outErrors, warnings);
-        getIntelGTNotes<Elf::EI_CLASS_64>(elf, intelGTNotes, outErrors, warnings);
-    } else if (NEO::isZebin<Elf::EI_CLASS_32>(binary)) {
+        auto elf = NEO::Elf::decodeElf(binary, outErrors, warnings);
+        Zebin::getIntelGTNotes<Elf::EI_CLASS_64>(elf, intelGTNotes, outErrors, warnings);
+    } else if (Zebin::isZebin<Elf::EI_CLASS_32>(binary)) {
         std::string warnings;
-        auto elf = Elf::decodeElf<Elf::EI_CLASS_32>(binary, outErrors, warnings);
-        getIntelGTNotes<Elf::EI_CLASS_32>(elf, intelGTNotes, outErrors, warnings);
+        auto elf = NEO::Elf::decodeElf<Elf::EI_CLASS_32>(binary, outErrors, warnings);
+        Zebin::getIntelGTNotes<Elf::EI_CLASS_32>(elf, intelGTNotes, outErrors, warnings);
     } else {
         outErrors.append("Not a zebin file\n");
         return {};
@@ -86,7 +87,7 @@ AOT::PRODUCT_CONFIG OclocConcat::getAOTProductConfigFromBinary(ArrayRef<const ui
     AOT::PRODUCT_CONFIG productConfig{};
     bool productConfigFound = false;
     for (auto &note : intelGTNotes) {
-        if (note.type == Elf::ProductConfig) {
+        if (note.type == Zebin::Elf::IntelGTSectionType::ProductConfig) {
             productConfig = *reinterpret_cast<const AOT::PRODUCT_CONFIG *>(note.data.begin());
             productConfigFound = true;
             break;

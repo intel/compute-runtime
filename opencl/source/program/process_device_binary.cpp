@@ -8,7 +8,9 @@
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
-#include "shared/source/device_binary_format/zebin_decoder.h"
+#include "shared/source/device_binary_format/zebin/debug_zebin.h"
+#include "shared/source/device_binary_format/zebin/zebin_decoder.h"
+#include "shared/source/device_binary_format/zebin/zeinfo_decoder.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -42,7 +44,7 @@ const KernelInfo *Program::getKernelInfo(
         return nullptr;
     }
 
-    if (kernelName == NEO::Elf::SectionsNamesZebin::externalFunctions) {
+    if (kernelName == NEO::Zebin::Elf::SectionNames::externalFunctions) {
         return nullptr;
     }
 
@@ -317,14 +319,14 @@ void Program::processDebugData(uint32_t rootDeviceIndex) {
     }
 }
 
-Debug::Segments Program::getZebinSegments(uint32_t rootDeviceIndex) {
+Zebin::Debug::Segments Program::getZebinSegments(uint32_t rootDeviceIndex) {
     ArrayRef<const uint8_t> strings = {reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].constStringSectionData.initData),
                                        buildInfos[rootDeviceIndex].constStringSectionData.size};
     std::vector<std::pair<std::string_view, NEO::GraphicsAllocation *>> kernels;
     for (const auto &kernelInfo : buildInfos[rootDeviceIndex].kernelInfoArray)
         kernels.push_back({kernelInfo->kernelDescriptor.kernelMetadata.kernelName, kernelInfo->getGraphicsAllocation()});
 
-    return Debug::Segments(getGlobalSurface(rootDeviceIndex), getConstantSurface(rootDeviceIndex), strings, kernels);
+    return Zebin::Debug::Segments(getGlobalSurface(rootDeviceIndex), getConstantSurface(rootDeviceIndex), strings, kernels);
 }
 
 void Program::createDebugZebin(uint32_t rootDeviceIndex) {
@@ -336,7 +338,7 @@ void Program::createDebugZebin(uint32_t rootDeviceIndex) {
 
     auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfos[rootDeviceIndex].unpackedDeviceBinary.get()), buildInfos[rootDeviceIndex].unpackedDeviceBinarySize);
     auto segments = getZebinSegments(rootDeviceIndex);
-    auto debugZebin = Debug::createDebugZebin(refBin, segments);
+    auto debugZebin = Zebin::Debug::createDebugZebin(refBin, segments);
 
     debugDataSizeRef = debugZebin.size();
     debugDataRef.reset(new char[debugDataSizeRef]);
@@ -377,8 +379,8 @@ void Program::callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex
             return;
         }
         std::string errors{}, warnings{};
-        auto metadataString = extractZeInfoMetadataStringFromZebin(refBin, errors, warnings);
-        auto decodeError = decodeAndPopulateKernelMiscInfo(buildInfo.kernelMiscInfoPos, buildInfo.kernelInfoArray, metadataString, errors, warnings);
+        auto zeInfo = Zebin::getZeInfoFromZebin(refBin, errors, warnings);
+        auto decodeError = Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(buildInfo.kernelMiscInfoPos, buildInfo.kernelInfoArray, zeInfo, errors, warnings);
         if (NEO::DecodeError::Success != decodeError) {
             PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error in decodeAndPopulateKernelMiscInfo: %s\n", errors.c_str());
         }

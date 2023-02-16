@@ -615,7 +615,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenDebugDataWithoutRelocationsWhenInitializ
     data.resize(4);
     NEO::Elf::ElfEncoder<> elfEncoder;
     elfEncoder.getElfFileHeader().type = NEO::Elf::SHT_PROGBITS;
-    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix, data);
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix, data);
     auto elfBinary = elfEncoder.encode();
 
     kernelInfo->kernelDescriptor.external.debugData->vIsaSize = static_cast<uint32_t>(elfBinary.size());
@@ -815,7 +815,7 @@ HWTEST_F(ModuleWithDebuggerL0Test, GivenNonZebinBinaryWhenDestroyModuleThenModul
     data.resize(4);
     NEO::Elf::ElfEncoder<> elfEncoder;
     elfEncoder.getElfFileHeader().type = NEO::Elf::SHT_PROGBITS;
-    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix, data);
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix, data);
     auto elfBinary = elfEncoder.encode();
 
     kernelInfo->kernelDescriptor.external.debugData->vIsaSize = static_cast<uint32_t>(elfBinary.size());

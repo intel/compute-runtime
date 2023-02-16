@@ -5,14 +5,14 @@
  *
  */
 
-#include "shared/source/device_binary_format/debug_zebin.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
-#include "shared/source/device_binary_format/elf/zebin_elf.h"
+#include "shared/source/device_binary_format/zebin/debug_zebin.h"
+#include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/test/common/mocks/mock_elf.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
-using namespace NEO::Elf;
+using namespace NEO::Zebin::Elf;
 TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     MockElfEncoder<> elfEncoder;
 
@@ -24,22 +24,22 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     uint8_t debugInfo[0x30] = {0x22};
     uint8_t debugAbbrev[8] = {0x0};
 
-    using Segment = NEO::Debug::Segments::Segment;
+    using Segment = NEO::Zebin::Debug::Segments::Segment;
 
-    elfEncoder.appendSection(SHT_PROGBITS, SectionsNamesZebin::textPrefix.str() + "kernel", ArrayRef<const uint8_t>(kernelISA, sizeof(kernelISA)));
+    elfEncoder.appendSection(SHT_PROGBITS, SectionNames::textPrefix.str() + "kernel", ArrayRef<const uint8_t>(kernelISA, sizeof(kernelISA)));
     auto kernelSectionIndex = elfEncoder.getLastSectionHeaderIndex();
-    elfEncoder.appendSection(SHT_PROGBITS, SectionsNamesZebin::dataConst, ArrayRef<const uint8_t>(constData, sizeof(constData)));
+    elfEncoder.appendSection(SHT_PROGBITS, SectionNames::dataConst, ArrayRef<const uint8_t>(constData, sizeof(constData)));
     auto constDataSectionIndex = elfEncoder.getLastSectionHeaderIndex();
-    elfEncoder.appendSection(SHT_PROGBITS, SectionsNamesZebin::dataGlobal, ArrayRef<const uint8_t>(varData, sizeof(varData)));
+    elfEncoder.appendSection(SHT_PROGBITS, SectionNames::dataGlobal, ArrayRef<const uint8_t>(varData, sizeof(varData)));
     auto varDataSectionIndex = elfEncoder.getLastSectionHeaderIndex();
-    elfEncoder.appendSection(SHT_PROGBITS, SectionsNamesZebin::dataConstString, ArrayRef<const uint8_t>(stringData, sizeof(stringData)));
-    elfEncoder.appendSection(SHT_PROGBITS, SectionsNamesZebin::debugInfo, ArrayRef<const uint8_t>(debugInfo, sizeof(debugInfo)));
+    elfEncoder.appendSection(SHT_PROGBITS, SectionNames::dataConstString, ArrayRef<const uint8_t>(stringData, sizeof(stringData)));
+    elfEncoder.appendSection(SHT_PROGBITS, SectionNames::debugInfo, ArrayRef<const uint8_t>(debugInfo, sizeof(debugInfo)));
     auto debugInfoSectionIndex = elfEncoder.getLastSectionHeaderIndex();
-    elfEncoder.appendSection(SHT_PROGBITS, SectionsNamesZebin::debugAbbrev, ArrayRef<const uint8_t>(debugAbbrev, sizeof(debugAbbrev)));
+    elfEncoder.appendSection(SHT_PROGBITS, SectionNames::debugAbbrev, ArrayRef<const uint8_t>(debugAbbrev, sizeof(debugAbbrev)));
     auto debugAbbrevSectionIndex = elfEncoder.getLastSectionHeaderIndex();
-    elfEncoder.appendSection(SHT_ZEBIN_ZEINFO, SectionsNamesZebin::zeInfo, std::string{});
+    elfEncoder.appendSection(SHT_ZEBIN_ZEINFO, SectionNames::zeInfo, std::string{});
     auto zeInfoSectionIndex = elfEncoder.getLastSectionHeaderIndex();
-    elfEncoder.appendSection(SHT_ZEBIN_SPIRV, SectionsNamesZebin::spv, std::string{});
+    elfEncoder.appendSection(SHT_ZEBIN_SPIRV, SectionNames::spv, std::string{});
 
     using SymbolEntry = ElfSymbolEntry<ELF_IDENTIFIER_CLASS::EI_CLASS_64>;
     using Relocation = ElfRela<ELF_IDENTIFIER_CLASS::EI_CLASS_64>;
@@ -70,7 +70,7 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     symbols[4].shndx = static_cast<decltype(SymbolEntry::shndx)>(zeInfoSectionIndex);
     symbols[4].value = 0U;
 
-    symbols[5].name = elfEncoder.appendSectionName(SectionsNamesZebin::textPrefix.str() + "kernel");
+    symbols[5].name = elfEncoder.appendSectionName(SectionNames::textPrefix.str() + "kernel");
     symbols[5].info = SYMBOL_TABLE_TYPE::STT_SECTION | SYMBOL_TABLE_BIND::STB_LOCAL << 4;
     symbols[5].shndx = static_cast<decltype(SymbolEntry::shndx)>(debugInfoSectionIndex);
     symbols[5].value = 0U;
@@ -84,45 +84,45 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     debugRelocations[0].addend = 0xabc;
     debugRelocations[0].offset = 0x0;
     debugRelocations[0].setSymbolTableIndex(0);
-    debugRelocations[0].setRelocationType(RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR);
+    debugRelocations[0].setRelocationType(R_ZE_SYM_ADDR);
 
     debugRelocations[1].addend = 0x0;
     debugRelocations[1].offset = 0x8U;
     debugRelocations[1].setSymbolTableIndex(1);
-    debugRelocations[1].setRelocationType(RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32);
+    debugRelocations[1].setRelocationType(R_ZE_SYM_ADDR_32);
 
     debugRelocations[2].addend = 0x0;
     debugRelocations[2].offset = 0xCU;
     debugRelocations[2].setSymbolTableIndex(2);
-    debugRelocations[2].setRelocationType(RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32_HI);
+    debugRelocations[2].setRelocationType(R_ZE_SYM_ADDR_32_HI);
 
     debugRelocations[3].addend = -0xa;
     debugRelocations[3].offset = 0x10U;
     debugRelocations[3].setSymbolTableIndex(3);
-    debugRelocations[3].setRelocationType(RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR);
+    debugRelocations[3].setRelocationType(R_ZE_SYM_ADDR);
 
     // Will be ignored
     debugRelocations[4].addend = 0x0;
     debugRelocations[4].offset = 0x18U;
     debugRelocations[4].setSymbolTableIndex(4);
-    debugRelocations[4].setRelocationType(RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR);
+    debugRelocations[4].setRelocationType(R_ZE_SYM_ADDR);
 
     debugRelocations[5].addend = 0x0;
     debugRelocations[5].offset = 0x20U;
     debugRelocations[5].setSymbolTableIndex(5);
-    debugRelocations[5].setRelocationType(RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR);
+    debugRelocations[5].setRelocationType(R_ZE_SYM_ADDR);
 
     // Will be ignored due to reloc type
     debugRelocations[6].addend = 0x0;
     debugRelocations[6].offset = 0x28;
     debugRelocations[6].setSymbolTableIndex(6);
-    debugRelocations[6].setRelocationType(RELOC_TYPE_ZEBIN::R_PER_THREAD_PAYLOAD_OFFSET);
+    debugRelocations[6].setRelocationType(R_PER_THREAD_PAYLOAD_OFFSET);
 
-    elfEncoder.appendSection(SHT_SYMTAB, SectionsNamesZebin::symtab, ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(symbols), sizeof(symbols)));
-    auto &relaHeader = elfEncoder.appendSection(SHT_RELA, SpecialSectionNames::relaPrefix.str() + SectionsNamesZebin::debugInfo.str(), ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(debugRelocations), sizeof(debugRelocations)));
+    elfEncoder.appendSection(SHT_SYMTAB, SectionNames::symtab, ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(symbols), sizeof(symbols)));
+    auto &relaHeader = elfEncoder.appendSection(SHT_RELA, SpecialSectionNames::relaPrefix.str() + SectionNames::debugInfo.str(), ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(debugRelocations), sizeof(debugRelocations)));
     relaHeader.info = debugInfoSectionIndex;
 
-    NEO::Debug::Segments segments;
+    NEO::Zebin::Debug::Segments segments;
     segments.constData = {0x10000000, 0x10000};
     segments.varData = {0x20000000, 0x20000};
     segments.nameToSegMap["kernel"] = {0x40000000, 0x50000};
@@ -134,7 +134,7 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
     ASSERT_TRUE(error.empty());
     ASSERT_TRUE(warning.empty());
 
-    auto debugZebinBin = NEO::Debug::createDebugZebin(zebinBin, segments);
+    auto debugZebinBin = NEO::Zebin::Debug::createDebugZebin(zebinBin, segments);
     auto debugZebin = decodeElf(debugZebinBin, error, warning);
     ASSERT_TRUE(error.empty());
     ASSERT_TRUE(warning.empty());
@@ -165,19 +165,19 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
         const auto &sectionData = debugZebin.sectionHeaders[i].data;
         const auto sectionName = debugZebin.getSectionName(i);
         auto refSectionName = NEO::ConstStringRef(sectionName);
-        if (refSectionName.startsWith(SectionsNamesZebin::textPrefix.data())) {
+        if (refSectionName.startsWith(SectionNames::textPrefix.data())) {
             offsetKernel = sectionHeader->offset;
             fileSzKernel = sectionHeader->size;
             EXPECT_EQ(segments.nameToSegMap["kernel"].address, sectionHeader->addr);
-        } else if (refSectionName == SectionsNamesZebin::dataConst) {
+        } else if (refSectionName == SectionNames::dataConst) {
             offsetConstData = sectionHeader->offset;
             fileSzConstData = sectionHeader->size;
             EXPECT_EQ(segments.constData.address, sectionHeader->addr);
-        } else if (refSectionName == SectionsNamesZebin::dataGlobal) {
+        } else if (refSectionName == SectionNames::dataGlobal) {
             offsetVarData = sectionHeader->offset;
             fileSzVarData = sectionHeader->size;
             EXPECT_EQ(segments.varData.address, sectionHeader->addr);
-        } else if (refSectionName == SectionsNamesZebin::debugInfo) {
+        } else if (refSectionName == SectionNames::debugInfo) {
             auto ptrDebugInfo = sectionData.begin();
             EXPECT_EQ(segments.nameToSegMap["kernel"].address + symbols[0].value + debugRelocations[0].addend,
                       *reinterpret_cast<const uint64_t *>(ptrDebugInfo + debugRelocations[0].offset));
@@ -202,7 +202,7 @@ TEST(DebugZebinTest, givenValidZebinThenDebugZebinIsGenerated) {
 
             EXPECT_EQ(*reinterpret_cast<uint64_t *>(debugInfo + debugRelocations[6].offset),
                       *reinterpret_cast<const uint64_t *>(ptrDebugInfo + debugRelocations[6].offset));
-        } else if (refSectionName == SectionsNamesZebin::symtab) {
+        } else if (refSectionName == SectionNames::symtab) {
             using ElfSymbolT = ElfSymbolEntry<EI_CLASS_64>;
             size_t symbolCount = static_cast<size_t>(sectionHeader->size) / static_cast<size_t>(sectionHeader->entsize);
             ArrayRef<const ElfSymbolT> debugSymbols = {reinterpret_cast<const ElfSymbolT *>(sectionData.begin()), symbolCount};
@@ -250,7 +250,7 @@ TEST(DebugZebinTest, givenInvalidZebinThenDebugZebinIsNotGenerated) {
                           'E',
                           'L',
                           'F'};
-    auto debugZebin = NEO::Debug::createDebugZebin(ArrayRef<const uint8_t>(notZebin, sizeof(notZebin)), {});
+    auto debugZebin = NEO::Zebin::Debug::createDebugZebin(ArrayRef<const uint8_t>(notZebin, sizeof(notZebin)), {});
     EXPECT_EQ(0U, debugZebin.size());
 }
 
@@ -258,7 +258,7 @@ TEST(DebugZebinTest, givenSymTabShndxUndefinedThenDoNotApplyRelocations) {
     MockElfEncoder<> elfEncoder;
 
     uint8_t kernelISA[8] = {0U};
-    elfEncoder.appendSection(SHT_PROGBITS, SectionsNamesZebin::textPrefix.str() + "kernel", ArrayRef<const uint8_t>(kernelISA, sizeof(kernelISA)));
+    elfEncoder.appendSection(SHT_PROGBITS, SectionNames::textPrefix.str() + "kernel", ArrayRef<const uint8_t>(kernelISA, sizeof(kernelISA)));
     auto kernelSectionIndex = elfEncoder.getLastSectionHeaderIndex();
 
     using SymbolEntry = ElfSymbolEntry<ELF_IDENTIFIER_CLASS::EI_CLASS_64>;
@@ -274,10 +274,10 @@ TEST(DebugZebinTest, givenSymTabShndxUndefinedThenDoNotApplyRelocations) {
     relocation.addend = 0x0;
     relocation.offset = 0x0;
     relocation.setSymbolTableIndex(0);
-    relocation.setRelocationType(RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR);
+    relocation.setRelocationType(R_ZE_SYM_ADDR);
 
-    elfEncoder.appendSection(SHT_SYMTAB, SectionsNamesZebin::symtab, ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(&symbol), sizeof(symbol)));
-    auto &relaHeader = elfEncoder.appendSection(SHT_RELA, SpecialSectionNames::relaPrefix.str() + SectionsNamesZebin::textPrefix.str() + "kernel", ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(&relocation), sizeof(relocation)));
+    elfEncoder.appendSection(SHT_SYMTAB, SectionNames::symtab, ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(&symbol), sizeof(symbol)));
+    auto &relaHeader = elfEncoder.appendSection(SHT_RELA, SpecialSectionNames::relaPrefix.str() + SectionNames::textPrefix.str() + "kernel", ArrayRef<const uint8_t>(reinterpret_cast<uint8_t *>(&relocation), sizeof(relocation)));
     relaHeader.info = kernelSectionIndex;
 
     auto zebin = elfEncoder.encode();
@@ -286,14 +286,14 @@ TEST(DebugZebinTest, givenSymTabShndxUndefinedThenDoNotApplyRelocations) {
     ASSERT_TRUE(errors.empty());
     ASSERT_TRUE(warnings.empty());
 
-    class MockDebugZebinCreator : public NEO::Debug::DebugZebinCreator {
+    class MockDebugZebinCreator : public NEO::Zebin::Debug::DebugZebinCreator {
       public:
-        using Base = NEO::Debug::DebugZebinCreator;
+        using Base = NEO::Zebin::Debug::DebugZebinCreator;
         using Base::Base;
         using Base::debugZebin;
         using Base::symTabShndx;
     };
-    NEO::Debug::Segments segments;
+    NEO::Zebin::Debug::Segments segments;
     MockDebugZebinCreator dzc(zebinElf, segments);
     dzc.debugZebin = zebin;
     dzc.symTabShndx = std::numeric_limits<uint32_t>::max();
@@ -303,7 +303,7 @@ TEST(DebugZebinTest, givenSymTabShndxUndefinedThenDoNotApplyRelocations) {
 
 TEST(PatchWithValueTest, GivenMisalignedAddressWhenPatchingWithValueThenMemoryIsPatchedCorrectly) {
     auto mem = std::make_unique<uint8_t[]>(9);
-    NEO::Debug::patchWithValue<uint64_t>(reinterpret_cast<uintptr_t>(mem.get() + 1), std::numeric_limits<uint64_t>::max());
+    NEO::Zebin::Debug::patchWithValue<uint64_t>(reinterpret_cast<uintptr_t>(mem.get() + 1), std::numeric_limits<uint64_t>::max());
     EXPECT_EQ(0x00U, mem[0]);
     EXPECT_EQ(0xFFU, mem[1]);
     EXPECT_EQ(0xFFU, mem[2]);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,22 +28,22 @@ struct MockZebin {
     MockZebin() {
         NEO::Elf::ElfEncoder<numBits> encoder;
         encoder.getElfFileHeader().machine = NEO::Elf::ELF_MACHINE::EM_INTELGT;
-        encoder.getElfFileHeader().type = NEO::Elf::ELF_TYPE_ZEBIN::ET_ZEBIN_EXE;
+        encoder.getElfFileHeader().type = NEO::Zebin::Elf::ELF_TYPE_ZEBIN::ET_ZEBIN_EXE;
 
         uint8_t kernelData[] = {0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x38};
-        encoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "exit_kernel", {kernelData, 8});
+        encoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "exit_kernel", {kernelData, 8});
 
         uint8_t dataGlobal[] = {0x00, 0x01, 0x02, 0x03, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
-        encoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::dataGlobal, {dataGlobal, 12});
+        encoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataGlobal, {dataGlobal, 12});
 
         uint8_t debugInfo[] = {0x10, 0x11, 0x12, 0x13, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0};
-        encoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::debugInfo, {debugInfo, 12});
+        encoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::debugInfo, {debugInfo, 12});
 
         uint8_t spvData[] = {0x20, 0x21, 0x22, 0x23};
-        encoder.appendSection(NEO::Elf::SHT_ZEBIN_SPIRV, NEO::Elf::SectionsNamesZebin::spv, {spvData, 4});
+        encoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_SPIRV, NEO::Zebin::Elf::SectionNames::spv, {spvData, 4});
 
         NEO::ConstStringRef buildOptions = "-ze-intel-allow-zebin";
-        encoder.appendSection(NEO::Elf::SHT_ZEBIN_MISC, NEO::Elf::SectionsNamesZebin::buildOptions,
+        encoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_MISC, NEO::Zebin::Elf::SectionNames::buildOptions,
                               {reinterpret_cast<const uint8_t *>(buildOptions.data()), buildOptions.size()});
 
         std::string zeInfo = R"===('
@@ -56,29 +56,29 @@ kernels:
       simd_size:       16
 ...
 )===";
-        encoder.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo,
+        encoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo,
                               {reinterpret_cast<const uint8_t *>(zeInfo.data()), zeInfo.size()});
 
-        NEO::Elf::ZebinTargetFlags flags;
+        NEO::Zebin::Elf::ZebinTargetFlags flags;
         flags.packed = 0U;
         auto intelGTNotes = ZebinTestData::createIntelGTNoteSection(IGFX_DG2, IGFX_XE_HPG_CORE, flags, versionToString({1, 15}));
-        encoder.appendSection(NEO::Elf::SHT_NOTE, NEO::Elf::SectionsNamesZebin::noteIntelGT,
+        encoder.appendSection(NEO::Elf::SHT_NOTE, NEO::Zebin::Elf::SectionNames::noteIntelGT,
                               {intelGTNotes.data(), intelGTNotes.size()});
 
         NEO::Elf::ElfRel<numBits> dataRelocation;
         dataRelocation.offset = 0x4;
-        dataRelocation.setRelocationType(NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR);
+        dataRelocation.setRelocationType(NEO::Zebin::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR);
         dataRelocation.setSymbolTableIndex(2);
-        auto &dataRelSec = encoder.appendSection(NEO::Elf::SHT_REL, NEO::Elf::SpecialSectionNames::relPrefix.str() + NEO::Elf::SectionsNamesZebin::dataGlobal.str(),
+        auto &dataRelSec = encoder.appendSection(NEO::Elf::SHT_REL, NEO::Elf::SpecialSectionNames::relPrefix.str() + NEO::Zebin::Elf::SectionNames::dataGlobal.str(),
                                                  {reinterpret_cast<const uint8_t *>(&dataRelocation), sizeof(dataRelocation)});
         dataRelSec.link = 10;
         dataRelSec.info = 2;
 
         NEO::Elf::ElfRela<numBits> debugRelocation;
         debugRelocation.offset = 0x4;
-        debugRelocation.setRelocationType(NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR);
+        debugRelocation.setRelocationType(NEO::Zebin::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR);
         debugRelocation.setSymbolTableIndex(1);
-        auto &debugDataRelaSec = encoder.appendSection(NEO::Elf::SHT_RELA, NEO::Elf::SpecialSectionNames::relaPrefix.str() + NEO::Elf::SectionsNamesZebin::debugInfo.str(),
+        auto &debugDataRelaSec = encoder.appendSection(NEO::Elf::SHT_RELA, NEO::Elf::SpecialSectionNames::relaPrefix.str() + NEO::Zebin::Elf::SectionNames::debugInfo.str(),
                                                        {reinterpret_cast<const uint8_t *>(&debugRelocation), sizeof(debugRelocation)});
         debugDataRelaSec.link = 10;
         debugDataRelaSec.info = 3;
@@ -96,7 +96,7 @@ kernels:
         symbols[2].setBinding(NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL);
         symbols[2].setType(NEO::Elf::SYMBOL_TABLE_TYPE::STT_OBJECT);
 
-        auto &symtabSec = encoder.appendSection(NEO::Elf::SHT_SYMTAB, NEO::Elf::SectionsNamesZebin::symtab,
+        auto &symtabSec = encoder.appendSection(NEO::Elf::SHT_SYMTAB, NEO::Zebin::Elf::SectionNames::symtab,
                                                 {reinterpret_cast<const uint8_t *>(symbols), sizeof(symbols)});
         symtabSec.link = 11;
         symtabSec.info = 2;
@@ -169,7 +169,7 @@ struct ZebinManipulatorValidateArgumentsFixture {
     MockOclocArgHelper::FilesMap filesMap;
     MockOclocArgHelper argHelper;
     MockIgaWrapper iga;
-    NEO::ZebinManipulator::Arguments arguments;
+    NEO::Zebin::Manipulator::Arguments arguments;
 };
 
 using ZebinManipulatorValidateInputTests = Test<ZebinManipulatorValidateArgumentsFixture>;
@@ -185,7 +185,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenValidInputWhenValidatingInputThe
                                      "-q",
                                      "-skip-asm-translation"};
 
-    auto retVal = NEO::ZebinManipulator::validateInput(args, &iga, &argHelper, arguments);
+    auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
     EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
 
     EXPECT_EQ("zebin.bin", arguments.binaryFile);
@@ -199,7 +199,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenHelpArgumentWhenValidatingInputT
     std::vector<std::string> args = {"ocloc",
                                      "asm/disasm",
                                      "--help"};
-    auto retVal = NEO::ZebinManipulator::validateInput(args, &iga, &argHelper, arguments);
+    auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
     EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
     EXPECT_TRUE(arguments.showHelp);
 }
@@ -210,7 +210,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenInvalidInputWhenValidatingInputT
                                      "-unknown_arg"};
 
     testing::internal::CaptureStdout();
-    auto retVal = NEO::ZebinManipulator::validateInput(args, &iga, &argHelper, arguments);
+    auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
     const auto output{testing::internal::GetCapturedStdout()};
 
     EXPECT_EQ(NEO::OclocErrorCode::INVALID_COMMAND_LINE, retVal);
@@ -224,7 +224,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenMissingFileWhenValidatingInputTh
                                      "./dump/"};
 
     testing::internal::CaptureStdout();
-    auto retVal = NEO::ZebinManipulator::validateInput(args, &iga, &argHelper, arguments);
+    auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
     const auto output{testing::internal::GetCapturedStdout()};
 
     EXPECT_EQ(NEO::OclocErrorCode::INVALID_COMMAND_LINE, retVal);
@@ -238,7 +238,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenMissingSecondPartOfTheArgumentWh
     for (const auto halfArg : {"-file", "-device", "-dump"}) {
         args[2] = halfArg;
         testing::internal::CaptureStdout();
-        auto retVal = NEO::ZebinManipulator::validateInput(args, &iga, &argHelper, arguments);
+        auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
         const auto output{testing::internal::GetCapturedStdout()};
 
         EXPECT_EQ(NEO::OclocErrorCode::INVALID_COMMAND_LINE, retVal);
@@ -253,7 +253,7 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenValidArgsButDumpNotSpecifiedWhen
                                      "-file",
                                      "binary.bin"};
     testing::internal::CaptureStdout();
-    auto retVal = NEO::ZebinManipulator::validateInput(args, &iga, &argHelper, arguments);
+    auto retVal = NEO::Zebin::Manipulator::validateInput(args, &iga, &argHelper, arguments);
     const auto output{testing::internal::GetCapturedStdout()};
 
     EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
@@ -262,35 +262,35 @@ TEST_F(ZebinManipulatorValidateInputTests, GivenValidArgsButDumpNotSpecifiedWhen
 
 TEST(ZebinManipulatorTests, GivenIntelGTNotesWithProductFamilyWhenParsingIntelGTNoteSectionsForDeviceThenIgaProductFamilyIsSet) {
     PRODUCT_FAMILY productFamily = PRODUCT_FAMILY::IGFX_DG2;
-    std::vector<NEO::Elf::IntelGTNote> intelGTnotes;
+    std::vector<NEO::Zebin::Elf::IntelGTNote> intelGTnotes;
     intelGTnotes.resize(1);
-    intelGTnotes[0].type = NEO::Elf::IntelGTSectionType::ProductFamily;
+    intelGTnotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::ProductFamily;
     intelGTnotes[0].data = ArrayRef<const uint8_t>::fromAny(&productFamily, 1);
 
     auto iga = std::make_unique<MockIgaWrapper>();
-    auto retVal = NEO::ZebinManipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get());
+    auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get());
     EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
     EXPECT_TRUE(iga->setProductFamilyWasCalled);
 }
 
 TEST(ZebinManipulatorTests, GivenIntelGTNotesWithGfxCoreFamilyWhenParsingIntelGTNoteSectionsForDeviceThenIgaGfxCoreIsSet) {
     GFXCORE_FAMILY gfxCore = GFXCORE_FAMILY::IGFX_XE_HPG_CORE;
-    std::vector<NEO::Elf::IntelGTNote> intelGTnotes;
+    std::vector<NEO::Zebin::Elf::IntelGTNote> intelGTnotes;
     intelGTnotes.resize(1);
-    intelGTnotes[0].type = NEO::Elf::IntelGTSectionType::GfxCore;
+    intelGTnotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::GfxCore;
     intelGTnotes[0].data = ArrayRef<const uint8_t>::fromAny(&gfxCore, 1);
 
     auto iga = std::make_unique<MockIgaWrapper>();
-    auto retVal = NEO::ZebinManipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get());
+    auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get());
     EXPECT_EQ(NEO::OclocErrorCode::SUCCESS, retVal);
     EXPECT_TRUE(iga->setGfxCoreWasCalled);
 }
 
 TEST(ZebinManipulatorTests, GivenIntelGTNotesWithoutProductFamilyOrGfxCoreFamilyEntryWhenParsingIntelGTNoteSectionsForDeviceThenReturnError) {
-    std::vector<NEO::Elf::IntelGTNote> intelGTnotes;
+    std::vector<NEO::Zebin::Elf::IntelGTNote> intelGTnotes;
 
     auto iga = std::make_unique<MockIgaWrapper>();
-    auto retVal = NEO::ZebinManipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get());
+    auto retVal = NEO::Zebin::Manipulator::parseIntelGTNotesSectionForDevice(intelGTnotes, iga.get());
     EXPECT_EQ(NEO::OclocErrorCode::INVALID_DEVICE, retVal);
 }
 
@@ -299,15 +299,15 @@ TEST(ZebinManipulatorTests, GivenNonZebinBinaryWhenGetBinaryFormatForDisassemble
     files.insert({"binary.bin", "000000000000000"});
     MockOclocArgHelper argHelper(files);
 
-    auto format = NEO::ZebinManipulator::getBinaryFormatForDisassemble(&argHelper, {"ocloc", "disasm", "-file", "binary.bin"});
-    EXPECT_EQ(NEO::ZebinManipulator::BinaryFormats::PatchTokens, format);
+    auto format = NEO::Zebin::Manipulator::getBinaryFormatForDisassemble(&argHelper, {"ocloc", "disasm", "-file", "binary.bin"});
+    EXPECT_EQ(NEO::Zebin::Manipulator::BinaryFormats::PatchTokens, format);
 }
 
 TEST(ZebinManipulatorTests, GivenEmptySectionsInfoWhenCheckingIfIs64BitZebinThenReturnFalse) {
     MockOclocArgHelper::FilesMap files;
     files.insert({"sections.txt", ""});
     MockOclocArgHelper argHelper(files);
-    auto retVal = NEO::ZebinManipulator::is64BitZebin(&argHelper, "sections.txt");
+    auto retVal = NEO::Zebin::Manipulator::is64BitZebin(&argHelper, "sections.txt");
     EXPECT_FALSE(retVal);
 }
 
@@ -315,7 +315,7 @@ TEST(ZebinManipulatorTests, GivenInvalidSectionsInfoWhenCheckingIfIs64BitZebinTh
     MockOclocArgHelper::FilesMap files;
     files.insert({"sections.txt", "ElfType"});
     MockOclocArgHelper argHelper(files);
-    auto retVal = NEO::ZebinManipulator::is64BitZebin(&argHelper, "sections.txt");
+    auto retVal = NEO::Zebin::Manipulator::is64BitZebin(&argHelper, "sections.txt");
     EXPECT_FALSE(retVal);
 }
 
@@ -351,7 +351,7 @@ TEST_F(ZebinDecoderTests, GivenInvalidIntelGTNotesWhenDecodeThenErrorIsReturned)
     decoder.returnValueGetIntelGTNotes = {};
     decoder.returnValueGetIntelGTNotes.resize(1);
     const std::string zebinVersion = "1.0";
-    decoder.returnValueGetIntelGTNotes[0].type = NEO::Elf::IntelGTSectionType::ZebinVersion;
+    decoder.returnValueGetIntelGTNotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::ZebinVersion;
     decoder.returnValueGetIntelGTNotes[0].data = ArrayRef<const uint8_t>::fromAny(zebinVersion.data(), zebinVersion.length());
 
     const auto retVal = decoder.decode();
@@ -361,10 +361,10 @@ TEST_F(ZebinDecoderTests, GivenInvalidIntelGTNotesWhenDecodeThenErrorIsReturned)
 
 TEST_F(ZebinDecoderTests, GivenElfWithInvalidIntelGTNotesWhenGetIntelGTNotesThenEmptyVectorIsReturned) {
     NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEncoder;
-    NEO::Elf::ZebinTargetFlags flags;
+    NEO::Zebin::Elf::ZebinTargetFlags flags;
     flags.packed = 0U;
     const uint8_t intelGTNotes[8] = {0x0, 0x1, 0x2, 0x3, 0x4, 0x5, 0x6, 0x7};
-    elfEncoder.appendSection(NEO::Elf::SHT_NOTE, NEO::Elf::SectionsNamesZebin::noteIntelGT,
+    elfEncoder.appendSection(NEO::Elf::SHT_NOTE, NEO::Zebin::Elf::SectionNames::noteIntelGT,
                              {intelGTNotes, 8U});
     auto elfBinary = elfEncoder.encode();
     ASSERT_FALSE(elfBinary.empty());
@@ -381,10 +381,10 @@ TEST_F(ZebinDecoderTests, GivenElfWithInvalidIntelGTNotesWhenGetIntelGTNotesThen
 
 TEST_F(ZebinDecoderTests, GivenElfWithValidIntelGTNotesWhenGetIntelGTNotesThenIntelGTNotesAreReturned) {
     NEO::Elf::ElfEncoder<NEO::Elf::EI_CLASS_64> elfEncoder;
-    NEO::Elf::ZebinTargetFlags flags;
+    NEO::Zebin::Elf::ZebinTargetFlags flags;
     flags.packed = 0U;
     auto intelGTNotes = ZebinTestData::createIntelGTNoteSection(IGFX_DG2, IGFX_XE_HPG_CORE, flags, versionToString({1, 15}));
-    elfEncoder.appendSection(NEO::Elf::SHT_NOTE, NEO::Elf::SectionsNamesZebin::noteIntelGT,
+    elfEncoder.appendSection(NEO::Elf::SHT_NOTE, NEO::Zebin::Elf::SectionNames::noteIntelGT,
                              {intelGTNotes.data(), intelGTNotes.size()});
     auto elfBinary = elfEncoder.encode();
     ASSERT_FALSE(elfBinary.empty());
@@ -411,7 +411,7 @@ TEST_F(ZebinDecoderTests, GivenNoFailsWhenDecodeThenSuccessIsReturned) {
     decoder.returnValueGetIntelGTNotes = {};
     decoder.returnValueGetIntelGTNotes.resize(1);
     const PRODUCT_FAMILY productFamily = PRODUCT_FAMILY::IGFX_DG2;
-    decoder.returnValueGetIntelGTNotes[0].type = NEO::Elf::IntelGTSectionType::ProductFamily;
+    decoder.returnValueGetIntelGTNotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::ProductFamily;
     decoder.returnValueGetIntelGTNotes[0].data = ArrayRef<const uint8_t>::fromAny(&productFamily, 1U);
 
     const auto retVal = decoder.decode();
@@ -509,16 +509,16 @@ TEST_F(ZebinEncoderTests, GivenErrorOnAppendingSectionsWhenEncodeThenErrorIsRetu
 }
 
 TEST_F(ZebinEncoderTests, GivenNoIntelGTNotesWhenGetIntelGTNotesSectionThenEmptyVectorIsReturned) {
-    std::vector<NEO::ZebinManipulator::SectionInfo> sectionInfos = {{".note.notIntelGT", NEO::Elf::SHT_NOTE}};
+    std::vector<NEO::Zebin::Manipulator::SectionInfo> sectionInfos = {{".note.notIntelGT", NEO::Elf::SHT_NOTE}};
     encoder.callBaseGetIntelGTNotesSection = true;
     auto retVal = encoder.getIntelGTNotesSection(sectionInfos);
     EXPECT_TRUE(retVal.empty());
 }
 
 TEST_F(ZebinEncoderTests, GivenInvalidSectionsInfoFileWhenLoadSectionsInfoThenErrorIsReturned) {
-    filesMap.insert({NEO::ZebinManipulator::sectionsInfoFilename.str(), ""});
+    filesMap.insert({NEO::Zebin::Manipulator::sectionsInfoFilename.str(), ""});
     encoder.callBaseLoadSectionsInfo = true;
-    std::vector<NEO::ZebinManipulator::SectionInfo> sectionInfos;
+    std::vector<NEO::Zebin::Manipulator::SectionInfo> sectionInfos;
     auto retVal = encoder.loadSectionsInfo(sectionInfos);
     EXPECT_EQ(NEO::OclocErrorCode::INVALID_FILE, retVal);
     EXPECT_TRUE(sectionInfos.empty());
@@ -533,7 +533,7 @@ TEST_F(ZebinEncoderTests, GivenInvalidIntelGTNotesSectionWhenGetIntelGTNotesThen
 
 TEST_F(ZebinEncoderTests, GivenInvalidSymtabFileWhenAppendSymtabThenErrorIsReturned) {
     MockElfEncoder elfEncoder;
-    NEO::ZebinManipulator::SectionInfo sectionInfo;
+    NEO::Zebin::Manipulator::SectionInfo sectionInfo;
     sectionInfo.name = ".symtab";
     sectionInfo.type = NEO::Elf::SHT_SYMTAB;
     std::unordered_map<std::string, size_t> secNameToId;
@@ -544,7 +544,7 @@ TEST_F(ZebinEncoderTests, GivenInvalidSymtabFileWhenAppendSymtabThenErrorIsRetur
 
 TEST_F(ZebinEncoderTests, GivenInvalidRelFileWhenAppendRelThenErrorIsReturned) {
     MockElfEncoder elfEncoder;
-    NEO::ZebinManipulator::SectionInfo sectionInfo;
+    NEO::Zebin::Manipulator::SectionInfo sectionInfo;
     sectionInfo.name = ".rel.text";
     sectionInfo.type = NEO::Elf::SHT_REL;
     std::unordered_map<std::string, size_t> secNameToId;
@@ -555,7 +555,7 @@ TEST_F(ZebinEncoderTests, GivenInvalidRelFileWhenAppendRelThenErrorIsReturned) {
 
 TEST_F(ZebinEncoderTests, GivenInvalidRelaFileWhenAppendRelaThenErrorIsReturned) {
     MockElfEncoder elfEncoder;
-    NEO::ZebinManipulator::SectionInfo sectionInfo;
+    NEO::Zebin::Manipulator::SectionInfo sectionInfo;
     sectionInfo.name = ".rela.text";
     sectionInfo.type = NEO::Elf::SHT_RELA;
     std::unordered_map<std::string, size_t> secNameToId;
@@ -566,7 +566,7 @@ TEST_F(ZebinEncoderTests, GivenInvalidRelaFileWhenAppendRelaThenErrorIsReturned)
 
 TEST_F(ZebinEncoderTests, GivenAsmFileWhenAppendKernelThenTranslateItToBinaryFile) {
     MockElfEncoder elfEncoder;
-    NEO::ZebinManipulator::SectionInfo sectionInfo;
+    NEO::Zebin::Manipulator::SectionInfo sectionInfo;
     sectionInfo.name = ".text.kernel";
     sectionInfo.type = NEO::Elf::SHT_PROGBITS;
     filesMap.insert({sectionInfo.name + ".asm", "assembly"});
@@ -578,7 +578,7 @@ TEST_F(ZebinEncoderTests, GivenAsmFileWhenAppendKernelThenTranslateItToBinaryFil
 
 TEST_F(ZebinEncoderTests, GivenAsmFileMissingWhenAppendKernelThenUseBinaryFile) {
     MockElfEncoder elfEncoder;
-    NEO::ZebinManipulator::SectionInfo sectionInfo;
+    NEO::Zebin::Manipulator::SectionInfo sectionInfo;
     sectionInfo.name = ".text.kernel";
     sectionInfo.type = NEO::Elf::SHT_PROGBITS;
     filesMap.insert({sectionInfo.name, "kernelData"});
@@ -603,7 +603,7 @@ TEST_F(ZebinEncoderTests, GivenUnsuccessfulAssemblyGenISAWhenParseKernelAssembly
 
 TEST_F(ZebinEncoderTests, GivenMissingFileWhenCheckIfAllFilesExistThenErrorIsReturned) {
     encoder.callBaseCheckIfAllFilesExist = true;
-    std::vector<NEO::ZebinManipulator::SectionInfo> sectionInfos;
+    std::vector<NEO::Zebin::Manipulator::SectionInfo> sectionInfos;
     sectionInfos.resize(1);
     sectionInfos[0].name = ".text.kernel";
     sectionInfos[0].type = NEO::Elf::SHT_PROGBITS;

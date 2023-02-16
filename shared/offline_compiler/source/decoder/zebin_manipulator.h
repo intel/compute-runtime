@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/source/device_binary_format/elf/elf.h"
+#include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/utilities/arrayref.h"
 #include "shared/source/utilities/const_stringref.h"
 
@@ -30,7 +30,7 @@ template <ELF_IDENTIFIER_CLASS numBits>
 struct ElfEncoder;
 } // namespace Elf
 
-namespace ZebinManipulator {
+namespace Zebin::Manipulator {
 
 struct SectionInfo {
     std::string name;
@@ -52,7 +52,7 @@ enum BinaryFormats {
 
 using ErrorCode = int;
 
-ErrorCode parseIntelGTNotesSectionForDevice(const std::vector<Elf::IntelGTNote> &intelGTNotes, IgaWrapper *iga);
+ErrorCode parseIntelGTNotesSectionForDevice(const std::vector<Zebin::Elf::IntelGTNote> &intelGTNotes, IgaWrapper *iga);
 ErrorCode validateInput(const std::vector<std::string> &args, IgaWrapper *iga, OclocArgHelper *argHelper, Arguments &outArguments);
 
 BinaryFormats getBinaryFormatForAssemble(OclocArgHelper *argHelper, const std::vector<std::string> &args);
@@ -140,5 +140,5 @@ class ZebinEncoder {
     std::unique_ptr<IgaWrapper> iga;
 };
 
-}; // namespace ZebinManipulator
+}; // namespace Zebin::Manipulator
 } // namespace NEO

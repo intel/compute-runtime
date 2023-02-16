@@ -10,8 +10,8 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
-#include "shared/source/device_binary_format/elf/zebin_elf.h"
-#include "shared/source/device_binary_format/zebin_decoder.h"
+#include "shared/source/device_binary_format/zebin/zebin_decoder.h"
+#include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 
@@ -32,9 +32,9 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
     default:
         outErrReason.append("Unhandled elf type\n");
         return {};
-    case NEO::Elf::ET_ZEBIN_EXE:
+    case NEO::Zebin::Elf::ET_ZEBIN_EXE:
         break;
-    case NEO::Elf::ET_REL:
+    case NEO::Zebin::Elf::ET_REL:
         break;
     }
 
@@ -45,19 +45,19 @@ SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, cons
 
     for (size_t sectionId = 0U; sectionId < elf.sectionHeaders.size(); sectionId++) {
         auto &elfSH = elf.sectionHeaders[sectionId];
-        if (elfSH.header->type == Elf::SHT_ZEBIN_SPIRV) {
+        if (elfSH.header->type == Zebin::Elf::SHT_ZEBIN_SPIRV) {
             ret.intermediateRepresentation = elfSH.data;
-        } else if (elfSH.header->type == Elf::SHT_ZEBIN_MISC &&
-                   Elf::SectionsNamesZebin::buildOptions == elf.getSectionName(static_cast<uint32_t>(sectionId))) {
+        } else if (elfSH.header->type == Zebin::Elf::SHT_ZEBIN_MISC &&
+                   Zebin::Elf::SectionNames::buildOptions == elf.getSectionName(static_cast<uint32_t>(sectionId))) {
             ret.buildOptions = ConstStringRef(reinterpret_cast<const char *>(elfSH.data.begin()), elfSH.data.size());
         }
     }
 
     bool validForTarget = true;
     if (elf.elfFileHeader->machine == Elf::ELF_MACHINE::EM_INTELGT) {
-        validForTarget &= validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning);
+        validForTarget &= Zebin::validateTargetDevice(elf, requestedTargetDevice, outErrReason, outWarning);
     } else {
-        const auto &flags = reinterpret_cast<const NEO::Elf::ZebinTargetFlags &>(elf.elfFileHeader->flags);
+        const auto &flags = reinterpret_cast<const NEO::Zebin::Elf::ZebinTargetFlags &>(elf.elfFileHeader->flags);
         validForTarget &= flags.machineEntryUsesGfxCoreInsteadOfProductFamily
                               ? (requestedTargetDevice.coreFamily == static_cast<GFXCORE_FAMILY>(elf.elfFileHeader->machine))
                               : (requestedTargetDevice.productFamily == static_cast<PRODUCT_FAMILY>(elf.elfFileHeader->machine));
@@ -94,7 +94,7 @@ void prepareLinkerInputForZebin(ProgramInfo &programInfo, Elf::Elf<numBits> &elf
     for (uint32_t id = 0; id < static_cast<uint32_t>(programInfo.kernelInfos.size()); id++) {
         const auto &kernelName = programInfo.kernelInfos[id]->kernelDescriptor.kernelMetadata.kernelName;
         nameToKernelId[kernelName] = id;
-        if (kernelName == Elf::SectionsNamesZebin::externalFunctions) {
+        if (kernelName == Zebin::Elf::SectionNames::externalFunctions) {
             programInfo.linkerInput->setExportedFunctionsSegmentId(static_cast<int32_t>(id));
         }
     }
@@ -110,7 +110,7 @@ DecodeError decodeSingleZebin(ProgramInfo &dst, const SingleDeviceBinary &src, s
 
     dst.grfSize = src.targetDevice.grfSize;
     dst.minScratchSpaceSize = src.targetDevice.minScratchSpaceSize;
-    auto decodeError = decodeZebin<numBits>(dst, elf, outErrReason, outWarning);
+    auto decodeError = NEO::Zebin::decodeZebin<numBits>(dst, elf, outErrReason, outWarning);
     if (DecodeError::Success != decodeError) {
         return decodeError;
     }

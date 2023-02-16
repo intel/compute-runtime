@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/device_binary_format/zebin/debug_zebin.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/test_macros/test.h"
@@ -36,7 +37,7 @@ TEST_F(ProgramWithZebinFixture, givenZebinSegmentsThenSegmentsArePopulated) {
     populateProgramWithSegments(program.get());
     auto segments = program->getZebinSegments(rootDeviceIndex);
 
-    auto checkGPUSeg = [](NEO::GraphicsAllocation *alloc, NEO::Debug::Segments::Segment segment) {
+    auto checkGPUSeg = [](NEO::GraphicsAllocation *alloc, NEO::Zebin::Debug::Segments::Segment segment) {
         EXPECT_EQ(static_cast<uintptr_t>(alloc->getGpuAddress()), segment.address);
         EXPECT_EQ(static_cast<size_t>(alloc->getUnderlyingBufferSize()), segment.size);
     };

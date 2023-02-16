@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,9 +10,9 @@
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 
 template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits>
-struct MockZebinDecoder : public NEO::ZebinManipulator::ZebinDecoder<numBits> {
-    using Base = NEO::ZebinManipulator::ZebinDecoder<numBits>;
-    using ErrorCode = NEO::ZebinManipulator::ErrorCode;
+struct MockZebinDecoder : public NEO::Zebin::Manipulator::ZebinDecoder<numBits> {
+    using Base = NEO::Zebin::Manipulator::ZebinDecoder<numBits>;
+    using ErrorCode = NEO::Zebin::Manipulator::ErrorCode;
     using ElfT = NEO::Elf::Elf<numBits>;
     using Base::arguments;
     using Base::decodeZebin;
@@ -34,7 +34,7 @@ struct MockZebinDecoder : public NEO::ZebinManipulator::ZebinDecoder<numBits> {
         return returnValueDecodeZebin;
     }
 
-    std::vector<NEO::Elf::IntelGTNote> getIntelGTNotes(ElfT &elf) override {
+    std::vector<NEO::Zebin::Elf::IntelGTNote> getIntelGTNotes(ElfT &elf) override {
         getIntelGTNotesCalled = true;
         if (callBaseGetIntelGTNotes) {
             return Base::getIntelGTNotes(elf);
@@ -42,19 +42,19 @@ struct MockZebinDecoder : public NEO::ZebinManipulator::ZebinDecoder<numBits> {
         return returnValueGetIntelGTNotes;
     }
 
-    std::vector<NEO::ZebinManipulator::SectionInfo> dumpElfSections(ElfT &elf) override {
+    std::vector<NEO::Zebin::Manipulator::SectionInfo> dumpElfSections(ElfT &elf) override {
         return returnValueDumpElfSections;
     }
 
-    void dumpSectionInfo(const std::vector<NEO::ZebinManipulator::SectionInfo> &sectionInfos) override {
+    void dumpSectionInfo(const std::vector<NEO::Zebin::Manipulator::SectionInfo> &sectionInfos) override {
         return;
     }
 
     bool callBaseGetIntelGTNotes = false;
     bool callBaseDecodeZebin = false;
     ErrorCode returnValueDecodeZebin = NEO::OclocErrorCode::SUCCESS;
-    std::vector<NEO::ZebinManipulator::SectionInfo> returnValueDumpElfSections;
-    std::vector<NEO::Elf::IntelGTNote> returnValueGetIntelGTNotes;
+    std::vector<NEO::Zebin::Manipulator::SectionInfo> returnValueDumpElfSections;
+    std::vector<NEO::Zebin::Elf::IntelGTNote> returnValueGetIntelGTNotes;
     bool getIntelGTNotesCalled = false;
     MockIgaWrapper *mockIga;
 };

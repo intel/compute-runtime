@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
+#include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/utilities/arrayref.h"
 
 #include <limits>
@@ -15,12 +16,9 @@
 #include <vector>
 
 namespace NEO {
-namespace Elf {
-enum RELOC_TYPE_ZEBIN : uint32_t;
-}
 
 class GraphicsAllocation;
-namespace Debug {
+namespace Zebin::Debug {
 struct Segments {
     struct Segment {
         uintptr_t address = std::numeric_limits<uintptr_t>::max();
@@ -50,8 +48,8 @@ class DebugZebinCreator {
     inline std::vector<uint8_t> getDebugZebin() { return debugZebin; }
 
   protected:
-    void applyRelocation(uintptr_t addr, uint64_t value, NEO::Elf::RELOC_TYPE_ZEBIN type);
-    bool isRelocTypeSupported(NEO::Elf::RELOC_TYPE_ZEBIN type);
+    void applyRelocation(uintptr_t addr, uint64_t value, NEO::Zebin::Elf::RELOC_TYPE_ZEBIN type);
+    bool isRelocTypeSupported(NEO::Zebin::Elf::RELOC_TYPE_ZEBIN type);
     const Segments::Segment *getSegmentByName(ConstStringRef sectionName);
     const Segments::Segment *getTextSegmentByName(ConstStringRef textSegmentName);
     bool isCpuSegment(ConstStringRef sectionName);
@@ -66,5 +64,5 @@ template <typename T>
 void patchWithValue(uintptr_t addr, T value);
 
 std::vector<uint8_t> createDebugZebin(ArrayRef<const uint8_t> zebin, const Segments &segmentData);
-} // namespace Debug
+} // namespace Zebin::Debug
 } // namespace NEO

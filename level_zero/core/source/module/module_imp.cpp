@@ -14,11 +14,11 @@
 #include "shared/source/compiler_interface/linker.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
-#include "shared/source/device_binary_format/debug_zebin.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
+#include "shared/source/device_binary_format/zebin/debug_zebin.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
@@ -481,13 +481,13 @@ ModuleImp::~ModuleImp() {
     kernelImmDatas.clear();
 }
 
-NEO::Debug::Segments ModuleImp::getZebinSegments() {
+NEO::Zebin::Debug::Segments ModuleImp::getZebinSegments() {
     std::vector<std::pair<std::string_view, NEO::GraphicsAllocation *>> kernels;
     for (const auto &kernelImmData : kernelImmDatas)
         kernels.push_back({kernelImmData->getDescriptor().kernelMetadata.kernelName, kernelImmData->getIsaGraphicsAllocation()});
     ArrayRef<const uint8_t> strings = {reinterpret_cast<const uint8_t *>(translationUnit->programInfo.globalStrings.initData),
                                        translationUnit->programInfo.globalStrings.size};
-    return NEO::Debug::Segments(translationUnit->globalVarBuffer, translationUnit->globalConstBuffer, strings, kernels);
+    return NEO::Zebin::Debug::Segments(translationUnit->globalVarBuffer, translationUnit->globalConstBuffer, strings, kernels);
 }
 
 ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neoDevice) {
@@ -665,7 +665,7 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
 void ModuleImp::createDebugZebin() {
     auto refBin = ArrayRef<const uint8_t>::fromAny(translationUnit->unpackedDeviceBinary.get(), translationUnit->unpackedDeviceBinarySize);
     auto segments = getZebinSegments();
-    auto debugZebin = NEO::Debug::createDebugZebin(refBin, segments);
+    auto debugZebin = NEO::Zebin::Debug::createDebugZebin(refBin, segments);
 
     translationUnit->debugDataSize = debugZebin.size();
     translationUnit->debugData.reset(new char[translationUnit->debugDataSize]);

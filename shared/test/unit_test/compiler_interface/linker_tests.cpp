@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/external_functions.h"
-#include "shared/source/device_binary_format/elf/zebin_elf.h"
+#include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/implicit_args.h"
@@ -282,14 +282,14 @@ TEST(LinkerInputTests, whenDataRelocationsAreAddedThenProperTraitsAreSet) {
 }
 
 TEST(LinkerInputTests, WhenGettingSegmentForSectionNameThenCorrectSegmentIsReturned) {
-    auto segmentConst = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataConst.str());
-    auto segmentGlobalConst = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataGlobalConst.str());
-    auto segmentGlobal = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataGlobal.str());
-    auto segmentConstString = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataConstString.str());
-    auto segmentInstructions = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::textPrefix.str());
+    auto segmentConst = NEO::LinkerInput::getSegmentForSection(NEO::Zebin::Elf::SectionNames::dataConst.str());
+    auto segmentGlobalConst = NEO::LinkerInput::getSegmentForSection(NEO::Zebin::Elf::SectionNames::dataGlobalConst.str());
+    auto segmentGlobal = NEO::LinkerInput::getSegmentForSection(NEO::Zebin::Elf::SectionNames::dataGlobal.str());
+    auto segmentConstString = NEO::LinkerInput::getSegmentForSection(NEO::Zebin::Elf::SectionNames::dataConstString.str());
+    auto segmentInstructions = NEO::LinkerInput::getSegmentForSection(NEO::Zebin::Elf::SectionNames::textPrefix.str());
     auto segmentInstructions2 = NEO::LinkerInput::getSegmentForSection(".text.abc");
-    auto segmentGlobalZeroInit = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataGlobalZeroInit.str());
-    auto segmentGlobalConstZeroInit = NEO::LinkerInput::getSegmentForSection(NEO::Elf::SectionsNamesZebin::dataConstZeroInit.str());
+    auto segmentGlobalZeroInit = NEO::LinkerInput::getSegmentForSection(NEO::Zebin::Elf::SectionNames::dataGlobalZeroInit.str());
+    auto segmentGlobalConstZeroInit = NEO::LinkerInput::getSegmentForSection(NEO::Zebin::Elf::SectionNames::dataConstZeroInit.str());
 
     EXPECT_EQ(NEO::SegmentType::GlobalConstants, segmentConst);
     EXPECT_EQ(NEO::SegmentType::GlobalConstants, segmentGlobalConst);
@@ -443,13 +443,13 @@ TEST(LinkerInputTests, GivenGlobalSymbolOfTypeFuncPointingToFunctionsSectionWhen
 
     std::unordered_map<uint32_t, std::string> sectionNames;
     sectionNames[0] = ".text.abc";
-    sectionNames[1] = Elf::SectionsNamesZebin::functions.str();
+    sectionNames[1] = Zebin::Elf::SectionNames::functions.str();
     elf64.setupSecionNames(std::move(sectionNames));
     elf64.overrideSymbolName = true;
 
     elf64.addSymbol(0, 0, 32, 1, Elf::STT_FUNC, Elf::STB_GLOBAL);
     NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0},
-                                                                  {Elf::SectionsNamesZebin::externalFunctions.str(), 1}};
+                                                                  {Zebin::Elf::SectionNames::externalFunctions.str(), 1}};
 
     NEO::LinkerInput linkerInput = {};
     linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
@@ -524,7 +524,7 @@ TEST(LinkerInputTests, GivenInstructionRelocationAndInvalidInstructionSectionNam
     sectionNames[1] = ".data.const";
 
     elf64.setupSecionNames(std::move(sectionNames));
-    elf64.addReloc(64, 0, Elf::R_ZE_SYM_ADDR, 0, 0, "0");
+    elf64.addReloc(64, 0, Zebin::Elf::R_ZE_SYM_ADDR, 0, 0, "0");
 
     elf64.overrideSymbolName = true;
     elf64.addSymbol(0, 0x1234000, 8, 1, Elf::STT_OBJECT, Elf::STB_GLOBAL);
@@ -541,7 +541,7 @@ TEST(LinkerInputTests, GivenRelocationWithSymbolIdOutOfBoundsOfSymbolTableWhenDe
     std::unordered_map<uint32_t, std::string> sectionNames = {{0, ".text.abc"}};
     elf64.setupSecionNames(std::move(sectionNames));
 
-    elf64.addReloc(64, 0, Elf::R_ZE_SYM_ADDR, 0, 2, "symbol");
+    elf64.addReloc(64, 0, Zebin::Elf::R_ZE_SYM_ADDR, 0, 2, "symbol");
 
     NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
     nameToKernelId["abc"] = 0;
@@ -556,7 +556,7 @@ TEST(LinkerInputTests, GivenRelocationToSectionDifferentThanDataOrInstructionsWh
     std::unordered_map<uint32_t, std::string> sectionNames = {{0, ".text.abc"},
                                                               {1, "unknown.section"}};
     elf64.setupSecionNames(std::move(sectionNames));
-    elf64.addReloc(64, 0, Elf::R_ZE_SYM_ADDR, 1, 2, "symbol");
+    elf64.addReloc(64, 0, Zebin::Elf::R_ZE_SYM_ADDR, 1, 2, "symbol");
 
     NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
     nameToKernelId["abc"] = 0;
@@ -576,7 +576,7 @@ TEST(LinkerInputTests, GivenGlobalDataRelocationWithLocalSymbolPointingToConstDa
     sectionNames[2] = ".data.global";
 
     elf64.setupSecionNames(std::move(sectionNames));
-    elf64.addReloc(64, 10, Elf::R_ZE_SYM_ADDR, 2, 0, "0");
+    elf64.addReloc(64, 10, Zebin::Elf::R_ZE_SYM_ADDR, 2, 0, "0");
 
     elf64.overrideSymbolName = true;
     elf64.addSymbol(0, 0x0, 8, 1, Elf::STT_OBJECT, Elf::STB_LOCAL);
@@ -605,16 +605,16 @@ TEST(LinkerInputTests, GivenInstructionRelocationWithLocalSymbolPointingToFuncti
 
     std::unordered_map<uint32_t, std::string> sectionNames;
     sectionNames[0] = ".text.abc";
-    sectionNames[1] = Elf::SectionsNamesZebin::functions.str();
+    sectionNames[1] = Zebin::Elf::SectionNames::functions.str();
 
     elf64.setupSecionNames(std::move(sectionNames));
-    elf64.addReloc(64, 10, Elf::R_ZE_SYM_ADDR, 0, 0, "0");
+    elf64.addReloc(64, 10, Zebin::Elf::R_ZE_SYM_ADDR, 0, 0, "0");
 
     elf64.overrideSymbolName = true;
     elf64.addSymbol(0, 0x10, 0x40, 1, Elf::STT_FUNC, Elf::STB_LOCAL);
 
     NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0},
-                                                                  {Elf::SectionsNamesZebin::externalFunctions.str(), 1}};
+                                                                  {Zebin::Elf::SectionNames::externalFunctions.str(), 1}};
     linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
     EXPECT_TRUE(linkerInput.isValid());
     auto &symbol = linkerInput.getSymbols().at("0");
@@ -724,11 +724,11 @@ TEST(LinkerInputTests, GivenInvalidFunctionsSymbolsUsedInFunctionsRelocationsWhe
     relocInfo.symbolName = "fun";
 
     relocInfo.offset = 0U;
-    mockLinkerInput.parseRelocationForExtFuncUsage(relocInfo, NEO::Elf::SectionsNamesZebin::externalFunctions.str());
+    mockLinkerInput.parseRelocationForExtFuncUsage(relocInfo, NEO::Zebin::Elf::SectionNames::externalFunctions.str());
     EXPECT_TRUE(mockLinkerInput.extFunDependencies.empty());
 
     relocInfo.offset = 0x10U;
-    mockLinkerInput.parseRelocationForExtFuncUsage(relocInfo, NEO::Elf::SectionsNamesZebin::externalFunctions.str());
+    mockLinkerInput.parseRelocationForExtFuncUsage(relocInfo, NEO::Zebin::Elf::SectionNames::externalFunctions.str());
     EXPECT_TRUE(mockLinkerInput.extFunDependencies.empty());
 }
 

@@ -11,24 +11,22 @@
 #include "shared/offline_compiler/source/ocloc_arg_helper.h"
 #include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
-#include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
-#include "shared/source/device_binary_format/elf/zebin_elf.h"
-#include "shared/source/device_binary_format/zebin_decoder.h"
+#include "shared/source/device_binary_format/zebin/zebin_decoder.h"
 #include "shared/source/utilities/directory.h"
 
 #include <algorithm>
 
-namespace NEO::ZebinManipulator {
+namespace NEO::Zebin::Manipulator {
 
-ErrorCode parseIntelGTNotesSectionForDevice(const std::vector<Elf::IntelGTNote> &intelGTNotes, IgaWrapper *iga) {
+ErrorCode parseIntelGTNotesSectionForDevice(const std::vector<Zebin::Elf::IntelGTNote> &intelGTNotes, IgaWrapper *iga) {
     size_t productFamilyNoteId = std::numeric_limits<size_t>::max();
     size_t gfxCoreNoteId = std::numeric_limits<size_t>::max();
     for (size_t i = 0; i < intelGTNotes.size(); i++) {
-        if (intelGTNotes[i].type == Elf::IntelGTSectionType::ProductFamily) {
+        if (intelGTNotes[i].type == Zebin::Elf::IntelGTSectionType::ProductFamily) {
             productFamilyNoteId = i;
-        } else if (intelGTNotes[i].type == Elf::IntelGTSectionType::GfxCore) {
+        } else if (intelGTNotes[i].type == Zebin::Elf::IntelGTSectionType::GfxCore) {
             gfxCoreNoteId = i;
         }
     }
@@ -106,10 +104,10 @@ BinaryFormats getBinaryFormatForAssemble(OclocArgHelper *argHelper, const std::v
     auto it = std::find(args.begin(), args.end(), "-dump");
     std::string dump = (it != args.end() && (it + 1) != args.end()) ? *(it + 1) : "dump/";
     addSlash(dump);
-    auto sectionsInfoFilepath = dump + ZebinManipulator::sectionsInfoFilename.str();
+    auto sectionsInfoFilepath = dump + Manipulator::sectionsInfoFilename.str();
     const bool usesZebin = argHelper->fileExists(sectionsInfoFilepath);
     if (usesZebin) {
-        return ZebinManipulator::is64BitZebin(argHelper, sectionsInfoFilepath) ? BinaryFormats::Zebin64b : BinaryFormats::Zebin32b;
+        return Manipulator::is64BitZebin(argHelper, sectionsInfoFilepath) ? BinaryFormats::Zebin64b : BinaryFormats::Zebin32b;
     }
     return BinaryFormats::PatchTokens;
 }
@@ -184,7 +182,7 @@ template ErrorCode ZebinDecoder<Elf::EI_CLASS_32>::validateInput(const std::vect
 template ErrorCode ZebinDecoder<Elf::EI_CLASS_64>::validateInput(const std::vector<std::string> &args);
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 ErrorCode ZebinDecoder<numBits>::validateInput(const std::vector<std::string> &args) {
-    return ZebinManipulator::validateInput(args, iga.get(), argHelper, arguments);
+    return Manipulator::validateInput(args, iga.get(), argHelper, arguments);
 }
 
 template void ZebinDecoder<Elf::EI_CLASS_32>::printHelp();
@@ -254,7 +252,7 @@ void ZebinDecoder<numBits>::dumpSymtab(ElfT &elf, ArrayRef<const uint8_t> symtab
                     << std::to_string(symbol.getBinding()) << "\n";
     }
     auto symbolsFileStr = symbolsFile.str();
-    dump(Elf::SectionsNamesZebin::symtab, ArrayRef<const uint8_t>::fromAny(symbolsFileStr.data(), symbolsFileStr.size()));
+    dump(Zebin::Elf::SectionNames::symtab, ArrayRef<const uint8_t>::fromAny(symbolsFileStr.data(), symbolsFileStr.size()));
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
@@ -264,7 +262,7 @@ std::vector<SectionInfo> ZebinDecoder<numBits>::dumpElfSections(ElfT &elf) {
         auto &[header, data] = elf.sectionHeaders[secId];
         auto sectionName = elf.getSectionName(static_cast<uint32_t>(secId));
         if (header->type == Elf::SHT_PROGBITS &&
-            ConstStringRef(sectionName).startsWith(Elf::SectionsNamesZebin::textPrefix)) {
+            ConstStringRef(sectionName).startsWith(Zebin::Elf::SectionNames::textPrefix)) {
             dumpKernelData(sectionName, data);
         } else if (header->type == Elf::SHT_SYMTAB) {
             dumpSymtab(elf, data);
@@ -308,10 +306,10 @@ ErrorCode ZebinDecoder<numBits>::decodeZebin(ArrayRef<const uint8_t> zebin, ElfT
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
-std::vector<Elf::IntelGTNote> ZebinDecoder<numBits>::getIntelGTNotes(ElfT &elf) {
-    std::vector<Elf::IntelGTNote> intelGTNotes;
+std::vector<NEO::Zebin::Elf::IntelGTNote> ZebinDecoder<numBits>::getIntelGTNotes(ElfT &elf) {
+    std::vector<Zebin::Elf::IntelGTNote> intelGTNotes;
     std::string errors, warnings;
-    NEO::getIntelGTNotes(elf, intelGTNotes, errors, warnings);
+    NEO::Zebin::getIntelGTNotes(elf, intelGTNotes, errors, warnings);
     if (false == errors.empty()) {
         argHelper->printf("Error when reading intelGTNotes: %s\n", errors.c_str());
     }
@@ -390,7 +388,7 @@ ErrorCode ZebinEncoder<numBits>::encode() {
 
     ElfEncoderT elfEncoder;
     elfEncoder.getElfFileHeader().machine = Elf::ELF_MACHINE::EM_INTELGT;
-    elfEncoder.getElfFileHeader().type = Elf::ELF_TYPE_ZEBIN::ET_ZEBIN_EXE;
+    elfEncoder.getElfFileHeader().type = Zebin::Elf::ELF_TYPE_ZEBIN::ET_ZEBIN_EXE;
 
     retVal = appendSections(elfEncoder, sectionInfos);
     if (retVal != OclocErrorCode::SUCCESS) {
@@ -408,7 +406,7 @@ template ErrorCode ZebinEncoder<Elf::EI_CLASS_32>::validateInput(const std::vect
 template ErrorCode ZebinEncoder<Elf::EI_CLASS_64>::validateInput(const std::vector<std::string> &args);
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 ErrorCode ZebinEncoder<numBits>::validateInput(const std::vector<std::string> &args) {
-    return ZebinManipulator::validateInput(args, iga.get(), argHelper, arguments);
+    return Manipulator::validateInput(args, iga.get(), argHelper, arguments);
 }
 
 template void ZebinEncoder<Elf::EI_CLASS_32>::printHelp();
@@ -437,7 +435,7 @@ std::vector<char> ZebinEncoder<numBits>::getIntelGTNotesSection(const std::vecto
     bool containsIntelGTNoteSection = false;
     for (auto &sectionInfo : sectionInfos) {
         if (sectionInfo.type == Elf::SHT_NOTE &&
-            sectionInfo.name == Elf::SectionsNamesZebin::noteIntelGT) {
+            sectionInfo.name == Zebin::Elf::SectionNames::noteIntelGT) {
             containsIntelGTNoteSection = true;
             break;
         }
@@ -446,15 +444,15 @@ std::vector<char> ZebinEncoder<numBits>::getIntelGTNotesSection(const std::vecto
         return {};
     }
 
-    return argHelper->readBinaryFile(getFilePath(Elf::SectionsNamesZebin::noteIntelGT.data()));
+    return argHelper->readBinaryFile(getFilePath(Zebin::Elf::SectionNames::noteIntelGT.data()));
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
-std::vector<Elf::IntelGTNote> ZebinEncoder<numBits>::getIntelGTNotes(const std::vector<char> &intelGtNotesSection) {
-    std::vector<Elf::IntelGTNote> intelGTNotes;
+std::vector<NEO::Zebin::Elf::IntelGTNote> ZebinEncoder<numBits>::getIntelGTNotes(const std::vector<char> &intelGtNotesSection) {
+    std::vector<Zebin::Elf::IntelGTNote> intelGTNotes;
     std::string errors, warnings;
     auto refIntelGTNotesSection = ArrayRef<const uint8_t>::fromAny(intelGtNotesSection.data(), intelGtNotesSection.size());
-    auto decodeError = decodeIntelGTNoteSection<numBits>(refIntelGTNotesSection, intelGTNotes, errors, warnings);
+    auto decodeError = NEO::Zebin::decodeIntelGTNoteSection<numBits>(refIntelGTNotesSection, intelGTNotes, errors, warnings);
     argHelper->printf(warnings.c_str());
     if (decodeError != NEO::DecodeError::Success) {
         argHelper->printf(errors.c_str());
@@ -482,10 +480,10 @@ ErrorCode ZebinEncoder<numBits>::loadSectionsInfo(std::vector<SectionInfo> &sect
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
-ErrorCode NEO::ZebinManipulator::ZebinEncoder<numBits>::checkIfAllFilesExist(const std::vector<SectionInfo> &sectionInfos) {
+ErrorCode ZebinEncoder<numBits>::checkIfAllFilesExist(const std::vector<SectionInfo> &sectionInfos) {
     for (auto &sectionInfo : sectionInfos) {
         bool fileExists = argHelper->fileExists(getFilePath(sectionInfo.name));
-        if (ConstStringRef(sectionInfo.name).startsWith(Elf::SectionsNamesZebin::textPrefix)) {
+        if (ConstStringRef(sectionInfo.name).startsWith(Zebin::Elf::SectionNames::textPrefix)) {
             fileExists |= argHelper->fileExists(getFilePath(sectionInfo.name + ".asm"));
         }
 
@@ -503,7 +501,7 @@ ErrorCode ZebinEncoder<numBits>::appendSections(ElfEncoderT &encoder, const std:
     size_t symtabIdx = std::numeric_limits<size_t>::max();
     for (size_t i = 0; i < sectionInfos.size(); i++) {
         secNameToId[sectionInfos[i].name] = i + 1;
-        if (sectionInfos[i].name == Elf::SectionsNamesZebin::symtab) {
+        if (sectionInfos[i].name == Zebin::Elf::SectionNames::symtab) {
             symtabIdx = i + 1;
         }
     }
@@ -516,7 +514,7 @@ ErrorCode ZebinEncoder<numBits>::appendSections(ElfEncoderT &encoder, const std:
             retVal |= appendRel(encoder, section, secNameToId[section.name.substr(Elf::SpecialSectionNames::relPrefix.length())], symtabIdx);
         } else if (section.type == Elf::SHT_RELA) {
             retVal |= appendRela(encoder, section, secNameToId[section.name.substr(Elf::SpecialSectionNames::relaPrefix.length())], symtabIdx);
-        } else if (section.type == Elf::SHT_PROGBITS && ConstStringRef(section.name).startsWith(Elf::SectionsNamesZebin::textPrefix)) {
+        } else if (section.type == Elf::SHT_PROGBITS && ConstStringRef(section.name).startsWith(Zebin::Elf::SectionNames::textPrefix)) {
             retVal |= appendKernel(encoder, section);
         } else {
             retVal |= appendOther(encoder, section);
@@ -603,7 +601,7 @@ ErrorCode ZebinEncoder<numBits>::appendSymtab(ElfEncoderT &encoder, const Sectio
 }
 
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
-ErrorCode NEO::ZebinManipulator::ZebinEncoder<numBits>::appendOther(ElfEncoderT &encoder, const SectionInfo &section) {
+ErrorCode ZebinEncoder<numBits>::appendOther(ElfEncoderT &encoder, const SectionInfo &section) {
     auto sectionData = argHelper->readBinaryFile(getFilePath(section.name));
     encoder.appendSection(section.type, section.name, ArrayRef<const uint8_t>::fromAny(sectionData.data(), sectionData.size()));
     return OclocErrorCode::SUCCESS;
@@ -693,4 +691,4 @@ std::vector<typename ZebinEncoder<numBits>::ElfSymT> ZebinEncoder<numBits>::pars
     return symbols;
 }
 
-} // namespace NEO::ZebinManipulator
+} // namespace NEO::Zebin::Manipulator

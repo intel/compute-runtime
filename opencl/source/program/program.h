@@ -8,7 +8,6 @@
 #pragma once
 #include "shared/source/compiler_interface/compiler_interface.h"
 #include "shared/source/compiler_interface/linker.h"
-#include "shared/source/device_binary_format/debug_zebin.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/program/program_info.h"
 
@@ -18,6 +17,9 @@
 #include <functional>
 
 namespace NEO {
+namespace Zebin::Debug {
+struct Segments;
+}
 namespace PatchTokenBinary {
 struct ProgramFromPatchtokens;
 }
@@ -281,7 +283,7 @@ class Program : public BaseObject<_cl_program> {
     MOCKABLE_VIRTUAL void debugNotify(const ClDeviceVector &deviceVector, std::unordered_map<uint32_t, BuildPhase> &phasesReached);
     void notifyDebuggerWithDebugData(ClDevice *clDevice);
     MOCKABLE_VIRTUAL void createDebugZebin(uint32_t rootDeviceIndex);
-    Debug::Segments getZebinSegments(uint32_t rootDeviceIndex);
+    Zebin::Debug::Segments getZebinSegments(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL void callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
     MOCKABLE_VIRTUAL void callGenerateDefaultExtendedArgsMetadataOnce(uint32_t rootDeviceIndex);
 

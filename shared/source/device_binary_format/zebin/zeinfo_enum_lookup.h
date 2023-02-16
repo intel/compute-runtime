@@ -7,11 +7,11 @@
 
 #pragma once
 
-#include "shared/source/device_binary_format/elf/zebin_elf.h"
+#include "shared/source/device_binary_format/zebin/zeinfo.h"
 #include "shared/source/utilities/lookup_array.h"
 
 namespace NEO::Zebin::ZeInfo::EnumLookup {
-using namespace Elf::ZebinKernelMetadata;
+using namespace NEO::Zebin::ZeInfo;
 
 namespace ArgType {
 using namespace Tags::Kernel::PayloadArgument::ArgType;
@@ -109,8 +109,8 @@ static_assert(lookup.size() == AllocType::AllocationTypeMax - 1, "Every enum fie
 } // namespace AllocationType
 
 namespace MemoryUsage {
-using namespace NEO::Elf::ZebinKernelMetadata::Tags::Kernel::PerThreadMemoryBuffer::MemoryUsage;
-using MemoryUsage = NEO::Elf::ZebinKernelMetadata::Types::Kernel::PerThreadMemoryBuffer::MemoryUsage;
+using namespace Tags::Kernel::PerThreadMemoryBuffer::MemoryUsage;
+using MemoryUsage = Types::Kernel::PerThreadMemoryBuffer::MemoryUsage;
 inline constexpr ConstStringRef name = "memory usage";
 inline constexpr LookupArray<ConstStringRef, MemoryUsage, 3> lookup({{{privateSpace, MemoryUsage::MemoryUsagePrivateSpace},
                                                                       {spillFillSpace, MemoryUsage::MemoryUsageSpillFillSpace},

@@ -11,7 +11,7 @@
 #include "shared/source/compiler_interface/compiler_warnings/compiler_warnings.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device_binary_format/ar/ar_encoder.h"
-#include "shared/source/device_binary_format/debug_zebin.h"
+#include "shared/source/device_binary_format/zebin/debug_zebin.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/addressing_mode_helper.h"
 #include "shared/source/helpers/blit_helper.h"
@@ -2340,7 +2340,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromZebinThenAppendAllowZebinFla
 }
 
 HWTEST2_F(ModuleTranslationUnitTest, givenLargeGrfAndSimd16WhenProcessingBinaryThenKernelGroupSizeReducedToFitWithinSubslice, IsWithinXeGfxFamily) {
-    std::string validZeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
+    std::string validZeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
 kernels:
     - name : kernel_with_default_maxWGS
       execution_env :
@@ -2355,10 +2355,10 @@ kernels:
 
     uint8_t kernelIsa[8]{0U};
     ZebinTestData::ValidEmptyProgram zebin;
-    zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "kernel_with_default_maxWGS", {kernelIsa, sizeof(kernelIsa)});
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "kernel_with_reduced_maxWGS", {kernelIsa, sizeof(kernelIsa)});
+    zebin.removeSection(NEO::Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel_with_default_maxWGS", {kernelIsa, sizeof(kernelIsa)});
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel_with_reduced_maxWGS", {kernelIsa, sizeof(kernelIsa)});
     zebin.elfHeader->machine = this->device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
 
     MockModule mockModule{this->device, nullptr, ModuleType::User};
@@ -2387,7 +2387,7 @@ kernels:
 }
 
 HWTEST2_F(ModuleTranslationUnitTest, givenLargeGrfAndSimd16WhenProcessingBinaryThenSuggestedKernelGroupSizeFitsWithinSubslice, IsWithinXeGfxFamily) {
-    std::string validZeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
+    std::string validZeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
 kernels:
     - name : kernel_with_default_maxWGS
       execution_env :
@@ -2402,10 +2402,10 @@ kernels:
 
     uint8_t kernelIsa[8]{0U};
     ZebinTestData::ValidEmptyProgram zebin;
-    zebin.removeSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    zebin.appendSection(NEO::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "kernel_with_default_maxWGS", {kernelIsa, sizeof(kernelIsa)});
-    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "kernel_with_reduced_maxWGS", {kernelIsa, sizeof(kernelIsa)});
+    zebin.removeSection(NEO::Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo);
+    zebin.appendSection(NEO::Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(validZeInfo.data(), validZeInfo.size()));
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel_with_default_maxWGS", {kernelIsa, sizeof(kernelIsa)});
+    zebin.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel_with_reduced_maxWGS", {kernelIsa, sizeof(kernelIsa)});
     zebin.elfHeader->machine = this->device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
 
     MockModule mockModule{this->device, nullptr, ModuleType::User};
@@ -2447,18 +2447,18 @@ kernels:
 }
 
 TEST_F(ModuleTranslationUnitTest, WhenCreatingFromZeBinaryAndGlobalsAreExportedThenTheirAllocationTypeIsUSMDevice) {
-    std::string zeInfo = std::string("version :\'") + versionToString(zeInfoDecoderVersion) + R"===('
+    std::string zeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
 kernels:
     - name : kernel
       execution_env :
         simd_size : 8
 )===";
     MockElfEncoder<> elfEncoder;
-    elfEncoder.getElfFileHeader().type = NEO::Elf::ET_ZEBIN_EXE;
-    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "kernel", std::string{});
-    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::dataConst, std::string{"12345678"});
+    elfEncoder.getElfFileHeader().type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::textPrefix.str() + "kernel", std::string{});
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataConst, std::string{"12345678"});
     auto dataConstSectionIndex = elfEncoder.getLastSectionHeaderIndex();
-    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::dataGlobal, std::string{"12345678"});
+    elfEncoder.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Zebin::Elf::SectionNames::dataGlobal, std::string{"12345678"});
     auto dataGlobalSectionIndex = elfEncoder.getLastSectionHeaderIndex();
 
     NEO::Elf::ElfSymbolEntry<NEO::Elf::ELF_IDENTIFIER_CLASS::EI_CLASS_64> symbolTable[2] = {};
@@ -2473,9 +2473,9 @@ kernels:
     symbolTable[1].shndx = decltype(symbolTable[1].shndx)(dataGlobalSectionIndex);
     symbolTable[1].size = 4;
     symbolTable[1].value = 0;
-    elfEncoder.appendSection(NEO::Elf::SHT_SYMTAB, NEO::Elf::SectionsNamesZebin::symtab,
+    elfEncoder.appendSection(NEO::Elf::SHT_SYMTAB, NEO::Zebin::Elf::SectionNames::symtab,
                              ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(symbolTable), sizeof(symbolTable)));
-    elfEncoder.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, zeInfo);
+    elfEncoder.appendSection(NEO::Zebin::Elf::SHT_ZEBIN_ZEINFO, NEO::Zebin::Elf::SectionNames::zeInfo, zeInfo);
     auto zebin = elfEncoder.encode();
 
     L0::ModuleTranslationUnit moduleTu(this->device);
@@ -3717,7 +3717,7 @@ TEST_F(ModuleWithZebinTest, givenZebinSegmentsThenSegmentsArePopulated) {
     module->addSegments();
     auto segments = module->getZebinSegments();
 
-    auto checkGPUSeg = [](NEO::GraphicsAllocation *alloc, NEO::Debug::Segments::Segment segment) {
+    auto checkGPUSeg = [](NEO::GraphicsAllocation *alloc, NEO::Zebin::Debug::Segments::Segment segment) {
         EXPECT_EQ(alloc->getGpuAddress(), segment.address);
         EXPECT_EQ(alloc->getUnderlyingBufferSize(), segment.size);
     };

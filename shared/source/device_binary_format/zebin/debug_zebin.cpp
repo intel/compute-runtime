@@ -5,17 +5,16 @@
  *
  */
 
-#include "shared/source/device_binary_format/debug_zebin.h"
+#include "shared/source/device_binary_format/zebin/debug_zebin.h"
 
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
-#include "shared/source/device_binary_format/elf/zebin_elf.h"
+#include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
-namespace NEO {
-namespace Debug {
-using namespace Elf;
+namespace NEO::Zebin::Debug {
+using namespace NEO::Zebin::Elf;
 
 Segments::Segments() {}
 
@@ -131,8 +130,8 @@ void DebugZebinCreator::applyRelocations() {
         auto segment = getSegmentByName(symbolSectionName);
         if (segment != nullptr) {
             symbol.value += segment->address;
-        } else if (ConstStringRef(symbolSectionName).startsWith(SectionsNamesZebin::debugPrefix.data()) &&
-                   ConstStringRef(symbolName).startsWith(SectionsNamesZebin::textPrefix.data())) {
+        } else if (ConstStringRef(symbolSectionName).startsWith(SectionNames::debugPrefix.data()) &&
+                   ConstStringRef(symbolName).startsWith(SectionNames::textPrefix.data())) {
             symbol.value += getTextSegmentByName(symbolName)->address;
         }
     }
@@ -151,35 +150,34 @@ void DebugZebinCreator::applyRelocations() {
     }
 }
 
-bool DebugZebinCreator::isRelocTypeSupported(NEO::Elf::RELOC_TYPE_ZEBIN type) {
-    return type == NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR ||
-           type == NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32 ||
-           type == NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32_HI;
+bool DebugZebinCreator::isRelocTypeSupported(RELOC_TYPE_ZEBIN type) {
+    return type == RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR ||
+           type == RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32 ||
+           type == RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32_HI;
 }
 
 const Segments::Segment *DebugZebinCreator::getSegmentByName(ConstStringRef sectionName) {
-    if (sectionName.startsWith(SectionsNamesZebin::textPrefix.data())) {
+    if (sectionName.startsWith(SectionNames::textPrefix.data())) {
         return getTextSegmentByName(sectionName);
-    } else if (sectionName == SectionsNamesZebin::dataConst) {
+    } else if (sectionName == SectionNames::dataConst) {
         return &segments.constData;
-    } else if (sectionName == SectionsNamesZebin::dataGlobal) {
+    } else if (sectionName == SectionNames::dataGlobal) {
         return &segments.varData;
-    } else if (sectionName == SectionsNamesZebin::dataConstString) {
+    } else if (sectionName == SectionNames::dataConstString) {
         return &segments.stringData;
     }
     return nullptr;
 }
 
 const Segments::Segment *DebugZebinCreator::getTextSegmentByName(ConstStringRef sectionName) {
-    auto kernelName = sectionName.substr(SectionsNamesZebin::textPrefix.length());
+    auto kernelName = sectionName.substr(SectionNames::textPrefix.length());
     auto kernelSegmentIt = segments.nameToSegMap.find(kernelName.str());
     UNRECOVERABLE_IF(kernelSegmentIt == segments.nameToSegMap.end());
     return &kernelSegmentIt->second;
 }
 
 bool DebugZebinCreator::isCpuSegment(ConstStringRef sectionName) {
-    return (sectionName == SectionsNamesZebin::dataConstString);
+    return (sectionName == SectionNames::dataConstString);
 }
 
-} // namespace Debug
-} // namespace NEO
+} // namespace NEO::Zebin::Debug

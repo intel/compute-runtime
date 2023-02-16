@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,10 +12,10 @@
 #include "opencl/test/unit_test/offline_compiler/decoder/mock/mock_iga_wrapper.h"
 
 template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits>
-struct MockZebinEncoder : public NEO::ZebinManipulator::ZebinEncoder<numBits> {
-    using Base = NEO::ZebinManipulator::ZebinEncoder<numBits>;
-    using ErrorCode = NEO::ZebinManipulator::ErrorCode;
-    using SectionInfo = NEO::ZebinManipulator::SectionInfo;
+struct MockZebinEncoder : public NEO::Zebin::Manipulator::ZebinEncoder<numBits> {
+    using Base = NEO::Zebin::Manipulator::ZebinEncoder<numBits>;
+    using ErrorCode = NEO::Zebin::Manipulator::ErrorCode;
+    using SectionInfo = NEO::Zebin::Manipulator::SectionInfo;
     using ElfEncoderT = NEO::Elf::ElfEncoder<numBits>;
     using Base::appendKernel;
     using Base::appendRel;
@@ -30,7 +30,7 @@ struct MockZebinEncoder : public NEO::ZebinManipulator::ZebinEncoder<numBits> {
         mockIga = iga.get();
         this->iga = std::move(iga);
         retValGetIntelGTNotes.resize(1);
-        retValGetIntelGTNotes[0].type = NEO::Elf::IntelGTSectionType::ProductFamily;
+        retValGetIntelGTNotes[0].type = NEO::Zebin::Elf::IntelGTSectionType::ProductFamily;
         retValGetIntelGTNotes[0].data = ArrayRef<const uint8_t>::fromAny(&productFamily, 1);
     }
 
@@ -55,7 +55,7 @@ struct MockZebinEncoder : public NEO::ZebinManipulator::ZebinEncoder<numBits> {
         return {};
     }
 
-    std::vector<NEO::Elf::IntelGTNote> getIntelGTNotes(const std::vector<char> &intelGtNotesSection) override {
+    std::vector<NEO::Zebin::Elf::IntelGTNote> getIntelGTNotes(const std::vector<char> &intelGtNotesSection) override {
         if (callBaseGetIntelGTNotes) {
             return Base::getIntelGTNotes(intelGtNotesSection);
         }
@@ -75,7 +75,7 @@ struct MockZebinEncoder : public NEO::ZebinManipulator::ZebinEncoder<numBits> {
     }
 
     MockIgaWrapper *mockIga;
-    std::vector<NEO::Elf::IntelGTNote> retValGetIntelGTNotes;
+    std::vector<NEO::Zebin::Elf::IntelGTNote> retValGetIntelGTNotes;
     ErrorCode retValLoadSectionsInfo = NEO::OclocErrorCode::SUCCESS;
     ErrorCode retValCheckIfAllFilesExist = NEO::OclocErrorCode::SUCCESS;
     ErrorCode retValAppendSections = NEO::OclocErrorCode::SUCCESS;

@@ -58,7 +58,7 @@ HWTEST_F(ZebinFallbackToPatchtokensLegacyDebugger, WhenCreatingProgramFromNonBui
         GTEST_SKIP();
     }
     const uint8_t mockSpvData[0x10]{0};
-    zebin.appendSection(Elf::SHT_ZEBIN_SPIRV, Elf::SectionsNamesZebin::spv, mockSpvData);
+    zebin.appendSection(Zebin::Elf::SHT_ZEBIN_SPIRV, Zebin::Elf::SectionNames::spv, mockSpvData);
 
     std::unique_ptr<MockProgram> program;
     device->executionEnvironment->rootDeviceEnvironments[mockRootDeviceIndex]->debugger.reset(new MockActiveSourceLevelDebugger);

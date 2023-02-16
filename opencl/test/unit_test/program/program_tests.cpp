@@ -616,7 +616,7 @@ TEST_F(ProgramGetKernelInfoTest, givenProgramWithFunctionsWhenGettingKernelInfoB
 }
 
 TEST_F(ProgramGetKernelInfoTest, givenProgramFunctionsWhenGettingKernelInfoByNameThenFunctionsAreNotExposed) {
-    EXPECT_EQ(nullptr, program->getKernelInfo(NEO::Elf::SectionsNamesZebin::externalFunctions.data(), uint32_t(0)));
+    EXPECT_EQ(nullptr, program->getKernelInfo(NEO::Zebin::Elf::SectionNames::externalFunctions.data(), uint32_t(0)));
 }
 
 HWTEST_F(ProgramFromBinaryTest, givenProgramWhenCleanCurrentKernelInfoIsCalledButGpuIsNotYetDoneThenKernelAllocationIsPutOnDeferredFreeListAndCsrRegistersCacheFlush) {
@@ -3565,7 +3565,7 @@ kernels:
     constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
     MockElfEncoder<numBits> elfEncoder;
     elfEncoder.getElfFileHeader().type = NEO::Elf::ET_REL;
-    elfEncoder.appendSection(Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(invalidZeInfo.data(), invalidZeInfo.size()));
+    elfEncoder.appendSection(Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(invalidZeInfo.data(), invalidZeInfo.size()));
     auto storage = elfEncoder.encode();
     buildInfo.unpackedDeviceBinary.reset(reinterpret_cast<char *>(storage.data()));
     buildInfo.unpackedDeviceBinarySize = storage.size();
@@ -3605,11 +3605,11 @@ kernels_misc_info:
     constexpr auto numBits = is32bit ? Elf::EI_CLASS_32 : Elf::EI_CLASS_64;
     MockElfEncoder<numBits> elfEncoder;
     elfEncoder.getElfFileHeader().type = NEO::Elf::ET_REL;
-    elfEncoder.appendSection(Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, Elf::SectionsNamesZebin::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
+    elfEncoder.appendSection(Zebin::Elf::SHT_ZEBIN::SHT_ZEBIN_ZEINFO, Zebin::Elf::SectionNames::zeInfo, ArrayRef<const uint8_t>::fromAny(zeInfo.data(), zeInfo.size()));
     auto storage = elfEncoder.encode();
     buildInfo.unpackedDeviceBinary.reset(reinterpret_cast<char *>(storage.data()));
     buildInfo.unpackedDeviceBinarySize = storage.size();
-    buildInfo.kernelMiscInfoPos = zeInfo.str().find(Elf::ZebinKernelMetadata::Tags::kernelMiscInfo.str());
+    buildInfo.kernelMiscInfoPos = zeInfo.str().find(Zebin::ZeInfo::Tags::kernelMiscInfo.str());
     ASSERT_NE(std::string::npos, buildInfo.kernelMiscInfoPos);
 
     ASSERT_TRUE(kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.empty());

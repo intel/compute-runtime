@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device/device.h"
-#include "shared/source/device_binary_format/elf/zebin_elf.h"
+#include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -30,17 +30,17 @@
 namespace NEO {
 
 SegmentType LinkerInput::getSegmentForSection(ConstStringRef name) {
-    if (name == NEO::Elf::SectionsNamesZebin::dataConst || name == NEO::Elf::SectionsNamesZebin::dataGlobalConst) {
+    if (name == NEO::Zebin::Elf::SectionNames::dataConst || name == NEO::Zebin::Elf::SectionNames::dataGlobalConst) {
         return NEO::SegmentType::GlobalConstants;
-    } else if (name == NEO::Elf::SectionsNamesZebin::dataGlobal) {
+    } else if (name == NEO::Zebin::Elf::SectionNames::dataGlobal) {
         return NEO::SegmentType::GlobalVariables;
-    } else if (name == NEO::Elf::SectionsNamesZebin::dataConstString) {
+    } else if (name == NEO::Zebin::Elf::SectionNames::dataConstString) {
         return NEO::SegmentType::GlobalStrings;
     } else if (name.startsWith(NEO::Elf::SpecialSectionNames::text.data())) {
         return NEO::SegmentType::Instructions;
-    } else if (name == NEO::Elf::SectionsNamesZebin::dataConstZeroInit) {
+    } else if (name == NEO::Zebin::Elf::SectionNames::dataConstZeroInit) {
         return NEO::SegmentType::GlobalConstantsZeroInit;
-    } else if (name == NEO::Elf::SectionsNamesZebin::dataGlobalZeroInit) {
+    } else if (name == NEO::Zebin::Elf::SectionNames::dataGlobalZeroInit) {
         return NEO::SegmentType::GlobalVariablesZeroInit;
     }
     return NEO::SegmentType::Unknown;
@@ -186,7 +186,7 @@ bool LinkerInput::addRelocation(Elf::Elf<numBits> &elf, const SectionNameToSegme
     relocationInfo.relocationSegment = getSegmentForSection(sectionName);
 
     if (SegmentType::Instructions == relocationInfo.relocationSegment) {
-        auto kernelName = sectionName.substr(Elf::SectionsNamesZebin::textPrefix.length());
+        auto kernelName = sectionName.substr(Zebin::Elf::SectionNames::textPrefix.length());
         if (auto instructionSegmentId = getInstructionSegmentId(nameToSegmentId, kernelName)) {
             addElfTextSegmentRelocation(relocationInfo, *instructionSegmentId);
             parseRelocationForExtFuncUsage(relocationInfo, kernelName);
@@ -242,7 +242,7 @@ bool LinkerInput::addSymbol(Elf::Elf<numBits> &elf, const SectionNameToSegmentId
             traits.exportsGlobalConstants |= isConstDataSegment(segment);
         }
     } else if (symbolType == Elf::STT_FUNC) {
-        auto kernelName = symbolSectionName.substr(NEO::Elf::SectionsNamesZebin::textPrefix.length());
+        auto kernelName = symbolSectionName.substr(NEO::Zebin::Elf::SectionNames::textPrefix.length());
         if (auto segId = getInstructionSegmentId(nameToSegmentId, kernelName)) {
             symbolInfo.instructionSegmentId = *segId;
         } else {
@@ -295,7 +295,7 @@ void LinkerInput::parseRelocationForExtFuncUsage(const RelocationInfo &relocInfo
         return pair.first == relocInfo.symbolName;
     });
     if (extFuncSymIt != extFuncSymbols.end()) {
-        if (kernelName == Elf::SectionsNamesZebin::externalFunctions.str()) {
+        if (kernelName == Zebin::Elf::SectionNames::externalFunctions.str()) {
             auto callerIt = std::find_if(extFuncSymbols.begin(), extFuncSymbols.end(), [relocInfo](auto &pair) {
                 auto &symbol = pair.second;
                 return relocInfo.offset >= symbol.offset && relocInfo.offset < symbol.offset + symbol.size;
@@ -585,9 +585,9 @@ void Linker::applyDebugDataRelocations(const NEO::Elf::Elf<NEO::Elf::EI_CLASS_64
 
         if (sectionName == Elf::SpecialSectionNames::text) {
             symbolAddress += text.gpuAddress;
-        } else if (ConstStringRef(sectionName.c_str()).startsWith(Elf::SectionsNamesZebin::dataConst.data())) {
+        } else if (ConstStringRef(sectionName.c_str()).startsWith(Zebin::Elf::SectionNames::dataConst.data())) {
             symbolAddress += constData.gpuAddress;
-        } else if (ConstStringRef(sectionName.c_str()).startsWith(Elf::SectionsNamesZebin::dataGlobal.data())) {
+        } else if (ConstStringRef(sectionName.c_str()).startsWith(Zebin::Elf::SectionNames::dataGlobal.data())) {
             symbolAddress += globalData.gpuAddress;
         } else {
             // do not offset debug sections
