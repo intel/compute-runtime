@@ -197,6 +197,7 @@ class ProductHelper {
     virtual bool isMultiContextResourceDeferDeletionSupported() const = 0;
     virtual bool isFusedEuDisabledForDpas(bool kernelHasDpasInstructions, const uint32_t *lws, const uint32_t *groupCount) const = 0;
     virtual bool isCalculationForDisablingEuFusionWithDpasNeeded() const = 0;
+    virtual uint32_t getNumberOfPartsInTileForConcurrentKernel() const = 0;
 
     virtual ~ProductHelper() = default;
 

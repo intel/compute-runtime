@@ -116,6 +116,7 @@ class ProductHelperHw : public ProductHelper {
     void adjustNumberOfCcs(HardwareInfo &hwInfo) const override;
     bool isPrefetcherDisablingInDirectSubmissionRequired() const override;
     bool isStatefulAddressingModeSupported() const override;
+    uint32_t getNumberOfPartsInTileForConcurrentKernel() const override;
     bool isPlatformQuerySupported() const override;
     bool isNonBlockingGpuSubmissionSupported() const override;
     bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const override;

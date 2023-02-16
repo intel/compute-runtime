@@ -25,6 +25,7 @@ struct PVC : public XeHpcCoreFamily {
     static const uint32_t maxSubslicesSupported = 64;
     static const uint32_t maxDualSubslicesSupported = 64;
     static const RuntimeCapabilityTable capabilityTable;
+    static constexpr uint32_t numberOfpartsInTileForConcurrentKernels = 8u;
 
     struct FrontEndStateSupport {
         static constexpr bool scratchSize = true;
