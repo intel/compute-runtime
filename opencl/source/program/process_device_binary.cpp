@@ -8,7 +8,8 @@
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
-#include "shared/source/device_binary_format/zebin_decoder.h"
+#include "shared/source/device_binary_format/zebin/zebin_decoder.h"
+#include "shared/source/device_binary_format/zebin/zeinfo_decoder.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -377,8 +378,8 @@ void Program::callPopulateZebinExtendedArgsMetadataOnce(uint32_t rootDeviceIndex
             return;
         }
         std::string errors{}, warnings{};
-        auto metadataString = extractZeInfoMetadataStringFromZebin(refBin, errors, warnings);
-        auto decodeError = decodeAndPopulateKernelMiscInfo(buildInfo.kernelMiscInfoPos, buildInfo.kernelInfoArray, metadataString, errors, warnings);
+        auto zeInfo = getZeInfoFromZebin(refBin, errors, warnings);
+        auto decodeError = Zebin::ZeInfo::decodeAndPopulateKernelMiscInfo(buildInfo.kernelMiscInfoPos, buildInfo.kernelInfoArray, zeInfo, errors, warnings);
         if (NEO::DecodeError::Success != decodeError) {
             PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error in decodeAndPopulateKernelMiscInfo: %s\n", errors.c_str());
         }

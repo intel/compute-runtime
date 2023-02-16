@@ -26,7 +26,7 @@ ValidEmptyProgram<numBits>::ValidEmptyProgram() {
     NEO::Elf::ElfEncoder<numBits> enc;
     enc.getElfFileHeader().type = NEO::Elf::ET_ZEBIN_EXE;
     enc.getElfFileHeader().machine = productFamily;
-    auto zeInfo = std::string{"---\nversion : \'" + versionToString(NEO::zeInfoDecoderVersion) + "\'" + "\nkernels : \n  - name : " + kernelName + "\n    execution_env : \n      simd_size  : 32\n      grf_count : 128\n...\n"};
+    auto zeInfo = std::string{"---\nversion : \'" + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + "\'" + "\nkernels : \n  - name : " + kernelName + "\n    execution_env : \n      simd_size  : 32\n      grf_count : 128\n...\n"};
     enc.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, zeInfo);
     enc.appendSection(NEO::Elf::SHT_PROGBITS, NEO::Elf::SectionsNamesZebin::textPrefix.str() + "valid_empty_kernel", zeInfo);
     storage = enc.encode();

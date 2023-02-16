@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/compiler_interface/external_functions.h"
-#include "shared/source/device_binary_format/elf/zebin_elf.h"
+#include "shared/source/device_binary_format/zebin/zebin_elf.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/kernel/implicit_args.h"
