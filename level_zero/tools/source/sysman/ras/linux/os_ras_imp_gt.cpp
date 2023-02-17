@@ -15,7 +15,7 @@ static const std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToL
     {ZES_RAS_ERROR_CAT_CACHE_ERRORS,
      {"fatal-array-bist", "fatal-idi-parity", "fatal-l3-double",
       "fatal-l3-ecc-checker",
-      "fatal-sqidi", "fatal-tlb"}},
+      "fatal-sqidi", "fatal-tlb", "fatal-l3bank"}},
     {ZES_RAS_ERROR_CAT_RESET,
      {"engine-reset"}},
     {ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS,
@@ -30,7 +30,7 @@ static const std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToL
       "gsc-nonfatal-ucode-parity", "gsc-nonfatal-mia-int", "gsc-nonfatal-wdg-timeout"}},
     {ZES_RAS_ERROR_CAT_COMPUTE_ERRORS,
      {"fatal-fpu", "fatal-l3-fabric", "fatal-eu-grf", "fatal-sampler", "fatal-slm",
-      "fatal-guc", "fatal-eu-ic"}},
+      "fatal-guc", "fatal-eu-ic", "fatal-subslice"}},
     {ZES_RAS_ERROR_CAT_DRIVER_ERRORS,
      {"driver-object-migration", "driver-engine-other", "driver-ggtt",
       "driver-gt-interrupt", "driver-gt-other", "driver-guc-communication",
@@ -38,11 +38,11 @@ static const std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToL
 
 static const std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToListOfEventsCorrectable = {
     {ZES_RAS_ERROR_CAT_CACHE_ERRORS,
-     {"correctable-l3-sng"}},
+     {"correctable-l3-sng", "correctable-l3bank"}},
     {ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS,
      {"sgunit-correctable", "gsc-correctable-sram-ecc"}},
     {ZES_RAS_ERROR_CAT_COMPUTE_ERRORS,
-     {"correctable-eu-grf", "correctable-eu-ic", "correctable-guc", "correctable-sampler", "correctable-slm"}}};
+     {"correctable-eu-grf", "correctable-eu-ic", "correctable-guc", "correctable-sampler", "correctable-slm", "correctable-subslice"}}};
 
 static void closeFd(int64_t &fd) {
     if (fd != -1) {

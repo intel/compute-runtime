@@ -36,6 +36,10 @@ constexpr uint64_t correctableSamplerErrorCountTile1 = 30u;
 constexpr uint64_t correctableGscSramEcc = 2u;
 constexpr uint64_t nonFatalGscAonParity = 2u;
 constexpr uint64_t nonFataGscSelfmBist = 3u;
+constexpr uint64_t correctablel3Bank = 2u;
+constexpr uint64_t fatalSubslice = 3u;
+constexpr uint64_t fatalL3BankTile1 = 1u;
+constexpr uint64_t correctableSubsliceTile1 = 2u;
 constexpr uint64_t fatalGucErrorCountTile1 = 40u;
 constexpr uint64_t fatalIdiParityErrorCountTile1 = 60u;
 constexpr uint64_t correctableGucErrorCountTile1 = 25u;
@@ -61,17 +65,18 @@ constexpr uint64_t initialCorrectableComputeErrors = 6u;
 constexpr uint64_t initialUncorrectableDriverErrors = 5u;
 
 constexpr uint64_t initialUncorrectableCacheErrorsTile0 = 2u;
+constexpr uint64_t initialCorrectableCacheErrorTile0 = 2u;
 constexpr uint64_t initialEngineResetTile0 = 2u;
 constexpr uint64_t initialProgrammingErrorsTile0 = 7u;
 constexpr uint64_t initialUncorrectableNonComputeErrorsTile0 = 15u;
 constexpr uint64_t initialCorrectableNonComputeErrorsTile0 = 2u;
-constexpr uint64_t initialUncorrectableComputeErrorsTile0 = 10u;
+constexpr uint64_t initialUncorrectableComputeErrorsTile0 = 11u;
 constexpr uint64_t initialCorrectableComputeErrorsTile0 = 6u;
 constexpr uint64_t initialUncorrectableDriverErrorsTile0 = 5u;
 constexpr uint64_t initialUncorrectableCacheErrorsTile1 = 1u;
 constexpr uint64_t initialEngineResetTile1 = 4u;
 constexpr uint64_t initialProgrammingErrorsTile1 = 5u;
-constexpr uint64_t initialCorrectableComputeErrorsTile1 = 5u;
+constexpr uint64_t initialCorrectableComputeErrorsTile1 = 7u;
 constexpr uint64_t initialUncorrectableNonComputeErrorsTile1 = 5u;
 constexpr uint64_t initialUncorrectableComputeErrorsTile1 = 6u;
 constexpr uint64_t initialUncorrectableDriverErrorsTile1 = 4u;
@@ -142,6 +147,7 @@ struct MockRasPmuInterfaceImp : public PmuInterfaceImp {
         data[2] = correctableGrfErrorCount;
         data[3] = correctableEuErrorCount;
         data[4] = correctableGscSramEcc;
+        data[5] = correctablel3Bank;
         return 0;
     }
 
@@ -155,12 +161,13 @@ struct MockRasPmuInterfaceImp : public PmuInterfaceImp {
         data[6] = driverRps;
         data[7] = 0;
         data[8] = 0;
-        data[9] = fatalEuErrorCount;
-        data[10] = socFatalMdfiEastCount;
-        data[11] = socFatalPsfCsc0Count;
-        data[12] = nonFatalGscAonParity;
-        data[13] = nonFataGscSelfmBist;
-        data[14] = fatalTlb;
+        data[9] = fatalSubslice;
+        data[10] = fatalEuErrorCount;
+        data[11] = socFatalMdfiEastCount;
+        data[12] = socFatalPsfCsc0Count;
+        data[13] = nonFatalGscAonParity;
+        data[14] = nonFataGscSelfmBist;
+        data[15] = fatalTlb;
         return 0;
     }
 
@@ -169,6 +176,7 @@ struct MockRasPmuInterfaceImp : public PmuInterfaceImp {
         data[1] = timeStamp;
         data[2] = correctableGucErrorCountTile1;
         data[3] = correctableSamplerErrorCountTile1;
+        data[4] = correctableSubsliceTile1;
         return 0;
     }
 
@@ -183,6 +191,7 @@ struct MockRasPmuInterfaceImp : public PmuInterfaceImp {
         data[7] = socFatalMdfiWestCountTile1;
         data[8] = socFatalPunitTile1;
         data[9] = fatalIdiParityErrorCountTile1;
+        data[10] = fatalL3BankTile1;
         return 0;
     }
 
@@ -358,6 +367,18 @@ struct MockRasSysfsAccess : public SysfsAccess {
         } else if (file.compare("gt/gt0/error_counter/gsc_nonfatal_selfmbist") == 0) {
             val = 4u;
             return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/correctable_l3bank") == 0) {
+            val = 2u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt0/error_counter/fatal_subslice") == 0) {
+            val = 1u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt1/error_counter/fatal_l3bank") == 0) {
+            val = 0u;
+            return ZE_RESULT_SUCCESS;
+        } else if (file.compare("gt/gt1/error_counter/correctable_subslice") == 0) {
+            val = 2u;
+            return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
@@ -532,6 +553,10 @@ struct MockRasFsAccess : public FsAccess {
             events.push_back("error-gt0--gsc-correctable-sram-ecc");
             events.push_back("error-gt0--gsc-nonfatal-aon-parity");
             events.push_back("error-gt0--gsc-nonfatal-selfmbist");
+            events.push_back("error-gt0--correctable-l3bank");
+            events.push_back("error-gt0--fatal-subslice");
+            events.push_back("error-gt1--fatal-l3bank");
+            events.push_back("error-gt1--correctable-subslice");
             return ZE_RESULT_SUCCESS;
         }
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
