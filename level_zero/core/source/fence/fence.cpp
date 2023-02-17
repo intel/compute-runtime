@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -58,29 +58,29 @@ ze_result_t Fence::hostSynchronize(uint64_t timeout) {
         return ZE_RESULT_NOT_READY;
     }
 
-    if (timeout == 0) {
-        return queryStatus();
-    }
-
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
-    while (timeDiff < timeout) {
+    do {
         ret = queryStatus();
         if (ret == ZE_RESULT_SUCCESS) {
+            cmdQueue->printKernelsPrintfOutput(false);
             return ZE_RESULT_SUCCESS;
         }
 
         currentTime = std::chrono::high_resolution_clock::now();
         if (csr->checkGpuHangDetected(currentTime, lastHangCheckTime)) {
+            cmdQueue->printKernelsPrintfOutput(true);
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
 
         if (timeout == std::numeric_limits<uint64_t>::max()) {
             continue;
+        } else if (timeout == 0) {
+            break;
         }
 
         timeDiff = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - waitStartTime).count();
-    }
+    } while (timeDiff < timeout);
 
     return ret;
 }

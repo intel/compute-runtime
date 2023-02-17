@@ -87,14 +87,13 @@ struct CommandQueueImp : public CommandQueue {
     virtual bool getPreemptionCmdProgramming() = 0;
     void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) override;
     void makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) override;
+    void printKernelsPrintfOutput(bool hangDetected);
 
   protected:
     MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
                                                              bool isCooperative);
 
     ze_result_t synchronizeByPollingForTaskCount(uint64_t timeout);
-
-    void printKernelsPrintfOutput(bool hangDetected);
 
     void postSyncOperations(bool hangDetected);
 

@@ -8,6 +8,7 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/fence/fence.h"
@@ -15,6 +16,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_fence.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
 
 #include <chrono>
 #include <cstdint>
@@ -349,5 +351,117 @@ TEST_F(FenceTest, givenFenceWhenResettingThenTaskCountIsReset) {
     delete fence;
 }
 
+HWTEST_F(FenceTest, givenPrintfKernelWhenSynchronizingFenceThenPrintPrintfOutputIsCalled) {
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    Mock<Kernel> kernel;
+    TaskCountType currentTaskCount = 33u;
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::Ready;
+    csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
+    *csr.tagAddress = currentTaskCount;
+    commandQueue->printfKernelContainer.push_back(&kernel);
+
+    ze_fence_desc_t fenceDesc = {ZE_STRUCTURE_TYPE_FENCE_DESC,
+                                 nullptr,
+                                 0};
+    auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
+    ASSERT_NE(fence, nullptr);
+    fence->taskCount = currentTaskCount;
+    ze_result_t result = fence->hostSynchronize(1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, commandQueue->printfKernelContainer.size());
+    EXPECT_EQ(1u, kernel.printPrintfOutputCalledTimes);
+    EXPECT_FALSE(kernel.hangDetectedPassedToPrintfOutput);
+
+    delete fence;
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(FenceTest, givenPrintfKernelAndDetectedHangWhenSynchronizingFenceThenPrintPrintfOutputAfterHangIsCalled) {
+    auto driverModel = new NEO::MockDriverModel();
+    driverModel->isGpuHangDetectedToReturn = true;
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(driverModel));
+
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+
+    Mock<Kernel> kernel;
+    TaskCountType currentTaskCount = 33u;
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+    *csr.tagAddress = 0;
+    csr.gpuHangCheckPeriod = 0us;
+    commandQueue->printfKernelContainer.push_back(&kernel);
+
+    ze_fence_desc_t fenceDesc = {ZE_STRUCTURE_TYPE_FENCE_DESC,
+                                 nullptr,
+                                 0};
+    auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
+    ASSERT_NE(fence, nullptr);
+    fence->taskCount = 1;
+    ze_result_t result = fence->hostSynchronize(1);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+
+    EXPECT_EQ(0u, commandQueue->printfKernelContainer.size());
+    EXPECT_EQ(1u, kernel.printPrintfOutputCalledTimes);
+    EXPECT_TRUE(kernel.hangDetectedPassedToPrintfOutput);
+
+    delete fence;
+    commandQueue->destroy();
+}
+
+HWTEST_F(FenceTest, givenPrintfKernelNotCompletedWhenSynchronizingFenceWithZeroTimeoutThenPrintfOutputIsNotFlushed) {
+    const ze_command_queue_desc_t desc{};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    Mock<Kernel> kernel;
+    TaskCountType currentTaskCount = 33u;
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::Ready;
+    csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
+    *csr.tagAddress = currentTaskCount - 1;
+
+    commandQueue->printfKernelContainer.push_back(&kernel);
+
+    ze_fence_desc_t fenceDesc = {ZE_STRUCTURE_TYPE_FENCE_DESC,
+                                 nullptr,
+                                 0};
+    auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
+    ASSERT_NE(fence, nullptr);
+    fence->taskCount = currentTaskCount;
+    ze_result_t result = fence->hostSynchronize(0);
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+
+    EXPECT_EQ(1u, commandQueue->printfKernelContainer.size());
+    EXPECT_EQ(0u, kernel.printPrintfOutputCalledTimes);
+
+    delete fence;
+    commandQueue->destroy();
+}
 } // namespace ult
 } // namespace L0
