@@ -34,7 +34,7 @@ HWTEST2_F(AILBaseTests, whenKernelSourceIsNotANGenDummyKernelThenDoNotEnforcePat
     EXPECT_FALSE(enforceRebuildToCTNI);
 }
 
-HWTEST2_F(AILBaseTests, givenResolveApplicationNameWhenCheckingIfPatchtokenFallbackIsRequiredThenIsCorrectResult, IsAtLeastSkl) {
+HWTEST2_F(AILBaseTests, givenApplicationNamesThatRequirAILWhenCheckingIfPatchtokenFallbackIsRequiredThenIsCorrectResult, IsAtLeastSkl) {
     class AILMock : public AILConfigurationHw<productFamily> {
       public:
         using AILConfiguration::processName;
@@ -49,9 +49,10 @@ HWTEST2_F(AILBaseTests, givenResolveApplicationNameWhenCheckingIfPatchtokenFallb
                              "ArcControl"}) {
         ail.processName = name;
 
-        ail.applyExt(defaultHwInfo->capabilityTable);
+        bool fallbackRequired;
+        ail.forceFallbackToPatchtokensIfRequired("", fallbackRequired);
 
-        EXPECT_FALSE(defaultHwInfo->capabilityTable.blitterOperationsSupported);
+        EXPECT_TRUE(fallbackRequired);
     }
 }
 
