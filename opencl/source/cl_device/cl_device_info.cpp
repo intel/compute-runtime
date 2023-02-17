@@ -87,6 +87,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_COMPILER_AVAILABLE:                          getCap<CL_DEVICE_COMPILER_AVAILABLE                          >(src, srcSize, retSize); break;
     case CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL:  getCap<CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL  >(src, srcSize, retSize); break;
     case CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL:               getCap<CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL               >(src, srcSize, retSize); break;
+    case CL_DEVICE_DOUBLE_FP_ATOMIC_CAPABILITIES_EXT:           getCap<CL_DEVICE_DOUBLE_FP_ATOMIC_CAPABILITIES_EXT           >(src, srcSize, retSize); break;
     case CL_DEVICE_DOUBLE_FP_CONFIG:                            getCap<CL_DEVICE_DOUBLE_FP_CONFIG                            >(src, srcSize, retSize); break;
     case CL_DEVICE_DRIVER_VERSION_INTEL:                        getCap<CL_DEVICE_DRIVER_VERSION_INTEL                        >(src, srcSize, retSize); break;
     case CL_DEVICE_ENDIAN_LITTLE:                               getCap<CL_DEVICE_ENDIAN_LITTLE                               >(src, srcSize, retSize); break;
@@ -99,6 +100,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_GLOBAL_MEM_CACHE_TYPE:                       getCap<CL_DEVICE_GLOBAL_MEM_CACHE_TYPE                       >(src, srcSize, retSize); break;
     case CL_DEVICE_GLOBAL_MEM_SIZE:                             getCap<CL_DEVICE_GLOBAL_MEM_SIZE                             >(src, srcSize, retSize); break;
     case CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE:        getCap<CL_DEVICE_GLOBAL_VARIABLE_PREFERRED_TOTAL_SIZE        >(src, srcSize, retSize); break;
+    case CL_DEVICE_HALF_FP_ATOMIC_CAPABILITIES_EXT:             getCap<CL_DEVICE_HALF_FP_ATOMIC_CAPABILITIES_EXT             >(src, srcSize, retSize); break;
     case CL_DEVICE_HALF_FP_CONFIG:                              getCap<CL_DEVICE_HALF_FP_CONFIG                              >(src, srcSize, retSize); break;
     case CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL:                 getCap<CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL                 >(src, srcSize, retSize); break;
     case CL_DEVICE_HOST_UNIFIED_MEMORY:                         getCap<CL_DEVICE_HOST_UNIFIED_MEMORY                         >(src, srcSize, retSize); break;
@@ -166,6 +168,7 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
     case CL_DEVICE_QUEUE_ON_HOST_PROPERTIES:                    getCap<CL_DEVICE_QUEUE_ON_HOST_PROPERTIES                    >(src, srcSize, retSize); break;
     case CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL:        getCap<CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL        >(src, srcSize, retSize); break;
     case CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL: getCap<CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL >(src, srcSize, retSize); break;
+    case CL_DEVICE_SINGLE_FP_ATOMIC_CAPABILITIES_EXT:           getCap<CL_DEVICE_SINGLE_FP_ATOMIC_CAPABILITIES_EXT           >(src, srcSize, retSize); break;
     case CL_DEVICE_SINGLE_FP_CONFIG:                            getCap<CL_DEVICE_SINGLE_FP_CONFIG                            >(src, srcSize, retSize); break;
     case CL_DEVICE_SLICE_COUNT_INTEL:                           getCap<CL_DEVICE_SLICE_COUNT_INTEL                           >(src, srcSize, retSize); break;
     case CL_DEVICE_SPIR_VERSIONS:                               getStr<CL_DEVICE_SPIR_VERSIONS                               >(src, srcSize, retSize); break;

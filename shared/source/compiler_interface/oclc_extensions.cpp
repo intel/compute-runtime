@@ -64,6 +64,7 @@ std::string getExtensionsList(const HardwareInfo &hwInfo) {
         }
         allExtensionsList += "cl_intel_spirv_subgroups ";
         allExtensionsList += "cl_khr_spirv_no_integer_wrap_decoration ";
+        allExtensionsList += "cl_ext_float_atomics ";
     }
 
     if (hwInfo.capabilityTable.ftrSupportsFP64) {
@@ -128,6 +129,32 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
 
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_subgroups");
         openclCFeatures.push_back(openClCFeature);
+
+        if (hwInfo.capabilityTable.supportsFloatAtomics) {
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp32_global_atomic_add");
+            openclCFeatures.push_back(openClCFeature);
+
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp32_local_atomic_add");
+            openclCFeatures.push_back(openClCFeature);
+
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp32_global_atomic_min_max");
+            openclCFeatures.push_back(openClCFeature);
+
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp32_local_atomic_min_max");
+            openclCFeatures.push_back(openClCFeature);
+
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_global_atomic_load_store");
+            openclCFeatures.push_back(openClCFeature);
+
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_local_atomic_load_store");
+            openclCFeatures.push_back(openClCFeature);
+
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_global_atomic_min_max");
+            openclCFeatures.push_back(openClCFeature);
+
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp16_local_atomic_min_max");
+            openclCFeatures.push_back(openClCFeature);
+        }
     }
 
     auto forcePipeSupport = DebugManager.flags.ForcePipeSupport.get();
@@ -142,6 +169,20 @@ void getOpenclCFeaturesList(const HardwareInfo &hwInfo, OpenClCFeaturesContainer
         (forceFp64Support == 1)) {
         strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_fp64");
         openclCFeatures.push_back(openClCFeature);
+
+        if (hwInfo.capabilityTable.supportsOcl21Features && hwInfo.capabilityTable.supportsFloatAtomics) {
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp64_global_atomic_add");
+            openclCFeatures.push_back(openClCFeature);
+
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp64_local_atomic_add");
+            openclCFeatures.push_back(openClCFeature);
+
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp64_global_atomic_min_max");
+            openclCFeatures.push_back(openClCFeature);
+
+            strcpy_s(openClCFeature.name, CL_NAME_VERSION_MAX_NAME_SIZE, "__opencl_c_ext_fp64_local_atomic_min_max");
+            openclCFeatures.push_back(openClCFeature);
+        }
     }
 }
 

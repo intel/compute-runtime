@@ -78,7 +78,9 @@ const RuntimeCapabilityTable ADLN::capabilityTable{
     true,                                           // supportsMediaBlock
     false,                                          // p2pAccessSupported
     false,                                          // p2pAtomicAccessSupported
-    true                                            // fusedEuEnabled
+    true,                                           // fusedEuEnabled
+    false,                                          // l0DebuggerSupported;
+    true                                            // supportsFloatAtomics
 };
 
 WorkaroundTable ADLN::workaroundTable = {};

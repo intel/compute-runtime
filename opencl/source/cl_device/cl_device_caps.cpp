@@ -40,6 +40,9 @@ static constexpr cl_device_fp_config defaultFpFlags = static_cast<cl_device_fp_c
                                                                                        CL_FP_DENORM |
                                                                                        CL_FP_FMA);
 
+static constexpr cl_device_fp_atomic_capabilities_ext defaultFpAtomicCapabilities = static_cast<cl_device_fp_atomic_capabilities_ext>(CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT |
+                                                                                                                                      CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT);
+
 void ClDevice::setupFp64Flags() {
     auto &hwInfo = getHardwareInfo();
 
@@ -165,6 +168,27 @@ void ClDevice::initializeCaps() {
         if (hwInfo.capabilityTable.supportsImages) {
             deviceExtensions += "cl_khr_mipmap_image cl_khr_mipmap_image_writes ";
         }
+    }
+
+    if (enabledClVersion >= 20) {
+        deviceExtensions += "cl_ext_float_atomics ";
+
+        deviceInfo.singleFpAtomicCapabilities = defaultFpAtomicCapabilities;
+        deviceInfo.halfFpAtomicCapabilities = 0;
+        if (ocl21FeaturesEnabled && hwInfo.capabilityTable.supportsFloatAtomics) {
+            deviceInfo.singleFpAtomicCapabilities |= static_cast<cl_device_fp_atomic_capabilities_ext>(
+                CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT);
+            deviceInfo.halfFpAtomicCapabilities |= static_cast<cl_device_fp_atomic_capabilities_ext>(
+                CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT);
+        }
+
+        const cl_device_fp_atomic_capabilities_ext baseFP64AtomicCapabilities = hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics || hwInfo.capabilityTable.supportsFloatAtomics ? defaultFpAtomicCapabilities : 0;
+        const cl_device_fp_atomic_capabilities_ext optionalFP64AtomicCapabilities = ocl21FeaturesEnabled && hwInfo.capabilityTable.supportsFloatAtomics ? static_cast<cl_device_fp_atomic_capabilities_ext>(
+                                                                                                                                                              CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT |
+                                                                                                                                                              CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT | CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT)
+                                                                                                                                                        : 0;
+
+        deviceInfo.doubleFpAtomicCapabilities = deviceInfo.doubleFpConfig != 0u ? baseFP64AtomicCapabilities | optionalFP64AtomicCapabilities : 0;
     }
 
     if (DebugManager.flags.EnableNV12.get() && hwInfo.capabilityTable.supportsImages) {

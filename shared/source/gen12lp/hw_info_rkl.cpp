@@ -80,6 +80,7 @@ const RuntimeCapabilityTable RKL::capabilityTable{
     false,                                           // p2pAtomicAccessSupported
     true,                                            // fusedEuEnabled
     false,                                           // l0DebuggerSupported;
+    true                                             // supportsFloatAtomics
 };
 
 WorkaroundTable RKL::workaroundTable = {};
