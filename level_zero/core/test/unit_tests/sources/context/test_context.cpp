@@ -776,6 +776,8 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, 16384u, 4090u, &dstBuffer);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
+    device->getDriverHandle()->getSvmAllocsManager()->nonGpuDomainAllocs.push_back(dstBuffer);
+
     int one = 1;
     result = commandList0->appendMemoryFill(dstBuffer, reinterpret_cast<void *>(&one), sizeof(one), 4090u,
                                             nullptr, 0, nullptr, false);
@@ -832,6 +834,8 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     auto sharedPtr = svmManager->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, device);
     EXPECT_NE(nullptr, sharedPtr);
+
+    device->getDriverHandle()->getSvmAllocsManager()->nonGpuDomainAllocs.push_back(sharedPtr);
 
     auto allocation = svmManager->getSVMAlloc(sharedPtr);
     auto gpuAllocation = allocation->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);

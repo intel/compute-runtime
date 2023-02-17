@@ -208,6 +208,19 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     auto csr = static_cast<CommandQueueImp *>(cmdQ)->getCsr();
     auto lockCSR = csr->obtainUniqueOwnership();
 
+    if (performMigration) {
+        auto deviceImp = static_cast<DeviceImp *>(this->device);
+        auto pageFaultManager = deviceImp->getDriverHandle()->getMemoryManager()->getPageFaultManager();
+        if (pageFaultManager == nullptr) {
+            performMigration = false;
+        } else {
+            auto ownershipForPageFaultManager = pageFaultManager->obtainUniqueOwnership();
+            if (this->device->getDriverHandle()->getSvmAllocsManager()->nonGpuDomainAllocs.size() == 0u) {
+                performMigration = false;
+            }
+        }
+    }
+
     if (cmdQ->getClientId() == CommandQueue::clientNotRegistered) {
         cmdQ->setClientId(csr->registerClient());
     }
@@ -215,14 +228,6 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
     std::unique_lock<std::mutex> lockForIndirect;
     if (this->hasIndirectAllocationsAllowed()) {
         cmdQ->handleIndirectAllocationResidency(this->getUnifiedMemoryControls(), lockForIndirect, performMigration);
-    }
-
-    if (performMigration) {
-        auto deviceImp = static_cast<DeviceImp *>(this->device);
-        auto pageFaultManager = deviceImp->getDriverHandle()->getMemoryManager()->getPageFaultManager();
-        if (pageFaultManager == nullptr) {
-            performMigration = false;
-        }
     }
 
     cmdQ->makeResidentAndMigrate(performMigration, this->commandContainer.getResidencyContainer());
