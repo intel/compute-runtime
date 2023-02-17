@@ -13,6 +13,7 @@
 
 #include "test_files_setup.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <dlfcn.h>
