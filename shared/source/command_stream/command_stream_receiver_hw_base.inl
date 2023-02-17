@@ -1653,7 +1653,7 @@ bool CommandStreamReceiverHw<GfxFamily>::directSubmissionRelaxedOrderingEnabled(
 }
 
 template <typename GfxFamily>
-void CommandStreamReceiverHw<GfxFamily>::handleStateBaseAddressStateTransition(const DispatchFlags &dispatchFlags, bool &isStateBaseAddressDirty) {
+inline void CommandStreamReceiverHw<GfxFamily>::handleStateBaseAddressStateTransition(const DispatchFlags &dispatchFlags, bool &isStateBaseAddressDirty) {
     auto &rootDeviceEnvironment = this->peekRootDeviceEnvironment();
 
     if (this->streamProperties.stateBaseAddress.statelessMocs.value != -1) {
