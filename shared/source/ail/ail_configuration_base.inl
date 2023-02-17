@@ -25,6 +25,15 @@ inline void AILConfigurationHw<Product>::forceFallbackToPatchtokensIfRequired(co
     if (sourcesContain(kernelSources, dummyKernelSource)) {
         requiresFallback = true;
     }
+
+    for (const auto &name : {"Resolve",
+                             "ArcControlAssist",
+                             "ArcControl"}) {
+        if (processName == name) {
+            requiresFallback = true;
+            break;
+        }
+    }
 }
 
 template <PRODUCT_FAMILY Product>
