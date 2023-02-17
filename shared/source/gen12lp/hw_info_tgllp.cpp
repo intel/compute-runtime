@@ -79,6 +79,7 @@ const RuntimeCapabilityTable TGLLP::capabilityTable{
     false,                                           // p2pAtomicAccessSupported
     true,                                            // fusedEuEnabled
     false,                                           // l0DebuggerSupported;
+    true                                             // supportsFloatAtomics
 };
 
 WorkaroundTable TGLLP::workaroundTable = {};

@@ -75,7 +75,8 @@ const RuntimeCapabilityTable KBL::capabilityTable{
     false,                                         // p2pAccessSupported
     false,                                         // p2pAtomicAccessSupported
     false,                                         // fusedEuEnabled
-    false                                          // l0DebuggerSupported;
+    false,                                         // l0DebuggerSupported;
+    false                                          // supportsFloatAtomics
 };
 
 WorkaroundTable KBL::workaroundTable = {};

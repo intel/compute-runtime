@@ -79,6 +79,7 @@ const RuntimeCapabilityTable DG1::capabilityTable{
     false,                                         // p2pAtomicAccessSupported
     true,                                          // fusedEuEnabled
     true,                                          // l0DebuggerSupported;
+    true                                           // supportsFloatAtomics
 };
 
 WorkaroundTable DG1::workaroundTable = {};
