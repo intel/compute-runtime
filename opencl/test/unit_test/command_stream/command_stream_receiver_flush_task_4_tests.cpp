@@ -458,11 +458,13 @@ HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventW
 HWTEST_F(CrossDeviceDependenciesTests, givenWaitListWithEventBlockedByUserEventWhenProgrammingSingleDeviceDependenciesForGpgpuCsrThenNoSemaphoreWaitIsProgrammed) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBlitterForEnqueueOperations.set(false);
+
     UserEvent userEvent1(&pCmdQ1->getContext());
 
     cl_event outputEvent1{};
     cl_event inputEvent1 = &userEvent1;
-
     pCmdQ1->enqueueMarkerWithWaitList(
         1,
         &inputEvent1,

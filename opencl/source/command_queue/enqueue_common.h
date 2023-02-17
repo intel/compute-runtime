@@ -187,11 +187,12 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = this->peekLatestSentEnqueueOperation() == EnqueueProperties::Operation::GpuKernel &&
                                                                    productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, this->isOOQEnabled());
-        if (false == clearDependenciesForSubCapture &&
-            false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
-            eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, computeCommandStreamReceiver, CsrDependencies::DependenciesType::OnCsr);
+        if (false == clearDependenciesForSubCapture) {
+            if (false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
+                eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, computeCommandStreamReceiver, CsrDependencies::DependenciesType::OnCsr);
+            }
+            eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, computeCommandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
         }
-
         auto allocator = computeCommandStreamReceiver.getTimestampPacketAllocator();
 
         size_t nodesCount = 0u;
@@ -859,7 +860,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     const bool isHandlingBarrier = getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
 
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && !clearDependenciesForSubCapture) {
-        eventsRequest.fillCsrDependenciesForTimestampPacketContainer(dispatchFlags.csrDependencies, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
         if (isHandlingBarrier) {
             fillCsrDependenciesWithLastBcsPackets(dispatchFlags.csrDependencies);
         }
@@ -1107,7 +1107,6 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
         const bool isHandlingBarrier = getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
 
         if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-            eventsRequest.fillCsrDependenciesForTimestampPacketContainer(dispatchFlags.csrDependencies, getGpgpuCommandStreamReceiver(), CsrDependencies::DependenciesType::OutOfCsr);
             if (isHandlingBarrier) {
                 fillCsrDependenciesWithLastBcsPackets(dispatchFlags.csrDependencies);
             }

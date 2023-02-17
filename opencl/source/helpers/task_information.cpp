@@ -227,7 +227,6 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
     const bool isHandlingBarrier = commandQueue.getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
 
     if (timestampPacketDependencies) {
-        eventsRequest.fillCsrDependenciesForTimestampPacketContainer(dispatchFlags.csrDependencies, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
         if (isHandlingBarrier) {
             commandQueue.fillCsrDependenciesWithLastBcsPackets(dispatchFlags.csrDependencies);
         }
@@ -403,7 +402,6 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
     const bool isHandlingBarrier = commandQueue.getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
 
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        eventsRequest.fillCsrDependenciesForTimestampPacketContainer(dispatchFlags.csrDependencies, commandStreamReceiver, CsrDependencies::DependenciesType::OutOfCsr);
         if (isHandlingBarrier) {
             commandQueue.fillCsrDependenciesWithLastBcsPackets(dispatchFlags.csrDependencies);
         }

@@ -501,7 +501,7 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForDiff
     EXPECT_EQ(sizeWithEvents, extendedSize);
 }
 
-HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenProgramSemaphoresOnCsrStream) {
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenProgramSemaphoresOnQueueStream) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
@@ -536,20 +536,24 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThe
     cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5, &event6};
 
     cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr);
-    auto &cmdStream = device->getUltCommandStreamReceiver<FamilyType>().commandStream;
+    auto &cmdStream = *cmdQ1->commandStream;
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
 
-    auto it = hwParser.cmdList.begin();
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp4.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp6.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp6.getNode(1), 0);
-
-    while (it != hwParser.cmdList.end()) {
-        EXPECT_EQ(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));
-        it++;
+    auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    auto expectedQueueSemaphoresCount = 5u;
+    if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment())) {
+        expectedQueueSemaphoresCount += 1;
     }
+
+    EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
+    ASSERT_GE(queueSemaphores.size(), 5u);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), timestamp3.getNode(0), 0);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), timestamp5.getNode(0), 0);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[2])), timestamp4.getNode(0), 0);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[3])), timestamp6.getNode(0), 0);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[4])), timestamp6.getNode(1), 0);
 }
 
 HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingThenTrackOwnershipUntilQueueIsCompleted) {
@@ -955,7 +959,7 @@ HWTEST_F(TimestampPacketTests, givenAllDependencyTypesModeWhenFillingFromDiffere
     EXPECT_EQ(static_cast<size_t>(eventsOnWaitlist), csrDependencies.timestampPacketContainer.size());
 }
 
-HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFromOneDeviceWhenEnqueueingThenProgramSemaphoresOnCsrStream) {
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFromOneDeviceWhenEnqueueingThenProgramSemaphoresOnQueueStream) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
@@ -989,27 +993,34 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
     cl_event waitlist[] = {&event1, &event2, &event3, &event4, &event5, &event6};
 
     cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, eventsOnWaitlist, waitlist, nullptr);
-    auto &cmdStream = device->getUltCommandStreamReceiver<FamilyType>().commandStream;
+    auto &cmdStream = *cmdQ1->commandStream;
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(cmdStream, 0);
 
-    auto it = hwParser.cmdList.begin();
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp4.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp6.getNode(0), 0);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp6.getNode(1), 0);
-
-    while (it != hwParser.cmdList.end()) {
-        EXPECT_EQ(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));
-        it++;
+    auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParser.cmdList.begin(), hwParser.cmdList.end());
+    auto expectedQueueSemaphoresCount = 5u;
+    if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment())) {
+        expectedQueueSemaphoresCount += 1;
     }
+    EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
+    ASSERT_GE(queueSemaphores.size(), 5u);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), timestamp3.getNode(0), 0);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), timestamp5.getNode(0), 0);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[2])), timestamp4.getNode(0), 0);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[3])), timestamp6.getNode(0), 0);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[4])), timestamp6.getNode(1), 0);
 }
 
-HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlockedThenProgramSemaphoresOnCsrStreamOnFlush) {
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlockedThenProgramSemaphoresOnQueueStreamOnFlush) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
 
-    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    auto mockCsr = new MockCsrHw2<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+    device->resetCommandStreamReceiver(mockCsr);
+    mockCsr->timestampPacketWriteEnabled = true;
+    mockCsr->storeFlushedTaskStream = true;
+
+    auto device2 = std::make_unique<MockClDevice>(Device::create<MockDevice>(executionEnvironment, 0u));
     device2->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
     auto context2 = new MockContext(device2.get());
 
@@ -1027,32 +1038,47 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEnqueueingBlo
 
     cl_event waitlist[] = {&userEvent, &event0, &event1};
     cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 3, waitlist, nullptr);
-    auto &cmdStream = device->getUltCommandStreamReceiver<FamilyType>().commandStream;
-    EXPECT_EQ(0u, cmdStream.getUsed());
+    auto initialCsrStreamOffset = mockCsr->commandStream.getUsed();
+    EXPECT_EQ(0u, initialCsrStreamOffset);
     userEvent.setStatus(CL_COMPLETE);
     cmdQ1->isQueueBlocked();
     cmdQ2->isQueueBlocked();
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+    HardwareParse hwParserCsr;
+    HardwareParse hwParserCmdQ;
+    LinearStream taskStream(mockCsr->storedTaskStream.get(), mockCsr->storedTaskStreamSize);
+    taskStream.getSpace(mockCsr->storedTaskStreamSize);
+    hwParserCsr.parseCommands<FamilyType>(mockCsr->commandStream, initialCsrStreamOffset);
+    hwParserCmdQ.parseCommands<FamilyType>(taskStream, 0);
 
-    auto it = hwParser.cmdList.begin();
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp1.getNode(0), 0);
-
-    while (it != hwParser.cmdList.end()) {
-        EXPECT_EQ(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));
-        it++;
+    auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
+    auto expectedQueueSemaphoresCount = 2u;
+    if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment())) {
+        expectedQueueSemaphoresCount += 1;
     }
+    EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
+    ASSERT_GE(queueSemaphores.size(), 2u);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), timestamp0.getNode(0), 0);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), timestamp1.getNode(0), 0);
+
+    auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
+    EXPECT_EQ(0u, csrSemaphores.size());
+
+    EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);
+    EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
+    EXPECT_EQ(device->getPreemptionMode(), mockCsr->passedDispatchFlags.preemptionMode);
 
     cmdQ2->release();
     context2->release();
 }
 
-HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFromOneDeviceWhenEnqueueingBlockedThenProgramSemaphoresOnCsrStreamOnFlush) {
+HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFromOneDeviceWhenEnqueueingBlockedThenProgramSemaphoresOnQueueStreamOnFlush) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    auto device2 = std::unique_ptr<MockDevice>(Device::create<MockDevice>(executionEnvironment, 1u));
 
-    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    auto mockCsr = new MockCsrHw2<FamilyType>(*device->getExecutionEnvironment(), device->getRootDeviceIndex(), device->getDeviceBitfield());
+    device->resetCommandStreamReceiver(mockCsr);
+    mockCsr->timestampPacketWriteEnabled = true;
+    mockCsr->storeFlushedTaskStream = true;
 
     auto cmdQ1 = clUniquePtr(new MockCommandQueueHw<FamilyType>(context, device.get(), nullptr));
 
@@ -1072,20 +1098,30 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledOnDifferentCSRsFr
 
     cl_event waitlist[] = {&userEvent, &event0, &event1};
     cmdQ1->enqueueKernel(kernel->mockKernel, 1, nullptr, gws, nullptr, 3, waitlist, nullptr);
-    auto &cmdStream = device->getUltCommandStreamReceiver<FamilyType>().commandStream;
-    EXPECT_EQ(0u, cmdStream.getUsed());
+
+    auto initialCsrStreamOffset = mockCsr->commandStream.getUsed();
+    EXPECT_EQ(0u, initialCsrStreamOffset);
     userEvent.setStatus(CL_COMPLETE);
 
-    HardwareParse hwParser;
-    hwParser.parseCommands<FamilyType>(cmdStream, 0);
+    HardwareParse hwParserCsr;
+    HardwareParse hwParserCmdQ;
+    LinearStream taskStream(mockCsr->storedTaskStream.get(), mockCsr->storedTaskStreamSize);
+    taskStream.getSpace(mockCsr->storedTaskStreamSize);
+    hwParserCsr.parseCommands<FamilyType>(mockCsr->commandStream, initialCsrStreamOffset);
+    hwParserCmdQ.parseCommands<FamilyType>(taskStream, 0);
 
-    auto it = hwParser.cmdList.begin();
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*it++), timestamp1.getNode(0), 0);
-
-    while (it != hwParser.cmdList.end()) {
-        EXPECT_EQ(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));
-        it++;
+    auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
+    auto expectedQueueSemaphoresCount = 2u;
+    if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment())) {
+        expectedQueueSemaphoresCount += 1;
     }
+    EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
+    ASSERT_GE(queueSemaphores.size(), 2u);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), timestamp0.getNode(0), 0);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), timestamp1.getNode(0), 0);
+
+    auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
+    EXPECT_EQ(0u, csrSemaphores.size());
 
     cmdQ2->isQueueBlocked();
     cmdQ1->isQueueBlocked();

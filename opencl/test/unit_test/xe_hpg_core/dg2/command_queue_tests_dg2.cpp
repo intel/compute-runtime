@@ -13,6 +13,7 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 
+#include "opencl/source/command_queue/enqueue_common.h"
 #include "opencl/source/event/event_builder.h"
 #include "opencl/source/helpers/task_information.h"
 #include "opencl/test/unit_test/command_queue/command_queue_fixture.h"

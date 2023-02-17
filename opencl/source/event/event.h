@@ -92,6 +92,8 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
     void setupBcs(aub_stream::EngineType bcsEngineType);
     TaskCountType peekBcsTaskCountFromCommandQueue();
+    bool isBcsEvent() const;
+    aub_stream::EngineType getBcsEngineType() const;
 
     TaskCountType getCompletionStamp() const;
     void updateCompletionStamp(TaskCountType taskCount, TaskCountType bcsTaskCount, TaskCountType tasklevel, FlushStamp flushStamp);

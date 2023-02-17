@@ -679,30 +679,32 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandStreamReceiverHwTestXeHPAndLater, givenBlock
 
     {
         auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
-        auto expectedQueueSemaphoresCount = 1u;
+        auto expectedQueueSemaphoresCount = 2u;
         if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(pDevice->getRootDeviceEnvironment())) {
             expectedQueueSemaphoresCount += 1;
         }
         EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
         ASSERT_GT(queueSemaphores.size(), 0u);
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0]));
-        EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+        {
+            auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0]));
+            EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+            EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
 
-        auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*node0.getNode(0));
-        EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+            auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*node0.getNode(0));
+            EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+        }
+        {
+            auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1]));
+            EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+            EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
+
+            auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*node1.getNode(0));
+            EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+        }
     }
     {
         auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
-        EXPECT_EQ(1u, csrSemaphores.size());
-        ASSERT_GT(csrSemaphores.size(), 0u);
-        auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0]));
-        EXPECT_EQ(semaphoreCmd->getCompareOperation(), MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
-        EXPECT_EQ(1u, semaphoreCmd->getSemaphoreDataDword());
-
-        auto dataAddress = TimestampPacketHelper::getContextEndGpuAddress(*node1.getNode(0));
-
-        EXPECT_EQ(dataAddress, semaphoreCmd->getSemaphoreGraphicsAddress());
+        EXPECT_EQ(0u, csrSemaphores.size());
     }
 
     EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);

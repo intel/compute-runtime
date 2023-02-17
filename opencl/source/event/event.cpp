@@ -238,6 +238,14 @@ TaskCountType Event::peekBcsTaskCountFromCommandQueue() {
     }
 }
 
+bool Event::isBcsEvent() const {
+    return bcsState.isValid() && bcsState.taskCount > 0;
+}
+
+aub_stream::EngineType Event::getBcsEngineType() const {
+    return bcsState.engineType;
+}
+
 TaskCountType Event::getCompletionStamp() const {
     return this->taskCount;
 }

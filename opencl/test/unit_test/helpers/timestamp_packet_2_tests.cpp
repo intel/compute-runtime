@@ -540,18 +540,17 @@ HWTEST_F(TimestampPacketTests, givenBlockedEnqueueWithoutKernelWhenSubmittingThe
         hwParserCmdQ.parseCommands<FamilyType>(taskStream, 0);
 
         auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
-        auto expectedQueueSemaphoresCount = 1u;
+        auto expectedQueueSemaphoresCount = 2u;
         if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment())) {
             expectedQueueSemaphoresCount += 1;
         }
         EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
-        ASSERT_GT(queueSemaphores.size(), 0u);
+        ASSERT_GE(queueSemaphores.size(), 2u);
         verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), node0.getNode(0), 0);
+        verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), node1.getNode(0), 0);
 
         auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
-        EXPECT_EQ(1u, csrSemaphores.size());
-        ASSERT_GT(csrSemaphores.size(), 0u);
-        verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0])), node1.getNode(0), 0);
+        EXPECT_EQ(0u, csrSemaphores.size());
 
         EXPECT_TRUE(mockCsr->passedDispatchFlags.blocking);
         EXPECT_TRUE(mockCsr->passedDispatchFlags.guardCommandBufferWithPipeControl);
@@ -592,18 +591,17 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingMarkerWi
     hwParserCmdQ.parseCommands<FamilyType>(*cmdQ->commandStream, 0);
 
     auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
-    EXPECT_EQ(1u, csrSemaphores.size());
-    ASSERT_GT(csrSemaphores.size(), 0u);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0])), node2.getNode(0), 0);
+    EXPECT_EQ(0u, csrSemaphores.size());
 
     auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
-    auto expectedQueueSemaphoresCount = 1u;
+    auto expectedQueueSemaphoresCount = 2u;
     if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment())) {
         expectedQueueSemaphoresCount += 1;
     }
     EXPECT_EQ(expectedQueueSemaphoresCount, queueSemaphores.size());
-    ASSERT_GT(queueSemaphores.size(), 0u);
+    ASSERT_GE(queueSemaphores.size(), 2u);
     verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[0])), node1.getNode(0), 0);
+    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(queueSemaphores[1])), node2.getNode(0), 0);
 }
 
 HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingBarrierWithoutKernelThenInheritTimestampPacketsAndProgramSemaphores) {
@@ -637,12 +635,10 @@ HWTEST_F(TimestampPacketTests, givenWaitlistAndOutputEventWhenEnqueueingBarrierW
     hwParserCmdQ.parseCommands<FamilyType>(*cmdQ->commandStream, 0);
 
     auto csrSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCsr.cmdList.begin(), hwParserCsr.cmdList.end());
-    EXPECT_EQ(1u, csrSemaphores.size());
-    ASSERT_GT(csrSemaphores.size(), 0u);
-    verifySemaphore(genCmdCast<MI_SEMAPHORE_WAIT *>(*(csrSemaphores[0])), node2.getNode(0), 0);
+    EXPECT_EQ(0u, csrSemaphores.size());
 
     auto queueSemaphores = findAll<MI_SEMAPHORE_WAIT *>(hwParserCmdQ.cmdList.begin(), hwParserCmdQ.cmdList.end());
-    auto expectedQueueSemaphoresCount = 1u;
+    auto expectedQueueSemaphoresCount = 2u;
     if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(device->getRootDeviceEnvironment())) {
         expectedQueueSemaphoresCount += 1;
     }
