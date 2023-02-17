@@ -18,6 +18,7 @@
 #include "igfxfmid.h"
 
 #include <array>
+#include <cstdint>
 #include <limits>
 #include <memory>
 #include <mutex>

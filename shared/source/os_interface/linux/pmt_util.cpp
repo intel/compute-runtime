@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
 #include <fcntl.h>
 #include <map>
 #include <sstream>

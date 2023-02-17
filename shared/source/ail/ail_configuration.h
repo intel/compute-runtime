@@ -9,6 +9,7 @@
 
 #include "igfxfmid.h"
 
+#include <cstdint>
 #include <string>
 
 /*
