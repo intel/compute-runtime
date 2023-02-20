@@ -7,6 +7,7 @@
 
 #include "level_zero/tools/source/sysman/pci/linux/os_pci_imp.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/utilities/directory.h"
 
 #include "level_zero/core/source/driver/driver_handle.h"
@@ -31,6 +32,7 @@ ze_result_t LinuxPciImp::getPciBdf(zes_pci_properties_t &pciProperties) {
     std::string bdfDir;
     ze_result_t result = pSysfsAccess->readSymLink(deviceDir, bdfDir);
     if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): readSymLink() failed to retrive BDF from %s and returning error:0x%x \n", __FUNCTION__, deviceDir.c_str(), result);
         return result;
     }
     const auto loc = bdfDir.find_last_of('/');
@@ -79,6 +81,7 @@ ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zes_pci_bar_propert
     std::vector<std::string> readBytes;
     ze_result_t result = pSysfsAccess->read(resourceFile, readBytes);
     if (result != ZE_RESULT_SUCCESS) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): read() failed to read %s and returning error:0x%x \n", __FUNCTION__, resourceFile.c_str(), result);
         return result;
     }
     for (uint32_t i = 0; i <= maxPciBars; i++) {
@@ -106,6 +109,7 @@ ze_result_t LinuxPciImp::initializeBarProperties(std::vector<zes_pci_bar_propert
         }
     }
     if (pBarProperties.size() == 0) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): BarProperties = %d and returning error:0x%x \n", __FUNCTION__, pBarProperties.size(), result);
         result = ZE_RESULT_ERROR_UNKNOWN;
     }
     return result;
@@ -251,6 +255,7 @@ bool LinuxPciImp::resizableBarEnabled(uint32_t barIndex) {
 }
 
 ze_result_t LinuxPciImp::getState(zes_pci_state_t *state) {
+    NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s() returning UNSUPPORTED_FEATURE \n", __FUNCTION__);
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
