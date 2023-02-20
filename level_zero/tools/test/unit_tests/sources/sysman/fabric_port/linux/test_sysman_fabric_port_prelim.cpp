@@ -585,6 +585,7 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
     zes_fabric_port_properties_t properties;
 
     result = zesFabricPortGetProperties(hPorts[0], &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::string fabricLinkErrorPath = "/mockRealPath/iaf.5/sd." + std::to_string(properties.portId.attachId) + "/port." + std::to_string(properties.portId.portNumber);
     std::string fabricFwErrorPath = "/mockRealPath/iaf.5/sd." + std::to_string(properties.portId.attachId);
@@ -632,6 +633,7 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
     zes_fabric_port_properties_t properties;
 
     result = zesFabricPortGetProperties(hPorts[0], &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::string fabricLinkErrorPath = "/mockRealPath/i915.iaf.5/sd." + std::to_string(properties.portId.attachId) + "/port." + std::to_string(properties.portId.portNumber);
     std::string fabricFwErrorPath = "/mockRealPath/i915.iaf.5/sd." + std::to_string(properties.portId.attachId);
@@ -733,6 +735,7 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
     zes_fabric_port_properties_t properties;
 
     result = zesFabricPortGetProperties(hPorts[0], &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::string fabricLinkErrorPath = "/mockRealPath/i915.iaf.5/sd." + std::to_string(properties.portId.attachId) + "/port." + std::to_string(properties.portId.portNumber);
     std::string fabricFwErrorPath = "/mockRealPath/i915.iaf.5/sd." + std::to_string(properties.portId.attachId);
@@ -777,6 +780,7 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
     zes_fabric_port_properties_t properties;
 
     result = zesFabricPortGetProperties(hPorts[0], &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::string fabricLinkErrorIncorrectPath = "/mockRealPath/i915.iaf.5/sd." + std::to_string(properties.portId.attachId + 1) + "/port." + std::to_string(properties.portId.portNumber);
     std::string fabricLinkErrorPath = "/mockRealPath/i915.iaf.5/sd." + std::to_string(properties.portId.attachId) + "/port." + std::to_string(properties.portId.portNumber);
@@ -827,6 +831,7 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
     zes_fabric_port_properties_t properties;
 
     result = zesFabricPortGetProperties(hPorts[0], &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::string fabricLinkErrorPath = "/mockRealPath/i915.iaf.5/sd." + std::to_string(properties.portId.attachId) + "/port." + std::to_string(properties.portId.portNumber);
     std::string fabricLinkErrorIncorrectPath = "/mockRealPath/i915.iaf.5/sd." + std::to_string(properties.portId.attachId + 1) + "/port." + std::to_string(properties.portId.portNumber);
@@ -878,6 +883,7 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
     zes_fabric_port_properties_t properties;
 
     result = zesFabricPortGetProperties(hPorts[0], &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::string fabricLinkErrorPath = "/mockRealPath/i915.iaf.5/sd." + std::to_string(properties.portId.attachId) + "/port." + std::to_string(properties.portId.portNumber);
     std::string fabricFwErrorPath = "/mockRealPath/i915.iaf.5/sd." + std::to_string(properties.portId.attachId);
@@ -929,6 +935,7 @@ TEST_F(ZesFabricPortFixture, GivenValidFabricPortHandleWhenCallingzesFabricPortG
     zes_fabric_port_properties_t properties;
 
     result = zesFabricPortGetProperties(hPorts[0], &properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     std::string fabricLinkErrorPath = "/mockRealPath/i915.iaf.5/sd." + std::to_string(properties.portId.attachId) + "/port." + std::to_string(properties.portId.portNumber);
     std::string fabricFwErrorPath = "/mockRealPath/i915.iaf.5/sd." + std::to_string(properties.portId.attachId);
