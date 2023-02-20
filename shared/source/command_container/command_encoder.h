@@ -37,6 +37,7 @@ struct MiFlushArgs;
 struct PipeControlArgs;
 struct PipelineSelectArgs;
 struct RootDeviceEnvironment;
+struct StateBaseAddressProperties;
 struct StateComputeModeProperties;
 
 struct EncodeDispatchKernelArgs {
@@ -310,6 +311,7 @@ struct EncodeStateBaseAddressArgs {
 
     CommandContainer *container = nullptr;
     STATE_BASE_ADDRESS &sbaCmd;
+    StateBaseAddressProperties *sbaProperties = nullptr;
 
     uint32_t statelessMocsIndex = 0;
 

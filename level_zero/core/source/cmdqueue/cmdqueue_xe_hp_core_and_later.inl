@@ -43,12 +43,13 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 
         STATE_BASE_ADDRESS sbaCmd;
         NEO::StateBaseAddressHelperArgs<GfxFamily> stateBaseAddressHelperArgs = {
-            0,                                                // generalStateBase
+            0,                                                // generalStateBaseAddress
             indirectObjectStateBaseAddress,                   // indirectObjectHeapBaseAddress
             instructionStateBaseAddress,                      // instructionHeapBaseAddress
             globalHeapsBase,                                  // globalHeapsBaseAddress
             0,                                                // surfaceStateBaseAddress
             &sbaCmd,                                          // stateBaseAddressCmd
+            nullptr,                                          // sbaProperties
             nullptr,                                          // dsh
             nullptr,                                          // ioh
             nullptr,                                          // ssh

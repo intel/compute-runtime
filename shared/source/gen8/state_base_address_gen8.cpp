@@ -19,6 +19,22 @@ void StateBaseAddressHelper<Family>::programStateBaseAddress(
 
     *args.stateBaseAddressCmd = Family::cmdInitStateBaseAddress;
 
+    if (args.sbaProperties) {
+        if (args.sbaProperties->dynamicStateBaseAddress.value != StreamProperty64::initValue) {
+            args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);
+            args.stateBaseAddressCmd->setDynamicStateBufferSizeModifyEnable(true);
+            args.stateBaseAddressCmd->setDynamicStateBaseAddress(static_cast<uint64_t>(args.sbaProperties->dynamicStateBaseAddress.value));
+            args.stateBaseAddressCmd->setDynamicStateBufferSize(static_cast<uint32_t>(args.sbaProperties->dynamicStateSize.value));
+        }
+        if (args.sbaProperties->surfaceStateBaseAddress.value != StreamProperty64::initValue) {
+            args.stateBaseAddressCmd->setSurfaceStateBaseAddressModifyEnable(true);
+            args.stateBaseAddressCmd->setSurfaceStateBaseAddress(static_cast<uint64_t>(args.sbaProperties->surfaceStateBaseAddress.value));
+        }
+        if (args.sbaProperties->statelessMocs.value != StreamProperty::initValue) {
+            args.statelessMocsIndex = static_cast<uint32_t>(args.sbaProperties->statelessMocs.value);
+        }
+    }
+
     if (args.dsh) {
         args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);
         args.stateBaseAddressCmd->setDynamicStateBufferSizeModifyEnable(true);
@@ -45,7 +61,7 @@ void StateBaseAddressHelper<Family>::programStateBaseAddress(
         args.stateBaseAddressCmd->setGeneralStateBaseAddressModifyEnable(true);
         args.stateBaseAddressCmd->setGeneralStateBufferSizeModifyEnable(true);
         // GSH must be set to 0 for stateless
-        args.stateBaseAddressCmd->setGeneralStateBaseAddress(args.gmmHelper->decanonize(args.generalStateBase));
+        args.stateBaseAddressCmd->setGeneralStateBaseAddress(args.gmmHelper->decanonize(args.generalStateBaseAddress));
         args.stateBaseAddressCmd->setGeneralStateBufferSize(0xfffff);
     }
 

@@ -48,12 +48,13 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     auto isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
 
     NEO::StateBaseAddressHelperArgs<GfxFamily> stateBaseAddressHelperArgs = {
-        gsba,                                             // generalStateBase
+        gsba,                                             // generalStateBaseAddress
         indirectObjectHeapBaseAddress,                    // indirectObjectHeapBaseAddress
         instructionHeapBaseAddress,                       // instructionHeapBaseAddress
         globalHeapsBase,                                  // globalHeapsBaseAddress
         0,                                                // surfaceStateBaseAddress
         &sbaCmd,                                          // stateBaseAddressCmd
+        nullptr,                                          // sbaProperties
         nullptr,                                          // dsh
         nullptr,                                          // ioh
         nullptr,                                          // ssh

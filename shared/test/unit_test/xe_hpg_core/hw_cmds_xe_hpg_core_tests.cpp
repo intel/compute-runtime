@@ -100,28 +100,9 @@ using XeHpgSbaTest = SbaTest;
 
 XE_HPG_CORETEST_F(XeHpgSbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgramWBPL1CachePolicy) {
     auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                                  // generalStateBase
-        0,                                                  // indirectObjectHeapBaseAddress
-        0,                                                  // instructionHeapBaseAddress
-        0,                                                  // globalHeapsBaseAddress
-        0,                                                  // surfaceStateBaseAddress
-        &sbaCmd,                                            // stateBaseAddressCmd
-        nullptr,                                            // dsh
-        nullptr,                                            // ioh
-        &ssh,                                               // ssh
-        pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
-        nullptr,                                            // hwInfo
-        0,                                                  // statelessMocsIndex
-        MemoryCompressionState::NotApplicable,              // memoryCompressionState
-        false,                                              // setInstructionStateBaseAddress
-        true,                                               // setGeneralStateBaseAddress
-        false,                                              // useGlobalHeapsBaseAddress
-        false,                                              // isMultiOsContextCapable
-        false,                                              // useGlobalAtomics
-        false,                                              // areMultipleSubDevicesInContext
-        false                                               // overrideSurfaceStateBaseAddress
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getRootDeviceEnvironment().getGmmHelper(), &ssh, nullptr, nullptr);
+    args.setGeneralStateBaseAddress = true;
+
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, sbaCmd.getL1CachePolicyL1CacheControl());
@@ -131,28 +112,9 @@ XE_HPG_CORETEST_F(XeHpgSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProg
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceStatelessL1CachingPolicy.set(0u);
     auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                                  // generalStateBase
-        0,                                                  // indirectObjectHeapBaseAddress
-        0,                                                  // instructionHeapBaseAddress
-        0,                                                  // globalHeapsBaseAddress
-        0,                                                  // surfaceStateBaseAddress
-        &sbaCmd,                                            // stateBaseAddressCmd
-        nullptr,                                            // dsh
-        nullptr,                                            // ioh
-        &ssh,                                               // ssh
-        pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
-        nullptr,                                            // hwInfo
-        0,                                                  // statelessMocsIndex
-        MemoryCompressionState::NotApplicable,              // memoryCompressionState
-        false,                                              // setInstructionStateBaseAddress
-        true,                                               // setGeneralStateBaseAddress
-        false,                                              // useGlobalHeapsBaseAddress
-        false,                                              // isMultiOsContextCapable
-        false,                                              // useGlobalAtomics
-        false,                                              // areMultipleSubDevicesInContext
-        false                                               // overrideSurfaceStateBaseAddress
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getRootDeviceEnvironment().getGmmHelper(), &ssh, nullptr, nullptr);
+    args.setGeneralStateBaseAddress = true;
+
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(0u, sbaCmd.getL1CachePolicyL1CacheControl());

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,15 @@ void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStr
 
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendIohParameters(StateBaseAddressHelperArgs<GfxFamily> &args) {
-    if (args.useGlobalHeapsBaseAddress) {
+    if (args.sbaProperties) {
+        if (args.sbaProperties->indirectObjectBaseAddress.value != StreamProperty64::initValue) {
+            auto baseAddress = static_cast<uint64_t>(args.sbaProperties->indirectObjectBaseAddress.value);
+            args.stateBaseAddressCmd->setIndirectObjectBaseAddress(args.gmmHelper->decanonize(baseAddress));
+            args.stateBaseAddressCmd->setIndirectObjectBaseAddressModifyEnable(true);
+            args.stateBaseAddressCmd->setIndirectObjectBufferSizeModifyEnable(true);
+            args.stateBaseAddressCmd->setIndirectObjectBufferSize(static_cast<uint32_t>(args.sbaProperties->indirectObjectSize.value));
+        }
+    } else if (args.useGlobalHeapsBaseAddress) {
         args.stateBaseAddressCmd->setIndirectObjectBaseAddressModifyEnable(true);
         args.stateBaseAddressCmd->setIndirectObjectBufferSizeModifyEnable(true);
         args.stateBaseAddressCmd->setIndirectObjectBaseAddress(args.indirectObjectHeapBaseAddress);

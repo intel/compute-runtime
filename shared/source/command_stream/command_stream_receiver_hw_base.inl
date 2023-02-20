@@ -490,13 +490,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStreamCSR, rootDeviceEnvironment, isRcs(), this->dcFlushSupport);
         EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, true, rootDeviceEnvironment, isRcs());
 
-        uint64_t newGSHbase = 0;
+        uint64_t newGshBase = 0;
         GSBAFor32BitProgrammed = false;
         if (is64bit && scratchSpaceController->getScratchSpaceAllocation() && !force32BitAllocations) {
-            newGSHbase = scratchSpaceController->calculateNewGSH();
+            newGshBase = scratchSpaceController->calculateNewGSH();
         } else if (is64bit && force32BitAllocations && dispatchFlags.gsba32BitRequired) {
             bool useLocalMemory = scratchSpaceController->getScratchSpaceAllocation() ? scratchSpaceController->getScratchSpaceAllocation()->isAllocatedInLocalMemoryPool() : false;
-            newGSHbase = getMemoryManager()->getExternalHeapBaseAddress(rootDeviceIndex, useLocalMemory);
+            newGshBase = getMemoryManager()->getExternalHeapBaseAddress(rootDeviceIndex, useLocalMemory);
             GSBAFor32BitProgrammed = true;
         }
 
@@ -507,12 +507,13 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         STATE_BASE_ADDRESS stateBaseAddressCmd;
 
         StateBaseAddressHelperArgs<GfxFamily> args = {
-            newGSHbase,                                   // generalStateBase
+            newGshBase,                                   // generalStateBaseAddress
             indirectObjectStateBaseAddress,               // indirectObjectHeapBaseAddress
             instructionHeapBaseAddress,                   // instructionHeapBaseAddress
             0,                                            // globalHeapsBaseAddress
             0,                                            // surfaceStateBaseAddress
             &stateBaseAddressCmd,                         // stateBaseAddressCmd
+            nullptr,                                      // sbaProperties
             dsh,                                          // dsh
             ioh,                                          // ioh
             ssh,                                          // ssh
@@ -554,7 +555,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs, false, rootDeviceEnvironment, isRcs());
 
         if (DebugManager.flags.AddPatchInfoCommentsForAUBDump.get()) {
-            collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGSHbase,
+            collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGshBase,
                                             device.getDeviceInfo().imageSupport);
         }
     }

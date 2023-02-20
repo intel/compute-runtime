@@ -3089,7 +3089,7 @@ typedef struct tagSTATE_BASE_ADDRESS {
     }
     inline uint32_t getStatelessDataPortAccessMemoryObjectControlState() const { // patched
         uint32_t mocs = TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateReserved_112;
-        mocs |= TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables << 1;
+        mocs |= (TheStructure.Common.StatelessDataPortAccessMemoryObjectControlStateIndexToMocsTables << 1);
         return (mocs);
     }
     inline void setL1CachePolicyL1CacheControl(const L1_CACHE_POLICY value) {

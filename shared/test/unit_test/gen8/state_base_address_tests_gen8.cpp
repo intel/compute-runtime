@@ -19,28 +19,7 @@ BDWTEST_F(SbaTest, givenUsedBindlessBuffersWhenAppendStateBaseAddressParametersI
     STATE_BASE_ADDRESS stateBaseAddress = {};
     STATE_BASE_ADDRESS stateBaseAddressReference = {};
 
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                     // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        &stateBaseAddress,                     // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        &ssh,                                  // ssh
-        nullptr,                               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&stateBaseAddress, nullptr, &ssh, nullptr, nullptr);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
@@ -56,28 +35,9 @@ BDWTEST_F(SbaTest,
 
     STATE_BASE_ADDRESS stateBaseAddressCmd = {};
 
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                     // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        surfaceStateBaseAddress,               // surfaceStateBaseAddress
-        &stateBaseAddressCmd,                  // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        &ssh,                                  // ssh
-        nullptr,                               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        true                                   // overrideSurfaceStateBaseAddress
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&stateBaseAddressCmd, nullptr, &ssh, nullptr, nullptr);
+    args.surfaceStateBaseAddress = surfaceStateBaseAddress;
+    args.overrideSurfaceStateBaseAddress = true;
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 

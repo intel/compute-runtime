@@ -208,12 +208,13 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 args.requiresUncachedMocs ? (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1) : (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
 
             EncodeStateBaseAddressArgs<Family> encodeStateBaseAddressArgs = {
-                &container,
-                sba,
-                statelessMocsIndex,
-                false,
-                false,
-                args.isRcs};
+                &container,         // container
+                sba,                // sbaCmd
+                nullptr,            // sbaProperties
+                statelessMocsIndex, // statelessMocsIndex
+                false,              // useGlobalAtomics
+                false,              // multiOsContextCapable
+                args.isRcs};        // isRcs
             EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
             container.setDirtyStateForAllHeaps(false);
             args.requiresUncachedMocs = false;
@@ -432,12 +433,13 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
     auto isDebuggerActive = device.isDebuggerActive() || device.getDebugger() != nullptr;
 
     StateBaseAddressHelperArgs<Family> stateBaseAddressHelperArgs = {
-        0,                                                  // generalStateBase
+        0,                                                  // generalStateBaseAddress
         args.container->getIndirectObjectHeapBaseAddress(), // indirectObjectHeapBaseAddress
         args.container->getInstructionHeapBaseAddress(),    // instructionHeapBaseAddress
         0,                                                  // globalHeapsBaseAddress
         0,                                                  // surfaceStateBaseAddress
         &args.sbaCmd,                                       // stateBaseAddressCmd
+        args.sbaProperties,                                 // sbaProperties
         dsh,                                                // dsh
         ioh,                                                // ioh
         ssh,                                                // ssh

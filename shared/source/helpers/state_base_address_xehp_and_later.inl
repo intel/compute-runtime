@@ -30,6 +30,23 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
+    if (args.sbaProperties) {
+        if (args.sbaProperties->indirectObjectBaseAddress.value != StreamProperty64::initValue) {
+            auto baseAddress = static_cast<uint64_t>(args.sbaProperties->indirectObjectBaseAddress.value);
+            args.stateBaseAddressCmd->setGeneralStateBaseAddress(args.gmmHelper->decanonize(baseAddress));
+            args.stateBaseAddressCmd->setGeneralStateBaseAddressModifyEnable(true);
+            args.stateBaseAddressCmd->setGeneralStateBufferSizeModifyEnable(true);
+            args.stateBaseAddressCmd->setGeneralStateBufferSize(static_cast<uint32_t>(args.sbaProperties->indirectObjectSize.value));
+        }
+        if (args.sbaProperties->surfaceStateBaseAddress.value != StreamProperty64::initValue) {
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(static_cast<uint64_t>(args.sbaProperties->surfaceStateBaseAddress.value));
+            args.stateBaseAddressCmd->setBindlessSurfaceStateSize(static_cast<uint32_t>(args.sbaProperties->surfaceStateSize.value));
+        }
+        if (args.sbaProperties->globalAtomics.value != StreamProperty::initValue) {
+            args.useGlobalAtomics = !!args.sbaProperties->globalAtomics.value;
+        }
+    }
     if (args.setGeneralStateBaseAddress && is64bit) {
         args.stateBaseAddressCmd->setGeneralStateBaseAddress(args.gmmHelper->decanonize(args.indirectObjectHeapBaseAddress));
     }

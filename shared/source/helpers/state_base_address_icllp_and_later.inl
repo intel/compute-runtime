@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/state_base_address.h"
 
 namespace NEO {
@@ -12,6 +13,14 @@ namespace NEO {
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
     StateBaseAddressHelperArgs<GfxFamily> &args) {
+
+    if (args.sbaProperties) {
+        if (args.sbaProperties->surfaceStateBaseAddress.value != StreamProperty64::initValue) {
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
+            args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(static_cast<uint64_t>(args.sbaProperties->surfaceStateBaseAddress.value));
+            args.stateBaseAddressCmd->setBindlessSurfaceStateSize(static_cast<uint32_t>(args.sbaProperties->surfaceStateSize.value));
+        }
+    }
 
     if (!args.useGlobalHeapsBaseAddress && args.ssh) {
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);

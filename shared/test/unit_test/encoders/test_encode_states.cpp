@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -489,4 +490,48 @@ HWTEST2_F(CommandEncodeStatesTest, givenHeapSharingEnabledWhenRetrievingNotIniti
 
     itorCmd = find<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(commands.begin(), commands.end());
     EXPECT_EQ(commands.end(), itorCmd);
+}
+
+HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetThenExpectPropertiesDataDispatched, IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
+
+    constexpr uint64_t bindingTablePoolBaseAddress = 0x32000;
+    constexpr uint32_t bindingTablePoolSize = 0x20;
+    constexpr uint64_t surfaceStateBaseAddress = 0x1200;
+    constexpr uint32_t surfaceStateSize = 0x10;
+
+    cmdContainer->setHeapDirty(NEO::HeapType::SURFACE_STATE);
+    auto gmmHelper = cmdContainer->getDevice()->getRootDeviceEnvironment().getGmmHelper();
+    uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+
+    StateBaseAddressProperties sbaProperties;
+
+    STATE_BASE_ADDRESS sba;
+    EncodeStateBaseAddressArgs<FamilyType> args = createDefaultEncodeStateBaseAddressArgs<FamilyType>(cmdContainer.get(), sba, statelessMocsIndex);
+    args.sbaProperties = &sbaProperties;
+
+    EncodeStateBaseAddress<FamilyType>::encode(args);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands,
+                                             cmdContainer->getCommandStream()->getCpuBase(),
+                                             cmdContainer->getCommandStream()->getUsed());
+    auto itorBindTablePoolCmd = find<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(commands.begin(), commands.end());
+    EXPECT_EQ(commands.end(), itorBindTablePoolCmd);
+
+    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize, pDevice->getRootDeviceEnvironment());
+
+    EncodeStateBaseAddress<FamilyType>::encode(args);
+
+    commands.clear();
+    CmdParse<FamilyType>::parseCommandBuffer(commands,
+                                             cmdContainer->getCommandStream()->getCpuBase(),
+                                             cmdContainer->getCommandStream()->getUsed());
+    itorBindTablePoolCmd = find<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(commands.begin(), commands.end());
+    ASSERT_NE(commands.end(), itorBindTablePoolCmd);
+
+    auto bindTablePoolCmd = reinterpret_cast<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(*itorBindTablePoolCmd);
+    EXPECT_EQ(bindingTablePoolBaseAddress, bindTablePoolCmd->getBindingTablePoolBaseAddress());
+    EXPECT_EQ(bindingTablePoolSize, bindTablePoolCmd->getBindingTablePoolBufferSize());
 }

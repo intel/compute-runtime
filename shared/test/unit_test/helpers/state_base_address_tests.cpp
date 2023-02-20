@@ -10,6 +10,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -27,29 +28,7 @@ HWTEST2_F(SbaTest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBind
     stateBaseAddress.setBindlessSurfaceStateBaseAddress(0);
     stateBaseAddress.setBindlessSurfaceStateBaseAddressModifyEnable(false);
 
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                     // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        &stateBaseAddress,                     // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        &ssh,                                  // ssh
-        nullptr,                               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&stateBaseAddress, nullptr, &ssh, nullptr, nullptr);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
@@ -71,29 +50,7 @@ HWTEST2_F(SbaTest, WhenProgramStateBaseAddressParametersIsCalledThenSBACmdHasBin
     STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(commandStream.getSpace(0));
     *cmd = stateBaseAddress;
 
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                     // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        cmd,                                   // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        &ssh,                                  // ssh
-        pDevice->getGmmHelper(),               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(cmd, pDevice->getGmmHelper(), &ssh, nullptr, nullptr);
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
@@ -115,29 +72,9 @@ HWTEST2_F(SbaTest,
 
     STATE_BASE_ADDRESS cmd;
 
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                     // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        surfaceStateBaseAddress,               // surfaceStateBaseAddress
-        &cmd,                                  // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        &ssh,                                  // ssh
-        pDevice->getGmmHelper(),               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        true,                                  // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&cmd, pDevice->getGmmHelper(), &ssh, nullptr, nullptr);
+    args.surfaceStateBaseAddress = surfaceStateBaseAddress;
+    args.overrideSurfaceStateBaseAddress = true;
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
@@ -158,30 +95,9 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenProgramStateBas
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
 
     STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStream.getSpace(0));
-
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                     // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        cmd,                                   // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        nullptr,                               // ssh
-        pDevice->getGmmHelper(),               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        true,                                  // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(cmd, pDevice->getGmmHelper());
+    args.globalHeapsBaseAddress = globalBindlessHeapsBaseAddress;
+    args.useGlobalHeapsBaseAddress = true;
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
@@ -215,30 +131,11 @@ HWTEST2_F(SbaForBindlessTests,
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
 
     STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStream.getSpace(0));
-
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                     // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
-        surfaceStateBaseAddress,               // surfaceStateBaseAddress
-        cmd,                                   // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        nullptr,                               // ssh
-        pDevice->getGmmHelper(),               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        true,                                  // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        true,                                  // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(cmd, pDevice->getGmmHelper());
+    args.globalHeapsBaseAddress = globalBindlessHeapsBaseAddress;
+    args.surfaceStateBaseAddress = surfaceStateBaseAddress;
+    args.useGlobalHeapsBaseAddress = true;
+    args.overrideSurfaceStateBaseAddress = true;
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
@@ -273,30 +170,10 @@ HWTEST2_F(SbaForBindlessTests, givenGlobalBindlessBaseAddressWhenPassingIndirect
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
 
     STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStream.getSpace(0));
-
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                     // generalStateBase
-        indirectObjectBaseAddress,             // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        cmd,                                   // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        nullptr,                               // ssh
-        pDevice->getGmmHelper(),               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        true,                                  // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(cmd, pDevice->getGmmHelper());
+    args.globalHeapsBaseAddress = globalBindlessHeapsBaseAddress;
+    args.indirectObjectHeapBaseAddress = indirectObjectBaseAddress;
+    args.useGlobalHeapsBaseAddress = true;
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
@@ -313,29 +190,8 @@ HWTEST2_F(SbaTest, givenSbaWhenOverrideBindlessSurfaceBaseIsFalseThenBindlessSur
     stateBaseAddress.setBindlessSurfaceStateBaseAddress(0);
     stateBaseAddress.setBindlessSurfaceStateBaseAddressModifyEnable(false);
 
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                                  // generalStateBase
-        0,                                                  // indirectObjectHeapBaseAddress
-        0,                                                  // instructionHeapBaseAddress
-        0,                                                  // globalHeapsBaseAddress
-        0,                                                  // surfaceStateBaseAddress
-        &stateBaseAddress,                                  // stateBaseAddressCmd
-        nullptr,                                            // dsh
-        nullptr,                                            // ioh
-        nullptr,                                            // ssh
-        pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
-        nullptr,                                            // hwInfo
-        0,                                                  // statelessMocsIndex
-        MemoryCompressionState::NotApplicable,              // memoryCompressionState
-        false,                                              // setInstructionStateBaseAddress
-        false,                                              // setGeneralStateBaseAddress
-        true,                                               // useGlobalHeapsBaseAddress
-        false,                                              // isMultiOsContextCapable
-        false,                                              // useGlobalAtomics
-        false,                                              // areMultipleSubDevicesInContext
-        false,                                              // overrideSurfaceStateBaseAddress
-        false                                               // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&stateBaseAddress, pDevice->getRootDeviceEnvironment().getGmmHelper());
+    args.useGlobalHeapsBaseAddress = true;
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
@@ -353,30 +209,9 @@ HWTEST2_F(SbaTest, givenGlobalBindlessBaseAddressWhenSshIsPassedThenBindlessSurf
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
 
     STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStream.getSpace(0));
-
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                     // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        cmd,                                   // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        &ssh,                                  // ssh
-        pDevice->getGmmHelper(),               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        true,                                  // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(cmd, pDevice->getGmmHelper(), &ssh, nullptr, nullptr);
+    args.globalHeapsBaseAddress = globalBindlessHeapsBaseAddress;
+    args.useGlobalHeapsBaseAddress = true;
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
@@ -393,30 +228,8 @@ HWTEST2_F(SbaTest, givenSurfaceStateHeapWhenNotUsingGlobalHeapBaseThenBindlessSu
     NEO::LinearStream cmdStream(buffer.begin(), buffer.size());
 
     STATE_BASE_ADDRESS *cmd = reinterpret_cast<STATE_BASE_ADDRESS *>(cmdStream.getSpace(0));
-
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                     // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        globalBindlessHeapsBaseAddress,        // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        cmd,                                   // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        &ssh,                                  // ssh
-        pDevice->getGmmHelper(),               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(cmd, pDevice->getGmmHelper(), &ssh, nullptr, nullptr);
+    args.globalHeapsBaseAddress = globalBindlessHeapsBaseAddress;
 
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
@@ -429,29 +242,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
     auto expectedStateBaseAddress = FamilyType::cmdInitStateBaseAddress;
     DebugManagerStateRestore restore;
 
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                     // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        &stateBaseAddress,                     // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        &ssh,                                  // ssh
-        pDevice->getGmmHelper(),               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&stateBaseAddress, pDevice->getGmmHelper(), &ssh, nullptr, nullptr);
 
     StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
     EXPECT_EQ(0, memcmp(&stateBaseAddress, &expectedStateBaseAddress, sizeof(STATE_BASE_ADDRESS)));
@@ -469,29 +260,8 @@ HWTEST2_F(SbaTest, givenStateBaseAddressAndDebugFlagSetWhenAppendExtraCacheSetti
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     auto stateBaseAddress = FamilyType::cmdInitStateBaseAddress;
 
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                     // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        &stateBaseAddress,                     // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        &ssh,                                  // ssh
-        pDevice->getGmmHelper(),               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&stateBaseAddress, pDevice->getGmmHelper(), &ssh, nullptr, nullptr);
+
     {
         DebugManagerStateRestore restore;
         StateBaseAddressHelper<FamilyType>::appendExtraCacheSettings(args);
@@ -549,29 +319,8 @@ HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePol
         {3, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WT},
         {4, FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WS}};
 
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                                  // generalStateBase
-        0,                                                  // indirectObjectHeapBaseAddress
-        0,                                                  // instructionHeapBaseAddress
-        0,                                                  // globalHeapsBaseAddress
-        0,                                                  // surfaceStateBaseAddress
-        &sbaCmd,                                            // stateBaseAddressCmd
-        nullptr,                                            // dsh
-        nullptr,                                            // ioh
-        &ssh,                                               // ssh
-        pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
-        nullptr,                                            // hwInfo
-        0,                                                  // statelessMocsIndex
-        MemoryCompressionState::NotApplicable,              // memoryCompressionState
-        false,                                              // setInstructionStateBaseAddress
-        true,                                               // setGeneralStateBaseAddress
-        false,                                              // useGlobalHeapsBaseAddress
-        false,                                              // isMultiOsContextCapable
-        false,                                              // useGlobalAtomics
-        false,                                              // areMultipleSubDevicesInContext
-        false,                                              // overrideSurfaceStateBaseAddress
-        false                                               // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getRootDeviceEnvironment().getGmmHelper(), &ssh, nullptr, nullptr);
+    args.setGeneralStateBaseAddress = true;
 
     for (const auto &input : testInputs) {
         DebugManagerStateRestore restore;
@@ -631,29 +380,12 @@ HWCMDTEST_F(IGFX_GEN8_CORE, SbaTest, whenGeneralStateBaseAddressIsProgrammedThen
     auto gmmHelper = pDevice->getGmmHelper();
 
     typename FamilyType::STATE_BASE_ADDRESS sbaCmd;
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        generalStateBaseAddress,               // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        generalStateBaseAddress,               // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        &sbaCmd,                               // stateBaseAddressCmd
-        &dsh,                                  // dsh
-        &ioh,                                  // ioh
-        &ssh,                                  // ssh
-        gmmHelper,                             // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        true,                                  // setInstructionStateBaseAddress
-        true,                                  // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, gmmHelper, &ssh, &dsh, &ioh);
+    args.generalStateBaseAddress = generalStateBaseAddress;
+    args.instructionHeapBaseAddress = generalStateBaseAddress;
+    args.setInstructionStateBaseAddress = true;
+    args.setGeneralStateBaseAddress = true;
+
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
     EXPECT_NE(generalStateBaseAddress, sbaCmd.getGeneralStateBaseAddress());
@@ -664,29 +396,11 @@ HWTEST_F(SbaTest, givenNonZeroGeneralStateBaseAddressWhenProgrammingIsDisabledTh
     constexpr uint64_t generalStateBaseAddress = 0x80010000ull;
 
     typename FamilyType::STATE_BASE_ADDRESS sbaCmd;
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        generalStateBaseAddress,               // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        generalStateBaseAddress,               // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        &sbaCmd,                               // stateBaseAddressCmd
-        &dsh,                                  // dsh
-        &ioh,                                  // ioh
-        &ssh,                                  // ssh
-        pDevice->getGmmHelper(),               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        true,                                  // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getGmmHelper(), &ssh, &dsh, &ioh);
+    args.generalStateBaseAddress = generalStateBaseAddress;
+    args.instructionHeapBaseAddress = generalStateBaseAddress;
+    args.setInstructionStateBaseAddress = true;
+
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
     EXPECT_EQ(0ull, sbaCmd.getGeneralStateBaseAddress());
@@ -699,29 +413,11 @@ HWTEST_F(SbaTest, givenNonZeroInternalHeapBaseAddressWhenProgrammingIsDisabledTh
     constexpr uint64_t internalHeapBaseAddress = 0x80010000ull;
 
     typename FamilyType::STATE_BASE_ADDRESS sbaCmd;
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        internalHeapBaseAddress,               // generalStateBase
-        internalHeapBaseAddress,               // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        &sbaCmd,                               // stateBaseAddressCmd
-        &dsh,                                  // dsh
-        &ioh,                                  // ioh
-        &ssh,                                  // ssh
-        pDevice->getGmmHelper(),               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        true,                                  // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getGmmHelper(), &ssh, &dsh, &ioh);
+    args.generalStateBaseAddress = internalHeapBaseAddress;
+    args.indirectObjectHeapBaseAddress = internalHeapBaseAddress;
+    args.setGeneralStateBaseAddress = true;
+
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
     EXPECT_FALSE(sbaCmd.getInstructionBaseAddressModifyEnable());
@@ -739,30 +435,13 @@ HWCMDTEST_F(IGFX_GEN8_CORE, SbaTest, givenSbaProgrammingWhenHeapsAreNotProvidedT
     constexpr uint64_t generalStateBase = 0x30000;
 
     typename FamilyType::STATE_BASE_ADDRESS sbaCmd;
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getGmmHelper());
+    args.generalStateBaseAddress = generalStateBase;
+    args.indirectObjectHeapBaseAddress = internalHeapBase;
+    args.instructionHeapBaseAddress = instructionHeapBase;
+    args.setGeneralStateBaseAddress = true;
+    args.setInstructionStateBaseAddress = true;
 
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        generalStateBase,                      // generalStateBase
-        internalHeapBase,                      // indirectObjectHeapBaseAddress
-        instructionHeapBase,                   // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        &sbaCmd,                               // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        nullptr,                               // ssh
-        gmmHelper,                             // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        true,                                  // setInstructionStateBaseAddress
-        true,                                  // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
     EXPECT_FALSE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
@@ -801,29 +480,13 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, SbaTest,
     constexpr uint64_t generalStateBase = 0x30000;
 
     STATE_BASE_ADDRESS sbaCmd;
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        generalStateBase,                      // generalStateBase
-        internalHeapBase,                      // indirectObjectHeapBaseAddress
-        instructionHeapBase,                   // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        &sbaCmd,                               // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        nullptr,                               // ssh
-        gmmHelper,                             // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        true,                                  // setInstructionStateBaseAddress
-        true,                                  // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, gmmHelper);
+    args.generalStateBaseAddress = generalStateBase;
+    args.indirectObjectHeapBaseAddress = internalHeapBase;
+    args.instructionHeapBaseAddress = instructionHeapBase;
+    args.setGeneralStateBaseAddress = true;
+    args.setInstructionStateBaseAddress = true;
+
     StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
 
     EXPECT_FALSE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
@@ -856,28 +519,168 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, SbaTest,
 }
 
 HWTEST2_F(SbaTest, GivenPlatformNotSupportingIndirectHeapBaseWhenProgramIndirectHeapThenNothingHappens, IsAtLeastXeHpCore) {
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                     // generalStateBase
-        0,                                     // indirectObjectHeapBaseAddress
-        0,                                     // instructionHeapBaseAddress
-        0,                                     // globalHeapsBaseAddress
-        0,                                     // surfaceStateBaseAddress
-        nullptr,                               // stateBaseAddressCmd
-        nullptr,                               // dsh
-        nullptr,                               // ioh
-        nullptr,                               // ssh
-        nullptr,                               // gmmHelper
-        nullptr,                               // hwInfo
-        0,                                     // statelessMocsIndex
-        MemoryCompressionState::NotApplicable, // memoryCompressionState
-        false,                                 // setInstructionStateBaseAddress
-        false,                                 // setGeneralStateBaseAddress
-        false,                                 // useGlobalHeapsBaseAddress
-        false,                                 // isMultiOsContextCapable
-        false,                                 // useGlobalAtomics
-        false,                                 // areMultipleSubDevicesInContext
-        false,                                 // overrideSurfaceStateBaseAddress
-        false                                  // isDebuggerActive
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(nullptr, nullptr);
     StateBaseAddressHelper<FamilyType>::appendIohParameters(args);
+}
+
+HWTEST_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingDynamicStateSurfaceStateMocsPropertiesThenCommandDispatchedCorrectly) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    DebugManagerStateRestore restore;
+    DebugManager.flags.ForceL1Caching.set(0);
+
+    constexpr uint64_t surfaceHeapBase = 0x10000;
+    constexpr uint64_t dynamicHeapBase = 0x20000;
+    constexpr uint32_t surfaceHeapSize = 0x10;
+    constexpr uint32_t dynamicHeapSize = 0x20;
+    constexpr uint32_t mocsIndex = 0x8;
+
+    auto gmmHelper = pDevice->getGmmHelper();
+    StateBaseAddressProperties sbaProperties;
+
+    STATE_BASE_ADDRESS sbaCmd;
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, gmmHelper, &sbaProperties);
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_FALSE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd.getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd.getDynamicStateBaseAddress());
+    EXPECT_EQ(0u, sbaCmd.getDynamicStateBufferSize());
+
+    EXPECT_FALSE(sbaCmd.getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(0u, sbaCmd.getSurfaceStateBaseAddress());
+
+    EXPECT_EQ(0u, sbaCmd.getStatelessDataPortAccessMemoryObjectControlState());
+
+    sbaProperties.setPropertiesSurfaceState(surfaceHeapBase, surfaceHeapSize, surfaceHeapBase, surfaceHeapSize, pDevice->getRootDeviceEnvironment());
+    sbaProperties.setPropertiesDynamicState(dynamicHeapBase, dynamicHeapSize);
+    sbaProperties.setPropertyStatelessMocs(mocsIndex);
+
+    sbaCmd = FamilyType::cmdInitStateBaseAddress;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_TRUE(sbaCmd.getDynamicStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd.getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(dynamicHeapBase, sbaCmd.getDynamicStateBaseAddress());
+    EXPECT_EQ(dynamicHeapSize, sbaCmd.getDynamicStateBufferSize());
+
+    EXPECT_TRUE(sbaCmd.getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(surfaceHeapBase, sbaCmd.getSurfaceStateBaseAddress());
+
+    EXPECT_EQ((mocsIndex << 1), sbaCmd.getStatelessDataPortAccessMemoryObjectControlState());
+}
+
+using IndirectBaseAddressPlatforms = IsAtMostGen12lp;
+
+HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingIndirectStatePropertyThenCommandDispatchedCorrectlyIndirectBaseAddress, IndirectBaseAddressPlatforms) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    constexpr uint64_t indirectHeapBase = 0x10000;
+    constexpr uint32_t indirectHeapSize = 0x10;
+
+    auto gmmHelper = pDevice->getGmmHelper();
+    StateBaseAddressProperties sbaProperties;
+
+    STATE_BASE_ADDRESS sbaCmd;
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, gmmHelper, &sbaProperties);
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_FALSE(sbaCmd.getIndirectObjectBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd.getIndirectObjectBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd.getIndirectObjectBaseAddress());
+    EXPECT_EQ(0u, sbaCmd.getIndirectObjectBufferSize());
+
+    sbaProperties.setPropertiesIndirectState(indirectHeapBase, indirectHeapSize);
+
+    sbaCmd = FamilyType::cmdInitStateBaseAddress;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_TRUE(sbaCmd.getIndirectObjectBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd.getIndirectObjectBufferSizeModifyEnable());
+    EXPECT_EQ(indirectHeapBase, sbaCmd.getIndirectObjectBaseAddress());
+    EXPECT_EQ(indirectHeapSize, sbaCmd.getIndirectObjectBufferSize());
+}
+
+using GlobalBaseAddressPlatforms = IsAtLeastXeHpCore;
+
+HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingIndirectStateAndGlobalAtomicsPropertyThenCommandDispatchedCorrectlyGlobalBaseAddressAndGlobalAtomics, GlobalBaseAddressPlatforms) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    constexpr uint64_t indirectHeapBase = 0x10000;
+    constexpr uint32_t indirectHeapSize = 0x10;
+
+    auto gmmHelper = pDevice->getGmmHelper();
+    StateBaseAddressProperties sbaProperties;
+
+    STATE_BASE_ADDRESS sbaCmd;
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, gmmHelper, &sbaProperties);
+    args.isMultiOsContextCapable = true;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_FALSE(sbaCmd.getGeneralStateBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd.getGeneralStateBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd.getGeneralStateBaseAddress());
+    EXPECT_EQ(0u, sbaCmd.getGeneralStateBufferSize());
+
+    EXPECT_TRUE(sbaCmd.getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
+
+    sbaProperties.setPropertiesIndirectState(indirectHeapBase, indirectHeapSize);
+    sbaProperties.globalAtomics.set(1);
+
+    sbaCmd = FamilyType::cmdInitStateBaseAddress;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_TRUE(sbaCmd.getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd.getGeneralStateBufferSizeModifyEnable());
+    EXPECT_EQ(indirectHeapBase, sbaCmd.getGeneralStateBaseAddress());
+    EXPECT_EQ(indirectHeapSize, sbaCmd.getGeneralStateBufferSize());
+
+    EXPECT_FALSE(sbaCmd.getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
+
+    sbaProperties.globalAtomics.set(0);
+
+    sbaCmd = FamilyType::cmdInitStateBaseAddress;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_TRUE(sbaCmd.getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
+}
+
+using BindlessSurfaceAddressPlatforms = IsAtLeastGen9;
+
+HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingBindlessSurfaceStatePropertyThenCommandDispatchedCorrectlyBindlessBaseAddress, BindlessSurfaceAddressPlatforms) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    constexpr uint64_t surfaceHeapBase = 0x10000;
+    constexpr uint32_t surfaceHeapSize = 0x10;
+
+    uint32_t defaultBindlessSurfaceStateSize = StateBaseAddressHelper<FamilyType>::getMaxBindlessSurfaceStates();
+
+    auto gmmHelper = pDevice->getGmmHelper();
+    StateBaseAddressProperties sbaProperties;
+
+    STATE_BASE_ADDRESS sbaCmd;
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, gmmHelper, &sbaProperties);
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_EQ(defaultBindlessSurfaceStateSize, sbaCmd.getBindlessSurfaceStateSize());
+    EXPECT_EQ(0u, sbaCmd.getBindlessSurfaceStateBaseAddress());
+    EXPECT_FALSE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
+
+    sbaProperties.setPropertiesSurfaceState(surfaceHeapBase, surfaceHeapSize, surfaceHeapBase, surfaceHeapSize, pDevice->getRootDeviceEnvironment());
+
+    sbaCmd = FamilyType::cmdInitStateBaseAddress;
+
+    StateBaseAddressHelper<FamilyType>::programStateBaseAddress(args);
+
+    EXPECT_EQ(surfaceHeapSize, sbaCmd.getBindlessSurfaceStateSize());
+    EXPECT_EQ(surfaceHeapBase, sbaCmd.getBindlessSurfaceStateBaseAddress());
+    EXPECT_TRUE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
 }

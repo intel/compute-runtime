@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/memory_compression_state.h"
+#include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -38,6 +39,22 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     const auto surfaceStateCount = getMaxBindlessSurfaceStates();
     args.stateBaseAddressCmd->setBindlessSurfaceStateSize(surfaceStateCount);
+
+    if (args.sbaProperties) {
+        if (args.sbaProperties->dynamicStateBaseAddress.value != StreamProperty64::initValue) {
+            args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);
+            args.stateBaseAddressCmd->setDynamicStateBufferSizeModifyEnable(true);
+            args.stateBaseAddressCmd->setDynamicStateBaseAddress(static_cast<uint64_t>(args.sbaProperties->dynamicStateBaseAddress.value));
+            args.stateBaseAddressCmd->setDynamicStateBufferSize(static_cast<uint32_t>(args.sbaProperties->dynamicStateSize.value));
+        }
+        if (args.sbaProperties->surfaceStateBaseAddress.value != StreamProperty64::initValue) {
+            args.stateBaseAddressCmd->setSurfaceStateBaseAddressModifyEnable(true);
+            args.stateBaseAddressCmd->setSurfaceStateBaseAddress(static_cast<uint64_t>(args.sbaProperties->surfaceStateBaseAddress.value));
+        }
+        if (args.sbaProperties->statelessMocs.value != StreamProperty::initValue) {
+            args.statelessMocsIndex = static_cast<uint32_t>(args.sbaProperties->statelessMocs.value);
+        }
+    }
 
     if (args.useGlobalHeapsBaseAddress) {
         args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);
@@ -80,7 +97,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
         args.stateBaseAddressCmd->setGeneralStateBaseAddressModifyEnable(true);
         args.stateBaseAddressCmd->setGeneralStateBufferSizeModifyEnable(true);
         // GSH must be set to 0 for stateless
-        args.stateBaseAddressCmd->setGeneralStateBaseAddress(args.gmmHelper->decanonize(args.generalStateBase));
+        args.stateBaseAddressCmd->setGeneralStateBaseAddress(args.gmmHelper->decanonize(args.generalStateBaseAddress));
         args.stateBaseAddressCmd->setGeneralStateBufferSize(0xfffff);
     }
 

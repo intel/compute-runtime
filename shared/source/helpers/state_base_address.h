@@ -12,23 +12,28 @@
 namespace NEO {
 
 enum class MemoryCompressionState;
+
 class GmmHelper;
 class IndirectHeap;
 class LinearStream;
+
 struct DispatchFlags;
 struct HardwareInfo;
+struct StateBaseAddressProperties;
 
 template <typename GfxFamily>
 struct StateBaseAddressHelperArgs {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
-    uint64_t generalStateBase = 0;
+    uint64_t generalStateBaseAddress = 0;
     uint64_t indirectObjectHeapBaseAddress = 0;
     uint64_t instructionHeapBaseAddress = 0;
     uint64_t globalHeapsBaseAddress = 0;
     uint64_t surfaceStateBaseAddress = 0;
 
     STATE_BASE_ADDRESS *stateBaseAddressCmd = nullptr;
+
+    StateBaseAddressProperties *sbaProperties = nullptr;
 
     const IndirectHeap *dsh = nullptr;
     const IndirectHeap *ioh = nullptr;

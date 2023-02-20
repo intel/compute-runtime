@@ -232,12 +232,13 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             args.requiresUncachedMocs ? (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1) : (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
 
         EncodeStateBaseAddressArgs<Family> encodeStateBaseAddressArgs = {
-            &container,
-            sbaCmd,
-            statelessMocsIndex,
-            args.useGlobalAtomics,
-            args.partitionCount > 1,
-            args.isRcs};
+            &container,              // container
+            sbaCmd,                  // sbaCmd
+            nullptr,                 // sbaProperties
+            statelessMocsIndex,      // statelessMocsIndex
+            args.useGlobalAtomics,   // useGlobalAtomics
+            args.partitionCount > 1, // multiOsContextCapable
+            args.isRcs};             // isRcs
         EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
         container.setDirtyStateForAllHeaps(false);
     }
@@ -529,12 +530,13 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
     auto isDebuggerActive = device.isDebuggerActive() || device.getDebugger() != nullptr;
 
     StateBaseAddressHelperArgs<Family> stateBaseAddressHelperArgs = {
-        0,                                                  // generalStateBase
+        0,                                                  // generalStateBaseAddress
         args.container->getIndirectObjectHeapBaseAddress(), // indirectObjectHeapBaseAddress
         args.container->getInstructionHeapBaseAddress(),    // instructionHeapBaseAddress
         0,                                                  // globalHeapsBaseAddress
         0,                                                  // surfaceStateBaseAddress
         &args.sbaCmd,                                       // stateBaseAddressCmd
+        args.sbaProperties,                                 // sbaProperties
         dsh,                                                // dsh
         ioh,                                                // ioh
         ssh,                                                // ssh
@@ -555,7 +557,14 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
     StateBaseAddressHelper<Family>::programStateBaseAddressIntoCommandStream(stateBaseAddressHelperArgs,
                                                                              *args.container->getCommandStream());
 
-    if (args.container->isHeapDirty(HeapType::SURFACE_STATE) && ssh != nullptr) {
+    if (args.sbaProperties) {
+        if (args.sbaProperties->bindingTablePoolBaseAddress.value != StreamProperty64::initValue) {
+            StateBaseAddressHelper<Family>::programBindingTableBaseAddress(*args.container->getCommandStream(),
+                                                                           static_cast<uint64_t>(args.sbaProperties->bindingTablePoolBaseAddress.value),
+                                                                           static_cast<uint32_t>(args.sbaProperties->bindingTablePoolSize.value),
+                                                                           gmmHelper);
+        }
+    } else if (args.container->isHeapDirty(HeapType::SURFACE_STATE) && ssh != nullptr) {
         auto heap = args.container->getIndirectHeap(HeapType::SURFACE_STATE);
         StateBaseAddressHelper<Family>::programBindingTableBaseAddress(*args.container->getCommandStream(),
                                                                        *heap,

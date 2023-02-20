@@ -2622,12 +2622,13 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
     STATE_BASE_ADDRESS sba;
 
     NEO::EncodeStateBaseAddressArgs<GfxFamily> encodeStateBaseAddressArgs = {
-        &commandContainer,
-        sba,
-        statelessMocsIndex,
-        false,
-        this->partitionCount > 1,
-        isRcs};
+        &commandContainer,        // container
+        sba,                      // sbaCmd
+        nullptr,                  // sbaProperties
+        statelessMocsIndex,       // statelessMocsIndex
+        false,                    // useGlobalAtomics
+        this->partitionCount > 1, // multiOsContextCapable
+        isRcs};                   // isRcs
     NEO::EncodeStateBaseAddress<GfxFamily>::encode(encodeStateBaseAddressArgs);
 
     bool sbaTrackingEnabled = NEO::Debugger::isDebugEnabled(this->internalUsage) && device->getL0Debugger();

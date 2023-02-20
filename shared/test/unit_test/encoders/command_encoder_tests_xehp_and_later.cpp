@@ -218,28 +218,10 @@ using XeHpAndLaterSbaTest = SbaTest;
 HWTEST2_F(XeHpAndLaterSbaTest, givenMemoryCompressionEnabledWhenAppendingSbaThenEnableStatelessCompressionForAllStatelessAccesses, CompressionParamsSupportedMatcher) {
     for (auto memoryCompressionState : {MemoryCompressionState::NotApplicable, MemoryCompressionState::Disabled, MemoryCompressionState::Enabled}) {
         auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
-        StateBaseAddressHelperArgs<FamilyType> args = {
-            0,                                                  // generalStateBase
-            0,                                                  // indirectObjectHeapBaseAddress
-            0,                                                  // instructionHeapBaseAddress
-            0,                                                  // globalHeapsBaseAddress
-            0,                                                  // surfaceStateBaseAddress
-            &sbaCmd,                                            // stateBaseAddressCmd
-            nullptr,                                            // dsh
-            nullptr,                                            // ioh
-            &ssh,                                               // ssh
-            pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
-            nullptr,                                            // hwInfo
-            0,                                                  // statelessMocsIndex
-            memoryCompressionState,                             // memoryCompressionState
-            false,                                              // setInstructionStateBaseAddress
-            true,                                               // setGeneralStateBaseAddress
-            false,                                              // useGlobalHeapsBaseAddress
-            false,                                              // isMultiOsContextCapable
-            false,                                              // useGlobalAtomics
-            false,                                              // areMultipleSubDevicesInContext
-            false                                               // overrideSurfaceStateBaseAddress
-        };
+        StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getRootDeviceEnvironment().getGmmHelper(), &ssh, nullptr, nullptr);
+        args.setGeneralStateBaseAddress = true;
+        args.memoryCompressionState = memoryCompressionState;
+
         StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
         if (memoryCompressionState == MemoryCompressionState::Enabled) {
             EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_ENABLED, sbaCmd.getEnableMemoryCompressionForAllStatelessAccesses());
@@ -253,28 +235,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpAndLaterSbaTest, givenNonZeroInternalHeapBaseAd
     constexpr uint64_t ihba = 0x80010000ull;
 
     auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
-    StateBaseAddressHelperArgs<FamilyType> args = {
-        0,                                                  // generalStateBase
-        ihba,                                               // indirectObjectHeapBaseAddress
-        0,                                                  // instructionHeapBaseAddress
-        0,                                                  // globalHeapsBaseAddress
-        0,                                                  // surfaceStateBaseAddress
-        &sbaCmd,                                            // stateBaseAddressCmd
-        nullptr,                                            // dsh
-        nullptr,                                            // ioh
-        &ssh,                                               // ssh
-        pDevice->getRootDeviceEnvironment().getGmmHelper(), // gmmHelper
-        nullptr,                                            // hwInfo
-        0,                                                  // statelessMocsIndex
-        MemoryCompressionState::NotApplicable,              // memoryCompressionState
-        false,                                              // setInstructionStateBaseAddress
-        false,                                              // setGeneralStateBaseAddress
-        false,                                              // useGlobalHeapsBaseAddress
-        false,                                              // isMultiOsContextCapable
-        false,                                              // useGlobalAtomics
-        false,                                              // areMultipleSubDevicesInContext
-        false                                               // overrideSurfaceStateBaseAddress
-    };
+    StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getRootDeviceEnvironment().getGmmHelper(), &ssh, nullptr, nullptr);
+    args.indirectObjectHeapBaseAddress = ihba;
+
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
     EXPECT_EQ(0ull, sbaCmd.getGeneralStateBaseAddress());
 }
