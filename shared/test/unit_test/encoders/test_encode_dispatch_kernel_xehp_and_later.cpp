@@ -26,8 +26,6 @@
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
-#include "test_traits_common.h"
-
 #include <memory>
 
 using namespace NEO;
@@ -519,7 +517,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
     }
 }
 
-HWTEST2_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNotDefaultThenStateComputeModeCommandAdded, IsAtLeastGen12lp) {
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNotDefaultThenStateComputeModeCommandAdded) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
 
@@ -530,11 +528,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNot
     EXPECT_FALSE(streamProperties.stateComputeMode.isDirty());
 
     streamProperties.stateComputeMode.setPropertiesAll(false, 256, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
-    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
-        EXPECT_TRUE(streamProperties.stateComputeMode.isDirty());
-    } else {
-        EXPECT_FALSE(streamProperties.stateComputeMode.isDirty());
-    }
+    EXPECT_TRUE(streamProperties.stateComputeMode.isDirty());
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredWhenEncodingWalkerThenEmitInlineParameterIsSet) {

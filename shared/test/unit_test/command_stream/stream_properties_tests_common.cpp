@@ -15,10 +15,7 @@
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
-#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
-
-#include "test_traits_common.h"
 
 using namespace NEO;
 
@@ -41,8 +38,6 @@ struct MockStateBaseAddressProperties : public StateBaseAddressProperties {
     using StateBaseAddressProperties::propertiesSupportLoaded;
     using StateBaseAddressProperties::stateBaseAddressPropertiesSupport;
 };
-
-using StreamPropertiesTests = ::testing::Test;
 
 TEST(StreamPropertiesTests, whenPropertyValueIsChangedThenProperStateIsSet) {
     NEO::StreamProperty streamProperty;
@@ -111,7 +106,7 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
     }
 }
 
-HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet, IsAtLeastGen12lp) {
+TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValuesAreSet) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
     DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
@@ -134,11 +129,7 @@ HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrec
             for (auto largeGrf : ::testing::Bool()) {
                 for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
                     properties.stateComputeMode.setPropertiesAll(requiresCoherency, largeGrf ? 256 : 128, threadArbitrationPolicy, preemptionMode, rootDeviceEnvironment);
-                    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
-                        EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
-                    } else {
-                        EXPECT_EQ(-1, properties.stateComputeMode.largeGrfMode.value);
-                    }
+                    EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
                     if (scmPropertiesSupport.coherencyRequired) {
                         EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
                     } else {

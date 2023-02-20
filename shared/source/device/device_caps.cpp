@@ -143,9 +143,6 @@ void Device::initializeCaps() {
     maxWS = Math::prevPowerOfTwo(maxWS);
     deviceInfo.maxWorkGroupSize = std::min(maxWS, 1024u);
 
-    const auto minGrfSize = gfxCoreHelper.getMinimalGrfSize();
-    deviceInfo.maxWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(minGrfSize, simdSizeUsed, static_cast<uint32_t>(deviceInfo.maxWorkGroupSize));
-
     if (DebugManager.flags.OverrideMaxWorkgroupSize.get() != -1) {
         deviceInfo.maxWorkGroupSize = DebugManager.flags.OverrideMaxWorkgroupSize.get();
     }

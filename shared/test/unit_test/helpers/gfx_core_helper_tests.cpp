@@ -927,13 +927,8 @@ HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenIs
 }
 
 HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenMinimalSIMDSizeIsQueriedThen8IsReturned) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     EXPECT_EQ(8u, gfxCoreHelper.getMinimalSIMDSize());
-}
-
-HWTEST_F(GfxCoreHelperTest, givenDefaultGfxCoreHelperHwWhenMinimalGrfSizeIsQueriedThen128IsReturned) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    EXPECT_EQ(128u, gfxCoreHelper.getMinimalGrfSize());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, GfxCoreHelperTest, WhenIsFusedEuDispatchEnabledIsCalledThenFalseIsReturned) {
@@ -1461,23 +1456,6 @@ HWTEST_F(GfxCoreHelperTest, whenIsDynamicallyPopulatedisTrueThengetHighestEnable
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto maxSlice = gfxCoreHelper.getHighestEnabledSlice(hwInfo);
     EXPECT_EQ(maxSlice, 7u);
-}
-
-HWTEST_F(GfxCoreHelperTest, givenNumGrfAndSimdSizeWhenAdjustingMaxWorkGroupSizeThenAlwaysReturnDeviceDefault) {
-    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
-    constexpr auto defaultMaxGroupSize = 1024u;
-
-    uint32_t simdSize = 16u;
-    uint32_t numGrfRequired = GrfConfig::LargeGrfNumber;
-    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, defaultMaxGroupSize));
-
-    simdSize = 32u;
-    numGrfRequired = GrfConfig::LargeGrfNumber;
-    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, defaultMaxGroupSize));
-
-    simdSize = 16u;
-    numGrfRequired = GrfConfig::DefaultGrfNumber;
-    EXPECT_EQ(defaultMaxGroupSize, gfxCoreHelper.adjustMaxWorkGroupSize(numGrfRequired, simdSize, defaultMaxGroupSize));
 }
 
 HWTEST_F(ProductHelperCommonTest, givenPatIndexAndAllocationTypeWhenCallOverridePatIndexThenSameIndexIsReturned) {

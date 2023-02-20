@@ -737,9 +737,7 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
     memset(pKernelProperties->uuid.kid, 0, ZE_MAX_KERNEL_UUID_SIZE);
     memset(pKernelProperties->uuid.mid, 0, ZE_MAX_MODULE_UUID_SIZE);
 
-    const auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
     uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getDevice()->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
-    maxKernelWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, maxKernelWorkGroupSize);
     pKernelProperties->maxNumSubgroups = maxKernelWorkGroupSize / kernelDescriptor.kernelAttributes.simdSize;
 
     void *pNext = pKernelProperties->pNext;
@@ -750,6 +748,7 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
                 reinterpret_cast<ze_kernel_preferred_group_size_properties_t *>(extendedProperties);
 
             preferredGroupSizeProperties->preferredMultiple = this->kernelImmData->getKernelInfo()->getMaxSimdSize();
+            auto &gfxCoreHelper = this->module->getDevice()->getGfxCoreHelper();
             if (gfxCoreHelper.isFusedEuDispatchEnabled(this->module->getDevice()->getHwInfo(), kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion)) {
                 preferredGroupSizeProperties->preferredMultiple *= 2;
             }
