@@ -32,7 +32,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                 void *phCommands,
                                 ze_fence_handle_t hFence) override;
 
-    void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed);
+    void programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed, NEO::StreamProperties *streamProperties);
     size_t estimateStateBaseAddressCmdSize();
     MOCKABLE_VIRTUAL void programFrontEnd(uint64_t scratchAddress, uint32_t perThreadScratchSpaceSize, NEO::LinearStream &commandStream, NEO::StreamProperties &streamProperties);
 
@@ -188,9 +188,15 @@ struct CommandQueueHw : public CommandQueueImp {
                                                               NEO::StreamProperties &csrState,
                                                               const NEO::StreamProperties &cmdListRequired,
                                                               const NEO::StreamProperties &cmdListFinal);
+
+    inline size_t estimateStateBaseAddressCmdDispatchSize();
+    inline size_t estimateStateBaseAddressCmdSizeForMultipleCommandLists(bool &baseAddressStateDirty,
+                                                                         NEO::StreamProperties &csrStateCopy,
+                                                                         const NEO::StreamProperties &cmdListRequired,
+                                                                         const NEO::StreamProperties &cmdListFinal);
     inline void programRequiredStateBaseAddressForCommandList(CommandListExecutionContext &ctx,
-                                                              CommandList *commandList,
                                                               NEO::LinearStream &commandStream,
+                                                              CommandList *commandList,
                                                               NEO::StreamProperties &csrState,
                                                               const NEO::StreamProperties &cmdListRequired,
                                                               const NEO::StreamProperties &cmdListFinal);

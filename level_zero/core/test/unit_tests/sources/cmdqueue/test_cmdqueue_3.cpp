@@ -91,7 +91,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
     auto &gfxCoreHelper = neoDevice->getGfxCoreHelper();
     const bool isaInLocalMemory = !gfxCoreHelper.useSystemMemoryPlacementForISA(neoDevice->getHardwareInfo());
 
-    commandQueue->programStateBaseAddress(0u, true, child, true);
+    commandQueue->programStateBaseAddress(0u, true, child, true, nullptr);
 
     EXPECT_EQ(2u, memoryManager->getInternalHeapBaseAddressCalled);
     EXPECT_EQ(rootDeviceIndex, memoryManager->getInternalHeapBaseAddressParamsPassed[0].rootDeviceIndex);
@@ -105,7 +105,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenCreatingCommandQueueThenItIsInitialize
         EXPECT_FALSE(memoryManager->getInternalHeapBaseAddressParamsPassed[1].useLocalMemory);
     }
 
-    commandQueue->programStateBaseAddress(0u, false, child, true);
+    commandQueue->programStateBaseAddress(0u, false, child, true, nullptr);
 
     EXPECT_EQ(4u, memoryManager->getInternalHeapBaseAddressCalled);
     EXPECT_EQ(rootDeviceIndex, memoryManager->getInternalHeapBaseAddressParamsPassed[2].rootDeviceIndex);
@@ -135,7 +135,7 @@ HWTEST2_F(CommandQueueProgramSBATest, whenProgrammingStateBaseAddressWithStatele
     NEO::LinearStream child(commandStream.getSpace(alignedSize), alignedSize);
 
     auto cachedMOCSAllowed = false;
-    commandQueue->programStateBaseAddress(0u, true, child, cachedMOCSAllowed);
+    commandQueue->programStateBaseAddress(0u, true, child, cachedMOCSAllowed, nullptr);
     GenCmdList commands;
     ASSERT_TRUE(CmdParse<FamilyType>::parseCommandBuffer(
         commands,
@@ -174,7 +174,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     auto alignedSize = commandQueue->estimateStateBaseAddressCmdSize();
     NEO::LinearStream child(commandQueue->commandStream.getSpace(alignedSize), alignedSize);
 
-    commandQueue->programStateBaseAddress(0u, true, child, true);
+    commandQueue->programStateBaseAddress(0u, true, child, true, nullptr);
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 
     GenCmdList cmdList;
@@ -215,7 +215,7 @@ HWTEST2_F(CommandQueueProgramSBATest,
     auto alignedSize = commandQueue->estimateStateBaseAddressCmdSize();
     NEO::LinearStream child(commandQueue->commandStream.getSpace(alignedSize), alignedSize);
 
-    commandQueue->programStateBaseAddress(0u, true, child, true);
+    commandQueue->programStateBaseAddress(0u, true, child, true, nullptr);
 
     auto usedSpaceAfter = commandQueue->commandStream.getUsed();
 

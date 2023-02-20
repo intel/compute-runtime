@@ -9,6 +9,8 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
 
@@ -148,13 +150,34 @@ void CmdListStateComputeModeStateFixture::setUp() {
 }
 
 void CommandListStateBaseAddressFixture::setUp() {
+    constexpr uint32_t storeAllocations = 4;
+
     DebugManager.flags.EnableStateBaseAddressTracking.set(1);
+    DebugManager.flags.SetAmountOfReusableAllocations.set(storeAllocations);
+    DebugManager.flags.ForceL1Caching.set(0);
+
     ModuleMutableCommandListFixture::setUp();
+
+    for (uint32_t i = 0; i < storeAllocations; i++) {
+        auto heapAllocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), true, 2 * MB,
+                                                                                                   NEO::AllocationType::LINEAR_STREAM, false, false,
+                                                                                                   neoDevice->getDeviceBitfield()});
+        commandListImmediate->csr->getInternalAllocationStorage()->storeAllocation(std::unique_ptr<GraphicsAllocation>(heapAllocation), REUSABLE_ALLOCATION);
+    }
 
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.numSamplers = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.tableOffset = 16;
     mockKernelImmData->kernelDescriptor->payloadMappings.samplerTable.borderColor = 0;
     kernel->dynamicStateHeapData.reset(new uint8_t[512]);
+
+    mockKernelImmData->mockKernelInfo->heapInfo.SurfaceStateHeapSize = 128;
+    mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
+    mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.tableOffset = 64;
+    kernel->surfaceStateHeapDataSize = 64;
+    kernel->surfaceStateHeapData.reset(new uint8_t[128]);
+
+    this->dshRequired = device->getDeviceInfo().imageSupport;
+    this->expectedSbaCmds = commandList->doubleSbaWa ? 2 : 1;
 }
 
 uint32_t CommandListStateBaseAddressFixture::getMocs(bool l3On) {

@@ -24,27 +24,38 @@
 namespace L0 {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed) {
+void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed, NEO::StreamProperties *streamProperties) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     NEO::Device *neoDevice = device->getNEODevice();
-    bool isRcs = this->getCsr()->isRcs();
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
 
-    NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, rootDeviceEnvironment, isRcs, this->getCsr()->getDcFlushSupport());
-    NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStream, {}, true, rootDeviceEnvironment, isRcs);
+    bool isRcs = this->getCsr()->isRcs();
+    bool useGlobalSshAndDsh = false;
+    bool isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
+
+    uint64_t globalHeapsBase = 0;
+    uint64_t indirectObjectHeapBaseAddress = 0;
+
+    NEO::StateBaseAddressProperties *sbaProperties = nullptr;
+
+    if (streamProperties != nullptr) {
+        sbaProperties = &streamProperties->stateBaseAddress;
+    } else {
+        useGlobalSshAndDsh = NEO::ApiSpecificConfig::getBindlessConfiguration();
+        if (useGlobalSshAndDsh) {
+            globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
+        }
+
+        indirectObjectHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), useLocalMemoryForIndirectHeap);
+    }
+
+    uint64_t instructionHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), neoDevice->getMemoryManager()->isLocalMemoryUsedForIsa(neoDevice->getRootDeviceIndex()));
 
     STATE_BASE_ADDRESS sbaCmd;
 
-    bool useGlobalSshAndDsh = NEO::ApiSpecificConfig::getBindlessConfiguration();
-    uint64_t globalHeapsBase = 0;
-    if (useGlobalSshAndDsh) {
-        globalHeapsBase = neoDevice->getBindlessHeapsHelper()->getGlobalHeapsBase();
-    }
-
-    auto indirectObjectHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), useLocalMemoryForIndirectHeap);
-    auto instructionHeapBaseAddress = neoDevice->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), neoDevice->getMemoryManager()->isLocalMemoryUsedForIsa(neoDevice->getRootDeviceIndex()));
-    auto isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
+    NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, rootDeviceEnvironment, isRcs, this->getCsr()->getDcFlushSupport());
+    NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStream, {}, true, rootDeviceEnvironment, isRcs);
 
     NEO::StateBaseAddressHelperArgs<GfxFamily> stateBaseAddressHelperArgs = {
         gsba,                                             // generalStateBaseAddress
@@ -53,7 +64,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         globalHeapsBase,                                  // globalHeapsBaseAddress
         0,                                                // surfaceStateBaseAddress
         &sbaCmd,                                          // stateBaseAddressCmd
-        nullptr,                                          // sbaProperties
+        sbaProperties,                                    // sbaProperties
         nullptr,                                          // dsh
         nullptr,                                          // ioh
         nullptr,                                          // ssh
@@ -82,7 +93,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
+inline size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdDispatchSize() {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     size_t size = sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) +
@@ -93,6 +104,11 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
         size += device->getL0Debugger()->getSbaTrackingCommandsSize(trackedAddressesCount);
     }
     return size;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
+    return estimateStateBaseAddressCmdDispatchSize();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

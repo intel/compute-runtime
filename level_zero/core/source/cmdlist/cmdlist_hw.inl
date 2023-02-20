@@ -79,6 +79,41 @@ CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
+    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
+
+    if (!NEO::ApiSpecificConfig::getBindlessConfiguration() && !this->stateBaseAddressTracking) {
+        if (!this->isFlushTaskSubmissionEnabled) {
+            programStateBaseAddress(commandContainer, false);
+        }
+    }
+    commandContainer.setDirtyStateForAllHeaps(false);
+
+    if (this->stateComputeModeTracking) {
+        requiredStreamState.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->commandListPreemptionMode, rootDeviceEnvironment, true);
+        finalStreamState.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->commandListPreemptionMode, rootDeviceEnvironment, true);
+    }
+
+    requiredStreamState.frontEndState.setPropertiesDisableOverdispatchEngineInstanced(cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, rootDeviceEnvironment, true);
+    requiredStreamState.pipelineSelect.setPropertiesModeSelectedMediaSamplerClockGate(cmdListDefaultPipelineSelectModeSelected, cmdListDefaultMediaSamplerClockGate, rootDeviceEnvironment, true);
+    requiredStreamState.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, rootDeviceEnvironment, true);
+
+    finalStreamState.frontEndState.setPropertiesDisableOverdispatchEngineInstanced(cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, rootDeviceEnvironment, true);
+    finalStreamState.pipelineSelect.setPropertiesModeSelectedMediaSamplerClockGate(cmdListDefaultPipelineSelectModeSelected, cmdListDefaultMediaSamplerClockGate, rootDeviceEnvironment, true);
+    finalStreamState.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, rootDeviceEnvironment, true);
+
+    currentSurfaceStateBaseAddress = NEO::StreamProperty64::initValue;
+    currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;
+    currentIndirectObjectBaseAddress = NEO::StreamProperty64::initValue;
+    currentBindingTablePoolBaseAddress = NEO::StreamProperty64::initValue;
+
+    currentSurfaceStateSize = NEO::StreamPropertySizeT::initValue;
+    currentDynamicStateSize = NEO::StreamPropertySizeT::initValue;
+    currentIndirectObjectSize = NEO::StreamPropertySizeT::initValue;
+    currentBindingTablePoolSize = NEO::StreamPropertySizeT::initValue;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     printfKernelContainer.clear();
     removeDeallocationContainerData();
@@ -100,10 +135,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     commandListSLMEnabled = false;
 
     if (!isCopyOnly()) {
-        if (!NEO::ApiSpecificConfig::getBindlessConfiguration()) {
-            programStateBaseAddress(commandContainer, false);
-        }
-        commandContainer.setDirtyStateForAllHeaps(false);
+        postInitComputeSetup();
     }
 
     for (auto alloc : this->ownedPrivateAllocations) {
@@ -112,16 +144,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     this->ownedPrivateAllocations.clear();
     cmdListCurrentStartOffset = 0;
     this->returnPoints.clear();
-
-    currentSurfaceStateBaseAddress = NEO::StreamProperty64::initValue;
-    currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;
-    currentIndirectObjectBaseAddress = NEO::StreamProperty64::initValue;
-    currentBindingTablePoolBaseAddress = NEO::StreamProperty64::initValue;
-
-    currentSurfaceStateSize = NEO::StreamPropertySizeT::initValue;
-    currentDynamicStateSize = NEO::StreamPropertySizeT::initValue;
-    currentIndirectObjectSize = NEO::StreamPropertySizeT::initValue;
-    currentBindingTablePoolSize = NEO::StreamPropertySizeT::initValue;
 
     return ZE_RESULT_SUCCESS;
 }
@@ -154,6 +176,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
     this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
     commandContainer.doubleSbaWa = this->doubleSbaWa;
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+    this->defaultMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
@@ -192,25 +216,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     ze_result_t returnType = parseErrorCode(returnValue);
     if (returnType == ZE_RESULT_SUCCESS) {
         if (!isCopyOnly()) {
-            if (!NEO::ApiSpecificConfig::getBindlessConfiguration()) {
-                if (!this->isFlushTaskSubmissionEnabled) {
-                    programStateBaseAddress(commandContainer, false);
-                }
-            }
-            commandContainer.setDirtyStateForAllHeaps(false);
-
-            if (this->stateComputeModeTracking) {
-                requiredStreamState.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->device->getNEODevice()->getPreemptionMode(), rootDeviceEnvironment, true);
-                finalStreamState.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->device->getNEODevice()->getPreemptionMode(), rootDeviceEnvironment, true);
-            }
-
-            requiredStreamState.frontEndState.setPropertiesDisableOverdispatchEngineInstanced(cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, rootDeviceEnvironment, true);
-            requiredStreamState.pipelineSelect.setPropertiesModeSelectedMediaSamplerClockGate(cmdListDefaultPipelineSelectModeSelected, cmdListDefaultMediaSamplerClockGate, rootDeviceEnvironment, true);
-            requiredStreamState.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, rootDeviceEnvironment, true);
-
-            finalStreamState.frontEndState.setPropertiesDisableOverdispatchEngineInstanced(cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, rootDeviceEnvironment, true);
-            finalStreamState.pipelineSelect.setPropertiesModeSelectedMediaSamplerClockGate(cmdListDefaultPipelineSelectModeSelected, cmdListDefaultMediaSamplerClockGate, rootDeviceEnvironment, true);
-            finalStreamState.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, rootDeviceEnvironment, true);
+            postInitComputeSetup();
         }
     }
 
@@ -2375,10 +2381,8 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
         updateStreamPropertiesForRegularCommandLists(kernel, isCooperative, threadGroupDimensions, isIndirect);
     }
 }
-
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDispatchFlags(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect) {
-    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+inline bool getFusedEuDisabled(Kernel &kernel, Device *device, const ze_group_count_t *threadGroupDimensions, bool isIndirect) {
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
 
     bool fusedEuDisabled = kernelAttributes.flags.requiresDisabledEUFusion;
@@ -2396,6 +2400,15 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDis
             fusedEuDisabled |= productHelper.isFusedEuDisabledForDpas(kernelAttributes.flags.usesSystolicPipelineSelectMode, kernel.getGroupSize(), groupCountPtr);
         }
     }
+    return fusedEuDisabled;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDispatchFlags(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect) {
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
+
+    bool fusedEuDisabled = getFusedEuDisabled<gfxCoreFamily>(kernel, this->device, threadGroupDimensions, isIndirect);
 
     requiredStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, rootDeviceEnvironment);
 
@@ -2444,21 +2457,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         checkIoh = true;
     }
 
-    bool fusedEuDisabled = kernelAttributes.flags.requiresDisabledEUFusion;
-    auto &productHelper = device->getProductHelper();
-    if (productHelper.isCalculationForDisablingEuFusionWithDpasNeeded()) {
-        if (threadGroupDimensions) {
-            uint32_t *groupCountPtr = nullptr;
-            uint32_t groupCount[3] = {};
-            if (!isIndirect) {
-                groupCount[0] = threadGroupDimensions->groupCountX;
-                groupCount[1] = threadGroupDimensions->groupCountY;
-                groupCount[2] = threadGroupDimensions->groupCountZ;
-                groupCountPtr = groupCount;
-            }
-            fusedEuDisabled |= productHelper.isFusedEuDisabledForDpas(kernelAttributes.flags.usesSystolicPipelineSelectMode, kernel.getGroupSize(), groupCountPtr);
-        }
-    }
+    bool fusedEuDisabled = getFusedEuDisabled<gfxCoreFamily>(kernel, this->device, threadGroupDimensions, isIndirect);
 
     if (!containsAnyKernel) {
         requiredStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, fusedEuDisabled, rootDeviceEnvironment);
@@ -2497,7 +2496,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
 
     finalStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, fusedEuDisabled, rootDeviceEnvironment);
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
-    if (finalStreamState.frontEndState.isDirty() && logicalStateHelperBlock) {
+    if (logicalStateHelperBlock && finalStreamState.frontEndState.isDirty()) {
         if (isPatchingVfeStateAllowed) {
             auto frontEndStateAddress = NEO::PreambleHelper<GfxFamily>::getSpaceForVfeState(commandContainer.getCommandStream(), device->getHwInfo(), engineGroupType);
             auto frontEndStateCmd = new VFE_STATE_TYPE;
@@ -2542,6 +2541,11 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     }
     if (checkIoh) {
         finalStreamState.stateBaseAddress.setPropertiesIndirectState(currentIndirectObjectBaseAddress, currentIndirectObjectSize);
+    }
+
+    if (logicalStateHelperBlock && this->stateBaseAddressTracking && finalStreamState.stateBaseAddress.isDirty()) {
+        commandContainer.setDirtyStateForAllHeaps(false);
+        programStateBaseAddress(commandContainer, true);
     }
 }
 
@@ -2612,22 +2616,22 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::setGlobalWorkSizeIndirect(NEO:
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandContainer &container, bool genericMediaStateClearRequired) {
+void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandContainer &container, bool useSbaProperties) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     bool isRcs = (this->engineGroupType == NEO::EngineGroupType::RenderCompute);
 
     NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(*commandContainer.getCommandStream(), this->device->getNEODevice()->getRootDeviceEnvironment(), isRcs, this->dcFlushSupport);
 
-    auto gmmHelper = container.getDevice()->getRootDeviceEnvironment().getGmmHelper();
-    uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+    uint32_t statelessMocsIndex = this->defaultMocsIndex;
+    NEO::StateBaseAddressProperties *sbaProperties = useSbaProperties ? &this->finalStreamState.stateBaseAddress : nullptr;
 
     STATE_BASE_ADDRESS sba;
 
     NEO::EncodeStateBaseAddressArgs<GfxFamily> encodeStateBaseAddressArgs = {
         &commandContainer,        // container
         sba,                      // sbaCmd
-        nullptr,                  // sbaProperties
+        sbaProperties,            // sbaProperties
         statelessMocsIndex,       // statelessMocsIndex
         false,                    // useGlobalAtomics
         this->partitionCount > 1, // multiOsContextCapable
@@ -2635,7 +2639,7 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
         this->doubleSbaWa};       // doubleSbaWa
     NEO::EncodeStateBaseAddress<GfxFamily>::encode(encodeStateBaseAddressArgs);
 
-    bool sbaTrackingEnabled = NEO::Debugger::isDebugEnabled(this->internalUsage) && device->getL0Debugger();
+    bool sbaTrackingEnabled = NEO::Debugger::isDebugEnabled(this->internalUsage) && this->device->getL0Debugger();
     NEO::EncodeStateBaseAddress<GfxFamily>::setSbaTrackingForL0DebuggerIfEnabled(sbaTrackingEnabled,
                                                                                  *this->device->getNEODevice(),
                                                                                  *container.getCommandStream(),

@@ -125,6 +125,8 @@ struct CommandListStateBaseAddressFixture : public ModuleMutableCommandListFixtu
     uint32_t getMocs(bool l3On);
 
     DebugManagerStateRestore restorer;
+    size_t expectedSbaCmds = 0;
+    bool dshRequired = false;
 };
 
 struct ImmediateCmdListSharedHeapsFixture : public ModuleMutableCommandListFixture {

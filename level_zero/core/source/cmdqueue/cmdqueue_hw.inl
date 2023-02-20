@@ -143,7 +143,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         this->programOneCmdListPipelineSelect(commandList, child, csrStateProperties, requiredStreamState, requiredStreamState);
     }
     this->programCommandQueueDebugCmdsForSourceLevelOrL0DebuggerIfEnabled(ctx.isDebugEnabled, child);
-    this->programStateBaseAddressWithGsbaIfDirty(ctx, phCommandLists[0], child);
+    if (!this->stateBaseAddressTracking) {
+        this->programStateBaseAddressWithGsbaIfDirty(ctx, phCommandLists[0], child);
+    }
     this->programCsrBaseAddressIfPreemptionModeInitial(ctx.isPreemptionModeInitial, child);
     this->programStateSip(ctx.stateSipRequired, child);
     this->makePreemptionAllocationResidentForModeMidThread(ctx.isDevicePreemptionModeMidThread);
@@ -170,7 +172,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         this->programOneCmdListPipelineSelect(commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
         this->programOneCmdListFrontEndIfDirty(ctx, child, csrStateProperties, requiredStreamState, finalStreamState);
         this->programRequiredStateComputeModeForCommandList(commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
-        this->programRequiredStateBaseAddressForCommandList(ctx, commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
+        this->programRequiredStateBaseAddressForCommandList(ctx, child, commandList, csrStateProperties, requiredStreamState, finalStreamState);
 
         this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
         this->programOneCmdListBatchBufferStart(commandList, child, ctx);
@@ -644,10 +646,11 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
     linearStreamSizeEstimate += estimateFrontEndCmdSize(ctx.frontEndStateDirty);
     linearStreamSizeEstimate += estimatePipelineSelectCmdSize();
 
-    if (this->stateComputeModeTracking || this->pipelineSelectStateTracking || frontEndTrackingEnabled()) {
-        bool frontEndStateDirtyCopy = ctx.frontEndStateDirty;
+    if (this->stateComputeModeTracking || this->pipelineSelectStateTracking || frontEndTrackingEnabled() || this->stateBaseAddressTracking) {
         auto streamPropertiesCopy = csr->getStreamProperties();
+        bool frontEndStateDirtyCopy = ctx.frontEndStateDirty;
         bool gpgpuEnabledCopy = csr->getPreambleSetFlag();
+        bool baseAdresStateDirtyCopy = ctx.gsbaStateDirty;
         for (uint32_t i = 0; i < numCommandLists; i++) {
             auto cmdList = CommandList::fromHandle(phCommandLists[i]);
             auto &requiredStreamState = cmdList->getRequiredStreamState();
@@ -657,10 +660,11 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
                                                                                        streamPropertiesCopy, requiredStreamState, finalStreamState);
             linearStreamSizeEstimate += estimatePipelineSelectCmdSizeForMultipleCommandLists(streamPropertiesCopy, requiredStreamState, finalStreamState, gpgpuEnabledCopy);
             linearStreamSizeEstimate += estimateScmCmdSizeForMultipleCommandLists(streamPropertiesCopy, requiredStreamState, finalStreamState);
+            linearStreamSizeEstimate += estimateStateBaseAddressCmdSizeForMultipleCommandLists(baseAdresStateDirtyCopy, streamPropertiesCopy, requiredStreamState, finalStreamState);
         }
     }
 
-    if (ctx.gsbaStateDirty) {
+    if (ctx.gsbaStateDirty && !this->stateBaseAddressTracking) {
         linearStreamSizeEstimate += estimateStateBaseAddressCmdSize();
     }
 
@@ -747,7 +751,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddressWithGsbaIfDirty(
     programStateBaseAddress(scratchSpaceController->calculateNewGSH(),
                             indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(),
                             cmdStream,
-                            ctx.cachedMOCSAllowed);
+                            ctx.cachedMOCSAllowed,
+                            nullptr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1197,7 +1202,7 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
 
     if (csrState.stateComputeMode.isDirty()) {
         NEO::PipelineSelectArgs pipelineSelectArgs = {
-            !!csrState.pipelineSelect.systolicMode.value,
+            csrState.pipelineSelect.systolicMode.value == 1,
             false,
             false,
             commandList->getSystolicModeSupport()};
@@ -1211,8 +1216,8 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForCommandList(CommandListExecutionContext &ctx,
-                                                                                  CommandList *commandList,
                                                                                   NEO::LinearStream &commandStream,
+                                                                                  CommandList *commandList,
                                                                                   NEO::StreamProperties &csrState,
                                                                                   const NEO::StreamProperties &cmdListRequired,
                                                                                   const NEO::StreamProperties &cmdListFinal) {
@@ -1222,6 +1227,18 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForCommandLis
     }
 
     csrState.stateBaseAddress.setProperties(cmdListRequired.stateBaseAddress);
+
+    if (ctx.gsbaStateDirty || csrState.stateBaseAddress.isDirty()) {
+        auto indirectHeap = commandList->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+        auto scratchSpaceController = this->csr->getScratchSpaceController();
+        programStateBaseAddress(scratchSpaceController->calculateNewGSH(),
+                                indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(),
+                                commandStream,
+                                ctx.cachedMOCSAllowed,
+                                &csrState);
+
+        ctx.gsbaStateDirty = false;
+    }
 
     csrState.stateBaseAddress.setProperties(cmdListFinal.stateBaseAddress);
 }
@@ -1238,6 +1255,28 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
     if (ssh != nullptr) {
         csrHw->getSshState().updateAndCheck(ssh);
     }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForMultipleCommandLists(bool &baseAddressStateDirty,
+                                                                                             NEO::StreamProperties &csrStateCopy,
+                                                                                             const NEO::StreamProperties &cmdListRequired,
+                                                                                             const NEO::StreamProperties &cmdListFinal) {
+    if (!this->stateBaseAddressTracking) {
+        return 0;
+    }
+
+    auto singleSbaDispatchSize = estimateStateBaseAddressCmdDispatchSize();
+    size_t estimatedSize = 0;
+
+    csrStateCopy.stateBaseAddress.setProperties(cmdListRequired.stateBaseAddress);
+    if (baseAddressStateDirty || csrStateCopy.stateBaseAddress.isDirty()) {
+        estimatedSize += singleSbaDispatchSize;
+        baseAddressStateDirty = false;
+    }
+    csrStateCopy.stateBaseAddress.setProperties(cmdListFinal.stateBaseAddress);
+
+    return estimatedSize;
 }
 
 } // namespace L0

@@ -279,7 +279,7 @@ struct CommandListCoreFamily : CommandListImp {
     void appendEventForProfiling(Event *event, bool beforeWalker);
     void appendEventForProfilingCopyCommand(Event *event, bool beforeWalker);
     void appendSignalEventPostWalker(Event *event);
-    virtual void programStateBaseAddress(NEO::CommandContainer &container, bool genericMediaStateClearRequired);
+    virtual void programStateBaseAddress(NEO::CommandContainer &container, bool useSbaProperties);
     void appendComputeBarrierCommand();
     NEO::PipeControlArgs createBarrierFlags();
     void appendMultiTileBarrier(NEO::Device &neoDevice);
@@ -317,6 +317,7 @@ struct CommandListCoreFamily : CommandListImp {
         }
         return this->containsStatelessUncachedResource;
     }
+    void postInitComputeSetup();
 
     static constexpr int32_t cmdListDefaultEngineInstancedDevice = NEO::StreamProperty::initValue;
     static constexpr bool cmdListDefaultCoherency = false;
@@ -338,6 +339,7 @@ struct CommandListCoreFamily : CommandListImp {
     size_t cmdListCurrentStartOffset = 0;
 
     int32_t currentMocsState = NEO::StreamProperty::initValue;
+    uint32_t defaultMocsIndex = 0;
 
     bool containsAnyKernel = false;
     bool pipeControlMultiKernelEventSync = false;

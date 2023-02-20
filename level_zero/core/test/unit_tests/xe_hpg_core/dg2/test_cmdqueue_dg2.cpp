@@ -59,7 +59,7 @@ HWTEST2_F(CommandQueueTestDG2, givenBindlessEnabledWhenProgramStateBaseAddressCa
     {
         NEO::LinearStream cmdStream(linearStreamBuffer, 4096);
         auto usedSpaceBefore = cmdStream.getUsed();
-        commandQueue->programStateBaseAddress(0, false, cmdStream, false);
+        commandQueue->programStateBaseAddress(0, false, cmdStream, false, nullptr);
         auto usedSpaceAfter = cmdStream.getUsed();
         ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
@@ -77,7 +77,7 @@ HWTEST2_F(CommandQueueTestDG2, givenBindlessEnabledWhenProgramStateBaseAddressCa
         const_cast<NEO::DeviceInfo &>(device->getDeviceInfo()).debuggerActive = true;
         NEO::LinearStream cmdStream(linearStreamBuffer, 4096);
         auto usedSpaceBefore = cmdStream.getUsed();
-        commandQueue->programStateBaseAddress(0, false, cmdStream, false);
+        commandQueue->programStateBaseAddress(0, false, cmdStream, false, nullptr);
         auto usedSpaceAfter = cmdStream.getUsed();
         ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
@@ -97,7 +97,7 @@ HWTEST2_F(CommandQueueTestDG2, givenBindlessEnabledWhenProgramStateBaseAddressCa
         const_cast<NEO::DeviceInfo &>(device->getDeviceInfo()).debuggerActive = false;
         NEO::LinearStream cmdStream(linearStreamBuffer, 4096);
         auto usedSpaceBefore = cmdStream.getUsed();
-        commandQueue->programStateBaseAddress(0, false, cmdStream, false);
+        commandQueue->programStateBaseAddress(0, false, cmdStream, false, nullptr);
         auto usedSpaceAfter = cmdStream.getUsed();
         ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
