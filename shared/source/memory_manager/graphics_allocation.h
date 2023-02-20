@@ -42,6 +42,7 @@ struct AubInfo {
     bool allocDumpable = false;
     bool bcsDumpOnly = false;
     bool memObjectsAllocationWithWritableFlags = false;
+    bool writeMemoryOnly = false;
 };
 
 class GraphicsAllocation : public IDNode<GraphicsAllocation> {
@@ -128,6 +129,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     void setAllocDumpable(bool dumpable, bool bcsDumpOnly) {
         aubInfo.allocDumpable = dumpable;
         aubInfo.bcsDumpOnly = bcsDumpOnly;
+    }
+    void setWriteMemoryOnly(bool writeMemoryOnly) {
+        aubInfo.writeMemoryOnly = writeMemoryOnly;
     }
     bool isAllocDumpable() const { return aubInfo.allocDumpable; }
     bool isMemObjectsAllocationWithWritableFlags() const { return aubInfo.memObjectsAllocationWithWritableFlags; }

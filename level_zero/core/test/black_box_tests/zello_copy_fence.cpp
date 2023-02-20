@@ -64,6 +64,7 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
         // Copy from heap to device-allocated memory
         SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, zeBuffer, heapBuffer, allocSize,
                                                            nullptr, 0, nullptr));
+        SUCCESS_OR_TERMINATE(zeCommandListAppendBarrier(cmdList, nullptr, 0, nullptr));
         // Copy from device-allocated memory to stack
         SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, stackBuffer, zeBuffer, allocSize,
                                                            nullptr, 0, nullptr));

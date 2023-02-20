@@ -69,7 +69,9 @@ void testAppendMemoryCopy(ze_context_handle_t &context, ze_device_handle_t &devi
                                                        useSyncCmdQ ? nullptr : event, 0, nullptr));
     // Copy from device-allocated memory to stack
     SUCCESS_OR_TERMINATE(zeCommandListAppendMemoryCopy(cmdList, stackBuffer, zeBuffer, allocSize,
-                                                       useSyncCmdQ ? nullptr : event2, 0, nullptr));
+                                                       useSyncCmdQ ? nullptr : event2,
+                                                       useSyncCmdQ ? 0 : 1,
+                                                       useSyncCmdQ ? nullptr : &event));
 
     if (!useSyncCmdQ) {
         // If Async mode, use event for syncing copies

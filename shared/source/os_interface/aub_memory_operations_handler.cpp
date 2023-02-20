@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,9 @@ MemoryOperationsStatus AubMemoryOperationsHandler::makeResident(Device *device, 
         }
 
         aubManager->writeMemory2(params);
-        residentAllocations.push_back(allocation);
+        if (!allocation->getAubInfo().writeMemoryOnly) {
+            residentAllocations.push_back(allocation);
+        }
     }
     return MemoryOperationsStatus::SUCCESS;
 }

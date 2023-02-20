@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,6 +25,45 @@ TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledThe
     auto result = memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
     EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
     EXPECT_TRUE(aubManager.writeMemory2Called);
+
+    auto itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
+    EXPECT_NE(memoryOperationsInterface->residentAllocations.end(), itor);
+    EXPECT_EQ(1u, memoryOperationsInterface->residentAllocations.size());
+
+    aubManager.writeMemory2Called = false;
+
+    result = memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
+    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_TRUE(aubManager.writeMemory2Called);
+
+    itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
+    EXPECT_NE(memoryOperationsInterface->residentAllocations.end(), itor);
+    EXPECT_EQ(2u, memoryOperationsInterface->residentAllocations.size());
+}
+
+TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnWriteOnlyAllocationThenTrueReturnedAndWriteCalled) {
+    MockAubManager aubManager;
+    getMemoryOperationsHandler()->setAubManager(&aubManager);
+    auto memoryOperationsInterface = getMemoryOperationsHandler();
+
+    allocPtr->setWriteMemoryOnly(true);
+
+    auto result = memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
+    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_TRUE(aubManager.writeMemory2Called);
+
+    auto itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
+    EXPECT_EQ(memoryOperationsInterface->residentAllocations.end(), itor);
+    EXPECT_EQ(0u, memoryOperationsInterface->residentAllocations.size());
+
+    aubManager.writeMemory2Called = false;
+    result = memoryOperationsInterface->makeResident(nullptr, ArrayRef<GraphicsAllocation *>(&allocPtr, 1));
+    EXPECT_EQ(result, MemoryOperationsStatus::SUCCESS);
+    EXPECT_TRUE(aubManager.writeMemory2Called);
+
+    itor = std::find(memoryOperationsInterface->residentAllocations.begin(), memoryOperationsInterface->residentAllocations.end(), allocPtr);
+    EXPECT_EQ(memoryOperationsInterface->residentAllocations.end(), itor);
+    EXPECT_EQ(0u, memoryOperationsInterface->residentAllocations.size());
 }
 
 TEST_F(AubMemoryOperationsHandlerTests, givenAubManagerWhenMakeResidentCalledOnCompressedAllocationThenPassCorrectParams) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,21 +17,26 @@
 
 using namespace NEO;
 
+struct MockAubMemoryOperationsHandler : public AubMemoryOperationsHandler {
+    using AubMemoryOperationsHandler::AubMemoryOperationsHandler;
+    using AubMemoryOperationsHandler::residentAllocations;
+};
+
 class AubMemoryOperationsHandlerTests : public ::testing::Test {
   public:
     void SetUp() override {
         DebugManager.flags.SetCommandStreamReceiver.set(2);
-        residencyHandler = std::unique_ptr<AubMemoryOperationsHandler>(new AubMemoryOperationsHandler(nullptr));
+        residencyHandler = std::unique_ptr<MockAubMemoryOperationsHandler>(new MockAubMemoryOperationsHandler(nullptr));
 
         allocPtr = &allocation;
     }
 
-    AubMemoryOperationsHandler *getMemoryOperationsHandler() {
+    MockAubMemoryOperationsHandler *getMemoryOperationsHandler() {
         return residencyHandler.get();
     }
 
     MockGraphicsAllocation allocation;
     GraphicsAllocation *allocPtr;
     DebugManagerStateRestore dbgRestore;
-    std::unique_ptr<AubMemoryOperationsHandler> residencyHandler;
+    std::unique_ptr<MockAubMemoryOperationsHandler> residencyHandler;
 };

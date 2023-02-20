@@ -240,16 +240,6 @@ template <typename TagSizeT>
 ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
     UNRECOVERABLE_IF(hostAddress == nullptr);
 
-    if (this->downloadAllocationRequired) {
-        auto eventAllocation = &this->getAllocation(device);
-
-        auto memoryIface = this->device->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get();
-        if (NEO::MemoryOperationsStatus::SUCCESS != memoryIface->isResident(nullptr, *eventAllocation)) {
-            ArrayRef<NEO::GraphicsAllocation *> allocationArray(&eventAllocation, 1);
-            memoryIface->makeResident(nullptr, allocationArray);
-        }
-    }
-
     if (isEventTimestampFlagSet()) {
         return hostEventSetValueTimestamps(eventVal);
     }
@@ -271,6 +261,16 @@ ze_result_t EventImp<TagSizeT>::hostEventSetValue(TagSizeT eventVal) {
         setRemainingPackets(eventVal, packetHostAddr, packets);
     }
 
+    if (this->downloadAllocationRequired) {
+        auto memoryIface = this->device->getNEODevice()->getRootDeviceEnvironment().memoryOperationsInterface.get();
+
+        auto eventAllocation = &this->getAllocation(device);
+        ArrayRef<NEO::GraphicsAllocation *> allocationArray(&eventAllocation, 1);
+        memoryIface->makeResident(nullptr, allocationArray);
+
+        constexpr uint32_t allBanks = std::numeric_limits<uint32_t>::max();
+        eventAllocation->setTbxWritable(true, allBanks);
+    }
     return ZE_RESULT_SUCCESS;
 }
 

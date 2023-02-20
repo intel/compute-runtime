@@ -2771,24 +2771,38 @@ HWTEST_F(EventTests, GivenCsrTbxModeWhenEventCreatedAndSignaledThenEventAllocati
     auto &ultCsr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     ultCsr.commandStreamReceiverType = CommandStreamReceiverType::CSR_TBX;
 
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
+
     auto event = whiteboxCast(getHelper<L0GfxCoreHelper>().createEvent(eventPool.get(), &eventDesc, device));
+    auto eventAllocation = &event->getAllocation(device);
+
+    EXPECT_TRUE(eventAllocation->getAubInfo().writeMemoryOnly);
 
     auto eventAllocItor = std::find(mockMemIface->gfxAllocationsForMakeResident.begin(),
                                     mockMemIface->gfxAllocationsForMakeResident.end(),
-                                    &event->getAllocation(device));
-    EXPECT_NE(mockMemIface->gfxAllocationsForMakeResident.end(), eventAllocItor);
-    EXPECT_EQ(1u, mockMemIface->isResidentCalledCount);
+                                    eventAllocation);
+    EXPECT_EQ(mockMemIface->gfxAllocationsForMakeResident.end(), eventAllocItor);
     EXPECT_EQ(1, mockMemIface->makeResidentCalledCount);
 
+    constexpr uint32_t expectedBanks = std::numeric_limits<uint32_t>::max();
+    eventAllocation->setTbxWritable(false, expectedBanks);
     auto status = event->hostSignal();
     EXPECT_EQ(ZE_RESULT_SUCCESS, status);
+    EXPECT_EQ(2, mockMemIface->makeResidentCalledCount);
 
-    EXPECT_EQ(2u, mockMemIface->isResidentCalledCount);
-    EXPECT_EQ(1, mockMemIface->makeResidentCalledCount);
+    EXPECT_TRUE(eventAllocation->isTbxWritable(expectedBanks));
+
+    std::bitset<32> singleBitMask;
+    for (uint32_t i = 0; i < 32; i++) {
+        singleBitMask.reset();
+        singleBitMask.set(i, true);
+        uint32_t bit = static_cast<uint32_t>(singleBitMask.to_ulong());
+        EXPECT_TRUE(eventAllocation->isTbxWritable(bit));
+    }
 
     event->reset();
-    EXPECT_EQ(3u, mockMemIface->isResidentCalledCount);
-    EXPECT_EQ(1, mockMemIface->makeResidentCalledCount);
+    EXPECT_EQ(3, mockMemIface->makeResidentCalledCount);
 
     size_t offset = event->getCompletionFieldOffset();
     void *completionAddress = ptrOffset(event->hostAddress, offset);

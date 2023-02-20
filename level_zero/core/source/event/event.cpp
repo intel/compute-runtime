@@ -97,8 +97,9 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
 
     this->isHostVisibleEventPoolAllocation = !(isEventPoolDeviceAllocationFlagSet());
 
+    auto neoDevice = devices[0]->getNEODevice();
     if (this->isDeviceEventPoolAllocation) {
-        NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, devices[0]->getNEODevice()->getDeviceBitfield()};
+        NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, neoDevice->getDeviceBitfield()};
         allocationProperties.alignment = eventAlignment;
 
         auto memoryManager = driver->getMemoryManager();
@@ -111,7 +112,6 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
                 this->isShareableEventMemory = (graphicsAllocation->peekInternalHandle(memoryManager, handle) == 0);
             }
         }
-
     } else {
         NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, systemMemoryBitfield};
         allocationProperties.alignment = eventAlignment;
@@ -119,16 +119,17 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
         eventPoolPtr = driver->getMemoryManager()->createMultiGraphicsAllocationInSystemMemoryPool(rootDeviceIndices,
                                                                                                    allocationProperties,
                                                                                                    *eventPoolAllocations);
-
         if (eventPoolFlags & ZE_EVENT_POOL_FLAG_IPC) {
             this->isShareableEventMemory = eventPoolAllocations->getDefaultGraphicsAllocation()->isShareableHostMemory;
         }
-
         allocatedMemory = (nullptr != eventPoolPtr);
     }
 
     if (!allocatedMemory) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+    if (neoDevice->getDefaultEngine().commandStreamReceiver->isTbxMode()) {
+        eventPoolAllocations->getDefaultGraphicsAllocation()->setWriteMemoryOnly(true);
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -287,6 +288,10 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
 
     if (alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
+
+    if (neoDevice->getDefaultEngine().commandStreamReceiver->isTbxMode()) {
+        alloc->setWriteMemoryOnly(true);
     }
 
     eventPool->context = context;

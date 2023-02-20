@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,9 @@ class MockMemoryOperations : public MemoryOperationsHandler {
         makeResidentCalledCount++;
         if (captureGfxAllocationsForMakeResident) {
             for (auto &gfxAllocation : gfxAllocations) {
-                gfxAllocationsForMakeResident.push_back(gfxAllocation);
+                if (!gfxAllocation->getAubInfo().writeMemoryOnly) {
+                    gfxAllocationsForMakeResident.push_back(gfxAllocation);
+                }
             }
         }
         return MemoryOperationsStatus::SUCCESS;
