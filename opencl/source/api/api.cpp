@@ -5813,7 +5813,7 @@ cl_int CL_API_CALL clGetDeviceGlobalVariablePointerINTEL(
             retVal = CL_INVALID_ARG_VALUE;
         } else {
             if (globalVariableSizeRet != nullptr) {
-                *globalVariableSizeRet = symbolIt->second.symbol.size;
+                *globalVariableSizeRet = static_cast<size_t>(symbolIt->second.symbol.size);
             }
             *globalVariablePointerRet = reinterpret_cast<void *>(symbolIt->second.gpuAddress);
         }

@@ -26,6 +26,7 @@
 #include "RelocationInfo.h"
 #include "gtest/gtest.h"
 
+#include <array>
 #include <string>
 
 TEST(SegmentTypeTests, givenSegmentTypeWhenAsStringIsCalledThenProperRepresentationIsReturned) {
@@ -359,44 +360,17 @@ TEST(LinkerInputTests, WhenAddingTwoElfTextRelocationForSingleSegmentIndexThenBo
     EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfInstructionSegments);
 }
 
-TEST(LinkerInputTests, WhenDecodingElfRelocationsWithAddendThenAddendIsSet) {
-    NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
-
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".text.abc";
-    sectionNames[1] = ".data.const";
-    elf64.setupSecionNames(std::move(sectionNames));
-
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
-    reloc.offset = 64;
-    reloc.addend = 128;
-    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
-    reloc.symbolName = "symbol1";
-    reloc.symbolSectionIndex = 1;
-    reloc.symbolTableIndex = 0;
-    reloc.targetSectionIndex = 0;
-    elf64.relocations.emplace_back(reloc);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-    nameToKernelId["abc"] = 0;
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto &relocsPerInstSegment = linkerInput.getRelocationsInInstructionSegments();
-    ASSERT_EQ(1u, relocsPerInstSegment.size());
-    auto &relocsKernelABC = relocsPerInstSegment[0];
-    ASSERT_EQ(1u, relocsKernelABC.size());
-
-    EXPECT_EQ(reloc.offset, relocsKernelABC[0].offset);
-    EXPECT_EQ(reloc.addend, relocsKernelABC[0].addend);
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocsKernelABC[0].type);
-    EXPECT_EQ(NEO::SegmentType::Instructions, relocsKernelABC[0].relocationSegment);
-    EXPECT_STREQ(reloc.symbolName.c_str(), relocsKernelABC[0].symbolName.c_str());
+TEST(LinkerInputTests, GivenVarDataSegmentThenIsVarDataSegmentReturnsTrue) {
+    EXPECT_TRUE(isVarDataSegment(SegmentType::GlobalVariables));
+    EXPECT_TRUE(isVarDataSegment(SegmentType::GlobalVariablesZeroInit));
 }
 
-TEST(LinkerInputTests, WhenDecodingElfTextRelocationsThenCorrectRelocationsAreAdded) {
+TEST(LinkerInputTests, GivenConstDataSegmentThenIsConstDataSegmentReturnsTrue) {
+    EXPECT_TRUE(isConstDataSegment(SegmentType::GlobalConstants));
+    EXPECT_TRUE(isConstDataSegment(SegmentType::GlobalConstantsZeroInit));
+}
+
+TEST(LinkerInputTests, GivenTwoGlobalSymbolsOfTypeFunctionEachPointingToDifferentInstructionSectionWhenDecodingElfThenLinkerInputIsInvalid) {
     NEO::LinkerInput linkerInput = {};
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
     MockElf<NEO::Elf::EI_CLASS_64> elf64;
@@ -408,618 +382,332 @@ TEST(LinkerInputTests, WhenDecodingElfTextRelocationsThenCorrectRelocationsAreAd
     sectionNames[2] = ".text.hello";
 
     elf64.setupSecionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
 
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
-    reloc.offset = 64;
-    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
-    reloc.symbolName = "symbol1";
-    reloc.symbolSectionIndex = 1;
-    reloc.symbolTableIndex = 0;
-    reloc.targetSectionIndex = 0;
-    elf64.relocations.emplace_back(reloc);
+    elf64.addSymbol(0, 0x1234000, 8, 0, Elf::STT_FUNC, Elf::STB_GLOBAL);
+    elf64.addSymbol(8, 0x5000, 16, 2, Elf::STT_FUNC, Elf::STB_GLOBAL);
 
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc2;
-    reloc2.offset = 32;
-    reloc2.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_32);
-    reloc2.symbolName = "symbol2";
-    reloc2.symbolSectionIndex = 1;
-    reloc2.symbolTableIndex = 0;
-    reloc2.targetSectionIndex = 2;
-    elf64.relocations.emplace_back(reloc2);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-
-    nameToKernelId["abc"] = 0;
-    nameToKernelId["hello"] = 1;
-
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0}, {"hello", 1}};
     linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto relocations = linkerInput.getRelocationsInInstructionSegments();
-    ASSERT_EQ(2u, relocations.size());
-
-    auto &segment0Relocs = relocations[0];
-    ASSERT_EQ(1u, segment0Relocs.size());
-
-    EXPECT_EQ(64u, segment0Relocs[0].offset);
-    EXPECT_EQ(NEO::SegmentType::Instructions, segment0Relocs[0].relocationSegment);
-    EXPECT_EQ("symbol1", segment0Relocs[0].symbolName);
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, segment0Relocs[0].type);
-
-    auto &segment1Relocs = relocations[1];
-    ASSERT_EQ(1u, segment1Relocs.size());
-
-    EXPECT_EQ(32u, segment1Relocs[0].offset);
-    EXPECT_EQ(NEO::SegmentType::Instructions, segment1Relocs[0].relocationSegment);
-    EXPECT_EQ("symbol2", segment1Relocs[0].symbolName);
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::AddressLow, segment1Relocs[0].type);
+    EXPECT_FALSE(linkerInput.isValid());
 }
 
-TEST(LinkerInputTests, GivenNoKernelNameToIdWhenDecodingElfTextRelocationsThenNoRelocationIsAdded) {
-    NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
+TEST(LinkerInputTests, GivenGlobalSymbolOfTypeObjectPointingToDataGlobalSectionWhenDecodingElfThenTraitExportsGlobalVariablesIsSet) {
     MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = ".data.global";
+    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    elf64.addSymbol(0, 0x20, 8, 1, Elf::STT_OBJECT, Elf::STB_GLOBAL);
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0}};
+
+    NEO::LinkerInput linkerInput = {};
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+    EXPECT_TRUE(linkerInput.isValid());
+    EXPECT_TRUE(linkerInput.getTraits().exportsGlobalVariables);
+    auto &symbol = linkerInput.getSymbols().at("0");
+    EXPECT_EQ(0x20U, symbol.offset);
+    EXPECT_EQ(8U, symbol.size);
+    EXPECT_EQ(SegmentType::GlobalVariables, symbol.segment);
+    EXPECT_TRUE(symbol.global);
+}
+
+TEST(LinkerInputTests, GivenGlobalSymbolOfTypeObjectPointingToDataConstSectionWhenDecodingElfThenTraitExportsGlobalVariablesIsSet) {
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
 
     std::unordered_map<uint32_t, std::string> sectionNames;
     sectionNames[0] = ".text.abc";
     sectionNames[1] = ".data.const";
-
     elf64.setupSecionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
 
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
-    reloc.offset = 64;
-    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
-    reloc.symbolName = "symbol1";
-    reloc.symbolSectionIndex = 1;
-    reloc.symbolTableIndex = 0;
-    reloc.targetSectionIndex = 0;
+    elf64.addSymbol(0, 0, 8, 1, Elf::STT_OBJECT, Elf::STB_GLOBAL);
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0}};
 
-    elf64.relocations.emplace_back(reloc);
+    NEO::LinkerInput linkerInput = {};
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+    EXPECT_TRUE(linkerInput.isValid());
+    EXPECT_TRUE(linkerInput.getTraits().exportsGlobalConstants);
+    auto &symbol = linkerInput.getSymbols().at("0");
+    EXPECT_EQ(0U, symbol.offset);
+    EXPECT_EQ(8U, symbol.size);
+    EXPECT_EQ(SegmentType::GlobalConstants, symbol.segment);
+    EXPECT_TRUE(symbol.global);
+}
+
+TEST(LinkerInputTests, GivenGlobalSymbolOfTypeFuncPointingToFunctionsSectionWhenDecodingElfThenTraitExportsFunctionsIsSetAndExportedFunctionsSegmentIdIsSet) {
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = Elf::SectionsNamesZebin::functions.str();
+    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    elf64.addSymbol(0, 0, 32, 1, Elf::STT_FUNC, Elf::STB_GLOBAL);
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0},
+                                                                  {Elf::SectionsNamesZebin::externalFunctions.str(), 1}};
+
+    NEO::LinkerInput linkerInput = {};
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+    EXPECT_TRUE(linkerInput.isValid());
+    EXPECT_TRUE(linkerInput.getTraits().exportsFunctions);
+    EXPECT_EQ(1, linkerInput.getExportedFunctionsSegmentId());
+    auto &symbol = linkerInput.getSymbols().at("0");
+    EXPECT_EQ(0U, symbol.offset);
+    EXPECT_EQ(32U, symbol.size);
+    EXPECT_EQ(SegmentType::Instructions, symbol.segment);
+    EXPECT_EQ(1U, symbol.instructionSegmentId);
+    EXPECT_TRUE(symbol.global);
+}
+
+TEST(LinkerInputTests, GivenGlobalSymbolOfTypeDifferentThantObjectOrFuncWhenDecodingElfThenItIsIgnored) {
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = ".data.const";
+    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    elf64.addSymbol(0, 0, 8, 0, Elf::STT_NOTYPE, Elf::STB_GLOBAL);
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0}};
+    NEO::LinkerInput linkerInput = {};
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+    EXPECT_TRUE(linkerInput.isValid());
+    EXPECT_EQ(0U, linkerInput.getSymbols().size());
+}
+
+TEST(LinkerInputTests, GivenGlobalSymbolPointingToSectionDifferentThanInstructionsOrDataWhenDecodingElfThenItIsIgnored) {
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ""; // UNDEF section
+    sectionNames[1] = ".text.abc";
+    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    elf64.addSymbol(0, 0, 8, 0, Elf::STT_OBJECT, Elf::STB_GLOBAL);
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0}};
+    NEO::LinkerInput linkerInput = {};
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+    EXPECT_TRUE(linkerInput.isValid());
+    EXPECT_EQ(0U, linkerInput.getSymbols().size());
+}
+
+TEST(LInkerInputTests, GivenSymbolPointingToInstructionSegmentAndInvalidInstructionSectionNameMappingWhenDecodingElfThenLinkerInputIsInvalid) {
+    NEO::LinkerInput linkerInput = {};
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.overrideSymbolName = true;
+
+    elf64.addSymbol(0, 0, 8, 0, Elf::STT_FUNC, Elf::STB_GLOBAL);
 
     NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
     nameToKernelId["wrong_name"] = 0;
-
     linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto relocations = linkerInput.getRelocationsInInstructionSegments();
-    ASSERT_EQ(0u, relocations.size());
+    EXPECT_FALSE(linkerInput.isValid());
 }
 
-TEST(LinkerInputTests, GivenInvalidTextSectionNameWhenDecodingElfTextRelocationsThenNoRelocationIsAdded) {
+TEST(LinkerInputTests, GivenInstructionRelocationAndInvalidInstructionSectionNameMappingWhenDecodingElfThenLinkerInputIsInvalid) {
     NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
     MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
 
     std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".invalid.abc";
+    sectionNames[0] = ".text.abc";
     sectionNames[1] = ".data.const";
-    sectionNames[2] = ".text.hello";
 
     elf64.setupSecionNames(std::move(sectionNames));
+    elf64.addReloc(64, 0, Elf::R_ZE_SYM_ADDR, 0, 0, "0");
 
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
-    reloc.offset = 64;
-    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
-    reloc.symbolName = "symbol1";
-    reloc.symbolSectionIndex = 1;
-    reloc.symbolTableIndex = 0;
-    reloc.targetSectionIndex = 0;
-
-    elf64.relocations.emplace_back(reloc);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-
-    nameToKernelId["abc"] = 0;
-    nameToKernelId["hello"] = 1;
-
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto relocations = linkerInput.getRelocationsInInstructionSegments();
-    ASSERT_EQ(0u, relocations.size());
-}
-
-TEST(LinkerInputTests, whenSymbolHasShndxReferringToSectionOfUnknownTypehenDoNotAddItToLinkerInput) {
-    NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
-
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".invalid.aaa";
-    elf64.setupSecionNames(std::move(sectionNames));
     elf64.overrideSymbolName = true;
+    elf64.addSymbol(0, 0x1234000, 8, 1, Elf::STT_OBJECT, Elf::STB_GLOBAL);
 
-    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol;
-    symbol.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_OBJECT | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
-    symbol.name = 0x20;
-    symbol.other = 0;
-    symbol.shndx = 0;
-    symbol.size = 0x8;
-    symbol.value = 0x4000;
-
-    elf64.symbolTable.emplace_back(symbol);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"wrong_name", 0}};
     linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto symbols = linkerInput.getSymbols();
-    ASSERT_EQ(0u, symbols.size());
+    EXPECT_FALSE(linkerInput.isValid());
 }
 
-TEST(LinkerInputTests, GivenValidZebinRelocationTypesWhenDecodingElfTextRelocationsThenCorrectTypeIsSet) {
+TEST(LinkerInputTests, GivenRelocationWithSymbolIdOutOfBoundsOfSymbolTableWhenDecodingElfThenLinkerInputIsInvalid) {
     NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
     MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
+
+    std::unordered_map<uint32_t, std::string> sectionNames = {{0, ".text.abc"}};
+    elf64.setupSecionNames(std::move(sectionNames));
+
+    elf64.addReloc(64, 0, Elf::R_ZE_SYM_ADDR, 0, 2, "symbol");
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+    nameToKernelId["abc"] = 0;
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+    EXPECT_FALSE(linkerInput.isValid());
+}
+
+TEST(LinkerInputTests, GivenRelocationToSectionDifferentThanDataOrInstructionsWhenDecodingElfThenItIsIgnored) {
+    NEO::LinkerInput linkerInput = {};
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+
+    std::unordered_map<uint32_t, std::string> sectionNames = {{0, ".text.abc"},
+                                                              {1, "unknown.section"}};
+    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.addReloc(64, 0, Elf::R_ZE_SYM_ADDR, 1, 2, "symbol");
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
+    nameToKernelId["abc"] = 0;
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+    EXPECT_TRUE(linkerInput.isValid());
+    EXPECT_TRUE(linkerInput.getDataRelocations().empty());
+    EXPECT_TRUE(linkerInput.getRelocationsInInstructionSegments().empty());
+}
+
+TEST(LinkerInputTests, GivenGlobalDataRelocationWithLocalSymbolPointingToConstDataWhenDecodingElfThenRelocationInfoAndSymbolInfoAreCreated) {
+    NEO::LinkerInput linkerInput = {};
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
 
     std::unordered_map<uint32_t, std::string> sectionNames;
     sectionNames[0] = ".text.abc";
     sectionNames[1] = ".data.const";
-    elf64.setupSecionNames(std::move(sectionNames));
-
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc1;
-    reloc1.offset = 0;
-    reloc1.relocType = NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_NONE;
-    reloc1.symbolName = "symbol1";
-    reloc1.symbolSectionIndex = 1;
-    reloc1.symbolTableIndex = 0;
-    reloc1.targetSectionIndex = 0;
-    elf64.relocations.emplace_back(reloc1);
-
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc2;
-    reloc2.offset = 0;
-    reloc2.relocType = NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR;
-    reloc2.symbolName = "symbol2";
-    reloc2.symbolSectionIndex = 1;
-    reloc2.symbolTableIndex = 0;
-    reloc2.targetSectionIndex = 0;
-    elf64.relocations.emplace_back(reloc2);
-
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc3;
-    reloc3.offset = 0;
-    reloc3.relocType = NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32;
-    reloc3.symbolName = "symbol3";
-    reloc3.symbolSectionIndex = 1;
-    reloc3.symbolTableIndex = 0;
-    reloc3.targetSectionIndex = 0;
-    elf64.relocations.emplace_back(reloc3);
-
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc4;
-    reloc4.offset = 0;
-    reloc4.relocType = NEO::Elf::RELOC_TYPE_ZEBIN::R_ZE_SYM_ADDR_32_HI;
-    reloc4.symbolName = "symbol4";
-    reloc4.symbolSectionIndex = 1;
-    reloc4.symbolTableIndex = 0;
-    reloc4.targetSectionIndex = 0;
-    elf64.relocations.emplace_back(reloc4);
-
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc5;
-    reloc5.offset = 0;
-    reloc5.relocType = NEO::Elf::RELOC_TYPE_ZEBIN::R_PER_THREAD_PAYLOAD_OFFSET;
-    reloc5.symbolName = "symbol5";
-    reloc5.symbolSectionIndex = 1;
-    reloc5.symbolTableIndex = 0;
-    reloc5.targetSectionIndex = 0;
-    elf64.relocations.emplace_back(reloc5);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-    nameToKernelId["abc"] = 0;
-
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto relocations = linkerInput.getRelocationsInInstructionSegments();
-    ASSERT_EQ(1u, relocations.size());
-    ASSERT_EQ(5u, relocations[0].size());
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Unknown, relocations[0][0].type);
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocations[0][1].type);
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::AddressLow, relocations[0][2].type);
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::AddressHigh, relocations[0][3].type);
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::PerThreadPayloadOffset, relocations[0][4].type);
-}
-
-TEST(LinkerInputTests, GivenInvalidRelocationTypeWhenDecodingElfTextRelocationsThenUnknownTypeIsSet) {
-    NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
-
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".text.abc";
-    sectionNames[1] = ".data.const";
-    sectionNames[2] = ".text.hello";
+    sectionNames[2] = ".data.global";
 
     elf64.setupSecionNames(std::move(sectionNames));
+    elf64.addReloc(64, 10, Elf::R_ZE_SYM_ADDR, 2, 0, "0");
 
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
-    reloc.offset = 64;
-    reloc.relocType = 0xffffffff; // invalid type
-    reloc.symbolName = "symbol1";
-    reloc.symbolSectionIndex = 1;
-    reloc.symbolTableIndex = 0;
-    reloc.targetSectionIndex = 0;
-
-    elf64.relocations.emplace_back(reloc);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-
-    nameToKernelId["abc"] = 0;
-    nameToKernelId["hello"] = 1;
-
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto relocations = linkerInput.getRelocationsInInstructionSegments();
-    ASSERT_EQ(1u, relocations.size());
-    ASSERT_EQ(1u, relocations[0].size());
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Unknown, relocations[0][0].type);
-}
-
-TEST(LinkerInputTests, WhenDecodingElfGlobalDataRelocationsThenCorrectRelocationsAreAdded) {
-    NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
-
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".text.abc";
-    sectionNames[1] = ".data.global";
-    sectionNames[2] = ".data.const";
-
-    elf64.setupSecionNames(std::move(sectionNames));
-
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
-    reloc.offset = 64;
-    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
-    reloc.symbolName = "symbol1";
-    reloc.symbolSectionIndex = 1;
-    reloc.symbolTableIndex = 0;
-    reloc.targetSectionIndex = 1;
-
-    elf64.relocations.emplace_back(reloc);
-
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc2;
-    reloc2.offset = 32;
-    reloc2.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
-    reloc2.symbolName = "symbol2";
-    reloc2.symbolSectionIndex = 2;
-    reloc2.symbolTableIndex = 1;
-    reloc2.targetSectionIndex = 1;
-
-    elf64.relocations.emplace_back(reloc2);
-
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc3;
-    reloc3.offset = 0;
-    reloc3.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
-    reloc3.symbolName = "symbol3";
-    reloc3.symbolSectionIndex = 0;
-    reloc3.symbolTableIndex = 2;
-    reloc3.targetSectionIndex = 1;
-
-    elf64.relocations.emplace_back(reloc3);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-
-    nameToKernelId["abc"] = 0;
-
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto relocations = linkerInput.getDataRelocations();
-    ASSERT_EQ(3u, relocations.size());
-
-    EXPECT_EQ(64u, relocations[0].offset);
-    EXPECT_EQ(NEO::SegmentType::GlobalVariables, relocations[0].relocationSegment);
-    EXPECT_EQ("symbol1", relocations[0].symbolName);
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocations[0].type);
-
-    EXPECT_EQ(32u, relocations[1].offset);
-    EXPECT_EQ(NEO::SegmentType::GlobalVariables, relocations[1].relocationSegment);
-    EXPECT_EQ("symbol2", relocations[1].symbolName);
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocations[1].type);
-
-    EXPECT_EQ(0u, relocations[2].offset);
-    EXPECT_EQ(NEO::SegmentType::GlobalVariables, relocations[2].relocationSegment);
-    EXPECT_EQ("symbol3", relocations[2].symbolName);
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocations[2].type);
-}
-
-TEST(LinkerInputTests, WhenDecodingElfConstantDataRelocationsThenCorrectRelocationsAreAdded) {
-    NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
-
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".text.abc";
-    sectionNames[1] = ".data.global";
-    sectionNames[2] = ".data.const";
-
-    elf64.setupSecionNames(std::move(sectionNames));
-
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
-    reloc.offset = 64;
-    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
-    reloc.symbolName = "symbol1";
-    reloc.symbolSectionIndex = 1;
-    reloc.symbolTableIndex = 0;
-    reloc.targetSectionIndex = 2;
-
-    elf64.relocations.emplace_back(reloc);
-
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc2;
-    reloc2.offset = 32;
-    reloc2.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
-    reloc2.symbolName = "symbol2";
-    reloc2.symbolSectionIndex = 2;
-    reloc2.symbolTableIndex = 0;
-    reloc2.targetSectionIndex = 2;
-
-    elf64.relocations.emplace_back(reloc2);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-
-    nameToKernelId["abc"] = 0;
-
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto relocations = linkerInput.getDataRelocations();
-    ASSERT_EQ(2u, relocations.size());
-
-    EXPECT_EQ(64u, relocations[0].offset);
-    EXPECT_EQ(NEO::SegmentType::GlobalConstants, relocations[0].relocationSegment);
-    EXPECT_EQ("symbol1", relocations[0].symbolName);
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocations[0].type);
-
-    EXPECT_EQ(32u, relocations[1].offset);
-    EXPECT_EQ(NEO::SegmentType::GlobalConstants, relocations[1].relocationSegment);
-    EXPECT_EQ("symbol2", relocations[1].symbolName);
-    EXPECT_EQ(NEO::LinkerInput::RelocationInfo::Type::Address, relocations[1].type);
-}
-
-TEST(LinkerInputTests, GivenUnsupportedDataSegmentWhenDecodingElfDataRelocationThenNoRelocationsAreAdded) {
-    NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
-
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".text.abc";
-    sectionNames[1] = ".data";
-    sectionNames[2] = ".data.const";
-
-    elf64.setupSecionNames(std::move(sectionNames));
-
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
-    reloc.offset = 64;
-    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
-    reloc.symbolName = "symbol1";
-    reloc.symbolSectionIndex = 2;
-    reloc.symbolTableIndex = 0;
-    reloc.targetSectionIndex = 1;
-
-    elf64.relocations.emplace_back(reloc);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-
-    nameToKernelId["abc"] = 0;
-
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto relocations = linkerInput.getDataRelocations();
-    ASSERT_EQ(0u, relocations.size());
-}
-
-TEST(LinkerInputTests, GivenUnsupportedSymbolSegmentWhenDecodingElfDataRelocationThenNoRelocationsAreAdded) {
-    NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
-
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".unknown_section";
-    sectionNames[1] = ".data";
-    sectionNames[2] = ".data.const";
-
-    elf64.setupSecionNames(std::move(sectionNames));
-
-    NEO::Elf::Elf<NEO::Elf::EI_CLASS_64>::RelocationInfo reloc;
-    reloc.offset = 64;
-    reloc.relocType = static_cast<uint32_t>(Elf::RELOCATION_X8664_TYPE::R_X8664_64);
-    reloc.symbolName = "symbol1";
-    reloc.symbolSectionIndex = 1;
-    reloc.symbolTableIndex = 0;
-    reloc.targetSectionIndex = 2;
-
-    elf64.relocations.emplace_back(reloc);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-
-    nameToKernelId["abc"] = 0;
-
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto relocations = linkerInput.getDataRelocations();
-    ASSERT_EQ(0u, relocations.size());
-}
-
-TEST(LinkerInputTests, GivenGlobalAndLocalElfSymbolsWhenDecodingThenOnlyGlobalSymbolsAreAdded) {
-    NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
-
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".text.abc";
-    sectionNames[1] = ".data.const";
-    sectionNames[2] = ".text.hello";
-
-    elf64.setupSecionNames(std::move(sectionNames));
     elf64.overrideSymbolName = true;
+    elf64.addSymbol(0, 0x0, 8, 1, Elf::STT_OBJECT, Elf::STB_LOCAL);
 
-    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol;
-    symbol.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_OBJECT | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
-    symbol.name = 0;
-    symbol.other = 0;
-    symbol.shndx = 1;
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0}};
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+    EXPECT_TRUE(linkerInput.isValid());
+    auto &symbol = linkerInput.getSymbols().at("0");
+    EXPECT_FALSE(symbol.global);
+    EXPECT_EQ(0U, symbol.offset);
+    EXPECT_EQ(8U, symbol.size);
+    EXPECT_EQ(SegmentType::GlobalConstants, symbol.segment);
+    auto &dataRelocations = linkerInput.getDataRelocations();
+    EXPECT_EQ(1U, dataRelocations.size());
+    EXPECT_EQ(64U, dataRelocations[0].offset);
+    EXPECT_EQ(10U, dataRelocations[0].addend);
+    EXPECT_EQ(SegmentType::GlobalVariables, dataRelocations[0].relocationSegment);
+    EXPECT_EQ("0", dataRelocations[0].symbolName);
+    EXPECT_EQ(LinkerInput::RelocationInfo::Type::Address, dataRelocations[0].type);
+    EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfGlobalVariablesBuffer);
+}
+
+TEST(LinkerInputTests, GivenInstructionRelocationWithLocalSymbolPointingToFunctionsWhendDecodingElfThenRelocationsInfoAndSymbolInfoAreCreated) {
+    NEO::LinkerInput linkerInput = {};
+    MockElf<NEO::Elf::EI_CLASS_64> elf64;
+
+    std::unordered_map<uint32_t, std::string> sectionNames;
+    sectionNames[0] = ".text.abc";
+    sectionNames[1] = Elf::SectionsNamesZebin::functions.str();
+
+    elf64.setupSecionNames(std::move(sectionNames));
+    elf64.addReloc(64, 10, Elf::R_ZE_SYM_ADDR, 0, 0, "0");
+
+    elf64.overrideSymbolName = true;
+    elf64.addSymbol(0, 0x10, 0x40, 1, Elf::STT_FUNC, Elf::STB_LOCAL);
+
+    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId = {{"abc", 0},
+                                                                  {Elf::SectionsNamesZebin::externalFunctions.str(), 1}};
+    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
+    EXPECT_TRUE(linkerInput.isValid());
+    auto &symbol = linkerInput.getSymbols().at("0");
+    EXPECT_FALSE(symbol.global);
+    EXPECT_EQ(0x10U, symbol.offset);
+    EXPECT_EQ(0x40U, symbol.size);
+    EXPECT_EQ(SegmentType::Instructions, symbol.segment);
+    EXPECT_EQ(1U, symbol.instructionSegmentId);
+
+    auto &instructionRelocsPerSeg = linkerInput.getRelocationsInInstructionSegments();
+    EXPECT_EQ(1U, instructionRelocsPerSeg.size());
+    auto &relocations = instructionRelocsPerSeg[0];
+    EXPECT_EQ(1U, relocations.size());
+    EXPECT_EQ(64U, relocations[0].offset);
+    EXPECT_EQ(10U, relocations[0].addend);
+    EXPECT_EQ(SegmentType::Instructions, relocations[0].relocationSegment);
+    EXPECT_EQ("0", relocations[0].symbolName);
+    EXPECT_EQ(LinkerInput::RelocationInfo::Type::Address, relocations[0].type);
+    EXPECT_TRUE(linkerInput.getTraits().requiresPatchingOfInstructionSegments);
+}
+
+TEST(LinkerTests, GivenSymbolToInstructionsAndNoCorrespondingInstructionSegmentWhenRelocatingSymbolsThenFail) {
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    auto &symbol = linkerInput.symbols["func"];
+    symbol.segment = SegmentType::Instructions;
+    symbol.instructionSegmentId = 4;
+
+    WhiteBox<NEO::Linker> linker(linkerInput);
+    Linker::PatchableSegments instSegments;
+    auto result = linker.relocateSymbols({}, {}, {}, {}, instSegments, 0U, 0U);
+    EXPECT_FALSE(result);
+}
+
+TEST(LinkerTests, GivenSymbolToInstructionBiggerThanCorrespondingInstructionSegmentWhenRelocatingSymbolsThenFail) {
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    auto &symbol = linkerInput.symbols["func"];
+    symbol.segment = SegmentType::Instructions;
+    symbol.instructionSegmentId = 0;
+    symbol.offset = 8;
     symbol.size = 8;
-    symbol.value = 0x1234000;
 
-    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol2;
-    symbol2.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_FUNC | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
-    symbol2.name = 8;
-    symbol2.other = 0;
-    symbol2.shndx = 0;
-    symbol2.size = 16;
-    symbol2.value = 0x5000;
+    WhiteBox<NEO::Linker> linker(linkerInput);
+    Linker::PatchableSegments instSegments(1);
+    instSegments[0].segmentSize = static_cast<size_t>(symbol.offset + symbol.size - 1);
 
-    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol3;
-    symbol3.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_FUNC | NEO::Elf::SYMBOL_TABLE_BIND::STB_LOCAL << 4;
-    symbol3.name = 16;
-    symbol3.other = 0;
-    symbol3.shndx = 0;
-    symbol3.size = 8;
-    symbol3.value = 0;
-
-    elf64.symbolTable.emplace_back(symbol);
-    elf64.symbolTable.emplace_back(symbol2);
-    elf64.symbolTable.emplace_back(symbol3);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-
-    nameToKernelId["abc"] = 0;
-    nameToKernelId["hello"] = 1;
-
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto symbols = linkerInput.getSymbols();
-    ASSERT_EQ(2u, symbols.size());
-
-    EXPECT_EQ(0x1234000u, symbols[std::to_string(symbol.name)].offset);
-    EXPECT_EQ(NEO::SegmentType::GlobalConstants, symbols[std::to_string(symbol.name)].segment);
-    EXPECT_EQ(8u, symbols[std::to_string(symbol.name)].size);
-
-    EXPECT_EQ(0x5000u, symbols[std::to_string(symbol2.name)].offset);
-    EXPECT_EQ(NEO::SegmentType::Instructions, symbols[std::to_string(symbol2.name)].segment);
-    EXPECT_EQ(16u, symbols[std::to_string(symbol2.name)].size);
-
-    EXPECT_FALSE(linkerInput.getTraits().exportsGlobalVariables);
-    EXPECT_TRUE(linkerInput.getTraits().exportsGlobalConstants);
-    EXPECT_TRUE(linkerInput.getTraits().exportsFunctions);
+    auto result = linker.relocateSymbols({}, {}, {}, {}, instSegments, 0U, 0U);
+    EXPECT_FALSE(result);
 }
 
-TEST(LinkerInputTests, GivenGlobalFunctionsInTwoSegmentsWhenDecodingThenUnrecoverableIsCalled) {
-    NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
-
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".text.abc";
-    sectionNames[1] = ".data.const";
-    sectionNames[2] = ".text.hello";
-
-    elf64.setupSecionNames(std::move(sectionNames));
-    elf64.overrideSymbolName = true;
-
-    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol;
-    symbol.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_FUNC | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
-    symbol.name = 0;
-    symbol.other = 0;
-    symbol.shndx = 0;
+TEST(LinkerTests, GivenValidSymbolToInstructionsWhenRelocatingSymbolsThenSymbolIsProperlyRelocated) {
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    auto &symbol = linkerInput.symbols["func"];
+    symbol.segment = SegmentType::Instructions;
+    symbol.instructionSegmentId = 0;
+    symbol.offset = 4;
     symbol.size = 8;
-    symbol.value = 0x1234000;
 
-    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol2;
-    symbol2.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_FUNC | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
-    symbol2.name = 8;
-    symbol2.other = 0;
-    symbol2.shndx = 2;
-    symbol2.size = 16;
-    symbol2.value = 0x5000;
+    WhiteBox<NEO::Linker> linker(linkerInput);
+    Linker::PatchableSegments instSegments(1);
+    instSegments[0].segmentSize = 32;
+    instSegments[0].gpuAddress = 0xaabbccdd;
 
-    elf64.symbolTable.emplace_back(symbol);
-    elf64.symbolTable.emplace_back(symbol2);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-
-    nameToKernelId["abc"] = 0;
-    nameToKernelId["hello"] = 1;
-
-    EXPECT_THROW(linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId), std::exception);
-
-    auto symbols = linkerInput.getSymbols();
-    ASSERT_EQ(1u, symbols.size());
-    EXPECT_EQ(0, linkerInput.getExportedFunctionsSegmentId());
+    auto result = linker.relocateSymbols({}, {}, {}, {}, instSegments, 0U, 0U);
+    EXPECT_TRUE(result);
+    EXPECT_EQ(1U, linker.relocatedSymbols.size());
+    EXPECT_EQ(linker.relocatedSymbols["func"].gpuAddress, instSegments[0].gpuAddress + symbol.offset);
 }
 
-TEST(LinkerInputTests, GivenNoKernelNameToIdWhenDecodingGlobalFunctionThenExportedFunctionsSegmentIsNotSet) {
-    NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
+TEST(LinkerTests, GivenRelocationToInstructionSegmentWithLocalUndefinedSymbolWhenPatchingInstructionsSegmentsThenItIsPatchedWithZeroes) {
+    WhiteBox<NEO::LinkerInput> linkerInput;
+    linkerInput.traits.requiresPatchingOfInstructionSegments = true;
+    NEO::LinkerInput::RelocationInfo rela;
+    rela.offset = 0U;
+    rela.addend = 128U;
+    rela.type = NEO::LinkerInput::RelocationInfo::Type::Address;
+    rela.symbolName = "";
+    rela.relocationSegment = NEO::SegmentType::Instructions;
+    linkerInput.textRelocations.push_back({rela});
 
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".text.abc";
+    WhiteBox<NEO::Linker> linker(linkerInput);
 
-    elf64.setupSecionNames(std::move(sectionNames));
-    elf64.overrideSymbolName = true;
+    uint64_t instructionSegmentData{std::numeric_limits<uint64_t>::max()};
+    NEO::Linker::PatchableSegment instructionSegmentToPatch;
+    instructionSegmentToPatch.hostPointer = reinterpret_cast<void *>(&instructionSegmentData);
+    instructionSegmentToPatch.segmentSize = sizeof(instructionSegmentData);
 
-    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol;
-    symbol.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_FUNC | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
-    symbol.name = 0;
-    symbol.other = 0;
-    symbol.shndx = 0;
-    symbol.size = 8;
-    symbol.value = 0x1234000;
+    NEO::Linker::UnresolvedExternals unresolvedExternals;
+    NEO::Linker::KernelDescriptorsT kernelDescriptors;
 
-    elf64.symbolTable.emplace_back(symbol);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-    nameToKernelId["hello"] = 1;
-
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto symbols = linkerInput.getSymbols();
-    ASSERT_EQ(1u, symbols.size());
-    EXPECT_EQ(-1, linkerInput.getExportedFunctionsSegmentId());
-}
-
-TEST(LinkerInputTests, GivenGlobalElfSymbolOfNoTypeWhenDecodingThenDebugBreakCalled) {
-    NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
-
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    sectionNames[0] = ".text.abc";
-    sectionNames[1] = ".data.const";
-    sectionNames[2] = ".text.hello";
-
-    elf64.setupSecionNames(std::move(sectionNames));
-    elf64.overrideSymbolName = true;
-
-    NEO::Elf::ElfSymbolEntry<NEO::Elf::EI_CLASS_64> symbol;
-    symbol.info = NEO::Elf::SYMBOL_TABLE_TYPE::STT_NOTYPE | NEO::Elf::SYMBOL_TABLE_BIND::STB_GLOBAL << 4;
-    symbol.name = 0;
-    symbol.other = 0;
-    symbol.shndx = 1;
-    symbol.size = 8;
-    symbol.value = 0x1234000;
-
-    elf64.symbolTable.emplace_back(symbol);
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-
-    nameToKernelId["abc"] = 0;
-    nameToKernelId["hello"] = 1;
-
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    auto symbols = linkerInput.getSymbols();
-    ASSERT_EQ(0u, symbols.size());
-
-    EXPECT_FALSE(linkerInput.getTraits().exportsGlobalVariables);
-    EXPECT_FALSE(linkerInput.getTraits().exportsGlobalConstants);
-    EXPECT_FALSE(linkerInput.getTraits().exportsFunctions);
+    linker.patchInstructionsSegments({instructionSegmentToPatch}, unresolvedExternals, kernelDescriptors);
+    auto instructionSegmentPatchedData = reinterpret_cast<uint64_t *>(ptrOffset(instructionSegmentToPatch.hostPointer, static_cast<size_t>(rela.offset)));
+    EXPECT_EQ(0u, static_cast<uint64_t>(*instructionSegmentPatchedData));
+    EXPECT_EQ(0u, unresolvedExternals.size());
 }
 
 TEST(LinkerInputTests, GivenInvalidFunctionsSymbolsUsedInFunctionsRelocationsWhenParsingRelocationsForExtFuncUsageThenDoNotAddDependency) {
@@ -1264,7 +952,7 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsThenInstructionSegmentsArePrope
 
     vISA::GenRelocEntry relocs[] = {relocA, relocB, relocC, relocCPartHigh, relocCPartLow, relocPerThreadPayloadOffset};
     constexpr uint32_t numRelocations = sizeof(relocs) / sizeof(relocs[0]);
-    bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 0);
+    bool decodeRelocSuccess = linkerInput.decodeRelocationTable(&relocs, numRelocations, 1);
     EXPECT_TRUE(decodeRelocSuccess);
 
     NEO::Linker linker(linkerInput);
@@ -1274,24 +962,34 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsThenInstructionSegmentsArePrope
     globalConstSegment.gpuAddress = 128;
     globalConstSegment.segmentSize = 256;
     exportedFuncSegment.gpuAddress = 4096;
-    exportedFuncSegment.segmentSize = 1024;
+    exportedFuncSegment.segmentSize = 128;
     NEO::Linker::UnresolvedExternals unresolvedExternals;
+
+    std::vector<char> exportedFuncSegmentData(exportedFuncSegment.segmentSize, 0);
 
     std::vector<char> instructionSegment;
     uint32_t initData = 0x77777777;
     instructionSegment.resize(64, static_cast<char>(initData));
-    NEO::Linker::PatchableSegment seg0;
-    seg0.hostPointer = instructionSegment.data();
-    seg0.segmentSize = instructionSegment.size();
-    NEO::Linker::PatchableSegments patchableInstructionSegments{seg0};
+    NEO::Linker::PatchableSegments patchableInstructionSegments(2);
+    patchableInstructionSegments[0].hostPointer = exportedFuncSegmentData.data();
+    patchableInstructionSegments[0].gpuAddress = exportedFuncSegment.gpuAddress;
+    patchableInstructionSegments[0].segmentSize = exportedFuncSegment.segmentSize;
+
+    patchableInstructionSegments[1].hostPointer = instructionSegment.data();
+    patchableInstructionSegments[1].gpuAddress = 0x0;
+    patchableInstructionSegments[1].segmentSize = instructionSegment.size();
+
     NEO::GraphicsAllocation *patchableGlobalVarSeg = nullptr;
     NEO::GraphicsAllocation *patchableConstVarSeg = nullptr;
     NEO::Linker::KernelDescriptorsT kernelDescriptors;
     NEO::Linker::ExternalFunctionsT externalFunctions;
 
+    kernelDescriptors.resize(2);
+    KernelDescriptor dummyKernelDescriptor;
     KernelDescriptor kd;
     kd.kernelAttributes.crossThreadDataSize = 0x20;
-    kernelDescriptors.push_back(&kd);
+    kernelDescriptors[0] = &dummyKernelDescriptor;
+    kernelDescriptors[1] = &kd;
 
     auto linkResult = linker.link(
         globalVarSegment, globalConstSegment, exportedFuncSegment, {},
@@ -1518,9 +1216,9 @@ TEST(LinkerTests, givenValidStringSymbolsAndRelocationsWhenPatchingThenItIsPrope
         nullptr, nullptr, 0, nullptr, 0, kernelDescriptors, externalFunctions);
     EXPECT_EQ(NEO::LinkingStatus::LinkedFully, linkResult);
     EXPECT_EQ(0U, unresolvedExternals.size());
-    EXPECT_EQ(1U, linker.extractRelocatedSymbols().size());
+    EXPECT_TRUE(linker.extractRelocatedSymbols().empty());
 
-    uintptr_t strAddr = stringSegment.gpuAddress + strSymbol.offset;
+    uintptr_t strAddr = static_cast<uintptr_t>(stringSegment.gpuAddress) + static_cast<uintptr_t>(strSymbol.offset);
     uintptr_t patchAddr = reinterpret_cast<uintptr_t>(instructionSegment) + static_cast<uintptr_t>(relocation.offset);
 
     EXPECT_EQ(static_cast<size_t>(strAddr), *reinterpret_cast<const size_t *>(patchAddr));
@@ -1557,21 +1255,25 @@ TEST(LinkerTests, givenValidSymbolsAndRelocationsWhenPatchingDataSegmentsThenThe
 
     WhiteBox<NEO::LinkerInput> linkerInput;
     auto &fun1 = linkerInput.symbols["fun1"];
+    fun1.global = true;
     fun1.segment = SegmentType::Instructions;
     fun1.offset = 0U;
     fun1.size = 8U;
 
     auto &fun2 = linkerInput.symbols["fun2"];
+    fun2.global = true;
     fun2.segment = SegmentType::Instructions;
     fun2.offset = 8U;
     fun2.size = 8U;
 
     auto &var1 = linkerInput.symbols["var1"];
+    var1.global = true;
     var1.segment = SegmentType::GlobalVariables;
     var1.offset = 8U;
     var1.size = 8U;
 
     auto &const1 = linkerInput.symbols["const1"];
+    const1.global = true;
     const1.segment = SegmentType::GlobalConstants;
     const1.offset = 8U;
     const1.size = 8U;
@@ -2698,184 +2400,4 @@ TEST(LinkerTests, givenPerThreadPayloadOffsetRelocationWhenPatchingInstructionSe
     linker.patchInstructionsSegments({segmentToPatch}, unresolvedExternals, kernelDescriptors);
     auto perThreadPayloadOffsetPatchedValue = reinterpret_cast<uint32_t *>(ptrOffset(segmentToPatch.hostPointer, static_cast<size_t>(rel.offset)));
     EXPECT_EQ(kd.kernelAttributes.crossThreadDataSize, static_cast<uint32_t>(*perThreadPayloadOffsetPatchedValue));
-}
-
-TEST(LinkerTests, givenRelocationToInstructionSegmentWithLocalSymbolPointingToSameSegmentThenItIsPatched) {
-    std::string kernelName{"test_kernel"};
-    WhiteBox<NEO::LinkerInput> linkerInput;
-    linkerInput.traits.requiresPatchingOfInstructionSegments = true;
-    NEO::LinkerInput::RelocationInfo rela;
-    rela.offset = 0U;
-    rela.addend = 128U;
-    rela.type = NEO::LinkerInput::RelocationInfo::Type::Address;
-    rela.symbolName = kernelName;
-    rela.relocationSegment = NEO::SegmentType::Instructions;
-    linkerInput.textRelocations.push_back({rela});
-
-    WhiteBox<NEO::Linker> linker(linkerInput);
-    constexpr uint64_t symValue = 64U;
-    linker.localRelocatedSymbols[kernelName].gpuAddress = symValue;
-
-    uint64_t instructionSegmentData{std::numeric_limits<uint64_t>::max()};
-    NEO::Linker::PatchableSegment instructionSegmentToPatch;
-    instructionSegmentToPatch.hostPointer = reinterpret_cast<void *>(&instructionSegmentData);
-    instructionSegmentToPatch.segmentSize = sizeof(instructionSegmentData);
-
-    NEO::Linker::UnresolvedExternals unresolvedExternals;
-    ASSERT_EQ(0u, unresolvedExternals.size());
-    NEO::Linker::KernelDescriptorsT kernelDescriptors;
-
-    KernelDescriptor kd;
-    kd.kernelMetadata.kernelName = kernelName;
-    kernelDescriptors.push_back(&kd);
-    linker.patchInstructionsSegments({instructionSegmentToPatch}, unresolvedExternals, kernelDescriptors);
-    auto instructionSegmentPatchedData = reinterpret_cast<uint64_t *>(ptrOffset(instructionSegmentToPatch.hostPointer, static_cast<size_t>(rela.offset)));
-    EXPECT_EQ(symValue + rela.addend, static_cast<uint64_t>(*instructionSegmentPatchedData));
-    EXPECT_EQ(0u, unresolvedExternals.size());
-}
-
-TEST(LinkerTests, givenRelocationToInstructionSegmentWithLocalSymbolPointingToDifferentSegmentThenItIsNotPatched) {
-    std::string kernelName{"test_kernel"};
-    WhiteBox<NEO::LinkerInput> linkerInput;
-    linkerInput.traits.requiresPatchingOfInstructionSegments = true;
-    NEO::LinkerInput::RelocationInfo rela;
-    rela.offset = 0U;
-    rela.addend = 128U;
-    rela.type = NEO::LinkerInput::RelocationInfo::Type::Address;
-    rela.symbolName = kernelName;
-    rela.relocationSegment = NEO::SegmentType::Instructions;
-    linkerInput.textRelocations.push_back({rela});
-
-    WhiteBox<NEO::Linker> linker(linkerInput);
-    constexpr uint64_t symValue = 64U;
-    linker.localRelocatedSymbols[kernelName].gpuAddress = symValue;
-
-    uint64_t instructionSegmentData{std::numeric_limits<uint64_t>::max()};
-    NEO::Linker::PatchableSegment instructionSegmentToPatch;
-    instructionSegmentToPatch.hostPointer = reinterpret_cast<void *>(&instructionSegmentData);
-    instructionSegmentToPatch.segmentSize = sizeof(instructionSegmentData);
-
-    NEO::Linker::UnresolvedExternals unresolvedExternals;
-    ASSERT_EQ(0u, unresolvedExternals.size());
-    NEO::Linker::KernelDescriptorsT kernelDescriptors;
-
-    KernelDescriptor kd;
-    kd.kernelMetadata.kernelName = "not_matching";
-    kernelDescriptors.push_back(&kd);
-    linker.patchInstructionsSegments({instructionSegmentToPatch}, unresolvedExternals, kernelDescriptors);
-    auto instructionSegmentPatchedData = reinterpret_cast<uint64_t *>(ptrOffset(instructionSegmentToPatch.hostPointer, static_cast<size_t>(rela.offset)));
-    EXPECT_EQ(std::numeric_limits<uint64_t>::max(), static_cast<uint64_t>(*instructionSegmentPatchedData));
-    EXPECT_EQ(1u, unresolvedExternals.size());
-}
-
-TEST(LinkerTests, givenRelocationToInstructionSegmentWithLocalUndefinedSymbolThenItIsPatchedWithZeroes) {
-    WhiteBox<NEO::LinkerInput> linkerInput;
-    linkerInput.traits.requiresPatchingOfInstructionSegments = true;
-    NEO::LinkerInput::RelocationInfo rela;
-    rela.offset = 0U;
-    rela.addend = 128U;
-    rela.type = NEO::LinkerInput::RelocationInfo::Type::Address;
-    rela.symbolName = "";
-    rela.relocationSegment = NEO::SegmentType::Instructions;
-    linkerInput.textRelocations.push_back({rela});
-
-    WhiteBox<NEO::Linker> linker(linkerInput);
-    EXPECT_TRUE(linker.relocatedSymbols.empty());
-    EXPECT_TRUE(linker.localRelocatedSymbols.empty());
-
-    uint64_t instructionSegmentData{std::numeric_limits<uint64_t>::max()};
-    NEO::Linker::PatchableSegment instructionSegmentToPatch;
-    instructionSegmentToPatch.hostPointer = reinterpret_cast<void *>(&instructionSegmentData);
-    instructionSegmentToPatch.segmentSize = sizeof(instructionSegmentData);
-
-    NEO::Linker::UnresolvedExternals unresolvedExternals;
-    ASSERT_EQ(0u, unresolvedExternals.size());
-    NEO::Linker::KernelDescriptorsT kernelDescriptors;
-
-    linker.patchInstructionsSegments({instructionSegmentToPatch}, unresolvedExternals, kernelDescriptors);
-    auto instructionSegmentPatchedData = reinterpret_cast<uint64_t *>(ptrOffset(instructionSegmentToPatch.hostPointer, static_cast<size_t>(rela.offset)));
-    EXPECT_EQ(0u, static_cast<uint64_t>(*instructionSegmentPatchedData));
-    EXPECT_EQ(0u, unresolvedExternals.size());
-}
-
-TEST(LinkerTests, givenElfWithLocalSymbolsWhenDecodingElfSymbolTableAndRelocationsThenOnlySymbolsWithTypeFunctionArePopulated) {
-    NEO::LinkerInput linkerInput = {};
-    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> header;
-    MockElf<NEO::Elf::EI_CLASS_64> elf64;
-    elf64.elfFileHeader = &header;
-
-    std::unordered_map<uint32_t, std::string> sectionNames;
-    std::string kernelName = "test_kernel";
-    sectionNames[0] = NEO::Elf::SectionsNamesZebin::textPrefix.str() + kernelName;
-    elf64.setupSecionNames(std::move(sectionNames));
-    elf64.overrideSymbolName = true;
-
-    elf64.symbolTable.reserve(2);
-    auto &localFuncSymbol = elf64.symbolTable.emplace_back();
-    localFuncSymbol.setBinding(NEO::Elf::SYMBOL_TABLE_BIND::STB_LOCAL);
-    localFuncSymbol.setType(NEO::Elf::SYMBOL_TABLE_TYPE::STT_FUNC);
-    localFuncSymbol.name = 0x20;
-    localFuncSymbol.other = 0;
-    localFuncSymbol.shndx = 0;
-    localFuncSymbol.size = 0x8;
-    localFuncSymbol.value = 0x4000;
-
-    auto &localIgnoredSymbol = elf64.symbolTable.emplace_back();
-    localIgnoredSymbol.setBinding(NEO::Elf::SYMBOL_TABLE_BIND::STB_LOCAL);
-    localIgnoredSymbol.setType(NEO::Elf::SYMBOL_TABLE_TYPE::STT_OBJECT);
-    localIgnoredSymbol.name = std::numeric_limits<uint32_t>::max();
-    localIgnoredSymbol.other = std::numeric_limits<uint8_t>::max();
-    localIgnoredSymbol.shndx = std::numeric_limits<uint16_t>::max();
-    localIgnoredSymbol.size = std::numeric_limits<uint64_t>::max();
-    localIgnoredSymbol.value = std::numeric_limits<uint64_t>::max();
-
-    NEO::LinkerInput::SectionNameToSegmentIdMap nameToKernelId;
-    linkerInput.decodeElfSymbolTableAndRelocations(elf64, nameToKernelId);
-
-    const auto &symbols = linkerInput.getSymbols();
-    EXPECT_EQ(0u, symbols.size());
-
-    const auto &localSymbols = linkerInput.getLocalSymbols();
-    EXPECT_EQ(1u, localSymbols.size());
-
-    const auto &retrievedSymbol = localSymbols.at(std::to_string(localFuncSymbol.name));
-    EXPECT_EQ(retrievedSymbol.offset, localFuncSymbol.value);
-    EXPECT_EQ(retrievedSymbol.size, localFuncSymbol.size);
-    EXPECT_STREQ(retrievedSymbol.targetedKernelSectionName.c_str(), kernelName.c_str());
-}
-
-TEST(LinkerTest, givenLocalFuncSymbolsWhenProcessingRelocationsThenLocalSymbolsAreRelocated) {
-    std::string kernelName{"test_kernel"};
-    WhiteBox<NEO::LinkerInput> linkerInput;
-
-    LocalFuncSymbolInfo localSymInfo;
-    localSymInfo.offset = 0x20;
-    localSymInfo.size = 0x30;
-    localSymInfo.targetedKernelSectionName = kernelName;
-
-    LocalFuncSymbolInfo ignoredSymInfo;
-    ignoredSymInfo.offset = 0x40;
-    ignoredSymInfo.size = 0x50;
-    ignoredSymInfo.targetedKernelSectionName = "mismatched_kernel";
-
-    linkerInput.localSymbols[localSymInfo.targetedKernelSectionName] = localSymInfo;
-    linkerInput.localSymbols[ignoredSymInfo.targetedKernelSectionName] = ignoredSymInfo;
-
-    WhiteBox<NEO::Linker> linker(linkerInput);
-    const NEO::Linker::SegmentInfo gVariables{}, gConstants{}, expFuncs{}, gStrings{};
-    NEO::Linker::PatchableSegments insSegments;
-    insSegments.reserve(2);
-    auto &emplacedTargeted = insSegments.emplace_back();
-    emplacedTargeted.gpuAddress = 0x1000;
-    emplacedTargeted.kernelName = kernelName;
-
-    auto &emplacedOther = insSegments.emplace_back();
-    emplacedOther.gpuAddress = 0x2000;
-    emplacedOther.kernelName = "other_kernel";
-
-    auto res = linker.processRelocations(gVariables, gConstants, expFuncs, gStrings, insSegments, 0u, 0u);
-    EXPECT_TRUE(res);
-    EXPECT_EQ(1u, linker.localRelocatedSymbols.size());
-    const auto &localRelocatedSymbolInfo = linker.localRelocatedSymbols.at(kernelName);
-    EXPECT_EQ(emplacedTargeted.gpuAddress + localSymInfo.offset, localRelocatedSymbolInfo.gpuAddress);
 }

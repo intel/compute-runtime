@@ -10,6 +10,7 @@
 
 #include <cstdint>
 #include <limits>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <unordered_map>
@@ -55,15 +56,11 @@ inline const char *asString(SegmentType segment) {
 }
 
 struct SymbolInfo {
-    uint32_t offset = std::numeric_limits<uint32_t>::max();
-    uint32_t size = std::numeric_limits<uint32_t>::max();
+    uint64_t offset = std::numeric_limits<uint64_t>::max();
+    uint64_t size = std::numeric_limits<uint64_t>::max();
     SegmentType segment = SegmentType::Unknown;
-};
-
-struct LocalFuncSymbolInfo {
-    uint32_t offset = std::numeric_limits<uint32_t>::max();
-    uint32_t size = std::numeric_limits<uint32_t>::max();
-    std::string targetedKernelSectionName;
+    uint32_t instructionSegmentId = std::numeric_limits<uint32_t>::max(); // set if segment type is instructions
+    bool global = false;                                                  // Binding
 };
 
 struct LinkerInput {
@@ -108,7 +105,6 @@ struct LinkerInput {
     using SectionNameToSegmentIdMap = std::unordered_map<std::string, uint32_t>;
     using Relocations = std::vector<RelocationInfo>;
     using SymbolMap = std::unordered_map<std::string, SymbolInfo>;
-    using LocalSymbolMap = std::unordered_map<std::string, LocalFuncSymbolInfo>;
     using RelocationsPerInstSegment = std::vector<Relocations>;
 
     virtual ~LinkerInput() = default;
@@ -125,6 +121,14 @@ struct LinkerInput {
     template <Elf::ELF_IDENTIFIER_CLASS numBits>
     void decodeElfSymbolTableAndRelocations(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId);
 
+    template <Elf::ELF_IDENTIFIER_CLASS numBits>
+    bool addSymbol(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, size_t symId);
+
+    template <Elf::ELF_IDENTIFIER_CLASS numBits>
+    bool addRelocation(Elf::Elf<numBits> &elf, const SectionNameToSegmentIdMap &nameToSegmentId, const typename Elf::Elf<numBits>::RelocationInfo &relocation);
+
+    std::optional<uint32_t> getInstructionSegmentId(const SectionNameToSegmentIdMap &kernelNameToSegId, const std::string &kernelName);
+
     const Traits &getTraits() const {
         return traits;
     }
@@ -139,10 +143,6 @@ struct LinkerInput {
 
     const SymbolMap &getSymbols() const {
         return symbols;
-    }
-
-    const LocalSymbolMap &getLocalSymbols() const {
-        return localSymbols;
     }
 
     void addSymbol(const std::string &symbolName, const SymbolInfo &symbolInfo) {
@@ -178,13 +178,12 @@ struct LinkerInput {
 
     Traits traits;
     SymbolMap symbols;
-    LocalSymbolMap localSymbols;
-    RelocationsPerInstSegment textRelocations;
-    Relocations dataRelocations;
     std::vector<std::pair<std::string, SymbolInfo>> extFuncSymbols;
-    int32_t exportedFunctionsSegmentId = -1;
+    Relocations dataRelocations;
+    RelocationsPerInstSegment textRelocations;
     std::vector<ExternalFunctionUsageKernel> kernelDependencies;
     std::vector<ExternalFunctionUsageExtFunc> extFunDependencies;
+    int32_t exportedFunctionsSegmentId = -1;
     bool valid = true;
 };
 
@@ -194,15 +193,14 @@ struct Linker {
     using RelocationInfo = LinkerInput::RelocationInfo;
 
     struct SegmentInfo {
-        uintptr_t gpuAddress = std::numeric_limits<uintptr_t>::max();
+        uint64_t gpuAddress = std::numeric_limits<uint64_t>::max();
         size_t segmentSize = 0u;
     };
 
     struct PatchableSegment {
         void *hostPointer = nullptr;
-        uintptr_t gpuAddress = 0;
+        uint64_t gpuAddress = 0;
         size_t segmentSize = std::numeric_limits<size_t>::max();
-        std::string kernelName;
     };
 
     struct UnresolvedExternal {
@@ -214,11 +212,10 @@ struct Linker {
     template <typename T>
     struct RelocatedSymbol {
         T symbol;
-        uintptr_t gpuAddress = std::numeric_limits<uintptr_t>::max();
+        uint64_t gpuAddress = std::numeric_limits<uint64_t>::max();
     };
 
     using RelocatedSymbolsMap = std::unordered_map<std::string, RelocatedSymbol<SymbolInfo>>;
-    using LocalsRelocatedSymbolsMap = std::unordered_map<std::string, RelocatedSymbol<LocalFuncSymbolInfo>>;
     using PatchableSegments = std::vector<PatchableSegment>;
     using UnresolvedExternals = std::vector<UnresolvedExternal>;
     using KernelDescriptorsT = std::vector<KernelDescriptor *>;
@@ -235,6 +232,7 @@ struct Linker {
                        ExternalFunctionsT &externalFunctions);
 
     static void patchAddress(void *relocAddress, const uint64_t value, const RelocationInfo &relocation);
+    void removeLocalSymbolsFromRelocatedSymbols();
     RelocatedSymbolsMap extractRelocatedSymbols() {
         return RelocatedSymbolsMap(std::move(relocatedSymbols));
     }
@@ -247,9 +245,8 @@ struct Linker {
   protected:
     const LinkerInput &data;
     RelocatedSymbolsMap relocatedSymbols;
-    LocalsRelocatedSymbolsMap localRelocatedSymbols;
 
-    bool processRelocations(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions, const SegmentInfo &globalStrings, const PatchableSegments &instructionsSegments, size_t globalConstantsInitDataSize, size_t globalVariablesInitDataSize);
+    bool relocateSymbols(const SegmentInfo &globalVariables, const SegmentInfo &globalConstants, const SegmentInfo &exportedFunctions, const SegmentInfo &globalStrings, const PatchableSegments &instructionsSegments, size_t globalConstantsInitDataSize, size_t globalVariablesInitDataSize);
 
     void patchInstructionsSegments(const std::vector<PatchableSegment> &instructionsSegments, std::vector<UnresolvedExternal> &outUnresolvedExternals, const KernelDescriptorsT &kernelDescriptors);
 
@@ -270,8 +267,15 @@ struct Linker {
 
 std::string constructLinkerErrorMessage(const Linker::UnresolvedExternals &unresolvedExternals, const std::vector<std::string> &instructionsSegmentsNames);
 std::string constructRelocationsDebugMessage(const Linker::RelocatedSymbolsMap &relocatedSymbols);
+
+inline bool isVarDataSegment(const SegmentType &segment) {
+    return segment == NEO::SegmentType::GlobalVariables || segment == NEO::SegmentType::GlobalVariablesZeroInit;
+}
+inline bool isConstDataSegment(const SegmentType &segment) {
+    return segment == NEO::SegmentType::GlobalConstants || segment == NEO::SegmentType::GlobalConstantsZeroInit;
+}
 inline bool isDataSegment(const SegmentType &segment) {
-    return segment == SegmentType::GlobalConstants || segment == SegmentType::GlobalVariables;
+    return isConstDataSegment(segment) || isVarDataSegment(segment);
 }
 
 } // namespace NEO

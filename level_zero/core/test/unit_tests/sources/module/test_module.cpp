@@ -3366,7 +3366,7 @@ TEST_F(ModuleTests, whenCopyingPatchedSegmentsThenAllocationsAreSetWritableForTb
     linkerInput->traits.requiresPatchingOfInstructionSegments = true;
     pModule->translationUnit->programInfo.linkerInput = std::move(linkerInput);
 
-    NEO::Linker::PatchableSegments segments{{data, 0u, 1, std::string{}}};
+    NEO::Linker::PatchableSegments segments{{data, 0u, 1}};
 
     auto allocation = pModule->kernelImmDatas[0]->getIsaGraphicsAllocation();
 

@@ -33,6 +33,30 @@ struct MockElf : public NEO::Elf::Elf<NumBits> {
         return NEO::Elf::Elf<NumBits>::getSymbolName(nameOffset);
     }
 
+    using ElfSymT = NEO::Elf::ElfSymbolEntry<NumBits>;
+    void addSymbol(typename ElfSymT::Name name, typename ElfSymT::Value value, typename ElfSymT::Size size, typename ElfSymT::Shndx shndx,
+                   typename ElfSymT::Info type, typename ElfSymT::Info binding) {
+        ElfSymT sym{};
+        sym.name = name;
+        sym.value = value;
+        sym.size = size;
+        sym.shndx = shndx;
+        sym.setType(type);
+        sym.setBinding(binding);
+        symbolTable.emplace_back(sym);
+    }
+
+    void addReloc(uint64_t offset, int64_t addend, uint32_t relocType, int targetSecIdx, int symIdx, NEO::ConstStringRef symbolName) {
+        typename BaseClass::RelocationInfo reloc{};
+        reloc.offset = offset;
+        reloc.addend = addend;
+        reloc.relocType = relocType;
+        reloc.symbolName = symbolName.str();
+        reloc.symbolTableIndex = symIdx;
+        reloc.targetSectionIndex = targetSecIdx;
+        relocations.emplace_back(reloc);
+    }
+
     void setupSecionNames(std::unordered_map<uint32_t, std::string> map) {
         sectionNames = map;
         overrideSectionNames = true;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,7 +27,6 @@ struct WhiteBox<NEO::LinkerInput> : NEO::LinkerInput {
     using BaseClass::extFuncSymbols;
     using BaseClass::extFunDependencies;
     using BaseClass::kernelDependencies;
-    using BaseClass::localSymbols;
     using BaseClass::parseRelocationForExtFuncUsage;
     using BaseClass::symbols;
     using BaseClass::textRelocations;
@@ -39,11 +38,10 @@ template <>
 struct WhiteBox<NEO::Linker> : NEO::Linker {
     using BaseClass = NEO::Linker;
     using BaseClass::BaseClass;
-    using BaseClass::localRelocatedSymbols;
     using BaseClass::patchDataSegments;
     using BaseClass::patchInstructionsSegments;
-    using BaseClass::processRelocations;
     using BaseClass::relocatedSymbols;
+    using BaseClass::relocateSymbols;
     using BaseClass::resolveExternalFunctions;
 };
 

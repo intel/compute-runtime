@@ -595,9 +595,9 @@ TEST(ProgramLinkBinaryTest, whenLinkerUnresolvedExternalThenLinkFailedAndBuildLo
 
 TEST_F(ProgramDataTest, whenLinkerInputValidThenIsaIsProperlyPatched) {
     auto linkerInput = std::make_unique<WhiteBox<LinkerInput>>();
-    linkerInput->symbols["A"] = NEO::SymbolInfo{4U, 4U, NEO::SegmentType::GlobalVariables};
-    linkerInput->symbols["B"] = NEO::SymbolInfo{8U, 4U, NEO::SegmentType::GlobalConstants};
-    linkerInput->symbols["C"] = NEO::SymbolInfo{16U, 4U, NEO::SegmentType::Instructions};
+    linkerInput->symbols["A"] = NEO::SymbolInfo{4U, 4U, NEO::SegmentType::GlobalVariables, std::numeric_limits<uint32_t>::max(), true};
+    linkerInput->symbols["B"] = NEO::SymbolInfo{8U, 4U, NEO::SegmentType::GlobalConstants, std::numeric_limits<uint32_t>::max(), true};
+    linkerInput->symbols["C"] = NEO::SymbolInfo{16U, 4U, NEO::SegmentType::Instructions, std::numeric_limits<uint32_t>::max(), true};
 
     auto relocationType = NEO::LinkerInput::RelocationInfo::Type::Address;
     linkerInput->textRelocations.push_back({NEO::LinkerInput::RelocationInfo{"A", 8U, relocationType},
