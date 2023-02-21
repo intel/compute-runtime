@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -45,7 +45,7 @@ class OsLibraryBackup : public Windows::OsLibrary {
     };
 };
 
-bool mockWillFail = true;
+bool mockWillFailInNonSystem32 = true;
 void trimFileName(char *buff, size_t length) {
     for (size_t l = length; l > 0; l--) {
         if (buff[l - 1] == '\\') {
@@ -60,7 +60,7 @@ DWORD WINAPI GetModuleFileNameAMock(HMODULE hModule, LPSTR lpFilename, DWORD nSi
 }
 
 HMODULE WINAPI LoadLibraryExAMock(LPCSTR lpFileName, HANDLE hFile, DWORD dwFlags) {
-    if (mockWillFail)
+    if (mockWillFailInNonSystem32 && dwFlags != LOAD_LIBRARY_SEARCH_SYSTEM32)
         return NULL;
 
     char fName[MAX_PATH];
@@ -68,7 +68,9 @@ HMODULE WINAPI LoadLibraryExAMock(LPCSTR lpFileName, HANDLE hFile, DWORD dwFlags
     strcpy_s(fName, sizeof(fName), lpFileName);
     trimFileName(fName, lenFn);
 
-    EXPECT_STREQ("z:\\", fName);
+    if (dwFlags != LOAD_LIBRARY_SEARCH_SYSTEM32) {
+        EXPECT_STREQ("z:\\", fName);
+    }
 
     return (HMODULE)1;
 }
@@ -79,7 +81,7 @@ UINT WINAPI GetSystemDirectoryAMock(LPSTR lpBuffer, UINT uSize) {
     return sizeof(path) - 1; // do not include terminating null
 }
 
-TEST(OSLibraryWinTest, WhenLoadDependencyFailsThenFallbackToNonDriverStore) {
+TEST(OSLibraryWinTest, WhenLoadDependencyFailsThenFallbackToSystem32) {
     auto bkp = OsLibraryBackup::backup(LoadLibraryExAMock, GetModuleFileNameAMock, GetSystemDirectoryAMock);
 
     std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
@@ -88,7 +90,7 @@ TEST(OSLibraryWinTest, WhenLoadDependencyFailsThenFallbackToNonDriverStore) {
 
 TEST(OSLibraryWinTest, WhenDependencyLoadsThenProperPathIsConstructed) {
     auto bkp = OsLibraryBackup::backup(LoadLibraryExAMock, GetModuleFileNameAMock, GetSystemDirectoryAMock);
-    VariableBackup<bool> bkpM(&mockWillFail, false);
+    VariableBackup<bool> bkpM(&mockWillFailInNonSystem32, false);
 
     std::unique_ptr<OsLibrary> library(OsLibrary::load(Os::testDllName));
     EXPECT_NE(nullptr, library);
@@ -96,7 +98,7 @@ TEST(OSLibraryWinTest, WhenDependencyLoadsThenProperPathIsConstructed) {
 
 TEST(OSLibraryWinTest, WhenCreatingFullSystemPathThenProperPathIsConstructed) {
     auto bkp = OsLibraryBackup::backup(LoadLibraryExAMock, GetModuleFileNameAMock, GetSystemDirectoryAMock);
-    VariableBackup<bool> bkpM(&mockWillFail, false);
+    VariableBackup<bool> bkpM(&mockWillFailInNonSystem32, false);
 
     auto fullPath = OsLibrary::createFullSystemPath("test");
     EXPECT_STREQ("C:\\System\\test", fullPath.c_str());

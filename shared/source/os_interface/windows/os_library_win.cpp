@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -76,7 +76,7 @@ OsLibrary::OsLibrary(const std::string &name, std::string *errorValue) {
     } else {
         this->handle = loadDependency(name);
         if (this->handle == nullptr) {
-            this->handle = ::LoadLibraryA(name.c_str());
+            this->handle = loadLibraryExA(name.c_str(), NULL, LOAD_LIBRARY_SEARCH_SYSTEM32);
             if ((this->handle == nullptr) && (errorValue != nullptr)) {
                 getLastErrorString(errorValue);
             }
