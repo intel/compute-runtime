@@ -1333,10 +1333,7 @@ HWTEST_F(UnifiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenWriteBufferThenC
     char *cpuPtr = static_cast<char *>(gpuAllocation->getUnderlyingBuffer());
     auto gpuAddress = gpuAllocation->getGpuAddress();
     void *gpuPtr = reinterpret_cast<void *>(gpuAddress);
-    char *shiftedPtr = cpuPtr + 0x10;
     auto gmmHelper = mockContext.getDevice(0)->getGmmHelper();
-    auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uint64_t>(shiftedPtr));
-    gpuAllocation->setCpuPtrAndGpuAddress(shiftedPtr, canonizedGpuAddress);
 
     cl_mem_flags flags = 0;
     auto status = CL_INVALID_PLATFORM;
@@ -1347,7 +1344,7 @@ HWTEST_F(UnifiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenWriteBufferThenC
     myCmdQ.enqueueWriteBuffer(buffer, false, 0u, 4096u, deviceMemory, nullptr, 0u, nullptr, nullptr);
     EXPECT_EQ(gpuPtr, myCmdQ.srcPtr);
 
-    canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
+    auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
     gpuAllocation->setCpuPtrAndGpuAddress(cpuPtr, canonizedGpuAddress);
     delete buffer;
     clMemFreeINTEL(&mockContext, deviceMemory);
@@ -1364,10 +1361,7 @@ HWTEST_F(UnifiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenReadBufferThenCp
     char *cpuPtr = static_cast<char *>(gpuAllocation->getUnderlyingBuffer());
     auto gpuAddress = gpuAllocation->getGpuAddress();
     void *gpuPtr = reinterpret_cast<void *>(gpuAddress);
-    char *shiftedPtr = cpuPtr + 0x10;
     auto gmmHelper = mockContext.getDevice(0)->getGmmHelper();
-    auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uint64_t>(shiftedPtr));
-    gpuAllocation->setCpuPtrAndGpuAddress(shiftedPtr, canonizedGpuAddress);
 
     cl_mem_flags flags = 0;
     auto status = CL_INVALID_PLATFORM;
@@ -1378,7 +1372,7 @@ HWTEST_F(UnifiedSharedMemoryHWTest, givenDeviceUsmAllocationWhenReadBufferThenCp
     myCmdQ.enqueueReadBuffer(buffer, false, 0u, 4096u, deviceMemory, nullptr, 0u, nullptr, nullptr);
     EXPECT_EQ(gpuPtr, myCmdQ.dstPtr);
 
-    canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
+    auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
     gpuAllocation->setCpuPtrAndGpuAddress(cpuPtr, canonizedGpuAddress);
     delete buffer;
     clMemFreeINTEL(&mockContext, deviceMemory);
