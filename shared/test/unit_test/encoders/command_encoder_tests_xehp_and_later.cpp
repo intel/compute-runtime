@@ -240,7 +240,7 @@ HWTEST2_F(XeHpAndLaterSbaTest, givenMemoryCompressionEnabledWhenAppendingSbaThen
             false,                                              // areMultipleSubDevicesInContext
             false                                               // overrideSurfaceStateBaseAddress
         };
-        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
         if (memoryCompressionState == MemoryCompressionState::Enabled) {
             EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::ENABLE_MEMORY_COMPRESSION_FOR_ALL_STATELESS_ACCESSES_ENABLED, sbaCmd.getEnableMemoryCompressionForAllStatelessAccesses());
         } else {
@@ -275,6 +275,6 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHpAndLaterSbaTest, givenNonZeroInternalHeapBaseAd
         false,                                              // areMultipleSubDevicesInContext
         false                                               // overrideSurfaceStateBaseAddress
     };
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
     EXPECT_EQ(0ull, sbaCmd.getGeneralStateBaseAddress());
 }

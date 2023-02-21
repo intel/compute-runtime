@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,9 @@ namespace NEO {
 
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
-    StateBaseAddressHelperArgs<GfxFamily> &args,
-    bool overrideBindlessSurfaceStateBase) {
+    StateBaseAddressHelperArgs<GfxFamily> &args) {
 
-    if (overrideBindlessSurfaceStateBase && args.ssh) {
+    if (!args.useGlobalHeapsBaseAddress && args.ssh) {
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.ssh->getHeapGpuBase());
         uint32_t size = uint32_t(args.ssh->getMaxAvailableSpace() / 64) - 1;
@@ -29,6 +28,8 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         args.stateBaseAddressCmd->setBindlessSurfaceStateMemoryObjectControlState(args.gmmHelper->getMOCS(l3CacheOnPolicy));
         args.stateBaseAddressCmd->setBindlessSamplerStateMemoryObjectControlState(args.gmmHelper->getMOCS(l3CacheOnPolicy));
     }
+
+    StateBaseAddressHelper<GfxFamily>::appendIohParameters(args);
 }
 
 template <typename GfxFamily>

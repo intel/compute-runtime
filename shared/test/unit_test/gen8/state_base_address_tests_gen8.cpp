@@ -42,7 +42,7 @@ BDWTEST_F(SbaTest, givenUsedBindlessBuffersWhenAppendStateBaseAddressParametersI
         false                                  // overrideSurfaceStateBaseAddress
     };
 
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(0u, ssh.getUsed());
     EXPECT_EQ(0, memcmp(&stateBaseAddressReference, &stateBaseAddress, sizeof(STATE_BASE_ADDRESS)));

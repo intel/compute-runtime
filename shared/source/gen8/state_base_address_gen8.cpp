@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,12 +11,13 @@
 #include "shared/source/helpers/state_base_address_bdw_and_later.inl"
 
 namespace NEO {
+using Family = Gen8Family;
 
 template <>
-void StateBaseAddressHelper<Gen8Family>::programStateBaseAddress(
-    StateBaseAddressHelperArgs<Gen8Family> &args) {
+void StateBaseAddressHelper<Family>::programStateBaseAddress(
+    StateBaseAddressHelperArgs<Family> &args) {
 
-    *args.stateBaseAddressCmd = Gen8Family::cmdInitStateBaseAddress;
+    *args.stateBaseAddressCmd = Family::cmdInitStateBaseAddress;
 
     if (args.dsh) {
         args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);
@@ -25,12 +26,7 @@ void StateBaseAddressHelper<Gen8Family>::programStateBaseAddress(
         args.stateBaseAddressCmd->setDynamicStateBufferSize(args.dsh->getHeapSizeInPages());
     }
 
-    if (args.ioh) {
-        args.stateBaseAddressCmd->setIndirectObjectBaseAddressModifyEnable(true);
-        args.stateBaseAddressCmd->setIndirectObjectBufferSizeModifyEnable(true);
-        args.stateBaseAddressCmd->setIndirectObjectBaseAddress(args.ioh->getHeapGpuBase());
-        args.stateBaseAddressCmd->setIndirectObjectBufferSize(args.ioh->getHeapSizeInPages());
-    }
+    StateBaseAddressHelper<Family>::appendIohParameters(args);
 
     if (args.ssh) {
         args.stateBaseAddressCmd->setSurfaceStateBaseAddressModifyEnable(true);
@@ -68,7 +64,7 @@ void StateBaseAddressHelper<Gen8Family>::programStateBaseAddress(
 
     args.stateBaseAddressCmd->setStatelessDataPortAccessMemoryObjectControlState(args.statelessMocsIndex);
 
-    appendStateBaseAddressParameters(args, true);
+    appendStateBaseAddressParameters(args);
 }
-template struct StateBaseAddressHelper<Gen8Family>;
+template struct StateBaseAddressHelper<Family>;
 } // namespace NEO

@@ -122,7 +122,7 @@ XE_HPG_CORETEST_F(XeHpgSbaTest, givenSpecificProductFamilyWhenAppendingSbaThenPr
         false,                                              // areMultipleSubDevicesInContext
         false                                               // overrideSurfaceStateBaseAddress
     };
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, sbaCmd.getL1CachePolicyL1CacheControl());
 }
@@ -153,19 +153,19 @@ XE_HPG_CORETEST_F(XeHpgSbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProg
         false,                                              // areMultipleSubDevicesInContext
         false                                               // overrideSurfaceStateBaseAddress
     };
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(0u, sbaCmd.getL1CachePolicyL1CacheControl());
 
     DebugManager.flags.ForceStatelessL1CachingPolicy.set(2u);
 
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(2u, sbaCmd.getL1CachePolicyL1CacheControl());
 
     DebugManager.flags.ForceAllResourcesUncached.set(true);
 
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(1u, sbaCmd.getL1CachePolicyL1CacheControl());
 }

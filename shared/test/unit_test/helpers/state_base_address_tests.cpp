@@ -51,7 +51,7 @@ HWTEST2_F(SbaTest, WhenAppendStateBaseAddressParametersIsCalledThenSBACmdHasBind
         false                                  // isDebuggerActive
     };
 
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(ssh.getMaxAvailableSpace() / 64 - 1, stateBaseAddress.getBindlessSurfaceStateSize());
     EXPECT_EQ(ssh.getHeapGpuBase(), stateBaseAddress.getBindlessSurfaceStateBaseAddress());
@@ -337,7 +337,7 @@ HWTEST2_F(SbaTest, givenSbaWhenOverrideBindlessSurfaceBaseIsFalseThenBindlessSur
         false                                               // isDebuggerActive
     };
 
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, false);
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(0u, stateBaseAddress.getBindlessSurfaceStateBaseAddress());
 }
@@ -576,12 +576,12 @@ HWTEST2_F(SbaTest, givenDebugFlagSetWhenAppendingSbaThenProgramCorrectL1CachePol
     for (const auto &input : testInputs) {
         DebugManagerStateRestore restore;
         DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(input.option);
-        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
         EXPECT_EQ(input.cachePolicy, sbaCmd.getL1CachePolicyL1CacheControl());
 
         DebugManager.flags.ForceAllResourcesUncached.set(true);
-        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+        StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
         EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_UC, sbaCmd.getL1CachePolicyL1CacheControl());
     }
 }
@@ -853,4 +853,31 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, SbaTest,
 
     auto surfaceStateCount = StateBaseAddressHelper<FamilyType>::getMaxBindlessSurfaceStates();
     EXPECT_EQ(surfaceStateCount, sbaCmd.getBindlessSurfaceStateSize());
+}
+
+HWTEST2_F(SbaTest, GivenPlatformNotSupportingIndirectHeapBaseWhenProgramIndirectHeapThenNothingHappens, IsAtLeastXeHpCore) {
+    StateBaseAddressHelperArgs<FamilyType> args = {
+        0,                                     // generalStateBase
+        0,                                     // indirectObjectHeapBaseAddress
+        0,                                     // instructionHeapBaseAddress
+        0,                                     // globalHeapsBaseAddress
+        0,                                     // surfaceStateBaseAddress
+        nullptr,                               // stateBaseAddressCmd
+        nullptr,                               // dsh
+        nullptr,                               // ioh
+        nullptr,                               // ssh
+        nullptr,                               // gmmHelper
+        nullptr,                               // hwInfo
+        0,                                     // statelessMocsIndex
+        MemoryCompressionState::NotApplicable, // memoryCompressionState
+        false,                                 // setInstructionStateBaseAddress
+        false,                                 // setGeneralStateBaseAddress
+        false,                                 // useGlobalHeapsBaseAddress
+        false,                                 // isMultiOsContextCapable
+        false,                                 // useGlobalAtomics
+        false,                                 // areMultipleSubDevicesInContext
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // isDebuggerActive
+    };
+    StateBaseAddressHelper<FamilyType>::appendIohParameters(args);
 }

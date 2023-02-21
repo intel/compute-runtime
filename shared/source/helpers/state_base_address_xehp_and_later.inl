@@ -6,8 +6,10 @@
  */
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
 #include "shared/source/helpers/state_base_address_base.inl"
+#include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
 
@@ -24,8 +26,7 @@ void setSbaStatelessCompressionParams(typename GfxFamily::STATE_BASE_ADDRESS *st
 
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
-    StateBaseAddressHelperArgs<GfxFamily> &args,
-    bool overrideBindlessSurfaceStateBase) {
+    StateBaseAddressHelperArgs<GfxFamily> &args) {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
@@ -33,7 +34,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
         args.stateBaseAddressCmd->setGeneralStateBaseAddress(args.gmmHelper->decanonize(args.indirectObjectHeapBaseAddress));
     }
 
-    if (overrideBindlessSurfaceStateBase && args.ssh) {
+    if (!args.useGlobalHeapsBaseAddress && args.ssh) {
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.ssh->getHeapGpuBase());
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
         const auto surfaceStateCount = args.ssh->getMaxAvailableSpace() / sizeof(RENDER_SURFACE_STATE);
@@ -103,11 +104,24 @@ void StateBaseAddressHelper<GfxFamily>::programBindingTableBaseAddress(LinearStr
 }
 
 template <typename GfxFamily>
-void StateBaseAddressHelper<GfxFamily>::appendIohParameters(StateBaseAddressHelperArgs<GfxFamily> &args) {
-}
-
-template <typename GfxFamily>
 uint32_t StateBaseAddressHelper<GfxFamily>::getMaxBindlessSurfaceStates() {
     return std::numeric_limits<uint32_t>::max();
 }
+
+template <typename GfxFamily>
+void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(StateBaseAddressHelperArgs<GfxFamily> &args) {
+    auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().template getHelper<ProductHelper>();
+    auto cachePolicy = productHelper.getL1CachePolicy(args.isDebuggerActive);
+    args.stateBaseAddressCmd->setL1CachePolicyL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_POLICY>(cachePolicy));
+
+    if (DebugManager.flags.ForceStatelessL1CachingPolicy.get() != -1 &&
+        DebugManager.flags.ForceAllResourcesUncached.get() == false) {
+        args.stateBaseAddressCmd->setL1CachePolicyL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_POLICY>(DebugManager.flags.ForceStatelessL1CachingPolicy.get()));
+    }
+}
+
+template <typename GfxFamily>
+void StateBaseAddressHelper<GfxFamily>::appendIohParameters(StateBaseAddressHelperArgs<GfxFamily> &args) {
+}
+
 } // namespace NEO

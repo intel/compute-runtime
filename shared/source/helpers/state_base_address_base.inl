@@ -35,7 +35,6 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
     StateBaseAddressHelperArgs<GfxFamily> &args) {
 
     *args.stateBaseAddressCmd = GfxFamily::cmdInitStateBaseAddress;
-    bool overrideBindlessSurfaceStateBase = true;
 
     const auto surfaceStateCount = getMaxBindlessSurfaceStates();
     args.stateBaseAddressCmd->setBindlessSurfaceStateSize(surfaceStateCount);
@@ -51,8 +50,6 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
         args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddress(args.globalHeapsBaseAddress);
-
-        overrideBindlessSurfaceStateBase = false;
     } else {
         if (args.dsh) {
             args.stateBaseAddressCmd->setDynamicStateBaseAddressModifyEnable(true);
@@ -66,8 +63,6 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
             args.stateBaseAddressCmd->setSurfaceStateBaseAddress(args.ssh->getHeapGpuBase());
         }
     }
-
-    appendIohParameters(args);
 
     if (args.setInstructionStateBaseAddress) {
         args.stateBaseAddressCmd->setInstructionBaseAddressModifyEnable(true);
@@ -104,7 +99,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddress(
 
     args.stateBaseAddressCmd->setStatelessDataPortAccessMemoryObjectControlState(args.statelessMocsIndex);
 
-    appendStateBaseAddressParameters(args, overrideBindlessSurfaceStateBase);
+    appendStateBaseAddressParameters(args);
 }
 
 template <typename GfxFamily>

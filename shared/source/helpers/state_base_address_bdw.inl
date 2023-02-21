@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,8 +11,7 @@ namespace NEO {
 
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
-    StateBaseAddressHelperArgs<GfxFamily> &args,
-    bool overrideBindlessSurfaceStateBase) {
+    StateBaseAddressHelperArgs<GfxFamily> &args) {
 }
 
 template <typename GfxFamily>

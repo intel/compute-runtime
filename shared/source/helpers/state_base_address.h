@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,8 +60,7 @@ struct StateBaseAddressHelper {
 
     static void appendIohParameters(StateBaseAddressHelperArgs<GfxFamily> &args);
 
-    static void appendStateBaseAddressParameters(StateBaseAddressHelperArgs<GfxFamily> &args,
-                                                 bool overrideBindlessSurfaceStateBase);
+    static void appendStateBaseAddressParameters(StateBaseAddressHelperArgs<GfxFamily> &args);
 
     static void appendExtraCacheSettings(StateBaseAddressHelperArgs<GfxFamily> &args);
 

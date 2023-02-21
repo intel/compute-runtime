@@ -107,11 +107,11 @@ DG2TEST_F(Dg2SbaTest, givenSpecificProductFamilyWhenAppendingSbaThenProgramCorre
         false,                                              // overrideSurfaceStateBaseAddress
         false                                               // isDebuggerActive
     };
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WB, sbaCmd.getL1CachePolicyL1CacheControl());
 
     args.isDebuggerActive = true;
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
     EXPECT_EQ(FamilyType::STATE_BASE_ADDRESS::L1_CACHE_POLICY_WBP, sbaCmd.getL1CachePolicyL1CacheControl());
 }
 
@@ -141,19 +141,19 @@ DG2TEST_F(Dg2SbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThen
         false,                                              // areMultipleSubDevicesInContext
         false                                               // overrideSurfaceStateBaseAddress
     };
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(0u, sbaCmd.getL1CachePolicyL1CacheControl());
 
     DebugManager.flags.ForceStatelessL1CachingPolicy.set(2u);
 
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(2u, sbaCmd.getL1CachePolicyL1CacheControl());
 
     DebugManager.flags.ForceAllResourcesUncached.set(true);
 
-    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args, true);
+    StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(1u, sbaCmd.getL1CachePolicyL1CacheControl());
 }
