@@ -191,6 +191,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     bool isHostSignalScopeEvent = launchParams.isHostSignalScopeEvent;
     Event *compactEvent = nullptr;
     if (event) {
+        if (kernel->getPrintfBufferAllocation() != nullptr) {
+            event->setKernelForPrintf(kernel);
+        }
         isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
         if (compactL3FlushEvent(getDcFlushRequired(event->isSignalScope()))) {
             compactEvent = event;

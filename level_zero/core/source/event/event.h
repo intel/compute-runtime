@@ -38,6 +38,7 @@ struct Context;
 struct DriverHandle;
 struct DriverHandleImp;
 struct Device;
+struct Kernel;
 
 #pragma pack(1)
 struct IpcEventPoolData {
@@ -178,6 +179,12 @@ struct Event : _ze_event_handle_t {
     uint32_t getMaxKernelCount() const {
         return maxKernelCount;
     }
+    void setKernelForPrintf(Kernel *inputKernelPtr) {
+        kernelWithPrintf = inputKernelPtr;
+    }
+    Kernel *getKernelForPrintf() {
+        return kernelWithPrintf;
+    }
 
     bool isSignalScope() const {
         return !!signalScope;
@@ -221,6 +228,7 @@ struct Event : _ze_event_handle_t {
     void *hostAddress = nullptr;
     Device *device = nullptr;
     EventPool *eventPool = nullptr;
+    Kernel *kernelWithPrintf = nullptr;
 
     uint32_t maxKernelCount = 0;
     uint32_t kernelCount = 1u;

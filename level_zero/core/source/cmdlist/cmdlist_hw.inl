@@ -361,6 +361,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelIndirect(ze_
     Event *event = nullptr;
     if (hEvent) {
         event = Event::fromHandle(hEvent);
+        if (Kernel::fromHandle(kernelHandle)->getPrintfBufferAllocation() != nullptr) {
+            event->setKernelForPrintf(Kernel::fromHandle(kernelHandle));
+        }
         launchParams.isHostSignalScopeEvent = event->isSignalScope(ZE_EVENT_SCOPE_FLAG_HOST);
     }
 
