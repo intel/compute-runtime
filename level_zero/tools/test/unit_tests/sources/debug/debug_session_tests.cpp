@@ -640,6 +640,26 @@ TEST(DebugSessionTest, givenSomeThreadsRunningWhenResumeCalledThenOnlyStoppedThr
     }
 }
 
+TEST(DebugSessionTest, givenStoppedThreadWhenResumeCalledThenStoppedThreadsAreCheckedSynchronously) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    ze_device_thread_t apiThread = {0, 0, 0, 1};
+    EuThread::ThreadId thread(0, apiThread);
+    sessionMock->allThreads[thread]->stopThread(1u);
+
+    auto result = sessionMock->resume(apiThread);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, sessionMock->checkStoppedThreadsAndGenerateEventsCallCount);
+}
+
 TEST(DebugSessionTest, givenAllThreadsRunningWhenResumeCalledThenErrorUnavailableReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;

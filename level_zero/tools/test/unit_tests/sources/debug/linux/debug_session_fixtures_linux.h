@@ -81,16 +81,21 @@ struct MockIoctlHandler : public L0::DebugSessionLinux::IoctlHandler {
             return vmOpenRetVal;
         } else if ((request == PRELIM_I915_DEBUG_IOCTL_EU_CONTROL) && (arg != nullptr)) {
             prelim_drm_i915_debug_eu_control *euControlArg = reinterpret_cast<prelim_drm_i915_debug_eu_control *>(arg);
-            euControl = *euControlArg;
+            EuControlArg arg;
+            arg.euControl = *euControlArg;
 
             euControlArg->seqno = euControlOutputSeqno;
 
             if (euControlArg->bitmask_size != 0) {
-                euControlBitmaskSize = euControlArg->bitmask_size;
-                euControlBitmask = std::make_unique<uint8_t[]>(euControlBitmaskSize);
+                arg.euControlBitmaskSize = euControlArg->bitmask_size;
+                arg.euControlBitmask = std::make_unique<uint8_t[]>(arg.euControlBitmaskSize);
 
-                memcpy(euControlBitmask.get(), reinterpret_cast<void *>(euControlArg->bitmask_ptr), euControlBitmaskSize);
+                memcpy(arg.euControlBitmask.get(), reinterpret_cast<void *>(euControlArg->bitmask_ptr), arg.euControlBitmaskSize);
+                if (euControlArg->cmd == PRELIM_I915_DEBUG_EU_THREADS_CMD_STOPPED && euControlArg->bitmask_ptr && outputBitmask.get()) {
+                    memcpy_s(reinterpret_cast<uint64_t *>(euControlArg->bitmask_ptr), euControlArg->bitmask_size, outputBitmask.get(), outputBitmaskSize);
+                }
             }
+            euControlArgs.push_back(std::move(arg));
         }
 
         return ioctlRetVal;
@@ -191,14 +196,23 @@ struct MockIoctlHandler : public L0::DebugSessionLinux::IoctlHandler {
         pWriteBase = baseAddress;
     }
 
+    struct EuControlArg {
+        EuControlArg() : euControlBitmask(nullptr) {
+            memset(&euControl, 0, sizeof(euControl));
+        }
+        EuControlArg(EuControlArg &&in) : euControl(in.euControl), euControlBitmask(std::move(in.euControlBitmask)), euControlBitmaskSize(in.euControlBitmaskSize){};
+        prelim_drm_i915_debug_eu_control euControl = {};
+        std::unique_ptr<uint8_t[]> euControlBitmask;
+        size_t euControlBitmaskSize = 0;
+    };
+
     prelim_drm_i915_debug_event debugEventInput = {};
     prelim_drm_i915_debug_event debugEventAcked = {};
     prelim_drm_i915_debug_read_uuid *returnUuid = nullptr;
     prelim_drm_i915_debug_vm_open vmOpen = {};
-    prelim_drm_i915_debug_eu_control euControl = {};
-
-    std::unique_ptr<uint8_t[]> euControlBitmask;
-    size_t euControlBitmaskSize = 0;
+    std::vector<EuControlArg> euControlArgs;
+    std::unique_ptr<uint8_t[]> outputBitmask;
+    size_t outputBitmaskSize = 0;
 
     int ioctlRetVal = 0;
     int debugEventRetVal = 0;
@@ -253,6 +267,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionLinux::asyncThread;
     using L0::DebugSessionLinux::blockOnFenceMode;
     using L0::DebugSessionLinux::checkAllEventsCollected;
+    using L0::DebugSessionLinux::checkStoppedThreadsAndGenerateEvents;
     using L0::DebugSessionLinux::clientHandle;
     using L0::DebugSessionLinux::clientHandleClosed;
     using L0::DebugSessionLinux::clientHandleToConnection;
@@ -435,6 +450,10 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         return DebugSessionLinux::processPendingVmBindEvents();
     }
 
+    void checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) override {
+        checkStoppedThreadsAndGenerateEventsCallCount++;
+        return DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, deviceIndex);
+    }
     TileDebugSessionLinux *createTileSession(const zet_debug_config_t &config, L0::Device *device, L0::DebugSessionImp *rootDebugSession) override;
 
     ze_result_t initializeRetVal = ZE_RESULT_FORCE_UINT32;
@@ -453,6 +472,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     uint32_t checkThreadIsResumedCalled = 0;
     uint32_t interruptedDevice = std::numeric_limits<uint32_t>::max();
     uint32_t processPendingVmBindEventsCalled = 0;
+    uint32_t checkStoppedThreadsAndGenerateEventsCallCount = 0;
 
     std::vector<uint32_t> resumedDevices;
     std::vector<std::vector<EuThread::ThreadId>> resumedThreads;

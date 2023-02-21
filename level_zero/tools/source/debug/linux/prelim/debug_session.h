@@ -186,6 +186,7 @@ struct DebugSessionLinux : DebugSessionImp {
     ze_result_t readEventImp(prelim_drm_i915_debug_event *drmDebugEvent);
     ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) override;
     ze_result_t interruptImp(uint32_t deviceIndex) override;
+    void checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) override;
 
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
         pushApiEvent(debugEvent);

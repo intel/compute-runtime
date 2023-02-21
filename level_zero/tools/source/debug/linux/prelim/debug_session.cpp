@@ -1439,6 +1439,40 @@ int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &thre
     return ret;
 }
 
+void DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) {
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize;
+    [[maybe_unused]] auto attReadResult = threadControl(threads, deviceIndex, ThreadControlCmd::Stopped, bitmask, bitmaskSize);
+    DEBUG_BREAK_IF(attReadResult != 0);
+
+    auto hwInfo = connectedDevice->getHwInfo();
+    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+
+    auto threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, deviceIndex, bitmask.get(), bitmaskSize);
+    std::vector<EuThread::ThreadId> stoppedThreadsToReport;
+    stoppedThreadsToReport.reserve(threads.size());
+
+    const auto &threadsToCheck = threadsWithAttention.size() > 0 ? threadsWithAttention : threads;
+
+    for (auto &threadId : threadsToCheck) {
+        SIP::sr_ident srMagic = {{0}};
+        srMagic.count = 0;
+
+        if (readSystemRoutineIdent(allThreads[threadId].get(), memoryHandle, srMagic)) {
+            bool wasStopped = allThreads[threadId]->isStopped();
+
+            if (allThreads[threadId]->verifyStopped(srMagic.count)) {
+                allThreads[threadId]->stopThread(memoryHandle);
+                if (!wasStopped) {
+                    stoppedThreadsToReport.push_back(threadId);
+                }
+            }
+        }
+    }
+
+    generateEventsForStoppedThreads(stoppedThreadsToReport);
+}
+
 ze_result_t DebugSessionLinux::resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) {
     std::unique_ptr<uint8_t[]> bitmask;
     size_t bitmaskSize;

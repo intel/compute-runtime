@@ -511,8 +511,34 @@ TEST_F(DebugApiLinuxTest, WhenCallingResumeThenProperIoctlsAreCalled) {
     auto result = L0::DebugApiHandlers::debugResume(session, thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    EXPECT_EQ(1, handler->ioctlCalled);
-    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControl.cmd);
+    EXPECT_EQ(2u, handler->euControlArgs.size());
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControlArgs[0].euControl.cmd);
+}
+
+TEST_F(DebugApiLinuxTest, GivenStoppedThreadWhenCallingResumeThenStoppedThreadsAreCheckedSynchronously) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
+
+    auto handler = new MockIoctlHandler;
+    sessionMock->ioctlHandler.reset(handler);
+    sessionMock->clientHandle = MockDebugSessionLinux::mockClientHandle;
+    sessionMock->clientHandleToConnection[sessionMock->clientHandle]->vmToContextStateSaveAreaBindInfo[1u] = {0x1000, 0x1000};
+
+    ze_device_thread_t thread = {};
+    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+
+    auto result = sessionMock->resume(thread);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    EXPECT_EQ(2u, handler->euControlArgs.size());
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControlArgs[0].euControl.cmd);
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_STOPPED), handler->euControlArgs[1].euControl.cmd);
+    EXPECT_EQ(1u, sessionMock->checkStoppedThreadsAndGenerateEventsCallCount);
 }
 
 TEST_F(DebugApiLinuxTest, GivenUnknownEventWhenAcknowledgeEventCalledThenErrorUninitializedIsReturned) {
@@ -5279,9 +5305,9 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForInterruptThenProperIoctlsIs
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(1, handler->ioctlCalled);
-    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT), handler->euControl.cmd);
-    EXPECT_NE(0u, handler->euControl.bitmask_size);
-    EXPECT_NE(0u, handler->euControl.bitmask_ptr);
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT), handler->euControlArgs[0].euControl.cmd);
+    EXPECT_NE(0u, handler->euControlArgs[0].euControl.bitmask_size);
+    EXPECT_NE(0u, handler->euControlArgs[0].euControl.bitmask_ptr);
     EXPECT_EQ(handler->euControlOutputSeqno, sessionMock->euControlInterruptSeqno[0]);
 
     EXPECT_EQ(0u, bitmaskSizeOut);
@@ -5293,9 +5319,9 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForInterruptThenProperIoctlsIs
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(1, handler->ioctlCalled);
-    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT_ALL), handler->euControl.cmd);
-    EXPECT_EQ(0u, handler->euControl.bitmask_size);
-    EXPECT_EQ(0u, handler->euControl.bitmask_ptr);
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT_ALL), handler->euControlArgs[1].euControl.cmd);
+    EXPECT_EQ(0u, handler->euControlArgs[1].euControl.bitmask_size);
+    EXPECT_EQ(0u, handler->euControlArgs[1].euControl.bitmask_ptr);
     EXPECT_EQ(handler->euControlOutputSeqno, sessionMock->euControlInterruptSeqno[0]);
 
     EXPECT_EQ(0u, bitmaskSizeOut);
@@ -5322,7 +5348,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromIoctlWhenCallingThreadControlForInterrup
     EXPECT_NE(0, result);
 
     EXPECT_EQ(1, handler->ioctlCalled);
-    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT_ALL), handler->euControl.cmd);
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT_ALL), handler->euControlArgs[0].euControl.cmd);
     EXPECT_NE(handler->euControlOutputSeqno, sessionMock->euControlInterruptSeqno[0]);
 }
 
@@ -5344,12 +5370,121 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForResumeThenProperIoctlsIsCal
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(1, handler->ioctlCalled);
-    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControl.cmd);
-    EXPECT_NE(0u, handler->euControl.bitmask_size);
-    EXPECT_NE(0u, handler->euControl.bitmask_ptr);
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControlArgs[0].euControl.cmd);
+    EXPECT_NE(0u, handler->euControlArgs[0].euControl.bitmask_size);
+    EXPECT_NE(0u, handler->euControlArgs[0].euControl.bitmask_ptr);
 
     EXPECT_EQ(0u, bitmaskSizeOut);
     EXPECT_EQ(nullptr, bitmaskOut.get());
+}
+
+TEST_F(DebugApiLinuxTest, GivenStoppedAndRunningThreadWhenCheckStoppedThreadsAndGenerateEventsCalledThenThreadStoppedEventsGeneratedOnlyForNewlyStoppedThreads) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+
+    auto handler = new MockIoctlHandler;
+    sessionMock->ioctlHandler.reset(handler);
+    EuThread::ThreadId thread = {0, 0, 0, 0, 0};
+    EuThread::ThreadId thread1 = {0, 0, 0, 0, 1};
+    const auto memoryHandle = 1u;
+    sessionMock->allThreads[thread.packed]->stopThread(memoryHandle);
+
+    std::vector<EuThread::ThreadId> threads;
+    threads.push_back(thread);
+    threads.push_back(thread1);
+
+    for (auto thread : threads) {
+        sessionMock->stoppedThreads[thread.packed] = 3;
+    }
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+
+    handler->outputBitmaskSize = bitmaskSize;
+    handler->outputBitmask = std::move(bitmask);
+
+    sessionMock->checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, 0);
+
+    EXPECT_EQ(1, handler->ioctlCalled);
+    EXPECT_EQ(1u, handler->euControlArgs.size());
+    EXPECT_EQ(2u, sessionMock->numThreadsPassedToThreadControl);
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_STOPPED), handler->euControlArgs[0].euControl.cmd);
+    EXPECT_NE(0u, handler->euControlArgs[0].euControl.bitmask_size);
+    EXPECT_NE(0u, handler->euControlArgs[0].euControl.bitmask_ptr);
+
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    EXPECT_EQ(0, memcmp(handler->euControlArgs[0].euControlBitmask.get(), bitmask.get(), bitmaskSize));
+
+    EXPECT_TRUE(sessionMock->allThreads[thread.packed]->isStopped());
+    EXPECT_TRUE(sessionMock->allThreads[thread1.packed]->isStopped());
+
+    EXPECT_EQ(1u, sessionMock->apiEvents.size());
+    auto event = sessionMock->apiEvents.front();
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED, event.type);
+    EXPECT_EQ(thread1.slice, event.info.thread.thread.slice);
+    EXPECT_EQ(thread1.subslice, event.info.thread.thread.subslice);
+    EXPECT_EQ(thread1.eu, event.info.thread.thread.eu);
+    EXPECT_EQ(thread1.thread, event.info.thread.thread.thread);
+}
+
+TEST_F(DebugApiLinuxTest, GivenNoAttentionBitsWhenCheckStoppedThreadsAndGenerateEventsCalledThenThreadStoppedEventsGeneratedOnlyForNewlyStoppedThreadsFromPassedVector) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, device, 10);
+    ASSERT_NE(nullptr, sessionMock);
+
+    auto handler = new MockIoctlHandler;
+    sessionMock->ioctlHandler.reset(handler);
+    EuThread::ThreadId thread = {0, 0, 0, 0, 0};
+    EuThread::ThreadId thread1 = {0, 0, 0, 0, 1};
+    EuThread::ThreadId thread2 = {0, 0, 0, 0, 2};
+    const auto memoryHandle = 1u;
+
+    std::vector<EuThread::ThreadId> threads;
+    threads.push_back(thread);
+    threads.push_back(thread1);
+
+    sessionMock->allThreads[thread.packed]->verifyStopped(1);
+    sessionMock->allThreads[thread.packed]->stopThread(memoryHandle);
+    sessionMock->stoppedThreads[thread.packed] = 1;  // previously stopped
+    sessionMock->stoppedThreads[thread1.packed] = 3; // newly stopped
+    sessionMock->stoppedThreads[thread2.packed] = 3; // newly stopped
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+    memset(bitmask.get(), 0, bitmaskSize);
+
+    handler->outputBitmaskSize = bitmaskSize;
+    handler->outputBitmask = std::move(bitmask);
+
+    sessionMock->checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, 0);
+
+    EXPECT_EQ(1, handler->ioctlCalled);
+    EXPECT_EQ(1u, handler->euControlArgs.size());
+    EXPECT_EQ(2u, sessionMock->numThreadsPassedToThreadControl);
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_STOPPED), handler->euControlArgs[0].euControl.cmd);
+
+    EXPECT_TRUE(sessionMock->allThreads[thread.packed]->isStopped());
+    EXPECT_TRUE(sessionMock->allThreads[thread1.packed]->isStopped());
+    EXPECT_FALSE(sessionMock->allThreads[thread2.packed]->isStopped());
+
+    EXPECT_EQ(1u, sessionMock->apiEvents.size());
+    auto event = sessionMock->apiEvents.front();
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED, event.type);
+    EXPECT_EQ(thread1.slice, event.info.thread.thread.slice);
+    EXPECT_EQ(thread1.subslice, event.info.thread.thread.subslice);
+    EXPECT_EQ(thread1.eu, event.info.thread.thread.eu);
+    EXPECT_EQ(thread1.thread, event.info.thread.thread.thread);
 }
 
 TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedToBitmask) {
@@ -5370,11 +5505,12 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControl.cmd);
-    EXPECT_NE(0u, handler->euControl.bitmask_size);
-    EXPECT_NE(0u, handler->euControl.bitmask_ptr);
+    uint32_t euControlIndex = 0;
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControlArgs[0].euControl.cmd);
+    EXPECT_NE(0u, handler->euControlArgs[euControlIndex].euControl.bitmask_size);
+    EXPECT_NE(0u, handler->euControlArgs[euControlIndex].euControl.bitmask_ptr);
 
-    auto bitmask = handler->euControlBitmask.get();
+    auto bitmask = handler->euControlArgs[euControlIndex].euControlBitmask.get();
 
     EXPECT_EQ(1u, bitmask[0]);
     if (l0GfxCoreHelper.isResumeWARequired()) {
@@ -5389,7 +5525,9 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
     result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    bitmask = handler->euControlBitmask.get();
+    // every resume call checks stopped threads
+    euControlIndex += 2;
+    bitmask = handler->euControlArgs[euControlIndex].euControlBitmask.get();
 
     if (l0GfxCoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, bitmask[0]);
@@ -5420,7 +5558,7 @@ TEST_F(DebugApiLinuxTest, GivenSliceALLWhenCallingResumeThenSliceIdIsNotRemapped
 
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControl.cmd);
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControlArgs[0].euControl.cmd);
 
     auto sliceCount = mockDrm->getTopologyMap().at(0).sliceIndices.size();
     EXPECT_EQ(sliceCount, sessionMock->numThreadsPassedToThreadControl);
@@ -5478,7 +5616,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingThreadControlForThreadStoppedThenProperIoct
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(1, handler->ioctlCalled);
-    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_STOPPED), handler->euControl.cmd);
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_STOPPED), handler->euControlArgs[0].euControl.cmd);
 
     EXPECT_NE(0u, bitmaskSizeOut);
     EXPECT_NE(nullptr, bitmaskOut.get());
@@ -7103,13 +7241,14 @@ TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThre
     auto result = L0::DebugApiHandlers::debugResume(session, allSlices);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
-    EXPECT_EQ(2, handler->ioctlCalled);
-    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControl.cmd);
+    EXPECT_EQ(4u, handler->euControlArgs.size());
+    EXPECT_EQ(uint32_t(PRELIM_I915_DEBUG_EU_THREADS_CMD_RESUME), handler->euControlArgs[0].euControl.cmd);
 
     ASSERT_EQ(2u, sessionMock->resumedDevices.size());
     ASSERT_EQ(2u, sessionMock->resumedThreads.size());
     EXPECT_EQ(0u, sessionMock->resumedDevices[0]);
     EXPECT_EQ(1u, sessionMock->resumedDevices[1]);
+    EXPECT_EQ(2u, sessionMock->checkStoppedThreadsAndGenerateEventsCallCount);
 
     EXPECT_EQ(thread.slice, sessionMock->resumedThreads[0][0].slice);
     EXPECT_EQ(thread.subslice, sessionMock->resumedThreads[0][0].subslice);
