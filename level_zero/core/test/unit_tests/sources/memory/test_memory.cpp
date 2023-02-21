@@ -3302,6 +3302,34 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 }
 
 HWTEST2_F(MultipleDevicePeerAllocationTest,
+          givenSharedAllocationPassedToGetAllignedAllocationUsingDevice1ThenAlignedAllocationWithPeerAllocationIsReturned,
+          IsAtLeastSkl) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocSharedMem(device0->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
+
+    AlignedAllocationData outData = commandList->getAlignedAllocation(device1, ptr, size, false);
+    EXPECT_NE(outData.alignedAllocationPtr, 0u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(MultipleDevicePeerAllocationTest,
           givenDeviceAllocationPassedToGetAllignedAllocationUsingDevice0ThenAlignedAllocationWithPeerAllocationIsReturned,
           IsAtLeastSkl) {
     L0::Device *device0 = driverHandle->devices[0];
@@ -3319,6 +3347,34 @@ HWTEST2_F(MultipleDevicePeerAllocationTest,
 
     auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
     commandList->initialize(device0, NEO::EngineGroupType::RenderCompute, 0u);
+
+    AlignedAllocationData outData = commandList->getAlignedAllocation(device0, ptr, size, false);
+    EXPECT_NE(outData.alignedAllocationPtr, 0u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(MultipleDevicePeerAllocationTest,
+          givenSharedAllocationPassedToGetAllignedAllocationUsingDevice0ThenAlignedAllocationWithPeerAllocationIsReturned,
+          IsAtLeastSkl) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    size_t size = 1024;
+    size_t alignment = 1u;
+    void *ptr = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_result_t result = context->allocSharedMem(device1->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto commandList = std::make_unique<::L0::ult::CommandListCoreFamily<gfxCoreFamily>>();
+    commandList->initialize(device1, NEO::EngineGroupType::RenderCompute, 0u);
 
     AlignedAllocationData outData = commandList->getAlignedAllocation(device0, ptr, size, false);
     EXPECT_NE(outData.alignedAllocationPtr, 0u);

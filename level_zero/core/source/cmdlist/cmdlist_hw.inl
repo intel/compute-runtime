@@ -1921,6 +1921,10 @@ inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAll
 
             alloc = driverHandle->getPeerAllocation(device, allocData, reinterpret_cast<void *>(pbase), &alignedPtr);
             alignedPtr += offset;
+
+            if (allocData->memoryType == InternalMemoryType::SHARED_UNIFIED_MEMORY) {
+                commandContainer.addToResidencyContainer(allocData->gpuAllocations.getDefaultGraphicsAllocation());
+            }
         } else {
             alignedPtr = sourcePtr;
         }
