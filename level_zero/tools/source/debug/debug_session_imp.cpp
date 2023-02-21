@@ -367,6 +367,7 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
     bool allThreadsRunning = true;
     auto singleThreads = getSingleThreadsForDevice(deviceIndex, physicalThread, hwInfo);
     Error retVal = Error::Unknown;
+    uint64_t memoryHandle = EuThread::invalidHandle;
 
     std::vector<ze_device_thread_t> resumeThreads;
     std::vector<EuThread::ThreadId> resumeThreadIds;
@@ -384,18 +385,20 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
     }
 
     std::unique_lock<std::mutex> lock(threadStateMutex);
+    memoryHandle = allThreads[resumeThreadIds[0]]->getMemoryHandle();
 
     [[maybe_unused]] auto sipCommandResult = writeResumeCommand(resumeThreadIds);
     DEBUG_BREAK_IF(sipCommandResult != true);
 
     auto result = resumeImp(resumeThreadIds, deviceIndex);
-
     for (auto &threadID : resumeThreadIds) {
         while (checkThreadIsResumed(threadID) == false)
             ;
 
         allThreads[threadID]->resumeThread();
     }
+
+    checkStoppedThreadsAndGenerateEvents(resumeThreadIds, memoryHandle, deviceIndex);
 
     if (sipCommandResult && result == ZE_RESULT_SUCCESS) {
         retVal = Error::Success;

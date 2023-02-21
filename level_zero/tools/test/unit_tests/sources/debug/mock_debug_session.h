@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -423,6 +423,11 @@ struct MockDebugSession : public L0::DebugSessionImp {
         return this->topologyMap;
     }
 
+    void checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) override {
+        checkStoppedThreadsAndGenerateEventsCallCount++;
+        return L0::DebugSessionImp::checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, deviceIndex);
+    }
+
     NEO::TopologyMap topologyMap;
 
     uint32_t interruptImpCalled = 0;
@@ -453,6 +458,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     bool skipCheckThreadIsResumed = true;
     uint32_t checkThreadIsResumedCalled = 0;
+    uint32_t checkStoppedThreadsAndGenerateEventsCallCount = 0;
 
     bool skipReadSystemRoutineIdent = true;
     std::vector<zet_debug_event_t> events;
