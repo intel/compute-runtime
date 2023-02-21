@@ -62,6 +62,10 @@ MTLTEST_F(MtlProductHelper, whenGettingAubstreamProductFamilyThenProperEnumValue
     EXPECT_EQ(aub_stream::ProductFamily::Mtl, productHelper->getAubStreamProductFamily());
 }
 
+MTLTEST_F(MtlProductHelper, givenMtlProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
+}
+
 MTLTEST_F(MtlProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {
     EXPECT_TRUE(productHelper->isEvictionIfNecessaryFlagSupported());
 }

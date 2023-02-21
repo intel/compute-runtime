@@ -35,6 +35,10 @@ SKLTEST_F(SklProductHelper, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsRe
     EXPECT_EQ(0u, gtSystemInfo.EUCount);
 }
 
+SKLTEST_F(SklProductHelper, givenSklProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
+}
+
 SKLTEST_F(SklProductHelper, givenBoolWhenCallSklHardwareInfoSetupThenFeatureTableAndWorkaroundTableAreSetCorrect) {
     uint64_t configs[] = {
         0x100030008,

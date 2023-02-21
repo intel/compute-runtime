@@ -55,6 +55,10 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2ConfigWhenSetupHardwareInfoThenGtSystemI
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
 }
 
+DG2TEST_F(ProductHelperTestDg2, givenDg2ProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
+}
+
 DG2TEST_F(ProductHelperTestDg2, givenG10DevIdWhenAdditionalKernelExecInfoSupportCheckedThenCorrectValueIsReturned) {
     HardwareInfo myHwInfo = *defaultHwInfo;
     myHwInfo.platform.usDeviceID = dg2G10DeviceIds[0];

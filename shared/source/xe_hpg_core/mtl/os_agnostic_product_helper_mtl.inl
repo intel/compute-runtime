@@ -107,6 +107,11 @@ bool ProductHelperHw<gfxProduct>::isAdjustWalkOrderAvailable(const HardwareInfo 
 }
 
 template <>
+bool ProductHelperHw<gfxProduct>::isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
 bool ProductHelperHw<gfxProduct>::isEvictionIfNecessaryFlagSupported() const {
     return true;
 }

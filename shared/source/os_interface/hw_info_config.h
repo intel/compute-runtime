@@ -125,6 +125,7 @@ class ProductHelper {
     virtual bool isFlushTaskAllowed() const = 0;
     virtual bool programAllStateComputeCommandFields() const = 0;
     virtual bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isGlobalFenceInDirectSubmissionRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const = 0;

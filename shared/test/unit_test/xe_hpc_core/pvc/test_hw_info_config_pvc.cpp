@@ -87,6 +87,10 @@ PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsStatefulAddressingModeSup
     EXPECT_FALSE(productHelper->isStatefulAddressingModeSupported());
 }
 
+PVCTEST_F(PvcProductHelper, givenPvcProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
+}
+
 PVCTEST_F(PvcProductHelper, givenPvcSteppingWhenQueryIsComputeDispatchAllWalkerEnableInCfeStateRequiredThenAppropriateValueIsReturned) {
     auto hwInfo = *defaultHwInfo;
 

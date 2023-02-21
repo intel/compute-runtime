@@ -51,6 +51,10 @@ XEHPTEST_F(XeHpProductHelper, givenProductHelperWhenRevisionIsAtLeastBThenAllowS
     }
 }
 
+XEHPTEST_F(XeHpProductHelper, givenXeHpProductHelperWhenIsInitBuiltinAsyncSupportedThenReturnTrue) {
+    EXPECT_TRUE(productHelper->isInitBuiltinAsyncSupported(*defaultHwInfo));
+}
+
 XEHPTEST_F(XeHpProductHelper, givenXeHpCoreProductHelperWhenCheckDirectSubmissionSupportedThenTrueIsReturned) {
     auto hwInfo = *defaultHwInfo;
 

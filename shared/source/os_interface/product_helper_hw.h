@@ -84,6 +84,7 @@ class ProductHelperHw : public ProductHelper {
     bool isFlushTaskAllowed() const override;
     bool programAllStateComputeCommandFields() const override;
     bool isSystolicModeConfigurable(const HardwareInfo &hwInfo) const override;
+    bool isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const override;
     bool isComputeDispatchAllWalkerEnableInComputeWalkerRequired(const HardwareInfo &hwInfo) const override;
     bool isCopyEngineSelectorEnabled(const HardwareInfo &hwInfo) const override;
     bool isGlobalFenceInCommandStreamRequired(const HardwareInfo &hwInfo) const override;

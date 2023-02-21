@@ -216,6 +216,11 @@ void ProductHelperHw<IGFX_UNKNOWN>::setCapabilityCoherencyFlag(const HardwareInf
 }
 
 template <>
+bool ProductHelperHw<IGFX_UNKNOWN>::isInitBuiltinAsyncSupported(const HardwareInfo &hwInfo) const {
+    return false;
+}
+
+template <>
 bool ProductHelperHw<IGFX_UNKNOWN>::isAdditionalMediaSamplerProgrammingRequired() const {
     return false;
 }
