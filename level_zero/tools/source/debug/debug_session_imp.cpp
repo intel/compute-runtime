@@ -1148,22 +1148,7 @@ ze_result_t DebugSessionImp::registersAccessHelper(const EuThread *thread, const
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    char tssMagic[8] = {0};
-    readGpuMemory(thread->getMemoryHandle(), tssMagic, sizeof(tssMagic), gpuVa);
-    if (0 != strcmp(tssMagic, "tssarea")) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
     auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
-
-    SIP::sr_ident srMagic = {{0}};
-
-    auto srMagicOffset = threadSlotOffset + getStateSaveAreaHeader()->regHeader.sr_magic_offset;
-    readGpuMemory(thread->getMemoryHandle(), reinterpret_cast<char *>(&srMagic), sizeof(srMagic), gpuVa + srMagicOffset);
-    if (0 != strcmp(srMagic.magic, "srmagic")) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-
     auto startRegOffset = threadSlotOffset + calculateRegisterOffsetInThreadSlot(regdesc, start);
 
     int ret = 0;

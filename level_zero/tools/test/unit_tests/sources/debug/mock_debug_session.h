@@ -154,6 +154,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::resumeAccidentallyStoppedThreads;
     using L0::DebugSessionImp::sendInterrupts;
     using L0::DebugSessionImp::typeToRegsetDesc;
+    using L0::DebugSessionImp::validateAndSetStateSaveAreaHeader;
 
     using L0::DebugSessionImp::interruptSent;
     using L0::DebugSessionImp::stateSaveAreaHeader;

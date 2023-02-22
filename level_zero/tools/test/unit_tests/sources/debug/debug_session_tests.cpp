@@ -1172,7 +1172,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenWritingResumeFailsThenErrorIs
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
-    sessionMock->readRegistersResult = ZE_RESULT_ERROR_UNKNOWN;
+    sessionMock->writeMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
     sessionMock->writeRegistersResult = ZE_RESULT_ERROR_UNKNOWN;
     sessionMock->debugArea.reserved1 = 1u;
     sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
@@ -1239,6 +1239,24 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenResumingThreadThenCheckIfThre
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 
     EXPECT_EQ(1u, sessionMock->checkThreadIsResumedCalled);
+}
+
+TEST_F(DebugSessionTest, givenTssMagicCorruptedWhenStateSaveAreIsReadThenHeaderIsNotSet) {
+    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+    auto versionHeader = &reinterpret_cast<SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data())->versionHeader;
+    versionHeader->magic[0] = '!';
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto session = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
+    session->stateSaveAreaHeader.clear();
+    session->validateAndSetStateSaveAreaHeader(session->allThreads[thread0]->getMemoryHandle(), reinterpret_cast<uint64_t>(session->readMemoryBuffer));
+    EXPECT_TRUE(session->stateSaveAreaHeader.empty());
 }
 
 using MultiTileDebugSessionTest = Test<MultipleDevicesWithCustomHwInfo>;
@@ -1816,26 +1834,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreaGpuVaWhenRegistersAc
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
 }
 
-TEST_F(DebugSessionRegistersAccessTest, givenTssMagicCorruptedWhenRegistersAccessHelperCalledThenErrorUnknownReturned) {
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
-
-    {
-        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
-        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
-                    pStateSaveAreaHeader->regHeader.state_area_offset +
-                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
-        session->stateSaveAreaHeader.resize(size);
-    }
-
-    session->stateSaveAreaHeader[0] = '!';
-    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
-    uint8_t r0[32];
-    EuThread::ThreadId thread0(0, 0, 0, 0, 0);
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, r0, false);
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
-}
-
-TEST_F(DebugSessionRegistersAccessTest, givenWriteGpuMemoryErrorWhenRegistersAccessHelperCalledThenErrorUnknownReturned) {
+TEST_F(DebugSessionRegistersAccessTest, givenWriteGpuMemoryErrorWhenRegistersAccessHelperCalledForWriteThenErrorUnknownReturned) {
     session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     {
@@ -1854,7 +1853,7 @@ TEST_F(DebugSessionRegistersAccessTest, givenWriteGpuMemoryErrorWhenRegistersAcc
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
 }
 
-TEST_F(DebugSessionRegistersAccessTest, givenReadGpuMemoryErrorWhenRegistersAccessHelperCalledThenErrorUnknownReturned) {
+TEST_F(DebugSessionRegistersAccessTest, givenReadGpuMemoryErrorWhenRegistersAccessHelperCalledForReadThenErrorUnknownReturned) {
     session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     {
@@ -1869,23 +1868,16 @@ TEST_F(DebugSessionRegistersAccessTest, givenReadGpuMemoryErrorWhenRegistersAcce
     auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
     uint8_t r0[32];
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
-    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, r0, true);
+    auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, r0, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, ret);
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreaWhenReadRegisterCalledThenErrorUnknownReturned) {
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+    session->stateSaveAreaHeader.clear();
 
-    {
-        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
-        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
-                    pStateSaveAreaHeader->regHeader.state_area_offset +
-                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
-        session->stateSaveAreaHeader.resize(size);
-    }
-
+    auto stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
     session->readMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
-    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data()))->regHeader.grf;
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data()))->regHeader.grf;
     uint8_t r0[32];
     EuThread::ThreadId thread0(0, 0, 0, 0, 0);
     auto ret = session->registersAccessHelper(session->allThreads[thread0].get(), regdesc, 0, 1, r0, true);
