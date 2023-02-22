@@ -1135,6 +1135,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnR
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
     DebugManager.flags.EnableDirectSubmission.set(1);
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
 
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_RCS].engineSupported = true;
@@ -1178,6 +1179,7 @@ HWTEST_TEMPLATED_F(WddmCommandStreamMockGdiTest, givenDirectSubmissionEnabledOnB
     auto mockCsr = static_cast<MockWddmCsr<FamilyType> *>(csr);
 
     DebugManager.flags.EnableDirectSubmission.set(1);
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
 
     auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
     hwInfo->capabilityTable.directSubmissionEngines.data[aub_stream::ENGINE_BCS].engineSupported = true;

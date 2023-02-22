@@ -97,7 +97,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     void *getHeapSpaceAllowGrow(HeapType heapType, size_t size);
 
-    ErrorCode initialize(Device *device, AllocationsList *reusableAllocationList, bool requireHeaps);
+    ErrorCode initialize(Device *device, AllocationsList *reusableAllocationList, bool requireHeaps, bool createSecondaryCmdBufferInHostMem);
 
     void prepareBindfulSsh();
 
@@ -111,6 +111,9 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     void handleCmdBufferAllocations(size_t startIndex);
     GraphicsAllocation *obtainNextCommandBufferAllocation();
+    GraphicsAllocation *obtainNextCommandBufferAllocation(bool forceHostMemory);
+
+    bool swapStreams();
 
     void reset();
 
@@ -139,7 +142,9 @@ class CommandContainer : public NonCopyableOrMovableClass {
     void reserveSpaceForDispatch(HeapReserveArguments &sshReserveArg, HeapReserveArguments &dshReserveArg, bool getDsh);
 
     GraphicsAllocation *reuseExistingCmdBuffer();
+    GraphicsAllocation *reuseExistingCmdBuffer(bool forceHostMemory);
     GraphicsAllocation *allocateCommandBuffer();
+    GraphicsAllocation *allocateCommandBuffer(bool forceHostMemory);
     void setCmdBuffer(GraphicsAllocation *cmdBuffer);
     void addCurrentCommandBufferToReusableAllocationList();
 
@@ -177,6 +182,8 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     std::unique_ptr<HeapHelper> heapHelper;
     std::unique_ptr<LinearStream> commandStream;
+    std::unique_ptr<LinearStream> secondaryCommandStreamForImmediateCmdList;
+    bool useSecondaryCommandStream = false;
 
     uint64_t instructionHeapBaseAddress = 0u;
     uint64_t indirectObjectHeapBaseAddress = 0u;

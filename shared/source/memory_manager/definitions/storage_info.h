@@ -31,6 +31,7 @@ struct StorageInfo {
     bool isLockable = false;
     bool localOnlyRequired = false;
     bool systemMemoryPlacement = true;
+    bool systemMemoryForced = false;
     char resourceTag[AppResourceDefines::maxStrLen + 1] = "";
     uint32_t getMemoryBanks() const { return static_cast<uint32_t>(memoryBanks.to_ulong()); }
     uint32_t getTotalBanksCnt() const;

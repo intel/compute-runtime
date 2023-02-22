@@ -3798,7 +3798,7 @@ TEST(DrmMemoryManager, givenEnabledResourceRegistrationWhenSshIsAllocatedThenItI
     auto device = std::unique_ptr<MockDevice>(MockDevice::create<MockDevice>(executionEnvironment, 0));
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(device.get(), nullptr, true);
+    cmdContainer.initialize(device.get(), nullptr, true, false);
 
     auto *ssh = cmdContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
     auto bo = static_cast<DrmAllocation *>(ssh->getGraphicsAllocation())->getBO();

@@ -15,7 +15,7 @@ namespace NEO {
 void CommandEncodeStatesFixture::setUp() {
     DeviceFixture::setUp();
     cmdContainer = std::make_unique<MyMockCommandContainer>();
-    cmdContainer->initialize(pDevice, nullptr, true);
+    cmdContainer->initialize(pDevice, nullptr, true, false);
     cmdContainer->setDirtyStateForAllHeaps(false);
     const auto &hwInfo = pDevice->getHardwareInfo();
     auto &productHelper = pDevice->getProductHelper();

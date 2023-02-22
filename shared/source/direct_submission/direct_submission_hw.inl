@@ -704,13 +704,22 @@ void *DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchWorkloadSection(BatchBu
             relaxedOrderingReturnPtrCmdStream.replaceBuffer(relaxedOrderingReturnPtrCmds, RelaxedOrderingHelper::getSizeReturnPtrRegs<GfxFamily>());
         }
 
-        dispatchStartSection(commandStreamAddress);
+        auto copyCmdBuffer = this->copyCommandBufferIntoRing(batchBuffer);
+
+        if (copyCmdBuffer) {
+            auto cmdStreamTaskPtr = ptrOffset(batchBuffer.stream->getCpuBase(), batchBuffer.startOffset);
+            auto sizeToCopy = ptrDiff(returnCmd, cmdStreamTaskPtr);
+            auto ringPtr = ringCommandStream.getSpace(sizeToCopy);
+            memcpy(ringPtr, cmdStreamTaskPtr, sizeToCopy);
+        } else {
+            dispatchStartSection(commandStreamAddress);
+        }
 
         uint64_t returnGpuPointer = ringCommandStream.getCurrentGpuAddressPosition();
 
         if (this->relaxedOrderingEnabled && batchBuffer.hasRelaxedOrderingDependencies) {
             dispatchRelaxedOrderingReturnPtrRegs(relaxedOrderingReturnPtrCmdStream, returnGpuPointer);
-        } else {
+        } else if (!copyCmdBuffer) {
             setReturnAddress(returnCmd, returnGpuPointer);
         }
     } else if (workloadMode == 1) {
@@ -881,6 +890,21 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchTaskStoreSection(uint64_
 }
 
 template <typename GfxFamily, typename Dispatcher>
+bool DirectSubmissionHw<GfxFamily, Dispatcher>::copyCommandBufferIntoRing(BatchBuffer &batchBuffer) {
+    auto ret = this->osContext.getNumSupportedDevices() == 1u &&
+               !batchBuffer.chainedBatchBuffer &&
+               batchBuffer.commandBufferAllocation &&
+               MemoryPoolHelper::isSystemMemoryPool(batchBuffer.commandBufferAllocation->getMemoryPool()) &&
+               !batchBuffer.hasRelaxedOrderingDependencies;
+
+    if (DebugManager.flags.DirectSubmissionFlatRingBuffer.get() != -1) {
+        ret &= !!DebugManager.flags.DirectSubmissionFlatRingBuffer.get();
+    }
+
+    return ret;
+}
+
+template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp) {
     // for now workloads requiring cache coherency are not supported
     UNRECOVERABLE_IF(batchBuffer.requiresCoherency);
@@ -894,6 +918,11 @@ bool DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchCommandBuffer(BatchBuffe
     bool relaxedOrderingSchedulerWillBeNeeded = (this->relaxedOrderingSchedulerRequired || batchBuffer.hasRelaxedOrderingDependencies);
 
     size_t dispatchSize = getSizeDispatch(relaxedOrderingSchedulerWillBeNeeded, batchBuffer.hasRelaxedOrderingDependencies);
+
+    if (this->copyCommandBufferIntoRing(batchBuffer)) {
+        dispatchSize += (batchBuffer.stream->getUsed() - batchBuffer.startOffset) - 2 * getSizeStartSection();
+    }
+
     size_t cycleSize = getSizeSwitchRingBufferSection();
     size_t requiredMinimalSize = dispatchSize + cycleSize + getSizeEnd(relaxedOrderingSchedulerWillBeNeeded);
     if (this->relaxedOrderingEnabled) {

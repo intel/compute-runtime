@@ -11,6 +11,7 @@
 #include "shared/source/kernel/implicit_args.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
@@ -811,6 +812,139 @@ HWTEST_F(CommandListCreate, givenFlushTaskFlagEnabledAndAsyncCmdQueueAndCopyOnly
     auto itor = find<SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
     EXPECT_GT(commandContainer.getCommandStream()->getUsed(), used);
+}
+
+struct CmdContainerMock : public CommandContainer {
+    using CommandContainer::secondaryCommandStreamForImmediateCmdList;
+};
+
+HWTEST_F(CommandListCreate, givenImmediateCopyOnlySingleTileDirectSubmissionCommandListWhenInitializeThenCreateSecondaryCmdBufferInSystemMemory) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index);
+    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    auto localMemSupported = device->getHwInfo().featureTable.flags.ftrLocalMemory;
+    EXPECT_EQ(reinterpret_cast<CmdContainerMock *>(&commandList->commandContainer)->secondaryCommandStreamForImmediateCmdList.get() != nullptr, localMemSupported);
+    if (localMemSupported) {
+        EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->commandContainer)->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
+    }
+}
+
+HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenCheckAvailableSpaceThenSwapCommandStreams, IsAtLeastSkl) {
+    if (!device->getHwInfo().featureTable.flags.ftrLocalMemory) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+
+    static_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager())->localMemorySupported[0] = true;
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index);
+    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_NE(reinterpret_cast<CmdContainerMock *>(&commandList->commandContainer)->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(reinterpret_cast<CmdContainerMock *>(&commandList->commandContainer)->secondaryCommandStreamForImmediateCmdList->getGraphicsAllocation()->getMemoryPool()));
+
+    auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get());
+    auto secondaryCmdStream = reinterpret_cast<CmdContainerMock *>(&commandList->commandContainer)->secondaryCommandStreamForImmediateCmdList.get();
+
+    immediateCmdList->checkAvailableSpace(0u, false);
+
+    EXPECT_EQ(commandList->commandContainer.getCommandStream(), secondaryCmdStream);
+    EXPECT_TRUE(MemoryPoolHelper::isSystemMemoryPool(commandList->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool()));
+}
+
+HWTEST2_F(CommandListCreate, givenNoSecondaryCommandStreamForImmediateCmdListWhenCheckAvailableSpaceThenNotSwapCommandStreams, IsAtLeastSkl) {
+    if (!device->getHwInfo().featureTable.flags.ftrLocalMemory) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+
+    static_cast<MockMemoryManager *>(device->getNEODevice()->getMemoryManager())->localMemorySupported[0] = true;
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+    EXPECT_EQ(reinterpret_cast<CmdContainerMock *>(&commandList->commandContainer)->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
+
+    auto immediateCmdList = static_cast<CommandListCoreFamilyImmediate<gfxCoreFamily> *>(commandList.get());
+    auto cmdStream = commandList->commandContainer.getCommandStream();
+
+    immediateCmdList->checkAvailableSpace(0u, false);
+
+    EXPECT_EQ(commandList->commandContainer.getCommandStream(), cmdStream);
+    EXPECT_FALSE(MemoryPoolHelper::isSystemMemoryPool(commandList->commandContainer.getCommandStream()->getGraphicsAllocation()->getMemoryPool()));
+}
+
+HWTEST_F(CommandListCreate, givenDirectSubmissionFlatRingBufferFlagDisabledImmediateCopyOnlySingleTileDirectSubmissionCommandListWhenInitializeThenNotCreateSecondaryCmdBufferInSystemMemory) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(0u);
+
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index);
+    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(reinterpret_cast<CmdContainerMock *>(&commandList->commandContainer)->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
+}
+
+HWTEST_F(CommandListCreate, givenImmediateCopyOnlySingleTileCommandListWhenInitializeThenNotCreateSecondaryCmdBufferInSystemMemory) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(reinterpret_cast<CmdContainerMock *>(&commandList->commandContainer)->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
+}
+
+using CommandListCreateImplicitScaling = Test<SingleRootMultiSubDeviceFixtureWithImplicitScaling<1u, 1u>>;
+HWTEST_F(CommandListCreateImplicitScaling, givenImmediateCopyOnlyDirectSubmissionCommandListWhenInitializeThenNotCreateSecondaryCmdBufferInSystemMemory) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index);
+    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(reinterpret_cast<CmdContainerMock *>(&commandList->commandContainer)->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
+}
+
+HWTEST_F(CommandListCreate, givenCopyOnlySingleTileDirectSubmissionCommandListWhenInitializeThenNotCreateSecondaryCmdBufferInSystemMemory) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    ze_result_t returnValue;
+    CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(reinterpret_cast<CmdContainerMock *>(&commandList->commandContainer)->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
 }
 
 HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndCopyOnlyImmediateCommandListWhenAppendWaitEventsWithSubdeviceScopeThenMiFlushAndSemWaitAreAdded) {

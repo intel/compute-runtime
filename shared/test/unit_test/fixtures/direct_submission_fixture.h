@@ -38,16 +38,20 @@ struct DirectSubmissionFixture : public DeviceFixture {
 
 struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
     void setUp() {
+        DebugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
         DirectSubmissionFixture::setUp();
         MemoryManager *memoryManager = pDevice->getExecutionEnvironment()->memoryManager.get();
         const AllocationProperties commandBufferProperties{pDevice->getRootDeviceIndex(), 0x1000,
                                                            AllocationType::COMMAND_BUFFER, pDevice->getDeviceBitfield()};
         commandBuffer = memoryManager->allocateGraphicsMemoryWithProperties(commandBufferProperties);
+        stream = std::make_unique<LinearStream>(commandBuffer);
+        stream->getSpace(0x40);
 
         batchBuffer.endCmdPtr = &bbStart[0];
         batchBuffer.commandBufferAllocation = commandBuffer;
         batchBuffer.usedSize = 0x40;
         batchBuffer.taskStartAddress = 0x881112340000;
+        batchBuffer.stream = stream.get();
     }
 
     void tearDown() {
@@ -60,4 +64,6 @@ struct DirectSubmissionDispatchBufferFixture : public DirectSubmissionFixture {
     BatchBuffer batchBuffer;
     uint8_t bbStart[64];
     GraphicsAllocation *commandBuffer;
+    DebugManagerStateRestore restorer;
+    std::unique_ptr<LinearStream> stream;
 };

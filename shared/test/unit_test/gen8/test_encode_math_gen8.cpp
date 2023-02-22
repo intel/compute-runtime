@@ -26,7 +26,7 @@ GEN8TEST_F(CommandEncoderMathTestGen8, WhenAppendsAGreaterThanThenPredicateCorre
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true);
+    cmdContainer.initialize(pDevice, nullptr, true, false);
 
     EncodeMathMMIO<FamilyType>::encodeGreaterThanPredicate(cmdContainer, 0xDEADBEEFCAF0u, 17u);
 

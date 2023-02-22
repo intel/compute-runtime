@@ -674,6 +674,7 @@ struct DrmCommandStreamDirectSubmissionTest : public DrmCommandStreamEnhancedTes
     void setUpT() {
         DebugManager.flags.EnableDirectSubmission.set(1u);
         DebugManager.flags.DirectSubmissionDisableMonitorFence.set(0);
+        DebugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
         DrmCommandStreamEnhancedTest::setUpT<GfxFamily>();
         auto hwInfo = device->getRootDeviceEnvironment().getMutableHardwareInfo();
         auto engineType = device->getDefaultEngine().osContext->getEngineType();

@@ -23,7 +23,7 @@ using CommandEncoderTest = Test<DeviceFixture>;
 
 GEN9TEST_F(CommandEncoderTest, WhenProgrammingThenLoadRegisterImmIsUsed) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true);
+    cmdContainer.initialize(pDevice, nullptr, true, false);
     EncodeL3State<FamilyType>::encode(cmdContainer, false);
 
     GenCmdList commands;
@@ -36,7 +36,7 @@ GEN9TEST_F(CommandEncoderTest, WhenProgrammingThenLoadRegisterImmIsUsed) {
 
 GEN9TEST_F(CommandEncoderTest, givenNoSlmThenCorrectMmioIsSet) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true);
+    cmdContainer.initialize(pDevice, nullptr, true, false);
     EncodeL3State<FamilyType>::encode(cmdContainer, false);
 
     GenCmdList commands;
@@ -54,7 +54,7 @@ GEN9TEST_F(CommandEncoderTest, givenNoSlmThenCorrectMmioIsSet) {
 
 GEN9TEST_F(CommandEncoderTest, givenSlmThenCorrectMmioIsSet) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true);
+    cmdContainer.initialize(pDevice, nullptr, true, false);
     EncodeL3State<FamilyType>::encode(cmdContainer, true);
 
     GenCmdList commands;

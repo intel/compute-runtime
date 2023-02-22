@@ -18,7 +18,7 @@ class CommandSetMMIOFixture : public DeviceFixture {
     void setUp() {
         DeviceFixture::setUp();
         cmdContainer = std::make_unique<CommandContainer>();
-        cmdContainer->initialize(pDevice, nullptr, true);
+        cmdContainer->initialize(pDevice, nullptr, true, false);
     }
     void tearDown() {
         cmdContainer.reset();

@@ -167,7 +167,19 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
 
     commandContainer.setReservedSshSize(getReserveSshSize());
     DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
-    auto returnValue = commandContainer.initialize(deviceImp->getActiveDevice(), deviceImp->allocationsForReuse.get(), !isCopyOnly());
+
+    auto createSecondaryCmdBufferInHostMem = this->cmdListType == TYPE_IMMEDIATE &&
+                                             this->isFlushTaskSubmissionEnabled &&
+                                             !device->isImplicitScalingCapable() &&
+                                             this->csr &&
+                                             this->csr->isAnyDirectSubmissionEnabled() &&
+                                             deviceImp->getNEODevice()->getMemoryManager()->isLocalMemorySupported(deviceImp->getRootDeviceIndex());
+
+    if (NEO::DebugManager.flags.DirectSubmissionFlatRingBuffer.get() != -1) {
+        createSecondaryCmdBufferInHostMem &= !!NEO::DebugManager.flags.DirectSubmissionFlatRingBuffer.get();
+    }
+
+    auto returnValue = commandContainer.initialize(deviceImp->getActiveDevice(), deviceImp->allocationsForReuse.get(), !isCopyOnly(), createSecondaryCmdBufferInHostMem);
     if (!this->pipelineSelectStateTracking) {
         // allow systolic support set in container when tracking disabled
         // setting systolic support allows dispatching untracked command in legacy mode

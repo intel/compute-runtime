@@ -113,6 +113,7 @@ class DirectSubmissionHw {
     virtual uint64_t updateTagValue() = 0;
     virtual void getTagAddressValue(TagData &tagData) = 0;
     void unblockGpu();
+    bool copyCommandBufferIntoRing(BatchBuffer &batchBuffer);
 
     void cpuCachelineFlush(void *ptr, size_t size);
 

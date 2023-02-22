@@ -15,6 +15,7 @@
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/utilities/cpuintrinsics.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -249,6 +250,119 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DirectSubmissionDispatchBufferTest,
         }
     }
     EXPECT_TRUE(foundFenceUpdate);
+}
+
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenCopyCommandBufferIntoRingWhenDispatchCommandBufferThenCopyTaskStream) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+
+    FlushStampTracker flushStamp(true);
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
+
+    bool ret = directSubmission.initialize(true, false);
+    EXPECT_TRUE(ret);
+
+    size_t sizeUsed = directSubmission.ringCommandStream.getUsed();
+    batchBuffer.endCmdPtr = batchBuffer.stream->getCpuBase();
+    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
+
+    HardwareParse hwParse;
+    hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, sizeUsed);
+    auto semaphoreIt = find<MI_SEMAPHORE_WAIT *>(hwParse.cmdList.begin(), hwParse.cmdList.end());
+
+    MI_BATCH_BUFFER_START *bbStart = hwParse.getCommand<MI_BATCH_BUFFER_START>(hwParse.cmdList.begin(), semaphoreIt);
+    EXPECT_EQ(nullptr, bbStart);
+}
+
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRingBufferAndSingleTileDirectSubmissionWhenSubmitSystemMemNotChainedBatchBufferWithoutRelaxingDependenciesThenCopyIntoRing) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_TRUE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
+}
+
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRingBufferAndSingleTileDirectSubmissionWhenSubmitSystemMemNotChainedBatchBufferWithoutCommandBufferRelaxingDependenciesThenNotCopyIntoRing) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+
+    batchBuffer.commandBufferAllocation = nullptr;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_FALSE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
+}
+
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenDisabledDirectSubmissionFlatRingBufferAndSingleTileDirectSubmissionWhenSubmitSystemMemNotChainedBatchBufferWithoutRelaxingDependenciesThenNotCopyIntoRing) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(0);
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_FALSE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
+}
+
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRingBufferAndSingleTileDirectSubmissionWhenSubmitSystemMemNotChainedBatchBufferWithRelaxingDependenciesThenNotCopyIntoRing) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+
+    batchBuffer.hasRelaxedOrderingDependencies = true;
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_FALSE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
+}
+
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRingBufferAndSingleTileDirectSubmissionWhenSubmitSystemMemChainedBatchBufferWithoutRelaxingDependenciesThenNotCopyIntoRing) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+
+    batchBuffer.chainedBatchBuffer = reinterpret_cast<GraphicsAllocation *>(0x1234);
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_FALSE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
+}
+
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRingBufferAndSingleTileDirectSubmissionWhenSubmitLocalMemNotChainedBatchBufferWithoutRelaxingDependenciesThenNotCopyIntoRing) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+
+    static_cast<MemoryAllocation *>(batchBuffer.commandBufferAllocation)->overrideMemoryPool(MemoryPool::LocalMemory);
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_FALSE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
+}
+
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRingBufferAndMultiTileDirectSubmissionWhenSubmitSystemMemNotChainedBatchBufferWithoutRelaxingDependenciesThenNotCopyIntoRing) {
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+
+    std::unique_ptr<OsContext> osContext(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
+                                                                                                        PreemptionMode::ThreadGroup, 0b11)));
+    pDevice->getDefaultEngine().commandStreamReceiver->setupContext(*osContext.get());
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+
+    EXPECT_FALSE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
 }
 
 HWTEST_F(DirectSubmissionDispatchBufferTest,

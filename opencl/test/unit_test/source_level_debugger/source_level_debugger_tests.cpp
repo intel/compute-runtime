@@ -704,7 +704,7 @@ TEST(SourceLevelDebugger, whenCaptureSBACalledThenNoCommandsAreAddedToStream) {
     MockSourceLevelDebugger debugger;
 
     CommandContainer container;
-    container.initialize(device.get(), nullptr, true);
+    container.initialize(device.get(), nullptr, true, false);
 
     NEO::Debugger::SbaAddresses sbaAddresses = {};
     debugger.captureStateBaseAddress(*container.getCommandStream(), sbaAddresses, false);

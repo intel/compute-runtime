@@ -530,6 +530,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     allocationData.flags.isUSMHostAllocation = properties.flags.isUSMHostAllocation;
 
     allocationData.storageInfo.systemMemoryPlacement = allocationData.flags.useSystemMemory;
+    allocationData.storageInfo.systemMemoryForced = properties.flags.forceSystemMemory;
 
     return true;
 }

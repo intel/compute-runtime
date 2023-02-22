@@ -65,7 +65,7 @@ CommandContainer::CommandContainer(uint32_t maxNumAggregatedIdds) : CommandConta
     numIddsPerBlock = maxNumAggregatedIdds;
 }
 
-CommandContainer::ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusableAllocationList, bool requireHeaps) {
+CommandContainer::ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusableAllocationList, bool requireHeaps, bool createSecondaryCmdBufferInHostMem) {
     this->device = device;
     this->reusableAllocationList = reusableAllocationList;
     size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
@@ -84,6 +84,19 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
                                                    alignedSize - cmdBufferReservedSize, this, gfxCoreHelper.getBatchBufferEndSize());
 
     commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
+
+    if (createSecondaryCmdBufferInHostMem) {
+        this->useSecondaryCommandStream = true;
+
+        auto cmdBufferAllocationHost = this->obtainNextCommandBufferAllocation(true);
+        if (!cmdBufferAllocationHost) {
+            return ErrorCode::OUT_OF_DEVICE_MEMORY;
+        }
+        secondaryCommandStreamForImmediateCmdList = std::make_unique<LinearStream>(cmdBufferAllocationHost->getUnderlyingBuffer(),
+                                                                                   alignedSize - cmdBufferReservedSize, this, gfxCoreHelper.getBatchBufferEndSize());
+        secondaryCommandStreamForImmediateCmdList->replaceGraphicsAllocation(cmdBufferAllocationHost);
+        cmdBufferAllocations.push_back(cmdBufferAllocationHost);
+    }
 
     if (!getFlushTaskUsedForImmediate()) {
         addToResidencyContainer(cmdBufferAllocation);
@@ -137,6 +150,14 @@ void CommandContainer::addToResidencyContainer(GraphicsAllocation *alloc) {
     }
 
     this->residencyContainer.push_back(alloc);
+}
+
+bool CommandContainer::swapStreams() {
+    if (this->useSecondaryCommandStream) {
+        this->commandStream.swap(this->secondaryCommandStreamForImmediateCmdList);
+        return true;
+    }
+    return false;
 }
 
 void CommandContainer::removeDuplicatesFromResidencyContainer() {
@@ -275,14 +296,18 @@ void CommandContainer::handleCmdBufferAllocations(size_t startIndex) {
 }
 
 GraphicsAllocation *CommandContainer::obtainNextCommandBufferAllocation() {
+    return this->obtainNextCommandBufferAllocation(false);
+}
 
+GraphicsAllocation *CommandContainer::obtainNextCommandBufferAllocation(bool forceHostMemory) {
+    forceHostMemory &= this->useSecondaryCommandStream;
     GraphicsAllocation *cmdBufferAllocation = nullptr;
     if (this->reusableAllocationList) {
         size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
-        cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, nullptr, AllocationType::COMMAND_BUFFER).release();
+        cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, nullptr, AllocationType::COMMAND_BUFFER).release();
     }
     if (!cmdBufferAllocation) {
-        cmdBufferAllocation = this->allocateCommandBuffer();
+        cmdBufferAllocation = this->allocateCommandBuffer(forceHostMemory);
     }
 
     return cmdBufferAllocation;
@@ -381,10 +406,15 @@ void CommandContainer::reserveSpaceForDispatch(HeapReserveArguments &sshReserveA
 }
 
 GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer() {
+    return this->reuseExistingCmdBuffer(false);
+}
+
+GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer(bool forceHostMemory) {
+    forceHostMemory &= this->useSecondaryCommandStream;
     size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
-    auto cmdBufferAllocation = this->immediateReusableAllocationList->detachAllocation(alignedSize, nullptr, this->immediateCmdListCsr, AllocationType::COMMAND_BUFFER).release();
+    auto cmdBufferAllocation = this->immediateReusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::COMMAND_BUFFER).release();
     if (!cmdBufferAllocation) {
-        this->reusableAllocationList->detachAllocation(alignedSize, nullptr, this->immediateCmdListCsr, AllocationType::COMMAND_BUFFER).release();
+        this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::COMMAND_BUFFER).release();
     }
 
     if (cmdBufferAllocation) {
@@ -409,6 +439,10 @@ void CommandContainer::setCmdBuffer(GraphicsAllocation *cmdBuffer) {
 }
 
 GraphicsAllocation *CommandContainer::allocateCommandBuffer() {
+    return this->allocateCommandBuffer(false);
+}
+
+GraphicsAllocation *CommandContainer::allocateCommandBuffer(bool forceHostMemory) {
     size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
     AllocationProperties properties{device->getRootDeviceIndex(),
                                     true /* allocateMemory*/,
@@ -417,6 +451,7 @@ GraphicsAllocation *CommandContainer::allocateCommandBuffer() {
                                     (device->getNumGenericSubDevices() > 1u) /* multiOsContextCapable */,
                                     false,
                                     device->getDeviceBitfield()};
+    properties.flags.forceSystemMemory = forceHostMemory && this->useSecondaryCommandStream;
 
     return device->getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
 }

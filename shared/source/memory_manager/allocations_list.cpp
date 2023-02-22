@@ -21,6 +21,7 @@ struct ReusableAllocationRequirements {
     uint32_t contextId;
     uint32_t activeTileCount;
     uint32_t tagOffset;
+    bool forceSystemMemoryFlag;
 };
 
 bool checkTagAddressReady(ReusableAllocationRequirements *requirements, NEO::GraphicsAllocation *gfxAllocation) {
@@ -42,6 +43,10 @@ AllocationsList::AllocationsList(AllocationUsage allocationUsage)
     : allocationUsage(allocationUsage) {}
 
 std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, CommandStreamReceiver *commandStreamReceiver, AllocationType allocationType) {
+    return this->detachAllocation(requiredMinimalSize, requiredPtr, false, commandStreamReceiver, allocationType);
+}
+
+std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t requiredMinimalSize, const void *requiredPtr, bool forceSystemMemoryFlag, CommandStreamReceiver *commandStreamReceiver, AllocationType allocationType) {
     ReusableAllocationRequirements req;
     req.requiredMinimalSize = requiredMinimalSize;
     req.csrTagAddress = (commandStreamReceiver == nullptr) ? nullptr : commandStreamReceiver->getTagAddress();
@@ -50,6 +55,7 @@ std::unique_ptr<GraphicsAllocation> AllocationsList::detachAllocation(size_t req
     req.requiredPtr = requiredPtr;
     req.activeTileCount = (commandStreamReceiver == nullptr) ? 1u : commandStreamReceiver->getActivePartitions();
     req.tagOffset = (commandStreamReceiver == nullptr) ? 0u : commandStreamReceiver->getPostSyncWriteOffset();
+    req.forceSystemMemoryFlag = forceSystemMemoryFlag;
     GraphicsAllocation *a = nullptr;
     GraphicsAllocation *retAlloc = processLocked<AllocationsList, &AllocationsList::detachAllocationImpl>(a, static_cast<void *>(&req));
     return std::unique_ptr<GraphicsAllocation>(retAlloc);
@@ -60,7 +66,8 @@ GraphicsAllocation *AllocationsList::detachAllocationImpl(GraphicsAllocation *, 
     auto *curr = head;
     while (curr != nullptr) {
         if ((req->allocationType == curr->getAllocationType()) &&
-            (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize)) {
+            (curr->getUnderlyingBufferSize() >= req->requiredMinimalSize) &&
+            (curr->storageInfo.systemMemoryForced == req->forceSystemMemoryFlag)) {
             if (req->csrTagAddress == nullptr) {
                 return removeOneImpl(curr, nullptr);
             }
