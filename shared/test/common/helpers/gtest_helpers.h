@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -42,7 +42,7 @@
 inline bool memoryZeroed(const void *mem, const size_t size) {
     size_t sizeLeft = (size_t)size;
     bool memoryZeroed = true;
-    while (--sizeLeft) {
+    while (sizeLeft--) {
         uint8_t *pMem = (uint8_t *)mem;
         if (pMem[sizeLeft] != 0) {
             memoryZeroed = false;

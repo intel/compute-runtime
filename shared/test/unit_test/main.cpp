@@ -16,6 +16,7 @@
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/default_hw_info.inl"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/test_files.h"
@@ -45,6 +46,17 @@ const char *fSeparator = "/";
 #endif
 
 TEST(Should, pass) { EXPECT_TRUE(true); }
+
+TEST(Helper, MemoryZeroed) {
+
+    uint8_t nonZero[] = {1, 0, 0};
+    uint8_t nonZero2[] = {0, 0, 0, 0, 1};
+    uint8_t zero[] = {0, 0, 0, 0, 0, 0};
+
+    EXPECT_FALSE(memoryZeroed(nonZero, sizeof(nonZero)));
+    EXPECT_FALSE(memoryZeroed(nonZero2, sizeof(nonZero2)));
+    EXPECT_TRUE(memoryZeroed(zero, sizeof(zero)));
+}
 
 namespace NEO {
 extern const char *hardwarePrefix[];
