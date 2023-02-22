@@ -226,8 +226,4 @@ std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStre
     return aub_stream::ProductFamily::Pvc;
 };
 
-template <>
-uint32_t ProductHelperHw<gfxProduct>::getNumberOfPartsInTileForConcurrentKernel() const {
-    return PVC::numberOfpartsInTileForConcurrentKernels;
-}
 } // namespace NEO

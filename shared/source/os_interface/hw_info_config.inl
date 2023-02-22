@@ -526,10 +526,6 @@ template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isStatefulAddressingModeSupported() const {
     return true;
 }
-template <PRODUCT_FAMILY gfxProduct>
-uint32_t ProductHelperHw<gfxProduct>::getNumberOfPartsInTileForConcurrentKernel() const {
-    return 1u;
-}
 
 template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isPlatformQuerySupported() const {
