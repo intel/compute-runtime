@@ -318,6 +318,7 @@ struct EncodeStateBaseAddressArgs {
     bool useGlobalAtomics = false;
     bool multiOsContextCapable = false;
     bool isRcs = false;
+    bool doubleSbaWa = false;
 };
 
 template <typename GfxFamily>

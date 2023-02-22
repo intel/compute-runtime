@@ -52,6 +52,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::containsAnyKernel;
     using BaseClass::containsCooperativeKernelsFlag;
     using BaseClass::csr;
+    using BaseClass::doubleSbaWa;
     using BaseClass::engineGroupType;
     using BaseClass::estimateBufferSizeMultiTileBarrier;
     using BaseClass::finalStreamState;
@@ -137,6 +138,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::commandsToPatch;
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::csr;
+    using BaseClass::doubleSbaWa;
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
     using BaseClass::getDcFlushRequired;
@@ -175,6 +177,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::commandContainer;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::csr;
+    using BaseClass::doubleSbaWa;
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
     using BaseClass::getDcFlushRequired;

@@ -27,7 +27,6 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
-    const auto &hwInfo = this->device->getHwInfo();
     NEO::Device *neoDevice = device->getNEODevice();
     bool isRcs = this->getCsr()->isRcs();
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
@@ -59,7 +58,6 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         nullptr,                                          // ioh
         nullptr,                                          // ssh
         neoDevice->getGmmHelper(),                        // gmmHelper
-        &hwInfo,                                          // hwInfo
         (device->getMOCS(cachedMOCSAllowed, false) >> 1), // statelessMocsIndex
         NEO::MemoryCompressionState::NotApplicable,       // memoryCompressionState
         true,                                             // setInstructionStateBaseAddress
@@ -69,7 +67,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         false,                                            // useGlobalAtomics
         false,                                            // areMultipleSubDevicesInContext
         false,                                            // overrideSurfaceStateBaseAddress
-        isDebuggerActive                                  // isDebuggerActive
+        isDebuggerActive,                                 // isDebuggerActive
+        this->doubleSbaWa                                 // doubleSbaWa
     };
 
     NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(stateBaseAddressHelperArgs, commandStream);

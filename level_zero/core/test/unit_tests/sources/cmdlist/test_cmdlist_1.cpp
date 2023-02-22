@@ -2376,7 +2376,10 @@ HWTEST2_F(CommandListCreate, givenNullEventWhenAppendEventAfterWalkerThenNothing
 }
 
 TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDefaultValuseIsHwSupported) {
-    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+    auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
 
     ze_result_t returnValue;
     std::unique_ptr<L0::ult::CommandList> commandList(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
@@ -2393,6 +2396,9 @@ TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDef
 
     bool expectedStateBaseAddressTracking = l0GfxCoreHelper.platformSupportsStateBaseAddressTracking();
     EXPECT_EQ(expectedStateBaseAddressTracking, commandList->stateBaseAddressTracking);
+
+    bool expectedDoubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(device->getHwInfo());
+    EXPECT_EQ(expectedDoubleSbaWa, commandList->doubleSbaWa);
 }
 
 } // namespace ult

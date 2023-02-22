@@ -165,6 +165,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool lastPipelineSelectModeRequired = false;
     bool lastSentUseGlobalAtomics = false;
     bool systolicModeSupport = false;
+    bool doubleSbaWa = false;
 
   protected:
     size_t getTotalCmdBufferSize();

@@ -24,8 +24,7 @@ void StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream
     auto cmdSpace = StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
     *cmdSpace = *args.stateBaseAddressCmd;
 
-    auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().template getHelper<ProductHelper>();
-    if (productHelper.isAdditionalStateBaseAddressWARequired(*args.hwInfo)) {
+    if (args.doubleSbaWa) {
         auto cmdSpace = StateBaseAddressHelper<GfxFamily>::getSpaceForSbaCmd(commandStream);
         *cmdSpace = *args.stateBaseAddressCmd;
     }

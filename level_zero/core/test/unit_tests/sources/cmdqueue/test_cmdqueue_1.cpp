@@ -1974,7 +1974,11 @@ TEST_F(CommandQueueCreate, givenOverrideCmdQueueSyncModeToSynchronousWhenCommand
 }
 
 TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenDefaultValuseIsHwSupported) {
-    auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+    auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
+
     const ze_command_queue_desc_t desc{};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
@@ -1999,6 +2003,9 @@ TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenD
 
     bool expectedStateBaseAddressTracking = l0GfxCoreHelper.platformSupportsStateBaseAddressTracking();
     EXPECT_EQ(expectedStateBaseAddressTracking, commandQueue->stateBaseAddressTracking);
+
+    bool expectedDoubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(device->getHwInfo());
+    EXPECT_EQ(expectedDoubleSbaWa, commandQueue->doubleSbaWa);
 
     commandQueue->destroy();
 }

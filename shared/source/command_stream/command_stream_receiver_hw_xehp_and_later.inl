@@ -31,9 +31,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredStateBaseAddressSize(const
     size += sizeof(typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC);
     size += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
 
-    auto &hwInfo = *device.getRootDeviceEnvironment().getHardwareInfo();
-    auto &productHelper = getProductHelper();
-    if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+    if (this->doubleSbaWa) {
         size += sizeof(typename GfxFamily::STATE_BASE_ADDRESS);
     }
 

@@ -24,7 +24,6 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool useLocalMemoryForIndirectHeap, NEO::LinearStream &commandStream, bool cachedMOCSAllowed) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
     NEO::Device *neoDevice = device->getNEODevice();
-    auto &hwInfo = neoDevice->getHardwareInfo();
     uint32_t rootDeviceIndex = neoDevice->getRootDeviceIndex();
 
     bool multiOsContextCapable = device->isImplicitScalingCapable();
@@ -54,7 +53,6 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
             nullptr,                                          // ioh
             nullptr,                                          // ssh
             neoDevice->getGmmHelper(),                        // gmmHelper
-            &hwInfo,                                          // hwInfo
             (device->getMOCS(cachedMOCSAllowed, false) >> 1), // statelessMocsIndex
             NEO::MemoryCompressionState::NotApplicable,       // memoryCompressionState
             true,                                             // setInstructionStateBaseAddress
@@ -64,7 +62,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
             false,                                            // useGlobalAtomics
             false,                                            // areMultipleSubDevicesInContext
             false,                                            // overrideSurfaceStateBaseAddress
-            isDebuggerActive                                  // isDebuggerActive
+            isDebuggerActive,                                 // isDebuggerActive
+            this->doubleSbaWa                                 // doubleSbaWa
         };
         NEO::StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(stateBaseAddressHelperArgs, commandStream);
 
@@ -87,16 +86,12 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
-
-    NEO::Device *neoDevice = device->getNEODevice();
-    auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &productHelper = neoDevice->getProductHelper();
     size_t size = 0;
 
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
         size += sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) + sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
 
-        if (productHelper.isAdditionalStateBaseAddressWARequired(hwInfo)) {
+        if (this->doubleSbaWa) {
             size += sizeof(STATE_BASE_ADDRESS);
         }
     }

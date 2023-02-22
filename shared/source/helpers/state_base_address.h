@@ -39,7 +39,6 @@ struct StateBaseAddressHelperArgs {
     const IndirectHeap *ioh = nullptr;
     const IndirectHeap *ssh = nullptr;
     GmmHelper *gmmHelper = nullptr;
-    const HardwareInfo *hwInfo = nullptr;
 
     uint32_t statelessMocsIndex = 0;
     MemoryCompressionState memoryCompressionState;
@@ -52,6 +51,7 @@ struct StateBaseAddressHelperArgs {
     bool areMultipleSubDevicesInContext = false;
     bool overrideSurfaceStateBaseAddress = false;
     bool isDebuggerActive = false;
+    bool doubleSbaWa = false;
 };
 
 template <typename GfxFamily>

@@ -507,28 +507,28 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         STATE_BASE_ADDRESS stateBaseAddressCmd;
 
         StateBaseAddressHelperArgs<GfxFamily> args = {
-            newGshBase,                                   // generalStateBaseAddress
-            indirectObjectStateBaseAddress,               // indirectObjectHeapBaseAddress
-            instructionHeapBaseAddress,                   // instructionHeapBaseAddress
-            0,                                            // globalHeapsBaseAddress
-            0,                                            // surfaceStateBaseAddress
-            &stateBaseAddressCmd,                         // stateBaseAddressCmd
-            nullptr,                                      // sbaProperties
-            dsh,                                          // dsh
-            ioh,                                          // ioh
-            ssh,                                          // ssh
-            device.getGmmHelper(),                        // gmmHelper
-            &hwInfo,                                      // hwInfo
-            this->latestSentStatelessMocsConfig,          // statelessMocsIndex
-            this->lastMemoryCompressionState,             // memoryCompressionState
-            true,                                         // setInstructionStateBaseAddress
-            true,                                         // setGeneralStateBaseAddress
-            false,                                        // useGlobalHeapsBaseAddress
-            isMultiOsContextCapable(),                    // isMultiOsContextCapable
-            this->lastSentUseGlobalAtomics,               // useGlobalAtomics
-            dispatchFlags.areMultipleSubDevicesInContext, // areMultipleSubDevicesInContext
-            false,                                        // overrideSurfaceStateBaseAddress
-            debuggingEnabled || device.isDebuggerActive() // isDebuggerActive
+            newGshBase,                                    // generalStateBaseAddress
+            indirectObjectStateBaseAddress,                // indirectObjectHeapBaseAddress
+            instructionHeapBaseAddress,                    // instructionHeapBaseAddress
+            0,                                             // globalHeapsBaseAddress
+            0,                                             // surfaceStateBaseAddress
+            &stateBaseAddressCmd,                          // stateBaseAddressCmd
+            nullptr,                                       // sbaProperties
+            dsh,                                           // dsh
+            ioh,                                           // ioh
+            ssh,                                           // ssh
+            device.getGmmHelper(),                         // gmmHelper
+            this->latestSentStatelessMocsConfig,           // statelessMocsIndex
+            this->lastMemoryCompressionState,              // memoryCompressionState
+            true,                                          // setInstructionStateBaseAddress
+            true,                                          // setGeneralStateBaseAddress
+            false,                                         // useGlobalHeapsBaseAddress
+            isMultiOsContextCapable(),                     // isMultiOsContextCapable
+            this->lastSentUseGlobalAtomics,                // useGlobalAtomics
+            dispatchFlags.areMultipleSubDevicesInContext,  // areMultipleSubDevicesInContext
+            false,                                         // overrideSurfaceStateBaseAddress
+            debuggingEnabled || device.isDebuggerActive(), // isDebuggerActive
+            this->doubleSbaWa                              // doubleSbaWa
         };
 
         StateBaseAddressHelper<GfxFamily>::programStateBaseAddressIntoCommandStream(args, commandStreamCSR);

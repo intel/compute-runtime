@@ -161,6 +161,8 @@ DG2TEST_F(CmdsProgrammingTestsDg2, givenDG2WithBSteppingWhenFlushingTaskThenAddi
     hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
+
     flushTask(commandStreamReceiver);
 
     EXPECT_GT(commandStreamReceiver.commandStream.getUsed(), 0u);

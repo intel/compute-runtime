@@ -41,13 +41,14 @@ class CommandEncodeStatesFixture : public DeviceFixture {
         typename FamilyType::STATE_BASE_ADDRESS &sbaCmd,
         uint32_t statelessMocs) {
         EncodeStateBaseAddressArgs<FamilyType> args = {
-            container,     // container
-            sbaCmd,        // sbaCmd
-            nullptr,       // sbaProperties
-            statelessMocs, // statelessMocsIndex
-            false,         // useGlobalAtomics
-            false,         // multiOsContextCapable
-            false};        // isRcs
+            container,               // container
+            sbaCmd,                  // sbaCmd
+            nullptr,                 // sbaProperties
+            statelessMocs,           // statelessMocsIndex
+            false,                   // useGlobalAtomics
+            false,                   // multiOsContextCapable
+            false,                   // isRcs
+            container->doubleSbaWa}; // doubleSbaWa
         return args;
     }
 

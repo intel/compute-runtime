@@ -208,13 +208,14 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 args.requiresUncachedMocs ? (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1) : (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
 
             EncodeStateBaseAddressArgs<Family> encodeStateBaseAddressArgs = {
-                &container,         // container
-                sba,                // sbaCmd
-                nullptr,            // sbaProperties
-                statelessMocsIndex, // statelessMocsIndex
-                false,              // useGlobalAtomics
-                false,              // multiOsContextCapable
-                args.isRcs};        // isRcs
+                &container,             // container
+                sba,                    // sbaCmd
+                nullptr,                // sbaProperties
+                statelessMocsIndex,     // statelessMocsIndex
+                false,                  // useGlobalAtomics
+                false,                  // multiOsContextCapable
+                args.isRcs,             // isRcs
+                container.doubleSbaWa}; // doubleSbaWa
             EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
             container.setDirtyStateForAllHeaps(false);
             args.requiresUncachedMocs = false;
@@ -419,7 +420,6 @@ void EncodeStateBaseAddress<Family>::setSbaAddressesForDebugger(NEO::Debugger::S
 template <typename Family>
 void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &args) {
     auto &device = *args.container->getDevice();
-    auto &hwInfo = device.getHardwareInfo();
 
     if (args.container->isAnyHeapDirty()) {
         EncodeWA<Family>::encodeAdditionalPipelineSelect(*args.container->getCommandStream(), {}, true, device.getRootDeviceEnvironment(), args.isRcs);
@@ -444,7 +444,6 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         ioh,                                                // ioh
         ssh,                                                // ssh
         gmmHelper,                                          // gmmHelper
-        &hwInfo,                                            // hwInfo
         args.statelessMocsIndex,                            // statelessMocsIndex
         NEO::MemoryCompressionState::NotApplicable,         // memoryCompressionState
         false,                                              // setInstructionStateBaseAddress
@@ -454,7 +453,8 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         args.useGlobalAtomics,                              // useGlobalAtomics
         false,                                              // areMultipleSubDevicesInContext
         false,                                              // overrideSurfaceStateBaseAddress
-        isDebuggerActive                                    // isDebuggerActive
+        isDebuggerActive,                                   // isDebuggerActive
+        args.doubleSbaWa                                    // doubleSbaWa
     };
 
     StateBaseAddressHelper<Family>::programStateBaseAddressIntoCommandStream(stateBaseAddressHelperArgs,

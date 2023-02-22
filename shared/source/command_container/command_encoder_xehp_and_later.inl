@@ -238,7 +238,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             statelessMocsIndex,      // statelessMocsIndex
             args.useGlobalAtomics,   // useGlobalAtomics
             args.partitionCount > 1, // multiOsContextCapable
-            args.isRcs};             // isRcs
+            args.isRcs,              // isRcs
+            container.doubleSbaWa};  // doubleSbaWa
         EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
         container.setDirtyStateForAllHeaps(false);
     }
@@ -541,7 +542,6 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         ioh,                                                // ioh
         ssh,                                                // ssh
         gmmHelper,                                          // gmmHelper
-        &args.container->getDevice()->getHardwareInfo(),    // hwInfo
         args.statelessMocsIndex,                            // statelessMocsIndex
         NEO::MemoryCompressionState::NotApplicable,         // memoryCompressionState
         true,                                               // setInstructionStateBaseAddress
@@ -551,7 +551,8 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         args.useGlobalAtomics,                              // useGlobalAtomics
         false,                                              // areMultipleSubDevicesInContext
         false,                                              // overrideSurfaceStateBaseAddress
-        isDebuggerActive                                    // isDebuggerActive
+        isDebuggerActive,                                   // isDebuggerActive
+        args.doubleSbaWa                                    // doubleSbaWa
     };
 
     StateBaseAddressHelper<Family>::programStateBaseAddressIntoCommandStream(stateBaseAddressHelperArgs,

@@ -516,6 +516,7 @@ class CommandStreamReceiver {
     bool dcFlushSupport = false;
     bool forceSkipResourceCleanupRequired = false;
     volatile bool resourcesInitialized = false;
+    bool doubleSbaWa = false;
 };
 
 typedef CommandStreamReceiver *(*CommandStreamReceiverCreateFunc)(bool withAubDump,

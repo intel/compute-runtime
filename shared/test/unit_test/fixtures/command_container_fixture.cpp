@@ -20,6 +20,7 @@ void CommandEncodeStatesFixture::setUp() {
     const auto &hwInfo = pDevice->getHardwareInfo();
     auto &productHelper = pDevice->getProductHelper();
     cmdContainer->systolicModeSupport = productHelper.isSystolicModeConfigurable(hwInfo);
+    cmdContainer->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
 }
 
 void CommandEncodeStatesFixture::tearDown() {

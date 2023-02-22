@@ -33,6 +33,7 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using BaseClass::synchronizeByPollingForTaskCount;
     using BaseClass::taskCount;
     using CommandQueue::activeSubDevices;
+    using CommandQueue::doubleSbaWa;
     using CommandQueue::frontEndStateTracking;
     using CommandQueue::internalUsage;
     using CommandQueue::partitionCount;
@@ -67,6 +68,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass::prepareAndSubmitBatchBuffer;
     using BaseClass::printfKernelContainer;
     using L0::CommandQueue::activeSubDevices;
+    using L0::CommandQueue::doubleSbaWa;
     using L0::CommandQueue::frontEndStateTracking;
     using L0::CommandQueue::internalUsage;
     using L0::CommandQueue::partitionCount;

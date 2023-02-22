@@ -14,9 +14,11 @@
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/debugger/debugger_l0.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
@@ -86,11 +88,14 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
         if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger()) {
             device->getL0Debugger()->notifyCommandQueueCreated(device->getNEODevice());
         }
+        auto &hwInfo = device->getHwInfo();
         auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
         this->stateComputeModeTracking = L0GfxCoreHelper::enableStateComputeModeTracking(rootDeviceEnvironment);
         this->frontEndStateTracking = L0GfxCoreHelper::enableFrontEndStateTracking(rootDeviceEnvironment);
         this->pipelineSelectStateTracking = L0GfxCoreHelper::enablePipelineSelectStateTracking(rootDeviceEnvironment);
         this->stateBaseAddressTracking = L0GfxCoreHelper::enableStateBaseAddressTracking(rootDeviceEnvironment);
+        auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
+        this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
     }
     return returnValue;
 }

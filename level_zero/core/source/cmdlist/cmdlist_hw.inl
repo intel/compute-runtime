@@ -151,6 +151,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->compactL3FlushEventPacket = L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo);
     this->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
     this->dynamicHeapRequired = NEO::EncodeDispatchKernel<GfxFamily>::isDshNeeded(device->getDeviceInfo());
+    auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
+    this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
+    commandContainer.doubleSbaWa = this->doubleSbaWa;
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
@@ -2628,7 +2631,8 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
         statelessMocsIndex,       // statelessMocsIndex
         false,                    // useGlobalAtomics
         this->partitionCount > 1, // multiOsContextCapable
-        isRcs};                   // isRcs
+        isRcs,                    // isRcs
+        this->doubleSbaWa};       // doubleSbaWa
     NEO::EncodeStateBaseAddress<GfxFamily>::encode(encodeStateBaseAddressArgs);
 
     bool sbaTrackingEnabled = NEO::Debugger::isDebugEnabled(this->internalUsage) && device->getL0Debugger();

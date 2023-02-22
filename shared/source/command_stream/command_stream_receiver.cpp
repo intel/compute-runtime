@@ -93,6 +93,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     productHelper.fillFrontEndPropertiesSupportStructure(feSupportFlags, hwInfo);
     productHelper.fillPipelineSelectPropertiesSupportStructure(pipelineSupportFlags, hwInfo);
     productHelper.fillStateBaseAddressPropertiesSupportStructure(sbaSupportFlags);
+    this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {

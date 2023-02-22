@@ -352,6 +352,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool stateComputeModeTracking = false;
     bool signalAllEventPackets = false;
     bool stateBaseAddressTracking = false;
+    bool doubleSbaWa = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

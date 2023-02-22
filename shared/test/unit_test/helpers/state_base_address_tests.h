@@ -30,7 +30,6 @@ StateBaseAddressHelperArgs<FamilyType> createSbaHelperArgs(typename FamilyType::
         ioh,                                   // ioh
         ssh,                                   // ssh
         gmmHelper,                             // gmmHelper
-        nullptr,                               // hwInfo
         0,                                     // statelessMocsIndex
         MemoryCompressionState::NotApplicable, // memoryCompressionState
         false,                                 // setInstructionStateBaseAddress
@@ -39,7 +38,8 @@ StateBaseAddressHelperArgs<FamilyType> createSbaHelperArgs(typename FamilyType::
         false,                                 // isMultiOsContextCapable
         false,                                 // useGlobalAtomics
         false,                                 // areMultipleSubDevicesInContext
-        false                                  // overrideSurfaceStateBaseAddress
+        false,                                 // overrideSurfaceStateBaseAddress
+        false                                  // doubleSbaWa
     };
     return sbaArgs;
 }
