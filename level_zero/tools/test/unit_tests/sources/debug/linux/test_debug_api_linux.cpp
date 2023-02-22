@@ -6563,7 +6563,7 @@ TEST_F(DebugApiRegistersAccessTest, givenInvalidClientHandleWhenReadRegistersCal
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, nullptr));
 }
 
-TEST_F(DebugApiRegistersAccessTest, givenCorruptedTssAreaWhenReadRegistersCalledThenErrorUnknownIsReturned) {
+TEST_F(DebugApiRegistersAccessTest, givenCorruptedTssAreaWhenReadRegistersCalledThenRegisterReadSuccessfully) {
     SIP::version version = {2, 0, 0};
     initStateSaveArea(session->stateSaveAreaHeader, version, device);
     ioctlHandler = new MockIoctlHandler;
@@ -6578,7 +6578,9 @@ TEST_F(DebugApiRegistersAccessTest, givenCorruptedTssAreaWhenReadRegistersCalled
     memcpy(session->stateSaveAreaHeader.data(), "garbage", 8);
     session->ensureThreadStopped({0, 0, 0, 0});
 
-    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, nullptr));
+    char grf[128] = {0};
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zetDebugReadRegisters(session->toHandle(), {0, 0, 0, 0}, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, grf));
+    EXPECT_EQ('a', grf[0]);
 }
 
 TEST_F(DebugApiRegistersAccessTest, givenInvalidRegistersIndicesWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {
