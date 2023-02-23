@@ -78,8 +78,7 @@ const RuntimeCapabilityTable ADLP::capabilityTable{
     false,                                          // p2pAccessSupported
     false,                                          // p2pAtomicAccessSupported
     true,                                           // fusedEuEnabled
-    false,                                          // l0DebuggerSupported;
-    true                                            // supportsFloatAtomics
+    false                                           // l0DebuggerSupported;
 };
 
 WorkaroundTable ADLP::workaroundTable = {};

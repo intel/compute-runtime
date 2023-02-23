@@ -342,31 +342,3 @@ typedef cl_bitfield cl_command_queue_mdapi_properties_intel;
 // cl_intel_variable_eu_thread_count
 #define CL_DEVICE_EU_THREAD_COUNTS_INTEL 0x1000A // placeholder
 #define CL_KERNEL_EU_THREAD_COUNT_INTEL 0x1000B  // placeholder
-
-/*************************************************
- *   cl_ext_float_atomics extension              *
- *************************************************/
-
-#if !defined(cl_ext_float_atomics)
-
-#define cl_ext_float_atomics 1
-
-#define CL_DEVICE_SINGLE_FP_ATOMIC_CAPABILITIES_EXT 0x4231
-#define CL_DEVICE_DOUBLE_FP_ATOMIC_CAPABILITIES_EXT 0x4232
-#define CL_DEVICE_HALF_FP_ATOMIC_CAPABILITIES_EXT 0x4233
-
-typedef cl_bitfield cl_device_fp_atomic_capabilities_ext;
-
-#define CL_DEVICE_GLOBAL_FP_ATOMIC_LOAD_STORE_EXT (1 << 0)
-#define CL_DEVICE_GLOBAL_FP_ATOMIC_ADD_EXT (1 << 1)
-#define CL_DEVICE_GLOBAL_FP_ATOMIC_MIN_MAX_EXT (1 << 2)
-
-/* bits 3 - 15 are currently unused */
-
-#define CL_DEVICE_LOCAL_FP_ATOMIC_LOAD_STORE_EXT (1 << 16)
-#define CL_DEVICE_LOCAL_FP_ATOMIC_ADD_EXT (1 << 17)
-#define CL_DEVICE_LOCAL_FP_ATOMIC_MIN_MAX_EXT (1 << 18)
-
-/* bits 19 and beyond are currently unused */
-
-#endif

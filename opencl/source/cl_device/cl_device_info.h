@@ -76,9 +76,6 @@ struct ClDeviceInfo {
     cl_bool                                                                       independentForwardProgress;
     cl_device_atomic_capabilities                                                 atomicMemoryCapabilities;
     cl_device_atomic_capabilities                                                 atomicFenceCapabilities;
-    cl_device_fp_atomic_capabilities_ext                                          singleFpAtomicCapabilities;
-    cl_device_fp_atomic_capabilities_ext                                          halfFpAtomicCapabilities;
-    cl_device_fp_atomic_capabilities_ext                                          doubleFpAtomicCapabilities;
     cl_bool                                                                       nonUniformWorkGroupSupport;
     cl_bool                                                                       workGroupCollectiveFunctionsSupport;
     cl_bool                                                                       genericAddressSpaceSupport;

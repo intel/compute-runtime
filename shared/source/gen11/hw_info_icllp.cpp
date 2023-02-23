@@ -75,8 +75,7 @@ const RuntimeCapabilityTable ICLLP::capabilityTable{
     false,                                           // p2pAccessSupported
     false,                                           // p2pAtomicAccessSupported
     false,                                           // fusedEuEnabled
-    false,                                           // l0DebuggerSupported;
-    false                                            // supportsFloatAtomics
+    false                                            // l0DebuggerSupported;
 };
 
 WorkaroundTable ICLLP::workaroundTable = {};
