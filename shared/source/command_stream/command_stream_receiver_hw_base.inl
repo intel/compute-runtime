@@ -1510,24 +1510,26 @@ inline bool CommandStreamReceiverHw<GfxFamily>::initDirectSubmission() {
     auto startDirect = this->osContext->isDirectSubmissionAvailable(peekHwInfo(), submitOnInit);
 
     if (startDirect) {
-        auto lock = this->obtainUniqueOwnership();
         if (!this->isAnyDirectSubmissionEnabled()) {
-            if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
-                blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(*this);
-                ret = blitterDirectSubmission->initialize(submitOnInit, this->isUsedNotifyEnableForPostSync());
-                completionFenceValuePointer = blitterDirectSubmission->getCompletionValuePointer();
+            auto lock = this->obtainUniqueOwnership();
+            if (!this->isAnyDirectSubmissionEnabled()) {
+                if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
+                    blitterDirectSubmission = DirectSubmissionHw<GfxFamily, BlitterDispatcher<GfxFamily>>::create(*this);
+                    ret = blitterDirectSubmission->initialize(submitOnInit, this->isUsedNotifyEnableForPostSync());
+                    completionFenceValuePointer = blitterDirectSubmission->getCompletionValuePointer();
 
-            } else {
-                directSubmission = DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>::create(*this);
-                ret = directSubmission->initialize(submitOnInit, this->isUsedNotifyEnableForPostSync());
-                completionFenceValuePointer = directSubmission->getCompletionValuePointer();
-            }
-            auto directSubmissionController = executionEnvironment.initializeDirectSubmissionController();
-            if (directSubmissionController) {
-                directSubmissionController->registerDirectSubmission(this);
-            }
-            if (this->isUpdateTagFromWaitEnabled()) {
-                this->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+                } else {
+                    directSubmission = DirectSubmissionHw<GfxFamily, RenderDispatcher<GfxFamily>>::create(*this);
+                    ret = directSubmission->initialize(submitOnInit, this->isUsedNotifyEnableForPostSync());
+                    completionFenceValuePointer = directSubmission->getCompletionValuePointer();
+                }
+                auto directSubmissionController = executionEnvironment.initializeDirectSubmissionController();
+                if (directSubmissionController) {
+                    directSubmissionController->registerDirectSubmission(this);
+                }
+                if (this->isUpdateTagFromWaitEnabled()) {
+                    this->overrideDispatchPolicy(DispatchMode::ImmediateDispatch);
+                }
             }
         }
         this->osContext->setDirectSubmissionActive();
