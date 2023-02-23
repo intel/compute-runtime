@@ -11,6 +11,7 @@
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
+#include "platforms.h"
 
 namespace NEO {
 
@@ -145,7 +146,7 @@ const HardwareInfo SklHw1x2x6::hwInfo = {
     &SKL::workaroundTable,
     &SklHw1x2x6::gtSystemInfo,
     SKL::capabilityTable,
-};
+    AOT::SKL};
 GT_SYSTEM_INFO SklHw1x2x6::gtSystemInfo = {0};
 void SklHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
@@ -163,7 +164,7 @@ const HardwareInfo SklHw1x3x6::hwInfo = {
     &SKL::workaroundTable,
     &SklHw1x3x6::gtSystemInfo,
     SKL::capabilityTable,
-};
+    AOT::SKL};
 GT_SYSTEM_INFO SklHw1x3x6::gtSystemInfo = {0};
 void SklHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
@@ -181,7 +182,7 @@ const HardwareInfo SklHw1x3x8::hwInfo = {
     &SKL::workaroundTable,
     &SklHw1x3x8::gtSystemInfo,
     SKL::capabilityTable,
-};
+    AOT::SKL};
 GT_SYSTEM_INFO SklHw1x3x8::gtSystemInfo = {0};
 void SklHw1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
@@ -199,7 +200,7 @@ const HardwareInfo SklHw2x3x8::hwInfo = {
     &SKL::workaroundTable,
     &SklHw2x3x8::gtSystemInfo,
     SKL::capabilityTable,
-};
+    AOT::SKL};
 GT_SYSTEM_INFO SklHw2x3x8::gtSystemInfo = {0};
 void SklHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
@@ -217,7 +218,7 @@ const HardwareInfo SklHw3x3x8::hwInfo = {
     &SKL::workaroundTable,
     &SklHw3x3x8::gtSystemInfo,
     SKL::capabilityTable,
-};
+    AOT::SKL};
 GT_SYSTEM_INFO SklHw3x3x8::gtSystemInfo = {0};
 void SklHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);

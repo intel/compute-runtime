@@ -134,20 +134,43 @@ MTLTEST_F(MtlProductHelper, givenCompressionFtrEnabledWhenAskingForPageTableMana
     EXPECT_TRUE(productHelper->isPageTableManagerSupported(hwInfo));
 }
 
-MTLTEST_F(MtlProductHelper, givenSteppingWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnCcsThenThenAllowOnA0) {
+MTLTEST_F(MtlProductHelper, givenHwIpVersionWhenIsPipeControlPriorToNonPipelinedStateCommandsWARequiredIsCalledOnCcsThenAllowOnlyOn12700And12710) {
     HardwareInfo hwInfo = *defaultHwInfo;
     auto isRcs = false;
 
+    hwInfo.ipVersion.architecture = 12;
+    hwInfo.ipVersion.release = 70;
+    hwInfo.ipVersion.revision = 0;
+
     {
-        hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_A0, hwInfo);
         const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
         EXPECT_FALSE(isExtendedWARequired);
         EXPECT_TRUE(isBasicWARequired);
     }
 
+    hwInfo.ipVersion.revision = 4;
+
     {
-        hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(REVISION_B, hwInfo);
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+
+        EXPECT_FALSE(isExtendedWARequired);
+        EXPECT_FALSE(isBasicWARequired);
+    }
+
+    hwInfo.ipVersion.release = 71;
+    hwInfo.ipVersion.revision = 0;
+
+    {
+        const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
+
+        EXPECT_FALSE(isExtendedWARequired);
+        EXPECT_TRUE(isBasicWARequired);
+    }
+
+    hwInfo.ipVersion.revision = 4;
+
+    {
         const auto &[isBasicWARequired, isExtendedWARequired] = productHelper->isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs);
 
         EXPECT_FALSE(isExtendedWARequired);

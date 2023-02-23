@@ -40,7 +40,7 @@ TEST(AubHelper, GivenMultipleSubDevicesWhenGettingDeviceCountThenCorrectValueIsR
     RuntimeCapabilityTable capTable = {};
     GT_SYSTEM_INFO sysInfo = {};
     PLATFORM platform = {};
-    HardwareInfo hwInfo{&platform, &featureTable, &workaroundTable, &sysInfo, capTable};
+    HardwareInfo hwInfo{&platform, &featureTable, &workaroundTable, &sysInfo, capTable, {}};
     DebugManager.flags.CreateMultipleSubDevices.set(2);
 
     uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);

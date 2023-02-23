@@ -135,7 +135,7 @@ inline bool operator==(const RuntimeCapabilityTable &lhs, const RuntimeCapabilit
 struct HardwareInfo {
     HardwareInfo() = default;
     HardwareInfo(const PLATFORM *platform, const FeatureTable *featureTable, const WorkaroundTable *workaroundTable,
-                 const GT_SYSTEM_INFO *gtSystemInfo, const RuntimeCapabilityTable &capabilityTable);
+                 const GT_SYSTEM_INFO *gtSystemInfo, const RuntimeCapabilityTable &capabilityTable, HardwareIpVersion ipVersion);
 
     PLATFORM platform{};
     FeatureTable featureTable{};

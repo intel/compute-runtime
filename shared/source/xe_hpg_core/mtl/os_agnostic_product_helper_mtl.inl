@@ -80,7 +80,7 @@ uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo 
 
 template <>
 std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
-    auto isBasicWARequired = GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
+    auto isBasicWARequired = getProductConfigFromHwInfo(hwInfo) == AOT::XE_LPG_MD_A0 || getProductConfigFromHwInfo(hwInfo) == AOT::XE_LPG_LG_A0;
     auto isExtendedWARequired = false;
 
     return {isBasicWARequired, isExtendedWARequired};

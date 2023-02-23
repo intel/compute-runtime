@@ -13,6 +13,7 @@
 
 #include "aubstream/engine_node.h"
 #include "device_ids_configs_dg2.h"
+#include "platforms.h"
 
 namespace NEO {
 
@@ -147,7 +148,7 @@ const HardwareInfo Dg2HwConfig::hwInfo = {
     &DG2::workaroundTable,
     &Dg2HwConfig::gtSystemInfo,
     DG2::capabilityTable,
-};
+    AOT::DG2_G10_A0};
 GT_SYSTEM_INFO Dg2HwConfig::gtSystemInfo = {0};
 void Dg2HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;

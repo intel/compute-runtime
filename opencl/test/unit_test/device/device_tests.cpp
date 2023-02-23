@@ -736,7 +736,7 @@ TEST(ClDeviceHelperTest, givenNonZeroNumberOfTilesWhenPrepareDeviceEnvironmentsC
     sysInfo.MultiTileArchInfo.IsValid = true;
     sysInfo.MultiTileArchInfo.TileCount = 3;
     PLATFORM platform = {};
-    HardwareInfo hwInfo{&platform, &skuTable, &waTable, &sysInfo, capTable};
+    HardwareInfo hwInfo{&platform, &skuTable, &waTable, &sysInfo, capTable, {}};
     DebugManager.flags.CreateMultipleSubDevices.set(0);
 
     uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);
@@ -752,7 +752,7 @@ TEST(ClDeviceHelperTest, givenZeroNumberOfTilesWhenPrepareDeviceEnvironmentsCoun
     sysInfo.MultiTileArchInfo.IsValid = true;
     sysInfo.MultiTileArchInfo.TileCount = 0;
     PLATFORM platform = {};
-    HardwareInfo hwInfo{&platform, &skuTable, &waTable, &sysInfo, capTable};
+    HardwareInfo hwInfo{&platform, &skuTable, &waTable, &sysInfo, capTable, {}};
     DebugManager.flags.CreateMultipleSubDevices.set(0);
 
     uint32_t devicesCount = GfxCoreHelper::getSubDevicesCount(&hwInfo);

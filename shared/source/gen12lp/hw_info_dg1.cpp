@@ -13,6 +13,7 @@
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
+#include "platforms.h"
 
 namespace NEO {
 
@@ -139,7 +140,7 @@ const HardwareInfo Dg1HwConfig::hwInfo = {
     &DG1::workaroundTable,
     &Dg1HwConfig::gtSystemInfo,
     DG1::capabilityTable,
-};
+    AOT::DG1};
 
 GT_SYSTEM_INFO Dg1HwConfig::gtSystemInfo = {0};
 void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {

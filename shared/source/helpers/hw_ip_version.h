@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,6 +10,8 @@
 
 namespace NEO {
 struct HardwareIpVersion {
+    HardwareIpVersion() = default;
+    HardwareIpVersion(uint32_t ipVersion) : value(ipVersion){};
     union {
         uint32_t value;
         struct

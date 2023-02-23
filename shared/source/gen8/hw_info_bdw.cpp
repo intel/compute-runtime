@@ -11,6 +11,7 @@
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
+#include "platforms.h"
 
 namespace NEO {
 
@@ -124,7 +125,7 @@ const HardwareInfo BdwHw1x2x6::hwInfo = {
     &BDW::workaroundTable,
     &BdwHw1x2x6::gtSystemInfo,
     BDW::capabilityTable,
-};
+    AOT::BDW};
 
 GT_SYSTEM_INFO BdwHw1x2x6::gtSystemInfo = {0};
 void BdwHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
@@ -143,7 +144,7 @@ const HardwareInfo BdwHw1x3x6::hwInfo = {
     &BDW::workaroundTable,
     &BdwHw1x3x6::gtSystemInfo,
     BDW::capabilityTable,
-};
+    AOT::BDW};
 GT_SYSTEM_INFO BdwHw1x3x6::gtSystemInfo = {0};
 void BdwHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
@@ -161,7 +162,7 @@ const HardwareInfo BdwHw1x3x8::hwInfo = {
     &BDW::workaroundTable,
     &BdwHw1x3x8::gtSystemInfo,
     BDW::capabilityTable,
-};
+    AOT::BDW};
 GT_SYSTEM_INFO BdwHw1x3x8::gtSystemInfo = {0};
 void BdwHw1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
@@ -179,7 +180,7 @@ const HardwareInfo BdwHw2x3x8::hwInfo = {
     &BDW::workaroundTable,
     &BdwHw2x3x8::gtSystemInfo,
     BDW::capabilityTable,
-};
+    AOT::BDW};
 GT_SYSTEM_INFO BdwHw2x3x8::gtSystemInfo = {0};
 void BdwHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);

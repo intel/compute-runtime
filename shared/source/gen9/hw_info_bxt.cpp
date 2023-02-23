@@ -11,6 +11,7 @@
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
+#include "platforms.h"
 
 namespace NEO {
 
@@ -133,7 +134,7 @@ const HardwareInfo BxtHw1x2x6::hwInfo = {
     &BXT::workaroundTable,
     &BxtHw1x2x6::gtSystemInfo,
     BXT::capabilityTable,
-};
+    AOT::APL};
 GT_SYSTEM_INFO BxtHw1x2x6::gtSystemInfo = {0};
 void BxtHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     BXT::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
@@ -151,7 +152,7 @@ const HardwareInfo BxtHw1x3x6::hwInfo = {
     &BXT::workaroundTable,
     &BxtHw1x3x6::gtSystemInfo,
     BXT::capabilityTable,
-};
+    AOT::APL};
 GT_SYSTEM_INFO BxtHw1x3x6::gtSystemInfo = {0};
 void BxtHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
     BXT::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);

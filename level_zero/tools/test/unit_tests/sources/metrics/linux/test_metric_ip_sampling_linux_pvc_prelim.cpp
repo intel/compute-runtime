@@ -44,7 +44,7 @@ class DrmPrelimMock : public DrmMock {
     DrmPrelimMock(RootDeviceEnvironment &rootDeviceEnvironment) : DrmPrelimMock(rootDeviceEnvironment, defaultHwInfo.get()) {}
     DrmPrelimMock(RootDeviceEnvironment &rootDeviceEnvironment, HardwareInfo *inputHwInfo, bool invokeQueryEngineInfo = true) : DrmMock(rootDeviceEnvironment) {
         customHwInfo = std::make_unique<NEO::HardwareInfo>(&inputHwInfo->platform, &inputHwInfo->featureTable,
-                                                           &inputHwInfo->workaroundTable, &inputHwInfo->gtSystemInfo, inputHwInfo->capabilityTable);
+                                                           &inputHwInfo->workaroundTable, &inputHwInfo->gtSystemInfo, inputHwInfo->capabilityTable, 0u);
         customHwInfo->gtSystemInfo.MaxDualSubSlicesSupported = 64;
         rootDeviceEnvironment.setHwInfoAndInitHelpers(customHwInfo.get());
         this->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*this);

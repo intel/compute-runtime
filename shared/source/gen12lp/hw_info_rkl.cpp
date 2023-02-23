@@ -13,6 +13,7 @@
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
+#include "platforms.h"
 
 namespace NEO {
 
@@ -137,7 +138,7 @@ const HardwareInfo RklHwConfig::hwInfo = {
     &RKL::workaroundTable,
     &RklHwConfig::gtSystemInfo,
     RKL::capabilityTable,
-};
+    AOT::RKL};
 
 GT_SYSTEM_INFO RklHwConfig::gtSystemInfo = {0};
 void RklHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {

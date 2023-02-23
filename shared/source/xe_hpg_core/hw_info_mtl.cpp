@@ -12,6 +12,7 @@
 #include "shared/source/xe_hpg_core/hw_cmds_mtl.h"
 
 #include "aubstream/engine_node.h"
+#include "platforms.h"
 
 namespace NEO {
 
@@ -148,7 +149,7 @@ const HardwareInfo MtlHwConfig::hwInfo = {
     &MTL::workaroundTable,
     &MtlHwConfig::gtSystemInfo,
     MTL::capabilityTable,
-};
+    AOT::XE_LPG_MD_A0};
 
 GT_SYSTEM_INFO MtlHwConfig::gtSystemInfo = {0};
 void MtlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
@@ -185,6 +186,5 @@ void MtlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
     }
 };
 
-#include "hw_info_setup_mtl.inl"
-
 } // namespace NEO
+#include "hw_info_setup_mtl.inl"

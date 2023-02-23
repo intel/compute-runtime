@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+namespace NEO {
 const HardwareInfo MTL::hwInfo = MtlHwConfig::hwInfo;
 const uint64_t MTL::defaultHardwareInfoConfig = 0;
 
@@ -14,3 +15,4 @@ void setupMTLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWor
 }
 
 void (*MTL::setupHardwareInfo)(HardwareInfo *, bool, const uint64_t) = setupMTLHardwareInfoImpl;
+} // namespace NEO

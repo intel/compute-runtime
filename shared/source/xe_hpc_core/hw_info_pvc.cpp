@@ -13,6 +13,7 @@
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 
 #include "aubstream/engine_node.h"
+#include "platforms.h"
 
 namespace NEO {
 
@@ -172,7 +173,7 @@ const HardwareInfo PvcHwConfig::hwInfo = {
     &PVC::workaroundTable,
     &PvcHwConfig::gtSystemInfo,
     PVC::capabilityTable,
-};
+    AOT::PVC_XT_A0};
 
 GT_SYSTEM_INFO PvcHwConfig::gtSystemInfo = {0};
 void PvcHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {

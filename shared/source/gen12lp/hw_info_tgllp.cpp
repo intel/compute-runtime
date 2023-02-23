@@ -13,6 +13,7 @@
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
+#include "platforms.h"
 
 namespace NEO {
 
@@ -134,7 +135,7 @@ const HardwareInfo TgllpHw1x6x16::hwInfo = {
     &TGLLP::workaroundTable,
     &TgllpHw1x6x16::gtSystemInfo,
     TGLLP::capabilityTable,
-};
+    AOT::TGL};
 
 GT_SYSTEM_INFO TgllpHw1x6x16::gtSystemInfo = {0};
 void TgllpHw1x6x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
@@ -162,7 +163,7 @@ const HardwareInfo TgllpHw1x2x16::hwInfo = {
     &TGLLP::workaroundTable,
     &TgllpHw1x2x16::gtSystemInfo,
     TGLLP::capabilityTable,
-};
+    AOT::TGL};
 
 GT_SYSTEM_INFO TgllpHw1x2x16::gtSystemInfo = {0};
 void TgllpHw1x2x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
