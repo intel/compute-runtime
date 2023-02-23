@@ -16,6 +16,20 @@ using namespace NEO;
 
 namespace ULT {
 
+TEST(GetDeviceInfo, givenClDeviceWhenGettingDeviceInfoLuidSizeThenCorrectAdapterLuidSizeIsReturned) {
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    clDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+    auto mockWddm = new WddmMock(*clDevice->executionEnvironment->rootDeviceEnvironments[0]);
+    clDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
+
+    size_t sizeReturned = std::numeric_limits<size_t>::max();
+    size_t expectedSize = CL_LUID_SIZE_KHR;
+    auto retVal = clDevice->getDeviceInfo(CL_DEVICE_LUID_KHR, 0, nullptr, &sizeReturned);
+
+    ASSERT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(sizeReturned, expectedSize);
+}
+
 TEST(GetDeviceInfo, givenClDeviceWhenGettingDeviceInfoThenCorrectAdapterLuidIsReturned) {
     auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     clDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
@@ -41,6 +55,19 @@ TEST(GetDeviceInfo, givenClDeviceWhenVerifyAdapterLuidThenGetTrue) {
 
     ASSERT_EQ(retVal, CL_SUCCESS);
     EXPECT_TRUE(isValid);
+}
+
+TEST(GetDeviceInfo, givenClDeviceWhenGettingDeviceInfoNodeMaskSizeThenCorrectNodeMaskSizeIsReturned) {
+    auto clDevice = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    clDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+    auto mockWddm = new WddmMock(*clDevice->executionEnvironment->rootDeviceEnvironments[0]);
+    clDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
+
+    size_t sizeReturned = std::numeric_limits<size_t>::max();
+    auto retVal = clDevice->getDeviceInfo(CL_DEVICE_NODE_MASK_KHR, 0, nullptr, &sizeReturned);
+
+    ASSERT_EQ(retVal, CL_SUCCESS);
+    EXPECT_EQ(sizeReturned, sizeof(cl_uint));
 }
 
 TEST(GetDeviceInfo, givenClDeviceWhenGettingDeviceInfoThenGetNodeMask) {

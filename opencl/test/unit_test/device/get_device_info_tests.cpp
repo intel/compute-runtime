@@ -987,8 +987,7 @@ cl_device_info deviceInfoParams[] = {
     CL_DEVICE_VENDOR_ID,
     CL_DEVICE_VERSION,
     CL_DRIVER_VERSION,
-    CL_DRIVER_UUID_KHR,
-};
+    CL_DRIVER_UUID_KHR};
 
 INSTANTIATE_TEST_CASE_P(
     Device_,

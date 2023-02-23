@@ -325,13 +325,21 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
         retSize = srcSize = sizeof(cl_bool);
         break;
     case CL_DEVICE_LUID_KHR:
-        memcpy_s(luid.data(), CL_LUID_SIZE_KHR, paramValue, CL_LUID_SIZE_KHR);
+        if (paramValue != nullptr) {
+            memcpy_s(luid.data(), CL_LUID_SIZE_KHR, paramValue, CL_LUID_SIZE_KHR);
+        } else {
+            luid = {0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u};
+        }
         device.getAdapterLuid(luid);
         src = luid.data();
         retSize = srcSize = CL_LUID_SIZE_KHR;
         break;
     case CL_DEVICE_NODE_MASK_KHR:
-        memcpy_s(&param.uint, sizeof(cl_uint), paramValue, paramValueSize);
+        if (paramValue != nullptr) {
+            memcpy_s(&param.uint, sizeof(cl_uint), paramValue, sizeof(cl_uint));
+        } else {
+            param.uint = 0;
+        }
         device.getAdapterMask(param.uint);
         src = &param.uint;
         retSize = srcSize = sizeof(cl_uint);
