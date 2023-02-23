@@ -147,6 +147,8 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             bool enabledCmdListSharing = !NEO::EngineHelper::isCopyOnlyEngineType(engineGroupType) && commandList->isFlushTaskSubmissionEnabled;
             commandList->immediateCmdListHeapSharing = L0GfxCoreHelper::enableImmediateCmdListHeapSharing(rootDeviceEnvironment, enabledCmdListSharing);
         }
+        csr->initializeResources();
+        csr->initDirectSubmission();
         returnValue = commandList->initialize(device, engineGroupType, desc->flags);
         if (returnValue != ZE_RESULT_SUCCESS) {
             commandList->destroy();
