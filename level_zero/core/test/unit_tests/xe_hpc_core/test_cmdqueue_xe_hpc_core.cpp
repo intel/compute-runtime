@@ -940,6 +940,7 @@ HWTEST2_F(CommandQueueCommandsXeHpc, givenSplitBcsCopyAndImmediateCommandListWhe
                             size, alignment, &srcPtr);
     ze_host_mem_alloc_desc_t hostDesc = {};
     context->allocHostMem(&hostDesc, size, alignment, &dstPtr);
+    *commandList0->csr->getBarrierCountTagAddress() = 0u;
     commandList0->csr->getNextBarrierCount();
 
     auto result = commandList0->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
