@@ -1394,6 +1394,29 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsThe
     allocList.freeAllGraphicsAllocations(pDevice);
 }
 
+TEST_F(CommandContainerTest, givenCreateSecondaryCmdBufferInHostMemWhenFillReusableAllocationListsThenCreateAlocsForSecondaryCmdBuffer) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.SetAmountOfReusableAllocations.set(1);
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
+
+    AllocationsList allocList;
+    cmdContainer->initialize(pDevice, &allocList, true, true);
+    cmdContainer->setImmediateCmdListCsr(csr);
+
+    auto actualResidencyContainerSize = cmdContainer->getResidencyContainer().size();
+    EXPECT_EQ(cmdContainer->immediateReusableAllocationList, nullptr);
+
+    cmdContainer->fillReusableAllocationLists();
+
+    ASSERT_NE(cmdContainer->immediateReusableAllocationList, nullptr);
+    EXPECT_FALSE(cmdContainer->immediateReusableAllocationList->peekIsEmpty());
+    EXPECT_EQ(cmdContainer->getResidencyContainer().size(), actualResidencyContainerSize + 2);
+
+    cmdContainer.reset();
+    allocList.freeAllGraphicsAllocations(pDevice);
+}
+
 TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsWithSharedHeapsEnabledThenOnlyOneHeapFilled) {
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.SetAmountOfReusableAllocations.set(1);
