@@ -1220,7 +1220,7 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatche
 
 using KernelIndirectPropertiesFromIGCTests = KernelImmutableDataTests;
 
-TEST_F(KernelIndirectPropertiesFromIGCTests, givenZebinFormatWhenInitializingKernelWithNoKernelLoadAndNoStoreAndNoAtomicThenHasIndirectAccessIsSetToFalse) {
+TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithNoKernelLoadAndNoStoreAndNoAtomicThenHasIndirectAccessIsSetToFalse) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DisableIndirectAccess.set(0);
 
@@ -1229,7 +1229,6 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenZebinFormatWhenInitializingKer
 
     std::unique_ptr<MockImmutableData> mockKernelImmData =
         std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
-    mockKernelImmData->mockKernelDescriptor->kernelAttributes.binaryFormat = NEO::DeviceBinaryFormat::Zebin;
 
     createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
 
@@ -1248,7 +1247,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenZebinFormatWhenInitializingKer
     EXPECT_FALSE(kernel->hasIndirectAccess());
 }
 
-TEST_F(KernelIndirectPropertiesFromIGCTests, givenNonZebinFormatWhenInitializingKernelWithNoKernelLoadAndNoStoreAndNoAtomicThenHasIndirectAccessIsSetToFalse) {
+TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithKernelLoadStoreAtomicThenHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DisableIndirectAccess.set(0);
 
@@ -1257,69 +1256,6 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, givenNonZebinFormatWhenInitializing
 
     std::unique_ptr<MockImmutableData> mockKernelImmData =
         std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
-    mockKernelImmData->mockKernelDescriptor->kernelAttributes.binaryFormat = NEO::DeviceBinaryFormat::Unknown;
-
-    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
-
-    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
-
-    ze_kernel_desc_t desc = {};
-    desc.pKernelName = kernelName.c_str();
-
-    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
-    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
-    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
-
-    kernel->initialize(&desc);
-
-    EXPECT_TRUE(kernel->hasIndirectAccess());
-}
-
-TEST_F(KernelIndirectPropertiesFromIGCTests, givenZebinFormatAndPtrPassedByValueWhenInitializingKernelWithNoKernelLoadAndNoStoreAndNoAtomicThenHasIndirectAccessIsSetToTrue) {
-    DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
-
-    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
-    bool isInternal = false;
-
-    std::unique_ptr<MockImmutableData> mockKernelImmData =
-        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
-    mockKernelImmData->mockKernelDescriptor->kernelAttributes.binaryFormat = NEO::DeviceBinaryFormat::Zebin;
-    auto ptrByValueArg = ArgDescriptor(ArgDescriptor::ArgTValue);
-    ArgDescValue::Element element{};
-    element.isPtr = true;
-    ptrByValueArg.as<ArgDescValue>().elements.push_back(element);
-    mockKernelImmData->mockKernelDescriptor->payloadMappings.explicitArgs.push_back(ptrByValueArg);
-    EXPECT_EQ(mockKernelImmData->mockKernelDescriptor->payloadMappings.explicitArgs.size(), 1u);
-
-    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
-
-    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
-    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
-
-    ze_kernel_desc_t desc = {};
-    desc.pKernelName = kernelName.c_str();
-
-    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
-    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
-    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
-
-    kernel->initialize(&desc);
-
-    EXPECT_TRUE(kernel->hasIndirectAccess());
-}
-
-TEST_F(KernelIndirectPropertiesFromIGCTests, givenZebinFormatwhenInitializingKernelWithKernelLoadStoreAtomicThenHasIndirectAccessIsSetToTrue) {
-    DebugManagerStateRestore restorer;
-    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
-
-    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
-    bool isInternal = false;
-
-    std::unique_ptr<MockImmutableData> mockKernelImmData =
-        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
-    mockKernelImmData->mockKernelDescriptor->kernelAttributes.binaryFormat = DeviceBinaryFormat::Zebin;
 
     createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
 

@@ -34,8 +34,6 @@ struct KernelHelper {
         return perHwThreadPrivateScratchSize * computeUnitsUsedForScratch;
     }
     static ErrorCode checkIfThereIsSpaceForScratchOrPrivate(KernelDescriptor::KernelAttributes attributes, Device *device);
-
-    static bool isAnyArgumentPtrByValue(const KernelDescriptor &kernelDescriptor);
 };
 
 } // namespace NEO

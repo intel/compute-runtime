@@ -163,31 +163,3 @@ TEST_F(KernelHelperTest, GivenScratchEqualsZeroAndPrivetGreaterThanZeroWhenCheck
     attributes.perThreadScratchSize[1] = 0;
     EXPECT_EQ(KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(attributes, pDevice), KernelHelper::ErrorCode::SUCCESS);
 }
-
-TEST_F(KernelHelperTest, GivenNoPtrByValueWhenCheckingIsAnyArgumentPtrByValueThenFalseIsReturned) {
-    KernelDescriptor kernelDescriptor;
-    auto pointerArg = ArgDescriptor(ArgDescriptor::ArgTPointer);
-
-    auto valueArg = ArgDescriptor(ArgDescriptor::ArgTValue);
-    ArgDescValue::Element element;
-    element.isPtr = false;
-    valueArg.as<ArgDescValue>().elements.push_back(element);
-
-    kernelDescriptor.payloadMappings.explicitArgs.push_back(pointerArg);
-    kernelDescriptor.payloadMappings.explicitArgs.push_back(valueArg);
-    EXPECT_FALSE(KernelHelper::isAnyArgumentPtrByValue(kernelDescriptor));
-}
-
-TEST_F(KernelHelperTest, GivenPtrByValueWhenCheckingIsAnyArgumentPtrByValueThenTrueIsReturned) {
-    KernelDescriptor kernelDescriptor;
-    auto pointerArg = ArgDescriptor(ArgDescriptor::ArgTPointer);
-
-    auto valueArg = ArgDescriptor(ArgDescriptor::ArgTValue);
-    ArgDescValue::Element element;
-    element.isPtr = true;
-    valueArg.as<ArgDescValue>().elements.push_back(element);
-
-    kernelDescriptor.payloadMappings.explicitArgs.push_back(pointerArg);
-    kernelDescriptor.payloadMappings.explicitArgs.push_back(valueArg);
-    EXPECT_TRUE(KernelHelper::isAnyArgumentPtrByValue(kernelDescriptor));
-}

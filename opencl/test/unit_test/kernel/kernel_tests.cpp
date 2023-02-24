@@ -1704,13 +1704,12 @@ HWTEST_F(KernelResidencyTest, givenKernelWhenclSetKernelExecInfoWithUnifiedMemor
     EXPECT_FALSE(mockKernel.mockKernel->unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
-HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicAndZebinFormatThenKernelHasIndirectAccessIsSetToFalse) {
+HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicThenKernelHasIndirectAccessIsSetToFalse) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.binaryFormat = NEO::DeviceBinaryFormat::Zebin;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -1730,71 +1729,12 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNor
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
 
-HWTEST_F(KernelResidencyTest, givenKernelWithPtrByValueArgumentAndZebinFormatThenKernelHasIndirectAccessIsSetToTrue) {
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.binaryFormat = NEO::DeviceBinaryFormat::Zebin;
-
-    auto ptrByValueArg = ArgDescriptor(ArgDescriptor::ArgTValue);
-    ArgDescValue::Element element;
-    element.isPtr = true;
-    ptrByValueArg.as<ArgDescValue>().elements.push_back(element);
-    pKernelInfo->kernelDescriptor.payloadMappings.explicitArgs.push_back(ptrByValueArg);
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
-
-    MockProgram program(toClDeviceVector(*pClDevice));
-    MockContext ctx;
-    program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
-
-    EXPECT_TRUE(kernel->getHasIndirectAccess());
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
-}
-
-HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadNorKernelArgStoreNorKernelArgAtomicAndNonZebinFormatThenKernelHasIndirectAccessIsSetToFalse) {
-    auto pKernelInfo = std::make_unique<KernelInfo>();
-    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.binaryFormat = NEO::DeviceBinaryFormat::Unknown;
-
-    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    commandStreamReceiver.storeMakeResidentAllocations = true;
-
-    auto memoryManager = commandStreamReceiver.getMemoryManager();
-    pKernelInfo->kernelAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{pDevice->getRootDeviceIndex(), MemoryConstants::pageSize});
-
-    MockProgram program(toClDeviceVector(*pClDevice));
-    MockContext ctx;
-    program.setContext(&ctx);
-    program.buildInfos[pDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
-    std::unique_ptr<MockKernel> kernel(new MockKernel(&program, *pKernelInfo, *pClDevice));
-    ASSERT_EQ(CL_SUCCESS, kernel->initialize());
-
-    EXPECT_TRUE(kernel->getHasIndirectAccess());
-
-    memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
-}
-
-HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadAndZebinFormatThenKernelHasIndirectAccessIsSetToTrue) {
+HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadThenKernelHasIndirectAccessIsSetToTrue) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = true;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.binaryFormat = NEO::DeviceBinaryFormat::Zebin;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -1814,13 +1754,12 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgLoadAndZebinFormatThenKe
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
 
-HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgStoreAndZebinFormatThenKernelHasIndirectAccessIsSetToTrue) {
+HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgStoreThenKernelHasIndirectAccessIsSetToTrue) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = true;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = false;
-    pKernelInfo->kernelDescriptor.kernelAttributes.binaryFormat = NEO::DeviceBinaryFormat::Zebin;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
@@ -1840,13 +1779,12 @@ HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgStoreAndZebinFormatThenK
     memoryManager->freeGraphicsMemory(pKernelInfo->kernelAllocation);
 }
 
-HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgAtomicAndZebinFormatThenKernelHasIndirectAccessIsSetToTrue) {
+HWTEST_F(KernelResidencyTest, givenKernelWithNoKernelArgAtomicThenKernelHasIndirectAccessIsSetToTrue) {
     auto pKernelInfo = std::make_unique<KernelInfo>();
     pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgLoad = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgStore = false;
     pKernelInfo->kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic = true;
-    pKernelInfo->kernelDescriptor.kernelAttributes.binaryFormat = NEO::DeviceBinaryFormat::Zebin;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;

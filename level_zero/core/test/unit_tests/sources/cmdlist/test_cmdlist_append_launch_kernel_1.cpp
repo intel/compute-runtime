@@ -19,7 +19,6 @@
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/event/event.h"
-#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
@@ -28,50 +27,26 @@
 namespace L0 {
 namespace ult {
 
-using CommandListAppendLaunchKernelMockModule = Test<ModuleMutableCommandListFixture>;
-HWTEST_F(CommandListAppendLaunchKernelMockModule, givenKernelWithIndirectAllocationsAllowedThenCommandListReturnsExpectedIndirectAllocationsAllowed) {
-    mockKernelImmData->kernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = true;
-    kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
-    kernel->unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
-    kernel->unifiedMemoryControls.indirectHostAllocationsAllowed = true;
+using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 
+HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsAllowedThenCommandListReturnsExpectedIndirectAllocationsAllowed) {
+    createKernel();
+    kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
+    kernel->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
+    kernel->unifiedMemoryControls.indirectHostAllocationsAllowed = true;
+    EXPECT_TRUE(kernel->getUnifiedMemoryControls().indirectDeviceAllocationsAllowed);
     EXPECT_TRUE(kernel->hasIndirectAllocationsAllowed());
 
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     CmdListKernelLaunchParams launchParams = {};
-    {
-        returnValue = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-        EXPECT_TRUE(commandList->hasIndirectAllocationsAllowed());
-    }
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
 
-    {
-        returnValue = commandList->reset();
-        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-        kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
-        kernel->unifiedMemoryControls.indirectSharedAllocationsAllowed = true;
-        kernel->unifiedMemoryControls.indirectHostAllocationsAllowed = false;
-
-        returnValue = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-        EXPECT_TRUE(commandList->hasIndirectAllocationsAllowed());
-    }
-
-    {
-        returnValue = commandList->reset();
-        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-        kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = true;
-        kernel->unifiedMemoryControls.indirectSharedAllocationsAllowed = false;
-        kernel->unifiedMemoryControls.indirectHostAllocationsAllowed = false;
-
-        returnValue = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
-        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-        EXPECT_TRUE(commandList->hasIndirectAllocationsAllowed());
-    }
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_TRUE(commandList->hasIndirectAllocationsAllowed());
 }
 
-using CommandListAppendLaunchKernel = Test<ModuleFixture>;
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithIndirectAllocationsNotAllowedThenCommandListReturnsExpectedIndirectAllocationsAllowed) {
     createKernel();
     kernel->unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
@@ -372,9 +347,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     eventDesc.index = 0;
     eventDesc.signal = ZE_EVENT_SCOPE_FLAG_DEVICE;
 
-    auto eventPool = std::unique_ptr<::L0::EventPool>(::L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    auto event = std::unique_ptr<::L0::Event>(::L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -467,9 +442,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFla
         ZE_EVENT_SCOPE_FLAG_HOST,
         ZE_EVENT_SCOPE_FLAG_HOST};
 
-    auto eventPool = std::unique_ptr<::L0::EventPool>(::L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    auto event = std::unique_ptr<::L0::Event>(::L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -584,9 +559,9 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenCommandListWhenAppendLaunchKernelS
         ZE_EVENT_SCOPE_FLAG_HOST,
         ZE_EVENT_SCOPE_FLAG_HOST};
 
-    auto eventPool = std::unique_ptr<::L0::EventPool>(::L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    auto eventPool = std::unique_ptr<EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    auto event = std::unique_ptr<::L0::Event>(::L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    auto event = std::unique_ptr<Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
     EXPECT_EQ(1u, event->getPacketsInUse());
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -800,9 +775,9 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsThenAddSemapho
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
 
-    std::unique_ptr<::L0::EventPool> eventPool(::L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    std::unique_ptr<EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    std::unique_ptr<::L0::Event> event(::L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+    std::unique_ptr<Event> event(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
     ze_event_handle_t hEventHandle = event->toHandle();
 
     ze_group_count_t groupCount{1, 1, 1};
@@ -852,10 +827,10 @@ HWTEST_F(CommandListAppendLaunchKernel, givenMultipleValidWaitEventsThenAddSemap
     ze_event_desc_t eventDesc2 = {};
     eventDesc2.index = 1;
 
-    std::unique_ptr<::L0::EventPool> eventPool(::L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    std::unique_ptr<EventPool> eventPool(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    std::unique_ptr<::L0::Event> event1(::L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc1, device));
-    std::unique_ptr<::L0::Event> event2(::L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc2, device));
+    std::unique_ptr<Event> event1(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc1, device));
+    std::unique_ptr<Event> event2(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc2, device));
     ze_event_handle_t hEventHandle1 = event1->toHandle();
     ze_event_handle_t hEventHandle2 = event2->toHandle();
 

@@ -90,7 +90,6 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
         using KernelImp::requiredWorkgroupOrder;
         using KernelImp::surfaceStateHeapData;
         using KernelImp::surfaceStateHeapDataSize;
-        using KernelImp::unifiedMemoryControls;
 
         MockKernel(MockModule *mockModule) : WhiteBox<L0::KernelImp>(mockModule) {
         }

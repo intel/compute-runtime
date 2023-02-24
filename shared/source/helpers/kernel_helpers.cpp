@@ -85,17 +85,4 @@ KernelHelper::ErrorCode KernelHelper::checkIfThereIsSpaceForScratchOrPrivate(Ker
     return KernelHelper::ErrorCode::SUCCESS;
 }
 
-bool KernelHelper::isAnyArgumentPtrByValue(const KernelDescriptor &kernelDescriptor) {
-    for (auto &argDescriptor : kernelDescriptor.payloadMappings.explicitArgs) {
-        if (argDescriptor.type == NEO::ArgDescriptor::ArgTValue) {
-            for (auto &element : argDescriptor.as<NEO::ArgDescValue>().elements) {
-                if (element.isPtr) {
-                    return true;
-                }
-            }
-        }
-    }
-    return false;
-}
-
 } // namespace NEO

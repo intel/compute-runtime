@@ -432,7 +432,6 @@ XE_HPG_CORETEST_P(XeHpgCoreUmStatelessCompressionInSBA, givenStatelessKernelWhen
 }
 
 XE_HPG_CORETEST_P(XeHpgCoreUmStatelessCompressionInSBA, givenKernelExecInfoWhenItHasIndirectHostAccessThenDisableCompressionInSBA) {
-    EXPECT_TRUE(multiDeviceKernel->getHasIndirectAccess());
     const size_t bufferSize = MemoryConstants::kiloByte;
     uint8_t bufferData[bufferSize] = {};
 
