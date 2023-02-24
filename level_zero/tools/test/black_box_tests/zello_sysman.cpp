@@ -8,11 +8,13 @@
 #include <level_zero/zes_api.h>
 
 #include <algorithm>
+#include <chrono>
 #include <cmath>
 #include <fstream>
 #include <iostream>
 #include <map>
 #include <sys/stat.h>
+#include <thread>
 #if defined(_WIN32) || defined(_WIN64)
 #include <shlobj_core.h>
 #include <string>
@@ -100,8 +102,7 @@ inline bool isParamEnabled(int argc, char *argv[], const char *shortName, const 
     } while (0);
 
 void usage() {
-    std::cout << "\n set Env variable ZES_ENABLE_SYSMAN=1"
-                 "\n"
+    std::cout << "\n"
                  "\n zello_sysman [OPTIONS]"
                  "\n"
                  "\n OPTIONS:"
@@ -132,8 +133,7 @@ void usage() {
                  "\n";
 }
 
-void getDeviceHandles(ze_driver_handle_t &driverHandle, std::vector<ze_device_handle_t> &devices, int argc, char *argv[]) {
-
+void getDeviceHandles(ze_driver_handle_t &driverHandle, std::vector<ze_device_handle_t> &devices) {
     VALIDATECALL(zeInit(ZE_INIT_FLAG_GPU_ONLY));
 
     uint32_t driverCount = 0;
@@ -156,11 +156,31 @@ void getDeviceHandles(ze_driver_handle_t &driverHandle, std::vector<ze_device_ha
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     for (const auto &device : devices) {
         VALIDATECALL(zeDeviceGetProperties(device, &deviceProperties));
-
         if (verbose) {
             std::cout << "Device Name = " << deviceProperties.name << std::endl;
         }
     }
+}
+
+void getSysmanDeviceHandles(zes_driver_handle_t &sysmanDriverHandle, std::vector<zes_device_handle_t> &sysmanDevices) {
+    VALIDATECALL(zesInit(0));
+
+    uint32_t driverCount = 0;
+    VALIDATECALL(zesDriverGet(&driverCount, nullptr));
+    if (driverCount == 0) {
+        std::cout << "Error could not retrieve driver" << std::endl;
+        std::terminate();
+    }
+    VALIDATECALL(zesDriverGet(&driverCount, &sysmanDriverHandle));
+
+    uint32_t deviceCount = 0;
+    VALIDATECALL(zesDeviceGet(sysmanDriverHandle, &deviceCount, nullptr));
+    if (deviceCount == 0) {
+        std::cout << "Error could not retrieve device" << std::endl;
+        std::terminate();
+    }
+    sysmanDevices.resize(deviceCount);
+    VALIDATECALL(zesDeviceGet(sysmanDriverHandle, &deviceCount, sysmanDevices.data()));
 }
 
 void getPowerLimits(const zes_pwr_handle_t &handle) {
@@ -1331,18 +1351,40 @@ int enableSysman() {
 #endif // defined(_WIN32) || defined(_WIN64)
     return ret;
 }
+
 int main(int argc, char *argv[]) {
+
     std::vector<ze_device_handle_t> devices;
     ze_driver_handle_t driver;
 
-    if (!validateGetenv("ZES_ENABLE_SYSMAN")) {
-        std::cout << "setting environment variable ZES_ENABLE_SYSMAN=1" << std::endl;
-        if (enableSysman() != 0) {
-            std::cout << "Must set environment variable ZES_ENABLE_SYSMAN=1" << std::endl;
-            exit(0);
+    if (validateGetenv("ZELLO_SYSMAN_USE_ZESINIT")) {
+        if (validateGetenv("ZES_ENABLE_SYSMAN")) {
+            std::cout << "ZES_ENABLE_SYSMAN environment variable Set" << std::endl;
         }
+
+        else {
+            std::cout << "ZES_ENABLE_SYSMAN environment variable Not Set" << std::endl;
+        }
+        getSysmanDeviceHandles(driver, devices);
+        std::cout << "Sysman Initialization done via zesInit" << std::endl;
     }
-    getDeviceHandles(driver, devices, argc, argv);
+
+    else {
+        if (validateGetenv("ZES_ENABLE_SYSMAN")) {
+            std::cout << "ZES_ENABLE_SYSMAN environment variable Set" << std::endl;
+        }
+
+        else {
+            std::cout << "ZES_ENABLE_SYSMAN environment variable Not Set" << std::endl;
+            std::cout << "Setting the environment variable ZES_ENABLE_SYSMAN " << std::endl;
+            if (enableSysman()) {
+                return 0;
+            }
+            std::cout << "ZES_ENABLE_SYSMAN environment variable Set" << std::endl;
+        }
+        getDeviceHandles(driver, devices);
+        std::cout << "Sysman Initialization done via zeInit" << std::endl;
+    }
 
     bool force = false;
     bool pFactorIsSet = true;
