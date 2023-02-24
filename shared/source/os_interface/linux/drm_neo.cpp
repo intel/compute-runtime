@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -332,7 +332,7 @@ void Drm::setUnrecoverableContext(uint32_t drmContextId) {
     ioctlHelper->ioctl(DrmIoctl::GemContextSetparam, &contextParam);
 }
 
-uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested) {
+int Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested) {
     GemContextCreateExt gcc{};
 
     if (DebugManager.flags.DirectSubmissionDrmContext.get() != -1) {
@@ -364,7 +364,11 @@ uint32_t Drm::createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequeste
     }
     auto ioctlResult = ioctlHelper->ioctl(DrmIoctl::GemContextCreateExt, &gcc);
 
-    UNRECOVERABLE_IF(ioctlResult != 0);
+    if (ioctlResult < 0) {
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: GemContextCreateExt ioctl failed. Not exposing this root device\n");
+        return ioctlResult;
+    }
+
     return gcc.contextId;
 }
 

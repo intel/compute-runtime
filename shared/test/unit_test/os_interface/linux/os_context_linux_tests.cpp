@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -32,4 +32,15 @@ TEST(OSContextLinux, givenReinitializeContextWhenContextIsInitThenContextIsStill
     OsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
     EXPECT_NO_THROW(osContext.reInitializeContext());
     EXPECT_NO_THROW(osContext.ensureContextInitialized());
+}
+
+TEST(OSContextLinux, givenInitializeContextWhenContextCreateIoctlFailsThenContextNotInitialized) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    pDrm->storedRetVal = -1;
+    EXPECT_EQ(-1, pDrm->createDrmContext(1, false, false));
+
+    OsContextLinux osContext(*pDrm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    EXPECT_EQ(false, osContext.ensureContextInitialized());
+    delete pDrm;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -217,7 +217,7 @@ class CommandStreamReceiver {
     virtual void fillReusableAllocationsList();
     virtual void setupContext(OsContext &osContext) { this->osContext = &osContext; }
     OsContext &getOsContext() const { return *osContext; }
-    void initializeResources();
+    bool initializeResources();
     TagAllocatorBase *getEventTsAllocator();
     TagAllocatorBase *getEventPerfCountAllocator(const uint32_t tagSize);
     virtual TagAllocatorBase *getTimestampPacketAllocator() = 0;

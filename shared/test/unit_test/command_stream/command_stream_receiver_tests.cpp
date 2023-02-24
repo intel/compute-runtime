@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,7 @@
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/utilities/tag_allocator.h"
 #include "shared/test/common/fixtures/command_stream_receiver_fixture.inl"
@@ -98,6 +99,28 @@ HWTEST_F(CommandStreamReceiverTest, WhenInitializeResourcesThenCallFillReusableA
     EXPECT_EQ(1u, pDevice->getUltCommandStreamReceiver<FamilyType>().fillReusableAllocationsListCalled);
     commandStreamReceiver->initializeResources();
     EXPECT_EQ(1u, pDevice->getUltCommandStreamReceiver<FamilyType>().fillReusableAllocationsListCalled);
+}
+
+HWTEST_F(CommandStreamReceiverTest, whenContextCreateReturnsFalseThenExpectCSRInitializeResourcesFail) {
+    struct MyOsContext : OsContext {
+        MyOsContext(uint32_t contextId,
+                    const EngineDescriptor &engineDescriptor) : OsContext(0, contextId, engineDescriptor) {}
+
+        bool initializeContext() override {
+            initializeContextCalled++;
+            return false;
+        }
+
+        size_t initializeContextCalled = 0u;
+    };
+
+    const EngineTypeUsage engineTypeUsageRegular{aub_stream::ENGINE_RCS, EngineUsage::Regular};
+    MyOsContext osContext{0, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsageRegular)};
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.resourcesInitialized = false;
+    ultCsr.setupContext(osContext);
+    bool ret = ultCsr.initializeResources();
+    EXPECT_FALSE(ret);
 }
 
 HWTEST_F(CommandStreamReceiverTest, givenCsrWhenCallFillReusableAllocationsListThenAllocateCommandBufferAndMakeItResident) {

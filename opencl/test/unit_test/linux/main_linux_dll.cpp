@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -607,7 +607,7 @@ TEST_F(DrmTests, GivenFailOnContextCreateWhenCreatingDrmThenDrmIsCreated) {
     auto drm = DrmWrap::createDrm(*rootDeviceEnvironment);
     EXPECT_NE(drm, nullptr);
     failOnContextCreate = -1;
-    EXPECT_THROW(drm->createDrmContext(1, false, false), std::exception);
+    EXPECT_EQ(-1, drm->createDrmContext(1, false, false));
     EXPECT_FALSE(drm->isPreemptionSupported());
     failOnContextCreate = 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -245,15 +245,19 @@ void CommandStreamReceiver::fillReusableAllocationsList() {
     }
 }
 
-void CommandStreamReceiver::initializeResources() {
+bool CommandStreamReceiver::initializeResources() {
     if (!resourcesInitialized) {
         auto lock = obtainUniqueOwnership();
         if (!resourcesInitialized) {
-            osContext->ensureContextInitialized();
+            if (!osContext->ensureContextInitialized()) {
+                return false;
+            }
             this->fillReusableAllocationsList();
             this->resourcesInitialized = true;
         }
     }
+
+    return true;
 }
 
 MemoryManager *CommandStreamReceiver::getMemoryManager() const {

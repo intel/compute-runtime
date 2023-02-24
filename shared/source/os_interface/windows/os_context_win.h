@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ class OsContextWin : public OsContext {
     void getDeviceLuidArray(std::vector<uint8_t> &luidData, size_t arraySize);
 
   protected:
-    void initializeContext() override;
+    bool initializeContext() override;
 
     WddmResidencyController residencyController;
     HardwareQueue hardwareQueue;

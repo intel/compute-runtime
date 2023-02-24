@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -373,7 +373,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemWithExtensionsThenRetu
 
     auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, {}, -1);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
     ASSERT_TRUE(drm->context.receivedCreateGemExt);
     EXPECT_EQ(1024u, drm->context.receivedCreateGemExt->size);
@@ -397,7 +397,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithSingleRegionThe
     ASSERT_NE(nullptr, memoryInfo);
     auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
     const auto &createExt = drm->context.receivedCreateGemExt;
@@ -427,12 +427,12 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithPairHandleThenR
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
     auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, pairHandle, -1);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
     uint32_t handle = 0;
     ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, pairHandle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(2u, drm->ioctlCallsCount);
 }
 
@@ -457,7 +457,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportWhenCreatingGemExt
     uint32_t handle = 0;
     auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
     const auto &createExt = drm->context.receivedCreateGemExt;
@@ -487,7 +487,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndNoPrivateBOSupportWhenCreatingGemE
     uint32_t handle = 0;
     auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
     const auto &createExt = drm->context.receivedCreateGemExt;
@@ -516,7 +516,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportedAndIsPerContextV
     uint32_t handle = 0;
     auto ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, -1);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
     const auto &createExt = drm->context.receivedCreateGemExt;
@@ -549,7 +549,7 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithMultipleRegions
     uint32_t memoryRegions = 0b1011;
     auto ret = memoryInfo->createGemExtWithMultipleRegions(memoryRegions, 1024, handle);
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 
     const auto &createExt = drm->context.receivedCreateGemExt;

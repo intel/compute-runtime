@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -346,8 +346,16 @@ TEST(DrmTest, GivenDrmWhenAskedForContextThatFailsThenFalseIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
     pDrm->storedRetVal = -1;
-    EXPECT_THROW(pDrm->createDrmContext(1, false, false), std::exception);
+    EXPECT_EQ(-1, pDrm->createDrmContext(1, false, false));
     pDrm->storedRetVal = 0;
+    delete pDrm;
+}
+
+TEST(DrmTest, GivenDrmWhenAskedForContextThatIsSuccessThenTrueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock *pDrm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    pDrm->storedRetVal = 0;
+    EXPECT_EQ(0, pDrm->createDrmContext(1, false, false));
     delete pDrm;
 }
 

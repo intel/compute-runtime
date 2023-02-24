@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -123,7 +123,7 @@ class DrmMock : public Drm {
         return pageFaultSupported;
     }
 
-    uint32_t createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested) override {
+    int createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested) override {
         capturedCooperativeContextRequest = isCooperativeContextRequested;
         if (callBaseCreateDrmContext) {
             return Drm::createDrmContext(drmVmId, isDirectSubmissionRequested, isCooperativeContextRequested);

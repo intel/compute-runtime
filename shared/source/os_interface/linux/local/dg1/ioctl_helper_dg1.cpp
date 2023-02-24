@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ constexpr static auto gfxProduct = IGFX_DG1;
 extern bool isQueryDrmTip(const std::vector<uint8_t> &queryInfo);
 
 template <>
-uint32_t IoctlHelperImpl<gfxProduct>::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
+int IoctlHelperImpl<gfxProduct>::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
     auto ret = IoctlHelperUpstream::createGemExt(memClassInstances, allocSize, handle, vmId, pairHandle);
     if (ret == 0) {
         return ret;

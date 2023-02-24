@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -135,7 +135,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) 
     auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1);
 
     EXPECT_EQ(1u, handle);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
@@ -158,7 +158,7 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCallIoctlThenProperIoctlRegiste
     GemContextCreateExt arg{};
     drm->ioctlCallsCount = 0;
     auto ret = drm->ioctlHelper->ioctl(DrmIoctl::GemContextCreateExt, &arg);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 

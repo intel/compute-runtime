@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtThenReturnCorrectValue) {
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
     auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1);
 
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(1u, drm->numRegions);
     EXPECT_EQ(1024u, drm->createExt.size);
@@ -53,7 +53,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WithDrmTipWhenCreateGemExtWithDebugFlagTh
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: 0 BO-1 with size: 1024\n");
     EXPECT_EQ(expectedOutput, output);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
 }
 
 DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtWithDebugFlagThenPrintDebugInfo) {
@@ -74,7 +74,7 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtWithDebugFlagThenPrintDeb
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: -1 BO-0 with size: 1024\nGEM_CREATE_EXT with EXT_SETPARAM has returned: 0 BO-1 with size: 1024\n");
     EXPECT_EQ(expectedOutput, output);
     EXPECT_EQ(2u, drm->ioctlCallsCount);
-    EXPECT_EQ(0u, ret);
+    EXPECT_EQ(0, ret);
 }
 
 DG1TEST_F(IoctlHelperTestsDg1, givenDg1AndMemoryRegionQuerySupportedWhenQueryingMemoryInfoThenMemoryInfoIsCreatedWithRegions) {

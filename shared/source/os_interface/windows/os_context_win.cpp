@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ OsContextWin::OsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contex
       wddm(wddm) {
 }
 
-void OsContextWin::initializeContext() {
+bool OsContextWin::initializeContext() {
 
     if (wddm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
         debuggableContext = wddm.getRootDeviceEnvironment().osInterface->isDebugAttachAvailable() && !isInternalEngine();
@@ -43,6 +43,8 @@ void OsContextWin::initializeContext() {
 
     residencyController.registerCallback();
     UNRECOVERABLE_IF(!residencyController.isInitialized());
+
+    return true;
 };
 
 void OsContextWin::reInitializeContext() {

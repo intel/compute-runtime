@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -69,14 +69,14 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
     size_t getMemoryRegionSize(uint32_t memoryBank) override {
         return 1024u;
     }
-    uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override {
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override {
         if (allocSize == 0) {
             return EINVAL;
         }
         handle = 1u;
         return 0u;
     }
-    uint32_t createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, int32_t pairHandle) override {
+    int createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, int32_t pairHandle) override {
         if (allocSize == 0) {
             return EINVAL;
         }
@@ -84,7 +84,7 @@ struct MockedMemoryInfo : public NEO::MemoryInfo {
         pairHandlePassed = pairHandle;
         return 0u;
     }
-    uint32_t createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
+    int createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle) override {
         if (allocSize == 0) {
             return EINVAL;
         }

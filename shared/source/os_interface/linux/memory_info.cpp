@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,7 +56,7 @@ void MemoryInfo::assignRegionsFromDistances(const std::vector<DistanceInfo> &dis
     }
 }
 
-uint32_t MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
+int MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
     return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, vmId, pairHandle);
 }
 
@@ -108,7 +108,7 @@ void MemoryInfo::printRegionSizes() {
     }
 }
 
-uint32_t MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, int32_t pairHandle) {
+int MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, int32_t pairHandle) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto regionClassAndInstance = getMemoryRegionClassAndInstance(memoryBanks, *pHwInfo);
     MemRegionsVec region = {regionClassAndInstance};
@@ -123,7 +123,7 @@ uint32_t MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t a
     return ret;
 }
 
-uint32_t MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle) {
+int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle) {
     auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
     auto banks = std::bitset<4>(memoryBanks);
     MemRegionsVec memRegions{};

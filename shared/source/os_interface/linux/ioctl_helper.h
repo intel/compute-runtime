@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -55,7 +55,7 @@ struct VmBindParams {
 };
 
 struct UuidRegisterResult {
-    uint32_t retVal;
+    int retVal;
     uint32_t handle;
 };
 
@@ -68,12 +68,12 @@ class IoctlHelper {
     IoctlHelper(Drm &drmArg) : drm(drmArg){};
     virtual ~IoctlHelper() {}
     static std::unique_ptr<IoctlHelper> get(const PRODUCT_FAMILY productFamily, const std::string &prelimVersion, const std::string &drmVersion, Drm &drm);
-    virtual uint32_t ioctl(DrmIoctl request, void *arg);
+    virtual int ioctl(DrmIoctl request, void *arg);
 
     virtual bool initialize() = 0;
     virtual bool isSetPairAvailable() = 0;
     virtual bool isVmBindAvailable() = 0;
-    virtual uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) = 0;
+    virtual int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) = 0;
     virtual CacheRegion closAlloc() = 0;
     virtual uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) = 0;
     virtual CacheRegion closFree(CacheRegion closIndex) = 0;
@@ -119,7 +119,7 @@ class IoctlHelper {
     virtual bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const;
     virtual std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo);
 
-    virtual uint32_t createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex);
+    virtual int createDrmContext(Drm &drm, OsContextLinux &osContext, uint32_t drmVmId, uint32_t deviceIndex);
     std::vector<EngineCapabilities> translateToEngineCaps(const std::vector<uint8_t> &data);
 
     void fillExecObject(ExecObject &execObject, uint32_t handle, uint64_t gpuAddress, uint32_t drmContextId, bool bindInfo, bool isMarkedForCapture);
@@ -151,7 +151,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     bool initialize() override;
     bool isSetPairAvailable() override;
     bool isVmBindAvailable() override;
-    uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
     CacheRegion closAlloc() override;
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(CacheRegion closIndex) override;
@@ -204,7 +204,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
         return std::make_unique<IoctlHelperImpl<gfxProduct>>(drm);
     }
 
-    uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
@@ -217,7 +217,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     bool initialize() override;
     bool isSetPairAvailable() override;
     bool isVmBindAvailable() override;
-    uint32_t createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
     CacheRegion closAlloc() override;
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(CacheRegion closIndex) override;
