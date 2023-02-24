@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/blit_properties_container.h"
+#include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/completion_stamp.h"
 #include "shared/source/helpers/options.h"
 #include "shared/source/utilities/spinlock.h"
@@ -395,6 +396,10 @@ class CommandStreamReceiver {
     bool isTbxMode() const;
     bool ensureTagAllocationForRootDeviceIndex(uint32_t rootDeviceIndex);
 
+    L1CachePolicy *getStoredL1CachePolicy() {
+        return &l1CachePolicyData;
+    }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();
@@ -428,6 +433,7 @@ class CommandStreamReceiver {
     FrontEndPropertiesSupport feSupportFlags{};
     PipelineSelectPropertiesSupport pipelineSupportFlags{};
     StateBaseAddressPropertiesSupport sbaSupportFlags{};
+    L1CachePolicy l1CachePolicyData{};
 
     uint64_t totalMemoryUsed = 0u;
 

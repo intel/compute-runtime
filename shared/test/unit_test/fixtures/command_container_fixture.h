@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/helpers/cache_policy.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -40,21 +41,25 @@ class CommandEncodeStatesFixture : public DeviceFixture {
         CommandContainer *container,
         typename FamilyType::STATE_BASE_ADDRESS &sbaCmd,
         uint32_t statelessMocs) {
+
         EncodeStateBaseAddressArgs<FamilyType> args = {
-            container,               // container
-            sbaCmd,                  // sbaCmd
-            nullptr,                 // sbaProperties
-            statelessMocs,           // statelessMocsIndex
-            false,                   // useGlobalAtomics
-            false,                   // multiOsContextCapable
-            false,                   // isRcs
-            container->doubleSbaWa}; // doubleSbaWa
+            container,                                // container
+            sbaCmd,                                   // sbaCmd
+            nullptr,                                  // sbaProperties
+            statelessMocs,                            // statelessMocsIndex
+            l1CachePolicyData.getL1CacheValue(false), // l1CachePolicy
+            l1CachePolicyData.getL1CacheValue(true),  // l1CachePolicyDebuggerActive
+            false,                                    // useGlobalAtomics
+            false,                                    // multiOsContextCapable
+            false,                                    // isRcs
+            container->doubleSbaWa};                  // doubleSbaWa
         return args;
     }
 
     KernelDescriptor descriptor;
     KernelInfo kernelInfo;
     std::unique_ptr<MyMockCommandContainer> cmdContainer;
+    NEO::L1CachePolicy l1CachePolicyData;
 };
 
 } // namespace NEO

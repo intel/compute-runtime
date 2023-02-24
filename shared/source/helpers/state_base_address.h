@@ -41,6 +41,8 @@ struct StateBaseAddressHelperArgs {
     GmmHelper *gmmHelper = nullptr;
 
     uint32_t statelessMocsIndex = 0;
+    uint32_t l1CachePolicy = 0;
+    uint32_t l1CachePolicyDebuggerActive = 0;
     MemoryCompressionState memoryCompressionState;
 
     bool setInstructionStateBaseAddress = false;

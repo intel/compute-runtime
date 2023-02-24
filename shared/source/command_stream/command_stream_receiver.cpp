@@ -94,6 +94,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
     productHelper.fillPipelineSelectPropertiesSupportStructure(pipelineSupportFlags, hwInfo);
     productHelper.fillStateBaseAddressPropertiesSupportStructure(sbaSupportFlags);
     this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
+    this->l1CachePolicyData.init(productHelper);
 }
 
 CommandStreamReceiver::~CommandStreamReceiver() {

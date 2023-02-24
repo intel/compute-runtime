@@ -12,6 +12,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/state_base_address.h"
 #include "shared/source/helpers/state_base_address_bdw_and_later.inl"
@@ -28,9 +29,10 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 
     NEO::Device *neoDevice = device->getNEODevice();
+    auto csr = this->getCsr();
+    bool isRcs = csr->isRcs();
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
 
-    bool isRcs = this->getCsr()->isRcs();
     bool useGlobalSshAndDsh = false;
     bool isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
 
@@ -54,8 +56,9 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 
     STATE_BASE_ADDRESS sbaCmd;
 
-    NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, rootDeviceEnvironment, isRcs, this->getCsr()->getDcFlushSupport());
+    NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, rootDeviceEnvironment, isRcs, csr->getDcFlushSupport());
     NEO::EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(commandStream, {}, true, rootDeviceEnvironment, isRcs);
+    auto l1CachePolicyData = csr->getStoredL1CachePolicy();
 
     NEO::StateBaseAddressHelperArgs<GfxFamily> stateBaseAddressHelperArgs = {
         gsba,                                             // generalStateBaseAddress
@@ -70,6 +73,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         nullptr,                                          // ssh
         neoDevice->getGmmHelper(),                        // gmmHelper
         (device->getMOCS(cachedMOCSAllowed, false) >> 1), // statelessMocsIndex
+        l1CachePolicyData->getL1CacheValue(false),        // l1CachePolicy
+        l1CachePolicyData->getL1CacheValue(true),         // l1CachePolicyDebuggerActive
         NEO::MemoryCompressionState::NotApplicable,       // memoryCompressionState
         true,                                             // setInstructionStateBaseAddress
         true,                                             // setGeneralStateBaseAddress

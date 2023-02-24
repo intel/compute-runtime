@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/command_stream/transfer_direction.h"
+#include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/vec.h"
@@ -325,6 +326,8 @@ struct CommandListCoreFamily : CommandListImp {
     static constexpr bool cmdListDefaultPipelineSelectModeSelected = true;
     static constexpr bool cmdListDefaultMediaSamplerClockGate = false;
     static constexpr bool cmdListDefaultGlobalAtomics = false;
+
+    NEO::L1CachePolicy l1CachePolicyData{};
 
     int64_t currentSurfaceStateBaseAddress = NEO::StreamProperty64::initValue;
     int64_t currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;

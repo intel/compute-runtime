@@ -9,6 +9,7 @@
 #include "shared/source/command_stream/csr_definitions.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/state_base_address.h"
@@ -26,9 +27,10 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
     NEO::Device *neoDevice = device->getNEODevice();
     uint32_t rootDeviceIndex = neoDevice->getRootDeviceIndex();
 
+    auto csr = this->getCsr();
     bool dispatchCommand = false;
     bool multiOsContextCapable = device->isImplicitScalingCapable();
-    bool isRcs = this->getCsr()->isRcs();
+    bool isRcs = csr->isRcs();
     auto isDebuggerActive = neoDevice->isDebuggerActive() || neoDevice->getDebugger() != nullptr;
     bool setGeneralStateBaseAddress = false;
     bool useGlobalHeapsBaseAddress = false;
@@ -39,6 +41,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
         rootDeviceIndex, neoDevice->getMemoryManager()->isLocalMemoryUsedForIsa(rootDeviceIndex));
 
     NEO::StateBaseAddressProperties *sbaProperties = nullptr;
+
+    auto l1CachePolicyData = csr->getStoredL1CachePolicy();
 
     if (streamProperties != nullptr) {
         dispatchCommand = true;
@@ -56,7 +60,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 
     if (dispatchCommand) {
         auto gmmHelper = neoDevice->getGmmHelper();
-        NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, neoDevice->getRootDeviceEnvironment(), isRcs, this->getCsr()->getDcFlushSupport());
+        NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(commandStream, neoDevice->getRootDeviceEnvironment(), isRcs, csr->getDcFlushSupport());
 
         STATE_BASE_ADDRESS sbaCmd;
         NEO::StateBaseAddressHelperArgs<GfxFamily> stateBaseAddressHelperArgs = {
@@ -72,6 +76,8 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
             nullptr,                                          // ssh
             gmmHelper,                                        // gmmHelper
             (device->getMOCS(cachedMOCSAllowed, false) >> 1), // statelessMocsIndex
+            l1CachePolicyData->getL1CacheValue(false),        // l1CachePolicy
+            l1CachePolicyData->getL1CacheValue(true),         // l1CachePolicyDebuggerActive
             NEO::MemoryCompressionState::NotApplicable,       // memoryCompressionState
             true,                                             // setInstructionStateBaseAddress
             setGeneralStateBaseAddress,                       // setGeneralStateBaseAddress

@@ -21,6 +21,8 @@ void CommandEncodeStatesFixture::setUp() {
     auto &productHelper = pDevice->getProductHelper();
     cmdContainer->systolicModeSupport = productHelper.isSystolicModeConfigurable(hwInfo);
     cmdContainer->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
+    this->l1CachePolicyData.init(productHelper);
+    cmdContainer->l1CachePolicyData = &this->l1CachePolicyData;
 }
 
 void CommandEncodeStatesFixture::tearDown() {

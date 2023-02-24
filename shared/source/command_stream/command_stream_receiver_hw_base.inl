@@ -519,6 +519,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             ssh,                                           // ssh
             device.getGmmHelper(),                         // gmmHelper
             this->latestSentStatelessMocsConfig,           // statelessMocsIndex
+            l1CachePolicyData.getL1CacheValue(false),      // l1CachePolicy
+            l1CachePolicyData.getL1CacheValue(true),       // l1CachePolicyDebuggerActive
             this->lastMemoryCompressionState,              // memoryCompressionState
             true,                                          // setInstructionStateBaseAddress
             true,                                          // setGeneralStateBaseAddress

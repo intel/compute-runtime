@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -70,4 +71,10 @@ HWTEST2_F(ProductHelperTest, givenL1CachePolicyHelperWhenDebugFlagSetAndGetL1Cac
     DebugManager.flags.OverrideL1CachePolicyInSurfaceStateAndStateless.set(4);
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(false), 4u);
     EXPECT_EQ(L1CachePolicyHelper<productFamily>::getL1CachePolicy(true), 4u);
+}
+
+HWTEST_F(ProductHelperTest, givenL1CachePolicyInitializedWhenGettingPolicySettingsThenExpectValueMatchProductHelper) {
+    L1CachePolicy policy(*productHelper);
+    EXPECT_EQ(productHelper->getL1CachePolicy(true), policy.getL1CacheValue(true));
+    EXPECT_EQ(productHelper->getL1CachePolicy(false), policy.getL1CacheValue(false));
 }

@@ -8,8 +8,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
+#include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/state_base_address_base.inl"
-#include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
 
@@ -127,8 +127,7 @@ uint32_t StateBaseAddressHelper<GfxFamily>::getMaxBindlessSurfaceStates() {
 
 template <typename GfxFamily>
 void StateBaseAddressHelper<GfxFamily>::appendExtraCacheSettings(StateBaseAddressHelperArgs<GfxFamily> &args) {
-    auto &productHelper = args.gmmHelper->getRootDeviceEnvironment().template getHelper<ProductHelper>();
-    auto cachePolicy = productHelper.getL1CachePolicy(args.isDebuggerActive);
+    auto cachePolicy = args.isDebuggerActive ? args.l1CachePolicyDebuggerActive : args.l1CachePolicy;
     args.stateBaseAddressCmd->setL1CachePolicyL1CacheControl(static_cast<typename STATE_BASE_ADDRESS::L1_CACHE_POLICY>(cachePolicy));
 
     if (DebugManager.flags.ForceStatelessL1CachingPolicy.get() != -1 &&

@@ -14,6 +14,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
@@ -206,16 +207,19 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             auto gmmHelper = container.getDevice()->getGmmHelper();
             uint32_t statelessMocsIndex =
                 args.requiresUncachedMocs ? (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1) : (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
-
+            auto l1CachePolicy = container.l1CachePolicyData->getL1CacheValue(false);
+            auto l1CachePolicyDebuggerActive = container.l1CachePolicyData->getL1CacheValue(true);
             EncodeStateBaseAddressArgs<Family> encodeStateBaseAddressArgs = {
-                &container,             // container
-                sba,                    // sbaCmd
-                nullptr,                // sbaProperties
-                statelessMocsIndex,     // statelessMocsIndex
-                false,                  // useGlobalAtomics
-                false,                  // multiOsContextCapable
-                args.isRcs,             // isRcs
-                container.doubleSbaWa}; // doubleSbaWa
+                &container,                  // container
+                sba,                         // sbaCmd
+                nullptr,                     // sbaProperties
+                statelessMocsIndex,          // statelessMocsIndex
+                l1CachePolicy,               // l1CachePolicy
+                l1CachePolicyDebuggerActive, // l1CachePolicyDebuggerActive
+                false,                       // useGlobalAtomics
+                false,                       // multiOsContextCapable
+                args.isRcs,                  // isRcs
+                container.doubleSbaWa};      // doubleSbaWa
             EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
             container.setDirtyStateForAllHeaps(false);
             args.requiresUncachedMocs = false;
@@ -445,6 +449,8 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         ssh,                                                // ssh
         gmmHelper,                                          // gmmHelper
         args.statelessMocsIndex,                            // statelessMocsIndex
+        args.l1CachePolicy,                                 // l1CachePolicy
+        args.l1CachePolicyDebuggerActive,                   // l1CachePolicyDebuggerActive
         NEO::MemoryCompressionState::NotApplicable,         // memoryCompressionState
         false,                                              // setInstructionStateBaseAddress
         false,                                              // setGeneralStateBaseAddress

@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/fixtures/front_window_fixture.h"
 
+#include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/memory_manager/gfx_partition.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -24,6 +25,25 @@ void MemManagerFixture::setUp() {
     DeviceFixture::setUp();
     memManager = std::unique_ptr<FrontWindowMemManagerMock>(new FrontWindowMemManagerMock(*pDevice->getExecutionEnvironment()));
 }
+
 void MemManagerFixture::tearDown() {
     DeviceFixture::tearDown();
+}
+
+BindlessCommandEncodeStatesFixture::~BindlessCommandEncodeStatesFixture() {
+}
+
+void BindlessCommandEncodeStatesFixture::setUp() {
+    MemManagerFixture::setUp();
+
+    auto &productHelper = pDevice->getProductHelper();
+    this->l1CachePolicyData.init(productHelper);
+
+    cmdContainer = std::make_unique<CommandContainer>();
+    cmdContainer->l1CachePolicyData = &l1CachePolicyData;
+}
+
+void BindlessCommandEncodeStatesFixture::tearDown() {
+    cmdContainer.reset(nullptr);
+    MemManagerFixture::tearDown();
 }

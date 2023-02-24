@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
 
@@ -19,6 +20,11 @@ bool isL3Capable(void *ptr, size_t size) {
 
 bool isL3Capable(const NEO::GraphicsAllocation &graphicsAllocation) {
     return isL3Capable(graphicsAllocation.getUnderlyingBuffer(), graphicsAllocation.getUnderlyingBufferSize());
+}
+
+void L1CachePolicy::init(const ProductHelper &helper) {
+    defaultDebuggerActive = helper.getL1CachePolicy(true);
+    defaultDebuggerInactive = helper.getL1CachePolicy(false);
 }
 
 } // namespace NEO

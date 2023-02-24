@@ -25,6 +25,8 @@ class IndirectHeap;
 class LinearStream;
 class ReservedIndirectHeap;
 
+struct L1CachePolicy;
+
 using ResidencyContainer = std::vector<GraphicsAllocation *>;
 using CmdBufferContainer = std::vector<GraphicsAllocation *>;
 using HeapContainer = std::vector<GraphicsAllocation *>;
@@ -162,6 +164,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     uint64_t currentLinearStreamStartOffset = 0u;
     uint32_t slmSize = std::numeric_limits<uint32_t>::max();
     uint32_t nextIddInBlock = 0;
+    L1CachePolicy *l1CachePolicyData = nullptr;
     bool lastPipelineSelectModeRequired = false;
     bool lastSentUseGlobalAtomics = false;
     bool systolicModeSupport = false;

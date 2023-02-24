@@ -2920,3 +2920,10 @@ INSTANTIATE_TEST_CASE_P(MultiGpuGlobalAtomics,
                             ::testing::Bool(),
                             ::testing::Bool(),
                             ::testing::Bool()));
+
+HWTEST_F(CommandStreamReceiverTest, givenL1CachePolicyInitializedInCsrWhenGettingPolicySettingsThenExpectValueMatchProductHelper) {
+    auto &productHelper = pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    auto l1CachePolicy = commandStreamReceiver->getStoredL1CachePolicy();
+    EXPECT_EQ(productHelper.getL1CachePolicy(true), l1CachePolicy->getL1CacheValue(true));
+    EXPECT_EQ(productHelper.getL1CachePolicy(false), l1CachePolicy->getL1CacheValue(false));
+}

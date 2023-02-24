@@ -178,6 +178,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     commandContainer.doubleSbaWa = this->doubleSbaWa;
     auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
     this->defaultMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
+    this->l1CachePolicyData.init(productHelper);
+    commandContainer.l1CachePolicyData = &this->l1CachePolicyData;
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
@@ -2381,6 +2383,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamProperties(Kernel &kernel
         updateStreamPropertiesForRegularCommandLists(kernel, isCooperative, threadGroupDimensions, isIndirect);
     }
 }
+
 template <GFXCORE_FAMILY gfxCoreFamily>
 inline bool getFusedEuDisabled(Kernel &kernel, Device *device, const ze_group_count_t *threadGroupDimensions, bool isIndirect) {
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
@@ -2621,22 +2624,24 @@ void CommandListCoreFamily<gfxCoreFamily>::programStateBaseAddress(NEO::CommandC
 
     bool isRcs = (this->engineGroupType == NEO::EngineGroupType::RenderCompute);
 
-    NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(*commandContainer.getCommandStream(), this->device->getNEODevice()->getRootDeviceEnvironment(), isRcs, this->dcFlushSupport);
-
     uint32_t statelessMocsIndex = this->defaultMocsIndex;
     NEO::StateBaseAddressProperties *sbaProperties = useSbaProperties ? &this->finalStreamState.stateBaseAddress : nullptr;
 
     STATE_BASE_ADDRESS sba;
 
+    NEO::EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(*commandContainer.getCommandStream(), this->device->getNEODevice()->getRootDeviceEnvironment(), isRcs, this->dcFlushSupport);
+
     NEO::EncodeStateBaseAddressArgs<GfxFamily> encodeStateBaseAddressArgs = {
-        &commandContainer,        // container
-        sba,                      // sbaCmd
-        sbaProperties,            // sbaProperties
-        statelessMocsIndex,       // statelessMocsIndex
-        false,                    // useGlobalAtomics
-        this->partitionCount > 1, // multiOsContextCapable
-        isRcs,                    // isRcs
-        this->doubleSbaWa};       // doubleSbaWa
+        &commandContainer,                        // container
+        sba,                                      // sbaCmd
+        sbaProperties,                            // sbaProperties
+        statelessMocsIndex,                       // statelessMocsIndex
+        l1CachePolicyData.getL1CacheValue(false), // l1CachePolicy
+        l1CachePolicyData.getL1CacheValue(true),  // l1CachePolicyDebuggerActive
+        false,                                    // useGlobalAtomics
+        this->partitionCount > 1,                 // multiOsContextCapable
+        isRcs,                                    // isRcs
+        this->doubleSbaWa};                       // doubleSbaWa
     NEO::EncodeStateBaseAddress<GfxFamily>::encode(encodeStateBaseAddressArgs);
 
     bool sbaTrackingEnabled = NEO::Debugger::isDebugEnabled(this->internalUsage) && this->device->getL0Debugger();

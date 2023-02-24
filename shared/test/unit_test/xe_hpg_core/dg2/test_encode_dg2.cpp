@@ -101,18 +101,22 @@ DG2TEST_F(Dg2SbaTest, givenL1CachingOverrideWhenStateBaseAddressIsProgrammedThen
     auto sbaCmd = FamilyType::cmdInitStateBaseAddress;
     StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, pDevice->getRootDeviceEnvironment().getGmmHelper(), &ssh, nullptr, nullptr);
     args.setGeneralStateBaseAddress = true;
+    auto &productHelper = getHelper<ProductHelper>();
+    updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(0u, sbaCmd.getL1CachePolicyL1CacheControl());
 
     DebugManager.flags.ForceStatelessL1CachingPolicy.set(2u);
+    updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
     EXPECT_EQ(2u, sbaCmd.getL1CachePolicyL1CacheControl());
 
     DebugManager.flags.ForceAllResourcesUncached.set(true);
+    updateSbaHelperArgsL1CachePolicy<FamilyType>(args, productHelper);
 
     StateBaseAddressHelper<FamilyType>::appendStateBaseAddressParameters(args);
 
