@@ -172,6 +172,7 @@ class PublicFsAccess : public L0::FsAccess {
 class PublicSysfsAccess : public L0::SysfsAccess {
   public:
     using SysfsAccess::accessSyscall;
+    using SysfsAccess::statSyscall;
 };
 
 class UdevLibMock : public UdevLib {

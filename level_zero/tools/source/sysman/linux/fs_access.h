@@ -12,6 +12,7 @@
 #include "level_zero/ze_api.h"
 #include "level_zero/zet_api.h"
 
+#include <fcntl.h>
 #include <fstream>
 #include <iostream>
 #include <list>
@@ -56,6 +57,10 @@ class FsAccess {
     FsAccess();
     decltype(&NEO::SysCalls::access) accessSyscall = NEO::SysCalls::access;
     decltype(&stat) statSyscall = stat;
+
+  private:
+    template <typename T>
+    ze_result_t readValue(const std::string file, T &val);
 };
 
 class ProcfsAccess : private FsAccess {

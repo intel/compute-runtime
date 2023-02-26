@@ -6,6 +6,7 @@
  */
 
 #include "shared/test/common/mocks/mock_driver_info.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/tools/source/sysman/diagnostics/linux/os_diagnostics_imp.h"
@@ -13,6 +14,12 @@
 #include "level_zero/tools/source/sysman/firmware/linux/os_firmware_imp.h"
 #include "level_zero/tools/source/sysman/ras/ras_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
+
+namespace NEO {
+namespace SysCalls {
+extern bool allowFakeDevicePath;
+} // namespace SysCalls
+} // namespace NEO
 
 namespace L0 {
 namespace ult {
@@ -245,6 +252,7 @@ TEST_F(SysmanDeviceFixture, GivenPublicFsAccessClassWhenCallingCanWriteWithInval
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPathnameWhenCallingFsAccessExistsThenSuccessIsReturned) {
+    VariableBackup<bool> allowFakeDevicePathBackup(&SysCalls::allowFakeDevicePath, true);
     auto fsAccess = pLinuxSysmanImp->getFsAccess();
 
     char cwd[PATH_MAX];
@@ -259,6 +267,253 @@ TEST_F(SysmanDeviceFixture, GivenInvalidPathnameWhenCallingFsAccessExistsThenErr
     EXPECT_FALSE(fsAccess.fileExists(path));
 }
 
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessAndValidDeviceNameWhenCallingBindDeviceThenSuccessIsReturned) {
+
+    std::string deviceName = "card0";
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> mockPwrite(&NEO::SysCalls::sysCallsPwrite, [](int fd, const void *buf, size_t count, off_t offset) -> ssize_t {
+        std::string deviceName = "card0";
+        return static_cast<ssize_t>(deviceName.size());
+    });
+
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->bindDevice(deviceName));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessAndValidDeviceNameWhenCallingUnbindDeviceThenSuccessIsReturned) {
+
+    std::string deviceName = "card0";
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> mockPwrite(&NEO::SysCalls::sysCallsPwrite, [](int fd, const void *buf, size_t count, off_t offset) -> ssize_t {
+        std::string deviceName = "card0";
+        return static_cast<ssize_t>(deviceName.size());
+    });
+
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->unbindDevice(deviceName));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidPathnameWhenCallingSysfsAccessGetFileModeThenSuccessIsReturned) {
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+
+    char cwd[PATH_MAX];
+    ::mode_t mode;
+    std::string path = getcwd(cwd, PATH_MAX);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->getFileMode(path, mode));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassWhenCallingCanWriteWithUserHavingWritePermissionsThenSuccessIsReturned) {
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+    tempSysfsAccess->statSyscall = mockStatSuccess;
+    char cwd[PATH_MAX];
+    std::string path = getcwd(cwd, PATH_MAX);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->canWrite(path));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassWhenCallingCanReadWithInvalidPathThenErrorIsReturned) {
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+    tempSysfsAccess->statSyscall = mockStatFailure;
+    std::string path = "invalidPath";
+    EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, tempSysfsAccess->canRead(path));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidPathnameWhenCallingSysfsAccessExistsThenSuccessIsReturned) {
+    VariableBackup<bool> allowFakeDevicePathBackup(&SysCalls::allowFakeDevicePath, true);
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+    char cwd[PATH_MAX];
+    std::string path = getcwd(cwd, PATH_MAX);
+    EXPECT_TRUE(tempSysfsAccess->fileExists(path));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndValidDirectoryWhenCallingscanDirEntriesThenSuccessIsReturned) {
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+    char cwd[PATH_MAX];
+    std::string path = getcwd(cwd, PATH_MAX);
+    std::vector<std::string> dir;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->scanDirEntries(path, dir));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndConstantStringWhenCallingWriteThenSuccessIsReturned) {
+    const std::string fileName = "mockFile.txt";
+    const std::string str = "Mock String";
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> mockPwrite(&NEO::SysCalls::sysCallsPwrite, [](int fd, const void *buf, size_t count, off_t offset) -> ssize_t {
+        const std::string str = "Mock String";
+        return static_cast<ssize_t>(str.size());
+    });
+
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->write(fileName, str));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndConstantIntegerWhenCallingWriteThenSuccessIsReturned) {
+
+    const std::string fileName = "mockFile.txt";
+    const int iVal32 = 0;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> mockPwrite(&NEO::SysCalls::sysCallsPwrite, [](int fd, const void *buf, size_t count, off_t offset) -> ssize_t {
+        const int iVal32 = 0;
+        std::ostringstream stream;
+        stream << iVal32;
+        return static_cast<ssize_t>(stream.str().size());
+    });
+
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->write(fileName, iVal32));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndIntegerWhenCallingReadThenSuccessIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::string value = "123";
+        memcpy(buf, value.data(), value.size());
+        return value.size();
+    });
+
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+    const std::string fileName = "mockFile.txt";
+    int iVal32;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->read(fileName, iVal32));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndUnsignedIntegerWhenCallingReadThenSuccessIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::string value = "123";
+        memcpy(buf, value.data(), value.size());
+        return value.size();
+    });
+
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+    const std::string fileName = "mockFile.txt";
+    uint32_t uVal32;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->read(fileName, uVal32));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndConstantDoubleValueWhenCallingWriteThenSuccessIsReturned) {
+
+    const std::string fileName = "mockFile.txt";
+    const double dVal = 0.0;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> mockPwrite(&NEO::SysCalls::sysCallsPwrite, [](int fd, const void *buf, size_t count, off_t offset) -> ssize_t {
+        const double dVal = 0.0;
+        std::ostringstream stream;
+        stream << dVal;
+        return static_cast<ssize_t>(stream.str().size());
+    });
+
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->write(fileName, dVal));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndDoubleWhenCallingReadThenSuccessIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::string value = "123";
+        memcpy(buf, value.data(), value.size());
+        return value.size();
+    });
+
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+    const std::string fileName = "mockFile.txt";
+    double dVal;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->read(fileName, dVal));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndUnsignedLongValueWhenCallingWriteThenSuccessIsReturned) {
+    const std::string fileName = "mockFile.txt";
+    const uint64_t uVal64 = 0;
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPwrite)> mockPwrite(&NEO::SysCalls::sysCallsPwrite, [](int fd, const void *buf, size_t count, off_t offset) -> ssize_t {
+        const uint64_t uVal64 = 0;
+        std::ostringstream stream;
+        stream << uVal64;
+        return static_cast<ssize_t>(stream.str().size());
+    });
+
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->write(fileName, uVal64));
+    delete tempSysfsAccess;
+}
+
+TEST_F(SysmanDeviceFixture, GivenSysfsAccessClassAndUnsignedLongWhenCallingReadThenSuccessIsReturned) {
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsOpen)> mockOpen(&NEO::SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return 1;
+    });
+
+    VariableBackup<decltype(NEO::SysCalls::sysCallsPread)> mockPread(&NEO::SysCalls::sysCallsPread, [](int fd, void *buf, size_t count, off_t offset) -> ssize_t {
+        std::string value = "123";
+        memcpy(buf, value.data(), value.size());
+        return value.size();
+    });
+
+    PublicSysfsAccess *tempSysfsAccess = new PublicSysfsAccess();
+    const std::string fileName = "mockFile.txt";
+    uint64_t uVal64;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, tempSysfsAccess->read(fileName, uVal64));
+    delete tempSysfsAccess;
+}
+
 TEST_F(SysmanDeviceFixture, GivenCreateSysfsAccessHandleWhenCallinggetSysfsAccessThenCreatedSysfsAccessHandleHandleWillBeRetrieved) {
     if (pLinuxSysmanImp->pSysfsAccess != nullptr) {
         // delete previously allocated pSysfsAccess
@@ -267,6 +522,28 @@ TEST_F(SysmanDeviceFixture, GivenCreateSysfsAccessHandleWhenCallinggetSysfsAcces
     }
     pLinuxSysmanImp->pSysfsAccess = SysfsAccess::create("");
     EXPECT_EQ(&pLinuxSysmanImp->getSysfsAccess(), pLinuxSysmanImp->pSysfsAccess);
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidPidWhenCallingProcfsAccessGetFileDescriptorsThenSuccessIsReturned) {
+    auto procfsAccess = pLinuxSysmanImp->getProcfsAccess();
+
+    ::pid_t processID = getpid();
+    std::vector<int> listFiles;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, procfsAccess.getFileDescriptors(processID, listFiles));
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidProcfsAccessHandleWhenCallingListProcessesThenSuccessIsReturned) {
+    auto procfsAccess = pLinuxSysmanImp->getProcfsAccess();
+
+    std::vector<::pid_t> listPid;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, procfsAccess.listProcesses(listPid));
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidProcfsAccessHandleAndKillProcessWhenCallingIsAliveThenErrorIsReturned) {
+    auto procfsAccess = pLinuxSysmanImp->getProcfsAccess();
+    int pid = NEO::SysCalls::getProcessId();
+    procfsAccess.kill(pid);
+    EXPECT_FALSE(procfsAccess.isAlive(pid));
 }
 
 TEST_F(SysmanDeviceFixture, GivenCreateProcfsAccessHandleWhenCallinggetProcfsAccessThenCreatedProcfsAccessHandleWillBeRetrieved) {
@@ -280,6 +557,7 @@ TEST_F(SysmanDeviceFixture, GivenCreateProcfsAccessHandleWhenCallinggetProcfsAcc
 }
 
 TEST_F(SysmanDeviceFixture, GivenValidPidWhenCallingProcfsAccessIsAliveThenSuccessIsReturned) {
+    VariableBackup<bool> allowFakeDevicePathBackup(&SysCalls::allowFakeDevicePath, true);
     auto procfsAccess = pLinuxSysmanImp->getProcfsAccess();
 
     EXPECT_TRUE(procfsAccess.isAlive(getpid()));

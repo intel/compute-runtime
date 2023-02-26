@@ -31,6 +31,30 @@ static ze_result_t getResult(int err) {
     }
 }
 
+template <typename T>
+ze_result_t FsAccess::readValue(const std::string file, T &val) {
+
+    std::string readVal(64, '\0');
+    int fd = NEO::SysCalls::open(file.c_str(), O_RDONLY);
+    if (fd < 0) {
+        return getResult(errno);
+    }
+
+    ssize_t bytesRead = NEO::SysCalls::pread(fd, readVal.data(), readVal.size(), 0);
+    NEO::SysCalls::close(fd);
+    if (bytesRead < 0) {
+        return getResult(errno);
+    }
+
+    std::istringstream stream(readVal);
+    stream >> val;
+    if (stream.fail()) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
+    return ZE_RESULT_SUCCESS;
+}
+
 // Generic Filesystem Access
 FsAccess::FsAccess() {
 }
@@ -40,72 +64,21 @@ FsAccess *FsAccess::create() {
 }
 
 ze_result_t FsAccess::read(const std::string file, uint64_t &val) {
-    // Read a single line from text file without trailing newline
-    std::ifstream fs;
-
-    fs.open(file.c_str());
-    if (fs.fail()) {
-        return getResult(errno);
-    }
-    fs >> val;
-    if (fs.fail()) {
-        fs.close();
-        return getResult(errno);
-    }
-    fs.close();
-    return ZE_RESULT_SUCCESS;
+    return readValue<uint64_t>(file, val);
 }
 
 ze_result_t FsAccess::read(const std::string file, double &val) {
-    // Read a single line from text file without trailing newline
-    std::ifstream fs;
-
-    fs.open(file.c_str());
-    if (fs.fail()) {
-        return getResult(errno);
-    }
-    fs >> val;
-    if (fs.fail()) {
-        fs.close();
-        return getResult(errno);
-    }
-    fs.close();
-    return ZE_RESULT_SUCCESS;
+    return readValue<double>(file, val);
 }
 
 ze_result_t FsAccess::read(const std::string file, int32_t &val) {
-    // Read a single line from text file without trailing newline
-    std::ifstream fs;
-
-    fs.open(file.c_str());
-    if (fs.fail()) {
-        return getResult(errno);
-    }
-    fs >> val;
-    if (fs.fail()) {
-        fs.close();
-        return getResult(errno);
-    }
-    fs.close();
-    return ZE_RESULT_SUCCESS;
+    return readValue<int32_t>(file, val);
 }
 
 ze_result_t FsAccess::read(const std::string file, uint32_t &val) {
-    // Read a single line from text file without trailing newline
-    std::ifstream fs;
-
-    fs.open(file.c_str());
-    if (fs.fail()) {
-        return getResult(errno);
-    }
-    fs >> val;
-    if (fs.fail()) {
-        fs.close();
-        return getResult(errno);
-    }
-    fs.close();
-    return ZE_RESULT_SUCCESS;
+    return readValue<uint32_t>(file, val);
 }
+
 ze_result_t FsAccess::read(const std::string file, std::string &val) {
     // Read a single line from text file without trailing newline
     std::ifstream fs;
@@ -125,6 +98,7 @@ ze_result_t FsAccess::read(const std::string file, std::string &val) {
     if (val.back() == '\n') {
         val.pop_back();
     }
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -154,18 +128,22 @@ ze_result_t FsAccess::read(const std::string file, std::vector<std::string> &val
 }
 
 ze_result_t FsAccess::write(const std::string file, const std::string val) {
-    std::ofstream sysfs;
 
-    sysfs.open(file.c_str());
-    if (sysfs.fail()) {
+    int fd = NEO::SysCalls::open(file.c_str(), O_WRONLY);
+    if (fd < 0) {
         return getResult(errno);
     }
-    sysfs << val << std::endl;
-    if (sysfs.fail()) {
-        sysfs.close();
+
+    ssize_t bytesWritten = NEO::SysCalls::pwrite(fd, val.data(), val.size(), 0);
+    NEO::SysCalls::close(fd);
+    if (bytesWritten < 0) {
         return getResult(errno);
     }
-    sysfs.close();
+
+    if (bytesWritten != static_cast<ssize_t>(val.size())) {
+        return ZE_RESULT_ERROR_UNKNOWN;
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 
@@ -192,7 +170,7 @@ ze_result_t FsAccess::canWrite(const std::string file) {
 }
 
 bool FsAccess::fileExists(const std::string file) {
-    if (access(file.c_str(), F_OK)) {
+    if (NEO::SysCalls::access(file.c_str(), F_OK)) {
         return false;
     }
     return true;
@@ -422,79 +400,23 @@ ze_result_t SysfsAccess::getFileMode(const std::string file, ::mode_t &mode) {
 
 ze_result_t SysfsAccess::read(const std::string file, std::string &val) {
     // Prepend sysfs directory path and call the base read
-    return FsAccess::read(fullPath(file).c_str(), val);
+    return FsAccess::read(fullPath(file), val);
 }
 
 ze_result_t SysfsAccess::read(const std::string file, int32_t &val) {
-    std::string str;
-    ze_result_t result;
-
-    result = FsAccess::read(fullPath(file), str);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-
-    std::istringstream stream(str);
-    stream >> val;
-
-    if (stream.fail()) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    return ZE_RESULT_SUCCESS;
+    return FsAccess::read(fullPath(file), val);
 }
 
 ze_result_t SysfsAccess::read(const std::string file, uint32_t &val) {
-    std::string str;
-    ze_result_t result;
-
-    result = FsAccess::read(fullPath(file), str);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-
-    std::istringstream stream(str);
-    stream >> val;
-
-    if (stream.fail()) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    return ZE_RESULT_SUCCESS;
+    return FsAccess::read(fullPath(file), val);
 }
 
 ze_result_t SysfsAccess::read(const std::string file, double &val) {
-    std::string str;
-    ze_result_t result;
-
-    result = FsAccess::read(fullPath(file), str);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-
-    std::istringstream stream(str);
-    stream >> val;
-
-    if (stream.fail()) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    return ZE_RESULT_SUCCESS;
+    return FsAccess::read(fullPath(file), val);
 }
 
 ze_result_t SysfsAccess::read(const std::string file, uint64_t &val) {
-    std::string str;
-    ze_result_t result;
-
-    result = FsAccess::read(fullPath(file), str);
-    if (ZE_RESULT_SUCCESS != result) {
-        return result;
-    }
-
-    std::istringstream stream(str);
-    stream >> val;
-
-    if (stream.fail()) {
-        return ZE_RESULT_ERROR_UNKNOWN;
-    }
-    return ZE_RESULT_SUCCESS;
+    return FsAccess::read(fullPath(file), val);
 }
 
 ze_result_t SysfsAccess::read(const std::string file, std::vector<std::string> &val) {
@@ -504,7 +426,7 @@ ze_result_t SysfsAccess::read(const std::string file, std::vector<std::string> &
 
 ze_result_t SysfsAccess::write(const std::string file, const std::string val) {
     // Prepend sysfs directory path and call the base write
-    return FsAccess::write(fullPath(file).c_str(), val);
+    return FsAccess::write(fullPath(file), val);
 }
 
 ze_result_t SysfsAccess::write(const std::string file, const int val) {
@@ -539,17 +461,17 @@ ze_result_t SysfsAccess::write(const std::string file, const uint64_t val) {
 
 ze_result_t SysfsAccess::scanDirEntries(const std::string path, std::vector<std::string> &list) {
     list.clear();
-    return FsAccess::listDirectory(fullPath(path).c_str(), list);
+    return FsAccess::listDirectory(fullPath(path), list);
 }
 
 ze_result_t SysfsAccess::readSymLink(const std::string path, std::string &val) {
     // Prepend sysfs directory path and call the base readSymLink
-    return FsAccess::readSymLink(fullPath(path).c_str(), val);
+    return FsAccess::readSymLink(fullPath(path), val);
 }
 
 ze_result_t SysfsAccess::getRealPath(const std::string path, std::string &val) {
     // Prepend sysfs directory path and call the base getRealPath
-    return FsAccess::getRealPath(fullPath(path).c_str(), val);
+    return FsAccess::getRealPath(fullPath(path), val);
 }
 
 ze_result_t SysfsAccess::bindDevice(std::string device) {
@@ -562,11 +484,11 @@ ze_result_t SysfsAccess::unbindDevice(std::string device) {
 
 bool SysfsAccess::fileExists(const std::string file) {
     // Prepend sysfs directory path and call the base fileExists
-    return FsAccess::fileExists(fullPath(file).c_str());
+    return FsAccess::fileExists(fullPath(file));
 }
 
 bool SysfsAccess::directoryExists(const std::string path) {
-    return FsAccess::directoryExists(fullPath(path).c_str());
+    return FsAccess::directoryExists(fullPath(path));
 }
 
 bool SysfsAccess::isMyDeviceFile(const std::string dev) {
