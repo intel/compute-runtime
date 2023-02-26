@@ -124,7 +124,6 @@ class GfxCoreHelper {
     virtual size_t getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSipWANeeded(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuImageTransferPreferred(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const = 0;
     virtual aub_stream::MMIOList getExtraMmioList(const HardwareInfo &hwInfo, const GmmHelper &gmmHelper) const = 0;
     virtual uint32_t getNumCacheRegions() const = 0;
     virtual bool isSubDeviceEngineSupported(const RootDeviceEnvironment &rootDeviceEnvironment, const DeviceBitfield &deviceBitfield, aub_stream::EngineType engineType) const = 0;
@@ -327,8 +326,6 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     size_t getMaxFillPaternSizeForCopyEngine() const override;
 
     size_t getSipKernelMaxDbgSurfaceSize(const HardwareInfo &hwInfo) const override;
-
-    bool isKmdMigrationSupported(const HardwareInfo &hwInfo) const override;
 
     bool isSipWANeeded(const HardwareInfo &hwInfo) const override;
 

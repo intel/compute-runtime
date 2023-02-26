@@ -49,3 +49,7 @@ MTLTEST_F(MtlProductHelperLinux, givenMtlWhenisVmBindPatIndexProgrammingSupporte
 MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnFalse) {
     EXPECT_FALSE(productHelper->isPageFaultSupported());
 }
+
+MTLTEST_F(MtlProductHelperLinux, givenProductHelperWhenAskedIsKmdMigrationsSupportedThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
+}

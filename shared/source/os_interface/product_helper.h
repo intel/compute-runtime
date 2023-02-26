@@ -120,6 +120,7 @@ class ProductHelper {
     virtual bool isStorageInfoAdjustmentRequired() const = 0;
     virtual bool isBlitterForImagesSupported() const = 0;
     virtual bool isPageFaultSupported() const = 0;
+    virtual bool isKmdMigrationSupported() const = 0;
     virtual bool isTile64With3DSurfaceOnBCSSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isDcFlushAllowed() const = 0;
     virtual uint32_t computeMaxNeededSubSliceSpace(const HardwareInfo &hwInfo) const = 0;

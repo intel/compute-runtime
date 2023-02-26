@@ -80,6 +80,11 @@ bool ProductHelperHw<gfxProduct>::isPageFaultSupported() const {
     return true;
 }
 
+template <>
+bool ProductHelperHw<gfxProduct>::isKmdMigrationSupported() const {
+    return false;
+}
+
 } // namespace NEO
 
 #include "shared/source/xe_hpc_core/linux/product_helper_xe_hpc_core.inl"

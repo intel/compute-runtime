@@ -408,6 +408,11 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfPageFaultIsSupportedThe
     EXPECT_FALSE(productHelper->isPageFaultSupported());
 }
 
+HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfKmdMigrationIsSupportedThenReturnFalse) {
+
+    EXPECT_FALSE(productHelper->isKmdMigrationSupported());
+}
+
 HWTEST_F(ProductHelperTest, givenProductHelperWhenAskedIfTile64With3DSurfaceOnBCSIsSupportedThenTrueIsReturned) {
 
     EXPECT_TRUE(productHelper->isTile64With3DSurfaceOnBCSSupported(pInHwInfo));

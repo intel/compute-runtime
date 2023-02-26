@@ -245,10 +245,8 @@ bool DrmMemoryManager::hasPageFaultsEnabled(const Device &neoDevice) {
 }
 
 bool DrmMemoryManager::isKmdMigrationAvailable(uint32_t rootDeviceIndex) {
-    auto hwInfo = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHardwareInfo();
-    auto &gfxCoreHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<GfxCoreHelper>();
-
-    auto useKmdMigration = gfxCoreHelper.isKmdMigrationSupported(*hwInfo);
+    const auto &productHelper = executionEnvironment.rootDeviceEnvironments[rootDeviceIndex]->getHelper<ProductHelper>();
+    auto useKmdMigration = productHelper.isKmdMigrationSupported();
 
     if (DebugManager.flags.UseKmdMigration.get() != -1) {
         useKmdMigration = DebugManager.flags.UseKmdMigration.get();
