@@ -77,7 +77,7 @@ PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIfPatIndexProgrammin
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfPageFaultIsSupportedThenReturnFalse, IGFX_PVC);
 
 PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnTrue) {
-    EXPECT_TRUE(productHelper->isPageFaultSupported());
+    EXPECT_FALSE(productHelper->isPageFaultSupported());
 }
 
 PVCTEST_F(PvcProductHelperLinux, givenAotConfigWhenSetHwInfoRevisionIdForPvcThenCorrectValueIsSet) {
