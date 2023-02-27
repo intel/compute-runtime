@@ -77,7 +77,7 @@ uint64_t ProductHelperHw<gfxProduct>::getDeviceMemoryMaxBandWidthInBytesPerSecon
 
 template <>
 bool ProductHelperHw<gfxProduct>::isPageFaultSupported() const {
-    return true;
+    return false;
 }
 
 } // namespace NEO
