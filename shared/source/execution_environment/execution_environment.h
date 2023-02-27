@@ -42,6 +42,10 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
         this->metricsEnabled = value;
     }
     bool areMetricsEnabled() { return this->metricsEnabled; }
+    void setFP64EmulationEnabled() {
+        fp64EmulationEnabled = true;
+    }
+    bool isFP64EmulationEnabled() const { return fp64EmulationEnabled; }
     DirectSubmissionController *initializeDirectSubmissionController();
 
     std::unique_ptr<MemoryManager> memoryManager;
@@ -56,6 +60,7 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void configureNeoEnvironment();
     bool debuggingEnabled = false;
     bool metricsEnabled = false;
+    bool fp64EmulationEnabled = false;
     std::unordered_map<uint32_t, uint32_t> rootDeviceNumCcsMap;
 };
 } // namespace NEO

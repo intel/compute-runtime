@@ -1861,6 +1861,56 @@ TEST_F(DeviceHasNoDoubleFp64Test, givenDeviceThatDoesntHaveFp64WhenDbgFlagEnable
     EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_FMA);
 }
 
+struct DeviceHasNoFp64HasFp64EmulationTest : public ::testing::Test {
+    void SetUp() override {
+        HardwareInfo fp64EmulationDevice = *defaultHwInfo;
+        fp64EmulationDevice.capabilityTable.ftrSupportsFP64 = false;
+        fp64EmulationDevice.capabilityTable.ftrSupportsFP64Emulation = true;
+        neoDevice = NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&fp64EmulationDevice, rootDeviceIndex);
+        NEO::DeviceVector devices;
+        devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+        driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+        driverHandle->initialize(std::move(devices));
+        device = driverHandle->devices[0];
+    }
+
+    std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
+    NEO::Device *neoDevice = nullptr;
+    L0::Device *device = nullptr;
+    const uint32_t rootDeviceIndex = 1u;
+    const uint32_t numRootDevices = 1u;
+};
+
+TEST_F(DeviceHasNoFp64HasFp64EmulationTest, givenDefaultFp64EmulationSettingsAndDeviceSupportingFp64EmulationAndWithoutNativeFp64ThenReportCorrectFp64Flags) {
+    ze_device_module_properties_t kernelProperties = {};
+    memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
+    kernelProperties.pNext = nullptr;
+
+    device->getKernelProperties(&kernelProperties);
+    EXPECT_FALSE(kernelProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64);
+    EXPECT_FALSE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT);
+    EXPECT_EQ(0u, kernelProperties.fp64flags);
+}
+
+TEST_F(DeviceHasNoFp64HasFp64EmulationTest, givenFp64EmulationEnabledAndDeviceSupportingFp64EmulationAndWithoutNativeFp64ThenReportCorrectFp64Flags) {
+    neoDevice->getExecutionEnvironment()->setFP64EmulationEnabled();
+    ze_device_module_properties_t kernelProperties = {};
+    memset(&kernelProperties, std::numeric_limits<int>::max(), sizeof(ze_device_module_properties_t));
+    kernelProperties.pNext = nullptr;
+
+    device->getKernelProperties(&kernelProperties);
+    EXPECT_TRUE(kernelProperties.flags & ZE_DEVICE_MODULE_FLAG_FP64);
+    EXPECT_TRUE(kernelProperties.fp64flags & ZE_DEVICE_FP_FLAG_SOFT_FLOAT);
+
+    ze_device_fp_flags_t defaultFpFlags = static_cast<ze_device_fp_flags_t>(ZE_DEVICE_FP_FLAG_ROUND_TO_NEAREST |
+                                                                            ZE_DEVICE_FP_FLAG_ROUND_TO_ZERO |
+                                                                            ZE_DEVICE_FP_FLAG_ROUND_TO_INF |
+                                                                            ZE_DEVICE_FP_FLAG_INF_NAN |
+                                                                            ZE_DEVICE_FP_FLAG_DENORM |
+                                                                            ZE_DEVICE_FP_FLAG_FMA);
+    EXPECT_EQ(defaultFpFlags, kernelProperties.fp64flags & defaultFpFlags);
+}
+
 struct DeviceHasFp64Test : public ::testing::Test {
     void SetUp() override {
         DebugManager.flags.CreateMultipleRootDevices.set(numRootDevices);

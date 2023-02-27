@@ -375,5 +375,45 @@ TEST_F(ModuleTests, givenDefaultGrfFlagSetWhenCreatingModuleThenOverrideInternal
     EXPECT_NE(pMockCompilerInterface->inputInternalOptions.find("-cl-intel-128-GRF-per-thread"), std::string::npos);
 }
 
+TEST_F(ModuleTests, givenFP64EmulationDisabledWhenCreatingModuleThenEnableFP64GenEmuOptionIsNotPresent) {
+    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    ASSERT_FALSE(device->getNEODevice()->getExecutionEnvironment()->isFP64EmulationEnabled());
+
+    uint8_t binary[10];
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = 10;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::Builtin));
+    ASSERT_NE(nullptr, module.get());
+    module->initialize(&moduleDesc, device->getNEODevice());
+
+    EXPECT_FALSE(CompilerOptions::contains(cip->buildInternalOptions, BuildOptions::enableFP64GenEmu));
+};
+
+TEST_F(ModuleTests, givenFP64EmulationEnabledWhenCreatingModuleThenEnableFP64GenEmuOptionIsPresent) {
+    auto cip = new NEO::MockCompilerInterfaceCaptureBuildOptions();
+    device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]->compilerInterface.reset(cip);
+    device->getNEODevice()->getExecutionEnvironment()->setFP64EmulationEnabled();
+
+    uint8_t binary[10];
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_IL_SPIRV;
+    moduleDesc.pInputModule = binary;
+    moduleDesc.inputSize = 10;
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+
+    auto module = std::unique_ptr<L0::ModuleImp>(new L0::ModuleImp(device, moduleBuildLog, ModuleType::Builtin));
+    ASSERT_NE(nullptr, module.get());
+    module->initialize(&moduleDesc, device->getNEODevice());
+
+    EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, BuildOptions::enableFP64GenEmu));
+};
+
 } // namespace ult
 } // namespace L0

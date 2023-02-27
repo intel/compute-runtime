@@ -1072,6 +1072,49 @@ TEST_F(DeviceGetCapsTest, givenFp64SupportForcedWhenCheckingFp64SupportThenFp64I
     }
 }
 
+TEST_F(DeviceGetCapsTest, givenFp64EmulationSupportWithoutFp64EmulationEnvVarWhenCreatingDeviceThenDeviceCapsAreSetCorrectly) {
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.capabilityTable.ftrSupportsFP64 = false;
+    hwInfo.capabilityTable.ftrSupportsFP64Emulation = true;
+
+    auto executionEnvironment = MockClDevice::prepareExecutionEnvironment(&hwInfo, 0);
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+
+    auto &caps = pClDevice->getDeviceInfo();
+    std::string extensionString = pClDevice->getDeviceInfo().deviceExtensions;
+
+    EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
+    EXPECT_FALSE(isValueSet(caps.doubleFpConfig, CL_FP_SOFT_FLOAT));
+}
+
+TEST_F(DeviceGetCapsTest, givenFp64EmulationSupportWithFp64EmulationEnvVarSetWhenCreatingDeviceThenDeviceCapsAreSetCorrectly) {
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.capabilityTable.ftrSupportsFP64 = false;
+    hwInfo.capabilityTable.ftrSupportsFP64Emulation = true;
+
+    auto executionEnvironment = MockClDevice::prepareExecutionEnvironment(&hwInfo, 0);
+    executionEnvironment->setFP64EmulationEnabled();
+    auto pClDevice = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0));
+
+    auto &caps = pClDevice->getDeviceInfo();
+    std::string extensionString = pClDevice->getDeviceInfo().deviceExtensions;
+
+    EXPECT_EQ(std::string::npos, extensionString.find(std::string("cl_khr_fp64")));
+    EXPECT_TRUE(isValueSet(caps.doubleFpConfig, CL_FP_SOFT_FLOAT));
+
+    cl_device_fp_config defaultFpFlags = static_cast<cl_device_fp_config>(CL_FP_ROUND_TO_NEAREST |
+                                                                          CL_FP_ROUND_TO_ZERO |
+                                                                          CL_FP_ROUND_TO_INF |
+                                                                          CL_FP_INF_NAN |
+                                                                          CL_FP_DENORM |
+                                                                          CL_FP_FMA);
+    EXPECT_EQ(defaultFpFlags, caps.doubleFpConfig & defaultFpFlags);
+    EXPECT_EQ(1u, caps.nativeVectorWidthDouble);
+    EXPECT_EQ(1u, caps.preferredVectorWidthDouble);
+}
+
 TEST(DeviceGetCaps, WhenPeekingCompilerExtensionsThenCompilerExtensionsAreReturned) {
     UltClDeviceFactory deviceFactory{1, 0};
     auto pClDevice = deviceFactory.rootDevices[0];

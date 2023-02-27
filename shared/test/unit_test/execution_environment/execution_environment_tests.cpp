@@ -444,3 +444,15 @@ TEST(ExecutionEnvironment, whenCalculateMaxOsContexCountThenGlobalVariableHasPro
         EXPECT_EQ(expectedOsContextCount + expectedOsContextCountForCcs, MemoryManager::maxOsContextCount);
     }
 }
+
+TEST(ExecutionEnvironment, givenDefaultExecutionEnvironmentSettingsWhenCheckingFP64EmulationThenFP64EmulationIsDisabled) {
+    ExecutionEnvironment executionEnvironment{};
+    EXPECT_FALSE(executionEnvironment.isFP64EmulationEnabled());
+}
+
+TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenSettingFP64EmulationEnabledThenFP64EmulationIsEnabled) {
+    ExecutionEnvironment executionEnvironment{};
+    ASSERT_FALSE(executionEnvironment.isFP64EmulationEnabled());
+    executionEnvironment.setFP64EmulationEnabled();
+    EXPECT_TRUE(executionEnvironment.isFP64EmulationEnabled());
+}

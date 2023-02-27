@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -197,6 +197,50 @@ TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndZeroProgramDebuggin
 
     VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
     std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "0"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    cl_int retVal = CL_SUCCESS;
+    cl_platform_id platformRet = nullptr;
+    cl_uint numPlatforms = 0;
+
+    platformsImpl->clear();
+
+    retVal = clGetPlatformIDs(1, &platformRet, &numPlatforms);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    ASSERT_NE(nullptr, platformsImpl);
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    EXPECT_FALSE(executionEnvironment->isDebuggingEnabled());
+
+    platformsImpl->clear();
+}
+
+TEST(clGetPlatformIDsTest, givenEnabledFP64EmulationWhenGettingPlatformIdsThenFP64EmulationIsEnabled) {
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_FP64_EMULATION", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    cl_int retVal = CL_SUCCESS;
+    cl_platform_id platformRet = nullptr;
+    cl_uint numPlatforms = 0;
+
+    platformsImpl->clear();
+
+    retVal = clGetPlatformIDs(1, &platformRet, &numPlatforms);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    ASSERT_NE(nullptr, platformsImpl);
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    EXPECT_TRUE(executionEnvironment->isFP64EmulationEnabled());
+
+    platformsImpl->clear();
+}
+
+TEST(clGetPlatformIDsTest, givenDefaultFP64EmulationStateWhenGettingPlatformIdsThenFP64EmulationIsDisabled) {
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_FP64_EMULATION", "0"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
 
     cl_int retVal = CL_SUCCESS;

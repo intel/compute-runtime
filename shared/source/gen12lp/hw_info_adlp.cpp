@@ -54,6 +54,7 @@ const RuntimeCapabilityTable ADLP::capabilityTable{
     false,                                          // blitterOperationsSupported
     true,                                           // ftrSupportsInteger64BitAtomics
     false,                                          // ftrSupportsFP64
+    false,                                          // ftrSupportsFP64Emulation
     false,                                          // ftrSupports64BitMath
     true,                                           // ftrSvm
     false,                                          // ftrSupportsCoherency

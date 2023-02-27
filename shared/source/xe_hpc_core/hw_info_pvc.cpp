@@ -65,6 +65,7 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     false,                                                     // blitterOperationsSupported
     true,                                                      // ftrSupportsInteger64BitAtomics
     true,                                                      // ftrSupportsFP64
+    false,                                                     // ftrSupportsFP64Emulation
     true,                                                      // ftrSupports64BitMath
     true,                                                      // ftrSvm
     false,                                                     // ftrSupportsCoherency

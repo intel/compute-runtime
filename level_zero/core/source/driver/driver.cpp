@@ -43,6 +43,8 @@ void DriverImp::initialize(ze_result_t *result) {
         envReader.getSetting("ZES_ENABLE_SYSMAN", false);
     envVariables.pciIdDeviceOrder =
         envReader.getSetting("ZE_ENABLE_PCI_ID_DEVICE_ORDER", false);
+    envVariables.fp64Emulation =
+        envReader.getSetting("NEO_FP64_EMULATION", false);
 
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     UNRECOVERABLE_IF(nullptr == executionEnvironment);
@@ -51,6 +53,10 @@ void DriverImp::initialize(ze_result_t *result) {
         if (!NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
             executionEnvironment->setDebuggingEnabled();
         }
+    }
+
+    if (envVariables.fp64Emulation) {
+        executionEnvironment->setFP64EmulationEnabled();
     }
 
     executionEnvironment->setMetricsEnabled(envVariables.metrics);

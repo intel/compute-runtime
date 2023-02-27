@@ -87,12 +87,15 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
             auto executionEnvironment = new ClExecutionEnvironment();
             executionEnvironment->incRefInternal();
 
+            NEO::EnvironmentVariableReader envReader;
             if (NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
-                NEO::EnvironmentVariableReader envReader;
                 auto programDebugging = envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", false);
                 if (programDebugging) {
                     executionEnvironment->setDebuggingEnabled();
                 }
+            }
+            if (envReader.getSetting("NEO_FP64_EMULATION", false)) {
+                executionEnvironment->setFP64EmulationEnabled();
             }
             auto allDevices = DeviceFactory::createDevices(*executionEnvironment);
             executionEnvironment->decRefInternal();

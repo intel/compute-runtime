@@ -413,6 +413,28 @@ TEST(DriverImpTest, givenEnabledProgramDebuggingWhenCreatingExecutionEnvironment
     L0::GlobalDriver = nullptr;
 }
 
+TEST(DriverImpTest, givenEnabledFP64EmulationWhenCreatingExecutionEnvironmentThenFP64EmulationIsEnabled) {
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.levelZeroSupported = true;
+
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_FP64_EMULATION", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    ze_result_t result = ZE_RESULT_ERROR_UNINITIALIZED;
+    DriverImp driverImp;
+    driverImp.initialize(&result);
+
+    ASSERT_NE(nullptr, L0::GlobalDriver);
+    ASSERT_NE(0u, L0::GlobalDriver->numDevices);
+    EXPECT_TRUE(L0::GlobalDriver->devices[0]->getNEODevice()->getExecutionEnvironment()->isFP64EmulationEnabled());
+
+    delete L0::GlobalDriver;
+    L0::GlobalDriverHandle = nullptr;
+    L0::GlobalDriver = nullptr;
+}
+
 TEST(DriverImpTest, givenEnabledProgramDebuggingAndEnabledExperimentalOpenCLWhenCreatingExecutionEnvironmentThenDebuggingEnabledIsFalse) {
     DebugManagerStateRestore restorer;
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();

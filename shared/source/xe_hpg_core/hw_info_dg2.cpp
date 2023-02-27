@@ -57,6 +57,7 @@ const RuntimeCapabilityTable DG2::capabilityTable{
     false,                                                     // blitterOperationsSupported
     true,                                                      // ftrSupportsInteger64BitAtomics
     false,                                                     // ftrSupportsFP64
+    true,                                                      // ftrSupportsFP64Emulation
     true,                                                      // ftrSupports64BitMath
     true,                                                      // ftrSvm
     false,                                                     // ftrSupportsCoherency

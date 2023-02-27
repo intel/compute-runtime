@@ -51,6 +51,7 @@ const RuntimeCapabilityTable EHL::capabilityTable{
     false,                                         // blitterOperationsSupported
     false,                                         // ftrSupportsInteger64BitAtomics
     false,                                         // ftrSupportsFP64
+    false,                                         // ftrSupportsFP64Emulation
     false,                                         // ftrSupports64BitMath
     false,                                         // ftrSvm
     false,                                         // ftrSupportsCoherency

@@ -63,6 +63,7 @@ NEO::ConstStringRef optLargeRegisterFile = "-ze-opt-large-register-file";
 NEO::ConstStringRef optAutoGrf = "-ze-intel-enable-auto-large-GRF-mode";
 NEO::ConstStringRef enableLibraryCompile = "-library-compilation";
 NEO::ConstStringRef enableGlobalVariableSymbols = "-ze-take-global-address";
+NEO::ConstStringRef enableFP64GenEmu = "-ze-fp64-gen-emu";
 } // namespace BuildOptions
 
 ModuleTranslationUnit::ModuleTranslationUnit(L0::Device *device)
@@ -141,6 +142,10 @@ std::string ModuleTranslationUnit::generateCompilerOptions(const char *buildOpti
 
         options = NEO::CompilerOptions::concatenate(options, NEO::CompilerOptions::generateDebugInfo);
         internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::debugKernelEnable);
+    }
+
+    if (neoDevice.getExecutionEnvironment()->isFP64EmulationEnabled()) {
+        internalOptions = NEO::CompilerOptions::concatenate(internalOptions, BuildOptions::enableFP64GenEmu);
     }
 
     const auto &compilerProductHelper = neoDevice.getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>();

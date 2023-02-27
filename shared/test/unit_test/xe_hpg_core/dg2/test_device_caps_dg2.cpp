@@ -23,6 +23,10 @@ DG2TEST_F(Dg2UsDeviceIdTest, givenDg2ProductWhenCheckFp64SupportThenReturnFalse)
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64);
 }
 
+DG2TEST_F(Dg2UsDeviceIdTest, givenDg2ProductWhenCheckFp64EmulationSupportThenReturnTrue) {
+    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64Emulation);
+}
+
 DG2TEST_F(Dg2UsDeviceIdTest, givenEnabledFtrPooledEuA0SteppingAndG10DevIdWhenCalculatingMaxEuPerSSThenDontIgnoreEuCountPerPoolMin) {
     HardwareInfo myHwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &mySysInfo = myHwInfo.gtSystemInfo;

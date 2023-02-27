@@ -40,6 +40,7 @@ extern NEO::ConstStringRef optLargeRegisterFile;
 extern NEO::ConstStringRef optAutoGrf;
 extern NEO::ConstStringRef enableLibraryCompile;
 extern NEO::ConstStringRef enableGlobalVariableSymbols;
+extern NEO::ConstStringRef enableFP64GenEmu;
 
 } // namespace BuildOptions
 

@@ -99,6 +99,10 @@ std::string Program::getInternalOptions() const {
         CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableImageSupport);
     }
 
+    if (pClDevice->getDevice().getExecutionEnvironment()->isFP64EmulationEnabled()) {
+        CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::enableFP64GenEmu);
+    }
+
     CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::preserveVec3Type);
     auto isDebuggerActive = pClDevice->getDevice().isDebuggerActive() || pClDevice->getDevice().getDebugger() != nullptr;
     CompilerOptions::concatenateAppend(internalOptions, compilerProductHelper.getCachingPolicyOptions(isDebuggerActive));

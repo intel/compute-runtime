@@ -1765,6 +1765,20 @@ TEST_F(ProgramTests, Force32BitAddressessWhenProgramIsCreatedThenGreaterThan4gbB
     }
 }
 
+TEST_F(ProgramTests, givenFp64EmulationInDefaultStateWhenProgramIsCreatedThenEnableFP64GenEmuBuildOptionIsNotPresent) {
+    std::unique_ptr<MockProgram> program{Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr)};
+    auto internalOptions = program->getInternalOptions();
+    EXPECT_FALSE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::enableFP64GenEmu)) << internalOptions;
+}
+
+TEST_F(ProgramTests, givenFp64EmulationEnabledTheWhenProgramIsCreatedThenEnableFP64GenEmuBuildOptionIsPresent) {
+    std::unique_ptr<MockProgram> program{Program::createBuiltInFromSource<MockProgram>("", pContext, pContext->getDevices(), nullptr)};
+    ASSERT_FALSE(pDevice->getExecutionEnvironment()->isFP64EmulationEnabled());
+    pDevice->getExecutionEnvironment()->setFP64EmulationEnabled();
+    auto internalOptions = program->getInternalOptions();
+    EXPECT_TRUE(CompilerOptions::contains(internalOptions, NEO::CompilerOptions::enableFP64GenEmu)) << internalOptions;
+}
+
 TEST_F(ProgramTests, whenContainsStatefulAccessIsCalledThenReturnCorrectResult) {
     std::vector<std::tuple<bool, SurfaceStateHeapOffset, CrossThreadDataOffset>> testParams = {
         {false, undefined<SurfaceStateHeapOffset>, undefined<CrossThreadDataOffset>},

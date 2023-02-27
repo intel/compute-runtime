@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -59,9 +60,17 @@ void ClDevice::setupFp64Flags() {
             deviceInfo.nativeVectorWidthDouble = 1;
             deviceInfo.preferredVectorWidthDouble = 1;
         } else {
-            deviceInfo.doubleFpConfig = 0;
-            deviceInfo.nativeVectorWidthDouble = 0;
-            deviceInfo.preferredVectorWidthDouble = 0;
+            if (hwInfo.capabilityTable.ftrSupportsFP64Emulation) {
+                if (getDevice().getExecutionEnvironment()->isFP64EmulationEnabled()) {
+                    deviceInfo.doubleFpConfig = defaultFpFlags | CL_FP_SOFT_FLOAT;
+                    deviceInfo.nativeVectorWidthDouble = 1;
+                    deviceInfo.preferredVectorWidthDouble = 1;
+                }
+            } else {
+                deviceInfo.doubleFpConfig = 0;
+                deviceInfo.nativeVectorWidthDouble = 0;
+                deviceInfo.preferredVectorWidthDouble = 0;
+            }
         }
 
         deviceInfo.singleFpConfig = static_cast<cl_device_fp_config>(

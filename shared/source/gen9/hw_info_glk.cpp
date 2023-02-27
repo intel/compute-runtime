@@ -51,6 +51,7 @@ const RuntimeCapabilityTable GLK::capabilityTable{
     false,                                         // blitterOperationsSupported
     false,                                         // ftrSupportsInteger64BitAtomics
     true,                                          // ftrSupportsFP64
+    false,                                         // ftrSupportsFP64Emulation
     true,                                          // ftrSupports64BitMath
     false,                                         // ftrSvm
     true,                                          // ftrSupportsCoherency
