@@ -34,6 +34,7 @@ struct XeHpcCore {
     static constexpr bool isUsingGenericMediaStateClear = true;
     static constexpr bool isUsingMiMemFence = true;
     static constexpr bool isUsingMiSetPredicate = true;
+    static constexpr bool isUsingMiMathMocs = true;
 
     struct StateBaseAddressStateSupport {
         static constexpr bool globalAtomics = false;

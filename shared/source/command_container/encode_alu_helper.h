@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,12 @@ class EncodeAluHelper {
         aluOps.miMath.DW0.BitField.InstructionType = MI_MATH::COMMAND_TYPE_MI_COMMAND;
         aluOps.miMath.DW0.BitField.InstructionOpcode = MI_MATH::MI_COMMAND_OPCODE_MI_MATH;
         aluOps.miMath.DW0.BitField.DwordLength = AluCount - 1;
+    }
+
+    void setMocs([[maybe_unused]] uint32_t mocs) {
+        if constexpr (GfxFamily::isUsingMiMathMocs) {
+            aluOps.miMath.DW0.BitField.MemoryObjectControlState = mocs;
+        }
     }
 
     void setNextAlu(AluRegisters opcode) {

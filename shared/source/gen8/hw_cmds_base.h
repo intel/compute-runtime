@@ -28,6 +28,7 @@ struct Gen8 {
     static constexpr bool isUsingGenericMediaStateClear = true;
     static constexpr bool isUsingMiMemFence = false;
     static constexpr bool isUsingMiSetPredicate = false;
+    static constexpr bool isUsingMiMathMocs = false;
 
     struct FrontEndStateSupport {
         static constexpr bool scratchSize = true;

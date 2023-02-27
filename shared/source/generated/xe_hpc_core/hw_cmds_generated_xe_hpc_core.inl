@@ -652,7 +652,8 @@ typedef struct tagMI_MATH {
     union _DW0 {
         struct _BitField {
             uint32_t DwordLength : BITFIELD_RANGE(0, 7);
-            uint32_t Reserved : BITFIELD_RANGE(8, 22);
+            uint32_t MemoryObjectControlState : BITFIELD_RANGE(8, 14);
+            uint32_t Reserved : BITFIELD_RANGE(15, 22);
             uint32_t InstructionOpcode : BITFIELD_RANGE(23, 28);
             uint32_t InstructionType : BITFIELD_RANGE(29, 31);
         } BitField;

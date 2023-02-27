@@ -26,6 +26,7 @@ struct Gen12Lp {
     static constexpr uint32_t stateComputeModeForceNonCoherentMask = (0b11u << 3);
     static constexpr bool isUsingMiMemFence = false;
     static constexpr bool isUsingMiSetPredicate = false;
+    static constexpr bool isUsingMiMathMocs = false;
 
     struct FrontEndStateSupport {
         static constexpr bool scratchSize = true;

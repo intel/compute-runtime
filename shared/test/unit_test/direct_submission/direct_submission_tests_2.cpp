@@ -12,6 +12,8 @@
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/dispatchers/render_dispatcher.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/register_offsets.h"
@@ -1054,7 +1056,7 @@ struct DirectSubmissionRelaxedOrderingTests : public DirectSubmissionDispatchBuf
     bool verifyDynamicSchedulerProgramming(LinearStream &cs, uint64_t schedulerAllocationGpuVa, uint64_t semaphoreGpuVa, uint32_t semaphoreValue, size_t offset, size_t &endOffset);
 
     template <typename FamilyType>
-    bool verifyStaticSchedulerProgramming(GraphicsAllocation &schedulerAllocation, uint64_t deferredTaskListVa, uint32_t expectedQueueSizeLimit);
+    bool verifyStaticSchedulerProgramming(GraphicsAllocation &schedulerAllocation, uint64_t deferredTaskListVa, uint32_t expectedQueueSizeLimit, uint32_t miMathMocs);
 
     template <typename FamilyType>
     bool verifyMiPredicate(void *miPredicateCmd, MiPredicateType predicateType);
@@ -1329,7 +1331,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyConditionalDataRegBbStart(void 
 }
 
 template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(GraphicsAllocation &schedulerAllocation, uint64_t deferredTaskListVa, uint32_t expectedQueueSizeLimit) {
+bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(GraphicsAllocation &schedulerAllocation, uint64_t deferredTaskListVa, uint32_t expectedQueueSizeLimit, uint32_t miMathMocs) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
@@ -1410,6 +1412,12 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
     if (miMathCmd->DW0.BitField.DwordLength != 9) {
         return false;
+    }
+
+    if constexpr (FamilyType::isUsingMiMathMocs) {
+        if (miMathCmd->DW0.BitField.MemoryObjectControlState != miMathMocs) {
+            return false;
+        }
     }
 
     auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
@@ -1502,6 +1510,12 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
     if (miMathCmd->DW0.BitField.DwordLength != 13) {
         return false;
+    }
+
+    if constexpr (FamilyType::isUsingMiMathMocs) {
+        if (miMathCmd->DW0.BitField.MemoryObjectControlState != miMathMocs) {
+            return false;
+        }
     }
 
     miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
@@ -1644,6 +1658,12 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
     if (miMathCmd->DW0.BitField.DwordLength != 3) {
         return false;
+    }
+
+    if constexpr (FamilyType::isUsingMiMathMocs) {
+        if (miMathCmd->DW0.BitField.MemoryObjectControlState != miMathMocs) {
+            return false;
+        }
     }
 
     miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
@@ -1793,7 +1813,8 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenDispatching
 
     EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
     EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
-                                                             directSubmission.deferredTasksListAllocation->getGpuAddress(), 123));
+                                                             directSubmission.deferredTasksListAllocation->getGpuAddress(), 123,
+                                                             pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER)));
 }
 
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNewNumberOfClientsWhenDispatchingWorkThenIncraseQueueSize, IsAtLeastXeHpcCore) {
@@ -1806,7 +1827,8 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNewNumberOfClientsWhenDispa
     EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
     EXPECT_EQ(RelaxedOrderingHelper::queueSizeMultiplier, directSubmission.currentRelaxedOrderingQueueSize);
     EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
-                                                             directSubmission.deferredTasksListAllocation->getGpuAddress(), RelaxedOrderingHelper::queueSizeMultiplier));
+                                                             directSubmission.deferredTasksListAllocation->getGpuAddress(), RelaxedOrderingHelper::queueSizeMultiplier,
+                                                             pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER)));
 
     const uint64_t expectedQueueSizeValueVa = directSubmission.relaxedOrderingSchedulerAllocation->getGpuAddress() +
                                               RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::drainRequestSectionStart +
@@ -1876,7 +1898,8 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenDispatchStat
 
         EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
         EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
-                                                                 directSubmission.deferredTasksListAllocation->getGpuAddress(), RelaxedOrderingHelper::queueSizeMultiplier));
+                                                                 directSubmission.deferredTasksListAllocation->getGpuAddress(), RelaxedOrderingHelper::queueSizeMultiplier,
+                                                                 pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER)));
     }
 
     {
@@ -2030,6 +2053,10 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTa
 
     auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
     EXPECT_EQ(8u, miMathCmd->DW0.BitField.DwordLength);
+
+    if constexpr (FamilyType::isUsingMiMathMocs) {
+        EXPECT_EQ(miMathCmd->DW0.BitField.MemoryObjectControlState, pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER));
+    }
 
     auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
     EXPECT_TRUE(verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_1));
