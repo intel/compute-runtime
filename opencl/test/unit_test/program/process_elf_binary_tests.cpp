@@ -35,9 +35,8 @@ class ProcessElfBinaryTests : public ::testing::Test {
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, rootDeviceIndex));
         program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*device));
     }
-
-    std::unique_ptr<MockProgram> program;
     std::unique_ptr<ClDevice> device;
+    std::unique_ptr<MockProgram> program;
     const uint32_t rootDeviceIndex = 1;
 };
 
@@ -121,8 +120,8 @@ class ProcessElfBinaryTestsWithBinaryType : public ::testing::TestWithParam<unsi
         device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr, rootDeviceIndex));
         program = std::make_unique<MockProgram>(nullptr, false, toClDeviceVector(*device));
     }
-    std::unique_ptr<MockProgram> program;
     std::unique_ptr<ClDevice> device;
+    std::unique_ptr<MockProgram> program;
     const uint32_t rootDeviceIndex = 1;
 };
 

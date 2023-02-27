@@ -62,6 +62,7 @@ class EnqueueDebugKernelFixture {
         if (multiDeviceKernel != nullptr) {
             multiDeviceKernel->release();
         }
+        program.reset();
     }
 
     std::unique_ptr<char[]> ssh = nullptr;

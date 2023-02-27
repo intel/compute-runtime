@@ -24,6 +24,7 @@ void ProgramWithZebinFixture::TearDown() {
     program->setGlobalSurface(nullptr);
     program->setConstantSurface(nullptr);
     program->getKernelInfoArray(rootDeviceIndex).clear();
+    program.reset();
     ProgramTests::TearDown();
 }
 

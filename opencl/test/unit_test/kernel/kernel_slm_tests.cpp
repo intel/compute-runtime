@@ -36,6 +36,7 @@ struct KernelSLMAndBarrierTest : public ClDeviceFixture,
         kernelInfo.kernelDescriptor.kernelAttributes.simdSize = 32;
     }
     void TearDown() override {
+        program.reset();
         ClDeviceFixture::tearDown();
     }
 

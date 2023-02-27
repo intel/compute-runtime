@@ -98,7 +98,7 @@ class ImageSetArgTest : public ClDeviceFixture,
     void TearDown() override {
         delete srcImage;
         delete pMultiDeviceKernel;
-
+        program.reset();
         delete context;
         ClDeviceFixture::tearDown();
     }

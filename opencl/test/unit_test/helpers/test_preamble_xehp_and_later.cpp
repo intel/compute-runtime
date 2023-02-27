@@ -101,6 +101,7 @@ struct KernelCommandsXeHPAndLater : public PreambleVfeState {
     }
 
     void TearDown() override {
+        program.reset();
         pClDevice->decRefInternal();
         PreambleVfeState::TearDown();
     }

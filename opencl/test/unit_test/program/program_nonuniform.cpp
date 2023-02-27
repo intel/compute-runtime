@@ -26,6 +26,9 @@ using namespace NEO;
 class MyMockProgram : public MockProgram {
   public:
     MyMockProgram() : MockProgram(toClDeviceVector(*(new MockClDevice(new MockDevice())))), device(this->clDevices[0]) {}
+    ~MyMockProgram() override {
+        clDevices.clear();
+    }
 
   private:
     std::unique_ptr<ClDevice> device;

@@ -2800,8 +2800,8 @@ struct setProgramSpecializationConstantTests : public ::testing::Test {
     }
 
     SpecializationConstantCompilerInterfaceMock *mockCompiler = nullptr;
-    std::unique_ptr<SpecializationConstantProgramMock> mockProgram;
     MockClDevice device;
+    std::unique_ptr<SpecializationConstantProgramMock> mockProgram;
 
     int specValue = 1;
 };

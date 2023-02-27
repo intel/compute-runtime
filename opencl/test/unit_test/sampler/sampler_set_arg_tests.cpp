@@ -65,7 +65,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
 
     void tearDown() {
         delete pMultiDeviceKernel;
-
+        program.reset();
         delete sampler;
         delete context;
         ClDeviceFixture::tearDown();

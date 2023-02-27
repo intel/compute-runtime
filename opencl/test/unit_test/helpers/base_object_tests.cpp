@@ -88,6 +88,9 @@ template <>
 class MockObject<Program> : public MockObjectBase<Program> {
   public:
     MockObject() : MockObjectBase<Program>(nullptr, false, toClDeviceVector(*(new MockClDevice(new MockDevice())))), device(this->clDevices[0]) {}
+    ~MockObject() override {
+        Program::clDevices.clear();
+    }
 
   private:
     std::unique_ptr<ClDevice> device;

@@ -47,6 +47,7 @@ struct ProfilingTests : public CommandEnqueueFixture,
     }
 
     void TearDown() override {
+        program.reset();
         CommandEnqueueFixture::tearDown();
     }
 

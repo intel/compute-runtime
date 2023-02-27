@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,9 +38,9 @@ class KernelArgInfoFixture {
     }
 
     KernelInfo kernelInfo;
+    std::unique_ptr<MockClDevice> clDevice;
     std::unique_ptr<MockProgram> program;
     std::unique_ptr<MockKernel> kernel;
-    std::unique_ptr<MockClDevice> clDevice;
     KernelDescriptor *kernelDescriptor;
 };
 

@@ -2125,7 +2125,7 @@ struct KernelExecutionEnvironmentTest : public Test<ClDeviceFixture> {
 
     void TearDown() override {
         delete kernel;
-
+        program.reset();
         ClDeviceFixture::tearDown();
     }
 
@@ -2200,7 +2200,7 @@ struct KernelCrossThreadTests : Test<ClDeviceFixture> {
     }
 
     void TearDown() override {
-
+        program.reset();
         ClDeviceFixture::tearDown();
     }
 
@@ -3158,6 +3158,8 @@ struct KernelLargeGrfTests : Test<ClDeviceFixture> {
     }
 
     void TearDown() override {
+        pKernelInfo.reset();
+        program.reset();
         ClDeviceFixture::tearDown();
     }
 

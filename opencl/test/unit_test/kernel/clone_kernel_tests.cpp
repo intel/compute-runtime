@@ -79,6 +79,10 @@ class CloneKernelTest : public MultiRootDeviceWithSubDevicesFixture {
     }
 
     void TearDown() override {
+        pClonedMultiDeviceKernel.reset();
+        pSourceMultiDeviceKernel.reset();
+        pKernelInfo.reset();
+        pProgram.reset();
         MultiRootDeviceWithSubDevicesFixture::TearDown();
     }
 

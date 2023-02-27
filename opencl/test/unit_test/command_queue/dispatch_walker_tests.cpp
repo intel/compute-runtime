@@ -68,6 +68,7 @@ struct DispatchWalkerTest : public CommandQueueFixture, public ClDeviceFixture, 
     }
 
     void TearDown() override {
+        program.reset();
         CommandQueueFixture::tearDown();
         context.reset();
         ClDeviceFixture::tearDown();
