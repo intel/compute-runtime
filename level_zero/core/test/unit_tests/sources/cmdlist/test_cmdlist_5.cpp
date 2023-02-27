@@ -838,6 +838,23 @@ HWTEST_F(CommandListCreate, givenImmediateCopyOnlySingleTileDirectSubmissionComm
     }
 }
 
+HWTEST_F(CommandListCreate, givenMetricsImmediateCopyOnlySingleTileDirectSubmissionCommandListWhenInitializeThenNotCreateSecondaryCmdBufferInSystemMemory) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+
+    device->getNEODevice()->getExecutionEnvironment()->setMetricsEnabled(true);
+    ze_command_queue_desc_t desc = {};
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+    ze_result_t returnValue;
+    CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, desc.ordinal, desc.index);
+    reinterpret_cast<UltCommandStreamReceiver<FamilyType> *>(csr)->directSubmissionAvailable = true;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &desc, false, NEO::EngineGroupType::Copy, returnValue));
+    ASSERT_NE(nullptr, commandList);
+
+    EXPECT_EQ(reinterpret_cast<CmdContainerMock *>(&commandList->commandContainer)->secondaryCommandStreamForImmediateCmdList.get(), nullptr);
+}
+
 HWTEST2_F(CommandListCreate, givenSecondaryCommandStreamForImmediateCmdListWhenCheckAvailableSpaceThenSwapCommandStreams, IsAtLeastSkl) {
     if (!device->getHwInfo().featureTable.flags.ftrLocalMemory) {
         GTEST_SKIP();

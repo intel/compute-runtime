@@ -202,6 +202,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
                                              !device->isImplicitScalingCapable() &&
                                              this->csr &&
                                              this->csr->isAnyDirectSubmissionEnabled() &&
+                                             !deviceImp->getNEODevice()->getExecutionEnvironment()->areMetricsEnabled() &&
                                              deviceImp->getNEODevice()->getMemoryManager()->isLocalMemorySupported(deviceImp->getRootDeviceIndex());
 
     if (NEO::DebugManager.flags.DirectSubmissionFlatRingBuffer.get() != -1) {

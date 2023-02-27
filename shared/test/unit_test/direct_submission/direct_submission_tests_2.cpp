@@ -292,6 +292,18 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRin
     EXPECT_TRUE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
 }
 
+HWTEST_F(DirectSubmissionDispatchBufferTest, givenMetricsDefaultDirectSubmissionFlatRingBufferAndSingleTileDirectSubmissionWhenSubmitSystemMemNotChainedBatchBufferWithoutRelaxingDependenciesThenNotCopyIntoRing) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using Dispatcher = RenderDispatcher<FamilyType>;
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionFlatRingBuffer.set(-1);
+    pDevice->getExecutionEnvironment()->setMetricsEnabled(true);
+
+    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
+    EXPECT_FALSE(directSubmission.copyCommandBufferIntoRing(batchBuffer));
+}
+
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenDefaultDirectSubmissionFlatRingBufferAndSingleTileDirectSubmissionWhenSubmitSystemMemNotChainedBatchBufferWithoutCommandBufferRelaxingDependenciesThenNotCopyIntoRing) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using Dispatcher = RenderDispatcher<FamilyType>;

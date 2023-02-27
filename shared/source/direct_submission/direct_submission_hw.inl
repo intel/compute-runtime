@@ -13,6 +13,7 @@
 #include "shared/source/direct_submission/direct_submission_hw.h"
 #include "shared/source/direct_submission/direct_submission_hw_diagnostic_mode.h"
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
@@ -902,6 +903,7 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchTaskStoreSection(uint64_
 template <typename GfxFamily, typename Dispatcher>
 bool DirectSubmissionHw<GfxFamily, Dispatcher>::copyCommandBufferIntoRing(BatchBuffer &batchBuffer) {
     auto ret = this->osContext.getNumSupportedDevices() == 1u &&
+               !this->rootDeviceEnvironment.executionEnvironment.areMetricsEnabled() &&
                !batchBuffer.chainedBatchBuffer &&
                batchBuffer.commandBufferAllocation &&
                MemoryPoolHelper::isSystemMemoryPool(batchBuffer.commandBufferAllocation->getMemoryPool()) &&
