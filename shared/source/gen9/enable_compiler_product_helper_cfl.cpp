@@ -14,6 +14,10 @@
 #include "hw_info_cfl.h"
 
 namespace NEO {
+template <>
+uint64_t CompilerProductHelperHw<IGFX_COFFEELAKE>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100030006;
+}
 
 static EnableCompilerProductHelper<IGFX_COFFEELAKE> enableCompilerProductHelperCFL;
 

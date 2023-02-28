@@ -160,7 +160,6 @@ void AdlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
 };
 
 const HardwareInfo ADLS::hwInfo = AdlsHwConfig::hwInfo;
-const uint64_t ADLS::defaultHardwareInfoConfig = 0x100020010;
 
 void setupADLSHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     AdlsHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);

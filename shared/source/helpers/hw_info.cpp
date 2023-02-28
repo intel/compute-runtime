@@ -24,11 +24,6 @@ const char *hardwarePrefix[IGFX_MAX_PRODUCT] = {
     nullptr,
 };
 
-// Global table of default hardware info configs
-uint64_t defaultHardwareInfoConfigTable[IGFX_MAX_PRODUCT] = {
-    0x0,
-};
-
 // Global table of family names
 bool familyEnabled[IGFX_MAX_CORE] = {
     false,

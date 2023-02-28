@@ -14,6 +14,10 @@
 #include "hw_info_icllp.h"
 
 namespace NEO {
+template <>
+uint64_t CompilerProductHelperHw<IGFX_ICELAKE_LP>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100080008;
+}
 
 static EnableCompilerProductHelper<IGFX_ICELAKE_LP> enableCompilerProductHelperICLLP;
 

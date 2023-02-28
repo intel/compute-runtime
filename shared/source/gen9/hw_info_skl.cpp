@@ -232,7 +232,6 @@ void SklHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
 };
 
 const HardwareInfo SKL::hwInfo = SklHw1x3x8::hwInfo;
-const uint64_t SKL::defaultHardwareInfoConfig = 0x000100030008;
 
 void setupSKLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100030008) {

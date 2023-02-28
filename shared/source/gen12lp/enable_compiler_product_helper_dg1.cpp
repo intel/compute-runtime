@@ -13,6 +13,10 @@
 
 #include "hw_info_dg1.h"
 namespace NEO {
+template <>
+uint64_t CompilerProductHelperHw<IGFX_DG1>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100060010;
+}
 
 static EnableCompilerProductHelper<IGFX_DG1> enableCompilerProductHelperDG1;
 

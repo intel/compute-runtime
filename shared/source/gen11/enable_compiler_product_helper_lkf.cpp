@@ -14,6 +14,10 @@
 #include "hw_info_lkf.h"
 
 namespace NEO {
+template <>
+uint64_t CompilerProductHelperHw<IGFX_LAKEFIELD>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100080008;
+}
 
 static EnableCompilerProductHelper<IGFX_LAKEFIELD> enableCompilerProductHelperLKF;
 

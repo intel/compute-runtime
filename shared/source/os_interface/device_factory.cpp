@@ -57,11 +57,21 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         *hardwareInfo = *hwInfoConst;
         rootDeviceEnvironment.initHelpers();
 
+        if (DebugManager.flags.OverrideRevision.get() != -1) {
+            hardwareInfo->platform.usRevId = static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
+        }
+
+        if (DebugManager.flags.ForceDeviceId.get() != "unk") {
+            hardwareInfo->platform.usDeviceID = static_cast<unsigned short>(std::stoi(DebugManager.flags.ForceDeviceId.get(), nullptr, 16));
+        }
+
+        const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
         if (hwInfoConfigStr == "default") {
-            hwInfoConfig = defaultHardwareInfoConfigTable[hwInfoConst->platform.eProductFamily];
+            hwInfoConfig = compilerProductHelper.getHwInfoConfig(*hwInfoConst);
         } else if (!parseHwInfoConfigString(hwInfoConfigStr, hwInfoConfig)) {
             return false;
         }
+
         setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
 
         hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig);
@@ -70,21 +80,12 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
         productHelper.configureHardwareCustom(hardwareInfo, nullptr);
 
         if (productConfigFound) {
-            const auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
             compilerProductHelper.setProductConfigForHwInfo(*hardwareInfo, aotInfo.aotConfig);
             hardwareInfo->platform.usDeviceID = aotInfo.deviceIds->front();
         }
 
         if (DebugManager.flags.OverrideGpuAddressSpace.get() != -1) {
             hardwareInfo->capabilityTable.gpuAddressSpace = maxNBitValue(static_cast<uint64_t>(DebugManager.flags.OverrideGpuAddressSpace.get()));
-        }
-
-        if (DebugManager.flags.OverrideRevision.get() != -1) {
-            hardwareInfo->platform.usRevId = static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
-        }
-
-        if (DebugManager.flags.ForceDeviceId.get() != "unk") {
-            hardwareInfo->platform.usDeviceID = static_cast<unsigned short>(std::stoi(DebugManager.flags.ForceDeviceId.get(), nullptr, 16));
         }
 
         [[maybe_unused]] bool result = rootDeviceEnvironment.initAilConfiguration();

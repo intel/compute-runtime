@@ -14,6 +14,11 @@
 #include "hw_info_kbl.h"
 
 namespace NEO {
+template <>
+uint64_t CompilerProductHelperHw<IGFX_KABYLAKE>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100030006;
+}
+
 static EnableCompilerProductHelper<IGFX_KABYLAKE> enableCompilerProductHelperKBL;
 
 } // namespace NEO

@@ -14,6 +14,10 @@
 #include "hw_info_tgllp.h"
 
 namespace NEO {
+template <>
+uint64_t CompilerProductHelperHw<IGFX_TIGERLAKE_LP>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100060010;
+}
 
 static EnableCompilerProductHelper<IGFX_TIGERLAKE_LP> enableCompilerProductHelperTGLLP;
 

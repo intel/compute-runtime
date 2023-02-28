@@ -18,7 +18,6 @@ struct EnableGfxProductHw {
         EnableGfxFamilyHw<static_cast<GFXCORE_FAMILY>(gfxFamily)> enableFamily;
 
         hardwarePrefix[gfxProduct] = HwMapper<gfxProduct>::abbreviation;
-        defaultHardwareInfoConfigTable[gfxProduct] = GfxProduct::defaultHardwareInfoConfig;
         hardwareInfoTable[gfxProduct] = &GfxProduct::hwInfo;
         hardwareInfoSetup[gfxProduct] = GfxProduct::setupHardwareInfo;
         hardwareInfoBaseSetup[gfxProduct] = GfxProduct::setupHardwareInfoBase;

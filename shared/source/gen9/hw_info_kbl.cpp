@@ -226,7 +226,6 @@ void KblHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
 };
 
 const HardwareInfo KBL::hwInfo = KblHw1x3x6::hwInfo;
-const uint64_t KBL::defaultHardwareInfoConfig = 0x100030006;
 
 void setupKBLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100030008) {

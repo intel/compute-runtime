@@ -13,6 +13,10 @@
 
 #include "hw_info_adls.h"
 namespace NEO {
+template <>
+uint64_t CompilerProductHelperHw<IGFX_ALDERLAKE_S>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100020010;
+}
 
 static EnableCompilerProductHelper<IGFX_ALDERLAKE_S> enableCompilerProductHelperADLS;
 

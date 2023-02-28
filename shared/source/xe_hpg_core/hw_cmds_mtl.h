@@ -14,7 +14,6 @@ namespace NEO {
 struct MTL : public XeHpgCoreFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
-    static const uint64_t defaultHardwareInfoConfig;
     static FeatureTable featureTable;
     static WorkaroundTable workaroundTable;
     // Initial non-zero values for unit tests
