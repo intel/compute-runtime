@@ -14,6 +14,11 @@
 #include "hw_info_glk.h"
 
 namespace NEO {
+template <>
+uint64_t CompilerProductHelperHw<IGFX_GEMINILAKE>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100030006;
+}
+
 static EnableCompilerProductHelper<IGFX_GEMINILAKE> enableCompilerProductHelperGLK;
 
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,6 @@ namespace NEO {
 struct DG1 : public Gen12LpFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
-    static const uint64_t defaultHardwareInfoConfig;
     static FeatureTable featureTable;
     static WorkaroundTable workaroundTable;
     static const uint32_t threadsPerEu = 7;

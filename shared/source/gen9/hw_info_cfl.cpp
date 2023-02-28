@@ -219,7 +219,6 @@ void CflHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
 };
 
 const HardwareInfo CFL::hwInfo = CflHw1x3x6::hwInfo;
-const uint64_t CFL::defaultHardwareInfoConfig = 0x100030006;
 
 void setupCFLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100030008) {

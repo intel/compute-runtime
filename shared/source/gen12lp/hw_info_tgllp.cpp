@@ -183,7 +183,6 @@ void TgllpHw1x2x16::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTab
 };
 
 const HardwareInfo TGLLP::hwInfo = TgllpHw1x6x16::hwInfo;
-const uint64_t TGLLP::defaultHardwareInfoConfig = 0x100060010;
 
 void setupTGLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100060010) {

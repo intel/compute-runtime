@@ -156,7 +156,6 @@ void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
 };
 
 const HardwareInfo DG1::hwInfo = Dg1HwConfig::hwInfo;
-const uint64_t DG1::defaultHardwareInfoConfig = 0x100060010;
 
 void setupDG1HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100060010) {

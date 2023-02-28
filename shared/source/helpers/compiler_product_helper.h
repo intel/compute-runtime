@@ -39,6 +39,7 @@ class CompilerProductHelper {
     virtual bool isForceToStatelessRequired() const = 0;
     virtual void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const = 0;
     virtual const char *getCachingPolicyOptions(bool isDebuggerActive) const = 0;
+    virtual uint64_t getHwInfoConfig(const HardwareInfo &hwInfo) const = 0;
 
     virtual ~CompilerProductHelper() = default;
 
@@ -60,6 +61,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isForceToStatelessRequired() const override;
     void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const override;
     const char *getCachingPolicyOptions(bool isDebuggerActive) const override;
+    uint64_t getHwInfoConfig(const HardwareInfo &hwInfo) const override;
 
     ~CompilerProductHelperHw() override = default;
 

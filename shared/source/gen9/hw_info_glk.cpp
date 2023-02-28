@@ -167,7 +167,6 @@ void GlkHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
 };
 
 const HardwareInfo GLK::hwInfo = GlkHw1x3x6::hwInfo;
-const uint64_t GLK::defaultHardwareInfoConfig = 0x100030006;
 
 void setupGLKHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100020006) {

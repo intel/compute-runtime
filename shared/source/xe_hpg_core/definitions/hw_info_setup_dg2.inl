@@ -1,12 +1,11 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 const HardwareInfo DG2::hwInfo = Dg2HwConfig::hwInfo;
-const uint64_t DG2::defaultHardwareInfoConfig = 0;
 
 void DG2::adjustHardwareInfo(HardwareInfo *hwInfo) {}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,7 +17,6 @@ namespace NEO {
 struct PVC : public XeHpcCoreFamily {
     static const PLATFORM platform;
     static const HardwareInfo hwInfo;
-    static const uint64_t defaultHardwareInfoConfig;
     static FeatureTable featureTable;
     static WorkaroundTable workaroundTable;
     // Initial non-zero values for unit tests

@@ -192,7 +192,6 @@ void BdwHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
 };
 
 const HardwareInfo BDW::hwInfo = BdwHw1x3x8::hwInfo;
-const uint64_t BDW::defaultHardwareInfoConfig = 0x100030008;
 
 void setupBDWHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x200030008) {

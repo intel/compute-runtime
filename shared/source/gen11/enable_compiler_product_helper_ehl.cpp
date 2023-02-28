@@ -14,6 +14,10 @@
 #include "hw_info_ehl.h"
 
 namespace NEO {
+template <>
+uint64_t CompilerProductHelperHw<IGFX_ELKHARTLAKE>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100040008;
+}
 
 static EnableCompilerProductHelper<IGFX_ELKHARTLAKE> enableCompilerProductHelperEHL;
 

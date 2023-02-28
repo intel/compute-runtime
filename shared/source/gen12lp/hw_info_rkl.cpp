@@ -153,7 +153,6 @@ void RklHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
 };
 
 const HardwareInfo RKL::hwInfo = RklHwConfig::hwInfo;
-const uint64_t RKL::defaultHardwareInfoConfig = 0x100020010;
 
 void setupRKLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     RklHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);

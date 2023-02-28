@@ -149,7 +149,6 @@ void EhlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
 };
 
 const HardwareInfo EHL::hwInfo = EhlHwConfig::hwInfo;
-const uint64_t EHL::defaultHardwareInfoConfig = 0x100040008;
 
 void setupEHLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     EhlHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);

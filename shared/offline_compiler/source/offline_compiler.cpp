@@ -435,10 +435,10 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceNam
             if (revisionId != -1) {
                 hwInfo.platform.usRevId = revisionId;
             }
-            uint64_t config = hwInfoConfig ? hwInfoConfig : defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
+            compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+            uint64_t config = hwInfoConfig ? hwInfoConfig : compilerProductHelper->getHwInfoConfig(hwInfo);
             setHwInfoValuesFromConfig(config, hwInfo);
             hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
-            compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
             UNRECOVERABLE_IF(compilerProductHelper == nullptr);
             productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
             return SUCCESS;

@@ -15,6 +15,11 @@
 
 namespace NEO {
 
+template <>
+uint64_t CompilerProductHelperHw<IGFX_BROXTON>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100030006;
+}
+
 static EnableCompilerProductHelper<IGFX_BROXTON> enableCompilerProductHelperBXT;
 
 } // namespace NEO

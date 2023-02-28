@@ -143,7 +143,6 @@ int main(int argc, char **argv) {
     bool enableAbrt = true;
     bool enableAlarm = true;
     bool enableSegv = true;
-    bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
     bool showTestStats = false;
     bool dumpTestStats = false;
     std::string dumpTestStatsFileName = "";
@@ -279,29 +278,8 @@ int main(int argc, char **argv) {
     } else {
         revId = platform.usRevId;
     }
-    uint64_t hwInfoConfig = defaultHardwareInfoConfigTable[productFamily];
-    setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
 
-    auto productHelper = ProductHelper::create(hwInfoForTests.platform.eProductFamily);
-    uint32_t threadsPerEu = productHelper->threadsPerEu;
-
-    // set Gt and FeatureTable to initial state
-    hardwareInfoSetup[productFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
-    GT_SYSTEM_INFO &gtSystemInfo = hwInfoForTests.gtSystemInfo;
-
-    // and adjust dynamic values if not secified
-    sliceCount = sliceCount > 0 ? sliceCount : gtSystemInfo.SliceCount;
-    subSlicePerSliceCount = subSlicePerSliceCount > 0 ? subSlicePerSliceCount : (gtSystemInfo.SubSliceCount / sliceCount);
-    euPerSubSlice = euPerSubSlice > 0 ? euPerSubSlice : gtSystemInfo.MaxEuPerSubSlice;
-    // clang-format off
-    gtSystemInfo.SliceCount             = sliceCount;
-    gtSystemInfo.SubSliceCount          = gtSystemInfo.SliceCount * subSlicePerSliceCount;
-    gtSystemInfo.EUCount                = gtSystemInfo.SubSliceCount * euPerSubSlice - dieRecovery;
-    gtSystemInfo.ThreadCount            = gtSystemInfo.EUCount * threadsPerEu;
-    gtSystemInfo.MaxEuPerSubSlice       = std::max(gtSystemInfo.MaxEuPerSubSlice, euPerSubSlice);
-    gtSystemInfo.MaxSlicesSupported     = std::max(gtSystemInfo.MaxSlicesSupported, gtSystemInfo.SliceCount);
-    gtSystemInfo.MaxSubSlicesSupported  = std::max(gtSystemInfo.MaxSubSlicesSupported, gtSystemInfo.SubSliceCount);
-    // clang-format on
+    adjustHwInfoForTests(hwInfoForTests, euPerSubSlice, sliceCount, subSlicePerSliceCount, dieRecovery);
 
     binaryNameSuffix.append(hardwarePrefix[hwInfoForTests.platform.eProductFamily]);
 

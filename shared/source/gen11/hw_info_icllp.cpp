@@ -190,7 +190,6 @@ void IcllpHw1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
 };
 
 const HardwareInfo ICLLP::hwInfo = IcllpHw1x8x8::hwInfo;
-const uint64_t ICLLP::defaultHardwareInfoConfig = 0x100080008;
 
 void setupICLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100080008) {

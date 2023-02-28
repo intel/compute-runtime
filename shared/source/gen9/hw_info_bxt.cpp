@@ -164,7 +164,6 @@ void BxtHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
 };
 
 const HardwareInfo BXT::hwInfo = BxtHw1x3x6::hwInfo;
-const uint64_t BXT::defaultHardwareInfoConfig = 0x100030006;
 
 void setupBXTHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100020006) {

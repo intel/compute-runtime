@@ -173,7 +173,7 @@ bool OclocArgHelper::getHwInfoForProductConfig(uint32_t productConfig, NEO::Hard
             if (revisionID != -1) {
                 hwInfo.platform.usRevId = revisionID;
             }
-            uint64_t config = hwInfoConfig ? hwInfoConfig : NEO::defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
+            uint64_t config = hwInfoConfig ? hwInfoConfig : compilerProductHelper->getHwInfoConfig(hwInfo);
             setHwInfoValuesFromConfig(config, hwInfo);
             NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
 

@@ -15,6 +15,11 @@
 
 namespace NEO {
 
+template <>
+uint64_t CompilerProductHelperHw<IGFX_SKYLAKE>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100030008;
+}
+
 static EnableCompilerProductHelper<IGFX_SKYLAKE> enableCompilerProductHelperSKL;
 
 } // namespace NEO

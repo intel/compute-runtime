@@ -149,7 +149,6 @@ void LkfHw1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
 };
 
 const HardwareInfo LKF::hwInfo = LkfHw1x8x8::hwInfo;
-const uint64_t LKF::defaultHardwareInfoConfig = 0x100080008;
 
 void setupLKFHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
     if (hwInfoConfig == 0x100080008) {

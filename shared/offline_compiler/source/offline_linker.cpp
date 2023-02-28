@@ -202,7 +202,8 @@ int OfflineLinker::initHardwareInfo() {
         if (hwInfoTable[productId]) {
             hwInfo = *hwInfoTable[productId];
 
-            const auto hwInfoConfig = defaultHardwareInfoConfigTable[hwInfo.platform.eProductFamily];
+            auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+            const auto hwInfoConfig = compilerProductHelper->getHwInfoConfig(hwInfo);
             setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
             hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, hwInfoConfig);
 
