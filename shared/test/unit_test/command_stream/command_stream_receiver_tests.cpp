@@ -2285,7 +2285,7 @@ HWTEST_F(CommandStreamReceiverTest, givenSshDirtyStateWhenUpdatingStateWithNewHe
     check = dirtyStateCopy.updateAndCheck(&dummyHeap);
     EXPECT_FALSE(check);
 
-    auto dirtyState = static_cast<CommandStreamReceiverHw<FamilyType> *>(commandStreamReceiver)->getSshState();
+    auto &dirtyState = static_cast<CommandStreamReceiverHw<FamilyType> *>(commandStreamReceiver)->getSshState();
 
     check = dirtyState.updateAndCheck(&dummyHeap);
     EXPECT_TRUE(check);
@@ -2309,7 +2309,31 @@ HWTEST_F(CommandStreamReceiverTest, givenDshDirtyStateWhenUpdatingStateWithNewHe
     check = dirtyStateCopy.updateAndCheck(&dummyHeap);
     EXPECT_FALSE(check);
 
-    auto dirtyState = static_cast<CommandStreamReceiverHw<FamilyType> *>(commandStreamReceiver)->getDshState();
+    auto &dirtyState = static_cast<CommandStreamReceiverHw<FamilyType> *>(commandStreamReceiver)->getDshState();
+
+    check = dirtyState.updateAndCheck(&dummyHeap);
+    EXPECT_TRUE(check);
+
+    check = dirtyState.updateAndCheck(&dummyHeap);
+    EXPECT_FALSE(check);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenIohDirtyStateWhenUpdatingStateWithNewHeapThenExpectDirtyStateTrue) {
+    MockGraphicsAllocation allocation{};
+    allocation.gpuAddress = 0xABC000;
+    allocation.size = 0x1000;
+
+    IndirectHeap dummyHeap(&allocation, false);
+
+    auto dirtyStateCopy = static_cast<CommandStreamReceiverHw<FamilyType> *>(commandStreamReceiver)->getIohState();
+
+    bool check = dirtyStateCopy.updateAndCheck(&dummyHeap);
+    EXPECT_TRUE(check);
+
+    check = dirtyStateCopy.updateAndCheck(&dummyHeap);
+    EXPECT_FALSE(check);
+
+    auto &dirtyState = static_cast<CommandStreamReceiverHw<FamilyType> *>(commandStreamReceiver)->getIohState();
 
     check = dirtyState.updateAndCheck(&dummyHeap);
     EXPECT_TRUE(check);

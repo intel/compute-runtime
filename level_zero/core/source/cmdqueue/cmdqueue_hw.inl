@@ -1255,6 +1255,9 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
     if (ssh != nullptr) {
         csrHw->getSshState().updateAndCheck(ssh);
     }
+
+    auto ioh = lastCommandList->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    csrHw->getIohState().updateAndCheck(ioh);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

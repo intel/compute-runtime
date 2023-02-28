@@ -1708,9 +1708,13 @@ HWTEST2_F(CommandListStateBaseAddressTest,
     EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
     EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
 
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto csrIohStateCopy = csrImmediate.getIohState();
+    bool iohDirty = csrIohStateCopy.updateAndCheck(container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT));
+    EXPECT_FALSE(iohDirty);
+
     auto &containerImmediate = commandListImmediate->commandContainer;
 
-    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csrImmediate.commandStream;
 
     size_t csrUsedBefore = csrStream.getUsed();

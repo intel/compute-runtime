@@ -149,6 +149,9 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     HeapDirtyState &getSshState() {
         return sshState;
     }
+    HeapDirtyState &getIohState() {
+        return iohState;
+    }
 
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
