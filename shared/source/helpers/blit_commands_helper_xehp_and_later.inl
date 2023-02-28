@@ -435,4 +435,48 @@ void BlitCommandsHelper<GfxFamily>::printImageBlitBlockCopyCommand(const typenam
     printf("DestinationArrayIndex: %u\n\n", blitCmd.getDestinationArrayIndex());
 }
 
+template <typename GfxFamily>
+bool BlitCommandsHelper<GfxFamily>::isDummyBlitWaNeeded(const EncodeDummyBlitWaArgs &waArgs) {
+    if (waArgs.isBcs) {
+        UNRECOVERABLE_IF(!waArgs.rootDeviceEnvironment);
+        if (DebugManager.flags.ForceDummyBlitWa.get() != -1) {
+            return DebugManager.flags.ForceDummyBlitWa.get();
+        }
+        auto &productHelper = waArgs.rootDeviceEnvironment->getProductHelper();
+        return productHelper.isDummyBlitWaRequired();
+    }
+    return false;
+}
+
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(LinearStream &linearStream, EncodeDummyBlitWaArgs &waArgs) {
+    using XY_COLOR_BLT = typename GfxFamily::XY_COLOR_BLT;
+
+    if (BlitCommandsHelper<GfxFamily>::isDummyBlitWaNeeded(waArgs)) {
+        auto blitCmd = GfxFamily::cmdInitXyColorBlt;
+        auto &rootDeviceEnvironment = waArgs.rootDeviceEnvironment;
+
+        rootDeviceEnvironment->initDummyAllocation();
+        auto dummyAllocation = rootDeviceEnvironment->getDummyAllocation();
+        blitCmd.setDestinationBaseAddress(dummyAllocation->getGpuAddress());
+        blitCmd.setColorDepth(COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR);
+        blitCmd.setDestinationX2CoordinateRight(1u);
+        blitCmd.setDestinationY2CoordinateBottom(4u);
+        blitCmd.setDestinationPitch(static_cast<uint32_t>(MemoryConstants::pageSize));
+
+        appendTilingEnable(blitCmd);
+        appendBlitCommandsForFillBuffer(dummyAllocation, blitCmd, *rootDeviceEnvironment);
+
+        auto cmd = linearStream.getSpaceForCmd<XY_COLOR_BLT>();
+        *cmd = blitCmd;
+    }
+}
+
+template <typename GfxFamily>
+size_t BlitCommandsHelper<GfxFamily>::getDummyBlitSize(const EncodeDummyBlitWaArgs &waArgs) {
+    if (BlitCommandsHelper<GfxFamily>::isDummyBlitWaNeeded(waArgs)) {
+        return sizeof(typename GfxFamily::XY_COLOR_BLT);
+    }
+    return 0u;
+}
 } // namespace NEO

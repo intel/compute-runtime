@@ -683,3 +683,7 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsMultiContextResource
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsUnlockingLockedPtrNecessaryThenReturnFalse) {
     EXPECT_FALSE(productHelper->isUnlockingLockedPtrNecessary(pInHwInfo));
 }
+
+HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnFalse) {
+    EXPECT_FALSE(productHelper->isDummyBlitWaRequired());
+}

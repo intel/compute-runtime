@@ -1181,8 +1181,9 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     auto lock = obtainUniqueOwnership();
     bool blitterDirectSubmission = this->isBlitterDirectSubmissionEnabled();
     auto debugPauseEnabled = PauseOnGpuProperties::featureEnabled(DebugManager.flags.PauseOnBlitCopy.get());
+    auto &rootDeviceEnvironment = this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex];
     auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, profilingEnabled, debugPauseEnabled, blitterDirectSubmission,
-                                                                                        *this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]));
+                                                                                        *rootDeviceEnvironment));
     auto commandStreamStart = commandStream.getUsed();
     auto newTaskCount = taskCount + 1;
     latestSentTaskCount = newTaskCount;
@@ -1217,8 +1218,11 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
             BlitCommandsHelper<GfxFamily>::encodeProfilingStartMmios(commandStream, *blitProperties.outputTimestampPacket);
         }
 
-        BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(blitProperties, commandStream, *this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex]);
-
+        BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(blitProperties, commandStream, *rootDeviceEnvironment);
+        auto dummyAllocation = rootDeviceEnvironment->getDummyAllocation();
+        if (dummyAllocation) {
+            makeResident(*dummyAllocation);
+        }
         if (blitProperties.outputTimestampPacket) {
             if (profilingEnabled) {
                 MiFlushArgs args;

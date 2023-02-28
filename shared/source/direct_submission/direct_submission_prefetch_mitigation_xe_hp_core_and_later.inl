@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,8 +21,8 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizePrefetchMitigati
 
 template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDisablePrefetcher() {
-    using MI_ARB_CHECK = typename GfxFamily::MI_ARB_CHECK;
-    return sizeof(MI_ARB_CHECK);
+    EncodeDummyBlitWaArgs waArgs{false};
+    return EncodeMiArbCheck<GfxFamily>::getCommandSizeWithWa(waArgs);
 }
 
 } // namespace NEO

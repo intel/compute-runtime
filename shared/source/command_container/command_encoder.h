@@ -16,6 +16,7 @@
 #include "shared/source/kernel/kernel_execution_type.h"
 
 #include <list>
+#include <optional>
 
 namespace NEO {
 enum class SlmPolicy;
@@ -472,13 +473,37 @@ struct EncodeMemoryPrefetch {
     static size_t getSizeForMemoryPrefetch(size_t size, const RootDeviceEnvironment &rootDeviceEnvironment);
 };
 
+struct EncodeDummyBlitWaArgs {
+    bool isBcs = false;
+    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
+};
+
 template <typename GfxFamily>
 struct EncodeMiArbCheck {
     using MI_ARB_CHECK = typename GfxFamily::MI_ARB_CHECK;
 
-    static void program(LinearStream &commandStream);
-    static void adjust(MI_ARB_CHECK &miArbCheck);
+    static void programWithWa(LinearStream &commandStream, std::optional<bool> preParserDisable, EncodeDummyBlitWaArgs &waArgs);
+    static size_t getCommandSizeWithWa(const EncodeDummyBlitWaArgs &waArgs);
+
+  protected:
+    static void program(LinearStream &commandStream, std::optional<bool> preParserDisable);
     static size_t getCommandSize();
+    static void adjust(MI_ARB_CHECK &miArbCheck, std::optional<bool> preParserDisable);
+};
+
+template <typename GfxFamily>
+struct EncodeWA {
+    static void encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args, bool is3DPipeline,
+                                               const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs);
+    static size_t getAdditionalPipelineSelectSize(Device &device, bool isRcs);
+
+    static void addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
+                                                              const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs);
+    static void setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args);
+
+    static void addPipeControlBeforeStateBaseAddress(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlushRequired);
+
+    static void adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, int plane);
 };
 
 template <typename GfxFamily>

@@ -20,7 +20,6 @@ void DebuggerL0Hw<GfxFamily>::captureStateBaseAddress(NEO::LinearStream &cmdStre
     using MI_STORE_DATA_IMM = typename GfxFamily::MI_STORE_DATA_IMM;
     using MI_STORE_REGISTER_MEM = typename GfxFamily::MI_STORE_REGISTER_MEM;
     using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
-    using MI_ARB_CHECK = typename GfxFamily::MI_ARB_CHECK;
 
     const auto gmmHelper = device->getGmmHelper();
     const auto gpuAddress = gmmHelper->decanonize(sbaTrackingGpuVa.address);

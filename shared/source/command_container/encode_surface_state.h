@@ -61,19 +61,4 @@ struct EncodeSurfaceState {
     static void appendParamsForImageFromBuffer(R_SURFACE_STATE *surfaceState);
 };
 
-template <typename GfxFamily>
-struct EncodeWA {
-    static void encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args, bool is3DPipeline,
-                                               const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs);
-    static size_t getAdditionalPipelineSelectSize(Device &device, bool isRcs);
-
-    static void addPipeControlPriorToNonPipelinedStateCommand(LinearStream &commandStream, PipeControlArgs args,
-                                                              const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs);
-    static void setAdditionalPipeControlFlagsForNonPipelineStateCommand(PipeControlArgs &args);
-
-    static void addPipeControlBeforeStateBaseAddress(LinearStream &commandStream, const RootDeviceEnvironment &rootDeviceEnvironment, bool isRcs, bool dcFlushRequired);
-
-    static void adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, GMM_YUV_PLANE_ENUM plane);
-};
-
 } // namespace NEO

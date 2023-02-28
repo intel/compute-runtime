@@ -10,6 +10,7 @@
 #include "shared/source/helpers/affinity_mask.h"
 #include "shared/source/helpers/options.h"
 
+#include <functional>
 #include <memory>
 #include <mutex>
 
@@ -35,7 +36,9 @@ class ProductHelper;
 class GfxCoreHelper;
 class ApiGfxCoreHelper;
 class CompilerProductHelper;
+class GraphicsAllocation;
 
+struct AllocationProperties;
 struct HardwareInfo;
 
 struct RootDeviceEnvironment {
@@ -58,6 +61,8 @@ struct RootDeviceEnvironment {
     void initGmm();
     void initDebugger();
     void initDebuggerL0(Device *neoDevice);
+    MOCKABLE_VIRTUAL void initDummyAllocation();
+    void setDummyBlitProperties(uint32_t rootDeviceIndex);
 
     MOCKABLE_VIRTUAL void prepareForCleanup() const;
     MOCKABLE_VIRTUAL bool initAilConfiguration();
@@ -77,6 +82,7 @@ struct RootDeviceEnvironment {
     template <typename HelperType>
     HelperType &getHelper() const;
     const ProductHelper &getProductHelper() const;
+    GraphicsAllocation *getDummyAllocation() const;
 
     std::unique_ptr<SipKernel> sipKernels[static_cast<uint32_t>(SipKernelType::COUNT)];
     std::unique_ptr<GmmHelper> gmmHelper;
@@ -100,7 +106,12 @@ struct RootDeviceEnvironment {
     AffinityMaskHelper deviceAffinityMask{true};
 
   protected:
+    using GraphicsAllocationUniquePtrType = std::unique_ptr<GraphicsAllocation, std::function<void(GraphicsAllocation *)>>;
+    GraphicsAllocationUniquePtrType dummyAllocation = nullptr;
+
     bool limitedNumberOfCcs = false;
+    std::once_flag isDummyAllocationInitialized;
+    std::unique_ptr<AllocationProperties> dummyBlitProperties;
 
   private:
     std::mutex mtx;

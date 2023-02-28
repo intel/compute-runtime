@@ -14,6 +14,7 @@
 #include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/register_offsets.h"
@@ -1054,6 +1055,9 @@ struct DirectSubmissionRelaxedOrderingTests : public DirectSubmissionDispatchBuf
     template <typename FamilyType>
     bool verifyBbStart(typename FamilyType::MI_BATCH_BUFFER_START *cmd, uint64_t startAddress, bool indirect, bool predicate);
 
+    template <typename FamilyType>
+    bool verifyDummyBlt(typename FamilyType::XY_COLOR_BLT *cmd);
+
     DebugManagerStateRestore restore;
     FlushStampTracker flushStamp{true};
 };
@@ -1089,6 +1093,14 @@ bool DirectSubmissionRelaxedOrderingTests::verifyLrr(typename FamilyType::MI_LOA
         return false;
     }
     return true;
+}
+
+template <typename FamilyType>
+bool DirectSubmissionRelaxedOrderingTests::verifyDummyBlt(typename FamilyType::XY_COLOR_BLT *cmd) {
+    if (cmd->getDestinationX2CoordinateRight() == 1u && cmd->getDestinationY2CoordinateBottom() == 4u && cmd->getDestinationPitch() == static_cast<uint32_t>(MemoryConstants::pageSize)) {
+        return true;
+    }
+    return false;
 }
 
 template <typename FamilyType>
@@ -1305,6 +1317,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
     using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
     using MI_MATH = typename FamilyType::MI_MATH;
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
 
     uint64_t schedulerStartGpuAddress = schedulerAllocation.getGpuAddress();
     void *schedulerCmds = schedulerAllocation.getUnderlyingBuffer();
@@ -1571,6 +1584,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     // 5. Drain request section
+
     auto arbCheck = reinterpret_cast<MI_ARB_CHECK *>(++lriCmd);
     if (memcmp(arbCheck, &FamilyType::cmdInitArbCheck, sizeof(MI_ARB_CHECK)) != 0) {
         return false;
@@ -1665,7 +1679,6 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDynamicSchedulerProgramming(Lin
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
     using MI_MATH = typename FamilyType::MI_MATH;
-    using MI_ARB_CHECK = typename FamilyType::MI_ARB_CHECK;
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(cs, offset);
@@ -1798,7 +1811,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNewNumberOfClientsWhenDispa
 
     const uint64_t expectedQueueSizeValueVa = directSubmission.relaxedOrderingSchedulerAllocation->getGpuAddress() +
                                               RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::drainRequestSectionStart +
-                                              sizeof(typename FamilyType::MI_ARB_CHECK) +
+                                              EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{}) +
                                               RelaxedOrderingHelper::getQueueSizeLimitValueOffset<FamilyType>();
 
     auto findStaticSchedulerUpdate = [&](LinearStream &cs, size_t offset, uint32_t expectedQueueSize) {

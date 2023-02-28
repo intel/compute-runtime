@@ -733,4 +733,9 @@ template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isCalculationForDisablingEuFusionWithDpasNeeded() const {
     return false;
 }
+
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
+    return false;
+}
 } // namespace NEO

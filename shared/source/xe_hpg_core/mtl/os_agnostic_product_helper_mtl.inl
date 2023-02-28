@@ -139,4 +139,9 @@ int ProductHelperHw<gfxProduct>::getProductMaxPreferredSlmSize(const HardwareInf
         return preferredEnumValue;
     }
 }
+
+template <>
+bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
+    return true;
+}
 } // namespace NEO

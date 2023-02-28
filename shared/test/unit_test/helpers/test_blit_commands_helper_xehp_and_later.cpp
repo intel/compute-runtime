@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/resource_info.h"
@@ -12,7 +13,10 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/raii_hw_info_config.h"
+#include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"
 #include "shared/test/common/mocks/mock_gmm_client_context.h"
 #include "shared/test/common/mocks/mock_gmm_resource_info.h"
@@ -1213,4 +1217,190 @@ HWTEST2_F(BlitTests, givenDebugVariableWhenDispatchBlitCommandsForImageRegionIsC
                    << "DestinationVerticalAlign: 0\n"
                    << "DestinationArrayIndex: 1\n\n";
     EXPECT_EQ(expectedOutput.str(), output);
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+class TestDummyBlitMockProductHelper : public ProductHelperHw<gfxProduct> {
+  public:
+    bool isDummyBlitWaRequired() const override {
+        return dummyBlitRequired;
+    }
+    uint32_t dummyBlitRequired = true;
+};
+
+HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaRequiredThenColorBltProgrammedCorrectly, IsXeHPOrAbove) {
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForceDummyBlitWa.set(-1);
+
+    auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());
+
+    RAIIProductHelperFactory<TestDummyBlitMockProductHelper<productFamily>> raii{
+        rootDeviceEnvironment};
+    auto &productHelper = *raii.mockProductHelper;
+    productHelper.dummyBlitRequired = true;
+
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+
+    size_t expectedSize = 0u;
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
+
+    EncodeDummyBlitWaArgs waArgsWhenDefault{};
+    auto val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenDefault);
+    EXPECT_EQ(expectedSize, val);
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenDefault);
+    EXPECT_EQ(0u, stream.getUsed());
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
+
+    EncodeDummyBlitWaArgs waArgsWhenNotBcs{false, &rootDeviceEnvironment};
+    val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenNotBcs);
+    EXPECT_EQ(expectedSize, val);
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenNotBcs);
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
+    EXPECT_EQ(0u, stream.getUsed());
+
+    EncodeDummyBlitWaArgs waArgsWhenBcs{true, &rootDeviceEnvironment};
+    expectedSize = sizeof(XY_COLOR_BLT);
+    val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenBcs);
+    EXPECT_EQ(expectedSize, val);
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenBcs);
+    EXPECT_NE(nullptr, rootDeviceEnvironment.getDummyAllocation());
+
+    EXPECT_EQ(expectedSize, stream.getUsed());
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
+    auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<XY_COLOR_BLT *>(*itor);
+
+    EXPECT_EQ(rootDeviceEnvironment.getDummyAllocation()->getGpuAddress(), cmd->getDestinationBaseAddress());
+    EXPECT_EQ(XY_COLOR_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR, cmd->getColorDepth());
+    EXPECT_EQ(1u, cmd->getDestinationX2CoordinateRight());
+    EXPECT_EQ(4u, cmd->getDestinationY2CoordinateBottom());
+    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::pageSize), cmd->getDestinationPitch());
+    EXPECT_EQ(XY_COLOR_BLT::DESTINATION_SURFACE_TYPE::DESTINATION_SURFACE_TYPE_2D, cmd->getDestinationSurfaceType());
+}
+
+HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenForceDummyBlitWaSetThenColorBltProgrammedCorrectly, IsXeHPOrAbove) {
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForceDummyBlitWa.set(1);
+
+    auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());
+
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+
+    size_t expectedSize = 0u;
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
+
+    EncodeDummyBlitWaArgs waArgsWhenDefault{};
+    auto val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenDefault);
+    EXPECT_EQ(expectedSize, val);
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenDefault);
+    EXPECT_EQ(0u, stream.getUsed());
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
+
+    EncodeDummyBlitWaArgs waArgsWhenNotBcs{false, &rootDeviceEnvironment};
+    val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenNotBcs);
+    EXPECT_EQ(expectedSize, val);
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenNotBcs);
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
+    EXPECT_EQ(0u, stream.getUsed());
+
+    EncodeDummyBlitWaArgs waArgsWhenBcs{true, &rootDeviceEnvironment};
+    expectedSize = sizeof(XY_COLOR_BLT);
+    val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenBcs);
+    EXPECT_EQ(expectedSize, val);
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenBcs);
+    EXPECT_NE(nullptr, rootDeviceEnvironment.getDummyAllocation());
+
+    EXPECT_EQ(expectedSize, stream.getUsed());
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
+    auto itor = find<XY_COLOR_BLT *>(cmdList.begin(), cmdList.end());
+    EXPECT_NE(cmdList.end(), itor);
+    auto cmd = genCmdCast<XY_COLOR_BLT *>(*itor);
+
+    EXPECT_EQ(rootDeviceEnvironment.getDummyAllocation()->getGpuAddress(), cmd->getDestinationBaseAddress());
+    EXPECT_EQ(XY_COLOR_BLT::COLOR_DEPTH::COLOR_DEPTH_64_BIT_COLOR, cmd->getColorDepth());
+    EXPECT_EQ(1u, cmd->getDestinationX2CoordinateRight());
+    EXPECT_EQ(4u, cmd->getDestinationY2CoordinateBottom());
+    EXPECT_EQ(static_cast<uint32_t>(MemoryConstants::pageSize), cmd->getDestinationPitch());
+    EXPECT_EQ(XY_COLOR_BLT::DESTINATION_SURFACE_TYPE::DESTINATION_SURFACE_TYPE_2D, cmd->getDestinationSurfaceType());
+}
+
+HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenDummyBlitWaNotRequiredThenAdditionalCommandsAreNotProgrammed, IsXeHPOrAbove) {
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForceDummyBlitWa.set(-1);
+    auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());
+
+    RAIIProductHelperFactory<TestDummyBlitMockProductHelper<productFamily>> raii{
+        rootDeviceEnvironment};
+    auto &productHelper = *raii.mockProductHelper;
+    productHelper.dummyBlitRequired = false;
+
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+
+    size_t expectedSize = 0u;
+
+    EncodeDummyBlitWaArgs waArgsWhenDefault{};
+    auto val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenDefault);
+    EXPECT_EQ(expectedSize, val);
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenDefault);
+    EXPECT_EQ(expectedSize, stream.getUsed());
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
+
+    EncodeDummyBlitWaArgs waArgsWhenNotBcs{false, &rootDeviceEnvironment};
+    val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenNotBcs);
+    EXPECT_EQ(expectedSize, val);
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenNotBcs);
+    EXPECT_EQ(expectedSize, stream.getUsed());
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
+
+    EncodeDummyBlitWaArgs waArgsWhenBcs{true, &rootDeviceEnvironment};
+    val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenBcs);
+    EXPECT_EQ(expectedSize, val);
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenBcs);
+    EXPECT_EQ(expectedSize, stream.getUsed());
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
+}
+
+HWTEST2_F(BlitTests, givenDispatchDummyBlitWhenForceDummyBlitWaDisabledThenAdditionalCommandsAreNotProgrammed, IsXeHPOrAbove) {
+    using XY_COLOR_BLT = typename FamilyType::XY_COLOR_BLT;
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.ForceDummyBlitWa.set(0);
+    auto &rootDeviceEnvironment = static_cast<MockRootDeviceEnvironment &>(pDevice->getRootDeviceEnvironmentRef());
+
+    uint32_t streamBuffer[100] = {};
+    LinearStream stream(streamBuffer, sizeof(streamBuffer));
+
+    size_t expectedSize = 0u;
+
+    EncodeDummyBlitWaArgs waArgsWhenDefault{};
+    auto val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenDefault);
+    EXPECT_EQ(expectedSize, val);
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenDefault);
+    EXPECT_EQ(expectedSize, stream.getUsed());
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
+
+    EncodeDummyBlitWaArgs waArgsWhenNotBcs{false, &rootDeviceEnvironment};
+    val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenNotBcs);
+    EXPECT_EQ(expectedSize, val);
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenNotBcs);
+    EXPECT_EQ(expectedSize, stream.getUsed());
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
+
+    EncodeDummyBlitWaArgs waArgsWhenBcs{true, &rootDeviceEnvironment};
+    val = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgsWhenBcs);
+    EXPECT_EQ(expectedSize, val);
+
+    BlitCommandsHelper<FamilyType>::dispatchDummyBlit(stream, waArgsWhenBcs);
+    EXPECT_EQ(expectedSize, stream.getUsed());
+    EXPECT_EQ(nullptr, rootDeviceEnvironment.getDummyAllocation());
 }

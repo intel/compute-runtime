@@ -25,6 +25,8 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/memory_operations_handler.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -193,6 +195,33 @@ void RootDeviceEnvironment::limitNumberOfCcs(uint32_t numberOfCcs) {
 
 bool RootDeviceEnvironment::isNumberOfCcsLimited() const {
     return limitedNumberOfCcs;
+}
+
+void RootDeviceEnvironment::initDummyAllocation() {
+    std::call_once(isDummyAllocationInitialized, [this]() {
+        auto customDeleter = [this](GraphicsAllocation *dummyAllocation) {
+            this->executionEnvironment.memoryManager->freeGraphicsMemory(dummyAllocation);
+        };
+        auto dummyBlitAllocation = this->executionEnvironment.memoryManager->allocateGraphicsMemoryWithProperties(
+            *this->dummyBlitProperties.get());
+        this->dummyAllocation = GraphicsAllocationUniquePtrType(dummyBlitAllocation, customDeleter);
+    });
+}
+
+void RootDeviceEnvironment::setDummyBlitProperties(uint32_t rootDeviceIndex) {
+    size_t size = 4 * 4096u;
+    this->dummyBlitProperties = std::make_unique<AllocationProperties>(
+        rootDeviceIndex,
+        true,
+        size,
+        NEO::AllocationType::BUFFER,
+        false,
+        false,
+        systemMemoryBitfield);
+}
+
+GraphicsAllocation *RootDeviceEnvironment::getDummyAllocation() const {
+    return dummyAllocation.get();
 }
 
 template <typename HelperType>

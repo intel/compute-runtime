@@ -15,7 +15,6 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/client_context/gmm_client_context.h"
-#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
@@ -769,7 +768,8 @@ inline void EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(Line
 }
 
 template <typename Family>
-void EncodeWA<Family>::adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, GMM_YUV_PLANE_ENUM plane) {
+void EncodeWA<Family>::adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, int plane) {
+    static_assert(sizeof(plane) == sizeof(GMM_YUV_PLANE_ENUM));
     if (plane == GMM_PLANE_Y) {
         compressionFormat &= 0xf;
     } else if ((plane == GMM_PLANE_U) || (plane == GMM_PLANE_V)) {
@@ -799,13 +799,6 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(MI_STORE_DATA_IMM *cm
 }
 
 template <typename Family>
-inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck) {
-    if (DebugManager.flags.ForcePreParserEnabledForMiArbCheck.get() != -1) {
-        miArbCheck.setPreParserDisable(!DebugManager.flags.ForcePreParserEnabledForMiArbCheck.get());
-    }
-}
-
-template <typename Family>
 inline void EncodeStoreMMIO<Family>::appendFlags(MI_STORE_REGISTER_MEM *storeRegMem, bool workloadPartition) {
     storeRegMem->setMmioRemapEnable(true);
     storeRegMem->setWorkloadPartitionIdOffsetEnable(workloadPartition);
@@ -818,5 +811,4 @@ template <typename Family>
 size_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh(uint32_t iddCount) {
     return 0u;
 }
-
 } // namespace NEO

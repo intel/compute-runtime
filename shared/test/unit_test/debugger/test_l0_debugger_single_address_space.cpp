@@ -147,19 +147,19 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenNonZeroSbaAddressesWhenProgra
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
 
-    size_t sizeExpected = sizeof(MI_ARB_CHECK) + sizeof(MI_BATCH_BUFFER_START);
+    size_t sizeExpected = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{}) + sizeof(MI_BATCH_BUFFER_START);
 
     for (int i = 0; i < 6; i++) {
         sizeExpected += NEO::EncodeSetMMIO<FamilyType>::sizeIMM;
         sizeExpected += NEO::EncodeMath<FamilyType>::streamCommandSize;
         sizeExpected += 2 * sizeof(MI_STORE_REGISTER_MEM);
         sizeExpected += 2 * sizeof(MI_STORE_DATA_IMM);
-        sizeExpected += sizeof(MI_ARB_CHECK);
+        sizeExpected += EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{});
         sizeExpected += sizeof(MI_BATCH_BUFFER_START);
         sizeExpected += sizeof(MI_STORE_DATA_IMM);
     }
 
-    sizeExpected += sizeof(MI_ARB_CHECK) + sizeof(MI_BATCH_BUFFER_START);
+    sizeExpected += EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{}) + sizeof(MI_BATCH_BUFFER_START);
 
     EXPECT_EQ(sizeExpected, cmdStream.getUsed());
 
@@ -259,17 +259,17 @@ HWTEST2_P(L0DebuggerBBlevelParameterizedTest, GivenOneNonZeroSbaAddressesWhenPro
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList, cmdStream.getCpuBase(), cmdStream.getUsed()));
 
-    size_t sizeExpected = sizeof(MI_ARB_CHECK) + sizeof(MI_BATCH_BUFFER_START);
+    size_t sizeExpected = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{}) + sizeof(MI_BATCH_BUFFER_START);
 
     sizeExpected += NEO::EncodeSetMMIO<FamilyType>::sizeIMM;
     sizeExpected += NEO::EncodeMath<FamilyType>::streamCommandSize;
     sizeExpected += 2 * sizeof(MI_STORE_REGISTER_MEM);
     sizeExpected += 2 * sizeof(MI_STORE_DATA_IMM);
-    sizeExpected += sizeof(MI_ARB_CHECK);
+    sizeExpected += EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{});
     sizeExpected += sizeof(MI_BATCH_BUFFER_START);
     sizeExpected += sizeof(MI_STORE_DATA_IMM);
 
-    sizeExpected += sizeof(MI_ARB_CHECK) + sizeof(MI_BATCH_BUFFER_START);
+    sizeExpected += EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{}) + sizeof(MI_BATCH_BUFFER_START);
 
     EXPECT_EQ(sizeExpected, cmdStream.getUsed());
     EXPECT_EQ(sizeExpected, debugger->getSbaTrackingCommandsSize(1));

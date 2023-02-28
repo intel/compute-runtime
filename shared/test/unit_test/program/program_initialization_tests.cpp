@@ -25,6 +25,7 @@ using namespace NEO;
 TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedThenMemoryIsAllocatedAsNonSvmAllocation) {
     MockDevice device{};
     REQUIRE_SVM_OR_SKIP(&device);
+    device.injectMemoryManager(new MockMemoryManager());
     MockSVMAllocsManager svmAllocsManager(device.getMemoryManager(), false);
     WhiteBox<LinkerInput> emptyLinkerInput;
     std::vector<uint8_t> initData;
@@ -67,8 +68,8 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreNotExportedTh
 TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenMemoryIsAllocatedAsUsmDeviceAllocation) {
     MockDevice device{};
     REQUIRE_SVM_OR_SKIP(&device);
-    MockMemoryManager memoryManager;
-    MockSVMAllocsManager svmAllocsManager(&memoryManager, false);
+    device.injectMemoryManager(new MockMemoryManager());
+    MockSVMAllocsManager svmAllocsManager(device.getMemoryManager(), false);
     WhiteBox<LinkerInput> linkerInputExportGlobalVariables;
     WhiteBox<LinkerInput> linkerInputExportGlobalConstants;
     linkerInputExportGlobalVariables.traits.exportsGlobalVariables = true;
@@ -112,6 +113,7 @@ TEST(AllocateGlobalSurfaceTest, GivenSvmAllocsManagerWhenGlobalsAreExportedThenM
 
 TEST(AllocateGlobalSurfaceTest, GivenNullSvmAllocsManagerWhenGlobalsAreExportedThenMemoryIsAllocatedAsNonSvmAllocation) {
     MockDevice device{};
+    device.injectMemoryManager(new MockMemoryManager());
     WhiteBox<LinkerInput> linkerInputExportGlobalVariables;
     WhiteBox<LinkerInput> linkerInputExportGlobalConstants;
     linkerInputExportGlobalVariables.traits.exportsGlobalVariables = true;
@@ -233,6 +235,7 @@ TEST(AllocateGlobalSurfaceTest, GivenAllocationInLocalMemoryWhichRequiresBlitter
 TEST(AllocateGlobalSurfaceTest, whenAllocatingGlobalSurfaceWithNonZeroZeroInitSizeThenTransferOnlyInitDataToAllocation) {
     MockDevice device{};
     WhiteBox<LinkerInput> emptyLinkerInput;
+    device.injectMemoryManager(new MockMemoryManager());
     emptyLinkerInput.traits.exportsGlobalConstants = true;
     std::vector<uint8_t> initData;
     initData.resize(64, 7u);

@@ -15,6 +15,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
+#include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/definitions/mi_flush_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
@@ -978,17 +979,27 @@ template <typename Family>
 inline size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const RootDeviceEnvironment &rootDeviceEnvironment) { return 0u; }
 
 template <typename Family>
-void EncodeMiArbCheck<Family>::program(LinearStream &commandStream) {
+void EncodeMiArbCheck<Family>::program(LinearStream &commandStream, std::optional<bool> preParserDisable) {
     MI_ARB_CHECK cmd = Family::cmdInitArbCheck;
 
-    EncodeMiArbCheck<Family>::adjust(cmd);
-
+    EncodeMiArbCheck<Family>::adjust(cmd, preParserDisable);
     auto miArbCheckStream = commandStream.getSpaceForCmd<MI_ARB_CHECK>();
     *miArbCheckStream = cmd;
 }
 
 template <typename Family>
-inline size_t EncodeMiArbCheck<Family>::getCommandSize() { return sizeof(MI_ARB_CHECK); }
+size_t EncodeMiArbCheck<Family>::getCommandSize() { return sizeof(MI_ARB_CHECK); }
+
+template <typename Family>
+void EncodeMiArbCheck<Family>::programWithWa(LinearStream &commandStream, std::optional<bool> preParserDisable, EncodeDummyBlitWaArgs &waArgs) {
+    BlitCommandsHelper<Family>::dispatchDummyBlit(commandStream, waArgs);
+    EncodeMiArbCheck<Family>::program(commandStream, preParserDisable);
+}
+
+template <typename Family>
+size_t EncodeMiArbCheck<Family>::getCommandSizeWithWa(const EncodeDummyBlitWaArgs &waArgs) {
+    return EncodeMiArbCheck<Family>::getCommandSize() + BlitCommandsHelper<Family>::getDummyBlitSize(waArgs);
+}
 
 template <typename Family>
 inline void EncodeNoop<Family>::alignToCacheLine(LinearStream &commandStream) {

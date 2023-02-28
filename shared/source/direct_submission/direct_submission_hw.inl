@@ -212,7 +212,8 @@ void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchStaticRelaxedOrderingSch
     {
         using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
-        *schedulerCmdStream.getSpaceForCmd<typename GfxFamily::MI_ARB_CHECK>() = GfxFamily::cmdInitArbCheck;
+        EncodeDummyBlitWaArgs waArgs{false};
+        EncodeMiArbCheck<GfxFamily>::programWithWa(schedulerCmdStream, std::nullopt, waArgs);
 
         if (DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get() != -1) {
             currentRelaxedOrderingQueueSize = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionRelaxedOrderingQueueSizeLimit.get());

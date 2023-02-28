@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/timestamp_packet_container.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
@@ -15,6 +16,7 @@
 using namespace NEO;
 struct BcsTests : public Test<ClDeviceFixture> {
     void SetUp() override {
+        DebugManager.flags.ForceDummyBlitWa.set(-1);
         Test<ClDeviceFixture>::SetUp();
         context = std::make_unique<MockContext>(pClDevice);
     }
@@ -34,4 +36,5 @@ struct BcsTests : public Test<ClDeviceFixture> {
     TimestampPacketContainer timestampPacketContainer;
     CsrDependencies csrDependencies;
     std::unique_ptr<MockContext> context;
+    DebugManagerStateRestore dbgRestore;
 };

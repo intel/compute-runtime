@@ -508,14 +508,9 @@ HWTEST_F(DeviceHwTest, givenGfxCoreHelperInputWhenInitializingCsrThenCreatePageT
     localHwInfo.capabilityTable.ftrRenderCompressedBuffers = false;
     localHwInfo.capabilityTable.ftrRenderCompressedImages = false;
 
-    MockExecutionEnvironment executionEnvironment;
-    executionEnvironment.prepareRootDeviceEnvironments(3);
+    MockExecutionEnvironment executionEnvironment(&localHwInfo, true, 3u);
     executionEnvironment.incRefInternal();
-    for (auto i = 0u; i < executionEnvironment.rootDeviceEnvironments.size(); i++) {
-        executionEnvironment.rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(&localHwInfo);
-        executionEnvironment.rootDeviceEnvironments[i]->initGmm();
-    }
-    executionEnvironment.initializeMemoryManager();
+
     std::unique_ptr<MockDevice> device;
     device.reset(MockDevice::createWithExecutionEnvironment<MockDevice>(&localHwInfo, &executionEnvironment, 0));
     auto &csr0 = device->getUltCommandStreamReceiver<FamilyType>();

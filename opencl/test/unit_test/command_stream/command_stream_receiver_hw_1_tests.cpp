@@ -733,7 +733,8 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeThenCal
     const uint32_t numberOfBlitOperations = 4;
 
     auto baseSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite() + sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
-    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK);
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs);
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
@@ -773,7 +774,8 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectsubmissionEnabledEstima
     const uint32_t numberOfBlitOperations = 4;
 
     auto baseSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite() + sizeof(typename FamilyType::MI_BATCH_BUFFER_START);
-    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK);
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs);
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
@@ -811,7 +813,8 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeForWrit
     const Vec3<size_t> bltSize = {(3 * max2DBlitSize), 4, 2};
     const size_t numberOfBlts = 3 * bltSize.y * bltSize.z;
     const size_t numberOfBlitOperations = 4 * bltSize.y * bltSize.z;
-    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK);
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs);
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
@@ -850,7 +853,8 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectSubmissionEnabledEstima
     const Vec3<size_t> bltSize = {(3 * max2DBlitSize), 4, 2};
     const size_t numberOfBlts = 3 * bltSize.y * bltSize.z;
     const size_t numberOfBlitOperations = 4 * bltSize.y * bltSize.z;
-    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK);
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs);
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
@@ -885,7 +889,8 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectSubmissionEnabledEstima
 }
 
 HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommandsThenAddMiFlushDw) {
-    size_t expectedBaseSize = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK);
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t expectedBaseSize = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs);
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         expectedBaseSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
@@ -907,7 +912,8 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
 }
 
 HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommandsWithProfilingThenAddMiFlushDw) {
-    size_t expectedBaseSize = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK) +
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t expectedBaseSize = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) +
                               EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
@@ -939,7 +945,8 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
     csrDependencies.timestampPacketContainer.push_back(&timestamp0);
     csrDependencies.timestampPacketContainer.push_back(&timestamp1);
 
-    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + sizeof(typename FamilyType::MI_ARB_CHECK);
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs);
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
@@ -961,7 +968,8 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
 HWTEST_F(BcsTests, givenImageAndBufferWhenEstimateBlitCommandSizeThenReturnCorrectCommandSize) {
 
     for (auto isImage : {false, true}) {
-        auto expectedSize = sizeof(typename FamilyType::MI_ARB_CHECK);
+        EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+        auto expectedSize = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs);
         expectedSize += isImage ? sizeof(typename FamilyType::XY_BLOCK_COPY_BLT) : sizeof(typename FamilyType::XY_COPY_BLT);
 
         if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
@@ -979,7 +987,6 @@ HWTEST_F(BcsTests, givenImageAndBufferWhenEstimateBlitCommandSizeThenReturnCorre
 }
 
 HWTEST_F(BcsTests, givenImageAndBufferBlitDirectionsWhenIsImageOperationIsCalledThenReturnCorrectValue) {
-
     BlitProperties blitProperties{};
     std::pair<bool, BlitterConstants::BlitDirection> params[] = {{false, BlitterConstants::BlitDirection::HostPtrToBuffer},
                                                                  {false, BlitterConstants::BlitDirection::BufferToHostPtr},
@@ -1065,7 +1072,21 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
                 EXPECT_NE(nullptr, miFlush);
             }
         }
+        const auto &productHelper = pDevice->getProductHelper();
+        if (productHelper.isDummyBlitWaRequired()) {
+            auto dummyBltCmd = genCmdCast<typename FamilyType::XY_COLOR_BLT *>(*(cmdIterator++));
+            EXPECT_NE(nullptr, dummyBltCmd);
 
+            auto expectedX2 = 1u;
+            auto expectedY2 = 4u;
+            uint32_t expectedPitch = 4096u;
+            auto expectedDestinationBaseAddress = pDevice->getRootDeviceEnvironment().getDummyAllocation()->getGpuAddress();
+
+            EXPECT_EQ(expectedDestinationBaseAddress, dummyBltCmd->getDestinationBaseAddress());
+            EXPECT_EQ(expectedX2, dummyBltCmd->getDestinationX2CoordinateRight());
+            EXPECT_EQ(expectedY2, dummyBltCmd->getDestinationY2CoordinateBottom());
+            EXPECT_EQ(expectedPitch, dummyBltCmd->getDestinationPitch());
+        }
         auto miArbCheckCmd = genCmdCast<typename FamilyType::MI_ARB_CHECK *>(*(cmdIterator++));
         EXPECT_NE(nullptr, miArbCheckCmd);
         EXPECT_TRUE(memcmp(&FamilyType::cmdInitArbCheck, miArbCheckCmd, sizeof(typename FamilyType::MI_ARB_CHECK)) == 0);
@@ -1203,6 +1224,7 @@ struct BcsDetaliedTests : public BcsTests,
 using BcsDetaliedTestsWithParams = BcsDetaliedTests<std::tuple<BcsTestParam, BlitterConstants::BlitDirection>>;
 
 HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenProgramAddresseForWriteReadBufferRect) {
+
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     static_cast<OsAgnosticMemoryManager *>(csr.getMemoryManager())->turnOnFakingBigAllocations();
 
@@ -1296,7 +1318,21 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
                 EXPECT_NE(nullptr, miFlush);
             }
         }
+        const auto &productHelper = pDevice->getProductHelper();
+        if (productHelper.isDummyBlitWaRequired()) {
+            auto dummyBltCmd = genCmdCast<typename FamilyType::XY_COLOR_BLT *>(*(cmdIterator++));
+            EXPECT_NE(nullptr, dummyBltCmd);
 
+            auto expectedX2 = 1u;
+            auto expectedY2 = 4u;
+            uint32_t expectedPitch = 4096u;
+            auto expectedDestinationBaseAddress = pDevice->getRootDeviceEnvironment().getDummyAllocation()->getGpuAddress();
+
+            EXPECT_EQ(expectedDestinationBaseAddress, dummyBltCmd->getDestinationBaseAddress());
+            EXPECT_EQ(expectedX2, dummyBltCmd->getDestinationX2CoordinateRight());
+            EXPECT_EQ(expectedY2, dummyBltCmd->getDestinationY2CoordinateBottom());
+            EXPECT_EQ(expectedPitch, dummyBltCmd->getDestinationPitch());
+        }
         auto miArbCheckCmd = genCmdCast<typename FamilyType::MI_ARB_CHECK *>(*(cmdIterator++));
         EXPECT_NE(nullptr, miArbCheckCmd);
         EXPECT_TRUE(memcmp(&FamilyType::cmdInitArbCheck, miArbCheckCmd, sizeof(typename FamilyType::MI_ARB_CHECK)) == 0);
@@ -1395,6 +1431,11 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
                 EXPECT_NE(nullptr, miFlush);
             }
         }
+        const auto &productHelper = pDevice->getProductHelper();
+        if (productHelper.isDummyBlitWaRequired()) {
+            auto dummyBltCmd = genCmdCast<typename FamilyType::XY_COLOR_BLT *>(*(cmdIterator++));
+            EXPECT_NE(nullptr, dummyBltCmd);
+        }
 
         auto miArbCheckCmd = genCmdCast<typename FamilyType::MI_ARB_CHECK *>(*(cmdIterator++));
         EXPECT_NE(nullptr, miArbCheckCmd);
@@ -1486,7 +1527,21 @@ HWTEST_P(BcsDetaliedTestsWithParams, givenBltSizeWithLeftoverWhenDispatchedThenP
                 EXPECT_NE(nullptr, miFlush);
             }
         }
+        const auto &productHelper = pDevice->getProductHelper();
+        if (productHelper.isDummyBlitWaRequired()) {
+            auto dummyBltCmd = genCmdCast<typename FamilyType::XY_COLOR_BLT *>(*(cmdIterator++));
+            EXPECT_NE(nullptr, dummyBltCmd);
 
+            auto expectedX2 = 1u;
+            auto expectedY2 = 4u;
+            uint32_t expectedPitch = 4096u;
+            auto expectedDestinationBaseAddress = pDevice->getRootDeviceEnvironment().getDummyAllocation()->getGpuAddress();
+
+            EXPECT_EQ(expectedDestinationBaseAddress, dummyBltCmd->getDestinationBaseAddress());
+            EXPECT_EQ(expectedX2, dummyBltCmd->getDestinationX2CoordinateRight());
+            EXPECT_EQ(expectedY2, dummyBltCmd->getDestinationY2CoordinateBottom());
+            EXPECT_EQ(expectedPitch, dummyBltCmd->getDestinationPitch());
+        }
         auto miArbCheckCmd = genCmdCast<typename FamilyType::MI_ARB_CHECK *>(*(cmdIterator++));
         EXPECT_NE(nullptr, miArbCheckCmd);
         EXPECT_TRUE(memcmp(&FamilyType::cmdInitArbCheck, miArbCheckCmd, sizeof(typename FamilyType::MI_ARB_CHECK)) == 0);

@@ -58,12 +58,15 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePreBlitCommandSize() {
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream, const ProductHelper &productHelper) {
+void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
     MiFlushArgs args;
+    EncodeDummyBlitWaArgs waArgs{true, &rootDeviceEnvironment};
+
+    auto &productHelper = rootDeviceEnvironment.getProductHelper();
     if (DebugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::Default) {
         switch (DebugManager.flags.PostBlitCommand.get()) {
         case BlitterConstants::PostBlitMode::MiArbCheck:
-            EncodeMiArbCheck<GfxFamily>::program(linearStream);
+            EncodeMiArbCheck<GfxFamily>::programWithWa(linearStream, std::nullopt, waArgs);
             return;
         case BlitterConstants::PostBlitMode::MiFlush:
             EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, args, productHelper);
@@ -77,15 +80,16 @@ void BlitCommandsHelper<GfxFamily>::dispatchPostBlitCommand(LinearStream &linear
         EncodeMiFlushDW<GfxFamily>::programMiFlushDw(linearStream, 0, 0, args, productHelper);
     }
 
-    EncodeMiArbCheck<GfxFamily>::program(linearStream);
+    EncodeMiArbCheck<GfxFamily>::programWithWa(linearStream, std::nullopt, waArgs);
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize() {
+size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    EncodeDummyBlitWaArgs waArgs{true, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
     if (DebugManager.flags.PostBlitCommand.get() != BlitterConstants::PostBlitMode::Default) {
         switch (DebugManager.flags.PostBlitCommand.get()) {
         case BlitterConstants::PostBlitMode::MiArbCheck:
-            return EncodeMiArbCheck<GfxFamily>::getCommandSize();
+            return EncodeMiArbCheck<GfxFamily>::getCommandSizeWithWa(waArgs);
         case BlitterConstants::PostBlitMode::MiFlush:
             return EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
         default:
@@ -94,10 +98,10 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize() {
     }
 
     if (BlitCommandsHelper<GfxFamily>::miArbCheckWaRequired()) {
-        return (EncodeMiArbCheck<GfxFamily>::getCommandSize() + EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
+        return (EncodeMiArbCheck<GfxFamily>::getCommandSizeWithWa(waArgs) + EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite());
     }
 
-    return EncodeMiArbCheck<GfxFamily>::getCommandSize();
+    return EncodeMiArbCheck<GfxFamily>::getCommandSizeWithWa(waArgs);
 }
 
 template <typename GfxFamily>
@@ -123,7 +127,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t>
         sizePerBlit = sizeof(typename GfxFamily::XY_COPY_BLT);
     }
 
-    sizePerBlit += estimatePostBlitCommandSize();
+    sizePerBlit += estimatePostBlitCommandSize(rootDeviceEnvironment);
     return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) +
            TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<GfxFamily>(csrDependencies) +
            (sizePerBlit * nBlits) +
@@ -178,7 +182,7 @@ uint64_t BlitCommandsHelper<GfxFamily>::calculateBlitCommandSourceBaseAddress(co
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
     uint64_t width = 1;
     uint64_t height = 1;
 
@@ -224,7 +228,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferPerRow(const Bl
                 auto bltStream = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
                 *bltStream = bltCmd;
 
-                dispatchPostBlitCommand(linearStream, productHelper);
+                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
 
                 auto blitSize = width * height;
                 sizeToBlit -= blitSize;
@@ -274,7 +278,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitMemoryFill(NEO::GraphicsAllocati
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
     auto srcSlicePitch = static_cast<uint32_t>(blitProperties.srcSlicePitch);
@@ -309,7 +313,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForImageRegion(const Bli
 
         auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_BLOCK_COPY_BLT>();
         *cmd = bltCmd;
-        dispatchPostBlitCommand(linearStream, productHelper);
+        dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
     }
 }
 
@@ -347,7 +351,7 @@ uint32_t BlitCommandsHelper<GfxFamily>::getAvailableBytesPerPixel(size_t copySiz
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void BlitCommandsHelper<GfxFamily>::dispatchBlitCommands(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
     if (blitProperties.isImageOperation()) {
         dispatchBlitCommandsForImageRegion(blitProperties, linearStream, rootDeviceEnvironment);
     } else {
@@ -383,7 +387,7 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsMemCopy(const BlitProperti
 }
 
 template <typename GfxFamily>
-void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferRegion(const BlitProperties &blitProperties, LinearStream &linearStream, const RootDeviceEnvironment &rootDeviceEnvironment) {
+void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferRegion(const BlitProperties &blitProperties, LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment) {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
 
     const auto maxWidthToCopy = getMaxBlitWidth(rootDeviceEnvironment);
@@ -417,7 +421,7 @@ void BlitCommandsHelper<GfxFamily>::dispatchBlitCommandsForBufferRegion(const Bl
 
                 auto cmd = linearStream.getSpaceForCmd<typename GfxFamily::XY_COPY_BLT>();
                 *cmd = bltCmd;
-                dispatchPostBlitCommand(linearStream, productHelper);
+                dispatchPostBlitCommand(linearStream, rootDeviceEnvironment);
 
                 srcAddress += width;
                 dstAddress += width;
@@ -525,4 +529,5 @@ template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::getWaCmdsSize(const BlitPropertiesContainer &blitPropertiesContainer) {
     return 0;
 }
+
 } // namespace NEO

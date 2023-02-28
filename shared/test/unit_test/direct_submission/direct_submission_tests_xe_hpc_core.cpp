@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
 #include "shared/source/xe_hp_core/hw_cmds.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
@@ -21,7 +22,7 @@ XE_HPC_CORETEST_F(DirectSubmissionTestXeHpcCore, givenXeHpcCoreWhenDispatchDisab
 
     MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
 
-    EXPECT_EQ(sizeof(MI_ARB_CHECK), directSubmission.getSizeDisablePrefetcher());
+    EXPECT_EQ(EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{}), directSubmission.getSizeDisablePrefetcher());
 
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);

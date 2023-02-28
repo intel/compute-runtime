@@ -175,8 +175,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenDebugFlagSetWhenProgrammi
 
         MI_ARB_CHECK buffer[2] = {};
         LinearStream linearStream(buffer, sizeof(buffer));
+        MockExecutionEnvironment executionEnvironment{};
+        auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+        rootDeviceEnvironment.initGmm();
 
-        EncodeMiArbCheck<FamilyType>::program(linearStream);
+        EncodeDummyBlitWaArgs waArgs{};
+        EncodeMiArbCheck<FamilyType>::programWithWa(linearStream, false, waArgs);
 
         if (value == 0) {
             EXPECT_TRUE(buffer[0].getPreParserDisable());

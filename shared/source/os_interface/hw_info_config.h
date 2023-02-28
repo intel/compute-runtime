@@ -165,6 +165,7 @@ class ProductHelper {
     virtual bool isBufferPoolAllocatorSupported() const = 0;
     virtual uint64_t overridePatIndex(AllocationType allocationType, uint64_t patIndex) const = 0;
     virtual bool isTlbFlushRequired() const = 0;
+    virtual bool isDummyBlitWaRequired() const = 0;
     virtual bool getFrontEndPropertyScratchSizeSupport() const = 0;
     virtual bool getFrontEndPropertyPrivateScratchSizeSupport() const = 0;
     virtual bool getFrontEndPropertyComputeDispatchAllWalkerSupport() const = 0;

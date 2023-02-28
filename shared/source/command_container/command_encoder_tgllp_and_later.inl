@@ -24,4 +24,14 @@ void EncodeWA<Family>::addPipeControlBeforeStateBaseAddress(LinearStream &comman
     NEO::EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(commandStream, args, rootDeviceEnvironment, isRcs);
 }
 
+template <>
+inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck, std::optional<bool> preParserDisable) {
+    if (DebugManager.flags.ForcePreParserEnabledForMiArbCheck.get() != -1) {
+        preParserDisable = !DebugManager.flags.ForcePreParserEnabledForMiArbCheck.get();
+    }
+    if (preParserDisable.has_value()) {
+        miArbCheck.setPreParserDisable(preParserDisable.value());
+    }
+}
+
 } // namespace NEO

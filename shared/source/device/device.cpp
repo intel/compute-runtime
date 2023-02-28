@@ -40,6 +40,7 @@ extern CommandStreamReceiver *createCommandStream(ExecutionEnvironment &executio
 Device::Device(ExecutionEnvironment *executionEnvironment, const uint32_t rootDeviceIndex)
     : executionEnvironment(executionEnvironment), rootDeviceIndex(rootDeviceIndex) {
     this->executionEnvironment->incRefInternal();
+    this->executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->setDummyBlitProperties(rootDeviceIndex);
 
     if (DebugManager.flags.NumberOfRegularContextsPerEngine.get() > 1) {
         this->numberOfRegularContextsPerEngine = static_cast<uint32_t>(DebugManager.flags.NumberOfRegularContextsPerEngine.get());

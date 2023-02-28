@@ -518,7 +518,7 @@ inline void EncodeWA<GfxFamily>::addPipeControlBeforeStateBaseAddress(LinearStre
 }
 
 template <typename GfxFamily>
-inline void EncodeWA<GfxFamily>::adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, GMM_YUV_PLANE_ENUM plane) {
+inline void EncodeWA<GfxFamily>::adjustCompressionFormatForPlanarImage(uint32_t &compressionFormat, int plane) {
 }
 
 template <typename GfxFamily>
@@ -577,7 +577,7 @@ inline void EncodeStoreMemory<Family>::programStoreDataImm(MI_STORE_DATA_IMM *cm
 }
 
 template <typename Family>
-inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck) {
+inline void EncodeMiArbCheck<Family>::adjust(MI_ARB_CHECK &miArbCheck, std::optional<bool> preParserDisable) {
 }
 
 template <typename Family>
@@ -590,5 +590,4 @@ template <typename Family>
 size_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh(uint32_t iddCount) {
     return iddCount * sizeof(typename Family::INTERFACE_DESCRIPTOR_DATA);
 }
-
 } // namespace NEO

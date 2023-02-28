@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,16 +11,10 @@ namespace NEO {
 
 template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchDisablePrefetcher(bool disable) {
-    using MI_ARB_CHECK = typename GfxFamily::MI_ARB_CHECK;
 
     if (isDisablePrefetcherRequired) {
-        MI_ARB_CHECK arbCheck = GfxFamily::cmdInitArbCheck;
-        arbCheck.setPreFetchDisable(disable);
-
-        EncodeMiArbCheck<GfxFamily>::adjust(arbCheck);
-
-        MI_ARB_CHECK *arbCheckSpace = ringCommandStream.getSpaceForCmd<MI_ARB_CHECK>();
-        *arbCheckSpace = arbCheck;
+        EncodeDummyBlitWaArgs waArgs{false};
+        EncodeMiArbCheck<GfxFamily>::programWithWa(ringCommandStream, disable, waArgs);
     }
 }
 

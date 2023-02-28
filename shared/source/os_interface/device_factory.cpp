@@ -53,9 +53,8 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
     for (auto rootDeviceIndex = 0u; rootDeviceIndex < numRootDevices; rootDeviceIndex++) {
         auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[rootDeviceIndex].get();
+        rootDeviceEnvironment.setHwInfoAndInitHelpers(hwInfoConst);
         auto hardwareInfo = rootDeviceEnvironment.getMutableHardwareInfo();
-        *hardwareInfo = *hwInfoConst;
-        rootDeviceEnvironment.initHelpers();
 
         if (DebugManager.flags.OverrideRevision.get() != -1) {
             hardwareInfo->platform.usRevId = static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());

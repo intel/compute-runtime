@@ -76,7 +76,6 @@ class MockDevice : public RootDevice {
     using RootDevice::subdevices;
 
     void setOSTime(OSTime *osTime);
-    void setDriverInfo(DriverInfo *driverInfo);
 
     static bool createSingleDevice;
     bool createDeviceImpl() override;
