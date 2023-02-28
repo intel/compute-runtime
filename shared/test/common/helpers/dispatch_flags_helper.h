@@ -44,7 +44,8 @@ struct DispatchFlagsHelper {
             false,                                   // textureCacheFlush
             false,                                   // hasStallingCmds
             false,                                   // hasRelaxedOrderingDependencies
-            false                                    // stateCacheInvalidation
+            false,                                   // stateCacheInvalidation
+            false                                    // isStallingCommandsOnNextFlushRequired
         );
     }
 };

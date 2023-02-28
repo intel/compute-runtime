@@ -447,7 +447,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     EncodeKernelArgsBuffer<GfxFamily>::encodeKernelArgsBufferCmds(kernelArgsBufferAllocation, logicalStateHelper.get());
 
-    if (stallingCommandsOnNextFlushRequired) {
+    if (dispatchFlags.isStallingCommandsOnNextFlushRequired) {
         programStallingCommandsForBarrier(commandStreamCSR, dispatchFlags);
     }
     const bool hasDsh = hwInfo.capabilityTable.supportsImages && dsh != nullptr;
@@ -801,7 +801,6 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
 
 template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStallingCommandsForBarrier(LinearStream &cmdStream, DispatchFlags &dispatchFlags) {
-    stallingCommandsOnNextFlushRequired = false;
 
     auto barrierTimestampPacketNodes = dispatchFlags.barrierTimestampPacketNodes;
 
@@ -998,7 +997,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
 
     size += EncodeKernelArgsBuffer<GfxFamily>::getKernelArgsBufferCmdsSize(kernelArgsBufferAllocation, logicalStateHelper.get());
 
-    if (stallingCommandsOnNextFlushRequired) {
+    if (dispatchFlags.isStallingCommandsOnNextFlushRequired) {
         size += getCmdSizeForStallingCommands(dispatchFlags);
     }
 

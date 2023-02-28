@@ -347,6 +347,9 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void fillCsrDependenciesWithLastBcsPackets(CsrDependencies &csrDeps);
     void clearLastBcsPackets();
 
+    void setStallingCommandsOnNextFlush(bool isStallingCommandsOnNextFlushRequired) { stallingCommandsOnNextFlushRequired = isStallingCommandsOnNextFlushRequired; }
+    bool isStallingCommandsOnNextFlushRequired() const { return stallingCommandsOnNextFlushRequired; }
+
     // taskCount of last task
     TaskCountType taskCount = 0;
 
@@ -448,6 +451,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
         TimestampPacketContainer lastSignalledPacket;
     };
     std::array<BcsTimestampPacketContainers, bcsInfoMaskSize> bcsTimestampPacketContainers;
+    bool stallingCommandsOnNextFlushRequired = false;
 };
 
 template <typename PtrType>

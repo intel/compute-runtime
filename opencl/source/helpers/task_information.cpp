@@ -83,7 +83,8 @@ CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminate
         false,                                                                       // textureCacheFlush
         false,                                                                       // hasStallingCmds
         false,                                                                       // hasRelaxedOrderingDependencies
-        false);                                                                      // stateCacheInvalidation
+        false,                                                                       // stateCacheInvalidation
+        commandQueue.isStallingCommandsOnNextFlushRequired());                       // isStallingCommandsOnNextFlushRequired
 
     DEBUG_BREAK_IF(taskLevel >= CompletionStamp::notReady);
 
@@ -177,6 +178,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
         BlitProperties::setupDependenciesForAuxTranslation(kernelOperation->blitPropertiesContainer, *timestampPacketDependencies,
                                                            *currentTimestampPacketNodes, csrDeps,
                                                            commandQueue.getGpgpuCommandStreamReceiver(), *bcsCsrForAuxTranslation);
+        commandQueue.setStallingCommandsOnNextFlush(true);
     }
 
     if (timestampPacketDependencies && commandQueue.isOOQEnabled()) {
@@ -218,13 +220,14 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
         commandQueue.isTextureCacheFlushNeeded(this->commandType),                        // textureCacheFlush
         false,                                                                            // hasStallingCmds
         false,                                                                            // hasRelaxedOrderingDependencies
-        false);                                                                           // stateCacheInvalidation
+        false,                                                                            // stateCacheInvalidation
+        commandQueue.isStallingCommandsOnNextFlushRequired());                            // isStallingCommandsOnNextFlushRequired
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForRootDevices(dispatchFlags.csrDependencies, commandStreamReceiver);
     }
 
-    const bool isHandlingBarrier = commandQueue.getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
+    const bool isHandlingBarrier = commandQueue.isStallingCommandsOnNextFlushRequired();
 
     if (timestampPacketDependencies) {
         if (isHandlingBarrier) {
@@ -265,6 +268,7 @@ CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool term
 
     if (isHandlingBarrier) {
         commandQueue.clearLastBcsPackets();
+        commandQueue.setStallingCommandsOnNextFlush(false);
     }
 
     if (kernelOperation->blitPropertiesContainer.size() > 0) {
@@ -352,7 +356,7 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
         enqueueOperationType = EnqueueProperties::Operation::Blit;
 
         UNRECOVERABLE_IF(!barrierNodes);
-        if (commandStreamReceiver.isStallingCommandsOnNextFlushRequired()) {
+        if (commandQueue.isStallingCommandsOnNextFlushRequired()) {
             barrierNodes->add(commandStreamReceiver.getTimestampPacketAllocator()->getTag());
         }
     }
@@ -393,13 +397,14 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
         false,                                                                 // textureCacheFlush
         false,                                                                 // hasStallingCmds
         false,                                                                 // hasRelaxedOrderingDependencies
-        false);                                                                // stateCacheInvalidation
+        false,                                                                 // stateCacheInvalidation
+        commandQueue.isStallingCommandsOnNextFlushRequired());                 // isStallingCommandsOnNextFlushRequired
 
     if (commandQueue.getContext().getRootDeviceIndices().size() > 1) {
         eventsRequest.fillCsrDependenciesForRootDevices(dispatchFlags.csrDependencies, commandStreamReceiver);
     }
 
-    const bool isHandlingBarrier = commandQueue.getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
+    const bool isHandlingBarrier = commandQueue.isStallingCommandsOnNextFlushRequired();
 
     if (commandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         if (isHandlingBarrier) {
@@ -421,6 +426,7 @@ CompletionStamp &CommandWithoutKernel::submit(TaskCountType taskLevel, bool term
 
     if (isHandlingBarrier) {
         commandQueue.clearLastBcsPackets();
+        commandQueue.setStallingCommandsOnNextFlush(false);
     }
 
     if (kernelOperation->blitEnqueue) {

@@ -403,6 +403,29 @@ HWTEST_F(DispatchFlagsBlitTests, givenBlitOperationWhenEnqueueCommandWithoutKern
     auto expectedValue = mockCmdQ->getGpgpuCommandStreamReceiver().getDcFlushSupport();
     EXPECT_EQ(expectedValue, mockCsr->passedDispatchFlags.stateCacheInvalidation);
 }
+HWTEST_F(DispatchFlagsBlitTests, givenBlitOperationWhenEnqueueCommandWithoutKernelThenDispatchFlagIsStallingCommandsOnNextFlushRequiredIsSetCorrectly) {
+    using CsrType = MockCsrHw2<FamilyType>;
+    setUpImpl<CsrType>();
+    REQUIRE_FULL_BLITTER_OR_SKIP(device->getRootDeviceEnvironment());
+
+    auto mockCmdQ = std::make_unique<MockCommandQueueHw<FamilyType>>(context.get(), device.get(), nullptr);
+    auto mockCsr = static_cast<CsrType *>(&mockCmdQ->getGpgpuCommandStreamReceiver());
+    auto &bcsCsr = *mockCmdQ->bcsEngines[0]->commandStreamReceiver;
+
+    auto blocking = true;
+    TimestampPacketDependencies timestampPacketDependencies;
+    EventsRequest eventsRequest(0, nullptr, nullptr);
+    EventBuilder eventBuilder;
+    CsrDependencies csrDeps;
+    mockCmdQ->setStallingCommandsOnNextFlush(true);
+
+    BlitPropertiesContainer blitPropertiesContainer;
+
+    EnqueueProperties enqueueProperties(true, false, false, false, false, &blitPropertiesContainer);
+    mockCmdQ->enqueueCommandWithoutKernel(nullptr, 0, &mockCmdQ->getCS(0), 0, blocking, enqueueProperties, timestampPacketDependencies,
+                                          eventsRequest, eventBuilder, 0, csrDeps, &bcsCsr);
+    EXPECT_TRUE(mockCsr->passedDispatchFlags.isStallingCommandsOnNextFlushRequired);
+}
 
 HWTEST_F(DispatchFlagsBlitTests, givenN1EnabledWhenDispatchingWithoutKernelThenAllowOutOfOrderExecution) {
     using CsrType = MockCsrHw2<FamilyType>;

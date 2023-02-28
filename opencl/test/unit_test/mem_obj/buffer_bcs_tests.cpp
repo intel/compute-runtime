@@ -634,7 +634,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(this->bcsCsr);
 
     auto queueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&cmdQ->getGpgpuCommandStreamReceiver());
-    queueCsr->stallingCommandsOnNextFlushRequired = true;
+    cmdQ->setStallingCommandsOnNextFlush(true);
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
@@ -714,9 +714,9 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWhenReleasingMultipleBlockedEnque
     };
 
     auto &csrStream = cmdQ->getGpgpuCommandStreamReceiver().getCS(0);
-    EXPECT_TRUE(cmdQ->getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired());
+    EXPECT_TRUE(cmdQ->isStallingCommandsOnNextFlushRequired());
     userEvent0.setStatus(CL_COMPLETE);
-    EXPECT_FALSE(cmdQ->getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired());
+    EXPECT_FALSE(cmdQ->isStallingCommandsOnNextFlushRequired());
     EXPECT_TRUE(pipeControlLookup(csrStream, 0, device->getRootDeviceEnvironment()));
 
     auto csrOffset = csrStream.getUsed();
@@ -732,8 +732,7 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlocked
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));
     auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(this->bcsCsr);
 
-    auto queueCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(&cmdQ->getGpgpuCommandStreamReceiver());
-    queueCsr->stallingCommandsOnNextFlushRequired = true;
+    cmdQ->setStallingCommandsOnNextFlush(true);
 
     cl_int retVal = CL_SUCCESS;
     auto buffer = clUniquePtr<Buffer>(Buffer::create(bcsMockContext.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));

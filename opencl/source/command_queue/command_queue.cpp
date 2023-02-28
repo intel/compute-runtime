@@ -1288,7 +1288,7 @@ WaitStatus CommandQueue::waitForAllEngines(bool blockedQueue, PrintfHandler *pri
 }
 
 void CommandQueue::setupBarrierTimestampForBcsEngines(aub_stream::EngineType engineType, TimestampPacketDependencies &timestampPacketDependencies) {
-    if (!getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired()) {
+    if (!isStallingCommandsOnNextFlushRequired()) {
         return;
     }
 

@@ -418,7 +418,7 @@ HWTEST_F(OoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequeste
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
-    cmdQHw->getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    cmdQHw->setStallingCommandsOnNextFlush(true);
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},
@@ -517,7 +517,7 @@ HWTEST_F(IoqCommandQueueHwBlitTest, givenSplitBcsCopyWhenEnqueueReadWithRequeste
     auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
     memoryManager->returnFakeAllocation = true;
     auto cmdQHw = static_cast<MockCommandQueueHw<FamilyType> *>(this->pCmdQ);
-    cmdQHw->getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    cmdQHw->setStallingCommandsOnNextFlush(true);
 
     std::unique_ptr<OsContext> osContext1(OsContext::create(pDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.get(), pDevice->getRootDeviceIndex(), 0,
                                                             EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS1, EngineUsage::Regular},

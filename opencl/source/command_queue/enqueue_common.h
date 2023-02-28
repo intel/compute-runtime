@@ -250,7 +250,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         processDispatchForCacheFlush(surfacesForResidency, numSurfaceForResidency, &commandStream, csrDeps);
     } else if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         if (CL_COMMAND_BARRIER == commandType) {
-            computeCommandStreamReceiver.requestStallingCommandsOnNextFlush();
+            setStallingCommandsOnNextFlush(true);
         }
 
         for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
@@ -593,6 +593,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForBlitAuxTranslation(CommandStre
         BlitProperties::setupDependenciesForAuxTranslation(blitPropertiesContainer, timestampPacketDependencies,
                                                            *this->timestampPacketContainer, csrDeps,
                                                            getGpgpuCommandStreamReceiver(), bcsCsr);
+        setStallingCommandsOnNextFlush(true);
     }
 
     eventsRequest.setupBcsCsrForOutputEvent(bcsCsr);
@@ -848,7 +849,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         isTextureCacheFlushNeeded(commandType),                                                                 // textureCacheFlush
         false,                                                                                                  // hasStallingCmds
         false,                                                                                                  // hasRelaxedOrderingDependencies
-        false);                                                                                                 // stateCacheInvalidation
+        false,                                                                                                  // stateCacheInvalidation
+        isStallingCommandsOnNextFlushRequired());                                                               // isStallingCommandsOnNextFlushRequired
 
     dispatchFlags.pipelineSelectArgs.mediaSamplerRequired = mediaSamplerRequired;
     dispatchFlags.pipelineSelectArgs.systolicPipelineSelectMode = systolicPipelineSelectMode;
@@ -857,7 +859,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     dispatchFlags.disableEUFusion = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion ||
                                     device->getProductHelper().isFusedEuDisabledForDpas(systolicPipelineSelectMode, lws, groupCount);
 
-    const bool isHandlingBarrier = getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
+    const bool isHandlingBarrier = isStallingCommandsOnNextFlushRequired();
 
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled() && !clearDependenciesForSubCapture) {
         if (isHandlingBarrier) {
@@ -910,6 +912,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
 
     if (isHandlingBarrier) {
         clearLastBcsPackets();
+        setStallingCommandsOnNextFlush(false);
     }
 
     if (gtpinIsGTPinInitialized()) {
@@ -1102,9 +1105,10 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             false,                                                               // textureCacheFlush
             false,                                                               // hasStallingCmds
             false,                                                               // hasRelaxedOrderingDependencies
-            stateCacheInvalidationNeeded);                                       // stateCacheInvalidation
+            stateCacheInvalidationNeeded,                                        // stateCacheInvalidation
+            isStallingCommandsOnNextFlushRequired());                            // isStallingCommandsOnNextFlushRequired
 
-        const bool isHandlingBarrier = getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired();
+        const bool isHandlingBarrier = isStallingCommandsOnNextFlushRequired();
 
         if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
             if (isHandlingBarrier) {
@@ -1125,6 +1129,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
 
         if (isHandlingBarrier) {
             clearLastBcsPackets();
+            setStallingCommandsOnNextFlush(false);
         }
     }
 
@@ -1218,7 +1223,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
     DEBUG_BREAK_IF(copyEngines.size() == 0);
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
-    if (isOOQEnabled() && getGpgpuCommandStreamReceiver().isStallingCommandsOnNextFlushRequired()) {
+    if (isOOQEnabled() && isStallingCommandsOnNextFlushRequired()) {
         NullSurface s;
         Surface *surfaces[] = {&s};
         BuiltinOpParams params{};

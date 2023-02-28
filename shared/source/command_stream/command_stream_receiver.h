@@ -173,9 +173,6 @@ class CommandStreamReceiver {
     GraphicsAllocation *getWorkPartitionAllocation() const { return workPartitionAllocation; }
     GraphicsAllocation *getKernelArgsBufferAllocation() const { return kernelArgsBufferAllocation; }
 
-    void requestStallingCommandsOnNextFlush() { stallingCommandsOnNextFlushRequired = true; }
-    bool isStallingCommandsOnNextFlushRequired() const { return stallingCommandsOnNextFlushRequired; }
-
     virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) = 0;
     virtual WaitStatus waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait);
     WaitStatus baseWaitFunction(volatile TagAddressType *pollAddress, const WaitParams &params, TaskCountType taskCountToWait);
@@ -504,7 +501,6 @@ class CommandStreamReceiver {
     bool heapStorageRequiresRecyclingTag = false;
     bool mediaVfeStateDirty = true;
     bool lastVmeSubslicesConfig = false;
-    bool stallingCommandsOnNextFlushRequired = false;
     bool timestampPacketWriteEnabled = false;
     bool staticWorkPartitioningEnabled = false;
     bool nTo1SubmissionModelEnabled = false;

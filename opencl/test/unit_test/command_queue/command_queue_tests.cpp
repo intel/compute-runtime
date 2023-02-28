@@ -2262,7 +2262,7 @@ TEST_F(CommandQueueWithTimestampPacketTests, givenInOrderQueueWhenSetupBarrierTi
     EXPECT_EQ(0u, dependencies.barrierNodes.peekNodes().size());
 
     // Add barrier node
-    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    queue.setStallingCommandsOnNextFlush(true);
     queue.setupBarrierTimestampForBcsEngines(aub_stream::EngineType::ENGINE_RCS, dependencies);
     EXPECT_EQ(1u, dependencies.barrierNodes.peekNodes().size());
     auto node1 = dependencies.barrierNodes.peekNodes()[0];
@@ -2283,7 +2283,7 @@ TEST_F(CommandQueueWithTimestampPacketTests, givenOutOfOrderQueueWhenSetupBarrie
     MockContext context{};
     MockCommandQueue queue{&context, context.getDevice(0), props, false};
     TimestampPacketDependencies dependencies{};
-    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    queue.setStallingCommandsOnNextFlush(true);
     for (auto &containers : queue.bcsTimestampPacketContainers) {
         EXPECT_TRUE(containers.lastBarrierToWaitFor.peekNodes().empty());
     }
@@ -2309,7 +2309,7 @@ TEST_F(CommandQueueWithTimestampPacketTests, givenOutOfOrderQueueWhenSetupBarrie
     MockContext context{};
     MockCommandQueue queue{&context, context.getDevice(0), props, false};
     TimestampPacketDependencies dependencies{};
-    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    queue.setStallingCommandsOnNextFlush(true);
     for (auto &containers : queue.bcsTimestampPacketContainers) {
         EXPECT_TRUE(containers.lastBarrierToWaitFor.peekNodes().empty());
     }
@@ -2319,7 +2319,7 @@ TEST_F(CommandQueueWithTimestampPacketTests, givenOutOfOrderQueueWhenSetupBarrie
     auto barrierNode = dependencies.barrierNodes.peekNodes()[0];
     EXPECT_EQ(1u, barrierNode->getContextEndValue(0u));
     dependencies.moveNodesToNewContainer(*queue.getDeferredTimestampPackets());
-    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    queue.setStallingCommandsOnNextFlush(true);
     barrierNode->incRefCount();
     barrierNode->incRefCount();
     barrierNode->incRefCount();
@@ -2332,7 +2332,7 @@ TEST_F(CommandQueueWithTimestampPacketTests, givenOutOfOrderQueueWhenSetupBarrie
     barrierNode = dependencies.barrierNodes.peekNodes()[0];
     EXPECT_EQ(1u, barrierNode->getContextEndValue(0u));
     dependencies.moveNodesToNewContainer(*queue.getDeferredTimestampPackets());
-    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    queue.setStallingCommandsOnNextFlush(true);
 
     queue.setupBarrierTimestampForBcsEngines(aub_stream::EngineType::ENGINE_BCS, dependencies);
     EXPECT_NE(1u, barrierNode->getContextEndValue(0u));
@@ -2346,7 +2346,7 @@ TEST_F(CommandQueueWithTimestampPacketTests, givenOutOfOrderQueueWhenSetupBarrie
     MockContext context{};
     MockCommandQueue queue{&context, context.getDevice(0), props, false};
     TimestampPacketDependencies dependencies{};
-    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    queue.setStallingCommandsOnNextFlush(true);
     for (auto &containers : queue.bcsTimestampPacketContainers) {
         EXPECT_TRUE(containers.lastBarrierToWaitFor.peekNodes().empty());
     }
@@ -2387,7 +2387,7 @@ TEST_F(CommandQueueWithTimestampPacketTests, givenOutOfOrderQueueWhenBarrierTime
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
     MockContext context{};
     MockCommandQueue queue{&context, context.getDevice(0), props, false};
-    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    queue.setStallingCommandsOnNextFlush(true);
 
     for (auto engineType : {aub_stream::EngineType::ENGINE_RCS,
                             aub_stream::EngineType::ENGINE_CCS}) {
@@ -2404,7 +2404,7 @@ TEST_F(CommandQueueWithTimestampPacketTests, givenOutOfOrderQueueWhenBarrierTime
     const cl_queue_properties props[3] = {CL_QUEUE_PROPERTIES, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE, 0};
     MockContext context{};
     MockCommandQueue queue{&context, context.getDevice(0), props, false};
-    queue.getGpgpuCommandStreamReceiver().requestStallingCommandsOnNextFlush();
+    queue.setStallingCommandsOnNextFlush(true);
 
     TimestampPacketDependencies dependencies{};
     queue.setupBarrierTimestampForBcsEngines(aub_stream::EngineType::ENGINE_BCS, dependencies);
