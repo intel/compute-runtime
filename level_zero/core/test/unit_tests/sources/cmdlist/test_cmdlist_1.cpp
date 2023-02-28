@@ -2399,6 +2399,10 @@ TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDef
 
     bool expectedDoubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(device->getHwInfo());
     EXPECT_EQ(expectedDoubleSbaWa, commandList->doubleSbaWa);
+
+    auto expectedHeapAddressModel = l0GfxCoreHelper.getPlatformHeapAddressModel();
+    EXPECT_EQ(expectedHeapAddressModel, commandList->cmdListHeapAddressModel);
+    EXPECT_EQ(expectedHeapAddressModel, commandList->commandContainer.getHeapAddressModel());
 }
 
 } // namespace ult

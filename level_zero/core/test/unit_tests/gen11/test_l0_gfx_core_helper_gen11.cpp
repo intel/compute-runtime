@@ -46,5 +46,10 @@ GEN11TEST_F(L0GfxCoreHelperTestGen11, GivenGen11WhenCheckingL0HelperForRayTracin
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsRayTracing());
 }
 
+GEN11TEST_F(L0GfxCoreHelperTestGen11, GivenGen11WhenGettingPlatformDefaultHeapAddressModelThenReturnPrivateHeaps) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(NEO::HeapAddressModel::PrivateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel());
+}
+
 } // namespace ult
 } // namespace L0

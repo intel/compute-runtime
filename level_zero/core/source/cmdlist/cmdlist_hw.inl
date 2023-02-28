@@ -180,6 +180,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->defaultMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
     this->l1CachePolicyData.init(productHelper);
     commandContainer.l1CachePolicyData = &this->l1CachePolicyData;
+    this->cmdListHeapAddressModel = L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment);
+    commandContainer.setHeapAddressModel(this->cmdListHeapAddressModel);
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());

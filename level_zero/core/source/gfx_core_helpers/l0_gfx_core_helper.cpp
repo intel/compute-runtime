@@ -95,6 +95,14 @@ bool L0GfxCoreHelper::useSignalAllEventPackets(const NEO::HardwareInfo &hwInfo) 
     return true;
 }
 
+NEO::HeapAddressModel L0GfxCoreHelper::getHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) {
+    if (NEO::DebugManager.flags.SelectCmdListHeapAddressModel.get() != -1) {
+        return static_cast<NEO::HeapAddressModel>(NEO::DebugManager.flags.SelectCmdListHeapAddressModel.get());
+    }
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+    return l0GfxCoreHelper.getPlatformHeapAddressModel();
+}
+
 } // namespace L0
 
 template <>

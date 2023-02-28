@@ -10,6 +10,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/heap_base_address_model.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/stackvec.h"
@@ -339,6 +340,7 @@ struct CommandList : _ze_command_list_handle_t {
 
     ze_command_list_flags_t flags = 0u;
     NEO::EngineGroupType engineGroupType;
+    NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::PrivateHeaps;
 
     bool indirectAllocationsAllowed = false;
     bool internalUsage = false;

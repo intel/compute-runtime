@@ -2007,6 +2007,9 @@ TEST_F(CommandQueueCreate, givenCreatedCommandQueueWhenGettingTrackingFlagsThenD
     bool expectedDoubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(device->getHwInfo());
     EXPECT_EQ(expectedDoubleSbaWa, commandQueue->doubleSbaWa);
 
+    auto expectedHeapAddressModel = l0GfxCoreHelper.getPlatformHeapAddressModel();
+    EXPECT_EQ(expectedHeapAddressModel, commandQueue->cmdListHeapAddressModel);
+
     commandQueue->destroy();
 }
 

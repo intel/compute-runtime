@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/heap_base_address_model.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/indirect_heap/indirect_heap_type.h"
 
@@ -160,6 +161,14 @@ class CommandContainer : public NonCopyableOrMovableClass {
         return dynamicStateHeapReserveData;
     }
 
+    void setHeapAddressModel(HeapAddressModel newValue) {
+        heapAddressModel = newValue;
+    }
+
+    HeapAddressModel getHeapAddressModel() const {
+        return heapAddressModel;
+    }
+
     HeapContainer sshAllocations;
     uint64_t currentLinearStreamStartOffset = 0u;
     uint32_t slmSize = std::numeric_limits<uint32_t>::max();
@@ -203,6 +212,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
     uint32_t numIddsPerBlock = 64;
+    HeapAddressModel heapAddressModel = HeapAddressModel::PrivateHeaps;
 
     bool isFlushTaskUsedForImmediate = false;
     bool isHandleFenceCompletionRequired = false;

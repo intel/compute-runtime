@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/api_gfx_core_helper.h"
+#include "shared/source/helpers/heap_base_address_model.h"
 
 #include "level_zero/tools/source/debug/eu_thread.h"
 #include <level_zero/ze_api.h>
@@ -48,6 +49,8 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     static bool useCompactL3FlushEventPacket(const NEO::HardwareInfo &hwInfo);
     static bool useDynamicEventPacketsCount(const NEO::HardwareInfo &hwInfo);
     static bool useSignalAllEventPackets(const NEO::HardwareInfo &hwInfo);
+    static NEO::HeapAddressModel getHeapAddressModel(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
+
     virtual void setAdditionalGroupProperty(ze_command_queue_group_properties_t &groupProperty, NEO::EngineGroupT &group) const = 0;
     virtual L0::Event *createEvent(L0::EventPool *eventPool, const ze_event_desc_t *desc, L0::Device *device) const = 0;
 
@@ -69,6 +72,7 @@ class L0GfxCoreHelper : public NEO::ApiGfxCoreHelper {
     virtual bool isZebinAllowed(const NEO::Debugger *debugger) const = 0;
     virtual uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
+    virtual NEO::HeapAddressModel getPlatformHeapAddressModel() const = 0;
 
   protected:
     L0GfxCoreHelper() = default;
@@ -102,6 +106,7 @@ class L0GfxCoreHelperHw : public L0GfxCoreHelper {
     bool isZebinAllowed(const NEO::Debugger *debugger) const override;
     uint32_t getEventMaxKernelCount(const NEO::HardwareInfo &hwInfo) const override;
     uint32_t getEventBaseMaxPacketCount(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
+    NEO::HeapAddressModel getPlatformHeapAddressModel() const override;
 
   protected:
     L0GfxCoreHelperHw() = default;

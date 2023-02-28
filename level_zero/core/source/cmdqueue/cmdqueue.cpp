@@ -96,6 +96,7 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
         this->stateBaseAddressTracking = L0GfxCoreHelper::enableStateBaseAddressTracking(rootDeviceEnvironment);
         auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
         this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
+        this->cmdListHeapAddressModel = L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment);
     }
     return returnValue;
 }

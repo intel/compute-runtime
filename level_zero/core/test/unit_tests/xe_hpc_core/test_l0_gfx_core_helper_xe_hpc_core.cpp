@@ -59,5 +59,10 @@ XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenCheckingL0HelperForRay
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsRayTracing());
 }
 
+XE_HPC_CORETEST_F(L0GfxCoreHelperTestXeHpc, GivenXeHpcWhenGettingPlatformDefaultHeapAddressModelThenReturnPrivateHeaps) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(NEO::HeapAddressModel::PrivateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel());
+}
+
 } // namespace ult
 } // namespace L0

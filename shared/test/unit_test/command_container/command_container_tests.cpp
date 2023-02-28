@@ -1570,3 +1570,14 @@ TEST_F(CommandContainerTest, givenCmdContainerWhenFillReusableAllocationListsAnd
     cmdContainer.reset();
     allocList.freeAllGraphicsAllocations(pDevice);
 }
+
+TEST_F(CommandContainerHeapStateTests, givenCmdContainerWhenSettingHeapAddressModelThenGeterReturnsTheSameValue) {
+    myCommandContainer.setHeapAddressModel(HeapAddressModel::GlobalStateless);
+    EXPECT_EQ(HeapAddressModel::GlobalStateless, myCommandContainer.getHeapAddressModel());
+
+    myCommandContainer.setHeapAddressModel(HeapAddressModel::GlobalBindless);
+    EXPECT_EQ(HeapAddressModel::GlobalBindless, myCommandContainer.getHeapAddressModel());
+
+    myCommandContainer.setHeapAddressModel(HeapAddressModel::GlobalBindful);
+    EXPECT_EQ(HeapAddressModel::GlobalBindful, myCommandContainer.getHeapAddressModel());
+}

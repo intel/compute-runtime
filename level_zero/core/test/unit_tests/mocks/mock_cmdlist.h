@@ -43,6 +43,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::appendWriteKernelTimestamp;
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::clearCommandsToPatch;
+    using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdQImmediate;
     using BaseClass::commandContainer;
     using BaseClass::commandListPerThreadScratchSize;
@@ -134,6 +135,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using BaseClass = L0::CommandListCoreFamilyImmediate<gfxCoreFamily>;
     using BaseClass::clearCommandsToPatch;
+    using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdQImmediate;
     using BaseClass::commandsToPatch;
     using BaseClass::compactL3FlushEventPacket;
@@ -173,6 +175,7 @@ template <>
 struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass = ::L0::CommandListImp;
     using BaseClass::BaseClass;
+    using BaseClass::cmdListHeapAddressModel;
     using BaseClass::cmdQImmediate;
     using BaseClass::commandContainer;
     using BaseClass::commandListPreemptionMode;

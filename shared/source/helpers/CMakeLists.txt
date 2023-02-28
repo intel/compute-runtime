@@ -76,6 +76,7 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/hash.h
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner.h
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_assigner.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/heap_base_address_model.h
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_helper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/heap_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper.cpp

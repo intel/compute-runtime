@@ -24,48 +24,46 @@ HWTEST_EXCLUDE_PRODUCT(L0GfxCoreHelperTest, givenBitmaskWithAttentionBitsForAllE
 HWTEST_EXCLUDE_PRODUCT(L0GfxCoreHelperTest, givenEu0To1Threads0To3BitmaskWhenGettingThreadsThenCorrectThreadsAreReturned, IGFX_XE_HPG_CORE);
 HWTEST_EXCLUDE_PRODUCT(L0GfxCoreHelperTest, givenBitmaskWithAttentionBitsForHalfOfThreadsWhenGettingThreadsThenCorrectThreadsAreReturned, IGFX_XE_HPG_CORE);
 
-using L0GfxCoreHelperTestXeHpg = ::testing::Test;
+using L0GfxCoreHelperTestXeHpg = Test<DeviceFixture>;
 
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForMultiTileCapablePlatformThenReturnFalse) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_FALSE(l0GfxCoreHelper.multiTileCapablePlatform());
 }
 
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnTrue) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsCmdListHeapSharing());
 }
 
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgcWhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnTrue) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsStateComputeModeTracking());
 }
 
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForFrontEndTrackingSupportThenReturnTrue) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsFrontEndTracking());
 }
 
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForPipelineSelectTrackingSupportThenReturnTrue) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsPipelineSelectTracking());
 }
 
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForStateBaseAddressTrackingSupportThenReturnFalse) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsStateBaseAddressTracking());
 }
 
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForRayTracingSupportThenReturnTrue) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsRayTracing());
+}
+
+XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenGettingPlatformDefaultHeapAddressModelThenReturnPrivateHeaps) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(NEO::HeapAddressModel::PrivateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel());
 }
 
 } // namespace ult

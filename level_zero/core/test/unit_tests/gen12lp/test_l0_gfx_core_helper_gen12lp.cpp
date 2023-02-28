@@ -21,47 +21,46 @@ HWTEST_EXCLUDE_PRODUCT(L0GfxCoreHelperTest, givenBitmaskWithAttentionBitsForAllE
 HWTEST_EXCLUDE_PRODUCT(L0GfxCoreHelperTest, givenEu0To1Threads0To3BitmaskWhenGettingThreadsThenCorrectThreadsAreReturned, IGFX_GEN12LP_CORE);
 HWTEST_EXCLUDE_PRODUCT(L0GfxCoreHelperTest, givenBitmaskWithAttentionBitsForHalfOfThreadsWhenGettingThreadsThenCorrectThreadsAreReturned, IGFX_GEN12LP_CORE);
 
-using L0GfxCoreHelperTestGen12Lp = ::testing::Test;
+using L0GfxCoreHelperTestGen12Lp = Test<DeviceFixture>;
 
 GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnFalse) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
 
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsCmdListHeapSharing());
 }
 
 GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForStateComputeModeTrackingSupportThenReturnFalse) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
 
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsStateComputeModeTracking());
 }
 
 GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForFrontEndTrackingSupportThenReturnFalse) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
 
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsFrontEndTracking());
 }
 
 GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForPipelineSelectTrackingSupportThenReturnFalse) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
 
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsPipelineSelectTracking());
 }
 
 GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForStateBaseAddressTrackingSupportThenReturnFalse) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsStateBaseAddressTracking());
 }
 
 GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenCheckingL0HelperForRayTracingSupportThenReturnFalse) {
-    MockExecutionEnvironment executionEnvironment;
-    auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
 
     EXPECT_FALSE(l0GfxCoreHelper.platformSupportsRayTracing());
+}
+
+GEN12LPTEST_F(L0GfxCoreHelperTestGen12Lp, GivenGen12LpWhenGettingPlatformDefaultHeapAddressModelThenReturnPrivateHeaps) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_EQ(NEO::HeapAddressModel::PrivateHeaps, l0GfxCoreHelper.getPlatformHeapAddressModel());
 }
 
 } // namespace ult

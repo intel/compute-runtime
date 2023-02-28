@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/heap_base_address_model.h"
+
 #include <level_zero/ze_api.h>
 
 #include <mutex>
@@ -69,6 +71,8 @@ struct CommandQueue : _ze_command_queue_handle_t {
     uint32_t clientId = clientNotRegistered;
     uint32_t partitionCount = 1;
     uint32_t activeSubDevices = 1;
+    NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::PrivateHeaps;
+
     bool preemptionCmdSyncProgramming = true;
     bool commandQueueDebugCmdsProgrammed = false;
     bool isCopyOnlyCommandQueue = false;

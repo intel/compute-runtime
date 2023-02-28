@@ -797,5 +797,36 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultValueForSignal
     EXPECT_TRUE(defaultValue);
 }
 
+TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingDefaultHeapModelThenUsePlatformDefaultHeapModel) {
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+
+    EXPECT_EQ(l0GfxCoreHelper.getPlatformHeapAddressModel(), L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
+}
+
+TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGettingDefaultHeapModelThenUseDebugKeySelectedModel) {
+    DebugManagerStateRestore restorer;
+
+    MockExecutionEnvironment executionEnvironment;
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+
+    DebugManager.flags.SelectCmdListHeapAddressModel.set(0);
+
+    EXPECT_EQ(NEO::HeapAddressModel::PrivateHeaps, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
+
+    DebugManager.flags.SelectCmdListHeapAddressModel.set(1);
+
+    EXPECT_EQ(NEO::HeapAddressModel::GlobalStateless, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
+
+    DebugManager.flags.SelectCmdListHeapAddressModel.set(2);
+
+    EXPECT_EQ(NEO::HeapAddressModel::GlobalBindless, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
+
+    DebugManager.flags.SelectCmdListHeapAddressModel.set(3);
+
+    EXPECT_EQ(NEO::HeapAddressModel::GlobalBindful, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
+}
+
 } // namespace ult
 } // namespace L0
