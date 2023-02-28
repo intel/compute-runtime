@@ -2016,6 +2016,14 @@ TEST_F(DeviceHas64BitAtomicTest, givenDeviceWithSupportForInteger64BitAtomicsThe
 struct MockMemoryManagerMultiDevice : public MemoryManagerMock {
     MockMemoryManagerMultiDevice(NEO::ExecutionEnvironment &executionEnvironment) : MemoryManagerMock(const_cast<NEO::ExecutionEnvironment &>(executionEnvironment)) {}
 
+    bool hasPageFaultsEnabled(const NEO::Device &neoDevice) override {
+        if (DebugManager.flags.EnableRecoverablePageFaults.get() != -1) {
+            return DebugManager.flags.EnableRecoverablePageFaults.get();
+        }
+
+        return false;
+    }
+
     bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) override {
         if (DebugManager.flags.UseKmdMigration.get() != -1) {
             return DebugManager.flags.UseKmdMigration.get();

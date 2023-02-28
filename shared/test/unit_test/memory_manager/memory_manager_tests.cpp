@@ -19,6 +19,13 @@
 
 using namespace NEO;
 
+TEST(MemoryManagerTest, WhenCallingHasPageFaultsEnabledThenReturnFalse) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    MockDevice device;
+    EXPECT_FALSE(memoryManager.hasPageFaultsEnabled(device));
+}
+
 TEST(MemoryManagerTest, WhenCallingIsAllocationTypeToCaptureThenScratchAndPrivateTypesReturnTrue) {
     MockMemoryManager mockMemoryManager;
 

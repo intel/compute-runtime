@@ -150,6 +150,21 @@ TEST_P(MemoryManagerMultiDeviceSharedHandleTest, whenCreatingAllocationFromShare
     memoryManager->freeGraphicsMemory(gfxAllocation1);
 }
 
+TEST_F(DrmMemoryManagerTest, whenCallingHasPageFaultsEnabledThenReturnCorrectValue) {
+    DebugManagerStateRestore dbgState;
+
+    EXPECT_FALSE(memoryManager->hasPageFaultsEnabled(*device));
+
+    for (auto debugFlag : {-1, 0, 1}) {
+        DebugManager.flags.EnableRecoverablePageFaults.set(debugFlag);
+        if (debugFlag == 1) {
+            EXPECT_TRUE(memoryManager->hasPageFaultsEnabled(*device));
+        } else {
+            EXPECT_FALSE(memoryManager->hasPageFaultsEnabled(*device));
+        }
+    }
+}
+
 TEST_F(DrmMemoryManagerTest, givenEnableDirectSubmissionWhenCreateDrmMemoryManagerThenGemCloseWorkerInactive) {
     DebugManagerStateRestore dbgState;
     DebugManager.flags.EnableDirectSubmission.set(1);

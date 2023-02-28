@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 
 #include "shared/source/command_stream/command_stream_receiver.h"
+#include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/cache_settings_helper.h"
@@ -235,6 +236,11 @@ void DrmMemoryManager::releaseGpuRange(void *address, size_t unmapSize, uint32_t
     graphicsAddress = gmmHelper->decanonize(graphicsAddress);
     auto gfxPartition = getGfxPartition(rootDeviceIndex);
     gfxPartition->freeGpuAddressRange(graphicsAddress, unmapSize);
+}
+
+bool DrmMemoryManager::hasPageFaultsEnabled(const Device &neoDevice) {
+    auto *drm = neoDevice.getRootDeviceEnvironment().osInterface->getDriverModel()->as<Drm>();
+    return drm->hasPageFaultSupport();
 }
 
 bool DrmMemoryManager::isKmdMigrationAvailable(uint32_t rootDeviceIndex) {

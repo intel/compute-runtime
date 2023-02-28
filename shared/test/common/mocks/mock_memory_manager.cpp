@@ -195,6 +195,13 @@ void MockMemoryManager::forceLimitedRangeAllocator(uint32_t rootDeviceIndex, uin
     getGfxPartition(rootDeviceIndex)->init(range, 0, 0, gfxPartitions.size());
 }
 
+bool MockMemoryManager::hasPageFaultsEnabled(const Device &neoDevice) {
+    if (DebugManager.flags.EnableRecoverablePageFaults.get() != -1) {
+        return !!DebugManager.flags.EnableRecoverablePageFaults.get();
+    }
+    return false;
+}
+
 bool MockMemoryManager::isKmdMigrationAvailable(uint32_t rootDeviceIndex) {
     if (DebugManager.flags.UseKmdMigration.get() != -1) {
         return !!DebugManager.flags.UseKmdMigration.get();

@@ -189,6 +189,7 @@ class MemoryManager {
     bool isLocalMemorySupported(uint32_t rootDeviceIndex) const;
     virtual bool isMemoryBudgetExhausted() const;
 
+    virtual bool hasPageFaultsEnabled(const Device &neoDevice) { return false; }
     virtual bool isKmdMigrationAvailable(uint32_t rootDeviceIndex) { return false; }
 
     virtual AlignedMallocRestrictions *getAlignedMallocRestrictions() {
