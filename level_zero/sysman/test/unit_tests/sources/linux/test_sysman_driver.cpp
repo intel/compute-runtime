@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/string.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -74,8 +75,8 @@ struct SysmanDriverTestMultipleFamilySupport : public ::testing::Test {
 
 TEST_F(SysmanDriverTestMultipleFamilySupport, whenInitializingSysmanDriverWithArrayOfDevicesThenDriverIsInitializedOnlyWithThoseSupported) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
-        std::string str = "/sys/devices/pci0000:00/0000:00:02.0";
-        buf = const_cast<char *>(str.c_str());
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:02.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0");
         return buf;
     });
 
@@ -142,8 +143,8 @@ struct SysmanDriverTestNoDeviceCreate : public ::testing::Test {
 
 TEST_F(SysmanDriverTestNoDeviceCreate, GivenReadLinkSysCallFailWhenInitializingSysmanDriverWithArrayOfDevicesThenSysmanDeviceCreateFailAndDriverIsNull) {
     VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
-        std::string str = "/sys/devices/pci0000:00/0000:00:02.0";
-        buf = const_cast<char *>(str.c_str());
+        constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:02.0");
+        strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0");
         return buf;
     });
 
@@ -173,8 +174,8 @@ TEST_F(SysmanDriverTestNoDeviceCreate, GivenRealpathSysCallFailWhenInitializingS
 struct SysmanDriverHandleTest : public ::testing::Test {
     void SetUp() override {
         VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
-            std::string str = "/sys/devices/pci0000:00/0000:00:02.0";
-            buf = const_cast<char *>(str.c_str());
+            constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:02.0");
+            strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0");
             return buf;
         });
 

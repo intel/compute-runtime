@@ -45,8 +45,8 @@ class SysmanDeviceFixture : public ::testing::Test {
   public:
     void SetUp() override {
         VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
-            std::string str = "/sys/devices/pci0000:00/0000:00:02.0";
-            buf = const_cast<char *>(str.c_str());
+            constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:02.0");
+            strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0");
             return buf;
         });
 
@@ -90,8 +90,8 @@ class SysmanMultiDeviceFixture : public ::testing::Test {
   public:
     void SetUp() override {
         VariableBackup<decltype(NEO::SysCalls::sysCallsRealpath)> mockRealPath(&NEO::SysCalls::sysCallsRealpath, [](const char *path, char *buf) -> char * {
-            std::string str = "/sys/devices/pci0000:00/0000:00:02.0";
-            buf = const_cast<char *>(str.c_str());
+            constexpr size_t sizeofPath = sizeof("/sys/devices/pci0000:00/0000:00:02.0");
+            strcpy_s(buf, sizeofPath, "/sys/devices/pci0000:00/0000:00:02.0");
             return buf;
         });
 
