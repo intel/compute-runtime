@@ -64,13 +64,6 @@ void EncodeDispatchKernel<Family>::adjustInterfaceDescriptorData(INTERFACE_DESCR
             } else {
                 interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_2);
             }
-
-            uint32_t exponent = INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1 - interfaceDescriptor.getThreadGroupDispatchSize();
-            uint32_t threadGroupDispatchSize = 1u << exponent;
-
-            if ((dispatchedTotalThreadCount % (numberOfThreadsInThreadGroup * threadGroupDispatchSize)) != 0) {
-                interfaceDescriptor.setThreadGroupDispatchSize(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1);
-            }
         }
     }
 

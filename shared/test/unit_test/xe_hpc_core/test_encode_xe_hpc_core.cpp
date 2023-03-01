@@ -642,23 +642,6 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenNumberOfThreadsInThreadGroupAn
     }
 }
 
-XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenIndivisibleDispatchSizeWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsCorrectlySet) {
-    using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
-
-    const auto &productHelper = pDevice->getProductHelper();
-    auto hwInfo = pDevice->getHardwareInfo();
-    hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, hwInfo);
-
-    const uint32_t threadGroupCount = 343u;
-    const uint32_t numGrf = GrfConfig::DefaultGrfNumber;
-    INTERFACE_DESCRIPTOR_DATA iddArg = FamilyType::cmdInitInterfaceDescriptorData;
-    iddArg.setNumberOfThreadsInGpgpuThreadGroup(18u);
-
-    EncodeDispatchKernel<FamilyType>::adjustInterfaceDescriptorData(iddArg, *pDevice, hwInfo, threadGroupCount, numGrf);
-
-    EXPECT_EQ(INTERFACE_DESCRIPTOR_DATA::THREAD_GROUP_DISPATCH_SIZE_TG_SIZE_1, iddArg.getThreadGroupDispatchSize());
-}
-
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenThreadGroupCountZeroWhenCallingAdjustInterfaceDescriptorDataThenThreadGroupDispatchSizeIsSetToDefault) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
 
