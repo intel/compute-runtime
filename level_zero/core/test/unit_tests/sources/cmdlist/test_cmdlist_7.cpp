@@ -483,12 +483,12 @@ HWTEST2_F(CommandListCreate, givenFlushErrorWhenPerformingCpuMemoryCopyThenError
 
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
     CpuMemCopyInfo cpuMemCopyInfo(nullptr, nullptr, 8);
-    returnValue = commandList0->performCpuMemcpy(cpuMemCopyInfo, nullptr, 1, nullptr);
+    returnValue = commandList0->performCpuMemcpy(cpuMemCopyInfo, nullptr, 6, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
 
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
 
-    returnValue = commandList0->performCpuMemcpy(cpuMemCopyInfo, nullptr, 1, nullptr);
+    returnValue = commandList0->performCpuMemcpy(cpuMemCopyInfo, nullptr, 6, nullptr);
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY, returnValue);
 }
 
@@ -2491,6 +2491,12 @@ class MockAppendMemoryLockedCopyTestImmediateCmdList : public MockCommandListImm
         return MockCommandListImmediateHw<gfxCoreFamily>::appendBarrier(hEvent, numWaitEvents, phWaitEvents);
     }
 
+    void synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t *waitEventList) override {
+        synchronizeEventListCalled++;
+        MockCommandListImmediateHw<gfxCoreFamily>::synchronizeEventList(numWaitEvents, waitEventList);
+    }
+
+    uint32_t synchronizeEventListCalled = 0;
     uint32_t appendBarrierCalled = 0;
     uint32_t appendMemoryCopyKernelWithGACalled = 0;
 };
@@ -2595,18 +2601,66 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithD
     cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
 
+    constexpr uint32_t numEvents = 5;
+
     ze_event_pool_desc_t eventPoolDesc = {};
-    eventPoolDesc.count = 1;
+    eventPoolDesc.count = numEvents;
 
     ze_event_desc_t eventDesc = {};
     eventDesc.index = 0;
     ze_result_t returnValue = ZE_RESULT_SUCCESS;
     auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    auto event = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
-    auto phEvent = event->toHandle();
-    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, 1, &phEvent, false);
+
+    std::unique_ptr<L0::Event> events[numEvents] = {};
+    ze_event_handle_t waitlist[numEvents] = {};
+
+    for (uint32_t i = 0; i < numEvents; i++) {
+        events[i] = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+        waitlist[i] = events[i]->toHandle();
+    }
+
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, numEvents, waitlist, false);
     EXPECT_EQ(cmdList.appendBarrierCalled, 1u);
+    EXPECT_EQ(cmdList.synchronizeEventListCalled, 0u);
+}
+
+HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithDependencyWithinThresholdThenWaitOnHost, IsAtLeastSkl) {
+    DebugManagerStateRestore restore;
+
+    MockAppendMemoryLockedCopyTestImmediateCmdList<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    cmdList.csr = device->getNEODevice()->getInternalEngine().commandStreamReceiver;
+
+    constexpr uint32_t numEvents = 4;
+
+    ze_event_pool_desc_t eventPoolDesc = {};
+    eventPoolDesc.count = numEvents;
+
+    ze_event_desc_t eventDesc = {};
+    eventDesc.index = 0;
+    ze_result_t returnValue = ZE_RESULT_SUCCESS;
+    auto eventPool = std::unique_ptr<L0::EventPool>(EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    std::unique_ptr<L0::Event> events[numEvents] = {};
+    ze_event_handle_t waitlist[numEvents] = {};
+
+    for (uint32_t i = 0; i < numEvents; i++) {
+        events[i] = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
+        events[i]->hostSignal();
+        waitlist[i] = events[i]->toHandle();
+    }
+
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, numEvents, waitlist, false);
+    EXPECT_EQ(cmdList.appendBarrierCalled, 0u);
+    EXPECT_EQ(cmdList.synchronizeEventListCalled, 1u);
+
+    DebugManager.flags.ExperimentalCopyThroughLockWaitlistSizeThreshold.set(numEvents - 1);
+
+    cmdList.appendMemoryCopy(devicePtr, nonUsmHostPtr, 2 * MemoryConstants::kiloByte, nullptr, numEvents, waitlist, false);
+    EXPECT_EQ(cmdList.appendBarrierCalled, 1u);
+    EXPECT_EQ(cmdList.synchronizeEventListCalled, 1u);
 }
 
 HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListAndCpuMemcpyWithoutDependencyThenAppendBarrierNotCalled, IsAtLeastSkl) {

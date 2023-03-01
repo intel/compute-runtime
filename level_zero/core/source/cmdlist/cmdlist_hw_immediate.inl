@@ -788,9 +788,19 @@ ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::performCpuMemcpy(cons
         return ZE_RESULT_ERROR_UNKNOWN;
     }
 
-    bool needsBarrier = (numWaitEvents > 0);
-    if (needsBarrier) {
-        this->appendBarrier(nullptr, numWaitEvents, phWaitEvents);
+    if (numWaitEvents > 0) {
+        uint32_t numEventsThreshold = 5;
+        if (NEO::DebugManager.flags.ExperimentalCopyThroughLockWaitlistSizeThreshold.get() != -1) {
+            numEventsThreshold = static_cast<uint32_t>(NEO::DebugManager.flags.ExperimentalCopyThroughLockWaitlistSizeThreshold.get());
+        }
+
+        bool waitOnHost = !this->dependenciesPresent && (numWaitEvents < numEventsThreshold);
+
+        if (waitOnHost) {
+            this->synchronizeEventList(numWaitEvents, phWaitEvents);
+        } else {
+            this->appendBarrier(nullptr, numWaitEvents, phWaitEvents);
+        }
     }
 
     if (this->dependenciesPresent) {
