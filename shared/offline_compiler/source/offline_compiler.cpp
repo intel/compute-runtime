@@ -435,6 +435,7 @@ int OfflineCompiler::initHardwareInfoForDeprecatedAcronyms(std::string deviceNam
             hwInfo = *hardwareInfoTable[product];
             if (revisionId != -1) {
                 hwInfo.platform.usRevId = revisionId;
+                hwInfo.ipVersion.revision = revisionId;
             }
             compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
             uint64_t config = hwInfoConfig ? hwInfoConfig : compilerProductHelper->getHwInfoConfig(hwInfo);
@@ -463,7 +464,7 @@ int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
     } else if (isArgumentDeviceId(deviceName)) {
         deviceID = std::stoi(deviceName, 0, 16);
         productConfig = argHelper->productConfigHelper->getProductConfigForDeviceId(deviceID);
-    } else if (argHelper->productConfigHelper->isProductConfig(deviceName)) {
+    } else if (argHelper->productConfigHelper->isProductConfig(deviceName) && (revisionId == -1)) {
         productConfig = ProductConfigHelper::getProductConfigForAcronym(deviceName);
     } else {
         return INVALID_DEVICE;

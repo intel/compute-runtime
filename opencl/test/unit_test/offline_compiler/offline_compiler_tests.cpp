@@ -581,9 +581,36 @@ TEST_F(MockOfflineCompilerTests, givenDeprecatedAcronymsWithRevisionWhenInitHwIn
     for (const auto &acronym : deprecatedAcronyms) {
         mockOfflineCompiler.deviceName = acronym.str();
         mockOfflineCompiler.revisionId = 0x3;
-        EXPECT_EQ(mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName), OclocErrorCode::SUCCESS);
-        EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, mockOfflineCompiler.revisionId);
+        EXPECT_EQ(OclocErrorCode::SUCCESS, mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName));
+        EXPECT_EQ(mockOfflineCompiler.revisionId, static_cast<decltype(mockOfflineCompiler.revisionId)>(mockOfflineCompiler.hwInfo.platform.usRevId));
+        EXPECT_EQ(mockOfflineCompiler.revisionId, static_cast<decltype(mockOfflineCompiler.revisionId)>(mockOfflineCompiler.hwInfo.ipVersion.revision));
     }
+}
+
+TEST_F(MockOfflineCompilerTests, givenValidAcronymAndRevisionIdWhenInitHardwareInfoForProductConfigThenInvalidDeviceIsReturned) {
+    MockOfflineCompiler mockOfflineCompiler;
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &deviceMapConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
+            if (!deviceMapConfig.deviceAcronyms.empty()) {
+                mockOfflineCompiler.deviceName = deviceMapConfig.deviceAcronyms.front().str();
+                break;
+            } else if (!deviceMapConfig.rtlIdAcronyms.empty()) {
+                mockOfflineCompiler.deviceName = deviceMapConfig.rtlIdAcronyms.front().str();
+                break;
+            }
+        }
+    }
+    if (mockOfflineCompiler.deviceName.empty()) {
+        GTEST_SKIP();
+    }
+
+    mockOfflineCompiler.revisionId = 0x3;
+    EXPECT_EQ(OclocErrorCode::INVALID_DEVICE, mockOfflineCompiler.initHardwareInfoForProductConfig(mockOfflineCompiler.deviceName));
 }
 
 TEST_F(MockOfflineCompilerTests, givenHwInfoConfigWhenSetHwInfoForProductConfigThenCorrectValuesAreSet) {
