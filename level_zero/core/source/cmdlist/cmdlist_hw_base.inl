@@ -279,4 +279,10 @@ void CommandListCoreFamily<gfxCoreFamily>::appendEventForProfilingAllWalkers(Eve
     }
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline NEO::PreemptionMode CommandListCoreFamily<gfxCoreFamily>::obtainKernelPreemptionMode(Kernel *kernel) {
+    NEO::PreemptionFlags flags = NEO::PreemptionHelper::createPreemptionLevelFlags(*device->getNEODevice(), &kernel->getImmutableData()->getDescriptor());
+    return NEO::PreemptionHelper::taskPreemptionMode(device->getDevicePreemptionMode(), flags);
+}
+
 } // namespace L0

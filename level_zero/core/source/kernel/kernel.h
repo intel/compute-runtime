@@ -162,6 +162,13 @@ struct Kernel : _ze_kernel_handle_t, virtual NEO::DispatchKernelEncoderI {
     static Kernel *fromHandle(ze_kernel_handle_t handle) { return static_cast<Kernel *>(handle); }
 
     inline ze_kernel_handle_t toHandle() { return this; }
+
+    bool isMidThreadPreemptionDisallowedForRayTracingKernels() const {
+        return midThreadPreemptionDisallowedForRayTracingKernels;
+    }
+
+  protected:
+    bool midThreadPreemptionDisallowedForRayTracingKernels = false;
 };
 
 using KernelAllocatorFn = Kernel *(*)(Module *module);

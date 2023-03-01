@@ -170,7 +170,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     commandListPerThreadPrivateScratchSize = std::max<uint32_t>(commandListPerThreadPrivateScratchSize, kernelDescriptor.kernelAttributes.perThreadScratchSize[1]);
 
     auto kernelPreemptionMode = obtainKernelPreemptionMode(kernel);
-    commandListPreemptionMode = std::min(commandListPreemptionMode, kernelPreemptionMode);
 
     kernel->patchGlobalOffset();
 
@@ -291,7 +290,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         dsh,                                                    // dynamicStateHeap
         reinterpret_cast<const void *>(threadGroupDimensions),  // threadGroupDimensions
         &additionalCommands,                                    // additionalCommands
-        commandListPreemptionMode,                              // preemptionMode
+        kernelPreemptionMode,                                   // preemptionMode
         this->partitionCount,                                   // partitionCount
         launchParams.isIndirect,                                // isIndirect
         launchParams.isPredicate,                               // isPredicate

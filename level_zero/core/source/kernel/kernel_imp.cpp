@@ -954,7 +954,7 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
         }
         this->residencyContainer.push_back(neoDevice->getRTMemoryBackedBuffer());
     }
-
+    this->midThreadPreemptionDisallowedForRayTracingKernels = productHelper.isMidThreadPreemptionDisallowedForRayTracingKernels();
     return ZE_RESULT_SUCCESS;
 }
 

@@ -50,6 +50,7 @@ struct WhiteBox<::L0::Kernel> : public ::L0::KernelImp {
     using ::L0::KernelImp::groupSize;
     using ::L0::KernelImp::kernelImmData;
     using ::L0::KernelImp::kernelRequiresGenerationOfLocalIdsByRuntime;
+    using ::L0::KernelImp::midThreadPreemptionDisallowedForRayTracingKernels;
     using ::L0::KernelImp::module;
     using ::L0::KernelImp::numThreadsPerThreadGroup;
     using ::L0::KernelImp::patchBindlessSurfaceState;

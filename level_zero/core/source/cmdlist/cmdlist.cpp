@@ -154,11 +154,6 @@ void CommandList::eraseResidencyContainerEntry(NEO::GraphicsAllocation *allocati
     }
 }
 
-NEO::PreemptionMode CommandList::obtainKernelPreemptionMode(Kernel *kernel) {
-    NEO::PreemptionFlags flags = NEO::PreemptionHelper::createPreemptionLevelFlags(*device->getNEODevice(), &kernel->getImmutableData()->getDescriptor());
-    return NEO::PreemptionHelper::taskPreemptionMode(device->getDevicePreemptionMode(), flags);
-}
-
 void CommandList::migrateSharedAllocations() {
     auto deviceImp = static_cast<DeviceImp *>(device);
     DriverHandleImp *driverHandleImp = static_cast<DriverHandleImp *>(deviceImp->getDriverHandle());

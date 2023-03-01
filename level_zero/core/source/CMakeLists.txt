@@ -126,6 +126,12 @@ if(SUPPORT_GEN12LP OR SUPPORT_XE_HP_CORE OR SUPPORT_XE_HPG_CORE)
   )
 endif()
 
+if(SUPPORT_XE_HPG_CORE OR SUPPORT_XE_HPC_CORE)
+  list(APPEND L0_RUNTIME_SOURCES
+       ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_dg2_and_pvc.inl
+  )
+endif()
+
 if(SUPPORT_PVC_AND_LATER)
   list(APPEND L0_RUNTIME_SOURCES
        ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helpers/l0_gfx_core_helper_pvc_and_later.inl
