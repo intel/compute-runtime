@@ -10,15 +10,8 @@
 
 namespace NEO {
 
-void HwDeviceIdDrm::closeFileDescriptor() {
-    if (fileDescriptor > 0) {
-        SysCalls::close(fileDescriptor);
-        fileDescriptor = -1;
-    }
-}
-
 HwDeviceIdDrm::~HwDeviceIdDrm() {
-    closeFileDescriptor();
+    SysCalls::close(fileDescriptor);
 }
 
 } // namespace NEO

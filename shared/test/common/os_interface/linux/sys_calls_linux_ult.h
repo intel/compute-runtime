@@ -28,5 +28,6 @@ constexpr int fakeFileDescriptor = 123;
 extern int passedFileDescriptorFlagsToSet;
 extern int getFileDescriptorFlagsCalled;
 extern int setFileDescriptorFlagsCalled;
+extern uint32_t closeFuncCalled;
 } // namespace SysCalls
 } // namespace NEO

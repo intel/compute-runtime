@@ -12,12 +12,14 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
 
+#include "level_zero/sysman/source/linux/hw_device_id_linux.h"
+
 namespace L0 {
 namespace ult {
-constexpr int mockFd = 0;
+constexpr int mockFd = -1;
 class SysmanMockDrm : public NEO::Drm {
   public:
-    SysmanMockDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<NEO::HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {
+    SysmanMockDrm(NEO::RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<L0::Sysman::SysmanHwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {
         setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
     }
 };

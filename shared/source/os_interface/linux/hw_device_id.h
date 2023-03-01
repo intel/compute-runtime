@@ -19,13 +19,17 @@ class HwDeviceIdDrm : public HwDeviceId {
     HwDeviceIdDrm(int fileDescriptorIn, const char *pciPathIn)
         : HwDeviceId(DriverModelType::DRM),
           fileDescriptor(fileDescriptorIn), pciPath(pciPathIn) {}
+    HwDeviceIdDrm(int fileDescriptorIn, const char *pciPathIn, const char *devNodePathIn)
+        : HwDeviceId(DriverModelType::DRM),
+          fileDescriptor(fileDescriptorIn), pciPath(pciPathIn), devNodePath(devNodePathIn) {}
     ~HwDeviceIdDrm() override;
     int getFileDescriptor() const { return fileDescriptor; }
-    void closeFileDescriptor();
     const char *getPciPath() const { return pciPath.c_str(); }
+    const char *getDeviceNode() const { return devNodePath.c_str(); }
 
   protected:
     int fileDescriptor;
     const std::string pciPath;
+    const std::string devNodePath;
 };
 } // namespace NEO

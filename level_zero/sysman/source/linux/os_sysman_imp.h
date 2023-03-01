@@ -9,10 +9,15 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
+#include "level_zero/sysman/source/linux/hw_device_id_linux.h"
 #include "level_zero/sysman/source/os_sysman.h"
 #include "level_zero/sysman/source/sysman_device_imp.h"
 
 #include <map>
+
+namespace NEO {
+class Drm;
+} // namespace NEO
 
 namespace L0 {
 namespace Sysman {
@@ -36,6 +41,8 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
     PlatformMonitoringTech *getPlatformMonitoringTechAccess(uint32_t subDeviceId);
     PRODUCT_FAMILY getProductFamily() const { return pParentSysmanDeviceImp->getProductFamily(); }
+    SysmanHwDeviceIdDrm *getSysmanHwDeviceId();
+    NEO::Drm *getDrm();
     void releasePmtObject();
     ze_result_t createPmtHandles();
     std::string devicePciBdf = "";

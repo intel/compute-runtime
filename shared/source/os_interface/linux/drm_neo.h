@@ -102,7 +102,6 @@ class Drm : public DriverModel {
 
     MOCKABLE_VIRTUAL void checkPreemptionSupport();
     inline int getFileDescriptor() const { return hwDeviceId->getFileDescriptor(); }
-    inline void closeFileDescriptor() const { return hwDeviceId->closeFileDescriptor(); }
     ADAPTER_BDF getAdapterBDF() const {
         return adapterBDF;
     }
@@ -259,6 +258,7 @@ class Drm : public DriverModel {
     void cleanup() override;
     bool readSysFsAsString(const std::string &relativeFilePath, std::string &readString);
     MOCKABLE_VIRTUAL std::string getSysFsPciPath();
+    std::unique_ptr<HwDeviceIdDrm> &getHwDeviceId() { return hwDeviceId; }
 
   protected:
     Drm(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceIdIn, RootDeviceEnvironment &rootDeviceEnvironment);

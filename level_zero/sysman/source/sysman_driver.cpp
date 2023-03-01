@@ -14,6 +14,7 @@
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/sysman/source/sysman_driver_handle_imp.h"
 #include "level_zero/sysman/source/sysman_driver_imp.h"
+#include "level_zero/sysman/source/sysman_hw_device_id.h"
 
 #include <cstring>
 #include <vector>
@@ -43,7 +44,12 @@ void SysmanDriverImp::initialize(ze_result_t *result) {
         executionEnvironment->prepareRootDeviceEnvironments(static_cast<uint32_t>(hwDeviceIds.size()));
         uint32_t rootDeviceIndex = 0u;
         for (auto &hwDeviceId : hwDeviceIds) {
-            if (!executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initOsInterface(std::move(hwDeviceId), rootDeviceIndex)) {
+
+            auto sysmanHwDeviceId = createSysmanHwDeviceId(hwDeviceId);
+            auto initStatus = sysmanHwDeviceId != nullptr &&
+                              executionEnvironment->rootDeviceEnvironments[rootDeviceIndex]->initOsInterface(std::move(sysmanHwDeviceId), rootDeviceIndex);
+
+            if (!initStatus) {
                 NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
                                       "OsInterface initialization failed for device : %d\n", rootDeviceIndex);
                 *result = ZE_RESULT_ERROR_UNINITIALIZED;

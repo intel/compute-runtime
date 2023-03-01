@@ -484,10 +484,10 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     return 0;
 }
 
-void appendHwDeviceId(std::vector<std::unique_ptr<HwDeviceId>> &hwDeviceIds, int fileDescriptor, const char *pciPath) {
+void appendHwDeviceId(std::vector<std::unique_ptr<HwDeviceId>> &hwDeviceIds, int fileDescriptor, const char *pciPath, const char *devNodePath) {
     if (fileDescriptor >= 0) {
         if (Drm::isDrmSupported(fileDescriptor)) {
-            hwDeviceIds.push_back(std::make_unique<HwDeviceIdDrm>(fileDescriptor, pciPath));
+            hwDeviceIds.push_back(std::make_unique<HwDeviceIdDrm>(fileDescriptor, pciPath, devNodePath));
         } else {
             SysCalls::close(fileDescriptor);
         }
@@ -524,7 +524,7 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
 
             auto pciPath = NEO::getPciPath(fileDescriptor);
 
-            appendHwDeviceId(hwDeviceIds, fileDescriptor, pciPath.value_or("0000:00:02.0").c_str());
+            appendHwDeviceId(hwDeviceIds, fileDescriptor, pciPath.value_or("0000:00:02.0").c_str(), path.c_str());
             if (!hwDeviceIds.empty() && hwDeviceIds.size() == numRootDevices) {
                 break;
             }
@@ -564,7 +564,7 @@ std::vector<std::unique_ptr<HwDeviceId>> Drm::discoverDevices(ExecutionEnvironme
                 }
             }
             int fileDescriptor = SysCalls::open(file->c_str(), O_RDWR);
-            appendHwDeviceId(hwDeviceIds, fileDescriptor, pciPath.c_str());
+            appendHwDeviceId(hwDeviceIds, fileDescriptor, pciPath.c_str(), file->c_str());
             if (!hwDeviceIds.empty() && hwDeviceIds.size() == numRootDevices) {
                 break;
             }

@@ -18,6 +18,7 @@
 #include "level_zero/sysman/source/linux/os_sysman_imp.h"
 #include "level_zero/sysman/source/sysman_device.h"
 #include "level_zero/sysman/source/sysman_driver_handle_imp.h"
+#include "level_zero/sysman/test/unit_tests/sources/linux/mock_sysman_drm.h"
 
 #include "gtest/gtest.h"
 
@@ -25,14 +26,6 @@ using namespace NEO;
 
 namespace L0 {
 namespace ult {
-constexpr int mockFd = 0;
-class SysmanMockDrm : public Drm {
-  public:
-    SysmanMockDrm(RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std::make_unique<HwDeviceIdDrm>(mockFd, ""), rootDeviceEnvironment) {
-        setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);
-    }
-};
-
 class PublicLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
   public:
     using LinuxSysmanImp::mapOfSubDeviceIdToPmtObject;

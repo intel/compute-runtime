@@ -33,8 +33,9 @@ ze_result_t LinuxSysmanImp::init() {
     if (osInterface.getDriverModel()->getDriverModelType() != NEO::DriverModelType::DRM) {
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
-    auto pDrm = osInterface.getDriverModel()->as<NEO::Drm>();
-    int myDeviceFd = pDrm->getFileDescriptor();
+    auto sysmanHwDeviceId = getSysmanHwDeviceId();
+    sysmanHwDeviceId->openFileDescriptor();
+    int myDeviceFd = sysmanHwDeviceId->getFileDescriptor();
     std::string myDeviceName;
     result = pProcfsAccess->getFileName(pProcfsAccess->myProcessId(), myDeviceFd, myDeviceName);
     if (ZE_RESULT_SUCCESS != result) {
@@ -53,8 +54,17 @@ ze_result_t LinuxSysmanImp::init() {
 
     osInterface.getDriverModel()->as<NEO::Drm>()->cleanup();
     // Close Drm handles
-    pDrm->closeFileDescriptor();
+    sysmanHwDeviceId->closeFileDescriptor();
     return createPmtHandles();
+}
+
+SysmanHwDeviceIdDrm *LinuxSysmanImp::getSysmanHwDeviceId() {
+    return static_cast<SysmanHwDeviceIdDrm *>(getDrm()->getHwDeviceId().get());
+}
+
+NEO::Drm *LinuxSysmanImp::getDrm() {
+    const auto &osInterface = *pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
+    return osInterface.getDriverModel()->as<NEO::Drm>();
 }
 
 ze_result_t LinuxSysmanImp::createPmtHandles() {
