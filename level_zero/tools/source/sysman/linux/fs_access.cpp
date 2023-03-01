@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -196,15 +196,6 @@ bool FsAccess::fileExists(const std::string file) {
         return false;
     }
     return true;
-}
-
-ze_result_t FsAccess::getFileMode(const std::string file, ::mode_t &mode) {
-    struct stat sb;
-    if (0 != stat(file.c_str(), &sb)) {
-        return getResult(errno);
-    }
-    mode = sb.st_mode;
-    return ZE_RESULT_SUCCESS;
 }
 
 ze_result_t FsAccess::readSymLink(const std::string path, std::string &val) {
@@ -413,11 +404,6 @@ ze_result_t SysfsAccess::canRead(const std::string file) {
 ze_result_t SysfsAccess::canWrite(const std::string file) {
     // Prepend sysfs directory path and call the base canWrite
     return FsAccess::canWrite(fullPath(file));
-}
-
-ze_result_t SysfsAccess::getFileMode(const std::string file, ::mode_t &mode) {
-    // Prepend sysfs directory path and call the base getFileMode
-    return FsAccess::getFileMode(fullPath(file), mode);
 }
 
 ze_result_t SysfsAccess::read(const std::string file, std::string &val) {
