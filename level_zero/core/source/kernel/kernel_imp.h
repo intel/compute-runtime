@@ -14,6 +14,7 @@
 #include "level_zero/core/source/kernel/kernel.h"
 
 #include <memory>
+#include <mutex>
 
 namespace L0 {
 
@@ -230,6 +231,7 @@ struct KernelImp : Kernel {
     std::unique_ptr<NEO::ImplicitArgs> pImplicitArgs;
 
     std::unique_ptr<KernelExt> pExtension;
+    std::mutex printfLock;
 };
 
 } // namespace L0

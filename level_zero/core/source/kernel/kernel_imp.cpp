@@ -974,6 +974,7 @@ void KernelImp::createPrintfBuffer() {
 }
 
 void KernelImp::printPrintfOutput(bool hangDetected) {
+    std::lock_guard<std::mutex> lock(this->printfLock);
     PrintfHandler::printOutput(kernelImmData, this->printfBuffer, module->getDevice(), hangDetected);
 }
 
