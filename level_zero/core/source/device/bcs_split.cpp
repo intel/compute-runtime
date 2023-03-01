@@ -115,6 +115,7 @@ std::vector<CommandQueue *> &BcsSplit::getCmdQsForSplit(NEO::TransferDirection d
 }
 
 size_t BcsSplit::Events::obtainForSplit(Context *context, size_t maxEventCountInPool) {
+    std::lock_guard<std::mutex> lock(this->mtx);
     for (size_t i = 0; i < this->marker.size(); i++) {
         auto ret = this->marker[i]->queryStatus();
         if (ret == ZE_RESULT_SUCCESS) {

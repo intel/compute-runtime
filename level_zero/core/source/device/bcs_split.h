@@ -37,6 +37,7 @@ struct BcsSplit {
     struct Events {
         BcsSplit &bcsSplit;
 
+        std::mutex mtx;
         std::vector<EventPool *> pools;
         std::vector<Event *> barrier;
         std::vector<Event *> subcopy;
