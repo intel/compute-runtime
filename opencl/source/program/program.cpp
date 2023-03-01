@@ -11,6 +11,7 @@
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/compiler_interface/intermediate_representations.h"
+#include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/elf/ocl_elf.h"
@@ -55,6 +56,7 @@ Program::Program(Context *context, bool isBuiltIn, const ClDeviceVector &clDevic
     }
 
     buildInfos.resize(maxRootDeviceIndex + 1);
+    debuggerInfos.resize(maxRootDeviceIndex + 1);
     kernelDebugEnabled = clDevices[0]->isDebuggerActive();
 }
 std::string Program::getInternalOptions() const {
@@ -125,6 +127,8 @@ Program::~Program() {
             }
         }
     }
+
+    notifyModuleDestroy();
 
     if (context && !isBuiltIn) {
         context->decRefInternal();
@@ -564,4 +568,76 @@ const ClDeviceVector &Program::getDevicesInProgram() const {
     }
 }
 
+void Program::notifyModuleCreate() {
+    if (isBuiltIn) {
+        return;
+    }
+
+    for (const auto &device : clDevices) {
+        if (device->getDevice().getL0Debugger()) {
+
+            auto debuggerL0 = device->getDevice().getL0Debugger();
+            auto rootDeviceIndex = device->getRootDeviceIndex();
+            auto &buildInfo = this->buildInfos[rootDeviceIndex];
+            auto refBin = ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(buildInfo.unpackedDeviceBinary.get()), buildInfo.unpackedDeviceBinarySize);
+
+            if (NEO::isDeviceBinaryFormat<NEO::DeviceBinaryFormat::Zebin>(refBin)) {
+
+                createDebugZebin(rootDeviceIndex);
+                NEO::DebugData debugData;
+                debugData.vIsa = reinterpret_cast<const char *>(buildInfo.debugData.get());
+                debugData.vIsaSize = static_cast<uint32_t>(buildInfo.debugDataSize);
+                this->debuggerInfos[rootDeviceIndex].debugElfHandle = debuggerL0->registerElf(&debugData);
+
+                auto allocs = getModuleAllocations(device->getRootDeviceIndex());
+                debuggerL0->attachZebinModuleToSegmentAllocations(allocs, this->debuggerInfos[rootDeviceIndex].debugModuleHandle, this->debuggerInfos[rootDeviceIndex].debugElfHandle);
+                device->getDevice().getL0Debugger()->notifyModuleLoadAllocations(&device->getDevice(), allocs);
+
+                auto minGpuAddressAlloc = std::min_element(allocs.begin(), allocs.end(), [](const auto &alloc1, const auto &alloc2) { return alloc1->getGpuAddress() < alloc2->getGpuAddress(); });
+                this->debuggerInfos[rootDeviceIndex].moduleLoadAddress = (*minGpuAddressAlloc)->getGpuAddress();
+                debuggerL0->notifyModuleCreate(buildInfo.debugData.get(), static_cast<uint32_t>(buildInfo.debugDataSize), this->debuggerInfos[rootDeviceIndex].moduleLoadAddress);
+            }
+        }
+    }
+}
+
+void Program::notifyModuleDestroy() {
+
+    if (isBuiltIn) {
+        return;
+    }
+
+    for (const auto &device : clDevices) {
+        if (device->getDevice().getL0Debugger()) {
+            auto debuggerL0 = device->getDevice().getL0Debugger();
+            auto rootDeviceIndex = device->getRootDeviceIndex();
+            auto tempHandle = this->debuggerInfos[rootDeviceIndex].debugModuleHandle;
+
+            if (tempHandle != 0) {
+                debuggerL0->removeZebinModule(tempHandle);
+            }
+
+            debuggerL0->notifyModuleDestroy(this->debuggerInfos[rootDeviceIndex].moduleLoadAddress);
+        }
+    }
+}
+
+StackVec<NEO::GraphicsAllocation *, 32> Program::getModuleAllocations(uint32_t rootIndex) {
+    StackVec<NEO::GraphicsAllocation *, 32> allocs;
+    auto &kernelInfoArray = buildInfos[rootIndex].kernelInfoArray;
+
+    for (const auto &kernelInfo : kernelInfoArray) {
+        allocs.push_back(kernelInfo->getGraphicsAllocation());
+    }
+    GraphicsAllocation *globalsForPatching = getGlobalSurface(rootIndex);
+    GraphicsAllocation *constantsForPatching = getConstantSurface(rootIndex);
+
+    if (globalsForPatching) {
+        allocs.push_back(globalsForPatching);
+    }
+    if (constantsForPatching) {
+        allocs.push_back(constantsForPatching);
+    }
+    return allocs;
+}
 } // namespace NEO

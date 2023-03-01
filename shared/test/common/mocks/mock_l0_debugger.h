@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,11 +62,11 @@ class MockDebuggerL0Hw : public NEO::DebuggerL0Hw<GfxFamily> {
     }
 
     uint32_t registerElf(NEO::DebugData *debugData) override {
+        registerElfCount++;
+        lastReceivedElf = debugData->vIsa;
         if (elfHandleToReturn != std::numeric_limits<uint32_t>::max()) {
             return elfHandleToReturn;
         }
-        registerElfCount++;
-        lastReceivedElf = debugData->vIsa;
         return NEO::DebuggerL0Hw<GfxFamily>::registerElf(debugData);
     }
 

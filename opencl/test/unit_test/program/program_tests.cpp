@@ -581,6 +581,25 @@ TEST_F(ProgramFromBinaryTest, givenReuseKernelBinariesWhenCleanCurrentKernelInfo
     EXPECT_EQ(0u, kernelAllocMap.size());
 }
 
+TEST_F(ProgramFromBinaryTest, givenProgramWithGlobalAndConstAllocationsWhenGettingModuleAllocationsThenAllAreReturned) {
+    pProgram->build(pProgram->getDevices(), nullptr, true);
+    pProgram->processGenBinary(*pClDevice);
+    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface = new MockGraphicsAllocation();
+    pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface = new MockGraphicsAllocation();
+
+    auto allocs = pProgram->getModuleAllocations(pClDevice->getRootDeviceIndex());
+    EXPECT_EQ(pProgram->getNumKernels() + 2u, allocs.size());
+
+    auto iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].constantSurface);
+    EXPECT_NE(allocs.end(), iter);
+
+    iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].globalSurface);
+    EXPECT_NE(allocs.end(), iter);
+
+    iter = std::find(allocs.begin(), allocs.end(), pProgram->buildInfos[pClDevice->getRootDeviceIndex()].kernelInfoArray[0]->getGraphicsAllocation());
+    EXPECT_NE(allocs.end(), iter);
+}
+
 using ProgramGetNumKernelsTest = Test<NEOProgramFixture>;
 TEST_F(ProgramGetNumKernelsTest, givenProgramWithFunctionsWhenGettingNumKernelsFunctionsAreNotExposed) {
     program->resizeAndPopulateKernelInfoArray(2);

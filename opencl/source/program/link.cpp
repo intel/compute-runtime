@@ -195,6 +195,7 @@ cl_int Program::link(
         if (retVal != CL_SUCCESS) {
             break;
         }
+        notifyModuleCreate();
         updateNonUniformFlag(&*inputProgramsInternal.begin(), inputProgramsInternal.size());
     } while (false);
 

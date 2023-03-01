@@ -51,11 +51,13 @@ class MockProgram : public Program {
     using Program::context;
     using Program::createdFrom;
     using Program::createProgramFromBinary;
+    using Program::debuggerInfos;
     using Program::deviceBuildInfos;
     using Program::disableZebinIfVmeEnabled;
     using Program::enforceFallbackToPatchtokens;
     using Program::extractInternalOptions;
     using Program::getKernelInfo;
+    using Program::getModuleAllocations;
     using Program::internalOptionsToExtract;
     using Program::irBinary;
     using Program::irBinarySize;
@@ -64,6 +66,8 @@ class MockProgram : public Program {
     using Program::isSpirV;
     using Program::kernelDebugEnabled;
     using Program::linkBinary;
+    using Program::notifyModuleCreate;
+    using Program::notifyModuleDestroy;
     using Program::options;
     using Program::packDeviceBinary;
     using Program::processGenBinaries;

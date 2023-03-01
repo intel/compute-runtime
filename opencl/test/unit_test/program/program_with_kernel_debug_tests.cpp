@@ -106,8 +106,8 @@ class ProgramWithKernelDebuggingFixture {
 
     void tearDown() {}
 
-    std::unique_ptr<MockDebugProgram> program = nullptr;
     MockUnrestrictiveContext mockContext;
+    std::unique_ptr<MockDebugProgram> program = nullptr;
     MockDevice *pDevice = nullptr;
 };
 

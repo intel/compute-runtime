@@ -311,6 +311,10 @@ class Program : public BaseObject<_cl_program> {
     bool containsVmeUsage(const std::vector<KernelInfo *> &kernelInfos) const;
     void disableZebinIfVmeEnabled(std::string &options, std::string &internalOptions, const std::string &sourceCode);
 
+    void notifyModuleCreate();
+    void notifyModuleDestroy();
+
+    StackVec<NEO::GraphicsAllocation *, 32> getModuleAllocations(uint32_t rootIndex);
     bool isSpirV = false;
 
     std::unique_ptr<char[]> irBinary;
@@ -358,6 +362,14 @@ class Program : public BaseObject<_cl_program> {
     };
 
     std::vector<BuildInfo> buildInfos;
+
+    struct DebuggerInfo : public NonCopyableClass {
+        uint32_t debugModuleHandle;
+        uint32_t debugElfHandle;
+        uint64_t moduleLoadAddress;
+    };
+
+    std::vector<DebuggerInfo> debuggerInfos;
 
     bool areSpecializationConstantsInitialized = false;
     CIF::RAII::UPtr_t<CIF::Builtins::BufferSimple> specConstantsIds;

@@ -180,6 +180,7 @@ cl_int Program::build(
         if (isKernelDebugEnabled() || gtpinIsGTPinInitialized()) {
             debugNotify(deviceVector, phaseReached);
         }
+        notifyModuleCreate();
     } while (false);
 
     if (retVal != CL_SUCCESS) {
