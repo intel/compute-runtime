@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,13 @@
 
 #pragma once
 #include "level_zero/api/sysman/zes_handles_struct.h"
-#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
 #include <mutex>
 #include <vector>
 
 namespace L0 {
+namespace Sysman {
 
 struct OsSysman;
 class Power : _zes_pwr_handle_t {
@@ -38,7 +38,7 @@ struct PowerHandleContext {
     PowerHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~PowerHandleContext();
 
-    ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles, ze_device_handle_t coreDevice);
+    ze_result_t init(uint32_t subDeviceCount);
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower);
     ze_result_t powerGetCardDomain(zes_pwr_handle_t *phPower);
 
@@ -46,9 +46,10 @@ struct PowerHandleContext {
     std::vector<Power *> handleList = {};
 
   private:
-    void createHandle(ze_device_handle_t deviceHandle);
+    void createHandle(ze_bool_t isSubDevice, uint32_t subDeviceId);
     std::once_flag initPowerOnce;
     void initPower();
 };
 
+} // namespace Sysman
 } // namespace L0

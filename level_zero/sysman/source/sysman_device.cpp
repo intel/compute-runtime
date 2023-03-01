@@ -35,5 +35,21 @@ ze_result_t SysmanDevice::memoryGet(zes_device_handle_t hDevice, uint32_t *pCoun
     return pSysmanDevice->memoryGet(pCount, phMemory);
 }
 
+ze_result_t SysmanDevice::powerGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_pwr_handle_t *phPower) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    if (pSysmanDevice == nullptr) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return pSysmanDevice->powerGet(pCount, phPower);
+}
+
+ze_result_t SysmanDevice::powerGetCardDomain(zes_device_handle_t hDevice, zes_pwr_handle_t *phPower) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    if (pSysmanDevice == nullptr) {
+        return ZE_RESULT_ERROR_UNINITIALIZED;
+    }
+    return pSysmanDevice->powerGetCardDomain(phPower);
+}
+
 } // namespace Sysman
 } // namespace L0

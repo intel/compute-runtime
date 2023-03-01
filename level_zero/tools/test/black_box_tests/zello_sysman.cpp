@@ -269,6 +269,7 @@ int geteuid() {
 }
 #endif // defined(_WIN32) || defined(_WIN64)
 void testSysmanPower(ze_device_handle_t &device, std::vector<std::string> &buf, uint32_t &curDeviceIndex) {
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
     std::cout << std::endl
               << " ----  Power tests ---- " << std::endl;
     bool iamroot = (geteuid() == 0);
@@ -285,17 +286,35 @@ void testSysmanPower(ze_device_handle_t &device, std::vector<std::string> &buf, 
         zes_power_properties_t properties = {};
         VALIDATECALL(zesPowerGetProperties(handle, &properties));
         if (verbose) {
+            std::cout << "properties.onSubdevice = " << static_cast<uint32_t>(properties.onSubdevice) << std::endl;
+            std::cout << "properties.subdeviceId = " << properties.subdeviceId << std::endl;
             std::cout << "properties.canControl = " << static_cast<uint32_t>(properties.canControl) << std::endl;
             std::cout << "properties.isEnergyThresholdSupported= " << static_cast<uint32_t>(properties.isEnergyThresholdSupported) << std::endl;
             std::cout << "properties.defaultLimit= " << properties.defaultLimit << std::endl;
             std::cout << "properties.maxLimit =" << properties.maxLimit << std::endl;
             std::cout << "properties.minLimit =" << properties.minLimit << std::endl;
         }
-        zes_power_energy_counter_t energyCounter;
-        VALIDATECALL(zesPowerGetEnergyCounter(handle, &energyCounter));
-        if (verbose) {
-            std::cout << "energyCounter.energy = " << energyCounter.energy << std::endl;
-            std::cout << "energyCounter.timestamp = " << energyCounter.timestamp << std::endl;
+        int count = 5; // Measure average power 5 times
+        for (; count > 0; count--) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            zes_power_energy_counter_t energyCounter1;
+            VALIDATECALL(zesPowerGetEnergyCounter(handle, &energyCounter1));
+            std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+            zes_power_energy_counter_t energyCounter2;
+            VALIDATECALL(zesPowerGetEnergyCounter(handle, &energyCounter2));
+            auto deltaE = static_cast<float>(energyCounter2.energy - energyCounter1.energy);
+            auto deltaT = static_cast<float>(energyCounter2.timestamp - energyCounter1.timestamp);
+            float powerWatt = deltaE / deltaT;
+
+            if (verbose) {
+                std::string deviceType;
+                if (static_cast<uint32_t>(properties.onSubdevice)) {
+                    deviceType = "subDevice";
+                } else {
+                    deviceType = "rootDevice";
+                }
+                std::cout << "CurrentPower = " << powerWatt << " W for" << deviceType << std::endl;
+            }
         }
 
         if (!properties.onSubdevice) {

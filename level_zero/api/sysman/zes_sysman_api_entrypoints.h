@@ -146,25 +146,41 @@ ze_result_t zesDeviceEnumPowerDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_pwr_handle_t *phPower) {
-    return L0::SysmanDevice::powerGet(hDevice, pCount, phPower);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::powerGet(hDevice, pCount, phPower);
+    } else {
+        return L0::Sysman::SysmanDevice::powerGet(hDevice, pCount, phPower);
+    }
 }
 
 ze_result_t zesDeviceGetCardPowerDomain(
     zes_device_handle_t hDevice,
     zes_pwr_handle_t *phPower) {
-    return L0::SysmanDevice::powerGetCardDomain(hDevice, phPower);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::powerGetCardDomain(hDevice, phPower);
+    } else {
+        return L0::Sysman::SysmanDevice::powerGetCardDomain(hDevice, phPower);
+    }
 }
 
 ze_result_t zesPowerGetProperties(
     zes_pwr_handle_t hPower,
     zes_power_properties_t *pProperties) {
-    return L0::Power::fromHandle(hPower)->powerGetProperties(pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::Power::fromHandle(hPower)->powerGetProperties(pProperties);
+    } else {
+        return L0::Sysman::Power::fromHandle(hPower)->powerGetProperties(pProperties);
+    }
 }
 
 ze_result_t zesPowerGetEnergyCounter(
     zes_pwr_handle_t hPower,
     zes_power_energy_counter_t *pEnergy) {
-    return L0::Power::fromHandle(hPower)->powerGetEnergyCounter(pEnergy);
+    if (L0::sysmanInitFromCore) {
+        return L0::Power::fromHandle(hPower)->powerGetEnergyCounter(pEnergy);
+    } else {
+        return L0::Sysman::Power::fromHandle(hPower)->powerGetEnergyCounter(pEnergy);
+    }
 }
 
 ze_result_t zesPowerGetLimits(
@@ -172,7 +188,11 @@ ze_result_t zesPowerGetLimits(
     zes_power_sustained_limit_t *pSustained,
     zes_power_burst_limit_t *pBurst,
     zes_power_peak_limit_t *pPeak) {
-    return L0::Power::fromHandle(hPower)->powerGetLimits(pSustained, pBurst, pPeak);
+    if (L0::sysmanInitFromCore) {
+        return L0::Power::fromHandle(hPower)->powerGetLimits(pSustained, pBurst, pPeak);
+    } else {
+        return L0::Sysman::Power::fromHandle(hPower)->powerGetLimits(pSustained, pBurst, pPeak);
+    }
 }
 
 ze_result_t zesPowerSetLimits(
@@ -180,33 +200,53 @@ ze_result_t zesPowerSetLimits(
     const zes_power_sustained_limit_t *pSustained,
     const zes_power_burst_limit_t *pBurst,
     const zes_power_peak_limit_t *pPeak) {
-    return L0::Power::fromHandle(hPower)->powerSetLimits(pSustained, pBurst, pPeak);
+    if (L0::sysmanInitFromCore) {
+        return L0::Power::fromHandle(hPower)->powerSetLimits(pSustained, pBurst, pPeak);
+    } else {
+        return L0::Sysman::Power::fromHandle(hPower)->powerSetLimits(pSustained, pBurst, pPeak);
+    }
 }
 
 ze_result_t zesPowerGetLimitsExt(
     zes_pwr_handle_t hPower,
     uint32_t *pCount,
     zes_power_limit_ext_desc_t *pSustained) {
-    return L0::Power::fromHandle(hPower)->powerGetLimitsExt(pCount, pSustained);
+    if (L0::sysmanInitFromCore) {
+        return L0::Power::fromHandle(hPower)->powerGetLimitsExt(pCount, pSustained);
+    } else {
+        return L0::Sysman::Power::fromHandle(hPower)->powerGetLimitsExt(pCount, pSustained);
+    }
 }
 
 ze_result_t zesPowerSetLimitsExt(
     zes_pwr_handle_t hPower,
     uint32_t *pCount,
     zes_power_limit_ext_desc_t *pSustained) {
-    return L0::Power::fromHandle(hPower)->powerSetLimitsExt(pCount, pSustained);
+    if (L0::sysmanInitFromCore) {
+        return L0::Power::fromHandle(hPower)->powerSetLimitsExt(pCount, pSustained);
+    } else {
+        return L0::Sysman::Power::fromHandle(hPower)->powerSetLimitsExt(pCount, pSustained);
+    }
 }
 
 ze_result_t zesPowerGetEnergyThreshold(
     zes_pwr_handle_t hPower,
     zes_energy_threshold_t *pThreshold) {
-    return L0::Power::fromHandle(hPower)->powerGetEnergyThreshold(pThreshold);
+    if (L0::sysmanInitFromCore) {
+        return L0::Power::fromHandle(hPower)->powerGetEnergyThreshold(pThreshold);
+    } else {
+        return L0::Sysman::Power::fromHandle(hPower)->powerGetEnergyThreshold(pThreshold);
+    }
 }
 
 ze_result_t zesPowerSetEnergyThreshold(
     zes_pwr_handle_t hPower,
     double threshold) {
-    return L0::Power::fromHandle(hPower)->powerSetEnergyThreshold(threshold);
+    if (L0::sysmanInitFromCore) {
+        return L0::Power::fromHandle(hPower)->powerSetEnergyThreshold(threshold);
+    } else {
+        return L0::Sysman::Power::fromHandle(hPower)->powerSetEnergyThreshold(threshold);
+    }
 }
 
 ze_result_t zesDeviceEnumFrequencyDomains(

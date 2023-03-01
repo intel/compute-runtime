@@ -28,6 +28,11 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t init();
 
     OsSysman *pOsSysman = nullptr;
+    PowerHandleContext *pPowerHandleContext = nullptr;
+
+    ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) override;
+    ze_result_t powerGetCardDomain(zes_pwr_handle_t *phPower) override;
+
     const NEO::RootDeviceEnvironment &getRootDeviceEnvironment() const {
         return *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex];
     }
