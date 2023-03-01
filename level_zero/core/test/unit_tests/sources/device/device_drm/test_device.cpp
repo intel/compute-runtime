@@ -24,7 +24,6 @@ namespace ult {
 using LuidDeviceTest = Test<DeviceFixture>;
 
 TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureAndDRMDriverTypeThenUnsupportedReturned) {
-    DebugManager.flags.EnableL0ReadLUIDExtension.set(true);
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
@@ -32,16 +31,13 @@ TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureAndDRMDriverTypeThenUns
     deviceProperties.pNext = &deviceLuidProperties;
     ze_result_t result = device->getProperties(&deviceProperties);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
-    DebugManager.flags.EnableL0ReadLUIDExtension.set(false);
 }
 
-TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureAndDebugVariableFalseThenSuccessReturned) {
-    DebugManager.flags.EnableL0ReadLUIDExtension.set(false);
+TEST_F(LuidDeviceTest, givenLuidDevicePropertiesStructureAndStypeIsIncorrectThenpNextIsNotDereferenced) {
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface());
     neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::make_unique<NEO::MockDriverModelDRM>());
-    ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
-    ze_device_luid_ext_properties_t deviceLuidProperties = {ZE_STRUCTURE_TYPE_DEVICE_LUID_EXT_PROPERTIES};
-    deviceProperties.pNext = &deviceLuidProperties;
+    ze_device_properties_t deviceProperties = {};
+    deviceProperties.pNext = (void *)0x12345;
     ze_result_t result = device->getProperties(&deviceProperties);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
 }

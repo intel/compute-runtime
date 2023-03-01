@@ -837,19 +837,19 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
     memcpy_s(pDeviceProperties->name, ZE_MAX_DEVICE_NAME, name.c_str(), name.length() + 1);
 
     ze_base_properties_t *extendedProperties = reinterpret_cast<ze_base_properties_t *>(pDeviceProperties->pNext);
-    bool anySupportedExt = NEO::DebugManager.flags.EnableL0ReadLUIDExtension.get() || NEO::DebugManager.flags.EnableL0EuCount.get() ||
-                           NEO::DebugManager.flags.EnableL0DeviceIpVersion.get();
 
-    if (anySupportedExt) {
+    bool isDevicePropertiesStypeValid = (pDeviceProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES) ? true : false;
+
+    if (isDevicePropertiesStypeValid) {
         while (extendedProperties) {
-            if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_LUID_EXT_PROPERTIES && NEO::DebugManager.flags.EnableL0ReadLUIDExtension.get()) {
+            if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_LUID_EXT_PROPERTIES) {
                 ze_device_luid_ext_properties_t *deviceLuidProperties = reinterpret_cast<ze_device_luid_ext_properties_t *>(extendedProperties);
                 deviceLuidProperties->nodeMask = queryDeviceNodeMask();
                 ze_result_t result = queryDeviceLuid(deviceLuidProperties);
                 if (result != ZE_RESULT_SUCCESS) {
                     return result;
                 }
-            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EU_COUNT_EXT && NEO::DebugManager.flags.EnableL0EuCount.get()) {
+            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_EU_COUNT_EXT) {
                 ze_eu_count_ext_t *zeEuCountDesc = reinterpret_cast<ze_eu_count_ext_t *>(extendedProperties);
                 uint32_t numTotalEUs = hardwareInfo.gtSystemInfo.MaxEuPerSubSlice * hardwareInfo.gtSystemInfo.SubSliceCount * hardwareInfo.gtSystemInfo.SliceCount;
 
@@ -857,7 +857,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
                     numTotalEUs *= neoDevice->getNumGenericSubDevices();
                 }
                 zeEuCountDesc->numTotalEUs = numTotalEUs;
-            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT && NEO::DebugManager.flags.EnableL0DeviceIpVersion.get()) {
+            } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT) {
                 ze_device_ip_version_ext_t *zeDeviceIpVersion = reinterpret_cast<ze_device_ip_version_ext_t *>(extendedProperties);
                 NEO::Device *activeDevice = getActiveDevice();
                 auto &productHelper = activeDevice->getProductHelper();

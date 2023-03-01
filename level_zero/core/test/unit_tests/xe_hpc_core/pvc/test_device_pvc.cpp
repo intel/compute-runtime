@@ -63,9 +63,6 @@ PVCTEST_F(DeviceTestPvc, GivenPvcWhenGettingPhysicalEuSimdWidthThenReturn16) {
 }
 
 PVCTEST_F(DeviceTestPvc, givenPvcXlDeviceIdAndRevIdWhenGetDeviceIpVersion) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableL0DeviceIpVersion.set(true);
-
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_device_ip_version_ext_t zeDeviceIpVersion = {ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT};
     zeDeviceIpVersion.ipVersion = std::numeric_limits<uint32_t>::max();
@@ -87,9 +84,6 @@ PVCTEST_F(DeviceTestPvc, givenPvcXlDeviceIdAndRevIdWhenGetDeviceIpVersion) {
 }
 
 PVCTEST_F(DeviceTestPvc, givenPvcXtDeviceIdAndRevIdWhenGetDeviceIpVersion) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.EnableL0DeviceIpVersion.set(true);
-
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     ze_device_ip_version_ext_t zeDeviceIpVersion = {ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT};
     zeDeviceIpVersion.ipVersion = std::numeric_limits<uint32_t>::max();
