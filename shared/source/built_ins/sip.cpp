@@ -88,7 +88,8 @@ size_t SipKernel::getStateSaveAreaSize(Device *device) const {
     auto hdr = reinterpret_cast<const SIP::StateSaveAreaHeader *>(stateSaveAreaHeader.data());
     DEBUG_BREAK_IF(hdr->versionHeader.size * 8 != sizeof(SIP::StateSaveAreaHeader));
 
-    auto stateSaveAreaSize = hdr->regHeader.num_slices *
+    auto numSlices = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
+    auto stateSaveAreaSize = numSlices *
                                  hdr->regHeader.num_subslices_per_slice *
                                  hdr->regHeader.num_eus_per_subslice *
                                  hdr->regHeader.num_threads_per_eu *
