@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/dispatch_kernel_encoder_interface.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -93,6 +94,7 @@ DG2TEST_F(CommandEncodeStatesDg2Test, GivenVariousSlmTotalSizesAndSettingRevIDTo
         for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
             hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
             hwInfo.platform.usDeviceID = deviceId;
+            setHwInfoValuesFromConfig(0x200040005, hwInfo);
             if (DG2::isG10(hwInfo) && (revision < REVISION_B)) {
                 verifyPreferredSlmValues<FamilyType>(valuesToTestForDg2G10AStep, rootDeviceEnvironment);
             } else {

@@ -165,18 +165,17 @@ void Dg2HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
         gtSysInfo->MaxEuPerSubSlice = gtSysInfo->EUCount / gtSysInfo->SubSliceCount;
         gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
         gtSysInfo->MaxSubSlicesSupported = gtSysInfo->SubSliceCount;
-
-        gtSysInfo->L3CacheSizeInKb = 1;
-        gtSysInfo->L3BankCount = 1;
-
-        gtSysInfo->CCSInfo.IsValid = true;
-        gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
-
-        hwInfo->featureTable.ftrBcsInfo = 1;
         gtSysInfo->IsDynamicallyPopulated = true;
-        for (uint32_t slice = 0; slice < gtSysInfo->SliceCount; slice++) {
-            gtSysInfo->SliceInfo[slice].Enabled = true;
-        }
+    }
+    gtSysInfo->L3CacheSizeInKb = 1;
+    gtSysInfo->L3BankCount = 1;
+
+    gtSysInfo->CCSInfo.IsValid = true;
+    gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
+
+    hwInfo->featureTable.ftrBcsInfo = 1;
+    for (uint32_t slice = 0; slice < gtSysInfo->SliceCount; slice++) {
+        gtSysInfo->SliceInfo[slice].Enabled = true;
     }
 
     adjustHardwareInfo(hwInfo);
