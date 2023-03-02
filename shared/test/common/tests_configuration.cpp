@@ -34,6 +34,7 @@ void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, 
 
     gtSystemInfo.SliceCount = sliceCount;
     gtSystemInfo.SubSliceCount = gtSystemInfo.SliceCount * subSlicePerSliceCount;
+    gtSystemInfo.DualSubSliceCount = gtSystemInfo.SubSliceCount;
     gtSystemInfo.EUCount = gtSystemInfo.SubSliceCount * euPerSubSlice - dieRecovery;
     gtSystemInfo.ThreadCount = gtSystemInfo.EUCount * threadsPerEu;
     gtSystemInfo.MaxEuPerSubSlice = std::max(gtSystemInfo.MaxEuPerSubSlice, euPerSubSlice);
