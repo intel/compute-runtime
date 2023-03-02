@@ -33,6 +33,7 @@ class FsAccess {
 
     virtual ze_result_t canRead(const std::string file);
     virtual ze_result_t canWrite(const std::string file);
+    virtual ze_result_t getFileMode(const std::string file, ::mode_t &mode);
 
     virtual ze_result_t read(const std::string file, uint64_t &val);
     virtual ze_result_t read(const std::string file, std::string &val);
@@ -89,6 +90,7 @@ class SysfsAccess : protected FsAccess {
 
     ze_result_t canRead(const std::string file) override;
     ze_result_t canWrite(const std::string file) override;
+    ze_result_t getFileMode(const std::string file, ::mode_t &mode) override;
 
     ze_result_t read(const std::string file, std::string &val) override;
     ze_result_t read(const std::string file, int32_t &val) override;
