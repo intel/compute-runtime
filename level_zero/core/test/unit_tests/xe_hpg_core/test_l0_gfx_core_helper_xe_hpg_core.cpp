@@ -31,6 +31,11 @@ XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForMul
     EXPECT_FALSE(l0GfxCoreHelper.multiTileCapablePlatform());
 }
 
+XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgPlatformsWhenAlwaysAllocateEventInLocalMemCalledThenReturnTrue) {
+    auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
+    EXPECT_TRUE(l0GfxCoreHelper.alwaysAllocateEventInLocalMem());
+}
+
 XE_HPG_CORETEST_F(L0GfxCoreHelperTestXeHpg, GivenXeHpgWhenCheckingL0HelperForCmdListHeapSharingSupportThenReturnTrue) {
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
     EXPECT_TRUE(l0GfxCoreHelper.platformSupportsCmdListHeapSharing());

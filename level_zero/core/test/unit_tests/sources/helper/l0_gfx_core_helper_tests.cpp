@@ -686,7 +686,7 @@ HWTEST2_F(L0GfxCoreHelperTest, GivenNonMultiTilePlatformsWhenCheckingL0HelperFor
     EXPECT_FALSE(l0GfxCoreHelper.multiTileCapablePlatform());
 }
 
-HWTEST2_F(L0GfxCoreHelperTest, whenAlwaysAllocateEventInLocalMemCalledThenReturnFalse, IsNotXeHpcCore) {
+HWTEST2_F(L0GfxCoreHelperTest, whenAlwaysAllocateEventInLocalMemCalledThenReturnFalse, IsNotXeHpgOrXeHpcCore) {
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 

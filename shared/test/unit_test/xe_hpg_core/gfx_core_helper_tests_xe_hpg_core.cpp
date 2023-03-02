@@ -101,24 +101,32 @@ XE_HPG_CORETEST_F(LriHelperTestsXeHpgCore, whenProgrammingLriCommandThenExpectMm
 
 XE_HPG_CORETEST_F(GfxCoreHelperTestXeHpgCore, givenAllocDataWhenSetExtraAllocationDataThenSetLocalMemForProperTypes) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto &productHelper = getHelper<ProductHelper>();
 
-    for (int type = 0; type < static_cast<int>(AllocationType::COUNT); type++) {
-        AllocationProperties allocProperties(0, 1, static_cast<AllocationType>(type), {});
-        AllocationData allocData{};
-        allocData.flags.useSystemMemory = true;
-        allocData.flags.requiresCpuAccess = false;
+    auto hwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(REVISION_B, *hwInfo);
 
-        gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, pDevice->getRootDeviceEnvironment());
+    for (int boolState = 0; boolState < 2; boolState++) {
+        hwInfo->featureTable.flags.ftrLocalMemory = !!boolState;
+        for (int type = 0; type < static_cast<int>(AllocationType::COUNT); type++) {
+            AllocationProperties allocProperties(0, 1, static_cast<AllocationType>(type), {});
+            AllocationData allocData{};
+            allocData.flags.useSystemMemory = true;
+            allocData.flags.requiresCpuAccess = false;
 
-        if (defaultHwInfo->featureTable.flags.ftrLocalMemory &&
-            (allocProperties.allocationType == AllocationType::COMMAND_BUFFER ||
-             allocProperties.allocationType == AllocationType::RING_BUFFER ||
-             allocProperties.allocationType == AllocationType::SEMAPHORE_BUFFER)) {
-            EXPECT_FALSE(allocData.flags.useSystemMemory);
-            EXPECT_TRUE(allocData.flags.requiresCpuAccess);
-        } else {
-            EXPECT_TRUE(allocData.flags.useSystemMemory);
-            EXPECT_FALSE(allocData.flags.requiresCpuAccess);
+            gfxCoreHelper.setExtraAllocationData(allocData, allocProperties, pDevice->getRootDeviceEnvironment());
+
+            if (hwInfo->featureTable.flags.ftrLocalMemory &&
+                (allocProperties.allocationType == AllocationType::COMMAND_BUFFER ||
+                 allocProperties.allocationType == AllocationType::RING_BUFFER ||
+                 allocProperties.allocationType == AllocationType::SEMAPHORE_BUFFER ||
+                 allocProperties.allocationType == AllocationType::TIMESTAMP_PACKET_TAG_BUFFER)) {
+                EXPECT_FALSE(allocData.flags.useSystemMemory);
+                EXPECT_TRUE(allocData.flags.requiresCpuAccess);
+            } else {
+                EXPECT_TRUE(allocData.flags.useSystemMemory);
+                EXPECT_FALSE(allocData.flags.requiresCpuAccess);
+            }
         }
     }
 }
