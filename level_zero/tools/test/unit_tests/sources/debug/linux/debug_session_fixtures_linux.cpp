@@ -32,9 +32,14 @@ void DebugApiLinuxFixture::setUp(NEO::HardwareInfo *hwInfo) {
     }
     NEO::Drm::QueryTopologyData topologyData = {};
     mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
+    auto &rootDeviceEnvironment = *neoDevice->executionEnvironment->rootDeviceEnvironments[0];
+    auto gtSystemInfo = &rootDeviceEnvironment.getMutableHardwareInfo()->gtSystemInfo;
+    for (uint32_t slice = 0; slice < GT_MAX_SLICE; slice++) {
+        gtSystemInfo->SliceInfo[slice].Enabled = slice < gtSystemInfo->SliceCount;
+    }
 
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
-    neoDevice->executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
+    rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface);
+    rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 }
 
 void DebugApiLinuxMultiDeviceFixture::setUp() {
@@ -58,9 +63,14 @@ void DebugApiLinuxMultiDeviceFixture::setUp() {
 
     NEO::Drm::QueryTopologyData topologyData = {};
     mockDrm->queryTopology(neoDevice->getHardwareInfo(), topologyData);
+    auto &rootDeviceEnvironment = *neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0];
+    auto gtSystemInfo = &rootDeviceEnvironment.getMutableHardwareInfo()->gtSystemInfo;
+    for (uint32_t slice = 0; slice < GT_MAX_SLICE; slice++) {
+        gtSystemInfo->SliceInfo[slice].Enabled = slice < gtSystemInfo->SliceCount;
+    }
 
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
-    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
+    rootDeviceEnvironment.osInterface.reset(new NEO::OSInterface);
+    rootDeviceEnvironment.osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockDrm));
 }
 
 TileDebugSessionLinux *MockDebugSessionLinux::createTileSession(const zet_debug_config_t &config, L0::Device *device, L0::DebugSessionImp *rootDebugSession) {

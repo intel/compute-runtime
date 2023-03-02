@@ -113,8 +113,8 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     gtSystemInfo->MaxDualSubSlicesSupported = gtSystemInfo->MaxSubSlicesSupported;
 
     gtSystemInfo->IsDynamicallyPopulated = true;
-    for (uint32_t slice = 0; slice < gtSystemInfo->SliceCount; slice++) {
-        gtSystemInfo->SliceInfo[slice].Enabled = true;
+    for (uint32_t slice = 0; slice < GT_MAX_SLICE; slice++) {
+        gtSystemInfo->SliceInfo[slice].Enabled = slice < gtSystemInfo->SliceCount;
     }
 
     uint64_t gttSizeQuery = 0;
