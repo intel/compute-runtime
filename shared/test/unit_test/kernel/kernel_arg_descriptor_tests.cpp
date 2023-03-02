@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -446,13 +446,6 @@ TEST(PatchNonPointer, GivenUndefinedOffsetThenReturnsFalse) {
     EXPECT_FALSE((NEO::patchNonPointer<uint32_t, uint32_t>(buffer, NEO::undefined<NEO::CrossThreadDataOffset>, value)));
 }
 
-TEST(PatchNonPointer, GivenOutOfBoundsOffsetThenAbort) {
-    uint8_t buffer[64];
-    uint32_t value = 7;
-    EXPECT_THROW((NEO::patchNonPointer<uint32_t, uint32_t>(buffer, sizeof(buffer), value)), std::exception);
-    EXPECT_THROW((NEO::patchNonPointer<uint32_t, uint32_t>(buffer, sizeof(buffer) - sizeof(value) + 1, value)), std::exception);
-}
-
 TEST(PatchNonPointer, GivenValidOffsetThenPatchProperly) {
     alignas(8) uint8_t buffer[64];
     memset(buffer, 3, sizeof(buffer));
@@ -475,8 +468,7 @@ TEST(PatchVecNonPointer, GivenArrayOfOffsetsThenReturnsNumberOfValuesProperlyPat
     memset(buffer, 3, sizeof(buffer));
     NEO::CrossThreadDataOffset offsets[] = {0, 4, sizeof(buffer) - sizeof(uint32_t), NEO::undefined<NEO::CrossThreadDataOffset>};
     uint32_t values[] = {7, 11, 13, 17};
-    auto numPatched = NEO::patchVecNonPointer(buffer, offsets, values);
-    EXPECT_EQ(3U, numPatched);
+    NEO::patchVecNonPointer(buffer, offsets, values);
     alignas(8) uint8_t expected[64];
     memset(expected, 3, sizeof(expected));
     *reinterpret_cast<uint32_t *>(expected) = 7;

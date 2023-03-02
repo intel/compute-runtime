@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -282,18 +282,17 @@ inline bool patchNonPointer(ArrayRef<uint8_t> buffer, CrossThreadDataOffset loca
     if (undefined<CrossThreadDataOffset> == location) {
         return false;
     }
-    UNRECOVERABLE_IF(location + sizeof(DstT) > buffer.size());
+    DEBUG_BREAK_IF(location + sizeof(DstT) > buffer.size());
     *reinterpret_cast<DstT *>(buffer.begin() + location) = static_cast<DstT>(value);
     return true;
 }
 
 template <uint32_t VecSize, typename T>
-inline uint32_t patchVecNonPointer(ArrayRef<uint8_t> buffer, const CrossThreadDataOffset (&location)[VecSize], const T (&value)[VecSize]) {
-    uint32_t numPatched = 0;
+inline void patchVecNonPointer(ArrayRef<uint8_t> buffer, const CrossThreadDataOffset (&location)[VecSize], const T (&value)[VecSize]) {
     for (uint32_t i = 0; i < VecSize; ++i) {
-        numPatched += patchNonPointer<T, T>(buffer, location[i], value[i]) ? 1 : 0;
+        patchNonPointer<T, T>(buffer, location[i], value[i]);
     }
-    return numPatched;
+    return;
 }
 
 inline bool patchPointer(ArrayRef<uint8_t> buffer, const ArgDescPointer &arg, uintptr_t value) {
