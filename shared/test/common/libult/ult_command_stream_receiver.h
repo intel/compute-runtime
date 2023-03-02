@@ -368,6 +368,10 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return commandStreamReceiverType;
     }
 
+    void pollForCompletion() override {
+        pollForCompletionCalled++;
+    }
+
     std::vector<std::string> aubCommentMessages;
 
     BatchBuffer latestFlushedBatchBuffer = {};
@@ -385,6 +389,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     uint32_t createPerDssBackedBufferCalled = 0;
     uint32_t initDirectSubmissionCalled = 0;
     uint32_t fillReusableAllocationsListCalled = 0;
+    uint32_t pollForCompletionCalled = 0;
     int ensureCommandBufferAllocationCalled = 0;
     DispatchFlags recordedDispatchFlags;
     BlitPropertiesContainer receivedBlitProperties = {};

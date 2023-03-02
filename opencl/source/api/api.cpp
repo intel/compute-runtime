@@ -5760,6 +5760,13 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueVerifyMemoryINTEL(cl_command_queue comm
         return retVal;
     }
 
+    auto activeCopyEngines = pCommandQueue->peekActiveBcsStates();
+    for (auto &copyEngine : activeCopyEngines) {
+        if (copyEngine.isValid()) {
+            pCommandQueue->getBcsCommandStreamReceiver(copyEngine.engineType)->pollForCompletion();
+        }
+    }
+
     auto &csr = pCommandQueue->getGpgpuCommandStreamReceiver();
     auto status = csr.expectMemory(allocationPtr, expectedData, sizeOfComparison, comparisonMode);
     return status ? CL_SUCCESS : CL_INVALID_VALUE;

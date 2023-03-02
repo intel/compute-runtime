@@ -368,6 +368,8 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
 
     bool isTextureCacheFlushNeeded(uint32_t commandType) const;
 
+    const std::array<CopyEngineState, bcsInfoMaskSize> &peekActiveBcsStates() const { return bcsStates; }
+
   protected:
     void *enqueueReadMemObjForMap(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueWriteMemObjForUnmap(MemObj *memObj, void *mappedPtr, EventsRequest &eventsRequest);
