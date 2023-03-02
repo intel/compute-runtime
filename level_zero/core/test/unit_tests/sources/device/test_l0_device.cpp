@@ -2438,10 +2438,29 @@ TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropert
 }
 
 using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0, 0>;
-TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndConcurrentAccessSupportThenSupportIsReturned) {
+TEST_F(MemoryAccessPropertieP2PAccess1Atomic0,
+       WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndConcurrentAccessSupportThenBasicSupportIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableRecoverablePageFaults.set(1);
     DebugManager.flags.UseKmdMigration.set(1);
+
+    L0::Device *device = driverHandle->devices[0];
+    ze_device_memory_access_properties_t properties;
+    auto result = device->getMemoryAccessProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_memory_access_cap_flags_t expectedSharedCrossDeviceAllocCapabilities =
+        ZE_MEMORY_ACCESS_CAP_FLAG_RW;
+    EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
+}
+
+using MemoryAccessPropertieP2PAccess1Atomic0 = MultipleDevicesP2PFixture<1, 0, 0, 0>;
+TEST_F(MemoryAccessPropertieP2PAccess1Atomic0,
+       WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndConcurrentAccessSupportAndEnableCrossP2PSharedAccessKeyThenSupportIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableRecoverablePageFaults.set(1);
+    DebugManager.flags.UseKmdMigration.set(1);
+    DebugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.set(1);
 
     L0::Device *device = driverHandle->devices[0];
     ze_device_memory_access_properties_t properties;
@@ -2454,10 +2473,27 @@ TEST_F(MemoryAccessPropertieP2PAccess1Atomic0, WhenCallingGetMemoryAccessPropert
 }
 
 using MemoryAccessPropertieP2PAccess1Atomic1 = MultipleDevicesP2PFixture<1, 1, 0, 0>;
-TEST_F(MemoryAccessPropertieP2PAccess1Atomic1, WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndAtomicAccessSupportThenSupportIsReturned) {
+TEST_F(MemoryAccessPropertieP2PAccess1Atomic1,
+       WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndAtomicAccessSupportThenBasicSupportIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableRecoverablePageFaults.set(1);
     DebugManager.flags.UseKmdMigration.set(1);
+
+    L0::Device *device = driverHandle->devices[0];
+    ze_device_memory_access_properties_t properties;
+    auto result = device->getMemoryAccessProperties(&properties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_memory_access_cap_flags_t expectedSharedCrossDeviceAllocCapabilities = ZE_MEMORY_ACCESS_CAP_FLAG_RW;
+    EXPECT_EQ(expectedSharedCrossDeviceAllocCapabilities, properties.sharedCrossDeviceAllocCapabilities);
+}
+
+TEST_F(MemoryAccessPropertieP2PAccess1Atomic1,
+       WhenCallingGetMemoryAccessPropertiesWithDevicesHavingP2PAndAtomicAccessSupportAndEnableCrossP2PSharedAccessKeyThenSupportIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableRecoverablePageFaults.set(1);
+    DebugManager.flags.UseKmdMigration.set(1);
+    DebugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.set(1);
 
     L0::Device *device = driverHandle->devices[0];
     ze_device_memory_access_properties_t properties;

@@ -628,7 +628,8 @@ ze_result_t DeviceImp::getMemoryAccessProperties(ze_device_memory_access_propert
 
         auto memoryManager = this->getDriverHandle()->getMemoryManager();
         if (memoryManager->isKmdMigrationAvailable(this->getRootDeviceIndex()) &&
-            memoryManager->hasPageFaultsEnabled(*this->getNEODevice())) {
+            memoryManager->hasPageFaultsEnabled(*this->getNEODevice()) &&
+            NEO::DebugManager.flags.EnableConcurrentSharedCrossP2PDeviceAccess.get() == 1) {
             pMemAccessProperties->sharedCrossDeviceAllocCapabilities |= ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT;
             if (this->getNEODevice()->getHardwareInfo().capabilityTable.p2pAtomicAccessSupported) {
                 pMemAccessProperties->sharedCrossDeviceAllocCapabilities |= ZE_MEMORY_ACCESS_CAP_FLAG_ATOMIC | ZE_MEMORY_ACCESS_CAP_FLAG_CONCURRENT_ATOMIC;
