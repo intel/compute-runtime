@@ -1030,3 +1030,33 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWithHardwar
 
     EXPECT_TRUE(mockHardwareContext->writeMMIOCalled);
 }
+
+HWTEST_F(AubCommandStreamReceiverTests, givenTimestampBufferAllocationWhenAubWriteMemoryIsCalledForAllocationThenItIsOneTimeWriteable) {
+    auto aubCsr = std::make_unique<AUBCommandStreamReceiverHw<FamilyType>>("", false, *pDevice->executionEnvironment, pDevice->getRootDeviceIndex(), pDevice->getDeviceBitfield());
+    aubCsr->setupContext(*pDevice->getDefaultEngine().osContext);
+    aubCsr->initializeEngine();
+
+    MemoryManager *memoryManager = aubCsr->getMemoryManager();
+    ASSERT_NE(nullptr, memoryManager);
+
+    size_t alignedSize = MemoryConstants::pageSize64k;
+    AllocationType allocationType = NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
+
+    AllocationProperties allocationProperties{pDevice->getRootDeviceIndex(),
+                                              true,
+                                              alignedSize,
+                                              allocationType,
+                                              false,
+                                              false,
+                                              pDevice->getDeviceBitfield()};
+
+    auto timestampAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
+    ASSERT_NE(nullptr, timestampAllocation);
+
+    timestampAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);
+
+    EXPECT_TRUE(aubCsr->writeMemory(*timestampAllocation));
+    EXPECT_FALSE(timestampAllocation->isAubWritable(GraphicsAllocation::defaultBank));
+
+    memoryManager->freeGraphicsMemory(timestampAllocation);
+}

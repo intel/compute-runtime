@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,6 +33,7 @@ class AubHelper : public NonCopyableOrMovableClass {
         case AllocationType::EXTERNAL_HOST_PTR:
         case AllocationType::MAP_ALLOCATION:
         case AllocationType::SVM_GPU:
+        case AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER:
             return true;
         default:
             return false;

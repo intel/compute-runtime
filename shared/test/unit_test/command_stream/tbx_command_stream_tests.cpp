@@ -1081,3 +1081,31 @@ HWTEST_F(TbxCommandStreamTests, givenGraphicsAllocationWhenDumpAllocationIsCalle
 
     memoryManager->freeGraphicsMemory(gfxAllocation);
 }
+
+HWTEST_F(TbxCommandStreamTests, givenTimestampBufferAllocationWhenTbxWriteMemoryIsCalledForAllocationThenItIsOneTimeWriteable) {
+    TbxCommandStreamReceiverHw<FamilyType> *tbxCsr = (TbxCommandStreamReceiverHw<FamilyType> *)pCommandStreamReceiver;
+    tbxCsr->initializeEngine();
+    MemoryManager *memoryManager = tbxCsr->getMemoryManager();
+    ASSERT_NE(nullptr, memoryManager);
+
+    size_t alignedSize = MemoryConstants::pageSize64k;
+    AllocationType allocationType = NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER;
+
+    AllocationProperties allocationProperties{pDevice->getRootDeviceIndex(),
+                                              true,
+                                              alignedSize,
+                                              allocationType,
+                                              false,
+                                              false,
+                                              pDevice->getDeviceBitfield()};
+
+    auto timestampAllocation = memoryManager->allocateGraphicsMemoryWithProperties(allocationProperties);
+    ASSERT_NE(nullptr, timestampAllocation);
+
+    timestampAllocation->setTbxWritable(true, GraphicsAllocation::defaultBank);
+
+    EXPECT_TRUE(tbxCsr->writeMemory(*timestampAllocation));
+    EXPECT_FALSE(timestampAllocation->isTbxWritable(GraphicsAllocation::defaultBank));
+
+    memoryManager->freeGraphicsMemory(timestampAllocation);
+}

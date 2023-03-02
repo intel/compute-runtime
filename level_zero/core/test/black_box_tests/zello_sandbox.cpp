@@ -236,6 +236,8 @@ void executeEventSyncForMultiTileAndCopy(ze_context_handle_t &context, ze_device
         SUCCESS_OR_TERMINATE(zeEventPoolCreate(context, &eventPoolDesc, eventPoolDevicesNum, eventPoolDevices.data(), &eventPool));
         for (uint32_t i = 0; i < numEvents; i++) {
             eventDesc.index = i;
+            eventDesc.signal = ZE_EVENT_SCOPE_FLAG_HOST;
+            eventDesc.wait = ZE_EVENT_SCOPE_FLAG_DEVICE;
             SUCCESS_OR_TERMINATE(zeEventCreate(eventPool, &eventDesc, eventPtr + i));
         }
     }
