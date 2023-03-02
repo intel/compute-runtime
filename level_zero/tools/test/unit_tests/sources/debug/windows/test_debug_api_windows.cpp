@@ -104,6 +104,7 @@ struct MockDebugSessionWindows : DebugSessionWindows {
             allThreads[threadId] = std::make_unique<EuThread>(threadId);
         }
         allThreads[threadId]->stopThread(context);
+        allThreads[threadId]->reportAsStopped();
     }
 
     bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srIdent) override {
@@ -1655,6 +1656,7 @@ TEST_F(DebugApiWindowsTest, GivenSipNotUpdatingSipCmdThenAccessToSlmFailsGracefu
 
     ze_device_thread_t thread = {0, 0, 0, 0};
     session->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+    session->allThreads[EuThread::ThreadId(0, thread)]->reportAsStopped();
 
     session->sipSupportsSlm = true;
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -101,6 +101,20 @@ TEST(EuThread, GivenThreadStateRunningWhenVerifyingStopWithOddCounterThenTrueRet
 
     EXPECT_TRUE(euThread.verifyStopped(1));
     EXPECT_TRUE(euThread.isStopped());
+    EXPECT_FALSE(euThread.isReportedAsStopped());
+}
+
+TEST(EuThread, GivenThreadStateStoppedAndReportedAsStoppedWhenResumedThenIsReportedAsStoppedIsFalse) {
+    ze_device_thread_t devThread = {3, 4, 5, 6};
+    EuThread::ThreadId threadId(0, devThread);
+    EuThread euThread(threadId);
+
+    EXPECT_TRUE(euThread.verifyStopped(1));
+    euThread.reportAsStopped();
+    EXPECT_TRUE(euThread.isReportedAsStopped());
+
+    EXPECT_TRUE(euThread.resumeThread());
+    EXPECT_FALSE(euThread.isReportedAsStopped());
 }
 
 TEST(EuThread, GivenThreadStateStoppedWhenVerifyingStopWithOddCounterThenTrueReturnedAndStateStopped) {

@@ -285,11 +285,13 @@ TEST(DebugSessionLinuxTest, GivenDeviceWithSingleSliceWhenCallingAreRequestedThr
 
     EuThread::ThreadId threadId(0, 0, 0, 0, 0);
     sessionMock->allThreads[threadId]->stopThread(1u);
+    sessionMock->allThreads[threadId]->reportAsStopped();
 
     uint32_t subDeviceCount = std::max(1u, neoDevice->getNumSubDevices());
     for (uint32_t i = 0; i < subDeviceCount; i++) {
         EuThread::ThreadId threadId(i, 0, 0, 0, 0);
         sessionMock->allThreads[threadId]->stopThread(1u);
+        sessionMock->allThreads[threadId]->reportAsStopped();
     }
     stopped = sessionMock->areRequestedThreadsStopped(thread);
     EXPECT_TRUE(stopped);
@@ -6541,6 +6543,7 @@ struct DebugApiRegistersAccessFixture : public DebugApiLinuxFixture {
         session->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = {stateSaveAreaGpuVa, maxDbgSurfaceSize};
         session->allThreadsStopped = true;
         session->allThreads[stoppedThreadId]->stopThread(1u);
+        session->allThreads[stoppedThreadId]->reportAsStopped();
     }
 
     void tearDown() {

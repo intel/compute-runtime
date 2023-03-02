@@ -109,6 +109,7 @@ TEST(DebugSessionTest, givenAllStoppedThreadsWhenInterruptCalledThenErrorNotAvai
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);
+        sessionMock->allThreads[thread]->reportAsStopped();
     }
 
     ze_device_thread_t apiThread = {0, 0, 0, UINT32_MAX};
@@ -284,6 +285,55 @@ TEST(DebugSessionTest, givenStoppedThreadWhenAddingNewlyStoppedThenThreadIsNotAd
     sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(thread, 1u);
 
     EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
+}
+
+TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWithForceExceptionOnlyWhenAddingNewlyStoppedThenThreadIsNotReportedAsStopped) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    EuThread::ThreadId thread(0, 0, 0, 0, 0);
+    sessionMock->skipReadSystemRoutineIdent = 1;
+    sessionMock->threadStopped = true;
+    sessionMock->onlyForceException = true;
+
+    sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(thread, 1u);
+
+    EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
+    EXPECT_FALSE(sessionMock->allThreads[thread]->isReportedAsStopped());
+}
+
+TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWhenGeneratingEventsFromStoppedThreadsThenThreadIsReportedAsStopped) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    EuThread::ThreadId thread(0, 0, 0, 0, 0);
+    sessionMock->skipReadSystemRoutineIdent = 1;
+    sessionMock->threadStopped = true;
+    sessionMock->onlyForceException = false;
+    sessionMock->triggerEvents = true;
+
+    sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(thread, 1u);
+
+    EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
+    EXPECT_FALSE(sessionMock->allThreads[thread]->isReportedAsStopped());
+
+    sessionMock->generateEventsAndResumeStoppedThreads();
+    EXPECT_TRUE(sessionMock->allThreads[thread]->isReportedAsStopped());
+
+    EXPECT_EQ(1u, sessionMock->events.size());
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED, sessionMock->events[0].type);
 }
 
 TEST(DebugSessionTest, givenNoStoppedThreadWhenAddingNewlyStoppedThenThreadIsNotAdded) {
@@ -1626,6 +1676,8 @@ TEST_F(MultiTileDebugSessionTest, GivenMultitileDeviceWhenCallingAreRequestedThr
 
     sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
     sessionMock->allThreads[EuThread::ThreadId(1, thread)]->stopThread(1u);
+    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->reportAsStopped();
+    sessionMock->allThreads[EuThread::ThreadId(1, thread)]->reportAsStopped();
 
     auto stopped = sessionMock->areRequestedThreadsStopped(thread);
     EXPECT_TRUE(stopped);
@@ -1636,6 +1688,7 @@ TEST_F(MultiTileDebugSessionTest, GivenMultitileDeviceWhenCallingAreRequestedThr
     for (uint32_t i = 0; i < sliceCount; i++) {
         EuThread::ThreadId threadId(0, i, 0, 0, 0);
         sessionMock->allThreads[threadId]->stopThread(1u);
+        sessionMock->allThreads[threadId]->reportAsStopped();
     }
 
     stopped = sessionMock->areRequestedThreadsStopped(allSlices);
@@ -1644,6 +1697,7 @@ TEST_F(MultiTileDebugSessionTest, GivenMultitileDeviceWhenCallingAreRequestedThr
     for (uint32_t i = 0; i < sliceCount; i++) {
         EuThread::ThreadId threadId(1, i, 0, 0, 0);
         sessionMock->allThreads[threadId]->stopThread(1u);
+        sessionMock->allThreads[threadId]->reportAsStopped();
     }
 
     stopped = sessionMock->areRequestedThreadsStopped(allSlices);
@@ -1662,6 +1716,7 @@ struct DebugSessionRegistersAccess {
         session = std::make_unique<MockDebugSession>(config, deviceImp.get());
 
         session->allThreads[stoppedThreadId]->stopThread(1u);
+        session->allThreads[stoppedThreadId]->reportAsStopped();
     }
 
     void tearDown() {

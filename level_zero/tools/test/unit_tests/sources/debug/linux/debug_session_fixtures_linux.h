@@ -389,6 +389,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
             allThreads[threadId] = std::make_unique<EuThread>(threadId);
         }
         allThreads[threadId]->stopThread(vmHandle);
+        allThreads[threadId]->reportAsStopped();
     }
 
     bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srIdent) override {
@@ -536,6 +537,7 @@ struct MockTileDebugSessionLinux : TileDebugSessionLinux {
             allThreads[threadId] = std::make_unique<EuThread>(threadId);
         }
         allThreads[threadId]->stopThread(vmHandle);
+        allThreads[threadId]->reportAsStopped();
     }
 
     bool writeResumeCommand(const std::vector<EuThread::ThreadId> &threadIds) override {

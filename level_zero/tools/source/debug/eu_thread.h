@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -122,6 +122,7 @@ class EuThread {
             return false;
         }
         PRINT_DEBUGGER_THREAD_LOG("Resumed thread: %s", toString().c_str());
+        reportedAsStopped = false;
         state = State::Running;
         memoryHandle = invalidHandle;
         return true;
@@ -155,6 +156,13 @@ class EuThread {
     uint8_t getLastCounter() const {
         return systemRoutineCounter;
     }
+    void reportAsStopped() {
+        reportedAsStopped = true;
+    }
+    bool isReportedAsStopped() {
+        DEBUG_BREAK_IF(reportedAsStopped && state != State::Stopped);
+        return reportedAsStopped;
+    }
 
   public:
     static constexpr uint64_t invalidHandle = std::numeric_limits<uint64_t>::max();
@@ -164,6 +172,7 @@ class EuThread {
     std::atomic<State> state = State::Unavailable;
     uint8_t systemRoutineCounter = 0;
     std::atomic<uint64_t> memoryHandle = invalidHandle;
+    std::atomic<bool> reportedAsStopped = false;
 };
 
 static_assert(sizeof(EuThread::ThreadId) == sizeof(uint64_t));
