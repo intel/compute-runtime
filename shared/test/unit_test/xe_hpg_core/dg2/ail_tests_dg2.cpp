@@ -54,11 +54,7 @@ HWTEST2_F(AILTestsDg2, givenApplicationNamesThatRequirAILWhenCheckingIfPatchtoke
                              "ArcControlAssist",
                              "ArcControl"}) {
         ail.processName = name;
-
-        bool fallbackRequired;
-        ail.forceFallbackToPatchtokensIfRequired("", fallbackRequired);
-
-        EXPECT_TRUE(fallbackRequired);
+        EXPECT_TRUE(ail.isFallbackToPatchtokensRequired(""));
     }
 }
 

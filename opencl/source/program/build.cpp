@@ -19,6 +19,7 @@
 #include "shared/source/utilities/logger.h"
 
 #include "opencl/source/cl_device/cl_device.h"
+#include "opencl/source/context/context.h"
 #include "opencl/source/gtpin/gtpin_notify.h"
 #include "opencl/source/helpers/cl_validators.h"
 #include "opencl/source/platform/platform.h"
@@ -116,8 +117,10 @@ cl_int Program::build(
                 NEO::CompilerOptions::concatenateAppend(internalOptions, NEO::DebugManager.flags.InjectInternalBuildOptions.get());
             }
 
-            if (this->enforceFallbackToPatchtokens) {
-                CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::disableZebin);
+            if (nullptr != this->getContextPtr()) {
+                if (this->getContext().checkIfContextIsNonZebin()) {
+                    CompilerOptions::concatenateAppend(internalOptions, CompilerOptions::disableZebin);
+                }
             }
 
             inputArgs.apiOptions = ArrayRef<const char>(options.c_str(), options.length());

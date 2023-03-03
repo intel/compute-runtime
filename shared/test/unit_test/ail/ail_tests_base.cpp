@@ -16,22 +16,14 @@ using AILBaseTests = ::testing::Test;
 
 HWTEST2_F(AILBaseTests, whenKernelSourceIsANGenDummyKernelThenDoEnforcePatchtokensFormat, IsAtLeastSkl) {
     std::string dummyKernelSource{"kernel void _(){}"};
-    bool enforceRebuildToCTNI = false;
-
     AILConfigurationHw<productFamily> ail;
-    ail.forceFallbackToPatchtokensIfRequired(dummyKernelSource, enforceRebuildToCTNI);
-
-    EXPECT_TRUE(enforceRebuildToCTNI);
+    EXPECT_TRUE(ail.isFallbackToPatchtokensRequired(dummyKernelSource));
 }
 
 HWTEST2_F(AILBaseTests, whenKernelSourceIsNotANGenDummyKernelThenDoNotEnforcePatchtokensFormat, IsAtLeastSkl) {
     std::string dummyKernelSource{"kernel void copybuffer(__global int* a, __global int* b){ //some code }"};
-    bool enforceRebuildToCTNI = false;
-
     AILConfigurationHw<productFamily> ail;
-    ail.forceFallbackToPatchtokensIfRequired(dummyKernelSource, enforceRebuildToCTNI);
-
-    EXPECT_FALSE(enforceRebuildToCTNI);
+    EXPECT_FALSE(ail.isFallbackToPatchtokensRequired(dummyKernelSource));
 }
 
 HWTEST2_F(AILBaseTests, givenApplicationNamesThatRequirAILWhenCheckingIfPatchtokenFallbackIsRequiredThenIsCorrectResult, IsAtLeastSkl) {
@@ -48,11 +40,7 @@ HWTEST2_F(AILBaseTests, givenApplicationNamesThatRequirAILWhenCheckingIfPatchtok
                              "ArcControlAssist",
                              "ArcControl"}) {
         ail.processName = name;
-
-        bool fallbackRequired;
-        ail.forceFallbackToPatchtokensIfRequired("", fallbackRequired);
-
-        EXPECT_TRUE(fallbackRequired);
+        EXPECT_TRUE(ail.isFallbackToPatchtokensRequired(""));
     }
 }
 

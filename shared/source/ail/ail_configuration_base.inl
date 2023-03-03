@@ -20,20 +20,20 @@ inline void AILConfigurationHw<Product>::modifyKernelIfRequired(std::string &ker
 //  Only this specific kernel with that exact source code will be affected.
 
 template <PRODUCT_FAMILY Product>
-inline void AILConfigurationHw<Product>::forceFallbackToPatchtokensIfRequired(const std::string &kernelSources, bool &requiresFallback) {
+inline bool AILConfigurationHw<Product>::isFallbackToPatchtokensRequired(const std::string &kernelSources) {
     std::string_view dummyKernelSource{"kernel void _(){}"};
     if (sourcesContain(kernelSources, dummyKernelSource)) {
-        requiresFallback = true;
+        return true;
     }
 
     for (const auto &name : {"Resolve",
                              "ArcControlAssist",
                              "ArcControl"}) {
         if (processName == name) {
-            requiresFallback = true;
-            break;
+            return true;
         }
     }
+    return false;
 }
 
 template <PRODUCT_FAMILY Product>

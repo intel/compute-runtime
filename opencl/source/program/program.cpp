@@ -564,6 +564,14 @@ bool Program::isOptionValueValid(ConstStringRef option, ConstStringRef value) {
     return false;
 }
 
+Context &Program::getContext() const {
+    return *context;
+}
+
+Context *Program::getContextPtr() const {
+    return context;
+}
+
 const ClDeviceVector &Program::getDevicesInProgram() const {
     if (clDevicesInProgram.empty()) {
         return clDevices;

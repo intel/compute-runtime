@@ -79,7 +79,9 @@ T *Program::create(
 
         program = new T(pContext, false, pContext->getDevices());
         if (ail) {
-            ail->forceFallbackToPatchtokensIfRequired(combinedString, program->enforceFallbackToPatchtokens);
+            if (ail->isFallbackToPatchtokensRequired(combinedString)) {
+                pContext->setContextAsNonZebin();
+            }
         }
         program->sourceCode.swap(combinedString);
         program->createdFrom = CreatedFrom::SOURCE;

@@ -691,8 +691,7 @@ TEST_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesThenSourc
     pProgram->release();
 }
 
-HWTEST_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesAndWithDummyKernelThenDoNotSetFallbackRequired) {
-
+HWTEST_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesAndWithDummyKernelThenDoNotMarkApplicationContextAsNonZebin) {
     VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
     ailConfigurationTable[productFamily] = nullptr;
     const char *dummyKernelSources[] = {"kernel void _(){}"}; // if detected - should trigger fallback to CTNI
@@ -708,11 +707,11 @@ HWTEST_F(MinimumProgramFixture, givenEmptyAilWhenCreateProgramWithSourcesAndWith
     ASSERT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    EXPECT_FALSE(pProgram->enforceFallbackToPatchtokens);
+    EXPECT_FALSE(pProgram->getContext().checkIfContextIsNonZebin());
     pProgram->release();
 }
 
-TEST_F(MinimumProgramFixture, givenEnforceLegacyBinaryFormatFlagSetWhenBuildingProgramThenInternalOptionsShouldContainDisableZebinOption) {
+TEST_F(MinimumProgramFixture, givenApplicationContextMarkedAsNonZebinWhenBuildingProgramThenInternalOptionsShouldContainDisableZebinOption) {
     const char *kernelSources[] = {"some source code"};
     size_t knownSourceSize = strlen(kernelSources[0]);
 
@@ -720,7 +719,9 @@ TEST_F(MinimumProgramFixture, givenEnforceLegacyBinaryFormatFlagSetWhenBuildingP
     auto pDevice = pContext->getDevice(0);
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->compilerInterface.reset(cip);
 
-    auto pProgram = Program::create<SucceedingGenBinaryProgram>(
+    MockProgram *pProgram = nullptr;
+    pContext->setContextAsNonZebin();
+    pProgram = Program::create<SucceedingGenBinaryProgram>(
         pContext,
         1,
         kernelSources,
@@ -730,11 +731,41 @@ TEST_F(MinimumProgramFixture, givenEnforceLegacyBinaryFormatFlagSetWhenBuildingP
     ASSERT_NE(nullptr, pProgram);
     ASSERT_EQ(CL_SUCCESS, retVal);
 
-    pProgram->enforceFallbackToPatchtokens = true;
     retVal = pProgram->build(pProgram->getDevices(), "", false);
     EXPECT_EQ(CL_SUCCESS, retVal);
-
     EXPECT_TRUE(CompilerOptions::contains(cip->buildInternalOptions, CompilerOptions::disableZebin));
+    pProgram->release();
+}
+
+HWTEST2_F(MinimumProgramFixture, givenAILReturningTrueForFallbackRequirementWhenBuildingProgramThenMarkContextAsNonZebin, IsAtLeastSkl) {
+    class MockAIL : public AILConfigurationHw<productFamily> {
+      public:
+        bool isFallbackToPatchtokensRequired(const std::string &kernelSources) override {
+            return true;
+        }
+    };
+    VariableBackup<AILConfiguration *> ailConfiguration(&ailConfigurationTable[productFamily]);
+
+    MockAIL mockAIL;
+    ailConfigurationTable[productFamily] = &mockAIL;
+    ASSERT_FALSE(pContext->checkIfContextIsNonZebin());
+
+    const char *kernelSources[] = {"some source code"};
+    size_t knownSourceSize = strlen(kernelSources[0]);
+    MockProgram *pProgram = nullptr;
+    pProgram = Program::create<SucceedingGenBinaryProgram>(
+        pContext,
+        1,
+        kernelSources,
+        &knownSourceSize,
+        retVal);
+
+    ASSERT_NE(nullptr, pProgram);
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    retVal = pProgram->build(pProgram->getDevices(), "", false);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(pContext->checkIfContextIsNonZebin());
     pProgram->release();
 }
 

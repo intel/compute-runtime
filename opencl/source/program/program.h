@@ -161,13 +161,8 @@ class Program : public BaseObject<_cl_program> {
         return std::any_of(this->deviceBuildInfos.begin(), this->deviceBuildInfos.end(), [](auto deviceBuildInfo) { return deviceBuildInfo.second.buildStatus == CL_SUCCESS && deviceBuildInfo.second.programBinaryType == CL_PROGRAM_BINARY_TYPE_EXECUTABLE; });
     }
 
-    Context &getContext() const {
-        return *context;
-    }
-
-    Context *getContextPtr() const {
-        return context;
-    }
+    Context &getContext() const;
+    Context *getContextPtr() const;
 
     ExecutionEnvironment &peekExecutionEnvironment() const {
         return executionEnvironment;
@@ -385,7 +380,6 @@ class Program : public BaseObject<_cl_program> {
 
     bool isBuiltIn = false;
     bool kernelDebugEnabled = false;
-    bool enforceFallbackToPatchtokens = false;
     uint32_t maxRootDeviceIndex = std::numeric_limits<uint32_t>::max();
     std::mutex lockMutex;
     uint32_t exposedKernels = 0;

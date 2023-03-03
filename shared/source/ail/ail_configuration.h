@@ -50,7 +50,7 @@ class AILConfiguration {
 
     virtual void modifyKernelIfRequired(std::string &kernel) = 0;
 
-    virtual void forceFallbackToPatchtokensIfRequired(const std::string &kernelSources, bool &requiresFallback) = 0;
+    virtual bool isFallbackToPatchtokensRequired(const std::string &kernelSources) = 0;
 
   protected:
     virtual void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) = 0;
@@ -73,7 +73,7 @@ class AILConfigurationHw : public AILConfiguration {
     void applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) override;
 
     void modifyKernelIfRequired(std::string &kernel) override;
-    void forceFallbackToPatchtokensIfRequired(const std::string &kernelSources, bool &requiresFallback) override;
+    bool isFallbackToPatchtokensRequired(const std::string &kernelSources) override;
 };
 
 template <PRODUCT_FAMILY product>

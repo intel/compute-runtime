@@ -70,10 +70,10 @@ void AILConfigurationHw<IGFX_DG2>::modifyKernelIfRequired(std::string &kernelsSo
 }
 
 template <>
-inline void AILConfigurationHw<IGFX_DG2>::forceFallbackToPatchtokensIfRequired(const std::string &kernelSources, bool &requiresFallback) {
+inline bool AILConfigurationHw<IGFX_DG2>::isFallbackToPatchtokensRequired(const std::string &kernelSources) {
     std::string_view dummyKernelSource{"kernel void _(){}"};
     if (sourcesContain(kernelSources, dummyKernelSource)) {
-        requiresFallback = true;
+        return true;
     }
 
     for (const auto &name : {"Wondershare Filmora 11",
@@ -84,10 +84,10 @@ inline void AILConfigurationHw<IGFX_DG2>::forceFallbackToPatchtokensIfRequired(c
                              "ArcControlAssist",
                              "ArcControl"}) {
         if (processName == name) {
-            requiresFallback = true;
-            break;
+            return true;
         }
     }
+    return false;
 }
 
 template class AILConfigurationHw<IGFX_DG2>;
