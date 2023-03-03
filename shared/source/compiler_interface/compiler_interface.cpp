@@ -473,7 +473,10 @@ CIF::RAII::UPtr_t<IGC::FclOclTranslationCtxTagOCL> CompilerInterface::createFclT
     }
 
     if (fclBaseTranslationCtx == nullptr) {
-        fclBaseTranslationCtx = deviceCtx->CreateTranslationCtx(inType, outType);
+        auto ulock = this->lock();
+        if (fclBaseTranslationCtx == nullptr) {
+            fclBaseTranslationCtx = deviceCtx->CreateTranslationCtx(inType, outType);
+        }
     }
 
     return deviceCtx->CreateTranslationCtx(inType, outType);

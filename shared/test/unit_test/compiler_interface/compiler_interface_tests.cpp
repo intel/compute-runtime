@@ -684,20 +684,25 @@ struct MockCompilerDeviceCtx : DeviceCtxBase {
 
 template <typename DeviceCtx, typename MockDeviceCtx>
 struct LockListener {
-    LockListener(NEO::Device *device)
-        : device(device) {
+    LockListener(NEO::Device *device, bool createDeviceCtxOnLock = true)
+        : device(device), createDeviceCtxOnLock(createDeviceCtxOnLock) {
     }
 
     static void listener(MockCompilerInterface &compInt) {
         auto data = (LockListener *)compInt.lockListenerData;
-        auto deviceCtx = CIF::RAII::UPtr(new MockDeviceCtx);
-        EXPECT_TRUE(compInt.getDeviceContexts<DeviceCtx>().empty());
-        compInt.setDeviceCtx(*data->device, deviceCtx.get());
-        data->createdDeviceCtx = deviceCtx.get();
+        data->lockCount += 1;
+        if (data->createDeviceCtxOnLock && compInt.getDeviceContexts<DeviceCtx>().empty()) {
+
+            auto deviceCtx = CIF::RAII::UPtr(new MockDeviceCtx);
+            compInt.setDeviceCtx(*data->device, deviceCtx.get());
+            data->createdDeviceCtx = deviceCtx.get();
+        }
     }
 
     NEO::Device *device = nullptr;
     MockDeviceCtx *createdDeviceCtx = nullptr;
+    bool createDeviceCtxOnLock = false;
+    int lockCount = 0;
 };
 
 struct WasLockedListener {
@@ -768,7 +773,9 @@ TEST_F(CompilerInterfaceTest, GivenSimultaneousRequestForNewFclTranslationContex
     this->pCompilerInterface->lockListenerData = &listenerData;
     this->pCompilerInterface->lockListener = ListenerT::listener;
 
+    EXPECT_EQ(0, listenerData.lockCount);
     auto ret = this->pCompilerInterface->createFclTranslationCtx(*device, IGC::CodeType::oclC, IGC::CodeType::spirV);
+    EXPECT_EQ(2, listenerData.lockCount);
     EXPECT_NE(nullptr, ret.get());
     ASSERT_EQ(1U, this->pCompilerInterface->getFclDeviceContexts().size());
     ASSERT_NE(this->pCompilerInterface->getFclDeviceContexts().end(),
