@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,9 +33,9 @@ bool WddmStandbyImp::isStandbySupported(void) {
     return false;
 }
 
-OsStandby *OsStandby::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
-    WddmStandbyImp *pWddmStandbyImp = new WddmStandbyImp();
-    return static_cast<OsStandby *>(pWddmStandbyImp);
+std::unique_ptr<OsStandby> OsStandby::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
+    std::unique_ptr<WddmStandbyImp> pWddmStandbyImp = std::make_unique<WddmStandbyImp>();
+    return pWddmStandbyImp;
 }
 
 } // namespace L0

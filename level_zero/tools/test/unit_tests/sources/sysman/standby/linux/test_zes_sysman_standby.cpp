@@ -35,9 +35,6 @@ class ZesStandbyFixture : public SysmanDeviceFixture {
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = ptestSysfsAccess.get();
         ptestSysfsAccess->setVal(standbyModeFile, standbyModeDefault);
-        for (const auto &handle : pSysmanDeviceImp->pStandbyHandleContext->handleList) {
-            delete handle;
-        }
         pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
         // We received a device handle. Check for subdevices in this device
@@ -94,9 +91,9 @@ TEST_F(ZesStandbyFixture, GivenComponentCountZeroWhenCallingzesStandbyGetThenNon
     EXPECT_NE(nullptr, standbyHandle.data());
     EXPECT_EQ(count, mockHandleCount);
 
-    StandbyImp *ptestStandbyImp = new StandbyImp(pSysmanDeviceImp->pStandbyHandleContext->pOsSysman, device->toHandle());
+    std::unique_ptr<StandbyImp> ptestStandbyImp = std::make_unique<StandbyImp>(pSysmanDeviceImp->pStandbyHandleContext->pOsSysman, device->toHandle());
     count = 0;
-    pSysmanDeviceImp->pStandbyHandleContext->handleList.push_back(ptestStandbyImp);
+    pSysmanDeviceImp->pStandbyHandleContext->handleList.push_back(std::move(ptestStandbyImp));
     result = zesDeviceEnumStandbyDomains(device, &count, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -112,7 +109,6 @@ TEST_F(ZesStandbyFixture, GivenComponentCountZeroWhenCallingzesStandbyGetThenNon
     EXPECT_EQ(count, mockHandleCount + 1);
 
     pSysmanDeviceImp->pStandbyHandleContext->handleList.pop_back();
-    delete ptestStandbyImp;
 }
 
 TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbyGetPropertiesThenVerifyzesStandbyGetPropertiesCallSucceeds) {
@@ -248,17 +244,13 @@ TEST_F(ZesStandbyFixture, GivenOnSubdeviceNotSetWhenValidatingosStandbyGetProper
     ze_device_properties_t deviceProperties = {};
     ze_bool_t isSubDevice = deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
     Device::fromHandle(device)->getProperties(&deviceProperties);
-    PublicLinuxStandbyImp *pLinuxStandbyImp = new PublicLinuxStandbyImp(pOsSysman, isSubDevice, deviceProperties.subdeviceId);
+    std::unique_ptr<PublicLinuxStandbyImp> pLinuxStandbyImp = std::make_unique<PublicLinuxStandbyImp>(pOsSysman, isSubDevice, deviceProperties.subdeviceId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxStandbyImp->osStandbyGetProperties(properties));
     EXPECT_EQ(properties.subdeviceId, deviceProperties.subdeviceId);
     EXPECT_EQ(properties.onSubdevice, isSubDevice);
-    delete pLinuxStandbyImp;
 }
 
 TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeDefaultWithLegacyPathThenVerifySysmanzesySetModeCallSucceeds) {
-    for (auto handle : pSysmanDeviceImp->pStandbyHandleContext->handleList) {
-        delete handle;
-    }
     pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
     ptestSysfsAccess->directoryExistsResult = false;
     pSysmanDeviceImp->pStandbyHandleContext->init(deviceHandles);
@@ -279,9 +271,6 @@ TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeDef
 }
 
 TEST_F(ZesStandbyFixture, GivenValidStandbyHandleWhenCallingzesStandbySetModeNeverWithLegacyPathThenVerifySysmanzesySetModeCallSucceeds) {
-    for (auto handle : pSysmanDeviceImp->pStandbyHandleContext->handleList) {
-        delete handle;
-    }
     pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
     ptestSysfsAccess->directoryExistsResult = false;
     pSysmanDeviceImp->pStandbyHandleContext->init(deviceHandles);
@@ -316,9 +305,6 @@ class ZesStandbyMultiDeviceFixture : public SysmanMultiDeviceFixture {
         pOriginalSysfsAccess = pLinuxSysmanImp->pSysfsAccess;
         pLinuxSysmanImp->pSysfsAccess = ptestSysfsAccess.get();
         ptestSysfsAccess->setVal(standbyModeFile, standbyModeDefault);
-        for (const auto &handle : pSysmanDeviceImp->pStandbyHandleContext->handleList) {
-            delete handle;
-        }
         pSysmanDeviceImp->pStandbyHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
         std::vector<ze_device_handle_t> deviceHandles;
@@ -374,11 +360,10 @@ TEST_F(ZesStandbyMultiDeviceFixture, GivenOnSubdeviceNotSetWhenValidatingosStand
     ze_device_properties_t deviceProperties = {};
     ze_bool_t isSubDevice = deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
     Device::fromHandle(device)->getProperties(&deviceProperties);
-    PublicLinuxStandbyImp *pLinuxStandbyImp = new PublicLinuxStandbyImp(pOsSysman, isSubDevice, deviceProperties.subdeviceId);
+    std::unique_ptr<PublicLinuxStandbyImp> pLinuxStandbyImp = std::make_unique<PublicLinuxStandbyImp>(pOsSysman, isSubDevice, deviceProperties.subdeviceId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxStandbyImp->osStandbyGetProperties(properties));
     EXPECT_EQ(properties.subdeviceId, deviceProperties.subdeviceId);
     EXPECT_EQ(properties.onSubdevice, isSubDevice);
-    delete pLinuxStandbyImp;
 }
 
 class StandbyAffinityMaskFixture : public ZesStandbyMultiDeviceFixture {

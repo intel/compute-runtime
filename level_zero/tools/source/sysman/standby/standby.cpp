@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,18 +13,11 @@
 
 namespace L0 {
 
-StandbyHandleContext::~StandbyHandleContext() {
-    for (Standby *pStandby : handleList) {
-        delete pStandby;
-    }
-}
-
+StandbyHandleContext::~StandbyHandleContext() = default;
 void StandbyHandleContext::createHandle(ze_device_handle_t deviceHandle) {
-    Standby *pStandby = new StandbyImp(pOsSysman, deviceHandle);
+    std::unique_ptr<Standby> pStandby = std::make_unique<StandbyImp>(pOsSysman, deviceHandle);
     if (pStandby->isStandbyEnabled == true) {
-        handleList.push_back(pStandby);
-    } else {
-        delete pStandby;
+        handleList.push_back(std::move(pStandby));
     }
 }
 

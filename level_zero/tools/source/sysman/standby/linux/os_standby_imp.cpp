@@ -85,9 +85,9 @@ LinuxStandbyImp::LinuxStandbyImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uin
     init();
 }
 
-OsStandby *OsStandby::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
-    LinuxStandbyImp *pLinuxStandbyImp = new LinuxStandbyImp(pOsSysman, onSubdevice, subdeviceId);
-    return static_cast<OsStandby *>(pLinuxStandbyImp);
+std::unique_ptr<OsStandby> OsStandby::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
+    std::unique_ptr<LinuxStandbyImp> pLinuxStandbyImp = std::make_unique<LinuxStandbyImp>(pOsSysman, onSubdevice, subdeviceId);
+    return pLinuxStandbyImp;
 }
 
 } // namespace L0

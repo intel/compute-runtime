@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,7 +44,7 @@ struct StandbyHandleContext {
     ze_result_t standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby);
 
     OsSysman *pOsSysman;
-    std::vector<Standby *> handleList = {};
+    std::vector<std::unique_ptr<Standby>> handleList = {};
 
   private:
     void createHandle(ze_device_handle_t deviceHandle);

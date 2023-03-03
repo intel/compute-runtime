@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -24,7 +24,7 @@ class StandbyImp : public Standby, NEO::NonCopyableOrMovableClass {
     StandbyImp() = default;
     StandbyImp(OsSysman *pOsSysman, ze_device_handle_t handle);
     ~StandbyImp() override;
-    OsStandby *pOsStandby = nullptr;
+    std::unique_ptr<OsStandby> pOsStandby = nullptr;
 
     void init();
 

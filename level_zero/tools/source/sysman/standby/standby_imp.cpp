@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -40,8 +40,5 @@ StandbyImp::StandbyImp(OsSysman *pOsSysman, ze_device_handle_t handle) : deviceH
     init();
 }
 
-StandbyImp::~StandbyImp() {
-    delete pOsStandby;
-}
-
+StandbyImp::~StandbyImp() {}
 } // namespace L0

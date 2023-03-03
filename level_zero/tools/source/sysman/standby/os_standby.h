@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,8 @@
 
 #include "level_zero/tools/source/sysman/os_sysman.h"
 #include <level_zero/zes_api.h>
+
+#include <memory>
 
 namespace L0 {
 
@@ -20,7 +22,7 @@ class OsStandby {
 
     virtual bool isStandbySupported(void) = 0;
 
-    static OsStandby *create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
+    static std::unique_ptr<OsStandby> create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     virtual ~OsStandby() {}
 };
 
