@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/device/device.h"
-#include "shared/source/device_binary_format/zebin/zebin_elf.h"
+#include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/helpers/blit_commands_helper.h"
 #include "shared/source/helpers/debug_helpers.h"
 #include "shared/source/helpers/gfx_core_helper.h"

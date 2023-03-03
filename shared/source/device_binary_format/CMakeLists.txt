@@ -23,23 +23,20 @@ set(NEO_DEVICE_BINARY_FORMAT
     ${CMAKE_CURRENT_SOURCE_DIR}/elf/elf_encoder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/elf/elf_encoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/elf/ocl_elf.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/elf/zebin_elf.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/elf/zeinfo_enum_lookup.h
     ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_decoder.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_decoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_dumper.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_dumper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_validator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/patchtokens_validator.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/zebin_decoder.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/zebin_decoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_zebin.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/debug_zebin.h
     ${CMAKE_CURRENT_SOURCE_DIR}/yaml/yaml_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/yaml/yaml_parser.h
-
-    ${CMAKE_CURRENT_SOURCE_DIR}/zebin/zebin_decoder.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/zebin/zebin_decoder.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/zebin/zebin_elf.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/zebin/zeinfo.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/zebin/zeinfo_decoder.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/zebin/zeinfo_decoder.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/zebin/zeinfo_enum_lookup.h
 )
+
 set_property(GLOBAL PROPERTY NEO_DEVICE_BINARY_FORMAT ${NEO_DEVICE_BINARY_FORMAT})

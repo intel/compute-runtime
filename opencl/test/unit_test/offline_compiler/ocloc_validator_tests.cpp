@@ -78,8 +78,7 @@ TEST(OclocValidate, WhenInputIsValid32BitZebinThenReturnSucceed) {
 
 TEST(OclocValidate, WhenWarningsEmitedThenRedirectsThemToStdout) {
     ZebinTestData::ValidEmptyProgram zebin;
-    NEO::ConstStringRef miscData{"Miscellaneous data"};
-    zebin.appendSection(NEO::Elf::SHT_ZEBIN_MISC, ".misc.other", ArrayRef<const uint8_t>::fromAny(miscData.begin(), miscData.size()));
+    zebin.removeSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
     MockOclocArgHelper::FilesMap files{{"src.gen", MockOclocArgHelper::FileData(reinterpret_cast<const char *>(zebin.storage.data()),
                                                                                 reinterpret_cast<const char *>(zebin.storage.data()) + zebin.storage.size())}};
     MockOclocArgHelper argHelper{files};
@@ -87,13 +86,13 @@ TEST(OclocValidate, WhenWarningsEmitedThenRedirectsThemToStdout) {
     int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_EQ(0, res) << oclocStdout;
-    EXPECT_NE(nullptr, strstr(oclocStdout.c_str(), "Validator detected potential problems :\nDeviceBinaryFormat::Zebin : unhandled SHT_ZEBIN_MISC section : .misc.other currently supports only : .misc.buildOptions.")) << oclocStdout;
+    EXPECT_NE(nullptr, strstr(oclocStdout.c_str(), "Validator detected potential problems :\nDeviceBinaryFormat::Zebin : Expected at least one .ze_info section, got 0")) << oclocStdout;
 }
 
 TEST(OclocValidate, WhenErrorsEmitedThenRedirectsThemToStdout) {
     ZebinTestData::ValidEmptyProgram zebin;
     zebin.removeSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo);
-    std::string zeInfo = "version:" + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + "\nkernels : \nkernels :\n";
+    std::string zeInfo = "version:" + versionToString(NEO::zeInfoDecoderVersion) + "\nkernels : \nkernels :\n";
     zebin.appendSection(NEO::Elf::SHT_ZEBIN_ZEINFO, NEO::Elf::SectionsNamesZebin::zeInfo, ArrayRef<const char>(zeInfo).toArrayRef<const uint8_t>());
     MockOclocArgHelper::FilesMap files{{"src.gen", MockOclocArgHelper::FileData(reinterpret_cast<const char *>(zebin.storage.data()),
                                                                                 reinterpret_cast<const char *>(zebin.storage.data()) + zebin.storage.size())}};

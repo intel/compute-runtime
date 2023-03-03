@@ -143,7 +143,7 @@ TEST(OclocConcatTest, GivenZebinWithAOTNoteAndFatBinaryWhenConcatenatingThenCorr
     {
         AOT::PRODUCT_CONFIG productConfig = AOT::PRODUCT_CONFIG::TGL; // 12.0.0
         zebin.appendSection(Elf::SHT_NOTE, Elf::SectionsNamesZebin::noteIntelGT,
-                            ZebinTestData::createIntelGTNoteSection(versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion), productConfig));
+                            ZebinTestData::createIntelGTNoteSection(versionToString(NEO::zeInfoDecoderVersion), productConfig));
     }
 
     MockOclocArgHelper::FilesMap mockArgHelperFilesMap{

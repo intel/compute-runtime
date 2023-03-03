@@ -7,7 +7,7 @@
 
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf.h"
-#include "shared/source/device_binary_format/zebin/zebin_elf.h"
+#include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"

@@ -3609,7 +3609,7 @@ kernels_misc_info:
     auto storage = elfEncoder.encode();
     buildInfo.unpackedDeviceBinary.reset(reinterpret_cast<char *>(storage.data()));
     buildInfo.unpackedDeviceBinarySize = storage.size();
-    buildInfo.kernelMiscInfoPos = zeInfo.str().find(Zebin::ZeInfo::Tags::kernelMiscInfo.str());
+    buildInfo.kernelMiscInfoPos = zeInfo.str().find(Elf::ZebinKernelMetadata::Tags::kernelMiscInfo.str());
     ASSERT_NE(std::string::npos, buildInfo.kernelMiscInfoPos);
 
     ASSERT_TRUE(kernelInfo.kernelDescriptor.explicitArgsExtendedMetadata.empty());

@@ -7,9 +7,8 @@
 
 #pragma once
 
-#include "shared/source/device_binary_format/zebin/zebin_decoder.h"
-#include "shared/source/device_binary_format/zebin/zebin_elf.h"
-#include "shared/source/device_binary_format/zebin/zeinfo_decoder.h"
+#include "shared/source/device_binary_format/elf/zebin_elf.h"
+#include "shared/source/device_binary_format/zebin_decoder.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/utilities/const_stringref.h"
@@ -21,7 +20,7 @@
 
 extern PRODUCT_FAMILY productFamily;
 
-inline std::string versionToString(NEO::Zebin::ZeInfo::Types::Version version) {
+inline std::string versionToString(NEO::Elf::ZebinKernelMetadata::Types::Version version) {
     return std::to_string(version.major) + "." + std::to_string(version.minor);
 }
 
@@ -61,7 +60,7 @@ struct ZebinWithExternalFunctionsInfo {
     NEO::ConstStringRef fun1Name = "fun1";
     const uint8_t barrierCount = 2;
     std::vector<uint8_t> storage;
-    std::string zeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+    std::string zeInfo = std::string("version :\'") + versionToString(NEO::zeInfoDecoderVersion) + R"===('
 kernels:
     - name: kernel
       execution_env:
@@ -92,7 +91,7 @@ struct ZebinWithL0TestCommonModule {
     const uint8_t numOfKernels = 2;
     NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> *elfHeader;
     std::vector<uint8_t> storage;
-    std::string zeInfo = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+    std::string zeInfo = std::string("version :\'") + versionToString(NEO::zeInfoDecoderVersion) + R"===('
 kernels:
   - name:            test
     execution_env:
@@ -273,7 +272,7 @@ struct ZebinCopyBufferSimdModule {
     std::vector<uint8_t> storage;
     std::string zeInfoCopyBuffer;
     size_t zeInfoSize;
-    std::string zeInfoCopyBufferSimdPlaceholder = std::string("version :\'") + versionToString(NEO::Zebin::ZeInfo::zeInfoDecoderVersion) + R"===('
+    std::string zeInfoCopyBufferSimdPlaceholder = std::string("version :\'") + versionToString(NEO::zeInfoDecoderVersion) + R"===('
 kernels:
   - name:            CopyBuffer
     execution_env:

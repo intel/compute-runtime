@@ -9,7 +9,7 @@
 
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
-#include "shared/source/device_binary_format/zebin/zebin_elf.h"
+#include "shared/source/device_binary_format/elf/zebin_elf.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 
