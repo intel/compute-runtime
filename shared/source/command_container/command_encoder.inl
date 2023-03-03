@@ -807,7 +807,13 @@ void EncodeSempahore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
                            compareAddress,
                            compareData,
                            compareMode,
-                           registerPollMode);
+                           registerPollMode,
+                           true);
+}
+template <typename Family>
+void EncodeSempahore<Family>::applyMiSemaphoreWaitCommand(LinearStream &commandStream, std::list<void *> &commandsList) {
+    MI_SEMAPHORE_WAIT *semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
+    commandsList.push_back(semaphoreCommand);
 }
 
 template <typename Family>

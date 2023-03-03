@@ -17,18 +17,28 @@ using CommandEncodeSemaphore = Test<CommandEncodeStatesFixture>;
 
 HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    MI_SEMAPHORE_WAIT miSemaphore;
+    MI_SEMAPHORE_WAIT miSemaphore1;
 
-    EncodeSempahore<FamilyType>::programMiSemaphoreWait(&miSemaphore,
+    EncodeSempahore<FamilyType>::programMiSemaphoreWait(&miSemaphore1,
                                                         0x123400,
                                                         4,
                                                         MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
-                                                        false);
+                                                        false,
+                                                        true);
 
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphore.getCompareOperation());
-    EXPECT_EQ(4u, miSemaphore.getSemaphoreDataDword());
-    EXPECT_EQ(0x123400u, miSemaphore.getSemaphoreGraphicsAddress());
-    EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore.getWaitMode());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD, miSemaphore1.getCompareOperation());
+    EXPECT_EQ(4u, miSemaphore1.getSemaphoreDataDword());
+    EXPECT_EQ(0x123400u, miSemaphore1.getSemaphoreGraphicsAddress());
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore1.getWaitMode());
+
+    MI_SEMAPHORE_WAIT miSemaphore2;
+    EncodeSempahore<FamilyType>::programMiSemaphoreWait(&miSemaphore2,
+                                                        0x123400,
+                                                        4,
+                                                        MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
+                                                        false,
+                                                        false);
+    EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_SIGNAL_MODE, miSemaphore2.getWaitMode());
 }
 
 HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFieldsAreSetCorrectly) {
@@ -45,7 +55,7 @@ HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFi
                                                            5u,
                                                            compareMode);
 
-    EXPECT_EQ(sizeof(MI_SEMAPHORE_WAIT), stream.getUsed());
+    EXPECT_EQ(NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait(), stream.getUsed());
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(stream);
@@ -60,7 +70,7 @@ HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFi
 
 HWTEST_F(CommandEncodeSemaphore, whenGettingMiSemaphoreCommandSizeThenExpectSingleMiSemaphoreCommandSize) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    size_t expectedSize = sizeof(MI_SEMAPHORE_WAIT);
+    size_t expectedSize = NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
     size_t actualSize = EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
     EXPECT_EQ(expectedSize, actualSize);
 }

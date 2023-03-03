@@ -285,7 +285,6 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
         }
 
         {
-            using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
             using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
             EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandStream,
                                                                   address,

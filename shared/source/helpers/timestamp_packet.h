@@ -95,7 +95,6 @@ struct TimestampPacketHelper {
     template <typename GfxFamily>
     static void programSemaphore(LinearStream &cmdStream, TagNodeBase &timestampPacketNode) {
         using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-        using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
 
         auto compareAddress = getContextEndGpuAddress(timestampPacketNode);
 
@@ -161,12 +160,12 @@ struct TimestampPacketHelper {
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue() {
-        return sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+        return NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
     }
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSizeForNodeDependency(TagNodeBase &timestampPacketNode) {
-        return (timestampPacketNode.getPacketsUsed() * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT));
+        return (timestampPacketNode.getPacketsUsed() * NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait());
     }
 
     template <typename GfxFamily>
@@ -183,7 +182,7 @@ struct TimestampPacketHelper {
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer(const CsrDependencies &csrDependencies) {
-        return csrDependencies.multiRootTimeStampSyncContainer.size() * sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+        return csrDependencies.multiRootTimeStampSyncContainer.size() * NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
     }
 };
 

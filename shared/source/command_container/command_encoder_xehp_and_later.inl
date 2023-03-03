@@ -252,9 +252,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(args.device->getRootDeviceEnvironment(), false));
         args.additionalCommands->push_back(commandBuffer);
 
-        using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
-        MI_SEMAPHORE_WAIT *semaphoreCommand = listCmdBufferStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-        args.additionalCommands->push_back(reinterpret_cast<void *>(semaphoreCommand));
+        EncodeSempahore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
     }
 
     walkerCmd.setIndirectDataStartAddress(static_cast<uint32_t>(offsetThreadData));
@@ -342,9 +340,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(rootDeviceEnvironment, false));
         args.additionalCommands->push_back(commandBuffer);
 
-        using MI_SEMAPHORE_WAIT = typename Family::MI_SEMAPHORE_WAIT;
-        MI_SEMAPHORE_WAIT *semaphoreCommand = listCmdBufferStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-        args.additionalCommands->push_back(semaphoreCommand);
+        EncodeSempahore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
     }
 }
 
@@ -720,12 +716,13 @@ void EncodeSempahore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                                      uint64_t compareAddress,
                                                      uint32_t compareData,
                                                      COMPARE_OPERATION compareMode,
-                                                     bool registerPollMode) {
+                                                     bool registerPollMode,
+                                                     bool waitMode) {
     MI_SEMAPHORE_WAIT localCmd = Family::cmdInitMiSemaphoreWait;
     localCmd.setCompareOperation(compareMode);
     localCmd.setSemaphoreDataDword(compareData);
     localCmd.setSemaphoreGraphicsAddress(compareAddress);
-    localCmd.setWaitMode(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE);
+    localCmd.setWaitMode(waitMode ? MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE : MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_SIGNAL_MODE);
     localCmd.setRegisterPollMode(registerPollMode ? MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_REGISTER_POLL : MI_SEMAPHORE_WAIT::REGISTER_POLL_MODE::REGISTER_POLL_MODE_MEMORY_POLL);
 
     *cmd = localCmd;

@@ -704,7 +704,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     EXPECT_EQ(1u, commandList->cmdListType);
     EXPECT_NE(nullptr, commandList->cmdQImmediate);
 
-    size_t expectedUsed = 2 * sizeof(SEMAPHORE_WAIT) + sizeof(MI_BATCH_BUFFER_END);
+    size_t expectedUsed = 2 * NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() + sizeof(MI_BATCH_BUFFER_END);
     if (NEO::MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
         expectedUsed += sizeof(PIPE_CONTROL);
     }
@@ -753,7 +753,7 @@ HWTEST_F(CommandListCreate, givenAsyncCmdQueueAndImmediateCommandListWhenAppendW
     EXPECT_EQ(1u, commandList->cmdListType);
     EXPECT_NE(nullptr, commandList->cmdQImmediate);
 
-    size_t expectedUsed = 2 * sizeof(SEMAPHORE_WAIT) + sizeof(MI_BATCH_BUFFER_END);
+    size_t expectedUsed = 2 * NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() + sizeof(MI_BATCH_BUFFER_END);
     expectedUsed = alignUp(expectedUsed, 64);
 
     auto &commandContainer = commandList->commandContainer;

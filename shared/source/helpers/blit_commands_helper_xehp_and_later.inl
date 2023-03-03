@@ -365,13 +365,13 @@ void BlitCommandsHelper<GfxFamily>::appendTilingEnable(typename GfxFamily::XY_CO
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(LinearStream &commandStream) {
     if (DebugManager.flags.GlobalSequencerFlushOnCopyEngine.get() != 0) {
-        using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
+        using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
         constexpr uint32_t globalInvalidationRegister = 0xB404u;
         LriHelper<GfxFamily>::program(&commandStream, globalInvalidationRegister, 1u, false);
         EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(commandStream,
                                                               globalInvalidationRegister,
                                                               0u,
-                                                              MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
+                                                              COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
                                                               true);
     }
 }
@@ -379,7 +379,7 @@ void BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(LinearStream &co
 template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::getSizeForGlobalSequencerFlush() {
     if (DebugManager.flags.GlobalSequencerFlushOnCopyEngine.get() != 0) {
-        return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) + sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+        return sizeof(typename GfxFamily::MI_LOAD_REGISTER_IMM) + NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
     }
     return 0u;
 }

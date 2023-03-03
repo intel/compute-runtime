@@ -124,7 +124,7 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
         EXPECT_EQ(gpuCrossTileSyncAddress, miSemaphore->getSemaphoreGraphicsAddress());
         EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphore->getCompareOperation());
         EXPECT_EQ(2u, miSemaphore->getSemaphoreDataDword());
-        parsedOffset += sizeof(MI_SEMAPHORE_WAIT);
+        parsedOffset += NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
     }
     {
         auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -162,7 +162,7 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
             EXPECT_EQ(gpuFinalSyncAddress, miSemaphore->getSemaphoreGraphicsAddress());
             EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphore->getCompareOperation());
             EXPECT_EQ(2u, miSemaphore->getSemaphoreDataDword());
-            parsedOffset += sizeof(MI_SEMAPHORE_WAIT);
+            parsedOffset += NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
         }
         {
             auto storeDataImm = genCmdCast<MI_STORE_DATA_IMM *>(ptrOffset(cmdBuffer, parsedOffset));
@@ -186,7 +186,7 @@ void validateMultiTileBarrier(void *cmdBuffer, size_t &parsedOffset,
             EXPECT_EQ(gpuFinalSyncAddress, miSemaphore->getSemaphoreGraphicsAddress());
             EXPECT_EQ(MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD, miSemaphore->getCompareOperation());
             EXPECT_EQ(4u, miSemaphore->getSemaphoreDataDword());
-            parsedOffset += sizeof(MI_SEMAPHORE_WAIT);
+            parsedOffset += NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
         }
     }
 }
@@ -205,16 +205,16 @@ HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControl
 
     size_t beforeControlSectionOffset = sizeof(MI_STORE_DATA_IMM) +
                                         sizeof(PIPE_CONTROL) +
-                                        sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                                        sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
                                         sizeof(MI_BATCH_BUFFER_START);
 
     size_t startOffset = beforeControlSectionOffset +
                          (2 * sizeof(uint32_t));
 
     size_t expectedUseBuffer = startOffset +
-                               sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                               sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
                                sizeof(MI_STORE_DATA_IMM) +
-                               sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+                               sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
 
     auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
     auto gpuBaseAddress = commandList->commandContainer.getCommandStream()->getGraphicsAllocation()->getGpuAddress() +
@@ -261,16 +261,16 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
 
     size_t beforeControlSectionOffset = sizeof(MI_STORE_DATA_IMM) +
                                         sizeof(PIPE_CONTROL) +
-                                        sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                                        sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
                                         sizeof(MI_BATCH_BUFFER_START);
 
     size_t bbStartOffset = beforeControlSectionOffset +
                            (2 * sizeof(uint32_t));
 
     size_t expectedUseBuffer = bbStartOffset +
-                               sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                               sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
                                sizeof(MI_STORE_DATA_IMM) +
-                               sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+                               sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
 
     auto firstBatchBufferAllocation = cmdListStream->getGraphicsAllocation();
     auto useSize = cmdListStream->getAvailableSpace();
@@ -327,16 +327,16 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
 
     size_t beforeControlSectionOffset = sizeof(MI_STORE_DATA_IMM) +
                                         sizeof(PIPE_CONTROL) +
-                                        sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                                        sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
                                         sizeof(MI_BATCH_BUFFER_START);
 
     size_t bbStartOffset = beforeControlSectionOffset +
                            (2 * sizeof(uint32_t));
 
     size_t multiTileBarrierSize = bbStartOffset +
-                                  sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                                  sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
                                   sizeof(MI_STORE_DATA_IMM) +
-                                  sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+                                  sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
 
     size_t postSyncSize = NEO::MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(device->getNEODevice()->getRootDeviceEnvironment(), false);
 
@@ -433,16 +433,16 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
 
     size_t beforeControlSectionOffset = sizeof(MI_STORE_DATA_IMM) +
                                         sizeof(PIPE_CONTROL) +
-                                        sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                                        sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
                                         sizeof(MI_BATCH_BUFFER_START);
 
     size_t bbStartOffset = beforeControlSectionOffset +
                            (2 * sizeof(uint32_t));
 
     size_t multiTileBarrierSize = bbStartOffset +
-                                  sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT) +
+                                  sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
                                   sizeof(MI_STORE_DATA_IMM) +
-                                  sizeof(MI_ATOMIC) + sizeof(MI_SEMAPHORE_WAIT);
+                                  sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
 
     size_t timestampRegisters = 2 * (sizeof(MI_LOAD_REGISTER_REG) + sizeof(MI_LOAD_REGISTER_IMM) +
                                      NEO::EncodeMath<FamilyType>::streamCommandSize + sizeof(MI_STORE_REGISTER_MEM));
@@ -527,7 +527,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
 
     constexpr size_t sizeBarrierCommands = sizeof(PIPE_CONTROL) +
                                            sizeof(MI_ATOMIC) +
-                                           sizeof(MI_SEMAPHORE_WAIT) +
+                                           NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
                                            sizeof(MI_BATCH_BUFFER_START);
 
     constexpr size_t expectedSize = sizeBarrierCommands +

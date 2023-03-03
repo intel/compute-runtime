@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/experimental_command_buffer.h"
 #include "shared/source/command_stream/linear_stream.h"
@@ -94,18 +95,16 @@ void ExperimentalCommandBuffer::addExperimentalCommands() {
     *semaphoreData = 1;
     uint64_t gpuAddr = experimentalAllocation->getGpuAddress() + experimentalAllocationOffset;
 
-    auto semaphoreCmdSpace = currentStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>();
-    auto semaphoreCmd = GfxFamily::cmdInitMiSemaphoreWait;
-    semaphoreCmd.setCompareOperation(MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD);
-    semaphoreCmd.setSemaphoreDataDword(*semaphoreData);
-    semaphoreCmd.setSemaphoreGraphicsAddress(gpuAddr);
-    *semaphoreCmdSpace = semaphoreCmd;
+    EncodeSempahore<GfxFamily>::programMiSemaphoreWait(currentStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>(),
+                                                       gpuAddr,
+                                                       *semaphoreData,
+                                                       MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD,
+                                                       false, false);
 }
 
 template <typename GfxFamily>
 size_t ExperimentalCommandBuffer::getExperimentalCommandsSize() noexcept {
-    using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
-    return sizeof(MI_SEMAPHORE_WAIT);
+    return NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
 }
 
 } // namespace NEO

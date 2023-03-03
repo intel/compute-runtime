@@ -370,7 +370,8 @@ struct EncodeSempahore {
                                        uint64_t compareAddress,
                                        uint32_t compareData,
                                        COMPARE_OPERATION compareMode,
-                                       bool registerPollMode);
+                                       bool registerPollMode,
+                                       bool waitMode);
 
     static void addMiSemaphoreWaitCommand(LinearStream &commandStream,
                                           uint64_t compareAddress,
@@ -382,6 +383,9 @@ struct EncodeSempahore {
                                           uint64_t compareAddress,
                                           uint32_t compareData,
                                           COMPARE_OPERATION compareMode);
+
+    static void applyMiSemaphoreWaitCommand(LinearStream &commandStream,
+                                            std::list<void *> &commandsList);
 
     static constexpr size_t getSizeMiSemaphoreWait() { return sizeof(MI_SEMAPHORE_WAIT); }
 };

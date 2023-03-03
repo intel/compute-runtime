@@ -598,14 +598,14 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
                                                     this->device->getNEODevice()->debugExecutionCounter.load(),
                                                     NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
         linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getNEODevice()->getRootDeviceEnvironment(), false);
-        linearStreamSizeEstimate += sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+        linearStreamSizeEstimate += NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(),
                                                     this->device->getNEODevice()->debugExecutionCounter.load(),
                                                     NEO::PauseOnGpuProperties::PauseMode::AfterWorkload)) {
         linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getNEODevice()->getRootDeviceEnvironment(), false);
-        linearStreamSizeEstimate += sizeof(typename GfxFamily::MI_SEMAPHORE_WAIT);
+        linearStreamSizeEstimate += NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
     }
 
     return linearStreamSizeEstimate;
