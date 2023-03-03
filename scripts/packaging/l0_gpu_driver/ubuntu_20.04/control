@@ -13,7 +13,7 @@ Standards-Version: 4.3.0
 Homepage: https://github.com/oneapi-src/level-zero
 
 Package: intel-level-zero-gpu
-Architecture: amd64
+Architecture: amd64 arm64
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
@@ -26,7 +26,7 @@ Description: Intel(R) Graphics Compute Runtime for oneAPI Level Zero.
  hardware, and efficiently exposing hardware capabilities to applications.
 
 Package: intel-level-zero-gpu-devel
-Architecture: amd64
+Architecture: amd64 arm64
 Depends:
  ${shlibs:Depends},
  ${misc:Depends},
