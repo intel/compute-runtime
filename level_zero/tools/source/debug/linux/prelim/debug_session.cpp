@@ -1274,9 +1274,20 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
     auto hwInfo = connectedDevice->getHwInfo();
     auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
 
-    auto threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, attention->bitmask, attention->bitmask_size);
+    std::vector<EuThread::ThreadId> threadsWithAttention;
+    if (interruptSent) {
+        std::unique_ptr<uint8_t[]> bitmask;
+        size_t bitmaskSize;
+        auto attReadResult = threadControl({}, tileIndex, ThreadControlCmd::Stopped, bitmask, bitmaskSize);
+        if (attReadResult == 0) {
+            threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, bitmask.get(), bitmaskSize);
+        }
+    }
 
-    printBitmask(attention->bitmask, attention->bitmask_size);
+    if (threadsWithAttention.size() == 0) {
+        threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, tileIndex, attention->bitmask, attention->bitmask_size);
+        printBitmask(attention->bitmask, attention->bitmask_size);
+    }
 
     PRINT_DEBUGGER_THREAD_LOG("ATTENTION for tile = %d thread count = %d\n", tileIndex, (int)threadsWithAttention.size());
 
@@ -1416,16 +1427,17 @@ int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &thre
 
     printBitmask(bitmask.get(), bitmaskSize);
 
-    auto ret = ioctl(PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &euControl);
-    if (ret != 0) {
-        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_EU_CONTROL failed: retCode: %d errno = %d command = %d\n", ret, errno, command);
+    auto euControlRetVal = ioctl(PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &euControl);
+    if (euControlRetVal != 0) {
+        PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_EU_CONTROL failed: retCode: %d errno = %d command = %d\n", euControlRetVal, errno, command);
+        DEBUG_BREAK_IF(true);
     } else {
         PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_EU_CONTROL: seqno = %llu command = %u\n", (uint64_t)euControl.seqno, command);
     }
 
     if (command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT ||
         command == PRELIM_I915_DEBUG_EU_THREADS_CMD_INTERRUPT_ALL) {
-        if (ret == 0) {
+        if (euControlRetVal == 0) {
             euControlInterruptSeqno[tile] = euControl.seqno;
         } else {
             euControlInterruptSeqno[tile] = invalidHandle;
@@ -1436,7 +1448,7 @@ int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &thre
         bitmaskOut = std::move(bitmask);
         bitmaskSizeOut = euControl.bitmask_size;
     }
-    return ret;
+    return euControlRetVal;
 }
 
 void DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) {
