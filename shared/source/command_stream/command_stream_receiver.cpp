@@ -384,6 +384,11 @@ void CommandStreamReceiver::cleanupResources() {
         getMemoryManager()->freeGraphicsMemory(kernelArgsBufferAllocation);
         kernelArgsBufferAllocation = nullptr;
     }
+
+    if (globalStatelessHeapAllocation) {
+        getMemoryManager()->freeGraphicsMemory(globalStatelessHeapAllocation);
+        globalStatelessHeapAllocation = nullptr;
+    }
 }
 
 WaitStatus CommandStreamReceiver::waitForCompletionWithTimeout(const WaitParams &params, TaskCountType taskCountToWait) {
@@ -1031,6 +1036,23 @@ uint64_t CommandStreamReceiver::getCompletionAddress() const {
     }
     completionFenceAddress += TagAllocationLayout::completionFenceOffset;
     return completionFenceAddress;
+}
+
+void CommandStreamReceiver::createGlobalStatelessHeap() {
+    if (this->globalStatelessHeapAllocation == nullptr) {
+        auto lock = obtainUniqueOwnership();
+        if (this->globalStatelessHeapAllocation == nullptr) {
+            constexpr size_t heapSize = 16 * MemoryConstants::kiloByte;
+            constexpr AllocationType allocationType = AllocationType::LINEAR_STREAM;
+
+            AllocationProperties properties{rootDeviceIndex, true, heapSize, allocationType,
+                                            isMultiOsContextCapable(), false, osContext->getDeviceBitfield()};
+
+            this->globalStatelessHeapAllocation = getMemoryManager()->allocateGraphicsMemoryWithProperties(properties);
+
+            this->globalStatelessHeap = std::make_unique<IndirectHeap>(this->globalStatelessHeapAllocation);
+        }
+    }
 }
 
 std::function<void()> CommandStreamReceiver::debugConfirmationFunction = []() { std::cin.get(); };

@@ -129,6 +129,20 @@ struct CommandListStateBaseAddressFixture : public ModuleMutableCommandListFixtu
     bool dshRequired = false;
 };
 
+struct CommandListGlobalHeapsFixtureInit : public CommandListStateBaseAddressFixture {
+    void setUp();
+    void setUpParams(int32_t globalHeapMode);
+    void tearDown();
+    std::unique_ptr<L0::ult::CommandList> commandListPrivateHeap;
+};
+
+template <int32_t globalHeapMode>
+struct CommandListGlobalHeapsFixture : public CommandListGlobalHeapsFixtureInit {
+    void setUp() {
+        CommandListGlobalHeapsFixtureInit::setUpParams(globalHeapMode);
+    }
+};
+
 struct ImmediateCmdListSharedHeapsFixture : public ModuleMutableCommandListFixture {
     void setUp();
 

@@ -2424,7 +2424,7 @@ TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDef
     EXPECT_EQ(expectedDoubleSbaWa, commandList->doubleSbaWa);
 
     auto expectedHeapAddressModel = l0GfxCoreHelper.getPlatformHeapAddressModel();
-    EXPECT_EQ(expectedHeapAddressModel, commandList->cmdListHeapAddressModel);
+    EXPECT_EQ(expectedHeapAddressModel, commandList->getCmdListHeapAddressModel());
     EXPECT_EQ(expectedHeapAddressModel, commandList->getCmdContainer().getHeapAddressModel());
 }
 

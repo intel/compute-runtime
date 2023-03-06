@@ -124,9 +124,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         return ret;
     }
 
-    this->allocateGlobalFenceAndMakeItResident();
-    this->allocateWorkPartitionAndMakeItResident();
-    this->allocateTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(child);
+    this->getGlobalFenceAndMakeItResident();
+    this->getWorkPartitionAndMakeItResident();
+    this->getGlobalStatelessHeapAndMakeItResident();
+    this->getTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(child);
     this->csr->programHardwareContext(child);
     this->makeSbaTrackingBufferResidentIfL0DebuggerEnabled(ctx.isDebugEnabled);
 
@@ -226,8 +227,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
         return ret;
     }
 
-    this->allocateGlobalFenceAndMakeItResident();
-    this->allocateTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(child);
+    this->getGlobalFenceAndMakeItResident();
+    this->getTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(child);
     this->csr->programHardwareContext(child);
 
     this->encodeKernelArgsBufferAndMakeItResident();
@@ -688,7 +689,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::makeAlignedChildStreamAndSetGpuBase(N
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::allocateGlobalFenceAndMakeItResident() {
+void CommandQueueHw<gfxCoreFamily>::getGlobalFenceAndMakeItResident() {
     const auto globalFenceAllocation = this->csr->getGlobalFenceAllocation();
     if (globalFenceAllocation) {
         this->csr->makeResident(*globalFenceAllocation);
@@ -696,7 +697,7 @@ void CommandQueueHw<gfxCoreFamily>::allocateGlobalFenceAndMakeItResident() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::allocateWorkPartitionAndMakeItResident() {
+void CommandQueueHw<gfxCoreFamily>::getWorkPartitionAndMakeItResident() {
     const auto workPartitionAllocation = this->csr->getWorkPartitionAllocation();
     if (workPartitionAllocation) {
         this->csr->makeResident(*workPartitionAllocation);
@@ -704,7 +705,15 @@ void CommandQueueHw<gfxCoreFamily>::allocateWorkPartitionAndMakeItResident() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::allocateTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(NEO::LinearStream &cmdStream) {
+void CommandQueueHw<gfxCoreFamily>::getGlobalStatelessHeapAndMakeItResident() {
+    const auto globalStatelessAllocation = this->csr->getGlobalStatelessHeapAllocation();
+    if (globalStatelessAllocation) {
+        this->csr->makeResident(*globalStatelessAllocation);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::getTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(NEO::LinearStream &cmdStream) {
     if (NEO::DebugManager.flags.EnableSWTags.get()) {
         NEO::Device *neoDevice = this->device->getNEODevice();
         NEO::SWTagsManager *tagsManager = neoDevice->getRootDeviceEnvironment().tagsManager.get();

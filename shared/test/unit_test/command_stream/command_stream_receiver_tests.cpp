@@ -13,6 +13,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
 #include "shared/source/helpers/api_specific_config.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/surface.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
@@ -2950,4 +2951,38 @@ HWTEST_F(CommandStreamReceiverTest, givenL1CachePolicyInitializedInCsrWhenGettin
     auto l1CachePolicy = commandStreamReceiver->getStoredL1CachePolicy();
     EXPECT_EQ(productHelper.getL1CachePolicy(true), l1CachePolicy->getL1CacheValue(true));
     EXPECT_EQ(productHelper.getL1CachePolicy(false), l1CachePolicy->getL1CacheValue(false));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenCreateGlobalStatelessHeapAllocationWhenGettingIndirectHeapObjectThenHeapAndAllocationAreInitialized) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_EQ(nullptr, commandStreamReceiver.getGlobalStatelessHeap());
+
+    commandStreamReceiver.createGlobalStatelessHeap();
+    auto heap = commandStreamReceiver.getGlobalStatelessHeap();
+    ASSERT_NE(nullptr, heap);
+    EXPECT_EQ(commandStreamReceiver.getGlobalStatelessHeapAllocation(), heap->getGraphicsAllocation());
+
+    auto heapAllocation = commandStreamReceiver.getGlobalStatelessHeapAllocation();
+    commandStreamReceiver.createGlobalStatelessHeap();
+    EXPECT_EQ(commandStreamReceiver.getGlobalStatelessHeap(), heap);
+    EXPECT_EQ(commandStreamReceiver.getGlobalStatelessHeapAllocation(), heap->getGraphicsAllocation());
+    EXPECT_EQ(commandStreamReceiver.getGlobalStatelessHeapAllocation(), heapAllocation);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenCreateGlobalStatelessHeapAllocationWhenFlushingTaskThenGlobalStatelessHeapAllocationIsResident) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+    EXPECT_EQ(nullptr, commandStreamReceiver.getGlobalStatelessHeap());
+
+    commandStreamReceiver.createGlobalStatelessHeap();
+
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    &ssh,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+    EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getGlobalStatelessHeapAllocation()));
 }

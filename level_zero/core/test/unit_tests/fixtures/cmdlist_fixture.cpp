@@ -184,6 +184,27 @@ uint32_t CommandListStateBaseAddressFixture::getMocs(bool l3On) {
     return device->getMOCS(l3On, false) >> 1;
 }
 
+void CommandListGlobalHeapsFixtureInit::setUp() {
+    CommandListGlobalHeapsFixtureInit::setUpParams(static_cast<int32_t>(NEO::HeapAddressModel::GlobalStateless));
+}
+
+void CommandListGlobalHeapsFixtureInit::setUpParams(int32_t globalHeapMode) {
+    DebugManager.flags.SelectCmdListHeapAddressModel.set(globalHeapMode);
+    CommandListStateBaseAddressFixture::setUp();
+
+    DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+
+    ze_result_t returnValue;
+    commandListPrivateHeap.reset(whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue)));
+
+    DebugManager.flags.SelectCmdListHeapAddressModel.set(globalHeapMode);
+}
+
+void CommandListGlobalHeapsFixtureInit::tearDown() {
+    commandListPrivateHeap.reset(nullptr);
+    CommandListStateBaseAddressFixture::tearDown();
+}
+
 void ImmediateCmdListSharedHeapsFixture::setUp() {
     DebugManager.flags.EnableFlushTaskSubmission.set(1);
     DebugManager.flags.EnableImmediateCmdListHeapSharing.set(1);

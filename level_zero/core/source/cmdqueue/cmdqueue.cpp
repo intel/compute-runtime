@@ -205,14 +205,16 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
 
     CommandQueueImp *commandQueue = nullptr;
     returnValue = ZE_RESULT_ERROR_UNINITIALIZED;
+    if (!allocator) {
+        return nullptr;
+    }
 
-    if (allocator) {
-        commandQueue = static_cast<CommandQueueImp *>((*allocator)(device, csr, desc));
-        returnValue = commandQueue->initialize(isCopyOnly, isInternal);
-        if (returnValue != ZE_RESULT_SUCCESS) {
-            commandQueue->destroy();
-            commandQueue = nullptr;
-        }
+    commandQueue = static_cast<CommandQueueImp *>((*allocator)(device, csr, desc));
+    returnValue = commandQueue->initialize(isCopyOnly, isInternal);
+    if (returnValue != ZE_RESULT_SUCCESS) {
+        commandQueue->destroy();
+        commandQueue = nullptr;
+        return nullptr;
     }
 
     auto &osContext = csr->getOsContext();
@@ -223,8 +225,11 @@ CommandQueue *CommandQueue::create(uint32_t productFamily, Device *device, NEO::
     }
 
     csr->initializeResources();
-
     csr->initDirectSubmission();
+    if (commandQueue->cmdListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
+        csr->createGlobalStatelessHeap();
+    }
+
     return commandQueue;
 }
 

@@ -626,6 +626,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         makeResident(*globalFenceAllocation);
     }
 
+    if (globalStatelessHeapAllocation) {
+        makeResident(*globalStatelessHeapAllocation);
+    }
+
     if (preemptionAllocation) {
         makeResident(*preemptionAllocation);
     }

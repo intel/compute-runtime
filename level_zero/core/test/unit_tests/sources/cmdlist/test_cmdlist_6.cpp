@@ -974,5 +974,24 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     EXPECT_GE(expectedSshAlignedSize, sshUsed);
 }
 
+using CommandListGlobalStatelessTest = Test<CommandListGlobalHeapsFixture<static_cast<int32_t>(NEO::HeapAddressModel::GlobalStateless)>>;
+HWTEST2_F(CommandListGlobalStatelessTest, givenGlobalStatelessWhenExecutingCommandListThenMakeAllocationResident, IsAtLeastXeHpCore) {
+    EXPECT_EQ(NEO::HeapAddressModel::GlobalStateless, commandList->cmdListHeapAddressModel);
+    EXPECT_EQ(NEO::HeapAddressModel::GlobalStateless, commandListImmediate->cmdListHeapAddressModel);
+    EXPECT_EQ(NEO::HeapAddressModel::GlobalStateless, commandQueue->cmdListHeapAddressModel);
+
+    ASSERT_EQ(commandListImmediate->csr, commandQueue->getCsr());
+    auto globalStatelessAlloc = commandListImmediate->csr->getGlobalStatelessHeapAllocation();
+    EXPECT_NE(nullptr, globalStatelessAlloc);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandListImmediate->csr);
+    ultCsr->storeMakeResidentAllocations = true;
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    auto result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(ultCsr->isMadeResident(globalStatelessAlloc));
+}
 } // namespace ult
 } // namespace L0

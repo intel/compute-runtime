@@ -171,6 +171,7 @@ class CommandStreamReceiver {
     GraphicsAllocation *getPreemptionAllocation() const { return preemptionAllocation; }
     GraphicsAllocation *getGlobalFenceAllocation() const { return globalFenceAllocation; }
     GraphicsAllocation *getWorkPartitionAllocation() const { return workPartitionAllocation; }
+    GraphicsAllocation *getGlobalStatelessHeapAllocation() const { return globalStatelessHeapAllocation; }
     GraphicsAllocation *getKernelArgsBufferAllocation() const { return kernelArgsBufferAllocation; }
 
     virtual WaitStatus waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, QueueThrottle throttle) = 0;
@@ -396,6 +397,10 @@ class CommandStreamReceiver {
     L1CachePolicy *getStoredL1CachePolicy() {
         return &l1CachePolicyData;
     }
+    void createGlobalStatelessHeap();
+    IndirectHeap *getGlobalStatelessHeap() {
+        return globalStatelessHeap.get();
+    }
 
   protected:
     void cleanupResources();
@@ -418,6 +423,7 @@ class CommandStreamReceiver {
     std::unique_ptr<TagAllocatorBase> timestampPacketAllocator;
     std::unique_ptr<Thread> userPauseConfirmation;
     std::unique_ptr<LogicalStateHelper> logicalStateHelper;
+    std::unique_ptr<IndirectHeap> globalStatelessHeap;
 
     ResidencyContainer residencyAllocations;
     ResidencyContainer evictionAllocations;
@@ -450,6 +456,7 @@ class CommandStreamReceiver {
     GraphicsAllocation *clearColorAllocation = nullptr;
     GraphicsAllocation *workPartitionAllocation = nullptr;
     GraphicsAllocation *kernelArgsBufferAllocation = nullptr;
+    GraphicsAllocation *globalStatelessHeapAllocation = nullptr;
 
     MultiGraphicsAllocation *tagsMultiAllocation = nullptr;
 

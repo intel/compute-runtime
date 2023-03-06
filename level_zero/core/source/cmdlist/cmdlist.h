@@ -297,6 +297,10 @@ struct CommandList : _ze_command_list_handle_t {
         return this->isTbxMode && !this->isSyncModeQueue;
     }
 
+    NEO::HeapAddressModel getCmdListHeapAddressModel() const {
+        return this->cmdListHeapAddressModel;
+    }
+
     void setCmdListContext(ze_context_handle_t contextHandle) {
         this->hContext = contextHandle;
     }
