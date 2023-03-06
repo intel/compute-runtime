@@ -490,6 +490,7 @@ zeGetImageProcAddrTable(
     pDdiTable->pfnCreate = L0::zeImageCreate;
     pDdiTable->pfnDestroy = L0::zeImageDestroy;
     pDdiTable->pfnGetAllocPropertiesExt = L0::zeImageGetAllocPropertiesExt;
+    pDdiTable->pfnViewCreateExt = L0::zeImageViewCreateExt;
     driver_ddiTable.core_ddiTable.Image = *pDdiTable;
     if (driver_ddiTable.enableTracing) {
         pDdiTable->pfnGetProperties = zeImageGetPropertiesTracing;

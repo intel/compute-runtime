@@ -109,6 +109,8 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExp(context, device, &imageViewDescPlaneY, srcImg, &planeYImageView));
+    SUCCESS_OR_TERMINATE(
+        zeImageViewCreateExt(context, device, &imageViewDescPlaneY, srcImg, &planeYImageView));
 
     // create image_view for UV plane
     ze_image_view_planar_exp_desc_t planeUVdesc = {};
@@ -131,6 +133,8 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExp(context, device, &imageViewDescPlaneUV, srcImg, &planeUVImageView));
+    SUCCESS_OR_TERMINATE(
+        zeImageViewCreateExt(context, device, &imageViewDescPlaneUV, srcImg, &planeUVImageView));
 
     // prepare input data
     std::vector<uint8_t> srcVecY;
@@ -354,6 +358,8 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExp(context, device, &imageViewDescPlaneY, srcImg, &planeYImageView));
+    SUCCESS_OR_TERMINATE(
+        zeImageViewCreateExt(context, device, &imageViewDescPlaneY, srcImg, &planeYImageView));
 
     // create image_view for U plane
     ze_image_view_planar_exp_desc_t planeUdesc = {};
@@ -376,6 +382,8 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExp(context, device, &imageViewDescPlaneU, srcImg, &planeUImageView));
+    SUCCESS_OR_TERMINATE(
+        zeImageViewCreateExt(context, device, &imageViewDescPlaneU, srcImg, &planeUImageView));
 
     // create image_view for V plane
     ze_image_view_planar_exp_desc_t planeVdesc = {};
@@ -398,6 +406,8 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExp(context, device, &imageViewDescPlaneV, srcImg, &planeVImageView));
+    SUCCESS_OR_TERMINATE(
+        zeImageViewCreateExt(context, device, &imageViewDescPlaneV, srcImg, &planeVImageView));
 
     // prepare input data
     std::vector<uint8_t> srcVecY;

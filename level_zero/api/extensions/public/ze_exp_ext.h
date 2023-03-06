@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,13 @@ ze_result_t zeImageGetAllocPropertiesExt(
     ze_image_allocation_ext_properties_t *pAllocProperties);
 
 ze_result_t zeImageViewCreateExp(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    const ze_image_desc_t *desc,
+    ze_image_handle_t hImage,
+    ze_image_handle_t *phImageView);
+
+ze_result_t zeImageViewCreateExt(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice,
     const ze_image_desc_t *desc,

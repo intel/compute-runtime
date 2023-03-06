@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,15 @@ ze_result_t zeImageGetAllocPropertiesExt(
 }
 
 ze_result_t zeImageViewCreateExp(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    const ze_image_desc_t *desc,
+    ze_image_handle_t hImage,
+    ze_image_handle_t *phImageView) {
+    return L0::Image::fromHandle(hImage)->createView(L0::Device::fromHandle(hDevice), desc, phImageView);
+}
+
+ze_result_t zeImageViewCreateExt(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice,
     const ze_image_desc_t *desc,
@@ -141,6 +150,16 @@ zeImageViewCreateExp(
     ze_image_handle_t hImage,
     ze_image_handle_t *phImageView) {
     return L0::zeImageViewCreateExp(hContext, hDevice, desc, hImage, phImageView);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL
+zeImageViewCreateExt(
+    ze_context_handle_t hContext,
+    ze_device_handle_t hDevice,
+    const ze_image_desc_t *desc,
+    ze_image_handle_t hImage,
+    ze_image_handle_t *phImageView) {
+    return L0::zeImageViewCreateExt(hContext, hDevice, desc, hImage, phImageView);
 }
 
 ZE_APIEXPORT ze_result_t ZE_APICALL
