@@ -4198,7 +4198,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueMigrateMemINTEL(
             pEvent->setCmdType(CL_COMMAND_MIGRATEMEM_INTEL);
         }
 
-        if (NEO::DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() > 0) {
+        if (NEO::DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.get() == true) {
             auto pSvmAllocMgr = pCommandQueue->getContext().getSVMAllocsManager();
             UNRECOVERABLE_IF(pSvmAllocMgr == nullptr);
 

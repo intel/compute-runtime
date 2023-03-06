@@ -889,9 +889,11 @@ TEST(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithWrongQu
     EXPECT_EQ(CL_INVALID_COMMAND_QUEUE, retVal);
 }
 
-TEST(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithProperParametersThenSuccessIsReturned) {
+TEST(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithProperParametersAndDebugKeyDisabledThenSuccessIsReturned) {
+    DebugManagerStateRestore restorer;
     MockCommandQueue cmdQ;
     void *unifiedMemoryAlloc = reinterpret_cast<void *>(0x1234);
+    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(0);
 
     auto retVal = clEnqueueMigrateMemINTEL(&cmdQ, unifiedMemoryAlloc, 10, 0, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -900,7 +902,6 @@ TEST(clUnifiedSharedMemoryTests, whenClEnqueueMigrateMemINTELisCalledWithProperP
 TEST(clUnifiedSharedMemoryTests, givenUseKmdMigrationAndAppendMemoryPrefetchForKmdMigratedSharedAllocationsWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheDeviceAssociatedWithCommandQueue) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(1);
 
     MockContext mockContext;
     auto device = mockContext.getDevice(0u);
@@ -926,7 +927,6 @@ TEST(clUnifiedSharedMemoryTests, givenUseKmdMigrationAndAppendMemoryPrefetchForK
 TEST(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheSubDeviceAssociatedWithCommandQueue) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(1);
 
     UltClDeviceFactory deviceFactory{1, 4};
     cl_device_id allDevices[] = {deviceFactory.rootDevices[0], deviceFactory.subDevices[0], deviceFactory.subDevices[1],
@@ -955,7 +955,6 @@ TEST(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueue
 TEST(clUnifiedSharedMemoryTests, givenContextWithMultipleSubdevicesWhenClEnqueueMigrateMemINTELisCalledThenExplicitlyMigrateMemoryToTheRootDeviceAssociatedWithCommandQueue) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.AppendMemoryPrefetchForKmdMigratedSharedAllocations.set(1);
 
     UltClDeviceFactory deviceFactory{1, 4};
     cl_device_id allDevices[] = {deviceFactory.rootDevices[0], deviceFactory.subDevices[0], deviceFactory.subDevices[1],
