@@ -334,7 +334,7 @@ bool MetricsLibrary::getGpuCommands(CommandList &commandList,
     }
 
     // Allocate command buffer.
-    auto stream = commandList.commandContainer.getCommandStream();
+    auto stream = commandList.getCmdContainer().getCommandStream();
     auto buffer = stream->getSpace(commandBuffer.Size);
 
     // Fill attached command buffer with gpu commands.
@@ -793,7 +793,7 @@ ze_result_t OaMetricQueryImp::writeMetricQuery(CommandList &commandList, ze_even
     const size_t metricQueriesSize = metricQueries.size();
 
     // Make gpu allocation visible.
-    commandList.commandContainer.addToResidencyContainer(pool.pAllocation);
+    commandList.getCmdContainer().addToResidencyContainer(pool.pAllocation);
 
     // Wait for events before executing query.
     commandList.appendWaitOnEvents(numWaitEvents, phWaitEvents, false, true);
@@ -839,7 +839,7 @@ ze_result_t OaMetricQueryImp::writeMetricQuery(CommandList &commandList, ze_even
 
             // Allocate command buffer only once.
             if (buffer == nullptr) {
-                auto stream = commandList.commandContainer.getCommandStream();
+                auto stream = commandList.getCmdContainer().getCommandStream();
                 buffer = stream->getSpace(commandBuffer.Size);
             }
 

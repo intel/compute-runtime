@@ -28,16 +28,16 @@ HWTEST_F(CommandListAppendSignalEvent, WhenAppendingSignalEventWithoutScopeThenM
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     auto result = commandList->appendSignalEvent(event->toHandle());
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     auto baseAddr = event->getCompletionFieldGpuAddress(device);
     auto itor = find<MI_STORE_DATA_IMM *>(cmdList.begin(), cmdList.end());
@@ -50,7 +50,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenCmdlistWhenAppendingSignalEventThenE
     auto result = commandList->appendSignalEvent(event->toHandle());
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto &residencyContainer = commandList->commandContainer.getResidencyContainer();
+    auto &residencyContainer = commandList->getCmdContainer().getResidencyContainer();
     auto eventPoolAlloc = &eventPool->getAllocation();
     for (auto alloc : eventPoolAlloc->getGraphicsAllocations()) {
         auto itor =
@@ -76,16 +76,16 @@ HWTEST_F(CommandListAppendSignalEvent, givenEventWithScopeFlagDeviceWhenAppendin
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto eventHostVisible = std::unique_ptr<L0::Event>(Event::create<typename FamilyType::TimestampPacketType>(eventPoolHostVisible.get(), &eventDesc, device));
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     result = commandList->appendSignalEvent(eventHostVisible->toHandle());
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
-                                                      ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+                                                      ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
                                                       usedSpaceAfter));
 
     auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -106,7 +106,7 @@ HWTEST_F(CommandListAppendSignalEvent, givenEventWithScopeFlagDeviceWhenAppendin
 HWTEST2_F(CommandListAppendSignalEvent, givenCommandListWhenAppendWriteGlobalTimestampCalledWithSignalEventThenPipeControlForTimestampAndSignalEncoded, IsAtLeastSkl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-    auto &commandContainer = commandList->commandContainer;
+    auto &commandContainer = commandList->getCmdContainer();
 
     uint64_t timestampAddress = 0x12345678555500;
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
@@ -149,7 +149,7 @@ HWTEST2_F(CommandListAppendSignalEvent, givenTimestampEventUsedInSignalThenPipeC
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-    auto &commandContainer = commandList->commandContainer;
+    auto &commandContainer = commandList->getCmdContainer();
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -194,7 +194,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     size_t useSize = cmdStream->getAvailableSpace();
     useSize -= sizeof(MI_BATCH_BUFFER_END);
@@ -247,7 +247,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     size_t useSize = cmdStream->getAvailableSpace();
     useSize -= sizeof(MI_BATCH_BUFFER_END);
@@ -305,7 +305,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     size_t useSize = cmdStream->getAvailableSpace();
     useSize -= sizeof(MI_BATCH_BUFFER_END);
@@ -354,7 +354,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
           givenMultiTileCommandListWhenAppendWriteGlobalTimestampCalledWithSignalEventThenWorkPartitionedRegistersAreUsed, IsAtLeastXeHpCore) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-    auto &commandContainer = commandList->commandContainer;
+    auto &commandContainer = commandList->getCmdContainer();
 
     uint64_t timestampAddress = 0x12345678555500;
     uint64_t *dstptr = reinterpret_cast<uint64_t *>(timestampAddress);
@@ -433,7 +433,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     event->setEventTimestampFlag(true);
 
@@ -474,7 +474,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     event->setEventTimestampFlag(false);
 
@@ -517,7 +517,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     event->setEventTimestampFlag(false);
 

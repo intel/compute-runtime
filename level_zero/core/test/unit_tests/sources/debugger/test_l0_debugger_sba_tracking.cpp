@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -281,19 +281,19 @@ HWTEST2_F(L0DebuggerTest, givenDebuggingEnabledWhenNonCopyCommandListIsInititali
     ze_command_list_handle_t commandListHandle = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
     auto commandList = CommandList::fromHandle(commandListHandle);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, commandList->commandContainer.getCommandStream()->getCpuBase(), usedSpaceAfter));
+        cmdList, commandList->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceAfter));
 
     auto sbaItor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), sbaItor);
     auto cmdSba = genCmdCast<STATE_BASE_ADDRESS *>(*sbaItor);
 
     uint64_t sshGpuVa = cmdSba->getSurfaceStateBaseAddress();
-    auto expectedGpuVa = commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getHeapGpuBase();
+    auto expectedGpuVa = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getHeapGpuBase();
     EXPECT_EQ(expectedGpuVa, sshGpuVa);
     EXPECT_EQ(1u, getMockDebuggerL0Hw<FamilyType>()->captureStateBaseAddressCount);
 

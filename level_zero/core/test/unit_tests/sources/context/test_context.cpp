@@ -840,7 +840,7 @@ HWTEST_F(ContextMakeMemoryResidentAndMigrationTests,
     auto allocation = svmManager->getSVMAlloc(sharedPtr);
     auto gpuAllocation = allocation->gpuAllocations.getGraphicsAllocation(mockRootDeviceIndex);
 
-    auto &commandContainer = commandList0->commandContainer;
+    auto &commandContainer = commandList0->getCmdContainer();
     commandContainer.addToResidencyContainer(gpuAllocation);
     commandContainer.addToResidencyContainer(allocation->cpuAllocation);
 

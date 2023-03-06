@@ -10,6 +10,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
@@ -258,7 +259,7 @@ struct CommandList : _ze_command_list_handle_t {
     virtual ze_result_t executeCommandListImmediate(bool performMigration) = 0;
     virtual ze_result_t initialize(Device *device, NEO::EngineGroupType engineGroupType, ze_command_list_flags_t flags) = 0;
     virtual ~CommandList();
-    NEO::CommandContainer commandContainer;
+
     bool getContainsStatelessUncachedResource() { return containsStatelessUncachedResource; }
     std::map<const void *, NEO::GraphicsAllocation *> &getHostPtrMap() {
         return hostPtrMap;
@@ -296,24 +297,41 @@ struct CommandList : _ze_command_list_handle_t {
         return this->isTbxMode && !this->isSyncModeQueue;
     }
 
-    ze_context_handle_t hContext = nullptr;
-    std::vector<Kernel *> printfKernelContainer;
-    CommandQueue *cmdQImmediate = nullptr;
-    NEO::CommandStreamReceiver *csr = nullptr;
-    Device *device = nullptr;
-    NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
-    unsigned long numThreads = 1u;
-    uint32_t cmdListType = CommandListType::TYPE_REGULAR;
-    uint32_t commandListPerThreadScratchSize = 0u;
-    uint32_t commandListPerThreadPrivateScratchSize = 0u;
-    uint32_t partitionCount = 1;
-    bool isFlushTaskSubmissionEnabled = false;
-    bool isSyncModeQueue = false;
-    bool isTbxMode = false;
-    bool commandListSLMEnabled = false;
-    bool requiresQueueUncachedMocs = false;
-    bool isBcsSplitNeeded = false;
-    bool immediateCmdListHeapSharing = false;
+    void setCmdListContext(ze_context_handle_t contextHandle) {
+        this->hContext = contextHandle;
+    }
+
+    ze_context_handle_t getCmdListContext() const {
+        return this->hContext;
+    }
+
+    uint32_t getPartitionCount() const {
+        return this->partitionCount;
+    }
+
+    uint32_t getCmdListType() const {
+        return this->cmdListType;
+    }
+
+    bool isRequiredQueueUncachedMocs() const {
+        return requiresQueueUncachedMocs;
+    }
+
+    bool flushTaskSubmissionEnabled() const {
+        return isFlushTaskSubmissionEnabled;
+    }
+
+    Device *getDevice() const {
+        return this->device;
+    }
+
+    NEO::CommandContainer &getCmdContainer() {
+        return this->commandContainer;
+    }
+
+    void setCsr(NEO::CommandStreamReceiver *newCsr) {
+        this->csr = newCsr;
+    }
 
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
@@ -328,18 +346,50 @@ struct CommandList : _ze_command_list_handle_t {
     std::map<const void *, NEO::GraphicsAllocation *> hostPtrMap;
     std::vector<NEO::GraphicsAllocation *> ownedPrivateAllocations;
     std::vector<NEO::GraphicsAllocation *> patternAllocations;
-    CmdListReturnPoints returnPoints;
+    std::vector<Kernel *> printfKernelContainer;
 
+    NEO::CommandContainer commandContainer;
+
+    CmdListReturnPoints returnPoints;
     NEO::StreamProperties requiredStreamState{};
     NEO::StreamProperties finalStreamState{};
     CommandsToPatch commandsToPatch{};
     UnifiedMemoryControls unifiedMemoryControls;
     NEO::PrefetchContext prefetchContext;
+    NEO::L1CachePolicy l1CachePolicyData{};
+
+    int64_t currentSurfaceStateBaseAddress = NEO::StreamProperty64::initValue;
+    int64_t currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;
+    int64_t currentIndirectObjectBaseAddress = NEO::StreamProperty64::initValue;
+    int64_t currentBindingTablePoolBaseAddress = NEO::StreamProperty64::initValue;
+
+    ze_context_handle_t hContext = nullptr;
+    CommandQueue *cmdQImmediate = nullptr;
+    NEO::CommandStreamReceiver *csr = nullptr;
+    Device *device = nullptr;
+
+    size_t cmdListCurrentStartOffset = 0;
+
+    unsigned long numThreads = 1u;
 
     ze_command_list_flags_t flags = 0u;
+    NEO::PreemptionMode commandListPreemptionMode = NEO::PreemptionMode::Initial;
     NEO::EngineGroupType engineGroupType;
     NEO::HeapAddressModel cmdListHeapAddressModel = NEO::HeapAddressModel::PrivateHeaps;
 
+    uint32_t cmdListType = CommandListType::TYPE_REGULAR;
+    uint32_t commandListPerThreadScratchSize = 0u;
+    uint32_t commandListPerThreadPrivateScratchSize = 0u;
+    uint32_t partitionCount = 1;
+    uint32_t defaultMocsIndex = 0;
+
+    bool isFlushTaskSubmissionEnabled = false;
+    bool isSyncModeQueue = false;
+    bool isTbxMode = false;
+    bool commandListSLMEnabled = false;
+    bool requiresQueueUncachedMocs = false;
+    bool isBcsSplitNeeded = false;
+    bool immediateCmdListHeapSharing = false;
     bool indirectAllocationsAllowed = false;
     bool internalUsage = false;
     bool containsCooperativeKernelsFlag = false;
@@ -353,6 +403,10 @@ struct CommandList : _ze_command_list_handle_t {
     bool signalAllEventPackets = false;
     bool stateBaseAddressTracking = false;
     bool doubleSbaWa = false;
+    bool containsAnyKernel = false;
+    bool pipeControlMultiKernelEventSync = false;
+    bool compactL3FlushEventPacket = false;
+    bool dynamicHeapRequired = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

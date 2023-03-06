@@ -106,11 +106,6 @@ void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
     currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;
     currentIndirectObjectBaseAddress = NEO::StreamProperty64::initValue;
     currentBindingTablePoolBaseAddress = NEO::StreamProperty64::initValue;
-
-    currentSurfaceStateSize = NEO::StreamPropertySizeT::initValue;
-    currentDynamicStateSize = NEO::StreamPropertySizeT::initValue;
-    currentIndirectObjectSize = NEO::StreamPropertySizeT::initValue;
-    currentBindingTablePoolSize = NEO::StreamPropertySizeT::initValue;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2441,12 +2436,17 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularCommandLists(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect) {
     using VFE_STATE_TYPE = typename GfxFamily::VFE_STATE_TYPE;
 
+    size_t currentSurfaceStateSize = NEO::StreamPropertySizeT::initValue;
+    size_t currentDynamicStateSize = NEO::StreamPropertySizeT::initValue;
+    size_t currentIndirectObjectSize = NEO::StreamPropertySizeT::initValue;
+    size_t currentBindingTablePoolSize = NEO::StreamPropertySizeT::initValue;
+
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
 
     KernelImp &kernelImp = static_cast<KernelImp &>(kernel);
 
-    currentMocsState = static_cast<int32_t>(device->getMOCS(!kernelImp.getKernelRequiresUncachedMocs(), false) >> 1);
+    int32_t currentMocsState = static_cast<int32_t>(device->getMOCS(!kernelImp.getKernelRequiresUncachedMocs(), false) >> 1);
     bool checkSsh = false;
     if (currentSurfaceStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::SURFACE_STATE)) {
         auto ssh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);

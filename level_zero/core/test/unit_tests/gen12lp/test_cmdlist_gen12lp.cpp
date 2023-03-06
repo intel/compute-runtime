@@ -27,6 +27,7 @@ template <PRODUCT_FAMILY productFamily>
 struct CommandListAdjustStateComputeMode : public WhiteBox<::L0::CommandListProductFamily<productFamily>> {
     CommandListAdjustStateComputeMode() : WhiteBox<::L0::CommandListProductFamily<productFamily>>(1) {}
     using ::L0::CommandListProductFamily<productFamily>::applyMemoryRangesBarrier;
+    using ::L0::CommandListProductFamily<productFamily>::commandContainer;
 };
 
 HWTEST2_F(CommandListCreate, givenAllocationsWhenApplyRangesBarrierThenCheckWhetherL3ControlIsProgrammed, IsGen12LP) {

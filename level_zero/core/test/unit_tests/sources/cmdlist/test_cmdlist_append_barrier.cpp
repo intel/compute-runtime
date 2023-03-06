@@ -22,17 +22,17 @@ using CommandListAppendBarrier = Test<CommandListFixture>;
 
 HWTEST_F(CommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerated) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     auto result = commandList->appendBarrier(nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
-                                                      ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), usedSpaceBefore),
+                                                      ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceBefore),
                                                       usedSpaceAfter - usedSpaceBefore));
 
     // Find a PC w/ CS stall
@@ -45,32 +45,32 @@ HWTEST_F(CommandListAppendBarrier, WhenAppendingBarrierThenPipeControlIsGenerate
 
 HWTEST_F(CommandListAppendBarrier, GivenEventVsNoEventWhenAppendingBarrierThenCorrectPipeControlsIsAddedToCommandStream) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     commandList->reset();
     auto result = commandList->appendBarrier(event->toHandle(), 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList1, cmdList2;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList1,
-                                                      ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+                                                      ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
                                                       usedSpaceAfter));
 
     auto itor1 = findAll<PIPE_CONTROL *>(cmdList1.begin(), cmdList1.end());
     ASSERT_FALSE(itor1.empty());
 
     commandList->reset();
-    usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     result = commandList->appendBarrier(nullptr, 0, nullptr);
-    usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList2,
-                                                      ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+                                                      ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
                                                       usedSpaceAfter));
     auto itor2 = findAll<PIPE_CONTROL *>(cmdList2.begin(), cmdList2.end());
     ASSERT_FALSE(itor2.empty());
@@ -216,8 +216,8 @@ HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControl
                                sizeof(MI_STORE_DATA_IMM) +
                                sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
-    auto gpuBaseAddress = commandList->commandContainer.getCommandStream()->getGraphicsAllocation()->getGpuAddress() +
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+    auto gpuBaseAddress = commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation()->getGpuAddress() +
                           usedSpaceBefore;
 
     auto gpuCrossTileSyncAddress = gpuBaseAddress +
@@ -232,12 +232,12 @@ HWTEST2_F(MultiTileCommandListAppendBarrier, WhenAppendingBarrierThenPipeControl
     auto result = commandList->appendBarrier(nullptr, 0, nullptr);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
     size_t usedBuffer = usedSpaceAfter - usedSpaceBefore;
     EXPECT_EQ(expectedUseBuffer, usedBuffer);
 
-    void *cmdBuffer = ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), usedSpaceBefore);
+    void *cmdBuffer = ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), usedSpaceBefore);
     size_t parsedOffset = 0;
 
     validateMultiTileBarrier<FamilyType>(cmdBuffer, parsedOffset, gpuFinalSyncAddress, gpuCrossTileSyncAddress, gpuStartAddress, true, true);
@@ -257,7 +257,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
     EXPECT_EQ(2u, commandList->partitionCount);
 
-    LinearStream *cmdListStream = commandList->commandContainer.getCommandStream();
+    LinearStream *cmdListStream = commandList->getCmdContainer().getCommandStream();
 
     size_t beforeControlSectionOffset = sizeof(MI_STORE_DATA_IMM) +
                                         sizeof(PIPE_CONTROL) +
@@ -323,7 +323,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
     EXPECT_EQ(2u, commandList->partitionCount);
 
-    LinearStream *cmdListStream = commandList->commandContainer.getCommandStream();
+    LinearStream *cmdListStream = commandList->getCmdContainer().getCommandStream();
 
     size_t beforeControlSectionOffset = sizeof(MI_STORE_DATA_IMM) +
                                         sizeof(PIPE_CONTROL) +
@@ -429,7 +429,7 @@ HWTEST2_F(MultiTileCommandListAppendBarrier,
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
     EXPECT_EQ(2u, commandList->partitionCount);
 
-    LinearStream *cmdListStream = commandList->commandContainer.getCommandStream();
+    LinearStream *cmdListStream = commandList->getCmdContainer().getCommandStream();
 
     size_t beforeControlSectionOffset = sizeof(MI_STORE_DATA_IMM) +
                                         sizeof(PIPE_CONTROL) +
@@ -523,7 +523,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, immediateCommandList->partitionCount);
 
-    auto cmdStream = immediateCommandList->commandContainer.getCommandStream();
+    auto cmdStream = immediateCommandList->getCmdContainer().getCommandStream();
 
     constexpr size_t sizeBarrierCommands = sizeof(PIPE_CONTROL) +
                                            sizeof(MI_ATOMIC) +
@@ -618,7 +618,7 @@ HWTEST2_F(MultiTileImmediateCommandListAppendBarrier,
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
     EXPECT_EQ(2u, immediateCommandList->partitionCount);
 
-    auto cmdStream = immediateCommandList->commandContainer.getCommandStream();
+    auto cmdStream = immediateCommandList->getCmdContainer().getCommandStream();
 
     size_t usedBeforeSize = cmdStream->getUsed();
 

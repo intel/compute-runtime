@@ -30,17 +30,17 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventAppendedThenStor
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     auto result = commandList->appendEventReset(event->toHandle());
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
-                                                      ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+                                                      ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
                                                       usedSpaceAfter));
 
     auto gpuAddress = event->getCompletionFieldGpuAddress(device);
@@ -71,17 +71,17 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenResetEventWithTimeStampIsA
     auto eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 0, nullptr, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = std::unique_ptr<L0::Event>(L0::Event::create<typename FamilyType::TimestampPacketType>(eventPool.get(), &eventDesc, device));
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     result = commandList->appendEventReset(event->toHandle());
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
-                                                      ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+                                                      ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
                                                       usedSpaceAfter));
 
     auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
@@ -130,16 +130,16 @@ HWTEST_F(CommandListAppendEventReset, whenResetEventIsAppendedAndNoSpaceIsAvaila
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
 
-    auto firstBatchBufferAllocation = commandList->commandContainer.getCommandStream()->getGraphicsAllocation();
+    auto firstBatchBufferAllocation = commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation();
 
-    auto useSize = commandList->commandContainer.getCommandStream()->getAvailableSpace();
+    auto useSize = commandList->getCmdContainer().getCommandStream()->getAvailableSpace();
     useSize -= sizeof(MI_BATCH_BUFFER_END);
-    commandList->commandContainer.getCommandStream()->getSpace(useSize);
+    commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
 
     auto result = commandList->appendEventReset(event->toHandle());
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto secondBatchBufferAllocation = commandList->commandContainer.getCommandStream()->getGraphicsAllocation();
+    auto secondBatchBufferAllocation = commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation();
 
     EXPECT_NE(firstBatchBufferAllocation, secondBatchBufferAllocation);
 }
@@ -149,17 +149,17 @@ HWTEST_F(CommandListAppendEventReset, givenCopyOnlyCmdlistWhenResetEventAppended
     ze_result_t returnValue;
     commandList.reset(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue)));
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     auto result = commandList->appendEventReset(event->toHandle());
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(cmdList,
-                                                      ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+                                                      ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
                                                       usedSpaceAfter));
 
     auto itorPC = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
@@ -183,7 +183,7 @@ HWTEST_F(CommandListAppendEventReset, givenCmdlistWhenAppendingEventResetThenEve
     auto result = commandList->appendEventReset(event->toHandle());
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto &residencyContainer = commandList->commandContainer.getResidencyContainer();
+    auto &residencyContainer = commandList->getCmdContainer().getResidencyContainer();
     auto eventPoolAlloc = &eventPool->getAllocation();
     for (auto alloc : eventPoolAlloc->getGraphicsAllocations()) {
         auto itor =
@@ -268,7 +268,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent, givenTimestampEventUsedInReset
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-    auto &commandContainer = commandList->commandContainer;
+    auto &commandContainer = commandList->getCmdContainer();
 
     auto &hwInfo = device->getHwInfo();
     auto &l0GfxCoreHelper = device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
@@ -323,7 +323,7 @@ HWTEST2_F(CommandListAppendEventReset, givenEventWithHostScopeUsedInResetThenPip
     using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     using POST_SYNC_OPERATION = typename PIPE_CONTROL::POST_SYNC_OPERATION;
-    auto &commandContainer = commandList->commandContainer;
+    auto &commandContainer = commandList->getCmdContainer();
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
@@ -375,7 +375,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     size_t useSize = cmdStream->getAvailableSpace();
     useSize -= sizeof(MI_BATCH_BUFFER_END);
@@ -450,7 +450,7 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
     ze_result_t returnValue = commandList->initialize(device, NEO::EngineGroupType::Copy, 0u);
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     constexpr uint32_t packets = 2u;
     event->setPacketsInUse(packets);

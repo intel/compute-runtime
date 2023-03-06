@@ -197,7 +197,7 @@ HWTEST2_F(CommandQueueExecuteCommandListsSimpleTest, givenTwoCommandQueuesUsingS
 
     ze_command_list_handle_t commandList = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
-    CommandList::fromHandle(commandList)->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
+    whiteboxCast(CommandList::fromHandle(commandList))->commandListPreemptionMode = NEO::PreemptionMode::ThreadGroup;
 
     ze_command_queue_desc_t queueDesc = {};
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
@@ -432,17 +432,17 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetWhenDispatchWalkersThenInser
 
     DebugManager.flags.PauseOnEnqueue.set(1);
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     enqueueKernel();
     enqueueKernel();
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
     findPipeControls<FamilyType>(cmdList);
@@ -459,17 +459,17 @@ HWTEST_F(PauseOnGpuTests, givenPauseOnEnqueueFlagSetToAlwaysWhenDispatchWalkersT
 
     DebugManager.flags.PauseOnEnqueue.set(-2);
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     enqueueKernel();
     enqueueKernel();
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
     findPipeControls<FamilyType>(cmdList);
@@ -487,17 +487,17 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeOnlyWhenDispatchingThenInsert
     DebugManager.flags.PauseOnEnqueue.set(0);
     DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeWorkload);
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     enqueueKernel();
     enqueueKernel();
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
 
@@ -516,16 +516,16 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToAfterOnlyWhenDispatchingThenInsertP
     DebugManager.flags.PauseOnEnqueue.set(0);
     DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::AfterWorkload);
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     enqueueKernel();
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
     findPipeControls<FamilyType>(cmdList);
@@ -543,16 +543,16 @@ HWTEST_F(PauseOnGpuTests, givenPauseModeSetToBeforeAndAfterWhenDispatchingThenIn
     DebugManager.flags.PauseOnEnqueue.set(0);
     DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeAndAfterWorkload);
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     enqueueKernel();
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
 
@@ -591,17 +591,17 @@ HWTEST_F(PauseOnGpuWithImmediateCommandListTests, givenPauseOnEnqueueFlagSetWhen
 
     DebugManager.flags.PauseOnEnqueue.set(1);
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     enqueueKernel();
     enqueueKernel();
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
     findPipeControls<FamilyType>(cmdList);
@@ -618,17 +618,17 @@ HWTEST_F(PauseOnGpuWithImmediateCommandListTests, givenPauseOnEnqueueFlagSetToAl
 
     DebugManager.flags.PauseOnEnqueue.set(-2);
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     enqueueKernel();
     enqueueKernel();
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
     findPipeControls<FamilyType>(cmdList);
@@ -646,17 +646,17 @@ HWTEST_F(PauseOnGpuWithImmediateCommandListTests, givenPauseModeSetToBeforeOnlyW
     DebugManager.flags.PauseOnEnqueue.set(0);
     DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeWorkload);
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     enqueueKernel();
     enqueueKernel();
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
 
@@ -675,16 +675,16 @@ HWTEST_F(PauseOnGpuWithImmediateCommandListTests, givenPauseModeSetToAfterOnlyWh
     DebugManager.flags.PauseOnEnqueue.set(0);
     DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::AfterWorkload);
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     enqueueKernel();
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
     findPipeControls<FamilyType>(cmdList);
@@ -702,16 +702,16 @@ HWTEST_F(PauseOnGpuWithImmediateCommandListTests, givenPauseModeSetToBeforeAndAf
     DebugManager.flags.PauseOnEnqueue.set(0);
     DebugManager.flags.PauseOnGpuMode.set(PauseOnGpuProperties::PauseMode::BeforeAndAfterWorkload);
 
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     enqueueKernel();
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     findSemaphores<MI_SEMAPHORE_WAIT>(cmdList);
 

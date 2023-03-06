@@ -751,7 +751,7 @@ ze_result_t ContextImp::createCommandList(ze_device_handle_t hDevice,
                                           ze_command_list_handle_t *commandList) {
     auto ret = L0::Device::fromHandle(hDevice)->createCommandList(desc, commandList);
     if (*commandList) {
-        L0::CommandList::fromHandle(*commandList)->hContext = this->toHandle();
+        L0::CommandList::fromHandle(*commandList)->setCmdListContext(this->toHandle());
     }
     return ret;
 }
@@ -761,7 +761,7 @@ ze_result_t ContextImp::createCommandListImmediate(ze_device_handle_t hDevice,
                                                    ze_command_list_handle_t *commandList) {
     auto ret = L0::Device::fromHandle(hDevice)->createCommandListImmediate(desc, commandList);
     if (*commandList) {
-        L0::CommandList::fromHandle(*commandList)->hContext = this->toHandle();
+        L0::CommandList::fromHandle(*commandList)->setCmdListContext(this->toHandle());
     }
     return ret;
 }

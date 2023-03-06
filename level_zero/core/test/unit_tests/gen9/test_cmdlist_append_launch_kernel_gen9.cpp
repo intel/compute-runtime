@@ -31,11 +31,11 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSLMThenL3IsProgrammedWit
     auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     bool foundL3 = false;
     for (auto it = cmdList.begin(); it != cmdList.end(); it++) {
@@ -43,7 +43,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelWithSLMThenL3IsProgrammedWit
         if (lri) {
             if (lri->getRegisterOffset() == NEO::L3CNTLRegisterOffset<FamilyType>::registerOffset) {
                 auto value = lri->getDataDword();
-                auto dataSlm = NEO::PreambleHelper<FamilyType>::getL3Config(commandList->commandContainer.getDevice()->getHardwareInfo(), true);
+                auto dataSlm = NEO::PreambleHelper<FamilyType>::getL3Config(commandList->getCmdContainer().getDevice()->getHardwareInfo(), true);
                 EXPECT_EQ(dataSlm, value);
                 foundL3 = true;
                 break;

@@ -748,7 +748,8 @@ HWTEST2_F(DeviceWithDualStorage, givenCmdListWithAppendedKernelAndUsmTransferAnd
     CmdListKernelLaunchParams launchParams = {};
     commandList->appendLaunchKernel(kernel.toHandle(), &dispatchKernelArguments, nullptr, 0, nullptr, launchParams, false);
     auto deviceImp = static_cast<DeviceImp *>(device);
-    auto pageFaultCmdQueue = whiteboxCast(deviceImp->pageFaultCommandList->cmdQImmediate);
+
+    auto pageFaultCmdQueue = whiteboxCast(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate);
 
     auto sizeBefore = commandQueue->commandStream.getUsed();
     auto pageFaultSizeBefore = pageFaultCmdQueue->commandStream.getUsed();

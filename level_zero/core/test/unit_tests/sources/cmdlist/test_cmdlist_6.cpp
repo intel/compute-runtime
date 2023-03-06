@@ -776,12 +776,12 @@ HWTEST2_F(CommandListTest, givenCmdListWithIndirectAccessWhenExecutingCommandLis
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     MockCommandQueueIndirectAccess mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
 
-    auto oldCommandQueue = commandList->cmdQImmediate;
-    commandList->cmdQImmediate = &mockCommandQueue;
+    auto oldCommandQueue = commandListImmediate.cmdQImmediate;
+    commandListImmediate.cmdQImmediate = &mockCommandQueue;
     commandListImmediate.indirectAllocationsAllowed = true;
     commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
     EXPECT_EQ(mockCommandQueue.handleIndirectAllocationResidencyCalledTimes, 1u);
-    commandList->cmdQImmediate = oldCommandQueue;
+    commandListImmediate.cmdQImmediate = oldCommandQueue;
 }
 
 HWTEST2_F(CommandListTest, givenCmdListWithNoIndirectAccessWhenExecutingCommandListImmediateWithFlushTaskThenHandleIndirectAccessNotCalled, IsAtLeastSkl) {
@@ -795,12 +795,12 @@ HWTEST2_F(CommandListTest, givenCmdListWithNoIndirectAccessWhenExecutingCommandL
     MockCommandStreamReceiver mockCommandStreamReceiver(*neoDevice->executionEnvironment, neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield());
     MockCommandQueueIndirectAccess mockCommandQueue(device, &mockCommandStreamReceiver, &desc);
 
-    auto oldCommandQueue = commandList->cmdQImmediate;
-    commandList->cmdQImmediate = &mockCommandQueue;
+    auto oldCommandQueue = commandListImmediate.cmdQImmediate;
+    commandListImmediate.cmdQImmediate = &mockCommandQueue;
     commandListImmediate.indirectAllocationsAllowed = false;
     commandListImmediate.executeCommandListImmediateWithFlushTask(false, false, false);
     EXPECT_EQ(mockCommandQueue.handleIndirectAllocationResidencyCalledTimes, 0u);
-    commandList->cmdQImmediate = oldCommandQueue;
+    commandListImmediate.cmdQImmediate = oldCommandQueue;
 }
 
 using ImmediateCmdListSharedHeapsTest = Test<ImmediateCmdListSharedHeapsFixture>;

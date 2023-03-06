@@ -44,6 +44,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::applyMemoryRangesBarrier;
     using BaseClass::clearCommandsToPatch;
     using BaseClass::cmdListHeapAddressModel;
+    using BaseClass::cmdListType;
     using BaseClass::cmdQImmediate;
     using BaseClass::commandContainer;
     using BaseClass::commandListPerThreadScratchSize;
@@ -53,6 +54,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::containsAnyKernel;
     using BaseClass::containsCooperativeKernelsFlag;
     using BaseClass::csr;
+    using BaseClass::device;
     using BaseClass::doubleSbaWa;
     using BaseClass::engineGroupType;
     using BaseClass::estimateBufferSizeMultiTileBarrier;
@@ -67,12 +69,16 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::indirectAllocationsAllowed;
     using BaseClass::initialize;
+    using BaseClass::isFlushTaskSubmissionEnabled;
+    using BaseClass::isSyncModeQueue;
+    using BaseClass::isTbxMode;
     using BaseClass::isTimestampEventForMultiTile;
     using BaseClass::partitionCount;
     using BaseClass::patternAllocations;
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
+    using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::setupTimestampEventForMultiTile;
     using BaseClass::signalAllEventPackets;
     using BaseClass::stateBaseAddressTracking;
@@ -136,10 +142,13 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass = L0::CommandListCoreFamilyImmediate<gfxCoreFamily>;
     using BaseClass::clearCommandsToPatch;
     using BaseClass::cmdListHeapAddressModel;
+    using BaseClass::cmdListType;
     using BaseClass::cmdQImmediate;
+    using BaseClass::commandContainer;
     using BaseClass::commandsToPatch;
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::csr;
+    using BaseClass::device;
     using BaseClass::doubleSbaWa;
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
@@ -148,10 +157,13 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::isFlushTaskSubmissionEnabled;
     using BaseClass::isRelaxedOrderingDispatchAllowed;
+    using BaseClass::isSyncModeQueue;
+    using BaseClass::isTbxMode;
     using BaseClass::partitionCount;
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
+    using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::signalAllEventPackets;
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
@@ -162,11 +174,18 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreFamily> {
     using BaseClass = CommandListCoreFamilyImmediate<gfxCoreFamily>;
+    using BaseClass::cmdQImmediate;
+    using BaseClass::commandContainer;
     using BaseClass::compactL3FlushEventPacket;
     using BaseClass::containsAnyKernel;
+    using BaseClass::csr;
+    using BaseClass::device;
     using BaseClass::finalStreamState;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::indirectAllocationsAllowed;
+    using BaseClass::isFlushTaskSubmissionEnabled;
+    using BaseClass::isSyncModeQueue;
+    using BaseClass::isTbxMode;
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::requiredStreamState;
 };
@@ -176,10 +195,12 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass = ::L0::CommandListImp;
     using BaseClass::BaseClass;
     using BaseClass::cmdListHeapAddressModel;
+    using BaseClass::cmdListType;
     using BaseClass::cmdQImmediate;
     using BaseClass::commandContainer;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::csr;
+    using BaseClass::device;
     using BaseClass::doubleSbaWa;
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;
@@ -187,15 +208,18 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::initialize;
     using BaseClass::isFlushTaskSubmissionEnabled;
+    using BaseClass::isSyncModeQueue;
+    using BaseClass::isTbxMode;
     using BaseClass::nonImmediateLogicalStateHelper;
     using BaseClass::partitionCount;
     using BaseClass::pipelineSelectStateTracking;
     using BaseClass::requiredStreamState;
+    using BaseClass::requiresQueueUncachedMocs;
     using BaseClass::signalAllEventPackets;
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
 
-    WhiteBox(Device *device);
+    WhiteBox();
     ~WhiteBox() override;
 };
 
@@ -445,7 +469,9 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
   public:
     using BaseClass = CommandListCoreFamily<gfxCoreFamily>;
+    using BaseClass::commandContainer;
     using BaseClass::dcFlushSupport;
+    using BaseClass::device;
 
     ADDMETHOD(appendMemoryCopyKernelWithGA, ze_result_t, false, ZE_RESULT_SUCCESS,
               (void *dstPtr, NEO::GraphicsAllocation *dstPtrAlloc,
@@ -520,6 +546,7 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
     using BaseClass = WhiteBox<::L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>;
     MockCommandListImmediateHw() : BaseClass() {}
     using BaseClass::applyMemoryRangesBarrier;
+    using BaseClass::cmdListType;
     using BaseClass::dcFlushSupport;
     using BaseClass::dependenciesPresent;
     using BaseClass::eventWaitlistSyncRequired;

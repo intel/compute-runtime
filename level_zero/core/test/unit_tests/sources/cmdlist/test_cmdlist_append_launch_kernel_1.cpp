@@ -137,7 +137,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenNotEnoughSpaceInCommandStreamWhenA
     ze_result_t returnValue;
     std::unique_ptr<L0::ult::CommandList> commandList(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
 
-    auto &commandContainer = commandList->commandContainer;
+    auto &commandContainer = commandList->getCmdContainer();
     const auto stream = commandContainer.getCommandStream();
     const auto streamCpu = stream->getCpuBase();
 
@@ -222,12 +222,15 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfUsedWhenAppendedToC
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToSynchronousImmCommandListThenPrintfBufferIsPrinted) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableFlushTaskSubmission.set(1);
+
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
-    commandList->isFlushTaskSubmissionEnabled = true;
+
     Mock<Kernel> kernel;
     kernel.descriptor.kernelAttributes.flags.usesPrintf = true;
 
@@ -247,12 +250,15 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToSynch
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToAsynchronousImmCommandListThenPrintfBufferIsPrinted) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableFlushTaskSubmission.set(1);
+
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
-    commandList->isFlushTaskSubmissionEnabled = true;
+
     Mock<Kernel> kernel;
     kernel.descriptor.kernelAttributes.flags.usesPrintf = true;
 
@@ -272,6 +278,9 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendedToAsync
 }
 
 HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendToSynchronousImmCommandListHangsThenPrintfBufferIsPrinted) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableFlushTaskSubmission.set(1);
+
     ze_result_t returnValue;
     ze_command_queue_desc_t queueDesc = {};
     queueDesc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
@@ -282,7 +291,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenKernelWithPrintfWhenAppendToSynchro
     csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
 
     std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(productFamily, device, &queueDesc, false, NEO::EngineGroupType::RenderCompute, returnValue));
-    commandList->isFlushTaskSubmissionEnabled = true;
+
     Mock<Kernel> kernel;
     kernel.descriptor.kernelAttributes.flags.usesPrintf = true;
 
@@ -312,7 +321,7 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAppendingMultipleTimesThenSshIsNotDe
     ze_group_count_t groupCount{1, 1, 1};
 
     auto kernelSshSize = kernel->getSurfaceStateHeapDataSize();
-    auto ssh = commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssh = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::SURFACE_STATE);
     auto sshHeapSize = ssh->getMaxAvailableSpace();
     auto initialAllocation = ssh->getGraphicsAllocation();
     EXPECT_NE(nullptr, initialAllocation);
@@ -338,7 +347,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     Mock<::L0::Kernel> kernel;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -357,12 +366,12 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
         kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     auto itor = find<MI_LOAD_REGISTER_REG *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
@@ -414,10 +423,10 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenTimestampEventsWhenAppendingKernel
     ASSERT_EQ(0u, numPCs.size());
 
     {
-        auto itorEvent = std::find(std::begin(commandList->commandContainer.getResidencyContainer()),
-                                   std::end(commandList->commandContainer.getResidencyContainer()),
+        auto itorEvent = std::find(std::begin(commandList->getCmdContainer().getResidencyContainer()),
+                                   std::end(commandList->getCmdContainer().getResidencyContainer()),
                                    &event->getAllocation(device));
-        EXPECT_NE(itorEvent, std::end(commandList->commandContainer.getResidencyContainer()));
+        EXPECT_NE(itorEvent, std::end(commandList->getCmdContainer().getResidencyContainer()));
     }
 }
 
@@ -430,7 +439,7 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFla
     Mock<::L0::Kernel> kernel;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.count = 1;
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_KERNEL_TIMESTAMP;
@@ -452,12 +461,12 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenKernelLaunchWithTSEventAndScopeFla
         kernel.toHandle(), &groupCount, event->toHandle(), 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     auto itorPC = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(0u, itorPC.size());
@@ -474,19 +483,19 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyTh
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandListBase(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    auto usedSpaceBefore = commandListBase->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceBefore = commandListBase->getCmdContainer().getCommandStream()->getUsed();
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
     result = commandListBase->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandListBase->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandListBase->getCmdContainer().getCommandStream()->getUsed();
     EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdListBase;
     EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdListBase, ptrOffset(commandListBase->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdListBase, ptrOffset(commandListBase->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     auto itorPC = findAll<PIPE_CONTROL *>(cmdListBase.begin(), cmdListBase.end());
 
@@ -497,17 +506,17 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyTh
 
     std::unique_ptr<L0::CommandList> commandListWithDebugKey(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    usedSpaceBefore = commandListWithDebugKey->commandContainer.getCommandStream()->getUsed();
+    usedSpaceBefore = commandListWithDebugKey->getCmdContainer().getCommandStream()->getUsed();
 
     result = commandListWithDebugKey->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    usedSpaceAfter = commandListWithDebugKey->commandContainer.getCommandStream()->getUsed();
+    usedSpaceAfter = commandListWithDebugKey->getCmdContainer().getCommandStream()->getUsed();
     EXPECT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdListBaseWithDebugKey;
     EXPECT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdListBaseWithDebugKey, ptrOffset(commandListWithDebugKey->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdListBaseWithDebugKey, ptrOffset(commandListWithDebugKey->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     itorPC = findAll<PIPE_CONTROL *>(cmdListBaseWithDebugKey.begin(), cmdListBaseWithDebugKey.end());
 
@@ -527,18 +536,18 @@ HWTEST2_F(CommandListAppendLaunchKernel, givenForcePipeControlPriorToWalkerKeyAn
     std::unique_ptr<L0::CommandList> commandList(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto firstBatchBufferAllocation = commandList->commandContainer.getCommandStream()->getGraphicsAllocation();
+    auto firstBatchBufferAllocation = commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation();
 
-    auto useSize = commandList->commandContainer.getCommandStream()->getAvailableSpace();
+    auto useSize = commandList->getCmdContainer().getCommandStream()->getAvailableSpace();
     useSize -= sizeof(PIPE_CONTROL);
-    commandList->commandContainer.getCommandStream()->getSpace(useSize);
+    commandList->getCmdContainer().getCommandStream()->getSpace(useSize);
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
     result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto secondBatchBufferAllocation = commandList->commandContainer.getCommandStream()->getGraphicsAllocation();
+    auto secondBatchBufferAllocation = commandList->getCmdContainer().getCommandStream()->getGraphicsAllocation();
 
     EXPECT_NE(firstBatchBufferAllocation, secondBatchBufferAllocation);
 }
@@ -603,7 +612,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenIndirectDispatchWhenAppendingThenWo
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
 
     auto itor = find<MI_STORE_REGISTER_MEM *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(itor, cmdList.end());
@@ -677,11 +686,11 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenState
     ze_result_t returnValue;
     auto commandList = std::unique_ptr<CommandList>(whiteboxCast(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandList);
-    ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
+    ASSERT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
 
     auto commandListControl = std::unique_ptr<CommandList>(whiteboxCast(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
     ASSERT_NE(nullptr, commandListControl);
-    ASSERT_NE(nullptr, commandListControl->commandContainer.getCommandStream());
+    ASSERT_NE(nullptr, commandListControl->getCmdContainer().getCommandStream());
 
     ze_group_count_t groupCount{1, 1, 1};
     CmdListKernelLaunchParams launchParams = {};
@@ -696,40 +705,40 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenState
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
     ASSERT_EQ(device, commandList->device);
-    ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
-    ASSERT_GE(commandListControl->commandContainer.getCmdBufferAllocations()[0]->getUnderlyingBufferSize(), commandList->commandContainer.getCmdBufferAllocations()[0]->getUnderlyingBufferSize());
-    ASSERT_EQ(commandListControl->commandContainer.getResidencyContainer().size(),
-              commandList->commandContainer.getResidencyContainer().size());
-    ASSERT_EQ(commandListControl->commandContainer.getDeallocationContainer().size(),
-              commandList->commandContainer.getDeallocationContainer().size());
+    ASSERT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
+    ASSERT_GE(commandListControl->getCmdContainer().getCmdBufferAllocations()[0]->getUnderlyingBufferSize(), commandList->getCmdContainer().getCmdBufferAllocations()[0]->getUnderlyingBufferSize());
+    ASSERT_EQ(commandListControl->getCmdContainer().getResidencyContainer().size(),
+              commandList->getCmdContainer().getResidencyContainer().size());
+    ASSERT_EQ(commandListControl->getCmdContainer().getDeallocationContainer().size(),
+              commandList->getCmdContainer().getDeallocationContainer().size());
     ASSERT_EQ(commandListControl->getPrintfKernelContainer().size(),
               commandList->getPrintfKernelContainer().size());
-    ASSERT_EQ(commandListControl->commandContainer.getCommandStream()->getUsed(), commandList->commandContainer.getCommandStream()->getUsed());
-    ASSERT_EQ(commandListControl->commandContainer.slmSize, commandList->commandContainer.slmSize);
+    ASSERT_EQ(commandListControl->getCmdContainer().getCommandStream()->getUsed(), commandList->getCmdContainer().getCommandStream()->getUsed());
+    ASSERT_EQ(commandListControl->getCmdContainer().slmSize, commandList->getCmdContainer().slmSize);
 
     for (uint32_t i = 0; i < NEO::HeapType::NUM_TYPES; i++) {
         auto heapType = static_cast<NEO::HeapType>(i);
         if (NEO::HeapType::DYNAMIC_STATE == heapType && !device->getHwInfo().capabilityTable.supportsImages) {
-            ASSERT_EQ(nullptr, commandListControl->commandContainer.getIndirectHeapAllocation(heapType));
-            ASSERT_EQ(nullptr, commandListControl->commandContainer.getIndirectHeap(heapType));
+            ASSERT_EQ(nullptr, commandListControl->getCmdContainer().getIndirectHeapAllocation(heapType));
+            ASSERT_EQ(nullptr, commandListControl->getCmdContainer().getIndirectHeap(heapType));
         } else {
-            ASSERT_NE(nullptr, commandListControl->commandContainer.getIndirectHeapAllocation(heapType));
-            ASSERT_NE(nullptr, commandList->commandContainer.getIndirectHeapAllocation(heapType));
-            ASSERT_EQ(commandListControl->commandContainer.getIndirectHeapAllocation(heapType)->getUnderlyingBufferSize(),
-                      commandList->commandContainer.getIndirectHeapAllocation(heapType)->getUnderlyingBufferSize());
+            ASSERT_NE(nullptr, commandListControl->getCmdContainer().getIndirectHeapAllocation(heapType));
+            ASSERT_NE(nullptr, commandList->getCmdContainer().getIndirectHeapAllocation(heapType));
+            ASSERT_EQ(commandListControl->getCmdContainer().getIndirectHeapAllocation(heapType)->getUnderlyingBufferSize(),
+                      commandList->getCmdContainer().getIndirectHeapAllocation(heapType)->getUnderlyingBufferSize());
 
-            ASSERT_NE(nullptr, commandListControl->commandContainer.getIndirectHeap(heapType));
-            ASSERT_NE(nullptr, commandList->commandContainer.getIndirectHeap(heapType));
-            ASSERT_EQ(commandListControl->commandContainer.getIndirectHeap(heapType)->getUsed(),
-                      commandList->commandContainer.getIndirectHeap(heapType)->getUsed());
+            ASSERT_NE(nullptr, commandListControl->getCmdContainer().getIndirectHeap(heapType));
+            ASSERT_NE(nullptr, commandList->getCmdContainer().getIndirectHeap(heapType));
+            ASSERT_EQ(commandListControl->getCmdContainer().getIndirectHeap(heapType)->getUsed(),
+                      commandList->getCmdContainer().getIndirectHeap(heapType)->getUsed());
 
-            ASSERT_EQ(commandListControl->commandContainer.isHeapDirty(heapType), commandList->commandContainer.isHeapDirty(heapType));
+            ASSERT_EQ(commandListControl->getCmdContainer().isHeapDirty(heapType), commandList->getCmdContainer().isHeapDirty(heapType));
         }
     }
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
 
     auto itor = find<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
     EXPECT_NE(cmdList.end(), itor);
@@ -751,7 +760,7 @@ HWTEST_F(CommandListAppendLaunchKernel, WhenAddingKernelsThenResidencyContainerD
     commandList->close();
 
     uint32_t it = 0;
-    const auto &residencyCont = commandList->commandContainer.getResidencyContainer();
+    const auto &residencyCont = commandList->getCmdContainer().getResidencyContainer();
     for (auto alloc : residencyCont) {
         auto occurences = std::count(residencyCont.begin(), residencyCont.end(), alloc);
         EXPECT_EQ(1U, static_cast<uint32_t>(occurences)) << it;
@@ -765,8 +774,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsThenAddSemapho
 
     ze_result_t returnValue;
     auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    ASSERT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -785,12 +794,12 @@ HWTEST_F(CommandListAppendLaunchKernel, givenSingleValidWaitEventsThenAddSemapho
     auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 1, &hEventHandle, launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
 
     auto itor = find<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     ASSERT_NE(cmdList.end(), itor);
@@ -814,8 +823,8 @@ HWTEST_F(CommandListAppendLaunchKernel, givenMultipleValidWaitEventsThenAddSemap
 
     ze_result_t returnValue;
     auto commandList = std::unique_ptr<L0::CommandList>(L0::CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    ASSERT_NE(nullptr, commandList->commandContainer.getCommandStream());
-    auto usedSpaceBefore = commandList->commandContainer.getCommandStream()->getUsed();
+    ASSERT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
+    auto usedSpaceBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
 
     ze_event_pool_desc_t eventPoolDesc = {};
     eventPoolDesc.flags = ZE_EVENT_POOL_FLAG_HOST_VISIBLE;
@@ -843,12 +852,12 @@ HWTEST_F(CommandListAppendLaunchKernel, givenMultipleValidWaitEventsThenAddSemap
     auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 2, waitEvents, launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     auto itor = findAll<MI_SEMAPHORE_WAIT *>(cmdList.begin(), cmdList.end());
     ASSERT_FALSE(itor.empty());

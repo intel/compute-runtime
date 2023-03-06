@@ -341,7 +341,7 @@ ze_result_t OaMetricGroupImp::streamerOpen(
 
 ze_result_t OaMetricStreamerImp::appendStreamerMarker(CommandList &commandList, uint32_t value) {
 
-    DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.device);
+    DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.getDevice());
 
     if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
         // Use one of the sub-device contexts to append to command list.

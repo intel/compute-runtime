@@ -76,7 +76,7 @@ struct BcsSplit {
                                 std::function<ze_result_t(T, K, size_t, ze_event_handle_t)> appendCall) {
         ze_result_t result = ZE_RESULT_SUCCESS;
 
-        auto markerEventIndex = this->events.obtainForSplit(Context::fromHandle(cmdList->hContext), MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
+        auto markerEventIndex = this->events.obtainForSplit(Context::fromHandle(cmdList->getCmdListContext()), MemoryConstants::pageSize64k / sizeof(typename CommandListCoreFamilyImmediate<gfxCoreFamily>::GfxFamily::TimestampPacketType));
 
         auto barrierRequired = cmdList->isBarrierRequired();
         if (barrierRequired) {
@@ -108,7 +108,7 @@ struct BcsSplit {
             auto eventHandle = this->events.subcopy[subcopyEventIndex + i]->toHandle();
             result = appendCall(localDstPtr, localSrcPtr, localSize, eventHandle);
 
-            if (cmdList->isFlushTaskSubmissionEnabled) {
+            if (cmdList->flushTaskSubmissionEnabled()) {
                 cmdList->executeCommandListImmediateWithFlushTaskImpl(performMigration, false, hasRelaxedOrderingDependencies, cmdQsForSplit[i]);
             } else {
                 cmdList->executeCommandListImmediateImpl(performMigration, cmdQsForSplit[i]);

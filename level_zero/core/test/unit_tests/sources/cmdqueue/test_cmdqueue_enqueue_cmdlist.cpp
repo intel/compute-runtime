@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,12 +74,12 @@ struct MultiDeviceCommandQueueExecuteCommandLists : public Test<MultiDeviceFixtu
         commandLists[0] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
         ASSERT_NE(nullptr, commandLists[0]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-        EXPECT_EQ(2u, CommandList::fromHandle(commandLists[0])->partitionCount);
+        EXPECT_EQ(2u, CommandList::fromHandle(commandLists[0])->getPartitionCount());
 
         commandLists[1] = CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)->toHandle();
         ASSERT_NE(nullptr, commandLists[1]);
         EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
-        EXPECT_EQ(2u, CommandList::fromHandle(commandLists[1])->partitionCount);
+        EXPECT_EQ(2u, CommandList::fromHandle(commandLists[1])->getPartitionCount());
     }
 
     void TearDown() override {
@@ -183,7 +183,7 @@ HWTEST_F(CommandQueueExecuteCommandLists, whenASecondLevelBatchBufferPerCommandL
     auto itorCurrent = cmdList.begin();
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(commandLists[i]);
-        auto allocation = commandList->commandContainer.getCmdBufferAllocations()[0];
+        auto allocation = commandList->getCmdContainer().getCmdBufferAllocations()[0];
 
         itorCurrent = find<MI_BATCH_BUFFER_START *>(itorCurrent, cmdList.end());
         ASSERT_NE(cmdList.end(), itorCurrent);
@@ -932,9 +932,10 @@ HWTEST_F(CommandQueueExecuteCommandLists, GivenCopyCommandQueueWhenExecutingCopy
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue));
     ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     // force command list to have preemption state to verify this state is not used during execution
-    commandList->commandListPreemptionMode = NEO::PreemptionMode::MidThread;
+    whiteBoxCmdList->commandListPreemptionMode = NEO::PreemptionMode::MidThread;
 
     auto currentCsr = neoDevice->getDefaultEngine().commandStreamReceiver;
     EXPECT_EQ(NEO::PreemptionMode::Initial, currentCsr->getPreemptionMode());
@@ -1167,7 +1168,7 @@ HWTEST2_F(MultiDeviceCommandQueueExecuteCommandLists, givenMultiplePartitionCoun
     size_t cmdBufferSizeWithoutMmioProgramming = usedSpaceAfter2ndExecute - usedSpaceBefore2ndExecute;
 
     for (auto i = 0u; i < numCommandLists; i++) {
-        auto commandList = CommandList::fromHandle(commandLists[i]);
+        auto commandList = whiteboxCast(CommandList::fromHandle(commandLists[i]));
         commandList->partitionCount = 2;
     }
 

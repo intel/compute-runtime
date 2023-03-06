@@ -42,18 +42,18 @@ HWTEST2_F(CommandListAppendGen9, WhenAppendingMemoryRangesBarrierThenPipeControl
     bool ret = commandList->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ASSERT_FALSE(ret);
     auto usedSpaceBefore =
-        commandList->commandContainer.getCommandStream()->getUsed();
+        commandList->getCmdContainer().getCommandStream()->getUsed();
     commandList->appendMemoryRangesBarrier(numRanges, &pRangeSizes, pRanges,
                                            nullptr, 0, nullptr);
     auto usedSpaceAfter =
-        commandList->commandContainer.getCommandStream()->getUsed();
+        commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList,
         ptrOffset(
-            commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
+            commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
         usedSpaceAfter));
 
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
@@ -96,16 +96,16 @@ HWTEST2_F(CommandListAppendGen9, givenSignalEventWhenAppendingMemoryRangesBarrie
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     auto event = whiteboxCast(Event::create<typename FamilyType::TimestampPacketType>(eventPool, &eventDesc, device));
     auto usedSpaceBefore =
-        commandList->commandContainer.getCommandStream()->getUsed();
+        commandList->getCmdContainer().getCommandStream()->getUsed();
     commandList->appendMemoryRangesBarrier(numRanges, &pRangeSizes, pRanges,
                                            event->toHandle(), 0, nullptr);
-    auto usedSpaceAfter = commandList->commandContainer.getCommandStream()->getUsed();
+    auto usedSpaceAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
     ASSERT_GT(usedSpaceAfter, usedSpaceBefore);
 
     // Ensure we have two pipe controls: one for barrier, one for signal
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), usedSpaceAfter));
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     auto itor = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
     ASSERT_FALSE(itor.empty());

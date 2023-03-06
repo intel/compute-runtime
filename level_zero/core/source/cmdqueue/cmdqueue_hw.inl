@@ -271,7 +271,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::validateCommandListsParams(
             return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
         }
 
-        if (this->activeSubDevices < commandList->partitionCount) {
+        if (this->activeSubDevices < commandList->getPartitionCount()) {
             return ZE_RESULT_ERROR_INVALID_COMMAND_LIST_TYPE;
         }
     }
@@ -443,7 +443,7 @@ CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::CommandListExecution
         }
 
         // If the Command List has commands that require uncached MOCS, then any changes to the commands in the queue requires the uncached MOCS
-        if (commandList->requiresQueueUncachedMocs && this->cachedMOCSAllowed == true) {
+        if (commandList->isRequiredQueueUncachedMocs() && this->cachedMOCSAllowed == true) {
             this->cachedMOCSAllowed = false;
         }
 
@@ -530,26 +530,27 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
+        commandList->setCsr(this->csr);
 
-        commandList->csr = this->csr;
+        auto &commandContainer = commandList->getCmdContainer();
 
-        ctx.containsAnyRegularCmdList |= commandList->cmdListType == CommandList::CommandListType::TYPE_REGULAR;
+        ctx.containsAnyRegularCmdList |= commandList->getCmdListType() == CommandList::CommandListType::TYPE_REGULAR;
         if (!isCopyOnlyCommandQueue) {
             ctx.perThreadScratchSpaceSize = std::max(ctx.perThreadScratchSpaceSize, commandList->getCommandListPerThreadScratchSize());
             ctx.perThreadPrivateScratchSize = std::max(ctx.perThreadPrivateScratchSize, commandList->getCommandListPerThreadPrivateScratchSize());
 
             if (commandList->getCommandListPerThreadScratchSize() != 0 || commandList->getCommandListPerThreadPrivateScratchSize() != 0) {
-                if (commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE) != nullptr) {
-                    heapContainer.push_back(commandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation());
+                if (commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE) != nullptr) {
+                    heapContainer.push_back(commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation());
                 }
-                for (auto element : commandList->commandContainer.sshAllocations) {
+                for (auto element : commandContainer.sshAllocations) {
                     heapContainer.push_back(element);
                 }
             }
         }
 
-        this->partitionCount = std::max(this->partitionCount, commandList->partitionCount);
-        makeResidentAndMigrate(ctx.isMigrationRequested, commandList->commandContainer.getResidencyContainer());
+        this->partitionCount = std::max(this->partitionCount, commandList->getPartitionCount());
+        makeResidentAndMigrate(ctx.isMigrationRequested, commandContainer.getResidencyContainer());
     }
 
     ctx.isDispatchTaskCountPostSyncRequired = isDispatchTaskCountPostSyncRequired(hFence, ctx.containsAnyRegularCmdList);
@@ -568,7 +569,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeInitial(
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
-        linearStreamSizeEstimate += commandList->commandContainer.getCmdBufferAllocations().size();
+        linearStreamSizeEstimate += commandList->getCmdContainer().getCmdBufferAllocations().size();
     }
     linearStreamSizeEstimate *= NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
     linearStreamSizeEstimate += this->csr->getCmdsSizeForHardwareContext();
@@ -746,7 +747,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddressWithGsbaIfDirty(
     if (!ctx.gsbaStateDirty) {
         return;
     }
-    auto indirectHeap = CommandList::fromHandle(hCommandList)->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    auto indirectHeap = CommandList::fromHandle(hCommandList)->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
     auto scratchSpaceController = this->csr->getScratchSpaceController();
     programStateBaseAddress(scratchSpaceController->calculateNewGSH(),
                             indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(),
@@ -873,9 +874,11 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandLis
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandList *commandList, NEO::LinearStream &cmdStream, CommandListExecutionContext &ctx) {
-    auto &cmdBufferAllocations = commandList->commandContainer.getCmdBufferAllocations();
+    auto &commandContainer = commandList->getCmdContainer();
+
+    auto &cmdBufferAllocations = commandContainer.getCmdBufferAllocations();
     auto cmdBufferCount = cmdBufferAllocations.size();
-    bool isCommandListImmediate = (commandList->cmdListType == CommandList::CommandListType::TYPE_IMMEDIATE) ? true : false;
+    bool isCommandListImmediate = (commandList->getCmdListType() == CommandList::CommandListType::TYPE_IMMEDIATE) ? true : false;
 
     auto &returnPoints = commandList->getReturnPoints();
     uint32_t returnPointsSize = commandList->getReturnPointsSize();
@@ -885,7 +888,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandLis
         auto allocation = cmdBufferAllocations[iter];
         uint64_t startOffset = allocation->getGpuAddress();
         if (isCommandListImmediate && (iter == (cmdBufferCount - 1))) {
-            startOffset = ptrOffset(allocation->getGpuAddress(), commandList->commandContainer.currentLinearStreamStartOffset);
+            startOffset = ptrOffset(allocation->getGpuAddress(), commandContainer.currentLinearStreamStartOffset);
         }
         NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&cmdStream, startOffset, true, false, false);
         if (returnPointsSize > 0) {
@@ -916,7 +919,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandLis
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::mergeOneCmdListPipelinedState(CommandList *commandList) {
 
-    bool isCommandListImmediate = (commandList->cmdListType == CommandList::CommandListType::TYPE_IMMEDIATE) ? true : false;
+    bool isCommandListImmediate = (commandList->getCmdListType() == CommandList::CommandListType::TYPE_IMMEDIATE) ? true : false;
     auto commandListImp = static_cast<CommandListImp *>(commandList);
     if (!isCommandListImmediate && commandListImp->getLogicalStateHelper()) {
         this->csr->getLogicalStateHelper()->mergePipelinedState(*commandListImp->getLogicalStateHelper());
@@ -952,8 +955,8 @@ void CommandQueueHw<gfxCoreFamily>::prefetchMemoryToDeviceAssociatedWithCmdList(
         auto prefetchManager = this->device->getDriverHandle()->getMemoryManager()->getPrefetchManager();
         prefetchManager->migrateAllocationsToGpu(commandList->getPrefetchContext(),
                                                  *this->device->getDriverHandle()->getSvmAllocsManager(),
-                                                 *commandList->device->getNEODevice(),
-                                                 *commandList->csr);
+                                                 *this->device->getNEODevice(),
+                                                 *this->csr);
     }
 }
 
@@ -1229,7 +1232,7 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForCommandLis
     csrState.stateBaseAddress.setProperties(cmdListRequired.stateBaseAddress);
 
     if (ctx.gsbaStateDirty || csrState.stateBaseAddress.isDirty()) {
-        auto indirectHeap = commandList->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+        auto indirectHeap = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
         auto scratchSpaceController = this->csr->getScratchSpaceController();
         programStateBaseAddress(scratchSpaceController->calculateNewGSH(),
                                 indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(),
@@ -1246,17 +1249,18 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForCommandLis
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastCommandList) {
     auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(csr);
-    auto dsh = lastCommandList->commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    auto &commandContainer = lastCommandList->getCmdContainer();
+    auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
     if (dsh != nullptr) {
         csrHw->getDshState().updateAndCheck(dsh);
     }
 
-    auto ssh = lastCommandList->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
     if (ssh != nullptr) {
         csrHw->getSshState().updateAndCheck(ssh);
     }
 
-    auto ioh = lastCommandList->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    auto ioh = commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
     csrHw->getIohState().updateAndCheck(ioh);
 }
 

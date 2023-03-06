@@ -39,7 +39,7 @@ bool OaMetricSourceImp::isAvailable() {
 }
 
 ze_result_t OaMetricSourceImp::appendMetricMemoryBarrier(CommandList &commandList) {
-    DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.device);
+    DeviceImp *pDeviceImp = static_cast<DeviceImp *>(commandList.getDevice());
 
     if (pDeviceImp->metricContext->isImplicitScalingCapable()) {
         // Use one of the sub-device contexts to append to command list.

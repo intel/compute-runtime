@@ -20,6 +20,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
 
@@ -434,10 +435,10 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDebugModeToTreatIndirectAllocatio
                                              launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto itorEvent = std::find(std::begin(commandList->commandContainer.getResidencyContainer()),
-                               std::end(commandList->commandContainer.getResidencyContainer()),
+    auto itorEvent = std::find(std::begin(commandList->getCmdContainer().getResidencyContainer()),
+                               std::end(commandList->getCmdContainer().getResidencyContainer()),
                                gpuAlloc);
-    EXPECT_EQ(itorEvent, std::end(commandList->commandContainer.getResidencyContainer()));
+    EXPECT_EQ(itorEvent, std::end(commandList->getCmdContainer().getResidencyContainer()));
 
     auto commandListHandle = commandList->toHandle();
 
@@ -496,10 +497,10 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
                                              launchParams, false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto itorEvent = std::find(std::begin(commandList->commandContainer.getResidencyContainer()),
-                               std::end(commandList->commandContainer.getResidencyContainer()),
+    auto itorEvent = std::find(std::begin(commandList->getCmdContainer().getResidencyContainer()),
+                               std::end(commandList->getCmdContainer().getResidencyContainer()),
                                gpuAlloc);
-    EXPECT_EQ(itorEvent, std::end(commandList->commandContainer.getResidencyContainer()));
+    EXPECT_EQ(itorEvent, std::end(commandList->getCmdContainer().getResidencyContainer()));
 
     auto commandListHandle = commandList->toHandle();
 
@@ -535,8 +536,10 @@ HWTEST_F(CommandQueueIndirectAllocations, givenDeviceThatSupportsSubmittingIndir
                                                                               NEO::EngineGroupType::Compute,
                                                                               returnValue));
     ASSERT_NE(nullptr, commandList);
-    EXPECT_EQ(1u, commandList->cmdListType);
-    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+    auto whiteBoxCmdList = static_cast<L0::ult::CommandList *>(commandList.get());
+
+    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -585,8 +588,10 @@ HWTEST_F(CommandQueueIndirectAllocations, givenImmediateCommandListAndFlushTaskW
                                                                               NEO::EngineGroupType::Compute,
                                                                               returnValue));
     ASSERT_NE(nullptr, commandList);
-    EXPECT_EQ(1u, commandList->cmdListType);
-    EXPECT_NE(nullptr, commandList->cmdQImmediate);
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
+
+    EXPECT_EQ(1u, commandList->getCmdListType());
+    EXPECT_NE(nullptr, whiteBoxCmdList->cmdQImmediate);
 
     void *deviceAlloc = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};

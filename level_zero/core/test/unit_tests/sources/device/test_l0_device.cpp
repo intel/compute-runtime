@@ -109,9 +109,9 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemorySupportedWhenCreatingDeviceThenPa
     auto deviceImp = static_cast<DeviceImp *>(device.get());
     ASSERT_NE(nullptr, deviceImp->pageFaultCommandList);
 
-    ASSERT_NE(nullptr, deviceImp->pageFaultCommandList->cmdQImmediate);
-    EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(deviceImp->pageFaultCommandList->cmdQImmediate)->getCsr());
-    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(deviceImp->pageFaultCommandList->cmdQImmediate)->getSynchronousMode());
+    ASSERT_NE(nullptr, whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate);
+    EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCsr());
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getSynchronousMode());
 }
 
 TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingThenPageFaultCmdListImmediateWithInitializedCmdQIsCreatedAgainstSubDeviceZero) {
@@ -131,10 +131,10 @@ TEST(L0DeviceTest, GivenDualStorageSharedMemoryAndImplicitScalingThenPageFaultCm
     auto deviceImp = static_cast<DeviceImp *>(device.get());
     ASSERT_NE(nullptr, deviceImp->pageFaultCommandList);
 
-    ASSERT_NE(nullptr, deviceImp->pageFaultCommandList->cmdQImmediate);
-    EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(deviceImp->pageFaultCommandList->cmdQImmediate)->getCsr());
-    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(deviceImp->pageFaultCommandList->cmdQImmediate)->getSynchronousMode());
-    EXPECT_EQ(deviceImp->pageFaultCommandList->device, deviceImp->subDevices[0]);
+    ASSERT_NE(nullptr, whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate);
+    EXPECT_NE(nullptr, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getCsr());
+    EXPECT_EQ(ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS, static_cast<CommandQueueImp *>(whiteboxCast(deviceImp->pageFaultCommandList)->cmdQImmediate)->getSynchronousMode());
+    EXPECT_EQ(whiteboxCast(deviceImp->pageFaultCommandList)->device, deviceImp->subDevices[0]);
 }
 
 TEST(L0DeviceTest, givenMultipleMaskedSubDevicesWhenCreatingL0DeviceThenDontAddDisabledNeoDevies) {

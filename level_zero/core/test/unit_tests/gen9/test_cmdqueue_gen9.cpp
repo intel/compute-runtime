@@ -19,6 +19,7 @@
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_built_ins.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 
 namespace L0 {
@@ -210,8 +211,9 @@ HWTEST2_F(CommandQueueGroupMultiDevice,
                                                                                false,
                                                                                NEO::EngineGroupType::RenderCompute,
                                                                                returnValue));
+    auto whiteBoxCmdList = static_cast<CommandList *>(commandList0.get());
 
-    L0::CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(commandList0->cmdQImmediate);
+    L0::CommandQueueImp *cmdQueue = reinterpret_cast<CommandQueueImp *>(whiteBoxCmdList->cmdQImmediate);
     auto &nearestSubDevice = *device->getNEODevice()->getNearestGenericSubDevice(0);
     const auto rcsIndex = nearestSubDevice.getEngineGroupIndexFromEngineGroupType(NEO::EngineGroupType::RenderCompute);
     auto expectedCSR = nearestSubDevice.getRegularEngineGroups()[rcsIndex].engines[queueGroupIndex].commandStreamReceiver;

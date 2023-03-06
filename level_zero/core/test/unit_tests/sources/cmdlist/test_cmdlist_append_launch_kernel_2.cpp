@@ -95,7 +95,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
 
     uint32_t regAddress = 0;
     uint64_t gpuAddress = 0;
@@ -143,7 +143,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
 
     auto groupCountStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
     groupCountStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMX);
-    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupXOffset);
+    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupXOffset);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), groupCountStoreRegisterMemCmd.getMemoryAddress());
@@ -153,7 +153,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
     groupCountStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMY);
-    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupYOffset);
+    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupYOffset);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), groupCountStoreRegisterMemCmd.getMemoryAddress());
@@ -163,7 +163,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
     groupCountStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMZ);
-    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupZOffset);
+    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupZOffset);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), groupCountStoreRegisterMemCmd.getMemoryAddress());
@@ -180,7 +180,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     EXPECT_NE(cmdList.end(), itor);
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
-    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeXOffset);
+    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeXOffset);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), workSizeStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), workSizeStoreRegisterMemCmd.getMemoryAddress());
@@ -193,7 +193,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     EXPECT_NE(cmdList.end(), itor);
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
-    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeYOffset);
+    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeYOffset);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), workSizeStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), workSizeStoreRegisterMemCmd.getMemoryAddress());
@@ -209,7 +209,7 @@ HWTEST_F(CommandListDualStorage, givenIndirectDispatchWithSharedDualStorageMemor
     EXPECT_NE(cmdList.end(), itor);
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
-    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeZOffset);
+    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeZOffset);
 
     EXPECT_EQ(cmd2->getRegisterAddress(), workSizeStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), workSizeStoreRegisterMemCmd.getMemoryAddress());
@@ -267,7 +267,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
 
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
+        cmdList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0), commandList->getCmdContainer().getCommandStream()->getUsed()));
 
     uint32_t regAddress = 0;
     uint64_t gpuAddress = 0;
@@ -315,7 +315,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
 
     auto groupCountStoreRegisterMemCmd = FamilyType::cmdInitStoreRegisterMem;
     groupCountStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMX);
-    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupXOffset - sizeof(INLINE_DATA));
+    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupXOffset - sizeof(INLINE_DATA));
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), groupCountStoreRegisterMemCmd.getMemoryAddress());
@@ -325,7 +325,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
     groupCountStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMY);
-    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupYOffset - sizeof(INLINE_DATA));
+    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupYOffset - sizeof(INLINE_DATA));
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), groupCountStoreRegisterMemCmd.getMemoryAddress());
@@ -335,7 +335,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
     groupCountStoreRegisterMemCmd.setRegisterAddress(GPUGPU_DISPATCHDIMZ);
-    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupZOffset - sizeof(INLINE_DATA));
+    groupCountStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + numWorkGroupZOffset - sizeof(INLINE_DATA));
 
     EXPECT_EQ(cmd2->getRegisterAddress(), groupCountStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), groupCountStoreRegisterMemCmd.getMemoryAddress());
@@ -352,7 +352,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     EXPECT_NE(cmdList.end(), itor);
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
-    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeXOffset - sizeof(INLINE_DATA));
+    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeXOffset - sizeof(INLINE_DATA));
 
     EXPECT_EQ(cmd2->getRegisterAddress(), workSizeStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), workSizeStoreRegisterMemCmd.getMemoryAddress());
@@ -365,7 +365,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     EXPECT_NE(cmdList.end(), itor);
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
-    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeYOffset - sizeof(INLINE_DATA));
+    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeYOffset - sizeof(INLINE_DATA));
 
     EXPECT_EQ(cmd2->getRegisterAddress(), workSizeStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), workSizeStoreRegisterMemCmd.getMemoryAddress());
@@ -381,7 +381,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandListDualStorage, givenIndirectDispatchWithSh
     EXPECT_NE(cmdList.end(), itor);
     cmd2 = genCmdCast<MI_STORE_REGISTER_MEM *>(*itor);
 
-    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->commandContainer.getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeZOffset - sizeof(INLINE_DATA));
+    workSizeStoreRegisterMemCmd.setMemoryAddress(commandList->getCmdContainer().getIndirectHeap(HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->getGpuAddress() + globalWorkSizeZOffset - sizeof(INLINE_DATA));
 
     EXPECT_EQ(cmd2->getRegisterAddress(), workSizeStoreRegisterMemCmd.getRegisterAddress());
     EXPECT_EQ(cmd2->getMemoryAddress(), workSizeStoreRegisterMemCmd.getMemoryAddress());
@@ -396,7 +396,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendLaunchK
     ze_group_count_t groupCount{1, 1, 1};
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     auto usedSpaceBefore = cmdStream->getUsed();
 
@@ -467,7 +467,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendEventRe
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     auto usedSpaceBefore = cmdStream->getUsed();
 
@@ -541,7 +541,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendSignalE
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     auto usedSpaceBefore = cmdStream->getUsed();
 
@@ -615,7 +615,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendWaitOnE
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     auto usedSpaceBefore = cmdStream->getUsed();
 
@@ -689,7 +689,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     auto usedSpaceBefore = cmdStream->getUsed();
 
@@ -746,7 +746,7 @@ HWTEST_F(CommandListAppendLaunchKernelSWTags, givenEnableSWTagsWhenAppendMemoryC
 
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     auto usedSpaceBefore = cmdStream->getUsed();
 
@@ -814,12 +814,12 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCreatingCommandListThenDefaultThr
                                                                                          0u,
                                                                                          returnValue)));
     EXPECT_NE(nullptr, commandList);
-    EXPECT_NE(nullptr, commandList->commandContainer.getCommandStream());
+    EXPECT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
 
     GenCmdList parsedCommandList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        parsedCommandList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
-        commandList->commandContainer.getCommandStream()->getUsed()));
+        parsedCommandList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
+        commandList->getCmdContainer().getCommandStream()->getUsed()));
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(parsedCommandList.begin(), parsedCommandList.end());
@@ -846,12 +846,12 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCreatingCommandListThenChosenThre
                                                                                          0u,
                                                                                          returnValue)));
     EXPECT_NE(nullptr, commandList);
-    EXPECT_NE(nullptr, commandList->commandContainer.getCommandStream());
+    EXPECT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
 
     GenCmdList parsedCommandList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        parsedCommandList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
-        commandList->commandContainer.getCommandStream()->getUsed()));
+        parsedCommandList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
+        commandList->getCmdContainer().getCommandStream()->getUsed()));
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(parsedCommandList.begin(), parsedCommandList.end());
@@ -876,14 +876,14 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCommandListIsResetThenOriginalThr
                                                                                          0u,
                                                                                          returnValue)));
     EXPECT_NE(nullptr, commandList);
-    EXPECT_NE(nullptr, commandList->commandContainer.getCommandStream());
+    EXPECT_NE(nullptr, commandList->getCmdContainer().getCommandStream());
 
     uint64_t originalThreadArbitrationPolicy = std::numeric_limits<uint64_t>::max();
     {
         GenCmdList parsedCommandList;
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-            parsedCommandList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
-            commandList->commandContainer.getCommandStream()->getUsed()));
+            parsedCommandList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
+            commandList->getCmdContainer().getCommandStream()->getUsed()));
         using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
         auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(parsedCommandList.begin(), parsedCommandList.end());
@@ -904,8 +904,8 @@ HWTEST_F(CommandListArbitrationPolicyTest, whenCommandListIsResetThenOriginalThr
     {
         GenCmdList parsedCommandList;
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-            parsedCommandList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0),
-            commandList->commandContainer.getCommandStream()->getUsed()));
+            parsedCommandList, ptrOffset(commandList->getCmdContainer().getCommandStream()->getCpuBase(), 0),
+            commandList->getCmdContainer().getCommandStream()->getUsed()));
         using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
         auto miLoadImm = findAll<MI_LOAD_REGISTER_IMM *>(parsedCommandList.begin(), parsedCommandList.end());
@@ -983,7 +983,7 @@ struct CmdlistAppendLaunchKernelWithImplicitArgsTests : CmdlistAppendLaunchKerne
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-        auto indirectHeap = commandList->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+        auto indirectHeap = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
         indirectHeapAllocation = indirectHeap->getGraphicsAllocation();
 
         ze_group_count_t groupCount{expectedImplicitArgs.groupCountX, expectedImplicitArgs.groupCountY, expectedImplicitArgs.groupCountZ};
@@ -1136,7 +1136,7 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, givenKernelWithoutImplicitArgsWhenAppen
     result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
-    auto indirectHeap = commandList->commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    auto indirectHeap = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
 
     auto sizeCrossThreadData = kernel->getCrossThreadDataSize();
     auto sizePerThreadDataForWholeGroup = kernel->getPerThreadDataSizeForWholeThreadGroup();
@@ -1187,33 +1187,33 @@ HWTEST_F(CmdlistAppendLaunchKernelTests, whenEncodingWorkDimForIndirectDispatchT
     {
         uint32_t groupSize[] = {1, 1, 1};
         auto estimate = EncodeIndirectParams<FamilyType>::getCmdsSizeForSetWorkDimIndirect(groupSize, false);
-        auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
-        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x4, 0u, groupSize);
-        auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
+        auto sizeBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->getCmdContainer(), 0x4, 0u, groupSize);
+        auto sizeAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
         EXPECT_LE(sizeAfter - sizeBefore, estimate);
     }
     {
         uint32_t groupSize[] = {1, 1, 2};
         auto estimate = EncodeIndirectParams<FamilyType>::getCmdsSizeForSetWorkDimIndirect(groupSize, false);
-        auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
-        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x4, 0u, groupSize);
-        auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
+        auto sizeBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->getCmdContainer(), 0x4, 0u, groupSize);
+        auto sizeAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
         EXPECT_LE(sizeAfter - sizeBefore, estimate);
     }
     {
         uint32_t groupSize[] = {1, 1, 1};
         auto estimate = EncodeIndirectParams<FamilyType>::getCmdsSizeForSetWorkDimIndirect(groupSize, true);
-        auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
-        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x2, 0u, groupSize);
-        auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
+        auto sizeBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->getCmdContainer(), 0x2, 0u, groupSize);
+        auto sizeAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
         EXPECT_LE(sizeAfter - sizeBefore, estimate);
     }
     {
         uint32_t groupSize[] = {1, 1, 2};
         auto estimate = EncodeIndirectParams<FamilyType>::getCmdsSizeForSetWorkDimIndirect(groupSize, true);
-        auto sizeBefore = commandList->commandContainer.getCommandStream()->getUsed();
-        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->commandContainer, 0x2, 0u, groupSize);
-        auto sizeAfter = commandList->commandContainer.getCommandStream()->getUsed();
+        auto sizeBefore = commandList->getCmdContainer().getCommandStream()->getUsed();
+        EncodeIndirectParams<FamilyType>::setWorkDimIndirect(commandList->getCmdContainer(), 0x2, 0u, groupSize);
+        auto sizeAfter = commandList->getCmdContainer().getCommandStream()->getUsed();
         EXPECT_LE(sizeAfter - sizeBefore, estimate);
     }
 }
@@ -1427,14 +1427,14 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     auto commandListWithNonCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     auto result = commandListWithNonCooperativeKernel->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    auto sizeBefore = commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getUsed();
+    auto sizeBefore = commandListWithNonCooperativeKernel->getCmdContainer().getCommandStream()->getUsed();
     CmdListKernelLaunchParams launchParams = {};
     result = commandListWithNonCooperativeKernel->appendLaunchKernelWithParams(kernel.get(), &groupCount, nullptr, launchParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    auto sizeAfter = commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getUsed();
+    auto sizeAfter = commandListWithNonCooperativeKernel->getCmdContainer().getCommandStream()->getUsed();
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandListWithNonCooperativeKernel->commandContainer.getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
+        cmdList, ptrOffset(commandListWithNonCooperativeKernel->getCmdContainer().getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
     auto itorWalker = find<typename FamilyType::WALKER_TYPE *>(cmdList.begin(), cmdList.end());
     auto cmd = genCmdCast<typename FamilyType::WALKER_TYPE *>(*itorWalker);
     EXPECT_TRUE(cmd->getWorkloadPartitionEnable());
@@ -1443,14 +1443,14 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest, givenCooperativeKe
     auto commandListWithCooperativeKernel = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
     result = commandListWithCooperativeKernel->initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    sizeBefore = commandListWithCooperativeKernel->commandContainer.getCommandStream()->getUsed();
+    sizeBefore = commandListWithCooperativeKernel->getCmdContainer().getCommandStream()->getUsed();
     launchParams.isCooperative = true;
     result = commandListWithCooperativeKernel->appendLaunchKernelWithParams(kernel.get(), &groupCount, nullptr, launchParams);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    sizeAfter = commandListWithCooperativeKernel->commandContainer.getCommandStream()->getUsed();
+    sizeAfter = commandListWithCooperativeKernel->getCmdContainer().getCommandStream()->getUsed();
     cmdList.clear();
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
-        cmdList, ptrOffset(commandListWithCooperativeKernel->commandContainer.getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
+        cmdList, ptrOffset(commandListWithCooperativeKernel->getCmdContainer().getCommandStream()->getCpuBase(), sizeBefore), sizeAfter - sizeBefore));
 
     itorWalker = find<typename FamilyType::WALKER_TYPE *>(cmdList.begin(), cmdList.end());
     cmd = genCmdCast<typename FamilyType::WALKER_TYPE *>(*itorWalker);
@@ -1466,7 +1466,7 @@ HWTEST2_F(MultiTileCommandListAppendLaunchKernelXeHpCoreTest,
 
     ze_group_count_t groupCount{128, 1, 1};
 
-    auto cmdStream = commandList->commandContainer.getCommandStream();
+    auto cmdStream = commandList->getCmdContainer().getCommandStream();
 
     auto sizeBefore = cmdStream->getUsed();
     CmdListKernelLaunchParams launchParams = {};
