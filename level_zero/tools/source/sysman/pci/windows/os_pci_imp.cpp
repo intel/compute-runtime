@@ -148,6 +148,12 @@ ze_result_t WddmPciImp::getState(zes_pci_state_t *state) {
         state->speed.width = static_cast<int32_t>(valueSmall);
     }
 
+    double currentLinkSpeed = convertPciGenToLinkSpeed(state->speed.gen);
+    state->speed.maxBandwidth = state->speed.width * convertPcieSpeedFromGTsToBs(currentLinkSpeed);
+    if (state->speed.maxBandwidth == 0) {
+        state->speed.maxBandwidth = -1;
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

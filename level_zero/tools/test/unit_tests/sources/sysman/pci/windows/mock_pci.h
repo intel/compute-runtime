@@ -31,6 +31,7 @@ struct Mock<PciKmdSysManager> : public PciKmdSysManager {
     uint32_t mockMaxLinkWidth[3] = {1, 0, 8};
     uint32_t mockCurrentLinkSpeed[3] = {1, 0, 3};
     uint32_t mockCurrentLinkWidth[3] = {1, 0, 1};
+    int64_t mockCurrentMaxBandwidth[3] = {250000000, -1, 984615384};
     uint32_t mockResizableBarSupported[3] = {1, 1, 1};
     uint32_t mockResizableBarEnabled[3] = {1, 1, 1};
     uint32_t pciBusReturnCode = KmdSysman::KmdSysmanSuccess;

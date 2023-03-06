@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -235,6 +235,15 @@ TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetS
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(state.speed.gen, pKmdSysManager->mockCurrentLinkSpeed[KmdSysman::PciDomainsType::PciCurrentDevice]);
     EXPECT_EQ(state.speed.width, pKmdSysManager->mockCurrentLinkWidth[KmdSysman::PciDomainsType::PciCurrentDevice]);
+}
+
+TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingzetSysmanPciGetStateThenValidCurrentMaxBandwidthIsReturned) {
+    setLocalMemorySupportedAndReinit(true);
+
+    zes_pci_state_t state = {};
+    ze_result_t result = zesDevicePciGetState(device, &state);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(state.speed.maxBandwidth, pKmdSysManager->mockCurrentMaxBandwidth[KmdSysman::PciDomainsType::PciRootPort]);
 }
 
 TEST_F(SysmanDevicePciFixture, GivenValidSysmanHandleWhenCallingGetPciStateAndRequestMultipleFailsThenFailureIsReturned) {
