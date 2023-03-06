@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -131,6 +131,16 @@ void MetricContextFixture::openMetricsAdapterGroup() {
     EXPECT_CALL(adapterGroup, Close())
         .Times(1)
         .WillOnce(Return(TCompletionCode::CC_OK));
+}
+
+void MetricContextFixture::setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice) {
+    EXPECT_CALL(metricDevice, GetParams())
+        .WillRepeatedly(testing::Return(&metricsDeviceParams));
+
+    defaultMaximumOaBufferSize.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT32;
+    defaultMaximumOaBufferSize.ValueUInt32 = 1024;
+    EXPECT_CALL(metricDevice, GetGlobalSymbolValueByName(_))
+        .WillRepeatedly(testing::Return(&defaultMaximumOaBufferSize));
 }
 
 void MetricMultiDeviceFixture::setUp() {
@@ -321,6 +331,16 @@ void MetricMultiDeviceFixture::openMetricsAdapterGroup() {
     EXPECT_CALL(adapterGroup, Close())
         .Times(1)
         .WillOnce(Return(TCompletionCode::CC_OK));
+}
+
+void MetricMultiDeviceFixture::setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice) {
+    EXPECT_CALL(metricDevice, GetParams())
+        .WillRepeatedly(testing::Return(&metricsDeviceParams));
+
+    defaultMaximumOaBufferSize.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT32;
+    defaultMaximumOaBufferSize.ValueUInt32 = 1024;
+    EXPECT_CALL(metricDevice, GetGlobalSymbolValueByName(_))
+        .WillRepeatedly(testing::Return(&defaultMaximumOaBufferSize));
 }
 
 void MetricStreamerMultiDeviceFixture::cleanup(zet_device_handle_t &hDevice, zet_metric_streamer_handle_t &hStreamer) {

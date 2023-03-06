@@ -73,8 +73,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenStreamerIsOpenThenQueryPool
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(1)
@@ -649,8 +648,7 @@ TEST_F(MetricQueryPoolTest, givenCorrectArgumentsWhenActivateMetricGroupsIsCalle
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(1)

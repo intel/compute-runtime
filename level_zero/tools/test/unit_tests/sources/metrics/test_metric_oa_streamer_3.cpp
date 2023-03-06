@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -94,8 +94,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetComma
         .Times(1)
         .WillOnce(Return(StatusCode::Success));
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(1)
@@ -184,8 +183,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricGroupCalcu
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(subDeviceCount)
@@ -254,6 +252,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricGroupCalcu
     uint32_t totalMetricCount = 0;
     EXPECT_EQ(L0::zetMetricGroupCalculateMultipleMetricValuesExp(metricGroupHandle, ZET_METRIC_GROUP_CALCULATION_TYPE_METRIC_VALUES, rawSize, rawData.data(), &dataCount, &totalMetricCount, nullptr, nullptr), ZE_RESULT_SUCCESS);
     EXPECT_EQ(totalMetricCount, subDeviceCount * metricsSetParams.MetricsCount * reportCount);
+    ASSERT_GE(dataCount, 2u);
 
     std::vector<uint32_t> metricCounts(dataCount);
     std::vector<zet_typed_value_t> caculatedRawResults(totalMetricCount);
@@ -296,8 +295,7 @@ TEST_F(MetricStreamerTest, givenRawReportSizeIsNotAlignedToOaBufferSizeWhenZetMe
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(1)

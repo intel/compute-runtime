@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -89,8 +89,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenValidArgumentsWhenZetMetricGroupCalc
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(subDeviceCount)
@@ -252,8 +251,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenCorrectArgumentsWhenActivateMetricGr
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(subDeviceCount)
@@ -396,8 +394,7 @@ TEST_F(MultiDeviceMetricQueryPoolTest, givenMetricQueryPoolIsDestroyedWhenMetric
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(subDeviceCount)

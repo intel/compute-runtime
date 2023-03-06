@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -165,6 +165,8 @@ class MetricContextFixture : public DeviceFixture {
     Mock<IAdapter_1_9> adapter;
     Mock<IMetricsDevice_1_5> metricsDevice;
     MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
+    MetricsDiscovery::TTypedValue_1_0 defaultMaximumOaBufferSize = {};
+    void setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice);
 };
 
 class MetricMultiDeviceFixture : public MultiDeviceFixture {
@@ -196,6 +198,8 @@ class MetricMultiDeviceFixture : public MultiDeviceFixture {
     Mock<IAdapter_1_9> adapter;
     Mock<IMetricsDevice_1_5> metricsDevice;
     MetricsDiscovery::TMetricsDeviceParams_1_2 metricsDeviceParams = {};
+    MetricsDiscovery::TTypedValue_1_0 defaultMaximumOaBufferSize = {};
+    void setupDefaultMocksForMetricDevice(Mock<IMetricsDevice_1_5> &metricDevice);
 };
 
 class MetricStreamerMultiDeviceFixture : public MetricMultiDeviceFixture {

@@ -192,11 +192,6 @@ ze_result_t OaMetricStreamerImp::stopMeasurements() {
     return result;
 }
 
-uint32_t OaMetricStreamerImp::getOaBufferSize(const uint32_t notifyEveryNReports) const {
-    // Notification is on half full buffer, hence multiplication by 2.
-    return notifyEveryNReports * rawReportSize * 2;
-}
-
 uint32_t OaMetricStreamerImp::getNotifyEveryNReports(const uint32_t oaBufferSize) const {
     // Notification is on half full buffer, hence division by 2.
     return rawReportSize

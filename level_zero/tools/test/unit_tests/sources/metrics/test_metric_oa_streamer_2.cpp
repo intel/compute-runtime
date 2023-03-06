@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,8 +57,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenInvalidMetricGroupTypeWhenZetMetricSt
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(subDeviceCount)
@@ -134,8 +133,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerOp
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(subDeviceCount)
@@ -247,8 +245,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenEnableWalkerPartitionIsOnWhenZetMetri
         .Times(1)
         .WillOnce(Return(TCompletionCode::CC_OK));
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(1)
@@ -334,8 +331,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerOp
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(subDeviceCount)
@@ -403,8 +399,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsAndCloseIoStreamFailsWh
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(subDeviceCount)
@@ -502,8 +497,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerOp
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(subDeviceCount)
@@ -598,8 +592,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerRe
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(subDeviceCount)
@@ -709,8 +702,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenValidArgumentsWhenZetMetricStreamerRe
 
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(subDeviceCount)
@@ -835,8 +827,7 @@ TEST_F(MetricStreamerMultiDeviceTest, givenMultipleMarkerInsertionsWhenZetComman
         .Times(1)
         .WillOnce(Return(StatusCode::Success));
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .Times(subDeviceCount)

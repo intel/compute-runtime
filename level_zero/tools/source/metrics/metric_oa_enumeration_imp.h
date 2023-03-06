@@ -15,6 +15,8 @@
 
 namespace L0 {
 
+static constexpr std::string_view globalSymbolOaMaxBufferSize = "OABufferMaxSize";
+
 class OaMetricSourceImp;
 
 struct MetricEnumeration {
@@ -29,6 +31,7 @@ struct MetricEnumeration {
 
     virtual ze_result_t loadMetricsDiscovery();
     void getMetricsDiscoveryFilename(std::vector<const char *> &names) const;
+    uint32_t getMaxOaBufferSize() const { return maximumOaBufferSize; }
 
   protected:
     ze_result_t initialize();
@@ -53,6 +56,7 @@ struct MetricEnumeration {
     getMetricType(const MetricsDiscovery::TInformationType sourceInformationType) const;
     zet_value_type_t
     getMetricResultType(const MetricsDiscovery::TMetricResultType sourceMetricResultType) const;
+    void readGlobalSymbols();
 
   protected:
     OaMetricSourceImp &metricSource;
@@ -65,6 +69,7 @@ struct MetricEnumeration {
     MetricsDiscovery::IAdapterGroup_1_9 *pAdapterGroup = nullptr;
     MetricsDiscovery::IAdapter_1_9 *pAdapter = nullptr;
     MetricsDiscovery::IMetricsDevice_1_5 *pMetricsDevice = nullptr;
+    uint32_t maximumOaBufferSize = 0u;
 
   public:
     // Metrics Discovery version should be at least 1.5.
@@ -126,6 +131,7 @@ struct OaMetricGroupImp : MetricGroup {
                                MetricSource &metricSource);
     static zet_metric_group_properties_t getProperties(const zet_metric_group_handle_t handle);
     uint32_t getRawReportSize();
+    const MetricEnumeration &getMetricEnumeration() const;
 
   protected:
     void copyProperties(const zet_metric_group_properties_t &source,

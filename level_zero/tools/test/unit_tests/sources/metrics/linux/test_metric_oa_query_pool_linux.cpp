@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -165,8 +165,7 @@ TEST_F(MetricQueryPoolLinuxTest, givenCorrectArgumentsWhenCacheConfigurationIsCa
     metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
     openMetricsAdapter();
 
-    EXPECT_CALL(metricsDevice, GetParams())
-        .WillRepeatedly(Return(&metricsDeviceParams));
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
         .WillOnce(Return(&metricsConcurrentGroup0));
@@ -234,6 +233,8 @@ TEST_F(MetricEnumerationTestLinux, givenCorrectLinuxDrmAdapterWhenGetMetricsAdap
 
     openMetricsAdapterGroup();
 
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
     EXPECT_CALL(adapterGroup, GetParams())
         .Times(1)
         .WillOnce(Return(&adapterGroupParams));
@@ -273,6 +274,8 @@ TEST_F(MetricEnumerationTestLinux, givenCorrectLinuxMinorPrimaryNodeDrmAdapterWh
 
     openMetricsAdapterGroup();
 
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
     EXPECT_CALL(adapterGroup, GetParams())
         .WillRepeatedly(Return(&adapterGroupParams));
 
@@ -310,6 +313,8 @@ TEST_F(MetricEnumerationTestLinux, givenCorrectLinuxMinorRenderNodeDrmAdapterWhe
     uint32_t drmMinor = 1000;
 
     openMetricsAdapterGroup();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(adapterGroup, GetParams())
         .WillRepeatedly(Return(&adapterGroupParams));
@@ -367,6 +372,8 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterTypeWhenGe
         .Times(1)
         .WillOnce(Return(TCompletionCode::CC_OK));
 
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
     EXPECT_NE(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_SUCCESS);
 }
 
@@ -380,6 +387,8 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterMajorWhenG
     adapterParams.SystemId.MajorMinor.Major = 0;
     adapterParams.SystemId.MajorMinor.Minor = 0;
     uint32_t incorrectMajor = 1;
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
         .Times(1)
@@ -421,6 +430,8 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectMetricDiscoveryAdapterMinorWhenG
     adapterParams.SystemId.MajorMinor.Minor = 0;
     uint32_t incorrectMinor = 1;
 
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
     EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
         .Times(1)
         .WillOnce(DoAll(::testing::SetArgPointee<0>(&adapterGroup), Return(TCompletionCode::CC_OK)));
@@ -459,6 +470,8 @@ TEST_F(MetricEnumerationTestLinux, givenIcorrectOpenMetricDeviceOnAdapterWhenGet
     adapterParams.SystemId.Type = MetricsDiscovery::TAdapterIdType::ADAPTER_ID_TYPE_MAJOR_MINOR;
     adapterParams.SystemId.MajorMinor.Major = 0;
     adapterParams.SystemId.MajorMinor.Minor = 0;
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(*mockMetricEnumeration->g_mockApi, MockOpenAdapterGroup(_))
         .Times(1)

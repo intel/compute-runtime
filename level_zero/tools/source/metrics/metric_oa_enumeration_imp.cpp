@@ -68,6 +68,13 @@ bool MetricEnumeration::isInitialized() {
     return initializationState == ZE_RESULT_SUCCESS;
 }
 
+void MetricEnumeration::readGlobalSymbols() {
+    auto symbolValue = pMetricsDevice->GetGlobalSymbolValueByName(globalSymbolOaMaxBufferSize.data());
+    if (symbolValue != nullptr) {
+        maximumOaBufferSize = symbolValue->ValueUInt32;
+    }
+}
+
 ze_result_t MetricEnumeration::initialize() {
     if (initializationState == ZE_RESULT_ERROR_UNINITIALIZED) {
         if (hMetricsDiscovery &&
@@ -162,6 +169,7 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
                 cleanupMetricsDiscovery();
                 return ZE_RESULT_ERROR_NOT_AVAILABLE;
             }
+            subDeviceMetricEnumeraion.readGlobalSymbols();
         }
     } else {
         auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
@@ -179,6 +187,8 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
             cleanupMetricsDiscovery();
             return ZE_RESULT_ERROR_NOT_AVAILABLE;
         }
+
+        readGlobalSymbols();
     }
 
     return ZE_RESULT_SUCCESS;
@@ -947,6 +957,10 @@ void OaMetricGroupImp::copyValue(const MetricsDiscovery::TTypedValue_1_0 &source
         DEBUG_BREAK_IF(true);
         break;
     }
+}
+
+const MetricEnumeration &OaMetricGroupImp::getMetricEnumeration() const {
+    return metricSource->getMetricEnumeration();
 }
 
 ze_result_t OaMetricImp::getProperties(zet_metric_properties_t *pProperties) {

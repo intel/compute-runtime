@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,6 +39,8 @@ TEST_F(MetricEnumerationTestWindows, givenCorrectWindowsAdapterWhenGetMetricsAda
     adapterParams.SystemId.Luid.LowPart = 0;
 
     openMetricsAdapterGroup();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
 
     EXPECT_CALL(adapterGroup, GetParams())
         .Times(1)
