@@ -591,6 +591,23 @@ TEST(OclocApiTests, GivenMissingFileNameWhenDecodingThenErrorIsReturned) {
     EXPECT_EQ(-1, retVal);
 }
 
+TEST(OclocApiTests, GivenHelpParameterWhenCompilingThenHelpMsgIsPrintedAndSuccessIsReturned) {
+    const char *argv[] = {
+        "ocloc",
+        "compile",
+        "--help"};
+    unsigned int argc = sizeof(argv) / sizeof(const char *);
+
+    testing::internal::CaptureStdout();
+    int retVal = oclocInvoke(argc, argv,
+                             0, nullptr, nullptr, nullptr,
+                             0, nullptr, nullptr, nullptr,
+                             nullptr, nullptr, nullptr, nullptr);
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_FALSE(output.empty());
+    EXPECT_EQ(retVal, NEO::OclocErrorCode::SUCCESS);
+}
+
 TEST(OclocApiTests, GivenHelpParameterWhenEncodingThenHelpMsgIsPrintedAndSuccessIsReturned) {
     const char *argv[] = {
         "ocloc",

@@ -93,6 +93,7 @@ All supported acronyms: %s.
     std::string getInternalOptionsReadFromFile() const {
         return internalOptionsReadFromFile;
     }
+    bool showHelpOnly() const { return showHelp; }
 
   protected:
     OfflineCompiler();

@@ -127,6 +127,9 @@ int compile(OclocArgHelper *argHelper, const std::vector<std::string> &args) {
 
     std::unique_ptr<OfflineCompiler> pCompiler{OfflineCompiler::create(args.size(), args, true, retVal, argHelper)};
     if (retVal == OclocErrorCode::SUCCESS) {
+        if (pCompiler->showHelpOnly()) {
+            return retVal;
+        }
         retVal = buildWithSafetyGuard(pCompiler.get());
 
         std::string buildLog = pCompiler->getBuildLog();
