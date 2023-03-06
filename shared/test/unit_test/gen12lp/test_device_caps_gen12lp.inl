@@ -83,3 +83,7 @@ HWTEST2_F(Gen12LpDeviceCaps, GivenTGLLPWhenCheckftr64KBpagesThenTrue, IsTGLLP) {
 HWTEST2_F(Gen12LpDeviceCaps, givenGen12lpWhenCheckFtrSupportsInteger64BitAtomicsThenReturnTrue, IsTGLLP) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }
+
+GEN12LPTEST_F(Gen12LpDeviceCaps, givenGen12LpWhenCheckingFloatAtomicsSupportThenReturnTrue) {
+    EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsFloatAtomics);
+}

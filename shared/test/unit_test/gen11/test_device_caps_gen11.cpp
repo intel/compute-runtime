@@ -75,3 +75,7 @@ GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingMediaBlockSupportThenReturnTr
 GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingCoherencySupportThenReturnFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsCoherency);
 }
+
+GEN11TEST_F(Gen11DeviceCaps, givenGen11WhenCheckingFloatAtomicsSupportThenReturnFalse) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsFloatAtomics);
+}

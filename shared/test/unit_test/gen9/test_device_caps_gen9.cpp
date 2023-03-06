@@ -62,3 +62,7 @@ GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckingImageSupportThenReturnTrue) {
 GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckingMediaBlockSupportThenReturnTrue) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.supportsMediaBlock);
 }
+
+GEN9TEST_F(Gen9DeviceCaps, givenGen9WhenCheckingFloatAtomicsSupportThenReturnFalse) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.supportsFloatAtomics);
+}

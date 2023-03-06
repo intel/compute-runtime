@@ -92,7 +92,8 @@ const RuntimeCapabilityTable PVC::capabilityTable{
     true,                                                      // p2pAccessSupported
     true,                                                      // p2pAtomicAccessSupported
     false,                                                     // fusedEuEnabled
-    true                                                       // l0DebuggerSupported;
+    true,                                                      // l0DebuggerSupported;
+    true                                                       // supportsFloatAtomics
 };
 
 void PVC::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {

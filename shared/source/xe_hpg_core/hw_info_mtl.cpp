@@ -80,7 +80,8 @@ const RuntimeCapabilityTable MTL::capabilityTable{
     false,                                         // p2pAccessSupported
     false,                                         // p2pAtomicAccessSupported
     true,                                          // fusedEuEnabled
-    true                                           // l0DebuggerSupported
+    true,                                          // l0DebuggerSupported
+    true                                           // supportsFloatAtomics
 };
 
 WorkaroundTable MTL::workaroundTable = {};

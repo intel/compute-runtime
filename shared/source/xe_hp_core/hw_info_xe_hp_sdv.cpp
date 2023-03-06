@@ -80,7 +80,8 @@ const RuntimeCapabilityTable XE_HP_SDV::capabilityTable{
     true,                                                      // p2pAccessSupported
     false,                                                     // p2pAtomicAccessSupported
     true,                                                      // fusedEuEnabled
-    true                                                       // l0DebuggerSupported;
+    true,                                                      // l0DebuggerSupported;
+    true                                                       // supportsFloatAtomics
 };
 
 WorkaroundTable XE_HP_SDV::workaroundTable = {};
