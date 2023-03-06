@@ -949,52 +949,6 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     EXPECT_TRUE(foundFenceUpdate);
 }
 
-HWTEST_F(DirectSubmissionDispatchBufferTest,
-         givenReadBackCommandBufferDebugFlagEnabledWhenDispatchWorkloadCalledThenFirstDwordOfCommandBufferIsRead) {
-
-    DebugManagerStateRestore restorer{};
-
-    DebugManager.flags.DirectSubmissionReadBackCommandBuffer.set(1);
-    using Dispatcher = BlitterDispatcher<FamilyType>;
-
-    FlushStampTracker flushStamp(true);
-
-    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    bool ret = directSubmission.initialize(true, true);
-    EXPECT_TRUE(ret);
-
-    uint32_t expectedValue = 0xDEADBEEF;
-    directSubmission.reserved = 0u;
-    reinterpret_cast<uint32_t *>(commandBuffer->getUnderlyingBuffer())[0] = expectedValue;
-
-    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
-    EXPECT_TRUE(ret);
-
-    EXPECT_EQ(expectedValue, directSubmission.reserved);
-}
-
-HWTEST_F(DirectSubmissionDispatchBufferTest,
-         givenReadBackRingBufferDebugFlagEnabledWhenDispatchWorkloadCalledThenFirstDwordOfRingBufferIsRead) {
-
-    DebugManagerStateRestore restorer{};
-
-    DebugManager.flags.DirectSubmissionReadBackRingBuffer.set(1);
-    using Dispatcher = BlitterDispatcher<FamilyType>;
-
-    FlushStampTracker flushStamp(true);
-
-    MockDirectSubmissionHw<FamilyType, Dispatcher> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
-    bool ret = directSubmission.initialize(true, true);
-    EXPECT_TRUE(ret);
-
-    directSubmission.reserved = 0u;
-
-    ret = directSubmission.dispatchCommandBuffer(batchBuffer, flushStamp);
-    EXPECT_TRUE(ret);
-    auto expectedValue = reinterpret_cast<uint32_t *>(directSubmission.ringCommandStream.getSpace(0))[0];
-    EXPECT_EQ(expectedValue, directSubmission.reserved);
-}
-
 HWTEST_F(DirectSubmissionDispatchBufferTest, givenRingBufferRestartRequestWhenDispatchCommandBuffer) {
     FlushStampTracker flushStamp(true);
     MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>> directSubmission(*pDevice->getDefaultEngine().commandStreamReceiver);
