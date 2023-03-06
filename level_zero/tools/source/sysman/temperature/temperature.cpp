@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,18 +12,12 @@
 
 namespace L0 {
 
-TemperatureHandleContext::~TemperatureHandleContext() {
-    for (Temperature *pTemperature : handleList) {
-        delete pTemperature;
-    }
-}
+TemperatureHandleContext::~TemperatureHandleContext() {}
 
 void TemperatureHandleContext::createHandle(const ze_device_handle_t &deviceHandle, zes_temp_sensors_t type) {
-    Temperature *pTemperature = new TemperatureImp(deviceHandle, pOsSysman, type);
+    std::unique_ptr<Temperature> pTemperature = std::make_unique<TemperatureImp>(deviceHandle, pOsSysman, type);
     if (pTemperature->initSuccess == true) {
-        handleList.push_back(pTemperature);
-    } else {
-        delete pTemperature;
+        handleList.push_back(std::move(pTemperature));
     }
 }
 

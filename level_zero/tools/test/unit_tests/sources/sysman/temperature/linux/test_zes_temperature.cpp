@@ -34,10 +34,6 @@ class SysmanMultiDeviceTemperatureFixture : public SysmanMultiDeviceFixture {
             GTEST_SKIP();
         }
         SysmanMultiDeviceFixture::SetUp();
-        for (auto &handle : pSysmanDeviceImp->pTempHandleContext->handleList) {
-            delete handle;
-            handle = nullptr;
-        }
         pSysmanDeviceImp->pTempHandleContext->handleList.clear();
         pFsAccess = std::make_unique<MockTemperatureFsAccess>();
         pFsAccessOriginal = pLinuxSysmanImp->pFsAccess;

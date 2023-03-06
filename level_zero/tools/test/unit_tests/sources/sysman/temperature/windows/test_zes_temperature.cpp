@@ -32,10 +32,6 @@ class SysmanDeviceTemperatureFixture : public SysmanDeviceFixture {
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
-        for (auto handle : pSysmanDeviceImp->pTempHandleContext->handleList) {
-            delete handle;
-        }
-
         pSysmanDeviceImp->pTempHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
         // We received a device handle. Check for subdevices in this device
