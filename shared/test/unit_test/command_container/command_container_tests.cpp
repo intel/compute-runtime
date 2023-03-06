@@ -994,6 +994,10 @@ HWTEST_F(CommandContainerTest, givenCmdContainerHasImmediateCsrWhenGettingHeapWi
     dshReserveArgs.alignment = dshAlign;
 
     cmdContainer.enableHeapSharing();
+    EXPECT_TRUE(cmdContainer.immediateCmdListSharedHeap(HeapType::SURFACE_STATE));
+    EXPECT_TRUE(cmdContainer.immediateCmdListSharedHeap(HeapType::DYNAMIC_STATE));
+    EXPECT_FALSE(cmdContainer.immediateCmdListSharedHeap(HeapType::INDIRECT_OBJECT));
+
     cmdContainer.setImmediateCmdListCsr(pDevice->getDefaultEngine().commandStreamReceiver);
     cmdContainer.immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
 
@@ -1580,4 +1584,13 @@ TEST_F(CommandContainerHeapStateTests, givenCmdContainerWhenSettingHeapAddressMo
 
     myCommandContainer.setHeapAddressModel(HeapAddressModel::GlobalBindful);
     EXPECT_EQ(HeapAddressModel::GlobalBindful, myCommandContainer.getHeapAddressModel());
+}
+
+TEST_F(CommandContainerTest, givenGlobalHeapModelSelectedWhenCmdContainerIsInitializedThenNoSurfaceAndDynamicHeapCreated) {
+    MyMockCommandContainer cmdContainer;
+    cmdContainer.setHeapAddressModel(HeapAddressModel::GlobalStateless);
+    cmdContainer.initialize(pDevice, nullptr, true, false);
+
+    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE));
+    EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE));
 }

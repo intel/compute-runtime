@@ -78,7 +78,6 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 
     cmdBufferAllocations.push_back(cmdBufferAllocation);
 
-    const auto &hardwareInfo = device->getHardwareInfo();
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     commandStream = std::make_unique<LinearStream>(cmdBufferAllocation->getUnderlyingBuffer(),
                                                    alignedSize - cmdBufferReservedSize, this, gfxCoreHelper.getBatchBufferEndSize());
@@ -109,15 +108,10 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
         heapHelper = std::unique_ptr<HeapHelper>(new HeapHelper(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u));
 
         for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
-            if (NEO::ApiSpecificConfig::getBindlessConfiguration() && i != IndirectHeap::Type::INDIRECT_OBJECT) {
+            if (skipHeapAllocationCreation(static_cast<HeapType>(i))) {
                 continue;
             }
-            if (!hardwareInfo.capabilityTable.supportsImages && IndirectHeap::Type::DYNAMIC_STATE == i) {
-                continue;
-            }
-            if (immediateCmdListSharedHeap(static_cast<HeapType>(i))) {
-                continue;
-            }
+
             allocationIndirectHeaps[i] = heapHelper->getHeapAllocation(i,
                                                                        heapSize,
                                                                        alignedSize,
@@ -462,7 +456,7 @@ void CommandContainer::fillReusableAllocationLists() {
     }
 
     this->immediateReusableAllocationList = std::make_unique<NEO::AllocationsList>();
-    const auto &hardwareInfo = device->getHardwareInfo();
+
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     auto amountToFill = gfxCoreHelper.getAmountOfAllocationsToFill();
     if (amountToFill == 0u) {
@@ -489,15 +483,10 @@ void CommandContainer::fillReusableAllocationLists() {
     size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
     for (auto i = 0u; i < amountToFill; i++) {
         for (auto heapType = 0u; heapType < IndirectHeap::Type::NUM_TYPES; heapType++) {
-            if (NEO::ApiSpecificConfig::getBindlessConfiguration() && heapType != IndirectHeap::Type::INDIRECT_OBJECT) {
+            if (skipHeapAllocationCreation(static_cast<HeapType>(heapType))) {
                 continue;
             }
-            if (!hardwareInfo.capabilityTable.supportsImages && IndirectHeap::Type::DYNAMIC_STATE == heapType) {
-                continue;
-            }
-            if (immediateCmdListSharedHeap(static_cast<HeapType>(heapType))) {
-                continue;
-            }
+
             auto heapToReuse = heapHelper->getHeapAllocation(heapType,
                                                              heapSize,
                                                              alignedSize,
@@ -530,6 +519,19 @@ HeapReserveData::HeapReserveData() {
 }
 
 HeapReserveData::~HeapReserveData() {
+}
+
+bool CommandContainer::skipHeapAllocationCreation(HeapType heapType) {
+    if (heapType == IndirectHeap::Type::INDIRECT_OBJECT) {
+        return false;
+    }
+    const auto &hardwareInfo = this->device->getHardwareInfo();
+
+    bool skipCreation = NEO::ApiSpecificConfig::getBindlessConfiguration() ||
+                        this->immediateCmdListSharedHeap(heapType) ||
+                        (!hardwareInfo.capabilityTable.supportsImages && IndirectHeap::Type::DYNAMIC_STATE == heapType) ||
+                        (this->heapAddressModel != HeapAddressModel::PrivateHeaps);
+    return skipCreation;
 }
 
 } // namespace NEO
