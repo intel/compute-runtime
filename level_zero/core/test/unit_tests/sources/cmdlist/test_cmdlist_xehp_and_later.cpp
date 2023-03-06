@@ -8,11 +8,13 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_command_encoder.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
@@ -706,7 +708,8 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         if constexpr (copyOnly == 1) {
             uint32_t flushCmdWaFactor = 1;
-            if (EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize() > 0) {
+            NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+            if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
                 flushCmdWaFactor++;
             }
 
@@ -926,7 +929,8 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
             auto itorFlushDw = findAll<MI_FLUSH_DW *>(cmdList.begin(), cmdList.end());
 
             uint32_t flushCmdWaFactor = 1;
-            if (EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize() > 0) {
+            NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+            if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
                 flushCmdWaFactor++;
             }
 
@@ -1134,7 +1138,8 @@ struct CommandListSignalAllEventPacketFixture : public ModuleFixture {
 
         if constexpr (copyOnly == 1) {
             uint32_t flushCmdWaFactor = 1;
-            if (EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize() > 0) {
+            NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+            if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
                 flushCmdWaFactor++;
             }
 

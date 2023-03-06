@@ -27,6 +27,7 @@ set(NEO_CORE_tests_mocks
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_builtinslib.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_cif.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_encoder.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_stream_receiver.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_command_stream_receiver.h
     ${CMAKE_CURRENT_SOURCE_DIR}/mock_compiler_cache.h

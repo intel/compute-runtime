@@ -29,9 +29,9 @@ class RenderDispatcher : public Dispatcher<GfxFamily> {
     static size_t getSizeMonitorFence(const RootDeviceEnvironment &rootDeviceEnvironment);
 
     static void dispatchCacheFlush(LinearStream &cmdBuffer, const RootDeviceEnvironment &rootDeviceEnvironment, uint64_t address);
-    static void dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const ProductHelper &productHelper);
-    static size_t getSizeCacheFlush(const HardwareInfo &hwInfo);
-    static size_t getSizeTlbFlush();
+    static void dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getSizeCacheFlush(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getSizeTlbFlush(const RootDeviceEnvironment &rootDeviceEnvironment);
     static bool isMultiTileSynchronizationSupported() {
         return true;
     }

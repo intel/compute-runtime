@@ -8,7 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/helpers/blit_commands_helper.h"
-#include "shared/source/helpers/definitions/mi_flush_args.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -25,9 +25,9 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithNoPostSyncThe
     MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
     LinearStream stream(&gfxAllocation);
     MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     MiFlushArgs args;
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(stream, 0, 0, args, productHelper);
+    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+    EncodeMiFlushDW<FamilyType>::programWithWa(stream, 0, 0, args);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, stream.getCpuBase(), stream.getUsed());
@@ -48,10 +48,10 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithPostSyncDataT
     uint64_t address = 0x1000;
     uint64_t data = 0x4321;
     MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     MiFlushArgs args;
     args.commandWithPostSync = true;
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(stream, address, data, args, productHelper);
+    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+    EncodeMiFlushDW<FamilyType>::programWithWa(stream, address, data, args);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, stream.getCpuBase(), stream.getUsed());
@@ -81,10 +81,10 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithTimestampFasl
     uint64_t address = 0x1000;
     uint64_t data = 0x4321;
     MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     MiFlushArgs args;
     args.commandWithPostSync = true;
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(stream, address, data, args, productHelper);
+    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+    EncodeMiFlushDW<FamilyType>::programWithWa(stream, address, data, args);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, stream.getCpuBase(), stream.getUsed());
@@ -113,11 +113,11 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithTimestampTrue
     uint64_t address = 0x1000;
     uint64_t data = 0x4321;
     MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     MiFlushArgs args;
     args.timeStampOperation = true;
     args.commandWithPostSync = true;
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(stream, address, data, args, productHelper);
+    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+    EncodeMiFlushDW<FamilyType>::programWithWa(stream, address, data, args);
 
     GenCmdList commands;
     CmdParse<FamilyType>::parseCommandBuffer(commands, stream.getCpuBase(), stream.getUsed());

@@ -18,6 +18,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/logical_state_helper.h"
@@ -634,7 +635,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSwitchRingBuffer
 template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeEnd(bool relaxedOrderingSchedulerRequired) {
     size_t size = Dispatcher::getSizeStopCommandBuffer() +
-                  Dispatcher::getSizeCacheFlush(*hwInfo) +
+                  Dispatcher::getSizeCacheFlush(rootDeviceEnvironment) +
                   (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
                   MemoryConstants::cacheLineSize;
     if (disableMonitorFence) {
@@ -660,7 +661,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDispatch(bool re
     // mode 2 does not dispatch any commands
 
     if (!disableCacheFlush) {
-        size += Dispatcher::getSizeCacheFlush(*hwInfo);
+        size += Dispatcher::getSizeCacheFlush(rootDeviceEnvironment);
     }
     if (!disableMonitorFence) {
         size += Dispatcher::getSizeMonitorFence(rootDeviceEnvironment);

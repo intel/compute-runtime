@@ -179,8 +179,7 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleNewResourcesSubmission() 
         auto osContextLinux = static_cast<OsContextLinux *>(&this->osContext);
         auto tlbFlushCounter = osContextLinux->peekTlbFlushCounter();
 
-        auto &productHelper = this->rootDeviceEnvironment.template getHelper<ProductHelper>();
-        Dispatcher::dispatchTlbFlush(this->ringCommandStream, this->gpuVaForMiFlush, productHelper);
+        Dispatcher::dispatchTlbFlush(this->ringCommandStream, this->gpuVaForMiFlush, this->rootDeviceEnvironment);
         osContextLinux->setTlbFlushed(tlbFlushCounter);
     }
 }
@@ -188,7 +187,7 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleNewResourcesSubmission() 
 template <typename GfxFamily, typename Dispatcher>
 size_t DrmDirectSubmission<GfxFamily, Dispatcher>::getSizeNewResourceHandler() {
     // Overestimate to avoid race
-    return Dispatcher::getSizeTlbFlush();
+    return Dispatcher::getSizeTlbFlush(this->rootDeviceEnvironment);
 }
 
 template <typename GfxFamily, typename Dispatcher>

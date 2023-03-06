@@ -5,10 +5,11 @@
  *
  */
 
-#include "shared/source/command_container/command_encoder.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/mocks/mock_command_encoder.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
@@ -447,7 +448,8 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         usedAfterSize));
 
     uint32_t expectedMiFlushCount = 1;
-    if (EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize() > 0) {
+    NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
         expectedMiFlushCount = 2;
     }
 
@@ -488,7 +490,8 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         usedAfterSize));
 
     uint32_t expectedMiFlushCount = 1;
-    if (EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize() > 0) {
+    NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
         expectedMiFlushCount = 2;
     }
 
@@ -531,7 +534,8 @@ HWTEST2_F(CommandListAppendUsedPacketSignalEvent,
         usedAfterSize));
 
     uint32_t expectedMiFlushCount = 1;
-    if (EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize() > 0) {
+    NEO::EncodeDummyBlitWaArgs waArgs{true, &(device->getNEODevice()->getRootDeviceEnvironmentRef())};
+    if (MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs) > 0) {
         expectedMiFlushCount = 2;
     }
 

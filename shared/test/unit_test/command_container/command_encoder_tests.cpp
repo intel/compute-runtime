@@ -10,7 +10,7 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/definitions/mi_flush_args.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -52,11 +52,11 @@ HWTEST_F(CommandEncoderTests, givenImmDataWriteWhenProgrammingMiFlushDwThenSetAl
     uint64_t gpuAddress = 0x1230000;
     uint64_t immData = 456;
     MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     MiFlushArgs args;
     args.commandWithPostSync = true;
+    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
 
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, gpuAddress, immData, args, productHelper);
+    EncodeMiFlushDW<FamilyType>::programWithWa(linearStream, gpuAddress, immData, args);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
 
     unsigned int sizeMultiplier = 1;
@@ -86,10 +86,10 @@ HWTEST2_F(CommandEncoderTests, given57bitVaForDestinationAddressWhenProgrammingM
     const uint64_t setGpuAddress = 0xffffffffffffffff;
     const uint64_t verifyGpuAddress = 0xfffffffffffffff8;
     MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     MiFlushArgs args;
     args.commandWithPostSync = true;
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, setGpuAddress, 0, args, productHelper);
+    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+    EncodeMiFlushDW<FamilyType>::programWithWa(linearStream, setGpuAddress, 0, args);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
 
     EXPECT_EQ(verifyGpuAddress, miFlushDwCmd->getDestinationAddress());
@@ -129,11 +129,11 @@ HWTEST_F(CommandEncoderTests, givenNotify) {
     uint64_t gpuAddress = 0x1230000;
     uint64_t immData = 456;
     MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     MiFlushArgs args;
     args.commandWithPostSync = true;
     args.notifyEnable = true;
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, gpuAddress, immData, args, productHelper);
+    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+    EncodeMiFlushDW<FamilyType>::programWithWa(linearStream, gpuAddress, immData, args);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
 
     unsigned int sizeMultiplier = 1;

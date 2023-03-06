@@ -183,17 +183,8 @@ size_t EncodeMemoryPrefetch<Family>::getSizeForMemoryPrefetch(size_t size, const
 }
 
 template <>
-inline void EncodeMiFlushDW<Family>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
+inline void EncodeMiFlushDW<Family>::adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
     miFlushDwCmd->setFlushLlc(1);
-}
-
-template <>
-inline void EncodeMiFlushDW<Family>::programMiFlushDwWA(LinearStream &commandStream) {
-}
-
-template <>
-size_t EncodeMiFlushDW<Family>::getMiFlushDwWaSize() {
-    return 0;
 }
 
 template <>

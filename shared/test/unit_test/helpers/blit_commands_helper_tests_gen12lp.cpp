@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gmm_helper/resource_info.h"
 #include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -250,15 +251,17 @@ HWTEST2_F(BlitTests, givenGen12LpPlatformWhenPreBlitCommandWARequiredThenReturns
 
 HWTEST2_F(BlitTests, givenGen12LpPlatformWhenEstimatePreBlitCommandSizeThenSizeOfFlushIsReturned, IsGen12LP) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    EXPECT_EQ(EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite(), BlitCommandsHelper<FamilyType>::estimatePreBlitCommandSize());
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    EXPECT_EQ(EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs), BlitCommandsHelper<FamilyType>::estimatePreBlitCommandSize(pDevice->getRootDeviceEnvironmentRef()));
 }
 
 HWTEST2_F(BlitTests, givenGen12LpPlatformWhenDispatchPreBlitCommandThenMiFlushDwIsProgramed, IsGen12LP) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     auto miFlushBuffer = std::make_unique<MI_FLUSH_DW>();
-    LinearStream linearStream(miFlushBuffer.get(), EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite());
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    LinearStream linearStream(miFlushBuffer.get(), EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs));
 
-    BlitCommandsHelper<FamilyType>::dispatchPreBlitCommand(linearStream, this->pDevice->getProductHelper());
+    BlitCommandsHelper<FamilyType>::dispatchPreBlitCommand(linearStream, *(&pDevice->getRootDeviceEnvironmentRef()));
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(linearStream);

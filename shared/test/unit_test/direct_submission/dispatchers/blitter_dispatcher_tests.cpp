@@ -5,9 +5,10 @@
  *
  */
 
-#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/direct_submission/dispatchers/blitter_dispatcher.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
+#include "shared/test/common/mocks/mock_command_encoder.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/direct_submission/dispatchers/dispatcher_fixture.h"
@@ -27,13 +28,15 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingPreemptionCmdThenDispa
 }
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenAskingForMonitorFenceCmdSizeThenReturnExpectedNumberOfMiFlush) {
-    size_t expectedSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t expectedSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
     EXPECT_EQ(expectedSize, BlitterDispatcher<FamilyType>::getSizeMonitorFence(pDevice->getRootDeviceEnvironment()));
 }
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingMonitorFenceCmdThenDispatchMiFlushWithPostSync) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    size_t expectedSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t expectedSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
 
     uint64_t expectedGpuAddress = 0x5100ull;
     uint64_t expectedValue = 0x1234ull;
@@ -56,13 +59,15 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingMonitorFenceCmdThenDis
     EXPECT_TRUE(foundPostSync);
 }
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenAskingForCacheFlushCmdSizeThenReturnExpetedSize) {
-    size_t expectedSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
-    EXPECT_EQ(expectedSize, BlitterDispatcher<FamilyType>::getSizeCacheFlush(pDevice->getHardwareInfo()));
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t expectedSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+    EXPECT_EQ(expectedSize, BlitterDispatcher<FamilyType>::getSizeCacheFlush(pDevice->getRootDeviceEnvironment()));
 }
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingCacheFlushCmdThenDispatchMiFlushCommand) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    size_t expectedSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t expectedSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
 
     BlitterDispatcher<FamilyType>::dispatchCacheFlush(cmdBuffer, pDevice->getRootDeviceEnvironment(), 0ull);
 
@@ -76,21 +81,20 @@ HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingCacheFlushCmdThenDispa
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenDispatchingTlbFlushThenDispatchMiFlushCommandWithproperBits) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    size_t expectedSize = EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t expectedSize = EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
 
-    auto &productHelper = this->pDevice->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    BlitterDispatcher<FamilyType>::dispatchTlbFlush(cmdBuffer, 0ull, productHelper);
+    BlitterDispatcher<FamilyType>::dispatchTlbFlush(cmdBuffer, 0ull, pDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedSize, cmdBuffer.getUsed());
 
     HardwareParse hwParse;
-    hwParse.parseCommands<FamilyType>(cmdBuffer, EncodeMiFlushDW<FamilyType>::getMiFlushDwWaSize());
+    hwParse.parseCommands<FamilyType>(cmdBuffer, MockEncodeMiFlushDW<FamilyType>::getWaSize(waArgs));
     auto miFlushDw = hwParse.getCommand<MI_FLUSH_DW>();
 
     EXPECT_TRUE(miFlushDw->getTlbInvalidate());
     EXPECT_EQ(miFlushDw->getPostSyncOperation(), MI_FLUSH_DW::POST_SYNC_OPERATION_WRITE_IMMEDIATE_DATA_QWORD);
-
-    EXPECT_EQ(BlitterDispatcher<FamilyType>::getSizeTlbFlush(), EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite());
+    EXPECT_EQ(BlitterDispatcher<FamilyType>::getSizeTlbFlush(pDevice->getRootDeviceEnvironment()), EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs));
 }
 
 HWTEST_F(BlitterDispatcheTest, givenBlitterWhenCheckingForMultiTileSynchronizationSupportThenExpectFalse) {

@@ -9,7 +9,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
-#include "shared/source/helpers/definitions/mi_flush_args.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -37,10 +37,10 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenMiFlushDwIsProgrammedThenSetAn
     uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
     LinearStream linearStream(buffer, sizeof(buffer));
     MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     MiFlushArgs args;
     args.commandWithPostSync = true;
-    EncodeMiFlushDW<FamilyType>::programMiFlushDw(linearStream, 0x1230000, 456, args, productHelper);
+    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+    EncodeMiFlushDW<FamilyType>::programWithWa(linearStream, 0x1230000, 456, args);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
     EXPECT_EQ(0u, miFlushDwCmd->getFlushCcs());
     EXPECT_EQ(1u, miFlushDwCmd->getFlushLlc());

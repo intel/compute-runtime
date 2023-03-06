@@ -89,7 +89,7 @@ HWTEST_F(RenderDispatcherTest, givenRenderWhenAddingMonitorFenceCmdThenExpectPip
 HWTEST_F(RenderDispatcherTest, givenRenderWhenAskingForCacheFlushCmdSizeThenReturnSetRequiredPipeControls) {
     size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForFullCacheFlush();
 
-    size_t actualSize = RenderDispatcher<FamilyType>::getSizeCacheFlush(hardwareInfo);
+    size_t actualSize = RenderDispatcher<FamilyType>::getSizeCacheFlush(pDevice->getRootDeviceEnvironment());
     EXPECT_EQ(expectedSize, actualSize);
 }
 

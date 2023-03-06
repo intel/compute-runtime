@@ -16,7 +16,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/bindless_heaps_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
-#include "shared/source/helpers/definitions/mi_flush_args.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_id_gen.h"
 #include "shared/source/helpers/preamble.h"
@@ -954,10 +954,15 @@ void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferEnd(CommandContainer
     programBatchBufferEnd(*container.getCommandStream());
 }
 
+template <typename GfxFamily>
+void EncodeMiFlushDW<GfxFamily>::appendWa(LinearStream &commandStream, MiFlushArgs &args) {
+    BlitCommandsHelper<GfxFamily>::dispatchDummyBlit(commandStream, args.waArgs);
+}
+
 template <typename Family>
-void EncodeMiFlushDW<Family>::programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData,
-                                               MiFlushArgs &args, const ProductHelper &productHelper) {
-    programMiFlushDwWA(commandStream);
+void EncodeMiFlushDW<Family>::programWithWa(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData,
+                                            MiFlushArgs &args) {
+    appendWa(commandStream, args);
 
     auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();
     MI_FLUSH_DW miFlush = Family::cmdInitMiFlushDw;
@@ -969,13 +974,18 @@ void EncodeMiFlushDW<Family>::programMiFlushDw(LinearStream &commandStream, uint
     }
     miFlush.setNotifyEnable(args.notifyEnable);
     miFlush.setTlbInvalidate(args.tlbFlush);
-    appendMiFlushDw(&miFlush, productHelper);
+    adjust(&miFlush, args.waArgs.rootDeviceEnvironment->getProductHelper());
     *miFlushDwCmd = miFlush;
 }
 
 template <typename Family>
-size_t EncodeMiFlushDW<Family>::getMiFlushDwCmdSizeForDataWrite() {
-    return sizeof(typename Family::MI_FLUSH_DW) + EncodeMiFlushDW<Family>::getMiFlushDwWaSize();
+size_t EncodeMiFlushDW<Family>::getWaSize(const EncodeDummyBlitWaArgs &waArgs) {
+    return BlitCommandsHelper<Family>::getDummyBlitSize(waArgs);
+}
+
+template <typename Family>
+size_t EncodeMiFlushDW<Family>::getCommandSizeWithWa(const EncodeDummyBlitWaArgs &waArgs) {
+    return sizeof(typename Family::MI_FLUSH_DW) + EncodeMiFlushDW<Family>::getWaSize(waArgs);
 }
 
 template <typename Family>

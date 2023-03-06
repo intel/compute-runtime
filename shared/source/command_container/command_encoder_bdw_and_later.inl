@@ -478,15 +478,7 @@ void EncodeL3State<Family>::encode(CommandContainer &container, bool enableSLM) 
 }
 
 template <typename GfxFamily>
-void EncodeMiFlushDW<GfxFamily>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {}
-
-template <typename GfxFamily>
-void EncodeMiFlushDW<GfxFamily>::programMiFlushDwWA(LinearStream &commandStream) {}
-
-template <typename GfxFamily>
-size_t EncodeMiFlushDW<GfxFamily>::getMiFlushDwWaSize() {
-    return 0;
-}
+void EncodeMiFlushDW<GfxFamily>::adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {}
 
 template <typename GfxFamily>
 inline void EncodeWA<GfxFamily>::encodeAdditionalPipelineSelect(LinearStream &stream, const PipelineSelectArgs &args, bool is3DPipeline,

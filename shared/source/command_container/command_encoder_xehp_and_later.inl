@@ -641,20 +641,9 @@ inline void EncodeMediaInterfaceDescriptorLoad<Family>::encode(CommandContainer 
 }
 
 template <typename Family>
-void EncodeMiFlushDW<Family>::appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
+void EncodeMiFlushDW<Family>::adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper) {
     miFlushDwCmd->setFlushCcs(1);
     miFlushDwCmd->setFlushLlc(1);
-}
-
-template <typename Family>
-void EncodeMiFlushDW<Family>::programMiFlushDwWA(LinearStream &commandStream) {
-    auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();
-    *miFlushDwCmd = Family::cmdInitMiFlushDw;
-}
-
-template <typename Family>
-size_t EncodeMiFlushDW<Family>::getMiFlushDwWaSize() {
-    return sizeof(typename Family::MI_FLUSH_DW);
 }
 
 template <typename Family>

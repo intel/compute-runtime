@@ -197,6 +197,18 @@ void adjustL3ControlField<Family>(void *l3ControlBuffer) {
     l3Control->setUnTypedDataPortCacheFlush(true);
 }
 
+template <>
+void EncodeMiFlushDW<Family>::appendWa(LinearStream &commandStream, MiFlushArgs &args) {
+    BlitCommandsHelper<Family>::dispatchDummyBlit(commandStream, args.waArgs);
+    auto miFlushDwCmd = commandStream.getSpaceForCmd<MI_FLUSH_DW>();
+    *miFlushDwCmd = Family::cmdInitMiFlushDw;
+}
+
+template <>
+size_t EncodeMiFlushDW<Family>::getWaSize(const EncodeDummyBlitWaArgs &waArgs) {
+    return sizeof(typename Family::MI_FLUSH_DW) + BlitCommandsHelper<Family>::getDummyBlitSize(waArgs);
+}
+
 template void flushGpuCache<Family>(LinearStream *commandStream, const Range<L3Range> &ranges, uint64_t postSyncAddress, const HardwareInfo &hwInfo);
 
 template struct EncodeDispatchKernel<Family>;

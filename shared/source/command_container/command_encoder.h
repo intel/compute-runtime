@@ -35,6 +35,7 @@ struct HardwareInfo;
 struct KernelDescriptor;
 struct KernelInfo;
 struct MiFlushArgs;
+struct EncodeDummyBlitWaArgs;
 struct PipeControlArgs;
 struct PipelineSelectArgs;
 struct RootDeviceEnvironment;
@@ -463,23 +464,21 @@ struct EncodeBatchBufferStartOrEnd {
 template <typename GfxFamily>
 struct EncodeMiFlushDW {
     using MI_FLUSH_DW = typename GfxFamily::MI_FLUSH_DW;
-    static void programMiFlushDw(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData,
-                                 MiFlushArgs &args, const ProductHelper &productHelper);
-    static void programMiFlushDwWA(LinearStream &commandStream);
-    static void appendMiFlushDw(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper);
-    static size_t getMiFlushDwCmdSizeForDataWrite();
-    static size_t getMiFlushDwWaSize();
+    static void programWithWa(LinearStream &commandStream, uint64_t immediateDataGpuAddress, uint64_t immediateData,
+                              MiFlushArgs &args);
+
+    static size_t getCommandSizeWithWa(const EncodeDummyBlitWaArgs &waArgs);
+
+  protected:
+    static size_t getWaSize(const EncodeDummyBlitWaArgs &waArgs);
+    static void appendWa(LinearStream &commandStream, MiFlushArgs &args);
+    static void adjust(MI_FLUSH_DW *miFlushDwCmd, const ProductHelper &productHelper);
 };
 
 template <typename GfxFamily>
 struct EncodeMemoryPrefetch {
     static void programMemoryPrefetch(LinearStream &commandStream, const GraphicsAllocation &graphicsAllocation, uint32_t size, size_t offset, const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t getSizeForMemoryPrefetch(size_t size, const RootDeviceEnvironment &rootDeviceEnvironment);
-};
-
-struct EncodeDummyBlitWaArgs {
-    bool isBcs = false;
-    RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 
 template <typename GfxFamily>

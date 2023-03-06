@@ -57,7 +57,7 @@ inline void RenderDispatcher<GfxFamily>::dispatchCacheFlush(LinearStream &cmdBuf
 }
 
 template <typename GfxFamily>
-inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const ProductHelper &productHelper) {
+inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffer, uint64_t address, const RootDeviceEnvironment &rootDeviceEnvironment) {
     PipeControlArgs args;
     args.tlbInvalidation = true;
     args.pipeControlFlushEnable = true;
@@ -67,13 +67,13 @@ inline void RenderDispatcher<GfxFamily>::dispatchTlbFlush(LinearStream &cmdBuffe
 }
 
 template <typename GfxFamily>
-inline size_t RenderDispatcher<GfxFamily>::getSizeCacheFlush(const HardwareInfo &hwInfo) {
+inline size_t RenderDispatcher<GfxFamily>::getSizeCacheFlush(const RootDeviceEnvironment &rootDeviceEnvironment) {
     size_t size = MemorySynchronizationCommands<GfxFamily>::getSizeForFullCacheFlush();
     return size;
 }
 
 template <typename GfxFamily>
-inline size_t RenderDispatcher<GfxFamily>::getSizeTlbFlush() {
+inline size_t RenderDispatcher<GfxFamily>::getSizeTlbFlush(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(true);
 }
 

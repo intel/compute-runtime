@@ -10,6 +10,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/helpers/blit_properties.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -150,14 +151,15 @@ HWTEST_F(BlitTests, givenDebugVariablesWhenGettingMaxBlitSizeThenHonorUseProvide
 }
 
 HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenReturnCorrectResult) {
-    size_t arbCheckSize = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{true, const_cast<RootDeviceEnvironment *>(&(pDevice->getRootDeviceEnvironment()))});
+    EncodeDummyBlitWaArgs waArgs{true, const_cast<RootDeviceEnvironment *>(&(pDevice->getRootDeviceEnvironment()))};
+    size_t arbCheckSize = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs);
 
     DebugManagerStateRestore restore{};
 
     size_t expectedDefaultSize = arbCheckSize;
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
-        expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+        expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
     }
 
     EXPECT_EQ(expectedDefaultSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
@@ -166,7 +168,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenRetu
     EXPECT_EQ(arbCheckSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
 
     DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiFlush);
-    EXPECT_EQ(EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite(), BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs), BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
 
     DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::None);
     EXPECT_EQ(0u, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
@@ -179,11 +181,11 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     uint32_t streamBuffer[100] = {};
     LinearStream linearStream{streamBuffer, sizeof(streamBuffer)};
     GenCmdList commands{};
-
-    size_t expectedDefaultSize = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(EncodeDummyBlitWaArgs{true, const_cast<RootDeviceEnvironment *>(&(pDevice->getRootDeviceEnvironment()))});
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t expectedDefaultSize = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs);
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
-        expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite();
+        expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
     }
 
     // -1: default
@@ -196,7 +198,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         iterator = find<MI_FLUSH_DW *>(commands.begin(), commands.end());
         EXPECT_NE(commands.end(), iterator);
-        if (EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite() == 2 * sizeof(MI_FLUSH_DW)) {
+        if (EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) == 2 * sizeof(MI_FLUSH_DW)) {
             iterator = find<MI_FLUSH_DW *>(++iterator, commands.end());
             EXPECT_NE(commands.end(), iterator);
         }
@@ -655,15 +657,16 @@ HWTEST2_F(BlitTests, givenPlatformWhenCallingPreBlitCommandWARequiredThenReturns
 
 HWTEST2_F(BlitTests, givenPlatformWhenCallingEstimatePreBlitCommandSizeThenZeroIsReturned, WithoutGen12Lp) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
-    EXPECT_EQ(0u, BlitCommandsHelper<FamilyType>::estimatePreBlitCommandSize());
+    EXPECT_EQ(0u, BlitCommandsHelper<FamilyType>::estimatePreBlitCommandSize(pDevice->getRootDeviceEnvironmentRef()));
 }
 
 HWTEST2_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlushDwIsProgramed, WithoutGen12Lp) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     auto miFlushBuffer = std::make_unique<MI_FLUSH_DW>();
-    LinearStream linearStream(miFlushBuffer.get(), EncodeMiFlushDW<FamilyType>::getMiFlushDwCmdSizeForDataWrite());
+    EncodeDummyBlitWaArgs waArgs{true, const_cast<RootDeviceEnvironment *>(&pDevice->getRootDeviceEnvironment())};
+    LinearStream linearStream(miFlushBuffer.get(), EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs));
 
-    BlitCommandsHelper<FamilyType>::dispatchPreBlitCommand(linearStream, this->pDevice->getProductHelper());
+    BlitCommandsHelper<FamilyType>::dispatchPreBlitCommand(linearStream, *waArgs.rootDeviceEnvironment);
 
     HardwareParse hwParser;
     hwParser.parseCommands<FamilyType>(linearStream);

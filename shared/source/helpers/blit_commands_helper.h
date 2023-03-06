@@ -31,8 +31,8 @@ struct BlitCommandsHelper {
     static uint64_t getMaxBlitWidthOverride(const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint64_t getMaxBlitHeight(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
     static uint64_t getMaxBlitHeightOverride(const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
-    static void dispatchPreBlitCommand(LinearStream &linearStream, const ProductHelper &productHelper);
-    static size_t estimatePreBlitCommandSize();
+    static void dispatchPreBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t estimatePreBlitCommandSize(const RootDeviceEnvironment &rootDeviceEnvironment);
     static void dispatchPostBlitCommand(LinearStream &linearStream, RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t estimatePostBlitCommandSize(const RootDeviceEnvironment &rootDeviceEnvironment);
     static size_t estimateBlitCommandSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket,
@@ -75,8 +75,8 @@ struct BlitCommandsHelper {
                                             uint32_t &mipTailLod, uint32_t &compressionDetails, uint32_t &compressionType,
                                             const RootDeviceEnvironment &rootDeviceEnvironment, GMM_YUV_PLANE_ENUM plane);
     static void dispatchDebugPauseCommands(LinearStream &commandStream, uint64_t debugPauseStateGPUAddress, DebugPauseState confirmationTrigger,
-                                           DebugPauseState waitCondition, const ProductHelper &productHelper);
-    static size_t getSizeForDebugPauseCommands();
+                                           DebugPauseState waitCondition, RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getSizeForDebugPauseCommands(const RootDeviceEnvironment &rootDeviceEnvironment);
     static uint32_t getAvailableBytesPerPixel(size_t copySize, uint32_t srcOrigin, uint32_t dstOrigin, size_t srcSize, size_t dstSize);
     static bool isCopyRegionPreferred(const Vec3<size_t> &copySize, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed);
     static void programGlobalSequencerFlush(LinearStream &commandStream);

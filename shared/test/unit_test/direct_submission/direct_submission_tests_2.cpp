@@ -5,7 +5,6 @@
  *
  */
 
-#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/submissions_aggregator.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
@@ -15,6 +14,7 @@
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/flush_stamp.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/register_offsets.h"
@@ -447,7 +447,7 @@ HWTEST_F(DirectSubmissionDispatchBufferTest,
     bool ret = directSubmission.allocateResources();
     EXPECT_TRUE(ret);
 
-    size_t flushSize = Dispatcher::getSizeCacheFlush(*directSubmission.hwInfo);
+    size_t flushSize = Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment);
 
     size_t disabledSizeDispatch = directSubmission.getSizeDispatch(false, false);
     EXPECT_EQ(disabledSizeDispatch, (regularSizeDispatch - flushSize));
@@ -2902,7 +2902,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenRelaxedOrderingSchedulerReq
     EXPECT_EQ(expectedBaseSemaphoreSectionSize + EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait(), directSubmission.getSizeSemaphoreSection(false));
 
     size_t expectedBaseEndSize = Dispatcher::getSizeStopCommandBuffer() +
-                                 Dispatcher::getSizeCacheFlush(pDevice->getHardwareInfo()) +
+                                 Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +
                                  (Dispatcher::getSizeStartCommandBuffer() - Dispatcher::getSizeStopCommandBuffer()) +
                                  MemoryConstants::cacheLineSize;
     if (directSubmission.disableMonitorFence) {

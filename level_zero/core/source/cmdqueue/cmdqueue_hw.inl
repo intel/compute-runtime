@@ -18,7 +18,7 @@
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/helpers/definitions/mi_flush_args.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 #include "shared/source/helpers/logical_state_helper.h"
@@ -220,8 +220,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeInitial(ctx, phCommandLists, numCommandLists);
 
     this->csr->getResidencyAllocations().reserve(ctx.spaceForResidency);
-
-    linearStreamSizeEstimate += NEO::EncodeMiFlushDW<GfxFamily>::getMiFlushDwCmdSizeForDataWrite();
+    auto isBcs = NEO::EngineHelpers::isBcs(this->csr->getOsContext().getEngineType());
+    NEO::EncodeDummyBlitWaArgs waArgs{isBcs, &(this->device->getNEODevice()->getRootDeviceEnvironmentRef())};
+    linearStreamSizeEstimate += NEO::EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
 
     NEO::LinearStream child(nullptr);
     if (const auto ret = this->makeAlignedChildStreamAndSetGpuBase(child, linearStreamSizeEstimate); ret != ZE_RESULT_SUCCESS) {
@@ -992,8 +993,9 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncByMiFlushDw(
     NEO::MiFlushArgs args;
     args.commandWithPostSync = true;
     args.notifyEnable = this->csr->isUsedNotifyEnableForPostSync();
-    const auto &productHelper = this->device->getProductHelper();
-    NEO::EncodeMiFlushDW<GfxFamily>::programMiFlushDw(cmdStream, postSyncAddress, postSyncData, args, productHelper);
+    args.waArgs.isBcs = NEO::EngineHelpers::isBcs(this->csr->getOsContext().getEngineType());
+    args.waArgs.rootDeviceEnvironment = &(this->device->getNEODevice()->getRootDeviceEnvironmentRef());
+    NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(cmdStream, postSyncAddress, postSyncData, args);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
