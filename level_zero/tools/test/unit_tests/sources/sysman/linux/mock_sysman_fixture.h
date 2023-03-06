@@ -12,6 +12,7 @@
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
 
+#include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
 #include "level_zero/tools/source/sysman/sysman.h"
@@ -79,6 +80,7 @@ class SysmanDeviceFixture : public DeviceFixture, public ::testing::Test {
         }
 
         pSysmanDeviceImp->init();
+        L0::sysmanInitFromCore = true;
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {
@@ -139,6 +141,7 @@ class SysmanMultiDeviceFixture : public MultiDeviceFixture, public ::testing::Te
 
         pSysmanDeviceImp->init();
         subDeviceCount = numSubDevices;
+        L0::sysmanInitFromCore = true;
     }
     void TearDown() override {
         if (!sysmanUltsEnable) {

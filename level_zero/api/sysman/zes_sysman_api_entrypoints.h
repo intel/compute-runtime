@@ -6,6 +6,7 @@
  */
 
 #pragma once
+#include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/source/driver/driver_handle.h"
 #include "level_zero/sysman/source/sysman_device.h"
 #include "level_zero/sysman/source/sysman_driver.h"
@@ -413,43 +414,71 @@ ze_result_t zesDeviceEnumFabricPorts(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_fabric_port_handle_t *phPort) {
-    return L0::SysmanDevice::fabricPortGet(hDevice, pCount, phPort);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::fabricPortGet(hDevice, pCount, phPort);
+    } else {
+        return L0::Sysman::SysmanDevice::fabricPortGet(hDevice, pCount, phPort);
+    }
 }
 
 ze_result_t zesFabricPortGetProperties(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_properties_t *pProperties) {
-    return L0::FabricPort::fromHandle(hPort)->fabricPortGetProperties(pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::FabricPort::fromHandle(hPort)->fabricPortGetProperties(pProperties);
+    } else {
+        return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetProperties(pProperties);
+    }
 }
 
 ze_result_t zesFabricPortGetLinkType(
     zes_fabric_port_handle_t hPort,
     zes_fabric_link_type_t *pLinkType) {
-    return L0::FabricPort::fromHandle(hPort)->fabricPortGetLinkType(pLinkType);
+    if (L0::sysmanInitFromCore) {
+        return L0::FabricPort::fromHandle(hPort)->fabricPortGetLinkType(pLinkType);
+    } else {
+        return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetLinkType(pLinkType);
+    }
 }
 
 ze_result_t zesFabricPortGetConfig(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_config_t *pConfig) {
-    return L0::FabricPort::fromHandle(hPort)->fabricPortGetConfig(pConfig);
+    if (L0::sysmanInitFromCore) {
+        return L0::FabricPort::fromHandle(hPort)->fabricPortGetConfig(pConfig);
+    } else {
+        return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetConfig(pConfig);
+    }
 }
 
 ze_result_t zesFabricPortSetConfig(
     zes_fabric_port_handle_t hPort,
     const zes_fabric_port_config_t *pConfig) {
-    return L0::FabricPort::fromHandle(hPort)->fabricPortSetConfig(pConfig);
+    if (L0::sysmanInitFromCore) {
+        return L0::FabricPort::fromHandle(hPort)->fabricPortSetConfig(pConfig);
+    } else {
+        return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortSetConfig(pConfig);
+    }
 }
 
 ze_result_t zesFabricPortGetState(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_state_t *pState) {
-    return L0::FabricPort::fromHandle(hPort)->fabricPortGetState(pState);
+    if (L0::sysmanInitFromCore) {
+        return L0::FabricPort::fromHandle(hPort)->fabricPortGetState(pState);
+    } else {
+        return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetState(pState);
+    }
 }
 
 ze_result_t zesFabricPortGetThroughput(
     zes_fabric_port_handle_t hPort,
     zes_fabric_port_throughput_t *pThroughput) {
-    return L0::FabricPort::fromHandle(hPort)->fabricPortGetThroughput(pThroughput);
+    if (L0::sysmanInitFromCore) {
+        return L0::FabricPort::fromHandle(hPort)->fabricPortGetThroughput(pThroughput);
+    } else {
+        return L0::Sysman::FabricPort::fromHandle(hPort)->fabricPortGetThroughput(pThroughput);
+    }
 }
 
 ze_result_t zesDeviceEnumTemperatureSensors(

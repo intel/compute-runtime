@@ -15,6 +15,7 @@
 #include <vector>
 
 namespace L0 {
+namespace Sysman {
 
 struct OsSysman;
 class OsFabricDevice;
@@ -59,4 +60,5 @@ struct FabricPortHandleContext : NEO::NonCopyableOrMovableClass {
     std::once_flag initFabricPortOnce;
 };
 
+} // namespace Sysman
 } // namespace L0

@@ -35,6 +35,9 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     NEO::ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }
 
+    FabricPortHandleContext *pFabricPortHandleContext = nullptr;
+    ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) override;
+
   private:
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     const uint32_t rootDeviceIndex;

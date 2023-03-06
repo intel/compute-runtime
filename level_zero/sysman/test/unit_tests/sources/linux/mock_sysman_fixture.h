@@ -75,7 +75,6 @@ class SysmanDeviceFixture : public ::testing::Test {
     PublicLinuxSysmanImp *pLinuxSysmanImp = nullptr;
     NEO::ExecutionEnvironment *execEnv = nullptr;
     std::unique_ptr<L0::Sysman::SysmanDriverHandleImp> driverHandle;
-    L0::Sysman::SysmanDevice *device = nullptr;
     const uint32_t numRootDevices = 1u;
 };
 
@@ -122,7 +121,6 @@ class SysmanMultiDeviceFixture : public ::testing::Test {
     PublicLinuxSysmanImp *pLinuxSysmanImp = nullptr;
     NEO::ExecutionEnvironment *execEnv = nullptr;
     std::unique_ptr<L0::Sysman::SysmanDriverHandleImp> driverHandle;
-    L0::Sysman::SysmanDevice *device = nullptr;
     const uint32_t numRootDevices = 4u;
     const uint32_t numSubDevices = 2u;
     DebugManagerStateRestore restorer;

@@ -25,5 +25,10 @@ SysmanDevice *SysmanDevice::create(NEO::ExecutionEnvironment &executionEnvironme
     return pSysmanDevice;
 }
 
+ze_result_t SysmanDevice::fabricPortGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_fabric_port_handle_t *phPort) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->fabricPortGet(pCount, phPort);
+}
+
 } // namespace Sysman
 } // namespace L0

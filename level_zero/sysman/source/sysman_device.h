@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/sysman/source/fabric_port/fabric_port.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
@@ -22,6 +23,9 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ~SysmanDevice() = default;
     static SysmanDevice *create(NEO::ExecutionEnvironment &executionEnvironment, const uint32_t rootDeviceIndex);
     virtual const NEO::HardwareInfo &getHardwareInfo() const = 0;
+
+    static ze_result_t fabricPortGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_fabric_port_handle_t *phPort);
+    virtual ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) = 0;
 };
 
 } // namespace Sysman
