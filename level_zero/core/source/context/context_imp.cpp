@@ -230,7 +230,8 @@ ze_result_t ContextImp::allocDeviceMem(ze_device_handle_t hDevice,
     }
 
     if (lookupTable.rayTracingMemory == true) {
-        unifiedMemoryProperties.allocationFlags.flags.resource48Bit = 1;
+        auto &productHelper = neoDevice->getProductHelper();
+        unifiedMemoryProperties.allocationFlags.flags.resource48Bit = productHelper.is48bResourceNeededForRayTracing();
     }
 
     void *usmPtr =
@@ -335,7 +336,8 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
     }
 
     if (rayTracingAllocation) {
-        unifiedMemoryProperties.allocationFlags.flags.resource48Bit = 1;
+        auto &productHelper = neoDevice->getProductHelper();
+        unifiedMemoryProperties.allocationFlags.flags.resource48Bit = productHelper.is48bResourceNeededForRayTracing();
     }
 
     if (hostDesc->flags & ZEX_HOST_MEM_ALLOC_FLAG_USE_HOST_PTR) {

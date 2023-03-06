@@ -268,6 +268,7 @@ class MockMemoryManager : public MemoryManagerCreate<OsAgnosticMemoryManager> {
     MemoryManager::AllocationStatus populateOsHandlesResult = MemoryManager::AllocationStatus::Success;
     GraphicsAllocation *allocateGraphicsMemoryForNonSvmHostPtrResult = nullptr;
     std::unique_ptr<AllocationProperties> lastAllocationProperties = nullptr;
+    std::function<void(const AllocationProperties &)> validateAllocateProperties = [](const AllocationProperties &) -> void {};
 };
 
 class MockAllocSysMemAgnosticMemoryManager : public OsAgnosticMemoryManager {

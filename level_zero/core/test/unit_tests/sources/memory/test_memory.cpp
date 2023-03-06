@@ -20,6 +20,7 @@
 #include "shared/test/common/mocks/mock_driver_model.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -890,7 +891,7 @@ TEST_F(MemoryTest, whenAllocatingHostMemoryWithUseHostPtrFlagThenExternalHostPtr
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
 }
 
-TEST_F(MemoryTest, whenAllocatingSharedMemoryAsRayTracingAllocationAddressIsIn48Bits) {
+TEST_F(MemoryTest, givenProductWith48bForRTWhenAllocatingSharedMemoryAsRayTracingThenAllocationAddressIsIn48Bits) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = reinterpret_cast<void *>(0x1234);
@@ -901,6 +902,17 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryAsRayTracingAllocationAddressIsIn48
 
     rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
     deviceDesc.pNext = &rtDesc;
+
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is48bResourceNeededForRayTracingResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &properties) -> void {
+        EXPECT_TRUE(properties.flags.resource48Bit);
+    };
+
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
 
     ze_result_t result = context->allocSharedMem(device->toHandle(),
                                                  &deviceDesc,
@@ -914,9 +926,47 @@ TEST_F(MemoryTest, whenAllocatingSharedMemoryAsRayTracingAllocationAddressIsIn48
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
 }
 
-TEST_F(MemoryTest, whenAllocatingDeviceMemoryAsRayTracingAllocationAddressIsIn48Bits) {
+TEST_F(MemoryTest, givenProductWithNon48bForRTWhenAllocatingSharedMemoryAsRayTracingThenResourceIsNot48b) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_raytracing_mem_alloc_ext_desc_t rtDesc = {};
+
+    rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
+    deviceDesc.pNext = &rtDesc;
+
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is48bResourceNeededForRayTracingResult = false;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &properties) -> void {
+        EXPECT_FALSE(properties.flags.resource48Bit);
+    };
+
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+}
+
+TEST_F(MemoryTest, givenProductWith48bForRTWhenAllocatingDeviceMemoryAsRayTracingAllocationAddressIsIn48Bits) {
     size_t size = 10;
     size_t alignment = 1u;
     void *ptr = reinterpret_cast<void *>(0x1234);
@@ -926,6 +976,17 @@ TEST_F(MemoryTest, whenAllocatingDeviceMemoryAsRayTracingAllocationAddressIsIn48
 
     rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
     deviceDesc.pNext = &rtDesc;
+
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is48bResourceNeededForRayTracingResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &properties) -> void {
+        EXPECT_TRUE(properties.flags.resource48Bit);
+    };
+
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
 
     ze_result_t result = context->allocDeviceMem(device->toHandle(),
                                                  &deviceDesc,
@@ -939,6 +1000,43 @@ TEST_F(MemoryTest, whenAllocatingDeviceMemoryAsRayTracingAllocationAddressIsIn48
 
     result = context->freeMem(ptr);
     ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+}
+
+TEST_F(MemoryTest, givenProductWithNon48bForRTWhenAllocatingDeviceMemoryAsRayTracingThenResourceIsNot48b) {
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_raytracing_mem_alloc_ext_desc_t rtDesc = {};
+
+    rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
+    deviceDesc.pNext = &rtDesc;
+
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is48bResourceNeededForRayTracingResult = false;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &properties) -> void {
+        EXPECT_FALSE(properties.flags.resource48Bit);
+    };
+
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    ze_result_t result = context->allocDeviceMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 size, alignment, &ptr);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
 }
 
 struct SVMAllocsManagerSharedAllocZexPointerMock : public NEO::SVMAllocsManager {

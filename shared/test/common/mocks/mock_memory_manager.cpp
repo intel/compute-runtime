@@ -67,6 +67,7 @@ void MockMemoryManager::waitForEnginesCompletion(GraphicsAllocation &graphicsAll
 }
 
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) {
+    validateAllocateProperties(properties);
     if (isMockHostMemoryManager) {
         allocateGraphicsMemoryWithPropertiesCount++;
         if (forceFailureInPrimaryAllocation) {
@@ -86,6 +87,7 @@ GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(cons
 }
 
 GraphicsAllocation *MockMemoryManager::allocateGraphicsMemoryWithProperties(const AllocationProperties &properties, const void *ptr) {
+    validateAllocateProperties(properties);
     lastAllocationProperties.reset(new AllocationProperties(properties));
     if (returnFakeAllocation) {
         return new GraphicsAllocation(properties.rootDeviceIndex, properties.allocationType, reinterpret_cast<void *>(dummyAddress), reinterpret_cast<uint64_t>(ptr), properties.size, 0, MemoryPool::System4KBPages, maxOsContextCount);

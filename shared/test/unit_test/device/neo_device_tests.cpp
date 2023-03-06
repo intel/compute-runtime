@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -21,6 +22,7 @@
 #include "shared/test/common/mocks/mock_compilers.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_product_helper.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
@@ -119,6 +121,24 @@ TEST_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledThenRTDispatchGlobalsIsA
     pDevice->initializeRayTracing(5);
     pDevice->allocateRTDispatchGlobals(3);
     EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
+}
+
+TEST_F(DeviceTest, givenNot48bResourceForRtWhenAllocateRTDispatchGlobalsIsCalledThenRTDispatchGlobalsIsAllocatedWithout48bResourceFlag) {
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is48bResourceNeededForRayTracingResult = false;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironmentRef();
+    auto memoryManager = static_cast<MockMemoryManager *>(pDevice->getMemoryManager());
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &properties) -> void {
+        EXPECT_FALSE(properties.flags.resource48Bit);
+    };
+
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    pDevice->initializeRayTracing(5);
+    pDevice->allocateRTDispatchGlobals(3);
+    EXPECT_NE(nullptr, pDevice->getRTDispatchGlobals(3));
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
 }
 
 HWTEST2_F(DeviceTest, whenAllocateRTDispatchGlobalsIsCalledAndRTStackAllocationFailsRTDispatchGlobalsIsNotAllocated, IsPVC) {

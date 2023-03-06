@@ -24,13 +24,7 @@ template <>
 void CommandStreamReceiverHw<Family>::programPerDssBackedBuffer(LinearStream &commandStream, Device &device, DispatchFlags &dispatchFlags) {
     if (dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) {
         DEBUG_BREAK_IF(perDssBackedBuffer == nullptr);
-
-        auto cmd3dStateBtd = commandStream.getSpaceForCmd<_3DSTATE_BTD>();
-
-        _3DSTATE_BTD cmd = Family::cmd3dStateBtd;
-        cmd.getBtdStateBody().setPerDssMemoryBackedBufferSize(static_cast<_3DSTATE_BTD_BODY::PER_DSS_MEMORY_BACKED_BUFFER_SIZE>(RayTracingHelper::getMemoryBackedFifoSizeToPatch()));
-        cmd.getBtdStateBody().setMemoryBackedBufferBasePointer(perDssBackedBuffer->getGpuAddress());
-        *cmd3dStateBtd = cmd;
+        EncodeEnableRayTracing<Family>::programEnableRayTracing(commandStream, perDssBackedBuffer->getGpuAddress());
         isPerDssBackedBufferSent = true;
     }
 }
