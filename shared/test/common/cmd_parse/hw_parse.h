@@ -29,6 +29,7 @@ struct HardwareParse {
         itorStateBaseAddress = cmdList.end();
         itorWalker = cmdList.end();
         itorGpgpuCsrBaseAddress = cmdList.end();
+        itorBindingTableBaseAddress = cmdList.end();
     }
 
     void setUp() {
@@ -199,6 +200,7 @@ struct HardwareParse {
     GenCmdList::iterator itorWalker;
     GenCmdList::iterator itorBBStartAfterWalker;
     GenCmdList::iterator itorGpgpuCsrBaseAddress;
+    GenCmdList::iterator itorBindingTableBaseAddress;
 
     void *cmdInterfaceDescriptorData = nullptr;
     void *cmdMediaInterfaceDescriptorLoad = nullptr;
@@ -208,6 +210,7 @@ struct HardwareParse {
     void *cmdWalker = nullptr;
     void *cmdBBStartAfterWalker = nullptr;
     void *cmdGpgpuCsrBaseAddress = nullptr;
+    void *cmdBindingTableBaseAddress = nullptr;
 
     bool parsePipeControl = false;
 };

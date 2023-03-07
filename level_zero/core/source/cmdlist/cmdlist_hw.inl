@@ -2448,27 +2448,30 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
 
     int32_t currentMocsState = static_cast<int32_t>(device->getMOCS(!kernelImp.getKernelRequiresUncachedMocs(), false) >> 1);
     bool checkSsh = false;
-    if (currentSurfaceStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::SURFACE_STATE)) {
-        auto ssh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
-        currentSurfaceStateBaseAddress = ssh->getHeapGpuBase();
-        currentSurfaceStateSize = ssh->getHeapSizeInPages();
-
-        currentBindingTablePoolBaseAddress = currentSurfaceStateBaseAddress;
-        currentBindingTablePoolSize = currentSurfaceStateSize;
-
-        checkSsh = true;
-    }
-
     bool checkDsh = false;
-    if (this->dynamicHeapRequired && (currentDynamicStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::DYNAMIC_STATE))) {
-        auto dsh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
-        currentDynamicStateBaseAddress = dsh->getHeapGpuBase();
-        currentDynamicStateSize = dsh->getHeapSizeInPages();
+    bool checkIoh = false;
 
-        checkDsh = true;
+    if (this->cmdListHeapAddressModel == NEO::HeapAddressModel::PrivateHeaps) {
+        if (currentSurfaceStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::SURFACE_STATE)) {
+            auto ssh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::SURFACE_STATE);
+            currentSurfaceStateBaseAddress = ssh->getHeapGpuBase();
+            currentSurfaceStateSize = ssh->getHeapSizeInPages();
+
+            currentBindingTablePoolBaseAddress = currentSurfaceStateBaseAddress;
+            currentBindingTablePoolSize = currentSurfaceStateSize;
+
+            checkSsh = true;
+        }
+
+        if (this->dynamicHeapRequired && (currentDynamicStateBaseAddress == NEO::StreamProperty64::initValue || commandContainer.isHeapDirty(NEO::IndirectHeap::Type::DYNAMIC_STATE))) {
+            auto dsh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::DYNAMIC_STATE);
+            currentDynamicStateBaseAddress = dsh->getHeapGpuBase();
+            currentDynamicStateSize = dsh->getHeapSizeInPages();
+
+            checkDsh = true;
+        }
     }
 
-    bool checkIoh = false;
     if (currentIndirectObjectBaseAddress == NEO::StreamProperty64::initValue) {
         auto ioh = commandContainer.getIndirectHeap(NEO::IndirectHeap::Type::INDIRECT_OBJECT);
         currentIndirectObjectBaseAddress = ioh->getHeapGpuBase();
@@ -2484,8 +2487,11 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         requiredStreamState.pipelineSelect.setPropertySystolicMode(kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
 
         requiredStreamState.stateBaseAddress.setPropertyStatelessMocs(currentMocsState);
-        requiredStreamState.stateBaseAddress.setPropertiesSurfaceState(currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
-                                                                       currentSurfaceStateBaseAddress, currentSurfaceStateSize, rootDeviceEnvironment);
+
+        if (checkSsh) {
+            requiredStreamState.stateBaseAddress.setPropertiesSurfaceState(currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
+                                                                           currentSurfaceStateBaseAddress, currentSurfaceStateSize, rootDeviceEnvironment);
+        }
         if (checkDsh) {
             requiredStreamState.stateBaseAddress.setPropertiesDynamicState(currentDynamicStateBaseAddress, currentDynamicStateSize);
         }

@@ -454,6 +454,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     bool dshDirty = hasDsh ? dshState.updateAndCheck(dsh) : false;
     bool iohDirty = iohState.updateAndCheck(ioh);
     bool sshDirty = ssh != nullptr ? sshState.updateAndCheck(ssh) : false;
+    bool btCommandNeeded = sshDirty && (ssh->getGraphicsAllocation() != globalStatelessHeapAllocation);
 
     if (dshDirty) {
         dynamicStateBaseAddress = dsh->getHeapGpuBase();
@@ -471,8 +472,10 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         surfaceStateBaseAddress = ssh->getHeapGpuBase();
         surfaceStateSize = ssh->getHeapSizeInPages();
 
-        bindingTablePoolBaseAddress = surfaceStateBaseAddress;
-        bindingTablePoolSize = surfaceStateSize;
+        if (btCommandNeeded) {
+            bindingTablePoolBaseAddress = surfaceStateBaseAddress;
+            bindingTablePoolSize = surfaceStateSize;
+        }
 
         this->streamProperties.stateBaseAddress.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize,
                                                                           surfaceStateBaseAddress, surfaceStateSize, rootDeviceEnvironment);
@@ -546,7 +549,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                                                                                      stateBaseAddressCmd, true);
 
         if (sshDirty) {
-            bindingTableBaseAddressRequired = true;
+            bindingTableBaseAddressRequired = btCommandNeeded;
         }
 
         if (bindingTableBaseAddressRequired) {
@@ -560,6 +563,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             collectStateBaseAddresPatchInfo(commandStream.getGraphicsAllocation()->getGpuAddress(), stateBaseAddressCmdOffset, dsh, ioh, ssh, newGshBase,
                                             device.getDeviceInfo().imageSupport);
         }
+        setGSBAStateDirty(false);
     }
 
     addPipeControlBeforeStateSip(commandStreamCSR, device);

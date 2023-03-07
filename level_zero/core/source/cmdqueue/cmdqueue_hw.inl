@@ -20,6 +20,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/definitions/mi_flush_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/heap_base_address_model.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
@@ -662,7 +663,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
                                                                                        streamPropertiesCopy, requiredStreamState, finalStreamState);
             linearStreamSizeEstimate += estimatePipelineSelectCmdSizeForMultipleCommandLists(streamPropertiesCopy, requiredStreamState, finalStreamState, gpgpuEnabledCopy);
             linearStreamSizeEstimate += estimateScmCmdSizeForMultipleCommandLists(streamPropertiesCopy, requiredStreamState, finalStreamState);
-            linearStreamSizeEstimate += estimateStateBaseAddressCmdSizeForMultipleCommandLists(baseAdresStateDirtyCopy, streamPropertiesCopy, requiredStreamState, finalStreamState);
+            linearStreamSizeEstimate += estimateStateBaseAddressCmdSizeForMultipleCommandLists(baseAdresStateDirtyCopy, cmdList, streamPropertiesCopy, requiredStreamState, finalStreamState);
         }
     }
 
@@ -1237,6 +1238,49 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForCommandLis
     if (!this->stateBaseAddressTracking) {
         return;
     }
+    auto heapModel = commandList->getCmdListHeapAddressModel();
+    if (heapModel == NEO::HeapAddressModel::GlobalStateless) {
+        programRequiredStateBaseAddressForGlobalStatelessCommandList(ctx, commandStream, commandList, csrState, cmdListRequired, cmdListFinal);
+    } else {
+        programRequiredStateBaseAddressForPrivateHeapCommandList(ctx, commandStream, commandList, csrState, cmdListRequired, cmdListFinal);
+    }
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForGlobalStatelessCommandList(CommandListExecutionContext &ctx,
+                                                                                                 NEO::LinearStream &commandStream,
+                                                                                                 CommandList *commandList,
+                                                                                                 NEO::StreamProperties &csrState,
+                                                                                                 const NEO::StreamProperties &cmdListRequired,
+                                                                                                 const NEO::StreamProperties &cmdListFinal) {
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    auto globalStatelessHeap = this->csr->getGlobalStatelessHeap();
+
+    csrState.stateBaseAddress.setProperties(cmdListRequired.stateBaseAddress);
+    csrState.stateBaseAddress.setPropertiesSurfaceState(-1, -1, globalStatelessHeap->getHeapGpuBase(), globalStatelessHeap->getHeapSizeInPages(), rootDeviceEnvironment);
+
+    if (ctx.gsbaStateDirty || csrState.stateBaseAddress.isDirty()) {
+        auto indirectHeap = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+        auto scratchSpaceController = this->csr->getScratchSpaceController();
+        programStateBaseAddress(scratchSpaceController->calculateNewGSH(),
+                                indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(),
+                                commandStream,
+                                ctx.cachedMOCSAllowed,
+                                &csrState);
+
+        ctx.gsbaStateDirty = false;
+    }
+
+    csrState.stateBaseAddress.setProperties(cmdListFinal.stateBaseAddress);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForPrivateHeapCommandList(CommandListExecutionContext &ctx,
+                                                                                             NEO::LinearStream &commandStream,
+                                                                                             CommandList *commandList,
+                                                                                             NEO::StreamProperties &csrState,
+                                                                                             const NEO::StreamProperties &cmdListRequired,
+                                                                                             const NEO::StreamProperties &cmdListFinal) {
 
     csrState.stateBaseAddress.setProperties(cmdListRequired.stateBaseAddress);
 
@@ -1259,14 +1303,19 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastCommandList) {
     auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(csr);
     auto &commandContainer = lastCommandList->getCmdContainer();
-    auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
-    if (dsh != nullptr) {
-        csrHw->getDshState().updateAndCheck(dsh);
-    }
 
-    auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
-    if (ssh != nullptr) {
-        csrHw->getSshState().updateAndCheck(ssh);
+    if (lastCommandList->getCmdListHeapAddressModel() == NEO::HeapAddressModel::GlobalStateless) {
+        csrHw->getSshState().updateAndCheck(csr->getGlobalStatelessHeap());
+    } else {
+        auto dsh = commandContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+        if (dsh != nullptr) {
+            csrHw->getDshState().updateAndCheck(dsh);
+        }
+
+        auto ssh = commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+        if (ssh != nullptr) {
+            csrHw->getSshState().updateAndCheck(ssh);
+        }
     }
 
     auto ioh = commandContainer.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
@@ -1275,6 +1324,7 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForMultipleCommandLists(bool &baseAddressStateDirty,
+                                                                                             CommandList *commandList,
                                                                                              NEO::StreamProperties &csrStateCopy,
                                                                                              const NEO::StreamProperties &cmdListRequired,
                                                                                              const NEO::StreamProperties &cmdListFinal) {
@@ -1282,7 +1332,48 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForMultiple
         return 0;
     }
 
-    auto singleSbaDispatchSize = estimateStateBaseAddressCmdDispatchSize();
+    size_t estimatedSize = 0;
+
+    auto heapModel = commandList->getCmdListHeapAddressModel();
+    if (heapModel == NEO::HeapAddressModel::GlobalStateless) {
+        estimatedSize = estimateStateBaseAddressCmdSizeForGlobalStatelessCommandList(baseAddressStateDirty, csrStateCopy, cmdListRequired, cmdListFinal);
+    } else {
+        estimatedSize = estimateStateBaseAddressCmdSizeForPrivateHeapCommandList(baseAddressStateDirty, csrStateCopy, cmdListRequired, cmdListFinal);
+    }
+
+    return estimatedSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForGlobalStatelessCommandList(bool &baseAddressStateDirty,
+                                                                                                   NEO::StreamProperties &csrStateCopy,
+                                                                                                   const NEO::StreamProperties &cmdListRequired,
+                                                                                                   const NEO::StreamProperties &cmdListFinal) {
+
+    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    auto globalStatelessHeap = this->csr->getGlobalStatelessHeap();
+
+    size_t estimatedSize = 0;
+
+    csrStateCopy.stateBaseAddress.setProperties(cmdListRequired.stateBaseAddress);
+    csrStateCopy.stateBaseAddress.setPropertiesSurfaceState(-1, -1, globalStatelessHeap->getHeapGpuBase(), globalStatelessHeap->getHeapSizeInPages(), rootDeviceEnvironment);
+    if (baseAddressStateDirty || csrStateCopy.stateBaseAddress.isDirty()) {
+        bool useBtiCommand = csrStateCopy.stateBaseAddress.bindingTablePoolBaseAddress.value != NEO::StreamProperty64::initValue;
+        estimatedSize += estimateStateBaseAddressCmdDispatchSize(useBtiCommand);
+        baseAddressStateDirty = false;
+    }
+    csrStateCopy.stateBaseAddress.setProperties(cmdListFinal.stateBaseAddress);
+
+    return estimatedSize;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForPrivateHeapCommandList(bool &baseAddressStateDirty,
+                                                                                               NEO::StreamProperties &csrStateCopy,
+                                                                                               const NEO::StreamProperties &cmdListRequired,
+                                                                                               const NEO::StreamProperties &cmdListFinal) {
+
+    auto singleSbaDispatchSize = estimateStateBaseAddressCmdDispatchSize(true);
     size_t estimatedSize = 0;
 
     csrStateCopy.stateBaseAddress.setProperties(cmdListRequired.stateBaseAddress);

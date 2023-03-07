@@ -129,6 +129,10 @@ struct CommandListStateBaseAddressFixture : public ModuleMutableCommandListFixtu
     bool dshRequired = false;
 };
 
+struct CommandListPrivateHeapsFixture : public CommandListStateBaseAddressFixture {
+    void setUp();
+};
+
 struct CommandListGlobalHeapsFixtureInit : public CommandListStateBaseAddressFixture {
     void setUp();
     void setUpParams(int32_t globalHeapMode);

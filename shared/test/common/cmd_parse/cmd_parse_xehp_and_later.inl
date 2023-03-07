@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -134,6 +134,7 @@ void HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
     typedef typename GenGfxFamily::INTERFACE_DESCRIPTOR_DATA INTERFACE_DESCRIPTOR_DATA;
     typedef typename GenGfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
     typedef typename GenGfxFamily::MI_LOAD_REGISTER_IMM MI_LOAD_REGISTER_IMM;
+    using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GenGfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
     itorWalker = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
     if (itorWalker != cmdList.end()) {
@@ -183,6 +184,11 @@ void HardwareParse::findHardwareCommands<GenGfxFamily>(IndirectHeap *dsh) {
             dynamicStateHeap = reinterpret_cast<uint64_t>(dsh->getCpuBase());
         }
         ASSERT_NE(0u, dynamicStateHeap);
+    }
+
+    itorBindingTableBaseAddress = find<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(cmdList.begin(), itorWalker);
+    if (itorBindingTableBaseAddress != itorWalker) {
+        cmdBindingTableBaseAddress = *itorBindingTableBaseAddress;
     }
 
     // interfaceDescriptorData should be located within COMPUTE_WALKER

@@ -141,7 +141,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     NEO::IndirectHeap *ssh = nullptr;
     NEO::IndirectHeap *dsh = nullptr;
 
-    if (this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) {
+    if ((this->immediateCmdListHeapSharing || this->stateBaseAddressTracking) &&
+        (this->cmdListHeapAddressModel == NEO::HeapAddressModel::PrivateHeaps)) {
         auto kernelInfo = kernelImmutableData->getKernelInfo();
 
         auto &sshReserveConfig = commandContainer.getSurfaceStateHeapReserve();

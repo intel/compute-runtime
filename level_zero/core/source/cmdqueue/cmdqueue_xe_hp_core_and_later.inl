@@ -118,14 +118,17 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddress(uint64_t gsba, bool 
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdDispatchSize() {
+inline size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdDispatchSize(bool bindingTableBaseAddress) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
-    size_t size = sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) + sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+    size_t size = sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
 
     if (this->doubleSbaWa) {
         size += sizeof(STATE_BASE_ADDRESS);
+    }
+    if (bindingTableBaseAddress) {
+        size += sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
     }
     return size;
 }
@@ -133,7 +136,7 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdDispatch
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSize() {
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
-        return estimateStateBaseAddressCmdDispatchSize();
+        return estimateStateBaseAddressCmdDispatchSize(true);
     }
     return 0;
 }

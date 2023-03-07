@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/kernel/kernel_descriptor.h"
@@ -974,8 +975,8 @@ HWTEST2_F(ImmediateCmdListSharedHeapsTest, givenMultipleCommandListsUsingSharedH
     EXPECT_GE(expectedSshAlignedSize, sshUsed);
 }
 
-using CommandListGlobalStatelessTest = Test<CommandListGlobalHeapsFixture<static_cast<int32_t>(NEO::HeapAddressModel::GlobalStateless)>>;
-HWTEST2_F(CommandListGlobalStatelessTest, givenGlobalStatelessWhenExecutingCommandListThenMakeAllocationResident, IsAtLeastXeHpCore) {
+using CommandListStateBaseAddressGlobalStatelessTest = Test<CommandListGlobalHeapsFixture<static_cast<int32_t>(NEO::HeapAddressModel::GlobalStateless)>>;
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest, givenGlobalStatelessWhenExecutingCommandListThenMakeAllocationResident, IsAtLeastXeHpCore) {
     EXPECT_EQ(NEO::HeapAddressModel::GlobalStateless, commandList->cmdListHeapAddressModel);
     EXPECT_EQ(NEO::HeapAddressModel::GlobalStateless, commandListImmediate->cmdListHeapAddressModel);
     EXPECT_EQ(NEO::HeapAddressModel::GlobalStateless, commandQueue->cmdListHeapAddressModel);
@@ -993,5 +994,1150 @@ HWTEST2_F(CommandListGlobalStatelessTest, givenGlobalStatelessWhenExecutingComma
 
     EXPECT_TRUE(ultCsr->isMadeResident(globalStatelessAlloc));
 }
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenGlobalStatelessWhenExecutingRegularCommandListThenBaseAddressPropertiesSetCorrectlyAndCommandProperlyDispatched,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &container = commandList->getCmdContainer();
+
+    auto statlessMocs = getMocs(true);
+    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
+    auto ioSize = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+
+    auto &requiredState = commandList->requiredStreamState.stateBaseAddress;
+    auto &finalState = commandList->finalStreamState.stateBaseAddress;
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), requiredState.statelessMocs.value);
+
+    EXPECT_EQ(-1, requiredState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), requiredState.surfaceStateSize.value);
+    EXPECT_EQ(-1, requiredState.dynamicStateBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), requiredState.dynamicStateSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), requiredState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, requiredState.indirectObjectSize.value);
+
+    EXPECT_EQ(-1, requiredState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), requiredState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalState.surfaceStateBaseAddress.value, requiredState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(finalState.surfaceStateSize.value, requiredState.surfaceStateSize.value);
+
+    EXPECT_EQ(finalState.dynamicStateBaseAddress.value, requiredState.dynamicStateBaseAddress.value);
+    EXPECT_EQ(finalState.dynamicStateSize.value, requiredState.dynamicStateSize.value);
+
+    EXPECT_EQ(finalState.indirectObjectBaseAddress.value, requiredState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(finalState.indirectObjectSize.value, requiredState.indirectObjectSize.value);
+
+    EXPECT_EQ(finalState.bindingTablePoolBaseAddress.value, requiredState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(finalState.bindingTablePoolSize.value, requiredState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalState.globalAtomics.value, requiredState.globalAtomics.value);
+    EXPECT_EQ(finalState.statelessMocs.value, requiredState.statelessMocs.value);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    size_t queueBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueAfter = cmdQueueStream.getUsed();
+
+    auto globalSurfaceHeap = commandQueue->getCsr()->getGlobalStatelessHeap();
+
+    auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
+    auto ssSize = globalSurfaceHeap->getHeapSizeInPages();
+
+    auto &csrState = commandQueue->getCsr()->getStreamProperties().stateBaseAddress;
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddress), csrState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSize, csrState.surfaceStateSize.value);
+
+    EXPECT_EQ(-1, csrState.dynamicStateBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), csrState.dynamicStateSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), csrState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, csrState.indirectObjectSize.value);
+
+    EXPECT_EQ(-1, csrState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), csrState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), csrState.statelessMocs.value);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(sbaCmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd->getGeneralStateBufferSizeModifyEnable());
+
+    auto ioBaseAddressDecanonized = neoDevice->getGmmHelper()->decanonize(ioBaseAddress);
+    EXPECT_EQ(ioBaseAddressDecanonized, sbaCmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(ioSize, sbaCmd->getGeneralStateBufferSize());
+
+    EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenGlobalStatelessWhenExecutingImmediateCommandListThenBaseAddressPropertiesSetCorrectlyAndCommandProperlyDispatched,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = csrImmediate.commandStream;
+    auto &csrState = csrImmediate.getStreamProperties().stateBaseAddress;
+    auto globalSurfaceHeap = csrImmediate.getGlobalStatelessHeap();
+
+    size_t csrUsedBefore = csrStream.getUsed();
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t csrUsedAfter = csrStream.getUsed();
+
+    auto &container = commandListImmediate->getCmdContainer();
+    auto statlessMocs = getMocs(true);
+    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
+    auto ioSize = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+
+    auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
+    auto ssSize = globalSurfaceHeap->getHeapSizeInPages();
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddress), csrState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSize, csrState.surfaceStateSize.value);
+
+    EXPECT_EQ(-1, csrState.dynamicStateBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), csrState.dynamicStateSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), csrState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, csrState.indirectObjectSize.value);
+
+    EXPECT_EQ(-1, csrState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), csrState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), csrState.statelessMocs.value);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(sbaCmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd->getGeneralStateBufferSizeModifyEnable());
+
+    auto ioBaseAddressDecanonized = neoDevice->getGmmHelper()->decanonize(ioBaseAddress);
+    EXPECT_EQ(ioBaseAddressDecanonized, sbaCmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(ioSize, sbaCmd->getGeneralStateBufferSize());
+
+    EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenGlobalStatelessWhenExecutingRegularCommandListAndImmediateCommandListThenBaseAddressPropertiesSetCorrectlyAndCommandProperlyDispatchedOnlyOnce,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &container = commandList->getCmdContainer();
+
+    auto statlessMocs = getMocs(true);
+    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
+    auto ioSize = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    size_t queueBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueAfter = cmdQueueStream.getUsed();
+
+    auto globalSurfaceHeap = commandQueue->getCsr()->getGlobalStatelessHeap();
+
+    auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(sbaCmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd->getGeneralStateBufferSizeModifyEnable());
+
+    auto ioBaseAddressDecanonized = neoDevice->getGmmHelper()->decanonize(ioBaseAddress);
+    EXPECT_EQ(ioBaseAddressDecanonized, sbaCmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(ioSize, sbaCmd->getGeneralStateBufferSize());
+
+    EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = csrImmediate.commandStream;
+
+    size_t csrUsedBefore = csrStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t csrUsedAfter = csrStream.getUsed();
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(0u, sbaCmds.size());
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenGlobalStatelessWhenExecutingImmediateCommandListAndRegularCommandListThenBaseAddressPropertiesSetCorrectlyAndCommandProperlyDispatchedOnlyOnce,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = csrImmediate.commandStream;
+    auto globalSurfaceHeap = csrImmediate.getGlobalStatelessHeap();
+
+    size_t csrUsedBefore = csrStream.getUsed();
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t csrUsedAfter = csrStream.getUsed();
+
+    auto &container = commandListImmediate->getCmdContainer();
+    auto statlessMocs = getMocs(true);
+    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
+    auto ioSize = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+
+    auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(sbaCmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd->getGeneralStateBufferSizeModifyEnable());
+
+    auto ioBaseAddressDecanonized = neoDevice->getGmmHelper()->decanonize(ioBaseAddress);
+    EXPECT_EQ(ioBaseAddressDecanonized, sbaCmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(ioSize, sbaCmd->getGeneralStateBufferSize());
+
+    EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    size_t queueBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueAfter = cmdQueueStream.getUsed();
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(0u, sbaCmds.size());
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenGlobalStatelessWhenExecutingRegularCommandListAndPrivateHeapsCommandListThenBaseAddressPropertiesSetCorrectlyAndCommandProperlyDispatched,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &container = commandList->getCmdContainer();
+
+    auto statlessMocs = getMocs(true);
+    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
+    auto ioSize = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+
+    auto &requiredState = commandList->requiredStreamState.stateBaseAddress;
+    auto &finalState = commandList->finalStreamState.stateBaseAddress;
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), requiredState.statelessMocs.value);
+
+    EXPECT_EQ(-1, requiredState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), requiredState.surfaceStateSize.value);
+    EXPECT_EQ(-1, requiredState.dynamicStateBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), requiredState.dynamicStateSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), requiredState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, requiredState.indirectObjectSize.value);
+
+    EXPECT_EQ(-1, requiredState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), requiredState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalState.surfaceStateBaseAddress.value, requiredState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(finalState.surfaceStateSize.value, requiredState.surfaceStateSize.value);
+
+    EXPECT_EQ(finalState.dynamicStateBaseAddress.value, requiredState.dynamicStateBaseAddress.value);
+    EXPECT_EQ(finalState.dynamicStateSize.value, requiredState.dynamicStateSize.value);
+
+    EXPECT_EQ(finalState.indirectObjectBaseAddress.value, requiredState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(finalState.indirectObjectSize.value, requiredState.indirectObjectSize.value);
+
+    EXPECT_EQ(finalState.bindingTablePoolBaseAddress.value, requiredState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(finalState.bindingTablePoolSize.value, requiredState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalState.globalAtomics.value, requiredState.globalAtomics.value);
+    EXPECT_EQ(finalState.statelessMocs.value, requiredState.statelessMocs.value);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    size_t queueBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueAfter = cmdQueueStream.getUsed();
+
+    auto globalSurfaceHeap = commandQueue->getCsr()->getGlobalStatelessHeap();
+
+    auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
+    auto ssSize = globalSurfaceHeap->getHeapSizeInPages();
+
+    auto &csrState = commandQueue->getCsr()->getStreamProperties().stateBaseAddress;
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddress), csrState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSize, csrState.surfaceStateSize.value);
+
+    EXPECT_EQ(-1, csrState.dynamicStateBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), csrState.dynamicStateSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), csrState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, csrState.indirectObjectSize.value);
+
+    EXPECT_EQ(-1, csrState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), csrState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), csrState.statelessMocs.value);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(sbaCmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd->getGeneralStateBufferSizeModifyEnable());
+    auto ioBaseAddressDecanonized = neoDevice->getGmmHelper()->decanonize(ioBaseAddress);
+    EXPECT_EQ(ioBaseAddressDecanonized, sbaCmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(ioSize, sbaCmd->getGeneralStateBufferSize());
+
+    EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+
+    result = commandListPrivateHeap->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &containerPrivateHeap = commandListPrivateHeap->getCmdContainer();
+
+    auto sshPrivateHeap = containerPrivateHeap.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssBaseAddressPrivateHeap = sshPrivateHeap->getHeapGpuBase();
+    auto ssSizePrivateHeap = sshPrivateHeap->getHeapSizeInPages();
+
+    uint64_t dsBaseAddressPrivateHeap = -1;
+    size_t dsSizePrivateHeap = static_cast<size_t>(-1);
+
+    auto dshPrivateHeap = containerPrivateHeap.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    if (!this->dshRequired) {
+        EXPECT_EQ(nullptr, dshPrivateHeap);
+    } else {
+        EXPECT_NE(nullptr, dshPrivateHeap);
+    }
+    if (dshPrivateHeap) {
+        dsBaseAddressPrivateHeap = dshPrivateHeap->getHeapGpuBase();
+        dsSizePrivateHeap = dshPrivateHeap->getHeapSizeInPages();
+    }
+
+    auto &requiredStatePrivateHeap = commandListPrivateHeap->requiredStreamState.stateBaseAddress;
+    auto &finalStatePrivateHeap = commandListPrivateHeap->finalStreamState.stateBaseAddress;
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), requiredStatePrivateHeap.statelessMocs.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), requiredStatePrivateHeap.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, requiredStatePrivateHeap.surfaceStateSize.value);
+    EXPECT_EQ(static_cast<int64_t>(dsBaseAddressPrivateHeap), requiredStatePrivateHeap.dynamicStateBaseAddress.value);
+    EXPECT_EQ(dsSizePrivateHeap, requiredStatePrivateHeap.dynamicStateSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), requiredStatePrivateHeap.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, requiredStatePrivateHeap.indirectObjectSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), requiredStatePrivateHeap.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, requiredStatePrivateHeap.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.surfaceStateBaseAddress.value, requiredStatePrivateHeap.surfaceStateBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.surfaceStateSize.value, requiredStatePrivateHeap.surfaceStateSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.dynamicStateBaseAddress.value, requiredStatePrivateHeap.dynamicStateBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.dynamicStateSize.value, requiredStatePrivateHeap.dynamicStateSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.indirectObjectBaseAddress.value, requiredStatePrivateHeap.indirectObjectBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.indirectObjectSize.value, requiredStatePrivateHeap.indirectObjectSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolBaseAddress.value, requiredStatePrivateHeap.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolSize.value, requiredStatePrivateHeap.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.globalAtomics.value, requiredStatePrivateHeap.globalAtomics.value);
+    EXPECT_EQ(finalStatePrivateHeap.statelessMocs.value, requiredStatePrivateHeap.statelessMocs.value);
+
+    result = commandListPrivateHeap->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    queueBefore = cmdQueueStream.getUsed();
+    cmdListHandle = commandListPrivateHeap->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    queueAfter = cmdQueueStream.getUsed();
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), csrState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, csrState.surfaceStateSize.value);
+
+    if (dshPrivateHeap) {
+        EXPECT_EQ(static_cast<int64_t>(dsBaseAddressPrivateHeap), csrState.dynamicStateBaseAddress.value);
+        EXPECT_EQ(dsSizePrivateHeap, csrState.dynamicStateSize.value);
+    } else {
+        EXPECT_EQ(-1, csrState.dynamicStateBaseAddress.value);
+        EXPECT_EQ(static_cast<size_t>(-1), csrState.dynamicStateSize.value);
+    }
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), csrState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, csrState.indirectObjectSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), csrState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, csrState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), csrState.statelessMocs.value);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    if (dshPrivateHeap) {
+        EXPECT_TRUE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_TRUE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(dsBaseAddressPrivateHeap, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(dsSizePrivateHeap, sbaCmd->getDynamicStateBufferSize());
+    } else {
+        EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+    }
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddressPrivateHeap, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(sbaCmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd->getGeneralStateBufferSizeModifyEnable());
+    EXPECT_EQ(ioBaseAddressDecanonized, sbaCmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(ioSize, sbaCmd->getGeneralStateBufferSize());
+
+    EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenGlobalStatelessWhenExecutingPrivateHeapsCommandListAndRegularCommandListThenBaseAddressPropertiesSetCorrectlyAndCommandProperlyDispatched,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto result = commandListPrivateHeap->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &containerPrivateHeap = commandListPrivateHeap->getCmdContainer();
+
+    auto statlessMocs = getMocs(true);
+    auto ioBaseAddress = containerPrivateHeap.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
+    auto ioSize = containerPrivateHeap.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+
+    auto sshPrivateHeap = containerPrivateHeap.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssBaseAddressPrivateHeap = sshPrivateHeap->getHeapGpuBase();
+    auto ssSizePrivateHeap = sshPrivateHeap->getHeapSizeInPages();
+
+    uint64_t dsBaseAddressPrivateHeap = -1;
+    size_t dsSizePrivateHeap = static_cast<size_t>(-1);
+
+    auto dshPrivateHeap = containerPrivateHeap.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    if (!this->dshRequired) {
+        EXPECT_EQ(nullptr, dshPrivateHeap);
+    } else {
+        EXPECT_NE(nullptr, dshPrivateHeap);
+    }
+    if (dshPrivateHeap) {
+        dsBaseAddressPrivateHeap = dshPrivateHeap->getHeapGpuBase();
+        dsSizePrivateHeap = dshPrivateHeap->getHeapSizeInPages();
+    }
+
+    auto &requiredStatePrivateHeap = commandListPrivateHeap->requiredStreamState.stateBaseAddress;
+    auto &finalStatePrivateHeap = commandListPrivateHeap->finalStreamState.stateBaseAddress;
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), requiredStatePrivateHeap.statelessMocs.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), requiredStatePrivateHeap.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, requiredStatePrivateHeap.surfaceStateSize.value);
+    EXPECT_EQ(static_cast<int64_t>(dsBaseAddressPrivateHeap), requiredStatePrivateHeap.dynamicStateBaseAddress.value);
+    EXPECT_EQ(dsSizePrivateHeap, requiredStatePrivateHeap.dynamicStateSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), requiredStatePrivateHeap.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, requiredStatePrivateHeap.indirectObjectSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), requiredStatePrivateHeap.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, requiredStatePrivateHeap.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.surfaceStateBaseAddress.value, requiredStatePrivateHeap.surfaceStateBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.surfaceStateSize.value, requiredStatePrivateHeap.surfaceStateSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.dynamicStateBaseAddress.value, requiredStatePrivateHeap.dynamicStateBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.dynamicStateSize.value, requiredStatePrivateHeap.dynamicStateSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.indirectObjectBaseAddress.value, requiredStatePrivateHeap.indirectObjectBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.indirectObjectSize.value, requiredStatePrivateHeap.indirectObjectSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolBaseAddress.value, requiredStatePrivateHeap.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolSize.value, requiredStatePrivateHeap.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.globalAtomics.value, requiredStatePrivateHeap.globalAtomics.value);
+    EXPECT_EQ(finalStatePrivateHeap.statelessMocs.value, requiredStatePrivateHeap.statelessMocs.value);
+
+    result = commandListPrivateHeap->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    auto &csrState = commandQueue->getCsr()->getStreamProperties().stateBaseAddress;
+
+    size_t queueBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandListPrivateHeap->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueAfter = cmdQueueStream.getUsed();
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), csrState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, csrState.surfaceStateSize.value);
+
+    if (dshPrivateHeap) {
+        EXPECT_EQ(static_cast<int64_t>(dsBaseAddressPrivateHeap), csrState.dynamicStateBaseAddress.value);
+        EXPECT_EQ(dsSizePrivateHeap, csrState.dynamicStateSize.value);
+    } else {
+        EXPECT_EQ(-1, csrState.dynamicStateBaseAddress.value);
+        EXPECT_EQ(static_cast<size_t>(-1), csrState.dynamicStateSize.value);
+    }
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), csrState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, csrState.indirectObjectSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), csrState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, csrState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), csrState.statelessMocs.value);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    if (dshPrivateHeap) {
+        EXPECT_TRUE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_TRUE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(dsBaseAddressPrivateHeap, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(dsSizePrivateHeap, sbaCmd->getDynamicStateBufferSize());
+    } else {
+        EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+    }
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddressPrivateHeap, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(sbaCmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd->getGeneralStateBufferSizeModifyEnable());
+    auto ioBaseAddressDecanonized = neoDevice->getGmmHelper()->decanonize(ioBaseAddress);
+    EXPECT_EQ(ioBaseAddressDecanonized, sbaCmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(ioSize, sbaCmd->getGeneralStateBufferSize());
+
+    EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &requiredState = commandList->requiredStreamState.stateBaseAddress;
+    auto &finalState = commandList->finalStreamState.stateBaseAddress;
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), requiredState.statelessMocs.value);
+
+    EXPECT_EQ(-1, requiredState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), requiredState.surfaceStateSize.value);
+    EXPECT_EQ(-1, requiredState.dynamicStateBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), requiredState.dynamicStateSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), requiredState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, requiredState.indirectObjectSize.value);
+
+    EXPECT_EQ(-1, requiredState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), requiredState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalState.surfaceStateBaseAddress.value, requiredState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(finalState.surfaceStateSize.value, requiredState.surfaceStateSize.value);
+
+    EXPECT_EQ(finalState.dynamicStateBaseAddress.value, requiredState.dynamicStateBaseAddress.value);
+    EXPECT_EQ(finalState.dynamicStateSize.value, requiredState.dynamicStateSize.value);
+
+    EXPECT_EQ(finalState.indirectObjectBaseAddress.value, requiredState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(finalState.indirectObjectSize.value, requiredState.indirectObjectSize.value);
+
+    EXPECT_EQ(finalState.bindingTablePoolBaseAddress.value, requiredState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(finalState.bindingTablePoolSize.value, requiredState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalState.globalAtomics.value, requiredState.globalAtomics.value);
+    EXPECT_EQ(finalState.statelessMocs.value, requiredState.statelessMocs.value);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    queueBefore = cmdQueueStream.getUsed();
+    cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    queueAfter = cmdQueueStream.getUsed();
+
+    auto globalSurfaceHeap = commandQueue->getCsr()->getGlobalStatelessHeap();
+
+    auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
+    auto ssSize = globalSurfaceHeap->getHeapSizeInPages();
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddress), csrState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSize, csrState.surfaceStateSize.value);
+
+    if (dshPrivateHeap) {
+        EXPECT_EQ(static_cast<int64_t>(dsBaseAddressPrivateHeap), csrState.dynamicStateBaseAddress.value);
+        EXPECT_EQ(dsSizePrivateHeap, csrState.dynamicStateSize.value);
+    } else {
+        EXPECT_EQ(-1, csrState.dynamicStateBaseAddress.value);
+        EXPECT_EQ(static_cast<size_t>(-1), csrState.dynamicStateSize.value);
+    }
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), csrState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, csrState.indirectObjectSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), csrState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, csrState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), csrState.statelessMocs.value);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    if (dshPrivateHeap) {
+        EXPECT_TRUE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_TRUE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(dsBaseAddressPrivateHeap, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(dsSizePrivateHeap, sbaCmd->getDynamicStateBufferSize());
+    } else {
+        EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+    }
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(sbaCmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd->getGeneralStateBufferSizeModifyEnable());
+    EXPECT_EQ(ioBaseAddressDecanonized, sbaCmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(ioSize, sbaCmd->getGeneralStateBufferSize());
+
+    EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenGlobalStatelessWhenExecutingImmediateCommandListAndPrivateHeapsCommandListThenBaseAddressPropertiesSetCorrectlyAndCommandProperlyDispatched,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = csrImmediate.commandStream;
+    auto &csrState = csrImmediate.getStreamProperties().stateBaseAddress;
+    auto globalSurfaceHeap = csrImmediate.getGlobalStatelessHeap();
+
+    size_t csrUsedBefore = csrStream.getUsed();
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t csrUsedAfter = csrStream.getUsed();
+
+    auto &container = commandListImmediate->getCmdContainer();
+    auto statlessMocs = getMocs(true);
+    auto ioBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
+    auto ioSize = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+
+    auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
+    auto ssSize = globalSurfaceHeap->getHeapSizeInPages();
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddress), csrState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSize, csrState.surfaceStateSize.value);
+
+    EXPECT_EQ(-1, csrState.dynamicStateBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), csrState.dynamicStateSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), csrState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, csrState.indirectObjectSize.value);
+
+    EXPECT_EQ(-1, csrState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(static_cast<size_t>(-1), csrState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), csrState.statelessMocs.value);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(sbaCmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd->getGeneralStateBufferSizeModifyEnable());
+
+    auto ioBaseAddressDecanonized = neoDevice->getGmmHelper()->decanonize(ioBaseAddress);
+    EXPECT_EQ(ioBaseAddressDecanonized, sbaCmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(ioSize, sbaCmd->getGeneralStateBufferSize());
+
+    EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+
+    result = commandListPrivateHeap->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &containerPrivateHeap = commandListPrivateHeap->getCmdContainer();
+
+    auto sshPrivateHeap = containerPrivateHeap.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssBaseAddressPrivateHeap = sshPrivateHeap->getHeapGpuBase();
+    auto ssSizePrivateHeap = sshPrivateHeap->getHeapSizeInPages();
+
+    uint64_t dsBaseAddressPrivateHeap = -1;
+    size_t dsSizePrivateHeap = static_cast<size_t>(-1);
+
+    auto dshPrivateHeap = containerPrivateHeap.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    if (!this->dshRequired) {
+        EXPECT_EQ(nullptr, dshPrivateHeap);
+    } else {
+        EXPECT_NE(nullptr, dshPrivateHeap);
+    }
+    if (dshPrivateHeap) {
+        dsBaseAddressPrivateHeap = dshPrivateHeap->getHeapGpuBase();
+        dsSizePrivateHeap = dshPrivateHeap->getHeapSizeInPages();
+    }
+
+    auto &requiredStatePrivateHeap = commandListPrivateHeap->requiredStreamState.stateBaseAddress;
+    auto &finalStatePrivateHeap = commandListPrivateHeap->finalStreamState.stateBaseAddress;
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), requiredStatePrivateHeap.statelessMocs.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), requiredStatePrivateHeap.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, requiredStatePrivateHeap.surfaceStateSize.value);
+    EXPECT_EQ(static_cast<int64_t>(dsBaseAddressPrivateHeap), requiredStatePrivateHeap.dynamicStateBaseAddress.value);
+    EXPECT_EQ(dsSizePrivateHeap, requiredStatePrivateHeap.dynamicStateSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), requiredStatePrivateHeap.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, requiredStatePrivateHeap.indirectObjectSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), requiredStatePrivateHeap.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, requiredStatePrivateHeap.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.surfaceStateBaseAddress.value, requiredStatePrivateHeap.surfaceStateBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.surfaceStateSize.value, requiredStatePrivateHeap.surfaceStateSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.dynamicStateBaseAddress.value, requiredStatePrivateHeap.dynamicStateBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.dynamicStateSize.value, requiredStatePrivateHeap.dynamicStateSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.indirectObjectBaseAddress.value, requiredStatePrivateHeap.indirectObjectBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.indirectObjectSize.value, requiredStatePrivateHeap.indirectObjectSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolBaseAddress.value, requiredStatePrivateHeap.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolSize.value, requiredStatePrivateHeap.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.globalAtomics.value, requiredStatePrivateHeap.globalAtomics.value);
+    EXPECT_EQ(finalStatePrivateHeap.statelessMocs.value, requiredStatePrivateHeap.statelessMocs.value);
+
+    result = commandListPrivateHeap->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    size_t queueBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandListPrivateHeap->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueAfter = cmdQueueStream.getUsed();
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), csrState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, csrState.surfaceStateSize.value);
+
+    if (dshPrivateHeap) {
+        EXPECT_EQ(static_cast<int64_t>(dsBaseAddressPrivateHeap), csrState.dynamicStateBaseAddress.value);
+        EXPECT_EQ(dsSizePrivateHeap, csrState.dynamicStateSize.value);
+    } else {
+        EXPECT_EQ(-1, csrState.dynamicStateBaseAddress.value);
+        EXPECT_EQ(static_cast<size_t>(-1), csrState.dynamicStateSize.value);
+    }
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), csrState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, csrState.indirectObjectSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), csrState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, csrState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), csrState.statelessMocs.value);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    if (dshPrivateHeap) {
+        EXPECT_TRUE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_TRUE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(dsBaseAddressPrivateHeap, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(dsSizePrivateHeap, sbaCmd->getDynamicStateBufferSize());
+    } else {
+        EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+    }
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddressPrivateHeap, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(sbaCmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd->getGeneralStateBufferSizeModifyEnable());
+    EXPECT_EQ(ioBaseAddressDecanonized, sbaCmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(ioSize, sbaCmd->getGeneralStateBufferSize());
+
+    EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenGlobalStatelessWhenExecutingPrivateHeapsCommandListAndImmediateCommandListThenBaseAddressPropertiesSetCorrectlyAndCommandProperlyDispatched,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    auto result = commandListPrivateHeap->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &containerPrivateHeap = commandListPrivateHeap->getCmdContainer();
+
+    auto statlessMocs = getMocs(true);
+    auto ioBaseAddress = containerPrivateHeap.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
+    auto ioSize = containerPrivateHeap.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapSizeInPages();
+
+    auto sshPrivateHeap = containerPrivateHeap.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    auto ssBaseAddressPrivateHeap = sshPrivateHeap->getHeapGpuBase();
+    auto ssSizePrivateHeap = sshPrivateHeap->getHeapSizeInPages();
+
+    uint64_t dsBaseAddressPrivateHeap = -1;
+    size_t dsSizePrivateHeap = static_cast<size_t>(-1);
+
+    auto dshPrivateHeap = containerPrivateHeap.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    if (!this->dshRequired) {
+        EXPECT_EQ(nullptr, dshPrivateHeap);
+    } else {
+        EXPECT_NE(nullptr, dshPrivateHeap);
+    }
+    if (dshPrivateHeap) {
+        dsBaseAddressPrivateHeap = dshPrivateHeap->getHeapGpuBase();
+        dsSizePrivateHeap = dshPrivateHeap->getHeapSizeInPages();
+    }
+
+    auto &requiredStatePrivateHeap = commandListPrivateHeap->requiredStreamState.stateBaseAddress;
+    auto &finalStatePrivateHeap = commandListPrivateHeap->finalStreamState.stateBaseAddress;
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), requiredStatePrivateHeap.statelessMocs.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), requiredStatePrivateHeap.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, requiredStatePrivateHeap.surfaceStateSize.value);
+    EXPECT_EQ(static_cast<int64_t>(dsBaseAddressPrivateHeap), requiredStatePrivateHeap.dynamicStateBaseAddress.value);
+    EXPECT_EQ(dsSizePrivateHeap, requiredStatePrivateHeap.dynamicStateSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), requiredStatePrivateHeap.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, requiredStatePrivateHeap.indirectObjectSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), requiredStatePrivateHeap.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, requiredStatePrivateHeap.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.surfaceStateBaseAddress.value, requiredStatePrivateHeap.surfaceStateBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.surfaceStateSize.value, requiredStatePrivateHeap.surfaceStateSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.dynamicStateBaseAddress.value, requiredStatePrivateHeap.dynamicStateBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.dynamicStateSize.value, requiredStatePrivateHeap.dynamicStateSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.indirectObjectBaseAddress.value, requiredStatePrivateHeap.indirectObjectBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.indirectObjectSize.value, requiredStatePrivateHeap.indirectObjectSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolBaseAddress.value, requiredStatePrivateHeap.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(finalStatePrivateHeap.bindingTablePoolSize.value, requiredStatePrivateHeap.bindingTablePoolSize.value);
+
+    EXPECT_EQ(finalStatePrivateHeap.globalAtomics.value, requiredStatePrivateHeap.globalAtomics.value);
+    EXPECT_EQ(finalStatePrivateHeap.statelessMocs.value, requiredStatePrivateHeap.statelessMocs.value);
+
+    result = commandListPrivateHeap->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    auto &csrState = commandQueue->getCsr()->getStreamProperties().stateBaseAddress;
+
+    size_t queueBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandListPrivateHeap->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueAfter = cmdQueueStream.getUsed();
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), csrState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, csrState.surfaceStateSize.value);
+
+    if (dshPrivateHeap) {
+        EXPECT_EQ(static_cast<int64_t>(dsBaseAddressPrivateHeap), csrState.dynamicStateBaseAddress.value);
+        EXPECT_EQ(dsSizePrivateHeap, csrState.dynamicStateSize.value);
+    } else {
+        EXPECT_EQ(-1, csrState.dynamicStateBaseAddress.value);
+        EXPECT_EQ(static_cast<size_t>(-1), csrState.dynamicStateSize.value);
+    }
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), csrState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, csrState.indirectObjectSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), csrState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, csrState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), csrState.statelessMocs.value);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    if (dshPrivateHeap) {
+        EXPECT_TRUE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_TRUE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(dsBaseAddressPrivateHeap, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(dsSizePrivateHeap, sbaCmd->getDynamicStateBufferSize());
+    } else {
+        EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+        EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+        EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+    }
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddressPrivateHeap, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(sbaCmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd->getGeneralStateBufferSizeModifyEnable());
+    auto ioBaseAddressDecanonized = neoDevice->getGmmHelper()->decanonize(ioBaseAddress);
+    EXPECT_EQ(ioBaseAddressDecanonized, sbaCmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(ioSize, sbaCmd->getGeneralStateBufferSize());
+
+    EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = csrImmediate.commandStream;
+    auto globalSurfaceHeap = csrImmediate.getGlobalStatelessHeap();
+
+    size_t csrUsedBefore = csrStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t csrUsedAfter = csrStream.getUsed();
+
+    auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
+    auto ssSize = globalSurfaceHeap->getHeapSizeInPages();
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddress), csrState.surfaceStateBaseAddress.value);
+    EXPECT_EQ(ssSize, csrState.surfaceStateSize.value);
+
+    if (dshPrivateHeap) {
+        EXPECT_EQ(static_cast<int64_t>(dsBaseAddressPrivateHeap), csrState.dynamicStateBaseAddress.value);
+        EXPECT_EQ(dsSizePrivateHeap, csrState.dynamicStateSize.value);
+    } else {
+        EXPECT_EQ(-1, csrState.dynamicStateBaseAddress.value);
+        EXPECT_EQ(static_cast<size_t>(-1), csrState.dynamicStateSize.value);
+    }
+
+    EXPECT_EQ(static_cast<int64_t>(ioBaseAddress), csrState.indirectObjectBaseAddress.value);
+    EXPECT_EQ(ioSize, csrState.indirectObjectSize.value);
+
+    EXPECT_EQ(static_cast<int64_t>(ssBaseAddressPrivateHeap), csrState.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(ssSizePrivateHeap, csrState.bindingTablePoolSize.value);
+
+    EXPECT_EQ(static_cast<int32_t>(statlessMocs), csrState.statelessMocs.value);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_FALSE(sbaCmd->getDynamicStateBaseAddressModifyEnable());
+    EXPECT_FALSE(sbaCmd->getDynamicStateBufferSizeModifyEnable());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBaseAddress());
+    EXPECT_EQ(0u, sbaCmd->getDynamicStateBufferSize());
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    EXPECT_TRUE(sbaCmd->getGeneralStateBaseAddressModifyEnable());
+    EXPECT_TRUE(sbaCmd->getGeneralStateBufferSizeModifyEnable());
+    EXPECT_EQ(ioBaseAddressDecanonized, sbaCmd->getGeneralStateBaseAddress());
+    EXPECT_EQ(ioSize, sbaCmd->getGeneralStateBufferSize());
+
+    EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+}
+
 } // namespace ult
 } // namespace L0

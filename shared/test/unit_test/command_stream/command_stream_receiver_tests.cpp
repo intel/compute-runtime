@@ -2969,20 +2969,33 @@ HWTEST_F(CommandStreamReceiverHwTest, givenCreateGlobalStatelessHeapAllocationWh
     EXPECT_EQ(commandStreamReceiver.getGlobalStatelessHeapAllocation(), heapAllocation);
 }
 
-HWTEST_F(CommandStreamReceiverHwTest, givenCreateGlobalStatelessHeapAllocationWhenFlushingTaskThenGlobalStatelessHeapAllocationIsResident) {
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenCreateGlobalStatelessHeapAllocationWhenFlushingTaskThenGlobalStatelessHeapAllocationIsResidentAndNoBindingTableCommandDispatched,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
+
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.storeMakeResidentAllocations = true;
     EXPECT_EQ(nullptr, commandStreamReceiver.getGlobalStatelessHeap());
 
     commandStreamReceiver.createGlobalStatelessHeap();
+    auto statelessHeap = commandStreamReceiver.getGlobalStatelessHeap();
+    ASSERT_NE(nullptr, statelessHeap);
 
     commandStreamReceiver.flushTask(commandStream,
                                     0,
                                     &dsh,
                                     &ioh,
-                                    &ssh,
+                                    statelessHeap,
                                     taskLevel,
                                     flushTaskFlags,
                                     *pDevice);
     EXPECT_TRUE(commandStreamReceiver.isMadeResident(commandStreamReceiver.getGlobalStatelessHeapAllocation()));
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    hwParserCsr.findHardwareCommands<FamilyType>();
+    ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
+    EXPECT_EQ(nullptr, hwParserCsr.cmdBindingTableBaseAddress);
 }

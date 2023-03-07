@@ -150,13 +150,26 @@ void CmdListStateComputeModeStateFixture::setUp() {
 }
 
 void CommandListStateBaseAddressFixture::setUp() {
-    constexpr uint32_t storeAllocations = 4;
-
     DebugManager.flags.EnableStateBaseAddressTracking.set(1);
-    DebugManager.flags.SetAmountOfReusableAllocations.set(storeAllocations);
     DebugManager.flags.ForceL1Caching.set(0);
 
     ModuleMutableCommandListFixture::setUp();
+
+    this->dshRequired = device->getDeviceInfo().imageSupport;
+    this->expectedSbaCmds = commandList->doubleSbaWa ? 2 : 1;
+}
+
+uint32_t CommandListStateBaseAddressFixture::getMocs(bool l3On) {
+    return device->getMOCS(l3On, false) >> 1;
+}
+
+void CommandListPrivateHeapsFixture::setUp() {
+    constexpr uint32_t storeAllocations = 4;
+
+    DebugManager.flags.SelectCmdListHeapAddressModel.set(static_cast<int32_t>(NEO::HeapAddressModel::PrivateHeaps));
+    DebugManager.flags.SetAmountOfReusableAllocations.set(storeAllocations);
+
+    CommandListStateBaseAddressFixture::setUp();
 
     for (uint32_t i = 0; i < storeAllocations; i++) {
         auto heapAllocation = neoDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties({device->getRootDeviceIndex(), true, 2 * MB,
@@ -175,13 +188,6 @@ void CommandListStateBaseAddressFixture::setUp() {
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.tableOffset = 64;
     kernel->surfaceStateHeapDataSize = 64;
     kernel->surfaceStateHeapData.reset(new uint8_t[128]);
-
-    this->dshRequired = device->getDeviceInfo().imageSupport;
-    this->expectedSbaCmds = commandList->doubleSbaWa ? 2 : 1;
-}
-
-uint32_t CommandListStateBaseAddressFixture::getMocs(bool l3On) {
-    return device->getMOCS(l3On, false) >> 1;
 }
 
 void CommandListGlobalHeapsFixtureInit::setUp() {

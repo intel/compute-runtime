@@ -189,17 +189,39 @@ struct CommandQueueHw : public CommandQueueImp {
                                                               const NEO::StreamProperties &cmdListRequired,
                                                               const NEO::StreamProperties &cmdListFinal);
 
-    inline size_t estimateStateBaseAddressCmdDispatchSize();
+    inline size_t estimateStateBaseAddressCmdDispatchSize(bool bindingTableBaseAddress);
     inline size_t estimateStateBaseAddressCmdSizeForMultipleCommandLists(bool &baseAddressStateDirty,
+                                                                         CommandList *commandList,
                                                                          NEO::StreamProperties &csrStateCopy,
                                                                          const NEO::StreamProperties &cmdListRequired,
                                                                          const NEO::StreamProperties &cmdListFinal);
+    inline size_t estimateStateBaseAddressCmdSizeForGlobalStatelessCommandList(bool &baseAddressStateDirty,
+                                                                               NEO::StreamProperties &csrStateCopy,
+                                                                               const NEO::StreamProperties &cmdListRequired,
+                                                                               const NEO::StreamProperties &cmdListFinal);
+    inline size_t estimateStateBaseAddressCmdSizeForPrivateHeapCommandList(bool &baseAddressStateDirty,
+                                                                           NEO::StreamProperties &csrStateCopy,
+                                                                           const NEO::StreamProperties &cmdListRequired,
+                                                                           const NEO::StreamProperties &cmdListFinal);
+
     inline void programRequiredStateBaseAddressForCommandList(CommandListExecutionContext &ctx,
                                                               NEO::LinearStream &commandStream,
                                                               CommandList *commandList,
                                                               NEO::StreamProperties &csrState,
                                                               const NEO::StreamProperties &cmdListRequired,
                                                               const NEO::StreamProperties &cmdListFinal);
+    inline void programRequiredStateBaseAddressForGlobalStatelessCommandList(CommandListExecutionContext &ctx,
+                                                                             NEO::LinearStream &commandStream,
+                                                                             CommandList *commandList,
+                                                                             NEO::StreamProperties &csrState,
+                                                                             const NEO::StreamProperties &cmdListRequired,
+                                                                             const NEO::StreamProperties &cmdListFinal);
+    inline void programRequiredStateBaseAddressForPrivateHeapCommandList(CommandListExecutionContext &ctx,
+                                                                         NEO::LinearStream &commandStream,
+                                                                         CommandList *commandList,
+                                                                         NEO::StreamProperties &csrState,
+                                                                         const NEO::StreamProperties &cmdListRequired,
+                                                                         const NEO::StreamProperties &cmdListFinal);
     inline void updateBaseAddressState(CommandList *lastCommandList);
 
     size_t alignedChildStreamPadding{};

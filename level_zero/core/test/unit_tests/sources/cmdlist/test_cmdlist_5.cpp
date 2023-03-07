@@ -1059,9 +1059,9 @@ HWTEST2_F(CommandListCreate, givenAllValuesTbxAndSyncModeFlagsWhenCheckingWaitli
     EXPECT_TRUE(cmdList.eventWaitlistSyncRequired());
 }
 
-using CommandListStateBaseAddressTest = Test<CommandListStateBaseAddressFixture>;
+using CommandListStateBaseAddressPrivateHeapTest = Test<CommandListPrivateHeapsFixture>;
 
-HWTEST2_F(CommandListStateBaseAddressTest,
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendKernelAndExecuteThenBaseAddressStateIsStoredInCsr,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -1228,7 +1228,7 @@ HWTEST2_F(CommandListStateBaseAddressTest,
     ASSERT_EQ(0u, sbaCmds.size());
 }
 
-HWTEST2_F(CommandListStateBaseAddressTest,
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendKernelChangesHeapsAndExecuteThenFinalBaseAddressStateIsStoredInCsr,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -1420,7 +1420,7 @@ HWTEST2_F(CommandListStateBaseAddressTest,
     EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
-HWTEST2_F(CommandListStateBaseAddressTest,
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenImmediateCmdListAppendKernelChangesHeapsAndExecuteThenFinalBaseAddressStateIsStoredInCsr,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -1577,7 +1577,7 @@ HWTEST2_F(CommandListStateBaseAddressTest,
     EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
 }
 
-HWTEST2_F(CommandListStateBaseAddressTest,
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendKernelAndExecuteAndImmediateCmdListAppendKernelSharingCsrThenBaseAddressStateIsUpdatedInCsr,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -1788,7 +1788,7 @@ HWTEST2_F(CommandListStateBaseAddressTest,
     EXPECT_EQ(ssBaseAddressImmediate, sbaCmd->getSurfaceStateBaseAddress());
 }
 
-HWTEST2_F(CommandListStateBaseAddressTest,
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenImmediateCmdListAppendKernelAndRegularCmdListAppendKernelAndExecuteSharingCsrThenBaseAddressStateIsUpdatedInCsr,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -1986,7 +1986,7 @@ HWTEST2_F(CommandListStateBaseAddressTest,
     EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
-HWTEST2_F(CommandListStateBaseAddressTest,
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendUncachedKernelFirstAndExecuteAndImmediateCmdListAppendUncachedKerneThenMocsStateIsUpdatedInCsr,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -2067,7 +2067,7 @@ HWTEST2_F(CommandListStateBaseAddressTest,
     ASSERT_EQ(0u, sbaList.size());
 }
 
-HWTEST2_F(CommandListStateBaseAddressTest,
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenRegularCmdListAppendCachedKernelFirstAndExecuteAndImmediateCmdListAppendUncachedKerneThenMocsStateIsUpdatedInCsr,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -2141,7 +2141,7 @@ HWTEST2_F(CommandListStateBaseAddressTest,
     EXPECT_EQ((uncachedStatlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
-HWTEST2_F(CommandListStateBaseAddressTest,
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenImmediateCmdListAppendUncachedKerneAndRegularCmdListAppendCachedKernelAndExecuteThenMocsStateIsUpdatedInCsr,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -2215,7 +2215,7 @@ HWTEST2_F(CommandListStateBaseAddressTest,
     EXPECT_EQ((cachedStatlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
-HWTEST2_F(CommandListStateBaseAddressTest,
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenStateBaseAddressTrackingWhenImmediateCmdListAppendCachedKerneAndRegularCmdListAppendUncachedKernelAndExecuteThenMocsStateIsUpdatedInCsr,
           IsAtLeastSkl) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
@@ -2289,7 +2289,7 @@ HWTEST2_F(CommandListStateBaseAddressTest,
     EXPECT_EQ((uncachedStatlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
 }
 
-HWTEST2_F(CommandListStateBaseAddressTest,
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
           givenSbaPropertiesWhenBindingBaseAddressSetThenExpectPropertiesDataDispatched, IsAtLeastXeHpCore) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
