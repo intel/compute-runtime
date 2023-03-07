@@ -23,6 +23,7 @@
 #include "shared/test/common/mocks/mock_cpu_page_fault_manager.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "opencl/source/api/api.h"
@@ -2402,6 +2403,42 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelHasDebugDataThenCorre
     EXPECT_EQ(debugDataPtr, dummyDebugData);
     EXPECT_EQ(debugDataSize, dummyDebugDataSize);
     pDevice->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.kernelAllocation);
+}
+
+TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenInstrumentedBinaryIsZebinThenReturnDebugZebinOnCallback) {
+    static void *debugDataPtr = nullptr;
+    static size_t debugDataSize = 0;
+    gtpinCallbacks.onContextCreate = onContextCreate;
+    gtpinCallbacks.onContextDestroy = onContextDestroy;
+    gtpinCallbacks.onKernelCreate = [](context_handle_t context, const instrument_params_in_t *paramsIn, instrument_params_out_t *paramsOut) {
+        debugDataPtr = const_cast<void *>(paramsIn->debug_data);
+        debugDataSize = paramsIn->debug_data_size;
+    };
+    gtpinCallbacks.onKernelSubmit = [](command_buffer_handle_t cb, uint64_t kernelId, uint32_t *entryOffset, resource_handle_t *resource) {};
+    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
+    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
+    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
+
+    MockKernelWithInternals mockKernel(*pDevice);
+    ASSERT_EQ(nullptr, mockKernel.kernelInfo.debugData.vIsa);
+    ASSERT_EQ(0u, mockKernel.kernelInfo.debugData.vIsaSize);
+
+    ZebinTestData::ValidEmptyProgram zebin;
+    std::unique_ptr<char[]> src = makeCopy(zebin.storage.data(), zebin.storage.size());
+    mockKernel.kernelInfo.kernelDescriptor.kernelMetadata.kernelName = zebin.kernelName;
+    mockKernel.mockProgram->replaceDeviceBinary(std::move(src), zebin.storage.size(), rootDeviceIndex);
+
+    mockKernel.kernelInfo.createKernelAllocation(pDevice->getDevice(), false);
+    auto &buildInfo = mockKernel.mockProgram->buildInfos[pDevice->getRootDeviceIndex()];
+    buildInfo.kernelInfoArray.push_back(&mockKernel.kernelInfo);
+    mockKernel.mockProgram->createDebugZebin(pDevice->getRootDeviceIndex());
+
+    gtpinNotifyKernelCreate(static_cast<cl_kernel>(mockKernel.mockKernel->getMultiDeviceKernel()));
+    EXPECT_EQ(buildInfo.debugData.get(), debugDataPtr);
+    EXPECT_EQ(buildInfo.debugDataSize, debugDataSize);
+
+    pDevice->getMemoryManager()->freeGraphicsMemory(mockKernel.kernelInfo.kernelAllocation);
+    mockKernel.mockProgram->buildInfos[pDevice->getRootDeviceIndex()].kernelInfoArray.clear();
 }
 
 HWTEST_F(GTPinTests, givenGtPinInitializedWhenSubmittingKernelCommandThenFlushedTaskCountIsNotified) {

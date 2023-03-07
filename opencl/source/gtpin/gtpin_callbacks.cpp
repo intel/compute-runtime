@@ -21,6 +21,7 @@
 #include "opencl/source/kernel/kernel.h"
 #include "opencl/source/kernel/multi_device_kernel.h"
 #include "opencl/source/mem_obj/buffer.h"
+#include "opencl/source/program/program.h"
 
 #include "CL/cl.h"
 #include "ocl_igc_shared/gtpin/gtpin_ocl_interface.h"
@@ -100,8 +101,10 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
             paramsIn.debug_data = kernelInfo.debugData.vIsa;
             paramsIn.debug_data_size = static_cast<uint32_t>(kernelInfo.debugData.vIsaSize);
         } else {
-            paramsIn.debug_data = nullptr;
-            paramsIn.debug_data_size = 0;
+            const auto rootDeviceIndex = pMultiDeviceKernel->getDevices()[0]->getRootDeviceIndex();
+            const auto &debugDataPerProgram = pMultiDeviceKernel->getProgram()->getDebugData(rootDeviceIndex);
+            paramsIn.debug_data = debugDataPerProgram;
+            paramsIn.debug_data_size = static_cast<uint32_t>(pMultiDeviceKernel->getProgram()->getDebugDataSize(rootDeviceIndex));
         }
         instrument_params_out_t paramsOut = {0};
         (*GTPinCallbacks.onKernelCreate)((context_handle_t)(cl_context)context, &paramsIn, &paramsOut);
