@@ -530,12 +530,9 @@ MemoryAllocation *OsAgnosticMemoryManager::createMemoryAllocation(AllocationType
     return memoryAllocation;
 }
 
-AddressRange OsAgnosticMemoryManager::reserveGpuAddress(const void *requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
+AddressRange OsAgnosticMemoryManager::reserveGpuAddress(const uint64_t requiredStartAddress, size_t size, RootDeviceIndicesContainer rootDeviceIndices, uint32_t *reservedOnRootDeviceIndex) {
     uint64_t gpuVa = 0u;
     *reservedOnRootDeviceIndex = 0;
-    if (requiredStartAddress) {
-        return AddressRange{0, 0};
-    }
     for (auto rootDeviceIndex : rootDeviceIndices) {
         auto gfxPartition = getGfxPartition(rootDeviceIndex);
         auto gmmHelper = getGmmHelper(rootDeviceIndex);
