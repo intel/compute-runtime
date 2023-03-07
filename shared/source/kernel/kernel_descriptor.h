@@ -54,9 +54,9 @@ struct KernelDescriptor {
         uint16_t numArgsToPatch = 0U;
         uint16_t numGrfRequired = GrfConfig::DefaultGrfNumber;
         uint8_t barrierCount = 0u;
-        bool hasNonKernelArgLoad = true;
-        bool hasNonKernelArgStore = true;
-        bool hasNonKernelArgAtomic = true;
+        bool hasNonKernelArgLoad = false;
+        bool hasNonKernelArgStore = false;
+        bool hasNonKernelArgAtomic = false;
         bool hasIndirectStatelessAccess = false;
 
         AddressingMode bufferAddressingMode = BindfulAndStateless;

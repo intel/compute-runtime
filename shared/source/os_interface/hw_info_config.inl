@@ -57,6 +57,12 @@ bool ProductHelperHw<gfxProduct>::isTlbFlushRequired() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor) const {
+    constexpr bool enabled = false;
+    return enabled;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::enableBlitterOperationsSupport(HardwareInfo *hwInfo) const {
     hwInfo->capabilityTable.blitterOperationsSupported = obtainBlitterPreference(*hwInfo);
 

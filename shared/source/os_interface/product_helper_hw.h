@@ -122,6 +122,7 @@ class ProductHelperHw : public ProductHelper {
     uint64_t overridePatIndex(AllocationType allocationType, uint64_t patIndex) const override;
     bool isTlbFlushRequired() const override;
     bool isDummyBlitWaRequired() const override;
+    bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor) const override;
     bool getFrontEndPropertyScratchSizeSupport() const override;
     bool getFrontEndPropertyPrivateScratchSizeSupport() const override;
     bool getFrontEndPropertyComputeDispatchAllWalkerSupport() const override;

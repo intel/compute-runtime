@@ -148,13 +148,13 @@ void Kernel::patchWithImplicitSurface(uint64_t ptrToPatchInCrossThreadData, Grap
 }
 
 cl_int Kernel::initialize() {
-    this->kernelHasIndirectAccess = false;
     auto pClDevice = &getDevice();
     auto rootDeviceIndex = pClDevice->getRootDeviceIndex();
     reconfigureKernel();
     auto &hwInfo = pClDevice->getHardwareInfo();
     auto &rootDeviceEnvironment = pClDevice->getRootDeviceEnvironment();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &kernelDescriptor = kernelInfo.kernelDescriptor;
     const auto &implicitArgs = kernelDescriptor.payloadMappings.implicitArgs;
     const auto &explicitArgs = kernelDescriptor.payloadMappings.explicitArgs;
@@ -281,11 +281,19 @@ cl_int Kernel::initialize() {
     slmSizes.resize(numArgs);
 
     this->setInlineSamplers();
-
-    this->kernelHasIndirectAccess |= kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
-                                     kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
-                                     kernelInfo.kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic;
-
+    bool detectIndirectAccessInKernel = productHelper.isDetectIndirectAccessInKernelSupported(kernelDescriptor);
+    if (DebugManager.flags.DetectIndirectAccessInKernel.get() != -1) {
+        detectIndirectAccessInKernel = DebugManager.flags.DetectIndirectAccessInKernel.get() == 1;
+    }
+    if (detectIndirectAccessInKernel) {
+        this->kernelHasIndirectAccess = kernelDescriptor.kernelAttributes.hasNonKernelArgLoad ||
+                                        kernelDescriptor.kernelAttributes.hasNonKernelArgStore ||
+                                        kernelDescriptor.kernelAttributes.hasNonKernelArgAtomic ||
+                                        kernelDescriptor.kernelAttributes.hasIndirectStatelessAccess ||
+                                        NEO::KernelHelper::isAnyArgumentPtrByValue(kernelDescriptor);
+    } else {
+        this->kernelHasIndirectAccess = true;
+    }
     provideInitializationHints();
     // resolve the new kernel info to account for kernel handlers
     // I think by this time we have decoded the binary and know the number of args etc.
@@ -1311,7 +1319,7 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
         }
     }
 
-    if (unifiedMemoryControls.indirectSharedAllocationsAllowed && pageFaultManager) {
+    if (getHasIndirectAccess() && unifiedMemoryControls.indirectSharedAllocationsAllowed && pageFaultManager) {
         pageFaultManager->moveAllocationsWithinUMAllocsManagerToGpuDomain(this->getContext().getSVMAllocsManager());
     }
     makeArgsResident(commandStreamReceiver);
@@ -1323,9 +1331,9 @@ void Kernel::makeResident(CommandStreamReceiver &commandStreamReceiver) {
 
     gtpinNotifyMakeResident(this, &commandStreamReceiver);
 
-    if (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
-        unifiedMemoryControls.indirectHostAllocationsAllowed ||
-        unifiedMemoryControls.indirectSharedAllocationsAllowed) {
+    if (getHasIndirectAccess() && (unifiedMemoryControls.indirectDeviceAllocationsAllowed ||
+                                   unifiedMemoryControls.indirectHostAllocationsAllowed ||
+                                   unifiedMemoryControls.indirectSharedAllocationsAllowed)) {
         this->getContext().getSVMAllocsManager()->makeInternalAllocationsResident(commandStreamReceiver, unifiedMemoryControls.generateMask());
     }
 }

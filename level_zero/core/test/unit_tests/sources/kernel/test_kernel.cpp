@@ -1214,9 +1214,10 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenCrossThreadDataIsPatche
 
 using KernelIndirectPropertiesFromIGCTests = KernelImmutableDataTests;
 
-TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithNoKernelLoadAndNoStoreAndNoAtomicThenHasIndirectAccessIsSetToFalse) {
+TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEnabledWhenInitializingKernelWithNoKernelLoadAndNoStoreAndNoAtomicAndNoHasIndirectStatelessAccessThenHasIndirectAccessIsSetToFalse) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DisableIndirectAccess.set(0);
+    NEO::DebugManager.flags.DetectIndirectAccessInKernel.set(1);
 
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
     bool isInternal = false;
@@ -1235,15 +1236,53 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithNoKernelL
     module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
     module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
     module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
+    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
 
     kernel->initialize(&desc);
 
     EXPECT_FALSE(kernel->hasIndirectAccess());
 }
 
-TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithKernelLoadStoreAtomicThenHasIndirectAccessIsSetToTrue) {
+TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEnabledAndPtrPassedByValueWhenInitializingKernelWithNoKernelLoadAndNoStoreAndNoAtomicAndNoHasIndirectStatelessAccessThenHasIndirectAccessIsSetToTrue) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DisableIndirectAccess.set(0);
+    NEO::DebugManager.flags.DetectIndirectAccessInKernel.set(1);
+
+    uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
+    bool isInternal = false;
+
+    std::unique_ptr<MockImmutableData> mockKernelImmData =
+        std::make_unique<MockImmutableData>(perHwThreadPrivateMemorySizeRequested);
+    mockKernelImmData->mockKernelDescriptor->kernelAttributes.binaryFormat = NEO::DeviceBinaryFormat::Zebin;
+    auto ptrByValueArg = ArgDescriptor(ArgDescriptor::ArgTValue);
+    ArgDescValue::Element element{};
+    element.isPtr = true;
+    ptrByValueArg.as<ArgDescValue>().elements.push_back(element);
+    mockKernelImmData->mockKernelDescriptor->payloadMappings.explicitArgs.push_back(ptrByValueArg);
+    EXPECT_EQ(mockKernelImmData->mockKernelDescriptor->payloadMappings.explicitArgs.size(), 1u);
+
+    createModuleFromMockBinary(perHwThreadPrivateMemorySizeRequested, isInternal, mockKernelImmData.get());
+
+    std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+    ze_kernel_desc_t desc = {};
+    desc.pKernelName = kernelName.c_str();
+
+    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
+    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
+    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
+    module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
+
+    kernel->initialize(&desc);
+
+    EXPECT_TRUE(kernel->hasIndirectAccess());
+}
+
+TEST_F(KernelIndirectPropertiesFromIGCTests, givenDetectIndirectAccessInKernelEnabledWhenInitializingKernelWithKernelLoadStoreAtomicThenHasIndirectAccessIsSetToTrue) {
+    DebugManagerStateRestore restorer;
+    NEO::DebugManager.flags.DisableIndirectAccess.set(0);
+    NEO::DebugManager.flags.DetectIndirectAccessInKernel.set(1);
 
     uint32_t perHwThreadPrivateMemorySizeRequested = 32u;
     bool isInternal = false;
@@ -1263,6 +1302,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithKernelLoa
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
 
         kernel->initialize(&desc);
 
@@ -1279,6 +1319,7 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithKernelLoa
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = true;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
 
         kernel->initialize(&desc);
 
@@ -1295,6 +1336,24 @@ TEST_F(KernelIndirectPropertiesFromIGCTests, whenInitializingKernelWithKernelLoa
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
         module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = true;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = false;
+
+        kernel->initialize(&desc);
+
+        EXPECT_TRUE(kernel->hasIndirectAccess());
+    }
+
+    {
+        std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+        kernel = std::make_unique<ModuleImmutableDataFixture::MockKernel>(module.get());
+
+        ze_kernel_desc_t desc = {};
+        desc.pKernelName = kernelName.c_str();
+
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgLoad = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgStore = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasNonKernelArgAtomic = false;
+        module->mockKernelImmData->mockKernelDescriptor->kernelAttributes.hasIndirectStatelessAccess = true;
 
         kernel->initialize(&desc);
 
@@ -1619,7 +1678,7 @@ TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThat
     EXPECT_TRUE(unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
-TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatDoesNotHaveIndirectAccessThenIndirectAccessIsNotSet) {
+TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThatDoesNotHaveIndirectAccessThenIndirectAccessIsSet) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.DisableIndirectAccess.set(0);
     kernel->kernelHasIndirectAccess = false;
@@ -1636,9 +1695,9 @@ TEST_F(KernelIndirectPropertiesTests, whenCallingSetIndirectAccessWithKernelThat
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
 
     unifiedMemoryControls = kernel->getUnifiedMemoryControls();
-    EXPECT_FALSE(unifiedMemoryControls.indirectDeviceAllocationsAllowed);
-    EXPECT_FALSE(unifiedMemoryControls.indirectHostAllocationsAllowed);
-    EXPECT_FALSE(unifiedMemoryControls.indirectSharedAllocationsAllowed);
+    EXPECT_TRUE(unifiedMemoryControls.indirectDeviceAllocationsAllowed);
+    EXPECT_TRUE(unifiedMemoryControls.indirectHostAllocationsAllowed);
+    EXPECT_TRUE(unifiedMemoryControls.indirectSharedAllocationsAllowed);
 }
 
 TEST_F(KernelPropertiesTests, givenValidKernelIndirectAccessFlagsSetThenExpectKernelIndirectAllocationsAllowedTrue) {

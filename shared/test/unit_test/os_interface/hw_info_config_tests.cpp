@@ -10,6 +10,7 @@
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
+#include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/fixtures/device_fixture.h"
@@ -686,4 +687,14 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsUnlockingLockedPtrNe
 
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckDummyBlitWaRequiredThenReturnFalse) {
     EXPECT_FALSE(productHelper->isDummyBlitWaRequired());
+}
+
+HWTEST_F(ProductHelperTest, givenProductHelperAndKernelBinaryFormatsWhenCheckingIsDetectIndirectAccessInKernelSupportedThenCorrectValueIsReturned) {
+    KernelDescriptor kernelDescriptor;
+
+    kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Patchtokens;
+    EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor));
+
+    kernelDescriptor.kernelAttributes.binaryFormat = DeviceBinaryFormat::Zebin;
+    EXPECT_FALSE(productHelper->isDetectIndirectAccessInKernelSupported(kernelDescriptor));
 }
