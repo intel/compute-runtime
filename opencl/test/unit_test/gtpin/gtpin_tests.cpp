@@ -1038,301 +1038,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelINTELIsExecutedThenGT
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenKernelCreateCallbacksIsNotCalled) {
-    gtpinCallbacks.onContextCreate = onContextCreate;
-    gtpinCallbacks.onContextDestroy = onContextDestroy;
-    gtpinCallbacks.onKernelCreate = onKernelCreate;
-    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
-    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-
-    cl_device_id device = (cl_device_id)pDevice;
-    cl_context context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, context);
-    auto pContext = castToObject<Context>(context);
-    auto rootDeviceIndex = pDevice->getRootDeviceIndex();
-
-    char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
-    size_t binSize = 10;
-    MockProgram *pProgram = Program::createBuiltInFromGenBinary<MockProgram>(pContext, pContext->getDevices(), &binary[0], binSize, &retVal);
-    ASSERT_NE(nullptr, pProgram);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    PatchTokensTestData::ValidProgramWithKernel programTokens;
-
-    pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(reinterpret_cast<char *>(programTokens.storage.data()), programTokens.storage.size());
-    pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = programTokens.storage.size();
-    retVal = pProgram->processGenBinary(*pContext->getDevice(0));
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    int prevCount = KernelCreateCallbackCount;
-    cl_kernel kernel = clCreateKernel(pProgram, std::string(programTokens.kernels[0].name.begin(), programTokens.kernels[0].name.size()).c_str(), &retVal);
-    EXPECT_NE(nullptr, kernel);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount, KernelCreateCallbackCount);
-
-    retVal = clReleaseKernel(kernel);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseProgram(pProgram);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseContext(context);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-}
-
-TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelWithoutSSHIsUsedThenGTPinSubmitKernelCallbackIsNotCalled) {
-
-    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-    if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
-        GTEST_SKIP();
-    }
-
-    gtpinCallbacks.onContextCreate = onContextCreate;
-    gtpinCallbacks.onContextDestroy = onContextDestroy;
-    gtpinCallbacks.onKernelCreate = onKernelCreate;
-    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
-    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-
-    cl_kernel kernel = nullptr;
-    cl_program pProgram = nullptr;
-    cl_device_id device = (cl_device_id)pDevice;
-    size_t sourceSize = 0;
-    std::string testFile;
-    cl_command_queue cmdQ = nullptr;
-    cl_queue_properties properties = 0;
-    cl_context context = nullptr;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
-
-    context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, context);
-
-    cmdQ = clCreateCommandQueue(context, device, properties, &retVal);
-    ASSERT_NE(nullptr, cmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    const char *sources[1] = {pSource.get()};
-    pProgram = clCreateProgramWithSource(
-        context,
-        1,
-        sources,
-        &sourceSize,
-        &retVal);
-    ASSERT_NE(nullptr, pProgram);
-
-    retVal = clBuildProgram(
-        pProgram,
-        1,
-        &device,
-        nullptr,
-        nullptr,
-        nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    int prevCount1 = KernelCreateCallbackCount;
-    kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
-    EXPECT_NE(nullptr, kernel);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
-
-    MultiDeviceKernel *pMultiDeviceKernel = static_cast<MultiDeviceKernel *>(kernel);
-    Kernel *pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
-    const KernelInfo &kInfo = pKernel->getKernelInfo();
-    uint64_t gtpinKernelId = pKernel->getKernelId();
-    EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
-
-    constexpr size_t n = 256;
-    auto buff0 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
-    auto buff1 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
-
-    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &buff0);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pMultiDeviceKernel, 1, sizeof(cl_mem), &buff1);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    // Verify that when SSH is removed then during kernel execution
-    // GT-Pin Kernel Submit, Command Buffer Create and Command Buffer Complete callbacks are not called.
-    pKernel->resizeSurfaceStateHeap(nullptr, 0, 0, 0);
-
-    int prevCount2 = KernelSubmitCallbackCount;
-    int prevCount3 = CommandBufferCreateCallbackCount;
-    int prevCount4 = CommandBufferCompleteCallbackCount;
-    cl_uint workDim = 1;
-    size_t globalWorkOffset[3] = {0, 0, 0};
-    size_t globalWorkSize[3] = {n, 1, 1};
-    size_t localWorkSize[3] = {1, 1, 1};
-    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 0, nullptr, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount2, KernelSubmitCallbackCount);
-    EXPECT_EQ(prevCount3, CommandBufferCreateCallbackCount);
-
-    retVal = clFinish(cmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount4, CommandBufferCompleteCallbackCount);
-
-    // Cleanup
-    retVal = clReleaseKernel(kernel);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseProgram(pProgram);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    pSource.reset();
-
-    retVal = clReleaseMemObject(buff0);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clReleaseMemObject(buff1);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseCommandQueue(cmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseContext(context);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-}
-
-TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenBlockedKernelWithoutSSHIsUsedThenGTPinSubmitKernelCallbackIsNotCalled) {
-
-    const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
-    if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
-        GTEST_SKIP();
-    }
-
-    gtpinCallbacks.onContextCreate = onContextCreate;
-    gtpinCallbacks.onContextDestroy = onContextDestroy;
-    gtpinCallbacks.onKernelCreate = onKernelCreate;
-    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
-    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-
-    cl_kernel kernel = nullptr;
-    cl_program pProgram = nullptr;
-    cl_device_id device = (cl_device_id)pDevice;
-    size_t sourceSize = 0;
-    std::string testFile;
-    cl_command_queue cmdQ = nullptr;
-    cl_queue_properties properties = 0;
-    cl_context context = nullptr;
-
-    KernelBinaryHelper kbHelper("CopyBuffer_simd16", false);
-    testFile.append(clFiles);
-    testFile.append("CopyBuffer_simd16.cl");
-    auto pSource = loadDataFromFile(testFile.c_str(), sourceSize);
-    EXPECT_NE(0u, sourceSize);
-    EXPECT_NE(nullptr, pSource);
-
-    context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, context);
-
-    cmdQ = clCreateCommandQueue(context, device, properties, &retVal);
-    ASSERT_NE(nullptr, cmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    const char *sources[1] = {pSource.get()};
-    pProgram = clCreateProgramWithSource(
-        context,
-        1,
-        sources,
-        &sourceSize,
-        &retVal);
-    ASSERT_NE(nullptr, pProgram);
-
-    retVal = clBuildProgram(
-        pProgram,
-        1,
-        &device,
-        nullptr,
-        nullptr,
-        nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    int prevCount1 = KernelCreateCallbackCount;
-    kernel = clCreateKernel(pProgram, "CopyBuffer", &retVal);
-    EXPECT_NE(nullptr, kernel);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount1 + 1, KernelCreateCallbackCount);
-
-    MultiDeviceKernel *pMultiDeviceKernel = static_cast<MultiDeviceKernel *>(kernel);
-    Kernel *pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
-    const KernelInfo &kInfo = pKernel->getKernelInfo();
-    uint64_t gtpinKernelId = pKernel->getKernelId();
-    EXPECT_EQ(kInfo.shaderHashCode, gtpinKernelId);
-
-    constexpr size_t n = 256;
-    auto buff0 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
-    auto buff1 = clCreateBuffer(context, 0, n * sizeof(unsigned int), nullptr, nullptr);
-
-    retVal = clSetKernelArg(pMultiDeviceKernel, 0, sizeof(cl_mem), &buff0);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clSetKernelArg(pMultiDeviceKernel, 1, sizeof(cl_mem), &buff1);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    // Verify that when SSH is removed then during kernel execution
-    // GT-Pin Kernel Submit, Command Buffer Create and Command Buffer Complete callbacks are not called.
-    pKernel->resizeSurfaceStateHeap(nullptr, 0, 0, 0);
-
-    cl_event userEvent = clCreateUserEvent(context, &retVal);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    int prevCount2 = KernelSubmitCallbackCount;
-    int prevCount3 = CommandBufferCreateCallbackCount;
-    int prevCount4 = CommandBufferCompleteCallbackCount;
-    cl_uint workDim = 1;
-    size_t globalWorkOffset[3] = {0, 0, 0};
-    size_t globalWorkSize[3] = {n, 1, 1};
-    size_t localWorkSize[3] = {1, 1, 1};
-    retVal = clEnqueueNDRangeKernel(cmdQ, pMultiDeviceKernel, workDim, globalWorkOffset, globalWorkSize, localWorkSize, 1, &userEvent, nullptr);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount2, KernelSubmitCallbackCount);
-    EXPECT_EQ(prevCount3, CommandBufferCreateCallbackCount);
-
-    retVal = clSetUserEventStatus(userEvent, CL_COMPLETE);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clFinish(cmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_EQ(prevCount4, CommandBufferCompleteCallbackCount);
-
-    // Cleanup
-    retVal = clReleaseKernel(kernel);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseProgram(pProgram);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    pSource.reset();
-
-    retVal = clReleaseMemObject(buff0);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    retVal = clReleaseMemObject(buff1);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseEvent(userEvent);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseCommandQueue(cmdQ);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-
-    retVal = clReleaseContext(context);
-    EXPECT_EQ(CL_SUCCESS, retVal);
-}
-
 TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenTheSameKerneIsExecutedTwiceThenGTPinCreateKernelCallbackIsCalledOnce) {
 
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
@@ -2015,75 +1720,6 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenOneKernelIsSubmittedSeveral
     EXPECT_EQ(CL_SUCCESS, retVal);
 }
 
-TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenLowMemoryConditionOccursThenKernelCreationFails) {
-
-    InjectedFunction allocBufferFunc = [this](size_t failureIndex) {
-        cl_device_id device = (cl_device_id)pDevice;
-        cl_context context = clCreateContext(nullptr, 1, &device, nullptr, nullptr, &retVal);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-        EXPECT_NE(nullptr, context);
-        auto pContext = castToObject<Context>(context);
-
-        char binary[1024] = {1, 2, 3, 4, 5, 6, 7, 8, 9, '\0'};
-        size_t binSize = 10;
-        MockProgram *pProgram = Program::createBuiltInFromGenBinary<MockProgram>(pContext, pContext->getDevices(), &binary[0], binSize, &retVal);
-        ASSERT_NE(nullptr, pProgram);
-        EXPECT_EQ(CL_SUCCESS, retVal);
-
-        PatchTokensTestData::ValidProgramWithKernel programTokens;
-
-        auto rootDeviceIndex = pDevice->getRootDeviceIndex();
-
-        pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinary = makeCopy(programTokens.storage.data(), programTokens.storage.size());
-        pProgram->buildInfos[rootDeviceIndex].unpackedDeviceBinarySize = programTokens.storage.size();
-        retVal = pProgram->processGenBinary(*pDevice);
-        if (retVal == CL_OUT_OF_HOST_MEMORY) {
-            auto nonFailingAlloc = MemoryManagement::nonfailingAllocation;
-            EXPECT_NE(nonFailingAlloc, failureIndex);
-        } else {
-            EXPECT_EQ(CL_SUCCESS, retVal);
-            // Create kernels from program
-            cl_kernel kernels[2] = {0};
-            cl_uint numCreatedKernels = 0;
-
-            if (MemoryManagement::nonfailingAllocation != failureIndex) {
-                memoryManager->failAllAllocationsInDevicePool = true;
-            }
-            retVal = clCreateKernelsInProgram(pProgram, 2, kernels, &numCreatedKernels);
-
-            if (MemoryManagement::nonfailingAllocation != failureIndex) {
-                if (retVal != CL_SUCCESS) {
-                    EXPECT_EQ(nullptr, kernels[0]);
-                    EXPECT_EQ(1u, numCreatedKernels);
-                }
-                clReleaseKernel(kernels[0]);
-            } else {
-                EXPECT_NE(nullptr, kernels[0]);
-                EXPECT_EQ(1u, numCreatedKernels);
-                clReleaseKernel(kernels[0]);
-            }
-        }
-
-        clReleaseProgram(pProgram);
-        clReleaseContext(context);
-    };
-
-    gtpinCallbacks.onContextCreate = onContextCreate;
-    gtpinCallbacks.onContextDestroy = onContextDestroy;
-    gtpinCallbacks.onKernelCreate = onKernelCreate;
-    gtpinCallbacks.onKernelSubmit = onKernelSubmit;
-    gtpinCallbacks.onCommandBufferCreate = onCommandBufferCreate;
-    gtpinCallbacks.onCommandBufferComplete = onCommandBufferComplete;
-    retFromGtPin = GTPin_Init(&gtpinCallbacks, &driverServices, nullptr);
-    EXPECT_EQ(GTPIN_DI_SUCCESS, retFromGtPin);
-    ASSERT_EQ(&NEO::gtpinCreateBuffer, driverServices.bufferAllocate);
-    ASSERT_EQ(&NEO::gtpinFreeBuffer, driverServices.bufferDeallocate);
-    EXPECT_EQ(&NEO::gtpinMapBuffer, driverServices.bufferMap);
-    EXPECT_EQ(&NEO::gtpinUnmapBuffer, driverServices.bufferUnMap);
-
-    injectFailures(allocBufferFunc);
-}
-
 TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     const auto &compilerProductHelper = pDevice->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
     if (compilerProductHelper.isForceToStatelessRequired() || !compilerProductHelper.isStatelessToStatefulBufferOffsetSupported()) {
@@ -2146,8 +1782,7 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
     EXPECT_NE(nullptr, pSS1);
 
     // Enlarge SSH by one SURFACE STATE element
-    bool surfaceAdded = gtpinHelper.addSurfaceState(pKernel);
-    EXPECT_TRUE(surfaceAdded);
+    gtpinHelper.addSurfaceState(pKernel);
 
     size_t numBTS2 = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(numBTS1 + 1, numBTS2);
@@ -2164,10 +1799,6 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
 
     // Remove kernel's SSH
     pKernel->resizeSurfaceStateHeap(nullptr, 0, 0, 0);
-
-    // Try to enlarge SSH once again, this time the operation must fail
-    surfaceAdded = gtpinHelper.addSurfaceState(pKernel);
-    EXPECT_FALSE(surfaceAdded);
 
     size_t numBTS3 = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(0u, numBTS3);
@@ -2187,6 +1818,28 @@ TEST_F(GTPinTests, givenKernelWithSSHThenVerifyThatSSHResizeWorksWell) {
 
     retVal = clReleaseContext(context);
     EXPECT_EQ(CL_SUCCESS, retVal);
+}
+
+TEST_F(GTPinTests, givenKernelWithoutAllocatedSSHThenGTPinStillCanAllocateNewSSHAndProperlyAddNewSurfaceState) {
+    auto kernelInfo = std::make_unique<MockKernelInfo>();
+    ASSERT_EQ(nullptr, kernelInfo->heapInfo.pSsh);
+    ASSERT_EQ(0u, kernelInfo->heapInfo.SurfaceStateHeapSize);
+
+    MockContext context(pDevice);
+    MockProgram program(&context, false, toClDeviceVector(*pDevice));
+    auto kernel = std::make_unique<MockKernel>(&program, *kernelInfo, *pDevice);
+    kernel->localBindingTableOffset = kernelInfo->kernelDescriptor.payloadMappings.bindingTable.tableOffset;
+    ASSERT_FALSE(isValidOffset<SurfaceStateHeapOffset>(static_cast<SurfaceStateHeapOffset>(kernel->localBindingTableOffset)));
+
+    const auto &gtpinHelper = pDevice->getGTPinGfxCoreHelper();
+    gtpinHelper.addSurfaceState(kernel.get());
+
+    auto numBts = kernel->getNumberOfBindingTableStates();
+    EXPECT_EQ(1u, numBts);
+    auto sshSize = kernel->getSurfaceStateHeapSize();
+    EXPECT_GT(sshSize, 0u);
+    auto offsetBTS = static_cast<SurfaceStateHeapOffset>(kernel->getBindingTableOffset());
+    EXPECT_TRUE(isValidOffset<SurfaceStateHeapOffset>(offsetBTS));
 }
 
 TEST_F(GTPinTests, givenKernelThenVerifyThatKernelCodeSubstitutionWorksWell) {

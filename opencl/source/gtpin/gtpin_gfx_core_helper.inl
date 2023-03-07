@@ -14,19 +14,18 @@
 namespace NEO {
 
 template <typename GfxFamily>
-bool GTPinGfxCoreHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) const {
+void GTPinGfxCoreHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) const {
     using RENDER_SURFACE_STATE = typename GfxFamily::RENDER_SURFACE_STATE;
     using BINDING_TABLE_STATE = typename GfxFamily::BINDING_TABLE_STATE;
 
     size_t sshSize = pKernel->getSurfaceStateHeapSize();
-    if (sshSize == 0) {
-        // Kernels which do not use SSH or use Execution Model are not supported (yet)
-        return false;
-    }
     size_t ssSize = sizeof(RENDER_SURFACE_STATE);
     size_t btsSize = sizeof(BINDING_TABLE_STATE);
     size_t sizeToEnlarge = ssSize + btsSize;
-    size_t currBTOffset = pKernel->getBindingTableOffset();
+    size_t currBTOffset = 0u;
+    if (isValidOffset<SurfaceStateHeapOffset>(static_cast<SurfaceStateHeapOffset>(pKernel->getBindingTableOffset()))) {
+        currBTOffset = pKernel->getBindingTableOffset();
+    }
     size_t currSurfaceStateSize = currBTOffset;
     char *pSsh = static_cast<char *>(pKernel->getSurfaceStateHeap());
     char *pNewSsh = new char[sshSize + sizeToEnlarge];
@@ -40,7 +39,6 @@ bool GTPinGfxCoreHelperHw<GfxFamily>::addSurfaceState(Kernel *pKernel) const {
     *pNewBTS = GfxFamily::cmdInitBindingTableState;
     pNewBTS->setSurfaceStatePointer((uint64_t)currBTOffset);
     pKernel->resizeSurfaceStateHeap(pNewSsh, sshSize + sizeToEnlarge, currBTCount + 1, newSurfaceStateSize);
-    return true;
 }
 
 template <typename GfxFamily>

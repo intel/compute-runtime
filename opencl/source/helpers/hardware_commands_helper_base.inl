@@ -228,9 +228,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendIndirectState(
 
     ssh.align(BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
 
-    auto dstBindingTablePointer = EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(ssh, kernelInfo.kernelDescriptor.payloadMappings.bindingTable.numEntries,
-                                                                                                  kernel.getSurfaceStateHeap(), kernel.getSurfaceStateHeapSize(),
-                                                                                                  kernel.getNumberOfBindingTableStates(), kernel.getBindingTableOffset());
+    size_t dstBindingTablePointer = HardwareCommandsHelper<GfxFamily>::checkForAdditionalBTAndSetBTPointer(ssh, kernel);
 
     // Copy our sampler state if it exists
     const auto &samplerTable = kernelInfo.kernelDescriptor.payloadMappings.samplerTable;
@@ -324,6 +322,22 @@ bool HardwareCommandsHelper<GfxFamily>::inlineDataProgrammingRequired(const Kern
 template <typename GfxFamily>
 bool HardwareCommandsHelper<GfxFamily>::kernelUsesLocalIds(const Kernel &kernel) {
     return kernel.getKernelInfo().kernelDescriptor.kernelAttributes.numLocalIdChannels > 0;
+}
+
+template <typename GfxFamily>
+size_t HardwareCommandsHelper<GfxFamily>::checkForAdditionalBTAndSetBTPointer(IndirectHeap &ssh, const Kernel &kernel) {
+    size_t dstBindingTablePointer{0u};
+    const auto &kernelInfo = kernel.getKernelInfo();
+    if (isGTPinInitialized && 0u == kernelInfo.kernelDescriptor.payloadMappings.bindingTable.numEntries) {
+        dstBindingTablePointer = EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(ssh, 1u,
+                                                                                                 kernel.getSurfaceStateHeap(), kernel.getSurfaceStateHeapSize(),
+                                                                                                 kernel.getNumberOfBindingTableStates(), kernel.getBindingTableOffset());
+    } else {
+        dstBindingTablePointer = EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(ssh, kernelInfo.kernelDescriptor.payloadMappings.bindingTable.numEntries,
+                                                                                                 kernel.getSurfaceStateHeap(), kernel.getSurfaceStateHeapSize(),
+                                                                                                 kernel.getNumberOfBindingTableStates(), kernel.getBindingTableOffset());
+    }
+    return dstBindingTablePointer;
 }
 
 } // namespace NEO

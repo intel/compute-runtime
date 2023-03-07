@@ -74,10 +74,7 @@ void gtpinNotifyKernelCreate(cl_kernel kernel) {
         // Enlarge local copy of SSH by 1 SS
         auto &gtpinHelper = device->getGTPinGfxCoreHelper();
 
-        if (!gtpinHelper.addSurfaceState(pKernel)) {
-            // Kernel with no SSH or Kernel EM, not supported
-            return;
-        }
+        gtpinHelper.addSurfaceState(pKernel);
         if (pKernel->isKernelHeapSubstituted()) {
             // ISA for this kernel was already substituted
             return;
@@ -121,10 +118,6 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
         auto rootDeviceIndex = device.getRootDeviceIndex();
         auto pMultiDeviceKernel = castToObjectOrAbort<MultiDeviceKernel>(kernel);
         auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
-        if (pKernel->getSurfaceStateHeapSize() == 0) {
-            // Kernel with no SSH, not supported
-            return;
-        }
         Context *pContext = &(pKernel->getContext());
         cl_context context = (cl_context)pContext;
         uint64_t kernelId = pKernel->getKernelId();

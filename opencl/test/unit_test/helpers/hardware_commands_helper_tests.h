@@ -45,11 +45,4 @@ struct HardwareCommandsTest : ClDeviceFixture,
     std::unique_ptr<MockKernelWithInternals> mockKernelWithInternal;
     Kernel::SimpleKernelArgInfo kernelArgInfo = {};
     std::vector<Kernel::SimpleKernelArgInfo> kernelArguments;
-
-    template <typename GfxFamily>
-    size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, const Kernel &srcKernel) {
-        return EncodeSurfaceState<GfxFamily>::pushBindingTableAndSurfaceStates(dstHeap, srcKernel.getKernelInfo().kernelDescriptor.payloadMappings.bindingTable.numEntries,
-                                                                               srcKernel.getSurfaceStateHeap(), srcKernel.getSurfaceStateHeapSize(),
-                                                                               srcKernel.getNumberOfBindingTableStates(), srcKernel.getBindingTableOffset());
-    }
 };

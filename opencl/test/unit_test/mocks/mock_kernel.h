@@ -116,6 +116,7 @@ class MockKernel : public Kernel {
     using Kernel::kernelSubmissionMap;
     using Kernel::kernelSvmGfxAllocations;
     using Kernel::kernelUnifiedMemoryGfxAllocations;
+    using Kernel::localBindingTableOffset;
     using Kernel::localIdsCache;
     using Kernel::maxKernelWorkGroupSize;
     using Kernel::maxWorkGroupSizeForCrossThreadData;

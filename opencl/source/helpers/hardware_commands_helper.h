@@ -122,5 +122,6 @@ struct HardwareCommandsHelper : public PerThreadDataHelper {
 
     static bool inlineDataProgrammingRequired(const Kernel &kernel);
     static bool kernelUsesLocalIds(const Kernel &kernel);
+    static size_t checkForAdditionalBTAndSetBTPointer(IndirectHeap &ssh, const Kernel &kernel);
 };
 } // namespace NEO

@@ -797,7 +797,7 @@ HWTEST_F(HardwareCommandsTest, GivenBuffersNotRequiringSshWhenSettingBindingTabl
     EXPECT_EQ(0u, numSurfaceStates);
 
     // set binding table states
-    auto dstBindingTablePointer = pushBindingTableAndSurfaceStates<FamilyType>(ssh, *pKernel);
+    auto dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, *pKernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
     auto usedAfter = ssh.getUsed();
@@ -836,19 +836,46 @@ HWTEST_F(HardwareCommandsTest, GivenZeroSurfaceStatesWhenSettingBindingTableStat
     auto numSurfaceStates = pKernel->getNumberOfBindingTableStates();
     EXPECT_EQ(0u, numSurfaceStates);
 
-    auto dstBindingTablePointer = pushBindingTableAndSurfaceStates<FamilyType>(ssh, *pKernel);
+    auto dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, *pKernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
-    dstBindingTablePointer = pushBindingTableAndSurfaceStates<FamilyType>(ssh, *pKernel);
+    dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, *pKernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
     pKernelInfo->setBindingTable(64, 0);
 
-    dstBindingTablePointer = pushBindingTableAndSurfaceStates<FamilyType>(ssh, *pKernel);
+    dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, *pKernel);
     EXPECT_EQ(0u, dstBindingTablePointer);
 
     delete pKernel;
 }
+
+HWTEST_F(HardwareCommandsTest, givenNoBTEntriesInKernelDescriptorAndGTPinInitializedWhenSettingBTPointerThenBTPointerIsSet) {
+    isGTPinInitialized = true;
+
+    auto pKernelInfo = std::make_unique<MockKernelInfo>();
+    pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
+    ASSERT_EQ(0u, pKernelInfo->kernelDescriptor.payloadMappings.bindingTable.numEntries);
+
+    MockContext context;
+    MockProgram program(&context, false, toClDeviceVector(*pClDevice));
+
+    auto pKernel = std::make_unique<MockKernel>(&program, *pKernelInfo, *pClDevice);
+
+    constexpr auto mockSshSize{256u};
+    constexpr auto mockBTOffset{32u};
+    auto mockSsh = new char[mockSshSize]{0};
+    ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
+    pKernel->resizeSurfaceStateHeap(mockSsh, mockSshSize, 1u, mockBTOffset);
+
+    CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
+    auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
+
+    auto dstBindingTablePointer = HardwareCommandsHelper<FamilyType>::checkForAdditionalBTAndSetBTPointer(ssh, *pKernel);
+    EXPECT_NE(0u, dstBindingTablePointer);
+    isGTPinInitialized = false;
+}
+
 HWCMDTEST_F(IGFX_GEN8_CORE, HardwareCommandsTest, GivenKernelWithInvalidSamplerStateArrayWhenSendIndirectStateIsCalledThenInterfaceDescriptorIsNotPopulated) {
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     using GPGPU_WALKER = typename FamilyType::GPGPU_WALKER;
