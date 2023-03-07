@@ -18,7 +18,7 @@
 constexpr static auto gfxProduct = IGFX_METEORLAKE;
 
 namespace NEO {
-#include "shared/source/os_interface/linux/hw_info_config_mtl_and_later.inl"
+#include "shared/source/os_interface/linux/product_helper_mtl_and_later.inl"
 } // namespace NEO
 
 #include "shared/source/xe_hpg_core/mtl/os_agnostic_product_helper_mtl.inl"
