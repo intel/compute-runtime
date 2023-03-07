@@ -838,7 +838,7 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
 
     ze_base_properties_t *extendedProperties = reinterpret_cast<ze_base_properties_t *>(pDeviceProperties->pNext);
 
-    bool isDevicePropertiesStypeValid = (pDeviceProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES) ? true : false;
+    bool isDevicePropertiesStypeValid = (pDeviceProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES || pDeviceProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2) ? true : false;
 
     if (isDevicePropertiesStypeValid) {
         while (extendedProperties) {
