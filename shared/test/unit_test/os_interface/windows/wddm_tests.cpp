@@ -11,6 +11,7 @@
 #include "shared/source/os_interface/windows/wddm/um_km_data_translator.h"
 #include "shared/source/os_interface/windows/wddm_allocation.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/os_interface/windows/wddm_fixture.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
@@ -92,6 +93,14 @@ TEST_F(WddmTests, whenProgramDebugIsEnabledAndCreatingContextWithInternalEngineT
     OsContextWin osContext(*wddm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Internal}));
     osContext.ensureContextInitialized();
     EXPECT_FALSE(osContext.isDebuggableContext());
+}
+TEST_F(WddmTests, WhenCreatingContextWithContextCreateDisabledFlagEnabledThenContextHandleIsNull) {
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_L0_SYSMAN_NO_CONTEXT_MODE", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    init();
+    auto newContext = osContext.get();
+    EXPECT_TRUE(wddm->createContext(*newContext));
+    EXPECT_EQ(0u, newContext->getWddmContextHandle());
 }
 
 TEST(WddmPciSpeedInfoTest, WhenGetPciSpeedInfoIsCalledThenUnknownIsReturned) {
