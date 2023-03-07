@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2019-2022 Intel Corporation
+# Copyright (C) 2019-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -107,6 +107,7 @@ apply_macro_for_each_core_type("SUPPORTED")
 
 append_sources_from_properties(CORE_SOURCES
                                NEO_CORE_AIL
+                               NEO_CORE_ASSERT_HANDLER
                                NEO_CORE_AUB
                                NEO_CORE_AUB_MEM_DUMP
                                NEO_CORE_BUILT_INS

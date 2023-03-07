@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 
 #include "shared/source/ail/ail_configuration.h"
+#include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/aub/aub_center.h"
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/built_ins/sip.h"
@@ -222,6 +223,16 @@ void RootDeviceEnvironment::setDummyBlitProperties(uint32_t rootDeviceIndex) {
 
 GraphicsAllocation *RootDeviceEnvironment::getDummyAllocation() const {
     return dummyAllocation.get();
+}
+
+AssertHandler *RootDeviceEnvironment::getAssertHandler(Device *neoDevice) {
+    if (this->assertHandler.get() == nullptr) {
+        std::lock_guard<std::mutex> autolock(this->mtx);
+        if (this->assertHandler.get() == nullptr) {
+            this->assertHandler = std::make_unique<AssertHandler>(neoDevice);
+        }
+    }
+    return this->assertHandler.get();
 }
 
 template <typename HelperType>

@@ -234,7 +234,8 @@ static const AllocationType allocationTypesWith32BitAnd64KbPagesAllowed[] = {All
                                                                              AllocationType::PRINTF_SURFACE,
                                                                              AllocationType::CONSTANT_SURFACE,
                                                                              AllocationType::GLOBAL_SURFACE,
-                                                                             AllocationType::WRITE_COMBINED};
+                                                                             AllocationType::WRITE_COMBINED,
+                                                                             AllocationType::ASSERT_BUFFER};
 
 INSTANTIATE_TEST_CASE_P(Allow32BitAnd64kbPagesTypes,
                         MemoryManagerGetAlloctionData32BitAnd64kbPagesAllowedTest,
@@ -723,6 +724,14 @@ HWTEST_F(GetAllocationDataTestHw, givenPrintfAllocationWhenGetAllocationDataIsCa
     AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::PRINTF_SURFACE, mockDeviceBitfield};
     mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_FALSE(allocData.flags.useSystemMemory);
+    EXPECT_TRUE(allocData.flags.requiresCpuAccess);
+}
+
+HWTEST_F(GetAllocationDataTestHw, givenAssertAllocationWhenGetAllocationDataIsCalledThenDontUseSystemMemoryAndRequireCpuAccess) {
+    AllocationData allocData;
+    MockMemoryManager mockMemoryManager;
+    AllocationProperties properties{mockRootDeviceIndex, 1, AllocationType::ASSERT_BUFFER, mockDeviceBitfield};
+    mockMemoryManager.getAllocationData(allocData, properties, nullptr, mockMemoryManager.createStorageInfoFromProperties(properties));
     EXPECT_TRUE(allocData.flags.requiresCpuAccess);
 }
 

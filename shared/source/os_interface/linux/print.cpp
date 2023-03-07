@@ -11,9 +11,14 @@
 #include <cstdio>
 #include <iostream>
 
-void printToSTDOUT(const char *str) {
+void printToStdout(const char *str) {
     fprintf(stdout, "%s", str);
     fflush(stdout);
+}
+
+void printToStderr(const char *str) {
+    fprintf(stderr, "%s", str);
+    fflush(stderr);
 }
 
 template <class T>

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -116,6 +116,8 @@ const char *AppResourceHelper::getResourceTagStr(AllocationType type) {
         return "SWTAGBF";
     case AllocationType::DEFERRED_TASKS_LIST:
         return "TSKLIST";
+    case AllocationType::ASSERT_BUFFER:
+        return "ASSRTBUF";
     default:
         return "NOTFOUND";
     }

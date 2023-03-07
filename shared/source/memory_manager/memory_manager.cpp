@@ -372,6 +372,7 @@ bool MemoryManager::getAllocationData(AllocationData &allocationData, const Allo
     case AllocationType::SCRATCH_SURFACE:
     case AllocationType::WORK_PARTITION_SURFACE:
     case AllocationType::WRITE_COMBINED:
+    case AllocationType::ASSERT_BUFFER:
         allow64KbPages = true;
         allow32Bit = true;
     default:

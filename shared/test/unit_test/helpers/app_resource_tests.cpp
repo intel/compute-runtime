@@ -101,7 +101,8 @@ AllocationTypeTagTestCase allocationTypeTagValues[static_cast<int>(AllocationTyp
     {AllocationType::UNIFIED_SHARED_MEMORY, "USHRDMEM"},
     {AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, "GPUTSDBF"},
     {AllocationType::SW_TAG_BUFFER, "SWTAGBF"},
-    {AllocationType::DEFERRED_TASKS_LIST, "TSKLIST"}};
+    {AllocationType::DEFERRED_TASKS_LIST, "TSKLIST"},
+    {AllocationType::ASSERT_BUFFER, "ASSRTBUF"}};
 class AllocationTypeTagString : public ::testing::TestWithParam<AllocationTypeTagTestCase> {};
 
 TEST_P(AllocationTypeTagString, givenGraphicsAllocationTypeWhenCopyTagToStorageInfoThenCorrectTagIsReturned) {

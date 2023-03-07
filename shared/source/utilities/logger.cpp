@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -243,6 +243,8 @@ const char *getAllocationTypeString(GraphicsAllocation const *graphicsAllocation
         return "SW_TAG_BUFFER";
     case AllocationType::DEFERRED_TASKS_LIST:
         return "DEFERRED_TASKS_LIST";
+    case AllocationType::ASSERT_BUFFER:
+        return "ASSERT_BUFFER";
     default:
         return "ILLEGAL_VALUE";
     }

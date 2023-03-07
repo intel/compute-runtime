@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -993,9 +993,9 @@ TEST_F(PrintFormatterTest, GivenTypeSmallerThan4BThenItIsReadAs4BValue) {
     EXPECT_STREQ(expectedOutput, output);
 }
 
-TEST(printToSTDOUTTest, GivenStringWhenPrintingToStdoutThenOutputOccurs) {
+TEST(printToStdoutTest, GivenStringWhenPrintingToStdoutThenOutputOccurs) {
     testing::internal::CaptureStdout();
-    printToSTDOUT("test");
+    printToStdout("test");
     std::string output = testing::internal::GetCapturedStdout();
     EXPECT_STREQ("test", output.c_str());
 }

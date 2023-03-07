@@ -746,7 +746,8 @@ HWTEST_F(AubCommandStreamReceiverTests, givenAubCommandStreamReceiverWhenWriteMe
         AllocationType::TIMESTAMP_PACKET_TAG_BUFFER,
         AllocationType::MAP_ALLOCATION,
         AllocationType::SVM_GPU,
-        AllocationType::EXTERNAL_HOST_PTR};
+        AllocationType::EXTERNAL_HOST_PTR,
+        AllocationType::ASSERT_BUFFER};
 
     for (auto allocationType : onlyOneTimeAubWritableTypes) {
         gfxAllocation->setAubWritable(true, GraphicsAllocation::defaultBank);

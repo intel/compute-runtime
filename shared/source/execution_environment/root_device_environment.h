@@ -15,6 +15,7 @@
 #include <mutex>
 
 namespace NEO {
+class AssertHandler;
 class AubCenter;
 class BindlessHeapsHelper;
 class BuiltIns;
@@ -71,6 +72,7 @@ struct RootDeviceEnvironment {
     MOCKABLE_VIRTUAL CompilerInterface *getCompilerInterface();
     BuiltIns *getBuiltIns();
     BindlessHeapsHelper *getBindlessHeapsHelper() const;
+    AssertHandler *getAssertHandler(Device *neoDevice);
     void createBindlessHeapsHelper(MemoryManager *memoryManager, bool availableDevices, uint32_t rootDeviceIndex, DeviceBitfield deviceBitfield);
     void limitNumberOfCcs(uint32_t numberOfCcs);
     bool isNumberOfCcsLimited() const;
@@ -100,6 +102,7 @@ struct RootDeviceEnvironment {
     std::unique_ptr<GfxCoreHelper> gfxCoreHelper;
     std::unique_ptr<ProductHelper> productHelper;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
+    std::unique_ptr<AssertHandler> assertHandler;
 
     ExecutionEnvironment &executionEnvironment;
 

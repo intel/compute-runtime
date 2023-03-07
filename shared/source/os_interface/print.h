@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,8 @@
 
 #include <cstddef>
 
-void printToSTDOUT(const char *str);
+void printToStdout(const char *str);
+void printToStderr(const char *str);
 
 template <class T>
 size_t simpleSprintf(char *output, size_t outputSize, const char *format, T value);

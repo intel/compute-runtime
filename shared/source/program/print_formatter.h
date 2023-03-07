@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -47,7 +47,7 @@ class PrintFormatter {
   public:
     PrintFormatter(const uint8_t *printfOutputBuffer, uint32_t printfOutputBufferMaxSize,
                    bool using32BitPointers, const StringMap *stringLiteralMap = nullptr);
-    void printKernelOutput(const std::function<void(char *)> &print = [](char *str) { printToSTDOUT(str); });
+    void printKernelOutput(const std::function<void(char *)> &print = [](char *str) { printToStdout(str); });
 
     constexpr static size_t maxSinglePrintStringLength = 16 * MemoryConstants::kiloByte;
 

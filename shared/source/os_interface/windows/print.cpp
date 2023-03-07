@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,12 +15,12 @@
 #include <io.h>
 #include <iostream>
 
-void printToSTDOUT(const char *str) {
+void printToStreamHandle(const char *str, DWORD handle) {
     int fd = 0;
     HANDLE stdoutDuplicate = 0;
     FILE *pFile = nullptr;
 
-    if ((DuplicateHandle(GetCurrentProcess(), GetStdHandle(STD_OUTPUT_HANDLE),
+    if ((DuplicateHandle(GetCurrentProcess(), GetStdHandle(handle),
                          GetCurrentProcess(), &stdoutDuplicate, 0L, TRUE, DUPLICATE_SAME_ACCESS))) {
         if ((fd = _open_osfhandle((DWORD_PTR)stdoutDuplicate, _O_TEXT)) &&
             (pFile = _fdopen(fd, "w"))) {
@@ -30,6 +30,14 @@ void printToSTDOUT(const char *str) {
             fclose(pFile);
         }
     }
+}
+
+void printToStdout(const char *str) {
+    printToStreamHandle(str, STD_OUTPUT_HANDLE);
+}
+
+void printToStderr(const char *str) {
+    printToStreamHandle(str, STD_ERROR_HANDLE);
 }
 
 template <class T>

@@ -24,6 +24,7 @@ void GfxCoreHelperHw<Family>::setExtraAllocationData(AllocationData &allocationD
         if (properties.allocationType == AllocationType::LINEAR_STREAM ||
             properties.allocationType == AllocationType::INTERNAL_HEAP ||
             properties.allocationType == AllocationType::PRINTF_SURFACE ||
+            properties.allocationType == AllocationType::ASSERT_BUFFER ||
             properties.allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER ||
             properties.allocationType == AllocationType::RING_BUFFER ||
             properties.allocationType == AllocationType::SEMAPHORE_BUFFER) {

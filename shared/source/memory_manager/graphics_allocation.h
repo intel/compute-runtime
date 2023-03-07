@@ -196,7 +196,8 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
                allocationType == AllocationType::DEBUG_CONTEXT_SAVE_AREA ||
                allocationType == AllocationType::DEBUG_SBA_TRACKING_BUFFER ||
                allocationType == AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER ||
-               allocationType == AllocationType::DEBUG_MODULE_AREA;
+               allocationType == AllocationType::DEBUG_MODULE_AREA ||
+               allocationType == AllocationType::ASSERT_BUFFER;
     }
     static bool isLockable(AllocationType allocationType) {
         return isCpuAccessRequired(allocationType) ||

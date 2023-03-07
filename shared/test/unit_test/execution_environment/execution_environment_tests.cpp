@@ -132,6 +132,17 @@ TEST(RootDeviceEnvironment, givenExecutionEnvironmentWhenInitializeAubCenterIsCa
     EXPECT_EQ(currentAubFileStream, rootDeviceEnvironment->aubCenter->getStreamProvider()->getStream());
 }
 
+TEST(RootDeviceEnvironment, givenRootExecutionEnvironmentWhenGetAssertHandlerIsCalledThenItIsInitalizedOnce) {
+    const HardwareInfo *hwInfo = defaultHwInfo.get();
+    auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
+    auto executionEnvironment = device->getExecutionEnvironment();
+    auto rootDeviceEnvironment = executionEnvironment->rootDeviceEnvironments[0].get();
+    auto assertHandler = rootDeviceEnvironment->getAssertHandler(device.get());
+
+    EXPECT_NE(nullptr, assertHandler);
+    EXPECT_EQ(assertHandler, rootDeviceEnvironment->getAssertHandler(device.get()));
+}
+
 TEST(ExecutionEnvironment, givenExecutionEnvironmentWhenInitializeMemoryManagerIsCalledThenLocalMemorySupportedInMemoryManagerHasCorrectValue) {
     const HardwareInfo *hwInfo = defaultHwInfo.get();
     auto device = std::unique_ptr<Device>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(hwInfo));
