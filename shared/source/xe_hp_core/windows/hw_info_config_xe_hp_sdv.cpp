@@ -10,7 +10,7 @@
 #include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.inl"
-#include "shared/source/os_interface/hw_info_config_xehp_and_later.inl"
+#include "shared/source/os_interface/product_helper_xehp_and_later.inl"
 #include "shared/source/xe_hp_core/hw_cmds_xe_hp_sdv.h"
 
 #include "platforms.h"

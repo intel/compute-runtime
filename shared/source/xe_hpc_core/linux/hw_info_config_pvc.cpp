@@ -13,11 +13,11 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/hw_info_config.inl"
 #include "shared/source/os_interface/hw_info_config_dg2_and_later.inl"
-#include "shared/source/os_interface/hw_info_config_xehp_and_later.inl"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/pci_path.h"
 #include "shared/source/os_interface/linux/pmt_util.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
+#include "shared/source/os_interface/product_helper_xehp_and_later.inl"
 #include "shared/source/utilities/directory.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 

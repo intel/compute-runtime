@@ -47,7 +47,7 @@ set(NEO_CORE_OS_INTERFACE
 )
 
 if(SUPPORT_XEHP_AND_LATER)
-  list(APPEND NEO_CORE_OS_INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_xehp_and_later.inl)
+  list(APPEND NEO_CORE_OS_INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_xehp_and_later.inl)
 endif()
 
 if(SUPPORT_DG2_AND_LATER)
