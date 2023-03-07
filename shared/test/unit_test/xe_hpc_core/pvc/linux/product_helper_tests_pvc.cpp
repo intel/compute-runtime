@@ -67,14 +67,10 @@ PVCTEST_F(PvcProductHelperLinux, GivenPvcWhenConfigureHardwareCustomThenKmdNotif
     EXPECT_EQ(20ll, pInHwInfo.capabilityTable.kmdNotifyProperties.delayQuickKmdSleepForDirectSubmissionMicroseconds);
 }
 
-HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfPatIndexProgrammingSupportedThenReturnFalse, IGFX_PVC);
-
 PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIfPatIndexProgrammingSupportedThenReturnTrue) {
 
     EXPECT_TRUE(productHelper->isVmBindPatIndexProgrammingSupported());
 }
-
-HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfPageFaultIsSupportedThenReturnFalse, IGFX_PVC);
 
 PVCTEST_F(PvcProductHelperLinux, givenProductHelperWhenAskedIsPageFaultSupportedThenReturnTrue) {
     EXPECT_TRUE(productHelper->isPageFaultSupported());

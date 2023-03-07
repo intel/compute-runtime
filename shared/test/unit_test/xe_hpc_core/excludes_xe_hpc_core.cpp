@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -46,3 +46,5 @@ HWTEST_EXCLUDE_PRODUCT(DirectSubmissionTest, givenDebugFlagSetWhenDispatchingPre
 HWTEST_EXCLUDE_PRODUCT(GetAllocationDataTestHw, givenRingBufferAllocationWhenGetAllocationDataIsCalledThenItHasProperFieldsSet, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(GetAllocationDataTestHw, givenSemaphoreBufferAllocationWhenGetAllocationDataIsCalledThenItHasProperFieldsSet, IGFX_XE_HPC_CORE);
 HWTEST_EXCLUDE_PRODUCT(MemoryManagerGetAlloctionDataTests, givenCommandBufferAllocationTypeWhenGetAllocationDataIsCalledThenSystemMemoryIsRequested, IGFX_XE_HPC_CORE);
+HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfPatIndexProgrammingSupportedThenReturnFalse, IGFX_XE_HPC_CORE);
+HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfPageFaultIsSupportedThenReturnFalse, IGFX_XE_HPC_CORE);
