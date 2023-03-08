@@ -17,8 +17,8 @@ class SysmanHwDeviceIdDrm : public NEO::HwDeviceIdDrm {
   public:
     using NEO::HwDeviceIdDrm::HwDeviceIdDrm;
     SysmanHwDeviceIdDrm() = delete;
-    int openFileDescriptor();
-    int closeFileDescriptor();
+    MOCKABLE_VIRTUAL int openFileDescriptor();
+    MOCKABLE_VIRTUAL int closeFileDescriptor();
 
   private:
     std::mutex fdMutex{};

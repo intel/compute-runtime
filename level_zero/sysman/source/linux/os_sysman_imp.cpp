@@ -8,11 +8,14 @@
 #include "level_zero/sysman/source/linux/os_sysman_imp.h"
 
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/os_interface/driver_info.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/os_interface.h"
 
+#include "level_zero/sysman/source/firmware_util/firmware_util.h"
 #include "level_zero/sysman/source/linux/fs_access.h"
 #include "level_zero/sysman/source/linux/pmt/pmt.h"
+#include "level_zero/sysman/source/linux/pmu/pmu.h"
 
 namespace L0 {
 namespace Sysman {
@@ -55,6 +58,7 @@ ze_result_t LinuxSysmanImp::init() {
     osInterface.getDriverModel()->as<NEO::Drm>()->cleanup();
     // Close Drm handles
     sysmanHwDeviceId->closeFileDescriptor();
+    pPmuInterface = PmuInterface::create(this);
     return createPmtHandles();
 }
 
@@ -155,6 +159,30 @@ LinuxSysmanImp::LinuxSysmanImp(SysmanDeviceImp *pParentSysmanDeviceImp) {
     rootDeviceIndex = pParentSysmanDeviceImp->getRootDeviceIndex();
 }
 
+void LinuxSysmanImp::createFwUtilInterface() {
+    const auto pciBusInfo = pParentSysmanDeviceImp->getRootDeviceEnvironment().osInterface->getDriverModel()->getPciBusInfo();
+    const uint16_t domain = static_cast<uint16_t>(pciBusInfo.pciDomain);
+    const uint8_t bus = static_cast<uint8_t>(pciBusInfo.pciBus);
+    const uint8_t device = static_cast<uint8_t>(pciBusInfo.pciDevice);
+    const uint8_t function = static_cast<uint8_t>(pciBusInfo.pciFunction);
+
+    pFwUtilInterface = FirmwareUtil::create(domain, bus, device, function);
+}
+
+FirmwareUtil *LinuxSysmanImp::getFwUtilInterface() {
+    if (pFwUtilInterface == nullptr) {
+        createFwUtilInterface();
+    }
+    return pFwUtilInterface;
+}
+
+void LinuxSysmanImp::releaseFwUtilInterface() {
+    if (nullptr != pFwUtilInterface) {
+        delete pFwUtilInterface;
+        pFwUtilInterface = nullptr;
+    }
+}
+
 LinuxSysmanImp::~LinuxSysmanImp() {
     if (nullptr != pSysfsAccess) {
         delete pSysfsAccess;
@@ -168,6 +196,11 @@ LinuxSysmanImp::~LinuxSysmanImp() {
         delete pFsAccess;
         pFsAccess = nullptr;
     }
+    if (nullptr != pPmuInterface) {
+        delete pPmuInterface;
+        pPmuInterface = nullptr;
+    }
+    releaseFwUtilInterface();
     releasePmtObject();
 }
 

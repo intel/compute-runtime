@@ -16,7 +16,6 @@
 #include <limits>
 #include <netlink/handlers.h>
 
-extern bool sysmanUltsEnable;
 struct nl_sock {
 };
 
@@ -39,9 +38,6 @@ class SysmanIafNlApiFixture : public ::testing::Test {
     PublicIafNlApi testIafNlApi;
 
     void SetUp() override {
-        if (!sysmanUltsEnable) {
-            GTEST_SKIP();
-        }
         auto mockNlApi = std::make_unique<MockNlApi>();
 
         testIafNlApi.pNlApi = std::move(mockNlApi);

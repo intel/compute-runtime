@@ -389,25 +389,41 @@ ze_result_t zesDeviceEnumMemoryModules(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_mem_handle_t *phMemory) {
-    return L0::SysmanDevice::memoryGet(hDevice, pCount, phMemory);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::memoryGet(hDevice, pCount, phMemory);
+    } else {
+        return L0::Sysman::SysmanDevice::memoryGet(hDevice, pCount, phMemory);
+    }
 }
 
 ze_result_t zesMemoryGetProperties(
     zes_mem_handle_t hMemory,
     zes_mem_properties_t *pProperties) {
-    return L0::Memory::fromHandle(hMemory)->memoryGetProperties(pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::Memory::fromHandle(hMemory)->memoryGetProperties(pProperties);
+    } else {
+        return L0::Sysman::Memory::fromHandle(hMemory)->memoryGetProperties(pProperties);
+    }
 }
 
 ze_result_t zesMemoryGetState(
     zes_mem_handle_t hMemory,
     zes_mem_state_t *pState) {
-    return L0::Memory::fromHandle(hMemory)->memoryGetState(pState);
+    if (L0::sysmanInitFromCore) {
+        return L0::Memory::fromHandle(hMemory)->memoryGetState(pState);
+    } else {
+        return L0::Sysman::Memory::fromHandle(hMemory)->memoryGetState(pState);
+    }
 }
 
 ze_result_t zesMemoryGetBandwidth(
     zes_mem_handle_t hMemory,
     zes_mem_bandwidth_t *pBandwidth) {
-    return L0::Memory::fromHandle(hMemory)->memoryGetBandwidth(pBandwidth);
+    if (L0::sysmanInitFromCore) {
+        return L0::Memory::fromHandle(hMemory)->memoryGetBandwidth(pBandwidth);
+    } else {
+        return L0::Sysman::Memory::fromHandle(hMemory)->memoryGetBandwidth(pBandwidth);
+    }
 }
 
 ze_result_t zesDeviceEnumFabricPorts(

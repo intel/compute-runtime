@@ -7,13 +7,13 @@
 
 #pragma once
 #include "level_zero/api/sysman/zes_handles_struct.h"
-#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
 #include <mutex>
 #include <vector>
 
 namespace L0 {
+namespace Sysman {
 
 struct OsSysman;
 
@@ -34,17 +34,17 @@ struct MemoryHandleContext {
     MemoryHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~MemoryHandleContext();
 
-    ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles);
+    ze_result_t init(uint32_t subDeviceCount);
 
     ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory);
 
     OsSysman *pOsSysman = nullptr;
-    bool isLmemSupported = false;
     std::vector<Memory *> handleList = {};
 
   private:
-    void createHandle(ze_device_handle_t deviceHandle);
+    void createHandle(bool onSubdevice, uint32_t subDeviceId);
     std::once_flag initMemoryOnce;
 };
 
+} // namespace Sysman
 } // namespace L0

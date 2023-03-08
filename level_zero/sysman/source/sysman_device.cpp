@@ -16,6 +16,7 @@ namespace L0 {
 namespace Sysman {
 
 SysmanDevice *SysmanDevice::create(NEO::ExecutionEnvironment &executionEnvironment, const uint32_t rootDeviceIndex) {
+
     SysmanDeviceImp *pSysmanDevice = new SysmanDeviceImp(&executionEnvironment, rootDeviceIndex);
     DEBUG_BREAK_IF(!pSysmanDevice);
     if (pSysmanDevice->init() != ZE_RESULT_SUCCESS) {
@@ -28,6 +29,10 @@ SysmanDevice *SysmanDevice::create(NEO::ExecutionEnvironment &executionEnvironme
 ze_result_t SysmanDevice::fabricPortGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_fabric_port_handle_t *phPort) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     return pSysmanDevice->fabricPortGet(pCount, phPort);
+}
+ze_result_t SysmanDevice::memoryGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_mem_handle_t *phMemory) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->memoryGet(pCount, phMemory);
 }
 
 } // namespace Sysman

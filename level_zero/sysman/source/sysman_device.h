@@ -10,6 +10,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/sysman/source/fabric_port/fabric_port.h"
+#include "level_zero/sysman/source/memory/memory.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
@@ -26,6 +27,8 @@ struct SysmanDevice : _ze_device_handle_t {
 
     static ze_result_t fabricPortGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_fabric_port_handle_t *phPort);
     virtual ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) = 0;
+    static ze_result_t memoryGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_mem_handle_t *phMemory);
+    virtual ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) = 0;
 };
 
 } // namespace Sysman

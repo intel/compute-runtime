@@ -22,9 +22,11 @@ class Drm;
 namespace L0 {
 namespace Sysman {
 class PlatformMonitoringTech;
+class PmuInterface;
 class FsAccess;
 class ProcfsAccess;
 class SysfsAccess;
+class FirmwareUtil;
 
 class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
   public:
@@ -33,6 +35,8 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
 
     ze_result_t init() override;
 
+    FirmwareUtil *getFwUtilInterface();
+    PmuInterface *getPmuInterface() { return pPmuInterface; }
     FsAccess &getFsAccess();
     ProcfsAccess &getProcfsAccess();
     SysfsAccess &getSysfsAccess();
@@ -45,6 +49,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     NEO::Drm *getDrm();
     void releasePmtObject();
     ze_result_t createPmtHandles();
+
     std::string devicePciBdf = "";
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t rootDeviceIndex;
@@ -55,11 +60,15 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     SysfsAccess *pSysfsAccess = nullptr;
     std::map<uint32_t, L0::Sysman::PlatformMonitoringTech *> mapOfSubDeviceIdToPmtObject;
     uint32_t subDeviceCount = 0;
+    FirmwareUtil *pFwUtilInterface = nullptr;
+    PmuInterface *pPmuInterface = nullptr;
+    void releaseFwUtilInterface();
 
   private:
     LinuxSysmanImp() = delete;
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
     static const std::string deviceDir;
+    void createFwUtilInterface();
 };
 
 } // namespace Sysman

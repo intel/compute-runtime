@@ -22,12 +22,14 @@ SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment
     pOsSysman = OsSysman::create(this);
     UNRECOVERABLE_IF(nullptr == pOsSysman);
     pFabricPortHandleContext = new FabricPortHandleContext(pOsSysman);
+    pMemoryHandleContext = new MemoryHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
     executionEnvironment->decRefInternal();
-    freeResource(pOsSysman);
     freeResource(pFabricPortHandleContext);
+    freeResource(pMemoryHandleContext);
+    freeResource(pOsSysman);
 }
 
 ze_result_t SysmanDeviceImp::init() {
@@ -40,6 +42,10 @@ ze_result_t SysmanDeviceImp::init() {
 
 ze_result_t SysmanDeviceImp::fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) {
     return pFabricPortHandleContext->fabricPortGet(pCount, phPort);
+}
+
+ze_result_t SysmanDeviceImp::memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) {
+    return pMemoryHandleContext->memoryGet(pCount, phMemory);
 }
 
 } // namespace Sysman
