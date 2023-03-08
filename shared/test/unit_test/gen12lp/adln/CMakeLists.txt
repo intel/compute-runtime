@@ -12,7 +12,7 @@ if(TESTS_ADLN)
                  ${NEO_CORE_tests_gen12lp_adln_excludes}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_adln.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_adln.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_product_helper_adln.cpp
   )
 
   add_subdirectories()

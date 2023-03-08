@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -14,7 +14,7 @@ if(TESTS_ADLP)
                  ${CMAKE_CURRENT_SOURCE_DIR}/command_stream_receiver_hw_tests_adlp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/preamble_helper_tests_adlp.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_adlp.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_adlp.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_product_helper_adlp.cpp
   )
 
   add_subdirectories()

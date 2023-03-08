@@ -9,7 +9,7 @@ if(TESTS_RKL)
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/excludes_gen12lp_rkl.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_gfx_core_helper_rkl.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_rkl.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_product_helper_rkl.cpp
   )
 
   add_subdirectories()

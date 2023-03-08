@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2022 Intel Corporation
+# Copyright (C) 2022-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -11,7 +11,7 @@ if(TESTS_SKL)
                  ${NEO_CORE_tests_gen9_skl_excludes}
                  ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                  ${CMAKE_CURRENT_SOURCE_DIR}/device_tests_skl.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_skl.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_product_helper_skl.cpp
   )
 
   add_subdirectories()

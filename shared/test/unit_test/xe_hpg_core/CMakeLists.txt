@@ -19,7 +19,7 @@ if(TESTS_XE_HPG_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_dispatch_kernel_xe_hpg_core.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_xe_hpg_core.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_product_helper_xe_hpg_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_xe_hpg_core.cpp
   )
   add_subdirectories()

@@ -17,7 +17,7 @@ if(TESTS_XE_HP_SDV)
       ${CMAKE_CURRENT_SOURCE_DIR}/test_buffer_xe_hp_sdv.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/test_command_stream_receiver_xehp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_xehp.inl
-      ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_xehp.inl
+      ${CMAKE_CURRENT_SOURCE_DIR}/test_product_helper_xehp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/test_image_xe_hp_sdv.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/test_local_work_size_xehp.inl
       ${CMAKE_CURRENT_SOURCE_DIR}/test_sub_devices_xehp.inl

@@ -16,7 +16,7 @@ if(TESTS_XE_HP_CORE)
                  ${CMAKE_CURRENT_SOURCE_DIR}/product_config_tests_xe_hp_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/simd_helper_tests_xe_hp_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_encode_xe_hp_core.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_xe_hp_core.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_product_helper_xe_hp_core.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_preemption_xe_hp_core.cpp
   )
 

@@ -12,7 +12,7 @@ if(TESTS_DG1)
                  ${CMAKE_CURRENT_SOURCE_DIR}/gfx_core_helper_tests_dg1.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_tests_dg1.cpp
                  ${CMAKE_CURRENT_SOURCE_DIR}/test_device_caps_dg1.cpp
-                 ${CMAKE_CURRENT_SOURCE_DIR}/test_hw_info_config_dg1.cpp
+                 ${CMAKE_CURRENT_SOURCE_DIR}/test_product_helper_dg1.cpp
   )
   add_subdirectories()
 endif()
