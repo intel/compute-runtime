@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,12 +15,12 @@ class CompilerCacheMock : public CompilerCache {
     CompilerCacheMock() : CompilerCache(CompilerCacheConfig{}) {
     }
 
-    bool cacheBinary(const std::string kernelFileHash, const char *pBinary, uint32_t binarySize) override {
+    bool cacheBinary(const std::string &kernelFileHash, const char *pBinary, size_t binarySize) override {
         cacheInvoked++;
         return cacheResult;
     }
 
-    std::unique_ptr<char[]> loadCachedBinary(const std::string kernelFileHash, size_t &cachedBinarySize) override {
+    std::unique_ptr<char[]> loadCachedBinary(const std::string &kernelFileHash, size_t &cachedBinarySize) override {
         if (loadResult || numberOfLoadResult > 0) {
             numberOfLoadResult--;
             cachedBinarySize = sizeof(char);

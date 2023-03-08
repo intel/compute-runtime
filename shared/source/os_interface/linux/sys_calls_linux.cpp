@@ -8,14 +8,17 @@
 #include "shared/source/os_interface/linux/sys_calls.h"
 
 #include <cstdlib>
+#include <dirent.h>
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <iostream>
 #include <poll.h>
 #include <stdio.h>
+#include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/sysmacros.h>
+#include <sys/types.h>
 #include <unistd.h>
 
 namespace NEO {
@@ -42,6 +45,9 @@ int close(int fileDescriptor) {
 }
 int open(const char *file, int flags) {
     return ::open(file, flags);
+}
+int openWithMode(const char *file, int flags, int mode) {
+    return ::open(file, flags, mode);
 }
 int ioctl(int fileDescriptor, unsigned long int request, void *arg) {
     return ::ioctl(fileDescriptor, request, arg);
@@ -114,8 +120,36 @@ char *realpath(const char *path, char *buf) {
     return ::realpath(path, buf);
 }
 
+int stat(const std::string &filePath, struct stat *statbuf) {
+    return ::stat(filePath.c_str(), statbuf);
+}
+
 int pipe(int pipeFd[2]) {
     return ::pipe(pipeFd);
+}
+
+int mkstemp(char *filePath) {
+    return ::mkstemp(filePath);
+}
+
+int flock(int fd, int flag) {
+    return ::flock(fd, flag);
+}
+
+int rename(const char *currName, const char *dstName) {
+    return ::rename(currName, dstName);
+}
+
+int scandir(const char *dirp,
+            struct dirent ***namelist,
+            int (*filter)(const struct dirent *),
+            int (*compar)(const struct dirent **,
+                          const struct dirent **)) {
+    return ::scandir(dirp, namelist, filter, compar);
+}
+
+int unlink(const std::string &pathname) {
+    return ::unlink(pathname.c_str());
 }
 
 } // namespace SysCalls

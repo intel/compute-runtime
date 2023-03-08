@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/compiler_interface/default_cache_config.h"
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 
 #include "level_zero/core/source/compiler_interface/l0_reg_path.h"
@@ -24,6 +25,7 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
     std::unique_ptr<NEO::SettingsReader> settingsReader(NEO::SettingsReader::createOsReader(false, keyName));
     ret.cacheDir = settingsReader->getSetting(settingsReader->appSpecificLocation(keyName), static_cast<std::string>(L0_CACHE_LOCATION));
 
+    ret.cacheSize = MemoryConstants::gigaByte;
     ret.cacheFileExtension = ".l0_cache";
 
     return ret;

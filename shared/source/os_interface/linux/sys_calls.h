@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/os_interface/sys_calls_common.h"
 
+#include <dirent.h>
 #include <iostream>
 #include <poll.h>
 #include <sys/mman.h>
@@ -17,6 +18,7 @@ namespace NEO {
 namespace SysCalls {
 int close(int fileDescriptor);
 int open(const char *file, int flags);
+int openWithMode(const char *file, int flags, int mode);
 void *dlopen(const char *filename, int flag);
 int ioctl(int fileDescriptor, unsigned long int request, void *arg);
 int getDevicePath(int deviceFd, char *buf, size_t &bufSize);
@@ -33,6 +35,16 @@ ssize_t write(int fd, void *buf, size_t count);
 int fcntl(int fd, int cmd);
 int fcntl(int fd, int cmd, int arg);
 char *realpath(const char *path, char *buf);
+int stat(const std::string &filePath, struct stat *statbuf);
 int pipe(int pipefd[2]);
+int flock(int fd, int flag);
+int mkstemp(char *filePath);
+int rename(const char *currName, const char *dstName);
+int scandir(const char *dirp,
+            struct dirent ***namelist,
+            int (*filter)(const struct dirent *),
+            int (*compar)(const struct dirent **,
+                          const struct dirent **));
+int unlink(const std::string &pathname);
 } // namespace SysCalls
 } // namespace NEO

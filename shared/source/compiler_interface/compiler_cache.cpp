@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,7 @@
 
 namespace NEO {
 std::mutex CompilerCache::cacheAccessMtx;
+
 const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, const ArrayRef<const char> input,
                                                    const ArrayRef<const char> options, const ArrayRef<const char> internalOptions) {
     Hash hash;
@@ -108,21 +109,5 @@ const std::string CompilerCache::getCachedFileName(const HardwareInfo &hwInfo, c
 
 CompilerCache::CompilerCache(const CompilerCacheConfig &cacheConfig)
     : config(cacheConfig){};
-
-bool CompilerCache::cacheBinary(const std::string kernelFileHash, const char *pBinary, uint32_t binarySize) {
-    if (pBinary == nullptr || binarySize == 0) {
-        return false;
-    }
-    std::string filePath = config.cacheDir + PATH_SEPARATOR + kernelFileHash + config.cacheFileExtension;
-    std::lock_guard<std::mutex> lock(cacheAccessMtx);
-    return 0 != writeDataToFile(filePath.c_str(), pBinary, binarySize);
-}
-
-std::unique_ptr<char[]> CompilerCache::loadCachedBinary(const std::string kernelFileHash, size_t &cachedBinarySize) {
-    std::string filePath = config.cacheDir + PATH_SEPARATOR + kernelFileHash + config.cacheFileExtension;
-
-    std::lock_guard<std::mutex> lock(cacheAccessMtx);
-    return loadDataFromFile(filePath.c_str(), cachedBinarySize);
-}
 
 } // namespace NEO

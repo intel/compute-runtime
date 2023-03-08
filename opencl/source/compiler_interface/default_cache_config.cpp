@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,6 +7,7 @@
 
 #include "shared/source/compiler_interface/default_cache_config.h"
 
+#include "shared/source/helpers/constants.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 
 #include "opencl/source/os_interface/ocl_reg_path.h"
@@ -25,6 +26,7 @@ CompilerCacheConfig getDefaultCompilerCacheConfig() {
     std::unique_ptr<SettingsReader> settingsReader(SettingsReader::createOsReader(false, keyName));
     ret.cacheDir = settingsReader->getSetting(settingsReader->appSpecificLocation(keyName), static_cast<std::string>(CL_CACHE_LOCATION));
 
+    ret.cacheSize = MemoryConstants::gigaByte;
     ret.cacheFileExtension = ".cl_cache";
 
     return ret;

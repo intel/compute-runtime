@@ -17,11 +17,13 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
+#include <dirent.h>
 #include <dlfcn.h>
 #include <fcntl.h>
 #include <iostream>
 #include <poll.h>
 #include <string.h>
+#include <string_view>
 #include <sys/ioctl.h>
 #include <system_error>
 
@@ -40,6 +42,7 @@ bool allowFakeDevicePath = false;
 constexpr unsigned long int invalidIoctl = static_cast<unsigned long int>(-1);
 int setErrno = 0;
 int fstatFuncRetVal = 0;
+int flockRetVal = 0;
 uint32_t preadFuncCalled = 0u;
 uint32_t pwriteFuncCalled = 0u;
 bool isInvalidAILTest = false;
@@ -47,6 +50,12 @@ const char *drmVersion = "i915";
 int passedFileDescriptorFlagsToSet = 0;
 int getFileDescriptorFlagsCalled = 0;
 int setFileDescriptorFlagsCalled = 0;
+int unlinkCalled = 0;
+int scandirCalled = 0;
+int mkstempCalled = 0;
+int renameCalled = 0;
+int pathFileExistsCalled = 0;
+int flockCalled = 0;
 
 std::vector<void *> mmapVector(64);
 std::vector<void *> mmapCapturedExtendedPointers(64);
@@ -57,6 +66,8 @@ uint32_t mmapFuncCalled = 0u;
 uint32_t munmapFuncCalled = 0u;
 
 int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
+int (*sysCallsClose)(int fileDescriptor) = nullptr;
+int (*sysCallsOpenWithMode)(const char *pathname, int flags, int mode) = nullptr;
 ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset) = nullptr;
 ssize_t (*sysCallsPwrite)(int fd, const void *buf, size_t count, off_t offset) = nullptr;
 int (*sysCallsReadlink)(const char *path, char *buf, size_t bufsize) = nullptr;
@@ -67,6 +78,15 @@ ssize_t (*sysCallsWrite)(int fd, void *buf, size_t count) = nullptr;
 int (*sysCallsPipe)(int pipeFd[2]) = nullptr;
 int (*sysCallsFstat)(int fd, struct stat *buf) = nullptr;
 char *(*sysCallsRealpath)(const char *path, char *buf) = nullptr;
+int (*sysCallsRename)(const char *currName, const char *dstName);
+int (*sysCallsScandir)(const char *dirp,
+                       struct dirent ***namelist,
+                       int (*filter)(const struct dirent *),
+                       int (*compar)(const struct dirent **,
+                                     const struct dirent **)) = nullptr;
+int (*sysCallsUnlink)(const std::string &pathname) = nullptr;
+int (*sysCallsStat)(const std::string &filePath, struct stat *statbuf) = nullptr;
+int (*sysCallsMkstemp)(char *fileName) = nullptr;
 
 void exit(int code) {
     exitCalled = true;
@@ -89,6 +109,22 @@ int open(const char *file, int flags) {
         return 0;
     }
     if (strcmp(file, NEO_SHARED_TEST_FILES_DIR "/linux/by-path/pci-0000:00:02.0-render") == 0) {
+        return fakeFileDescriptor;
+    }
+    std::string_view configFile = file;
+    if (configFile.find("config.file") != configFile.npos) {
+        return fakeFileDescriptor;
+    }
+
+    return 0;
+}
+
+int openWithMode(const char *file, int flags, int mode) {
+    if (sysCallsOpenWithMode != nullptr) {
+        return sysCallsOpenWithMode(file, flags, mode);
+    }
+    std::string_view configFile = file;
+    if (configFile.find("config.file") != configFile.npos) {
         return fakeFileDescriptor;
     }
 
@@ -286,6 +322,67 @@ char *realpath(const char *path, char *buf) {
         return sysCallsRealpath(path, buf);
     }
     return nullptr;
+}
+
+int mkstemp(char *fileName) {
+    mkstempCalled++;
+
+    if (sysCallsMkstemp != nullptr) {
+        return sysCallsMkstemp(fileName);
+    }
+
+    return 0;
+}
+
+int flock(int fd, int flag) {
+    flockCalled++;
+
+    if (fd > 0 && flockRetVal == 0) {
+        return 0;
+    }
+
+    return -1;
+}
+int rename(const char *currName, const char *dstName) {
+    renameCalled++;
+
+    if (sysCallsRename != nullptr) {
+        return sysCallsRename(currName, dstName);
+    }
+
+    return 0;
+}
+
+int scandir(const char *dirp,
+            struct dirent ***namelist,
+            int (*filter)(const struct dirent *),
+            int (*compar)(const struct dirent **,
+                          const struct dirent **)) {
+    scandirCalled++;
+
+    if (sysCallsScandir != nullptr) {
+        return sysCallsScandir(dirp, namelist, filter, compar);
+    }
+
+    return 0;
+}
+
+int unlink(const std::string &pathname) {
+    unlinkCalled++;
+
+    if (sysCallsUnlink != nullptr) {
+        return sysCallsUnlink(pathname);
+    }
+
+    return 0;
+}
+
+int stat(const std::string &filePath, struct stat *statbuf) {
+    if (sysCallsStat != nullptr) {
+        return sysCallsStat(filePath, statbuf);
+    }
+
+    return 0;
 }
 
 } // namespace SysCalls
