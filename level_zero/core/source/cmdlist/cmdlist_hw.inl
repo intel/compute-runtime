@@ -80,8 +80,6 @@ CommandListCoreFamily<gfxCoreFamily>::~CommandListCoreFamily() {
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
-    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
-
     if (!NEO::ApiSpecificConfig::getBindlessConfiguration() && !this->stateBaseAddressTracking) {
         if (!this->isFlushTaskSubmissionEnabled) {
             programStateBaseAddress(commandContainer, false);
@@ -89,23 +87,8 @@ void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
     }
     commandContainer.setDirtyStateForAllHeaps(false);
 
-    if (this->stateComputeModeTracking) {
-        requiredStreamState.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->commandListPreemptionMode, rootDeviceEnvironment, true);
-        finalStreamState.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->commandListPreemptionMode, rootDeviceEnvironment, true);
-    }
-
-    requiredStreamState.frontEndState.setPropertiesDisableOverdispatchEngineInstanced(cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, rootDeviceEnvironment, true);
-    requiredStreamState.pipelineSelect.setPropertiesModeSelectedMediaSamplerClockGate(cmdListDefaultPipelineSelectModeSelected, cmdListDefaultMediaSamplerClockGate, rootDeviceEnvironment, true);
-    requiredStreamState.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, rootDeviceEnvironment, true);
-
-    finalStreamState.frontEndState.setPropertiesDisableOverdispatchEngineInstanced(cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, rootDeviceEnvironment, true);
-    finalStreamState.pipelineSelect.setPropertiesModeSelectedMediaSamplerClockGate(cmdListDefaultPipelineSelectModeSelected, cmdListDefaultMediaSamplerClockGate, rootDeviceEnvironment, true);
-    finalStreamState.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, rootDeviceEnvironment, true);
-
-    currentSurfaceStateBaseAddress = NEO::StreamProperty64::initValue;
-    currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;
-    currentIndirectObjectBaseAddress = NEO::StreamProperty64::initValue;
-    currentBindingTablePoolBaseAddress = NEO::StreamProperty64::initValue;
+    setStreamPropertiesDefaultSettings(requiredStreamState);
+    setStreamPropertiesDefaultSettings(finalStreamState);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

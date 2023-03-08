@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,11 +31,19 @@ struct CommandListImp : CommandList {
     virtual void appendMultiPartitionEpilogue() = 0;
 
     virtual NEO::LogicalStateHelper *getLogicalStateHelper() const { return nonImmediateLogicalStateHelper.get(); }
+    void setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties);
 
   protected:
     std::unique_ptr<NEO::LogicalStateHelper> nonImmediateLogicalStateHelper;
 
     ~CommandListImp() override = default;
+
+    static constexpr int32_t cmdListDefaultEngineInstancedDevice = NEO::StreamProperty::initValue;
+    static constexpr bool cmdListDefaultCoherency = false;
+    static constexpr bool cmdListDefaultDisableOverdispatch = true;
+    static constexpr bool cmdListDefaultPipelineSelectModeSelected = true;
+    static constexpr bool cmdListDefaultMediaSamplerClockGate = false;
+    static constexpr bool cmdListDefaultGlobalAtomics = false;
 };
 
 } // namespace L0

@@ -2215,6 +2215,7 @@ HWTEST_F(CommandListCreate, givenBindlessModeEnabledWhenCommandListsResetThenSba
 HWTEST_F(CommandListCreate, givenBindlessModeDisabledWhenCommandListsResetThenSbaReloaded) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(0);
+    DebugManager.flags.EnableStateBaseAddressTracking.set(0);
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily,

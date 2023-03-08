@@ -664,7 +664,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
                                                                                        streamPropertiesCopy, requiredStreamState, finalStreamState);
             linearStreamSizeEstimate += estimatePipelineSelectCmdSizeForMultipleCommandLists(streamPropertiesCopy, requiredStreamState, finalStreamState, gpgpuEnabledCopy);
             linearStreamSizeEstimate += estimateScmCmdSizeForMultipleCommandLists(streamPropertiesCopy, requiredStreamState, finalStreamState);
-            linearStreamSizeEstimate += estimateStateBaseAddressCmdSizeForMultipleCommandLists(baseAdresStateDirtyCopy, cmdList, streamPropertiesCopy, requiredStreamState, finalStreamState);
+            linearStreamSizeEstimate += estimateStateBaseAddressCmdSizeForMultipleCommandLists(baseAdresStateDirtyCopy, cmdList->getCmdListHeapAddressModel(), streamPropertiesCopy, requiredStreamState, finalStreamState);
         }
     }
 
@@ -1326,7 +1326,7 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForMultipleCommandLists(bool &baseAddressStateDirty,
-                                                                                             CommandList *commandList,
+                                                                                             NEO::HeapAddressModel commandListHeapAddressModel,
                                                                                              NEO::StreamProperties &csrStateCopy,
                                                                                              const NEO::StreamProperties &cmdListRequired,
                                                                                              const NEO::StreamProperties &cmdListFinal) {
@@ -1336,8 +1336,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForMultiple
 
     size_t estimatedSize = 0;
 
-    auto heapModel = commandList->getCmdListHeapAddressModel();
-    if (heapModel == NEO::HeapAddressModel::GlobalStateless) {
+    if (commandListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
         estimatedSize = estimateStateBaseAddressCmdSizeForGlobalStatelessCommandList(baseAddressStateDirty, csrStateCopy, cmdListRequired, cmdListFinal);
     } else {
         estimatedSize = estimateStateBaseAddressCmdSizeForPrivateHeapCommandList(baseAddressStateDirty, csrStateCopy, cmdListRequired, cmdListFinal);
@@ -1351,8 +1350,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForGlobalSt
                                                                                                    NEO::StreamProperties &csrStateCopy,
                                                                                                    const NEO::StreamProperties &cmdListRequired,
                                                                                                    const NEO::StreamProperties &cmdListFinal) {
-
-    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
     auto globalStatelessHeap = this->csr->getGlobalStatelessHeap();
 
     size_t estimatedSize = 0;
@@ -1361,7 +1359,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForGlobalSt
     csrStateCopy.stateBaseAddress.setPropertiesSurfaceState(-1, -1, globalStatelessHeap->getHeapGpuBase(), globalStatelessHeap->getHeapSizeInPages(), rootDeviceEnvironment);
     if (baseAddressStateDirty || csrStateCopy.stateBaseAddress.isDirty()) {
         bool useBtiCommand = csrStateCopy.stateBaseAddress.bindingTablePoolBaseAddress.value != NEO::StreamProperty64::initValue;
-        estimatedSize += estimateStateBaseAddressCmdDispatchSize(useBtiCommand);
+        estimatedSize = estimateStateBaseAddressCmdDispatchSize(useBtiCommand);
         baseAddressStateDirty = false;
     }
     csrStateCopy.stateBaseAddress.setProperties(cmdListFinal.stateBaseAddress);
@@ -1374,18 +1372,26 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForPrivateH
                                                                                                NEO::StreamProperties &csrStateCopy,
                                                                                                const NEO::StreamProperties &cmdListRequired,
                                                                                                const NEO::StreamProperties &cmdListFinal) {
-
-    auto singleSbaDispatchSize = estimateStateBaseAddressCmdDispatchSize(true);
     size_t estimatedSize = 0;
 
     csrStateCopy.stateBaseAddress.setProperties(cmdListRequired.stateBaseAddress);
     if (baseAddressStateDirty || csrStateCopy.stateBaseAddress.isDirty()) {
-        estimatedSize += singleSbaDispatchSize;
+        bool useBtiCommand = csrStateCopy.stateBaseAddress.bindingTablePoolBaseAddress.value != NEO::StreamProperty64::initValue;
+        estimatedSize = estimateStateBaseAddressCmdDispatchSize(useBtiCommand);
         baseAddressStateDirty = false;
     }
     csrStateCopy.stateBaseAddress.setProperties(cmdListFinal.stateBaseAddress);
 
     return estimatedSize;
+}
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressDebugTracking() {
+    size_t size = 0;
+    if (NEO::Debugger::isDebugEnabled(this->internalUsage) && this->device->getL0Debugger() != nullptr) {
+        const size_t trackedAddressesCount = 6;
+        size = this->device->getL0Debugger()->getSbaTrackingCommandsSize(trackedAddressesCount);
+    }
+    return size;
 }
 
 } // namespace L0

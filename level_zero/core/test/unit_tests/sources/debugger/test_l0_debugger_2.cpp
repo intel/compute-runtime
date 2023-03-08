@@ -35,6 +35,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionEnabledWhenCommandLi
 
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(true);
+    DebugManager.flags.EnableStateBaseAddressTracking.set(0);
 
     size_t usedSpaceBefore = 0;
     ze_command_queue_desc_t queueDesc = {};
@@ -64,6 +65,7 @@ HWTEST_P(L0DebuggerWithBlitterTest, givenFlushTaskSubmissionDisabledWhenCommandL
 
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.EnableFlushTaskSubmission.set(false);
+    DebugManager.flags.EnableStateBaseAddressTracking.set(0);
 
     size_t usedSpaceBefore = 0;
     ze_command_queue_desc_t queueDesc = {};

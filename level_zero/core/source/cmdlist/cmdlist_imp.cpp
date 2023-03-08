@@ -155,6 +155,7 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             commandList = nullptr;
             return commandList;
         }
+        commandList->setStreamPropertiesDefaultSettings(csr->getStreamProperties());
 
         auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, commandList->isCopyOnly(), internalUsage, returnValue);
         if (!commandQueue) {
@@ -178,6 +179,17 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
     }
 
     return commandList;
+}
+
+void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties) {
+    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
+    if (this->stateComputeModeTracking) {
+        streamProperties.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->commandListPreemptionMode, rootDeviceEnvironment, true);
+    }
+
+    streamProperties.frontEndState.setPropertiesDisableOverdispatchEngineInstanced(cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, rootDeviceEnvironment, true);
+    streamProperties.pipelineSelect.setPropertiesModeSelectedMediaSamplerClockGate(cmdListDefaultPipelineSelectModeSelected, cmdListDefaultMediaSamplerClockGate, rootDeviceEnvironment, true);
+    streamProperties.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, rootDeviceEnvironment, true);
 }
 
 } // namespace L0

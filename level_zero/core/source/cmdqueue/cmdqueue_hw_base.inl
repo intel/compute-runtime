@@ -104,10 +104,7 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdDispatch
     size_t size = sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) +
                   NEO::EncodeWA<GfxFamily>::getAdditionalPipelineSelectSize(*device->getNEODevice(), this->csr->isRcs());
 
-    if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() != nullptr) {
-        const size_t trackedAddressesCount = 6;
-        size += device->getL0Debugger()->getSbaTrackingCommandsSize(trackedAddressesCount);
-    }
+    size += estimateStateBaseAddressDebugTracking();
     return size;
 }
 

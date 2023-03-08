@@ -191,7 +191,7 @@ struct CommandQueueHw : public CommandQueueImp {
 
     inline size_t estimateStateBaseAddressCmdDispatchSize(bool bindingTableBaseAddress);
     inline size_t estimateStateBaseAddressCmdSizeForMultipleCommandLists(bool &baseAddressStateDirty,
-                                                                         CommandList *commandList,
+                                                                         NEO::HeapAddressModel commandListHeapAddressModel,
                                                                          NEO::StreamProperties &csrStateCopy,
                                                                          const NEO::StreamProperties &cmdListRequired,
                                                                          const NEO::StreamProperties &cmdListFinal);
@@ -203,6 +203,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                                                            NEO::StreamProperties &csrStateCopy,
                                                                            const NEO::StreamProperties &cmdListRequired,
                                                                            const NEO::StreamProperties &cmdListFinal);
+    inline size_t estimateStateBaseAddressDebugTracking();
 
     inline void programRequiredStateBaseAddressForCommandList(CommandListExecutionContext &ctx,
                                                               NEO::LinearStream &commandStream,

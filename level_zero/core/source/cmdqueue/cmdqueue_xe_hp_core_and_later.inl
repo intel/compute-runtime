@@ -130,6 +130,7 @@ inline size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdDispatch
     if (bindingTableBaseAddress) {
         size += sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
     }
+    size += estimateStateBaseAddressDebugTracking();
     return size;
 }
 

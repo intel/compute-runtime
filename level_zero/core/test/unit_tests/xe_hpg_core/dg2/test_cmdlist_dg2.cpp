@@ -23,6 +23,9 @@ using CommandListTests = Test<DeviceFixture>;
 HWTEST2_F(CommandListTests, givenDG2WithBSteppingWhenCreatingCommandListThenAdditionalStateBaseAddressCmdIsAdded, IsDG2) {
     using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
 
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableStateBaseAddressTracking.set(0);
+
     ze_result_t returnValue;
     auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
     const auto &productHelper = neoDevice->getProductHelper();

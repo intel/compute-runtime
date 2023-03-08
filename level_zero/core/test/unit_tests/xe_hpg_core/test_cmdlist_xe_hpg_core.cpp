@@ -32,6 +32,9 @@ using CommandListCreate = Test<DeviceFixture>;
 HWTEST2_F(CommandListCreate, WhenCreatingCommandListThenBindingTablePoolAllocAddedToBatchBuffer, IsXeHpgCore) {
     using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename FamilyType::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
 
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableStateBaseAddressTracking.set(0);
+
     ze_result_t returnValue;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     auto &commandContainer = commandList->getCmdContainer();

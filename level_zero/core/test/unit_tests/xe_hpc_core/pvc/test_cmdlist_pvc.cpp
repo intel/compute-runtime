@@ -83,18 +83,17 @@ PVCTEST_F(CommandListAppendBarrierXeHpcCore, givenCommandListWhenAppendingBarrie
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(commandList->commandContainer.getCommandStream()->getCpuBase(), 0), commandList->commandContainer.getCommandStream()->getUsed()));
 
-    // PC for STATE_BASE_ADDRESS from list initialization
-    auto itor = find<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-    itor++;
+    bool correctPcFound = false;
+    auto itorPcs = findAll<PIPE_CONTROL *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(0u, itorPcs.size());
+    for (auto &itor : itorPcs) {
+        auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*itor);
+        if (pipeControlCmd->getHdcPipelineFlush() && pipeControlCmd->getUnTypedDataPortCacheFlush()) {
+            correctPcFound = true;
+        }
+    }
 
-    // PC for appendBarrier
-    itor = find<PIPE_CONTROL *>(itor, cmdList.end());
-    EXPECT_NE(cmdList.end(), itor);
-
-    auto pipeControlCmd = reinterpret_cast<typename FamilyType::PIPE_CONTROL *>(*itor);
-    EXPECT_TRUE(pipeControlCmd->getHdcPipelineFlush());
-    EXPECT_TRUE(pipeControlCmd->getUnTypedDataPortCacheFlush());
+    EXPECT_TRUE(correctPcFound);
 }
 
 } // namespace ult

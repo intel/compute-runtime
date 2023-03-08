@@ -319,13 +319,6 @@ struct CommandListCoreFamily : CommandListImp {
     }
     void postInitComputeSetup();
     NEO::PreemptionMode obtainKernelPreemptionMode(Kernel *kernel);
-
-    static constexpr int32_t cmdListDefaultEngineInstancedDevice = NEO::StreamProperty::initValue;
-    static constexpr bool cmdListDefaultCoherency = false;
-    static constexpr bool cmdListDefaultDisableOverdispatch = true;
-    static constexpr bool cmdListDefaultPipelineSelectModeSelected = true;
-    static constexpr bool cmdListDefaultMediaSamplerClockGate = false;
-    static constexpr bool cmdListDefaultGlobalAtomics = false;
 };
 
 template <PRODUCT_FAMILY gfxProductFamily>

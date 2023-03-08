@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -68,6 +68,9 @@ XE_HPG_CORETEST_F(CommandQueueExecuteCommandListsXeHpgCore, WhenExecutingCmdList
 }
 
 XE_HPG_CORETEST_F(CommandQueueExecuteCommandListsXeHpgCore, WhenExecutingCmdListsThenStateBaseAddressForGeneralStateBaseAddressIsNotAdded) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.EnableStateBaseAddressTracking.set(0);
+
     const ze_command_queue_desc_t desc = {};
     ze_result_t returnValue;
     auto commandQueue = whiteboxCast(CommandQueue::create(
