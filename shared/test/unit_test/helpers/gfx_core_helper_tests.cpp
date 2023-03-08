@@ -1468,12 +1468,14 @@ HWTEST_F(ProductHelperCommonTest, givenPatIndexAndAllocationTypeWhenCallOverride
     EXPECT_EQ(patIndex, gfxCoreHelper.overridePatIndex(allocationType, patIndex));
 }
 HWTEST_F(ProductHelperCommonTest, givenHwHelperWhenIsFusedEuDisabledForDpasCalledThenFalseReturned) {
+    auto hwInfo = *defaultHwInfo;
     auto &gfxCoreHelper = getHelper<ProductHelper>();
-    EXPECT_FALSE(gfxCoreHelper.isFusedEuDisabledForDpas(true, nullptr, nullptr));
+    EXPECT_FALSE(gfxCoreHelper.isFusedEuDisabledForDpas(true, nullptr, nullptr, hwInfo));
 }
 HWTEST_F(ProductHelperCommonTest, givenProductHelperWhenCallingIsCalculationForDisablingEuFusionWithDpasNeededThenFalseReturned) {
+    auto hwInfo = *defaultHwInfo;
     auto &gfxCoreHelper = getHelper<ProductHelper>();
-    EXPECT_FALSE(gfxCoreHelper.isCalculationForDisablingEuFusionWithDpasNeeded());
+    EXPECT_FALSE(gfxCoreHelper.isCalculationForDisablingEuFusionWithDpasNeeded(hwInfo));
 }
 HWTEST_F(GfxCoreHelperTest, GivenCooperativeEngineSupportedAndNotUsedWhenAdjustMaxWorkGroupCountIsCalledThenSmallerValueIsReturned) {
 

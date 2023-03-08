@@ -857,7 +857,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     uint32_t lws[3] = {static_cast<uint32_t>(multiDispatchInfo.begin()->getLocalWorkgroupSize().x), static_cast<uint32_t>(multiDispatchInfo.begin()->getLocalWorkgroupSize().y), static_cast<uint32_t>(multiDispatchInfo.begin()->getLocalWorkgroupSize().z)};
     uint32_t groupCount[3] = {static_cast<uint32_t>(multiDispatchInfo.begin()->getNumberOfWorkgroups().x), static_cast<uint32_t>(multiDispatchInfo.begin()->getNumberOfWorkgroups().y), static_cast<uint32_t>(multiDispatchInfo.begin()->getNumberOfWorkgroups().z)};
     dispatchFlags.disableEUFusion = kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.requiresDisabledEUFusion ||
-                                    device->getProductHelper().isFusedEuDisabledForDpas(systolicPipelineSelectMode, lws, groupCount);
+                                    device->getProductHelper().isFusedEuDisabledForDpas(systolicPipelineSelectMode, lws, groupCount, this->getDevice().getHardwareInfo());
 
     const bool isHandlingBarrier = isStallingCommandsOnNextFlushRequired();
 

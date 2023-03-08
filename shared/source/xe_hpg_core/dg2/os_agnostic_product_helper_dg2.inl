@@ -233,8 +233,9 @@ std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStre
     return aub_stream::ProductFamily::Dg2;
 };
 template <>
-bool ProductHelperHw<gfxProduct>::isFusedEuDisabledForDpas(bool kernelHasDpasInstructions, const uint32_t *lws, const uint32_t *groupCount) const {
-    if (!kernelHasDpasInstructions) {
+bool ProductHelperHw<gfxProduct>::isFusedEuDisabledForDpas(bool kernelHasDpasInstructions, const uint32_t *lws, const uint32_t *groupCount, const HardwareInfo &hwInfo) const {
+    auto isAcm = DG2::isG10(hwInfo) || DG2::isG11(hwInfo) || DG2::isG12(hwInfo);
+    if (!kernelHasDpasInstructions || !isAcm) {
         return false;
     } else if (lws == nullptr) {
         return true;
@@ -250,8 +251,8 @@ bool ProductHelperHw<gfxProduct>::isFusedEuDisabledForDpas(bool kernelHasDpasIns
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isCalculationForDisablingEuFusionWithDpasNeeded() const {
-    return true;
+bool ProductHelperHw<gfxProduct>::isCalculationForDisablingEuFusionWithDpasNeeded(const HardwareInfo &hwInfo) const {
+    return DG2::isG10(hwInfo) || DG2::isG11(hwInfo) || DG2::isG12(hwInfo);
 }
 template <>
 bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {

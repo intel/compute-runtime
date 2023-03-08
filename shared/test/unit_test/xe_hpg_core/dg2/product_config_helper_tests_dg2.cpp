@@ -42,51 +42,105 @@ DG2TEST_F(ProductConfigHelperDg2Tests, givenXeHpgReleaseWhenSearchForDeviceAcron
     EXPECT_TRUE(std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(AOT::XE_HPG_RELEASE)));
 }
 DG2TEST_F(ProductHelperTestDg2, givenNoDpasInstructionInKernelHelperWhenCheckingIfEuFusionShouldBeDisabledThenFalseReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
     const uint32_t lws[3] = {1, 1, 1};
     const uint32_t groupCount[3] = {5, 3, 1};
     bool dpasInstruction = false;
-    EXPECT_FALSE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, lws, groupCount));
+    EXPECT_FALSE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, lws, groupCount, hwInfo));
 }
-DG2TEST_F(ProductHelperTestDg2, givenDpasInstructionLwsAndGroupCountIsNullPtrInKernelHelperWhenCheckingIfEuFusionShouldBeDisabledThenTrueReturned) {
-    bool dpasInstruction = true;
-    EXPECT_TRUE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, nullptr, nullptr));
-}
-DG2TEST_F(ProductHelperTestDg2, givenDpasInstructionLwsIsNullPtrInKernelHelperWhenCheckingIfEuFusionShouldBeDisabledThenTrueReturned) {
+
+DG2TEST_F(ProductHelperTestDg2, givenDpasInstructionAndG10Dg2DeviceWhenCheckingIfEuFusionShouldBeDisabledThenTrueReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.platform.usDeviceID = *dg2G10DeviceIds.begin();
     bool dpasInstruction = true;
     const uint32_t groupCount[3] = {5, 3, 1};
-    EXPECT_TRUE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, nullptr, groupCount));
+    EXPECT_TRUE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, nullptr, groupCount, hwInfo));
+}
+DG2TEST_F(ProductHelperTestDg2, givenDpasInstructionAndG11Dg2DeviceWhenCheckingIfEuFusionShouldBeDisabledThenTrueReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.platform.usDeviceID = *dg2G11DeviceIds.begin();
+    bool dpasInstruction = true;
+    const uint32_t groupCount[3] = {5, 3, 1};
+    EXPECT_TRUE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, nullptr, groupCount, hwInfo));
+}
+DG2TEST_F(ProductHelperTestDg2, givenDpasInstructionAndG12Dg2DeviceWhenCheckingIfEuFusionShouldBeDisabledThenTrueReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.platform.usDeviceID = *dg2G12DeviceIds.begin();
+    bool dpasInstruction = true;
+    const uint32_t groupCount[3] = {5, 3, 1};
+    EXPECT_TRUE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, nullptr, groupCount, hwInfo));
+}
+DG2TEST_F(ProductHelperTestDg2, givenDpasInstructionAndNotAcmDeviceWhenCheckingIfEuFusionShouldBeDisabledThenFalseReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.platform.usDeviceID = 0x1234;
+    bool dpasInstruction = true;
+    const uint32_t groupCount[3] = {5, 3, 1};
+    EXPECT_FALSE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, nullptr, groupCount, hwInfo));
+}
+DG2TEST_F(ProductHelperTestDg2, givenDpasInstructionLwsAndGroupCountIsNullPtrInKernelHelperWhenCheckingIfEuFusionShouldBeDisabledThenTrueReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    bool dpasInstruction = true;
+    EXPECT_TRUE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, nullptr, nullptr, hwInfo));
+}
+DG2TEST_F(ProductHelperTestDg2, givenDpasInstructionLwsIsNullPtrInKernelHelperWhenCheckingIfEuFusionShouldBeDisabledThenTrueReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    bool dpasInstruction = true;
+    const uint32_t groupCount[3] = {5, 3, 1};
+    EXPECT_TRUE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, nullptr, groupCount, hwInfo));
 }
 DG2TEST_F(ProductHelperTestDg2, givenDpasInstructionGroupCountIsNullPtrInKernelHelperWhenCheckingIfEuFusionShouldBeDisabledThenTrueReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
     bool dpasInstruction = true;
     const uint32_t lws[3] = {1, 1, 1};
-    EXPECT_TRUE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, lws, nullptr));
+    EXPECT_TRUE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, lws, nullptr, hwInfo));
 }
 DG2TEST_F(ProductHelperTestDg2, givenDpasInstructionLwsAndLwsIsOddWhenCheckingIfEuFusionShouldBeDisabledThenTrueReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
     const uint32_t lws[3] = {7, 3, 1};
     const uint32_t groupCount[3] = {2, 1, 1};
     bool dpasInstruction = true;
-    EXPECT_TRUE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, lws, groupCount));
+    EXPECT_TRUE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, lws, groupCount, hwInfo));
 }
 DG2TEST_F(ProductHelperTestDg2, givenDpasInstructionLwsAndLwsIsNoOddWhenCheckingIfEuFusionShouldBeDisabledThenFalseReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
     const uint32_t lws[3] = {8, 3, 1};
     const uint32_t groupCount[3] = {2, 1, 1};
     bool dpasInstruction = true;
-    EXPECT_FALSE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, lws, groupCount));
+    EXPECT_FALSE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, lws, groupCount, hwInfo));
 }
 DG2TEST_F(ProductHelperTestDg2, givenDpasInstructionLwsAndLwsIsOneAndXGroupCountIsOddWhenCheckingIfEuFusionShouldBeDisabledThenFalseReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
     const uint32_t lws[3] = {1, 1, 1};
     const uint32_t groupCount[3] = {5, 1, 1};
     bool dpasInstruction = true;
-    EXPECT_TRUE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, lws, groupCount));
+    EXPECT_TRUE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, lws, groupCount, hwInfo));
 }
 DG2TEST_F(ProductHelperTestDg2, givenDpasInstructionLwsAndLwsIsOneAndXGroupCountIsNoOddWhenCheckingIfEuFusionShouldBeDisabledThenFalseReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
     const uint32_t lws[3] = {1, 1, 1};
     const uint32_t groupCount[3] = {4, 1, 1};
     bool dpasInstruction = true;
-    EXPECT_FALSE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, lws, groupCount));
+    EXPECT_FALSE(productHelper->isFusedEuDisabledForDpas(dpasInstruction, lws, groupCount, hwInfo));
 }
-DG2TEST_F(ProductHelperTestDg2, givenDg2ProductHelperWhenCallingIsCalculationForDisablingEuFusionWithDpasNeededThenTrueReturned) {
-    EXPECT_TRUE(productHelper->isCalculationForDisablingEuFusionWithDpasNeeded());
+DG2TEST_F(ProductHelperTestDg2, givenG10Dg2ProductHelperWhenCallingIsCalculationForDisablingEuFusionWithDpasNeededThenTrueReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.platform.usDeviceID = *dg2G10DeviceIds.begin();
+    EXPECT_TRUE(productHelper->isCalculationForDisablingEuFusionWithDpasNeeded(hwInfo));
+}
+DG2TEST_F(ProductHelperTestDg2, givenG11Dg2ProductHelperWhenCallingIsCalculationForDisablingEuFusionWithDpasNeededThenTrueReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.platform.usDeviceID = *dg2G11DeviceIds.begin();
+    EXPECT_TRUE(productHelper->isCalculationForDisablingEuFusionWithDpasNeeded(hwInfo));
+}
+DG2TEST_F(ProductHelperTestDg2, givenG12Dg2ProductHelperWhenCallingIsCalculationForDisablingEuFusionWithDpasNeededThenTrueReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.platform.usDeviceID = *dg2G12DeviceIds.begin();
+    EXPECT_TRUE(productHelper->isCalculationForDisablingEuFusionWithDpasNeeded(hwInfo));
+}
+DG2TEST_F(ProductHelperTestDg2, givenNotACMProductHelperWhenCallingIsCalculationForDisablingEuFusionWithDpasNeededThenFalseReturned) {
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.platform.usDeviceID = 0x1234;
+    EXPECT_FALSE(productHelper->isCalculationForDisablingEuFusionWithDpasNeeded(hwInfo));
 }
 
 DG2TEST_F(ProductHelperTestDg2, whenGettingAubstreamProductFamilyThenProperEnumValueIsReturned) {

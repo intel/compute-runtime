@@ -2402,7 +2402,7 @@ inline bool getFusedEuDisabled(Kernel &kernel, Device *device, const ze_group_co
 
     bool fusedEuDisabled = kernelAttributes.flags.requiresDisabledEUFusion;
     auto &productHelper = device->getProductHelper();
-    if (productHelper.isCalculationForDisablingEuFusionWithDpasNeeded()) {
+    if (productHelper.isCalculationForDisablingEuFusionWithDpasNeeded(device->getHwInfo())) {
         if (threadGroupDimensions) {
             uint32_t *groupCountPtr = nullptr;
             uint32_t groupCount[3] = {};
@@ -2412,7 +2412,7 @@ inline bool getFusedEuDisabled(Kernel &kernel, Device *device, const ze_group_co
                 groupCount[2] = threadGroupDimensions->groupCountZ;
                 groupCountPtr = groupCount;
             }
-            fusedEuDisabled |= productHelper.isFusedEuDisabledForDpas(kernelAttributes.flags.usesSystolicPipelineSelectMode, kernel.getGroupSize(), groupCountPtr);
+            fusedEuDisabled |= productHelper.isFusedEuDisabledForDpas(kernelAttributes.flags.usesSystolicPipelineSelectMode, kernel.getGroupSize(), groupCountPtr, device->getHwInfo());
         }
     }
     return fusedEuDisabled;
