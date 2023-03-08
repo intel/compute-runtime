@@ -15,30 +15,6 @@ namespace NEO {
 
 static EnableAIL<IGFX_DG2> enableAILDG2;
 
-std::map<std::string_view, std::vector<AILEnumeration>> applicationMapDG2 = {
-    {"Wondershare Filmora 11", {AILEnumeration::DISABLE_BLITTER}}, // Blitter is disabled as a temporary mitigation of high GPU utilization
-    {"perf_check", {AILEnumeration::DISABLE_BLITTER}},             // perf_check
-    {"tlb_player_gui", {AILEnumeration::DISABLE_BLITTER}},         // and tlb_player_gui are part of Wondershare Filmora 11
-    {"Wondershare Filmora", {AILEnumeration::DISABLE_BLITTER}}     // From version 12 Wondershare Filmora drops version number from process name
-};
-
-template <>
-inline void AILConfigurationHw<IGFX_DG2>::applyExt(RuntimeCapabilityTable &runtimeCapabilityTable) {
-    auto search = applicationMapDG2.find(processName);
-
-    if (search != applicationMapDG2.end()) {
-        for (size_t i = 0; i < search->second.size(); ++i) {
-            switch (search->second[i]) {
-            case AILEnumeration::DISABLE_BLITTER:
-                runtimeCapabilityTable.blitterOperationsSupported = false;
-                break;
-            default:
-                break;
-            }
-        }
-    }
-}
-
 struct ApplicationKernelFixDg2 {
     std::string_view applicationName;
     std::string_view kernelName;
@@ -67,27 +43,6 @@ void AILConfigurationHw<IGFX_DG2>::modifyKernelIfRequired(std::string &kernelsSo
             kernelsSources.insert(it->fixStartPosition, it->fixCode);
         }
     }
-}
-
-template <>
-inline bool AILConfigurationHw<IGFX_DG2>::isFallbackToPatchtokensRequired(const std::string &kernelSources) {
-    std::string_view dummyKernelSource{"kernel void _(){}"};
-    if (sourcesContain(kernelSources, dummyKernelSource)) {
-        return true;
-    }
-
-    for (const auto &name : {"Wondershare Filmora 11",
-                             "perf_check",
-                             "tlb_player_gui",
-                             "Wondershare Filmora",
-                             "Resolve",
-                             "ArcControlAssist",
-                             "ArcControl"}) {
-        if (processName == name) {
-            return true;
-        }
-    }
-    return false;
 }
 
 template class AILConfigurationHw<IGFX_DG2>;

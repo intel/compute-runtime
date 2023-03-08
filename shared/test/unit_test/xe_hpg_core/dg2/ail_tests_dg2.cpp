@@ -14,50 +14,6 @@ namespace NEO {
 
 using AILTestsDg2 = ::testing::Test;
 
-HWTEST2_F(AILTestsDg2, givenApplicationNamesThatRequireAILWhenApplyExtThenCorrectCapIsChanged, IsDG2) {
-    class AILMock : public AILConfigurationHw<productFamily> {
-      public:
-        using AILConfiguration::processName;
-    };
-
-    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
-    AILMock ail;
-    ailConfigurationTable[productFamily] = &ail;
-
-    for (auto name : {"perf_check",
-                      "tlb_player_gui",
-                      "Wondershare Filmora",
-                      "Wondershare Filmora 11"}) {
-        ail.processName = name;
-
-        ail.applyExt(defaultHwInfo->capabilityTable);
-
-        EXPECT_FALSE(defaultHwInfo->capabilityTable.blitterOperationsSupported);
-    }
-}
-
-HWTEST2_F(AILTestsDg2, givenApplicationNamesThatRequirAILWhenCheckingIfPatchtokenFallbackIsRequiredThenIsCorrectResult, IsDG2) {
-    class AILMock : public AILConfigurationHw<productFamily> {
-      public:
-        using AILConfiguration::processName;
-    };
-
-    VariableBackup<AILConfiguration *> ailConfigurationBackup(&ailConfigurationTable[productFamily]);
-    AILMock ail;
-    ailConfigurationTable[productFamily] = &ail;
-
-    for (const auto &name : {"perf_check",
-                             "tlb_player_gui",
-                             "Wondershare Filmora",
-                             "Wondershare Filmora 11",
-                             "Resolve",
-                             "ArcControlAssist",
-                             "ArcControl"}) {
-        ail.processName = name;
-        EXPECT_TRUE(ail.isFallbackToPatchtokensRequired(""));
-    }
-}
-
 HWTEST2_F(AILTestsDg2, givenFixesForApplicationsWhenModifyKernelIfRequiredIsCalledThenReturnCorrectResults, IsDG2) {
 
     class AILMock : public AILConfigurationHw<productFamily> {
