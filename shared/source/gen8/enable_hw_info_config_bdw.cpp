@@ -11,6 +11,6 @@
 
 namespace NEO {
 
-static EnableProductProductHelper<IGFX_BROADWELL> enableBDW;
+static EnableProductHelper<IGFX_BROADWELL> enableBDW;
 
 } // namespace NEO

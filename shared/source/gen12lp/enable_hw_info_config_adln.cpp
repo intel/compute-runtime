@@ -12,6 +12,6 @@
 
 namespace NEO {
 
-static EnableProductProductHelper<IGFX_ALDERLAKE_N> enableADLN;
+static EnableProductHelper<IGFX_ALDERLAKE_N> enableADLN;
 
 } // namespace NEO

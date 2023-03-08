@@ -11,6 +11,6 @@
 
 namespace NEO {
 
-static EnableProductProductHelper<IGFX_BROXTON> enableBXT;
+static EnableProductHelper<IGFX_BROXTON> enableBXT;
 
 } // namespace NEO

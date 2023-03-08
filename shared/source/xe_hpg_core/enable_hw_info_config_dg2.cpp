@@ -11,6 +11,6 @@
 
 namespace NEO {
 
-static EnableProductProductHelper<IGFX_DG2> enableDG2;
+static EnableProductHelper<IGFX_DG2> enableDG2;
 
 } // namespace NEO

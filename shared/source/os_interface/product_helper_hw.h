@@ -176,11 +176,11 @@ class ProductHelperHw : public ProductHelper {
 };
 
 template <PRODUCT_FAMILY gfxProduct>
-struct EnableProductProductHelper {
+struct EnableProductHelper {
 
     using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
 
-    EnableProductProductHelper() {
+    EnableProductHelper() {
         auto productHelperCreateFunction = ProductHelperHw<gfxProduct>::create;
         productHelperFactory[gfxProduct] = productHelperCreateFunction;
     }

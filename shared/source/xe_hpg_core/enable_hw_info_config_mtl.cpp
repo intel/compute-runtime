@@ -11,6 +11,6 @@
 
 namespace NEO {
 
-static EnableProductProductHelper<IGFX_METEORLAKE> enableMTL;
+static EnableProductHelper<IGFX_METEORLAKE> enableMTL;
 
 } // namespace NEO

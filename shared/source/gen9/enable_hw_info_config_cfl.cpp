@@ -11,6 +11,6 @@
 
 namespace NEO {
 
-static EnableProductProductHelper<IGFX_COFFEELAKE> enableCFL;
+static EnableProductHelper<IGFX_COFFEELAKE> enableCFL;
 
 } // namespace NEO

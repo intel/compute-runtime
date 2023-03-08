@@ -11,6 +11,6 @@
 
 namespace NEO {
 
-static EnableProductProductHelper<IGFX_XE_HP_SDV> enableXEHP;
+static EnableProductHelper<IGFX_XE_HP_SDV> enableXEHP;
 
 } // namespace NEO
