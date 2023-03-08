@@ -211,6 +211,8 @@ class BufferObject {
     uint32_t getOsContextId(OsContext *osContext);
     std::vector<std::array<bool, EngineLimits::maxHandleCount>> bindInfo;
 
+    bool isChunked = false;
+
   protected:
     MOCKABLE_VIRTUAL MemoryOperationsStatus evictUnusedAllocations(bool waitForCompletion, bool isLockNeeded);
 

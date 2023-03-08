@@ -61,6 +61,35 @@ TEST(DrmVmBindTest, givenBoRequiringExplicitResidencyWhenBindingThenMakeResident
     }
 }
 
+TEST(DrmVmBindTest,
+     givenBoWithChunkingRequiringExplicitResidencyWhenBindingThenMakeResidentFlagIsNotPassedAndUserFenceIsSetup) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.pageFaultSupported = true;
+
+    for (auto requireResidency : {false, true}) {
+        MockBufferObject bo(0, &drm, 3, 0, 0, 1);
+        bo.isChunked = true;
+        bo.requireExplicitResidency(requireResidency);
+
+        OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+        osContext.ensureContextInitialized();
+        uint32_t vmHandleId = 0;
+        bo.bind(&osContext, vmHandleId);
+
+        if (requireResidency) {
+            EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag(), drm.context.receivedVmBind->flags);
+            ASSERT_TRUE(drm.context.receivedVmBindUserFence);
+            EXPECT_EQ(castToUint64(drm.getFenceAddr(vmHandleId)), drm.context.receivedVmBindUserFence->addr);
+            EXPECT_EQ(drm.fenceVal[vmHandleId], drm.context.receivedVmBindUserFence->val);
+        } else {
+            EXPECT_EQ(DrmPrelimHelper::getImmediateVmBindFlag(), drm.context.receivedVmBind->flags);
+        }
+    }
+}
+
 TEST(DrmVmBindTest, givenPerContextVmsAndBoRequiringExplicitResidencyWhenBindingThenPagingFenceFromContextIsUsed) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();

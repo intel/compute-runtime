@@ -54,6 +54,10 @@ MemoryOperationsStatus DrmMemoryOperationsHandlerBind::makeResidentWithinOsConte
             auto drmAllocation = static_cast<DrmAllocation *>(*gfxAllocation);
             auto bo = drmAllocation->storageInfo.getNumBanks() > 1 ? drmAllocation->getBOs()[drmIterator] : drmAllocation->getBO();
 
+            if (drmAllocation->storageInfo.isChunked) {
+                bo = drmAllocation->getBO();
+            }
+
             if (!bo->bindInfo[bo->getOsContextId(osContext)][drmIterator]) {
                 int result = drmAllocation->makeBOsResident(osContext, drmIterator, nullptr, true);
                 if (result) {

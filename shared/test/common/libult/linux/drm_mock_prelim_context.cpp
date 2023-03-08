@@ -52,6 +52,10 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
             setPairQueryCalled++;
             *gp->value = setPairQueryValue;
             return setPairQueryReturn;
+        } else if (gp->param == PRELIM_I915_PARAM_HAS_CHUNK_SIZE) {
+            chunkingQueryCalled++;
+            *gp->value = chunkingQueryValue;
+            return chunkingQueryReturn;
         }
     } break;
     case DrmIoctl::GemContextGetparam: {

@@ -235,7 +235,8 @@ HWTEST2_F(MemoryInfoTest, givenMemoryInfoWithRegionsWhenCreatingGemWithExtension
 
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {regionInfo[0].region, regionInfo[1].region};
-    auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, {}, -1);
+    uint32_t numOfChunks = 0;
+    auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, {}, -1, false, numOfChunks);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);

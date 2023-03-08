@@ -22,11 +22,15 @@ bool IoctlHelperUpstream::isSetPairAvailable() {
     return false;
 }
 
+bool IoctlHelperUpstream::isChunkingAvailable() {
+    return false;
+}
+
 bool IoctlHelperUpstream::isVmBindAvailable() {
     return false;
 }
 
-int IoctlHelperUpstream::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
+int IoctlHelperUpstream::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
     std::vector<drm_i915_gem_memory_class_instance> regions(regionsSize);
     for (uint32_t i = 0; i < regionsSize; i++) {
@@ -91,6 +95,10 @@ std::optional<MemoryClassInstance> IoctlHelperUpstream::getPreferredLocationRegi
 }
 
 bool IoctlHelperUpstream::setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) {
+    return true;
+}
+
+bool IoctlHelperUpstream::setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) {
     return true;
 }
 

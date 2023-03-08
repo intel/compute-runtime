@@ -161,6 +161,8 @@ class Drm : public DriverModel {
 
     MOCKABLE_VIRTUAL bool isSetPairAvailable();
     MOCKABLE_VIRTUAL bool getSetPairAvailable() { return setPairAvailable; }
+    MOCKABLE_VIRTUAL bool isChunkingAvailable();
+    MOCKABLE_VIRTUAL bool getChunkingAvailable() { return chunkingAvailable; }
 
     MOCKABLE_VIRTUAL bool useVMBindImmediate() const;
 
@@ -334,6 +336,7 @@ class Drm : public DriverModel {
 
     std::once_flag checkBindOnce;
     std::once_flag checkSetPairOnce;
+    std::once_flag checkChunkingOnce;
     std::once_flag checkCompletionFenceOnce;
 
     RootDeviceEnvironment &rootDeviceEnvironment;
@@ -346,6 +349,7 @@ class Drm : public DriverModel {
     bool bindAvailable = false;
     bool directSubmissionActive = false;
     bool setPairAvailable = false;
+    bool chunkingAvailable = false;
     bool contextDebugSupported = false;
     bool pageFaultSupported = false;
     bool completionFenceSupported = false;

@@ -252,6 +252,10 @@ bool IoctlHelperXe::isSetPairAvailable() {
     return false;
 }
 
+bool IoctlHelperXe::isChunkingAvailable() {
+    return false;
+}
+
 bool IoctlHelperXe::isVmBindAvailable() {
     return true;
 }
@@ -365,7 +369,7 @@ std::unique_ptr<MemoryInfo> IoctlHelperXe::createMemoryInfo() {
     return std::make_unique<MemoryInfo>(regionsContainer, drm);
 }
 
-int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
+int IoctlHelperXe::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
     struct drm_xe_gem_create create = {};
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
 
@@ -480,6 +484,10 @@ std::optional<MemoryClassInstance> IoctlHelperXe::getPreferredLocationRegion(Pre
 
 bool IoctlHelperXe::setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
+    return false;
+}
+
+bool IoctlHelperXe::setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) {
     return false;
 }
 

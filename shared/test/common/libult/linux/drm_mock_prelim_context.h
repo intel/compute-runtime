@@ -112,6 +112,10 @@ struct DrmMockPrelimContext {
     int vmBindQueryValue{0};
     int vmBindQueryReturn{0};
 
+    size_t chunkingQueryCalled{0};
+    int chunkingQueryValue{0};
+    int chunkingQueryReturn{0};
+
     size_t vmBindCalled{0};
     std::optional<VmBindParams> receivedVmBind{};
     std::optional<UserFenceVmBindExt> receivedVmBindUserFence{};

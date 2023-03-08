@@ -70,3 +70,11 @@ TEST(DrmBindTest, whenCheckingSetPairAvailabilityThenIoctlHelperSupportIsUsed) {
 
     EXPECT_EQ(drm.isSetPairAvailable(), drm.getIoctlHelper()->isSetPairAvailable());
 }
+
+TEST(DrmBindTest, whenCheckingChunkingAvailabilityThenIoctlHelperSupportIsUsed) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.callBaseIsChunkingAvailable = true;
+
+    EXPECT_EQ(drm.isChunkingAvailable(), drm.getIoctlHelper()->isChunkingAvailable());
+}

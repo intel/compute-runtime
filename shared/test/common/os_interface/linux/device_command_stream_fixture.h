@@ -121,11 +121,20 @@ class DrmMockCustom : public Drm {
         uint32_t called = 0u;
     };
 
+    struct IsChunkingAvailableCall {
+        bool callParent = true;
+        bool returnValue = true;
+        uint32_t called = 0u;
+    };
+
     DrmMockCustom(RootDeviceEnvironment &rootDeviceEnvironment);
 
     int waitUserFence(uint32_t ctxId, uint64_t address, uint64_t value, ValueWidth dataWidth, int64_t timeout, uint16_t flags) override;
 
     bool getSetPairAvailable() override;
+
+    bool getChunkingAvailable() override;
+    bool isChunkingAvailable() override;
 
     bool isVmBindAvailable() override;
 
@@ -170,6 +179,9 @@ class DrmMockCustom : public Drm {
     WaitUserFenceCall waitUserFenceCall{};
     IsVmBindAvailableCall getSetPairAvailableCall{};
     IsVmBindAvailableCall isVmBindAvailableCall{};
+
+    IsChunkingAvailableCall getChunkingAvailableCall{};
+    IsChunkingAvailableCall isChunkingAvailableCall{};
 
     std::atomic<int> ioctlRes;
     std::atomic<IoctlResExt *> ioctlResExt;
@@ -224,6 +236,7 @@ class DrmMockCustom : public Drm {
     uint64_t createExtSize = 0;
     uint32_t createExtHandle = 0;
     uint64_t createExtExtensions = 0;
+    bool failOnCreateExt = false;
 
     uint32_t vmIdToCreate = 0;
 

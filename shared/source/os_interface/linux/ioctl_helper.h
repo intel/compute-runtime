@@ -75,8 +75,9 @@ class IoctlHelper {
 
     virtual bool initialize() = 0;
     virtual bool isSetPairAvailable() = 0;
+    virtual bool isChunkingAvailable() = 0;
     virtual bool isVmBindAvailable() = 0;
-    virtual int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) = 0;
+    virtual int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) = 0;
     virtual CacheRegion closAlloc() = 0;
     virtual uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) = 0;
     virtual CacheRegion closFree(CacheRegion closIndex) = 0;
@@ -86,6 +87,7 @@ class IoctlHelper {
     virtual uint32_t getPreferredLocationAdvise() = 0;
     virtual std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) = 0;
     virtual bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) = 0;
+    virtual bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) = 0;
     virtual bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) = 0;
     virtual uint32_t getDirectSubmissionFlag() = 0;
     virtual std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) = 0;
@@ -159,8 +161,9 @@ class IoctlHelperUpstream : public IoctlHelper {
 
     bool initialize() override;
     bool isSetPairAvailable() override;
+    bool isChunkingAvailable() override;
     bool isVmBindAvailable() override;
-    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) override;
     CacheRegion closAlloc() override;
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(CacheRegion closIndex) override;
@@ -170,6 +173,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     uint32_t getPreferredLocationAdvise() override;
     std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
+    bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) override;
     bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override;
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;
@@ -215,7 +219,7 @@ class IoctlHelperImpl : public IoctlHelperUpstream {
         return std::make_unique<IoctlHelperImpl<gfxProduct>>(drm);
     }
 
-    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) override;
     std::vector<MemoryRegion> translateToMemoryRegions(const std::vector<uint8_t> &regionInfo) override;
     unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
@@ -227,8 +231,9 @@ class IoctlHelperPrelim20 : public IoctlHelper {
 
     bool initialize() override;
     bool isSetPairAvailable() override;
+    bool isChunkingAvailable() override;
     bool isVmBindAvailable() override;
-    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) override;
+    int createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) override;
     CacheRegion closAlloc() override;
     uint16_t closAllocWays(CacheRegion closIndex, uint16_t cacheLevel, uint16_t numWays) override;
     CacheRegion closFree(CacheRegion closIndex) override;
@@ -238,6 +243,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     uint32_t getPreferredLocationAdvise() override;
     std::optional<MemoryClassInstance> getPreferredLocationRegion(PreferredLocation memoryLocation, uint32_t memoryInstance) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
+    bool setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) override;
     bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override;
     uint32_t getDirectSubmissionFlag() override;
     std::unique_ptr<uint8_t[]> prepareVmBindExt(const StackVec<uint32_t, 2> &bindExtHandles) override;

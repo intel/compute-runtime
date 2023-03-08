@@ -372,7 +372,8 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemWithExtensionsThenRetu
     auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
     ASSERT_NE(nullptr, memoryInfo);
 
-    auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, {}, -1);
+    uint32_t numOfChunks = 0;
+    auto ret = memoryInfo->createGemExt(memClassInstance, 1024, handle, {}, -1, false, numOfChunks);
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
@@ -435,6 +436,60 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithPairHandleThenR
     ret = memoryInfo->createGemExtWithSingleRegion(1, 1024, handle, pairHandle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(2u, drm->ioctlCallsCount);
+}
+
+TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithChunkingButSizeLessThanAllowedThenExceptionIsThrown) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probedSize = 16 * GB;
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->context.chunkingQueryValue = 1;
+    drm->context.chunkingQueryReturn = 1;
+
+    uint32_t numOfChunks = 2;
+    size_t allocSize = MemoryConstants::chunkThreshold / (numOfChunks * 2);
+    uint32_t pairHandle = -1;
+    uint32_t handle = 0;
+    bool isChunked = true;
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+    EXPECT_THROW(memoryInfo->createGemExtWithMultipleRegions(1, allocSize, handle, pairHandle, isChunked, numOfChunks), std::runtime_error);
+}
+
+TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithChunkingWithSizeGreaterThanAllowedThenAllocationIsCreatedWithChunking) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probedSize = 16 * GB;
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->context.chunkingQueryValue = 1;
+    drm->context.chunkingQueryReturn = 1;
+
+    uint32_t numOfChunks = 2;
+    size_t allocSize = MemoryConstants::chunkThreshold * numOfChunks * 2;
+    uint32_t pairHandle = -1;
+    uint32_t handle = 0;
+    bool isChunked = true;
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+    auto ret = memoryInfo->createGemExtWithMultipleRegions(1, allocSize, handle, pairHandle, isChunked, numOfChunks);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
 }
 
 TEST(MemoryInfo, givenMemoryInfoWithRegionsAndPrivateBOSupportWhenCreatingGemExtWithSingleRegionThenValidVmIdIsSet) {
@@ -563,4 +618,73 @@ TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCreatingGemExtWithMultipleRegions
     EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[2].memoryClass);
     EXPECT_EQ(3u, createExt->memoryRegions[2].memoryInstance);
     EXPECT_EQ(1024u, drm->context.receivedCreateGemExt->size);
+}
+
+TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCallingCreatingGemExtWithMultipleRegionsAndNotAllowedSizeThenExceptionIsThrown) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+
+    std::vector<MemoryRegion> regionInfo(5);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probedSize = 16 * GB;
+    regionInfo[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1};
+    regionInfo[2].probedSize = 16 * GB;
+    regionInfo[3].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2};
+    regionInfo[3].probedSize = 16 * GB;
+    regionInfo[4].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 3};
+    regionInfo[4].probedSize = 16 * GB;
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+    uint32_t handle = 0;
+    uint32_t memoryRegions = 0b1011;
+    uint32_t numOfChunks = 2;
+    EXPECT_THROW(memoryInfo->createGemExtWithMultipleRegions(memoryRegions, MemoryConstants::chunkThreshold / (numOfChunks * 2), handle, -1, true, numOfChunks), std::runtime_error);
+}
+
+TEST(MemoryInfo, givenMemoryInfoWithRegionsWhenCallingCreatingGemExtWithMultipleRegionsAndChunkingThenReturnCorrectValues) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableLocalMemory.set(1);
+
+    std::vector<MemoryRegion> regionInfo(5);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probedSize = 16 * GB;
+    regionInfo[2].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1};
+    regionInfo[2].probedSize = 16 * GB;
+    regionInfo[3].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2};
+    regionInfo[3].probedSize = 16 * GB;
+    regionInfo[4].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 3};
+    regionInfo[4].probedSize = 16 * GB;
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    auto drm = std::make_unique<DrmQueryMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    auto memoryInfo = std::make_unique<MemoryInfo>(regionInfo, *drm);
+    ASSERT_NE(nullptr, memoryInfo);
+    uint32_t handle = 0;
+    uint32_t memoryRegions = 0b1011;
+    uint32_t numOfChunks = 2;
+    size_t size = MemoryConstants::chunkThreshold * numOfChunks;
+    auto ret = memoryInfo->createGemExtWithMultipleRegions(memoryRegions, size, handle, -1, true, numOfChunks);
+    EXPECT_EQ(1u, handle);
+    EXPECT_EQ(0, ret);
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+
+    const auto &createExt = drm->context.receivedCreateGemExt;
+    ASSERT_TRUE(createExt);
+    ASSERT_EQ(3u, createExt->memoryRegions.size());
+    EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[0].memoryClass);
+    EXPECT_EQ(0u, createExt->memoryRegions[0].memoryInstance);
+    EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[1].memoryClass);
+    EXPECT_EQ(1u, createExt->memoryRegions[1].memoryInstance);
+    EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, createExt->memoryRegions[2].memoryClass);
+    EXPECT_EQ(3u, createExt->memoryRegions[2].memoryInstance);
+    EXPECT_EQ(size, drm->context.receivedCreateGemExt->size);
 }

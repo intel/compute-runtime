@@ -33,5 +33,7 @@ struct StorageInfo {
     char resourceTag[AppResourceDefines::maxStrLen + 1] = "";
     uint32_t getMemoryBanks() const { return static_cast<uint32_t>(memoryBanks.to_ulong()); }
     uint32_t getTotalBanksCnt() const;
+    bool isChunked = false;
+    uint32_t numOfChunks = 0;
 };
 } // namespace NEO

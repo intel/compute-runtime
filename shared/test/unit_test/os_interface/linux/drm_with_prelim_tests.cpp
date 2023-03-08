@@ -136,11 +136,43 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtThenReturnSuccess) 
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
-    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1);
+    uint32_t numOfChunks = 0;
+    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1, false, numOfChunks);
 
     EXPECT_EQ(1u, handle);
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, drm->ioctlCallsCount);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingThenGetNumOfChunks) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.PrintBOChunkingLogs.set(true);
+    DebugManager.flags.NumberOfBOChunks.set(2);
+    size_t allocSize = 2 * MemoryConstants::pageSize64k;
+
+    testing::internal::CaptureStdout();
+    auto ioctlHelper = drm->getIoctlHelper();
+    uint32_t handle = 0;
+    uint32_t getNumOfChunks = 2;
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
+    ioctlHelper->createGemExt(memClassInstance, allocSize, handle, {}, -1, true, getNumOfChunks);
+    std::string output = testing::internal::GetCapturedStdout();
+    std::string expectedOutput("GEM_CREATE_EXT with BOChunkingSize 65536, chunkingParamRegion.param.data 65536, numOfChunks 2\n");
+    EXPECT_EQ(expectedOutput, output);
+    EXPECT_EQ(2u, getNumOfChunks);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithChunkingAndAllocTooSmallThenExceptionThrown) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.PrintBOChunkingLogs.set(false);
+    DebugManager.flags.NumberOfBOChunks.set(2);
+    size_t allocSize = MemoryConstants::pageSize64k;
+
+    auto ioctlHelper = drm->getIoctlHelper();
+    uint32_t handle = 0;
+    uint32_t getNumOfChunks = 2;
+    MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
+    EXPECT_THROW(ioctlHelper->createGemExt(memClassInstance, allocSize, handle, {}, -1, true, getNumOfChunks), std::runtime_error);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPrintDebugInfo) {
@@ -151,7 +183,8 @@ TEST_F(IoctlHelperPrelimFixture, givenPrelimsWhenCreateGemExtWithDebugFlagThenPr
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
-    ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1);
+    uint32_t numOfChunks = 0;
+    ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1, false, numOfChunks);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, param: 0x1000000010001, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT has returned: 0 BO-1 with size: 1024\n");
@@ -252,6 +285,28 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseFailsThenDont
     EXPECT_NE(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
 }
 
+TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseForChunkingFailsThenDontUpdateMemAdviceFlags) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableBOChunking.set(1);
+    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
+
+    drm->ioctlCallsCount = 0;
+    drm->ioctlRetVal = -1;
+
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    MemAdviseFlags memAdviseFlags{};
+    memAdviseFlags.nonAtomic = 1;
+    allocation.storageInfo.isChunked = 1;
+
+    allocation.setMemAdvise(drm.get(), memAdviseFlags);
+
+    EXPECT_EQ(1u, drm->ioctlCallsCount);
+    EXPECT_NE(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
+}
+
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithNonAtomicIsCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
     MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
     drm->ioctlCallsCount = 0;
@@ -286,6 +341,102 @@ TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithDevicePre
         EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
     }
     EXPECT_EQ(2u, drm->ioctlCallsCount);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithChunkingPreferredLocationIsCalledThenUpdateTheCorrespondingVmAdviceForBufferChunks) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableBOChunking.set(1);
+    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
+
+    std::vector<MemoryRegion> memRegions{
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, MemoryConstants::chunkThreshold * 4, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
+
+    drm->ioctlCallsCount = 0;
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.storageInfo.memoryBanks = 0x1;
+    allocation.setNumHandles(1);
+    allocation.storageInfo.isChunked = 1;
+    allocation.storageInfo.numOfChunks = 4;
+
+    MemAdviseFlags memAdviseFlags{};
+
+    for (auto devicePreferredLocation : {true, false}) {
+        memAdviseFlags.devicePreferredLocation = devicePreferredLocation;
+
+        EXPECT_TRUE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
+    }
+    EXPECT_EQ(allocation.storageInfo.numOfChunks * 2, drm->ioctlCallsCount);
+}
+
+TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemAdviseWithChunkingButWithoutEnableBOChunkingPreferredLocationHintCalledThenUpdateTheCorrespondingVmAdviceForBufferObject) {
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableBOChunking.set(1);
+    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(0);
+
+    std::vector<MemoryRegion> memRegions{
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, MemoryConstants::chunkThreshold * 4, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
+
+    drm->ioctlCallsCount = 0;
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.storageInfo.memoryBanks = 0x1;
+    allocation.setNumHandles(1);
+    allocation.storageInfo.isChunked = 1;
+    allocation.storageInfo.numOfChunks = 4;
+
+    MemAdviseFlags memAdviseFlags{};
+
+    for (auto devicePreferredLocation : {true, false}) {
+        memAdviseFlags.devicePreferredLocation = devicePreferredLocation;
+
+        EXPECT_TRUE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
+        EXPECT_EQ(memAdviseFlags.allFlags, allocation.enabledMemAdviseFlags.allFlags);
+    }
+    EXPECT_EQ(2u, drm->ioctlCallsCount);
+}
+
+TEST_F(IoctlHelperPrelimFixture,
+       givenDrmAllocationWhenSetMemAdviseWithChunkingPreferredLocationIsCalledWithFailureThenReturnFalse) {
+    drm->ioctlRetVal = -1;
+    DebugManagerStateRestore restore;
+    DebugManager.flags.EnableBOChunking.set(1);
+    DebugManager.flags.EnableBOChunkingPreferredLocationHint.set(true);
+
+    std::vector<MemoryRegion> memRegions{
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 1}, MemoryConstants::chunkThreshold * 4, 0},
+        {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 2}, MemoryConstants::chunkThreshold * 4, 0}};
+    drm->memoryInfo.reset(new MemoryInfo(memRegions, *drm));
+
+    drm->ioctlCallsCount = 0;
+    MockBufferObject bo(0u, drm.get(), 3, 0, 0, 1);
+    MockDrmAllocation allocation(0u, AllocationType::BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+    allocation.storageInfo.memoryBanks = 0x5;
+    allocation.setNumHandles(1);
+    allocation.storageInfo.isChunked = 1;
+    allocation.storageInfo.numOfChunks = 4;
+
+    MemAdviseFlags memAdviseFlags{};
+
+    memAdviseFlags.devicePreferredLocation = true;
+
+    EXPECT_FALSE(allocation.setMemAdvise(drm.get(), memAdviseFlags));
+
+    EXPECT_EQ(allocation.storageInfo.numOfChunks, drm->ioctlCallsCount);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenDrmAllocationWhenSetMemPrefetchSucceedsThenReturnTrue) {

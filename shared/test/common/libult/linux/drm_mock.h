@@ -27,6 +27,7 @@ class DrmMock : public Drm {
     using Drm::bindAvailable;
     using Drm::cacheInfo;
     using Drm::checkQueueSliceSupport;
+    using Drm::chunkingAvailable;
     using Drm::classHandles;
     using Drm::completionFenceSupported;
     using Drm::contextDebugSupported;
@@ -141,6 +142,13 @@ class DrmMock : public Drm {
         return setPairAvailable;
     }
 
+    bool isChunkingAvailable() override {
+        if (callBaseIsChunkingAvailable) {
+            return Drm::isChunkingAvailable();
+        }
+        return chunkingAvailable;
+    }
+
     bool getSetPairAvailable() override {
         if (callBaseGetSetPairAvailable) {
             return Drm::getSetPairAvailable();
@@ -197,6 +205,7 @@ class DrmMock : public Drm {
     bool callBaseCreateDrmContext = true;
     bool callBaseIsVmBindAvailable = false;
     bool callBaseIsSetPairAvailable = false;
+    bool callBaseIsChunkingAvailable = false;
     bool callBaseGetSetPairAvailable = false;
     bool unrecoverableContextSet = false;
     bool failRetHwIpVersion = false;

@@ -62,6 +62,43 @@ TEST(IoctlHelperXeTest, whenChangingBufferBindingThenWaitIsNeededAlways) {
     EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(false));
 }
 
+TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsThenDummyValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    ASSERT_NE(nullptr, xeIoctlHelper);
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probedSize = 16 * GB;
+    MemRegionsVec memRegions = {regionInfo[0].region, regionInfo[1].region};
+
+    uint32_t handle = 0u;
+    uint32_t numOfChunks = 0;
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, {}, -1, false, numOfChunks));
+}
+
+TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingGemCreateExtWithRegionsAndVmIdThenDummyValueIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    auto xeIoctlHelper = std::make_unique<IoctlHelperXe>(drm);
+    ASSERT_NE(nullptr, xeIoctlHelper);
+
+    std::vector<MemoryRegion> regionInfo(2);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+    regionInfo[0].probedSize = 8 * GB;
+    regionInfo[1].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0};
+    regionInfo[1].probedSize = 16 * GB;
+    MemRegionsVec memRegions = {regionInfo[0].region, regionInfo[1].region};
+
+    uint32_t handle = 0u;
+    uint32_t numOfChunks = 0;
+    GemVmControl test = {};
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, test.vmId, -1, false, numOfChunks));
+}
+
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
@@ -82,7 +119,8 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     MemRegionsVec memRegions{};
     uint32_t handle = 0u;
-    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, {}, -1));
+    uint32_t numOfChunks = 0;
+    EXPECT_NE(0, xeIoctlHelper->createGemExt(memRegions, 0u, handle, {}, -1, false, numOfChunks));
 
     EXPECT_TRUE(xeIoctlHelper->isVmBindAvailable());
 
@@ -103,6 +141,10 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     EXPECT_EQ(std::nullopt, xeIoctlHelper->getPreferredLocationRegion(PreferredLocation::None, 0));
 
     EXPECT_FALSE(xeIoctlHelper->setVmBoAdvise(0, 0, nullptr));
+
+    EXPECT_FALSE(xeIoctlHelper->setVmBoAdviseForChunking(0, 0, 0, 0, nullptr));
+
+    EXPECT_FALSE(xeIoctlHelper->isChunkingAvailable());
 
     EXPECT_FALSE(xeIoctlHelper->setVmPrefetch(0, 0, 0, 0));
 

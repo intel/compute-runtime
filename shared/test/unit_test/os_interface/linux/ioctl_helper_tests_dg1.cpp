@@ -27,7 +27,8 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtThenReturnCorrectValue) {
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
-    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1);
+    uint32_t numOfChunks = 0;
+    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1, false, numOfChunks);
 
     EXPECT_EQ(0, ret);
     EXPECT_EQ(1u, handle);
@@ -48,7 +49,8 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WithDrmTipWhenCreateGemExtWithDebugFlagTh
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
-    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1);
+    uint32_t numOfChunks = 0;
+    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1, false, numOfChunks);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: 0 BO-1 with size: 1024\n");
@@ -69,7 +71,8 @@ DG1TEST_F(IoctlHelperTestsDg1, givenDg1WhenCreateGemExtWithDebugFlagThenPrintDeb
     auto ioctlHelper = drm->getIoctlHelper();
     uint32_t handle = 0;
     MemRegionsVec memClassInstance = {{drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, 0}};
-    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1);
+    uint32_t numOfChunks = 0;
+    auto ret = ioctlHelper->createGemExt(memClassInstance, 1024, handle, {}, -1, false, numOfChunks);
 
     std::string output = testing::internal::GetCapturedStdout();
     std::string expectedOutput("Performing GEM_CREATE_EXT with { size: 1024, memory class: 1, memory instance: 0 }\nGEM_CREATE_EXT with EXT_MEMORY_REGIONS has returned: -1 BO-0 with size: 1024\nGEM_CREATE_EXT with EXT_SETPARAM has returned: 0 BO-1 with size: 1024\n");

@@ -567,6 +567,37 @@ TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenMakeRe
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenMakeResidentWithChunkingWithinOsContextEvictableAllocationThenAllocationIsNotMarkedAsAlwaysResident) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    allocation->storageInfo.isChunked = true;
+
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), false), MemoryOperationsStatus::SUCCESS);
+    EXPECT_TRUE(allocation->isAlwaysResident(device->getDefaultEngine().osContext->getContextId()));
+
+    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::SUCCESS);
+
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+    EXPECT_FALSE(allocation->isAlwaysResident(device->getDefaultEngine().osContext->getContextId()));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenMakeResidentWithChunkingAndMultipleBanksWithinOsContextEvictableAllocationThenAllocationIsNotMarkedAsAlwaysResident) {
+    auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
+    allocation->storageInfo.isChunked = true;
+    allocation->storageInfo.memoryBanks = 0x5;
+
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), false), MemoryOperationsStatus::SUCCESS);
+    EXPECT_TRUE(allocation->isAlwaysResident(device->getDefaultEngine().osContext->getContextId()));
+
+    EXPECT_EQ(operationHandler->evict(device, *allocation), MemoryOperationsStatus::SUCCESS);
+
+    EXPECT_EQ(operationHandler->makeResidentWithinOsContext(device->getDefaultEngine().osContext, ArrayRef<GraphicsAllocation *>(&allocation, 1), true), MemoryOperationsStatus::SUCCESS);
+    EXPECT_FALSE(allocation->isAlwaysResident(device->getDefaultEngine().osContext->getContextId()));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryOperationsHandlerBindTest, givenDrmMemoryOperationBindWhenChangingResidencyThenOperationIsHandledProperly) {
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
 
@@ -1358,6 +1389,20 @@ TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndNoDebugKeyThenFalseIsRet
     EXPECT_EQ(0u, drm.context.setPairQueryCalled);
 }
 
+TEST(DrmChunkingTests, whenQueryingForChunkingAvailableAndNoDebugKeyThenFalseIsReturned) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.context.chunkingQueryValue = 0;
+    drm.context.chunkingQueryReturn = 0;
+    EXPECT_FALSE(drm.chunkingAvailable);
+
+    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
+    drm.callBaseIsChunkingAvailable = true;
+    EXPECT_FALSE(drm.isChunkingAvailable());
+    EXPECT_FALSE(drm.chunkingAvailable);
+    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
+}
+
 TEST(DrmSetPairTests, whenQueryingForSetPairAvailableAndDebugKeySetAndNoSupportAvailableThenFalseIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableSetPair.set(1);
@@ -1471,4 +1516,55 @@ TEST(DrmResidencyHandlerTests, whenQueryingForSetPairAvailableWithDebugKeySetToZ
     EXPECT_FALSE(drm.isSetPairAvailable());
     EXPECT_FALSE(drm.setPairAvailable);
     EXPECT_EQ(0u, drm.context.setPairQueryCalled);
+}
+
+TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndSupportAvailableThenExpectedValueIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBOChunking.set(1);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.context.chunkingQueryValue = 1;
+    drm.context.chunkingQueryReturn = 0;
+    EXPECT_FALSE(drm.chunkingAvailable);
+
+    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
+    drm.callBaseIsChunkingAvailable = true;
+    EXPECT_TRUE(drm.isChunkingAvailable());
+    EXPECT_TRUE(drm.chunkingAvailable);
+    EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
+}
+
+TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableAndFailureInQueryThenFalseIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBOChunking.set(1);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.context.chunkingQueryValue = 1;
+    drm.context.chunkingQueryReturn = 1;
+    EXPECT_FALSE(drm.chunkingAvailable);
+
+    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
+    drm.callBaseIsChunkingAvailable = true;
+    EXPECT_FALSE(drm.isChunkingAvailable());
+    EXPECT_FALSE(drm.chunkingAvailable);
+    EXPECT_EQ(1u, drm.context.chunkingQueryCalled);
+}
+
+TEST(DrmResidencyHandlerTests, whenQueryingForChunkingAvailableWithDebugKeySetToZeroThenFalseIsReturned) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableBOChunking.set(0);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    drm.context.chunkingQueryValue = 1;
+    drm.context.chunkingQueryReturn = 1;
+    EXPECT_FALSE(drm.chunkingAvailable);
+
+    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
+    drm.callBaseIsChunkingAvailable = true;
+    EXPECT_FALSE(drm.isChunkingAvailable());
+    EXPECT_FALSE(drm.chunkingAvailable);
+    EXPECT_EQ(0u, drm.context.chunkingQueryCalled);
 }

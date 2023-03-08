@@ -7,6 +7,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/common_types.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/debug_helpers.h"
@@ -56,6 +57,19 @@ bool IoctlHelperPrelim20::isSetPairAvailable() {
     return setPairSupported;
 }
 
+bool IoctlHelperPrelim20::isChunkingAvailable() {
+    int chunkSupported = 0;
+    GetParam getParam{};
+    getParam.param = PRELIM_I915_PARAM_HAS_CHUNK_SIZE;
+    getParam.value = &chunkSupported;
+    int retVal = IoctlHelper::ioctl(DrmIoctl::Getparam, &getParam);
+    if (retVal) {
+        return false;
+    }
+
+    return chunkSupported;
+}
+
 bool IoctlHelperPrelim20::isVmBindAvailable() {
     int vmBindSupported = 0;
     GetParam getParam{};
@@ -68,7 +82,7 @@ bool IoctlHelperPrelim20::isVmBindAvailable() {
     return vmBindSupported;
 }
 
-int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
+int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
     uint32_t regionsSize = static_cast<uint32_t>(memClassInstances.size());
     std::vector<prelim_drm_i915_gem_memory_class_instance> regions(regionsSize);
     for (uint32_t i = 0; i < regionsSize; i++) {
@@ -86,6 +100,7 @@ int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, si
 
     prelim_drm_i915_gem_create_ext_vm_private vmPrivate{};
     prelim_drm_i915_gem_create_ext_setparam pairSetparamRegion{};
+    prelim_drm_i915_gem_create_ext_setparam chunkingParamRegion{};
 
     if (vmId != std::nullopt) {
         vmPrivate.base.name = PRELIM_I915_GEM_CREATE_EXT_VM_PRIVATE;
@@ -98,11 +113,25 @@ int IoctlHelperPrelim20::createGemExt(const MemRegionsVec &memClassInstances, si
         pairSetparamRegion.param.data = pairHandle;
     }
 
-    if (vmId != std::nullopt) {
-        vmPrivate.base.next_extension = reinterpret_cast<uintptr_t>(&pairSetparamRegion);
-        setparamRegion.base.next_extension = reinterpret_cast<uintptr_t>(&vmPrivate);
-    } else if (pairHandle != -1) {
-        setparamRegion.base.next_extension = reinterpret_cast<uintptr_t>(&pairSetparamRegion);
+    if (isChunked) {
+        size_t chunkingSize = allocSize / numOfChunks;
+        chunkingParamRegion.base.name = PRELIM_I915_GEM_CREATE_EXT_SETPARAM;
+        chunkingParamRegion.param.param = PRELIM_I915_OBJECT_PARAM | PRELIM_I915_PARAM_SET_CHUNK_SIZE;
+        UNRECOVERABLE_IF(chunkingSize & (MemoryConstants::pageSize64k - 1));
+        chunkingParamRegion.param.data = chunkingSize;
+        printDebugString(DebugManager.flags.PrintBOChunkingLogs.get(), stdout,
+                         "GEM_CREATE_EXT with BOChunkingSize %d, chunkingParamRegion.param.data %d, numOfChunks %d\n",
+                         chunkingSize,
+                         chunkingParamRegion.param.data,
+                         numOfChunks);
+        setparamRegion.base.next_extension = reinterpret_cast<uintptr_t>(&chunkingParamRegion);
+    } else {
+        if (vmId != std::nullopt) {
+            vmPrivate.base.next_extension = reinterpret_cast<uintptr_t>(&pairSetparamRegion);
+            setparamRegion.base.next_extension = reinterpret_cast<uintptr_t>(&vmPrivate);
+        } else if (pairHandle != -1) {
+            setparamRegion.base.next_extension = reinterpret_cast<uintptr_t>(&pairSetparamRegion);
+        }
     }
 
     prelim_drm_i915_gem_create_ext createExt{};
@@ -236,6 +265,25 @@ std::optional<MemoryClassInstance> IoctlHelperPrelim20::getPreferredLocationRegi
         return std::nullopt;
     }
     return region;
+}
+
+bool IoctlHelperPrelim20::setVmBoAdviseForChunking(int32_t handle, uint64_t start, uint64_t length, uint32_t attribute, void *region) {
+    prelim_drm_i915_gem_vm_advise vmAdvise{};
+    vmAdvise.handle = handle;
+    vmAdvise.start = start;
+    vmAdvise.length = length;
+    vmAdvise.attribute = attribute;
+    UNRECOVERABLE_IF(region == nullptr);
+    vmAdvise.region = *reinterpret_cast<prelim_drm_i915_gem_memory_class_instance *>(region);
+
+    int ret = IoctlHelper::ioctl(DrmIoctl::GemVmAdvise, &vmAdvise);
+    if (ret != 0) {
+        int err = errno;
+        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stderr, "ioctl(PRELIM_DRM_I915_GEM_VM_ADVISE) failed with %d. errno=%d(%s)\n", ret, err, strerror(err));
+        DEBUG_BREAK_IF(true);
+        return false;
+    }
+    return true;
 }
 
 bool IoctlHelperPrelim20::setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) {

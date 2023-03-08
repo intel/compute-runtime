@@ -116,6 +116,7 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     }
 
     drm->isSetPairAvailable();
+    drm->isChunkingAvailable();
 
     if (!drm->isPerContextVMRequired()) {
         if (!drm->createVirtualMemoryAddressSpace(GfxCoreHelper::getSubDevicesCount(rootDeviceEnvironment.getHardwareInfo()))) {

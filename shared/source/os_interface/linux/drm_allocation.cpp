@@ -10,12 +10,15 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
+#include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -82,6 +85,44 @@ bool DrmAllocation::setPreferredLocation(Drm *drm, PreferredLocation memoryLocat
     auto ioctlHelper = drm->getIoctlHelper();
     auto remainingMemoryBanks = storageInfo.memoryBanks;
     bool success = true;
+    auto pHwInfo = drm->getRootDeviceEnvironment().getHardwareInfo();
+
+    if (this->storageInfo.isChunked && DebugManager.flags.EnableBOChunkingPreferredLocationHint.get() == 1) {
+        prelim_drm_i915_gem_memory_class_instance region{};
+        region.memory_class = NEO::PrelimI915::PRELIM_I915_MEMORY_CLASS_DEVICE;
+        auto banks = std::bitset<4>(remainingMemoryBanks);
+        MemRegionsVec memRegions{};
+        size_t currentBank = 0;
+        size_t i = 0;
+        while (i < banks.count()) {
+            if (banks.test(currentBank)) {
+                auto regionClassAndInstance = drm->getMemoryInfo()->getMemoryRegionClassAndInstance(1u << currentBank, *pHwInfo);
+                memRegions.push_back(regionClassAndInstance);
+                i++;
+            }
+            currentBank++;
+        }
+
+        for (uint32_t i = 0; i < this->storageInfo.numOfChunks; i++) {
+            // Depth-first
+            region.memory_instance = memRegions[i / (this->storageInfo.numOfChunks / memRegions.size())].memoryInstance;
+            uint64_t chunkLength = (bufferObjects[0]->peekSize() / this->storageInfo.numOfChunks);
+            uint64_t chunkStart = i * chunkLength;
+            printDebugString(DebugManager.flags.PrintBOChunkingLogs.get(), stdout,
+                             "Setting PRELIM_DRM_I915_GEM_VM_ADVISE for BO-%d chunk 0x%lx chunkLength %ld memory_class %d, memory_region %d\n",
+                             bufferObjects[0]->peekHandle(),
+                             chunkStart,
+                             chunkLength,
+                             region.memory_class,
+                             region.memory_instance);
+            success &= ioctlHelper->setVmBoAdviseForChunking(bufferObjects[0]->peekHandle(),
+                                                             chunkStart,
+                                                             chunkLength,
+                                                             ioctlHelper->getPreferredLocationAdvise(),
+                                                             &region);
+        }
+        return success;
+    }
 
     for (uint8_t handleId = 0u; handleId < numHandles; handleId++) {
         auto memoryInstance = Math::getMinLsbSet(static_cast<uint32_t>(remainingMemoryBanks.to_ulong()));

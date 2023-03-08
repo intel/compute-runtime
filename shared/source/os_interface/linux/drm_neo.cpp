@@ -1270,6 +1270,20 @@ bool Drm::isSetPairAvailable() {
     return setPairAvailable;
 }
 
+bool Drm::isChunkingAvailable() {
+    if (DebugManager.flags.EnableBOChunking.get()) {
+        std::call_once(checkChunkingOnce, [this]() {
+            int ret = ioctlHelper->isChunkingAvailable();
+            if (ret) {
+                chunkingAvailable = true;
+            }
+            printDebugString(DebugManager.flags.PrintBOChunkingLogs.get(), stdout,
+                             "Chunking available: %d\n", chunkingAvailable);
+        });
+    }
+    return chunkingAvailable;
+}
+
 bool Drm::isVmBindAvailable() {
     std::call_once(checkBindOnce, [this]() {
         int ret = ioctlHelper->isVmBindAvailable();
@@ -1350,7 +1364,7 @@ int changeBufferObjectBinding(Drm *drm, OsContext *osContext, uint32_t vmHandleI
         bool bindImmediate = bo->isImmediateBindingRequired();
         bool bindMakeResident = false;
         if (drm->useVMBindImmediate()) {
-            bindMakeResident = bo->isExplicitResidencyRequired();
+            bindMakeResident = bo->isExplicitResidencyRequired() && !bo->isChunked;
             bindImmediate = true;
         }
         flags |= ioctlHelper->getFlagsForVmBind(bindCapture, bindImmediate, bindMakeResident);

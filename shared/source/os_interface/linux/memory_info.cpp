@@ -56,8 +56,8 @@ void MemoryInfo::assignRegionsFromDistances(const std::vector<DistanceInfo> &dis
     }
 }
 
-int MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle) {
-    return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, vmId, pairHandle);
+int MemoryInfo::createGemExt(const MemRegionsVec &memClassInstances, size_t allocSize, uint32_t &handle, std::optional<uint32_t> vmId, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
+    return this->drm.getIoctlHelper()->createGemExt(memClassInstances, allocSize, handle, vmId, pairHandle, isChunked, numOfChunks);
 }
 
 uint32_t MemoryInfo::getTileIndex(uint32_t memoryBank) {
@@ -120,7 +120,8 @@ int MemoryInfo::createGemExtWithSingleRegion(uint32_t memoryBanks, size_t allocS
             vmId = this->drm.getVirtualMemoryAddressSpace(tileIndex);
         }
     }
-    auto ret = createGemExt(region, allocSize, handle, vmId, pairHandle);
+    uint32_t numOfChunks = 0;
+    auto ret = createGemExt(region, allocSize, handle, vmId, pairHandle, false, numOfChunks);
     return ret;
 }
 
@@ -138,7 +139,26 @@ int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t all
         }
         currentBank++;
     }
-    auto ret = createGemExt(memRegions, allocSize, handle, {}, -1);
+    uint32_t numOfChunks = 0;
+    auto ret = createGemExt(memRegions, allocSize, handle, {}, -1, false, numOfChunks);
+    return ret;
+}
+
+int MemoryInfo::createGemExtWithMultipleRegions(uint32_t memoryBanks, size_t allocSize, uint32_t &handle, int32_t pairHandle, bool isChunked, uint32_t numOfChunks) {
+    auto pHwInfo = this->drm.getRootDeviceEnvironment().getHardwareInfo();
+    auto banks = std::bitset<4>(memoryBanks);
+    MemRegionsVec memRegions{};
+    size_t currentBank = 0;
+    size_t i = 0;
+    while (i < banks.count()) {
+        if (banks.test(currentBank)) {
+            auto regionClassAndInstance = getMemoryRegionClassAndInstance(1u << currentBank, *pHwInfo);
+            memRegions.push_back(regionClassAndInstance);
+            i++;
+        }
+        currentBank++;
+    }
+    auto ret = createGemExt(memRegions, allocSize, handle, {}, pairHandle, isChunked, numOfChunks);
     return ret;
 }
 

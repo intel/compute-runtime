@@ -38,6 +38,7 @@
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
+#include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -1826,6 +1827,34 @@ BufferObject *DrmMemoryManager::createBufferObjectInMemoryRegion(uint32_t rootDe
     return bo;
 }
 
+bool DrmMemoryManager::createDrmChunkedAllocation(Drm *drm, DrmAllocation *allocation, uint64_t boAddress, size_t boSize, size_t maxOsContextCount) {
+    auto &storageInfo = allocation->storageInfo;
+    auto memoryInfo = drm->getMemoryInfo();
+    uint32_t handle = 0;
+    auto memoryBanks = static_cast<uint32_t>(storageInfo.memoryBanks.to_ulong());
+    uint32_t numOfChunks = DebugManager.flags.NumberOfBOChunks.get();
+    int ret = memoryInfo->createGemExtWithMultipleRegions(memoryBanks, boSize, handle, -1, true, numOfChunks);
+    if (ret != 0) {
+        return false;
+    }
+
+    auto gmm = allocation->getGmm(0u);
+    auto patIndex = drm->getPatIndex(gmm, allocation->getAllocationType(), CacheRegion::Default, CachePolicy::WriteBack, false);
+
+    auto bo = new (std::nothrow) BufferObject(allocation->getRootDeviceIndex(), drm, patIndex, handle, boSize, maxOsContextCount);
+    UNRECOVERABLE_IF(bo == nullptr);
+    bo->setAddress(boAddress);
+
+    allocation->getBufferObjectToModify(0) = bo;
+
+    bo->isChunked = 1;
+
+    storageInfo.isChunked = true;
+    storageInfo.numOfChunks = numOfChunks;
+
+    return true;
+}
+
 bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, uint64_t gpuAddress, size_t maxOsContextCount) {
     BufferObjects bos{};
     auto &storageInfo = allocation->storageInfo;
@@ -1836,7 +1865,25 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
     auto useKmdMigrationForBuffers = (AllocationType::BUFFER == allocation->getAllocationType() && (DebugManager.flags.UseKmdMigrationForBuffers.get() > 0));
 
     auto handles = storageInfo.getNumBanks();
-    if (storageInfo.colouringPolicy == ColouringPolicy::ChunkSizeBased) {
+    bool useChunking = false;
+    size_t boTotalChunkSize = 0;
+
+    if (AllocationType::BUFFER == allocation->getAllocationType() &&
+        drm->getChunkingAvailable()) {
+        boTotalChunkSize = allocation->getUnderlyingBufferSize();
+
+        uint32_t numOfChunks = DebugManager.flags.NumberOfBOChunks.get();
+        size_t chunkingSize = boTotalChunkSize / numOfChunks;
+
+        // Dont chunk for sizes less than chunkThreshold
+        if (!(chunkingSize & (MemoryConstants::chunkThreshold - 1))) {
+
+            handles = 1;
+            allocation->resizeBufferObjects(handles);
+            bos.resize(handles);
+            useChunking = true;
+        }
+    } else if (storageInfo.colouringPolicy == ColouringPolicy::ChunkSizeBased) {
         handles = allocation->getNumGmms();
         allocation->resizeBufferObjects(handles);
         bos.resize(handles);
@@ -1844,6 +1891,10 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
     allocation->setNumHandles(handles);
 
     int32_t pairHandle = -1;
+
+    if (useChunking) {
+        return createDrmChunkedAllocation(drm, allocation, gpuAddress, boTotalChunkSize, maxOsContextCount);
+    }
 
     for (auto handleId = 0u; handleId < handles; handleId++, currentBank++) {
         if (currentBank == banksCnt) {
@@ -2163,6 +2214,16 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     auto remainingMemoryBanks = allocationData.storageInfo.memoryBanks;
     auto numHandles = GraphicsAllocation::getNumHandlesForKmdSharedAllocation(allocationData.storageInfo.getNumBanks());
 
+    bool useChunking = false;
+    uint32_t numOfChunks = DebugManager.flags.NumberOfBOChunks.get();
+    size_t chunkingSize = size / numOfChunks;
+
+    // Dont chunk for sizes less than chunkThreshold
+    if (drm.getChunkingAvailable() && !(chunkingSize & (MemoryConstants::chunkThreshold - 1))) {
+        numHandles = 1;
+        useChunking = true;
+    }
+
     for (auto handleId = 0u; handleId < numHandles; handleId++) {
         uint32_t handle = 0;
 
@@ -2172,10 +2233,10 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
         }
 
         auto memoryInstance = Math::getMinLsbSet(static_cast<uint32_t>(remainingMemoryBanks.to_ulong()));
-        auto memoryBanks = DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.get() > 0 ? allocationData.storageInfo.memoryBanks : DeviceBitfield(1 << memoryInstance);
+        auto memoryBanks = (DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.get() > 0 || useChunking) ? allocationData.storageInfo.memoryBanks : DeviceBitfield(1 << memoryInstance);
         auto memRegions = createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memoryBanks);
 
-        auto ret = memoryInfo->createGemExt(memRegions, currentSize, handle, {}, -1);
+        int ret = memoryInfo->createGemExt(memRegions, currentSize, handle, {}, -1, useChunking, numOfChunks);
 
         if (ret) {
             this->munmapFunction(cpuPointer, totalSizeToAlloc);
@@ -2205,6 +2266,8 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 
         bo->setAddress(castToUint64(currentAddress));
 
+        bo->isChunked = useChunking;
+
         bos.push_back(bo.release());
 
         currentAddress = reinterpret_cast<void *>(castToUint64(currentAddress) + currentSize);
@@ -2220,6 +2283,8 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     allocation->setReservedAddressRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc);
     allocation->setNumHandles(static_cast<uint32_t>(bos.size()));
     allocation->storageInfo = allocationData.storageInfo;
+    allocation->storageInfo.isChunked = useChunking;
+    allocation->storageInfo.numOfChunks = numOfChunks;
     if (!allocation->setCacheRegion(&drm, static_cast<CacheRegion>(allocationData.cacheRegion))) {
         this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
         for (auto bo : bos) {

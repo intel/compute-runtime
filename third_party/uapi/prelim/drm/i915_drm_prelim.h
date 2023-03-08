@@ -265,6 +265,9 @@ struct prelim_i915_user_extension {
 
 /* End getparam */
 
+/* BO chunk granularity support */
+#define PRELIM_I915_PARAM_HAS_CHUNK_SIZE	(PRELIM_I915_PARAM | 10)
+
 struct prelim_drm_i915_gem_create_ext {
 
 	/**
@@ -326,6 +329,18 @@ struct prelim_drm_i915_gem_object_param {
  * use two buffer objects with a single exported dma-buf file descriptor
  */
 #define PRELIM_I915_PARAM_SET_PAIR ((1 << 17) | 0x1)
+
+/*
+ * PRELIM_I915_PARAM_SET_CHUNK_SIZE:
+ *
+ * Specifies that this buffer object should support 'chunking' and chunk
+ * granularity. Allows internal KMD paging/migration/eviction handling to
+ * operate on a single chunk instead of the whole buffer object.
+ * Size specified in bytes and must be non-zero and a power of 2.
+ * KMD will return error (-ENOSPC) if CHUNK_SIZE is deemed to be too small
+ * to be supported.
+ */
+#define PRELIM_I915_PARAM_SET_CHUNK_SIZE ((1 << 18) | 1)
 	__u64 param;
 
 	/* Data value or pointer */
@@ -1229,10 +1244,20 @@ struct prelim_drm_i915_gem_vm_bind {
 /**
  * struct prelim_drm_i915_gem_vm_advise
  *
- * Set attribute (hint) for an address range or whole buffer object.
+ * Set attribute (hint) for an address range, whole buffer object, or
+ * part of buffer object.
  *
  * To apply attribute to whole buffer object, specify:  handle
+ *
+ * To apply attribute to part of buffer object (chunk granularity), specify:
+ *   handle, start, and length.
+ * Start and length must be exactly aligned to chunk boundaries of object.
+ * Above requires object to have been created during GEM_CREATE with:
+ * PRELIM_I915_PARAM_SET_CHUNK_SIZE.
+ *
  * To apply attribute to address range, specify:  vm_id, start, and length.
+ *
+ * On error, any applied hints are reverted before returning.
  */
 struct prelim_drm_i915_gem_vm_advise {
 	/** vm that contains address range (specified with start, length) */

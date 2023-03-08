@@ -193,6 +193,9 @@ int DrmMockCustom::ioctl(DrmIoctl request, void *arg) {
         createExtHandle = createExtParams->handle;
         createExtExtensions = createExtParams->extensions;
         ioctlCnt.gemCreateExt++;
+        if (failOnCreateExt == true) {
+            return -1;
+        }
     } break;
     case DrmIoctl::GemVmBind: {
     } break;
@@ -256,5 +259,23 @@ bool DrmMockCustom::getSetPairAvailable() {
         return Drm::getSetPairAvailable();
     } else {
         return getSetPairAvailableCall.returnValue;
+    }
+}
+
+bool DrmMockCustom::isChunkingAvailable() {
+    isChunkingAvailableCall.called++;
+    if (isChunkingAvailableCall.callParent) {
+        return Drm::isChunkingAvailable();
+    } else {
+        return isChunkingAvailableCall.returnValue;
+    }
+}
+
+bool DrmMockCustom::getChunkingAvailable() {
+    getChunkingAvailableCall.called++;
+    if (getChunkingAvailableCall.callParent) {
+        return Drm::getChunkingAvailable();
+    } else {
+        return getChunkingAvailableCall.returnValue;
     }
 }
