@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
-#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
+#include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 using namespace NEO;
 

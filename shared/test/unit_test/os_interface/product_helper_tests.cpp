@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
+#include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
 #include "shared/source/helpers/gfx_core_helper.h"

@@ -16,7 +16,7 @@
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
 #include "shared/test/common/xe_hpc_core/pvc/product_configs_pvc.h"
-#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
+#include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "aubstream/product_family.h"
 

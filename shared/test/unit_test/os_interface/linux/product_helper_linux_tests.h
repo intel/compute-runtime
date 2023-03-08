@@ -14,7 +14,7 @@
 #include "shared/source/utilities/cpu_info.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
-#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
+#include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 using namespace NEO;
 

@@ -11,7 +11,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
-#include "shared/test/unit_test/os_interface/hw_info_config_tests.h"
+#include "shared/test/unit_test/os_interface/product_helper_tests.h"
 
 #include "aubstream/product_family.h"
 #include "platforms.h"
