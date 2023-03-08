@@ -16,6 +16,7 @@
 
 namespace NEO {
 enum PreemptionMode : uint32_t;
+class CompilerProductHelper;
 
 struct RuntimeCapabilityTable {
     DirectSubmissionProperyEngines directSubmissionEngines;
@@ -154,8 +155,8 @@ struct HardwareInfo {
 extern bool familyEnabled[IGFX_MAX_CORE];
 extern const char *hardwarePrefix[IGFX_MAX_PRODUCT];
 extern const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT];
-extern void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
-extern void (*hardwareInfoBaseSetup[IGFX_MAX_PRODUCT])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
+extern void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper);
+extern void (*hardwareInfoBaseSetup[IGFX_MAX_PRODUCT])(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &);
 
 template <GFXCORE_FAMILY gfxFamily>
 struct EnableGfxFamilyHw {

@@ -28,6 +28,7 @@ RKLTEST_F(RklHwInfo, givenBoolWhenCallRklHardwareInfoSetupThenFeatureTableAndWor
     bool boolValue[]{
         true, false};
     HardwareInfo hwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
@@ -38,7 +39,7 @@ RKLTEST_F(RklHwInfo, givenBoolWhenCallRklHardwareInfoSetupThenFeatureTableAndWor
             gtSystemInfo = {0};
             featureTable = {};
             workaroundTable = {};
-            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
+            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, *compilerProductHelper);
 
             EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);

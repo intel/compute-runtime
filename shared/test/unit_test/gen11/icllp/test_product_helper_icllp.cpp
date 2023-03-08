@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen11/hw_cmds_icllp.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -21,11 +23,12 @@ using IcllpProductHelper = ProductHelperTest;
 
 ICLLPTEST_F(IcllpProductHelper, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
 
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config, compilerProductHelper));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
@@ -59,6 +62,7 @@ ICLLPTEST_F(IcllpProductHelper, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatu
     bool boolValue[]{
         true, false};
 
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
     FeatureTable &featureTable = pInHwInfo.featureTable;
     WorkaroundTable &workaroundTable = pInHwInfo.workaroundTable;
@@ -69,7 +73,7 @@ ICLLPTEST_F(IcllpProductHelper, givenBoolWhenCallIcllpHardwareInfoSetupThenFeatu
             gtSystemInfo = {0};
             featureTable = {};
             workaroundTable = {};
-            hardwareInfoSetup[productFamily](&pInHwInfo, setParamBool, config);
+            hardwareInfoSetup[productFamily](&pInHwInfo, setParamBool, config, compilerProductHelper);
 
             EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);

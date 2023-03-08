@@ -7,6 +7,7 @@
 
 #include "shared/source/device/device.h"
 #include "shared/source/gmm_helper/gmm.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/driver_model_type.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/source/os_interface/driver_info.h"
@@ -748,7 +749,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, givenDebuggableOsContextWhenDeviceCrea
     ultHwConfig.useFirstSubmissionInitDevice = true;
 
     auto hwInfo = *defaultHwInfo;
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0);
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, *compilerProductHelper);
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.memoryManager.reset(new MockMemoryManagerWithDebuggableOsContext(executionEnvironment));
@@ -766,7 +768,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, DeviceTests, whenDeviceCreatesEnginesThenDeviceIsIn
     ultHwConfig.useFirstSubmissionInitDevice = true;
 
     auto hwInfo = *defaultHwInfo;
-    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0);
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, 0, *compilerProductHelper);
 
     MockExecutionEnvironment executionEnvironment(&hwInfo);
     executionEnvironment.incRefInternal();

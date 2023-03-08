@@ -41,6 +41,7 @@ class CompilerProductHelper {
     virtual void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const = 0;
     virtual const char *getCachingPolicyOptions(bool isDebuggerActive) const = 0;
     virtual uint64_t getHwInfoConfig(const HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getNumThreadsPerEu() const = 0;
 
     virtual ~CompilerProductHelper() = default;
 
@@ -64,6 +65,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const override;
     const char *getCachingPolicyOptions(bool isDebuggerActive) const override;
     uint64_t getHwInfoConfig(const HardwareInfo &hwInfo) const override;
+    uint32_t getNumThreadsPerEu() const override;
 
     ~CompilerProductHelperHw() override = default;
 

@@ -10,6 +10,7 @@
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen12lp/hw_cmds_adls.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
@@ -114,9 +115,9 @@ void ADLS::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waUntypedBufferCompression = true;
 };
 
-void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+void ADLS::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * ADLS::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * compilerProductHelper.getNumThreadsPerEu();
     gtSysInfo->TotalPsThreadsWindowerRange = 64;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->MaxEuPerSubSlice = ADLS::maxEuPerSubslice;
@@ -140,8 +141,8 @@ const HardwareInfo AdlsHwConfig::hwInfo = {
     AOT::ADL_S};
 
 GT_SYSTEM_INFO AdlsHwConfig::gtSystemInfo = {0};
-void AdlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void AdlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->DualSubSliceCount = gtSysInfo->SubSliceCount;
@@ -162,9 +163,9 @@ void AdlsHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
 
 const HardwareInfo ADLS::hwInfo = AdlsHwConfig::hwInfo;
 
-void setupADLSHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
-    AdlsHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+void setupADLSHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
+    AdlsHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 }
 
-void (*ADLS::setupHardwareInfo)(HardwareInfo *, bool, const uint64_t) = setupADLSHardwareInfoImpl;
+void (*ADLS::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupADLSHardwareInfoImpl;
 } // namespace NEO

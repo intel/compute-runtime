@@ -27,8 +27,9 @@ using MtlProductHelper = ProductHelperTest;
 
 MTLTEST_F(MtlProductHelper, givenMtlConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    MtlHwConfig::setupHardwareInfoBase(&hwInfo, false);
+    MtlHwConfig::setupHardwareInfoBase(&hwInfo, false, *compilerProductHelper);
 
     EXPECT_EQ(336u, gtSystemInfo.TotalVsThreads);
     EXPECT_EQ(336u, gtSystemInfo.TotalHsThreads);
@@ -42,8 +43,9 @@ MTLTEST_F(MtlProductHelper, givenMtlConfigWhenSetupHardwareInfoBaseThenGtSystemI
 
 MTLTEST_F(MtlProductHelper, givenMtlConfigWhenSetupHardwareInfoThenGtSystemInfoHasNonZeroValues) {
     HardwareInfo hwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    MtlHwConfig::setupHardwareInfo(&hwInfo, false);
+    MtlHwConfig::setupHardwareInfo(&hwInfo, false, *compilerProductHelper);
 
     EXPECT_GT(gtSystemInfo.SliceCount, 0u);
     EXPECT_GT(gtSystemInfo.SubSliceCount, 0u);

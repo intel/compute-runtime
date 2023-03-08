@@ -9,7 +9,6 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
 
@@ -19,12 +18,11 @@ void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, 
     auto hwInfoConfig = compilerProductHelper->getHwInfoConfig(hwInfoForTests);
     setHwInfoValuesFromConfig(hwInfoConfig, hwInfoForTests);
 
-    auto productHelper = ProductHelper::create(hwInfoForTests.platform.eProductFamily);
-    uint32_t threadsPerEu = productHelper->threadsPerEu;
+    uint32_t threadsPerEu = compilerProductHelper->getNumThreadsPerEu();
 
     // set Gt and FeatureTable to initial state
     bool setupFeatureTableAndWorkaroundTable = testMode == TestMode::AubTests ? true : false;
-    hardwareInfoSetup[hwInfoForTests.platform.eProductFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable, hwInfoConfig);
+    hardwareInfoSetup[hwInfoForTests.platform.eProductFamily](&hwInfoForTests, setupFeatureTableAndWorkaroundTable, hwInfoConfig, *compilerProductHelper);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfoForTests.gtSystemInfo;
 
     // and adjust dynamic values if not specified

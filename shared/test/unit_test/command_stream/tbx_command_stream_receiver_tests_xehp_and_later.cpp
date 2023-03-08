@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_stream/tbx_command_stream_receiver_hw.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/memory_pool.h"
 #include "shared/source/memory_manager/physical_address_allocator.h"
@@ -22,7 +23,8 @@ struct XeHPAndLaterTbxCommandStreamReceiverTests : DeviceFixture, ::testing::Tes
     template <typename FamilyType>
     void setUpImpl() {
         hardwareInfo = *defaultHwInfo;
-        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0);
+        auto compilerProductHelper = CompilerProductHelper::create(hardwareInfo.platform.eProductFamily);
+        hardwareInfoSetup[hardwareInfo.platform.eProductFamily](&hardwareInfo, true, 0, *compilerProductHelper);
         hardwareInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
         DeviceFixture::setUpImpl(&hardwareInfo);
     }

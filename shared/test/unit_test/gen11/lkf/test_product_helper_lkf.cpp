@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen11/hw_cmds_lkf.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -20,11 +22,12 @@ using LkfProductHelper = ProductHelperTest;
 
 LKFTEST_F(LkfProductHelper, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
 
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config, compilerProductHelper));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
@@ -33,8 +36,9 @@ LKFTEST_F(LkfProductHelper, givenInvalidSystemInfoWhenSettingHardwareInfoThenExp
 
 LKFTEST_F(LkfProductHelper, givenProductHelperStringThenAfterSetupResultingVmeIsDisabled) {
 
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     uint64_t config = 0x100080008;
-    hardwareInfoSetup[productFamily](&pInHwInfo, false, config);
+    hardwareInfoSetup[productFamily](&pInHwInfo, false, config, compilerProductHelper);
     EXPECT_FALSE(pInHwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
     EXPECT_FALSE(pInHwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
     EXPECT_FALSE(pInHwInfo.capabilityTable.supportsVme);
@@ -44,6 +48,7 @@ LKFTEST_F(LkfProductHelper, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTabl
     bool boolValue[]{
         true, false};
 
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
     FeatureTable &featureTable = pInHwInfo.featureTable;
     WorkaroundTable &workaroundTable = pInHwInfo.workaroundTable;
@@ -55,7 +60,7 @@ LKFTEST_F(LkfProductHelper, givenBoolWhenCallLkfHardwareInfoSetupThenFeatureTabl
         gtSystemInfo = {0};
         featureTable = {};
         workaroundTable = {};
-        hardwareInfoSetup[productFamily](&pInHwInfo, setParamBool, config);
+        hardwareInfoSetup[productFamily](&pInHwInfo, setParamBool, config, compilerProductHelper);
 
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);

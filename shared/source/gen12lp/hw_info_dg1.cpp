@@ -10,6 +10,7 @@
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen12lp/hw_cmds_dg1.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
@@ -115,9 +116,9 @@ void DG1::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 };
 
-void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+void DG1::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * DG1::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * compilerProductHelper.getNumThreadsPerEu();
     gtSysInfo->TotalVsThreads = 672;
     gtSysInfo->TotalHsThreads = 672;
     gtSysInfo->TotalDsThreads = 672;
@@ -145,8 +146,8 @@ const HardwareInfo Dg1HwConfig::hwInfo = {
     AOT::DG1};
 
 GT_SYSTEM_INFO Dg1HwConfig::gtSystemInfo = {0};
-void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    DG1::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    DG1::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -162,16 +163,16 @@ void Dg1HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
 
 const HardwareInfo DG1::hwInfo = Dg1HwConfig::hwInfo;
 
-void setupDG1HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
+void setupDG1HardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
     if (hwInfoConfig == 0x100060010) {
-        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        Dg1HwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else {
         UNRECOVERABLE_IF(true);
     }
 }
 
-void (*DG1::setupHardwareInfo)(HardwareInfo *, bool, const uint64_t) = setupDG1HardwareInfoImpl;
+void (*DG1::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupDG1HardwareInfoImpl;
 } // namespace NEO

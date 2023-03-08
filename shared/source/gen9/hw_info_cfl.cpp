@@ -8,6 +8,7 @@
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen9/hw_cmds_cfl.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
@@ -109,9 +110,9 @@ void CFL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 }
 
-void CFL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+void CFL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * CFL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * compilerProductHelper.getNumThreadsPerEu();
     gtSysInfo->TotalVsThreads = 336;
     gtSysInfo->TotalHsThreads = 336;
     gtSysInfo->TotalDsThreads = 336;
@@ -137,8 +138,8 @@ const HardwareInfo CflHw1x2x6::hwInfo = {
     CFL::capabilityTable,
     AOT::CFL};
 GT_SYSTEM_INFO CflHw1x2x6::gtSystemInfo = {0};
-void CflHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void CflHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -156,8 +157,8 @@ const HardwareInfo CflHw1x3x6::hwInfo = {
     AOT::CFL};
 
 GT_SYSTEM_INFO CflHw1x3x6::gtSystemInfo = {0};
-void CflHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void CflHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -175,8 +176,8 @@ const HardwareInfo CflHw1x3x8::hwInfo = {
     AOT::CFL};
 
 GT_SYSTEM_INFO CflHw1x3x8::gtSystemInfo = {0};
-void CflHw1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void CflHw1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -193,8 +194,8 @@ const HardwareInfo CflHw2x3x8::hwInfo = {
     CFL::capabilityTable,
     AOT::CFL};
 GT_SYSTEM_INFO CflHw2x3x8::gtSystemInfo = {0};
-void CflHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void CflHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 2;
@@ -211,8 +212,8 @@ const HardwareInfo CflHw3x3x8::hwInfo = {
     CFL::capabilityTable,
     AOT::CFL};
 GT_SYSTEM_INFO CflHw3x3x8::gtSystemInfo = {0};
-void CflHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void CflHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    CFL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 3;
@@ -223,24 +224,24 @@ void CflHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
 
 const HardwareInfo CFL::hwInfo = CflHw1x3x6::hwInfo;
 
-void setupCFLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
+void setupCFLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
     if (hwInfoConfig == 0x100030008) {
-        CflHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        CflHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x200030008) {
-        CflHw2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        CflHw2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x300030008) {
-        CflHw3x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        CflHw3x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x100020006) {
-        CflHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        CflHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x100030006) {
-        CflHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        CflHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        CflHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        CflHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else {
         UNRECOVERABLE_IF(true);
     }
 }
 
-void (*CFL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t) = setupCFLHardwareInfoImpl;
+void (*CFL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupCFLHardwareInfoImpl;
 } // namespace NEO

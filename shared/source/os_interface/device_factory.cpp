@@ -73,7 +73,7 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
 
         setHwInfoValuesFromConfig(hwInfoConfig, *hardwareInfo);
 
-        hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig);
+        hardwareInfoSetup[hwInfoConst->platform.eProductFamily](hardwareInfo, true, hwInfoConfig, compilerProductHelper);
 
         auto &productHelper = rootDeviceEnvironment.getProductHelper();
         productHelper.configureHardwareCustom(hardwareInfo, nullptr);

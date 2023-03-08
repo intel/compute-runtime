@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen9/hw_cmds_bxt.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -21,11 +23,12 @@ using BxtProductHelper = ProductHelperTest;
 
 BXTTEST_F(BxtProductHelper, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
 
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config, compilerProductHelper));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
@@ -42,6 +45,7 @@ BXTTEST_F(BxtProductHelper, givenBoolWhenCallBxtHardwareInfoSetupThenFeatureTabl
         0x100030006};
     bool boolValue[]{
         true, false};
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
@@ -55,7 +59,7 @@ BXTTEST_F(BxtProductHelper, givenBoolWhenCallBxtHardwareInfoSetupThenFeatureTabl
             featureTable = {};
             workaroundTable = {};
             platform.usRevId = 9;
-            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
+            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, compilerProductHelper);
 
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);

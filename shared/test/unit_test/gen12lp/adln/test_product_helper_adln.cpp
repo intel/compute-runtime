@@ -7,6 +7,7 @@
 
 #include "shared/source/gen12lp/hw_cmds_adln.h"
 #include "shared/source/gen12lp/hw_info_gen12lp.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -25,6 +26,7 @@ ADLNTEST_F(AdlnHwInfo, givenBoolWhenCallAdlnHardwareInfoSetupThenFeatureTableAnd
     static bool boolValue[]{
         true, false};
     HardwareInfo hwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
@@ -35,7 +37,7 @@ ADLNTEST_F(AdlnHwInfo, givenBoolWhenCallAdlnHardwareInfoSetupThenFeatureTableAnd
         gtSystemInfo = {0};
         featureTable = {};
         workaroundTable = {};
-        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
+        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, *compilerProductHelper);
 
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);

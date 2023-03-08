@@ -175,6 +175,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDepreca
         for (auto i = 0u; i < expectedDevices; i++) {
             hwInfo = exeEnv.rootDeviceEnvironments[i]->getHardwareInfo();
             auto &productHelper = exeEnv.rootDeviceEnvironments[i]->getProductHelper();
+            auto &compilerProductHelper = exeEnv.rootDeviceEnvironments[i]->getHelper<CompilerProductHelper>();
             switch (csrType) {
             case CSR_HW:
             case CSR_HW_WITH_AUB:
@@ -202,7 +203,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsForDepreca
                 hwInfoFromTable.featureTable = {};
                 hwInfoFromTable.workaroundTable = {};
                 hwInfoFromTable.gtSystemInfo = {};
-                hardwareInfoSetup[hwInfoFromTable.platform.eProductFamily](&hwInfoFromTable, true, 0x0);
+                hardwareInfoSetup[hwInfoFromTable.platform.eProductFamily](&hwInfoFromTable, true, 0x0, compilerProductHelper);
 
                 productHelper.configureHardwareCustom(&hwInfoFromTable, nullptr);
                 EXPECT_EQ(0, memcmp(&hwInfoFromTable.platform, &hwInfo->platform, sizeof(PLATFORM)));
@@ -250,6 +251,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
         for (auto i = 0u; i < expectedDevices; i++) {
             hwInfo = exeEnv.rootDeviceEnvironments[i]->getHardwareInfo();
             auto &productHelper = exeEnv.rootDeviceEnvironments[i]->getProductHelper();
+            auto &compilerProductHelper = exeEnv.rootDeviceEnvironments[i]->getHelper<CompilerProductHelper>();
 
             switch (csrType) {
             case CSR_HW:
@@ -267,10 +269,9 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsWhenCsrIsS
                 expectedHwInfo.featureTable = {};
                 expectedHwInfo.workaroundTable = {};
                 expectedHwInfo.gtSystemInfo = {};
-                hardwareInfoSetup[expectedHwInfo.platform.eProductFamily](&expectedHwInfo, true, 0x0);
+                hardwareInfoSetup[expectedHwInfo.platform.eProductFamily](&expectedHwInfo, true, 0x0, compilerProductHelper);
                 productHelper.configureHardwareCustom(&expectedHwInfo, nullptr);
 
-                const auto &compilerProductHelper = exeEnv.rootDeviceEnvironments[i]->getHelper<CompilerProductHelper>();
                 compilerProductHelper.setProductConfigForHwInfo(expectedHwInfo, deviceAot.aotConfig);
                 expectedHwInfo.platform.usDeviceID = deviceAot.deviceIds->front();
 
@@ -338,6 +339,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
         for (auto i = 0u; i < expectedDevices; i++) {
             hwInfo = exeEnv.rootDeviceEnvironments[i]->getHardwareInfo();
             auto &productHelper = exeEnv.rootDeviceEnvironments[i]->getProductHelper();
+            auto &compilerProductHelper = exeEnv.rootDeviceEnvironments[i]->getHelper<CompilerProductHelper>();
 
             switch (csrType) {
             case CSR_HW:
@@ -362,7 +364,7 @@ HWTEST_F(PrepareDeviceEnvironmentsTest, givenPrepareDeviceEnvironmentsAndUnknown
                 baseHwInfo.featureTable = {};
                 baseHwInfo.workaroundTable = {};
                 baseHwInfo.gtSystemInfo = {};
-                hardwareInfoSetup[baseHwInfo.platform.eProductFamily](&baseHwInfo, true, 0x0);
+                hardwareInfoSetup[baseHwInfo.platform.eProductFamily](&baseHwInfo, true, 0x0, compilerProductHelper);
 
                 productHelper.configureHardwareCustom(&baseHwInfo, nullptr);
                 EXPECT_EQ(0, memcmp(&baseHwInfo.platform, &hwInfo->platform, sizeof(PLATFORM)));

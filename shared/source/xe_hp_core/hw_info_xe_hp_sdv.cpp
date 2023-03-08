@@ -117,9 +117,9 @@ void XE_HP_SDV::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 };
 
-void XE_HP_SDV::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+void XE_HP_SDV::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * XE_HP_SDV::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * compilerProductHelper.getNumThreadsPerEu();
     gtSysInfo->TotalVsThreads = 336;
     gtSysInfo->TotalHsThreads = 336;
     gtSysInfo->TotalDsThreads = 336;
@@ -146,7 +146,7 @@ const HardwareInfo XehpSdvHwConfig::hwInfo = {
     XE_HP_SDV::capabilityTable,
 };
 GT_SYSTEM_INFO XehpSdvHwConfig::gtSystemInfo = {0};
-void XehpSdvHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+void XehpSdvHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->CsrSizeInMb = 8;
     gtSysInfo->IsL3HashModeEnabled = false;

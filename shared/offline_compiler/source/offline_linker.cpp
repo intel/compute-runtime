@@ -206,7 +206,7 @@ int OfflineLinker::initHardwareInfo() {
             auto compilerProductHelper = NEO::CompilerProductHelper::create(hwInfo.platform.eProductFamily);
             const auto hwInfoConfig = compilerProductHelper->getHwInfoConfig(hwInfo);
             setHwInfoValuesFromConfig(hwInfoConfig, hwInfo);
-            hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, hwInfoConfig);
+            hardwareInfoSetup[hwInfo.platform.eProductFamily](&hwInfo, true, hwInfoConfig, *compilerProductHelper);
 
             return OclocErrorCode::SUCCESS;
         }

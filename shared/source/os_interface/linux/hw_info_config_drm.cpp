@@ -101,11 +101,13 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
         topologyData.maxSubSliceCount = topologyData.sliceCount > 0 ? topologyData.subSliceCount / topologyData.sliceCount : 0;
     }
 
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+
     gtSystemInfo->SliceCount = static_cast<uint32_t>(topologyData.sliceCount);
     gtSystemInfo->SubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     gtSystemInfo->DualSubSliceCount = static_cast<uint32_t>(topologyData.subSliceCount);
     gtSystemInfo->EUCount = static_cast<uint32_t>(topologyData.euCount);
-    gtSystemInfo->ThreadCount = this->threadsPerEu * gtSystemInfo->EUCount;
+    gtSystemInfo->ThreadCount = compilerProductHelper.getNumThreadsPerEu() * gtSystemInfo->EUCount;
 
     gtSystemInfo->MaxEuPerSubSlice = gtSystemInfo->MaxEuPerSubSlice != 0 ? gtSystemInfo->MaxEuPerSubSlice : topologyData.maxEuCount;
     gtSystemInfo->MaxSubSlicesSupported = std::max(static_cast<uint32_t>(topologyData.maxSubSliceCount * topologyData.maxSliceCount), gtSystemInfo->MaxSubSlicesSupported);
@@ -151,7 +153,6 @@ int ProductHelper::configureHwInfoDrm(const HardwareInfo *inHwInfo, HardwareInfo
     drm->checkNonPersistentContextsSupport();
     drm->checkPreemptionSupport();
     bool preemption = drm->isPreemptionSupported();
-    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     PreemptionHelper::adjustDefaultPreemptionMode(outHwInfo->capabilityTable,
                                                   compilerProductHelper.isMidThreadPreemptionSupported(*outHwInfo) && preemption,
                                                   static_cast<bool>(outHwInfo->featureTable.flags.ftrGpGpuThreadGroupLevelPreempt) && preemption,

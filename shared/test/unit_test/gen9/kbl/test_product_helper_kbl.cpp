@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen9/kbl/device_ids_configs_kbl.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -24,11 +26,12 @@ KBLTEST_F(KblProductHelper, whenGettingDefaultRevisionIdThen9IsReturned) {
 
 KBLTEST_F(KblProductHelper, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
 
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config, compilerProductHelper));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
@@ -48,6 +51,7 @@ KBLTEST_F(KblProductHelper, givenBoolWhenCallKblHardwareInfoSetupThenFeatureTabl
         0x100030006};
     bool boolValue[]{
         true, false};
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     HardwareInfo hwInfo = *defaultHwInfo;
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
@@ -61,7 +65,7 @@ KBLTEST_F(KblProductHelper, givenBoolWhenCallKblHardwareInfoSetupThenFeatureTabl
             featureTable = {};
             workaroundTable = {};
             platform.usRevId = 9;
-            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
+            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, compilerProductHelper);
 
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
@@ -87,7 +91,7 @@ KBLTEST_F(KblProductHelper, givenBoolWhenCallKblHardwareInfoSetupThenFeatureTabl
 
             platform.usRevId = 1;
             workaroundTable = {};
-            hardwareInfoSetup[productFamily](&hwInfo, true, config);
+            hardwareInfoSetup[productFamily](&hwInfo, true, config, compilerProductHelper);
 
             EXPECT_EQ(true, workaroundTable.flags.waDisableLSQCROPERFforOCL);
             EXPECT_EQ(true, workaroundTable.flags.waEncryptedEdramOnlyPartials);

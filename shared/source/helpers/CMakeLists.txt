@@ -43,7 +43,9 @@ set(NEO_CORE_HELPERS
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_base.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_aot_config_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_bdw_and_later.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_before_xe_hp.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_before_xe_hpc.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_xe_hp_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_xe_hpc_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_options_parser.h

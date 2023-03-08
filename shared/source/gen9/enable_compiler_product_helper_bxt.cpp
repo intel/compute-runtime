@@ -20,6 +20,11 @@ uint64_t CompilerProductHelperHw<IGFX_BROXTON>::getHwInfoConfig(const HardwareIn
     return 0x100030006;
 }
 
+template <>
+uint32_t CompilerProductHelperHw<IGFX_BROXTON>::getNumThreadsPerEu() const {
+    return 6;
+}
+
 static EnableCompilerProductHelper<IGFX_BROXTON> enableCompilerProductHelperBXT;
 
 } // namespace NEO

@@ -209,8 +209,5 @@ class ProductHelper {
 
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     virtual void fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) const = 0;
-
-  public:
-    uint32_t threadsPerEu = 0u;
 };
 } // namespace NEO

@@ -7,8 +7,8 @@
 
 const HardwareInfo ADLN::hwInfo = AdlnHwConfig::hwInfo;
 
-void setupADLNHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
-    AdlnHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+void setupADLNHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
+    AdlnHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 }
 
-void (*ADLN::setupHardwareInfo)(HardwareInfo *, bool, const uint64_t) = setupADLNHardwareInfoImpl;
+void (*ADLN::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupADLNHardwareInfoImpl;

@@ -8,6 +8,7 @@
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen8/hw_cmds_bdw.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
@@ -101,9 +102,9 @@ void BDW::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.waSamplerCacheFlushBetweenRedescribedSurfaceReads = true;
 }
 
-void BDW::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+void BDW::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * BDW::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * compilerProductHelper.getNumThreadsPerEu();
     gtSysInfo->TotalVsThreads = 336;
     gtSysInfo->TotalHsThreads = 336;
     gtSysInfo->TotalDsThreads = 336;
@@ -130,8 +131,8 @@ const HardwareInfo BdwHw1x2x6::hwInfo = {
     AOT::BDW};
 
 GT_SYSTEM_INFO BdwHw1x2x6::gtSystemInfo = {0};
-void BdwHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void BdwHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -148,8 +149,8 @@ const HardwareInfo BdwHw1x3x6::hwInfo = {
     BDW::capabilityTable,
     AOT::BDW};
 GT_SYSTEM_INFO BdwHw1x3x6::gtSystemInfo = {0};
-void BdwHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void BdwHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -166,8 +167,8 @@ const HardwareInfo BdwHw1x3x8::hwInfo = {
     BDW::capabilityTable,
     AOT::BDW};
 GT_SYSTEM_INFO BdwHw1x3x8::gtSystemInfo = {0};
-void BdwHw1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void BdwHw1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -184,8 +185,8 @@ const HardwareInfo BdwHw2x3x8::hwInfo = {
     BDW::capabilityTable,
     AOT::BDW};
 GT_SYSTEM_INFO BdwHw2x3x8::gtSystemInfo = {0};
-void BdwHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void BdwHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    BDW::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 2;
@@ -196,22 +197,22 @@ void BdwHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
 
 const HardwareInfo BDW::hwInfo = BdwHw1x3x8::hwInfo;
 
-void setupBDWHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
+void setupBDWHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
     if (hwInfoConfig == 0x200030008) {
-        BdwHw2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        BdwHw2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x100030008) {
-        BdwHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        BdwHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x100030006) {
-        BdwHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        BdwHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x100020006) {
-        BdwHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        BdwHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        BdwHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        BdwHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else {
         UNRECOVERABLE_IF(true);
     }
 }
 
-void (*BDW::setupHardwareInfo)(HardwareInfo *, bool, uint64_t) = setupBDWHardwareInfoImpl;
+void (*BDW::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupBDWHardwareInfoImpl;
 } // namespace NEO

@@ -175,7 +175,7 @@ bool OclocArgHelper::getHwInfoForProductConfig(uint32_t productConfig, NEO::Hard
             }
             uint64_t config = hwInfoConfig ? hwInfoConfig : compilerProductHelper->getHwInfoConfig(hwInfo);
             setHwInfoValuesFromConfig(config, hwInfo);
-            NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true);
+            NEO::hardwareInfoBaseSetup[hwInfo.platform.eProductFamily](&hwInfo, true, *compilerProductHelper);
 
             retVal = true;
             return retVal;

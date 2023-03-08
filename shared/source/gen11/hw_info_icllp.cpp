@@ -8,6 +8,7 @@
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen11/hw_cmds_icllp.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
@@ -112,9 +113,9 @@ void ICLLP::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     workaroundTable->flags.wa4kAlignUVOffsetNV12LinearSurface = true;
 };
 
-void ICLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+void ICLLP::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * ICLLP::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * compilerProductHelper.getNumThreadsPerEu();
     gtSysInfo->TotalHsThreads = 224;
     gtSysInfo->TotalGsThreads = 224;
     gtSysInfo->TotalVsThreads = 336;
@@ -141,8 +142,8 @@ const HardwareInfo IcllpHw1x8x8::hwInfo = {
     AOT::ICL};
 
 GT_SYSTEM_INFO IcllpHw1x8x8::gtSystemInfo = {0};
-void IcllpHw1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    ICLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void IcllpHw1x8x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    ICLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -163,8 +164,8 @@ const HardwareInfo IcllpHw1x4x8::hwInfo = {
     AOT::ICL};
 
 GT_SYSTEM_INFO IcllpHw1x4x8::gtSystemInfo = {0};
-void IcllpHw1x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    ICLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void IcllpHw1x4x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    ICLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -182,8 +183,8 @@ const HardwareInfo IcllpHw1x6x8::hwInfo = {
     AOT::ICL};
 
 GT_SYSTEM_INFO IcllpHw1x6x8::gtSystemInfo = {0};
-void IcllpHw1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    ICLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void IcllpHw1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    ICLLP::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -194,20 +195,20 @@ void IcllpHw1x6x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTabl
 
 const HardwareInfo ICLLP::hwInfo = IcllpHw1x8x8::hwInfo;
 
-void setupICLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
+void setupICLLPHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
     if (hwInfoConfig == 0x100080008) {
-        IcllpHw1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        IcllpHw1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x100040008) {
-        IcllpHw1x4x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        IcllpHw1x4x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x100060008) {
-        IcllpHw1x6x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        IcllpHw1x6x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        IcllpHw1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        IcllpHw1x8x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else {
         UNRECOVERABLE_IF(true);
     }
 }
 
-void (*ICLLP::setupHardwareInfo)(HardwareInfo *, bool, uint64_t) = setupICLLPHardwareInfoImpl;
+void (*ICLLP::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupICLLPHardwareInfoImpl;
 } // namespace NEO

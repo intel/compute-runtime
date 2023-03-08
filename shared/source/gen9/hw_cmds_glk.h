@@ -16,20 +16,19 @@ struct GLK : public Gen9Family {
     static const HardwareInfo hwInfo;
     static FeatureTable featureTable;
     static WorkaroundTable workaroundTable;
-    static const uint32_t threadsPerEu = 6;
     static const uint32_t maxEuPerSubslice = 6;
     static const uint32_t maxSlicesSupported = 1;
     static const uint32_t maxSubslicesSupported = 3;
 
     static const RuntimeCapabilityTable capabilityTable;
-    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig);
+    static void (*setupHardwareInfo)(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper);
     static void setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo);
-    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
+    static void setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper);
 };
 
 class GlkHw1x3x6 : public GLK {
   public:
-    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper);
     static const HardwareInfo hwInfo;
 
   private:
@@ -38,7 +37,7 @@ class GlkHw1x3x6 : public GLK {
 
 class GlkHw1x2x6 : public GLK {
   public:
-    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable);
+    static void setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper);
     static const HardwareInfo hwInfo;
 
   private:

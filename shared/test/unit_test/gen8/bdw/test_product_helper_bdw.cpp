@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen8/hw_cmds_bdw.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
@@ -21,12 +23,12 @@ using namespace NEO;
 using BdwProductHelper = ProductHelperTest;
 
 BDWTEST_F(BdwProductHelper, givenInvalidSystemInfoWhenSettingHardwareInfoThenExpectThrow) {
-
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
 
     uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config, compilerProductHelper));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
@@ -42,6 +44,7 @@ BDWTEST_F(BdwProductHelper, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTabl
     bool boolValue[]{
         true, false};
 
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
     FeatureTable &featureTable = pInHwInfo.featureTable;
     WorkaroundTable &workaroundTable = pInHwInfo.workaroundTable;
@@ -52,7 +55,7 @@ BDWTEST_F(BdwProductHelper, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTabl
             gtSystemInfo = {0};
             featureTable = {};
             workaroundTable = {};
-            hardwareInfoSetup[productFamily](&pInHwInfo, setParamBool, config);
+            hardwareInfoSetup[productFamily](&pInHwInfo, setParamBool, config, compilerProductHelper);
 
             EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);
@@ -71,8 +74,9 @@ BDWTEST_F(BdwProductHelper, givenBoolWhenCallBdwHardwareInfoSetupThenFeatureTabl
 
 BDWTEST_F(BdwProductHelper, givenProductHelperStringThenAfterSetupResultingVmeIsDisabled) {
 
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     uint64_t config = 0x0;
-    hardwareInfoSetup[productFamily](&pInHwInfo, false, config);
+    hardwareInfoSetup[productFamily](&pInHwInfo, false, config, compilerProductHelper);
     EXPECT_FALSE(pInHwInfo.capabilityTable.ftrSupportsVmeAvcTextureSampler);
     EXPECT_FALSE(pInHwInfo.capabilityTable.ftrSupportsVmeAvcPreemption);
     EXPECT_FALSE(pInHwInfo.capabilityTable.supportsVme);

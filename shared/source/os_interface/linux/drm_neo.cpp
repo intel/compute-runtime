@@ -468,7 +468,8 @@ int Drm::setupHardwareInfo(const DeviceDescriptor *device, bool setupFeatureTabl
     }
 
     status = querySystemInfo();
-    device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    device->setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     if (status) {
         systemInfo->checkSysInfoMismatch(hwInfo);

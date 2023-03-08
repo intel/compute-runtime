@@ -30,11 +30,11 @@ bool familyEnabled[IGFX_MAX_CORE] = {
 };
 
 const HardwareInfo *hardwareInfoTable[IGFX_MAX_PRODUCT] = {};
-void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, uint64_t) = {
+void (*hardwareInfoSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = {
     0x0,
 };
 
-void (*hardwareInfoBaseSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool) = {
+void (*hardwareInfoBaseSetup[IGFX_MAX_PRODUCT])(HardwareInfo *, bool, const CompilerProductHelper &) = {
     0x0,
 };
 

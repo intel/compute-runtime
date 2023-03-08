@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -20,11 +21,12 @@ TYPED_TEST_CASE(Dg1HwInfoTests, dg1TestTypes);
 
 TYPED_TEST(Dg1HwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFalseIsCalledThenFeatureTableHasCorrectValueOfLocalMemoryFeature) {
     HardwareInfo hwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     FeatureTable &featureTable = hwInfo.featureTable;
 
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
-    TypeParam::setupHardwareInfo(&hwInfo, false);
+    TypeParam::setupHardwareInfo(&hwInfo, false, *compilerProductHelper);
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
-    TypeParam::setupHardwareInfo(&hwInfo, true);
+    TypeParam::setupHardwareInfo(&hwInfo, true, *compilerProductHelper);
     EXPECT_TRUE(featureTable.flags.ftrLocalMemory);
 }

@@ -1,10 +1,11 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -17,6 +18,7 @@ using MtlHwInfoTests = ::testing::Test;
 
 MTLTEST_F(MtlHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFalseIsCalledThenFeatureTableHasCorrectValues) {
     HardwareInfo hwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
 
@@ -30,7 +32,7 @@ MTLTEST_F(MtlHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_FALSE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
     EXPECT_FALSE(workaroundTable.flags.waUntypedBufferCompression);
 
-    MtlHwConfig::setupHardwareInfo(&hwInfo, false);
+    MtlHwConfig::setupHardwareInfo(&hwInfo, false, *compilerProductHelper);
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
     EXPECT_FALSE(featureTable.flags.ftrFlatPhysCCS);
     EXPECT_FALSE(featureTable.flags.ftrLinearCCS);
@@ -41,7 +43,7 @@ MTLTEST_F(MtlHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
     EXPECT_FALSE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
     EXPECT_FALSE(workaroundTable.flags.waUntypedBufferCompression);
 
-    MtlHwConfig::setupHardwareInfo(&hwInfo, true);
+    MtlHwConfig::setupHardwareInfo(&hwInfo, true, *compilerProductHelper);
     EXPECT_FALSE(featureTable.flags.ftrLocalMemory);
     EXPECT_FALSE(featureTable.flags.ftrFlatPhysCCS);
     EXPECT_TRUE(featureTable.flags.ftrLinearCCS);
@@ -55,20 +57,22 @@ MTLTEST_F(MtlHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFa
 
 MTLTEST_F(MtlHwInfoTests, WhenSetupHardwareInfoWithSetupFeatureTableFlagTrueOrFalseIsCalledThenFeatureTableHasCorrectValueOfFtrLinearCCS) {
     HardwareInfo hwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     FeatureTable &featureTable = hwInfo.featureTable;
 
     EXPECT_FALSE(featureTable.flags.ftrLinearCCS);
-    MtlHwConfig::setupHardwareInfo(&hwInfo, false);
+    MtlHwConfig::setupHardwareInfo(&hwInfo, false, *compilerProductHelper);
     EXPECT_FALSE(featureTable.flags.ftrLinearCCS);
-    MtlHwConfig::setupHardwareInfo(&hwInfo, true);
+    MtlHwConfig::setupHardwareInfo(&hwInfo, true, *compilerProductHelper);
     EXPECT_TRUE(featureTable.flags.ftrLinearCCS);
 }
 
 MTLTEST_F(MtlHwInfoTests, WhenSetupHardwareInfoThenCorrectValuesOfCCSAndMultiTileInfoAreSet) {
     HardwareInfo hwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    MtlHwConfig::setupHardwareInfo(&hwInfo, false);
+    MtlHwConfig::setupHardwareInfo(&hwInfo, false, *compilerProductHelper);
 
     EXPECT_FALSE(gtSystemInfo.MultiTileArchInfo.IsValid);
 
@@ -78,10 +82,12 @@ MTLTEST_F(MtlHwInfoTests, WhenSetupHardwareInfoThenCorrectValuesOfCCSAndMultiTil
 }
 
 MTLTEST_F(MtlHwInfoTests, GivenEmptyHwInfoForUnitTestsWhenSetupHardwareInfoIsCalledThenNonZeroValuesAreSet) {
-    HardwareInfo hwInfoToSet;
+    HardwareInfo hwInfoToSet = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfoToSet.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfoToSet.gtSystemInfo;
+    gtSystemInfo = {};
 
-    MtlHwConfig::setupHardwareInfo(&hwInfoToSet, false);
+    MtlHwConfig::setupHardwareInfo(&hwInfoToSet, false, *compilerProductHelper);
 
     EXPECT_GT_VAL(gtSystemInfo.SliceCount, 0u);
     EXPECT_GT_VAL(gtSystemInfo.SubSliceCount, 0u);

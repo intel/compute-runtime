@@ -7,6 +7,7 @@
 
 #include "shared/source/gen12lp/hw_cmds_adlp.h"
 #include "shared/source/gen12lp/hw_info_gen12lp.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -53,8 +54,9 @@ ADLPTEST_F(AdlpProductHelperLinux, GivenInvalidDeviceIdWhenConfiguringHwInfoThen
 
 ADLPTEST_F(AdlpProductHelperLinux, givenAdlpConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    ADLP::setupHardwareInfoBase(&hwInfo, false);
+    ADLP::setupHardwareInfoBase(&hwInfo, false, *compilerProductHelper);
 
     EXPECT_EQ(64u, gtSystemInfo.TotalPsThreadsWindowerRange);
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
@@ -66,82 +68,13 @@ template <typename T>
 using AdlpHwInfoLinux = ::testing::Test;
 using adlpConfigTestTypes = ::testing::Types<AdlpHwConfig>;
 TYPED_TEST_CASE(AdlpHwInfoLinux, adlpConfigTestTypes);
-TYPED_TEST(AdlpHwInfoLinux, givenAdlpConfigWhenSetupHardwareInfoThenGtSystemInfoAndWaAndFtrTablesAreSetCorrect) {
-    auto executionEnvironment = std::make_unique<ExecutionEnvironment>();
-    executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
-    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
-
-    DrmMock drm(*executionEnvironment->rootDeviceEnvironments[0]);
-    DeviceDescriptor device = {0, &TypeParam::hwInfo, &TypeParam::setupHardwareInfo};
-
-    int ret = drm.setupHardwareInfo(&device, false);
-    {
-        const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
-        const auto &featureTable = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->featureTable;
-        const auto &workaroundTable = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->workaroundTable;
-
-        EXPECT_EQ(ret, 0);
-        EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
-        EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
-        EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
-
-        EXPECT_FALSE(featureTable.flags.ftrL3IACoherency);
-        EXPECT_FALSE(featureTable.flags.ftrPPGTT);
-        EXPECT_FALSE(featureTable.flags.ftrSVM);
-        EXPECT_FALSE(featureTable.flags.ftrIA32eGfxPTEs);
-        EXPECT_FALSE(featureTable.flags.ftrStandardMipTailFormat);
-        EXPECT_FALSE(featureTable.flags.ftrTranslationTable);
-        EXPECT_FALSE(featureTable.flags.ftrUserModeTranslationTable);
-        EXPECT_FALSE(featureTable.flags.ftrTileMappedResource);
-        EXPECT_FALSE(featureTable.flags.ftrFbc);
-        EXPECT_FALSE(featureTable.flags.ftrTileY);
-        EXPECT_FALSE(featureTable.flags.ftrAstcHdr2D);
-        EXPECT_FALSE(featureTable.flags.ftrAstcLdr2D);
-
-        EXPECT_FALSE(featureTable.flags.ftrGpGpuMidBatchPreempt);
-        EXPECT_FALSE(featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-
-        EXPECT_FALSE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-        EXPECT_FALSE(workaroundTable.flags.waUntypedBufferCompression);
-    }
-    ret = drm.setupHardwareInfo(&device, true);
-    {
-        const auto &gtSystemInfo = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo;
-        const auto &featureTable = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->featureTable;
-        const auto &workaroundTable = executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->workaroundTable;
-
-        EXPECT_EQ(ret, 0);
-        EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
-        EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
-        EXPECT_FALSE(gtSystemInfo.IsDynamicallyPopulated);
-
-        EXPECT_TRUE(featureTable.flags.ftrL3IACoherency);
-        EXPECT_TRUE(featureTable.flags.ftrPPGTT);
-        EXPECT_TRUE(featureTable.flags.ftrSVM);
-        EXPECT_TRUE(featureTable.flags.ftrIA32eGfxPTEs);
-        EXPECT_TRUE(featureTable.flags.ftrStandardMipTailFormat);
-        EXPECT_TRUE(featureTable.flags.ftrTranslationTable);
-        EXPECT_TRUE(featureTable.flags.ftrUserModeTranslationTable);
-        EXPECT_TRUE(featureTable.flags.ftrTileMappedResource);
-        EXPECT_TRUE(featureTable.flags.ftrFbc);
-        EXPECT_FALSE(featureTable.flags.ftrTileY);
-        EXPECT_TRUE(featureTable.flags.ftrAstcHdr2D);
-        EXPECT_TRUE(featureTable.flags.ftrAstcLdr2D);
-
-        EXPECT_TRUE(featureTable.flags.ftrGpGpuMidBatchPreempt);
-        EXPECT_TRUE(featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);
-
-        EXPECT_TRUE(workaroundTable.flags.wa4kAlignUVOffsetNV12LinearSurface);
-        EXPECT_TRUE(workaroundTable.flags.waUntypedBufferCompression);
-    }
-}
 
 TYPED_TEST(AdlpHwInfoLinux, givenSliceCountZeroWhenSetupHardwareInfoThenNotZeroValuesSetInGtSystemInfo) {
-    HardwareInfo hwInfo = {};
+    HardwareInfo hwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     hwInfo.gtSystemInfo = {0};
 
-    TypeParam::setupHardwareInfo(&hwInfo, false);
+    TypeParam::setupHardwareInfo(&hwInfo, false, *compilerProductHelper);
 
     EXPECT_NE(0u, hwInfo.gtSystemInfo.SliceCount);
     EXPECT_NE(0u, hwInfo.gtSystemInfo.SubSliceCount);

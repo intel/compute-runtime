@@ -8,10 +8,10 @@
 namespace NEO {
 const HardwareInfo MTL::hwInfo = MtlHwConfig::hwInfo;
 
-void setupMTLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
-    MTL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
-    MtlHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+void setupMTLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
+    MTL::setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
+    MtlHwConfig::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 }
 
-void (*MTL::setupHardwareInfo)(HardwareInfo *, bool, const uint64_t) = setupMTLHardwareInfoImpl;
+void (*MTL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupMTLHardwareInfoImpl;
 } // namespace NEO

@@ -41,6 +41,7 @@ enum class CacheRegion : uint16_t;
 enum class SubmissionStatus : uint32_t;
 
 class BufferObject;
+class CompilerProductHelper;
 class DeviceFactory;
 class MemoryInfo;
 class OsContext;
@@ -55,7 +56,7 @@ struct SystemInfo;
 struct DeviceDescriptor {
     unsigned short deviceId;
     const HardwareInfo *pHwInfo;
-    void (*setupHardwareInfo)(HardwareInfo *, bool);
+    void (*setupHardwareInfo)(HardwareInfo *, bool, const CompilerProductHelper &);
     const char *devName;
 };
 

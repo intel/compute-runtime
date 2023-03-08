@@ -8,6 +8,7 @@
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/product_config_helper.h"
@@ -149,8 +150,9 @@ DG2TEST_F(ProductHelperTestDg2, whenGettingAubstreamProductFamilyThenProperEnumV
 
 DG2TEST_F(ProductHelperTestDg2, givenDg2ConfigWhenSetupHardwareInfoBaseThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
-    Dg2HwConfig::setupHardwareInfoBase(&hwInfo, false);
+    Dg2HwConfig::setupHardwareInfoBase(&hwInfo, false, *compilerProductHelper);
 
     EXPECT_EQ(336u, gtSystemInfo.TotalVsThreads);
     EXPECT_EQ(336u, gtSystemInfo.TotalHsThreads);
@@ -164,9 +166,10 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2ConfigWhenSetupHardwareInfoBaseThenGtSys
 
 DG2TEST_F(ProductHelperTestDg2, givenDg2ConfigWhenSetupHardwareInfoThenGtSystemInfoIsCorrect) {
     HardwareInfo hwInfo = *defaultHwInfo;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
 
-    Dg2HwConfig::setupHardwareInfo(&hwInfo, false);
+    Dg2HwConfig::setupHardwareInfo(&hwInfo, false, *compilerProductHelper);
     EXPECT_EQ(8u, gtSystemInfo.CsrSizeInMb);
     EXPECT_FALSE(gtSystemInfo.IsL3HashModeEnabled);
 }

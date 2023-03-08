@@ -7,6 +7,7 @@
 
 #include "shared/source/gen12lp/hw_cmds_adls.h"
 #include "shared/source/gen12lp/hw_info_gen12lp.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -28,6 +29,7 @@ ADLSTEST_F(AdlsHwInfo, givenBoolWhenCallAdlsHardwareInfoSetupThenFeatureTableAnd
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
 
     uint64_t config = 0x100020016;
     for (auto setParamBool : boolValue) {
@@ -35,7 +37,7 @@ ADLSTEST_F(AdlsHwInfo, givenBoolWhenCallAdlsHardwareInfoSetupThenFeatureTableAnd
         gtSystemInfo = {0};
         featureTable = {};
         workaroundTable = {};
-        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
+        hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, *compilerProductHelper);
 
         EXPECT_EQ(setParamBool, featureTable.flags.ftrL3IACoherency);
         EXPECT_EQ(setParamBool, featureTable.flags.ftrPPGTT);

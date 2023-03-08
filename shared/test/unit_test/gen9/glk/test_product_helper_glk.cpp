@@ -5,6 +5,8 @@
  *
  */
 
+#include "shared/source/execution_environment/execution_environment.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen9/hw_cmds_glk.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -21,12 +23,13 @@ using GlkProductHelper = ProductHelperTest;
 
 GLKTEST_F(GlkProductHelper, GivenIncorrectDataWhenConfiguringHwInfoThenErrorIsReturned) {
 
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = pInHwInfo.gtSystemInfo;
     gtSystemInfo = {0};
 
     uint64_t config = 0xdeadbeef;
     gtSystemInfo = {0};
-    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config));
+    EXPECT_ANY_THROW(hardwareInfoSetup[productFamily](&pInHwInfo, false, config, compilerProductHelper));
     EXPECT_EQ(0u, gtSystemInfo.SliceCount);
     EXPECT_EQ(0u, gtSystemInfo.SubSliceCount);
     EXPECT_EQ(0u, gtSystemInfo.DualSubSliceCount);
@@ -44,6 +47,7 @@ GLKTEST_F(GlkProductHelper, givenBoolWhenCallGlkHardwareInfoSetupThenFeatureTabl
     bool boolValue[]{
         true, false};
     HardwareInfo hwInfo = *defaultHwInfo;
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     GT_SYSTEM_INFO &gtSystemInfo = hwInfo.gtSystemInfo;
     FeatureTable &featureTable = hwInfo.featureTable;
     WorkaroundTable &workaroundTable = hwInfo.workaroundTable;
@@ -54,7 +58,7 @@ GLKTEST_F(GlkProductHelper, givenBoolWhenCallGlkHardwareInfoSetupThenFeatureTabl
             gtSystemInfo = {0};
             featureTable = {};
             workaroundTable = {};
-            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config);
+            hardwareInfoSetup[productFamily](&hwInfo, setParamBool, config, compilerProductHelper);
 
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuMidBatchPreempt);
             EXPECT_EQ(setParamBool, featureTable.flags.ftrGpGpuThreadGroupLevelPreempt);

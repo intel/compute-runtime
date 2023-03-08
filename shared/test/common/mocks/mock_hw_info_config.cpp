@@ -9,6 +9,7 @@
 #include "shared/source/helpers/cache_policy.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/product_helper_hw.h"

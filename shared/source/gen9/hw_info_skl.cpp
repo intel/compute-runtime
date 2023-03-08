@@ -8,6 +8,7 @@
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/gen9/hw_cmds_skl.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 
 #include "aubstream/engine_node.h"
@@ -122,9 +123,9 @@ void SKL::setupFeatureAndWorkaroundTable(HardwareInfo *hwInfo) {
     }
 }
 
-void SKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
+void SKL::setupHardwareInfoBase(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
-    gtSysInfo->ThreadCount = gtSysInfo->EUCount * SKL::threadsPerEu;
+    gtSysInfo->ThreadCount = gtSysInfo->EUCount * compilerProductHelper.getNumThreadsPerEu();
     gtSysInfo->TotalVsThreads = 336;
     gtSysInfo->TotalHsThreads = 336;
     gtSysInfo->TotalDsThreads = 336;
@@ -150,8 +151,8 @@ const HardwareInfo SklHw1x2x6::hwInfo = {
     SKL::capabilityTable,
     AOT::SKL};
 GT_SYSTEM_INFO SklHw1x2x6::gtSystemInfo = {0};
-void SklHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void SklHw1x2x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -168,8 +169,8 @@ const HardwareInfo SklHw1x3x6::hwInfo = {
     SKL::capabilityTable,
     AOT::SKL};
 GT_SYSTEM_INFO SklHw1x3x6::gtSystemInfo = {0};
-void SklHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void SklHw1x3x6::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -186,8 +187,8 @@ const HardwareInfo SklHw1x3x8::hwInfo = {
     SKL::capabilityTable,
     AOT::SKL};
 GT_SYSTEM_INFO SklHw1x3x8::gtSystemInfo = {0};
-void SklHw1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void SklHw1x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 1;
@@ -204,8 +205,8 @@ const HardwareInfo SklHw2x3x8::hwInfo = {
     SKL::capabilityTable,
     AOT::SKL};
 GT_SYSTEM_INFO SklHw2x3x8::gtSystemInfo = {0};
-void SklHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void SklHw2x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 2;
@@ -222,8 +223,8 @@ const HardwareInfo SklHw3x3x8::hwInfo = {
     SKL::capabilityTable,
     AOT::SKL};
 GT_SYSTEM_INFO SklHw3x3x8::gtSystemInfo = {0};
-void SklHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable) {
-    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable);
+void SklHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {
+    setupHardwareInfoBase(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
 
     GT_SYSTEM_INFO *gtSysInfo = &hwInfo->gtSystemInfo;
     gtSysInfo->SliceCount = 3;
@@ -234,24 +235,24 @@ void SklHw3x3x8::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableA
 
 const HardwareInfo SKL::hwInfo = SklHw1x3x8::hwInfo;
 
-void setupSKLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig) {
+void setupSKLHardwareInfoImpl(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, uint64_t hwInfoConfig, const CompilerProductHelper &compilerProductHelper) {
     if (hwInfoConfig == 0x100030008) {
-        SklHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        SklHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x200030008) {
-        SklHw2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        SklHw2x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x300030008) {
-        SklHw3x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        SklHw3x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x100020006) {
-        SklHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        SklHw1x2x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x100030006) {
-        SklHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        SklHw1x3x6::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else if (hwInfoConfig == 0x0) {
         // Default config
-        SklHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable);
+        SklHw1x3x8::setupHardwareInfo(hwInfo, setupFeatureTableAndWorkaroundTable, compilerProductHelper);
     } else {
         UNRECOVERABLE_IF(true);
     }
 }
 
-void (*SKL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t) = setupSKLHardwareInfoImpl;
+void (*SKL::setupHardwareInfo)(HardwareInfo *, bool, uint64_t, const CompilerProductHelper &) = setupSKLHardwareInfoImpl;
 } // namespace NEO

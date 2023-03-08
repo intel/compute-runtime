@@ -19,6 +19,11 @@ uint64_t CompilerProductHelperHw<IGFX_GEMINILAKE>::getHwInfoConfig(const Hardwar
     return 0x100030006;
 }
 
+template <>
+uint32_t CompilerProductHelperHw<IGFX_GEMINILAKE>::getNumThreadsPerEu() const {
+    return 6;
+}
+
 static EnableCompilerProductHelper<IGFX_GEMINILAKE> enableCompilerProductHelperGLK;
 
 } // namespace NEO

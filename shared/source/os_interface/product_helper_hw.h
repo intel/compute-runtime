@@ -6,7 +6,6 @@
  */
 
 #pragma once
-#include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/os_interface/hw_info_config.h"
 
 namespace NEO {
@@ -16,9 +15,6 @@ class ProductHelperHw : public ProductHelper {
   public:
     static std::unique_ptr<ProductHelper> create() {
         auto productHelper = std::unique_ptr<ProductHelper>(new ProductHelperHw());
-
-        using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-        productHelper->threadsPerEu = GfxProduct::threadsPerEu;
 
         return productHelper;
     }
@@ -177,9 +173,6 @@ class ProductHelperHw : public ProductHelper {
 
 template <PRODUCT_FAMILY gfxProduct>
 struct EnableProductHelper {
-
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
-
     EnableProductHelper() {
         auto productHelperCreateFunction = ProductHelperHw<gfxProduct>::create;
         productHelperFactory[gfxProduct] = productHelperCreateFunction;
