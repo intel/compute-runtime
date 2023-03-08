@@ -95,7 +95,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
 if(SUPPORT_XEHP_AND_LATER)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
        ${CMAKE_CURRENT_SOURCE_DIR}/drm_command_stream_xehp_and_later.inl
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_uuid_xehp_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_uuid_xehp_and_later.inl
   )
 endif()
 

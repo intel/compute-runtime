@@ -28,7 +28,7 @@ const std::map<std::string, std::pair<uint32_t, uint32_t>> guidUuidOffsetMap = {
     // add new values for guid in the form of {"guid", {offset, size}} for each platform
     {"0xfdc76195", {64u, 8u}}};
 
-#include "shared/source/os_interface/linux/hw_info_config_uuid_xehp_and_later.inl"
+#include "shared/source/os_interface/linux/product_helper_uuid_xehp_and_later.inl"
 } // namespace NEO
 
 #include "shared/source/xe_hp_core/os_agnostic_product_helper_xe_hp_core.inl"
