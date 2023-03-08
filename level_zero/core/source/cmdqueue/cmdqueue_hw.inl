@@ -542,12 +542,14 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
             ctx.perThreadScratchSpaceSize = std::max(ctx.perThreadScratchSpaceSize, commandList->getCommandListPerThreadScratchSize());
             ctx.perThreadPrivateScratchSize = std::max(ctx.perThreadPrivateScratchSize, commandList->getCommandListPerThreadPrivateScratchSize());
 
-            if (commandList->getCommandListPerThreadScratchSize() != 0 || commandList->getCommandListPerThreadPrivateScratchSize() != 0) {
-                if (commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE) != nullptr) {
-                    heapContainer.push_back(commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation());
-                }
-                for (auto element : commandContainer.sshAllocations) {
-                    heapContainer.push_back(element);
+            if (commandList->getCmdListHeapAddressModel() == NEO::HeapAddressModel::PrivateHeaps) {
+                if (commandList->getCommandListPerThreadScratchSize() != 0 || commandList->getCommandListPerThreadPrivateScratchSize() != 0) {
+                    if (commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE) != nullptr) {
+                        heapContainer.push_back(commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation());
+                    }
+                    for (auto &element : commandContainer.sshAllocations) {
+                        heapContainer.push_back(element);
+                    }
                 }
             }
         }

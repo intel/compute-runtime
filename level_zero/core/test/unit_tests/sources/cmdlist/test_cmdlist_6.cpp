@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/command_stream/scratch_space_controller.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
@@ -2137,6 +2138,121 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     EXPECT_EQ(ioSize, sbaCmd->getGeneralStateBufferSize());
 
     EXPECT_EQ((statlessMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenGlobalStatelessKernelUsingScratchSpaceWhenExecutingRegularCommandListThenBaseAddressAndFrontEndStateCommandsProperlyDispatched,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x100;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    size_t queueBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueAfter = cmdQueueStream.getUsed();
+
+    auto globalSurfaceHeap = commandQueue->getCsr()->getGlobalStatelessHeap();
+
+    auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    auto frontEndCmds = findAll<CFE_STATE *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, frontEndCmds.size());
+
+    constexpr size_t expectedScratchOffset = 2 * sizeof(RENDER_SURFACE_STATE);
+
+    auto frontEndCmd = reinterpret_cast<CFE_STATE *>(*frontEndCmds[0]);
+    EXPECT_EQ(expectedScratchOffset, frontEndCmd->getScratchSpaceBuffer());
+
+    auto scratchSpaceController = commandQueue->csr->getScratchSpaceController();
+    EXPECT_EQ(expectedScratchOffset, scratchSpaceController->getScratchPatchAddress());
+
+    auto surfaceStateHeapAlloc = globalSurfaceHeap->getGraphicsAllocation();
+    void *scratchSurfaceStateBuffer = ptrOffset(surfaceStateHeapAlloc->getUnderlyingBuffer(), expectedScratchOffset);
+    auto scratchSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(scratchSurfaceStateBuffer);
+
+    auto scratchAllocation = scratchSpaceController->getScratchSpaceAllocation();
+    EXPECT_EQ(scratchAllocation->getGpuAddress(), scratchSurfaceState->getSurfaceBaseAddress());
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenGlobalStatelessKernelUsingScratchSpaceWhenExecutingImmediateCommandListThenBaseAddressAndFrontEndStateCommandsProperlyDispatched,
+          IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.perThreadScratchSize[0] = 0x100;
+
+    auto &csrImmediate = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = csrImmediate.commandStream;
+    auto globalSurfaceHeap = csrImmediate.getGlobalStatelessHeap();
+
+    size_t csrUsedBefore = csrStream.getUsed();
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t csrUsedAfter = csrStream.getUsed();
+
+    auto ssBaseAddress = globalSurfaceHeap->getHeapGpuBase();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(csrStream.getCpuBase(), csrUsedBefore),
+        csrUsedAfter - csrUsedBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(ssBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    auto frontEndCmds = findAll<CFE_STATE *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, frontEndCmds.size());
+
+    constexpr size_t expectedScratchOffset = 2 * sizeof(RENDER_SURFACE_STATE);
+
+    auto frontEndCmd = reinterpret_cast<CFE_STATE *>(*frontEndCmds[0]);
+    EXPECT_EQ(expectedScratchOffset, frontEndCmd->getScratchSpaceBuffer());
+
+    auto scratchSpaceController = commandQueue->csr->getScratchSpaceController();
+    EXPECT_EQ(expectedScratchOffset, scratchSpaceController->getScratchPatchAddress());
+
+    auto surfaceStateHeapAlloc = globalSurfaceHeap->getGraphicsAllocation();
+    void *scratchSurfaceStateBuffer = ptrOffset(surfaceStateHeapAlloc->getUnderlyingBuffer(), expectedScratchOffset);
+    auto scratchSurfaceState = reinterpret_cast<RENDER_SURFACE_STATE *>(scratchSurfaceStateBuffer);
+
+    auto scratchAllocation = scratchSpaceController->getScratchSpaceAllocation();
+    EXPECT_EQ(scratchAllocation->getGpuAddress(), scratchSurfaceState->getSurfaceBaseAddress());
 }
 
 } // namespace ult
