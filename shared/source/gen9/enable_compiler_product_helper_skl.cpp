@@ -12,8 +12,6 @@
 #include "shared/source/helpers/compiler_product_helper_before_xe_hp.inl"
 #include "shared/source/helpers/compiler_product_helper_before_xe_hpc.inl"
 
-#include "hw_info_skl.h"
-
 namespace NEO {
 
 template <>

@@ -12,8 +12,6 @@
 #include "shared/source/helpers/compiler_product_helper_before_xe_hp.inl"
 #include "shared/source/helpers/compiler_product_helper_before_xe_hpc.inl"
 
-#include "hw_info_kbl.h"
-
 namespace NEO {
 template <>
 uint64_t CompilerProductHelperHw<IGFX_KABYLAKE>::getHwInfoConfig(const HardwareInfo &hwInfo) const {

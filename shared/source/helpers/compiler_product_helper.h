@@ -76,7 +76,6 @@ class CompilerProductHelperHw : public CompilerProductHelper {
 template <PRODUCT_FAMILY gfxProduct>
 struct EnableCompilerProductHelper {
 
-    using GfxProduct = typename HwMapper<gfxProduct>::GfxProduct;
     EnableCompilerProductHelper() {
         auto compilerProductHelperCreateFunction = CompilerProductHelperHw<gfxProduct>::create;
         compilerProductHelperFactory[gfxProduct] = compilerProductHelperCreateFunction;

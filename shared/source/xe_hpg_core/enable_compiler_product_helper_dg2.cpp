@@ -13,7 +13,6 @@
 #include "shared/source/helpers/compiler_product_helper_xe_hp_and_later.inl"
 
 #include "compiler_product_helper_dg2.inl"
-#include "hw_info_dg2.h"
 namespace NEO {
 
 static EnableCompilerProductHelper<IGFX_DG2> enableCompilerProductHelperDG2;

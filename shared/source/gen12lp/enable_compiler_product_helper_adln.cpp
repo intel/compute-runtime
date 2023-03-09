@@ -13,7 +13,6 @@
 #include "shared/source/helpers/compiler_product_helper_before_xe_hpc.inl"
 
 #include "compiler_product_helper_adln.inl"
-#include "hw_info_adln.h"
 
 namespace NEO {
 

@@ -13,7 +13,6 @@
 #include "shared/source/helpers/compiler_product_helper_xe_hpc_and_later.inl"
 
 #include "compiler_product_helper_pvc.inl"
-#include "hw_info_pvc.h"
 
 namespace NEO {
 
