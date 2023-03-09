@@ -6,12 +6,13 @@
  */
 
 #pragma once
-
-#include "level_zero/tools/source/sysman/events/linux/os_events_imp_prelim.h"
 #include "level_zero/tools/source/sysman/linux/udev/udev_lib.h"
 #include "level_zero/tools/source/sysman/os_sysman_driver.h"
 
 namespace L0 {
+
+class LinuxEventsUtil;
+struct SysmanDeviceImp;
 
 class LinuxSysmanDriverImp : public OsSysmanDriver {
   public:

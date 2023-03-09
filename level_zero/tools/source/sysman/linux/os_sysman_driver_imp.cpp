@@ -9,6 +9,8 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
+#include "level_zero/tools/source/sysman/events/linux/os_events_imp.h"
+
 #include <sys/stat.h>
 
 namespace L0 {
