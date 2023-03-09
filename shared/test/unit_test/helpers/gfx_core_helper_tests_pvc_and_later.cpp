@@ -12,7 +12,7 @@
 #include "shared/source/os_interface/hw_info_config.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
-#include "shared/test/common/helpers/mock_hw_info_config_hw.h"
+#include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"

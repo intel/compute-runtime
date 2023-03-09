@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2021-2022 Intel Corporation
+# Copyright (C) 2021-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -101,8 +101,9 @@ set(neo_libult_common_SRCS_LIB_ULT
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_leak_listener.h
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/memory_management.h
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_hw_info_config_hw.cpp
-    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_hw_info_config_hw.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_product_helper_hw.cpp
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_product_helper_hw.h
+    ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/mock_product_helper_hw.inl
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/sip_init.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.cpp
     ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/test_files.h

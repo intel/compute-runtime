@@ -16,7 +16,7 @@
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
-#include "shared/test/common/helpers/mock_hw_info_config_hw.h"
+#include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gmm.h"

@@ -19,7 +19,7 @@
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
-#include "shared/test/common/helpers/mock_hw_info_config_hw.h"
+#include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/raii_product_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"

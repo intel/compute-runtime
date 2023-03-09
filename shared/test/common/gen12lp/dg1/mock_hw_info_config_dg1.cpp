@@ -1,13 +1,13 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "shared/test/common/helpers/mock_hw_info_config_hw.h"
+#include "shared/test/common/helpers/mock_product_helper_hw.h"
 namespace NEO {
 constexpr static auto gfxProduct = IGFX_DG1;
-#include "shared/test/common/helpers/mock_hw_info_config_hw.inl"
+#include "shared/test/common/helpers/mock_product_helper_hw.inl"
 template struct MockProductHelperHw<gfxProduct>;
 } // namespace NEO
