@@ -55,14 +55,17 @@ ze_result_t CommandListImp::destroy() {
 
         auto memoryManager = device->getNEODevice()->getMemoryManager();
 
-        auto heapAllocation = this->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation();
-        for (auto &engine : memoryManager->getRegisteredEngines()) {
-            if (NEO::EngineHelpers::isComputeEngine(engine.getEngineType())) {
-                auto contextId = engine.osContext->getContextId();
+        auto surfaceStateHeap = this->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+        if (surfaceStateHeap) {
+            auto heapAllocation = surfaceStateHeap->getGraphicsAllocation();
+            for (auto &engine : memoryManager->getRegisteredEngines()) {
+                if (NEO::EngineHelpers::isComputeEngine(engine.getEngineType())) {
+                    auto contextId = engine.osContext->getContextId();
 
-                if (heapAllocation->isUsedByOsContext(contextId)) {
-                    engine.commandStreamReceiver->sendRenderStateCacheFlush();
-                    engine.commandStreamReceiver->waitForCompletionWithTimeout(NEO::WaitParams{false, false, NEO::TimeoutControls::maxTimeout}, engine.commandStreamReceiver->peekTaskCount());
+                    if (heapAllocation->isUsedByOsContext(contextId)) {
+                        engine.commandStreamReceiver->sendRenderStateCacheFlush();
+                        engine.commandStreamReceiver->waitForCompletionWithTimeout(NEO::WaitParams{false, false, NEO::TimeoutControls::maxTimeout}, engine.commandStreamReceiver->peekTaskCount());
+                    }
                 }
             }
         }
