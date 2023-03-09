@@ -959,7 +959,7 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
     }
 
     size_t expectedSize = (cmdsSizePerBlit * numberOfBlts) +
-                          TimestampPacketHelper::getRequiredCmdStreamSize<FamilyType>(csrDependencies);
+                          TimestampPacketHelper::getRequiredCmdStreamSize<FamilyType>(csrDependencies, false);
 
     if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
         expectedSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);

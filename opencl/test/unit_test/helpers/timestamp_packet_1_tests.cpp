@@ -88,7 +88,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledAndOoqWhenEstimat
     size_t sizeForNodeDependency = 0;
     for (auto timestampPacketContainer : csrDeps.timestampPacketContainer) {
         for (auto &node : timestampPacketContainer->peekNodes()) {
-            sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(*node);
+            sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForSemaphoreNodeDependency<FamilyType>(*node);
         }
     }
     size_t extendedSize = sizeWithDisabled + EnqueueOperation<FamilyType>::getSizeRequiredForTimestampPacketWrite() + sizeForNodeDependency;
@@ -178,7 +178,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
     size_t sizeForNodeDependency = 0;
     for (auto timestampPacketContainer : csrDeps.timestampPacketContainer) {
         for (auto &node : timestampPacketContainer->peekNodes()) {
-            sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(*node);
+            sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForSemaphoreNodeDependency<FamilyType>(*node);
         }
     }
 
@@ -244,12 +244,12 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWithEventsWithoutTimestampsWhen
     size_t sizeForNodeDependency = 0;
     for (auto timestampPacketContainer : csrDepsSize3.timestampPacketContainer) {
         for (auto &node : timestampPacketContainer->peekNodes()) {
-            sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(*node);
+            sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForSemaphoreNodeDependency<FamilyType>(*node);
         }
     }
 
     size_t expectedSize = sizeForNodeDependency;
-    EXPECT_EQ(expectedSize, TimestampPacketHelper::getRequiredCmdStreamSize<FamilyType>(csrDepsSize3));
+    EXPECT_EQ(expectedSize, TimestampPacketHelper::getRequiredCmdStreamSize<FamilyType>(csrDepsSize3, false));
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, TimestampPacketTests, givenTimestampPacketWhenDispatchingGpuWalkerThenAddTwoPcForLastWalker) {
@@ -444,7 +444,7 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForCsrT
     size_t sizeForNodeDependency = 0;
     for (auto timestampPacketContainer : flags.csrDependencies.timestampPacketContainer) {
         for (auto &node : timestampPacketContainer->peekNodes()) {
-            sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(*node);
+            sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForSemaphoreNodeDependency<FamilyType>(*node);
         }
     }
     size_t extendedSize = sizeWithoutEvents + sizeForNodeDependency;
@@ -492,7 +492,7 @@ HWTEST_F(TimestampPacketTests, givenEventsRequestWhenEstimatingStreamSizeForDiff
     size_t sizeForNodeDependency = 0;
     for (auto timestampPacketContainer : flags.csrDependencies.timestampPacketContainer) {
         for (auto &node : timestampPacketContainer->peekNodes()) {
-            sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(*node);
+            sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForSemaphoreNodeDependency<FamilyType>(*node);
         }
     }
 

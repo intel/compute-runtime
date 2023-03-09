@@ -99,7 +99,12 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
                                 mainKernel->areMultipleSubDevicesInContext());
     }
 
-    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies);
+    if (walkerArgs.relaxedOrderingEnabled) {
+        NEO::EncodeSetMMIO<GfxFamily>::encodeREG(*commandStream, CS_GPR_R0, CS_GPR_R4);
+        NEO::EncodeSetMMIO<GfxFamily>::encodeREG(*commandStream, CS_GPR_R0 + 4, CS_GPR_R4 + 4);
+    }
+
+    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies, walkerArgs.relaxedOrderingEnabled);
 
     dsh->align(EncodeStates<GfxFamily>::alignInterfaceDescriptorData);
 

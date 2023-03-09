@@ -23,6 +23,7 @@
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/dispatch_flags_helper.h"
+#include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
 #include "shared/test/common/helpers/ult_hw_config.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -1026,36 +1027,6 @@ struct DirectSubmissionRelaxedOrderingTests : public DirectSubmissionDispatchBuf
     bool verifyStaticSchedulerProgramming(GraphicsAllocation &schedulerAllocation, uint64_t deferredTaskListVa, uint32_t expectedQueueSizeLimit, uint32_t miMathMocs);
 
     template <typename FamilyType>
-    bool verifyMiPredicate(void *miPredicateCmd, MiPredicateType predicateType);
-
-    template <typename FamilyType>
-    bool verifyAlu(typename FamilyType::MI_MATH_ALU_INST_INLINE *miAluCmd, AluRegisters opcode, AluRegisters operand1, AluRegisters operand2);
-
-    template <typename FamilyType>
-    bool verifyLri(typename FamilyType::MI_LOAD_REGISTER_IMM *lriCmd, uint32_t registerOffset, uint32_t data);
-
-    template <typename FamilyType>
-    bool verifyLrr(typename FamilyType::MI_LOAD_REGISTER_REG *lrrCmd, uint32_t dstOffset, uint32_t srcOffset);
-
-    template <typename FamilyType>
-    bool verifyIncrementOrDecrement(void *cmds, AluRegisters aluRegister, bool increment);
-
-    template <typename FamilyType>
-    bool verifyConditionalDataRegBbStart(void *cmd, uint64_t startAddress, uint32_t compareReg, uint32_t compareData, CompareOperation compareOperation, bool indirect);
-
-    template <typename FamilyType>
-    bool verifyConditionalDataMemBbStart(void *cmd, uint64_t startAddress, uint64_t compareAddress, uint32_t compareData, CompareOperation compareOperation, bool indirect);
-
-    template <typename FamilyType>
-    bool verifyConditionalRegRegBbStart(void *cmd, uint64_t startAddress, AluRegisters compareReg0, AluRegisters compareReg1, CompareOperation compareOperation, bool indirect);
-
-    template <typename FamilyType>
-    bool verifyBaseConditionalBbStart(void *cmd, CompareOperation compareOperation, uint64_t startAddress, bool indirect, AluRegisters regA, AluRegisters regB);
-
-    template <typename FamilyType>
-    bool verifyBbStart(typename FamilyType::MI_BATCH_BUFFER_START *cmd, uint64_t startAddress, bool indirect, bool predicate);
-
-    template <typename FamilyType>
     bool verifyDummyBlt(typename FamilyType::XY_COLOR_BLT *cmd);
 
     DebugManagerStateRestore restore;
@@ -1063,249 +1034,11 @@ struct DirectSubmissionRelaxedOrderingTests : public DirectSubmissionDispatchBuf
 };
 
 template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifyMiPredicate(void *miPredicateCmd, MiPredicateType predicateType) {
-    if constexpr (FamilyType::isUsingMiSetPredicate) {
-        using MI_SET_PREDICATE = typename FamilyType::MI_SET_PREDICATE;
-        using PREDICATE_ENABLE = typename MI_SET_PREDICATE::PREDICATE_ENABLE;
-
-        auto miSetPredicate = reinterpret_cast<MI_SET_PREDICATE *>(miPredicateCmd);
-        if (static_cast<PREDICATE_ENABLE>(predicateType) != miSetPredicate->getPredicateEnable()) {
-            return false;
-        }
-
-        return true;
-    }
-    return false;
-}
-
-template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifyLri(typename FamilyType::MI_LOAD_REGISTER_IMM *lriCmd, uint32_t registerOffset, uint32_t data) {
-    if ((lriCmd->getRegisterOffset() != registerOffset) || (lriCmd->getDataDword() != data)) {
-        return false;
-    }
-
-    return true;
-}
-
-template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifyLrr(typename FamilyType::MI_LOAD_REGISTER_REG *lrrCmd, uint32_t dstOffset, uint32_t srcOffset) {
-    if ((dstOffset != lrrCmd->getDestinationRegisterAddress()) || (srcOffset != lrrCmd->getSourceRegisterAddress())) {
-        return false;
-    }
-    return true;
-}
-
-template <typename FamilyType>
 bool DirectSubmissionRelaxedOrderingTests::verifyDummyBlt(typename FamilyType::XY_COLOR_BLT *cmd) {
     if (cmd->getDestinationX2CoordinateRight() == 1u && cmd->getDestinationY2CoordinateBottom() == 4u && cmd->getDestinationPitch() == static_cast<uint32_t>(MemoryConstants::pageSize)) {
         return true;
     }
     return false;
-}
-
-template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifyIncrementOrDecrement(void *cmds, AluRegisters aluRegister, bool increment) {
-    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-    using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
-    using MI_MATH = typename FamilyType::MI_MATH;
-
-    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(cmds);
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R7, 1)) {
-        return false;
-    }
-
-    lriCmd++;
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R7 + 4, 0)) {
-        return false;
-    }
-
-    auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
-    if (miMathCmd->DW0.BitField.DwordLength != 3) {
-        return false;
-    }
-
-    auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, aluRegister)) {
-        return false;
-    }
-
-    miAluCmd++;
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_7)) {
-        return false;
-    }
-
-    miAluCmd++;
-
-    if (increment && !verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
-        return false;
-    }
-
-    if (!increment && !verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_SUB, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
-        return false;
-    }
-
-    miAluCmd++;
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_STORE, aluRegister, AluRegisters::R_ACCU)) {
-        return false;
-    }
-
-    return true;
-}
-
-template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifyAlu(typename FamilyType::MI_MATH_ALU_INST_INLINE *miAluCmd, AluRegisters opcode, AluRegisters operand1, AluRegisters operand2) {
-    if ((static_cast<uint32_t>(opcode) != miAluCmd->DW0.BitField.ALUOpcode) ||
-        (static_cast<uint32_t>(operand1) != miAluCmd->DW0.BitField.Operand1) ||
-        (static_cast<uint32_t>(operand2) != miAluCmd->DW0.BitField.Operand2)) {
-        return false;
-    }
-
-    return true;
-}
-
-template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifyBbStart(typename FamilyType::MI_BATCH_BUFFER_START *bbStartCmd, uint64_t startAddress, bool indirect, bool predicate) {
-    if constexpr (FamilyType::isUsingMiSetPredicate) {
-        if ((predicate != !!bbStartCmd->getPredicationEnable()) ||
-            (indirect != !!bbStartCmd->getIndirectAddressEnable())) {
-            return false;
-        }
-    }
-
-    if (!indirect && startAddress != bbStartCmd->getBatchBufferStartAddress()) {
-        return false;
-    }
-
-    return true;
-}
-
-template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifyBaseConditionalBbStart(void *cmd, CompareOperation compareOperation, uint64_t startAddress, bool indirect, AluRegisters regA, AluRegisters regB) {
-    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
-    using MI_SET_PREDICATE = typename FamilyType::MI_SET_PREDICATE;
-    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
-    using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
-    using MI_MATH = typename FamilyType::MI_MATH;
-
-    auto miMathCmd = reinterpret_cast<MI_MATH *>(cmd);
-    if (miMathCmd->DW0.BitField.DwordLength != 3) {
-        return false;
-    }
-
-    auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, regA)) {
-        return false;
-    }
-
-    miAluCmd++;
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, regB)) {
-        return false;
-    }
-
-    miAluCmd++;
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_SUB, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
-        return false;
-    }
-
-    miAluCmd++;
-
-    if (compareOperation == CompareOperation::Equal || compareOperation == CompareOperation::NotEqual) {
-        if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ZF)) {
-            return false;
-        }
-    } else {
-        if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_CF)) {
-            return false;
-        }
-    }
-
-    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(++miAluCmd);
-    if (!verifyLrr<FamilyType>(lrrCmd, CS_PREDICATE_RESULT_2, CS_GPR_R7)) {
-        return false;
-    }
-
-    auto predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++lrrCmd);
-    if (compareOperation == CompareOperation::Equal) {
-        if (!verifyMiPredicate<FamilyType>(predicateCmd, MiPredicateType::NoopOnResult2Clear)) {
-            return false;
-        }
-    } else {
-        if (!verifyMiPredicate<FamilyType>(predicateCmd, MiPredicateType::NoopOnResult2Set)) {
-            return false;
-        }
-    }
-
-    auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(++predicateCmd);
-    if (!verifyBbStart<FamilyType>(bbStartCmd, startAddress, indirect, true)) {
-        return false;
-    }
-
-    predicateCmd = reinterpret_cast<MI_SET_PREDICATE *>(++bbStartCmd);
-    if (!verifyMiPredicate<FamilyType>(predicateCmd, MiPredicateType::Disable)) {
-        return false;
-    }
-
-    return true;
-}
-
-template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifyConditionalRegRegBbStart(void *cmd, uint64_t startAddress, AluRegisters compareReg0, AluRegisters compareReg1, CompareOperation compareOperation, bool indirect) {
-    return verifyBaseConditionalBbStart<FamilyType>(cmd, compareOperation, startAddress, indirect, compareReg0, compareReg1);
-}
-
-template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifyConditionalDataMemBbStart(void *cmd, uint64_t startAddress, uint64_t compareAddress, uint32_t compareData, CompareOperation compareOperation, bool indirect) {
-    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
-    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-
-    auto lrmCmd = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(cmd);
-    if ((lrmCmd->getRegisterAddress() != CS_GPR_R7) || (lrmCmd->getMemoryAddress() != compareAddress)) {
-        return false;
-    }
-
-    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrmCmd);
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R7 + 4, 0)) {
-        return false;
-    }
-
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R8, compareData)) {
-        return false;
-    }
-
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R8 + 4, 0)) {
-        return false;
-    }
-
-    return verifyBaseConditionalBbStart<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
-}
-
-template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifyConditionalDataRegBbStart(void *cmds, uint64_t startAddress, uint32_t compareReg, uint32_t compareData,
-                                                                           CompareOperation compareOperation, bool indirect) {
-    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
-    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
-
-    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(cmds);
-    if (!verifyLrr<FamilyType>(lrrCmd, CS_GPR_R7, compareReg)) {
-        return false;
-    }
-
-    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrrCmd);
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R7 + 4, 0)) {
-        return false;
-    }
-
-    lriCmd++;
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R8, compareData)) {
-        return false;
-    }
-
-    lriCmd++;
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R8 + 4, 0)) {
-        return false;
-    }
-
-    return verifyBaseConditionalBbStart<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
 }
 
 template <typename FamilyType>
@@ -1325,66 +1058,66 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     // 1. Init section
     auto miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(schedulerCmds);
 
-    if (!verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
+    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
         return false;
     }
 
     miPredicate++;
-    if (!verifyConditionalDataRegBbStart<FamilyType>(miPredicate, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::semaphoreSectionJumpStart,
-                                                     CS_GPR_R1, 0, CompareOperation::Equal, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(miPredicate, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::semaphoreSectionJumpStart,
+                                                                                    CS_GPR_R1, 0, CompareOperation::Equal, false)) {
         return false;
     }
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(miPredicate, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart()));
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R2, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R2, 0)) {
         return false;
     }
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R2 + 4, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R2 + 4, 0)) {
         return false;
     }
 
     uint64_t removeTaskVa = schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::removeTaskSectionStart;
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R3, static_cast<uint32_t>(removeTaskVa & 0xFFFF'FFFFULL))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R3, static_cast<uint32_t>(removeTaskVa & 0xFFFF'FFFFULL))) {
         return false;
     }
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R3 + 4, static_cast<uint32_t>(removeTaskVa >> 32))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R3 + 4, static_cast<uint32_t>(removeTaskVa >> 32))) {
         return false;
     }
 
     uint64_t walkersLoopConditionCheckVa = schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::tasksListLoopCheckSectionStart;
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R4, static_cast<uint32_t>(walkersLoopConditionCheckVa & 0xFFFF'FFFFULL))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R4, static_cast<uint32_t>(walkersLoopConditionCheckVa & 0xFFFF'FFFFULL))) {
         return false;
     }
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R4 + 4, static_cast<uint32_t>(walkersLoopConditionCheckVa >> 32))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R4 + 4, static_cast<uint32_t>(walkersLoopConditionCheckVa >> 32))) {
         return false;
     }
 
     // 2. Dispatch task section (loop start)
     miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++lriCmd);
 
-    if (!verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
+    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
         return false;
     }
 
     lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++miPredicate);
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R6, 8)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R6, 8)) {
         return false;
     }
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R6 + 4, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R6 + 4, 0)) {
         return false;
     }
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R8, static_cast<uint32_t>(deferredTaskListVa & 0xFFFF'FFFFULL))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R8, static_cast<uint32_t>(deferredTaskListVa & 0xFFFF'FFFFULL))) {
         return false;
     }
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R8 + 4, static_cast<uint32_t>(deferredTaskListVa >> 32))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R8 + 4, static_cast<uint32_t>(deferredTaskListVa >> 32))) {
         return false;
     }
 
@@ -1400,89 +1133,89 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_2)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_2)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_6)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_6)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_SHL, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_SHL, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ACCU)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ACCU)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_7)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_7)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_8)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_8)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_6, AluRegisters::R_ACCU)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_6, AluRegisters::R_ACCU)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOADIND, AluRegisters::R_0, AluRegisters::R_ACCU)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOADIND, AluRegisters::R_0, AluRegisters::R_ACCU)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_FENCE_RD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_FENCE_RD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
         return false;
     }
 
     auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(++miAluCmd);
-    if (!verifyBbStart<FamilyType>(bbStart, 0, true, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyBbStart<FamilyType>(bbStart, 0, true, false)) {
         return false;
     }
 
     // 3. Remove task section
     miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++bbStart);
-    if (!verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
+    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
         return false;
     }
 
     miPredicate++;
-    if (!verifyIncrementOrDecrement<FamilyType>(miPredicate, AluRegisters::R_1, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyIncrementOrDecrement<FamilyType>(miPredicate, AluRegisters::R_1, false)) {
         return false;
     }
 
     auto cmds = ptrOffset(miPredicate, EncodeMathMMIO<FamilyType>::getCmdSizeForIncrementOrDecrement());
 
-    if (!verifyIncrementOrDecrement<FamilyType>(cmds, AluRegisters::R_2, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyIncrementOrDecrement<FamilyType>(cmds, AluRegisters::R_2, false)) {
         return false;
     }
 
     cmds = ptrOffset(cmds, EncodeMathMMIO<FamilyType>::getCmdSizeForIncrementOrDecrement());
 
-    if (!verifyConditionalDataRegBbStart<FamilyType>(cmds, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::semaphoreSectionJumpStart,
-                                                     CS_GPR_R1, 0, CompareOperation::Equal, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(cmds, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::semaphoreSectionJumpStart,
+                                                                                    CS_GPR_R1, 0, CompareOperation::Equal, false)) {
         return false;
     }
 
     lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(cmds, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart()));
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R7, 8)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R7, 8)) {
         return false;
     }
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R7 + 4, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R7 + 4, 0)) {
         return false;
     }
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R8, static_cast<uint32_t>(deferredTaskListVa & 0xFFFF'FFFFULL))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R8, static_cast<uint32_t>(deferredTaskListVa & 0xFFFF'FFFFULL))) {
         return false;
     }
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R8 + 4, static_cast<uint32_t>(deferredTaskListVa >> 32))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R8 + 4, static_cast<uint32_t>(deferredTaskListVa >> 32))) {
         return false;
     }
 
@@ -1498,88 +1231,88 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_1)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_1)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_7)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_7)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_SHL, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_SHL, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ACCU)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_7, AluRegisters::R_ACCU)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_7)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_7)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_8)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_8)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOADIND, AluRegisters::R_7, AluRegisters::R_ACCU)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOADIND, AluRegisters::R_7, AluRegisters::R_ACCU)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_FENCE_RD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_FENCE_RD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_6)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_6)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD0, AluRegisters::R_SRCB, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD0, AluRegisters::R_SRCB, AluRegisters::OPCODE_NONE)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STOREIND, AluRegisters::R_ACCU, AluRegisters::R_7)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STOREIND, AluRegisters::R_ACCU, AluRegisters::R_7)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_FENCE_WR, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_FENCE_WR, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
         return false;
     }
 
     // 4. List loop check section
 
     miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++miAluCmd);
-    if (!verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
+    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
         return false;
     }
 
     miPredicate++;
-    if (!verifyIncrementOrDecrement<FamilyType>(miPredicate, AluRegisters::R_2, true)) {
+    if (!RelaxedOrderingCommandsHelper::verifyIncrementOrDecrement<FamilyType>(miPredicate, AluRegisters::R_2, true)) {
         return false;
     }
 
     cmds = ptrOffset(miPredicate, EncodeMathMMIO<FamilyType>::getCmdSizeForIncrementOrDecrement());
 
-    if (!verifyConditionalRegRegBbStart<FamilyType>(cmds, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
-                                                    AluRegisters::R_1, AluRegisters::R_2, CompareOperation::NotEqual, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalRegRegBbStart<FamilyType>(cmds, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
+                                                                                   AluRegisters::R_1, AluRegisters::R_2, CompareOperation::NotEqual, false)) {
         return false;
     }
 
     lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(cmds, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalRegRegBatchBufferStart()));
 
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R2, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R2, 0)) {
         return false;
     }
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R2 + 4, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R2 + 4, 0)) {
         return false;
     }
 
@@ -1590,48 +1323,48 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
         return false;
     }
 
-    if (!verifyConditionalDataRegBbStart<FamilyType>(++arbCheck, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
-                                                     CS_GPR_R1, expectedQueueSizeLimit, CompareOperation::GreaterOrEqual, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(++arbCheck, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
+                                                                                    CS_GPR_R1, expectedQueueSizeLimit, CompareOperation::GreaterOrEqual, false)) {
         return false;
     }
 
     auto conditionalBbStartcmds = ptrOffset(arbCheck, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart());
 
-    if (!verifyConditionalDataRegBbStart<FamilyType>(conditionalBbStartcmds, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
-                                                     CS_GPR_R5, 1, CompareOperation::Equal, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(conditionalBbStartcmds, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart,
+                                                                                    CS_GPR_R5, 1, CompareOperation::Equal, false)) {
         return false;
     }
 
     // 6. Jump to scheduler loop check section (dynamic scheduler)
     auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(ptrOffset(conditionalBbStartcmds, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart()));
 
-    if (!verifyLrr<FamilyType>(lrrCmd, CS_GPR_R0, CS_GPR_R9)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(lrrCmd, CS_GPR_R0, CS_GPR_R9)) {
         return false;
     }
 
-    if (!verifyLrr<FamilyType>(++lrrCmd, CS_GPR_R0 + 4, CS_GPR_R9 + 4)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(++lrrCmd, CS_GPR_R0 + 4, CS_GPR_R9 + 4)) {
         return false;
     }
 
     bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(++lrrCmd);
-    if (!verifyBbStart<FamilyType>(bbStart, 0, true, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyBbStart<FamilyType>(bbStart, 0, true, false)) {
         return false;
     }
 
     // 7. Jump to Semaphore section (dynamic scheduler)
     miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++bbStart);
 
-    if (!verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
+    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
         return false;
     }
 
     lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++miPredicate);
 
-    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::schedulerLoopCheckSectionSize))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::schedulerLoopCheckSectionSize))) {
         return false;
     }
 
-    if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R10 + 4, 0)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R10 + 4, 0)) {
         return false;
     }
 
@@ -1647,24 +1380,24 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     }
 
     miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
-    if (!verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_9)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_9)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_10)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_10)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE)) {
         return false;
     }
 
-    if (!verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_0, AluRegisters::R_ACCU)) {
+    if (!RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_0, AluRegisters::R_ACCU)) {
         return false;
     }
 
     bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(++miAluCmd);
-    if (!verifyBbStart<FamilyType>(bbStart, 0, true, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyBbStart<FamilyType>(bbStart, 0, true, false)) {
         return false;
     }
 
@@ -1694,16 +1427,16 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDynamicSchedulerProgramming(Lin
 
             uint64_t schedulerLoopCheckVa = schedulerStartAddress + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::schedulerLoopCheckSectionStart;
 
-            if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R9, static_cast<uint32_t>(schedulerLoopCheckVa & 0xFFFF'FFFFULL))) {
+            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R9, static_cast<uint32_t>(schedulerLoopCheckVa & 0xFFFF'FFFFULL))) {
                 continue;
             }
 
-            if (!verifyLri<FamilyType>(++lriCmd, CS_GPR_R9 + 4, static_cast<uint32_t>(schedulerLoopCheckVa >> 32))) {
+            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R9 + 4, static_cast<uint32_t>(schedulerLoopCheckVa >> 32))) {
                 continue;
             }
 
             auto bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(++lriCmd);
-            if (!verifyBbStart<FamilyType>(bbStart, schedulerAllocationGpuVa, false, false)) {
+            if (!RelaxedOrderingCommandsHelper::verifyBbStart<FamilyType>(bbStart, schedulerAllocationGpuVa, false, false)) {
                 continue;
             }
 
@@ -1711,19 +1444,19 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDynamicSchedulerProgramming(Lin
 
             bbStart++;
 
-            if (!verifyConditionalDataMemBbStart<FamilyType>(bbStart, schedulerStartAddress + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::endSectionStart,
-                                                             semaphoreGpuVa, semaphoreValue, CompareOperation::GreaterOrEqual, false)) {
+            if (!RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(bbStart, schedulerStartAddress + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::endSectionStart,
+                                                                                            semaphoreGpuVa, semaphoreValue, CompareOperation::GreaterOrEqual, false)) {
                 continue;
             }
 
             bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(ptrOffset(bbStart, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart()));
-            if (!verifyBbStart<FamilyType>(bbStart, schedulerAllocationGpuVa + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart, false, false)) {
+            if (!RelaxedOrderingCommandsHelper::verifyBbStart<FamilyType>(bbStart, schedulerAllocationGpuVa + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart, false, false)) {
                 continue;
             }
 
             // 3. Semaphore section
             auto miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++bbStart);
-            if (!verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
+            if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
                 continue;
             }
 
@@ -1737,12 +1470,12 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDynamicSchedulerProgramming(Lin
             // 4. End section
 
             miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++semaphore);
-            if (!verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
+            if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
                 continue;
             }
 
             lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++miPredicate);
-            if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R5, 0)) {
+            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R5, 0)) {
                 continue;
             }
             lriCmd++;
@@ -1915,17 +1648,17 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenPreinitialize
                     EXPECT_EQ(0u, lriCmd->getDataDword());
 
                     lriCmd++;
-                    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R1 + 4, 0)) {
+                    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R1 + 4, 0)) {
                         continue;
                     }
 
                     lriCmd++;
-                    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R5, 0)) {
+                    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R5, 0)) {
                         continue;
                     }
 
                     lriCmd++;
-                    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R5 + 4, 0)) {
+                    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R5 + 4, 0)) {
                         continue;
                     }
 
@@ -2003,7 +1736,7 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTa
     auto taskStoreSection = ptrOffset(directSubmission.ringCommandStream.getCpuBase(), offset);
 
     if constexpr (FamilyType::isUsingMiSetPredicate) {
-        EXPECT_TRUE(verifyMiPredicate<FamilyType>(taskStoreSection, MiPredicateType::Disable));
+        EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(taskStoreSection, MiPredicateType::Disable));
 
         taskStoreSection = ptrOffset(taskStoreSection, sizeof(typename FamilyType::MI_SET_PREDICATE));
     }
@@ -2012,23 +1745,23 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTa
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(taskStoreSection);
 
-    EXPECT_TRUE(verifyLri<FamilyType>(lriCmd, CS_GPR_R6, static_cast<uint32_t>(deferredTasksVa & 0xFFFF'FFFFULL)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R6, static_cast<uint32_t>(deferredTasksVa & 0xFFFF'FFFFULL)));
 
-    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R6 + 4, static_cast<uint32_t>(deferredTasksVa >> 32)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R6 + 4, static_cast<uint32_t>(deferredTasksVa >> 32)));
 
     EXPECT_NE(0u, batchBuffer.taskStartAddress);
 
     uint32_t taskStartAddressLow = static_cast<uint32_t>(batchBuffer.taskStartAddress & 0xFFFF'FFFFULL);
     EXPECT_NE(0u, taskStartAddressLow);
-    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R7, taskStartAddressLow));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R7, taskStartAddressLow));
 
     uint32_t taskStartHigh = static_cast<uint32_t>(batchBuffer.taskStartAddress >> 32);
     EXPECT_NE(0u, taskStartHigh);
-    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R7 + 4, taskStartHigh));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R7 + 4, taskStartHigh));
 
-    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R8, 8));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R8, 8));
 
-    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R8 + 4, 0));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R8 + 4, 0));
 
     auto miMathCmd = reinterpret_cast<MI_MATH *>(++lriCmd);
     EXPECT_EQ(8u, miMathCmd->DW0.BitField.DwordLength);
@@ -2038,25 +1771,25 @@ HWTEST_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkThenDispatchTa
     }
 
     auto miAluCmd = reinterpret_cast<MI_MATH_ALU_INST_INLINE *>(++miMathCmd);
-    EXPECT_TRUE(verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_1));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_1));
 
-    EXPECT_TRUE(verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_8));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_8));
 
-    EXPECT_TRUE(verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_SHL, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_SHL, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE));
 
-    EXPECT_TRUE(verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_8, AluRegisters::R_ACCU));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STORE, AluRegisters::R_8, AluRegisters::R_ACCU));
 
-    EXPECT_TRUE(verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_8));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCA, AluRegisters::R_8));
 
-    EXPECT_TRUE(verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_6));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_LOAD, AluRegisters::R_SRCB, AluRegisters::R_6));
 
-    EXPECT_TRUE(verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_ADD, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE));
 
-    EXPECT_TRUE(verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STOREIND, AluRegisters::R_ACCU, AluRegisters::R_7));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_STOREIND, AluRegisters::R_ACCU, AluRegisters::R_7));
 
-    EXPECT_TRUE(verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_FENCE_WR, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyAlu<FamilyType>(++miAluCmd, AluRegisters::OPCODE_FENCE_WR, AluRegisters::OPCODE_NONE, AluRegisters::OPCODE_NONE));
 
-    EXPECT_TRUE(verifyIncrementOrDecrement<FamilyType>(++miAluCmd, AluRegisters::R_1, true));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyIncrementOrDecrement<FamilyType>(++miAluCmd, AluRegisters::R_1, true));
 }
 
 HWTEST_F(DirectSubmissionRelaxedOrderingTests, givenNotEnoughSpaceForTaskStoreSectionWhenDispatchingThenSwitchRingBuffers) {
@@ -2140,7 +1873,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenBbWithStallingCmdsWhenDispa
                       EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart();
     uint64_t expectedJumpAddress = directSubmission.ringCommandStream.getGpuBase() + offset + jumpOffset;
 
-    EXPECT_TRUE(verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, CS_GPR_R1, 0, CompareOperation::Equal, false));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, CS_GPR_R1, 0, CompareOperation::Equal, false));
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart());
@@ -2241,7 +1974,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenStoppingRingThenProgramSched
                       EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart();
     uint64_t expectedJumpAddress = directSubmission.ringCommandStream.getGpuBase() + offset + jumpOffset;
 
-    EXPECT_TRUE(verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, CS_GPR_R1, 0, CompareOperation::Equal, false));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(startAddress, expectedJumpAddress, CS_GPR_R1, 0, CompareOperation::Equal, false));
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(directSubmission.ringCommandStream, offset + EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart());
@@ -2512,12 +2245,12 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenDispatchingWorkloadSectionTh
     uint64_t returnPtr = directSubmission.ringCommandStream.getGpuBase() + offset + (4 * sizeof(MI_LOAD_REGISTER_IMM)) + directSubmission.getSizeStartSection();
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(directSubmission.ringCommandStream.getCpuBase(), offset));
-    EXPECT_TRUE(verifyLri<FamilyType>(lriCmd, CS_GPR_R4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL)));
-    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R4 + 4, static_cast<uint32_t>(returnPtr >> 32)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R4 + 4, static_cast<uint32_t>(returnPtr >> 32)));
 
     uint64_t returnPtr2 = returnPtr + RelaxedOrderingHelper::getSizeTaskStoreSection<FamilyType>();
-    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R3, static_cast<uint32_t>(returnPtr2 & 0xFFFF'FFFFULL)));
-    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R3 + 4, static_cast<uint32_t>(returnPtr2 >> 32)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R3, static_cast<uint32_t>(returnPtr2 & 0xFFFF'FFFFULL)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R3 + 4, static_cast<uint32_t>(returnPtr2 >> 32)));
 
     EXPECT_EQ(0, memcmp(&originalBbStart, batchBuffer.endCmdPtr, sizeof(MI_BATCH_BUFFER_START)));
 }
@@ -2927,11 +2660,11 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenSchedulerRequiredWhenDispat
     directSubmission.dispatchRelaxedOrderingReturnPtrRegs(directSubmission.ringCommandStream, returnPtr);
 
     auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(directSubmission.ringCommandStream.getCpuBase(), offset));
-    EXPECT_TRUE(verifyLri<FamilyType>(lriCmd, CS_GPR_R4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL)));
-    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R4 + 4, static_cast<uint32_t>(returnPtr >> 32)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R4, static_cast<uint32_t>(returnPtr & 0xFFFF'FFFFULL)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R4 + 4, static_cast<uint32_t>(returnPtr >> 32)));
 
-    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R3, static_cast<uint32_t>(returnPtr2 & 0xFFFF'FFFFULL)));
-    EXPECT_TRUE(verifyLri<FamilyType>(++lriCmd, CS_GPR_R3 + 4, static_cast<uint32_t>(returnPtr2 >> 32)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R3, static_cast<uint32_t>(returnPtr2 & 0xFFFF'FFFFULL)));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R3 + 4, static_cast<uint32_t>(returnPtr2 >> 32)));
 }
 
 HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenReturnPtrsRequiredWhenAskingForDispatchSizeTheAddMmioSizes, IsAtLeastXeHpcCore) {

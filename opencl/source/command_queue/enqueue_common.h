@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/wait_status.h"
+#include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/flat_batch_buffer_helper.h"
 #include "shared/source/helpers/flush_stamp.h"
@@ -209,7 +210,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
         if (nodesCount > 0) {
             obtainNewTimestampPacketNodes(nodesCount, timestampPacketDependencies.previousEnqueueNodes, clearAllDependencies, computeCommandStreamReceiver);
-            if (false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
+            if (false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies && timestampPacketDependencies.previousEnqueueNodes.peekNodes().size() > 0) {
                 csrDeps.timestampPacketContainer.push_back(&timestampPacketDependencies.previousEnqueueNodes);
             }
         }
@@ -241,11 +242,14 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     }
 
     bool flushDependenciesForNonKernelCommand = false;
+    bool relaxedOrderingEnabled = false;
 
     if (multiDispatchInfo.empty() == false) {
+        relaxedOrderingEnabled = relaxedOrderingForGpgpuAllowed(static_cast<uint32_t>(csrDeps.timestampPacketContainer.size()));
+
         processDispatchForKernels<commandType>(multiDispatchInfo, printfHandler, eventBuilder.getEvent(),
                                                hwTimeStamps, blockQueue, csrDeps, blockedCommandsData.get(),
-                                               timestampPacketDependencies);
+                                               timestampPacketDependencies, relaxedOrderingEnabled);
     } else if (isCacheFlushCommand(commandType)) {
         processDispatchForCacheFlush(surfacesForResidency, numSurfaceForResidency, &commandStream, csrDeps);
     } else if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
@@ -268,7 +272,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         }
 
         if (flushDependenciesForNonKernelCommand) {
-            TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps);
+            TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps, false);
         }
 
         if (isMarkerWithPostSyncWrite) {
@@ -327,7 +331,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 eventsRequest,
                 eventBuilder,
                 taskLevel,
-                printfHandler.get());
+                printfHandler.get(),
+                relaxedOrderingEnabled);
         } else if (enqueueProperties.isFlushWithoutKernelRequired()) {
             completionStamp = enqueueCommandWithoutKernel(
                 surfacesForResidency,
@@ -451,7 +456,8 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
                                                           bool blockQueue,
                                                           CsrDependencies &csrDeps,
                                                           KernelOperation *blockedCommandsData,
-                                                          TimestampPacketDependencies &timestampPacketDependencies) {
+                                                          TimestampPacketDependencies &timestampPacketDependencies,
+                                                          bool relaxedOrderingEnabled) {
     TagNodeBase *hwPerfCounter = nullptr;
     getClFileLogger().dumpKernelArgs(&multiDispatchInfo);
 
@@ -491,6 +497,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForKernels(const MultiDispatchInf
     dispatchWalkerArgs.currentTimestampPacketNodes = timestampPacketContainer.get();
     dispatchWalkerArgs.commandType = commandType;
     dispatchWalkerArgs.event = event;
+    dispatchWalkerArgs.relaxedOrderingEnabled = relaxedOrderingEnabled;
 
     HardwareInterface<GfxFamily>::dispatchWalker(
         *this,
@@ -605,7 +612,7 @@ void CommandQueueHw<GfxFamily>::processDispatchForCacheFlush(Surface **surfaces,
                                                              LinearStream *commandStream,
                                                              CsrDependencies &csrDeps) {
 
-    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDeps);
+    TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDeps, false);
 
     uint64_t postSyncAddress = 0;
     if (getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
@@ -726,7 +733,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     EventsRequest &eventsRequest,
     EventBuilder &eventBuilder,
     TaskCountType taskLevel,
-    PrintfHandler *printfHandler) {
+    PrintfHandler *printfHandler,
+    bool relaxedOrderingEnabled) {
 
     UNRECOVERABLE_IF(multiDispatchInfo.empty());
 
@@ -848,7 +856,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
         kernel->requiresMemoryMigration(),                                                                      // memoryMigrationRequired
         isTextureCacheFlushNeeded(commandType),                                                                 // textureCacheFlush
         false,                                                                                                  // hasStallingCmds
-        false,                                                                                                  // hasRelaxedOrderingDependencies
+        relaxedOrderingEnabled,                                                                                 // hasRelaxedOrderingDependencies
         false,                                                                                                  // stateCacheInvalidation
         isStallingCommandsOnNextFlushRequired());                                                               // isStallingCommandsOnNextFlushRequired
 
@@ -1103,7 +1111,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             context->containsMultipleSubDevices(rootDeviceIndex),                // areMultipleSubDevicesInContext
             false,                                                               // memoryMigrationRequired
             false,                                                               // textureCacheFlush
-            false,                                                               // hasStallingCmds
+            true,                                                                // hasStallingCmds
             false,                                                               // hasRelaxedOrderingDependencies
             stateCacheInvalidationNeeded,                                        // stateCacheInvalidation
             isStallingCommandsOnNextFlushRequired());                            // isStallingCommandsOnNextFlushRequired
@@ -1463,6 +1471,15 @@ bool CommandQueueHw<GfxFamily>::isBlitAuxTranslationRequired(const MultiDispatch
     return multiDispatchInfo.getKernelObjsForAuxTranslation() &&
            (multiDispatchInfo.getKernelObjsForAuxTranslation()->size() > 0) &&
            (GfxCoreHelperHw<GfxFamily>::getAuxTranslationMode(device->getHardwareInfo()) == AuxTranslationMode::Blit);
+}
+
+template <typename GfxFamily>
+bool CommandQueueHw<GfxFamily>::relaxedOrderingForGpgpuAllowed(uint32_t numWaitEvents) const {
+    if (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() != 1) {
+        return false;
+    }
+
+    return RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(getGpgpuCommandStreamReceiver(), numWaitEvents);
 }
 
 } // namespace NEO

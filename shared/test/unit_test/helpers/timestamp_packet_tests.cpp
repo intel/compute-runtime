@@ -192,7 +192,7 @@ HWTEST_F(TimestampPacketTests, whenEstimatingSizeForNodeDependencyThenReturnCorr
     mockNode.gpuAddress = 0x1230000;
 
     size_t sizeForNodeDependency = 0;
-    sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(mockNode);
+    sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForSemaphoreNodeDependency<FamilyType>(mockNode);
 
     size_t expectedSize = mockNode.getPacketsUsed() * NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 

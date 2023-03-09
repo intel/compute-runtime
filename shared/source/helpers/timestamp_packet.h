@@ -105,10 +105,26 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily>
-    static void programCsrDependenciesForTimestampPacketContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies) {
+    static void programConditionalBbStartForRelaxedOrdering(LinearStream &cmdStream, TagNodeBase &timestampPacketNode) {
+        auto compareAddress = getContextEndGpuAddress(timestampPacketNode);
+
+        for (uint32_t packetId = 0; packetId < timestampPacketNode.getPacketsUsed(); packetId++) {
+            uint64_t compareOffset = packetId * timestampPacketNode.getSinglePacketSize();
+
+            EncodeBatchBufferStartOrEnd<GfxFamily>::programConditionalDataMemBatchBufferStart(cmdStream, 0, compareAddress + compareOffset, 1,
+                                                                                              NEO::CompareOperation::Equal, true);
+        }
+    }
+
+    template <typename GfxFamily>
+    static void programCsrDependenciesForTimestampPacketContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies, bool relaxedOrderingEnabled) {
         for (auto timestampPacketContainer : csrDependencies.timestampPacketContainer) {
             for (auto &node : timestampPacketContainer->peekNodes()) {
-                TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node);
+                if (relaxedOrderingEnabled) {
+                    TimestampPacketHelper::programConditionalBbStartForRelaxedOrdering<GfxFamily>(cmdStream, *node);
+                } else {
+                    TimestampPacketHelper::programSemaphore<GfxFamily>(cmdStream, *node);
+                }
             }
         }
     }
@@ -164,16 +180,25 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily>
-    static size_t getRequiredCmdStreamSizeForNodeDependency(TagNodeBase &timestampPacketNode) {
+    static size_t getRequiredCmdStreamSizeForSemaphoreNodeDependency(TagNodeBase &timestampPacketNode) {
         return (timestampPacketNode.getPacketsUsed() * NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait());
     }
 
     template <typename GfxFamily>
-    static size_t getRequiredCmdStreamSize(const CsrDependencies &csrDependencies) {
+    static size_t getRequiredCmdStreamSizeForRelaxedOrderingNodeDependency(TagNodeBase &timestampPacketNode) {
+        return (timestampPacketNode.getPacketsUsed() * EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataMemBatchBufferStart());
+    }
+
+    template <typename GfxFamily>
+    static size_t getRequiredCmdStreamSize(const CsrDependencies &csrDependencies, bool relaxedOrderingEnabled) {
         size_t totalCommandsSize = 0;
         for (auto timestampPacketContainer : csrDependencies.timestampPacketContainer) {
             for (auto &node : timestampPacketContainer->peekNodes()) {
-                totalCommandsSize += getRequiredCmdStreamSizeForNodeDependency<GfxFamily>(*node);
+                if (relaxedOrderingEnabled) {
+                    totalCommandsSize += getRequiredCmdStreamSizeForRelaxedOrderingNodeDependency<GfxFamily>(*node);
+                } else {
+                    totalCommandsSize += getRequiredCmdStreamSizeForSemaphoreNodeDependency<GfxFamily>(*node);
+                }
             }
         }
 

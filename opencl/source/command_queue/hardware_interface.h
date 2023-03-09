@@ -46,6 +46,7 @@ struct HardwareInterfaceWalkerArgs {
     uint32_t commandType = 0;
     uint32_t interfaceDescriptorIndex = 0;
     bool isMainKernel = false;
+    bool relaxedOrderingEnabled = false;
 };
 
 template <typename GfxFamily>

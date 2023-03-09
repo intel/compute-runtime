@@ -378,7 +378,8 @@ class CommandQueueHw : public CommandQueue {
                                       EventsRequest &eventsRequest,
                                       EventBuilder &eventBuilder,
                                       TaskCountType taskLevel,
-                                      PrintfHandler *printfHandler);
+                                      PrintfHandler *printfHandler,
+                                      bool relaxedOrderingEnabled);
 
     void enqueueBlocked(uint32_t commandType,
                         Surface **surfacesForResidency,
@@ -506,11 +507,13 @@ class CommandQueueHw : public CommandQueue {
                                    bool blockQueue,
                                    CsrDependencies &csrDeps,
                                    KernelOperation *blockedCommandsData,
-                                   TimestampPacketDependencies &timestampPacketDependencies);
+                                   TimestampPacketDependencies &timestampPacketDependencies,
+                                   bool relaxedOrderingEnabled);
 
     MOCKABLE_VIRTUAL bool isGpgpuSubmissionForBcsRequired(bool queueBlocked, TimestampPacketDependencies &timestampPacketDependencies) const;
     void setupEvent(EventBuilder &eventBuilder, cl_event *outEvent, uint32_t cmdType);
 
     bool isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo);
+    bool relaxedOrderingForGpgpuAllowed(uint32_t numWaitEvents) const;
 };
 } // namespace NEO

@@ -14,7 +14,10 @@
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_direct_submission_hw.h"
+#include "shared/test/common/mocks/mock_timestamp_container.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
 #include "shared/test/common/utilities/base_object_utils.h"
 
@@ -1019,6 +1022,145 @@ HWTEST_F(EnqueueKernelTest, givenTimestampWriteEnableWhenMarkerProfilingWithoutW
     auto extendedCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_MARKER, {}, false, false, false, *pCmdQ, multiDispatchInfo, true, false, nullptr);
 
     EXPECT_EQ(baseCommandStreamSize + 4 * EncodeStoreMMIO<FamilyType>::size + MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false), extendedCommandStreamSize);
+}
+
+HWTEST_F(EnqueueKernelTest, givenRelaxedOrderingEnabledWhenCheckingSizeForCsThenReturnCorrectValue) {
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    ultCsr.timestampPacketWriteEnabled = true;
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
+    ultCsr.directSubmission.reset(directSubmission);
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+    DispatchInfo dispatchInfo;
+    MultiDispatchInfo multiDispatchInfo(mockKernel.mockKernel);
+    dispatchInfo.setKernel(mockKernel.mockKernel);
+    multiDispatchInfo.push(dispatchInfo);
+
+    uint32_t numberOfDependencyContainers = 2;
+    size_t numberNodesPerContainer = 5;
+
+    MockTimestampPacketContainer timestamp0(*ultCsr.getTimestampPacketAllocator(), numberNodesPerContainer);
+    MockTimestampPacketContainer timestamp1(*ultCsr.getTimestampPacketAllocator(), numberNodesPerContainer);
+
+    CsrDependencies csrDeps;
+
+    csrDeps.timestampPacketContainer.push_back(&timestamp0);
+    csrDeps.timestampPacketContainer.push_back(&timestamp1);
+
+    directSubmission->relaxedOrderingEnabled = false;
+    auto baseCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, csrDeps, false, false, false, *pCmdQ, multiDispatchInfo, false, false, nullptr);
+
+    directSubmission->relaxedOrderingEnabled = true;
+    auto newCommandStreamSize = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, csrDeps, false, false, false, *pCmdQ, multiDispatchInfo, false, false, nullptr);
+
+    auto semaphoresSize = numberOfDependencyContainers * numberNodesPerContainer * sizeof(typename FamilyType::MI_SEMAPHORE_WAIT);
+    auto conditionalBbsSize = numberOfDependencyContainers * numberNodesPerContainer * EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart();
+    auto registersSize = 2 * EncodeSetMMIO<FamilyType>::sizeREG;
+
+    auto expectedSize = baseCommandStreamSize - semaphoresSize + conditionalBbsSize + registersSize;
+
+    EXPECT_EQ(expectedSize, newCommandStreamSize);
+}
+
+struct RelaxedOrderingEnqueueKernelTests : public EnqueueKernelTest {
+    void SetUp() override {
+        ultHwConfigBackup = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
+
+        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+        DebugManager.flags.UpdateTaskCountFromWait.set(1);
+
+        ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
+
+        EnqueueKernelTest::SetUp();
+    }
+
+    std::unique_ptr<VariableBackup<UltHwConfig>> ultHwConfigBackup;
+
+    DebugManagerStateRestore restore;
+    size_t gws[3] = {1, 1, 1};
+};
+
+HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDependenciesThenUseConditionalBbStarts, IsAtLeastXeHpcCore) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
+    ultCsr.directSubmission.reset(directSubmission);
+    ultCsr.registerClient();
+    ultCsr.registerClient();
+
+    MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
+
+    cl_event outEvent;
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+
+    mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &outEvent);
+    mockCmdQueueHw.flush();
+
+    EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasStallingCmds);
+    EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
+
+    auto cmdsOffset = mockCmdQueueHw.getCS(0).getUsed();
+
+    mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 1, &outEvent, nullptr);
+    mockCmdQueueHw.flush();
+
+    EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasStallingCmds);
+    EXPECT_TRUE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
+
+    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(ptrOffset(mockCmdQueueHw.getCS(0).getCpuBase(), cmdsOffset));
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0);
+
+    lrrCmd++;
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
+
+    auto eventNode = castToObject<Event>(outEvent)->getTimestampPacketNodes()->peekNodes()[0];
+    auto compareAddress = eventNode->getGpuAddress() + eventNode->getContextEndOffset();
+
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(++lrrCmd, 0, compareAddress, 1, CompareOperation::Equal, true));
+
+    mockCmdQueueHw.enqueueBarrierWithWaitList(1, &outEvent, nullptr);
+    mockCmdQueueHw.flush();
+
+    EXPECT_TRUE(ultCsr.recordedDispatchFlags.hasStallingCmds);
+    EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
+
+    clReleaseEvent(outEvent);
+}
+
+HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueWithPipeControlWhenSendingBbThenMarkAsStallingDispatch, IsAtLeastXeHpcCore) {
+
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
+    ultCsr.directSubmission.reset(directSubmission);
+    ultCsr.registerClient();
+    ultCsr.registerClient();
+
+    ultCsr.recordFlusheBatchBuffer = true;
+
+    MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
+    MockKernelWithInternals mockKernel(*pClDevice);
+
+    // warmup
+    mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    mockCmdQueueHw.flush();
+
+    mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    mockCmdQueueHw.flush();
+
+    EXPECT_FALSE(ultCsr.latestFlushedBatchBuffer.hasStallingCmds);
+
+    ultCsr.heapStorageRequiresRecyclingTag = true;
+    mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    mockCmdQueueHw.flush();
+
+    EXPECT_TRUE(ultCsr.latestFlushedBatchBuffer.hasStallingCmds);
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, EnqueueKernelTest, givenTimestampWriteEnableOnMultiTileQueueWhenMarkerProfilingWithoutWaitListThenSizeHasFourMMIOStoresAndCrossTileBarrier) {

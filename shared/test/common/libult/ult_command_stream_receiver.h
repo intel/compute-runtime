@@ -43,6 +43,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::handleFrontEndStateTransition;
     using BaseClass::handlePipelineSelectStateTransition;
     using BaseClass::handleStateBaseAddressStateTransition;
+    using BaseClass::heapStorageRequiresRecyclingTag;
     using BaseClass::indirectHeap;
     using BaseClass::iohState;
     using BaseClass::isBlitterDirectSubmissionEnabled;

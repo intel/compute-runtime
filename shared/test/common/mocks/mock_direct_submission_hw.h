@@ -60,6 +60,7 @@ struct MockDirectSubmissionHw : public DirectSubmissionHw<GfxFamily, Dispatcher>
     using BaseClass::postSyncOffset;
     using BaseClass::preinitializedRelaxedOrderingScheduler;
     using BaseClass::preinitializedTaskStoreSection;
+    using BaseClass::relaxedOrderingEnabled;
     using BaseClass::relaxedOrderingInitialized;
     using BaseClass::relaxedOrderingSchedulerAllocation;
     using BaseClass::relaxedOrderingSchedulerRequired;

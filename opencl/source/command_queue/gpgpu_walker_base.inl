@@ -190,8 +190,16 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         expectedSizeCS += dispatchInfo.dispatchInitCommands.estimateCommandsSize(kernelObjAuxCount, rootDeviceEnvironment, commandQueueHw.isCacheFlushForBcsRequired());
         expectedSizeCS += dispatchInfo.dispatchEpilogueCommands.estimateCommandsSize(kernelObjAuxCount, rootDeviceEnvironment, commandQueueHw.isCacheFlushForBcsRequired());
     }
+
+    auto relaxedOrderingEnabled = commandQueue.getGpgpuCommandStreamReceiver().directSubmissionRelaxedOrderingEnabled();
+
+    if (relaxedOrderingEnabled) {
+        expectedSizeCS += 2 * EncodeSetMMIO<GfxFamily>::sizeREG;
+    }
+
     if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDeps);
+        // add relaxed ordering cond_bb_start
+        expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDeps, relaxedOrderingEnabled);
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
         if (productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, commandQueue.isOOQEnabled())) {
             expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);

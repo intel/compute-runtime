@@ -11,6 +11,7 @@
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_os_library.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
 #include "shared/test/common/mocks/mock_timestamp_container.h"
@@ -1187,4 +1188,32 @@ HWTEST_F(CommandQueueHwTest, givenNoGpuHangWhenFinishingCommandQueueHwThenWaitFo
     const auto finishResult = mockCmdQueueHw.finish();
     EXPECT_EQ(1, mockCmdQueueHw.waitForAllEnginesCalledCount);
     EXPECT_EQ(CL_SUCCESS, finishResult);
+}
+
+HWTEST_F(CommandQueueHwTest, givenRelaxedOrderingEnabledWhenCheckingIfAllowedByCommandQueueThenReturnFalse) {
+    DebugManagerStateRestore restore;
+
+    MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
+
+    auto &ultCsr = mockCmdQueueHw.getUltCommandStreamReceiver();
+
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
+    directSubmission->relaxedOrderingEnabled = true;
+    ultCsr.directSubmission.reset(directSubmission);
+
+    EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(0));
+    EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(1));
+
+    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+    EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(0));
+    EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(1));
+
+    ultCsr.registerClient();
+    EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(0));
+    EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(1));
+
+    ultCsr.registerClient();
+
+    EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(0));
+    EXPECT_TRUE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(1));
 }

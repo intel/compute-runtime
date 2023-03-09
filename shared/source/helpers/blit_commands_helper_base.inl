@@ -132,7 +132,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t>
     }
 
     sizePerBlit += estimatePostBlitCommandSize(rootDeviceEnvironment);
-    return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies) +
+    return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies, false) +
            TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<GfxFamily>(csrDependencies) +
            (sizePerBlit * nBlits) +
            timestampCmdSize +

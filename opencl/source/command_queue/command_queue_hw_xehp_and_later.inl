@@ -50,7 +50,7 @@ LinearStream &getCommandStream<Family, CL_COMMAND_RESOURCE_BARRIER>(CommandQueue
     size_t expectedSizeCS = 0;
     [[maybe_unused]] bool usePostSync = false;
     if (commandQueue.getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<Family>(csrDeps);
+        expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<Family>(csrDeps, false);
         usePostSync = true;
     }
 
