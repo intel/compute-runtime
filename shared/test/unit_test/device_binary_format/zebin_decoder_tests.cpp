@@ -3690,6 +3690,47 @@ kernels:
     EXPECT_EQ(256U * 8, kernelDescriptor->kernelAttributes.perHwThreadPrivateMemorySize);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferOfSizeBiggerThanMinimalWhenTypeIsScratchAndSimtThreadThenSetsProperFieldsInDescriptor) {
+    ConstStringRef zeinfo = R"===(
+kernels:         
+    - name : some_kernel
+      execution_env:   
+        simd_size: 8
+      per_thread_memory_buffers: 
+          - type:            scratch
+            usage:           private_space
+            size:            2048
+            is_simt_thread:  true
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_EQ(2048U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
+    EXPECT_EQ(0U, kernelDescriptor->kernelAttributes.perThreadScratchSize[1]);
+}
+
+TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferBiggerThanMinimalWhenSlotAndSimtThreadIsProvidedThenSetsProperFieldsInDescriptorInCorrectSlot) {
+    ConstStringRef zeinfo = R"===(
+kernels:         
+    - name : some_kernel
+      execution_env:   
+        simd_size: 8
+      per_thread_memory_buffers: 
+          - type:            scratch
+            usage:           private_space
+            size:            2048
+            is_simt_thread:  true
+            slot : 1
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    EXPECT_EQ(0U, kernelDescriptor->kernelAttributes.perThreadScratchSize[0]);
+    EXPECT_EQ(2048U, kernelDescriptor->kernelAttributes.perThreadScratchSize[1]);
+}
+
 TEST_F(decodeZeInfoKernelEntryTest, GivenPerThreadMemoryBufferOfSizeSmallerThanMinimalWhenTypeIsScratchThenSetsProperFieldsInDescriptor) {
     ConstStringRef zeinfo = R"===(
 kernels:         

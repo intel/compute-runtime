@@ -1456,7 +1456,7 @@ DecodeError populateKernelPerThreadMemoryBuffer(KernelDescriptor &dst, const Ker
             outErrReason.append("DeviceBinaryFormat::Zebin : Invalid duplicated scratch buffer entry " + std::to_string(src.slot) + " in context of : " + dst.kernelMetadata.kernelName + ".\n");
             return DecodeError::InvalidBinary;
         }
-        uint32_t scratchSpaceSize = std::max(static_cast<uint32_t>(size), minScratchSpaceSize);
+        uint32_t scratchSpaceSize = std::max(static_cast<uint32_t>(src.size), minScratchSpaceSize);
         scratchSpaceSize = Math::isPow2(scratchSpaceSize) ? scratchSpaceSize : Math::nextPowerOfTwo(scratchSpaceSize);
         dst.kernelAttributes.perThreadScratchSize[src.slot] = scratchSpaceSize;
         break;
