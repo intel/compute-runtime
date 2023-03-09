@@ -592,7 +592,7 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
     verifyDebugCapabilities();
 
     auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironment();
-    auto containsStatefulAccess = NEO::AddressingModeHelper::containsStatefulAccess(translationUnit->programInfo.kernelInfos);
+    auto containsStatefulAccess = NEO::AddressingModeHelper::containsStatefulAccess(translationUnit->programInfo.kernelInfos, false);
     auto isUserKernel = (type == ModuleType::User);
 
     auto failBuildProgram = containsStatefulAccess &&

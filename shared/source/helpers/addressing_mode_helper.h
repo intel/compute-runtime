@@ -14,7 +14,7 @@ struct RootDeviceEnvironment;
 
 namespace AddressingModeHelper {
 bool failBuildProgramWithStatefulAccess(const RootDeviceEnvironment &rootDeviceEnvironment);
-bool containsStatefulAccess(const std::vector<KernelInfo *> &kernelInfos);
+bool containsStatefulAccess(const std::vector<KernelInfo *> &kernelInfos, bool skipLastExplicitArg);
 
 } // namespace AddressingModeHelper
 } // namespace NEO

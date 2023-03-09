@@ -27,9 +27,15 @@ bool failBuildProgramWithStatefulAccess(const RootDeviceEnvironment &rootDeviceE
     return failBuildProgram && forceToStatelessRequired;
 }
 
-bool containsStatefulAccess(const std::vector<KernelInfo *> &kernelInfos) {
+bool containsStatefulAccess(const std::vector<KernelInfo *> &kernelInfos, bool skipLastExplicitArg) {
     for (const auto &kernelInfo : kernelInfos) {
-        for (const auto &arg : kernelInfo->kernelDescriptor.payloadMappings.explicitArgs) {
+        auto size = static_cast<int32_t>(kernelInfo->kernelDescriptor.payloadMappings.explicitArgs.size());
+        if (skipLastExplicitArg) {
+            size--;
+        }
+        for (auto i = 0; i < size; i++) {
+
+            auto &arg = kernelInfo->kernelDescriptor.payloadMappings.explicitArgs[i];
             auto isStatefulAccess = arg.is<NEO::ArgDescriptor::ArgTPointer>() &&
                                     (NEO::isValidOffset(arg.as<NEO::ArgDescPointer>().bindless) ||
                                      NEO::isValidOffset(arg.as<NEO::ArgDescPointer>().bindful));

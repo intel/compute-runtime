@@ -165,7 +165,8 @@ cl_int Program::build(
 
         retVal = processGenBinaries(deviceVector, phaseReached);
 
-        auto containsStatefulAccess = AddressingModeHelper::containsStatefulAccess(buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray);
+        auto skipLastExplicitArg = isGTPinInitialized;
+        auto containsStatefulAccess = AddressingModeHelper::containsStatefulAccess(buildInfos[clDevices[0]->getRootDeviceIndex()].kernelInfoArray, skipLastExplicitArg);
         auto isUserKernel = !isBuiltIn;
 
         auto failBuildProgram = (containsStatefulAccess &&
