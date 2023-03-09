@@ -300,13 +300,9 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         timeout = NEO::DebugManager.flags.OverrideEventSynchronizeTimeout.get();
     }
 
-    if (timeout == 0) {
-        return queryStatus();
-    }
-
     waitStartTime = std::chrono::high_resolution_clock::now();
     lastHangCheckTime = waitStartTime;
-    while (true) {
+    do {
         ret = queryStatus();
         if (ret == ZE_RESULT_SUCCESS) {
             if (this->getKernelForPrintf() != nullptr) {
@@ -328,14 +324,13 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
         if (timeout == std::numeric_limits<uint64_t>::max()) {
             continue;
+        } else if (timeout == 0) {
+            break;
         }
 
         timeDiff = std::chrono::duration_cast<std::chrono::nanoseconds>(currentTime - waitStartTime).count();
 
-        if (timeDiff >= timeout) {
-            break;
-        }
-    }
+    } while (timeDiff < timeout);
 
     return ret;
 }
