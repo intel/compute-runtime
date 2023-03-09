@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -79,13 +79,14 @@ TEST(YamlIsAlphaNumeric, GivenCharThenReturnsTrueOnlyWhenCharIsNumberOrLetter) {
     }
 }
 
-TEST(YamlIsNameIdentifierCharacter, GivenCharThenReturnsTrueOnlyWhenCharIsNumberOrLetterOrUnderscore) {
+TEST(YamlIsNameIdentifierCharacter, GivenCharThenReturnsTrueOnlyWhenCharIsNumberOrLetterOrUnderscoreOrHyphen) {
     std::set<char> validChars{};
     using It = IteratorAsValue<char>;
     validChars.insert(It{'a'}, ++It{'z'});
     validChars.insert(It{'A'}, ++It{'Z'});
     validChars.insert(It{'0'}, ++It{'9'});
     validChars.insert('_');
+    validChars.insert('-');
     for (int c = std::numeric_limits<char>::min(); c <= std::numeric_limits<char>::max(); ++c) {
         bool expected = validChars.count(static_cast<char>(c)) > 0;
         EXPECT_EQ(expected, NEO::Yaml::isNameIdentifierCharacter(static_cast<char>(c))) << static_cast<char>(c);
