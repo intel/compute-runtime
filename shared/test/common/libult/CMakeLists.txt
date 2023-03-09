@@ -9,7 +9,7 @@ macro(macro_for_each_platform)
 
   foreach(BRANCH_DIR ${BRANCH_DIR_LIST})
     foreach(BRANCH ${BRANCH_DIR_LIST})
-      set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH_DIR}${CORE_TYPE_LOWER}${BRANCH}enable_product_helper_${PLATFORM_IT_LOWER}.cpp)
+      set(SRC_FILE ${NEO_SHARED_DIRECTORY}${BRANCH_DIR}${CORE_TYPE_LOWER}${BRANCH}enable_hw_info_config_${PLATFORM_IT_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
         list(APPEND neo_libult_common_SRCS_ENABLE_TESTED_HW ${SRC_FILE})
       endif()

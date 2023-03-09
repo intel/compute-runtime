@@ -93,7 +93,7 @@ macro(macro_for_each_platform)
         list(APPEND CORE_SRCS_${CORE_TYPE}_CPP_WINDOWS ${SRC_FILE})
       endif()
 
-      set(SRC_FILE ${PATH_TO_CORE}enable_product_helper_${PLATFORM_IT_LOWER}.cpp)
+      set(SRC_FILE ${PATH_TO_CORE}enable_hw_info_config_${PLATFORM_IT_LOWER}.cpp)
       if(EXISTS ${SRC_FILE})
         list(APPEND ${CORE_TYPE}_SRC_LINK_BASE ${SRC_FILE})
       endif()
