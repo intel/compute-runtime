@@ -740,6 +740,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, givenEnqueueWithoutArbitrationPoli
     DebugManager.flags.ForceThreadArbitrationPolicyProgrammingWithScm.set(1);
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.streamProperties.initSupport(pDevice->getRootDeviceEnvironment());
     auto &csrThreadArbitrationPolicy = commandStreamReceiver.streamProperties.stateComputeMode.threadArbitrationPolicy.value;
 
     int32_t sentThreadArbitrationPolicy = ThreadArbitrationPolicy::RoundRobinAfterDependency;

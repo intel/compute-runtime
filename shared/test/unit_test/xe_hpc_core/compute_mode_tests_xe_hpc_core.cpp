@@ -189,7 +189,7 @@ HWTEST2_F(XeHpcComputeModeRequirements, giventhreadArbitrationPolicyWithoutShare
     };
 
     getCsrHw<FamilyType>()->streamProperties.stateComputeMode.setPropertiesAll(flags.requiresCoherency, flags.numGrfRequired,
-                                                                               flags.threadArbitrationPolicy, PreemptionMode::Disabled, device->getRootDeviceEnvironment());
+                                                                               flags.threadArbitrationPolicy, PreemptionMode::Disabled);
 
     flushTask(true);
     findCmd(productHelper.isThreadArbitrationPolicyReportedWithScm()); // first time

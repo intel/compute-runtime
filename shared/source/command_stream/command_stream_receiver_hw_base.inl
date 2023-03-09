@@ -375,7 +375,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     auto requiresCoherency = gfxCoreHelper.forceNonGpuCoherencyWA(dispatchFlags.requiresCoherency);
     this->streamProperties.stateComputeMode.setPropertiesAll(requiresCoherency, dispatchFlags.numGrfRequired,
-                                                             dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode(), rootDeviceEnvironment);
+                                                             dispatchFlags.threadArbitrationPolicy, device.getPreemptionMode());
 
     csrSizeRequestFlags.l3ConfigChanged = this->lastSentL3Config != newL3Config;
     csrSizeRequestFlags.preemptionRequestChanged = this->lastPreemptionMode != dispatchFlags.preemptionMode;
@@ -478,7 +478,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
 
         this->streamProperties.stateBaseAddress.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize,
-                                                                          surfaceStateBaseAddress, surfaceStateSize, rootDeviceEnvironment);
+                                                                          surfaceStateBaseAddress, surfaceStateSize);
     }
 
     auto isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;
@@ -1102,7 +1102,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
 
         auto isCooperative = dispatchFlags.kernelExecutionType == KernelExecutionType::Concurrent;
         auto disableOverdispatch = (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotSet);
-        streamProperties.frontEndState.setPropertiesAll(isCooperative, dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced(), peekRootDeviceEnvironment());
+        streamProperties.frontEndState.setPropertiesAll(isCooperative, dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced());
 
         auto &gfxCoreHelper = getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), hwInfo);
@@ -1706,7 +1706,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::handleStateBaseAddressStateTrans
             isStateBaseAddressDirty = true;
             this->lastSentUseGlobalAtomics = globalAtomics;
         }
-        this->streamProperties.stateBaseAddress.setPropertyGlobalAtomics(globalAtomics, rootDeviceEnvironment, false);
+        this->streamProperties.stateBaseAddress.setPropertyGlobalAtomics(globalAtomics, false);
     }
 }
 

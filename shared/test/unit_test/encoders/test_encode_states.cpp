@@ -457,7 +457,7 @@ HWTEST2_F(CommandEncodeStatesTest, whenGetCmdSizeForComputeModeThenCorrectValueI
 
     UltDeviceFactory deviceFactory{1, 0};
     auto &csr = deviceFactory.rootDevices[0]->getUltCommandStreamReceiver<FamilyType>();
-    csr.streamProperties.stateComputeMode.setPropertiesAll(false, 0, ThreadArbitrationPolicy::AgeBased, PreemptionMode::Disabled, csr.peekRootDeviceEnvironment());
+    csr.streamProperties.stateComputeMode.setPropertiesAll(false, 0, ThreadArbitrationPolicy::AgeBased, PreemptionMode::Disabled);
     EXPECT_EQ(expectedScmSize, csr.getCmdSizeForComputeMode());
 }
 
@@ -506,6 +506,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetTh
     uint32_t statelessMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
 
     StateBaseAddressProperties sbaProperties;
+    sbaProperties.initSupport(pDevice->getRootDeviceEnvironment());
 
     STATE_BASE_ADDRESS sba;
     EncodeStateBaseAddressArgs<FamilyType> args = createDefaultEncodeStateBaseAddressArgs<FamilyType>(cmdContainer.get(), sba, statelessMocsIndex);
@@ -520,7 +521,7 @@ HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetTh
     auto itorBindTablePoolCmd = find<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(commands.begin(), commands.end());
     EXPECT_EQ(commands.end(), itorBindTablePoolCmd);
 
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize, pDevice->getRootDeviceEnvironment());
+    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
 
     EncodeStateBaseAddress<FamilyType>::encode(args);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,13 @@ struct StreamProperties {
     FrontEndProperties frontEndState{};
     PipelineSelectProperties pipelineSelect{};
     StateBaseAddressProperties stateBaseAddress{};
+
+    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment) {
+        stateComputeMode.initSupport(rootDeviceEnvironment);
+        frontEndState.initSupport(rootDeviceEnvironment);
+        pipelineSelect.initSupport(rootDeviceEnvironment);
+        stateBaseAddress.initSupport(rootDeviceEnvironment);
+    }
 };
 
 } // namespace NEO

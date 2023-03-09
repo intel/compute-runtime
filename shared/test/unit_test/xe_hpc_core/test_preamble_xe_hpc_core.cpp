@@ -47,7 +47,8 @@ XE_HPC_CORETEST_F(PreambleCfeState, givenKernelExecutionTypeConcurrentAndRevisio
 
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::RenderCompute);
     StreamProperties streamProperties{};
-    streamProperties.frontEndState.setPropertiesAll(true, false, false, false, pDevice->getRootDeviceEnvironment());
+    streamProperties.initSupport(pDevice->getRootDeviceEnvironment());
+    streamProperties.frontEndState.setPropertiesAll(true, false, false, false);
 
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, streamProperties, nullptr);
     parseCommands<FamilyType>(linearStream);

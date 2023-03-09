@@ -634,7 +634,8 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
 
     UltDeviceFactory deviceFactory{1, 0};
     auto pDevice = deviceFactory.rootDevices[0];
-    auto pHwInfo = pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto pHwInfo = rootDeviceEnvironment.getMutableHardwareInfo();
     const auto &productHelper = pDevice->getProductHelper();
 
     uint8_t memory[1 * KB]{};
@@ -649,6 +650,7 @@ HWTEST2_F(CommandStreamReceiverHwTest, whenProgramVFEStateIsCalledThenCorrectCom
 
         {
             mockCsr->getStreamProperties().frontEndState = {};
+            mockCsr->getStreamProperties().frontEndState.initSupport(rootDeviceEnvironment);
             auto flags = DispatchFlagsHelper::createDefaultDispatchFlags();
             flags.additionalKernelExecInfo = AdditionalKernelExecInfo::DisableOverdispatch;
 

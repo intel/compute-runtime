@@ -16,14 +16,13 @@
 
 using namespace NEO;
 
-void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode,
-                                                  const RootDeviceEnvironment &rootDeviceEnvironment) {
-    initSupport(rootDeviceEnvironment);
+void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
     clearIsDirty();
 
     setCoherencyProperty(requiresCoherency);
     setGrfNumberProperty(numGrfRequired);
-    setThreadArbitrationProperty(threadArbitrationPolicy, rootDeviceEnvironment);
+    setThreadArbitrationProperty(threadArbitrationPolicy);
 
     int32_t zPassAsyncComputeThreadLimit = -1;
     if (DebugManager.flags.ForceZPassAsyncComputeThreadLimit.get() != -1) {
@@ -96,14 +95,12 @@ void StateComputeModeProperties::setGrfNumberProperty(uint32_t numGrfRequired) {
     }
 }
 
-void StateComputeModeProperties::setThreadArbitrationProperty(int32_t threadArbitrationPolicy,
-                                                              const RootDeviceEnvironment &rootDeviceEnvironment) {
+void StateComputeModeProperties::setThreadArbitrationProperty(int32_t threadArbitrationPolicy) {
     bool setDefaultThreadArbitrationPolicy = (threadArbitrationPolicy == ThreadArbitrationPolicy::NotPresent) &&
                                              (NEO::DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.get() ||
                                               (this->threadArbitrationPolicy.value == ThreadArbitrationPolicy::NotPresent));
     if (setDefaultThreadArbitrationPolicy) {
-        auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-        threadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
+        threadArbitrationPolicy = this->defaultThreadArbitrationPolicy;
     }
     if (DebugManager.flags.OverrideThreadArbitrationPolicy.get() != -1) {
         threadArbitrationPolicy = DebugManager.flags.OverrideThreadArbitrationPolicy.get();
@@ -114,15 +111,17 @@ void StateComputeModeProperties::setThreadArbitrationProperty(int32_t threadArbi
 }
 
 void StateComputeModeProperties::initSupport(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (this->propertiesSupportLoaded == false) {
-        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        productHelper.fillScmPropertiesSupportStructure(this->scmPropertiesSupport);
-        this->propertiesSupportLoaded = true;
-    }
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    productHelper.fillScmPropertiesSupportStructure(this->scmPropertiesSupport);
+
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+    this->defaultThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
+
+    this->propertiesSupportLoaded = true;
 }
 
-void StateComputeModeProperties::setPropertiesCoherencyDevicePreemption(bool requiresCoherency, PreemptionMode devicePreemptionMode, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState) {
-    initSupport(rootDeviceEnvironment);
+void StateComputeModeProperties::setPropertiesCoherencyDevicePreemption(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     if (!clearDirtyState) {
         this->isCoherencyRequired.isDirty = false;
@@ -139,30 +138,27 @@ void StateComputeModeProperties::setPropertiesCoherencyDevicePreemption(bool req
     }
 }
 
-void StateComputeModeProperties::setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    initSupport(rootDeviceEnvironment);
+void StateComputeModeProperties::setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     this->threadArbitrationPolicy.isDirty = false;
     this->largeGrfMode.isDirty = false;
     clearIsDirtyExtraPerKernel();
 
     setGrfNumberProperty(numGrfRequired);
-    setThreadArbitrationProperty(threadArbitrationPolicy, rootDeviceEnvironment);
+    setThreadArbitrationProperty(threadArbitrationPolicy);
     setPropertiesExtraPerKernel();
 }
 
 void FrontEndProperties::initSupport(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (this->propertiesSupportLoaded == false) {
-        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-        productHelper.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport, hwInfo);
-        this->propertiesSupportLoaded = true;
-    }
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    productHelper.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport, hwInfo);
+    this->propertiesSupportLoaded = true;
 }
 
-void FrontEndProperties::setPropertiesAll(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    initSupport(rootDeviceEnvironment);
-
+void FrontEndProperties::setPropertiesAll(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, int32_t engineInstancedDevice) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
     clearIsDirty();
 
     if (this->frontEndPropertiesSupport.computeDispatchAllWalker) {
@@ -182,8 +178,8 @@ void FrontEndProperties::setPropertiesAll(bool isCooperativeKernel, bool disable
     }
 }
 
-void FrontEndProperties::setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    initSupport(rootDeviceEnvironment);
+void FrontEndProperties::setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     this->singleSliceDispatchCcsMode.isDirty = false;
     if (this->frontEndPropertiesSupport.singleSliceDispatchCcsMode) {
@@ -191,8 +187,8 @@ void FrontEndProperties::setPropertySingleSliceDispatchCcsMode(int32_t engineIns
     }
 }
 
-void FrontEndProperties::setPropertiesDisableOverdispatchEngineInstanced(bool disableOverdispatch, int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState) {
-    initSupport(rootDeviceEnvironment);
+void FrontEndProperties::setPropertiesDisableOverdispatchEngineInstanced(bool disableOverdispatch, int32_t engineInstancedDevice, bool clearDirtyState) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     if (!clearDirtyState) {
         this->disableOverdispatch.isDirty = false;
@@ -212,8 +208,8 @@ void FrontEndProperties::setPropertiesDisableOverdispatchEngineInstanced(bool di
     }
 }
 
-void FrontEndProperties::setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(bool isCooperativeKernel, bool disableEuFusion, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    initSupport(rootDeviceEnvironment);
+void FrontEndProperties::setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(bool isCooperativeKernel, bool disableEuFusion) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     this->computeDispatchAllWalkerEnable.isDirty = false;
     this->disableEUFusion.isDirty = false;
@@ -249,16 +245,13 @@ void FrontEndProperties::clearIsDirty() {
 }
 
 void PipelineSelectProperties::initSupport(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (this->propertiesSupportLoaded == false) {
-        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-
-        productHelper.fillPipelineSelectPropertiesSupportStructure(this->pipelineSelectPropertiesSupport, *rootDeviceEnvironment.getHardwareInfo());
-        this->propertiesSupportLoaded = true;
-    }
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    productHelper.fillPipelineSelectPropertiesSupportStructure(this->pipelineSelectPropertiesSupport, *rootDeviceEnvironment.getHardwareInfo());
+    this->propertiesSupportLoaded = true;
 }
 
-void PipelineSelectProperties::setPropertiesAll(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    initSupport(rootDeviceEnvironment);
+void PipelineSelectProperties::setPropertiesAll(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
     clearIsDirty();
 
     this->modeSelected.set(modeSelected);
@@ -272,8 +265,8 @@ void PipelineSelectProperties::setPropertiesAll(bool modeSelected, bool mediaSam
     }
 }
 
-void PipelineSelectProperties::setPropertiesModeSelectedMediaSamplerClockGate(bool modeSelected, bool mediaSamplerDopClockGate, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState) {
-    initSupport(rootDeviceEnvironment);
+void PipelineSelectProperties::setPropertiesModeSelectedMediaSamplerClockGate(bool modeSelected, bool mediaSamplerDopClockGate, bool clearDirtyState) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     if (!clearDirtyState) {
         this->modeSelected.isDirty = false;
@@ -292,8 +285,8 @@ void PipelineSelectProperties::setPropertiesModeSelectedMediaSamplerClockGate(bo
     }
 }
 
-void PipelineSelectProperties::setPropertySystolicMode(bool systolicMode, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    initSupport(rootDeviceEnvironment);
+void PipelineSelectProperties::setPropertySystolicMode(bool systolicMode) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     this->systolicMode.isDirty = false;
 
@@ -321,16 +314,14 @@ void PipelineSelectProperties::clearIsDirty() {
 }
 
 void StateBaseAddressProperties::initSupport(const RootDeviceEnvironment &rootDeviceEnvironment) {
-    if (this->propertiesSupportLoaded == false) {
-        auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-        productHelper.fillStateBaseAddressPropertiesSupportStructure(this->stateBaseAddressPropertiesSupport);
-        this->propertiesSupportLoaded = true;
-    }
+    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    productHelper.fillStateBaseAddressPropertiesSupportStructure(this->stateBaseAddressPropertiesSupport);
+    this->propertiesSupportLoaded = true;
 }
 
 void StateBaseAddressProperties::setPropertiesSurfaceState(int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
-                                                           int64_t surfaceStateBaseAddress, size_t surfaceStateSize, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    initSupport(rootDeviceEnvironment);
+                                                           int64_t surfaceStateBaseAddress, size_t surfaceStateSize) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     this->bindingTablePoolBaseAddress.isDirty = false;
     this->bindingTablePoolSize.isDirty = false;
@@ -364,8 +355,8 @@ void StateBaseAddressProperties::setPropertyStatelessMocs(int32_t statelessMocs)
     this->statelessMocs.set(statelessMocs);
 }
 
-void StateBaseAddressProperties::setPropertyGlobalAtomics(bool globalAtomics, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState) {
-    initSupport(rootDeviceEnvironment);
+void StateBaseAddressProperties::setPropertyGlobalAtomics(bool globalAtomics, bool clearDirtyState) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     if (!clearDirtyState) {
         this->globalAtomics.isDirty = false;
@@ -382,8 +373,8 @@ void StateBaseAddressProperties::setPropertiesAll(bool globalAtomics, int32_t st
                                                   int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
                                                   int64_t surfaceStateBaseAddress, size_t surfaceStateSize,
                                                   int64_t dynamicStateBaseAddress, size_t dynamicStateSize,
-                                                  int64_t indirectObjectBaseAddress, size_t indirectObjectSize, const RootDeviceEnvironment &rootDeviceEnvironment) {
-    initSupport(rootDeviceEnvironment);
+                                                  int64_t indirectObjectBaseAddress, size_t indirectObjectSize) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
     clearIsDirty();
 
     if (this->stateBaseAddressPropertiesSupport.globalAtomics) {

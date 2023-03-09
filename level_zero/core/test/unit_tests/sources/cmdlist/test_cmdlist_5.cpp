@@ -2300,6 +2300,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     constexpr uint32_t surfaceStateSize = 0x10;
 
     NEO::StreamProperties streamProperties;
+    streamProperties.initSupport(device->getNEODevice()->getRootDeviceEnvironment());
 
     ze_command_queue_desc_t desc = {};
     auto cmdQueueHw = new MockCommandQueueHw<gfxCoreFamily>(device, commandQueue->getCsr(), &desc);
@@ -2319,7 +2320,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     auto itorBindTablePoolCmd = find<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(cmdList.end(), itorBindTablePoolCmd);
 
-    streamProperties.stateBaseAddress.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize, device->getNEODevice()->getRootDeviceEnvironment());
+    streamProperties.stateBaseAddress.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
 
     queueBefore = cmdQueueStream.getUsed();
     cmdQueueHw->programStateBaseAddress(0, true, cmdQueueStream, true, &streamProperties);

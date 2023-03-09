@@ -82,13 +82,7 @@ void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool cre
     event = std::unique_ptr<Event>(static_cast<Event *>(device->getL0GfxCoreHelper().createEvent(eventPool.get(), &eventDesc, device)));
 }
 
-void ModuleMutableCommandListFixture::setUpImpl(uint32_t revision) {
-    if (revision != 0) {
-        auto &productHelper = device->getProductHelper();
-        auto revId = productHelper.getHwRevIdFromStepping(revision, device->getHwInfo());
-        neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo()->platform.usRevId = revId;
-    }
-
+void ModuleMutableCommandListFixture::setUpImpl() {
     ze_result_t returnValue;
 
     ze_command_queue_desc_t queueDesc{ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC};
@@ -119,9 +113,11 @@ void ModuleMutableCommandListFixture::setUpImpl(uint32_t revision) {
 }
 
 void ModuleMutableCommandListFixture::setUp(uint32_t revision) {
+    if (revision != 0) {
+        DebugManager.flags.OverrideRevision.set(revision);
+    }
     ModuleImmutableDataFixture::setUp();
-
-    ModuleMutableCommandListFixture::setUpImpl(revision);
+    ModuleMutableCommandListFixture::setUpImpl();
 }
 
 void ModuleMutableCommandListFixture::tearDown() {

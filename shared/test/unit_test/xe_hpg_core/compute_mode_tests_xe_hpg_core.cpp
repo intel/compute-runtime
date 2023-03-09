@@ -66,7 +66,8 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
         DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(testValue.pixelThreadLimit);
 
         pCsr->streamProperties.stateComputeMode = {};
-        pCsr->streamProperties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
+        pCsr->streamProperties.stateComputeMode.initSupport(rootDeviceEnvironment);
+        pCsr->streamProperties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::Disabled);
         LinearStream stream(buff, 1024);
         pCsr->programComputeMode(stream, flags, *defaultHwInfo);
         EXPECT_EQ(cmdsSize, stream.getUsed());
@@ -87,7 +88,8 @@ XE_HPG_CORETEST_F(ComputeModeRequirementsXeHpgCore, GivenVariousSettingsWhenComp
     DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(-1);
 
     pCsr->streamProperties.stateComputeMode = {};
-    pCsr->streamProperties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::Disabled, rootDeviceEnvironment);
+    pCsr->streamProperties.stateComputeMode.initSupport(rootDeviceEnvironment);
+    pCsr->streamProperties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::Disabled);
     LinearStream stream(buff, 1024);
     pCsr->programComputeMode(stream, flags, *defaultHwInfo);
     EXPECT_EQ(cmdsSize, stream.getUsed());

@@ -327,7 +327,8 @@ HWTEST2_F(PreambleCfeState, givenXehpAndDisabledFusedEuWhenCfeStateProgrammedThe
 
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::RenderCompute);
     StreamProperties streamProperties{};
-    streamProperties.frontEndState.setPropertiesAll(false, false, false, false, rootDeviceEnvironment);
+    streamProperties.initSupport(rootDeviceEnvironment);
+    streamProperties.frontEndState.setPropertiesAll(false, false, false, false);
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, rootDeviceEnvironment, 0u, 0, 0, streamProperties, nullptr);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
@@ -349,7 +350,8 @@ HWTEST2_F(PreambleCfeState, givenXehpEnabledFusedEuAndDisableFusedDispatchFromKe
 
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::RenderCompute);
     StreamProperties streamProperties{};
-    streamProperties.frontEndState.setPropertiesAll(false, true, false, false, rootDeviceEnvironment);
+    streamProperties.initSupport(rootDeviceEnvironment);
+    streamProperties.frontEndState.setPropertiesAll(false, true, false, false);
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, rootDeviceEnvironment, 0u, 0, 0, streamProperties, nullptr);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());
@@ -368,7 +370,8 @@ HWTEST2_F(PreambleCfeState, givenXehpAndEnabledFusedEuWhenCfeStateProgrammedThen
 
     auto pVfeCmd = PreambleHelper<FamilyType>::getSpaceForVfeState(&linearStream, hwInfo, EngineGroupType::RenderCompute);
     StreamProperties streamProperties{};
-    streamProperties.frontEndState.setPropertiesAll(false, false, false, false, rootDeviceEnvironment);
+    streamProperties.initSupport(rootDeviceEnvironment);
+    streamProperties.frontEndState.setPropertiesAll(false, false, false, false);
     PreambleHelper<FamilyType>::programVfeState(pVfeCmd, rootDeviceEnvironment, 0u, 0, 0, streamProperties, nullptr);
     parseCommands<FamilyType>(linearStream);
     auto cfeStateIt = find<CFE_STATE *>(cmdList.begin(), cmdList.end());

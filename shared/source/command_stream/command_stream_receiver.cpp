@@ -88,7 +88,7 @@ CommandStreamReceiver::CommandStreamReceiver(ExecutionEnvironment &executionEnvi
         this->activePartitions = subDeviceCount;
         this->staticWorkPartitioningEnabled = true;
     }
-
+    this->streamProperties.initSupport(rootDeviceEnvironment);
     auto &productHelper = getProductHelper();
     productHelper.fillFrontEndPropertiesSupportStructure(feSupportFlags, hwInfo);
     productHelper.fillPipelineSelectPropertiesSupportStructure(pipelineSupportFlags, hwInfo);

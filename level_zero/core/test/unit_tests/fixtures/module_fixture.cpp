@@ -73,7 +73,13 @@ void ModuleImmutableDataFixture::MockKernel::setCrossThreadData(uint32_t dataSiz
 }
 
 void ModuleImmutableDataFixture::setUp() {
-    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(NEO::defaultHwInfo.get(), 0u);
+    auto hwInfo = NEO::defaultHwInfo.get();
+    if (DebugManager.flags.OverrideRevision.get() != -1) {
+        this->copyHwInfo = *NEO::defaultHwInfo.get();
+        this->copyHwInfo.platform.usRevId = static_cast<unsigned short>(DebugManager.flags.OverrideRevision.get());
+        hwInfo = &this->copyHwInfo;
+    }
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(hwInfo, 0u);
     memoryManager = new MockImmutableMemoryManager(*executionEnvironment);
     executionEnvironment->memoryManager.reset(memoryManager);
     DeviceFixture::setupWithExecutionEnvironment(*executionEnvironment);

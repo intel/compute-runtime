@@ -29,10 +29,12 @@ struct StateComputeModeProperties {
     StreamProperty threadArbitrationPolicy{};
     StreamProperty devicePreemptionMode{};
 
-    void setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode, const RootDeviceEnvironment &rootDeviceEnvironment);
+    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
+
+    void setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode);
     void setProperties(const StateComputeModeProperties &properties);
-    void setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy, const RootDeviceEnvironment &rootDeviceEnvironment);
-    void setPropertiesCoherencyDevicePreemption(bool requiresCoherency, PreemptionMode devicePreemptionMode, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState);
+    void setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy);
+    void setPropertiesCoherencyDevicePreemption(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState);
     bool isDirty() const;
 
   protected:
@@ -45,15 +47,13 @@ struct StateComputeModeProperties {
     void setPropertiesExtraPerKernel();
     void setPropertiesExtra(const StateComputeModeProperties &properties);
 
-    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
-
     void setCoherencyProperty(bool requiresCoherency);
     void setDevicePreemptionProperty(PreemptionMode devicePreemptionMode);
     void setGrfNumberProperty(uint32_t numGrfRequired);
-    void setThreadArbitrationProperty(int32_t threadArbitrationPolicy,
-                                      const RootDeviceEnvironment &rootDeviceEnvironment);
+    void setThreadArbitrationProperty(int32_t threadArbitrationPolicy);
 
     StateComputeModePropertiesSupport scmPropertiesSupport = {};
+    int32_t defaultThreadArbitrationPolicy = 0;
     bool propertiesSupportLoaded = false;
 };
 
@@ -70,16 +70,17 @@ struct FrontEndProperties {
     StreamProperty disableOverdispatch{};
     StreamProperty singleSliceDispatchCcsMode{};
 
-    void setPropertiesAll(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment);
+    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
+
+    void setPropertiesAll(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, int32_t engineInstancedDevice);
     void setProperties(const FrontEndProperties &properties);
-    void setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment);
-    void setPropertiesDisableOverdispatchEngineInstanced(bool disableOverdispatch, int32_t engineInstancedDevice, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState);
-    void setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(bool isCooperativeKernel, bool disableEuFusion, const RootDeviceEnvironment &rootDeviceEnvironment);
+    void setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice);
+    void setPropertiesDisableOverdispatchEngineInstanced(bool disableOverdispatch, int32_t engineInstancedDevice, bool clearDirtyState);
+    void setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(bool isCooperativeKernel, bool disableEuFusion);
     bool isDirty() const;
 
   protected:
     void clearIsDirty();
-    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
 
     FrontEndPropertiesSupport frontEndPropertiesSupport = {};
     bool propertiesSupportLoaded = false;
@@ -95,15 +96,16 @@ struct PipelineSelectProperties {
     StreamProperty mediaSamplerDopClockGate{};
     StreamProperty systolicMode{};
 
-    void setPropertiesAll(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode, const RootDeviceEnvironment &rootDeviceEnvironment);
+    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
+
+    void setPropertiesAll(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode);
     void setProperties(const PipelineSelectProperties &properties);
-    void setPropertiesModeSelectedMediaSamplerClockGate(bool modeSelected, bool mediaSamplerDopClockGate, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState);
-    void setPropertySystolicMode(bool systolicMode, const RootDeviceEnvironment &rootDeviceEnvironment);
+    void setPropertiesModeSelectedMediaSamplerClockGate(bool modeSelected, bool mediaSamplerDopClockGate, bool clearDirtyState);
+    void setPropertySystolicMode(bool systolicMode);
     bool isDirty() const;
 
   protected:
     void clearIsDirty();
-    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
 
     PipelineSelectPropertiesSupport pipelineSelectPropertiesSupport = {};
     bool propertiesSupportLoaded = false;
@@ -126,23 +128,24 @@ struct StateBaseAddressProperties {
     StreamProperty globalAtomics{};
     StreamProperty statelessMocs{};
 
+    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
+
     void setPropertiesAll(bool globalAtomics, int32_t statelessMocs,
                           int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
                           int64_t surfaceStateBaseAddress, size_t surfaceStateSize,
                           int64_t dynamicStateBaseAddress, size_t dynamicStateSize,
-                          int64_t indirectObjectBaseAddress, size_t indirectObjectSize, const RootDeviceEnvironment &rootDeviceEnvironment);
+                          int64_t indirectObjectBaseAddress, size_t indirectObjectSize);
     void setPropertiesSurfaceState(int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
-                                   int64_t surfaceStateBaseAddress, size_t surfaceStateSize, const RootDeviceEnvironment &rootDeviceEnvironment);
+                                   int64_t surfaceStateBaseAddress, size_t surfaceStateSize);
     void setPropertiesDynamicState(int64_t dynamicStateBaseAddress, size_t dynamicStateSize);
     void setPropertiesIndirectState(int64_t indirectObjectBaseAddress, size_t indirectObjectSize);
     void setPropertyStatelessMocs(int32_t statelessMocs);
-    void setPropertyGlobalAtomics(bool globalAtomics, const RootDeviceEnvironment &rootDeviceEnvironment, bool clearDirtyState);
+    void setPropertyGlobalAtomics(bool globalAtomics, bool clearDirtyState);
     void setProperties(const StateBaseAddressProperties &properties);
     bool isDirty() const;
 
   protected:
     void clearIsDirty();
-    void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
 
     StateBaseAddressPropertiesSupport stateBaseAddressPropertiesSupport = {};
     bool propertiesSupportLoaded = false;

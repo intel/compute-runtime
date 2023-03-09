@@ -20,6 +20,7 @@
 using namespace NEO;
 
 struct MockStateComputeModeProperties : public StateComputeModeProperties {
+    using StateComputeModeProperties::defaultThreadArbitrationPolicy;
     using StateComputeModeProperties::propertiesSupportLoaded;
     using StateComputeModeProperties::scmPropertiesSupport;
 };
@@ -74,12 +75,13 @@ TEST(StreamPropertiesTests, whenSettingCooperativeKernelPropertiesThenCorrectVal
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     productHelper.fillFrontEndPropertiesSupportStructure(frontEndPropertiesSupport, *defaultHwInfo);
+    properties.initSupport(rootDeviceEnvironment);
 
     for (auto isEngineInstanced : ::testing::Bool()) {
         for (auto isCooperativeKernel : ::testing::Bool()) {
             for (auto disableOverdispatch : ::testing::Bool()) {
                 for (auto disableEUFusion : ::testing::Bool()) {
-                    properties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEUFusion, disableOverdispatch, isEngineInstanced, rootDeviceEnvironment);
+                    properties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEUFusion, disableOverdispatch, isEngineInstanced);
                     if (frontEndPropertiesSupport.computeDispatchAllWalker) {
                         EXPECT_EQ(isCooperativeKernel, properties.frontEndState.computeDispatchAllWalkerEnable.value);
                     } else {
@@ -124,11 +126,13 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
     PreemptionMode preemptionModes[] = {PreemptionMode::Disabled, PreemptionMode::Initial, PreemptionMode::MidBatch, PreemptionMode::ThreadGroup, PreemptionMode::MidThread};
 
     StreamProperties properties;
+    properties.initSupport(rootDeviceEnvironment);
+
     for (auto preemptionMode : preemptionModes) {
         for (auto requiresCoherency : ::testing::Bool()) {
             for (auto largeGrf : ::testing::Bool()) {
                 for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
-                    properties.stateComputeMode.setPropertiesAll(requiresCoherency, largeGrf ? 256 : 128, threadArbitrationPolicy, preemptionMode, rootDeviceEnvironment);
+                    properties.stateComputeMode.setPropertiesAll(requiresCoherency, largeGrf ? 256 : 128, threadArbitrationPolicy, preemptionMode);
                     EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
                     if (scmPropertiesSupport.coherencyRequired) {
                         EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
@@ -151,7 +155,7 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
 
     for (auto forceZPassAsyncComputeThreadLimit : ::testing::Bool()) {
         DebugManager.flags.ForceZPassAsyncComputeThreadLimit.set(forceZPassAsyncComputeThreadLimit);
-        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch, rootDeviceEnvironment);
+        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch);
         if (scmPropertiesSupport.zPassAsyncComputeThreadLimit) {
             EXPECT_EQ(forceZPassAsyncComputeThreadLimit, properties.stateComputeMode.zPassAsyncComputeThreadLimit.value);
         } else {
@@ -161,7 +165,7 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
 
     for (auto forcePixelAsyncComputeThreadLimit : ::testing::Bool()) {
         DebugManager.flags.ForcePixelAsyncComputeThreadLimit.set(forcePixelAsyncComputeThreadLimit);
-        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch, rootDeviceEnvironment);
+        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch);
         if (scmPropertiesSupport.pixelAsyncComputeThreadLimit) {
             EXPECT_EQ(forcePixelAsyncComputeThreadLimit, properties.stateComputeMode.pixelAsyncComputeThreadLimit.value);
         } else {
@@ -171,7 +175,7 @@ TEST(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrectValu
 
     for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
         DebugManager.flags.OverrideThreadArbitrationPolicy.set(threadArbitrationPolicy);
-        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch, rootDeviceEnvironment);
+        properties.stateComputeMode.setPropertiesAll(false, 0u, 0u, PreemptionMode::MidBatch);
         if (scmPropertiesSupport.threadArbitrationPolicy) {
             EXPECT_EQ(threadArbitrationPolicy, properties.stateComputeMode.threadArbitrationPolicy.value);
         } else {
@@ -272,9 +276,6 @@ TEST(StreamPropertiesTests, givenOtherPipelineSelectPropertiesStructWhenSetPrope
 }
 
 TEST(StreamPropertiesTests, givenCoherencyStateAndDevicePreemptionComputeModePropertiesWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
     bool clearDirtyState = false;
     MockStateComputeModeProperties scmProperties{};
     scmProperties.propertiesSupportLoaded = true;
@@ -283,42 +284,42 @@ TEST(StreamPropertiesTests, givenCoherencyStateAndDevicePreemptionComputeModePro
 
     bool coherencyRequired = false;
     PreemptionMode devicePreemptionMode = PreemptionMode::Disabled;
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, rootDeviceEnvironment, clearDirtyState);
+    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(-1, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(-1, scmProperties.devicePreemptionMode.value);
 
     scmProperties.scmPropertiesSupport.coherencyRequired = true;
     scmProperties.scmPropertiesSupport.devicePreemptionMode = true;
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, rootDeviceEnvironment, clearDirtyState);
+    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
     devicePreemptionMode = PreemptionMode::Initial;
-    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode, rootDeviceEnvironment);
+    scmProperties.setPropertiesAll(coherencyRequired, -1, -1, devicePreemptionMode);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, rootDeviceEnvironment, clearDirtyState);
+    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, rootDeviceEnvironment, clearDirtyState);
+    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
     coherencyRequired = true;
     devicePreemptionMode = PreemptionMode::MidThread;
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, rootDeviceEnvironment, clearDirtyState);
+    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(1, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, rootDeviceEnvironment, clearDirtyState);
+    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(1, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
@@ -326,16 +327,13 @@ TEST(StreamPropertiesTests, givenCoherencyStateAndDevicePreemptionComputeModePro
     clearDirtyState = true;
     coherencyRequired = false;
     devicePreemptionMode = PreemptionMode::ThreadGroup;
-    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, rootDeviceEnvironment, clearDirtyState);
+    scmProperties.setPropertiesCoherencyDevicePreemption(coherencyRequired, devicePreemptionMode, clearDirtyState);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
     EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
 }
 
 TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePropertiesWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
     MockStateComputeModeProperties scmProperties{};
     scmProperties.propertiesSupportLoaded = true;
     scmProperties.scmPropertiesSupport.largeGrfMode = false;
@@ -343,36 +341,36 @@ TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePr
 
     int32_t grfNumber = 128;
     int32_t threadArbitration = 1;
-    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(-1, scmProperties.largeGrfMode.value);
     EXPECT_EQ(-1, scmProperties.threadArbitrationPolicy.value);
 
     scmProperties.scmPropertiesSupport.largeGrfMode = true;
     scmProperties.scmPropertiesSupport.threadArbitrationPolicy = true;
-    scmProperties.setPropertiesAll(false, static_cast<uint32_t>(grfNumber), threadArbitration, PreemptionMode::Initial, rootDeviceEnvironment);
+    scmProperties.setPropertiesAll(false, static_cast<uint32_t>(grfNumber), threadArbitration, PreemptionMode::Initial);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.largeGrfMode.value);
     EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
 
-    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.largeGrfMode.value);
     EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
 
-    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(0, scmProperties.largeGrfMode.value);
     EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
 
     grfNumber = 256;
     threadArbitration = 2;
-    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(1, scmProperties.largeGrfMode.value);
     EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
 
-    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration);
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(1, scmProperties.largeGrfMode.value);
     EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
@@ -388,20 +386,21 @@ TEST(StreamPropertiesTests, givenForceDebugDefaultThreadArbitrationStateComputeM
     auto defaultThreadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
 
     MockStateComputeModeProperties scmProperties{};
+    scmProperties.defaultThreadArbitrationPolicy = defaultThreadArbitrationPolicy;
     scmProperties.propertiesSupportLoaded = true;
     scmProperties.scmPropertiesSupport.threadArbitrationPolicy = true;
 
     constexpr int32_t grfNumber = -1;
     constexpr int32_t requestedThreadArbitration = ThreadArbitrationPolicy::RoundRobinAfterDependency;
     int32_t threadArbitration = requestedThreadArbitration;
-    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration);
     EXPECT_TRUE(scmProperties.isDirty());
     EXPECT_EQ(-1, scmProperties.largeGrfMode.value);
     EXPECT_EQ(requestedThreadArbitration, scmProperties.threadArbitrationPolicy.value);
 
     DebugManager.flags.ForceDefaultThreadArbitrationPolicyIfNotSpecified.set(true);
     threadArbitration = ThreadArbitrationPolicy::NotPresent;
-    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration, rootDeviceEnvironment);
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration);
     if (defaultThreadArbitrationPolicy == requestedThreadArbitration) {
         EXPECT_FALSE(scmProperties.isDirty());
     } else {
@@ -418,12 +417,12 @@ TEST(StreamPropertiesTests, givenSingleDispatchCcsFrontEndPropertyWhenSettingPro
     productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, *defaultHwInfo);
 
     MockFrontEndProperties feProperties{};
-    EXPECT_FALSE(feProperties.propertiesSupportLoaded);
+    feProperties.initSupport(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    EXPECT_TRUE(feProperties.propertiesSupportLoaded);
 
     int32_t engineInstancedDevice = 1;
 
-    feProperties.setPropertySingleSliceDispatchCcsMode(engineInstancedDevice, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
-    EXPECT_TRUE(feProperties.propertiesSupportLoaded);
+    feProperties.setPropertySingleSliceDispatchCcsMode(engineInstancedDevice);
     if (fePropertiesSupport.singleSliceDispatchCcsMode) {
         EXPECT_TRUE(feProperties.singleSliceDispatchCcsMode.isDirty);
         EXPECT_EQ(engineInstancedDevice, feProperties.singleSliceDispatchCcsMode.value);
@@ -435,15 +434,12 @@ TEST(StreamPropertiesTests, givenSingleDispatchCcsFrontEndPropertyWhenSettingPro
     feProperties.frontEndPropertiesSupport.singleSliceDispatchCcsMode = true;
     engineInstancedDevice = 2;
 
-    feProperties.setPropertySingleSliceDispatchCcsMode(engineInstancedDevice, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    feProperties.setPropertySingleSliceDispatchCcsMode(engineInstancedDevice);
     EXPECT_TRUE(feProperties.singleSliceDispatchCcsMode.isDirty);
     EXPECT_EQ(engineInstancedDevice, feProperties.singleSliceDispatchCcsMode.value);
 }
 
 TEST(StreamPropertiesTests, givenDisableOverdispatchEngineInstancedFrontEndPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
     bool clearDirtyState = false;
     MockFrontEndProperties feProperties{};
     feProperties.propertiesSupportLoaded = true;
@@ -452,7 +448,7 @@ TEST(StreamPropertiesTests, givenDisableOverdispatchEngineInstancedFrontEndPrope
 
     int32_t engineInstancedDevice = 0;
     bool disableOverdispatch = false;
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, rootDeviceEnvironment, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(-1, feProperties.disableOverdispatch.value);
     EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
@@ -460,40 +456,40 @@ TEST(StreamPropertiesTests, givenDisableOverdispatchEngineInstancedFrontEndPrope
     feProperties.frontEndPropertiesSupport.disableOverdispatch = true;
     feProperties.frontEndPropertiesSupport.singleSliceDispatchCcsMode = true;
     engineInstancedDevice = -1;
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, rootDeviceEnvironment, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
     EXPECT_TRUE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableOverdispatch.value);
     EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
 
     engineInstancedDevice = 0;
-    feProperties.setPropertiesAll(false, false, disableOverdispatch, engineInstancedDevice, rootDeviceEnvironment);
+    feProperties.setPropertiesAll(false, false, disableOverdispatch, engineInstancedDevice);
     EXPECT_TRUE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableOverdispatch.value);
     EXPECT_EQ(0, feProperties.singleSliceDispatchCcsMode.value);
 
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, rootDeviceEnvironment, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableOverdispatch.value);
     EXPECT_EQ(0, feProperties.singleSliceDispatchCcsMode.value);
 
     engineInstancedDevice = 1;
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, rootDeviceEnvironment, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
     EXPECT_TRUE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableOverdispatch.value);
     EXPECT_EQ(1, feProperties.singleSliceDispatchCcsMode.value);
 
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, rootDeviceEnvironment, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableOverdispatch.value);
     EXPECT_EQ(1, feProperties.singleSliceDispatchCcsMode.value);
 
     disableOverdispatch = true;
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, rootDeviceEnvironment, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
     EXPECT_TRUE(feProperties.isDirty());
     EXPECT_EQ(1, feProperties.disableOverdispatch.value);
     EXPECT_EQ(1, feProperties.singleSliceDispatchCcsMode.value);
 
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, rootDeviceEnvironment, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(1, feProperties.disableOverdispatch.value);
     EXPECT_EQ(1, feProperties.singleSliceDispatchCcsMode.value);
@@ -502,16 +498,13 @@ TEST(StreamPropertiesTests, givenDisableOverdispatchEngineInstancedFrontEndPrope
     disableOverdispatch = false;
     engineInstancedDevice = 0;
 
-    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, rootDeviceEnvironment, clearDirtyState);
+    feProperties.setPropertiesDisableOverdispatchEngineInstanced(disableOverdispatch, engineInstancedDevice, clearDirtyState);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableOverdispatch.value);
     EXPECT_EQ(0, feProperties.singleSliceDispatchCcsMode.value);
 }
 
 TEST(StreamPropertiesTests, givenComputeDispatchAllWalkerEnableAndDisableEuFusionFrontEndPropertiesWhenSettingPropertiesAndCheckIfSupportedThenExpectCorrectState) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
     MockFrontEndProperties feProperties{};
     feProperties.propertiesSupportLoaded = true;
     feProperties.frontEndPropertiesSupport.disableEuFusion = false;
@@ -519,36 +512,36 @@ TEST(StreamPropertiesTests, givenComputeDispatchAllWalkerEnableAndDisableEuFusio
 
     bool disableEuFusion = false;
     bool isCooperativeKernel = false;
-    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion, rootDeviceEnvironment);
+    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(-1, feProperties.disableEUFusion.value);
     EXPECT_EQ(-1, feProperties.computeDispatchAllWalkerEnable.value);
 
     feProperties.frontEndPropertiesSupport.disableEuFusion = true;
     feProperties.frontEndPropertiesSupport.computeDispatchAllWalker = true;
-    feProperties.setPropertiesAll(isCooperativeKernel, disableEuFusion, false, -1, rootDeviceEnvironment);
+    feProperties.setPropertiesAll(isCooperativeKernel, disableEuFusion, false, -1);
     EXPECT_TRUE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableEUFusion.value);
     EXPECT_EQ(0, feProperties.computeDispatchAllWalkerEnable.value);
 
-    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion, rootDeviceEnvironment);
+    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableEUFusion.value);
     EXPECT_EQ(0, feProperties.computeDispatchAllWalkerEnable.value);
 
-    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion, rootDeviceEnvironment);
+    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(0, feProperties.disableEUFusion.value);
     EXPECT_EQ(0, feProperties.computeDispatchAllWalkerEnable.value);
 
     disableEuFusion = true;
     isCooperativeKernel = true;
-    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion, rootDeviceEnvironment);
+    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion);
     EXPECT_TRUE(feProperties.isDirty());
     EXPECT_EQ(1, feProperties.disableEUFusion.value);
     EXPECT_EQ(1, feProperties.computeDispatchAllWalkerEnable.value);
 
-    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion, rootDeviceEnvironment);
+    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion);
     EXPECT_FALSE(feProperties.isDirty());
     EXPECT_EQ(1, feProperties.disableEUFusion.value);
     EXPECT_EQ(1, feProperties.computeDispatchAllWalkerEnable.value);
@@ -558,6 +551,7 @@ TEST(StreamPropertiesTests, whenSettingPipelineSelectPropertiesThenCorrectValueI
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
     StreamProperties properties;
+    properties.initSupport(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
     PipelineSelectPropertiesSupport pipelineSelectPropertiesSupport = {};
     productHelper.fillPipelineSelectPropertiesSupportStructure(pipelineSelectPropertiesSupport, *defaultHwInfo);
@@ -565,7 +559,7 @@ TEST(StreamPropertiesTests, whenSettingPipelineSelectPropertiesThenCorrectValueI
     for (auto modeSelected : ::testing::Bool()) {
         for (auto mediaSamplerDopClockGate : ::testing::Bool()) {
             for (auto systolicMode : ::testing::Bool()) {
-                properties.pipelineSelect.setPropertiesAll(modeSelected, mediaSamplerDopClockGate, systolicMode, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+                properties.pipelineSelect.setPropertiesAll(modeSelected, mediaSamplerDopClockGate, systolicMode);
 
                 EXPECT_EQ(modeSelected, properties.pipelineSelect.modeSelected.value);
                 if (pipelineSelectPropertiesSupport.mediaSamplerDopClockGate) {
@@ -584,7 +578,6 @@ TEST(StreamPropertiesTests, whenSettingPipelineSelectPropertiesThenCorrectValueI
 }
 
 TEST(StreamPropertiesTests, givenModeSelectPipelineSelectPropertyWhenSettingChangedPropertyAndCheckIfDirtyThenExpectDirtyState) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
     MockPipelineSelectProperties pipeProperties{};
     pipeProperties.propertiesSupportLoaded = true;
     pipeProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate = true;
@@ -592,56 +585,50 @@ TEST(StreamPropertiesTests, givenModeSelectPipelineSelectPropertyWhenSettingChan
 
     constexpr bool constState = false;
     bool changingState = false;
-    pipeProperties.setPropertiesAll(changingState, constState, constState, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    pipeProperties.setPropertiesAll(changingState, constState, constState);
 
     EXPECT_TRUE(pipeProperties.isDirty());
 
     changingState = !changingState;
-    pipeProperties.setPropertiesAll(changingState, constState, constState, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    pipeProperties.setPropertiesAll(changingState, constState, constState);
 
     EXPECT_TRUE(pipeProperties.isDirty());
 }
 
 TEST(StreamPropertiesTests, givenSystolicModePipelineSelectPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
     MockPipelineSelectProperties pipeProperties{};
     pipeProperties.propertiesSupportLoaded = true;
     pipeProperties.pipelineSelectPropertiesSupport.systolicMode = false;
 
     bool systolicMode = false;
-    pipeProperties.setPropertySystolicMode(systolicMode, rootDeviceEnvironment);
+    pipeProperties.setPropertySystolicMode(systolicMode);
     EXPECT_FALSE(pipeProperties.isDirty());
     EXPECT_EQ(-1, pipeProperties.systolicMode.value);
 
     pipeProperties.pipelineSelectPropertiesSupport.systolicMode = true;
-    pipeProperties.setPropertySystolicMode(systolicMode, rootDeviceEnvironment);
+    pipeProperties.setPropertySystolicMode(systolicMode);
     EXPECT_TRUE(pipeProperties.isDirty());
     EXPECT_EQ(0, pipeProperties.systolicMode.value);
 
-    pipeProperties.setPropertySystolicMode(systolicMode, rootDeviceEnvironment);
+    pipeProperties.setPropertySystolicMode(systolicMode);
     EXPECT_FALSE(pipeProperties.isDirty());
     EXPECT_EQ(0, pipeProperties.systolicMode.value);
 
     systolicMode = true;
-    pipeProperties.setPropertySystolicMode(systolicMode, rootDeviceEnvironment);
+    pipeProperties.setPropertySystolicMode(systolicMode);
     EXPECT_TRUE(pipeProperties.isDirty());
     EXPECT_EQ(1, pipeProperties.systolicMode.value);
 
-    pipeProperties.setPropertySystolicMode(systolicMode, rootDeviceEnvironment);
+    pipeProperties.setPropertySystolicMode(systolicMode);
     EXPECT_FALSE(pipeProperties.isDirty());
     EXPECT_EQ(1, pipeProperties.systolicMode.value);
 
-    pipeProperties.setPropertySystolicMode(systolicMode, rootDeviceEnvironment);
+    pipeProperties.setPropertySystolicMode(systolicMode);
     EXPECT_FALSE(pipeProperties.isDirty());
     EXPECT_EQ(1, pipeProperties.systolicMode.value);
 }
 
 TEST(StreamPropertiesTests, givenModeSelectedMediaSamplerClockGatePipelineSelectPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
     bool clearDirtyState = false;
     MockPipelineSelectProperties pipeProperties{};
     pipeProperties.propertiesSupportLoaded = true;
@@ -649,38 +636,38 @@ TEST(StreamPropertiesTests, givenModeSelectedMediaSamplerClockGatePipelineSelect
 
     bool modeSelected = false;
     bool mediaSamplerDopClockGate = false;
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, rootDeviceEnvironment, clearDirtyState);
+    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
     EXPECT_TRUE(pipeProperties.isDirty());
     EXPECT_EQ(0, pipeProperties.modeSelected.value);
     EXPECT_EQ(-1, pipeProperties.mediaSamplerDopClockGate.value);
 
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, rootDeviceEnvironment, clearDirtyState);
+    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
     EXPECT_FALSE(pipeProperties.isDirty());
 
     pipeProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate = true;
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, rootDeviceEnvironment, clearDirtyState);
+    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
     EXPECT_TRUE(pipeProperties.isDirty());
     EXPECT_EQ(0, pipeProperties.modeSelected.value);
     EXPECT_EQ(0, pipeProperties.mediaSamplerDopClockGate.value);
 
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, rootDeviceEnvironment, clearDirtyState);
+    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
     EXPECT_FALSE(pipeProperties.isDirty());
     EXPECT_EQ(0, pipeProperties.modeSelected.value);
     EXPECT_EQ(0, pipeProperties.mediaSamplerDopClockGate.value);
 
     modeSelected = true;
     mediaSamplerDopClockGate = true;
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, rootDeviceEnvironment, clearDirtyState);
+    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
     EXPECT_TRUE(pipeProperties.isDirty());
     EXPECT_EQ(1, pipeProperties.modeSelected.value);
     EXPECT_EQ(1, pipeProperties.mediaSamplerDopClockGate.value);
 
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, rootDeviceEnvironment, clearDirtyState);
+    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
     EXPECT_FALSE(pipeProperties.isDirty());
     EXPECT_EQ(1, pipeProperties.modeSelected.value);
     EXPECT_EQ(1, pipeProperties.mediaSamplerDopClockGate.value);
 
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, rootDeviceEnvironment, clearDirtyState);
+    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
     EXPECT_FALSE(pipeProperties.isDirty());
     EXPECT_EQ(1, pipeProperties.modeSelected.value);
     EXPECT_EQ(1, pipeProperties.mediaSamplerDopClockGate.value);
@@ -688,20 +675,19 @@ TEST(StreamPropertiesTests, givenModeSelectedMediaSamplerClockGatePipelineSelect
     clearDirtyState = true;
     modeSelected = false;
     mediaSamplerDopClockGate = false;
-    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, rootDeviceEnvironment, clearDirtyState);
+    pipeProperties.setPropertiesModeSelectedMediaSamplerClockGate(modeSelected, mediaSamplerDopClockGate, clearDirtyState);
     EXPECT_FALSE(pipeProperties.isDirty());
     EXPECT_EQ(0, pipeProperties.modeSelected.value);
     EXPECT_EQ(0, pipeProperties.mediaSamplerDopClockGate.value);
 }
 
 TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingPropertyAndCheckIfDirtyThenExpectCleanStateForNotSupportedAndDirtyForSupported) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
     MockStateBaseAddressProperties sbaProperties{};
     sbaProperties.propertiesSupportLoaded = true;
     sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = false;
     sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = false;
 
-    sbaProperties.setPropertiesAll(true, -1, 1, -1, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(true, -1, 1, -1, -1, -1, -1, -1, -1, -1);
     EXPECT_FALSE(sbaProperties.isDirty());
 
     EXPECT_EQ(-1, sbaProperties.globalAtomics.value);
@@ -710,7 +696,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     EXPECT_EQ(static_cast<size_t>(-1), sbaProperties.bindingTablePoolSize.value);
 
     sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = true;
-    sbaProperties.setPropertiesAll(true, -1, 0, -1, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(true, -1, 0, -1, -1, -1, -1, -1, -1, -1);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_TRUE(sbaProperties.globalAtomics.isDirty);
     EXPECT_FALSE(sbaProperties.statelessMocs.isDirty);
@@ -723,7 +709,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     EXPECT_EQ(static_cast<size_t>(-1), sbaProperties.bindingTablePoolSize.value);
 
     sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = false;
-    sbaProperties.setPropertiesAll(false, 1, 1, -1, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(false, 1, 1, -1, -1, -1, -1, -1, -1, -1);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_FALSE(sbaProperties.globalAtomics.isDirty);
     EXPECT_TRUE(sbaProperties.statelessMocs.isDirty);
@@ -736,7 +722,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     EXPECT_EQ(static_cast<size_t>(-1), sbaProperties.bindingTablePoolSize.value);
 
     sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = true;
-    sbaProperties.setPropertiesAll(true, -1, 2, 2, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(true, -1, 2, 2, -1, -1, -1, -1, -1, -1);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_FALSE(sbaProperties.globalAtomics.isDirty);
     EXPECT_FALSE(sbaProperties.statelessMocs.isDirty);
@@ -749,10 +735,10 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     EXPECT_EQ(2u, sbaProperties.bindingTablePoolSize.value);
 
     sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = true;
-    sbaProperties.setPropertiesAll(true, 1, 2, 2, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(true, 1, 2, 2, -1, -1, -1, -1, -1, -1);
     EXPECT_FALSE(sbaProperties.isDirty());
 
-    sbaProperties.setPropertiesAll(false, 0, 3, 2, -1, -1, -1, -1, -1 - 1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(false, 0, 3, 2, -1, -1, -1, -1, -1 - 1, -1);
     EXPECT_TRUE(sbaProperties.isDirty());
 
     EXPECT_EQ(0, sbaProperties.globalAtomics.value);
@@ -760,7 +746,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     EXPECT_EQ(3, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(2u, sbaProperties.bindingTablePoolSize.value);
 
-    sbaProperties.setPropertiesAll(false, 0, 3, 3, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(false, 0, 3, 3, -1, -1, -1, -1, -1, -1);
     EXPECT_TRUE(sbaProperties.isDirty());
 
     EXPECT_EQ(0, sbaProperties.globalAtomics.value);
@@ -768,7 +754,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     EXPECT_EQ(3, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(3u, sbaProperties.bindingTablePoolSize.value);
 
-    sbaProperties.setPropertiesAll(false, 0, 3, -1, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(false, 0, 3, -1, -1, -1, -1, -1, -1, -1);
     EXPECT_FALSE(sbaProperties.isDirty());
 
     MockStateBaseAddressProperties copySbaProperties{};
@@ -792,8 +778,9 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagDefaultValueWhenSett
     productHelper.fillStateBaseAddressPropertiesSupportStructure(sbaPropertiesSupport);
 
     StateBaseAddressProperties sbaProperties{};
+    sbaProperties.initSupport(*mockExecutionEnvironment.rootDeviceEnvironments[0]);
 
-    sbaProperties.setPropertiesAll(true, 2, 3, 3, -1, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(true, 2, 3, 3, -1, -1, -1, -1, -1, -1);
     if (sbaPropertiesSupport.globalAtomics) {
         EXPECT_EQ(1, sbaProperties.globalAtomics.value);
     } else {
@@ -818,7 +805,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
     sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = false;
     sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = false;
 
-    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, -1, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, -1, -1, -1, -1, -1);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(10, sbaProperties.surfaceStateBaseAddress.value);
 
@@ -829,7 +816,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
     EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
     EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
 
-    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, -1, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, -1, -1, -1, -1);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(20u, sbaProperties.surfaceStateSize.value);
 
@@ -840,7 +827,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
     EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
     EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
 
-    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, -1, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, -1, -1, -1);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(30, sbaProperties.dynamicStateBaseAddress.value);
 
@@ -851,7 +838,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
     EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
     EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
 
-    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, 40, -1, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, 40, -1, -1);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(40u, sbaProperties.dynamicStateSize.value);
 
@@ -862,7 +849,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
     EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
     EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
 
-    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, 40, 50, -1, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, 40, 50, -1);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(50, sbaProperties.indirectObjectBaseAddress.value);
 
@@ -873,7 +860,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
     EXPECT_TRUE(sbaProperties.indirectObjectBaseAddress.isDirty);
     EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
 
-    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, 40, 50, 60, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, 40, 50, 60);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(60u, sbaProperties.indirectObjectSize.value);
 
@@ -884,7 +871,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
     EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
     EXPECT_TRUE(sbaProperties.indirectObjectSize.isDirty);
 
-    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, 40, 50, 60, *mockExecutionEnvironment.rootDeviceEnvironments[0]);
+    sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, 40, 50, 60);
     EXPECT_FALSE(sbaProperties.isDirty());
 
     EXPECT_FALSE(sbaProperties.surfaceStateBaseAddress.isDirty);
@@ -896,44 +883,41 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
 }
 
 TEST(StreamPropertiesTests, givenGlobalAtomicsStateBaseAddressPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
     bool clearDirtyState = false;
     MockStateBaseAddressProperties sbaProperties{};
     sbaProperties.propertiesSupportLoaded = true;
     sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = false;
 
     bool globalAtomics = false;
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, rootDeviceEnvironment, clearDirtyState);
+    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(-1, sbaProperties.globalAtomics.value);
 
     sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = true;
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, rootDeviceEnvironment, clearDirtyState);
+    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(0, sbaProperties.globalAtomics.value);
 
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, rootDeviceEnvironment, clearDirtyState);
+    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(0, sbaProperties.globalAtomics.value);
 
     globalAtomics = true;
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, rootDeviceEnvironment, clearDirtyState);
+    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(1, sbaProperties.globalAtomics.value);
 
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, rootDeviceEnvironment, clearDirtyState);
+    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(1, sbaProperties.globalAtomics.value);
 
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, rootDeviceEnvironment, clearDirtyState);
+    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(1, sbaProperties.globalAtomics.value);
 
     clearDirtyState = true;
     globalAtomics = false;
-    sbaProperties.setPropertyGlobalAtomics(globalAtomics, rootDeviceEnvironment, clearDirtyState);
+    sbaProperties.setPropertyGlobalAtomics(globalAtomics, clearDirtyState);
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(0, sbaProperties.globalAtomics.value);
 }
@@ -971,9 +955,6 @@ TEST(StreamPropertiesTests, givenStatelessMocsStateBaseAddressPropertyWhenSettin
 }
 
 TEST(StreamPropertiesTests, givenSurfaceStateBaseAddressStateBaseAddressPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
-    MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-
     int64_t bindingTablePoolBaseAddress = 0;
     size_t bindingTablePoolSize = 0;
     int64_t surfaceStateBaseAddress = 0;
@@ -982,14 +963,14 @@ TEST(StreamPropertiesTests, givenSurfaceStateBaseAddressStateBaseAddressProperty
     MockStateBaseAddressProperties sbaProperties{};
     sbaProperties.propertiesSupportLoaded = true;
     sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = false;
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize, rootDeviceEnvironment);
+    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(-1, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(static_cast<size_t>(-1), sbaProperties.bindingTablePoolSize.value);
     EXPECT_EQ(0, sbaProperties.surfaceStateBaseAddress.value);
     EXPECT_EQ(0u, sbaProperties.surfaceStateSize.value);
 
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize, rootDeviceEnvironment);
+    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(-1, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(static_cast<size_t>(-1), sbaProperties.bindingTablePoolSize.value);
@@ -997,14 +978,14 @@ TEST(StreamPropertiesTests, givenSurfaceStateBaseAddressStateBaseAddressProperty
     EXPECT_EQ(0u, sbaProperties.surfaceStateSize.value);
 
     sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = true;
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize, rootDeviceEnvironment);
+    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(0, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(0u, sbaProperties.bindingTablePoolSize.value);
     EXPECT_EQ(0, sbaProperties.surfaceStateBaseAddress.value);
     EXPECT_EQ(0u, sbaProperties.surfaceStateSize.value);
 
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize, rootDeviceEnvironment);
+    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(0, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(0u, sbaProperties.bindingTablePoolSize.value);
@@ -1015,21 +996,21 @@ TEST(StreamPropertiesTests, givenSurfaceStateBaseAddressStateBaseAddressProperty
     bindingTablePoolSize = 1;
     surfaceStateBaseAddress = 1;
     surfaceStateSize = 1;
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize, rootDeviceEnvironment);
+    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(1, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(1u, sbaProperties.bindingTablePoolSize.value);
     EXPECT_EQ(1, sbaProperties.surfaceStateBaseAddress.value);
     EXPECT_EQ(1u, sbaProperties.surfaceStateSize.value);
 
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize, rootDeviceEnvironment);
+    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(1, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(1u, sbaProperties.bindingTablePoolSize.value);
     EXPECT_EQ(1, sbaProperties.surfaceStateBaseAddress.value);
     EXPECT_EQ(1u, sbaProperties.surfaceStateSize.value);
 
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize, rootDeviceEnvironment);
+    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(1, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(1u, sbaProperties.bindingTablePoolSize.value);

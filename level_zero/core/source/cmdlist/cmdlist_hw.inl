@@ -105,7 +105,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::reset() {
     unifiedMemoryControls.indirectDeviceAllocationsAllowed = false;
     commandListPreemptionMode = device->getDevicePreemptionMode();
     commandListPerThreadScratchSize = 0u;
+    commandListPerThreadPrivateScratchSize = 0u;
+    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
     requiredStreamState = {};
+    requiredStreamState.initSupport(rootDeviceEnvironment);
     finalStreamState = requiredStreamState;
     containsAnyKernel = false;
     containsCooperativeKernelsFlag = false;
@@ -141,6 +144,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
 
     auto &hwInfo = device->getHwInfo();
     auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+    auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
+    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+
     this->dcFlushSupport = NEO::MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, rootDeviceEnvironment);
     this->systolicModeSupport = NEO::PreambleHelper<GfxFamily>::isSystolicModeConfigurable(rootDeviceEnvironment);
     this->stateComputeModeTracking = L0GfxCoreHelper::enableStateComputeModeTracking(rootDeviceEnvironment);
@@ -151,15 +157,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->compactL3FlushEventPacket = L0GfxCoreHelper::useCompactL3FlushEventPacket(hwInfo);
     this->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
     this->dynamicHeapRequired = NEO::EncodeDispatchKernel<GfxFamily>::isDshNeeded(device->getDeviceInfo());
-    auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
     this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
-    commandContainer.doubleSbaWa = this->doubleSbaWa;
-    auto gmmHelper = rootDeviceEnvironment.getGmmHelper();
+    this->commandContainer.doubleSbaWa = this->doubleSbaWa;
     this->defaultMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
     this->l1CachePolicyData.init(productHelper);
-    commandContainer.l1CachePolicyData = &this->l1CachePolicyData;
+    this->commandContainer.l1CachePolicyData = &this->l1CachePolicyData;
     this->cmdListHeapAddressModel = L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment);
-    commandContainer.setHeapAddressModel(this->cmdListHeapAddressModel);
+    this->requiredStreamState.initSupport(rootDeviceEnvironment);
+    this->finalStreamState.initSupport(rootDeviceEnvironment);
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
@@ -2406,16 +2411,15 @@ inline bool getFusedEuDisabled(Kernel &kernel, Device *device, const ze_group_co
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForFlushTaskDispatchFlags(Kernel &kernel, bool isCooperative, const ze_group_count_t *threadGroupDimensions, bool isIndirect) {
-    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
     auto &kernelAttributes = kernel.getKernelDescriptor().kernelAttributes;
 
     bool fusedEuDisabled = getFusedEuDisabled<gfxCoreFamily>(kernel, this->device, threadGroupDimensions, isIndirect);
 
-    requiredStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, rootDeviceEnvironment);
+    requiredStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy);
 
-    requiredStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, fusedEuDisabled, rootDeviceEnvironment);
+    requiredStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, fusedEuDisabled);
 
-    requiredStreamState.pipelineSelect.setPropertySystolicMode(kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
+    requiredStreamState.pipelineSelect.setPropertySystolicMode(kernelAttributes.flags.usesSystolicPipelineSelectMode);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2469,14 +2473,14 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     bool fusedEuDisabled = getFusedEuDisabled<gfxCoreFamily>(kernel, this->device, threadGroupDimensions, isIndirect);
 
     if (!containsAnyKernel) {
-        requiredStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, fusedEuDisabled, rootDeviceEnvironment);
-        requiredStreamState.pipelineSelect.setPropertySystolicMode(kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
+        requiredStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, fusedEuDisabled);
+        requiredStreamState.pipelineSelect.setPropertySystolicMode(kernelAttributes.flags.usesSystolicPipelineSelectMode);
 
         requiredStreamState.stateBaseAddress.setPropertyStatelessMocs(currentMocsState);
 
         if (checkSsh) {
             requiredStreamState.stateBaseAddress.setPropertiesSurfaceState(currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
-                                                                           currentSurfaceStateBaseAddress, currentSurfaceStateSize, rootDeviceEnvironment);
+                                                                           currentSurfaceStateBaseAddress, currentSurfaceStateSize);
         }
         if (checkDsh) {
             requiredStreamState.stateBaseAddress.setPropertiesDynamicState(currentDynamicStateBaseAddress, currentDynamicStateSize);
@@ -2484,18 +2488,18 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         requiredStreamState.stateBaseAddress.setPropertiesIndirectState(currentIndirectObjectBaseAddress, currentIndirectObjectSize);
 
         if (this->stateComputeModeTracking) {
-            requiredStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, rootDeviceEnvironment);
+            requiredStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy);
             finalStreamState = requiredStreamState;
         } else {
             finalStreamState = requiredStreamState;
-            requiredStreamState.stateComputeMode.setPropertiesAll(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
+            requiredStreamState.stateComputeMode.setPropertiesAll(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode());
         }
         containsAnyKernel = true;
     }
 
     auto logicalStateHelperBlock = !getLogicalStateHelper();
 
-    finalStreamState.pipelineSelect.setPropertySystolicMode(kernelAttributes.flags.usesSystolicPipelineSelectMode, rootDeviceEnvironment);
+    finalStreamState.pipelineSelect.setPropertySystolicMode(kernelAttributes.flags.usesSystolicPipelineSelectMode);
     if (this->pipelineSelectStateTracking && finalStreamState.pipelineSelect.isDirty() && logicalStateHelperBlock) {
         NEO::PipelineSelectArgs pipelineSelectArgs;
         pipelineSelectArgs.systolicPipelineSelectMode = kernelAttributes.flags.usesSystolicPipelineSelectMode;
@@ -2506,7 +2510,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
                                                               rootDeviceEnvironment);
     }
 
-    finalStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, fusedEuDisabled, rootDeviceEnvironment);
+    finalStreamState.frontEndState.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperative, fusedEuDisabled);
     bool isPatchingVfeStateAllowed = NEO::DebugManager.flags.AllowPatchingVfeStateInCommandLists.get();
     if (logicalStateHelperBlock && finalStreamState.frontEndState.isDirty()) {
         if (isPatchingVfeStateAllowed) {
@@ -2529,9 +2533,9 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     }
 
     if (this->stateComputeModeTracking) {
-        finalStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, rootDeviceEnvironment);
+        finalStreamState.stateComputeMode.setPropertiesGrfNumberThreadArbitration(kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy);
     } else {
-        finalStreamState.stateComputeMode.setPropertiesAll(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode(), rootDeviceEnvironment);
+        finalStreamState.stateComputeMode.setPropertiesAll(cmdListDefaultCoherency, kernelAttributes.numGrfRequired, kernelAttributes.threadArbitrationPolicy, device->getDevicePreemptionMode());
     }
     if (finalStreamState.stateComputeMode.isDirty() && logicalStateHelperBlock) {
         bool isRcs = (this->engineGroupType == NEO::EngineGroupType::RenderCompute);
@@ -2546,7 +2550,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
     finalStreamState.stateBaseAddress.setPropertyStatelessMocs(currentMocsState);
     if (checkSsh) {
         finalStreamState.stateBaseAddress.setPropertiesSurfaceState(currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
-                                                                    currentSurfaceStateBaseAddress, currentSurfaceStateSize, rootDeviceEnvironment);
+                                                                    currentSurfaceStateBaseAddress, currentSurfaceStateSize);
     }
     if (checkDsh) {
         finalStreamState.stateBaseAddress.setPropertiesDynamicState(currentDynamicStateBaseAddress, currentDynamicStateSize);

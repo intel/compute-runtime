@@ -73,7 +73,7 @@ struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
     }
     void setUp(uint32_t revision);
     void tearDown();
-    void setUpImpl(uint32_t revision);
+    void setUpImpl();
 
     std::unique_ptr<MockImmutableData> mockKernelImmData;
     std::unique_ptr<L0::ult::CommandList> commandList;
@@ -81,12 +81,12 @@ struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
     L0::ult::CommandQueue *commandQueue;
     NEO::EngineGroupType engineGroupType;
+
+    DebugManagerStateRestore restorer;
 };
 
 struct MultiReturnCommandListFixture : public ModuleMutableCommandListFixture {
     void setUp();
-
-    DebugManagerStateRestore restorer;
 };
 
 struct CmdListPipelineSelectStateFixture : public ModuleMutableCommandListFixture {
@@ -100,14 +100,10 @@ struct CmdListPipelineSelectStateFixture : public ModuleMutableCommandListFixtur
 
     template <typename FamilyType>
     void testBodyShareStateImmediateRegular();
-
-    DebugManagerStateRestore restorer;
 };
 
 struct CmdListStateComputeModeStateFixture : public ModuleMutableCommandListFixture {
     void setUp();
-
-    DebugManagerStateRestore restorer;
 };
 
 struct CmdListThreadArbitrationFixture : public CmdListStateComputeModeStateFixture {
@@ -124,7 +120,6 @@ struct CommandListStateBaseAddressFixture : public ModuleMutableCommandListFixtu
     void setUp();
     uint32_t getMocs(bool l3On);
 
-    DebugManagerStateRestore restorer;
     size_t expectedSbaCmds = 0;
     bool dshRequired = false;
 };
@@ -149,8 +144,6 @@ struct CommandListGlobalHeapsFixture : public CommandListGlobalHeapsFixtureInit 
 
 struct ImmediateCmdListSharedHeapsFixture : public ModuleMutableCommandListFixture {
     void setUp();
-
-    DebugManagerStateRestore restorer;
 };
 
 class AppendFillFixture : public DeviceFixture {
@@ -248,7 +241,6 @@ struct TbxImmediateCommandListFixture : public ModuleMutableCommandListFixture {
     void setUp() {}
     void tearDown() {}
 
-    DebugManagerStateRestore restorer;
     std::unique_ptr<EventPool> eventPool;
     std::unique_ptr<Event> event;
 };

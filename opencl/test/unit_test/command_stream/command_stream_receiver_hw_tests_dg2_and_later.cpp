@@ -98,7 +98,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskDg2AndLaterTests, givenProgramExtendedPi
     dispatchFlags.threadArbitrationPolicy = gfxCoreHelper.getDefaultThreadArbitrationPolicy();
 
     commandStreamReceiver.streamProperties.stateComputeMode.setPropertiesAll(dispatchFlags.requiresCoherency, dispatchFlags.numGrfRequired,
-                                                                             dispatchFlags.threadArbitrationPolicy, PreemptionMode::Disabled, pDevice->getRootDeviceEnvironment());
+                                                                             dispatchFlags.threadArbitrationPolicy, PreemptionMode::Disabled);
     auto cmdSizeForAllCommands = commandStreamReceiver.getRequiredCmdStreamSize(dispatchFlags, *pDevice);
     commandStreamReceiver.flushTask(commandStream,
                                     0,

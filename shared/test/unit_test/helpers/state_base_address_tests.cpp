@@ -563,6 +563,7 @@ HWTEST_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingDynamicStateSurfaceS
 
     auto gmmHelper = pDevice->getGmmHelper();
     StateBaseAddressProperties sbaProperties;
+    sbaProperties.initSupport(pDevice->getRootDeviceEnvironment());
 
     STATE_BASE_ADDRESS sbaCmd;
     StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, gmmHelper, &sbaProperties);
@@ -579,7 +580,7 @@ HWTEST_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingDynamicStateSurfaceS
 
     EXPECT_EQ(0u, sbaCmd.getStatelessDataPortAccessMemoryObjectControlState());
 
-    sbaProperties.setPropertiesSurfaceState(surfaceHeapBase, surfaceHeapSize, surfaceHeapBase, surfaceHeapSize, pDevice->getRootDeviceEnvironment());
+    sbaProperties.setPropertiesSurfaceState(surfaceHeapBase, surfaceHeapSize, surfaceHeapBase, surfaceHeapSize);
     sbaProperties.setPropertiesDynamicState(dynamicHeapBase, dynamicHeapSize);
     sbaProperties.setPropertyStatelessMocs(mocsIndex);
 
@@ -691,6 +692,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingBindlessSurfaceStat
 
     auto gmmHelper = pDevice->getGmmHelper();
     StateBaseAddressProperties sbaProperties;
+    sbaProperties.initSupport(pDevice->getRootDeviceEnvironment());
 
     STATE_BASE_ADDRESS sbaCmd;
     StateBaseAddressHelperArgs<FamilyType> args = createSbaHelperArgs<FamilyType>(&sbaCmd, gmmHelper, &sbaProperties);
@@ -701,7 +703,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingBindlessSurfaceStat
     EXPECT_EQ(0u, sbaCmd.getBindlessSurfaceStateBaseAddress());
     EXPECT_FALSE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
 
-    sbaProperties.setPropertiesSurfaceState(surfaceHeapBase, surfaceHeapSize, surfaceHeapBase, surfaceHeapSize, pDevice->getRootDeviceEnvironment());
+    sbaProperties.setPropertiesSurfaceState(surfaceHeapBase, surfaceHeapSize, surfaceHeapBase, surfaceHeapSize);
 
     sbaCmd = FamilyType::cmdInitStateBaseAddress;
 

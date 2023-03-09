@@ -30,8 +30,9 @@ PVCTEST_F(PreambleCfeState, givenXeHpcAndKernelExecutionTypeAndRevisionWhenCalli
 
     for (const auto &[revision, kernelExecutionType] : revisions) {
         StreamProperties streamProperties{};
+        streamProperties.initSupport(pDevice->getRootDeviceEnvironment());
         hwInfo->platform.usRevId = productHelper.getHwRevIdFromStepping(revision, *hwInfo);
-        streamProperties.frontEndState.setPropertiesAll(kernelExecutionType, false, false, false, pDevice->getRootDeviceEnvironment());
+        streamProperties.frontEndState.setPropertiesAll(kernelExecutionType, false, false, false);
 
         PreambleHelper<FamilyType>::programVfeState(pVfeCmd, pDevice->getRootDeviceEnvironment(), 0u, 0, 0, streamProperties, nullptr);
         parseCommands<FamilyType>(linearStream);

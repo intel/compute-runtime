@@ -110,6 +110,7 @@ struct ModuleImmutableDataFixture : public DeviceFixture {
 
     void tearDown();
 
+    NEO::HardwareInfo copyHwInfo;
     const std::string kernelName = "test";
     const uint32_t numKernelArguments = 6;
     std::unique_ptr<MockModule> module;

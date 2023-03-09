@@ -41,7 +41,8 @@ GEN12LPTEST_F(CommandEncoderTest, WhenAdjustComputeModeIsCalledThenStateComputeM
 
     // Adjust the State Compute Mode which sets FORCE_NON_COHERENT_FORCE_GPU_NON_COHERENT
     StreamProperties properties{};
-    properties.stateComputeMode.setPropertiesAll(false, GrfConfig::DefaultGrfNumber, 0, PreemptionMode::Disabled, rootDeviceEnvironment);
+    properties.initSupport(rootDeviceEnvironment);
+    properties.stateComputeMode.setPropertiesAll(false, GrfConfig::DefaultGrfNumber, 0, PreemptionMode::Disabled);
     NEO::EncodeComputeMode<FamilyType>::programComputeModeCommand(*cmdContainer.getCommandStream(),
                                                                   properties.stateComputeMode, rootDeviceEnvironment, nullptr);
 

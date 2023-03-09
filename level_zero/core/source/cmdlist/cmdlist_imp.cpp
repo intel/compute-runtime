@@ -182,14 +182,13 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
 }
 
 void CommandListImp::setStreamPropertiesDefaultSettings(NEO::StreamProperties &streamProperties) {
-    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
     if (this->stateComputeModeTracking) {
-        streamProperties.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->commandListPreemptionMode, rootDeviceEnvironment, true);
+        streamProperties.stateComputeMode.setPropertiesCoherencyDevicePreemption(cmdListDefaultCoherency, this->commandListPreemptionMode, true);
     }
 
-    streamProperties.frontEndState.setPropertiesDisableOverdispatchEngineInstanced(cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, rootDeviceEnvironment, true);
-    streamProperties.pipelineSelect.setPropertiesModeSelectedMediaSamplerClockGate(cmdListDefaultPipelineSelectModeSelected, cmdListDefaultMediaSamplerClockGate, rootDeviceEnvironment, true);
-    streamProperties.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, rootDeviceEnvironment, true);
+    streamProperties.frontEndState.setPropertiesDisableOverdispatchEngineInstanced(cmdListDefaultDisableOverdispatch, cmdListDefaultEngineInstancedDevice, true);
+    streamProperties.pipelineSelect.setPropertiesModeSelectedMediaSamplerClockGate(cmdListDefaultPipelineSelectModeSelected, cmdListDefaultMediaSamplerClockGate, true);
+    streamProperties.stateBaseAddress.setPropertyGlobalAtomics(cmdListDefaultGlobalAtomics, true);
 }
 
 } // namespace L0

@@ -302,7 +302,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListFrontEndIfDirty(
 
     if (frontEndTrackingEnabled()) {
         csrState.frontEndState.setProperties(cmdListRequired.frontEndState);
-        csrState.frontEndState.setPropertySingleSliceDispatchCcsMode(ctx.engineInstanced, device->getNEODevice()->getRootDeviceEnvironment());
+        csrState.frontEndState.setPropertySingleSliceDispatchCcsMode(ctx.engineInstanced);
 
         shouldProgramVfe |= csrState.frontEndState.isDirty();
     }
@@ -379,7 +379,7 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandL
     size_t estimatedSize = 0;
 
     csrStateCopy.frontEndState.setProperties(cmdListRequired.frontEndState);
-    csrStateCopy.frontEndState.setPropertySingleSliceDispatchCcsMode(engineInstanced, device->getNEODevice()->getRootDeviceEnvironment());
+    csrStateCopy.frontEndState.setPropertySingleSliceDispatchCcsMode(engineInstanced);
     if (isFrontEndStateDirty || csrStateCopy.frontEndState.isDirty()) {
         estimatedSize += singleFrontEndCmdSize;
         isFrontEndStateDirty = false;
@@ -624,7 +624,7 @@ void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecut
     auto &streamProperties = this->csr->getStreamProperties();
     if (!frontEndTrackingEnabled()) {
         streamProperties.frontEndState.setPropertiesAll(ctx.anyCommandListWithCooperativeKernels, ctx.anyCommandListRequiresDisabledEUFusion,
-                                                        true, isEngineInstanced, this->device->getNEODevice()->getRootDeviceEnvironment());
+                                                        true, isEngineInstanced);
         ctx.frontEndStateDirty |= (streamProperties.frontEndState.isDirty() && !this->csr->getLogicalStateHelper());
     } else {
         ctx.engineInstanced = isEngineInstanced;
@@ -1257,11 +1257,11 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForGlobalStat
                                                                                                  NEO::StreamProperties &csrState,
                                                                                                  const NEO::StreamProperties &cmdListRequired,
                                                                                                  const NEO::StreamProperties &cmdListFinal) {
-    auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
     auto globalStatelessHeap = this->csr->getGlobalStatelessHeap();
 
     csrState.stateBaseAddress.setProperties(cmdListRequired.stateBaseAddress);
-    csrState.stateBaseAddress.setPropertiesSurfaceState(-1, -1, globalStatelessHeap->getHeapGpuBase(), globalStatelessHeap->getHeapSizeInPages(), rootDeviceEnvironment);
+    csrState.stateBaseAddress.setPropertiesSurfaceState(NEO::StreamProperty64::initValue, NEO::StreamPropertySizeT::initValue,
+                                                        globalStatelessHeap->getHeapGpuBase(), globalStatelessHeap->getHeapSizeInPages());
 
     if (ctx.gsbaStateDirty || csrState.stateBaseAddress.isDirty()) {
         auto scratchSpaceController = this->csr->getScratchSpaceController();
@@ -1350,13 +1350,12 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForGlobalSt
                                                                                                    NEO::StreamProperties &csrStateCopy,
                                                                                                    const NEO::StreamProperties &cmdListRequired,
                                                                                                    const NEO::StreamProperties &cmdListFinal) {
-    auto &rootDeviceEnvironment = this->device->getNEODevice()->getRootDeviceEnvironment();
     auto globalStatelessHeap = this->csr->getGlobalStatelessHeap();
 
     size_t estimatedSize = 0;
 
     csrStateCopy.stateBaseAddress.setProperties(cmdListRequired.stateBaseAddress);
-    csrStateCopy.stateBaseAddress.setPropertiesSurfaceState(-1, -1, globalStatelessHeap->getHeapGpuBase(), globalStatelessHeap->getHeapSizeInPages(), rootDeviceEnvironment);
+    csrStateCopy.stateBaseAddress.setPropertiesSurfaceState(-1, -1, globalStatelessHeap->getHeapGpuBase(), globalStatelessHeap->getHeapSizeInPages());
     if (baseAddressStateDirty || csrStateCopy.stateBaseAddress.isDirty()) {
         bool useBtiCommand = csrStateCopy.stateBaseAddress.bindingTablePoolBaseAddress.value != NEO::StreamProperty64::initValue;
         estimatedSize = estimateStateBaseAddressCmdDispatchSize(useBtiCommand);
