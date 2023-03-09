@@ -9,6 +9,7 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "level_zero/tools/source/sysman/diagnostics/linux/os_diagnostics_imp.h"
+#include "level_zero/tools/source/sysman/events/linux/os_events_imp.h"
 #include "level_zero/tools/source/sysman/firmware/linux/os_firmware_imp.h"
 #include "level_zero/tools/source/sysman/ras/ras_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
