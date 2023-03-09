@@ -11,7 +11,10 @@
 #include "shared/source/command_container/encode_alu_helper.h"
 
 namespace NEO {
+class CommandStreamReceiver;
+
 namespace RelaxedOrderingHelper {
+bool isRelaxedOrderingDispatchAllowed(const CommandStreamReceiver &csr, uint32_t numWaitEvents);
 
 static constexpr uint32_t queueSizeMultiplier = 4;
 

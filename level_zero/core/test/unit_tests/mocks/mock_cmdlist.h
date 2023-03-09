@@ -156,7 +156,6 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
     using BaseClass::getHostPtrAlloc;
     using BaseClass::immediateCmdListHeapSharing;
     using BaseClass::isFlushTaskSubmissionEnabled;
-    using BaseClass::isRelaxedOrderingDispatchAllowed;
     using BaseClass::isSyncModeQueue;
     using BaseClass::isTbxMode;
     using BaseClass::partitionCount;

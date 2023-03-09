@@ -169,7 +169,6 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
   protected:
     void printKernelsPrintfOutput(bool hangDetected);
-    bool isRelaxedOrderingDispatchAllowed(uint32_t numWaitEvents) const;
     std::atomic<bool> dependenciesPresent{false};
 };
 

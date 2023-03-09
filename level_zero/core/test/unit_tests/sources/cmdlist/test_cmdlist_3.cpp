@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/encode_surface_state.h"
+#include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -1332,42 +1333,6 @@ HWTEST2_F(CommandListCreate, whenGettingCommandsToPatchThenCorrectValuesAreRetur
     EXPECT_EQ(&commandList->requiredStreamState, &commandList->getRequiredStreamState());
     EXPECT_EQ(&commandList->finalStreamState, &commandList->getFinalStreamState());
     EXPECT_EQ(&commandList->commandsToPatch, &commandList->getCommandsToPatch());
-}
-
-HWTEST2_F(CommandListCreate, givenNumClientsWhenAskingIfRelaxedOrderingEnabledThenReturnCorrectValue, IsAtLeastXeHpcCore) {
-    DebugManagerStateRestore restore;
-    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-
-    auto commandList = std::make_unique<WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>>();
-    commandList->csr = device->getNEODevice()->getDefaultEngine().commandStreamReceiver;
-
-    auto ultCsr = static_cast<NEO::UltCommandStreamReceiver<FamilyType> *>(commandList->csr);
-    ultCsr->registerClient();
-    ultCsr->recordFlusheBatchBuffer = true;
-
-    auto directSubmission = new NEO::MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
-    ultCsr->directSubmission.reset(directSubmission);
-
-    EXPECT_EQ(1u, ultCsr->getNumClients());
-    EXPECT_FALSE(commandList->isRelaxedOrderingDispatchAllowed(1));
-
-    ultCsr->registerClient();
-
-    EXPECT_EQ(2u, ultCsr->getNumClients());
-    EXPECT_TRUE(commandList->isRelaxedOrderingDispatchAllowed(1));
-
-    DebugManager.flags.DirectSubmissionRelaxedOrderingMinNumberOfClients.set(4);
-
-    EXPECT_EQ(2u, ultCsr->getNumClients());
-    EXPECT_FALSE(commandList->isRelaxedOrderingDispatchAllowed(1));
-
-    ultCsr->registerClient();
-    EXPECT_EQ(3u, ultCsr->getNumClients());
-    EXPECT_FALSE(commandList->isRelaxedOrderingDispatchAllowed(1));
-
-    ultCsr->registerClient();
-    EXPECT_EQ(4u, ultCsr->getNumClients());
-    EXPECT_TRUE(commandList->isRelaxedOrderingDispatchAllowed(1));
 }
 
 HWTEST2_F(CommandListCreate, givenNonEmptyCommandsToPatchWhenClearCommandsToPatchIsCalledThenCommandsAreCorrectlyCleared, IsAtLeastSkl) {

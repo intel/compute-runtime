@@ -373,7 +373,7 @@ class CommandStreamReceiver {
 
     virtual SubmissionStatus initializeDeviceWithFirstSubmission() = 0;
 
-    uint32_t getNumClients() {
+    uint32_t getNumClients() const {
         return this->numClients.load();
     }
     uint32_t registerClient() {

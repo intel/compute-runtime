@@ -2942,3 +2942,33 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenReturnPtrsRequiredWhenAskin
 
     EXPECT_EQ(baseSize + RelaxedOrderingHelper::getSizeReturnPtrRegs<FamilyType>(), sizeWitfRetPtr);
 }
+
+HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNumClientsWhenAskingIfRelaxedOrderingEnabledThenReturnCorrectValue, IsAtLeastXeHpcCore) {
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(pDevice->getDefaultEngine().commandStreamReceiver);
+
+    ultCsr->registerClient();
+
+    auto directSubmission = new NEO::MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(*ultCsr);
+    ultCsr->directSubmission.reset(directSubmission);
+
+    EXPECT_EQ(1u, ultCsr->getNumClients());
+    EXPECT_FALSE(NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*ultCsr, 1));
+
+    ultCsr->registerClient();
+
+    EXPECT_EQ(2u, ultCsr->getNumClients());
+    EXPECT_TRUE(NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*ultCsr, 1));
+
+    DebugManager.flags.DirectSubmissionRelaxedOrderingMinNumberOfClients.set(4);
+
+    EXPECT_EQ(2u, ultCsr->getNumClients());
+    EXPECT_FALSE(NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*ultCsr, 1));
+
+    ultCsr->registerClient();
+    EXPECT_EQ(3u, ultCsr->getNumClients());
+    EXPECT_FALSE(NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*ultCsr, 1));
+
+    ultCsr->registerClient();
+    EXPECT_EQ(4u, ultCsr->getNumClients());
+    EXPECT_TRUE(NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*ultCsr, 1));
+}
