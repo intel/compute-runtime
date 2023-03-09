@@ -82,6 +82,6 @@ bool ProductHelperHw<gfxProduct>::isPageFaultSupported() const {
 
 } // namespace NEO
 
-#include "shared/source/xe_hpc_core/linux/hw_info_config_xe_hpc_core.inl"
+#include "shared/source/xe_hpc_core/linux/product_helper_xe_hpc_core.inl"
 
 template class NEO::ProductHelperHw<gfxProduct>;

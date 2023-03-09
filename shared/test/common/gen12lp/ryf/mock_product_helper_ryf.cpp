@@ -8,4 +8,4 @@
 using namespace NEO;
 
 constexpr static auto gfxProduct = IGFX_BROADWELL;
-#include "shared/source/os_interface/hw_info_config_hw.inl"
+#include "shared/source/os_interface/product_helper_hw.inl"
