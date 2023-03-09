@@ -6,6 +6,8 @@
  */
 
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -126,7 +128,9 @@ HWTEST_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmask
     uint32_t subslice = subslicesPerSlice > 1 ? subslicesPerSlice - 1 : 0;
 
     const auto threadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
-    const auto bytesPerEu = 1;
+
+    auto &compilerProductHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::CompilerProductHelper>();
+    auto bytesPerEu = Math::divideAndRoundUp(compilerProductHelper.getNumThreadsPerEu(), 8u);
 
     const auto maxEUsInAtt = hwInfo.gtSystemInfo.MaxEuPerSubSlice > 8 ? 8 : hwInfo.gtSystemInfo.MaxEuPerSubSlice;
     const auto threadsSizePerSubSlice = maxEUsInAtt * bytesPerEu;
@@ -195,7 +199,7 @@ HWTEST_F(L0GfxCoreHelperTest, givenSliceSubsliceEuAndThreadIdsWhenGettingBitmask
     if (l0GfxCoreHelper.isResumeWARequired()) {
         data = ptrOffset(data, (maxEUsInAtt - 1) % 4 * bytesPerEu);
     } else {
-        data = ptrOffset(data, maxEUsInAtt - 1 * bytesPerEu);
+        data = ptrOffset(data, (maxEUsInAtt - 1) * bytesPerEu);
     }
     data[0] = 1;
 
@@ -217,11 +221,14 @@ HWTEST_F(L0GfxCoreHelperTest, givenSingleThreadsWhenGettingBitmaskThenCorrectBit
 
     l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, size);
 
+    auto &compilerProductHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::CompilerProductHelper>();
+    auto numBytesPerThread = Math::divideAndRoundUp(compilerProductHelper.getNumThreadsPerEu(), 8u);
+
     auto data = bitmask.get();
     EXPECT_EQ(1u << 3, data[0]);
-    EXPECT_EQ(1u, data[1]);
+    EXPECT_EQ(1u, data[numBytesPerThread]);
 
-    EXPECT_TRUE(memoryZeroed(&data[2], size - 2));
+    EXPECT_TRUE(memoryZeroed(&data[numBytesPerThread + 1], size - numBytesPerThread - 1));
 }
 
 HWTEST_F(L0GfxCoreHelperTest, givenBitmaskWithAttentionBitsForSingleThreadWhenGettingThreadsThenSingleCorrectThreadReturned) {
@@ -330,11 +337,15 @@ HWTEST_F(L0GfxCoreHelperTest, givenEu0To1Threads0To3BitmaskWhenGettingThreadsThe
     MockExecutionEnvironment executionEnvironment;
     auto &l0GfxCoreHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<L0GfxCoreHelper>();
 
-    uint8_t data[2] = {0x0f, 0x0f};
+    auto &compilerProductHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::CompilerProductHelper>();
+    auto numBytesPerEu = Math::divideAndRoundUp(compilerProductHelper.getNumThreadsPerEu(), 8u);
+
+    uint8_t data[4]{};
+    data[0] = 0x0f;
+    data[numBytesPerEu] = 0x0f;
     auto threads = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, 0, data, sizeof(data));
 
     ASSERT_EQ(8u, threads.size());
-
     ze_device_thread_t expectedThreads[] = {
         {0, 0, 0, 0},
         {0, 0, 0, 1},

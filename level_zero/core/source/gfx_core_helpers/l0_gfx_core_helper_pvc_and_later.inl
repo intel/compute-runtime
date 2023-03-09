@@ -49,7 +49,6 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
     const uint32_t threadsSizePerSubSlice = numEuPerSubslice * bytesPerEu;
     const uint32_t highestEnabledSlice = NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo);
 
-    UNRECOVERABLE_IF(bytesPerEu != 1);
     std::vector<EuThread::ThreadId> threads;
 
     for (uint32_t slice = 0; slice < std::max(highestEnabledSlice, hwInfo.gtSystemInfo.MaxSlicesSupported); slice++) {
@@ -61,10 +60,12 @@ std::vector<EuThread::ThreadId> L0GfxCoreHelperHw<Family>::getThreadsFromAttenti
                     return threads;
                 }
 
-                std::bitset<8> bits(bitmask[offset]);
-                for (uint32_t i = 0; i < 8; i++) {
-                    if (bits.test(i)) {
-                        threads.emplace_back(tile, slice, subslice, eu, i);
+                for (uint32_t byte = 0; byte < bytesPerEu; byte++) {
+                    std::bitset<8> bits(bitmask[offset + byte]);
+                    for (uint32_t i = 0; i < 8; i++) {
+                        if (bits.test(i)) {
+                            threads.emplace_back(tile, slice, subslice, eu, i + 8 * byte);
+                        }
                     }
                 }
             }
