@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,6 +27,11 @@ class DrmQueryMock : public DrmMock {
         supportedCopyEnginesMask,
         contextDebugSupported,
     };
+
+    void getPrelimEuDebug(int &prelimEuDebug) override {
+        prelimEuDebug = prelimEuDebugValue;
+    }
+    int prelimEuDebugValue = 0;
 
     static constexpr uint32_t maxEngineCount{9};
     ContextEnginesLoadBalance<maxEngineCount> receivedContextEnginesLoadBalance{};

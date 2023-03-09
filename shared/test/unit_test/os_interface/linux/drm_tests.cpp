@@ -1196,6 +1196,33 @@ TEST(DrmQueryTest, givenUapiPrelimVersionWithInvalidPathThenReturnEmptyString) {
     EXPECT_TRUE(prelimVersion.empty());
 }
 
+TEST(DrmQueryTest, givenPrelimEnableEuDebugThenReturnCorrectValue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    std::string prelimEuDebugFile = getLinuxDevicesPath("device/drm/card1/prelim_enable_eu_debug");
+    EXPECT_TRUE(fileExists(prelimEuDebugFile));
+
+    drm.setPciPath("device");
+
+    int prelimEnableEuDebug = 0;
+    drm.getPrelimEuDebug(prelimEnableEuDebug);
+
+    EXPECT_EQ(1, prelimEnableEuDebug);
+}
+
+TEST(DrmQueryTest, givenPrelimEnableEuDebugWithInvalidPathThenReturnDefaultValue) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    drm.setPciPath("invalidPath");
+
+    int prelimEnableEuDebug = 1;
+    drm.getPrelimEuDebug(prelimEnableEuDebug);
+
+    EXPECT_EQ(0, prelimEnableEuDebug);
+}
+
 TEST(DrmTest, givenInvalidUapiPrelimVersionThenFallbackToBasePrelim) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};

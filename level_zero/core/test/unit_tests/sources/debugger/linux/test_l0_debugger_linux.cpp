@@ -308,6 +308,54 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledWhenCommandQueuesAreCreatedAn
     EXPECT_EQ(2u, debuggerL0Hw->commandQueueDestroyedCount);
 }
 
+HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndDebugAttachAvailableWhenInitializingDriverThenSuccessIsReturned) {
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    executionEnvironment->initializeMemoryManager();
+    auto osInterface = new OSInterface();
+    auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
+
+    auto neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
+
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->enableProgramDebugging = true;
+
+    drmMock->allowDebugAttach = true;
+
+    ze_result_t result = driverHandle->initialize(std::move(devices));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndDebugAttachNotAvailableWhenInitializingDriverThenErrorIsReturned) {
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->setDebuggingEnabled();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
+    executionEnvironment->initializeMemoryManager();
+    auto osInterface = new OSInterface();
+    auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<Drm>(drmMock));
+
+    auto neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
+
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+    driverHandle->enableProgramDebugging = true;
+
+    drmMock->allowDebugAttach = false;
+
+    ze_result_t result = driverHandle->initialize(std::move(devices));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, result);
+}
+
 HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledWhenImmCommandListsCreatedAndDestroyedThenDebuggerL0IsNotified) {
     auto debuggerL0Hw = static_cast<MockDebuggerL0Hw<FamilyType> *>(device->getL0Debugger());
 
