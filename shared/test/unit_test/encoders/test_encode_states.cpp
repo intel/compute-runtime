@@ -535,3 +535,29 @@ HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenBindingBaseAddressSetTh
     EXPECT_EQ(bindingTablePoolBaseAddress, bindTablePoolCmd->getBindingTablePoolBaseAddress());
     EXPECT_EQ(bindingTablePoolSize, bindTablePoolCmd->getBindingTablePoolBufferSize());
 }
+
+HWTEST2_F(CommandEncodeStatesTest, givenSbaPropertiesWhenGeneralBaseAddressSetThenExpectAddressFromPropertiesUsedNotFromContainer, IsAtLeastXeHpCore) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto indirectHeapBaseAddress = cmdContainer->getIndirectObjectHeapBaseAddress();
+    auto indirectHeapBaseAddressProperties = indirectHeapBaseAddress + 0x10000;
+
+    StateBaseAddressProperties sbaProperties;
+    sbaProperties.setPropertiesIndirectState(indirectHeapBaseAddressProperties, MemoryConstants::kiloByte);
+
+    STATE_BASE_ADDRESS sba;
+    EncodeStateBaseAddressArgs<FamilyType> args = createDefaultEncodeStateBaseAddressArgs<FamilyType>(cmdContainer.get(), sba, 4);
+    args.sbaProperties = &sbaProperties;
+
+    EncodeStateBaseAddress<FamilyType>::encode(args);
+
+    GenCmdList commands;
+    CmdParse<FamilyType>::parseCommandBuffer(commands,
+                                             cmdContainer->getCommandStream()->getCpuBase(),
+                                             cmdContainer->getCommandStream()->getUsed());
+    auto itorSbaCmd = find<STATE_BASE_ADDRESS *>(commands.begin(), commands.end());
+    ASSERT_NE(commands.end(), itorSbaCmd);
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*itorSbaCmd);
+    EXPECT_EQ(indirectHeapBaseAddressProperties, sbaCmd->getGeneralStateBaseAddress());
+}

@@ -638,6 +638,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingIndirectStateAndGlo
 
     constexpr uint64_t indirectHeapBase = 0x10000;
     constexpr uint32_t indirectHeapSize = 0x10;
+    constexpr uint32_t constGlobalHeapSize = 0xfffff;
 
     auto gmmHelper = pDevice->getGmmHelper();
     StateBaseAddressProperties sbaProperties;
@@ -665,7 +666,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingIndirectStateAndGlo
     EXPECT_TRUE(sbaCmd.getGeneralStateBaseAddressModifyEnable());
     EXPECT_TRUE(sbaCmd.getGeneralStateBufferSizeModifyEnable());
     EXPECT_EQ(indirectHeapBase, sbaCmd.getGeneralStateBaseAddress());
-    EXPECT_EQ(indirectHeapSize, sbaCmd.getGeneralStateBufferSize());
+    EXPECT_EQ(constGlobalHeapSize, sbaCmd.getGeneralStateBufferSize());
 
     EXPECT_FALSE(sbaCmd.getDisableSupportForMultiGpuAtomicsForStatelessAccesses());
 

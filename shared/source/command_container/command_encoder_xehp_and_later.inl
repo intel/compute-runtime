@@ -529,6 +529,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
     auto ioh = args.container->isHeapDirty(HeapType::INDIRECT_OBJECT) ? args.container->getIndirectHeap(HeapType::INDIRECT_OBJECT) : nullptr;
     auto ssh = args.container->isHeapDirty(HeapType::SURFACE_STATE) ? args.container->getIndirectHeap(HeapType::SURFACE_STATE) : nullptr;
     auto isDebuggerActive = device.isDebuggerActive() || device.getDebugger() != nullptr;
+    bool setGeneralStateBaseAddress = args.sbaProperties ? false : true;
 
     StateBaseAddressHelperArgs<Family> stateBaseAddressHelperArgs = {
         0,                                                  // generalStateBaseAddress
@@ -547,7 +548,7 @@ void EncodeStateBaseAddress<Family>::encode(EncodeStateBaseAddressArgs<Family> &
         args.l1CachePolicyDebuggerActive,                   // l1CachePolicyDebuggerActive
         NEO::MemoryCompressionState::NotApplicable,         // memoryCompressionState
         true,                                               // setInstructionStateBaseAddress
-        true,                                               // setGeneralStateBaseAddress
+        setGeneralStateBaseAddress,                         // setGeneralStateBaseAddress
         false,                                              // useGlobalHeapsBaseAddress
         args.multiOsContextCapable,                         // isMultiOsContextCapable
         args.useGlobalAtomics,                              // useGlobalAtomics

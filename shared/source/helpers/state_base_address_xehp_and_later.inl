@@ -36,7 +36,7 @@ void StateBaseAddressHelper<GfxFamily>::appendStateBaseAddressParameters(
             args.stateBaseAddressCmd->setGeneralStateBaseAddress(args.gmmHelper->decanonize(baseAddress));
             args.stateBaseAddressCmd->setGeneralStateBaseAddressModifyEnable(true);
             args.stateBaseAddressCmd->setGeneralStateBufferSizeModifyEnable(true);
-            args.stateBaseAddressCmd->setGeneralStateBufferSize(static_cast<uint32_t>(args.sbaProperties->indirectObjectSize.value));
+            args.stateBaseAddressCmd->setGeneralStateBufferSize(0xfffff);
         }
         if (args.sbaProperties->surfaceStateBaseAddress.value != StreamProperty64::initValue) {
             args.stateBaseAddressCmd->setBindlessSurfaceStateBaseAddressModifyEnable(true);
