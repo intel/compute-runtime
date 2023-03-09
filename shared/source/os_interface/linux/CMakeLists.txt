@@ -45,7 +45,7 @@ set(NEO_CORE_OS_INTERFACE_LINUX
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers_checks.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/drm_wrappers.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_drm.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_drm.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hw_device_id_linux.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/kmd_notify_properties_linux.cpp
@@ -109,7 +109,7 @@ endif()
 
 if(DISABLE_WDDM_LINUX)
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
-       ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config_wddm_stub.cpp
+       ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_wddm_stub.cpp
   )
 else()
   list(APPEND NEO_CORE_OS_INTERFACE_LINUX
