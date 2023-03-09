@@ -215,7 +215,7 @@ macro(macro_for_each_core_type)
       list(APPEND CORE_SRCS_${CORE_TYPE}_H_BASE "${GENERATED_COREX_PREFIX}/hw_cmds_generated_${CORE_TYPE_LOWER}.inl")
     endif()
   endforeach()
-  apply_macro_for_each_platform()
+  apply_macro_for_each_platform("SUPPORTED")
 
   list(APPEND CORE_SRCS_COREX_ALL_BASE ${CORE_SRCS_${CORE_TYPE}_H_BASE})
   list(APPEND CORE_SRCS_COREX_ALL_BASE ${CORE_SRCS_${CORE_TYPE}_CPP_BASE})

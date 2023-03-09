@@ -193,7 +193,7 @@ macro(macro_for_each_core_type)
       endforeach()
     endforeach()
   endforeach()
-  apply_macro_for_each_platform()
+  apply_macro_for_each_platform("SUPPORTED")
 endmacro()
 
 apply_macro_for_each_core_type("SUPPORTED")

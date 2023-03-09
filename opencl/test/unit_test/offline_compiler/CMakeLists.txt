@@ -170,7 +170,7 @@ macro(macro_for_each_platform)
   endif()
 endmacro()
 macro(macro_for_each_core_type)
-  apply_macro_for_each_platform()
+  apply_macro_for_each_platform("TESTED")
 endmacro()
 apply_macro_for_each_core_type("TESTED")
 
