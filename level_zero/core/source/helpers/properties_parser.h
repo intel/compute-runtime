@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -104,6 +104,11 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             }
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC) {
             const ze_image_view_planar_exp_desc_t *imageViewDesc = reinterpret_cast<const ze_image_view_planar_exp_desc_t *>(extendedDesc);
+            lookupTable.areImageProperties = true;
+            lookupTable.imageProperties.isPlanarExtension = true;
+            lookupTable.imageProperties.planeIndex = imageViewDesc->planeIndex;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC) {
+            const ze_image_view_planar_ext_desc_t *imageViewDesc = reinterpret_cast<const ze_image_view_planar_ext_desc_t *>(extendedDesc);
             lookupTable.areImageProperties = true;
             lookupTable.imageProperties.isPlanarExtension = true;
             lookupTable.imageProperties.planeIndex = imageViewDesc->planeIndex;

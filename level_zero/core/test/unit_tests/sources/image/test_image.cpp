@@ -1293,7 +1293,7 @@ HWTEST2_F(ImageCreate, WhenCopyingToSshThenSurfacePropertiesAreRetained, IsAtMos
     delete imageB;
 }
 
-HWTEST2_F(ImageCreate, WhenImageViewCreateThenSuccessIsReturned, IsAtLeastSkl) {
+HWTEST2_F(ImageCreate, WhenImageViewCreateExpThenSuccessIsReturned, IsAtLeastSkl) {
     using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
     const size_t width = 32;
     const size_t height = 32;
@@ -1318,6 +1318,61 @@ HWTEST2_F(ImageCreate, WhenImageViewCreateThenSuccessIsReturned, IsAtLeastSkl) {
 
     ze_image_view_planar_exp_desc_t planeYdesc = {};
     planeYdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXP_DESC;
+    planeYdesc.planeIndex = 0u; // Y plane
+
+    ze_image_desc_t imageViewDescPlaneY = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                           &planeYdesc,
+                                           (ZE_IMAGE_FLAG_KERNEL_WRITE | ZE_IMAGE_FLAG_BIAS_UNCACHED),
+                                           ZE_IMAGE_TYPE_2D,
+                                           {ZE_IMAGE_FORMAT_LAYOUT_8, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                            ZE_IMAGE_FORMAT_SWIZZLE_A, ZE_IMAGE_FORMAT_SWIZZLE_B,
+                                            ZE_IMAGE_FORMAT_SWIZZLE_G, ZE_IMAGE_FORMAT_SWIZZLE_R},
+                                           width,
+                                           height,
+                                           depth,
+                                           0,
+                                           0};
+    ze_image_handle_t planeY;
+
+    ret = imageHW->createView(device, &imageViewDescPlaneY, &planeY);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    auto nv12Allocation = imageHW->getAllocation();
+
+    auto planeYAllocation = Image::fromHandle(planeY)->getAllocation();
+
+    EXPECT_EQ(nv12Allocation->getGpuBaseAddress(), planeYAllocation->getGpuBaseAddress());
+
+    zeImageDestroy(planeY);
+}
+
+HWTEST2_F(ImageCreate, WhenImageViewCreateExtThenSuccessIsReturned, IsAtLeastSkl) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    const size_t width = 32;
+    const size_t height = 32;
+    const size_t depth = 1;
+
+    ze_image_desc_t srcImgDesc = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
+                                  nullptr,
+                                  (ZE_IMAGE_FLAG_KERNEL_WRITE | ZE_IMAGE_FLAG_BIAS_UNCACHED),
+                                  ZE_IMAGE_TYPE_2D,
+                                  {ZE_IMAGE_FORMAT_LAYOUT_NV12, ZE_IMAGE_FORMAT_TYPE_UINT,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_R, ZE_IMAGE_FORMAT_SWIZZLE_G,
+                                   ZE_IMAGE_FORMAT_SWIZZLE_B, ZE_IMAGE_FORMAT_SWIZZLE_A},
+                                  width,
+                                  height,
+                                  depth,
+                                  0,
+                                  0};
+
+    auto imageHW = std::make_unique<WhiteBox<::L0::ImageCoreFamily<gfxCoreFamily>>>();
+    auto ret = imageHW->initialize(device, &srcImgDesc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, ret);
+
+    ze_image_view_planar_ext_desc_t planeYdesc = {};
+    planeYdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     planeYdesc.planeIndex = 0u; // Y plane
 
     ze_image_desc_t imageViewDescPlaneY = {ZE_STRUCTURE_TYPE_IMAGE_DESC,
