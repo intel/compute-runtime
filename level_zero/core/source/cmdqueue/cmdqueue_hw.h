@@ -207,19 +207,20 @@ struct CommandQueueHw : public CommandQueueImp {
 
     inline void programRequiredStateBaseAddressForCommandList(CommandListExecutionContext &ctx,
                                                               NEO::LinearStream &commandStream,
-                                                              CommandList *commandList,
+                                                              NEO::HeapAddressModel commandListHeapAddressModel,
+                                                              bool indirectHeapInLocalMemory,
                                                               NEO::StreamProperties &csrState,
                                                               const NEO::StreamProperties &cmdListRequired,
                                                               const NEO::StreamProperties &cmdListFinal);
     inline void programRequiredStateBaseAddressForGlobalStatelessCommandList(CommandListExecutionContext &ctx,
                                                                              NEO::LinearStream &commandStream,
-                                                                             CommandList *commandList,
+                                                                             bool indirectHeapInLocalMemory,
                                                                              NEO::StreamProperties &csrState,
                                                                              const NEO::StreamProperties &cmdListRequired,
                                                                              const NEO::StreamProperties &cmdListFinal);
     inline void programRequiredStateBaseAddressForPrivateHeapCommandList(CommandListExecutionContext &ctx,
                                                                          NEO::LinearStream &commandStream,
-                                                                         CommandList *commandList,
+                                                                         bool indirectHeapInLocalMemory,
                                                                          NEO::StreamProperties &csrState,
                                                                          const NEO::StreamProperties &cmdListRequired,
                                                                          const NEO::StreamProperties &cmdListFinal);

@@ -121,14 +121,18 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
             }
             residencyContainer.push_back(allocationIndirectHeaps[i]);
 
-            bool requireInternalHeap = (IndirectHeap::Type::INDIRECT_OBJECT == i);
+            bool requireInternalHeap = false;
+            if (IndirectHeap::Type::INDIRECT_OBJECT == i) {
+                requireInternalHeap = true;
+                indirectHeapInLocalMemory = allocationIndirectHeaps[i]->isAllocatedInLocalMemoryPool();
+            }
             indirectHeaps[i] = std::make_unique<IndirectHeap>(allocationIndirectHeaps[i], requireInternalHeap);
             if (i == IndirectHeap::Type::SURFACE_STATE) {
                 indirectHeaps[i]->getSpace(reservedSshSize);
             }
         }
 
-        indirectObjectHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), allocationIndirectHeaps[IndirectHeap::Type::INDIRECT_OBJECT]->isAllocatedInLocalMemoryPool());
+        indirectObjectHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), indirectHeapInLocalMemory);
 
         instructionHeapBaseAddress = device->getMemoryManager()->getInternalHeapBaseAddress(device->getRootDeviceIndex(), device->getMemoryManager()->isLocalMemoryUsedForIsa(device->getRootDeviceIndex()));
 

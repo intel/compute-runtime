@@ -169,6 +169,10 @@ class CommandContainer : public NonCopyableOrMovableClass {
         return heapAddressModel;
     }
 
+    bool isIndirectHeapInLocalMemory() const {
+        return indirectHeapInLocalMemory;
+    }
+
     HeapContainer sshAllocations;
     uint64_t currentLinearStreamStartOffset = 0u;
     uint32_t slmSize = std::numeric_limits<uint32_t>::max();
@@ -185,6 +189,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     void createAndAssignNewHeap(HeapType heapType, size_t size);
     IndirectHeap *initIndirectHeapReservation(ReservedIndirectHeap *indirectHeapReservation, size_t size, size_t alignment, HeapType heapType);
     inline bool skipHeapAllocationCreation(HeapType heapType);
+
     GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
     std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];
     HeapReserveData dynamicStateHeapReserveData;
@@ -197,7 +202,6 @@ class CommandContainer : public NonCopyableOrMovableClass {
     std::unique_ptr<HeapHelper> heapHelper;
     std::unique_ptr<LinearStream> commandStream;
     std::unique_ptr<LinearStream> secondaryCommandStreamForImmediateCmdList;
-    bool useSecondaryCommandStream = false;
 
     uint64_t instructionHeapBaseAddress = 0u;
     uint64_t indirectObjectHeapBaseAddress = 0u;
@@ -218,6 +222,8 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool isFlushTaskUsedForImmediate = false;
     bool isHandleFenceCompletionRequired = false;
     bool heapSharingEnabled = false;
+    bool useSecondaryCommandStream = false;
+    bool indirectHeapInLocalMemory = false;
 };
 
 } // namespace NEO

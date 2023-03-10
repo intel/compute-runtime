@@ -174,7 +174,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         this->programOneCmdListPipelineSelect(commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
         this->programOneCmdListFrontEndIfDirty(ctx, child, csrStateProperties, requiredStreamState, finalStreamState);
         this->programRequiredStateComputeModeForCommandList(commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
-        this->programRequiredStateBaseAddressForCommandList(ctx, child, commandList, csrStateProperties, requiredStreamState, finalStreamState);
+        this->programRequiredStateBaseAddressForCommandList(ctx, child, commandList->getCmdListHeapAddressModel(), commandList->getCmdContainer().isIndirectHeapInLocalMemory(), csrStateProperties, requiredStreamState, finalStreamState);
 
         this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
         this->programOneCmdListBatchBufferStart(commandList, child, ctx);
@@ -1234,7 +1234,8 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForCommandList(CommandListExecutionContext &ctx,
                                                                                   NEO::LinearStream &commandStream,
-                                                                                  CommandList *commandList,
+                                                                                  NEO::HeapAddressModel commandListHeapAddressModel,
+                                                                                  bool indirectHeapInLocalMemory,
                                                                                   NEO::StreamProperties &csrState,
                                                                                   const NEO::StreamProperties &cmdListRequired,
                                                                                   const NEO::StreamProperties &cmdListFinal) {
@@ -1242,18 +1243,17 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForCommandLis
     if (!this->stateBaseAddressTracking) {
         return;
     }
-    auto heapModel = commandList->getCmdListHeapAddressModel();
-    if (heapModel == NEO::HeapAddressModel::GlobalStateless) {
-        programRequiredStateBaseAddressForGlobalStatelessCommandList(ctx, commandStream, commandList, csrState, cmdListRequired, cmdListFinal);
+    if (commandListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
+        programRequiredStateBaseAddressForGlobalStatelessCommandList(ctx, commandStream, indirectHeapInLocalMemory, csrState, cmdListRequired, cmdListFinal);
     } else {
-        programRequiredStateBaseAddressForPrivateHeapCommandList(ctx, commandStream, commandList, csrState, cmdListRequired, cmdListFinal);
+        programRequiredStateBaseAddressForPrivateHeapCommandList(ctx, commandStream, indirectHeapInLocalMemory, csrState, cmdListRequired, cmdListFinal);
     }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForGlobalStatelessCommandList(CommandListExecutionContext &ctx,
                                                                                                  NEO::LinearStream &commandStream,
-                                                                                                 CommandList *commandList,
+                                                                                                 bool indirectHeapInLocalMemory,
                                                                                                  NEO::StreamProperties &csrState,
                                                                                                  const NEO::StreamProperties &cmdListRequired,
                                                                                                  const NEO::StreamProperties &cmdListFinal) {
@@ -1264,10 +1264,9 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForGlobalStat
     csrState.stateBaseAddress.setPropertiesSurfaceState(-1, -1, globalStatelessHeap->getHeapGpuBase(), globalStatelessHeap->getHeapSizeInPages(), rootDeviceEnvironment);
 
     if (ctx.gsbaStateDirty || csrState.stateBaseAddress.isDirty()) {
-        auto indirectHeap = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
         auto scratchSpaceController = this->csr->getScratchSpaceController();
         programStateBaseAddress(scratchSpaceController->calculateNewGSH(),
-                                indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(),
+                                indirectHeapInLocalMemory,
                                 commandStream,
                                 ctx.cachedMOCSAllowed,
                                 &csrState);
@@ -1281,7 +1280,7 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForGlobalStat
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForPrivateHeapCommandList(CommandListExecutionContext &ctx,
                                                                                              NEO::LinearStream &commandStream,
-                                                                                             CommandList *commandList,
+                                                                                             bool indirectHeapInLocalMemory,
                                                                                              NEO::StreamProperties &csrState,
                                                                                              const NEO::StreamProperties &cmdListRequired,
                                                                                              const NEO::StreamProperties &cmdListFinal) {
@@ -1289,10 +1288,9 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForPrivateHea
     csrState.stateBaseAddress.setProperties(cmdListRequired.stateBaseAddress);
 
     if (ctx.gsbaStateDirty || csrState.stateBaseAddress.isDirty()) {
-        auto indirectHeap = commandList->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
         auto scratchSpaceController = this->csr->getScratchSpaceController();
         programStateBaseAddress(scratchSpaceController->calculateNewGSH(),
-                                indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(),
+                                indirectHeapInLocalMemory,
                                 commandStream,
                                 ctx.cachedMOCSAllowed,
                                 &csrState);

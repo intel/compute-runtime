@@ -1594,3 +1594,10 @@ TEST_F(CommandContainerTest, givenGlobalHeapModelSelectedWhenCmdContainerIsIniti
     EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE));
     EXPECT_EQ(nullptr, cmdContainer.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE));
 }
+
+TEST_F(CommandContainerTest, givenCmdContainerAllocatesIndirectHeapWhenGettingMemoryPlacementThenFlagMatchesGraphicsAllocationPlacement) {
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    cmdContainer->initialize(pDevice, nullptr, true, false);
+
+    EXPECT_EQ(cmdContainer->isIndirectHeapInLocalMemory(), cmdContainer->getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
+}
