@@ -13,6 +13,8 @@
 
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/aligned_memory.h"
+#include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -5494,6 +5496,8 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
     config.pid = 0x1234;
 
     auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+    auto &compilerProductHelper = neoDevice->getRootDeviceEnvironment().getHelper<NEO::CompilerProductHelper>();
+    auto numBytesPerThread = Math::divideAndRoundUp(compilerProductHelper.getNumThreadsPerEu(), 8u);
     auto sessionMock = std::make_unique<MockDebugSessionLinux>(config, device, 10);
     ASSERT_NE(nullptr, sessionMock);
     SIP::version version = {2, 0, 0};
@@ -5515,10 +5519,12 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
     auto bitmask = handler->euControlArgs[euControlIndex].euControlBitmask.get();
 
     EXPECT_EQ(1u, bitmask[0]);
+
+    auto bitmaskIndex = 4 * numBytesPerThread;
     if (l0GfxCoreHelper.isResumeWARequired()) {
-        EXPECT_EQ(1u, bitmask[4]);
+        EXPECT_EQ(1u, bitmask[bitmaskIndex]);
     } else {
-        EXPECT_EQ(0u, bitmask[4]);
+        EXPECT_EQ(0u, bitmask[bitmaskIndex]);
     }
 
     thread = {0, 0, 4, 0};
@@ -5533,11 +5539,10 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
 
     if (l0GfxCoreHelper.isResumeWARequired()) {
         EXPECT_EQ(1u, bitmask[0]);
-        EXPECT_EQ(1u, bitmask[4]);
     } else {
         EXPECT_EQ(0u, bitmask[0]);
-        EXPECT_EQ(1u, bitmask[4]);
     }
+    EXPECT_EQ(1u, bitmask[bitmaskIndex]);
 }
 
 TEST_F(DebugApiLinuxTest, GivenSliceALLWhenCallingResumeThenSliceIdIsNotRemapped) {

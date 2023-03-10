@@ -147,7 +147,7 @@ std::vector<EuThread::ThreadId> DebugSession::getSingleThreadsForDevice(uint32_t
     const uint32_t numEuPerSubslice = hwInfo.gtSystemInfo.MaxEuPerSubSlice;
     const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
 
-    UNRECOVERABLE_IF(numThreadsPerEu > 8);
+    UNRECOVERABLE_IF(numThreadsPerEu > 16);
 
     std::vector<EuThread::ThreadId> threads;
 
