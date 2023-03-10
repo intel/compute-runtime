@@ -219,6 +219,7 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
     verifyIoctlString(DrmIoctl::SyncobjWait, "DRM_IOCTL_SYNCOBJ_WAIT");
     verifyIoctlString(DrmIoctl::SyncobjDestroy, "DRM_IOCTL_SYNCOBJ_DESTROY");
     verifyIoctlString(DrmIoctl::GemClose, "DRM_IOCTL_GEM_CLOSE");
+    verifyIoctlString(DrmIoctl::GemCreate, "DRM_IOCTL_XE_GEM_CREATE");
     verifyIoctlString(DrmIoctl::GemVmCreate, "DRM_IOCTL_XE_VM_CREATE");
     verifyIoctlString(DrmIoctl::GemVmDestroy, "DRM_IOCTL_XE_VM_DESTROY");
     verifyIoctlString(DrmIoctl::GemMmapOffset, "DRM_IOCTL_XE_GEM_MMAP_OFFSET");
@@ -436,6 +437,7 @@ TEST(IoctlHelperXeTest, whenGettingFileNamesForFrequencyThenProperStringIsReturn
 inline constexpr int testValueVmId = 0x5764;
 inline constexpr int testValueMapOff = 0x7788;
 inline constexpr int testValuePrime = 0x4321;
+inline constexpr int testValueGemCreate = 0x8273;
 
 class DrmMockXe : public DrmMockCustom {
   public:
@@ -488,6 +490,12 @@ class DrmMockXe : public DrmMockCustom {
             PrimeHandle *v = static_cast<PrimeHandle *>(arg);
             if (v->handle == testValuePrime) {
                 v->fileDescriptor = testValuePrime;
+                ret = 0;
+            }
+        } break;
+        case DrmIoctl::GemCreate: {
+            GemCreate *v = static_cast<GemCreate *>(arg);
+            if (v->handle == testValueGemCreate) {
                 ret = 0;
             }
         } break;
@@ -579,6 +587,12 @@ TEST(IoctlHelperXeTest, whenCallingIoctlThenProperValueIsReturned) {
         ret = mockXeIoctlHelper->ioctl(DrmIoctl::PrimeHandleToFd, &test);
         EXPECT_EQ(0, ret);
         EXPECT_EQ(static_cast<int>(test.fileDescriptor), testValuePrime);
+    }
+    {
+        GemCreate test = {};
+        test.handle = testValueGemCreate;
+        ret = mockXeIoctlHelper->ioctl(DrmIoctl::GemCreate, &test);
+        EXPECT_EQ(0, ret);
     }
     {
         ResetStats test = {};

@@ -1059,6 +1059,12 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
               prime->handle, prime->flags, prime->fileDescriptor, ret);
         ret = IoctlHelper::ioctl(request, arg);
     } break;
+    case DrmIoctl::GemCreate: {
+        GemCreate *gemCreate = static_cast<GemCreate *>(arg);
+        ret = IoctlHelper::ioctl(request, arg);
+        xeLog(" -> IoctlHelperXe::ioctl GemCreate h=0x%x s=0x%llx r=%d\n",
+              gemCreate->handle, gemCreate->size, ret);
+    } break;
     default:
         xeLog("Not handled 0x%x\n", request);
         UNRECOVERABLE_IF(true);
