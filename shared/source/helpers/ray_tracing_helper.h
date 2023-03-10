@@ -10,6 +10,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/basic_math.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
@@ -34,7 +35,7 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
     }
 
     static size_t getTotalMemoryBackedFifoSize(const Device &device) {
-        return static_cast<size_t>(getNumDss(device)) * memoryBackedFifoSizePerDss;
+        return static_cast<size_t>(NEO::GfxCoreHelper::getHighestEnabledDualSubSlice(device.getHardwareInfo())) * memoryBackedFifoSizePerDss;
     }
 
     static size_t getMemoryBackedFifoSizeToPatch() {
@@ -42,15 +43,11 @@ class RayTracingHelper : public NonCopyableOrMovableClass {
     }
 
     static uint32_t getNumRtStacks(const Device &device) {
-        return device.getHardwareInfo().gtSystemInfo.MaxDualSubSlicesSupported * stackDssMultiplier;
+        return NEO::GfxCoreHelper::getHighestEnabledDualSubSlice(device.getHardwareInfo()) * stackDssMultiplier;
     }
 
     static uint32_t getNumRtStacksPerDss(const Device &device) {
         return stackDssMultiplier;
-    }
-
-    static uint32_t getNumDss(const Device &device) {
-        return device.getHardwareInfo().gtSystemInfo.MaxDualSubSlicesSupported;
     }
 
     static uint32_t getStackSizePerRay(uint32_t maxBvhLevel, uint32_t extraBytesLocal) {

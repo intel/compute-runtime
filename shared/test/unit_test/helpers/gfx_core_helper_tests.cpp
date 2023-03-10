@@ -1425,6 +1425,16 @@ HWTEST_F(GfxCoreHelperTest, whenIsDynamicallyPopulatedisFalseThengetHighestEnabl
     EXPECT_EQ(maxSlice, hwInfo.gtSystemInfo.MaxSlicesSupported);
 }
 
+HWTEST_F(GfxCoreHelperTest, WhenIsDynamicallyPopulatedIsFalseThenGetHighestEnabledDualSubSliceReturnsMaxDualSubSlicesSupported) {
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = false;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 16;
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto maxDualSubSlice = gfxCoreHelper.getHighestEnabledDualSubSlice(hwInfo);
+    EXPECT_EQ(maxDualSubSlice, hwInfo.gtSystemInfo.MaxDualSubSlicesSupported);
+}
+
 HWTEST2_F(GfxCoreHelperTest, givenLargeGrfIsNotSupportedWhenCalculatingMaxWorkGroupSizeThenAlwaysReturnDeviceDefault, IsAtMostGen12lp) {
     auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto defaultMaxGroupSize = 42u;
@@ -1456,6 +1466,30 @@ HWTEST_F(GfxCoreHelperTest, whenIsDynamicallyPopulatedisTrueThengetHighestEnable
     const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
     auto maxSlice = gfxCoreHelper.getHighestEnabledSlice(hwInfo);
     EXPECT_EQ(maxSlice, 7u);
+}
+
+HWTEST_F(GfxCoreHelperTest, WhenIsDynamicallyPopulatedIsTrueThenGetHighestEnabledDualSubSliceReturnsHighestEnabledDualSubSliceId) {
+    auto hwInfo = *defaultHwInfo;
+
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = 1;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 4;
+
+    for (int i = 0; i < GT_MAX_SLICE; i++) {
+        hwInfo.gtSystemInfo.SliceInfo[i].Enabled = false;
+        for (unsigned int dssID = 0; dssID < GT_MAX_DUALSUBSLICE_PER_SLICE; dssID++) {
+            hwInfo.gtSystemInfo.SliceInfo[i].DSSInfo[dssID].Enabled = false;
+        }
+    }
+    hwInfo.gtSystemInfo.SliceInfo[3].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[3].DSSInfo[0].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[3].DSSInfo[1].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[3].DSSInfo[2].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[3].DSSInfo[3].Enabled = true;
+
+    const auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto maxDualSubSlice = gfxCoreHelper.getHighestEnabledDualSubSlice(hwInfo);
+    EXPECT_EQ(maxDualSubSlice, 16u);
 }
 
 HWTEST_F(ProductHelperCommonTest, givenPatIndexAndAllocationTypeWhenCallOverridePatIndexThenSameIndexIsReturned) {

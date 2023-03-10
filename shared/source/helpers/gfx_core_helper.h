@@ -70,6 +70,7 @@ class GfxCoreHelper {
     static bool compressedImagesSupported(const HardwareInfo &hwInfo);
     static bool cacheFlushAfterWalkerSupported(const HardwareInfo &hwInfo);
     static uint32_t getHighestEnabledSlice(const HardwareInfo &hwInfo);
+    static uint32_t getHighestEnabledDualSubSlice(const HardwareInfo &hwInfo);
     virtual bool timestampPacketWriteSupported() const = 0;
     virtual bool isTimestampWaitSupportedForQueues() const = 0;
     virtual bool isUpdateTaskCountFromWaitSupported() const = 0;

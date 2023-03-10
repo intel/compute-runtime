@@ -89,6 +89,25 @@ uint32_t GfxCoreHelper::getHighestEnabledSlice(const HardwareInfo &hwInfo) {
     return highestEnabledSlice;
 }
 
+uint32_t GfxCoreHelper::getHighestEnabledDualSubSlice(const HardwareInfo &hwInfo) {
+    uint32_t highestDualSubSlice = hwInfo.gtSystemInfo.MaxDualSubSlicesSupported;
+
+    if (!hwInfo.gtSystemInfo.IsDynamicallyPopulated) {
+        return highestDualSubSlice;
+    }
+
+    uint32_t numDssPerSlice = hwInfo.gtSystemInfo.MaxDualSubSlicesSupported / hwInfo.gtSystemInfo.MaxSlicesSupported;
+    uint32_t highestEnabledSliceIdx = getHighestEnabledSlice(hwInfo) - 1;
+
+    for (uint32_t dssID = 0; dssID < GT_MAX_DUALSUBSLICE_PER_SLICE; dssID++) {
+        if (hwInfo.gtSystemInfo.SliceInfo[highestEnabledSliceIdx].DSSInfo[dssID].Enabled) {
+            highestDualSubSlice = std::max(highestDualSubSlice, (highestEnabledSliceIdx * numDssPerSlice) + dssID + 1);
+        }
+    }
+
+    return highestDualSubSlice;
+}
+
 bool GfxCoreHelper::isWorkaroundRequired(uint32_t lowestSteppingWithBug, uint32_t steppingWithFix, const HardwareInfo &hwInfo, const ProductHelper &productHelper) {
     auto lowestHwRevIdWithBug = productHelper.getHwRevIdFromStepping(lowestSteppingWithBug, hwInfo);
     auto hwRevIdWithFix = productHelper.getHwRevIdFromStepping(steppingWithFix, hwInfo);

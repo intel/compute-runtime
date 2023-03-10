@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,11 +60,6 @@ TEST(RayTracingHelperTests, whenNumRtStacksIsQueriedThenItIsEqualToNumRtStacksPe
     uint32_t subsliceCount = device.getHardwareInfo().gtSystemInfo.MaxDualSubSlicesSupported;
 
     EXPECT_EQ(numDssRtStacks, numDssRtStacksPerDss * subsliceCount);
-}
-
-TEST(RayTracingHelperTests, whenNumDssIsRequestedThenCorrectValueIsReturned) {
-    MockDevice device;
-    EXPECT_EQ(device.getHardwareInfo().gtSystemInfo.MaxDualSubSlicesSupported, RayTracingHelper::getNumDss(device));
 }
 
 TEST(RayTracingHelperTests, whenStackSizePerRayIsRequestedThenCorrectValueIsReturned) {
