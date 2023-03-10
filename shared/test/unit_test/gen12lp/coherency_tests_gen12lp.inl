@@ -215,7 +215,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
         csr->flushTask(stream, 0, &stream, &stream, &stream, 0, flags, *device);
     };
 
-    auto findCmd = [&](bool expectToBeProgrammed, bool expectCoherent, bool expectPipeControl) {
+    auto findCmd = [&](bool expectToBeProgrammed, bool expectCoherent) {
         HardwareParse hwParser;
         hwParser.parseCommands<FamilyType>(csr->commandStream, startOffset);
         bool foundOne = false;
@@ -230,12 +230,6 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
                 EXPECT_EQ(expectedCoherentMask, cmd->getMaskBits());
                 EXPECT_FALSE(foundOne);
                 foundOne = true;
-                auto pc = genCmdCast<PIPE_CONTROL *>(*(++it));
-                if (!expectPipeControl && !SpecialUltHelperGen12lp::isPipeControlWArequired(device->getHardwareInfo().platform.eProductFamily)) {
-                    EXPECT_EQ(nullptr, pc);
-                } else {
-                    EXPECT_NE(nullptr, pc);
-                }
             }
         }
         EXPECT_EQ(expectToBeProgrammed, foundOne);
@@ -243,13 +237,13 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
 
     flushTask(false);
     if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(device->getRootDeviceEnvironment())) {
-        findCmd(true, false, true); // first time
+        findCmd(true, false); // first time
     } else {
-        findCmd(true, false, false); // first time
+        findCmd(true, false); // first time
     }
 
     flushTask(false);
-    findCmd(false, false, false); // not changed
+    findCmd(false, false); // not changed
 
     csr->getMemoryManager()->freeGraphicsMemory(graphicAlloc);
 }

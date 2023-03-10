@@ -435,8 +435,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     }
 
     programHardwareContext(commandStreamCSR);
-    programComputeMode(commandStreamCSR, dispatchFlags, hwInfo);
     programPipelineSelect(commandStreamCSR, dispatchFlags.pipelineSelectArgs);
+    programComputeMode(commandStreamCSR, dispatchFlags, hwInfo);
     programL3(commandStreamCSR, newL3Config);
     programPreamble(commandStreamCSR, device, newL3Config);
     programMediaSampler(commandStreamCSR, dispatchFlags);
@@ -568,6 +568,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                                             device.getDeviceInfo().imageSupport);
         }
         setGSBAStateDirty(false);
+        this->streamProperties.stateBaseAddress.clearIsDirty();
     }
 
     addPipeControlBeforeStateSip(commandStreamCSR, device);
@@ -809,6 +810,7 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
             stream, this->streamProperties.stateComputeMode, dispatchFlags.pipelineSelectArgs,
             hasSharedHandles(), this->peekRootDeviceEnvironment(), isRcs(), this->dcFlushSupport, logicalStateHelper.get());
         this->setStateComputeModeDirty(false);
+        this->streamProperties.stateComputeMode.clearIsDirty();
     }
 }
 
@@ -1106,7 +1108,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
 
         auto isCooperative = dispatchFlags.kernelExecutionType == KernelExecutionType::Concurrent;
         auto disableOverdispatch = (dispatchFlags.additionalKernelExecInfo != AdditionalKernelExecInfo::NotSet);
-        streamProperties.frontEndState.setPropertiesAll(isCooperative, dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced());
+        this->streamProperties.frontEndState.setPropertiesAll(isCooperative, dispatchFlags.disableEUFusion, disableOverdispatch, osContext->isEngineInstanced());
 
         auto &gfxCoreHelper = getGfxCoreHelper();
         auto engineGroupType = gfxCoreHelper.getEngineGroupType(getOsContext().getEngineType(), getOsContext().getEngineUsage(), hwInfo);
@@ -1120,6 +1122,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::programVFEState(LinearStream &cs
             flatBatchBufferHelper->collectScratchSpacePatchInfo(getScratchPatchAddress(), commandOffset, csr);
         }
         setMediaVFEStateDirty(false);
+        this->streamProperties.frontEndState.clearIsDirty();
     }
 }
 

@@ -39,9 +39,9 @@ struct StateComputeModeProperties {
     void copyPropertiesGrfNumberThreadArbitration(const StateComputeModeProperties &properties);
 
     bool isDirty() const;
+    void clearIsDirty();
 
   protected:
-    void clearIsDirty();
     void clearIsDirtyExtraPerContext();
     void clearIsDirtyExtraPerKernel();
     bool isDirtyExtra() const;
@@ -85,10 +85,9 @@ struct FrontEndProperties {
     void copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(const FrontEndProperties &properties);
 
     bool isDirty() const;
-
-  protected:
     void clearIsDirty();
 
+  protected:
     FrontEndPropertiesSupport frontEndPropertiesSupport = {};
     bool propertiesSupportLoaded = false;
 };
@@ -113,10 +112,9 @@ struct PipelineSelectProperties {
     void copyPropertiesSystolicMode(const PipelineSelectProperties &properties);
 
     bool isDirty() const;
-
-  protected:
     void clearIsDirty();
 
+  protected:
     PipelineSelectPropertiesSupport pipelineSelectPropertiesSupport = {};
     bool propertiesSupportLoaded = false;
 };
@@ -158,10 +156,9 @@ struct StateBaseAddressProperties {
     void copyPropertiesStatelessMocsIndirectState(const StateBaseAddressProperties &properties);
 
     bool isDirty() const;
-
-  protected:
     void clearIsDirty();
 
+  protected:
     StateBaseAddressPropertiesSupport stateBaseAddressPropertiesSupport = {};
     bool propertiesSupportLoaded = false;
 };

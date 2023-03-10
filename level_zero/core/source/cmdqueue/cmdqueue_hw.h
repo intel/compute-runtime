@@ -182,6 +182,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                                 const NEO::StreamProperties &cmdListFinal);
 
     inline size_t estimateScmCmdSizeForMultipleCommandLists(NEO::StreamProperties &csrStateCopy,
+                                                            bool &scmStateDirty,
                                                             const NEO::StreamProperties &cmdListRequired,
                                                             const NEO::StreamProperties &cmdListFinal);
     inline void programRequiredStateComputeModeForCommandList(CommandList *commandList,
