@@ -1124,6 +1124,22 @@ HWTEST_F(ImageShaderChannelValueTest, GivenChannelRgbaWhenGettingShaderChannelVa
     EXPECT_EQ(SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE, outputChannel);
 }
 
+HWTEST_F(ImageShaderChannelValueTest, GivenChannelDepthWhenGettingShaderChannelValueThenOutputChannelIsCorrect) {
+    using RENDER_SURFACE_STATE = typename FamilyType::RENDER_SURFACE_STATE;
+    RENDER_SURFACE_STATE surfaceState;
+
+    cl_image_desc imgDesc = Image2dDefaults::imageDesc;
+    cl_image_format imgFormat = {CL_DEPTH, CL_UNORM_INT16};
+    std::unique_ptr<Image> image(ImageHelper<ImageReadOnly<Image2dDefaults>>::create(context, &imgDesc, &imgFormat));
+
+    image->setImageArg(&surfaceState, false, 0, pClDevice->getRootDeviceIndex(), false);
+
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_RED, surfaceState.getShaderChannelSelectRed());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, surfaceState.getShaderChannelSelectGreen());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO, surfaceState.getShaderChannelSelectBlue());
+    EXPECT_EQ(RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ONE, surfaceState.getShaderChannelSelectAlpha());
+}
+
 HWTEST_F(ImageSetArgTest, givenImageWithOffsetGreaterThan4GBWhenSurfaceStateIsProgrammedThenCorrectStataBaseAddressIsSet) {
     typedef typename FamilyType::RENDER_SURFACE_STATE RENDER_SURFACE_STATE;
     RENDER_SURFACE_STATE surfaceState;

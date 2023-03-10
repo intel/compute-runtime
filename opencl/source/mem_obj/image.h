@@ -384,7 +384,8 @@ class ImageHw : public Image {
             }
         } else if (imageChannelOrder == CL_R ||
                    imageChannelOrder == CL_RA ||
-                   imageChannelOrder == CL_Rx) {
+                   imageChannelOrder == CL_Rx ||
+                   imageChannelOrder == CL_DEPTH) {
             if (inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_GREEN ||
                 inputShaderChannel == RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_BLUE) {
                 return RENDER_SURFACE_STATE::SHADER_CHANNEL_SELECT_ZERO;
