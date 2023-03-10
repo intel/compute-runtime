@@ -90,8 +90,6 @@ class ProductHelperHw : public ProductHelper {
     size_t getSvmCpuAlignment() const override;
     bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const override;
     bool isVmBindPatIndexProgrammingSupported() const override;
-    bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const override;
-    bool isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const override;
     bool isIpSamplingSupported(const HardwareInfo &hwInfo) const override;
     bool isGrfNumReportedWithScm() const override;
     bool isThreadArbitrationPolicyReportedWithScm() const override;

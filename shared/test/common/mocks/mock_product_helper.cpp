@@ -337,16 +337,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isVmBindPatIndexProgrammingSupported() const
 }
 
 template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
-bool ProductHelperHw<IGFX_UNKNOWN>::isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
-    return false;
-}
-
-template <>
 void ProductHelperHw<IGFX_UNKNOWN>::updateScmCommand(void *const commandPtr, const StateComputeModeProperties &properties) const {
 }
 

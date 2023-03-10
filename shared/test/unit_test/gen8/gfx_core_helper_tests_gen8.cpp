@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/gen8/hw_cmds.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -58,8 +59,8 @@ GEN8TEST_F(MemorySynchronizatiopCommandsTestsGen8, WhenProgrammingCacheFlushThen
     EXPECT_TRUE(pipeControl->getConstantCacheInvalidationEnable());
 }
 
-using ProductHelperTestGen8 = Test<DeviceFixture>;
-GEN8TEST_F(ProductHelperTestGen8, givenHwInfosWhenIsMatrixMultiplyAccumulateSupportedThenReturnFalse) {
-    auto &productHelper = getHelper<ProductHelper>();
-    EXPECT_FALSE(productHelper.isMatrixMultiplyAccumulateSupported(*defaultHwInfo));
+using CompilerProductHelperTestGen8 = Test<DeviceFixture>;
+GEN8TEST_F(CompilerProductHelperTestGen8, givenHwInfosWhenIsMatrixMultiplyAccumulateSupportedThenReturnFalse) {
+    auto &compilerProductHelper = getHelper<CompilerProductHelper>();
+    EXPECT_FALSE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(*defaultHwInfo));
 }

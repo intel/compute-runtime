@@ -189,7 +189,7 @@ MTLTEST_F(MtlProductHelper, givenMtlNotLpgWhenIsBFloat16ConversionSupportedIsCal
     auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
 
-    EXPECT_TRUE(productHelper->isBFloat16ConversionSupported(hwInfo));
+    EXPECT_TRUE(compilerProductHelper.isBFloat16ConversionSupported(hwInfo));
 }
 
 MTLTEST_F(MtlProductHelper, givenMtlLpgWhenIsBFloat16ConversionSupportedIsCalledThenFalseIsReturned) {
@@ -203,7 +203,7 @@ MTLTEST_F(MtlProductHelper, givenMtlLpgWhenIsBFloat16ConversionSupportedIsCalled
     auto &compilerProductHelper = this->executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
 
-    EXPECT_FALSE(productHelper->isBFloat16ConversionSupported(hwInfo));
+    EXPECT_FALSE(compilerProductHelper.isBFloat16ConversionSupported(hwInfo));
 }
 
 MTLTEST_F(MtlProductHelper, givenMtlLpgMdA0WhengetProductMaxPreferredSlmSizeThen96KbValueReturned) {

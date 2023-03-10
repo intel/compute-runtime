@@ -11,6 +11,7 @@
 
 using Family = NEO::XeHpgCoreFamily;
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/extra_allocation_data_xehp_and_later.inl"
 #include "shared/source/helpers/flat_batch_buffer_helper_hw.inl"
@@ -105,8 +106,8 @@ std::string GfxCoreHelperHw<Family>::getExtensions(const RootDeviceEnvironment &
     extensions += "cl_intel_subgroup_local_block_io ";
 
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto &productHelper = rootDeviceEnvironment.template getHelper<ProductHelper>();
-    if (productHelper.isMatrixMultiplyAccumulateSupported(hwInfo)) {
+    auto &compilerProductHelper = rootDeviceEnvironment.template getHelper<CompilerProductHelper>();
+    if (compilerProductHelper.isMatrixMultiplyAccumulateSupported(hwInfo)) {
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
         extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
     }

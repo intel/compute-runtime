@@ -9,6 +9,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
@@ -83,6 +84,7 @@ void ClDevice::setupFp64Flags() {
 void ClDevice::initializeCaps() {
     auto &hwInfo = getHardwareInfo();
     auto &rootDeviceEnvironment = getRootDeviceEnvironment();
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto &sharedDeviceInfo = getSharedDeviceInfo();
@@ -239,7 +241,7 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_intel_media_block_io ";
     }
 
-    if (productHelper.isBFloat16ConversionSupported(hwInfo)) {
+    if (compilerProductHelper.isBFloat16ConversionSupported(hwInfo)) {
         deviceExtensions += "cl_intel_bfloat16_conversions ";
     }
 

@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 
 #include "opencl/source/helpers/cl_gfx_core_helper.h"
 
@@ -26,8 +26,8 @@ cl_ulong ClGfxCoreHelperHw<GfxFamily>::getKernelPrivateMemSize(const KernelInfo 
 template <typename GfxFamily>
 cl_device_feature_capabilities_intel ClGfxCoreHelperHw<GfxFamily>::getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const {
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    if (productHelper.isMatrixMultiplyAccumulateSupported(hwInfo)) {
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    if (compilerProductHelper.isMatrixMultiplyAccumulateSupported(hwInfo)) {
         return CL_DEVICE_FEATURE_FLAG_DPAS_INTEL | CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
     }
     return CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;

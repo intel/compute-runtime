@@ -136,8 +136,6 @@ class ProductHelper {
     virtual size_t getSvmCpuAlignment() const = 0;
     virtual bool isComputeDispatchAllWalkerEnableInCfeStateRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isVmBindPatIndexProgrammingSupported() const = 0;
-    virtual bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const = 0;
-    virtual bool isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isIpSamplingSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isGrfNumReportedWithScm() const = 0;
     virtual bool isThreadArbitrationPolicyReportedWithScm() const = 0;

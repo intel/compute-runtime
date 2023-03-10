@@ -36,6 +36,8 @@ class CompilerProductHelper {
     virtual bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isForceEmuInt32DivRemSPRequired() const = 0;
     virtual bool isStatelessToStatefulBufferOffsetSupported() const = 0;
+    virtual bool isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isForceToStatelessRequired() const = 0;
     virtual bool failBuildProgramWithStatefulAccessPreference() const = 0;
     virtual void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const = 0;
@@ -60,6 +62,8 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const override;
     bool isForceEmuInt32DivRemSPRequired() const override;
     bool isStatelessToStatefulBufferOffsetSupported() const override;
+    bool isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const override;
+    bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const override;
     bool isForceToStatelessRequired() const override;
     bool failBuildProgramWithStatefulAccessPreference() const override;
     void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const override;

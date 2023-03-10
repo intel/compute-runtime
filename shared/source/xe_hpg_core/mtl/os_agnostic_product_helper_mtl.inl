@@ -92,16 +92,6 @@ bool ProductHelperHw<gfxProduct>::programAllStateComputeCommandFields() const {
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const {
-    return (MTL::isLpg(hwInfo) == false);
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
-    return (MTL::isLpg(hwInfo) == false);
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isAdjustWalkOrderAvailable(const HardwareInfo &hwInfo) const {
     return (MTL::isLpg(hwInfo) == false);
 }

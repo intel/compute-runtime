@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,3 +21,5 @@ HWTEST_EXCLUDE_PRODUCT(ComputeModeRequirements, givenComputeModeProgrammingWhenR
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenAskedIfPatIndexProgrammingSupportedThenReturnFalse, IGFX_METEORLAKE);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperTest, givenProductHelperWhenIsAdjustWalkOrderAvailableCallThenFalseReturn, IGFX_METEORLAKE);
 HWTEST_EXCLUDE_PRODUCT(ProductHelperCommonTest, givenPatIndexAndAllocationTypeWhenCallOverridePatIndexThenSameIndexIsReturned, IGFX_METEORLAKE);
+HWTEST_EXCLUDE_PRODUCT(CompilerProductHelperFixture, GivenXeHpAndLaterThenBFloat16ConversionIsSupported_IsAtLeastXeHpCore, IGFX_METEORLAKE);
+HWTEST_EXCLUDE_PRODUCT(CompilerProductHelperFixture, GivenXeHpAndLaterThenMatrixMultiplyAccumulateIsSupported_IsAtLeastXeHpCore, IGFX_METEORLAKE);

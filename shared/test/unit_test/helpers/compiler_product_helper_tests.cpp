@@ -50,6 +50,30 @@ HWTEST2_F(CompilerProductHelperFixture, GivenXeHpcAndLaterWhenIsForceToStateless
     EXPECT_FALSE(compilerProductHelper.isForceToStatelessRequired());
 }
 
+HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenBFloat16ConversionIsSupported, IsAtLeastXeHpCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    EXPECT_TRUE(compilerProductHelper.isBFloat16ConversionSupported(pDevice->getHardwareInfo()));
+}
+
+HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenMatrixMultiplyAccumulateIsSupported, IsAtLeastXeHpCore) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    EXPECT_TRUE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(pDevice->getHardwareInfo()));
+}
+
+HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpThenBFloat16ConversionIsNotSupported, IsAtMostGen12lp) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    EXPECT_FALSE(compilerProductHelper.isBFloat16ConversionSupported(pDevice->getHardwareInfo()));
+}
+
+HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpThenMatrixMultiplyAccumulateIsNotSupported, IsAtMostGen12lp) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    EXPECT_FALSE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(pDevice->getHardwareInfo()));
+}
+
 HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetHwInfoRevisionIdThenCorrectValueIsSet, IsAtMostDg2) {
     auto hwInfo = *defaultHwInfo;
     auto &productHelper = getHelper<ProductHelper>();
