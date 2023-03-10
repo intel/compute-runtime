@@ -634,11 +634,13 @@ void CommandQueueHw<gfxCoreFamily>::setFrontEndStateProperties(CommandListExecut
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx) {
+    auto scratchController = this->csr->getScratchSpaceController();
     handleScratchSpace(this->heapContainer,
-                       this->csr->getScratchSpaceController(),
+                       scratchController,
                        ctx.gsbaStateDirty, ctx.frontEndStateDirty,
                        ctx.perThreadScratchSpaceSize, ctx.perThreadPrivateScratchSize);
     ctx.gsbaStateDirty |= this->csr->getGSBAStateDirty();
+    ctx.scratchGsba = scratchController->calculateNewGSH();
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -761,8 +763,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateBaseAddressWithGsbaIfDirty(
         return;
     }
     auto indirectHeap = CommandList::fromHandle(hCommandList)->getCmdContainer().getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
-    auto scratchSpaceController = this->csr->getScratchSpaceController();
-    programStateBaseAddress(scratchSpaceController->calculateNewGSH(),
+    programStateBaseAddress(ctx.scratchGsba,
                             indirectHeap->getGraphicsAllocation()->isAllocatedInLocalMemoryPool(),
                             cmdStream,
                             ctx.cachedMOCSAllowed,
@@ -1264,8 +1265,7 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForGlobalStat
                                                         globalStatelessHeap->getHeapGpuBase(), globalStatelessHeap->getHeapSizeInPages());
 
     if (ctx.gsbaStateDirty || csrState.stateBaseAddress.isDirty()) {
-        auto scratchSpaceController = this->csr->getScratchSpaceController();
-        programStateBaseAddress(scratchSpaceController->calculateNewGSH(),
+        programStateBaseAddress(ctx.scratchGsba,
                                 indirectHeapInLocalMemory,
                                 commandStream,
                                 ctx.cachedMOCSAllowed,
@@ -1288,8 +1288,7 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForPrivateHea
     csrState.stateBaseAddress.setProperties(cmdListRequired.stateBaseAddress);
 
     if (ctx.gsbaStateDirty || csrState.stateBaseAddress.isDirty()) {
-        auto scratchSpaceController = this->csr->getScratchSpaceController();
-        programStateBaseAddress(scratchSpaceController->calculateNewGSH(),
+        programStateBaseAddress(ctx.scratchGsba,
                                 indirectHeapInLocalMemory,
                                 commandStream,
                                 ctx.cachedMOCSAllowed,

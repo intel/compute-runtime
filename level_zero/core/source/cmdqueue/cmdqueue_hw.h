@@ -70,6 +70,7 @@ struct CommandQueueHw : public CommandQueueImp {
         inline bool isNEODebuggerActive(Device *device);
 
         NEO::StreamProperties cmdListBeginState{};
+        uint64_t scratchGsba = 0;
         size_t spaceForResidency = 0;
         NEO::PreemptionMode preemptionMode{};
         NEO::PreemptionMode statePreemption{};
