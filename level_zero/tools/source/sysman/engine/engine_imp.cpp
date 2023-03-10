@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,11 +30,6 @@ EngineImp::EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_
     init();
 }
 
-EngineImp::~EngineImp() {
-    if (nullptr != pOsEngine) {
-        delete pOsEngine;
-        pOsEngine = nullptr;
-    }
-}
+EngineImp::~EngineImp() = default;
 
 } // namespace L0

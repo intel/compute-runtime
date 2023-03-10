@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,7 +23,7 @@ class EngineImp : public Engine, NEO::NonCopyableOrMovableClass {
     EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice);
     ~EngineImp() override;
 
-    OsEngine *pOsEngine = nullptr;
+    std::unique_ptr<OsEngine> pOsEngine = nullptr;
     void init();
 
   private:

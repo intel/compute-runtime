@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -29,10 +29,6 @@ class SysmanDeviceEngineFixture : public SysmanDeviceFixture {
 
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
-
-        for (auto handle : pSysmanDeviceImp->pEngineHandleContext->handleList) {
-            delete handle;
-        }
 
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
     }
@@ -96,10 +92,9 @@ TEST_F(SysmanDeviceEngineFixture, GivenComponentCountZeroWhenEnumeratingEngineGr
 }
 
 TEST_F(SysmanDeviceEngineFixture, GivenUnsupportedEngineHandleWhenGettingEngineActivityThenFailureIsReturned) {
-    WddmEngineImp *pEngineImp = new WddmEngineImp(pOsSysman, ZES_ENGINE_GROUP_3D_ALL, 0, 0);
+    std::unique_ptr<WddmEngineImp> pEngineImp = std::make_unique<WddmEngineImp>(pOsSysman, ZES_ENGINE_GROUP_3D_ALL, 0, 0);
     zes_engine_stats_t pStats = {};
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pEngineImp->getActivity(&pStats));
-    delete pEngineImp;
 }
 
 TEST_F(SysmanDeviceEngineFixture, GivenValidHandleGetPropertiesThenCorrectEngineGroupIsReturned) {

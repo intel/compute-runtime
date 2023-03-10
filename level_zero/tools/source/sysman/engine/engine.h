@@ -39,7 +39,7 @@ struct EngineHandleContext {
     ze_result_t engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine);
 
     OsSysman *pOsSysman = nullptr;
-    std::vector<Engine *> handleList = {};
+    std::vector<std::unique_ptr<Engine>> handleList = {};
     bool isEngineInitDone() {
         return engineInitDone;
     }
