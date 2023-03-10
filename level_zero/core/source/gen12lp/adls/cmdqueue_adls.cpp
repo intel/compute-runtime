@@ -9,7 +9,7 @@
 #include "shared/source/gen12lp/hw_info_adls.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.inl"
-#include "level_zero/core/source/cmdqueue/cmdqueue_hw_base.inl"
+#include "level_zero/core/source/cmdqueue/cmdqueue_hw_skl_to_tgllp.inl"
 
 #include "cmdqueue_extended.inl"
 

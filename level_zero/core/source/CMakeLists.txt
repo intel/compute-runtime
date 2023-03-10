@@ -15,7 +15,7 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_skl_to_tgllp.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_imp.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist/cmdlist_hw_immediate.h
@@ -25,7 +25,7 @@ set(L0_RUNTIME_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_hw.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_hw.inl
-    ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_hw_base.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_hw_skl_to_tgllp.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_imp.h
     ${CMAKE_CURRENT_SOURCE_DIR}/cmdqueue/cmdqueue_extended${BRANCH_DIR_SUFFIX}cmdqueue_extended.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/context/context_imp_${DRIVER_MODEL}.cpp

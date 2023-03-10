@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,7 +9,7 @@
 #include "shared/source/gen9/hw_info.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue_hw.inl"
-#include "level_zero/core/source/cmdqueue/cmdqueue_hw_base.inl"
+#include "level_zero/core/source/cmdqueue/cmdqueue_hw_skl_to_tgllp.inl"
 
 #include "cmdqueue_extended.inl"
 #include "igfxfmid.h"
