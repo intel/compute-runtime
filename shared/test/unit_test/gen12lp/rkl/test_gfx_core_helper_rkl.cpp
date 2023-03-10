@@ -8,7 +8,7 @@
 #include "shared/source/gen12lp/hw_cmds_rkl.h"
 #include "shared/source/gen12lp/hw_info_rkl.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"

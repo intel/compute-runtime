@@ -8,7 +8,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/gmm_helper/gmm_interface.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/debug_settings_reader.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
 #include "shared/test/common/helpers/default_hw_info.inl"

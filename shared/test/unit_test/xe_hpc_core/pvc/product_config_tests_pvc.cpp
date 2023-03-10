@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"

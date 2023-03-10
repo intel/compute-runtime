@@ -8,7 +8,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen9/kbl/device_ids_configs_kbl.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"

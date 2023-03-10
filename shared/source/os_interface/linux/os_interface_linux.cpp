@@ -1,15 +1,15 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
-#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/drm_memory_operations_handler.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/hw_device_id.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include <sys/stat.h>
 #include <system_error>

@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/arrayref.h"
 
 #include "opencl/source/api/api.h"

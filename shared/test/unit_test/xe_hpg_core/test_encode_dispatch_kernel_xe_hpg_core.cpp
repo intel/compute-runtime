@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 #include "shared/test//common/helpers/raii_product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"

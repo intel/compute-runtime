@@ -41,8 +41,8 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
-#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/tag_allocator.h"
 
 #include "command_stream_receiver_hw_ext.inl"

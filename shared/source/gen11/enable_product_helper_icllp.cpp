@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/gen11/hw_cmds_icllp.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 
 namespace NEO {

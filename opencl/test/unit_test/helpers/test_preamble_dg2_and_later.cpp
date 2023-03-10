@@ -9,7 +9,7 @@
 #include "shared/source/compiler_interface/external_functions.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/kernel/implicit_args.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/fixtures/preamble_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/test_macros/test.h"

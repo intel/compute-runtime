@@ -8,8 +8,8 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/kernel_properties.h"
-#include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/os_interface/hw_info_config.inl"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/os_interface/product_helper.inl"
 #include "shared/source/os_interface/product_helper_xehp_and_later.inl"
 #include "shared/source/xe_hp_core/hw_cmds_xe_hp_sdv.h"
 

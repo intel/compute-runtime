@@ -11,8 +11,8 @@
 #include "shared/source/command_stream/scratch_space_controller_xehp_and_later.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/kernel/grf_config.h"
-#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 

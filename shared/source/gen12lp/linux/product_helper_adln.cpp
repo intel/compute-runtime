@@ -8,8 +8,8 @@
 #include "shared/source/gen12lp/hw_cmds_adln.h"
 #include "shared/source/gen12lp/hw_info_adln.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/os_interface/hw_info_config.inl"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/os_interface/product_helper.inl"
 #include "shared/source/os_interface/product_helper_bdw_and_later.inl"
 
 #include "platforms.h"

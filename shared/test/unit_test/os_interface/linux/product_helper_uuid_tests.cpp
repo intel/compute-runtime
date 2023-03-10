@@ -6,9 +6,9 @@
  */
 
 #include "shared/source/device/root_device.h"
-#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/linux/os_inc.h"
 #include "shared/source/os_interface/linux/pmt_util.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"

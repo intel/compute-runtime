@@ -36,7 +36,7 @@
 #include "shared/source/memory_manager/memory_banks.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/page_table.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "aubstream/aubstream.h"
 

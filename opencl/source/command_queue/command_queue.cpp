@@ -25,8 +25,8 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/timestamp_packet.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
-#include "shared/source/os_interface/hw_info_config.h"
 #include "shared/source/os_interface/os_context.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/utilities/api_intercept.h"
 #include "shared/source/utilities/tag_allocator.h"
 

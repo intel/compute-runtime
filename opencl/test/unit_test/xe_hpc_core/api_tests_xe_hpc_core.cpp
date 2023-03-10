@@ -5,7 +5,7 @@
  *
  */
 
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "opencl/test/unit_test/api/cl_api_tests.h"
 

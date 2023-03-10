@@ -11,7 +11,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 
 #include "platforms.h"
@@ -452,7 +452,7 @@ struct HwMapper<IGFX_UNKNOWN> {
 
 } // namespace NEO
 
-#include "shared/source/os_interface/hw_info_config.inl"
+#include "shared/source/os_interface/product_helper.inl"
 
 template class NEO::ProductHelperHw<IGFX_UNKNOWN>;
 template struct NEO::L1CachePolicyHelper<IGFX_UNKNOWN>;

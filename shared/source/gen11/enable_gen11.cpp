@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,7 +8,7 @@
 #include "shared/source/gen11/hw_cmds.h"
 #include "shared/source/helpers/cache_policy_bdw_and_later.inl"
 #include "shared/source/helpers/enable_product.inl"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 

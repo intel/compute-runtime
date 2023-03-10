@@ -16,7 +16,7 @@ using Family = NEO::XeHpgCoreFamily;
 #include "shared/source/helpers/blit_commands_helper_xehp_and_later.inl"
 #include "shared/source/helpers/populate_factory.h"
 #include "shared/source/helpers/state_base_address_xehp_and_later.inl"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 static auto gfxCore = IGFX_XE_HPG_CORE;

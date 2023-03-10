@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/helpers/debug_helpers.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 

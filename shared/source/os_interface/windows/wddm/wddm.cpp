@@ -25,7 +25,7 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/memory_manager/gfx_partition.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
 #include "shared/source/os_interface/windows/dxcore_wrapper.h"

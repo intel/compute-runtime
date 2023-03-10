@@ -7,7 +7,7 @@
 
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 namespace NEO {

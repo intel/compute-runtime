@@ -10,8 +10,8 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/pipeline_select_args.h"
 #include "shared/source/helpers/pipeline_select_helper.h"
-#include "shared/source/os_interface/hw_info_config.h"
-#include "shared/source/os_interface/hw_info_config.inl"
+#include "shared/source/os_interface/product_helper.h"
+#include "shared/source/os_interface/product_helper.inl"
 #include "shared/source/os_interface/product_helper_bdw_and_later.inl"
 
 #include "platforms.h"

@@ -9,7 +9,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen8/hw_cmds_bdw.h"
 #include "shared/source/helpers/compiler_product_helper.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"

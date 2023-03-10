@@ -7,7 +7,7 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"

@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/mock_product_helper_hw.h"
 #include "shared/test/unit_test/os_interface/product_helper_tests.h"
 

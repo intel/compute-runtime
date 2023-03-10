@@ -10,7 +10,7 @@
 #include "shared/source/helpers/l3_range.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/cmd_buffer_validator.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"

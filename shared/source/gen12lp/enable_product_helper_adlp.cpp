@@ -7,7 +7,7 @@
 
 #include "shared/source/gen12lp/hw_cmds_adlp.h"
 #include "shared/source/gen12lp/hw_info_adlp.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 
 namespace NEO {

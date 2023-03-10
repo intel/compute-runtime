@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/test_macros/hw_test.h"
 

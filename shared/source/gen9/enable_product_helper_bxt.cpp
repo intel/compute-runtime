@@ -6,7 +6,7 @@
  */
 
 #include "shared/source/gen9/hw_cmds_bxt.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 
 namespace NEO {

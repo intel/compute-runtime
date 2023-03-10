@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@ using Family = XeHpcCoreFamily;
 
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/preamble_xehp_and_later.inl"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 

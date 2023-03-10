@@ -9,7 +9,7 @@
 
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 extern ProductHelperCreateFunctionType productHelperFactory[IGFX_MAX_PRODUCT];

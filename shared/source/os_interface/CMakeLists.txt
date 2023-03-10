@@ -22,9 +22,9 @@ set(NEO_CORE_OS_INTERFACE
     ${CMAKE_CURRENT_SOURCE_DIR}/device_factory.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/device_factory.h
     ${CMAKE_CURRENT_SOURCE_DIR}/driver_info.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/hw_info_config.inl
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/product_helper.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_bdw_and_later.inl
     ${CMAKE_CURRENT_SOURCE_DIR}/metrics_library.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/os_context.cpp

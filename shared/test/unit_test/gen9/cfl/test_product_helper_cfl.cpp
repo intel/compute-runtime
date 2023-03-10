@@ -9,7 +9,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen9/cfl/device_ids_configs_cfl.h"
 #include "shared/source/gen9/hw_cmds_cfl.h"
-#include "shared/source/os_interface/hw_info_config.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
 #include "shared/test/common/test_macros/test.h"
