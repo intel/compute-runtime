@@ -242,7 +242,7 @@ void verifySettingPropertiesFromOtherStruct() {
     }
     EXPECT_FALSE(propertiesSource.isDirty());
 
-    propertiesDestination.setProperties(propertiesSource);
+    propertiesDestination.copyPropertiesAll(propertiesSource);
     EXPECT_EQ(!allPropertiesDestination.empty(), propertiesDestination.isDirty());
 
     int expectedValue = 1;
@@ -252,7 +252,7 @@ void verifySettingPropertiesFromOtherStruct() {
         expectedValue++;
     }
 
-    propertiesDestination.setProperties(propertiesSource);
+    propertiesDestination.copyPropertiesAll(propertiesSource);
     EXPECT_FALSE(propertiesDestination.isDirty());
 
     expectedValue = 1;
@@ -374,6 +374,41 @@ TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePr
     EXPECT_FALSE(scmProperties.isDirty());
     EXPECT_EQ(1, scmProperties.largeGrfMode.value);
     EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
+}
+
+TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePropertiesWhenCopyingPropertyAndCheckIfDirtyThenExpectCorrectState) {
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.scmPropertiesSupport.largeGrfMode = true;
+    scmProperties.scmPropertiesSupport.threadArbitrationPolicy = true;
+
+    int32_t grfNumber = 128;
+    int32_t threadArbitration = 1;
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.largeGrfMode.value);
+    EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
+
+    MockStateComputeModeProperties scmPropertiesCopy{};
+
+    scmPropertiesCopy.copyPropertiesGrfNumberThreadArbitration(scmProperties);
+    EXPECT_TRUE(scmPropertiesCopy.isDirty());
+    EXPECT_EQ(0, scmPropertiesCopy.largeGrfMode.value);
+    EXPECT_EQ(threadArbitration, scmPropertiesCopy.threadArbitrationPolicy.value);
+
+    scmPropertiesCopy.copyPropertiesGrfNumberThreadArbitration(scmProperties);
+    EXPECT_FALSE(scmPropertiesCopy.isDirty());
+    EXPECT_EQ(0, scmPropertiesCopy.largeGrfMode.value);
+    EXPECT_EQ(threadArbitration, scmPropertiesCopy.threadArbitrationPolicy.value);
+
+    grfNumber = 256;
+    threadArbitration = 2;
+    scmProperties.setPropertiesGrfNumberThreadArbitration(static_cast<uint32_t>(grfNumber), threadArbitration);
+
+    scmPropertiesCopy.copyPropertiesGrfNumberThreadArbitration(scmProperties);
+    EXPECT_TRUE(scmPropertiesCopy.isDirty());
+    EXPECT_EQ(1, scmPropertiesCopy.largeGrfMode.value);
+    EXPECT_EQ(threadArbitration, scmPropertiesCopy.threadArbitrationPolicy.value);
 }
 
 TEST(StreamPropertiesTests, givenForceDebugDefaultThreadArbitrationStateComputeModePropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
@@ -547,6 +582,41 @@ TEST(StreamPropertiesTests, givenComputeDispatchAllWalkerEnableAndDisableEuFusio
     EXPECT_EQ(1, feProperties.computeDispatchAllWalkerEnable.value);
 }
 
+TEST(StreamPropertiesTests, givenComputeDispatchAllWalkerEnableAndDisableEuFusionFrontEndPropertiesWhenCopyingPropertiesAndCheckIfDirtyThenExpectCorrectState) {
+    MockFrontEndProperties feProperties{};
+    feProperties.propertiesSupportLoaded = true;
+    feProperties.frontEndPropertiesSupport.disableEuFusion = true;
+    feProperties.frontEndPropertiesSupport.computeDispatchAllWalker = true;
+
+    bool disableEuFusion = false;
+    bool isCooperativeKernel = false;
+    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion);
+    EXPECT_TRUE(feProperties.isDirty());
+    EXPECT_EQ(0, feProperties.disableEUFusion.value);
+    EXPECT_EQ(0, feProperties.computeDispatchAllWalkerEnable.value);
+
+    MockFrontEndProperties fePropertiesCopy{};
+
+    fePropertiesCopy.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(feProperties);
+    EXPECT_TRUE(fePropertiesCopy.isDirty());
+    EXPECT_EQ(0, fePropertiesCopy.disableEUFusion.value);
+    EXPECT_EQ(0, fePropertiesCopy.computeDispatchAllWalkerEnable.value);
+
+    fePropertiesCopy.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(feProperties);
+    EXPECT_FALSE(fePropertiesCopy.isDirty());
+    EXPECT_EQ(0, fePropertiesCopy.disableEUFusion.value);
+    EXPECT_EQ(0, fePropertiesCopy.computeDispatchAllWalkerEnable.value);
+
+    disableEuFusion = true;
+    isCooperativeKernel = true;
+    feProperties.setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(isCooperativeKernel, disableEuFusion);
+
+    fePropertiesCopy.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(feProperties);
+    EXPECT_TRUE(fePropertiesCopy.isDirty());
+    EXPECT_EQ(1, fePropertiesCopy.disableEUFusion.value);
+    EXPECT_EQ(1, fePropertiesCopy.computeDispatchAllWalkerEnable.value);
+}
+
 TEST(StreamPropertiesTests, whenSettingPipelineSelectPropertiesThenCorrectValueIsSet) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
@@ -626,6 +696,33 @@ TEST(StreamPropertiesTests, givenSystolicModePipelineSelectPropertyWhenSettingPr
     pipeProperties.setPropertySystolicMode(systolicMode);
     EXPECT_FALSE(pipeProperties.isDirty());
     EXPECT_EQ(1, pipeProperties.systolicMode.value);
+}
+
+TEST(StreamPropertiesTests, givenSystolicModePipelineSelectPropertyWhenCopyingPropertyAndCheckIfDirtyThenExpectCorrectState) {
+    MockPipelineSelectProperties pipeProperties{};
+    pipeProperties.propertiesSupportLoaded = true;
+    pipeProperties.pipelineSelectPropertiesSupport.systolicMode = true;
+
+    bool systolicMode = false;
+    pipeProperties.setPropertySystolicMode(systolicMode);
+    EXPECT_TRUE(pipeProperties.isDirty());
+    EXPECT_EQ(0, pipeProperties.systolicMode.value);
+
+    MockPipelineSelectProperties pipePropertiesCopy{};
+    pipePropertiesCopy.copyPropertiesSystolicMode(pipeProperties);
+    EXPECT_TRUE(pipePropertiesCopy.isDirty());
+    EXPECT_EQ(0, pipePropertiesCopy.systolicMode.value);
+
+    pipePropertiesCopy.copyPropertiesSystolicMode(pipeProperties);
+    EXPECT_FALSE(pipePropertiesCopy.isDirty());
+    EXPECT_EQ(0, pipePropertiesCopy.systolicMode.value);
+
+    systolicMode = true;
+    pipeProperties.setPropertySystolicMode(systolicMode);
+
+    pipePropertiesCopy.copyPropertiesSystolicMode(pipeProperties);
+    EXPECT_TRUE(pipePropertiesCopy.isDirty());
+    EXPECT_EQ(1, pipePropertiesCopy.systolicMode.value);
 }
 
 TEST(StreamPropertiesTests, givenModeSelectedMediaSamplerClockGatePipelineSelectPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
@@ -759,7 +856,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
 
     MockStateBaseAddressProperties copySbaProperties{};
 
-    copySbaProperties.setProperties(sbaProperties);
+    copySbaProperties.copyPropertiesAll(sbaProperties);
     EXPECT_TRUE(copySbaProperties.isDirty());
 
     EXPECT_EQ(0, copySbaProperties.globalAtomics.value);
@@ -767,7 +864,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     EXPECT_EQ(3, copySbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(3u, copySbaProperties.bindingTablePoolSize.value);
 
-    sbaProperties.setProperties(copySbaProperties);
+    sbaProperties.copyPropertiesAll(copySbaProperties);
     EXPECT_FALSE(sbaProperties.isDirty());
 }
 
@@ -954,7 +1051,89 @@ TEST(StreamPropertiesTests, givenStatelessMocsStateBaseAddressPropertyWhenSettin
     EXPECT_EQ(1, sbaProperties.statelessMocs.value);
 }
 
-TEST(StreamPropertiesTests, givenSurfaceStateBaseAddressStateBaseAddressPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
+TEST(StreamPropertiesTests, givenStatelessMocsStateBaseAddressPropertyWhenCopyingPropertyAndCheckIfDirtyThenExpectCorrectState) {
+    MockStateBaseAddressProperties sbaProperties{};
+    sbaProperties.propertiesSupportLoaded = true;
+
+    int32_t statelessMocs = 0;
+    sbaProperties.setPropertyStatelessMocs(statelessMocs);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(0, sbaProperties.statelessMocs.value);
+
+    MockStateBaseAddressProperties sbaPropertiesCopy{};
+    sbaPropertiesCopy.copyPropertiesStatelessMocs(sbaProperties);
+    EXPECT_TRUE(sbaPropertiesCopy.isDirty());
+    EXPECT_EQ(0, sbaPropertiesCopy.statelessMocs.value);
+
+    sbaPropertiesCopy.copyPropertiesStatelessMocs(sbaProperties);
+    EXPECT_FALSE(sbaPropertiesCopy.isDirty());
+    EXPECT_EQ(0, sbaPropertiesCopy.statelessMocs.value);
+
+    statelessMocs = 1;
+    sbaProperties.setPropertyStatelessMocs(statelessMocs);
+
+    sbaPropertiesCopy.copyPropertiesStatelessMocs(sbaProperties);
+    EXPECT_TRUE(sbaPropertiesCopy.isDirty());
+    EXPECT_EQ(1, sbaPropertiesCopy.statelessMocs.value);
+}
+
+TEST(StreamPropertiesTests, givenIndirectHeapAndStatelessMocsStateBaseAddressPropertyWhenCopyingPropertyAndCheckIfDirtyThenExpectCorrectState) {
+    MockStateBaseAddressProperties sbaProperties{};
+    sbaProperties.propertiesSupportLoaded = true;
+
+    int32_t statelessMocs = 0;
+    int64_t indirectObjectBaseAddress = 1;
+    size_t indirectObjectSize = 1;
+
+    sbaProperties.setPropertyStatelessMocs(statelessMocs);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(0, sbaProperties.statelessMocs.value);
+
+    sbaProperties.setPropertiesIndirectState(indirectObjectBaseAddress, indirectObjectSize);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(1, sbaProperties.indirectObjectBaseAddress.value);
+    EXPECT_EQ(1u, sbaProperties.indirectObjectSize.value);
+
+    MockStateBaseAddressProperties sbaPropertiesCopy{};
+    sbaPropertiesCopy.copyPropertiesStatelessMocsIndirectState(sbaProperties);
+    EXPECT_TRUE(sbaPropertiesCopy.isDirty());
+    EXPECT_EQ(0, sbaPropertiesCopy.statelessMocs.value);
+    EXPECT_EQ(1, sbaPropertiesCopy.indirectObjectBaseAddress.value);
+    EXPECT_EQ(1u, sbaPropertiesCopy.indirectObjectSize.value);
+
+    sbaPropertiesCopy.copyPropertiesStatelessMocsIndirectState(sbaProperties);
+    EXPECT_FALSE(sbaPropertiesCopy.isDirty());
+    EXPECT_EQ(0, sbaPropertiesCopy.statelessMocs.value);
+    EXPECT_EQ(1, sbaPropertiesCopy.indirectObjectBaseAddress.value);
+    EXPECT_EQ(1u, sbaPropertiesCopy.indirectObjectSize.value);
+
+    statelessMocs = 1;
+    sbaProperties.setPropertyStatelessMocs(statelessMocs);
+
+    sbaPropertiesCopy.copyPropertiesStatelessMocsIndirectState(sbaProperties);
+    EXPECT_TRUE(sbaPropertiesCopy.isDirty());
+    EXPECT_EQ(1, sbaPropertiesCopy.statelessMocs.value);
+    EXPECT_EQ(1, sbaPropertiesCopy.indirectObjectBaseAddress.value);
+    EXPECT_EQ(1u, sbaPropertiesCopy.indirectObjectSize.value);
+
+    indirectObjectBaseAddress = 2;
+    sbaProperties.setPropertiesIndirectState(indirectObjectBaseAddress, indirectObjectSize);
+    sbaPropertiesCopy.copyPropertiesStatelessMocsIndirectState(sbaProperties);
+    EXPECT_TRUE(sbaPropertiesCopy.isDirty());
+    EXPECT_EQ(1, sbaPropertiesCopy.statelessMocs.value);
+    EXPECT_EQ(2, sbaPropertiesCopy.indirectObjectBaseAddress.value);
+    EXPECT_EQ(1u, sbaPropertiesCopy.indirectObjectSize.value);
+
+    indirectObjectSize = 2;
+    sbaProperties.setPropertiesIndirectState(indirectObjectBaseAddress, indirectObjectSize);
+    sbaPropertiesCopy.copyPropertiesStatelessMocsIndirectState(sbaProperties);
+    EXPECT_TRUE(sbaPropertiesCopy.isDirty());
+    EXPECT_EQ(1, sbaPropertiesCopy.statelessMocs.value);
+    EXPECT_EQ(2, sbaPropertiesCopy.indirectObjectBaseAddress.value);
+    EXPECT_EQ(2u, sbaPropertiesCopy.indirectObjectSize.value);
+}
+
+TEST(StreamPropertiesTests, givenBindingTableAndSurfaceStateBaseAddressStateBaseAddressPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
     int64_t bindingTablePoolBaseAddress = 0;
     size_t bindingTablePoolSize = 0;
     int64_t surfaceStateBaseAddress = 0;
@@ -963,14 +1142,14 @@ TEST(StreamPropertiesTests, givenSurfaceStateBaseAddressStateBaseAddressProperty
     MockStateBaseAddressProperties sbaProperties{};
     sbaProperties.propertiesSupportLoaded = true;
     sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = false;
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
+    sbaProperties.setPropertiesBindingTableSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(-1, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(static_cast<size_t>(-1), sbaProperties.bindingTablePoolSize.value);
     EXPECT_EQ(0, sbaProperties.surfaceStateBaseAddress.value);
     EXPECT_EQ(0u, sbaProperties.surfaceStateSize.value);
 
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
+    sbaProperties.setPropertiesBindingTableSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(-1, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(static_cast<size_t>(-1), sbaProperties.bindingTablePoolSize.value);
@@ -978,14 +1157,14 @@ TEST(StreamPropertiesTests, givenSurfaceStateBaseAddressStateBaseAddressProperty
     EXPECT_EQ(0u, sbaProperties.surfaceStateSize.value);
 
     sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = true;
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
+    sbaProperties.setPropertiesBindingTableSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(0, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(0u, sbaProperties.bindingTablePoolSize.value);
     EXPECT_EQ(0, sbaProperties.surfaceStateBaseAddress.value);
     EXPECT_EQ(0u, sbaProperties.surfaceStateSize.value);
 
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
+    sbaProperties.setPropertiesBindingTableSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(0, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(0u, sbaProperties.bindingTablePoolSize.value);
@@ -996,24 +1175,54 @@ TEST(StreamPropertiesTests, givenSurfaceStateBaseAddressStateBaseAddressProperty
     bindingTablePoolSize = 1;
     surfaceStateBaseAddress = 1;
     surfaceStateSize = 1;
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
+    sbaProperties.setPropertiesBindingTableSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(1, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(1u, sbaProperties.bindingTablePoolSize.value);
     EXPECT_EQ(1, sbaProperties.surfaceStateBaseAddress.value);
     EXPECT_EQ(1u, sbaProperties.surfaceStateSize.value);
 
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
+    sbaProperties.setPropertiesBindingTableSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(1, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(1u, sbaProperties.bindingTablePoolSize.value);
     EXPECT_EQ(1, sbaProperties.surfaceStateBaseAddress.value);
     EXPECT_EQ(1u, sbaProperties.surfaceStateSize.value);
 
-    sbaProperties.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
+    sbaProperties.setPropertiesBindingTableSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(1, sbaProperties.bindingTablePoolBaseAddress.value);
     EXPECT_EQ(1u, sbaProperties.bindingTablePoolSize.value);
+    EXPECT_EQ(1, sbaProperties.surfaceStateBaseAddress.value);
+    EXPECT_EQ(1u, sbaProperties.surfaceStateSize.value);
+}
+
+TEST(StreamPropertiesTests, givenSurfaceStateBaseAddressStateBaseAddressPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
+    int64_t surfaceStateBaseAddress = 0;
+    size_t surfaceStateSize = 0;
+
+    MockStateBaseAddressProperties sbaProperties{};
+    sbaProperties.propertiesSupportLoaded = true;
+
+    sbaProperties.setPropertiesSurfaceState(surfaceStateBaseAddress, surfaceStateSize);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(0, sbaProperties.surfaceStateBaseAddress.value);
+    EXPECT_EQ(0u, sbaProperties.surfaceStateSize.value);
+
+    sbaProperties.setPropertiesSurfaceState(surfaceStateBaseAddress, surfaceStateSize);
+    EXPECT_FALSE(sbaProperties.isDirty());
+    EXPECT_EQ(0, sbaProperties.surfaceStateBaseAddress.value);
+    EXPECT_EQ(0u, sbaProperties.surfaceStateSize.value);
+
+    surfaceStateBaseAddress = 1;
+    surfaceStateSize = 1;
+    sbaProperties.setPropertiesSurfaceState(surfaceStateBaseAddress, surfaceStateSize);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(1, sbaProperties.surfaceStateBaseAddress.value);
+    EXPECT_EQ(1u, sbaProperties.surfaceStateSize.value);
+
+    sbaProperties.setPropertiesSurfaceState(surfaceStateBaseAddress, surfaceStateSize);
+    EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(1, sbaProperties.surfaceStateBaseAddress.value);
     EXPECT_EQ(1u, sbaProperties.surfaceStateSize.value);
 }

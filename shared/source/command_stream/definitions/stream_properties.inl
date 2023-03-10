@@ -32,9 +32,12 @@ struct StateComputeModeProperties {
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
 
     void setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode);
-    void setProperties(const StateComputeModeProperties &properties);
     void setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy);
     void setPropertiesCoherencyDevicePreemption(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState);
+
+    void copyPropertiesAll(const StateComputeModeProperties &properties);
+    void copyPropertiesGrfNumberThreadArbitration(const StateComputeModeProperties &properties);
+
     bool isDirty() const;
 
   protected:
@@ -45,7 +48,8 @@ struct StateComputeModeProperties {
 
     void setPropertiesExtraPerContext();
     void setPropertiesExtraPerKernel();
-    void setPropertiesExtra(const StateComputeModeProperties &properties);
+
+    void copyPropertiesExtra(const StateComputeModeProperties &properties);
 
     void setCoherencyProperty(bool requiresCoherency);
     void setDevicePreemptionProperty(PreemptionMode devicePreemptionMode);
@@ -73,10 +77,13 @@ struct FrontEndProperties {
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
 
     void setPropertiesAll(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, int32_t engineInstancedDevice);
-    void setProperties(const FrontEndProperties &properties);
     void setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice);
     void setPropertiesDisableOverdispatchEngineInstanced(bool disableOverdispatch, int32_t engineInstancedDevice, bool clearDirtyState);
     void setPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(bool isCooperativeKernel, bool disableEuFusion);
+
+    void copyPropertiesAll(const FrontEndProperties &properties);
+    void copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(const FrontEndProperties &properties);
+
     bool isDirty() const;
 
   protected:
@@ -99,9 +106,12 @@ struct PipelineSelectProperties {
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
 
     void setPropertiesAll(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode);
-    void setProperties(const PipelineSelectProperties &properties);
     void setPropertiesModeSelectedMediaSamplerClockGate(bool modeSelected, bool mediaSamplerDopClockGate, bool clearDirtyState);
     void setPropertySystolicMode(bool systolicMode);
+
+    void copyPropertiesAll(const PipelineSelectProperties &properties);
+    void copyPropertiesSystolicMode(const PipelineSelectProperties &properties);
+
     bool isDirty() const;
 
   protected:
@@ -135,13 +145,18 @@ struct StateBaseAddressProperties {
                           int64_t surfaceStateBaseAddress, size_t surfaceStateSize,
                           int64_t dynamicStateBaseAddress, size_t dynamicStateSize,
                           int64_t indirectObjectBaseAddress, size_t indirectObjectSize);
-    void setPropertiesSurfaceState(int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
-                                   int64_t surfaceStateBaseAddress, size_t surfaceStateSize);
+    void setPropertiesBindingTableSurfaceState(int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
+                                               int64_t surfaceStateBaseAddress, size_t surfaceStateSize);
+    void setPropertiesSurfaceState(int64_t surfaceStateBaseAddress, size_t surfaceStateSize);
     void setPropertiesDynamicState(int64_t dynamicStateBaseAddress, size_t dynamicStateSize);
     void setPropertiesIndirectState(int64_t indirectObjectBaseAddress, size_t indirectObjectSize);
     void setPropertyStatelessMocs(int32_t statelessMocs);
     void setPropertyGlobalAtomics(bool globalAtomics, bool clearDirtyState);
-    void setProperties(const StateBaseAddressProperties &properties);
+
+    void copyPropertiesAll(const StateBaseAddressProperties &properties);
+    void copyPropertiesStatelessMocs(const StateBaseAddressProperties &properties);
+    void copyPropertiesStatelessMocsIndirectState(const StateBaseAddressProperties &properties);
+
     bool isDirty() const;
 
   protected:

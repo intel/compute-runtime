@@ -481,8 +481,8 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
             bindingTablePoolSize = surfaceStateSize;
         }
 
-        this->streamProperties.stateBaseAddress.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize,
-                                                                          surfaceStateBaseAddress, surfaceStateSize);
+        this->streamProperties.stateBaseAddress.setPropertiesBindingTableSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize,
+                                                                                      surfaceStateBaseAddress, surfaceStateSize);
     }
 
     auto isStateBaseAddressDirty = dshDirty || iohDirty || sshDirty || stateBaseAddressDirty;

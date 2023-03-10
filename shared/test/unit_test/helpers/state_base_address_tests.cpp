@@ -580,7 +580,7 @@ HWTEST_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingDynamicStateSurfaceS
 
     EXPECT_EQ(0u, sbaCmd.getStatelessDataPortAccessMemoryObjectControlState());
 
-    sbaProperties.setPropertiesSurfaceState(surfaceHeapBase, surfaceHeapSize, surfaceHeapBase, surfaceHeapSize);
+    sbaProperties.setPropertiesBindingTableSurfaceState(surfaceHeapBase, surfaceHeapSize, surfaceHeapBase, surfaceHeapSize);
     sbaProperties.setPropertiesDynamicState(dynamicHeapBase, dynamicHeapSize);
     sbaProperties.setPropertyStatelessMocs(mocsIndex);
 
@@ -703,7 +703,7 @@ HWTEST2_F(SbaTest, givenStateBaseAddressPropertiesWhenSettingBindlessSurfaceStat
     EXPECT_EQ(0u, sbaCmd.getBindlessSurfaceStateBaseAddress());
     EXPECT_FALSE(sbaCmd.getBindlessSurfaceStateBaseAddressModifyEnable());
 
-    sbaProperties.setPropertiesSurfaceState(surfaceHeapBase, surfaceHeapSize, surfaceHeapBase, surfaceHeapSize);
+    sbaProperties.setPropertiesBindingTableSurfaceState(surfaceHeapBase, surfaceHeapSize, surfaceHeapBase, surfaceHeapSize);
 
     sbaCmd = FamilyType::cmdInitStateBaseAddress;
 

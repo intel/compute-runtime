@@ -2484,8 +2484,8 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
         requiredStreamState.stateBaseAddress.setPropertyStatelessMocs(currentMocsState);
 
         if (checkSsh) {
-            requiredStreamState.stateBaseAddress.setPropertiesSurfaceState(currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
-                                                                           currentSurfaceStateBaseAddress, currentSurfaceStateSize);
+            requiredStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
+                                                                                       currentSurfaceStateBaseAddress, currentSurfaceStateSize);
         }
         if (checkDsh) {
             requiredStreamState.stateBaseAddress.setPropertiesDynamicState(currentDynamicStateBaseAddress, currentDynamicStateSize);
@@ -2532,7 +2532,7 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
                 {},
                 stream.getGpuBase() + stream.getUsed(),
                 stream.getGraphicsAllocation()};
-            returnPoint.configSnapshot.frontEndState.setProperties(finalStreamState.frontEndState);
+            returnPoint.configSnapshot.frontEndState.copyPropertiesAll(finalStreamState.frontEndState);
             returnPoints.push_back(returnPoint);
         }
     }
@@ -2554,8 +2554,8 @@ void CommandListCoreFamily<gfxCoreFamily>::updateStreamPropertiesForRegularComma
 
     finalStreamState.stateBaseAddress.setPropertyStatelessMocs(currentMocsState);
     if (checkSsh) {
-        finalStreamState.stateBaseAddress.setPropertiesSurfaceState(currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
-                                                                    currentSurfaceStateBaseAddress, currentSurfaceStateSize);
+        finalStreamState.stateBaseAddress.setPropertiesBindingTableSurfaceState(currentBindingTablePoolBaseAddress, currentBindingTablePoolSize,
+                                                                                currentSurfaceStateBaseAddress, currentSurfaceStateSize);
     }
     if (checkDsh) {
         finalStreamState.stateBaseAddress.setPropertiesDynamicState(currentDynamicStateBaseAddress, currentDynamicStateSize);

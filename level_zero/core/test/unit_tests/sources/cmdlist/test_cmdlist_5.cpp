@@ -2320,7 +2320,7 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     auto itorBindTablePoolCmd = find<_3DSTATE_BINDING_TABLE_POOL_ALLOC *>(cmdList.begin(), cmdList.end());
     ASSERT_EQ(cmdList.end(), itorBindTablePoolCmd);
 
-    streamProperties.stateBaseAddress.setPropertiesSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
+    streamProperties.stateBaseAddress.setPropertiesBindingTableSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
 
     queueBefore = cmdQueueStream.getUsed();
     cmdQueueHw->programStateBaseAddress(0, true, cmdQueueStream, true, &streamProperties);

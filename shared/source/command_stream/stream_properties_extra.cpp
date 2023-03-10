@@ -14,7 +14,7 @@ void StateComputeModeProperties::setPropertiesExtraPerContext() {
 void StateComputeModeProperties::setPropertiesExtraPerKernel() {
 }
 
-void StateComputeModeProperties::setPropertiesExtra(const StateComputeModeProperties &properties) {
+void StateComputeModeProperties::copyPropertiesExtra(const StateComputeModeProperties &properties) {
 }
 
 bool StateComputeModeProperties::isDirtyExtra() const {

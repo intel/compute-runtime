@@ -45,7 +45,7 @@ void StateComputeModeProperties::setPropertiesAll(bool requiresCoherency, uint32
     setPropertiesExtraPerKernel();
 }
 
-void StateComputeModeProperties::setProperties(const StateComputeModeProperties &properties) {
+void StateComputeModeProperties::copyPropertiesAll(const StateComputeModeProperties &properties) {
     clearIsDirty();
 
     isCoherencyRequired.set(properties.isCoherencyRequired.value);
@@ -55,7 +55,19 @@ void StateComputeModeProperties::setProperties(const StateComputeModeProperties 
     threadArbitrationPolicy.set(properties.threadArbitrationPolicy.value);
     devicePreemptionMode.set(properties.devicePreemptionMode.value);
 
-    setPropertiesExtra(properties);
+    copyPropertiesExtra(properties);
+}
+
+void StateComputeModeProperties::copyPropertiesGrfNumberThreadArbitration(const StateComputeModeProperties &properties) {
+    largeGrfMode.isDirty = false;
+    threadArbitrationPolicy.isDirty = false;
+
+    clearIsDirtyExtraPerKernel();
+
+    largeGrfMode.set(properties.largeGrfMode.value);
+    threadArbitrationPolicy.set(properties.threadArbitrationPolicy.value);
+
+    copyPropertiesExtra(properties);
 }
 
 bool StateComputeModeProperties::isDirty() const {
@@ -223,13 +235,21 @@ void FrontEndProperties::setPropertiesComputeDispatchAllWalkerEnableDisableEuFus
     }
 }
 
-void FrontEndProperties::setProperties(const FrontEndProperties &properties) {
+void FrontEndProperties::copyPropertiesAll(const FrontEndProperties &properties) {
     clearIsDirty();
 
     disableOverdispatch.set(properties.disableOverdispatch.value);
     disableEUFusion.set(properties.disableEUFusion.value);
     singleSliceDispatchCcsMode.set(properties.singleSliceDispatchCcsMode.value);
     computeDispatchAllWalkerEnable.set(properties.computeDispatchAllWalkerEnable.value);
+}
+
+void FrontEndProperties::copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(const FrontEndProperties &properties) {
+    this->computeDispatchAllWalkerEnable.isDirty = false;
+    this->disableEUFusion.isDirty = false;
+
+    this->disableEUFusion.set(properties.disableEUFusion.value);
+    this->computeDispatchAllWalkerEnable.set(properties.computeDispatchAllWalkerEnable.value);
 }
 
 bool FrontEndProperties::isDirty() const {
@@ -295,11 +315,16 @@ void PipelineSelectProperties::setPropertySystolicMode(bool systolicMode) {
     }
 }
 
-void PipelineSelectProperties::setProperties(const PipelineSelectProperties &properties) {
+void PipelineSelectProperties::copyPropertiesAll(const PipelineSelectProperties &properties) {
     clearIsDirty();
 
     modeSelected.set(properties.modeSelected.value);
     mediaSamplerDopClockGate.set(properties.mediaSamplerDopClockGate.value);
+    systolicMode.set(properties.systolicMode.value);
+}
+
+void PipelineSelectProperties::copyPropertiesSystolicMode(const PipelineSelectProperties &properties) {
+    systolicMode.isDirty = false;
     systolicMode.set(properties.systolicMode.value);
 }
 
@@ -319,8 +344,8 @@ void StateBaseAddressProperties::initSupport(const RootDeviceEnvironment &rootDe
     this->propertiesSupportLoaded = true;
 }
 
-void StateBaseAddressProperties::setPropertiesSurfaceState(int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
-                                                           int64_t surfaceStateBaseAddress, size_t surfaceStateSize) {
+void StateBaseAddressProperties::setPropertiesBindingTableSurfaceState(int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
+                                                                       int64_t surfaceStateBaseAddress, size_t surfaceStateSize) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
     this->bindingTablePoolBaseAddress.isDirty = false;
@@ -332,6 +357,16 @@ void StateBaseAddressProperties::setPropertiesSurfaceState(int64_t bindingTableP
         this->bindingTablePoolBaseAddress.set(bindingTablePoolBaseAddress);
         this->bindingTablePoolSize.set(bindingTablePoolSize);
     }
+    this->surfaceStateBaseAddress.set(surfaceStateBaseAddress);
+    this->surfaceStateSize.set(surfaceStateSize);
+}
+
+void StateBaseAddressProperties::setPropertiesSurfaceState(int64_t surfaceStateBaseAddress, size_t surfaceStateSize) {
+    DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
+
+    this->surfaceStateBaseAddress.isDirty = false;
+    this->surfaceStateSize.isDirty = false;
+
     this->surfaceStateBaseAddress.set(surfaceStateBaseAddress);
     this->surfaceStateSize.set(surfaceStateSize);
 }
@@ -396,7 +431,7 @@ void StateBaseAddressProperties::setPropertiesAll(bool globalAtomics, int32_t st
     this->indirectObjectSize.set(indirectObjectSize);
 }
 
-void StateBaseAddressProperties::setProperties(const StateBaseAddressProperties &properties) {
+void StateBaseAddressProperties::copyPropertiesAll(const StateBaseAddressProperties &properties) {
     clearIsDirty();
 
     this->globalAtomics.set(properties.globalAtomics.value);
@@ -409,6 +444,22 @@ void StateBaseAddressProperties::setProperties(const StateBaseAddressProperties 
     this->surfaceStateSize.set(properties.surfaceStateSize.value);
     this->dynamicStateBaseAddress.set(properties.dynamicStateBaseAddress.value);
     this->dynamicStateSize.set(properties.dynamicStateSize.value);
+    this->indirectObjectBaseAddress.set(properties.indirectObjectBaseAddress.value);
+    this->indirectObjectSize.set(properties.indirectObjectSize.value);
+}
+
+void StateBaseAddressProperties::copyPropertiesStatelessMocs(const StateBaseAddressProperties &properties) {
+    this->statelessMocs.isDirty = false;
+
+    this->statelessMocs.set(properties.statelessMocs.value);
+}
+
+void StateBaseAddressProperties::copyPropertiesStatelessMocsIndirectState(const StateBaseAddressProperties &properties) {
+    this->statelessMocs.isDirty = false;
+    this->indirectObjectBaseAddress.isDirty = false;
+    this->indirectObjectSize.isDirty = false;
+
+    this->statelessMocs.set(properties.statelessMocs.value);
     this->indirectObjectBaseAddress.set(properties.indirectObjectBaseAddress.value);
     this->indirectObjectSize.set(properties.indirectObjectSize.value);
 }
