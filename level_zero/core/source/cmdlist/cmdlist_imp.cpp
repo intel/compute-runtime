@@ -155,7 +155,6 @@ CommandList *CommandList::createImmediate(uint32_t productFamily, Device *device
             commandList = nullptr;
             return commandList;
         }
-        commandList->setStreamPropertiesDefaultSettings(csr->getStreamProperties());
 
         auto commandQueue = CommandQueue::create(productFamily, device, csr, desc, commandList->isCopyOnly(), internalUsage, returnValue);
         if (!commandQueue) {
