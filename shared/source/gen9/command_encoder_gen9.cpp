@@ -68,7 +68,7 @@ template struct EncodeStateBaseAddress<Family>;
 template struct EncodeStoreMMIO<Family>;
 template struct EncodeSurfaceState<Family>;
 template struct EncodeAtomic<Family>;
-template struct EncodeSempahore<Family>;
+template struct EncodeSemaphore<Family>;
 template struct EncodeBatchBufferStartOrEnd<Family>;
 template struct EncodeMiFlushDW<Family>;
 template struct EncodeMiPredicate<Family>;

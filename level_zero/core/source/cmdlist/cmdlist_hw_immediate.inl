@@ -46,7 +46,7 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAvailableSpace(uint32_t
         }
     }
 
-    size_t semaphoreSize = NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait() * numEvents;
+    size_t semaphoreSize = NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * numEvents;
     if (this->commandContainer.getCommandStream()->getAvailableSpace() < maxImmediateCommandSize + semaphoreSize) {
         bool requireSystemMemoryCommandBuffer = !hasRelaxedOrderingDependencies;
 

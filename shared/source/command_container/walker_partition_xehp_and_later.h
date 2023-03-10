@@ -219,7 +219,7 @@ void programRegisterWithValue(void *&inputAddress, uint32_t registerOffset, uint
 template <typename GfxFamily>
 void programWaitForSemaphore(void *&inputAddress, uint32_t &totalBytesProgrammed, uint64_t gpuAddress, uint32_t semaphoreCompareValue, typename MI_SEMAPHORE_WAIT<GfxFamily>::COMPARE_OPERATION compareOperation) {
     auto semaphoreWait = putCommand<MI_SEMAPHORE_WAIT<GfxFamily>>(inputAddress, totalBytesProgrammed);
-    NEO::EncodeSempahore<GfxFamily>::programMiSemaphoreWait(semaphoreWait, gpuAddress, semaphoreCompareValue, compareOperation, false, true);
+    NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(semaphoreWait, gpuAddress, semaphoreCompareValue, compareOperation, false, true);
 }
 
 template <typename GfxFamily>
@@ -373,7 +373,7 @@ void programSelfCleanupSection(void *&inputAddress,
 template <typename GfxFamily>
 uint64_t computeTilesSynchronizationWithAtomicsSectionSize() {
     return sizeof(MI_ATOMIC<GfxFamily>) +
-           NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
+           NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
 }
 
 template <typename GfxFamily>
@@ -453,7 +453,7 @@ uint64_t computeControlSectionOffset(WalkerPartitionArgs &args) {
     size += sizeof(LOAD_REGISTER_REG<GfxFamily>); // id into register
     size += sizeof(MI_SET_PREDICATE<GfxFamily>) * 2 +
             sizeof(BATCH_BUFFER_START<GfxFamily>) * 2;
-    size += (args.semaphoreProgrammingRequired ? NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait() * args.partitionCount : 0u);
+    size += (args.semaphoreProgrammingRequired ? NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * args.partitionCount : 0u);
     size += computeWalkerSectionSize<GfxFamily>();
     size += args.emitPipeControlStall ? NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) : 0u;
     if (args.crossTileAtomicSynchronization || args.emitSelfCleanup) {
@@ -656,7 +656,7 @@ uint64_t computeStaticPartitioningControlSectionOffset(WalkerPartitionArgs &args
                                                   ? computeTilesSynchronizationWithAtomicsSectionSize<GfxFamily>()
                                                   : 0u;
     const auto afterExecutionSyncPostSyncSize = args.semaphoreProgrammingRequired
-                                                    ? NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait() * args.partitionCount
+                                                    ? NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * args.partitionCount
                                                     : 0u;
     const auto selfCleanupSectionSize = args.emitSelfCleanup
                                             ? computeSelfCleanupSectionSize<GfxFamily>(args.useAtomicsForSelfCleanup)

@@ -214,7 +214,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
 
     if (DebugManager.flags.PauseOnEnqueue.get() != -1) {
         expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) * 2;
-        expectedSizeCS += NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait() * 2;
+        expectedSizeCS += NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() * 2;
     }
 
     if (DebugManager.flags.GpuScratchRegWriteAfterWalker.get() != -1) {

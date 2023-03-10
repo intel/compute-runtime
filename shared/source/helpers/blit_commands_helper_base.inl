@@ -333,13 +333,13 @@ void BlitCommandsHelper<GfxFamily>::dispatchDebugPauseCommands(LinearStream &com
     EncodeMiFlushDW<GfxFamily>::programWithWa(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(confirmationTrigger),
                                               args);
 
-    EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(waitCondition), COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);
+    EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(commandStream, debugPauseStateGPUAddress, static_cast<uint32_t>(waitCondition), COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);
 }
 
 template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::getSizeForDebugPauseCommands(const RootDeviceEnvironment &rootDeviceEnvironment) {
     EncodeDummyBlitWaArgs waArgs{true, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
-    return (EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs) + EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait()) * 2;
+    return (EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs) + EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait()) * 2;
 }
 
 template <typename GfxFamily>

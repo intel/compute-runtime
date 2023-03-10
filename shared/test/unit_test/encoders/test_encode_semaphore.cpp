@@ -19,7 +19,7 @@ HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
     MI_SEMAPHORE_WAIT miSemaphore1;
 
-    EncodeSempahore<FamilyType>::programMiSemaphoreWait(&miSemaphore1,
+    EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&miSemaphore1,
                                                         0x123400,
                                                         4,
                                                         MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
@@ -32,7 +32,7 @@ HWTEST_F(CommandEncodeSemaphore, WhenProgrammingThenMiSemaphoreWaitIsUsed) {
     EXPECT_EQ(MI_SEMAPHORE_WAIT::WAIT_MODE::WAIT_MODE_POLLING_MODE, miSemaphore1.getWaitMode());
 
     MI_SEMAPHORE_WAIT miSemaphore2;
-    EncodeSempahore<FamilyType>::programMiSemaphoreWait(&miSemaphore2,
+    EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&miSemaphore2,
                                                         0x123400,
                                                         4,
                                                         MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
@@ -50,12 +50,12 @@ HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFi
     LinearStream stream(buffer.get(), 128);
     COMPARE_OPERATION compareMode = COMPARE_OPERATION::COMPARE_OPERATION_SAD_GREATER_THAN_OR_EQUAL_SDD;
 
-    EncodeSempahore<FamilyType>::addMiSemaphoreWaitCommand(stream,
+    EncodeSemaphore<FamilyType>::addMiSemaphoreWaitCommand(stream,
                                                            0xFF00FF000u,
                                                            5u,
                                                            compareMode);
 
-    EXPECT_EQ(NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait(), stream.getUsed());
+    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), stream.getUsed());
 
     HardwareParse hwParse;
     hwParse.parseCommands<FamilyType>(stream);
@@ -70,7 +70,7 @@ HWTEST_F(CommandEncodeSemaphore, whenAddingMiSemaphoreCommandThenExpectCompareFi
 
 HWTEST_F(CommandEncodeSemaphore, whenGettingMiSemaphoreCommandSizeThenExpectSingleMiSemaphoreCommandSize) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
-    size_t expectedSize = NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
-    size_t actualSize = EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+    size_t expectedSize = NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
+    size_t actualSize = EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
     EXPECT_EQ(expectedSize, actualSize);
 }

@@ -124,8 +124,8 @@ HWTEST2_F(PipeControlHelperTestsDg2AndLater, WhenAddingPipeControlWAThenCorrectC
         if (requiresMemorySynchronization) {
             if (UnitTestHelper<FamilyType>::isAdditionalMiSemaphoreWaitRequired(rootDeviceEnvironment)) {
                 MI_SEMAPHORE_WAIT expectedMiSemaphoreWait;
-                EncodeSempahore<FamilyType>::programMiSemaphoreWait(&expectedMiSemaphoreWait, address,
-                                                                    EncodeSempahore<FamilyType>::invalidHardwareTag,
+                EncodeSemaphore<FamilyType>::programMiSemaphoreWait(&expectedMiSemaphoreWait, address,
+                                                                    EncodeSemaphore<FamilyType>::invalidHardwareTag,
                                                                     MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
                                                                     false,
                                                                     true);

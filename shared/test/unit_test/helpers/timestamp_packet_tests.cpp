@@ -194,7 +194,7 @@ HWTEST_F(TimestampPacketTests, whenEstimatingSizeForNodeDependencyThenReturnCorr
     size_t sizeForNodeDependency = 0;
     sizeForNodeDependency += TimestampPacketHelper::getRequiredCmdStreamSizeForNodeDependency<FamilyType>(mockNode);
 
-    size_t expectedSize = mockNode.getPacketsUsed() * NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+    size_t expectedSize = mockNode.getPacketsUsed() * NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     EXPECT_EQ(expectedSize, sizeForNodeDependency);
 }
@@ -315,7 +315,7 @@ HWTEST_F(TimestampPacketHelperTests, givenTagNodesInMultiRootSyncContainerWhenPr
     container.add(mockTagAllocator->getTag());
     deps.multiRootTimeStampSyncContainer.push_back(&container);
     TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<FamilyType>(cmdStream, deps);
-    EXPECT_EQ(cmdStream.getUsed(), NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait());
+    EXPECT_EQ(cmdStream.getUsed(), NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait());
 }
 
 HWTEST_F(TimestampPacketHelperTests, givenEmptyContainerMultiRootSyncContainerWhenProgramingDependensiecThenZeroSemaforesAreProgrammed) {

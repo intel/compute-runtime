@@ -1918,7 +1918,7 @@ HWTEST2_F(CommandListCreate, givenImmediateCommandListWhenThereIsNoEnoughSpaceFo
     auto whiteBoxCmdList = static_cast<CommandList *>(commandList.get());
 
     constexpr uint32_t numEvents = 100;
-    constexpr size_t eventWaitSize = numEvents * NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+    constexpr size_t eventWaitSize = numEvents * NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     size_t useSize = commandList->getCmdContainer().getCommandStream()->getMaxAvailableSpace() - (maxImmediateCommandSize + eventWaitSize) + 1;
 

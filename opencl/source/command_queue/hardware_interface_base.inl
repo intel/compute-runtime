@@ -286,7 +286,7 @@ inline void HardwareInterface<GfxFamily>::dispatchDebugPauseCommands(
 
         {
             using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
-            EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(*commandStream,
+            EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(*commandStream,
                                                                   address,
                                                                   static_cast<uint32_t>(waitCondition),
                                                                   COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD);

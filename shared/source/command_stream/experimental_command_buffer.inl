@@ -95,7 +95,7 @@ void ExperimentalCommandBuffer::addExperimentalCommands() {
     *semaphoreData = 1;
     uint64_t gpuAddr = experimentalAllocation->getGpuAddress() + experimentalAllocationOffset;
 
-    EncodeSempahore<GfxFamily>::programMiSemaphoreWait(currentStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>(),
+    EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(currentStream->getSpaceForCmd<MI_SEMAPHORE_WAIT>(),
                                                        gpuAddr,
                                                        *semaphoreData,
                                                        MI_SEMAPHORE_WAIT::COMPARE_OPERATION_SAD_EQUAL_SDD,
@@ -104,7 +104,7 @@ void ExperimentalCommandBuffer::addExperimentalCommands() {
 
 template <typename GfxFamily>
 size_t ExperimentalCommandBuffer::getExperimentalCommandsSize() noexcept {
-    return NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
+    return NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
 }
 
 } // namespace NEO

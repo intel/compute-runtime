@@ -100,7 +100,7 @@ struct TimestampPacketHelper {
 
         for (uint32_t packetId = 0; packetId < timestampPacketNode.getPacketsUsed(); packetId++) {
             uint64_t compareOffset = packetId * timestampPacketNode.getSinglePacketSize();
-            EncodeSempahore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream, compareAddress + compareOffset, 1, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
+            EncodeSemaphore<GfxFamily>::addMiSemaphoreWaitCommand(cmdStream, compareAddress + compareOffset, 1, COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD);
         }
     }
 
@@ -160,12 +160,12 @@ struct TimestampPacketHelper {
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSizeForNodeDependencyWithBlitEnqueue() {
-        return NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
+        return NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
     }
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSizeForNodeDependency(TagNodeBase &timestampPacketNode) {
-        return (timestampPacketNode.getPacketsUsed() * NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait());
+        return (timestampPacketNode.getPacketsUsed() * NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait());
     }
 
     template <typename GfxFamily>
@@ -182,7 +182,7 @@ struct TimestampPacketHelper {
 
     template <typename GfxFamily>
     static size_t getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer(const CsrDependencies &csrDependencies) {
-        return csrDependencies.multiRootTimeStampSyncContainer.size() * NEO::EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait();
+        return csrDependencies.multiRootTimeStampSyncContainer.size() * NEO::EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait();
     }
 };
 

@@ -268,7 +268,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(args.device->getRootDeviceEnvironment(), false));
         args.additionalCommands->push_back(commandBuffer);
 
-        EncodeSempahore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
+        EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
     }
 
     PreemptionHelper::applyPreemptionWaCmdsBegin<Family>(listCmdBufferStream, *args.device);
@@ -288,7 +288,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         void *commandBuffer = listCmdBufferStream->getSpace(MemorySynchronizationCommands<Family>::getSizeForBarrierWithPostSyncOperation(args.device->getRootDeviceEnvironment(), false));
         args.additionalCommands->push_back(commandBuffer);
 
-        EncodeSempahore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
+        EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(*listCmdBufferStream, *args.additionalCommands);
     }
 }
 
@@ -526,7 +526,7 @@ inline void EncodeSurfaceState<Family>::setCoherencyType(R_SURFACE_STATE *surfac
 }
 
 template <typename Family>
-void EncodeSempahore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
+void EncodeSemaphore<Family>::programMiSemaphoreWait(MI_SEMAPHORE_WAIT *cmd,
                                                      uint64_t compareAddress,
                                                      uint32_t compareData,
                                                      COMPARE_OPERATION compareMode,

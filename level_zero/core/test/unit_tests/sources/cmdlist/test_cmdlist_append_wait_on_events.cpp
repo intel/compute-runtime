@@ -530,7 +530,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenCommandBufferIsEmptyWhenAppendingWai
     consumeSpace -= sizeof(MI_BATCH_BUFFER_END);
     commandList->getCmdContainer().getCommandStream()->getSpace(consumeSpace);
 
-    size_t expectedConsumedSpace = NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+    size_t expectedConsumedSpace = NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
     if (MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(true, device->getNEODevice()->getRootDeviceEnvironment())) {
         expectedConsumedSpace += sizeof(PIPE_CONTROL);
     }
@@ -600,7 +600,7 @@ HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
           GivenMultiTileCmdListWhenPartitionedEventUsedToWaitThenExpectProperGpuAddressAndSemaphoreCount, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
 
-    size_t expectedSize = commandList->partitionCount * NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+    size_t expectedSize = commandList->partitionCount * NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     event->setPacketsInUse(commandList->partitionCount);
     event->setUsingContextEndOffset(true);

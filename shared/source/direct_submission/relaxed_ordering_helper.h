@@ -92,7 +92,7 @@ struct DynamicSchedulerSizeAndOffsetSection {
     static constexpr uint64_t schedulerLoopCheckSectionSize = EncodeBatchBufferStartOrEnd<GfxFamily>::getCmdSizeConditionalDataMemBatchBufferStart() + sizeof(MI_BATCH_BUFFER_START);
 
     static constexpr uint64_t semaphoreSectionStart = schedulerLoopCheckSectionStart + schedulerLoopCheckSectionSize;
-    static constexpr uint64_t semaphoreSectionSize = EncodeSempahore<GfxFamily>::getSizeMiSemaphoreWait() + EncodeMiPredicate<GfxFamily>::getCmdSize();
+    static constexpr uint64_t semaphoreSectionSize = EncodeSemaphore<GfxFamily>::getSizeMiSemaphoreWait() + EncodeMiPredicate<GfxFamily>::getCmdSize();
 
     static constexpr uint64_t endSectionStart = semaphoreSectionStart + semaphoreSectionSize;
     static constexpr uint64_t endSectionSize = sizeof(MI_LOAD_REGISTER_IMM) + EncodeMiPredicate<GfxFamily>::getCmdSize();

@@ -367,7 +367,7 @@ HWTEST_F(CrossDeviceDependenciesTests, givenMultipleEventInMultiRootDeviceEnviro
         eventsRequest.fillCsrDependenciesForRootDevices(csrDeps, pCmdQ2->getGpgpuCommandStreamReceiver());
 
         EXPECT_EQ(3u, csrDeps.multiRootTimeStampSyncContainer.size());
-        EXPECT_EQ(3u * NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait(), TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<FamilyType>(csrDeps));
+        EXPECT_EQ(3u * NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<FamilyType>(csrDeps));
     }
 }
 

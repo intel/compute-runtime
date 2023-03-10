@@ -434,12 +434,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     size_t expectedSize = sizeof(WALKER_TYPE) +
                           sizeof(MI_STORE_DATA_IMM) +
                           sizeof(PIPE_CONTROL) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::StaticPartitioningControlSection) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_STORE_DATA_IMM) * 2 +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
@@ -502,12 +502,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
                           sizeof(WALKER_TYPE) +
                           sizeof(MI_STORE_DATA_IMM) +
                           sizeof(PIPE_CONTROL) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::StaticPartitioningControlSection) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_STORE_DATA_IMM) * 2 +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
@@ -689,12 +689,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     size_t expectedSize = sizeof(WALKER_TYPE) +
                           sizeof(MI_STORE_DATA_IMM) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::StaticPartitioningControlSection) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_STORE_DATA_IMM) * 2 +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
@@ -755,7 +755,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     walker.setThreadGroupIdXDimension(32);
 
     size_t expectedSize = sizeof(WALKER_TYPE) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::StaticPartitioningControlSection);
 
@@ -820,7 +820,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     size_t expectedSize = sizeof(MI_LOAD_REGISTER_MEM) +
                           sizeof(WALKER_TYPE) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::StaticPartitioningControlSection);
 
@@ -882,15 +882,15 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     WALKER_TYPE walker = FamilyType::cmdInitGpgpuWalker;
     walker.setThreadGroupIdXDimension(32);
 
-    size_t expectedSize = sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+    size_t expectedSize = sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(WALKER_TYPE) +
                           sizeof(MI_STORE_DATA_IMM) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::StaticPartitioningControlSection) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_STORE_DATA_IMM) * 2 +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
@@ -952,12 +952,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     size_t expectedSize = sizeof(WALKER_TYPE) +
                           sizeof(MI_STORE_DATA_IMM) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::StaticPartitioningControlSection) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_STORE_DATA_IMM) * 2 +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
@@ -1006,7 +1006,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     size_t expectedSize = sizeof(PIPE_CONTROL) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection);
 
@@ -1056,12 +1056,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     size_t expectedSize = sizeof(MI_STORE_DATA_IMM) +
                           sizeof(PIPE_CONTROL) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_STORE_DATA_IMM) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
@@ -1110,12 +1110,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     size_t expectedSize = sizeof(MI_ATOMIC) +
                           sizeof(PIPE_CONTROL) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_ATOMIC) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     DebugManager.flags.UseAtomicsForSelfCleanupSection.set(1);
 
@@ -1165,7 +1165,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     MockExecutionEnvironment mockExecutionEnvironment{};
 
     size_t expectedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pDevice->getRootDeviceEnvironment(), false) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection);
 
@@ -1242,12 +1242,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     size_t expectedSize = sizeof(MI_STORE_DATA_IMM) +
                           MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pDevice->getRootDeviceEnvironment(), false) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_STORE_DATA_IMM) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
@@ -1326,12 +1326,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     size_t expectedSize = sizeof(MI_ATOMIC) +
                           MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pDevice->getRootDeviceEnvironment(), false) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_ATOMIC) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
@@ -1406,7 +1406,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
     DebugManager.flags.ProgramWalkerPartitionSelfCleanup.set(0);
 
     size_t expectedSize = sizeof(PIPE_CONTROL) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection);
 
@@ -1460,12 +1460,12 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     size_t expectedSize = sizeof(MI_STORE_DATA_IMM) +
                           sizeof(PIPE_CONTROL) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_STORE_DATA_IMM) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;
@@ -1517,14 +1517,14 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, ImplicitScalingTests,
 
     size_t expectedSize = sizeof(MI_STORE_DATA_IMM) +
                           sizeof(PIPE_CONTROL) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_BATCH_BUFFER_START) +
                           sizeof(WalkerPartition::BarrierControlSection) +
                           sizeof(PIPE_CONTROL) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait() +
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait() +
                           sizeof(MI_STORE_DATA_IMM) +
                           sizeof(PIPE_CONTROL) +
-                          sizeof(MI_ATOMIC) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+                          sizeof(MI_ATOMIC) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
 
     size_t estimatedSize = 0;
     size_t totalBytesProgrammed = 0;

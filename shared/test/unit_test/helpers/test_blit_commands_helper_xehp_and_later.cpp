@@ -1114,7 +1114,7 @@ HWTEST2_F(BlitTests, givenEnabledGlobalCacheInvalidationWhenProgrammingGlobalSeq
     uint32_t streamBuffer[100] = {};
     LinearStream stream(streamBuffer, sizeof(streamBuffer));
 
-    size_t expectedSize = sizeof(MI_LOAD_REGISTER_IMM) + NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait();
+    size_t expectedSize = sizeof(MI_LOAD_REGISTER_IMM) + NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait();
     auto val = BlitCommandsHelper<FamilyType>::getSizeForGlobalSequencerFlush();
     EXPECT_EQ(expectedSize, val);
 

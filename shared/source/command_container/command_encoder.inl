@@ -789,7 +789,7 @@ inline size_t EncodeIndirectParams<Family>::getCmdsSizeForSetWorkDimIndirect(con
     return requiredSize;
 }
 template <typename Family>
-void EncodeSempahore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStream,
+void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStream,
                                                         uint64_t compareAddress,
                                                         uint32_t compareData,
                                                         COMPARE_OPERATION compareMode) {
@@ -797,7 +797,7 @@ void EncodeSempahore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
 }
 
 template <typename Family>
-void EncodeSempahore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStream,
+void EncodeSemaphore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStream,
                                                         uint64_t compareAddress,
                                                         uint32_t compareData,
                                                         COMPARE_OPERATION compareMode,
@@ -811,7 +811,7 @@ void EncodeSempahore<Family>::addMiSemaphoreWaitCommand(LinearStream &commandStr
                            true);
 }
 template <typename Family>
-void EncodeSempahore<Family>::applyMiSemaphoreWaitCommand(LinearStream &commandStream, std::list<void *> &commandsList) {
+void EncodeSemaphore<Family>::applyMiSemaphoreWaitCommand(LinearStream &commandStream, std::list<void *> &commandsList) {
     MI_SEMAPHORE_WAIT *semaphoreCommand = commandStream.getSpaceForCmd<MI_SEMAPHORE_WAIT>();
     commandsList.push_back(semaphoreCommand);
 }

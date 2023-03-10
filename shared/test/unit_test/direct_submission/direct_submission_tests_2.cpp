@@ -2899,7 +2899,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenRelaxedOrderingSchedulerReq
     }
 
     EXPECT_EQ(expectedBaseSemaphoreSectionSize + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::totalSize, directSubmission.getSizeSemaphoreSection(true));
-    EXPECT_EQ(expectedBaseSemaphoreSectionSize + EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait(), directSubmission.getSizeSemaphoreSection(false));
+    EXPECT_EQ(expectedBaseSemaphoreSectionSize + EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), directSubmission.getSizeSemaphoreSection(false));
 
     size_t expectedBaseEndSize = Dispatcher::getSizeStopCommandBuffer() +
                                  Dispatcher::getSizeCacheFlush(directSubmission.rootDeviceEnvironment) +

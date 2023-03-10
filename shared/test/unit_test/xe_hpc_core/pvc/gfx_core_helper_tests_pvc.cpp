@@ -61,14 +61,14 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenRevisionEnumAndPlatformFamilyTypeThenPrope
 }
 
 PVCTEST_F(GfxCoreHelperTestsPvc, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
-    EXPECT_EQ(NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
 }
 
 PVCTEST_F(GfxCoreHelperTestsPvc, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
 
-    EXPECT_EQ(2 * NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(2 * NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
 }
 
 PVCTEST_F(GfxCoreHelperTestsPvc, givenRevisionIdWhenGetComputeUnitsUsedForScratchThenReturnValidValue) {
@@ -139,7 +139,7 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenMemorySynchronizationCommandsWhenAddingSyn
         EXPECT_EQ(1u, hwParser.cmdList.size());
 
         if (testInput.expectMiSemaphoreWait) {
-            EXPECT_EQ(NEO::EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait(), synchronizationSize);
+            EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), synchronizationSize);
 
             auto semaphoreCmd = genCmdCast<MI_SEMAPHORE_WAIT *>(*hwParser.cmdList.begin());
             ASSERT_NE(nullptr, semaphoreCmd);

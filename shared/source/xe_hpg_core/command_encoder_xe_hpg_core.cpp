@@ -223,7 +223,7 @@ template struct EncodeStoreMMIO<Family>;
 template struct EncodeSurfaceState<Family>;
 template struct EncodeComputeMode<Family>;
 template struct EncodeAtomic<Family>;
-template struct EncodeSempahore<Family>;
+template struct EncodeSemaphore<Family>;
 template struct EncodeBatchBufferStartOrEnd<Family>;
 template struct EncodeMiFlushDW<Family>;
 template struct EncodeMiPredicate<Family>;

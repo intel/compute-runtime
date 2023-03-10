@@ -167,7 +167,7 @@ size_t MemorySynchronizationCommands<Family>::getSizeForSingleAdditionalSynchron
     if (programGlobalFenceAsMiMemFenceCommandInCommandStream) {
         return sizeof(Family::MI_MEM_FENCE);
     } else {
-        return EncodeSempahore<Family>::getSizeMiSemaphoreWait();
+        return EncodeSemaphore<Family>::getSizeMiSemaphoreWait();
     }
 }
 
@@ -192,13 +192,13 @@ void MemorySynchronizationCommands<Family>::setAdditionalSynchronization(void *&
         *reinterpret_cast<MI_MEM_FENCE *>(commandsBuffer) = miMemFence;
         commandsBuffer = ptrOffset(commandsBuffer, sizeof(MI_MEM_FENCE));
     } else {
-        EncodeSempahore<Family>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandsBuffer),
+        EncodeSemaphore<Family>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandsBuffer),
                                                         gpuAddress,
-                                                        EncodeSempahore<Family>::invalidHardwareTag,
+                                                        EncodeSemaphore<Family>::invalidHardwareTag,
                                                         MI_SEMAPHORE_WAIT::COMPARE_OPERATION::COMPARE_OPERATION_SAD_NOT_EQUAL_SDD,
                                                         false,
                                                         true);
-        commandsBuffer = ptrOffset(commandsBuffer, EncodeSempahore<Family>::getSizeMiSemaphoreWait());
+        commandsBuffer = ptrOffset(commandsBuffer, EncodeSemaphore<Family>::getSizeMiSemaphoreWait());
     }
 }
 

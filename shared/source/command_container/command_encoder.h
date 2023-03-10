@@ -361,7 +361,7 @@ struct EncodeComputeMode {
 };
 
 template <typename GfxFamily>
-struct EncodeSempahore {
+struct EncodeSemaphore {
     using MI_SEMAPHORE_WAIT = typename GfxFamily::MI_SEMAPHORE_WAIT;
     using COMPARE_OPERATION = typename GfxFamily::MI_SEMAPHORE_WAIT::COMPARE_OPERATION;
 

@@ -140,7 +140,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             break;
         }
         case CommandList::CommandToPatch::PauseOnEnqueueSemaphoreStart: {
-            NEO::EncodeSempahore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
+            NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
                                                                     csr->getDebugPauseStateGPUAddress(),
                                                                     static_cast<uint32_t>(NEO::DebugPauseState::hasUserStartConfirmation),
                                                                     COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,
@@ -148,7 +148,7 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
             break;
         }
         case CommandList::CommandToPatch::PauseOnEnqueueSemaphoreEnd: {
-            NEO::EncodeSempahore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
+            NEO::EncodeSemaphore<GfxFamily>::programMiSemaphoreWait(reinterpret_cast<MI_SEMAPHORE_WAIT *>(commandToPatch.pCommand),
                                                                     csr->getDebugPauseStateGPUAddress(),
                                                                     static_cast<uint32_t>(NEO::DebugPauseState::hasUserEndConfirmation),
                                                                     COMPARE_OPERATION::COMPARE_OPERATION_SAD_EQUAL_SDD,

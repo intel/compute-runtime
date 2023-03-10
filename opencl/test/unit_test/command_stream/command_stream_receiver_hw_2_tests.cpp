@@ -81,7 +81,7 @@ HWTEST_F(BcsTests, givenDebugCapabilityWhenEstimatingCommandSizeThenAddAllRequir
         cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
     }
 
-    const size_t debugCommandsSize = (EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + EncodeSempahore<FamilyType>::getSizeMiSemaphoreWait()) * 2;
+    const size_t debugCommandsSize = (EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs) + EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait()) * 2;
 
     constexpr uint32_t numberOfBlts = 3;
     constexpr size_t bltSize = (numberOfBlts * max2DBlitSize);
