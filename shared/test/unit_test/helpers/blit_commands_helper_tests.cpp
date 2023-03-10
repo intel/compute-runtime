@@ -151,11 +151,12 @@ HWTEST_F(BlitTests, givenDebugVariablesWhenGettingMaxBlitSizeThenHonorUseProvide
 }
 
 HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenReturnCorrectResult) {
-    EncodeDummyBlitWaArgs waArgs{true, const_cast<RootDeviceEnvironment *>(&(pDevice->getRootDeviceEnvironment()))};
-    size_t arbCheckSize = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs);
-
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t dummyBlitWaSize = BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
+    waArgs.isWaRequired = false;
     DebugManagerStateRestore restore{};
 
+    size_t arbCheckSize = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) + dummyBlitWaSize;
     size_t expectedDefaultSize = arbCheckSize;
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
@@ -168,6 +169,7 @@ HWTEST_F(BlitTests, givenDebugVariableWhenEstimatingPostBlitsCommandSizeThenRetu
     EXPECT_EQ(arbCheckSize, BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
 
     DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiFlush);
+    waArgs.isWaRequired = true;
     EXPECT_EQ(EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs), BlitCommandsHelper<FamilyType>::estimatePostBlitCommandSize(pDevice->getRootDeviceEnvironment()));
 
     DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::None);
@@ -181,15 +183,15 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     uint32_t streamBuffer[100] = {};
     LinearStream linearStream{streamBuffer, sizeof(streamBuffer)};
     GenCmdList commands{};
-    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
-    size_t expectedDefaultSize = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs);
+    EncodeDummyBlitWaArgs waArgs{false, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t expectedDefaultSize = EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs) + BlitCommandsHelper<FamilyType>::getDummyBlitSize(waArgs);
 
     if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
         expectedDefaultSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
     }
 
     // -1: default
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, pDevice->getRootDeviceEnvironmentRef());
+    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, waArgs);
 
     EXPECT_EQ(expectedDefaultSize, linearStream.getUsed());
     CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
@@ -212,7 +214,8 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
     commands.clear();
     DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiArbCheck);
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, pDevice->getRootDeviceEnvironmentRef());
+    waArgs.isWaRequired = true;
+    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, waArgs);
 
     CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
     arbCheck = find<MI_ARB_CHECK *>(commands.begin(), commands.end());
@@ -223,7 +226,8 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
     commands.clear();
     DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::MiFlush);
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, pDevice->getRootDeviceEnvironmentRef());
+    waArgs.isWaRequired = true;
+    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, waArgs);
 
     CmdParse<FamilyType>::parseCommandBuffer(commands, linearStream.getCpuBase(), linearStream.getUsed());
     auto miFlush = find<MI_FLUSH_DW *>(commands.begin(), commands.end());
@@ -234,7 +238,8 @@ HWTEST_F(BlitTests, givenDebugVariableWhenDispatchingPostBlitsCommandThenUseCorr
     linearStream.replaceBuffer(streamBuffer, sizeof(streamBuffer));
     commands.clear();
     DebugManager.flags.PostBlitCommand.set(BlitterConstants::PostBlitMode::None);
-    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, pDevice->getRootDeviceEnvironmentRef());
+    waArgs.isWaRequired = true;
+    BlitCommandsHelper<FamilyType>::dispatchPostBlitCommand(linearStream, waArgs);
 
     EXPECT_EQ(0u, linearStream.getUsed());
 }
@@ -248,7 +253,8 @@ HWTEST_F(BlitTests, givenMemoryWhenFillPatternWithBlitThenCommandIsProgrammed) {
     MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, pattern, sizeof(uint32_t), stream, mockAllocation.getUnderlyingBufferSize(), *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
+    EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
+    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, pattern, sizeof(uint32_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
@@ -266,7 +272,8 @@ HWTEST_F(BlitTests, givenMemorySizeBiggerThanMaxWidthButLessThanTwiceMaxWidthWhe
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, (2 * BlitterConstants::maxBlitWidth) - 1,
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
 
-    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, pattern, sizeof(uint32_t), stream, mockAllocation.getUnderlyingBufferSize(), *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
+    EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
+    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, pattern, sizeof(uint32_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
@@ -287,8 +294,8 @@ HWTEST_F(BlitTests, givenMemoryPointerOffsetVerifyCorrectDestinationBaseAddress)
     MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-
-    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0x234, pattern, sizeof(uint32_t), stream, mockAllocation.getUnderlyingBufferSize(), *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
+    EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
+    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0x234, pattern, sizeof(uint32_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
@@ -315,7 +322,8 @@ HWTEST_F(BlitTests, givenMemorySizeTwiceBiggerThanMaxWidthWhenFillPatternWithBli
     MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, (2 * BlitterConstants::maxBlitWidth * sizeof(uint32_t)),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, pattern, sizeof(uint32_t), stream, mockAllocation.getUnderlyingBufferSize(), *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
+    EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
+    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, pattern, sizeof(uint32_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
@@ -343,7 +351,8 @@ HWTEST_F(BlitTests, givenMemorySizeIsLessThanTwicenMaxWidthWhenFillPatternWithBl
     MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, ((BlitterConstants::maxBlitWidth + 1) * sizeof(uint32_t)),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, pattern, sizeof(uint32_t), stream, mockAllocation.getUnderlyingBufferSize(), *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
+    EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
+    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, pattern, sizeof(uint32_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
@@ -385,7 +394,8 @@ HWTEST2_F(BlitTests, givenMemoryWhenFillPatternSizeIs4BytesThen32BitMaskISSetCor
     MockGraphicsAllocation mockAllocation(0, AllocationType::INTERNAL_HOST_MEMORY,
                                           reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
                                           MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, &pattern, sizeof(uint32_t), stream, mockAllocation.getUnderlyingBufferSize(), *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
+    EncodeDummyBlitWaArgs waArgs{false, pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()].get()};
+    BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, &pattern, sizeof(uint32_t), stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));
@@ -503,7 +513,8 @@ HWTEST2_F(BlitTests, givenMemoryAndImageWhenDispatchCopyImageCallThenCommandAdde
     blitProperties.bytesPerPixel = 4;
     blitProperties.srcSize = srcSize;
     blitProperties.dstSize = dstSize;
-    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForImageRegion(blitProperties, stream, *pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]);
+    EncodeDummyBlitWaArgs waArgs{false, &(pDevice->getRootDeviceEnvironmentRef())};
+    NEO::BlitCommandsHelper<FamilyType>::dispatchBlitCommandsForImageRegion(blitProperties, stream, waArgs);
     GenCmdList cmdList;
     ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
         cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));

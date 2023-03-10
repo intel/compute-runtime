@@ -13,7 +13,7 @@ template <typename GfxFamily, typename Dispatcher>
 inline void DirectSubmissionHw<GfxFamily, Dispatcher>::dispatchDisablePrefetcher(bool disable) {
 
     if (isDisablePrefetcherRequired) {
-        EncodeDummyBlitWaArgs waArgs{false};
+        EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&this->rootDeviceEnvironment)};
         EncodeMiArbCheck<GfxFamily>::programWithWa(ringCommandStream, disable, waArgs);
     }
 }

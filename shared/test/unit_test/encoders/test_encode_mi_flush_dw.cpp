@@ -25,8 +25,9 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithNoPostSyncThe
     MockGraphicsAllocation gfxAllocation(static_cast<void *>(pCmdBuffer), sizeof(pCmdBuffer));
     LinearStream stream(&gfxAllocation);
     MockExecutionEnvironment mockExecutionEnvironment{};
-    MiFlushArgs args;
-    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+    NEO::EncodeDummyBlitWaArgs waArgs{false, mockExecutionEnvironment.rootDeviceEnvironments[0].get()};
+    MiFlushArgs args{waArgs};
+
     EncodeMiFlushDW<FamilyType>::programWithWa(stream, 0, 0, args);
 
     GenCmdList commands;
@@ -48,9 +49,9 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithPostSyncDataT
     uint64_t address = 0x1000;
     uint64_t data = 0x4321;
     MockExecutionEnvironment mockExecutionEnvironment{};
-    MiFlushArgs args;
+    NEO::EncodeDummyBlitWaArgs waArgs{false, mockExecutionEnvironment.rootDeviceEnvironments[0].get()};
+    MiFlushArgs args{waArgs};
     args.commandWithPostSync = true;
-    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
     EncodeMiFlushDW<FamilyType>::programWithWa(stream, address, data, args);
 
     GenCmdList commands;
@@ -81,9 +82,10 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithTimestampFasl
     uint64_t address = 0x1000;
     uint64_t data = 0x4321;
     MockExecutionEnvironment mockExecutionEnvironment{};
-    MiFlushArgs args;
+    NEO::EncodeDummyBlitWaArgs waArgs{false, mockExecutionEnvironment.rootDeviceEnvironments[0].get()};
+    MiFlushArgs args{waArgs};
     args.commandWithPostSync = true;
-    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+
     EncodeMiFlushDW<FamilyType>::programWithWa(stream, address, data, args);
 
     GenCmdList commands;
@@ -113,10 +115,11 @@ HWTEST_F(EncodeMiFlushDWTest, GivenLinearStreamWhenCllaedEncodeWithTimestampTrue
     uint64_t address = 0x1000;
     uint64_t data = 0x4321;
     MockExecutionEnvironment mockExecutionEnvironment{};
-    MiFlushArgs args;
+    NEO::EncodeDummyBlitWaArgs waArgs{false, mockExecutionEnvironment.rootDeviceEnvironments[0].get()};
+    MiFlushArgs args{waArgs};
     args.timeStampOperation = true;
     args.commandWithPostSync = true;
-    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+
     EncodeMiFlushDW<FamilyType>::programWithWa(stream, address, data, args);
 
     GenCmdList commands;

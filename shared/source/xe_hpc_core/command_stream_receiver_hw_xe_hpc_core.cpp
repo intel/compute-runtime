@@ -135,9 +135,10 @@ void BlitCommandsHelper<Family>::appendBlitCommandsMemCopy(const BlitProperties 
 
 template <>
 template <>
-void BlitCommandsHelper<Family>::dispatchBlitMemoryFill<1>(NEO::GraphicsAllocation *dstAlloc, uint64_t offset, uint32_t *pattern, LinearStream &linearStream, size_t size, const RootDeviceEnvironment &rootDeviceEnvironment, COLOR_DEPTH depth) {
+void BlitCommandsHelper<Family>::dispatchBlitMemoryFill<1>(NEO::GraphicsAllocation *dstAlloc, uint64_t offset, uint32_t *pattern, LinearStream &linearStream, size_t size, EncodeDummyBlitWaArgs &waArgs, COLOR_DEPTH depth) {
     using MEM_SET = typename Family::MEM_SET;
     auto blitCmd = Family::cmdInitMemSet;
+    auto &rootDeviceEnvironment = *waArgs.rootDeviceEnvironment;
 
     auto mocsL3enabled = rootDeviceEnvironment.getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER);
     blitCmd.setDestinationMOCS(mocsL3enabled);

@@ -11,7 +11,7 @@ namespace NEO {
 struct RootDeviceEnvironment;
 
 struct EncodeDummyBlitWaArgs {
-    bool isBcs = false;
+    bool isWaRequired = false;
     RootDeviceEnvironment *rootDeviceEnvironment = nullptr;
 };
 
@@ -21,7 +21,7 @@ struct MiFlushArgs {
     bool notifyEnable = false;
     bool tlbFlush = false;
 
-    EncodeDummyBlitWaArgs waArgs{};
-    MiFlushArgs() = default;
+    EncodeDummyBlitWaArgs &waArgs;
+    MiFlushArgs(EncodeDummyBlitWaArgs &args) : waArgs(args) {}
 };
 } // namespace NEO

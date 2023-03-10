@@ -37,9 +37,10 @@ XE_HPC_CORETEST_F(CommandEncodeXeHpcCoreTest, whenMiFlushDwIsProgrammedThenSetAn
     uint8_t buffer[2 * sizeof(MI_FLUSH_DW)] = {};
     LinearStream linearStream(buffer, sizeof(buffer));
     MockExecutionEnvironment mockExecutionEnvironment{};
-    MiFlushArgs args;
+    NEO::EncodeDummyBlitWaArgs waArgs{false, mockExecutionEnvironment.rootDeviceEnvironments[0].get()};
+    MiFlushArgs args{waArgs};
     args.commandWithPostSync = true;
-    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+
     EncodeMiFlushDW<FamilyType>::programWithWa(linearStream, 0x1230000, 456, args);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
     EXPECT_EQ(0u, miFlushDwCmd->getFlushCcs());

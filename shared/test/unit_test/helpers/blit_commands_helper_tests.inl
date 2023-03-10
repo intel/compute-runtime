@@ -10,6 +10,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -51,7 +52,8 @@ class GivenLinearStreamWhenCallDispatchBlitMemoryColorFillThenCorrectDepthIsProg
                                               canonizedGpuAddress);
         uint32_t patternToCommand[4];
         memset(patternToCommand, 4, patternSize);
-        BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, patternToCommand, patternSize, stream, mockAllocation.getUnderlyingBufferSize(), *device->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()]);
+        EncodeDummyBlitWaArgs waArgs{false, &(device->getRootDeviceEnvironmentRef())};
+        BlitCommandsHelper<FamilyType>::dispatchBlitMemoryColorFill(&mockAllocation, 0, patternToCommand, patternSize, stream, mockAllocation.getUnderlyingBufferSize(), waArgs);
         GenCmdList cmdList;
         ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
             cmdList, ptrOffset(stream.getCpuBase(), 0), stream.getUsed()));

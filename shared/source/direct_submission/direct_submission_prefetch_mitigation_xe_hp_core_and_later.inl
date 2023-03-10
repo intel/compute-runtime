@@ -21,7 +21,7 @@ inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizePrefetchMitigati
 
 template <typename GfxFamily, typename Dispatcher>
 inline size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeDisablePrefetcher() {
-    EncodeDummyBlitWaArgs waArgs{false};
+    EncodeDummyBlitWaArgs waArgs{false, const_cast<RootDeviceEnvironment *>(&this->rootDeviceEnvironment)};
     return EncodeMiArbCheck<GfxFamily>::getCommandSizeWithWa(waArgs);
 }
 

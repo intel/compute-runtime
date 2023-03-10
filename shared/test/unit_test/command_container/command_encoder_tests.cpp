@@ -52,9 +52,9 @@ HWTEST_F(CommandEncoderTests, givenImmDataWriteWhenProgrammingMiFlushDwThenSetAl
     uint64_t gpuAddress = 0x1230000;
     uint64_t immData = 456;
     MockExecutionEnvironment mockExecutionEnvironment{};
-    MiFlushArgs args;
+    NEO::EncodeDummyBlitWaArgs waArgs{false, mockExecutionEnvironment.rootDeviceEnvironments[0].get()};
+    MiFlushArgs args{waArgs};
     args.commandWithPostSync = true;
-    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
 
     EncodeMiFlushDW<FamilyType>::programWithWa(linearStream, gpuAddress, immData, args);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
@@ -86,9 +86,10 @@ HWTEST2_F(CommandEncoderTests, given57bitVaForDestinationAddressWhenProgrammingM
     const uint64_t setGpuAddress = 0xffffffffffffffff;
     const uint64_t verifyGpuAddress = 0xfffffffffffffff8;
     MockExecutionEnvironment mockExecutionEnvironment{};
-    MiFlushArgs args;
+    NEO::EncodeDummyBlitWaArgs waArgs{false, mockExecutionEnvironment.rootDeviceEnvironments[0].get()};
+    MiFlushArgs args{waArgs};
     args.commandWithPostSync = true;
-    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+
     EncodeMiFlushDW<FamilyType>::programWithWa(linearStream, setGpuAddress, 0, args);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
 
@@ -129,10 +130,11 @@ HWTEST_F(CommandEncoderTests, givenNotify) {
     uint64_t gpuAddress = 0x1230000;
     uint64_t immData = 456;
     MockExecutionEnvironment mockExecutionEnvironment{};
-    MiFlushArgs args;
+    NEO::EncodeDummyBlitWaArgs waArgs{false, mockExecutionEnvironment.rootDeviceEnvironments[0].get()};
+    MiFlushArgs args{waArgs};
     args.commandWithPostSync = true;
     args.notifyEnable = true;
-    args.waArgs.rootDeviceEnvironment = mockExecutionEnvironment.rootDeviceEnvironments[0].get();
+
     EncodeMiFlushDW<FamilyType>::programWithWa(linearStream, gpuAddress, immData, args);
     auto miFlushDwCmd = reinterpret_cast<MI_FLUSH_DW *>(buffer);
 

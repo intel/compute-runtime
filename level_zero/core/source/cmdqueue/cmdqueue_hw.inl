@@ -223,8 +223,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
     size_t linearStreamSizeEstimate = this->estimateLinearStreamSizeInitial(ctx, phCommandLists, numCommandLists);
 
     this->csr->getResidencyAllocations().reserve(ctx.spaceForResidency);
-    auto isBcs = NEO::EngineHelpers::isBcs(this->csr->getOsContext().getEngineType());
-    NEO::EncodeDummyBlitWaArgs waArgs{isBcs, &(this->device->getNEODevice()->getRootDeviceEnvironmentRef())};
+
+    NEO::EncodeDummyBlitWaArgs waArgs{false, &(this->device->getNEODevice()->getRootDeviceEnvironmentRef())};
     linearStreamSizeEstimate += NEO::EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
 
     NEO::LinearStream child(nullptr);
@@ -996,11 +996,11 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncByMiFlushDw(
     uint64_t postSyncAddress = this->csr->getTagAllocation()->getGpuAddress();
     TaskCountType postSyncData = this->csr->peekTaskCount() + 1;
 
-    NEO::MiFlushArgs args;
+    NEO::EncodeDummyBlitWaArgs waArgs{false, &(this->device->getNEODevice()->getRootDeviceEnvironmentRef())};
+    NEO::MiFlushArgs args{waArgs};
     args.commandWithPostSync = true;
     args.notifyEnable = this->csr->isUsedNotifyEnableForPostSync();
-    args.waArgs.isBcs = NEO::EngineHelpers::isBcs(this->csr->getOsContext().getEngineType());
-    args.waArgs.rootDeviceEnvironment = &(this->device->getNEODevice()->getRootDeviceEnvironmentRef());
+
     NEO::EncodeMiFlushDW<GfxFamily>::programWithWa(cmdStream, postSyncAddress, postSyncData, args);
 }
 

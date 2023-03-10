@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/stream_properties.h"
 #include "shared/source/helpers/cache_policy.h"
+#include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/heap_base_address_model.h"
 #include "shared/source/memory_manager/prefetch_manager.h"
 #include "shared/source/unified_memory/unified_memory.h"
@@ -416,6 +417,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool compactL3FlushEventPacket = false;
     bool dynamicHeapRequired = false;
     bool kernelWithAssertAppended = false;
+    NEO::EncodeDummyBlitWaArgs dummyBlitWa{};
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);
