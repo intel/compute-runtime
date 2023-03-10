@@ -179,6 +179,42 @@ TEST(DebugSession, givenSingleThreadWhenGettingSingleThreadsThenCorrectThreadIsR
     EXPECT_EQ(3u, threads[0].thread);
 }
 
+TEST(DebugSession, givenAllThreadsWithLowSliceDisabledWhenGettingSingleThreadsThenCorrectThreadsAreReturned) {
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.gtSystemInfo.MaxSlicesSupported = 2;
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
+    hwInfo.gtSystemInfo.SliceInfo[0].Enabled = false;
+    hwInfo.gtSystemInfo.SliceInfo[1].Enabled = false;
+    hwInfo.gtSystemInfo.SliceInfo[2].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[3].Enabled = true;
+    hwInfo.gtSystemInfo.SliceInfo[4].Enabled = false;
+    hwInfo.gtSystemInfo.SliceInfo[5].Enabled = false;
+    hwInfo.gtSystemInfo.SliceInfo[6].Enabled = false;
+    hwInfo.gtSystemInfo.SliceInfo[7].Enabled = false;
+
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    auto debugSession = std::make_unique<DebugSessionMock>(config, &deviceImp);
+
+    ze_device_thread_t physicalThread = {UINT32_MAX, 0, 0, 0};
+
+    auto threads = debugSession->getSingleThreadsForDevice(0, physicalThread, hwInfo);
+
+    EXPECT_EQ(2u, threads.size());
+
+    for (uint32_t i = 0; i < 2; i++) {
+        EXPECT_EQ(0u, threads[i].tileIndex);
+        EXPECT_EQ(i + 2, threads[i].slice);
+        EXPECT_EQ(0u, threads[i].subslice);
+        EXPECT_EQ(0u, threads[i].eu);
+        EXPECT_EQ(0u, threads[i].thread);
+    }
+}
+
 TEST(DebugSession, givenAllThreadsWhenGettingSingleThreadsThenCorrectThreadsAreReturned) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;

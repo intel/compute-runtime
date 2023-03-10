@@ -156,7 +156,11 @@ std::vector<EuThread::ThreadId> DebugSession::getSingleThreadsForDevice(uint32_t
     const uint32_t eu = physicalThread.eu;
     const uint32_t thread = physicalThread.thread;
 
-    for (uint32_t sliceID = 0; sliceID < hwInfo.gtSystemInfo.MaxSlicesSupported; sliceID++) {
+    for (uint32_t sliceID = 0; sliceID < NEO::GfxCoreHelper::getHighestEnabledSlice(hwInfo); sliceID++) {
+        if (hwInfo.gtSystemInfo.IsDynamicallyPopulated && !hwInfo.gtSystemInfo.SliceInfo[sliceID].Enabled) {
+            continue;
+        }
+
         if (slice != UINT32_MAX) {
             sliceID = slice;
         }
