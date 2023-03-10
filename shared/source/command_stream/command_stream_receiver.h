@@ -159,10 +159,13 @@ class CommandStreamReceiver {
     void overrideDispatchPolicy(DispatchMode overrideValue) { this->dispatchMode = overrideValue; }
 
     void setMediaVFEStateDirty(bool dirty) { mediaVfeStateDirty = dirty; }
-    bool getMediaVFEStateDirty() { return mediaVfeStateDirty; }
+    bool getMediaVFEStateDirty() const { return mediaVfeStateDirty; }
 
     void setGSBAStateDirty(bool dirty) { GSBAStateDirty = dirty; }
-    bool getGSBAStateDirty() { return GSBAStateDirty; }
+    bool getGSBAStateDirty() const { return GSBAStateDirty; }
+
+    void setStateComputeModeDirty(bool dirty) { stateComputeModeDirty = dirty; }
+    bool getStateComputeModeDirty() const { return stateComputeModeDirty; }
 
     void setRequiredScratchSizes(uint32_t newRequiredScratchSize, uint32_t newRequiredPrivateScratchSize);
     GraphicsAllocation *getScratchAllocation();
@@ -507,6 +510,7 @@ class CommandStreamReceiver {
     bool bindingTableBaseAddressRequired = false;
     bool heapStorageRequiresRecyclingTag = false;
     bool mediaVfeStateDirty = true;
+    bool stateComputeModeDirty = true;
     bool lastVmeSubslicesConfig = false;
     bool timestampPacketWriteEnabled = false;
     bool staticWorkPartitioningEnabled = false;

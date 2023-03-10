@@ -593,6 +593,7 @@ void CmdListThreadArbitrationFixture::testBody() {
 
     auto &commandListStream = *commandList->commandContainer.getCommandStream();
     auto &cmdQueueStream = commandQueue->commandStream;
+    auto queueCsr = commandQueue->getCsr();
 
     GenCmdList cmdList;
     std::vector<GenCmdList::iterator> stateComputeModeList;
@@ -622,10 +623,14 @@ void CmdListThreadArbitrationFixture::testBody() {
         stateComputeModeList.clear();
         commandList->close();
 
+        EXPECT_TRUE(queueCsr->getStateComputeModeDirty());
+
         sizeBefore = cmdQueueStream.getUsed();
         result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
+
+        EXPECT_FALSE(queueCsr->getStateComputeModeDirty());
 
         EXPECT_EQ(NEO::ThreadArbitrationPolicy::AgeBased, csrState.stateComputeMode.threadArbitrationPolicy.value);
 
@@ -850,6 +855,7 @@ void CmdListLargeGrfFixture::testBody() {
     auto &cmdlistRequiredState = commandList->getRequiredStreamState();
     auto &cmdListFinalState = commandList->getFinalStreamState();
     auto &csrState = commandQueue->csr->getStreamProperties();
+    auto queueCsr = commandQueue->getCsr();
 
     auto commandListHandle = commandList->toHandle();
 
@@ -884,10 +890,14 @@ void CmdListLargeGrfFixture::testBody() {
         stateComputeModeList.clear();
         commandList->close();
 
+        EXPECT_TRUE(queueCsr->getStateComputeModeDirty());
+
         sizeBefore = cmdQueueStream.getUsed();
         result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
         sizeAfter = cmdQueueStream.getUsed();
+
+        EXPECT_FALSE(queueCsr->getStateComputeModeDirty());
 
         EXPECT_EQ(0, csrState.stateComputeMode.largeGrfMode.value);
 

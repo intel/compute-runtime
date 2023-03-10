@@ -653,9 +653,9 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
     linearStreamSizeEstimate += estimatePipelineSelectCmdSize();
 
     if (this->stateComputeModeTracking || this->pipelineSelectStateTracking || frontEndTrackingEnabled() || this->stateBaseAddressTracking) {
-        auto streamPropertiesCopy = csr->getStreamProperties();
+        auto streamPropertiesCopy = this->csr->getStreamProperties();
         bool frontEndStateDirtyCopy = ctx.frontEndStateDirty;
-        bool gpgpuEnabledCopy = csr->getPreambleSetFlag();
+        bool gpgpuEnabledCopy = this->csr->getPreambleSetFlag();
         bool baseAdresStateDirtyCopy = ctx.gsbaStateDirty;
         for (uint32_t i = 0; i < numCommandLists; i++) {
             auto cmdList = CommandList::fromHandle(phCommandLists[i]);
@@ -1194,11 +1194,10 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateScmCmdSizeForMultipleCommandLists(
     size_t estimatedSize = 0;
 
     bool isRcs = this->getCsr()->isRcs();
-    size_t singleScmCmdSize = NEO::EncodeComputeMode<GfxFamily>::getCmdSizeForComputeMode(device->getNEODevice()->getRootDeviceEnvironment(), false, isRcs);
 
     csrStateCopy.stateComputeMode.setProperties(cmdListRequired.stateComputeMode);
     if (csrStateCopy.stateComputeMode.isDirty()) {
-        estimatedSize += singleScmCmdSize;
+        estimatedSize = NEO::EncodeComputeMode<GfxFamily>::getCmdSizeForComputeMode(device->getNEODevice()->getRootDeviceEnvironment(), false, isRcs);
     }
     csrStateCopy.stateComputeMode.setProperties(cmdListFinal.stateComputeMode);
 
@@ -1227,6 +1226,7 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandLis
         bool isRcs = this->getCsr()->isRcs();
         NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(commandStream, csrState.stateComputeMode, pipelineSelectArgs,
                                                                                         false, device->getNEODevice()->getRootDeviceEnvironment(), isRcs, this->getCsr()->getDcFlushSupport(), nullptr);
+        this->csr->setStateComputeModeDirty(false);
     }
     csrState.stateComputeMode.setProperties(cmdListFinal.stateComputeMode);
 }

@@ -804,6 +804,7 @@ void CommandStreamReceiverHw<GfxFamily>::programComputeMode(LinearStream &stream
         EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(
             stream, this->streamProperties.stateComputeMode, dispatchFlags.pipelineSelectArgs,
             hasSharedHandles(), this->peekRootDeviceEnvironment(), isRcs(), this->dcFlushSupport, logicalStateHelper.get());
+        this->setStateComputeModeDirty(false);
     }
 }
 

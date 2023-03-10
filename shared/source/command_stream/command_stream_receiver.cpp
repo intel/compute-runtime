@@ -534,6 +534,7 @@ void CommandStreamReceiver::initProgrammingFlags() {
     bindingTableBaseAddressRequired = true;
     mediaVfeStateDirty = true;
     lastVmeSubslicesConfig = false;
+    stateComputeModeDirty = true;
 
     lastSentL3Config = 0;
     lastMediaSamplerConfig = -1;

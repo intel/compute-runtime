@@ -198,6 +198,7 @@ HWTEST_F(CommandStreamReceiverTest, WhenCreatingCsrThenFlagsAreSetCorrectly) {
     EXPECT_FALSE(csr.isPreambleSent);
     EXPECT_FALSE(csr.GSBAFor32BitProgrammed);
     EXPECT_TRUE(csr.mediaVfeStateDirty);
+    EXPECT_TRUE(csr.stateComputeModeDirty);
     EXPECT_FALSE(csr.lastVmeSubslicesConfig);
     EXPECT_EQ(0u, csr.lastSentL3Config);
     EXPECT_EQ(-1, csr.lastMediaSamplerConfig);
@@ -2998,4 +2999,29 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     hwParserCsr.findHardwareCommands<FamilyType>();
     ASSERT_NE(nullptr, hwParserCsr.cmdStateBaseAddress);
     EXPECT_EQ(nullptr, hwParserCsr.cmdBindingTableBaseAddress);
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenStateComputeModeDirtyWhenFlushingFirstTimeThenCleanDirtyFlagToDispatchStateComputeMode,
+          IsAtLeastXeHpCore) {
+    using STATE_COMPUTE_MODE = typename FamilyType::STATE_COMPUTE_MODE;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    EXPECT_TRUE(commandStreamReceiver.getStateComputeModeDirty());
+
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    &ssh,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+    EXPECT_FALSE(commandStreamReceiver.getStateComputeModeDirty());
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    hwParserCsr.findHardwareCommands<FamilyType>();
+    auto scmCmd = hwParserCsr.getCommand<STATE_COMPUTE_MODE>();
+    EXPECT_NE(nullptr, scmCmd);
 }

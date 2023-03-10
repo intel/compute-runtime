@@ -124,6 +124,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     using BaseClass::CommandStreamReceiver::samplerCacheFlushRequired;
     using BaseClass::CommandStreamReceiver::sbaSupportFlags;
     using BaseClass::CommandStreamReceiver::scratchSpaceController;
+    using BaseClass::CommandStreamReceiver::stateComputeModeDirty;
     using BaseClass::CommandStreamReceiver::submissionAggregator;
     using BaseClass::CommandStreamReceiver::tagAddress;
     using BaseClass::CommandStreamReceiver::taskCount;

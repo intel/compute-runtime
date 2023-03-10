@@ -143,6 +143,7 @@ struct UltCommandStreamReceiverTest
         commandStreamReceiver.isStateSipSent = true;
         commandStreamReceiver.lastPreemptionMode = pDevice->getPreemptionMode();
         commandStreamReceiver.setMediaVFEStateDirty(false);
+        commandStreamReceiver.stateComputeModeDirty = false;
         auto gmmHelper = pDevice->getGmmHelper();
         auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
         auto mocsIndex = gfxCoreHelper.getMocsIndex(*gmmHelper, true, isL1CacheEnabled);
