@@ -360,6 +360,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
+    if (kernelDescriptor.kernelAttributes.flags.usesAssert) {
+        kernelWithAssertAppended = true;
+    }
+
     if (kernelImp->usesRayTracing()) {
         NEO::GraphicsAllocation *memoryBackedBuffer = device->getNEODevice()->getRTMemoryBackedBuffer();
         if (memoryBackedBuffer == nullptr) {

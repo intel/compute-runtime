@@ -36,7 +36,7 @@ class AssertHandler {
     }
 
     bool checkAssert() const;
-    void printAssertAndAbort();
+    MOCKABLE_VIRTUAL void printAssertAndAbort();
 
   protected:
     static constexpr size_t assertBufferSize = MemoryConstants::pageSize64k;

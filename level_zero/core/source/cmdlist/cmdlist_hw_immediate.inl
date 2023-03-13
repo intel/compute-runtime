@@ -7,6 +7,7 @@
 
 #pragma once
 
+#include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver_hw.h"
 #include "shared/source/command_stream/scratch_space_controller.h"
@@ -274,14 +275,17 @@ inline ze_result_t CommandListCoreFamilyImmediate<gfxCoreFamily>::executeCommand
         const auto waitStatus = csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, completionStamp.taskCount);
         if (waitStatus == NEO::WaitStatus::GpuHang) {
             this->printKernelsPrintfOutput(true);
+            this->checkAssert();
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
         csr->getInternalAllocationStorage()->cleanAllocationList(completionStamp.taskCount, NEO::AllocationUsage::TEMPORARY_ALLOCATION);
         this->printKernelsPrintfOutput(false);
+        this->checkAssert();
     }
 
     this->cmdListCurrentStartOffset = commandStream->getUsed();
     this->containsAnyKernel = false;
+    this->kernelWithAssertAppended = false;
     this->handlePostSubmissionState();
 
     if (NEO::DebugManager.flags.PauseOnEnqueue.get() != -1) {
@@ -997,6 +1001,14 @@ void CommandListCoreFamilyImmediate<gfxCoreFamily>::printKernelsPrintfOutput(boo
         this->printfKernelContainer[i]->printPrintfOutput(hangDetected);
     }
     this->printfKernelContainer.clear();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamilyImmediate<gfxCoreFamily>::checkAssert() {
+    if (this->hasKernelWithAssert()) {
+        UNRECOVERABLE_IF(this->device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get() == nullptr);
+        this->device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
+    }
 }
 
 } // namespace L0

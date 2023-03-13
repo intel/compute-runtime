@@ -228,9 +228,9 @@ struct CommandHandler {
         return result;
     }
 
-    ze_result_t appendKernel(ze_kernel_handle_t kernel, const ze_group_count_t &dispatchTraits) {
+    ze_result_t appendKernel(ze_kernel_handle_t kernel, const ze_group_count_t &dispatchTraits, ze_event_handle_t event = nullptr) {
         return zeCommandListAppendLaunchKernel(cmdList, kernel, &dispatchTraits,
-                                               nullptr, 0, nullptr);
+                                               event, 0, nullptr);
     }
 
     ze_result_t execute() {

@@ -64,12 +64,14 @@ ze_result_t Fence::hostSynchronize(uint64_t timeout) {
         ret = queryStatus();
         if (ret == ZE_RESULT_SUCCESS) {
             cmdQueue->printKernelsPrintfOutput(false);
+            cmdQueue->checkAssert();
             return ZE_RESULT_SUCCESS;
         }
 
         currentTime = std::chrono::high_resolution_clock::now();
         if (csr->checkGpuHangDetected(currentTime, lastHangCheckTime)) {
             cmdQueue->printKernelsPrintfOutput(true);
+            cmdQueue->checkAssert();
             return ZE_RESULT_ERROR_DEVICE_LOST;
         }
 

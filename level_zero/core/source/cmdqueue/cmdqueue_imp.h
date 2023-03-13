@@ -88,6 +88,7 @@ struct CommandQueueImp : public CommandQueue {
     void handleIndirectAllocationResidency(UnifiedMemoryControls unifiedMemoryControls, std::unique_lock<std::mutex> &lockForIndirect, bool performMigration) override;
     void makeResidentAndMigrate(bool performMigration, const NEO::ResidencyContainer &residencyContainer) override;
     void printKernelsPrintfOutput(bool hangDetected);
+    void checkAssert();
 
   protected:
     MOCKABLE_VIRTUAL NEO::SubmissionStatus submitBatchBuffer(size_t offset, NEO::ResidencyContainer &residencyContainer, void *endingCmdPtr,
@@ -101,6 +102,7 @@ struct CommandQueueImp : public CommandQueue {
     NEO::HeapContainer heapContainer;
     ze_command_queue_desc_t desc;
     std::vector<Kernel *> printfKernelContainer;
+    std::atomic<bool> cmdListWithAssertExecuted = false;
 
     Device *device = nullptr;
     NEO::CommandStreamReceiver *csr = nullptr;

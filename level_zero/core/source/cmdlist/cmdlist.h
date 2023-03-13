@@ -337,6 +337,10 @@ struct CommandList : _ze_command_list_handle_t {
         this->csr = newCsr;
     }
 
+    bool hasKernelWithAssert() {
+        return kernelWithAssertAppended;
+    }
+
   protected:
     NEO::GraphicsAllocation *getAllocationFromHostPtrMap(const void *buffer, uint64_t bufferSize);
     NEO::GraphicsAllocation *getHostPtrAlloc(const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
@@ -411,6 +415,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool pipeControlMultiKernelEventSync = false;
     bool compactL3FlushEventPacket = false;
     bool dynamicHeapRequired = false;
+    bool kernelWithAssertAppended = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/sub_device.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
@@ -309,6 +310,9 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
                 static_cast<Kernel *>(this->getKernelForPrintf())->printPrintfOutput(true);
                 this->setKernelForPrintf(nullptr);
             }
+            if (device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get()) {
+                device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
+            }
             return ret;
         }
 
@@ -318,6 +322,9 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
         if (elapsedTimeSinceGpuHangCheck.count() >= this->gpuHangCheckPeriod.count()) {
             lastHangCheckTime = currentTime;
             if (this->csr->isGpuHangDetected()) {
+                if (device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get()) {
+                    device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
+                }
                 return ZE_RESULT_ERROR_DEVICE_LOST;
             }
         }
@@ -332,6 +339,9 @@ ze_result_t EventImp<TagSizeT>::hostSynchronize(uint64_t timeout) {
 
     } while (timeDiff < timeout);
 
+    if (device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get()) {
+        device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
+    }
     return ret;
 }
 

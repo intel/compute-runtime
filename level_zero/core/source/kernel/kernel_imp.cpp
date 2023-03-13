@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
 
+#include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -217,6 +218,12 @@ KernelImp::~KernelImp() {
         PrintfHandler::printOutput(kernelImmData, this->printfBuffer, module->getDevice(), false);
         module->getDevice()->getNEODevice()->getMemoryManager()->freeGraphicsMemory(printfBuffer);
     }
+
+    if (kernelImmData && kernelImmData->getDescriptor().kernelAttributes.flags.usesAssert && module &&
+        module->getDevice()->getNEODevice()->getRootDeviceEnvironment().assertHandler.get()) {
+        module->getDevice()->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
+    }
+
     slmArgSizes.clear();
     crossThreadData.reset();
     surfaceStateHeapData.reset();
@@ -921,6 +928,8 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
 
     this->setInlineSamplers();
 
+    this->setAssertBuffer();
+
     residencyContainer.insert(residencyContainer.end(), kernelImmData->getResidencyContainer().begin(),
                               kernelImmData->getResidencyContainer().end());
 
@@ -1105,5 +1114,18 @@ ze_result_t KernelImp::setSchedulingHintExp(ze_scheduling_hint_exp_desc_t *pHint
         threadArbitrationPolicy = NEO::ThreadArbitrationPolicy::RoundRobinAfterDependency;
     }
     return ZE_RESULT_SUCCESS;
+}
+
+void KernelImp::setAssertBuffer() {
+    if (!getKernelDescriptor().kernelAttributes.flags.usesAssert) {
+        return;
+    }
+
+    auto assertHandler = this->module->getDevice()->getNEODevice()->getRootDeviceEnvironmentRef().getAssertHandler(this->module->getDevice()->getNEODevice());
+
+    NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
+                      this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.assertBufferAddress,
+                      static_cast<uintptr_t>(assertHandler->getAssertBuffer()->getGpuAddressToPatch()));
+    this->residencyContainer.push_back(assertHandler->getAssertBuffer());
 }
 } // namespace L0

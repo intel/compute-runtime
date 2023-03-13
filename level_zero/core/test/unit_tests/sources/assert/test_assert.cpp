@@ -1,0 +1,517 @@
+/*
+ * Copyright (C) 2020-2023 Intel Corporation
+ *
+ * SPDX-License-Identifier: MIT
+ *
+ */
+
+#include "shared/source/helpers/hw_info.h"
+#include "shared/test/common/helpers/default_hw_info.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_assert_handler.h"
+#include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_logical_state_helper.h"
+#include "shared/test/common/test_macros/hw_test.h"
+#include "shared/test/common/test_macros/test.h"
+
+#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/event_fixture.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_device.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_fence.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_kernel.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
+
+#include <chrono>
+
+namespace L0 {
+namespace ult {
+
+using CommandListImmediateWithAssert = Test<DeviceFixture>;
+
+TEST(KernelAssert, GivenKernelWithAssertWhenDestroyedThenAssertIsChecked) {
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto assertHandler = new MockAssertHandler(neoDevice);
+    neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    Mock<Module> module(&l0Device, nullptr, ModuleType::User);
+
+    {
+        Mock<Kernel> kernel;
+        kernel.module = &module;
+
+        kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+    }
+
+    EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
+}
+
+TEST(KernelAssert, GivenKernelWithAssertWhenNoAssertHandlerOnDestroyThenDestructorDoesNotCrash) {
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+
+    Mock<Module> module(&l0Device, nullptr, ModuleType::User);
+
+    {
+        Mock<Kernel> kernel;
+        kernel.module = &module;
+
+        kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+    }
+}
+
+TEST(KernelAssert, GivenKernelWithAssertWhenSettingAssertBufferThenAssertBufferIsAddedToResidencyAndCrossThreadDataPatched) {
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto assertHandler = new MockAssertHandler(neoDevice);
+    neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    Mock<Module> module(&l0Device, nullptr, ModuleType::User);
+    Mock<Kernel> kernel;
+    kernel.module = &module;
+
+    kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+    kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.stateless = 0;
+    kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.pointerSize = sizeof(uintptr_t);
+    kernel.crossThreadData = std::make_unique<uint8_t[]>(16);
+    kernel.crossThreadDataSize = sizeof(uint8_t[16]);
+
+    kernel.setAssertBuffer();
+
+    auto assertBufferAddress = assertHandler->getAssertBuffer()->getGpuAddressToPatch();
+
+    EXPECT_TRUE(memcmp(kernel.crossThreadData.get(), &assertBufferAddress, sizeof(assertBufferAddress)) == 0);
+    EXPECT_TRUE(std::find(kernel.getResidencyContainer().begin(), kernel.getResidencyContainer().end(), assertHandler->getAssertBuffer()) != kernel.getResidencyContainer().end());
+}
+
+TEST(KernelAssert, GivenNoAssertHandlerWhenKernelWithAssertSetsAssertBufferThenAssertHandlerIsCreated) {
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+
+    Mock<Module> module(&l0Device, nullptr, ModuleType::User);
+    Mock<Kernel> kernel;
+    kernel.module = &module;
+
+    kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+    kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.stateless = 0;
+    kernel.descriptor.payloadMappings.implicitArgs.assertBufferAddress.pointerSize = sizeof(uintptr_t);
+    kernel.crossThreadData = std::make_unique<uint8_t[]>(16);
+    kernel.crossThreadDataSize = sizeof(uint8_t[16]);
+
+    kernel.setAssertBuffer();
+    EXPECT_NE(nullptr, neoDevice->getRootDeviceEnvironmentRef().assertHandler.get());
+}
+
+TEST(CommandListAssertTest, GivenCmdListWhenKernelWithAssertAppendedThenHasKernelWithAssertIsSetTrue) {
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    ze_result_t returnValue;
+
+    Mock<Kernel> kernel;
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, &l0Device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    ze_group_count_t groupCount{1, 1, 1};
+
+    kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_TRUE(commandList->hasKernelWithAssert());
+}
+
+TEST(CommandListAssertTest, GivenCmdListWithAppendedAssertKernelWhenResetThenKernelWithAssertAppendedIsFalse) {
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    Mock<L0::DeviceImp> l0Device(neoDevice, neoDevice->getExecutionEnvironment());
+    ze_result_t returnValue;
+
+    std::unique_ptr<ult::WhiteBox<L0::CommandList>> commandList(ult::whiteboxCast(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily,
+                                                                                                      &l0Device, NEO::EngineGroupType::RenderCompute, 0u, returnValue)));
+
+    commandList->kernelWithAssertAppended = true;
+    EXPECT_TRUE(commandList->hasKernelWithAssert());
+
+    commandList->reset();
+    EXPECT_FALSE(commandList->kernelWithAssertAppended);
+    EXPECT_FALSE(commandList->hasKernelWithAssert());
+}
+
+TEST_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenKernelWithAssertAppendedThenHasKernelWithAssertIsSetFalseAfterFlush) {
+    auto assertHandler = new MockAssertHandler(device->getNEODevice());
+    device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    ze_result_t result;
+    Mock<Kernel> kernel;
+    ze_command_queue_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    desc.pNext = 0;
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily, device, &desc, false,
+                                                                              NEO::EngineGroupType::RenderCompute, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_group_count_t groupCount{1, 1, 1};
+
+    kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+
+    CmdListKernelLaunchParams launchParams = {};
+    result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
+    EXPECT_FALSE(commandList->hasKernelWithAssert());
+}
+
+HWTEST2_F(CommandListImmediateWithAssert, GivenImmediateCmdListWhenCheckingAssertThenPrintMessageAndAbortOnAssertHandlerIsCalled, IsAtLeastSkl) {
+    ze_result_t result;
+    ze_command_queue_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    desc.pNext = 0;
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily, device, &desc, false,
+                                                                              NEO::EngineGroupType::RenderCompute, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto assertHandler = new MockAssertHandler(device->getNEODevice());
+    device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+    static_cast<MockCommandListImmediate<gfxCoreFamily> *>(commandList.get())->kernelWithAssertAppended = true;
+    static_cast<MockCommandListImmediate<gfxCoreFamily> *>(commandList.get())->checkAssert();
+
+    EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
+}
+
+HWTEST2_F(CommandListImmediateWithAssert, GivenImmediateCmdListAndNoAssertHandlerWhenCheckingAssertThenUnrecoverableIsCalled, IsAtLeastSkl) {
+    ze_result_t result;
+    ze_command_queue_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    desc.pNext = 0;
+
+    std::unique_ptr<L0::CommandList> commandList(CommandList::createImmediate(NEO::defaultHwInfo->platform.eProductFamily, device, &desc, false,
+                                                                              NEO::EngineGroupType::RenderCompute, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    static_cast<MockCommandListImmediate<gfxCoreFamily> *>(commandList.get())->kernelWithAssertAppended = true;
+    EXPECT_THROW(static_cast<MockCommandListImmediate<gfxCoreFamily> *>(commandList.get())->checkAssert(), std::exception);
+}
+
+HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToAsynchronousImmCommandListThenAssertIsNotChecked, IsAtLeastSkl) {
+    ze_result_t result;
+
+    Mock<Kernel> kernel;
+    ze_command_queue_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    desc.pNext = 0;
+    desc.mode = ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS;
+
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.callBaseExecute = true;
+    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.isSyncModeQueue = false;
+    result = cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    cmdList.setCsr(&csr);
+    cmdList.getCmdContainer().setImmediateCmdListCsr(&csr);
+    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, result);
+    cmdList.cmdQImmediate = commandQueue;
+
+    auto mockCsrLogicalStateHelper = new NEO::LogicalStateHelperMock<FamilyType>();
+    csr.logicalStateHelper.reset(mockCsrLogicalStateHelper);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+
+    CmdListKernelLaunchParams launchParams = {};
+    result = cmdList.appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(0u, cmdList.checkAssertCalled);
+}
+
+HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendedToSynchronousImmCommandListThenAssertIsChecked, IsAtLeastSkl) {
+    ze_result_t result;
+
+    Mock<Kernel> kernel;
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.callBaseExecute = true;
+    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.isSyncModeQueue = true;
+    result = cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    cmdList.setCsr(&csr);
+    cmdList.getCmdContainer().setImmediateCmdListCsr(&csr);
+
+    ze_command_queue_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    desc.pNext = 0;
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, result);
+    cmdList.cmdQImmediate = commandQueue;
+
+    auto mockCsrLogicalStateHelper = new NEO::LogicalStateHelperMock<FamilyType>();
+    csr.logicalStateHelper.reset(mockCsrLogicalStateHelper);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+
+    CmdListKernelLaunchParams launchParams = {};
+    result = cmdList.appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(1u, cmdList.checkAssertCalled);
+}
+
+HWTEST2_F(CommandListImmediateWithAssert, givenKernelWithAssertWhenAppendToSynchronousImmCommandListHangsThenAssertIsChecked, IsAtLeastSkl) {
+    ze_result_t result;
+
+    Mock<Kernel> kernel;
+    TaskCountType currentTaskCount = 33u;
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
+    csr.callBaseWaitForCompletionWithTimeout = false;
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+
+    MockCommandListImmediateHw<gfxCoreFamily> cmdList;
+    cmdList.isFlushTaskSubmissionEnabled = true;
+    cmdList.callBaseExecute = true;
+    cmdList.cmdListType = CommandList::CommandListType::TYPE_IMMEDIATE;
+    cmdList.isSyncModeQueue = true;
+    result = cmdList.initialize(device, NEO::EngineGroupType::RenderCompute, 0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdList.setCsr(&csr);
+    cmdList.getCmdContainer().setImmediateCmdListCsr(&csr);
+    ze_command_queue_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC;
+    desc.pNext = 0;
+    desc.mode = ZE_COMMAND_QUEUE_MODE_SYNCHRONOUS;
+    auto commandQueue = CommandQueue::create(productFamily, device, &csr, &desc, cmdList.isCopyOnly(), false, result);
+    cmdList.cmdQImmediate = commandQueue;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+
+    CmdListKernelLaunchParams launchParams = {};
+    result = cmdList.appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+
+    EXPECT_EQ(1u, cmdList.checkAssertCalled);
+}
+
+using CommandQueueWithAssert = Test<DeviceFixture>;
+
+TEST_F(CommandQueueWithAssert, GivenCmdListWithAssertWhenExecutingThenCommandQueuesPropertyIsSet) {
+    ze_command_queue_desc_t desc = {};
+
+    auto assertHandler = new MockAssertHandler(device->getNEODevice());
+    device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    Mock<Kernel> kernel;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(NEO::defaultHwInfo->platform.eProductFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    ze_group_count_t groupCount{1, 1, 1};
+
+    kernel.descriptor.kernelAttributes.flags.usesAssert = true;
+
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    commandList->close();
+
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, false);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_TRUE(commandQueue->cmdListWithAssertExecuted);
+
+    commandQueue->destroy();
+}
+
+TEST_F(CommandQueueWithAssert, GivenAssertKernelExecutedAndNoAssertHandlerWhenCheckingAssertThenUnrecoverableIsCalled) {
+    ze_command_queue_desc_t desc = {};
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    commandQueue->cmdListWithAssertExecuted = true;
+
+    EXPECT_THROW(commandQueue->checkAssert(), std::exception);
+    EXPECT_FALSE(commandQueue->cmdListWithAssertExecuted);
+
+    commandQueue->destroy();
+}
+
+TEST_F(CommandQueueWithAssert, GivenCmdListWithAssertExecutedWhenSynchronizeByPollingTaskCountCalledThenAssertIsChecked) {
+    ze_command_queue_desc_t desc = {};
+
+    auto assertHandler = new MockAssertHandler(device->getNEODevice());
+    device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    commandQueue->cmdListWithAssertExecuted = true;
+
+    returnValue = commandQueue->synchronizeByPollingForTaskCount(0u);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
+    EXPECT_FALSE(commandQueue->cmdListWithAssertExecuted);
+
+    commandQueue->destroy();
+}
+
+HWTEST_F(CommandQueueWithAssert, GivenCmdListWithAssertExecutedAndDetectedHangWhenSynchronizingByPollingThenAssertIsChecked) {
+    const ze_command_queue_desc_t desc{};
+
+    auto assertHandler = new MockAssertHandler(device->getNEODevice());
+    device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+
+    Mock<Kernel> kernel1;
+    TaskCountType currentTaskCount = 33u;
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.callBaseWaitForCompletionWithTimeout = false;
+    csr.latestWaitForCompletionWithTimeoutTaskCount = currentTaskCount;
+    csr.returnWaitForCompletionWithTimeout = WaitStatus::GpuHang;
+
+    commandQueue->cmdListWithAssertExecuted = true;
+
+    returnValue = commandQueue->synchronizeByPollingForTaskCount(0u);
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, returnValue);
+
+    EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
+    EXPECT_FALSE(commandQueue->cmdListWithAssertExecuted);
+
+    commandQueue->destroy();
+}
+
+TEST_F(CommandQueueWithAssert, GivenAssertKernelExecutedWhenSynchronizingFenceThenAssertIsChecked) {
+    ze_command_queue_desc_t desc = {};
+
+    auto assertHandler = new MockAssertHandler(device->getNEODevice());
+    device->getNEODevice()->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    ze_result_t returnValue;
+    auto commandQueue = whiteboxCast(CommandQueue::create(productFamily,
+                                                          device,
+                                                          neoDevice->getDefaultEngine().commandStreamReceiver,
+                                                          &desc,
+                                                          false,
+                                                          false,
+                                                          returnValue));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    commandQueue->cmdListWithAssertExecuted = true;
+
+    ze_fence_desc_t fenceDesc = {ZE_STRUCTURE_TYPE_FENCE_DESC,
+                                 nullptr,
+                                 0};
+    auto fence = whiteboxCast(Fence::create(commandQueue, &fenceDesc));
+    ASSERT_NE(fence, nullptr);
+    fence->taskCount = 0;
+    ze_result_t result = fence->hostSynchronize(1);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    delete fence;
+
+    EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
+    EXPECT_FALSE(commandQueue->cmdListWithAssertExecuted);
+    commandQueue->destroy();
+}
+
+using EventAssertTest = Test<EventFixture<1, 0>>;
+
+TEST_F(EventAssertTest, GivenGpuHangWhenHostSynchronizeIsCalledThenAssertIsChecked) {
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->isGpuHangDetectedReturnValue = true;
+
+    event->csr = csr.get();
+    event->gpuHangCheckPeriod = std::chrono::microseconds::zero();
+    auto assertHandler = new MockAssertHandler(device->getNEODevice());
+    neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    constexpr uint64_t timeout = std::numeric_limits<std::uint64_t>::max();
+    auto result = event->hostSynchronize(timeout);
+
+    EXPECT_EQ(ZE_RESULT_ERROR_DEVICE_LOST, result);
+    EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
+}
+
+TEST_F(EventAssertTest, GivenNoGpuHangAndOneNanosecondTimeoutWhenHostSynchronizeIsCalledThenAssertIsChecked) {
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    csr->isGpuHangDetectedReturnValue = false;
+
+    event->csr = csr.get();
+    event->gpuHangCheckPeriod = std::chrono::microseconds::zero();
+    auto assertHandler = new MockAssertHandler(device->getNEODevice());
+    neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    constexpr uint64_t timeoutNanoseconds = 1;
+    auto result = event->hostSynchronize(timeoutNanoseconds);
+
+    EXPECT_EQ(ZE_RESULT_NOT_READY, result);
+    EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
+}
+
+TEST_F(EventAssertTest, GivenEventSignalledWhenHostSynchronizeIsCalledThenAssertIsChecked) {
+    const auto csr = std::make_unique<MockCommandStreamReceiver>(*neoDevice->getExecutionEnvironment(), 0, neoDevice->getDeviceBitfield());
+    uint32_t *hostAddr = static_cast<uint32_t *>(event->getHostAddress());
+    *hostAddr = Event::STATE_SIGNALED;
+
+    event->setUsingContextEndOffset(false);
+    event->csr = csr.get();
+
+    auto assertHandler = new MockAssertHandler(device->getNEODevice());
+    neoDevice->getRootDeviceEnvironmentRef().assertHandler.reset(assertHandler);
+
+    constexpr uint64_t timeoutNanoseconds = 1;
+    auto result = event->hostSynchronize(timeoutNanoseconds);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, assertHandler->printAssertAndAbortCalled);
+}
+
+} // namespace ult
+} // namespace L0

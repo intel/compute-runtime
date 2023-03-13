@@ -214,6 +214,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         storePrintfKernel(kernel);
     }
 
+    if (kernelDescriptor.kernelAttributes.flags.usesAssert) {
+        kernelWithAssertAppended = true;
+    }
+
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {
         commandsToPatch.push_back({0x0, additionalCommands.front(), CommandToPatch::PauseOnEnqueuePipeControlStart});
         additionalCommands.pop_front();

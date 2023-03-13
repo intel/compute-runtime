@@ -7,17 +7,12 @@
 
 #include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
+#include "shared/test/common/mocks/mock_assert_handler.h"
 #include "shared/test/common/mocks/mock_device.h"
 
 #include "gtest/gtest.h"
 
 using namespace NEO;
-
-struct MockAssertHandler : AssertHandler {
-
-    using AssertHandler::assertBufferSize;
-    using AssertHandler::AssertHandler;
-};
 
 TEST(AssertHandlerTests, WhenAssertHandlerIsCreatedThenAssertBufferIsAllocated) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));

@@ -169,6 +169,7 @@ struct CommandListCoreFamilyImmediate : public CommandListCoreFamily<gfxCoreFami
 
   protected:
     void printKernelsPrintfOutput(bool hangDetected);
+    MOCKABLE_VIRTUAL void checkAssert();
     std::atomic<bool> dependenciesPresent{false};
 };
 

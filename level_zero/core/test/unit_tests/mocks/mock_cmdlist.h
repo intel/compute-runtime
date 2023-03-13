@@ -177,6 +177,7 @@ struct WhiteBox<L0::CommandListCoreFamilyImmediate<gfxCoreFamily>>
 template <GFXCORE_FAMILY gfxCoreFamily>
 struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreFamily> {
     using BaseClass = CommandListCoreFamilyImmediate<gfxCoreFamily>;
+    using BaseClass::checkAssert;
     using BaseClass::cmdQImmediate;
     using BaseClass::commandContainer;
     using BaseClass::compactL3FlushEventPacket;
@@ -191,6 +192,7 @@ struct MockCommandListImmediate : public CommandListCoreFamilyImmediate<gfxCoreF
     using BaseClass::isTbxMode;
     using BaseClass::pipeControlMultiKernelEventSync;
     using BaseClass::requiredStreamState;
+    using CommandList::kernelWithAssertAppended;
 };
 
 template <>
@@ -225,6 +227,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::signalAllEventPackets;
     using BaseClass::stateBaseAddressTracking;
     using BaseClass::stateComputeModeTracking;
+    using CommandList::kernelWithAssertAppended;
 
     WhiteBox();
     ~WhiteBox() override;
@@ -563,13 +566,26 @@ class MockCommandListImmediateHw : public WhiteBox<::L0::CommandListCoreFamilyIm
 
     ze_result_t executeCommandListImmediate(bool performMigration) override {
         ++executeCommandListImmediateCalledCount;
+        if (callBaseExecute) {
+            return BaseClass::executeCommandListImmediate(performMigration);
+        }
         return executeCommandListImmediateReturnValue;
     }
 
     ze_result_t executeCommandListImmediateWithFlushTask(bool performMigration, bool hasStallingCmds, bool hasRelaxedOrderingDependencies) override {
         ++executeCommandListImmediateWithFlushTaskCalledCount;
+        if (callBaseExecute) {
+            return BaseClass::executeCommandListImmediateWithFlushTask(performMigration, hasStallingCmds, hasRelaxedOrderingDependencies);
+        }
         return executeCommandListImmediateWithFlushTaskReturnValue;
     }
+
+    void checkAssert() override {
+        checkAssertCalled++;
+    }
+
+    uint32_t checkAssertCalled = 0;
+    bool callBaseExecute = false;
 
     ze_result_t executeCommandListImmediateReturnValue = ZE_RESULT_SUCCESS;
     uint32_t executeCommandListImmediateCalledCount = 0;

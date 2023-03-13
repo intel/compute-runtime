@@ -181,6 +181,9 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         this->mergeOneCmdListPipelinedState(commandList);
 
         this->prefetchMemoryToDeviceAssociatedWithCmdList(commandList);
+        if (commandList->hasKernelWithAssert()) {
+            cmdListWithAssertExecuted.exchange(true);
+        }
     }
 
     this->updateBaseAddressState(CommandList::fromHandle(phCommandLists[numCommandLists - 1]));

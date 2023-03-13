@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,10 +7,10 @@
 
 #pragma once
 
+#include "level_zero/core/source/builtin/builtin_functions_lib_impl.h"
 #include "level_zero/core/source/driver/driver_handle_imp.h"
 #include "level_zero/core/source/module/module.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_device.h"
-
 namespace L0 {
 namespace ult {
 
@@ -30,6 +30,7 @@ class MockDeviceForSpv : public Mock<DeviceImp> {
     ze_result_t createModule(const ze_module_desc_t *desc, ze_module_handle_t *module,
                              ze_module_build_log_handle_t *buildLog, ModuleType type) override;
     ~MockDeviceForSpv() override {
+        builtins.reset(nullptr);
     }
 };
 

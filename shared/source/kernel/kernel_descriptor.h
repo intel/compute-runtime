@@ -110,8 +110,11 @@ struct KernelDescriptor {
                 bool hasRTCalls : 1;
                 bool isInvalid : 1;
                 bool hasSample : 1;
+                // 3
+                bool usesAssert : 1;
+                bool reserved : 7;
             };
-            std::array<bool, 3> packed;
+            std::array<bool, 4> packed;
         } flags = {};
         static_assert(sizeof(KernelAttributes::flags) == sizeof(KernelAttributes::flags.packed), "");
 
@@ -164,6 +167,7 @@ struct KernelDescriptor {
             ArgDescPointer systemThreadSurfaceAddress;
             ArgDescPointer syncBufferAddress;
             ArgDescPointer rtDispatchGlobals;
+            ArgDescPointer assertBufferAddress;
             CrossThreadDataOffset privateMemorySize = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset maxWorkGroupSize = undefined<CrossThreadDataOffset>;
             CrossThreadDataOffset simdSize = undefined<CrossThreadDataOffset>;

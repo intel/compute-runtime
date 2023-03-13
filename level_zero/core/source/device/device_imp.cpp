@@ -7,6 +7,7 @@
 
 #include "level_zero/core/source/device/device_imp.h"
 
+#include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
@@ -1245,6 +1246,9 @@ void DeviceImp::releaseResources() {
     if (neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.get() &&
         !neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger->isLegacy()) {
         neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->debugger.reset(nullptr);
+    }
+    if (neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->assertHandler.get()) {
+        neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[neoDevice->getRootDeviceIndex()]->assertHandler.reset(nullptr);
     }
 
     // close connection and async threads in debug session before releasing device resources

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/assert_handler/assert_handler.h"
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/command_stream/csr_definitions.h"
@@ -188,8 +189,19 @@ void CommandQueueImp::printKernelsPrintfOutput(bool hangDetected) {
     this->printfKernelContainer.clear();
 }
 
+void CommandQueueImp::checkAssert() {
+    bool valueExpected = true;
+    bool hadAssert = cmdListWithAssertExecuted.compare_exchange_strong(valueExpected, false);
+
+    if (hadAssert) {
+        UNRECOVERABLE_IF(device->getNEODevice()->getRootDeviceEnvironment().assertHandler.get() == nullptr);
+        device->getNEODevice()->getRootDeviceEnvironment().assertHandler->printAssertAndAbort();
+    }
+}
+
 void CommandQueueImp::postSyncOperations(bool hangDetected) {
     printKernelsPrintfOutput(hangDetected);
+    checkAssert();
 
     if (NEO::Debugger::isDebugEnabled(internalUsage) && device->getL0Debugger() && NEO::DebugManager.flags.DebuggerLogBitmask.get()) {
         device->getL0Debugger()->printTrackedAddresses(csr->getOsContext().getContextId());

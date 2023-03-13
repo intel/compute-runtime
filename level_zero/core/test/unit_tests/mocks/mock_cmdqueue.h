@@ -24,6 +24,7 @@ template <>
 struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using BaseClass = ::L0::CommandQueueImp;
     using BaseClass::buffers;
+    using BaseClass::cmdListWithAssertExecuted;
     using BaseClass::commandStream;
     using BaseClass::csr;
     using BaseClass::device;
