@@ -1024,6 +1024,8 @@ TaskCountType CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionS
         return CompletionStamp::outOfHostMemory;
     case SubmissionStatus::OUT_OF_MEMORY:
         return CompletionStamp::outOfDeviceMemory;
+    case SubmissionStatus::FAILED:
+        return CompletionStamp::failed;
     default:
         return 0;
     }

@@ -23,6 +23,7 @@ struct CompletionStamp {
     FlushStamp flushStamp;
 
     static constexpr TaskCountType notReady = std::numeric_limits<TaskCountType>::max() - 0xF;
+    static constexpr TaskCountType failed = std::numeric_limits<TaskCountType>::max() - 0x6;
     static constexpr TaskCountType gpuHang = std::numeric_limits<TaskCountType>::max() - 0x5;
     static constexpr TaskCountType outOfDeviceMemory = std::numeric_limits<TaskCountType>::max() - 0x4;
     static constexpr TaskCountType outOfHostMemory = std::numeric_limits<TaskCountType>::max() - 0x3;

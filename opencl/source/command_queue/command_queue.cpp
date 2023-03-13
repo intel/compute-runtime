@@ -75,6 +75,7 @@ CommandQueue *CommandQueue::create(Context *context,
 
 cl_int CommandQueue::getErrorCodeFromTaskCount(TaskCountType taskCount) {
     switch (taskCount) {
+    case CompletionStamp::failed:
     case CompletionStamp::gpuHang:
     case CompletionStamp::outOfDeviceMemory:
         return CL_OUT_OF_RESOURCES;

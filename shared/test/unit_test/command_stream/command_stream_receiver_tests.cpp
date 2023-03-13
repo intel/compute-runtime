@@ -2636,6 +2636,7 @@ TEST(CommandStreamReceiverSimpleTest, whenTranslatingSubmissionStatusToTaskCount
     EXPECT_EQ(0u, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::SUCCESS));
     EXPECT_EQ(CompletionStamp::outOfHostMemory, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::OUT_OF_HOST_MEMORY));
     EXPECT_EQ(CompletionStamp::outOfDeviceMemory, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::OUT_OF_MEMORY));
+    EXPECT_EQ(CompletionStamp::failed, CompletionStamp::getTaskCountFromSubmissionStatusError(SubmissionStatus::FAILED));
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenFailureOnFlushWhenFlushingBcsTaskThenErrorIsPropagated) {
@@ -2654,6 +2655,8 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFailureOnFlushWhenFlushingBcsTaskThen
     EXPECT_EQ(CompletionStamp::outOfHostMemory, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
     EXPECT_EQ(CompletionStamp::outOfDeviceMemory, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::FAILED;
+    EXPECT_EQ(CompletionStamp::failed, commandStreamReceiver.flushBcsTask(container, true, false, *pDevice));
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfHostMemoryFailureOnFlushWhenFlushingTaskThenErrorIsPropagated) {
@@ -2687,6 +2690,23 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfDeviceMemoryFailureOnFlushWhenFl
                                                            *pDevice);
 
     EXPECT_EQ(CompletionStamp::outOfDeviceMemory, completionStamp.taskCount);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenFailedFailureOnFlushWhenFlushingTaskThenErrorIsPropagated) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::FAILED;
+
+    auto completionStamp = commandStreamReceiver.flushTask(commandStream,
+                                                           0,
+                                                           &dsh,
+                                                           &ioh,
+                                                           nullptr,
+                                                           taskLevel,
+                                                           flushTaskFlags,
+                                                           *pDevice);
+
+    EXPECT_EQ(CompletionStamp::failed, completionStamp.taskCount);
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenFlushingMiDWThenErrorIsPropagated) {
