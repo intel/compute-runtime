@@ -258,6 +258,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     } else if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         if (CL_COMMAND_BARRIER == commandType) {
             setStallingCommandsOnNextFlush(true);
+            this->splitBarrierRequired = true;
         }
 
         for (size_t i = 0; i < eventsRequest.numEventsInWaitList; i++) {
@@ -1245,7 +1246,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
                                                 di,
                                                 numEventsInWaitList,
                                                 eventWaitList,
-                                                event);
+                                                nullptr);
         DEBUG_BREAK_IF(ret != CL_SUCCESS);
     }
 
@@ -1259,6 +1260,9 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
     auto remainingSize = size;
 
     for (size_t i = 0; i < copyEngines.size(); i++) {
+        if (isOOQEnabled() && this->splitBarrierRequired) {
+            this->setStallingCommandsOnNextFlush(true);
+        }
         auto localSize = remainingSize / (copyEngines.size() - i);
         auto localParams = dispatchInfo.peekBuiltinOpParams();
         localParams.size.x = localSize;
@@ -1282,6 +1286,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
     }
 
     this->timestampPacketContainer->swapNodes(splitNodes);
+    this->splitBarrierRequired = false;
 
     queueOwnership.unlock();
     for (auto &lock : locks) {

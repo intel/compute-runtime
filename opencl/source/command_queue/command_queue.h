@@ -452,6 +452,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     };
     std::array<BcsTimestampPacketContainers, bcsInfoMaskSize> bcsTimestampPacketContainers;
     bool stallingCommandsOnNextFlushRequired = false;
+    bool splitBarrierRequired = false;
 };
 
 template <typename PtrType>
