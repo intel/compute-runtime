@@ -54,6 +54,10 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::containsAnyKernel;
     using BaseClass::containsCooperativeKernelsFlag;
     using BaseClass::csr;
+    using BaseClass::currentBindingTablePoolBaseAddress;
+    using BaseClass::currentDynamicStateBaseAddress;
+    using BaseClass::currentIndirectObjectBaseAddress;
+    using BaseClass::currentSurfaceStateBaseAddress;
     using BaseClass::device;
     using BaseClass::doubleSbaWa;
     using BaseClass::engineGroupType;
@@ -199,6 +203,10 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::commandContainer;
     using BaseClass::commandListPreemptionMode;
     using BaseClass::csr;
+    using BaseClass::currentBindingTablePoolBaseAddress;
+    using BaseClass::currentDynamicStateBaseAddress;
+    using BaseClass::currentIndirectObjectBaseAddress;
+    using BaseClass::currentSurfaceStateBaseAddress;
     using BaseClass::device;
     using BaseClass::doubleSbaWa;
     using BaseClass::finalStreamState;

@@ -89,6 +89,11 @@ void CommandListCoreFamily<gfxCoreFamily>::postInitComputeSetup() {
 
     setStreamPropertiesDefaultSettings(requiredStreamState);
     setStreamPropertiesDefaultSettings(finalStreamState);
+
+    currentSurfaceStateBaseAddress = NEO::StreamProperty64::initValue;
+    currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;
+    currentIndirectObjectBaseAddress = NEO::StreamProperty64::initValue;
+    currentBindingTablePoolBaseAddress = NEO::StreamProperty64::initValue;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

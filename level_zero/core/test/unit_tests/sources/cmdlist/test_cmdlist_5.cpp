@@ -2341,5 +2341,39 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     cmdQueueHw->destroy();
 }
 
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
+          givenCommandListAppendsKernelWhenCommandListIsResetThenBaseAddressPropertiesAreResetToo,
+          IsAtLeastSkl) {
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &container = commandList->getCmdContainer();
+    auto indirectBaseAddress = container.getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getHeapGpuBase();
+    auto surfaceBaseAddress = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getHeapGpuBase();
+    auto dynamicBaseAddress = static_cast<uint64_t>(NEO::StreamProperty64::initValue);
+    if (dshRequired) {
+        dynamicBaseAddress = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE)->getHeapGpuBase();
+    }
+
+    EXPECT_EQ(static_cast<int64_t>(indirectBaseAddress), commandList->currentIndirectObjectBaseAddress);
+    EXPECT_EQ(static_cast<int64_t>(surfaceBaseAddress), commandList->currentSurfaceStateBaseAddress);
+    EXPECT_EQ(static_cast<int64_t>(surfaceBaseAddress), commandList->currentBindingTablePoolBaseAddress);
+    EXPECT_EQ(static_cast<int64_t>(dynamicBaseAddress), commandList->currentDynamicStateBaseAddress);
+
+    result = commandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(NEO::StreamProperty64::initValue, commandList->currentIndirectObjectBaseAddress);
+    EXPECT_EQ(NEO::StreamProperty64::initValue, commandList->currentSurfaceStateBaseAddress);
+    EXPECT_EQ(NEO::StreamProperty64::initValue, commandList->currentBindingTablePoolBaseAddress);
+    EXPECT_EQ(NEO::StreamProperty64::initValue, commandList->currentDynamicStateBaseAddress);
+}
+
 } // namespace ult
 } // namespace L0
