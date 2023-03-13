@@ -49,6 +49,9 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) override;
     ze_result_t engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine) override;
 
+    FrequencyHandleContext *pFrequencyHandleContext = nullptr;
+    ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) override;
+
   private:
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     const uint32_t rootDeviceIndex;

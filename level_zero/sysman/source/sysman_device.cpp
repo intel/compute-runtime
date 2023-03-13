@@ -37,23 +37,22 @@ ze_result_t SysmanDevice::memoryGet(zes_device_handle_t hDevice, uint32_t *pCoun
 
 ze_result_t SysmanDevice::powerGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_pwr_handle_t *phPower) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
-    if (pSysmanDevice == nullptr) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     return pSysmanDevice->powerGet(pCount, phPower);
 }
 
 ze_result_t SysmanDevice::powerGetCardDomain(zes_device_handle_t hDevice, zes_pwr_handle_t *phPower) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
-    if (pSysmanDevice == nullptr) {
-        return ZE_RESULT_ERROR_UNINITIALIZED;
-    }
     return pSysmanDevice->powerGetCardDomain(phPower);
 }
 
 ze_result_t SysmanDevice::engineGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_engine_handle_t *phEngine) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     return pSysmanDevice->engineGet(pCount, phEngine);
+}
+
+ze_result_t SysmanDevice::frequencyGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_freq_handle_t *phFrequency) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->frequencyGet(pCount, phFrequency);
 }
 
 } // namespace Sysman

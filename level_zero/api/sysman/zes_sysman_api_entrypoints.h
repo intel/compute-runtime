@@ -252,112 +252,184 @@ ze_result_t zesDeviceEnumFrequencyDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_freq_handle_t *phFrequency) {
-    return L0::SysmanDevice::frequencyGet(hDevice, pCount, phFrequency);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::frequencyGet(hDevice, pCount, phFrequency);
+    } else {
+        return L0::Sysman::SysmanDevice::frequencyGet(hDevice, pCount, phFrequency);
+    }
 }
 
 ze_result_t zesFrequencyGetProperties(
     zes_freq_handle_t hFrequency,
     zes_freq_properties_t *pProperties) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyGetProperties(pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyGetProperties(pProperties);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetProperties(pProperties);
+    }
 }
 
 ze_result_t zesFrequencyGetAvailableClocks(
     zes_freq_handle_t hFrequency,
     uint32_t *pCount,
     double *phFrequency) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyGetAvailableClocks(pCount, phFrequency);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyGetAvailableClocks(pCount, phFrequency);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetAvailableClocks(pCount, phFrequency);
+    }
 }
 
 ze_result_t zesFrequencyGetRange(
     zes_freq_handle_t hFrequency,
     zes_freq_range_t *pLimits) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyGetRange(pLimits);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyGetRange(pLimits);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetRange(pLimits);
+    }
 }
 
 ze_result_t zesFrequencySetRange(
     zes_freq_handle_t hFrequency,
     const zes_freq_range_t *pLimits) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencySetRange(pLimits);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencySetRange(pLimits);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencySetRange(pLimits);
+    }
 }
 
 ze_result_t zesFrequencyGetState(
     zes_freq_handle_t hFrequency,
     zes_freq_state_t *pState) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyGetState(pState);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyGetState(pState);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetState(pState);
+    }
 }
 
 ze_result_t zesFrequencyGetThrottleTime(
     zes_freq_handle_t hFrequency,
     zes_freq_throttle_time_t *pThrottleTime) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyGetThrottleTime(pThrottleTime);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyGetThrottleTime(pThrottleTime);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyGetThrottleTime(pThrottleTime);
+    }
 }
 
 ze_result_t zesFrequencyOcGetFrequencyTarget(
     zes_freq_handle_t hFrequency,
     double *pCurrentOcFrequency) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetFrequencyTarget(pCurrentOcFrequency);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetFrequencyTarget(pCurrentOcFrequency);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetFrequencyTarget(pCurrentOcFrequency);
+    }
 }
 
 ze_result_t zesFrequencyOcSetFrequencyTarget(
     zes_freq_handle_t hFrequency,
     double currentOcFrequency) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetFrequencyTarget(currentOcFrequency);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetFrequencyTarget(currentOcFrequency);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetFrequencyTarget(currentOcFrequency);
+    }
 }
 
 ze_result_t zesFrequencyOcGetVoltageTarget(
     zes_freq_handle_t hFrequency,
     double *pCurrentVoltageTarget,
     double *pCurrentVoltageOffset) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetVoltageTarget(pCurrentVoltageTarget, pCurrentVoltageOffset);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetVoltageTarget(pCurrentVoltageTarget, pCurrentVoltageOffset);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetVoltageTarget(pCurrentVoltageTarget, pCurrentVoltageOffset);
+    }
 }
 
 ze_result_t zesFrequencyOcSetVoltageTarget(
     zes_freq_handle_t hFrequency,
     double currentVoltageTarget,
     double currentVoltageOffset) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetVoltageTarget(currentVoltageTarget, currentVoltageOffset);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetVoltageTarget(currentVoltageTarget, currentVoltageOffset);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetVoltageTarget(currentVoltageTarget, currentVoltageOffset);
+    }
 }
 
 ze_result_t zesFrequencyOcSetMode(
     zes_freq_handle_t hFrequency,
     zes_oc_mode_t currentOcMode) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetMode(currentOcMode);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetMode(currentOcMode);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetMode(currentOcMode);
+    }
 }
 
 ze_result_t zesFrequencyOcGetMode(
     zes_freq_handle_t hFrequency,
     zes_oc_mode_t *pCurrentOcMode) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetMode(pCurrentOcMode);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetMode(pCurrentOcMode);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetMode(pCurrentOcMode);
+    }
 }
 
 ze_result_t zesFrequencyOcGetCapabilities(
     zes_freq_handle_t hFrequency,
     zes_oc_capabilities_t *pOcCapabilities) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetCapabilities(pOcCapabilities);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetCapabilities(pOcCapabilities);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetCapabilities(pOcCapabilities);
+    }
 }
 
 ze_result_t zesFrequencyOcGetIccMax(
     zes_freq_handle_t hFrequency,
     double *pOcIccMax) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetIccMax(pOcIccMax);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyOcGetIccMax(pOcIccMax);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGetIccMax(pOcIccMax);
+    }
 }
 
 ze_result_t zesFrequencyOcSetIccMax(
     zes_freq_handle_t hFrequency,
     double ocIccMax) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetIccMax(ocIccMax);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetIccMax(ocIccMax);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetIccMax(ocIccMax);
+    }
 }
 
 ze_result_t zesFrequencyOcGetTjMax(
     zes_freq_handle_t hFrequency,
     double *pOcTjMax) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyOcGeTjMax(pOcTjMax);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyOcGeTjMax(pOcTjMax);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcGeTjMax(pOcTjMax);
+    }
 }
 
 ze_result_t zesFrequencyOcSetTjMax(
     zes_freq_handle_t hFrequency,
     double ocTjMax) {
-    return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetTjMax(ocTjMax);
+    if (L0::sysmanInitFromCore) {
+        return L0::Frequency::fromHandle(hFrequency)->frequencyOcSetTjMax(ocTjMax);
+    } else {
+        return L0::Sysman::Frequency::fromHandle(hFrequency)->frequencyOcSetTjMax(ocTjMax);
+    }
 }
 
 ze_result_t zesDeviceEnumEngineGroups(

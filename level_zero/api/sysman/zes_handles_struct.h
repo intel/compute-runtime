@@ -23,3 +23,6 @@ struct _zes_pwr_handle_t {
 struct _zes_engine_handle_t {
     virtual ~_zes_engine_handle_t() = default;
 };
+struct _zes_freq_handle_t {
+    virtual ~_zes_freq_handle_t() = default;
+};
