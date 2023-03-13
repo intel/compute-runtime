@@ -685,13 +685,13 @@ HWTEST_F(BlitTests, givenPlatformWhenCallingDispatchPreBlitCommandThenNoneMiFlus
     blitPropertiesContainer1.push_back(blitProperties);
 
     auto estimatedSizeWithoutNode = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        blitPropertiesContainer1, false, true, false, pDevice->getRootDeviceEnvironment());
+        blitPropertiesContainer1, false, true, false, false, pDevice->getRootDeviceEnvironment());
     blitProperties.multiRootDeviceEventSync = tag;
     BlitPropertiesContainer blitPropertiesContainer2;
     blitPropertiesContainer2.push_back(blitProperties);
     blitPropertiesContainer2.push_back(blitProperties);
     blitPropertiesContainer2.push_back(blitProperties);
     auto estimatedSizeWithNode = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        blitPropertiesContainer2, false, true, false, pDevice->getRootDeviceEnvironment());
+        blitPropertiesContainer2, false, true, false, false, pDevice->getRootDeviceEnvironment());
     EXPECT_NE(estimatedSizeWithoutNode, estimatedSizeWithNode);
 }

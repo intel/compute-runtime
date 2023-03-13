@@ -16,10 +16,12 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/relaxed_ordering_commands_helper.h"
 #include "shared/test/common/mocks/mock_command_encoder.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_direct_submission_hw.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/mocks/mock_source_level_debugger.h"
@@ -768,7 +770,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeThenCal
     expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
 
     auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        blitPropertiesContainer, false, false, false, pClDevice->getRootDeviceEnvironment());
+        blitPropertiesContainer, false, false, false, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
 }
@@ -809,7 +811,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectsubmissionEnabledEstima
     expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
 
     auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        blitPropertiesContainer, false, false, true, pClDevice->getRootDeviceEnvironment());
+        blitPropertiesContainer, false, false, true, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
 }
@@ -849,7 +851,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenEstimatingCommandsSizeForWrit
     expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
 
     auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        blitPropertiesContainer, false, false, false, pClDevice->getRootDeviceEnvironment());
+        blitPropertiesContainer, false, false, false, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
 }
@@ -889,7 +891,7 @@ HWTEST_F(BcsTests, givenBlitPropertiesContainerWhenDirectSubmissionEnabledEstima
     expectedAlignedSize = alignUp(expectedAlignedSize, MemoryConstants::cacheLineSize);
 
     auto alignedEstimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandsSize(
-        blitPropertiesContainer, false, false, true, pClDevice->getRootDeviceEnvironment());
+        blitPropertiesContainer, false, false, true, false, pClDevice->getRootDeviceEnvironment());
 
     EXPECT_EQ(expectedAlignedSize, alignedEstimatedSize);
 }
@@ -909,9 +911,9 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     auto expectedSizeWithoutTimestampPacketWrite = expectedBaseSize;
 
     auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment(), false);
+        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment(), false, false);
     auto estimatedSizeWithoutTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false);
+        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false, false);
 
     EXPECT_EQ(expectedSizeWithTimestampPacketWrite, estimatedSizeWithTimestampPacketWrite);
     EXPECT_EQ(expectedSizeWithoutTimestampPacketWrite, estimatedSizeWithoutTimestampPacketWrite);
@@ -933,9 +935,9 @@ HWTEST_F(BcsTests, givenTimestampPacketWriteRequestWhenEstimatingSizeForCommands
     auto expectedSizeWithTimestampPacketWriteAndProfiling = expectedBaseSize + BlitCommandsHelper<FamilyType>::getProfilingMmioCmdsSize();
 
     auto estimatedSizeWithTimestampPacketWrite = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment(), false);
+        {1, 1, 1}, csrDependencies, true, false, false, pClDevice->getRootDeviceEnvironment(), false, false);
     auto estimatedSizeWithTimestampPacketWriteAndProfiling = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, true, true, false, pClDevice->getRootDeviceEnvironment(), false);
+        {1, 1, 1}, csrDependencies, true, true, false, pClDevice->getRootDeviceEnvironment(), false, false);
 
     EXPECT_EQ(expectedSizeWithTimestampPacketWriteAndProfiling, estimatedSizeWithTimestampPacketWriteAndProfiling);
     EXPECT_EQ(expectedBaseSize, estimatedSizeWithTimestampPacketWrite);
@@ -966,7 +968,37 @@ HWTEST_F(BcsTests, givenBltSizeAndCsrDependenciesWhenEstimatingCommandSizeThenAd
     }
 
     auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false);
+        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false, false);
+
+    EXPECT_EQ(expectedSize, estimatedSize);
+}
+
+HWTEST_F(BcsTests, givenBltSizeWithCsrDependenciesAndRelaxedOrderingWhenEstimatingCommandSizeThenAddAllRequiredCommands) {
+    uint32_t numberOfBlts = 1;
+    size_t numberNodesPerContainer = 5;
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    MockTimestampPacketContainer timestamp0(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
+    MockTimestampPacketContainer timestamp1(*csr.getTimestampPacketAllocator(), numberNodesPerContainer);
+    csrDependencies.timestampPacketContainer.push_back(&timestamp0);
+    csrDependencies.timestampPacketContainer.push_back(&timestamp1);
+
+    EncodeDummyBlitWaArgs waArgs{true, &(pDevice->getRootDeviceEnvironmentRef())};
+    size_t cmdsSizePerBlit = sizeof(typename FamilyType::XY_COPY_BLT) + EncodeMiArbCheck<FamilyType>::getCommandSizeWithWa(waArgs);
+
+    if (BlitCommandsHelper<FamilyType>::miArbCheckWaRequired()) {
+        cmdsSizePerBlit += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+    }
+
+    size_t expectedSize = (cmdsSizePerBlit * numberOfBlts) +
+                          TimestampPacketHelper::getRequiredCmdStreamSize<FamilyType>(csrDependencies, true);
+
+    if (BlitCommandsHelper<FamilyType>::preBlitCommandWARequired()) {
+        expectedSize += EncodeMiFlushDW<FamilyType>::getCommandSizeWithWa(waArgs);
+    }
+
+    auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
+        {1, 1, 1}, csrDependencies, false, false, false, pClDevice->getRootDeviceEnvironment(), false, true);
 
     EXPECT_EQ(expectedSize, estimatedSize);
 }
@@ -986,7 +1018,7 @@ HWTEST_F(BcsTests, givenImageAndBufferWhenEstimateBlitCommandSizeThenReturnCorre
         }
 
         auto estimatedSize = BlitCommandsHelper<FamilyType>::estimateBlitCommandSize(
-            {1, 1, 1}, csrDependencies, false, false, isImage, pClDevice->getRootDeviceEnvironment(), false);
+            {1, 1, 1}, csrDependencies, false, false, isImage, pClDevice->getRootDeviceEnvironment(), false, false);
 
         EXPECT_EQ(expectedSize, estimatedSize);
     }
@@ -1024,6 +1056,152 @@ void verifyDummyBlitWa(const RootDeviceEnvironment *rootDeviceEnvironment, GenCm
         EXPECT_EQ(expectedPitch, dummyBltCmd->getDestinationPitch());
     }
 }
+
+struct RelaxedOrderingBcsTests : public BcsTests {
+    void SetUp() override {
+        ultHwConfigBackup = std::make_unique<VariableBackup<UltHwConfig>>(&ultHwConfig);
+        ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
+        ultHwConfig.csrBaseCallBlitterDirectSubmissionAvailable = true;
+
+        DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
+        DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
+        DebugManager.flags.UpdateTaskCountFromWait.set(2);
+        BcsTests::SetUp();
+    }
+
+    BlitProperties generateBlitProperties(CommandStreamReceiver &csr, Buffer *clBuffer) {
+        return BlitProperties::constructPropertiesForReadWrite(BlitterConstants::BlitDirection::HostPtrToBuffer,
+                                                               csr, clBuffer->getGraphicsAllocation(pDevice->getRootDeviceIndex()), nullptr, hostPtr,
+                                                               clBuffer->getGraphicsAllocation(pDevice->getRootDeviceIndex())->getGpuAddress(), 0,
+                                                               0, 0, {1, 1, 1}, 0, 0, 0, 0);
+    }
+
+    std::unique_ptr<VariableBackup<UltHwConfig>> ultHwConfigBackup;
+    void *hostPtr = reinterpret_cast<void *>(0x12340000);
+};
+
+HWTEST2_F(RelaxedOrderingBcsTests, givenDependenciesWhenFlushingThenProgramCorrectCommands, IsAtLeastXeHpcCore) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+
+    cl_int retVal = CL_SUCCESS;
+    auto clBuffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.registerClient();
+    csr.registerClient();
+    csr.recordFlusheBatchBuffer = true;
+
+    csr.blitterDirectSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>>(csr);
+
+    auto blitProperties = generateBlitProperties(csr, clBuffer.get());
+
+    MockTimestampPacketContainer timestamp(*csr.getTimestampPacketAllocator(), 1);
+    blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestamp);
+
+    // First submission with global state
+    flushBcsTask(&csr, blitProperties, false, *pDevice);
+    EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasStallingCmds);
+    EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+
+    auto cmdsOffset = csr.commandStream.getUsed();
+
+    flushBcsTask(&csr, blitProperties, false, *pDevice);
+    EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasStallingCmds);
+    EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+
+    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(ptrOffset(csr.commandStream.getCpuBase(), cmdsOffset));
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0);
+
+    lrrCmd++;
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
+
+    auto eventNode = timestamp.peekNodes()[0];
+    auto compareAddress = eventNode->getGpuAddress() + eventNode->getContextEndOffset();
+
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(++lrrCmd, 0, compareAddress, 1, CompareOperation::Equal, true));
+}
+
+HWTEST2_F(RelaxedOrderingBcsTests, givenDependenciesWhenFlushingThenProgramProgramRelaxedOrderingOnlyIfAllowed, IsAtLeastXeHpcCore) {
+    cl_int retVal = CL_SUCCESS;
+    auto clBuffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.registerClient();
+    csr.registerClient();
+    csr.recordFlusheBatchBuffer = true;
+
+    csr.blitterDirectSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>>(csr);
+
+    auto blitProperties = generateBlitProperties(csr, clBuffer.get());
+
+    MockTimestampPacketContainer timestamp(*csr.getTimestampPacketAllocator(), 1);
+    blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestamp);
+
+    BlitPropertiesContainer blitPropertiesContainer;
+    blitPropertiesContainer.push_back(blitProperties);
+
+    EXPECT_FALSE(csr.bcsRelaxedOrderingAllowed(blitPropertiesContainer, true));
+    EXPECT_TRUE(csr.bcsRelaxedOrderingAllowed(blitPropertiesContainer, false));
+
+    DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(-1);
+    EXPECT_FALSE(csr.bcsRelaxedOrderingAllowed(blitPropertiesContainer, false));
+
+    DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.set(1);
+    blitPropertiesContainer.push_back(blitProperties);
+    EXPECT_FALSE(csr.bcsRelaxedOrderingAllowed(blitPropertiesContainer, false));
+
+    blitPropertiesContainer.push_back(blitProperties);
+    csr.unregisterClient();
+    csr.unregisterClient();
+    EXPECT_FALSE(csr.bcsRelaxedOrderingAllowed(blitPropertiesContainer, false));
+
+    csr.registerClient();
+    csr.registerClient();
+    csr.blitterDirectSubmission.reset();
+    EXPECT_FALSE(csr.bcsRelaxedOrderingAllowed(blitPropertiesContainer, false));
+}
+
+HWTEST2_F(RelaxedOrderingBcsTests, givenTagUpdateWhenFlushingThenDisableRelaxedOrdering, IsAtLeastXeHpcCore) {
+    cl_int retVal = CL_SUCCESS;
+    auto clBuffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, 1, nullptr, retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.registerClient();
+    csr.registerClient();
+    csr.recordFlusheBatchBuffer = true;
+
+    csr.blitterDirectSubmission = std::make_unique<MockDirectSubmissionHw<FamilyType, BlitterDispatcher<FamilyType>>>(csr);
+
+    auto blitProperties = generateBlitProperties(csr, clBuffer.get());
+
+    MockTimestampPacketContainer timestamp(*csr.getTimestampPacketAllocator(), 1);
+    blitProperties.csrDependencies.timestampPacketContainer.push_back(&timestamp);
+
+    // First submission with global state
+    flushBcsTask(&csr, blitProperties, false, *pDevice);
+    EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasStallingCmds);
+    EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+
+    DebugManager.flags.UpdateTaskCountFromWait.set(0);
+
+    // blocking
+    flushBcsTask(&csr, blitProperties, true, *pDevice);
+    EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasStallingCmds);
+    EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+
+    // Disabled UpdateTaskCountFromWait
+    DebugManager.flags.UpdateTaskCountFromWait.set(0);
+    blitProperties = generateBlitProperties(csr, clBuffer.get());
+    flushBcsTask(&csr, blitProperties, false, *pDevice);
+    EXPECT_TRUE(csr.latestFlushedBatchBuffer.hasStallingCmds);
+    EXPECT_FALSE(csr.latestFlushedBatchBuffer.hasRelaxedOrderingDependencies);
+}
+
 HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredCommands) {
     using MI_FLUSH_DW = typename FamilyType::MI_FLUSH_DW;
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;

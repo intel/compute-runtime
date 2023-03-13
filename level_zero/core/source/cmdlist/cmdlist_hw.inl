@@ -9,6 +9,7 @@
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/source/device/device.h"
+#include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
@@ -2051,9 +2052,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnEvents(uint32_t nu
     }
 
     if (relaxedOrderingAllowed) {
-        // Indirect BB_START operates only on GPR_0
-        NEO::EncodeSetMMIO<GfxFamily>::encodeREG(*commandContainer.getCommandStream(), CS_GPR_R0, CS_GPR_R4);
-        NEO::EncodeSetMMIO<GfxFamily>::encodeREG(*commandContainer.getCommandStream(), CS_GPR_R0 + 4, CS_GPR_R4 + 4);
+        NEO::RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandContainer.getCommandStream());
     }
 
     for (uint32_t i = 0; i < numEvents; i++) {

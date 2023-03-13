@@ -108,8 +108,8 @@ size_t BlitCommandsHelper<GfxFamily>::estimatePostBlitCommandSize(const RootDevi
 }
 
 template <typename GfxFamily>
-size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies,
-                                                              bool updateTimestampPacket, bool profilingEnabled, bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed) {
+size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t> &copySize, const CsrDependencies &csrDependencies, bool updateTimestampPacket, bool profilingEnabled,
+                                                              bool isImage, const RootDeviceEnvironment &rootDeviceEnvironment, bool isSystemMemoryPoolUsed, bool relaxedOrderingEnabled) {
     size_t timestampCmdSize = 0;
     if (updateTimestampPacket) {
         EncodeDummyBlitWaArgs waArgs{true, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
@@ -132,7 +132,7 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t>
     }
 
     sizePerBlit += estimatePostBlitCommandSize(rootDeviceEnvironment);
-    return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies, false) +
+    return TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDependencies, relaxedOrderingEnabled) +
            TimestampPacketHelper::getRequiredCmdStreamSizeForMultiRootDeviceSyncNodesContainer<GfxFamily>(csrDependencies) +
            (sizePerBlit * nBlits) +
            timestampCmdSize +
@@ -141,15 +141,15 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(const Vec3<size_t>
 
 template <typename GfxFamily>
 size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropertiesContainer &blitPropertiesContainer,
-                                                               bool profilingEnabled, bool debugPauseEnabled,
-                                                               bool blitterDirectSubmission, const RootDeviceEnvironment &rootDeviceEnvironment) {
+                                                               bool profilingEnabled, bool debugPauseEnabled, bool blitterDirectSubmission,
+                                                               bool relaxedOrderingEnabled, const RootDeviceEnvironment &rootDeviceEnvironment) {
     size_t size = 0;
     EncodeDummyBlitWaArgs waArgs{true, const_cast<RootDeviceEnvironment *>(&rootDeviceEnvironment)};
     for (auto &blitProperties : blitPropertiesContainer) {
         auto updateTimestampPacket = blitProperties.outputTimestampPacket != nullptr;
         auto isImage = blitProperties.isImageOperation();
         size += BlitCommandsHelper<GfxFamily>::estimateBlitCommandSize(blitProperties.copySize, blitProperties.csrDependencies, updateTimestampPacket,
-                                                                       profilingEnabled, isImage, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed);
+                                                                       profilingEnabled, isImage, rootDeviceEnvironment, blitProperties.isSystemMemoryPoolUsed, relaxedOrderingEnabled);
         if (blitProperties.multiRootDeviceEventSync != nullptr) {
             size += EncodeMiFlushDW<GfxFamily>::getCommandSizeWithWa(waArgs);
         }
@@ -164,6 +164,10 @@ size_t BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(const BlitPropert
     }
 
     size += BlitCommandsHelper<GfxFamily>::getSizeForGlobalSequencerFlush();
+
+    if (relaxedOrderingEnabled) {
+        size += 2 * EncodeSetMMIO<GfxFamily>::sizeREG;
+    }
 
     return alignUp(size, MemoryConstants::cacheLineSize);
 }

@@ -30,6 +30,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
   public:
     using BaseClass::addPipeControlBefore3dState;
+    using BaseClass::bcsRelaxedOrderingAllowed;
     using BaseClass::blitterDirectSubmission;
     using BaseClass::checkPlatformSupportsGpuIdleImplicitFlush;
     using BaseClass::checkPlatformSupportsNewResourceImplicitFlush;

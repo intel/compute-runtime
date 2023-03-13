@@ -19,6 +19,13 @@ bool isRelaxedOrderingDispatchAllowed(const CommandStreamReceiver &csr, uint32_t
 static constexpr uint32_t queueSizeMultiplier = 4;
 
 template <typename GfxFamily>
+void encodeRegistersBeforeDependencyCheckers(LinearStream &cmdStream) {
+    // Indirect BB_START operates only on GPR_0
+    EncodeSetMMIO<GfxFamily>::encodeREG(cmdStream, CS_GPR_R0, CS_GPR_R4);
+    EncodeSetMMIO<GfxFamily>::encodeREG(cmdStream, CS_GPR_R0 + 4, CS_GPR_R4 + 4);
+}
+
+template <typename GfxFamily>
 constexpr size_t getQueueSizeLimitValueOffset() {
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
     using MI_LOAD_REGISTER_REG = typename GfxFamily::MI_LOAD_REGISTER_REG;

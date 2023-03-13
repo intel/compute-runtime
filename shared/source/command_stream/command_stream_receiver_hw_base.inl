@@ -21,6 +21,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/direct_submission/direct_submission_controller.h"
 #include "shared/source/direct_submission/direct_submission_hw.h"
+#include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/page_table_mngr.h"
@@ -1187,6 +1188,12 @@ inline void CommandStreamReceiverHw<GfxFamily>::unregisterDirectSubmissionFromCo
 }
 
 template <typename GfxFamily>
+bool CommandStreamReceiverHw<GfxFamily>::bcsRelaxedOrderingAllowed(const BlitPropertiesContainer &blitPropertiesContainer, bool hasStallingCmds) const {
+    return directSubmissionRelaxedOrderingEnabled() && (DebugManager.flags.DirectSubmissionRelaxedOrderingForBcs.get() == 1) &&
+           (blitPropertiesContainer.size() == 1) && !hasStallingCmds;
+}
+
+template <typename GfxFamily>
 TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropertiesContainer &blitPropertiesContainer, bool blocking, bool profilingEnabled, Device &device) {
     using MI_BATCH_BUFFER_END = typename GfxFamily::MI_BATCH_BUFFER_END;
 
@@ -1194,8 +1201,14 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     bool blitterDirectSubmission = this->isBlitterDirectSubmissionEnabled();
     auto debugPauseEnabled = PauseOnGpuProperties::featureEnabled(DebugManager.flags.PauseOnBlitCopy.get());
     auto &rootDeviceEnvironment = this->executionEnvironment.rootDeviceEnvironments[this->rootDeviceIndex];
-    auto &commandStream = getCS(BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, profilingEnabled, debugPauseEnabled, blitterDirectSubmission,
-                                                                                        *rootDeviceEnvironment));
+
+    const bool updateTag = !isUpdateTagFromWaitEnabled() || blocking;
+    const bool hasStallingCmds = updateTag || !this->isEnginePrologueSent;
+    const bool relaxedOrderingAllowed = bcsRelaxedOrderingAllowed(blitPropertiesContainer, hasStallingCmds);
+
+    auto estimatedCsSize = BlitCommandsHelper<GfxFamily>::estimateBlitCommandsSize(blitPropertiesContainer, profilingEnabled, debugPauseEnabled, blitterDirectSubmission,
+                                                                                   relaxedOrderingAllowed, *rootDeviceEnvironment);
+    auto &commandStream = getCS(estimatedCsSize);
     auto commandStreamStart = commandStream.getUsed();
     auto newTaskCount = taskCount + 1;
     latestSentTaskCount = newTaskCount;
@@ -1209,6 +1222,18 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
                                                                   DebugPauseState::hasUserStartConfirmation, *rootDeviceEnvironment.get());
     }
 
+    bool isRelaxedOrderingDispatch = false;
+
+    if (relaxedOrderingAllowed) {
+        uint32_t dependenciesCount = 0;
+
+        for (auto timestampPacketContainer : blitPropertiesContainer[0].csrDependencies.timestampPacketContainer) {
+            dependenciesCount += static_cast<uint32_t>(timestampPacketContainer->peekNodes().size());
+        }
+
+        isRelaxedOrderingDispatch = RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*this, dependenciesCount);
+    }
+
     programEnginePrologue(commandStream);
 
     if (pageTableManager.get() && !pageTableManagerInitialized) {
@@ -1218,11 +1243,16 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     if (logicalStateHelper) {
         logicalStateHelper->writeStreamInline(commandStream, false);
     }
+
+    if (isRelaxedOrderingDispatch) {
+        RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(commandStream);
+    }
+
     MiFlushArgs args;
     args.waArgs.isBcs = true;
     args.waArgs.rootDeviceEnvironment = rootDeviceEnvironment.get();
     for (auto &blitProperties : blitPropertiesContainer) {
-        TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, blitProperties.csrDependencies, false);
+        TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, blitProperties.csrDependencies, isRelaxedOrderingDispatch);
         TimestampPacketHelper::programCsrDependenciesForForMultiRootDeviceSyncContainer<GfxFamily>(commandStream, blitProperties.csrDependencies);
 
         BlitCommandsHelper<GfxFamily>::encodeWa(commandStream, blitProperties, latestSentBcsWaValue);
@@ -1267,8 +1297,6 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
 
     BlitCommandsHelper<GfxFamily>::programGlobalSequencerFlush(commandStream);
 
-    auto updateTag = !isUpdateTagFromWaitEnabled();
-    updateTag |= blocking;
     if (updateTag) {
         MemorySynchronizationCommands<GfxFamily>::addAdditionalSynchronization(commandStream, tagAllocation->getGpuAddress(), false, peekRootDeviceEnvironment());
         args.commandWithPostSync = true;
@@ -1284,7 +1312,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     }
 
     void *endingCmdPtr = nullptr;
-    programEndingCmd(commandStream, &endingCmdPtr, blitterDirectSubmission, false, false);
+    programEndingCmd(commandStream, &endingCmdPtr, blitterDirectSubmission, isRelaxedOrderingDispatch, false);
 
     EncodeNoop<GfxFamily>::alignToCacheLine(commandStream);
 
@@ -1296,7 +1324,7 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     uint64_t taskStartAddress = commandStream.getGpuBase() + commandStreamStart;
 
     BatchBuffer batchBuffer{commandStream.getGraphicsAllocation(), commandStreamStart, 0, taskStartAddress, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
-                            commandStream.getUsed(), &commandStream, endingCmdPtr, this->getNumClients(), false, false};
+                            commandStream.getUsed(), &commandStream, endingCmdPtr, this->getNumClients(), hasStallingCmds, isRelaxedOrderingDispatch};
 
     commandStream.getGraphicsAllocation()->updateTaskCount(newTaskCount, this->osContext->getContextId());
     commandStream.getGraphicsAllocation()->updateResidencyTaskCount(newTaskCount, this->osContext->getContextId());

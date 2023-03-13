@@ -193,6 +193,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void handlePipelineSelectStateTransition(const DispatchFlags &dispatchFlags);
     void handleStateBaseAddressStateTransition(const DispatchFlags &dispatchFlags, bool &isStateBaseAddressDirty);
 
+    bool bcsRelaxedOrderingAllowed(const BlitPropertiesContainer &blitPropertiesContainer, bool hasStallingCmds) const;
+
     HeapDirtyState dshState;
     HeapDirtyState iohState;
     HeapDirtyState sshState;

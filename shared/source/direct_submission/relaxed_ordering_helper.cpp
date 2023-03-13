@@ -23,7 +23,7 @@ bool isRelaxedOrderingDispatchAllowed(const CommandStreamReceiver &csr, uint32_t
         minimalNumberOfClients = static_cast<uint32_t>(DebugManager.flags.DirectSubmissionRelaxedOrderingMinNumberOfClients.get());
     }
 
-    return (csr.getNumClients() >= minimalNumberOfClients && csr.directSubmissionRelaxedOrderingEnabled());
+    return (csr.directSubmissionRelaxedOrderingEnabled() && csr.getNumClients() >= minimalNumberOfClients);
 }
 
 } // namespace RelaxedOrderingHelper

@@ -7,6 +7,7 @@
 
 #pragma once
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/direct_submission/relaxed_ordering_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/pipe_control_args.h"
@@ -100,8 +101,7 @@ void HardwareInterface<GfxFamily>::dispatchWalker(
     }
 
     if (walkerArgs.relaxedOrderingEnabled) {
-        NEO::EncodeSetMMIO<GfxFamily>::encodeREG(*commandStream, CS_GPR_R0, CS_GPR_R4);
-        NEO::EncodeSetMMIO<GfxFamily>::encodeREG(*commandStream, CS_GPR_R0 + 4, CS_GPR_R4 + 4);
+        RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(*commandStream);
     }
 
     TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(*commandStream, csrDependencies, walkerArgs.relaxedOrderingEnabled);
