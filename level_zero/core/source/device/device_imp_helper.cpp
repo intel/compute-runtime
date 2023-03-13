@@ -18,4 +18,7 @@ uint32_t DeviceImp::getAdditionalEngines(uint32_t numAdditionalEnginesRequested,
                                          ze_command_queue_group_properties_t *pCommandQueueGroupProperties) {
     return 0;
 }
+
+void DeviceImp::getExtendedDeviceModuleProperties(ze_base_desc_t *pExtendedProperties) {}
+
 } // namespace L0

@@ -122,6 +122,8 @@ struct ModuleImp : public Module {
     uint32_t getMaxGroupSize(const NEO::KernelDescriptor &kernelDescriptor) const override;
 
     void createBuildOptions(const char *pBuildFlags, std::string &buildOptions, std::string &internalBuildOptions);
+    void createBuildExtraOptions(std::string &buildOptions, std::string &internalBuildOptions);
+    bool verifyBuildOptions(std::string buildOptions) const;
     bool moveOptLevelOption(std::string &dstOptionsSet, std::string &srcOptionSet);
     bool moveProfileFlagsOption(std::string &dstOptionsSet, std::string &srcOptionSet);
     void updateBuildLog(NEO::Device *neoDevice);

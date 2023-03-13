@@ -655,7 +655,9 @@ static constexpr ze_device_fp_flags_t defaultFpFlags = static_cast<ze_device_fp_
 ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKernelProperties) {
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
     auto &compilerProductHelper = this->neoDevice->getCompilerProductHelper();
-    const auto &deviceInfo = this->neoDevice->getDeviceInfo();
+    const auto &deviceInfo = this->getDeviceInfo();
+    const auto &productHelper = this->getProductHelper();
+    const auto &l0GfxCoreHelper = this->getL0GfxCoreHelper();
 
     std::string ilVersion = deviceInfo.ilVersion;
     size_t majorVersionPos = ilVersion.find('_');
@@ -705,8 +707,6 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
     pKernelProperties->maxArgumentsSize = static_cast<uint32_t>(this->neoDevice->getDeviceInfo().maxParameterSize);
     pKernelProperties->printfBufferSize = static_cast<uint32_t>(this->neoDevice->getDeviceInfo().printfBufferSize);
 
-    auto &productHelper = this->getProductHelper();
-
     void *pNext = pKernelProperties->pNext;
     while (pNext) {
         ze_base_desc_t *extendedProperties = reinterpret_cast<ze_base_desc_t *>(pNext);
@@ -737,7 +737,6 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
         } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_RAYTRACING_EXT_PROPERTIES) {
             ze_device_raytracing_ext_properties_t *rtProperties =
                 reinterpret_cast<ze_device_raytracing_ext_properties_t *>(extendedProperties);
-            auto &l0GfxCoreHelper = this->neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
             if (l0GfxCoreHelper.platformSupportsRayTracing()) {
                 rtProperties->flags = ZE_DEVICE_RAYTRACING_EXT_FLAG_RAYQUERY;
@@ -747,6 +746,8 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
                 rtProperties->maxBVHLevels = 0;
             }
         }
+        getExtendedDeviceModuleProperties(extendedProperties);
+
         pNext = const_cast<void *>(extendedProperties->pNext);
     }
 

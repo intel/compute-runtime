@@ -839,5 +839,23 @@ TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGetting
     EXPECT_EQ(NEO::HeapAddressModel::GlobalBindful, L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment));
 }
 
+HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingSupportedNumGrfsThenCorrectValueIsReturned, IsBeforeXeHpCore) {
+    MockExecutionEnvironment executionEnvironment;
+    const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    const auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+    const std::vector<uint32_t> expectedValues{128u};
+
+    EXPECT_EQ(expectedValues, l0GfxCoreHelper.getSupportedNumGrfs());
+}
+
+HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingSupportedNumGrfsThenCorrectValueIsReturned, IsAtLeastXeHpCore) {
+    MockExecutionEnvironment executionEnvironment;
+    const auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0].get();
+    const auto &l0GfxCoreHelper = rootDeviceEnvironment.getHelper<L0GfxCoreHelper>();
+    const std::vector<uint32_t> expectedValues{128u, 256u};
+
+    EXPECT_EQ(expectedValues, l0GfxCoreHelper.getSupportedNumGrfs());
+}
+
 } // namespace ult
 } // namespace L0

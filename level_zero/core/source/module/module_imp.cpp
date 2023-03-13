@@ -556,6 +556,10 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
         }
     } else {
         std::string buildFlagsInput{desc->pBuildFlags != nullptr ? desc->pBuildFlags : ""};
+        if (!this->verifyBuildOptions(buildFlagsInput)) {
+            return ZE_RESULT_ERROR_INVALID_ARGUMENT;
+        }
+
         this->translationUnit->shouldSuppressRebuildWarning = NEO::CompilerOptions::extract(NEO::CompilerOptions::noRecompiledFromIr, buildFlagsInput);
         this->translationUnit->isBuiltIn = this->type == ModuleType::Builtin ? true : false;
         this->createBuildOptions(buildFlagsInput.c_str(), buildOptions, internalBuildOptions);
@@ -745,6 +749,8 @@ void ModuleImp::createBuildOptions(const char *pBuildFlags, std::string &apiOpti
         moveProfileFlagsOption(apiOptions, apiOptions);
         this->isFunctionSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableLibraryCompile, BuildOptions::enableLibraryCompile);
         this->isGlobalSymbolExportEnabled = moveBuildOption(apiOptions, apiOptions, BuildOptions::enableGlobalVariableSymbols, BuildOptions::enableGlobalVariableSymbols);
+
+        createBuildExtraOptions(apiOptions, internalBuildOptions);
     }
     if (NEO::ApiSpecificConfig::getBindlessConfiguration()) {
         NEO::CompilerOptions::concatenateAppend(internalBuildOptions, NEO::CompilerOptions::bindlessMode.str());
@@ -1119,7 +1125,6 @@ void ModuleImp::checkIfPrivateMemoryPerDispatchIsNeeded() {
 }
 
 ze_result_t ModuleImp::getProperties(ze_module_properties_t *pModuleProperties) {
-
     pModuleProperties->flags = 0;
 
     if (!unresolvedExternalsInfo.empty()) {

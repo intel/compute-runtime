@@ -72,4 +72,9 @@ NEO::HeapAddressModel L0GfxCoreHelperHw<Family>::getPlatformHeapAddressModel() c
     return NEO::HeapAddressModel::PrivateHeaps;
 }
 
+template <typename Family>
+std::vector<uint32_t> L0GfxCoreHelperHw<Family>::getSupportedNumGrfs() const {
+    return {128u, 256u};
+}
+
 } // namespace L0

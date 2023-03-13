@@ -763,6 +763,7 @@ ze_result_t KernelImp::getProperties(ze_kernel_properties_t *pKernelProperties) 
                 preferredGroupSizeProperties->preferredMultiple *= 2;
             }
         }
+        getExtendedKernelProperties(extendedProperties);
 
         pNext = const_cast<void *>(extendedProperties->pNext);
     }

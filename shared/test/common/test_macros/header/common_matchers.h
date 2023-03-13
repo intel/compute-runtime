@@ -33,6 +33,7 @@ using IsNotWithinXeGfxFamily = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_COR
 
 using IsAtLeastXeHpCore = IsAtLeastGfxCore<IGFX_XE_HP_CORE>;
 using IsAtMostXeHpCore = IsAtMostGfxCore<IGFX_XE_HP_CORE>;
+using IsBeforeXeHpCore = IsBeforeGfxCore<IGFX_XE_HP_CORE>;
 
 using IsAtLeastXeHpgCore = IsAtLeastGfxCore<IGFX_XE_HPG_CORE>;
 using IsAtMostXeHpgCore = IsAtMostGfxCore<IGFX_XE_HPG_CORE>;

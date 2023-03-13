@@ -2837,22 +2837,22 @@ HWTEST_F(PrintfModuleTest, GivenModuleWithPrintfWhenKernelIsCreatedThenPrintfAll
 }
 
 TEST(BuildOptions, givenNoSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenFalseIsReturned) {
-    std::string srcNames = NEO::CompilerOptions::concatenate(NEO::CompilerOptions::fastRelaxedMath, NEO::CompilerOptions::finiteMathOnly);
+    std::string srcNames = NEO::CompilerOptions::concatenate(BuildOptions::optAutoGrf, BuildOptions::optLevel);
     std::string dstNames;
 
-    auto result = moveBuildOption(dstNames, srcNames, BuildOptions::optDisable, NEO::CompilerOptions::optDisable);
+    auto result = moveBuildOption(dstNames, srcNames, NEO::CompilerOptions::optDisable, BuildOptions::optDisable);
     EXPECT_FALSE(result);
 }
 
 TEST(BuildOptions, givenSrcOptionNameInSrcNamesWhenMovingBuildOptionsThenOptionIsRemovedFromSrcNamesAndTranslatedOptionsStoredInDstNames) {
-    std::string srcNames = NEO::CompilerOptions::concatenate(NEO::CompilerOptions::fastRelaxedMath, NEO::CompilerOptions::optDisable);
+    std::string srcNames = NEO::CompilerOptions::concatenate(BuildOptions::optAutoGrf, BuildOptions::optDisable);
     std::string dstNames;
 
-    auto result = moveBuildOption(dstNames, srcNames, BuildOptions::optDisable, NEO::CompilerOptions::optDisable);
+    auto result = moveBuildOption(dstNames, srcNames, NEO::CompilerOptions::optDisable, BuildOptions::optDisable);
     EXPECT_TRUE(result);
 
-    EXPECT_EQ(BuildOptions::optDisable, dstNames);
-    EXPECT_EQ(std::string::npos, srcNames.find(NEO::CompilerOptions::optDisable.str()));
+    EXPECT_EQ(NEO::CompilerOptions::optDisable, dstNames);
+    EXPECT_EQ(std::string::npos, srcNames.find(BuildOptions::optDisable.str()));
 }
 
 TEST_F(ModuleTest, givenInternalOptionsWhenBindlessEnabledThenBindlesOptionsPassed) {
