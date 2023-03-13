@@ -69,43 +69,24 @@ ze_result_t WddmPowerImp::getPropertiesExt(zes_power_ext_properties_t *pExtPoper
 
 ze_result_t WddmPowerImp::getEnergyCounter(zes_power_energy_counter_t *pEnergy) {
     uint64_t energyCounter64Bit = 0;
-    uint32_t timestampFrequency = 0;
     uint64_t valueTimeStamp = 0;
-    std::vector<KmdSysman::RequestProperty> vRequests = {};
-    std::vector<KmdSysman::ResponseProperty> vResponses = {};
-    KmdSysman::RequestProperty request = {};
+    KmdSysman::RequestProperty request;
+    KmdSysman::ResponseProperty response;
 
     request.commandId = KmdSysman::Command::Get;
     request.componentId = KmdSysman::Component::PowerComponent;
     request.requestId = KmdSysman::Requests::Power::CurrentEnergyCounter64Bit;
-    vRequests.push_back(request);
 
-    request.commandId = KmdSysman::Command::Get;
-    request.componentId = KmdSysman::Component::ActivityComponent;
-    request.requestId = KmdSysman::Requests::Activity::TimestampFrequency;
-    vRequests.push_back(request);
+    ze_result_t status = pKmdSysManager->requestSingle(request, response);
 
-    ze_result_t status = pKmdSysManager->requestMultiple(vRequests, vResponses);
-
-    if ((status != ZE_RESULT_SUCCESS) || (vResponses.size() != vRequests.size())) {
-        return status;
-    }
-
-    if (vResponses[0].returnCode == KmdSysman::Success) {
-        memcpy_s(&energyCounter64Bit, sizeof(uint64_t), vResponses[0].dataBuffer, sizeof(uint64_t));
+    if (status == ZE_RESULT_SUCCESS) {
+        memcpy_s(&energyCounter64Bit, sizeof(uint64_t), response.dataBuffer, sizeof(uint64_t));
         pEnergy->energy = energyCounter64Bit;
-        memcpy_s(&valueTimeStamp, sizeof(uint64_t), (vResponses[0].dataBuffer + sizeof(uint64_t)), sizeof(uint64_t));
+        memcpy_s(&valueTimeStamp, sizeof(uint64_t), (response.dataBuffer + sizeof(uint64_t)), sizeof(uint64_t));
+        pEnergy->timestamp = valueTimeStamp;
     }
 
-    if (vResponses[1].returnCode == KmdSysman::Success) {
-        memcpy_s(&timestampFrequency, sizeof(uint32_t), vResponses[1].dataBuffer, sizeof(uint32_t));
-        double timeFactor = 1.0 / static_cast<double>(timestampFrequency);
-        timeFactor = static_cast<double>(valueTimeStamp) * timeFactor;
-        timeFactor *= static_cast<double>(microFacor);
-        pEnergy->timestamp = static_cast<uint64_t>(timeFactor);
-    }
-
-    return ZE_RESULT_SUCCESS;
+    return status;
 }
 
 ze_result_t WddmPowerImp::getLimits(zes_power_sustained_limit_t *pSustained, zes_power_burst_limit_t *pBurst, zes_power_peak_limit_t *pPeak) {
