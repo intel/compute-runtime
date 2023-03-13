@@ -169,9 +169,9 @@ void Dg2HwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTable
         gtSysInfo->MaxSlicesSupported = gtSysInfo->SliceCount;
         gtSysInfo->MaxSubSlicesSupported = gtSysInfo->SubSliceCount;
         gtSysInfo->IsDynamicallyPopulated = true;
+        gtSysInfo->L3BankCount = 1;
     }
     gtSysInfo->L3CacheSizeInKb = 1;
-    gtSysInfo->L3BankCount = 1;
 
     gtSysInfo->CCSInfo.IsValid = true;
     gtSysInfo->CCSInfo.NumberOfCCSEnabled = 1;
