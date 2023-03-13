@@ -1096,6 +1096,46 @@ HWTEST_F(CommandQueueHwTest, givenWalkerSplitEnqueueNDRangeWhenBlockedThenKernel
     pCmdQ->isQueueBlocked();
 }
 
+HWTEST_F(CommandQueueHwTest, givenCommandQueueWhenDispatchingWorkThenRegisterCsrClient) {
+    MockKernelWithInternals mockKernelWithInternals(*pClDevice);
+    auto mockKernel = mockKernelWithInternals.mockKernel;
+
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    size_t gws = 1;
+
+    auto baseNumClients = csr.getNumClients();
+
+    {
+        MockCommandQueueHw<FamilyType> mockCmdQueueHw0{context, pClDevice, nullptr};
+        EXPECT_EQ(baseNumClients, csr.getNumClients());
+
+        MockCommandQueueHw<FamilyType> mockCmdQueueHw1{context, pClDevice, nullptr};
+        EXPECT_EQ(baseNumClients, csr.getNumClients());
+
+        EXPECT_EQ(CL_SUCCESS, mockCmdQueueHw1.enqueueKernel(mockKernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
+        EXPECT_EQ(baseNumClients + 1, csr.getNumClients());
+
+        EXPECT_EQ(CL_SUCCESS, mockCmdQueueHw1.enqueueKernel(mockKernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
+        EXPECT_EQ(baseNumClients + 1, csr.getNumClients());
+
+        {
+            MockCommandQueueHw<FamilyType> mockCmdQueueHw2{context, pClDevice, nullptr};
+            EXPECT_EQ(baseNumClients + 1, csr.getNumClients());
+
+            EXPECT_EQ(CL_SUCCESS, mockCmdQueueHw2.enqueueKernel(mockKernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
+            EXPECT_EQ(baseNumClients + 2, csr.getNumClients());
+
+            EXPECT_EQ(CL_SUCCESS, mockCmdQueueHw2.enqueueKernel(mockKernel, 1, nullptr, &gws, nullptr, 0, nullptr, nullptr));
+            EXPECT_EQ(baseNumClients + 2, csr.getNumClients());
+        }
+
+        EXPECT_EQ(baseNumClients + 1, csr.getNumClients());
+    }
+
+    EXPECT_EQ(baseNumClients, csr.getNumClients());
+}
+
 HWTEST_F(CommandQueueHwTest, givenKernelSplitEnqueueReadBufferWhenBlockedThenEnqueueSurfacesMakeResidentIsCalledOnce) {
     UserEvent userEvent(context);
     auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();

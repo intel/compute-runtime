@@ -241,11 +241,13 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
 
   public:
     using BaseClass::bcsEngines;
+    using BaseClass::bcsEngineTypes;
     using BaseClass::bcsStates;
     using BaseClass::blitEnqueueAllowed;
     using BaseClass::commandQueueProperties;
     using BaseClass::commandStream;
     using BaseClass::deferredTimestampPackets;
+    using BaseClass::getDevice;
     using BaseClass::gpgpuEngine;
     using BaseClass::isBlitAuxTranslationRequired;
     using BaseClass::latestSentEnqueueType;
@@ -261,6 +263,13 @@ class MockCommandQueueHw : public CommandQueueHw<GfxFamily> {
     void clearBcsStates() {
         CopyEngineState unusedState{};
         std::fill(bcsStates.begin(), bcsStates.end(), unusedState);
+    }
+
+    void insertBcsEngine(aub_stream::EngineType bcsEngineType) {
+        const auto index = NEO::EngineHelpers::getBcsIndex(bcsEngineType);
+        const auto engine = &getDevice().getEngine(bcsEngineType, EngineUsage::Regular);
+        bcsEngines[index] = engine;
+        bcsEngineTypes.push_back(bcsEngineType);
     }
 
     MockCommandQueueHw(Context *context,

@@ -33,6 +33,8 @@ class CommandQueueHw : public CommandQueue {
     using BaseClass = CommandQueue;
 
   public:
+    ~CommandQueueHw() override;
+
     CommandQueueHw(Context *context,
                    ClDevice *device,
                    const cl_queue_properties *properties,
@@ -515,5 +517,10 @@ class CommandQueueHw : public CommandQueue {
 
     bool isBlitAuxTranslationRequired(const MultiDispatchInfo &multiDispatchInfo);
     bool relaxedOrderingForGpgpuAllowed(uint32_t numWaitEvents) const;
+
+    void registerGpgpuCsrClient();
+    void registerBcsCsrClient(CommandStreamReceiver &bcsCsr);
+
+    bool gpgpuCsrClientRegistered = false;
 };
 } // namespace NEO

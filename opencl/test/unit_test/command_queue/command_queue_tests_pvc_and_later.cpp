@@ -54,6 +54,81 @@ HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenGetBcsCommand
     EXPECT_EQ(nullptr, queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS8));
 }
 
+HWTEST2_F(CommandQueuePvcAndLaterTests, givenMultipleBcsEnginesWhenDispatchingCopyThenRegisterAllCsrs, IsAtLeastXeHpcCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableCopyEngineSelector.set(1);
+    HardwareInfo hwInfo = *defaultHwInfo;
+    hwInfo.featureTable.ftrBcsInfo = maxNBitValue(9);
+    hwInfo.capabilityTable.blitterOperationsSupported = true;
+    MockDevice *device = MockDevice::createWithNewExecutionEnvironment<MockDevice>(&hwInfo, 0);
+    MockClDevice clDevice{device};
+    MockContext context{&clDevice};
+
+    CommandStreamReceiver *bcsCsr0 = nullptr;
+    CommandStreamReceiver *bcsCsr3 = nullptr;
+    CommandStreamReceiver *bcsCsr7 = nullptr;
+
+    uint32_t baseNumClientsBcs0 = 0;
+    uint32_t baseNumClientsBcs3 = 0;
+    uint32_t baseNumClientsBcs7 = 0;
+
+    MockGraphicsAllocation mockGraphicsAllocation;
+    MockBuffer mockMemObj(mockGraphicsAllocation);
+
+    BuiltinOpParams params;
+    params.dstPtr = reinterpret_cast<void *>(0x12300);
+    params.dstOffset = {0, 0, 0};
+    params.srcMemObj = &mockMemObj;
+    params.srcOffset = {0, 0, 0};
+    params.size = {1, 0, 0};
+    params.transferAllocation = &mockGraphicsAllocation;
+
+    MultiDispatchInfo dispatchInfo(params);
+
+    {
+        MockCommandQueueHw<FamilyType> queue(&context, &clDevice, nullptr);
+        queue.clearBcsEngines();
+
+        queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS);
+        queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS3);
+        queue.insertBcsEngine(aub_stream::EngineType::ENGINE_BCS7);
+
+        bcsCsr0 = queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS);
+        bcsCsr3 = queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS3);
+        bcsCsr7 = queue.getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS7);
+
+        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, bcsCsr0->getOsContext().getEngineType());
+        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, bcsCsr3->getOsContext().getEngineType());
+        EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS7, bcsCsr7->getOsContext().getEngineType());
+
+        baseNumClientsBcs0 = bcsCsr0->getNumClients();
+        baseNumClientsBcs3 = bcsCsr0->getNumClients();
+        baseNumClientsBcs7 = bcsCsr0->getNumClients();
+
+        auto retVal = queue.template enqueueBlit<CL_COMMAND_READ_BUFFER>(dispatchInfo, 0, nullptr, nullptr, false, *bcsCsr0);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(baseNumClientsBcs0 + 1, bcsCsr0->getNumClients());
+        EXPECT_EQ(baseNumClientsBcs3, bcsCsr3->getNumClients());
+        EXPECT_EQ(baseNumClientsBcs7, bcsCsr7->getNumClients());
+
+        retVal = queue.template enqueueBlit<CL_COMMAND_READ_BUFFER>(dispatchInfo, 0, nullptr, nullptr, false, *bcsCsr3);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(baseNumClientsBcs0 + 1, bcsCsr0->getNumClients());
+        EXPECT_EQ(baseNumClientsBcs3 + 1, bcsCsr3->getNumClients());
+        EXPECT_EQ(baseNumClientsBcs7, bcsCsr7->getNumClients());
+
+        retVal = queue.template enqueueBlit<CL_COMMAND_READ_BUFFER>(dispatchInfo, 0, nullptr, nullptr, false, *bcsCsr7);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_EQ(baseNumClientsBcs0 + 1, bcsCsr0->getNumClients());
+        EXPECT_EQ(baseNumClientsBcs3 + 1, bcsCsr3->getNumClients());
+        EXPECT_EQ(baseNumClientsBcs7 + 1, bcsCsr7->getNumClients());
+    }
+
+    EXPECT_EQ(baseNumClientsBcs0, bcsCsr0->getNumClients());
+    EXPECT_EQ(baseNumClientsBcs3, bcsCsr3->getNumClients());
+    EXPECT_EQ(baseNumClientsBcs7, bcsCsr7->getNumClients());
+}
+
 HWTEST2_F(CommandQueuePvcAndLaterTests, givenAdditionalBcsWhenCreatingCommandQueueThenUseCorrectEngine, IsAtLeastXeHpcCore) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableCopyEngineSelector.set(1);

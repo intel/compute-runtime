@@ -3022,6 +3022,44 @@ HWTEST_F(CopyOnlyQueueTests, givenBcsSelectedWhenEnqueuingCopyThenBcsIsUsed) {
     EXPECT_NE(usedCommandStream, commandStream->getUsed());
 }
 
+HWTEST_F(CopyOnlyQueueTests, givenBcsSelectedWhenEnqueuingCopyThenRegisterClient) {
+    auto srcBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(context.get())};
+    auto dstBuffer = std::unique_ptr<Buffer>{BufferHelper<>::create(context.get())};
+
+    auto bcsCSr = bcsEngine->commandStreamReceiver;
+
+    auto baseNumClients = bcsCSr->getNumClients();
+
+    {
+        MockCommandQueueHw<FamilyType> queue0(context.get(), clDevice.get(), properties);
+        EXPECT_EQ(baseNumClients, bcsCSr->getNumClients());
+
+        MockCommandQueueHw<FamilyType> queue1(context.get(), clDevice.get(), properties);
+        EXPECT_EQ(baseNumClients, bcsCSr->getNumClients());
+
+        EXPECT_EQ(CL_SUCCESS, queue1.enqueueCopyBuffer(srcBuffer.get(), dstBuffer.get(), 0, 0, 1, 0, nullptr, nullptr));
+        EXPECT_EQ(baseNumClients + 1, bcsCSr->getNumClients());
+
+        EXPECT_EQ(CL_SUCCESS, queue1.enqueueCopyBuffer(srcBuffer.get(), dstBuffer.get(), 0, 0, 1, 0, nullptr, nullptr));
+        EXPECT_EQ(baseNumClients + 1, bcsCSr->getNumClients());
+
+        {
+            MockCommandQueueHw<FamilyType> queue2(context.get(), clDevice.get(), properties);
+            EXPECT_EQ(baseNumClients + 1, bcsCSr->getNumClients());
+
+            EXPECT_EQ(CL_SUCCESS, queue2.enqueueCopyBuffer(srcBuffer.get(), dstBuffer.get(), 0, 0, 1, 0, nullptr, nullptr));
+            EXPECT_EQ(baseNumClients + 2, bcsCSr->getNumClients());
+
+            EXPECT_EQ(CL_SUCCESS, queue2.enqueueCopyBuffer(srcBuffer.get(), dstBuffer.get(), 0, 0, 1, 0, nullptr, nullptr));
+            EXPECT_EQ(baseNumClients + 2, bcsCSr->getNumClients());
+        }
+
+        EXPECT_EQ(baseNumClients + 1, bcsCSr->getNumClients());
+    }
+
+    EXPECT_EQ(baseNumClients, bcsCSr->getNumClients());
+}
+
 HWTEST_F(CopyOnlyQueueTests, givenBlitterEnabledWhenCreatingBcsCommandQueueThenReturnSuccess) {
     DebugManagerStateRestore restore{};
     DebugManager.flags.EnableBlitterOperationsSupport.set(1);

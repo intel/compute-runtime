@@ -130,6 +130,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                                                  cl_uint numEventsInWaitList,
                                                  const cl_event *eventWaitList,
                                                  cl_event *event) {
+
     if (multiDispatchInfo.empty() && !isCommandWithoutKernel(commandType)) {
         const auto enqueueResult = enqueueHandler<CL_COMMAND_MARKER>(nullptr, 0, blocking, multiDispatchInfo,
                                                                      numEventsInWaitList, eventWaitList, event);
@@ -155,6 +156,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     std::unique_ptr<PrintfHandler> printfHandler;
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
     auto commandStreamReceiverOwnership = computeCommandStreamReceiver.obtainUniqueOwnership();
+
+    registerGpgpuCsrClient();
 
     auto blockQueue = false;
     TaskCountType taskLevel = 0u;
@@ -1298,6 +1301,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     auto bcsCommandStreamReceiverOwnership = bcsCsr.obtainUniqueOwnership();
     std::unique_lock<NEO::CommandStreamReceiver::MutexType> commandStreamReceiverOwnership;
 
+    registerBcsCsrClient(bcsCsr);
+
     EventsRequest eventsRequest(numEventsInWaitList, eventWaitList, event);
     EventBuilder eventBuilder;
 
@@ -1369,6 +1374,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     LinearStream *gpgpuCommandStream = {};
     size_t gpgpuCommandStreamStart = {};
     if (gpgpuSubmission) {
+        registerGpgpuCsrClient();
+
         if (DebugManager.flags.ForceCsrLockInBcsEnqueueOnlyForGpgpuSubmission.get() == 1) {
             commandStreamReceiverOwnership = getGpgpuCommandStreamReceiver().obtainUniqueOwnership();
         }
