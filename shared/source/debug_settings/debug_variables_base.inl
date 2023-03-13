@@ -77,7 +77,6 @@ DECLARE_DEBUG_VARIABLE(bool, UseNewQueryTopoIoctl, true, "Use DRM_I915_QUERY_COM
 DECLARE_DEBUG_VARIABLE(bool, DisableGpuHangDetection, false, "Disable GPU hang detection")
 DECLARE_DEBUG_VARIABLE(bool, DisableForceToStateless, false, "Do not force stateless for buffers")
 DECLARE_DEBUG_VARIABLE(bool, ForceTheoreticalMaxWorkGroupCount, false, "Do not apply any limitation to max cooperative/concurrent work-group count queries")
-DECLARE_DEBUG_VARIABLE(bool, DisableScratchPages, false, "Disable scratch pages during VM creations")
 DECLARE_DEBUG_VARIABLE(bool, DontDisableZebinIfVmeUsed, false, "When enabled, driver will not add -cl-intel-disable-zebin internal option when vme is used")
 DECLARE_DEBUG_VARIABLE(bool, AppendMemoryPrefetchForKmdMigratedSharedAllocations, true, "Allow prefetching shared memory to the device associated with the specified command list")
 DECLARE_DEBUG_VARIABLE(std::string, ForceDeviceId, std::string("unk"), "Override device id in AUB/TBX mode")
@@ -227,6 +226,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ForceComputeWalkerPostSyncFlush, -1, "-1: defaul
 DECLARE_DEBUG_VARIABLE(int32_t, NumberOfRegularContextsPerEngine, -1, "-1: default, >0: Create more than 1 Regular contexts for the same engine")
 DECLARE_DEBUG_VARIABLE(int32_t, EnableMultipleRegularContextForBcs, -1, "-1: default, 0: disabled, 1: Use NumberOfRegularContextsPerEngine to create multiple Regular contexts on the same engine")
 DECLARE_DEBUG_VARIABLE(int32_t, AppendAubStreamContextFlags, -1, "-1: default, >0: Append flags passed during HardwareContext creation.")
+DECLARE_DEBUG_VARIABLE(int32_t, DisableScratchPages, -1, "-1: default, 0: do not disable scratch pages during VM creations, 1: disable scratch pages during VM creations")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideEventSynchronizeTimeout, -1, "-1: default - user provided timeout value,  >0: timeout in nanoseconds")
 
 /*LOGGING FLAGS*/

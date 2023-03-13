@@ -1526,7 +1526,14 @@ int Drm::createDrmVirtualMemory(uint32_t &drmVmId) {
         ctl.extensions = castToUint64(vmControlExtRegion.get());
     }
 
-    bool disableScratch = DebugManager.flags.DisableScratchPages.get();
+    bool disableScratch = false;
+    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
+        disableScratch = false;
+    }
+    if (DebugManager.flags.DisableScratchPages.get() != -1) {
+        disableScratch = DebugManager.flags.DisableScratchPages.get();
+    }
+
     bool useVmBind = isVmBindAvailable();
     bool enablePageFault = hasPageFaultSupport() && useVmBind;
 

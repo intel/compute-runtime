@@ -294,11 +294,40 @@ struct BufferObjectMock : public BufferObject {
 
 TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesWhenCreateDrmVirtualMemoryThenProperFlagIsSet) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.DisableScratchPages.set(true);
+    DebugManager.flags.DisableScratchPages.set(1);
     DebugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
 
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+
+    uint32_t vmId = 0;
+    drm.createDrmVirtualMemory(vmId);
+
+    EXPECT_TRUE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
+}
+
+TEST(DrmBufferObjectTestPrelim, givenDebuggingEnabledWithoutDisableScratchPagesFlagSetWhenCreateDrmVirtualMemoryThenDisableScratchPagesFlagIsNotSet) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    executionEnvironment->setDebuggingEnabled();
+
+    uint32_t vmId = 0;
+    drm.createDrmVirtualMemory(vmId);
+
+    EXPECT_FALSE(drm.receivedGemVmControl.flags & DrmPrelimHelper::getDisableScratchVmCreateFlag());
+}
+
+TEST(DrmBufferObjectTestPrelim, givenDisableScratchPagesAndDebuggingEnabledWhenCreateDrmVirtualMemoryThenEnvVariableIsPriority) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DisableScratchPages.set(1);
+    DebugManager.flags.UseTileMemoryBankInVirtualMemoryCreation.set(0u);
+
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    executionEnvironment->setDebuggingEnabled();
 
     uint32_t vmId = 0;
     drm.createDrmVirtualMemory(vmId);
