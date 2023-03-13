@@ -70,6 +70,12 @@ TEST_F(DriverHandleImpTest, givenDriverImpWhenCallingupdateRootDeviceBitFieldsTh
 }
 
 using DriverVersionTest = Test<DeviceFixture>;
+TEST_F(DriverVersionTest, givenSupportedExtensionsWhenCheckIfDeviceIpVersionIsSupportedThenCorrectResultsAreReturned) {
+    auto &supportedExt = driverHandle->extensionsSupported;
+    auto it = std::find_if(supportedExt.begin(), supportedExt.end(), [](const auto &supportedExt) { return supportedExt.first == ZE_DEVICE_IP_VERSION_EXT_NAME; });
+    EXPECT_NE(it, supportedExt.end());
+    EXPECT_EQ(it->second, ZE_DEVICE_IP_VERSION_VERSION_CURRENT);
+}
 
 TEST_F(DriverVersionTest, givenCallToGetExtensionPropertiesThenSupportedExtensionsAreReturned) {
     uint32_t count = 0;
