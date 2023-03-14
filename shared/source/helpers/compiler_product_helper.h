@@ -37,6 +37,7 @@ class CompilerProductHelper {
     virtual bool isForceEmuInt32DivRemSPRequired() const = 0;
     virtual bool isStatelessToStatefulBufferOffsetSupported() const = 0;
     virtual bool isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isSplitMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSubgroupLocalBlockIoSupported() const = 0;
     virtual bool isDotAccumulateSupported() const = 0;
@@ -69,6 +70,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isForceEmuInt32DivRemSPRequired() const override;
     bool isStatelessToStatefulBufferOffsetSupported() const override;
     bool isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const override;
+    bool isSplitMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const override;
     bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const override;
     bool isSubgroupLocalBlockIoSupported() const override;
     bool isDotAccumulateSupported() const override;

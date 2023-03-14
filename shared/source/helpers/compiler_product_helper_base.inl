@@ -50,6 +50,9 @@ std::string CompilerProductHelperHw<gfxProduct>::getExtensions(const HardwareInf
 
     if (isMatrixMultiplyAccumulateSupported(hwInfo)) {
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
+    }
+
+    if (isSplitMatrixMultiplyAccumulateSupported(hwInfo)) {
         extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
     }
 

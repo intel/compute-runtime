@@ -122,6 +122,18 @@ HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenMatrixMultiplyAccum
     EXPECT_TRUE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(pDevice->getHardwareInfo()));
 }
 
+HWTEST2_F(CompilerProductHelperFixture, GivenXeFamilyThenSplitMatrixMultiplyAccumulateIsSupported, IsWithinXeGfxFamily) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    EXPECT_TRUE(compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(pDevice->getHardwareInfo()));
+}
+
+HWTEST2_F(CompilerProductHelperFixture, GivenNotXeFamilyThenSplitMatrixMultiplyAccumulateIsNotSupported, IsNotWithinXeGfxFamily) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+
+    EXPECT_FALSE(compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(pDevice->getHardwareInfo()));
+}
+
 HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpThenBFloat16ConversionIsNotSupported, IsAtMostGen12lp) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
 

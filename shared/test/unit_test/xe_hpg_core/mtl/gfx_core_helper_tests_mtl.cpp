@@ -38,6 +38,7 @@ MTLTEST_F(GfxCoreHelperTestMtl, givenVariousMtlReleasesWhenGetExtensionsIsCalled
         EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
         EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
         EXPECT_EQ(!MTL::isLpg(hwInfo), compilerProductHelper.isMatrixMultiplyAccumulateSupported(hwInfo));
+        EXPECT_EQ(!MTL::isLpg(hwInfo), compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(hwInfo));
     }
 }
 

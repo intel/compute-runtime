@@ -26,6 +26,11 @@ bool CompilerProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(co
 }
 
 template <>
+bool CompilerProductHelperHw<gfxProduct>::isSplitMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
+    return (MTL::isLpg(hwInfo) == false);
+}
+
+template <>
 bool CompilerProductHelperHw<gfxProduct>::isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const {
     return (MTL::isLpg(hwInfo) == false);
 }

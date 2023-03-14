@@ -29,6 +29,7 @@ using IsAtMostGen12lp = IsAtMostGfxCore<IGFX_GEN12LP_CORE>;
 using IsAtLeastGen12lp = IsAtLeastGfxCore<IGFX_GEN12LP_CORE>;
 
 using IsWithinXeGfxFamily = IsWithinGfxCore<IGFX_XE_HP_CORE, IGFX_XE_HPC_CORE>;
+using IsNotWithinXeGfxFamily = IsNotAnyGfxCores<IGFX_XE_HP_CORE, IGFX_XE_HPG_CORE, IGFX_XE_HPC_CORE>;
 
 using IsAtLeastXeHpCore = IsAtLeastGfxCore<IGFX_XE_HP_CORE>;
 using IsAtMostXeHpCore = IsAtMostGfxCore<IGFX_XE_HP_CORE>;
