@@ -207,22 +207,12 @@ TEST(DrmQueryTest, givenCreateContextWithAccessCounterWhenDrmContextIsCreatedThe
     }
 }
 
-TEST(DrmQueryTest, givenPrelimEuDebugEnabledWhenCallingIsDebugAttachAvailableThenReturnValueIsTrue) {
+TEST(DrmQueryTest, WhenCallingIsDebugAttachAvailableThenReturnValueIsTrue) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
     drm.allowDebugAttachCallBase = true;
-    drm.prelimEuDebugValue = 1;
 
     EXPECT_TRUE(drm.isDebugAttachAvailable());
-}
-
-TEST(DrmQueryTest, givenPrelimEuDebugDisabledWhenCallingIsDebugAttachAvailableThenReturnValueIsFalse) {
-    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
-    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
-    drm.allowDebugAttachCallBase = true;
-    drm.prelimEuDebugValue = 0;
-
-    EXPECT_FALSE(drm.isDebugAttachAvailable());
 }
 
 TEST(DrmPrelimTest, GivenDebuggerOpenIoctlWhenErrorEbusyReturnedThenErrorIsReturnedWithoutReinvokingIoctl) {
