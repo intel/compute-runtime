@@ -147,8 +147,6 @@ void ClDevice::initializeCaps() {
     deviceInfo.spirVersions = spirVersions.c_str();
     deviceInfo.ilsWithVersion[0].version = CL_MAKE_VERSION(1, 2, 0);
     strcpy_s(deviceInfo.ilsWithVersion[0].name, CL_NAME_VERSION_MAX_NAME_SIZE, spirvName.c_str());
-    auto supportsVme = hwInfo.capabilityTable.supportsVme;
-    auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;
 
     deviceInfo.independentForwardProgress = hwInfo.capabilityTable.supportsIndependentForwardProgress;
     deviceInfo.maxNumOfSubGroups = 0;
@@ -165,25 +163,9 @@ void ClDevice::initializeCaps() {
         if (deviceInfo.independentForwardProgress) {
             deviceExtensions += "cl_khr_subgroups ";
         }
-
-        if (supportsVme) {
-            deviceExtensions += "cl_intel_spirv_device_side_avc_motion_estimation ";
-        }
-        if (hwInfo.capabilityTable.supportsMediaBlock) {
-            deviceExtensions += "cl_intel_spirv_media_block_io ";
-        }
-        deviceExtensions += "cl_intel_spirv_subgroups ";
-        deviceExtensions += "cl_khr_spirv_no_integer_wrap_decoration ";
-
-        deviceExtensions += "cl_intel_unified_shared_memory ";
-        if (hwInfo.capabilityTable.supportsImages) {
-            deviceExtensions += "cl_khr_mipmap_image cl_khr_mipmap_image_writes ";
-        }
     }
 
     if (enabledClVersion >= 20) {
-        deviceExtensions += "cl_ext_float_atomics ";
-
         deviceInfo.singleFpAtomicCapabilities = defaultFpAtomicCapabilities;
         deviceInfo.halfFpAtomicCapabilities = 0;
         if (ocl21FeaturesEnabled && hwInfo.capabilityTable.supportsFloatAtomics) {
@@ -203,46 +185,18 @@ void ClDevice::initializeCaps() {
     }
 
     if (DebugManager.flags.EnableNV12.get() && hwInfo.capabilityTable.supportsImages) {
-        deviceExtensions += "cl_intel_planar_yuv ";
         deviceInfo.nv12Extension = true;
     }
     if (DebugManager.flags.EnablePackedYuv.get() && hwInfo.capabilityTable.supportsImages) {
-        deviceExtensions += "cl_intel_packed_yuv ";
         deviceInfo.packedYuvExtension = true;
     }
+    auto supportsVme = hwInfo.capabilityTable.supportsVme;
     if (DebugManager.flags.EnableIntelVme.get() != -1) {
         supportsVme = !!DebugManager.flags.EnableIntelVme.get();
     }
 
     if (supportsVme) {
-        deviceExtensions += "cl_intel_motion_estimation cl_intel_device_side_avc_motion_estimation ";
         deviceInfo.vmeExtension = true;
-    }
-
-    if (DebugManager.flags.EnableIntelAdvancedVme.get() != -1) {
-        supportsAdvancedVme = !!DebugManager.flags.EnableIntelAdvancedVme.get();
-    }
-    if (supportsAdvancedVme) {
-        deviceExtensions += "cl_intel_advanced_motion_estimation ";
-    }
-
-    if (hwInfo.capabilityTable.ftrSupportsInteger64BitAtomics) {
-        deviceExtensions += "cl_khr_int64_base_atomics ";
-        deviceExtensions += "cl_khr_int64_extended_atomics ";
-    }
-
-    if (hwInfo.capabilityTable.supportsImages) {
-        deviceExtensions += "cl_khr_image2d_from_buffer ";
-        deviceExtensions += "cl_khr_depth_images ";
-        deviceExtensions += "cl_khr_3d_image_writes ";
-    }
-
-    if (hwInfo.capabilityTable.supportsMediaBlock) {
-        deviceExtensions += "cl_intel_media_block_io ";
-    }
-
-    if (compilerProductHelper.isBFloat16ConversionSupported(hwInfo)) {
-        deviceExtensions += "cl_intel_bfloat16_conversions ";
     }
 
     auto sharingAllowed = (getNumGenericSubDevices() <= 1u);
@@ -271,6 +225,11 @@ void ClDevice::initializeCaps() {
     std::vector<std::string> exposedBuiltinKernelsVector;
     if (supportsVme) {
         exposedBuiltinKernelsVector.push_back("block_motion_estimate_intel");
+    }
+    auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;
+
+    if (DebugManager.flags.EnableIntelAdvancedVme.get() != -1) {
+        supportsAdvancedVme = !!DebugManager.flags.EnableIntelAdvancedVme.get();
     }
     if (supportsAdvancedVme) {
         exposedBuiltinKernelsVector.push_back("block_advanced_motion_estimate_check_intel");
