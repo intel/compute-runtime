@@ -182,8 +182,8 @@ void CommandListPrivateHeapsFixture::setUp() {
     mockKernelImmData->mockKernelInfo->heapInfo.SurfaceStateHeapSize = 128;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.numEntries = 1;
     mockKernelImmData->kernelDescriptor->payloadMappings.bindingTable.tableOffset = 64;
-    kernel->surfaceStateHeapDataSize = 64;
-    kernel->surfaceStateHeapData.reset(new uint8_t[128]);
+    kernel->surfaceStateHeapDataSize = 128;
+    kernel->surfaceStateHeapData.reset(new uint8_t[256]);
 }
 
 void CommandListGlobalHeapsFixtureInit::setUp() {

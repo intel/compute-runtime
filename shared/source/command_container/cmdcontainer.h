@@ -173,6 +173,10 @@ class CommandContainer : public NonCopyableOrMovableClass {
         return indirectHeapInLocalMemory;
     }
 
+    void setKeepCurrentStateHeap(bool value) {
+        keepCurrentStateHeap = value;
+    }
+
     HeapContainer sshAllocations;
     uint64_t currentLinearStreamStartOffset = 0u;
     uint32_t slmSize = std::numeric_limits<uint32_t>::max();
@@ -224,6 +228,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool heapSharingEnabled = false;
     bool useSecondaryCommandStream = false;
     bool indirectHeapInLocalMemory = false;
+    bool keepCurrentStateHeap = false;
 };
 
 } // namespace NEO

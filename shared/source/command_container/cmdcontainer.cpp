@@ -181,15 +181,17 @@ void CommandContainer::reset() {
     commandStream->replaceGraphicsAllocation(cmdBufferAllocations[0]);
     addToResidencyContainer(commandStream->getGraphicsAllocation());
 
-    for (auto &indirectHeap : indirectHeaps) {
-        if (indirectHeap != nullptr) {
-            indirectHeap->replaceBuffer(indirectHeap->getCpuBase(),
-                                        indirectHeap->getMaxAvailableSpace());
-            addToResidencyContainer(indirectHeap->getGraphicsAllocation());
+    for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
+        if (indirectHeaps[i] != nullptr) {
+            if (i == IndirectHeap::Type::INDIRECT_OBJECT || !this->keepCurrentStateHeap) {
+                indirectHeaps[i]->replaceBuffer(indirectHeaps[i]->getCpuBase(),
+                                                indirectHeaps[i]->getMaxAvailableSpace());
+                if (i == IndirectHeap::Type::SURFACE_STATE) {
+                    indirectHeaps[i]->getSpace(reservedSshSize);
+                }
+            }
+            addToResidencyContainer(indirectHeaps[i]->getGraphicsAllocation());
         }
-    }
-    if (indirectHeaps[IndirectHeap::Type::SURFACE_STATE] != nullptr) {
-        indirectHeaps[IndirectHeap::Type::SURFACE_STATE]->getSpace(reservedSshSize);
     }
 
     iddBlock = nullptr;

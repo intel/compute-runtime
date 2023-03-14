@@ -2375,5 +2375,188 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(NEO::StreamProperty64::initValue, commandList->currentDynamicStateBaseAddress);
 }
 
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
+          givenCommandListAppendsKernelWhenCommandListIsResetThenStateHeapsRetainPosition,
+          IsAtLeastSkl) {
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &container = commandList->getCmdContainer();
+    size_t surfaceHeapUsed = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getUsed();
+    size_t dynamicHeapUsed = 0;
+    if (dshRequired) {
+        dynamicHeapUsed = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE)->getUsed();
+    }
+
+    result = commandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_EQ(surfaceHeapUsed, container.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getUsed());
+    if (dshRequired) {
+        EXPECT_EQ(dynamicHeapUsed, container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE)->getUsed());
+    }
+}
+
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
+          givenCommandListAppendsKernelWhenCommandListIsResetAndHeapsExhaustedBeforeFirstKernelThenStateIsReloadedInCmdQueuePreamble,
+          IsAtLeastSkl) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &container = commandList->getCmdContainer();
+    auto ssh = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+
+    auto firstHeapSurfaceBaseAddress = ssh->getHeapGpuBase();
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    size_t queueBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueAfter = cmdQueueStream.getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(firstHeapSurfaceBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    ssh->getSpace(ssh->getAvailableSpace());
+
+    result = commandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto secondHeapSurfaceBaseAddress = ssh->getHeapGpuBase();
+    EXPECT_NE(firstHeapSurfaceBaseAddress, secondHeapSurfaceBaseAddress);
+
+    queueBefore = cmdQueueStream.getUsed();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    queueAfter = cmdQueueStream.getUsed();
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(secondHeapSurfaceBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+}
+
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
+          givenCommandListAppendsKernelWhenCommandListIsResetAndHeapsExhaustedBeforeSecondKernelThenStateIsReloadedInCmdList,
+          IsAtLeastSkl) {
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &container = commandList->getCmdContainer();
+    auto ssh = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+
+    auto firstHeapSurfaceBaseAddress = ssh->getHeapGpuBase();
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    size_t queueBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueAfter = cmdQueueStream.getUsed();
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    auto sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    auto sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(firstHeapSurfaceBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    ssh->getSpace(ssh->getAvailableSpace() - 128);
+
+    result = commandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdListStream = *container.getCommandStream();
+
+    size_t usedBefore = cmdListStream.getUsed();
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t usedAfter = cmdListStream.getUsed();
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto secondHeapSurfaceBaseAddress = ssh->getHeapGpuBase();
+    EXPECT_NE(firstHeapSurfaceBaseAddress, secondHeapSurfaceBaseAddress);
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdListStream.getCpuBase(), usedBefore),
+        usedAfter - usedBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(expectedSbaCmds, sbaCmds.size());
+
+    sbaCmd = reinterpret_cast<STATE_BASE_ADDRESS *>(*sbaCmds[0]);
+    EXPECT_TRUE(sbaCmd->getSurfaceStateBaseAddressModifyEnable());
+    EXPECT_EQ(secondHeapSurfaceBaseAddress, sbaCmd->getSurfaceStateBaseAddress());
+
+    queueBefore = cmdQueueStream.getUsed();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    queueAfter = cmdQueueStream.getUsed();
+
+    cmdList.clear();
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueBefore),
+        queueAfter - queueBefore));
+    sbaCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(0u, sbaCmds.size());
+}
+
 } // namespace ult
 } // namespace L0

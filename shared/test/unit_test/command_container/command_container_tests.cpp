@@ -1609,3 +1609,33 @@ TEST_F(CommandContainerTest, givenCmdContainerAllocatesIndirectHeapWhenGettingMe
 
     EXPECT_EQ(cmdContainer->isIndirectHeapInLocalMemory(), cmdContainer->getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT)->getGraphicsAllocation()->isAllocatedInLocalMemoryPool());
 }
+
+TEST_F(CommandContainerTest, givenCmdContainerSetToKeepStateHeapPositionWhenStateHeapsConsumedAndContainerResetThenHeapsCurrentPositionRetained) {
+    bool useDsh = pDevice->getHardwareInfo().capabilityTable.supportsImages;
+
+    auto cmdContainer = std::make_unique<MyMockCommandContainer>();
+    cmdContainer->setKeepCurrentStateHeap(true);
+    cmdContainer->initialize(pDevice, nullptr, true, false);
+
+    NEO::IndirectHeap *ioh = cmdContainer->getIndirectHeap(NEO::HeapType::INDIRECT_OBJECT);
+    ioh->getSpace(64);
+
+    NEO::IndirectHeap *ssh = cmdContainer->getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    ssh->getSpace(64);
+    size_t sshUsed = ssh->getUsed();
+
+    NEO::IndirectHeap *dsh = cmdContainer->getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    size_t dshUsed = 0;
+    if (useDsh) {
+        dsh->getSpace(64);
+        dshUsed = dsh->getUsed();
+    }
+
+    cmdContainer->reset();
+
+    EXPECT_EQ(0u, ioh->getUsed());
+    EXPECT_EQ(sshUsed, ssh->getUsed());
+    if (useDsh) {
+        EXPECT_EQ(dshUsed, dsh->getUsed());
+    }
+}
