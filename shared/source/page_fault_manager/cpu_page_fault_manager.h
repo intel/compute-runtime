@@ -44,7 +44,7 @@ class PageFaultManager : public NonCopyableOrMovableClass {
     };
 
     typedef void (*gpuDomainHandlerFunc)(PageFaultManager *pageFaultHandler, void *alloc, PageFaultData &pageFaultData);
-    [[nodiscard]] std::unique_lock<SpinLock> obtainUniqueOwnership() { return std::unique_lock<SpinLock>(this->mtx); }
+
     void setGpuDomainHandler(gpuDomainHandlerFunc gpuHandlerFuncPtr);
 
     virtual void allowCPUMemoryAccess(void *ptr, size_t size) = 0;
