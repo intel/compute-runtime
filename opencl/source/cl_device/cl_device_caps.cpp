@@ -265,7 +265,7 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_khr_pci_bus_info ";
     }
 
-    deviceExtensions += gfxCoreHelper.getExtensions(rootDeviceEnvironment);
+    deviceExtensions += compilerProductHelper.getExtensions(hwInfo);
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
 
     std::vector<std::string> exposedBuiltinKernelsVector;

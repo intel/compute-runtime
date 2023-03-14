@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/allocation_type.h"
@@ -26,8 +27,9 @@ using GfxCoreHelperTestDg2 = ::testing::Test;
 DG2TEST_F(GfxCoreHelperTestDg2, whenGetExtensionsIsCalledThenMatrixMultiplyAccumulateExtensionsAreReturned) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    auto extensions = gfxCoreHelper.getExtensions(rootDeviceEnvironment);
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+    auto extensions = compilerProductHelper.getExtensions(hwInfo);
 
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));

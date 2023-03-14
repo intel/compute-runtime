@@ -26,7 +26,6 @@ using GfxCoreHelperTestMtl = GfxCoreHelperTest;
 MTLTEST_F(GfxCoreHelperTestMtl, givenVariousMtlReleasesWhenGetExtensionsIsCalledThenMatrixMultiplyAccumulateExtensionsAreCorrectlyReported) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &rootDeviceEnvironment = *mockExecutionEnvironment.rootDeviceEnvironments[0];
-    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
     unsigned int gmdReleases[] = {70, 71, 72, 73};
@@ -34,7 +33,7 @@ MTLTEST_F(GfxCoreHelperTestMtl, givenVariousMtlReleasesWhenGetExtensionsIsCalled
 
     for (auto gmdRelease : gmdReleases) {
         hwInfo.ipVersion.release = gmdRelease;
-        auto extensions = gfxCoreHelper.getExtensions(rootDeviceEnvironment);
+        auto extensions = compilerProductHelper.getExtensions(hwInfo);
 
         EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
         EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));

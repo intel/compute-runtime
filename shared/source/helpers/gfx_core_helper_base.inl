@@ -684,37 +684,4 @@ template <typename gfxProduct>
 bool GfxCoreHelperHw<gfxProduct>::isRelaxedOrderingSupported() const {
     return false;
 }
-
-template <typename GfxFamily>
-std::string GfxCoreHelperHw<GfxFamily>::getExtensions(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    std::string extensions = "";
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto &compilerProductHelper = rootDeviceEnvironment.template getHelper<CompilerProductHelper>();
-
-    if (compilerProductHelper.isCreateBufferWithPropertiesSupported()) {
-        extensions += "cl_intel_create_buffer_with_properties ";
-    }
-
-    if (compilerProductHelper.isDotAccumulateSupported()) {
-        extensions += "cl_intel_dot_accumulate ";
-    }
-
-    if (compilerProductHelper.isSubgroupLocalBlockIoSupported()) {
-        extensions += "cl_intel_subgroup_local_block_io ";
-    }
-
-    if (compilerProductHelper.isMatrixMultiplyAccumulateSupported(hwInfo)) {
-        extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
-        extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
-    }
-
-    if (compilerProductHelper.isSubgroupNamedBarrierSupported()) {
-        extensions += "cl_khr_subgroup_named_barrier ";
-    }
-
-    if (compilerProductHelper.isSubgroupExtendedBlockReadSupported()) {
-        extensions += "cl_intel_subgroup_extended_block_read ";
-    }
-    return extensions;
-}
 } // namespace NEO

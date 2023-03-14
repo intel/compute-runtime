@@ -32,4 +32,35 @@ bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithStatefulAccessPref
     return false;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+std::string CompilerProductHelperHw<gfxProduct>::getExtensions(const HardwareInfo &hwInfo) const {
+    std::string extensions = "";
+
+    if (isCreateBufferWithPropertiesSupported()) {
+        extensions += "cl_intel_create_buffer_with_properties ";
+    }
+
+    if (isDotAccumulateSupported()) {
+        extensions += "cl_intel_dot_accumulate ";
+    }
+
+    if (isSubgroupLocalBlockIoSupported()) {
+        extensions += "cl_intel_subgroup_local_block_io ";
+    }
+
+    if (isMatrixMultiplyAccumulateSupported(hwInfo)) {
+        extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
+        extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
+    }
+
+    if (isSubgroupNamedBarrierSupported()) {
+        extensions += "cl_khr_subgroup_named_barrier ";
+    }
+
+    if (isSubgroupExtendedBlockReadSupported()) {
+        extensions += "cl_intel_subgroup_extended_block_read ";
+    }
+    return extensions;
+}
+
 } // namespace NEO
