@@ -38,6 +38,11 @@ class CompilerProductHelper {
     virtual bool isStatelessToStatefulBufferOffsetSupported() const = 0;
     virtual bool isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isSubgroupLocalBlockIoSupported() const = 0;
+    virtual bool isDotAccumulateSupported() const = 0;
+    virtual bool isCreateBufferWithPropertiesSupported() const = 0;
+    virtual bool isSubgroupNamedBarrierSupported() const = 0;
+    virtual bool isSubgroupExtendedBlockReadSupported() const = 0;
     virtual bool isForceToStatelessRequired() const = 0;
     virtual bool failBuildProgramWithStatefulAccessPreference() const = 0;
     virtual void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const = 0;
@@ -64,6 +69,11 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isStatelessToStatefulBufferOffsetSupported() const override;
     bool isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const override;
     bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const override;
+    bool isSubgroupLocalBlockIoSupported() const override;
+    bool isDotAccumulateSupported() const override;
+    bool isCreateBufferWithPropertiesSupported() const override;
+    bool isSubgroupNamedBarrierSupported() const override;
+    bool isSubgroupExtendedBlockReadSupported() const override;
     bool isForceToStatelessRequired() const override;
     bool failBuildProgramWithStatefulAccessPreference() const override;
     void setProductConfigForHwInfo(HardwareInfo &hwInfo, HardwareIpVersion config) const override;

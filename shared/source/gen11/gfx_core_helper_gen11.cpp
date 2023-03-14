@@ -24,11 +24,6 @@ uint32_t GfxCoreHelperHw<Family>::getComputeUnitsUsedForScratch(const RootDevice
 }
 
 template <>
-std::string GfxCoreHelperHw<Family>::getExtensions(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    return "cl_intel_subgroup_local_block_io ";
-}
-
-template <>
 int32_t GfxCoreHelperHw<Family>::getDefaultThreadArbitrationPolicy() const {
     return ThreadArbitrationPolicy::RoundRobinAfterDependency;
 }

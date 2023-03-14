@@ -72,11 +72,6 @@ EngineGroupType GfxCoreHelperHw<GfxFamily>::getEngineGroupType(aub_stream::Engin
 }
 
 template <typename GfxFamily>
-std::string GfxCoreHelperHw<GfxFamily>::getExtensions(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    return "";
-}
-
-template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::getMocsIndex(const GmmHelper &gmmHelper, bool l3enabled, bool l1enabled) const {
     if (l3enabled) {
         return gmmHelper.getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1;

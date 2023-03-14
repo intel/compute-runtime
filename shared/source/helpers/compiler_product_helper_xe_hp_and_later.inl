@@ -23,4 +23,14 @@ bool CompilerProductHelperHw<gfxProduct>::isBFloat16ConversionSupported(const Ha
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isDotAccumulateSupported() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isCreateBufferWithPropertiesSupported() const {
+    return true;
+}
+
 } // namespace NEO

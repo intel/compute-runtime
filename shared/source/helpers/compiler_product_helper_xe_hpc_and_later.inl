@@ -20,4 +20,14 @@ bool CompilerProductHelperHw<gfxProduct>::isForceToStatelessRequired() const {
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isSubgroupNamedBarrierSupported() const {
+    return true;
+}
+
+template <PRODUCT_FAMILY gfxProduct>
+bool CompilerProductHelperHw<gfxProduct>::isSubgroupExtendedBlockReadSupported() const {
+    return true;
+}
+
 } // namespace NEO

@@ -276,21 +276,6 @@ uint32_t GfxCoreHelperHw<Family>::getNumCacheRegions() const {
 }
 
 template <>
-std::string GfxCoreHelperHw<Family>::getExtensions(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    std::string extensions;
-
-    extensions += "cl_intel_create_buffer_with_properties ";
-    extensions += "cl_intel_dot_accumulate ";
-    extensions += "cl_intel_subgroup_local_block_io ";
-    extensions += "cl_khr_subgroup_named_barrier ";
-    extensions += "cl_intel_subgroup_extended_block_read ";
-    extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
-    extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
-
-    return extensions;
-}
-
-template <>
 uint32_t GfxCoreHelperHw<Family>::alignSlmSize(uint32_t slmSize) const {
     const uint32_t alignedSlmSizes[] = {
         0u,

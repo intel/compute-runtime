@@ -18,9 +18,11 @@ using IsXeHpcCore = IsGfxCore<IGFX_XE_HPC_CORE>;
 using IsNotXeHpcCore = IsNotGfxCore<IGFX_XE_HPC_CORE>;
 using IsNotXeHpgCore = IsNotGfxCore<IGFX_XE_HPG_CORE>;
 
+using IsAtMostGen9 = IsAtMostGfxCore<IGFX_GEN9_CORE>;
 using IsAtLeastGen9 = IsAtLeastGfxCore<IGFX_GEN9_CORE>;
 
 using IsAtMostGen11 = IsAtMostGfxCore<IGFX_GEN11LP_CORE>;
+using IsAtLeastGen11 = IsAtLeastGfxCore<IGFX_GEN11LP_CORE>;
 
 using IsAtMostGen12lp = IsAtMostGfxCore<IGFX_GEN12LP_CORE>;
 

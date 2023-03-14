@@ -94,17 +94,6 @@ const StackVec<uint32_t, 6> GfxCoreHelperHw<Family>::getThreadsPerEUConfigs() co
 }
 
 template <>
-std::string GfxCoreHelperHw<Family>::getExtensions(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    std::string extensions;
-    extensions += "cl_intel_dot_accumulate ";
-    extensions += "cl_intel_subgroup_local_block_io ";
-    extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
-    extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
-
-    return extensions;
-}
-
-template <>
 void MemorySynchronizationCommands<Family>::setBarrierWaFlags(void *barrierCmd) {
     auto &pipeControl = *reinterpret_cast<typename Family::PIPE_CONTROL *>(barrierCmd);
 

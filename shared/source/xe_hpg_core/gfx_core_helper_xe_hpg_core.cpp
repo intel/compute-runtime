@@ -99,23 +99,6 @@ const StackVec<uint32_t, 6> GfxCoreHelperHw<Family>::getThreadsPerEUConfigs() co
 }
 
 template <>
-std::string GfxCoreHelperHw<Family>::getExtensions(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    std::string extensions;
-    extensions += "cl_intel_create_buffer_with_properties ";
-    extensions += "cl_intel_dot_accumulate ";
-    extensions += "cl_intel_subgroup_local_block_io ";
-
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto &compilerProductHelper = rootDeviceEnvironment.template getHelper<CompilerProductHelper>();
-    if (compilerProductHelper.isMatrixMultiplyAccumulateSupported(hwInfo)) {
-        extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
-        extensions += "cl_intel_subgroup_split_matrix_multiply_accumulate ";
-    }
-
-    return extensions;
-}
-
-template <>
 bool GfxCoreHelperHw<Family>::isBufferSizeSuitableForCompression(const size_t size) const {
     if (DebugManager.flags.OverrideBufferSuitableForRenderCompression.get() != -1) {
         return !!DebugManager.flags.OverrideBufferSuitableForRenderCompression.get();
