@@ -90,8 +90,6 @@ MemObj::~MemObj() {
                 }
                 destroyGraphicsAllocation(graphicsAllocation, doAsyncDestructions);
                 graphicsAllocation = nullptr;
-            } else if (graphicsAllocation && context->getBufferPoolAllocator().isPoolBuffer(associatedMemObject)) {
-                memoryManager->waitForEnginesCompletion(*graphicsAllocation);
             }
             if (!associatedMemObject) {
                 releaseMapAllocation(rootDeviceIndex, doAsyncDestructions);
@@ -102,7 +100,6 @@ MemObj::~MemObj() {
         }
         if (associatedMemObject) {
             associatedMemObject->decRefInternal();
-            context->getBufferPoolAllocator().tryFreeFromPoolBuffer(associatedMemObject, this->offset, this->sizeInPoolAllocator);
         }
         if (!associatedMemObject) {
             releaseAllocatedMapPtr();
