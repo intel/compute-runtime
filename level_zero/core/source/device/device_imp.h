@@ -93,7 +93,6 @@ struct DeviceImp : public Device {
     const NEO::DeviceInfo &getDeviceInfo() const override;
 
     void activateMetricGroups() override;
-    void processAdditionalKernelProperties(const NEO::GfxCoreHelper &gfxCoreHelper, ze_device_module_properties_t *pKernelProperties);
     uint32_t getAdditionalEngines(uint32_t numAdditionalEnginesRequested,
                                   ze_command_queue_group_properties_t *pCommandQueueGroupProperties);
     NEO::GraphicsAllocation *getDebugSurface() const override { return debugSurface; }

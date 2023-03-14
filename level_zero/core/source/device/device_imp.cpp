@@ -17,6 +17,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm_helper.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -652,8 +653,8 @@ static constexpr ze_device_fp_flags_t defaultFpFlags = static_cast<ze_device_fp_
 
 ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKernelProperties) {
     const auto &hardwareInfo = this->neoDevice->getHardwareInfo();
+    auto &compilerProductHelper = this->neoDevice->getCompilerProductHelper();
     const auto &deviceInfo = this->neoDevice->getDeviceInfo();
-    auto &gfxCoreHelper = this->neoDevice->getGfxCoreHelper();
 
     std::string ilVersion = deviceInfo.ilVersion;
     size_t majorVersionPos = ilVersion.find('_');
@@ -697,7 +698,9 @@ ze_result_t DeviceImp::getKernelProperties(ze_device_module_properties_t *pKerne
     }
 
     pKernelProperties->nativeKernelSupported.id[0] = 0;
-    processAdditionalKernelProperties(gfxCoreHelper, pKernelProperties);
+    if (compilerProductHelper.isDotAccumulateSupported()) {
+        pKernelProperties->flags |= ZE_DEVICE_MODULE_FLAG_DP4A;
+    }
     pKernelProperties->maxArgumentsSize = static_cast<uint32_t>(this->neoDevice->getDeviceInfo().maxParameterSize);
     pKernelProperties->printfBufferSize = static_cast<uint32_t>(this->neoDevice->getDeviceInfo().printfBufferSize);
 

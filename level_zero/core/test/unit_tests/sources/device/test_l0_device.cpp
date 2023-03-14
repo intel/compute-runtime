@@ -8,6 +8,7 @@
 #include "shared/source/command_container/implicit_scaling.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/helpers/bit_helpers.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/preamble.h"
@@ -1445,6 +1446,17 @@ TEST_F(DeviceTest, givenNullDriverInfowhenPciPropertiesIsCalledThenUninitialized
     ze_result_t res = device->getPciProperties(&pciProperties);
 
     EXPECT_EQ(ZE_RESULT_ERROR_UNINITIALIZED, res);
+}
+
+TEST_F(DeviceTest, GivenFlagDp4aWhenGettingPropertiesFlagsThenBitIsSet) {
+    ze_device_module_properties_t kernelProps = {};
+
+    device->getKernelProperties(&kernelProps);
+    if (device->getNEODevice()->getCompilerProductHelper().isDotAccumulateSupported()) {
+        EXPECT_NE(0u, kernelProps.flags & ZE_DEVICE_MODULE_FLAG_DP4A);
+    } else {
+        EXPECT_EQ(0u, kernelProps.flags & ZE_DEVICE_MODULE_FLAG_DP4A);
+    }
 }
 
 TEST_F(DeviceTest, givenValidPciExtPropertiesWhenPciPropertiesIsCalledThenSuccessIsReturned) {
