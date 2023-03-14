@@ -13,6 +13,7 @@
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/array_count.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/helpers/sleep.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/linux/drm_debug.h"
@@ -1452,19 +1453,29 @@ int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &thre
 }
 
 void DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(const std::vector<EuThread::ThreadId> &threads, uint64_t memoryHandle, uint32_t deviceIndex) {
-    std::unique_ptr<uint8_t[]> bitmask;
-    size_t bitmaskSize;
-    [[maybe_unused]] auto attReadResult = threadControl(threads, deviceIndex, ThreadControlCmd::Stopped, bitmask, bitmaskSize);
-    DEBUG_BREAK_IF(attReadResult != 0);
 
-    auto hwInfo = connectedDevice->getHwInfo();
-    auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
-
-    auto threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, deviceIndex, bitmask.get(), bitmaskSize);
+    std::vector<EuThread::ThreadId> threadsWithAttention;
     std::vector<EuThread::ThreadId> stoppedThreadsToReport;
-    stoppedThreadsToReport.reserve(threads.size());
+    NEO::sleep(std::chrono::microseconds(1));
+
+    if (threads.size() > 1) {
+        auto hwInfo = connectedDevice->getHwInfo();
+        auto &l0GfxCoreHelper = connectedDevice->getL0GfxCoreHelper();
+
+        std::unique_ptr<uint8_t[]> bitmask;
+        size_t bitmaskSize;
+        [[maybe_unused]] auto attReadResult = threadControl(threads, deviceIndex, ThreadControlCmd::Stopped, bitmask, bitmaskSize);
+        DEBUG_BREAK_IF(attReadResult != 0);
+
+        threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, deviceIndex, bitmask.get(), bitmaskSize);
+
+        if (threadsWithAttention.size() == 0) {
+            return;
+        }
+    }
 
     const auto &threadsToCheck = threadsWithAttention.size() > 0 ? threadsWithAttention : threads;
+    stoppedThreadsToReport.reserve(threadsToCheck.size());
 
     for (auto &threadId : threadsToCheck) {
         SIP::sr_ident srMagic = {{0}};
