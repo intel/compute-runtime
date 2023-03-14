@@ -59,6 +59,6 @@ constexpr uint32_t milliFactor = 1000u;
 constexpr uint32_t microFacor = milliFactor * milliFactor;
 constexpr uint64_t gigaUnitTransferToUnitTransfer = 1000 * 1000 * 1000;
 
-constexpr int32_t memoryBusWidth = 128; // bus width in bits
+constexpr int32_t memoryBusWidth = 128; // bus width in bytes
 constexpr int32_t numMemoryChannels = 8;
 #define BITS(x, at, width) (((x) >> (at)) & ((1 << (width)) - 1))

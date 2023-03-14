@@ -18,7 +18,7 @@ extern bool sysmanUltsEnable;
 namespace L0 {
 namespace ult {
 
-constexpr int32_t memoryBusWidth = 128; // bus width in bits
+constexpr int32_t memoryBusWidth = 128; // bus width in bytes
 constexpr int32_t numMemoryChannels = 8;
 constexpr uint32_t memoryHandleComponentCount = 1u;
 const std::string sampleGuid1 = "0xb15a0edc";
@@ -427,7 +427,6 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         EXPECT_EQ(bandwidth.timestamp, expectedTimestamp);
         EXPECT_EQ(bandwidth.timestamp, expectedTimestamp);
         expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
-        expectedBandwidth /= 8;
         EXPECT_EQ(bandwidth.maxBandwidth, expectedBandwidth);
     }
 }
@@ -461,7 +460,6 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidMemoryHandleWhenCallingzesSysmanM
         expectedTimestamp = (expectedTimestamp << 32) | vF1TimestampLValue;
         EXPECT_EQ(bandwidth.timestamp, expectedTimestamp);
         expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
-        expectedBandwidth /= 8;
         EXPECT_EQ(bandwidth.maxBandwidth, expectedBandwidth);
     }
 }
@@ -485,7 +483,6 @@ HWTEST2_F(SysmanDeviceMemoryFixture, GivenValidUsRevIdForRevisionBWhenCallingzes
 
         EXPECT_EQ(zesMemoryGetBandwidth(handle, &bandwidth), ZE_RESULT_SUCCESS);
         uint64_t expectedBandwidth = 128 * hbmRP0Frequency * 1000 * 1000 * 4;
-        expectedBandwidth /= 8;
         EXPECT_EQ(bandwidth.maxBandwidth, expectedBandwidth);
     }
 }

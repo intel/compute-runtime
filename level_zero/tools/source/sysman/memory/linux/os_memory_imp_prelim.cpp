@@ -262,8 +262,7 @@ ze_result_t LinuxMemoryImp::getHbmBandwidth(uint32_t numHbmModules, zes_mem_band
     uint64_t hbmFrequency = 0;
     getHbmFrequency(productFamily, stepping, hbmFrequency);
 
-    pBandwidth->maxBandwidth = memoryBusWidth * hbmFrequency * numHbmModules;
-    pBandwidth->maxBandwidth /= 8; // Divide by 8 to get bandwidth in bytes/sec
+    pBandwidth->maxBandwidth = memoryBusWidth * hbmFrequency * numHbmModules; // Value in bytes/secs
     return result;
 }
 
