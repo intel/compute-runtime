@@ -364,19 +364,31 @@ ze_result_t zesDeviceEnumEngineGroups(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_engine_handle_t *phEngine) {
-    return L0::SysmanDevice::engineGet(hDevice, pCount, phEngine);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::engineGet(hDevice, pCount, phEngine);
+    } else {
+        return L0::Sysman::SysmanDevice::engineGet(hDevice, pCount, phEngine);
+    }
 }
 
 ze_result_t zesEngineGetProperties(
     zes_engine_handle_t hEngine,
     zes_engine_properties_t *pProperties) {
-    return L0::Engine::fromHandle(hEngine)->engineGetProperties(pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::Engine::fromHandle(hEngine)->engineGetProperties(pProperties);
+    } else {
+        return L0::Sysman::Engine::fromHandle(hEngine)->engineGetProperties(pProperties);
+    }
 }
 
 ze_result_t zesEngineGetActivity(
     zes_engine_handle_t hEngine,
     zes_engine_stats_t *pStats) {
-    return L0::Engine::fromHandle(hEngine)->engineGetActivity(pStats);
+    if (L0::sysmanInitFromCore) {
+        return L0::Engine::fromHandle(hEngine)->engineGetActivity(pStats);
+    } else {
+        return L0::Sysman::Engine::fromHandle(hEngine)->engineGetActivity(pStats);
+    }
 }
 
 ze_result_t zesDeviceEnumStandbyDomains(

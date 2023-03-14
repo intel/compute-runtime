@@ -7,13 +7,15 @@
 
 #pragma once
 #include "level_zero/api/sysman/zes_handles_struct.h"
-#include "level_zero/core/source/device/device.h"
+#include "level_zero/sysman/source/sysman_device.h"
 #include <level_zero/zes_api.h>
 
+#include <map>
 #include <mutex>
 #include <vector>
 
 namespace L0 {
+namespace Sysman {
 using EngineInstanceSubDeviceId = std::pair<uint32_t, uint32_t>;
 struct OsSysman;
 
@@ -31,9 +33,8 @@ class Engine : _zes_engine_handle_t {
 
 struct EngineHandleContext {
     EngineHandleContext(OsSysman *pOsSysman);
-    MOCKABLE_VIRTUAL ~EngineHandleContext();
-
-    MOCKABLE_VIRTUAL void init(std::vector<ze_device_handle_t> &deviceHandles);
+    virtual ~EngineHandleContext();
+    MOCKABLE_VIRTUAL void init(uint32_t subDeviceCount);
     void releaseEngines();
 
     ze_result_t engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine);
@@ -50,4 +51,5 @@ struct EngineHandleContext {
     bool engineInitDone = false;
 };
 
+} // namespace Sysman
 } // namespace L0

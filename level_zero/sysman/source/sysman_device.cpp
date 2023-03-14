@@ -51,5 +51,10 @@ ze_result_t SysmanDevice::powerGetCardDomain(zes_device_handle_t hDevice, zes_pw
     return pSysmanDevice->powerGetCardDomain(phPower);
 }
 
+ze_result_t SysmanDevice::engineGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_engine_handle_t *phEngine) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->engineGet(pCount, phEngine);
+}
+
 } // namespace Sysman
 } // namespace L0

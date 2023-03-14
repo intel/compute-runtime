@@ -24,11 +24,13 @@ SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment
     pFabricPortHandleContext = new FabricPortHandleContext(pOsSysman);
     pMemoryHandleContext = new MemoryHandleContext(pOsSysman);
     pPowerHandleContext = new PowerHandleContext(pOsSysman);
+    pEngineHandleContext = new EngineHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
     executionEnvironment->decRefInternal();
     freeResource(pPowerHandleContext);
+    freeResource(pEngineHandleContext);
     freeResource(pFabricPortHandleContext);
     freeResource(pMemoryHandleContext);
     freeResource(pOsSysman);
@@ -56,6 +58,10 @@ ze_result_t SysmanDeviceImp::powerGetCardDomain(zes_pwr_handle_t *phPower) {
 
 ze_result_t SysmanDeviceImp::powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) {
     return pPowerHandleContext->powerGet(pCount, phPower);
+}
+
+ze_result_t SysmanDeviceImp::engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine) {
+    return pEngineHandleContext->engineGet(pCount, phEngine);
 }
 
 } // namespace Sysman
