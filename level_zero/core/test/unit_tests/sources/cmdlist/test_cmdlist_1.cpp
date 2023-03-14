@@ -545,7 +545,11 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     NEO::PageFaultManager::PageFaultData pageData;
     pageData.cmdQ = deviceImp;
     pageData.domain = NEO::PageFaultManager::AllocationDomain::Gpu;
+    pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
+    EXPECT_EQ(0u, device->getDriverHandle()->getSvmAllocsManager()->nonGpuDomainAllocs.size());
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
+    EXPECT_EQ(1u, device->getDriverHandle()->getSvmAllocsManager()->nonGpuDomainAllocs.size());
+
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(0, flags.cpuMigrationBlocked);
 
@@ -616,6 +620,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     NEO::PageFaultManager::PageFaultData pageData;
     pageData.cmdQ = deviceImp;
     pageData.domain = NEO::PageFaultManager::AllocationDomain::Gpu;
+    pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(0, flags.cpuMigrationBlocked);
@@ -669,6 +674,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     NEO::PageFaultManager::PageFaultData pageData;
     pageData.cmdQ = deviceImp;
     pageData.domain = NEO::PageFaultManager::AllocationDomain::Gpu;
+    pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(0, flags.cpuMigrationBlocked);
@@ -715,6 +721,7 @@ TEST_F(CommandListMemAdvisePageFault, givenValidPtrAndPageFaultHandlerAndGpuDoma
     NEO::PageFaultManager::PageFaultData pageData;
     pageData.cmdQ = deviceImp;
     pageData.domain = NEO::PageFaultManager::AllocationDomain::Cpu;
+    pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, ptr, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
     EXPECT_EQ(0, flags.cpuMigrationBlocked);
@@ -761,6 +768,7 @@ TEST_F(CommandListMemAdvisePageFault, givenInvalidPtrAndPageFaultHandlerAndGpuDo
     NEO::PageFaultManager::PageFaultData pageData;
     pageData.cmdQ = deviceImp;
     pageData.domain = NEO::PageFaultManager::AllocationDomain::Gpu;
+    pageData.unifiedMemoryManager = device->getDriverHandle()->getSvmAllocsManager();
     void *alloc = reinterpret_cast<void *>(0x1);
     mockPageFaultManager->gpuDomainHandler(mockPageFaultManager, alloc, pageData);
     flags = deviceImp->memAdviseSharedAllocations[allocData];
