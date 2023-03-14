@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,14 +16,11 @@ DiagnosticsHandleContext::~DiagnosticsHandleContext() {
 }
 
 void DiagnosticsHandleContext::releaseDiagnosticsHandles() {
-    for (Diagnostics *pDiagnostics : handleList) {
-        delete pDiagnostics;
-    }
     handleList.clear();
 }
 void DiagnosticsHandleContext::createHandle(const std::string &diagTests) {
-    Diagnostics *pDiagnostics = new DiagnosticsImp(pOsSysman, diagTests);
-    handleList.push_back(pDiagnostics);
+    std::unique_ptr<Diagnostics> pDiagnostics = std::make_unique<DiagnosticsImp>(pOsSysman, diagTests);
+    handleList.push_back(std::move(pDiagnostics));
 }
 
 void DiagnosticsHandleContext::init() {

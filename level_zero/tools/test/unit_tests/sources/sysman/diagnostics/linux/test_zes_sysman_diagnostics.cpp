@@ -85,9 +85,6 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pFsAccess = pMockFsAccess.get();
         pLinuxSysmanImp->pFwUtilInterface = pMockDiagFwInterface.get();
 
-        for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
-            delete handle;
-        }
         pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
     }
 
@@ -104,9 +101,6 @@ class ZesDiagnosticsFixture : public SysmanDeviceFixture {
     }
 
     void clearAndReinitHandles() {
-        for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
-            delete handle;
-        }
         pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
         pSysmanDeviceImp->pDiagnosticsHandleContext->supportedDiagTests.clear();
     }
@@ -134,8 +128,8 @@ HWTEST2_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnum
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, mockDiagHandleCount);
 
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    std::unique_ptr<DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
     result = zesDeviceEnumDiagnosticTestSuites(device->toHandle(), &count, nullptr);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -151,7 +145,6 @@ HWTEST2_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnum
     EXPECT_EQ(testCount, mockDiagHandleCount);
 
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-    delete ptestDiagnosticsImp;
 }
 
 HWTEST2_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnumDiagnosticTestSuitesThenZeroCountIsReturnedAndVerifyzesDeviceEnumDiagnosticTestSuitesCallSucceeds, IsNotPVC) {
@@ -181,8 +174,8 @@ HWTEST2_F(ZesDiagnosticsFixture, GivenComponentCountZeroWhenCallingzesDeviceEnum
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsPropertiesThenCallSucceeds) {
 
     clearAndReinitHandles();
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    std::unique_ptr<DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();
     zes_diag_properties_t properties = {};
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDiagnosticsGetProperties(handle, &properties));
@@ -190,31 +183,27 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsP
     EXPECT_FALSE(properties.onSubdevice);
     EXPECT_EQ(properties.name, mockSupportedDiagTypes[0]);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-    delete ptestDiagnosticsImp;
 }
 
 TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingDiagnosticsPropertiesThenValidDiagPropertiesRetrieved) {
     zes_diag_properties_t properties = {};
     ze_device_properties_t deviceProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
     Device::fromHandle(device)->getProperties(&deviceProperties);
-    LinuxDiagnosticsImp *pLinuxDiagnosticsImp = new LinuxDiagnosticsImp(pOsSysman, mockSupportedDiagTypes[0]);
+    std::unique_ptr<LinuxDiagnosticsImp> pLinuxDiagnosticsImp = std::make_unique<LinuxDiagnosticsImp>(pOsSysman, mockSupportedDiagTypes[0]);
     pLinuxDiagnosticsImp->osGetDiagProperties(&properties);
     EXPECT_EQ(properties.subdeviceId, deviceProperties.subdeviceId);
     EXPECT_EQ(properties.onSubdevice, deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE);
-
-    delete pLinuxDiagnosticsImp;
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGettingDiagnosticsTestThenCallSucceeds) {
     clearAndReinitHandles();
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    std::unique_ptr<DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();
     zes_diag_test_t tests = {};
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesDiagnosticsGetTests(handle, &count, &tests));
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-    delete ptestDiagnosticsImp;
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenRunningDiagnosticsTestThenCallSucceeds) {
@@ -230,18 +219,16 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenRunningDiagnosticsT
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    std::unique_ptr<DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
     ptestDiagnosticsImp->pOsDiagnostics = std::move(pPublicLinuxDiagnosticsImp);
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();
     zes_diag_result_t results = ZES_DIAG_RESULT_FORCE_UINT32;
     uint32_t start = 0, end = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDiagnosticsRunTests(handle, start, end, &results));
     EXPECT_EQ(results, ZES_DIAG_RESULT_NO_ERRORS);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-    ptestDiagnosticsImp->pOsDiagnostics = nullptr;
-    delete ptestDiagnosticsImp;
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenRunningDiagnosticsTestAndFwRunDiagTestFailsThenCallFails) {
@@ -258,18 +245,16 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenRunningDiagnosticsT
 
     pMockDiagFwInterface->setDiagResult(ZES_DIAG_RESULT_FORCE_UINT32);
     pMockDiagFwInterface->mockFwRunDiagTestsResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    std::unique_ptr<DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
     ptestDiagnosticsImp->pOsDiagnostics = std::move(pPublicLinuxDiagnosticsImp);
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();
     zes_diag_result_t results = ZES_DIAG_RESULT_FORCE_UINT32;
     uint32_t start = 0, end = 0;
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDiagnosticsRunTests(handle, start, end, &results));
     EXPECT_EQ(results, ZES_DIAG_RESULT_FORCE_UINT32);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-    ptestDiagnosticsImp->pOsDiagnostics = nullptr;
-    delete ptestDiagnosticsImp;
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenListProcessFailsThenCallFails) {
@@ -286,10 +271,10 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenListProcessFailsThe
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
     pMockDiagProcfsAccess->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    std::unique_ptr<DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
     ptestDiagnosticsImp->pOsDiagnostics = std::move(pPublicLinuxDiagnosticsImp);
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();
     zes_diag_result_t results = ZES_DIAG_RESULT_FORCE_UINT32;
     uint32_t start = 0, end = 0;
@@ -297,8 +282,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenListProcessFailsThe
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDiagnosticsRunTests(handle, start, end, &results));
     EXPECT_EQ(results, ZES_DIAG_RESULT_FORCE_UINT32);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-    ptestDiagnosticsImp->pOsDiagnostics = nullptr;
-    delete ptestDiagnosticsImp;
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenQuiescentingFailsThenCallFails) {
@@ -315,10 +298,10 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenQuiescentingFailsTh
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
     pMockSysfsAccess->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    std::unique_ptr<DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
     ptestDiagnosticsImp->pOsDiagnostics = std::move(pPublicLinuxDiagnosticsImp);
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();
     zes_diag_result_t results = ZES_DIAG_RESULT_FORCE_UINT32;
     uint32_t start = 0, end = 0;
@@ -326,8 +309,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenQuiescentingFailsTh
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDiagnosticsRunTests(handle, start, end, &results));
     EXPECT_EQ(results, ZES_DIAG_RESULT_FORCE_UINT32);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-    ptestDiagnosticsImp->pOsDiagnostics = nullptr;
-    delete ptestDiagnosticsImp;
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenInvalidateLmemFailsThenCallFails) {
@@ -344,10 +325,10 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenInvalidateLmemFails
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
     pMockSysfsAccess->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    std::unique_ptr<DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
     ptestDiagnosticsImp->pOsDiagnostics = std::move(pPublicLinuxDiagnosticsImp);
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();
     zes_diag_result_t results = ZES_DIAG_RESULT_FORCE_UINT32;
     uint32_t start = 0, end = 0;
@@ -355,8 +336,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenInvalidateLmemFails
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDiagnosticsRunTests(handle, start, end, &results));
     EXPECT_EQ(results, ZES_DIAG_RESULT_FORCE_UINT32);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-    ptestDiagnosticsImp->pOsDiagnostics = nullptr;
-    delete ptestDiagnosticsImp;
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenColdResetFailsThenCallFails) {
@@ -374,10 +353,10 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenColdResetFailsThenC
 
     pMockDiagFwInterface->setDiagResult(ZES_DIAG_RESULT_REBOOT_FOR_REPAIR);
     pMockDiagLinuxSysmanImp->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    std::unique_ptr<DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
     ptestDiagnosticsImp->pOsDiagnostics = std::move(pPublicLinuxDiagnosticsImp);
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();
     zes_diag_result_t results = ZES_DIAG_RESULT_FORCE_UINT32;
     uint32_t start = 0, end = 0;
@@ -385,8 +364,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenColdResetFailsThenC
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDiagnosticsRunTests(handle, start, end, &results));
     EXPECT_EQ(results, ZES_DIAG_RESULT_REBOOT_FOR_REPAIR);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-    ptestDiagnosticsImp->pOsDiagnostics = nullptr;
-    delete ptestDiagnosticsImp;
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenWarmResetFailsThenCallFails) {
@@ -403,10 +380,10 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenWarmResetFailsThenC
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
     pMockDiagLinuxSysmanImp->setMockError(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    std::unique_ptr<DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
     ptestDiagnosticsImp->pOsDiagnostics = std::move(pPublicLinuxDiagnosticsImp);
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();
     zes_diag_result_t results = ZES_DIAG_RESULT_FORCE_UINT32;
     uint32_t start = 0, end = 0;
@@ -414,8 +391,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenWarmResetFailsThenC
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDiagnosticsRunTests(handle, start, end, &results));
     EXPECT_EQ(results, ZES_DIAG_RESULT_NO_ERRORS);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-    ptestDiagnosticsImp->pOsDiagnostics = nullptr;
-    delete ptestDiagnosticsImp;
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenWarmResetSucceedsAndInitDeviceFailsThenCallFails) {
@@ -432,10 +407,10 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenWarmResetSucceedsAn
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
 
     pMockDiagLinuxSysmanImp->setMockInitDeviceError(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    std::unique_ptr<DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
     ptestDiagnosticsImp->pOsDiagnostics = std::move(pPublicLinuxDiagnosticsImp);
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();
     zes_diag_result_t results = ZES_DIAG_RESULT_FORCE_UINT32;
     uint32_t start = 0, end = 0;
@@ -443,8 +418,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenWarmResetSucceedsAn
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDiagnosticsRunTests(handle, start, end, &results));
     EXPECT_EQ(results, ZES_DIAG_RESULT_NO_ERRORS);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-    ptestDiagnosticsImp->pOsDiagnostics = nullptr;
-    delete ptestDiagnosticsImp;
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenColdResetSucceedsAndInitDeviceFailsThenCallFails) {
@@ -462,10 +435,10 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenColdResetSucceedsAn
 
     pMockDiagFwInterface->setDiagResult(ZES_DIAG_RESULT_REBOOT_FOR_REPAIR);
     pMockDiagLinuxSysmanImp->setMockInitDeviceError(ZE_RESULT_ERROR_NOT_AVAILABLE);
-    DiagnosticsImp *ptestDiagnosticsImp = new DiagnosticsImp(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
+    std::unique_ptr<DiagnosticsImp> ptestDiagnosticsImp = std::make_unique<DiagnosticsImp>(pSysmanDeviceImp->pDiagnosticsHandleContext->pOsSysman, mockSupportedDiagTypes[0]);
     std::unique_ptr<OsDiagnostics> pOsDiagnosticsPrev = std::move(ptestDiagnosticsImp->pOsDiagnostics);
     ptestDiagnosticsImp->pOsDiagnostics = std::move(pPublicLinuxDiagnosticsImp);
-    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(ptestDiagnosticsImp);
+    pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.push_back(std::move(ptestDiagnosticsImp));
     auto handle = pSysmanDeviceImp->pDiagnosticsHandleContext->handleList[0]->toHandle();
     zes_diag_result_t results = ZES_DIAG_RESULT_FORCE_UINT32;
     uint32_t start = 0, end = 0;
@@ -473,8 +446,6 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenColdResetSucceedsAn
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesDiagnosticsRunTests(handle, start, end, &results));
     EXPECT_EQ(results, ZES_DIAG_RESULT_REBOOT_FOR_REPAIR);
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.pop_back();
-    ptestDiagnosticsImp->pOsDiagnostics = nullptr;
-    delete ptestDiagnosticsImp;
 }
 
 TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenGPUProcessCleanupSucceedsThenCallSucceeds) {
@@ -680,9 +651,6 @@ HWTEST2_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleAndHandleCountZeroWh
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, mockDiagHandleCount);
 
-    for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
-        delete handle;
-    }
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
     pSysmanDeviceImp->pDiagnosticsHandleContext->supportedDiagTests.clear();
 
@@ -702,9 +670,6 @@ HWTEST2_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleAndHandleCountZeroWh
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(count, mockDiagHandleCount);
 
-    for (const auto &handle : pSysmanDeviceImp->pDiagnosticsHandleContext->handleList) {
-        delete handle;
-    }
     pSysmanDeviceImp->pDiagnosticsHandleContext->handleList.clear();
     pSysmanDeviceImp->pDiagnosticsHandleContext->supportedDiagTests.clear();
 
