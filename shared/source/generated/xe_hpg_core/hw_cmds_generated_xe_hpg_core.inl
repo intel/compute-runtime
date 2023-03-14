@@ -4248,6 +4248,7 @@ struct XY_FAST_COLOR_BLT {
     }
 
     inline void setSpecialModeofOperation(const SPECIAL_MODE_OF_OPERATION value) {
+        UNRECOVERABLE_IF(true); // patched
         TheStructure.Common.SpecialModeofOperation = value;
     }
 
