@@ -2155,7 +2155,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
     auto canonizedGpuAddress = gmmHelper->canonize(reinterpret_cast<uintptr_t>(cpuPointer));
-    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, bos, cpuPointer, canonizedGpuAddress, size, MemoryPool::System4KBPages);
+    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.type, bos, cpuPointer, canonizedGpuAddress, size, MemoryPool::LocalMemory);
     allocation->setMmapPtr(cpuBasePointer);
     allocation->setMmapSize(totalSizeToAlloc);
     if (!allocation->setCacheRegion(&drm, static_cast<CacheRegion>(allocationData.cacheRegion))) {

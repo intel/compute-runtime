@@ -438,8 +438,10 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
 
     EXPECT_NE(ptr, nullptr);
     auto allocation = unifiedMemoryManager.getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
-
     EXPECT_NE(allocation, nullptr);
+
+    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+
     EXPECT_NE(static_cast<DrmAllocation *>(allocation)->getMmapPtr(), nullptr);
     EXPECT_NE(static_cast<DrmAllocation *>(allocation)->getMmapSize(), 0u);
     EXPECT_EQ(allocation->getAllocationOffset(), 0u);
