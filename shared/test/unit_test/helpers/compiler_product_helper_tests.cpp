@@ -215,15 +215,23 @@ TEST_F(CompilerProductHelperFixture, givenHwInfoWithIndependentForwardProgressTh
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_subgroups")));
 }
 
-TEST_F(CompilerProductHelperFixture, givenHwInfoWithFloatAtomicsThenReportsClExtFloatAtomicsExtension) {
+TEST_F(CompilerProductHelperFixture, givenHwInfoWithCLVersionAtLeast20ThenReportsClExtFloatAtomicsExtension) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto hwInfo = *defaultHwInfo;
-    hwInfo.capabilityTable.supportsFloatAtomics = true;
+    hwInfo.capabilityTable.clVersionSupport = 20;
     auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 
-    hwInfo.capabilityTable.supportsFloatAtomics = false;
+    hwInfo.capabilityTable.clVersionSupport = 21;
+    extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
+    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
+
+    hwInfo.capabilityTable.clVersionSupport = 30;
+    extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
+    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
+
+    hwInfo.capabilityTable.clVersionSupport = 12;
     extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 }

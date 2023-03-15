@@ -103,7 +103,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         }
     }
 
-    if (hwInfo.capabilityTable.supportsFloatAtomics) {
+    if (enabledClVersion >= 20) {
         extensions += "cl_ext_float_atomics ";
     }
 
