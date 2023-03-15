@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/kernel/kernel_arg_descriptor.h"
+#include "shared/source/os_interface/product_helper.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/default_hw_info.h"
@@ -80,7 +81,7 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenIsLinearStoragePreferredThenRe
     cl_int retVal = CL_SUCCESS;
     auto buffer = std::unique_ptr<Buffer>(Buffer::create(&context, 0, 1, nullptr, retVal));
 
-    auto &gfxCoreHelper = getHelper<GfxCoreHelper>();
+    auto &productHelper = getHelper<ProductHelper>();
 
     for (uint32_t i = 0; i < numImageTypes; i++) {
         imgDesc.image_type = imgTypes[i];
@@ -90,21 +91,21 @@ HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenIsLinearStoragePreferredThenRe
                            (imgTypes[i] == CL_MEM_OBJECT_IMAGE2D_ARRAY);
 
         // non shared context, dont force linear storage
-        EXPECT_EQ((tilingSupported & allowedType), !gfxCoreHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
+        EXPECT_EQ((tilingSupported & allowedType), !productHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
         {
             DebugManagerStateRestore restore;
             DebugManager.flags.ForceLinearImages.set(true);
             // non shared context, dont force linear storage + debug flag
-            EXPECT_TRUE(gfxCoreHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
+            EXPECT_TRUE(productHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
         }
         // shared context, dont force linear storage
-        EXPECT_TRUE(gfxCoreHelper.isLinearStoragePreferred(true, Image::isImage1d(imgDesc), false));
+        EXPECT_TRUE(productHelper.isLinearStoragePreferred(true, Image::isImage1d(imgDesc), false));
         // non shared context,  force linear storage
-        EXPECT_TRUE(gfxCoreHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), true));
+        EXPECT_TRUE(productHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), true));
 
         // non shared context, dont force linear storage + create from buffer
         imgDesc.buffer = buffer.get();
-        EXPECT_TRUE(gfxCoreHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
+        EXPECT_TRUE(productHelper.isLinearStoragePreferred(false, Image::isImage1d(imgDesc), false));
     }
 }
 

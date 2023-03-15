@@ -2446,7 +2446,7 @@ TEST(MemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValuesW
     DebugManager.flags.ForceLinearImages.set(true);
 
     MockExecutionEnvironment mockExecutionEnvironment{};
-    auto &gfxCoreHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
 
     ImageInfo imgInfo{};
 
@@ -2468,7 +2468,7 @@ TEST(MemoryManagerTest, givenForcedLinearImages3DImageAndProperDescriptorValuesW
     imgInfo.rowPitch = imageDesc.image_width * surfaceFormat->surfaceFormat.ImageElementSizeInBytes;
     imgInfo.slicePitch = imgInfo.rowPitch * imageDesc.image_height;
     imgInfo.size = imgInfo.slicePitch;
-    imgInfo.linearStorage = gfxCoreHelper.isLinearStoragePreferred(false, Image::isImage1d(Image::convertDescriptor(imgInfo.imgDesc)), false);
+    imgInfo.linearStorage = productHelper.isLinearStoragePreferred(false, Image::isImage1d(Image::convertDescriptor(imgInfo.imgDesc)), false);
 
     auto hostPtr = alignedMalloc(imgInfo.size, MemoryConstants::cacheLineSize);
 

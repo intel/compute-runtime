@@ -398,14 +398,6 @@ uint32_t GfxCoreHelperHw<GfxFamily>::getMetricsLibraryGenId() const {
 }
 
 template <typename GfxFamily>
-bool GfxCoreHelperHw<GfxFamily>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const {
-    if (DebugManager.flags.ForceLinearImages.get() || forceLinearStorage || isSharedContext || isImage1d) {
-        return true;
-    }
-    return false;
-}
-
-template <typename GfxFamily>
 uint32_t GfxCoreHelperHw<GfxFamily>::alignSlmSize(uint32_t slmSize) const {
     if (slmSize == 0u) {
         return 0u;

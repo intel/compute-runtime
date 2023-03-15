@@ -21,6 +21,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/migration_sync_data.h"
+#include "shared/source/os_interface/product_helper.h"
 
 #include "opencl/source/cl_device/cl_device.h"
 #include "opencl/source/cl_device/cl_device_get_cap.inl"
@@ -153,8 +154,8 @@ Image *Image::create(Context *context,
 
     auto defaultClDevice = context->getDevice(0);
     auto defaultRootDeviceIndex = defaultClDevice->getRootDeviceIndex();
-    auto &defaultGfxCoreHelper = defaultClDevice->getGfxCoreHelper();
-    imgInfo.linearStorage = defaultGfxCoreHelper.isLinearStoragePreferred(context->isSharedContext, Image::isImage1d(*imageDesc),
+    auto &defaultProductHelper = defaultClDevice->getProductHelper();
+    imgInfo.linearStorage = defaultProductHelper.isLinearStoragePreferred(context->isSharedContext, Image::isImage1d(*imageDesc),
                                                                           memoryProperties.flags.forceLinearStorage);
 
     // if device doesn't support images, it can create only linear images
@@ -279,6 +280,7 @@ Image *Image::create(Context *context,
             copyRegion = {imageWidth, imageCount, 1};
         }
 
+        auto &defaultGfxCoreHelper = defaultClDevice->getGfxCoreHelper();
         auto allocationInSystemMemory = MemoryPoolHelper::isSystemMemoryPool(memory->getMemoryPool());
         bool isCpuTransferPreferred = imgInfo.linearStorage && defaultGfxCoreHelper.isCpuImageTransferPreferred(defaultHwInfo);
         bool isCpuTransferPreferredInSystemMemory = imgInfo.linearStorage && allocationInSystemMemory;

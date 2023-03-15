@@ -121,6 +121,8 @@ class ProductHelperHw : public ProductHelper {
     bool isTlbFlushRequired() const override;
     bool isDummyBlitWaRequired() const override;
     bool isDetectIndirectAccessInKernelSupported(const KernelDescriptor &kernelDescriptor) const override;
+    bool isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const override;
+
     bool getFrontEndPropertyScratchSizeSupport() const override;
     bool getFrontEndPropertyPrivateScratchSizeSupport() const override;
     bool getFrontEndPropertyComputeDispatchAllWalkerSupport() const override;

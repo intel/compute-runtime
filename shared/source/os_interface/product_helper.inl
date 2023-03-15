@@ -751,4 +751,12 @@ bool ProductHelperHw<gfxProduct>::is48bResourceNeededForRayTracing() const {
     return true;
 }
 
+template <PRODUCT_FAMILY gfxProduct>
+bool ProductHelperHw<gfxProduct>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const {
+    if (DebugManager.flags.ForceLinearImages.get() || forceLinearStorage || isSharedContext || isImage1d) {
+        return true;
+    }
+    return false;
+}
+
 } // namespace NEO

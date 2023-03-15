@@ -118,11 +118,6 @@ void GfxCoreHelperHw<Family>::adjustDefaultEngineType(HardwareInfo *pHwInfo, con
 }
 
 template <>
-bool GfxCoreHelperHw<Family>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const {
-    return true;
-}
-
-template <>
 uint32_t GfxCoreHelperHw<Family>::getMetricsLibraryGenId() const {
     return static_cast<uint32_t>(MetricsLibraryApi::ClientGen::XeHPC);
 }

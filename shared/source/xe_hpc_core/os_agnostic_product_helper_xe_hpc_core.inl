@@ -59,4 +59,10 @@ template <>
 bool ProductHelperHw<gfxProduct>::isPrefetcherDisablingInDirectSubmissionRequired() const {
     return false;
 }
+
+template <>
+bool ProductHelperHw<gfxProduct>::isLinearStoragePreferred(bool isSharedContext, bool isImage1d, bool forceLinearStorage) const {
+    return true;
+}
+
 } // namespace NEO
