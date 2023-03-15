@@ -65,7 +65,7 @@ XE_HPG_CORETEST_F(ImageCompressionTests, givenRedescribableFormatWhenCreatingAll
         mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedPreferCompressed);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
 
     imageFormat.image_channel_order = CL_RG;
     surfaceFormat = Image::getSurfaceFormatFromTable(

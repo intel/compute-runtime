@@ -82,7 +82,7 @@ HWTEST_P(CreateTiledImageTest, GivenImageTypeWhenCheckingIsTiledThenTrueReturned
         retVal);
     ASSERT_NE(nullptr, image);
 
-    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, image->isTiledAllocation());
+    EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, image->isTiledAllocation());
 
     delete image;
 }

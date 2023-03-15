@@ -28,9 +28,6 @@ uint64_t UnitTestHelper<Family>::getAtomicMemoryAddress(const Family::MI_ATOMIC 
 }
 
 template <>
-const bool UnitTestHelper<Family>::tiledImagesSupported = false;
-
-template <>
 const uint32_t UnitTestHelper<Family>::smallestTestableSimdSize = 16;
 
 template <>

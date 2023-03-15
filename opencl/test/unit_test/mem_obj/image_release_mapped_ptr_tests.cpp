@@ -76,7 +76,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlocking
 
     commandQueue->enqueueUnmapMemObject(image.get(), ptr, 0, nullptr, nullptr);
 
-    if (UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (defaultHwInfo->capabilityTable.supportsImages) {
         EXPECT_EQ(ptr, commandQueue->passedPtr);
         EXPECT_EQ((cl_bool)CL_FALSE, commandQueue->passedBlockingWrite);
         EXPECT_EQ(1u, commandQueue->enqueueWriteImageCalled);
@@ -86,7 +86,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledThenEnqueueNonBlocking
 }
 
 HWTEST_F(ImageUnmapTest, givenImageWhenEnqueueMapImageIsCalledTwiceThenAllocatedMemoryPtrIsNotOverridden) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     cl_int retVal;

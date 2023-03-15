@@ -1030,7 +1030,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenCreateFromSharedHandleFa
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     MockContext context;
@@ -1095,7 +1095,7 @@ TEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageWithMipCountNo
 }
 
 HWTEST_F(WddmMemoryManagerTest, givenWddmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenallocateGraphicsMemoryForImageIsUsed) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
 

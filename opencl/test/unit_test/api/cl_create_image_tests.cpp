@@ -92,7 +92,7 @@ HWTEST_F(clCreateImageTest, GivenDeviceThatDoesntSupportImagesWhenCreatingTiledI
         &imageDesc,
         nullptr,
         &retVal);
-    if (UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (defaultHwInfo->capabilityTable.supportsImages) {
         EXPECT_EQ(CL_INVALID_OPERATION, retVal);
         EXPECT_EQ(nullptr, image);
     } else {

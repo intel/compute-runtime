@@ -93,7 +93,7 @@ HWTEST_P(CreateImageArraySize, GivenArrayTypeWhenCreatingImageThenImageCreatedWi
         EXPECT_NE(nullptr, address);
 
     } else if (types == CL_MEM_OBJECT_IMAGE2D_ARRAY) {
-        EXPECT_EQ(!UnitTestHelper<FamilyType>::tiledImagesSupported, image->isMemObjZeroCopy());
+        EXPECT_EQ(!defaultHwInfo->capabilityTable.supportsImages, image->isMemObjZeroCopy());
     }
     ASSERT_EQ(10u, image->getImageDesc().image_array_size);
 
@@ -128,7 +128,7 @@ HWTEST_P(CreateImageNonArraySize, GivenNonArrayTypeWhenCreatingImageThenImageCre
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, image);
     if (types == CL_MEM_OBJECT_IMAGE2D || types == CL_MEM_OBJECT_IMAGE3D) {
-        EXPECT_EQ(!UnitTestHelper<FamilyType>::tiledImagesSupported, image->isMemObjZeroCopy());
+        EXPECT_EQ(!defaultHwInfo->capabilityTable.supportsImages, image->isMemObjZeroCopy());
     } else {
         EXPECT_TRUE(image->isMemObjZeroCopy());
         auto address = image->getCpuAddress();

@@ -62,8 +62,6 @@ struct UnitTestHelper {
     static uint32_t getTdCtlRegisterOffset();
     static uint32_t getTdCtlRegisterValue();
 
-    static const bool tiledImagesSupported;
-
     static const uint32_t smallestTestableSimdSize;
 
     static const AuxTranslationMode requiredAuxTranslationMode;

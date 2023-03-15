@@ -93,7 +93,7 @@ TEST_F(EnqueueMapImageTest, GivenTiledImageWhenMappingImageThenPointerIsReused) 
 }
 
 HWTEST_F(EnqueueMapImageTest, givenAllocatedMapPtrAndMapWithDifferentOriginIsCalledThenReturnDifferentPointers) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     std::unique_ptr<Image> img(Image2dHelper<Image2dDefaults>::create(context));
@@ -196,7 +196,7 @@ struct mockedImage : public ImageHw<GfxFamily> {
 };
 
 HWTEST_F(EnqueueMapImageTest, givenTiledImageWhenMapImageIsCalledThenStorageIsSetWithImageMutexTaken) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     auto imageFormat = image->getImageFormat();
@@ -315,7 +315,7 @@ TEST_F(EnqueueMapImageTest, GivenCmdqAndValidArgsWhenMappingImageThenSuccessIsRe
 }
 
 HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEventAndIncraseTaskCountFromWriteImage) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore dbgRestore;
@@ -402,7 +402,7 @@ HWTEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEv
 }
 
 HWTEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEventAndDontIncraseTaskCountFromWriteImage) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     DebugManagerStateRestore dbgRestore;
@@ -447,7 +447,7 @@ HWTEST_F(EnqueueMapImageTest, givenReadOnlyMapWithOutEventWhenMappedThenSetEvent
 }
 
 HWTEST_F(EnqueueMapImageTest, GivenPtrToReturnEventWhenMappingImageThenEventIsNotNull) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     cl_event eventReturned = nullptr;

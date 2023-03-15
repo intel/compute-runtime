@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -312,7 +312,7 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmBufferWhenItIsQueriedForInternalAllocatio
 }
 
 HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     mock->ioctl_expected.gemCreate = 1;
@@ -360,7 +360,7 @@ HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCount
 }
 
 HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageWithMipCountNonZeroIsBeingCreatedThenallocateGraphicsMemoryForImageIsUsed) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     mock->ioctl_expected.gemCreate = 1;
@@ -442,7 +442,7 @@ TEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreated
 }
 
 HWTEST_F(ClDrmMemoryManagerTest, givenDrmMemoryManagerWhenTiledImageIsBeingCreatedFromHostPtrThenAllocateGraphicsMemoryForImageIsUsed) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
 

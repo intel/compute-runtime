@@ -1157,9 +1157,9 @@ HWTEST_F(ImageCompressionTests, givenTiledImageWhenCreatingAllocationThenPreferC
         mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
         flags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, image->isTiledAllocation());
+    EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, image->isTiledAllocation());
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedPreferCompressed);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
 }
 
 TEST_F(ImageCompressionTests, givenNonTiledImageWhenCreatingAllocationThenDontPreferCompression) {
@@ -1190,9 +1190,9 @@ HWTEST_F(ImageCompressionTests, givenTiledImageAndVariousFlagsWhenCreatingAlloca
         mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(newFlags, 0, 0, &context.getDevice(0)->getDevice()),
         newFlags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, image->isTiledAllocation());
+    EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, image->isTiledAllocation());
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, myMemoryManager->capturedPreferCompressed);
+    EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, myMemoryManager->capturedPreferCompressed);
 
     newFlags = flags | CL_MEM_UNCOMPRESSED_HINT_INTEL;
     surfaceFormat = Image::getSurfaceFormatFromTable(
@@ -1201,7 +1201,7 @@ HWTEST_F(ImageCompressionTests, givenTiledImageAndVariousFlagsWhenCreatingAlloca
         mockContext.get(), ClMemoryPropertiesHelper::createMemoryProperties(newFlags, 0, 0, &context.getDevice(0)->getDevice()),
         newFlags, 0, surfaceFormat, &imageDesc, nullptr, retVal));
     ASSERT_NE(nullptr, image);
-    EXPECT_EQ(UnitTestHelper<FamilyType>::tiledImagesSupported, image->isTiledAllocation());
+    EXPECT_EQ(defaultHwInfo->capabilityTable.supportsImages, image->isTiledAllocation());
     EXPECT_TRUE(myMemoryManager->mockMethodCalled);
     EXPECT_FALSE(myMemoryManager->capturedPreferCompressed);
 }
@@ -1268,7 +1268,7 @@ TEST(ImageTest, givenImageWhenGettingCompressionOfImageThenCorrectValueIsReturne
 
 using ImageTests = ::testing::Test;
 HWTEST_F(ImageTests, givenImageWhenAskedForPtrOffsetForGpuMappingThenReturnCorrectValue) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     MockContext ctx;
@@ -1325,7 +1325,7 @@ TEST(ImageTest, given1DArrayImageWhenAskedForPtrOffsetForMappingThenReturnCorrec
 }
 
 HWTEST_F(ImageTests, givenImageWhenAskedForPtrLengthForGpuMappingThenReturnCorrectValue) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     MockContext ctx;

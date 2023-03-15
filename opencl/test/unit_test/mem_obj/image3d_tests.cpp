@@ -79,7 +79,7 @@ HWTEST_F(CreateImage3DTest, WhenCreatingImageThenPropertiesAreSetCorrectly) {
     EXPECT_NE(0u, imgDesc.image_row_pitch);
 
     EXPECT_EQ(image->getCubeFaceIndex(), static_cast<uint32_t>(__GMM_NO_CUBE_MAP));
-    EXPECT_EQ(!UnitTestHelper<FamilyType>::tiledImagesSupported, image->isMemObjZeroCopy());
+    EXPECT_EQ(!defaultHwInfo->capabilityTable.supportsImages, image->isMemObjZeroCopy());
 
     typedef typename FamilyType::RENDER_SURFACE_STATE SURFACE_STATE;
     auto imageHw = static_cast<ImageHw<FamilyType> *>(image);

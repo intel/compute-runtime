@@ -55,9 +55,6 @@ void UnitTestHelper<GfxFamily>::setExtraMidThreadPreemptionFlag(HardwareInfo &hw
 }
 
 template <typename GfxFamily>
-const bool UnitTestHelper<GfxFamily>::tiledImagesSupported = true;
-
-template <typename GfxFamily>
 const uint32_t UnitTestHelper<GfxFamily>::smallestTestableSimdSize = 8;
 
 template <typename GfxFamily>

@@ -70,7 +70,7 @@ TEST(ClHelper, whenCallGetStringWithCmdTypeFunctionThenGetProperCmdTypeAsString)
 }
 
 HWTEST_F(GfxCoreHelperTest, givenGfxCoreHelperWhenIsLinearStoragePreferredThenReturnValidValue) {
-    bool tilingSupported = UnitTestHelper<FamilyType>::tiledImagesSupported;
+    bool tilingSupported = defaultHwInfo->capabilityTable.supportsImages;
 
     const uint32_t numImageTypes = 6;
     const cl_mem_object_type imgTypes[numImageTypes] = {CL_MEM_OBJECT_IMAGE1D, CL_MEM_OBJECT_IMAGE1D_ARRAY, CL_MEM_OBJECT_IMAGE1D_BUFFER,

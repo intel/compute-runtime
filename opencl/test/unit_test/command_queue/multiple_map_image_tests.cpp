@@ -145,7 +145,7 @@ struct MultipleMapImageTest : public ClDeviceFixture, public ::testing::Test {
 };
 
 HWTEST_F(MultipleMapImageTest, givenValidReadAndWriteImageWhenMappedOnGpuThenAddMappedPtrAndRemoveOnUnmap) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     auto image = createMockImage<Image3dDefaults, FamilyType>();
@@ -170,7 +170,7 @@ HWTEST_F(MultipleMapImageTest, givenValidReadAndWriteImageWhenMappedOnGpuThenAdd
 }
 
 HWTEST_F(MultipleMapImageTest, givenReadOnlyMapWhenUnmappedOnGpuThenEnqueueMarker) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     auto image = createMockImage<Image3dDefaults, FamilyType>();
@@ -193,7 +193,7 @@ HWTEST_F(MultipleMapImageTest, givenReadOnlyMapWhenUnmappedOnGpuThenEnqueueMarke
 }
 
 HWTEST_F(MultipleMapImageTest, givenWriteInvalidateMapWhenMappedOnGpuThenEnqueueMarker) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     auto image = createMockImage<Image3dDefaults, FamilyType>();
@@ -219,7 +219,7 @@ HWTEST_F(MultipleMapImageTest, givenWriteInvalidateMapWhenMappedOnGpuThenEnqueue
 HWTEST_F(MultipleMapImageTest, givenNotMappedPtrWhenUnmapedThenReturnError) {
     auto image = createMockImage<Image2dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
-    EXPECT_EQ(!UnitTestHelper<FamilyType>::tiledImagesSupported, image->mappingOnCpuAllowed());
+    EXPECT_EQ(!defaultHwInfo->capabilityTable.supportsImages, image->mappingOnCpuAllowed());
 
     EXPECT_EQ(0u, image->getMapOperationsHandler().size());
     retVal = clEnqueueUnmapMemObject(cmdQ.get(), image.get(), image->getBasePtrForMap(cmdQ->getDevice().getRootDeviceIndex()), 0, nullptr, nullptr);
@@ -227,7 +227,7 @@ HWTEST_F(MultipleMapImageTest, givenNotMappedPtrWhenUnmapedThenReturnError) {
 }
 
 HWTEST_F(MultipleMapImageTest, givenErrorFromReadImageWhenMappedOnGpuThenDontAddMappedPtr) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     auto image = createMockImage<Image3dDefaults, FamilyType>();
@@ -244,7 +244,7 @@ HWTEST_F(MultipleMapImageTest, givenErrorFromReadImageWhenMappedOnGpuThenDontAdd
 }
 
 HWTEST_F(MultipleMapImageTest, givenErrorFromWriteImageWhenUnmappedOnGpuThenDontRemoveMappedPtr) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     auto image = createMockImage<Image3dDefaults, FamilyType>();
@@ -394,7 +394,7 @@ HWTEST_F(MultipleMapImageTest, givenInvalidPtrWhenUnmappedOnCpuThenReturnError) 
 }
 
 HWTEST_F(MultipleMapImageTest, givenMultimpleMapsWhenUnmappingThenRemoveCorrectPointers) {
-    if (!UnitTestHelper<FamilyType>::tiledImagesSupported) {
+    if (!defaultHwInfo->capabilityTable.supportsImages) {
         GTEST_SKIP();
     }
     auto image = createMockImage<Image3dDefaults, FamilyType>();
@@ -436,7 +436,7 @@ HWTEST_F(MultipleMapImageTest, givenMultimpleMapsWhenUnmappingThenRemoveCorrectP
 HWTEST_F(MultipleMapImageTest, givenOverlapingPtrWhenMappingForWriteThenReturnError) {
     auto image = createMockImage<Image3dDefaults, FamilyType>();
     auto cmdQ = createMockCmdQ<FamilyType>();
-    EXPECT_EQ(!UnitTestHelper<FamilyType>::tiledImagesSupported, image->mappingOnCpuAllowed());
+    EXPECT_EQ(!defaultHwInfo->capabilityTable.supportsImages, image->mappingOnCpuAllowed());
 
     MemObjOffsetArray origin = {{1, 2, 1}};
     MemObjSizeArray region = {{3, 4, 1}};
