@@ -95,10 +95,9 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
 
     bool allocatedMemory = false;
 
-    this->isHostVisibleEventPoolAllocation = !(isEventPoolDeviceAllocationFlagSet());
-
     auto neoDevice = devices[0]->getNEODevice();
     if (this->isDeviceEventPoolAllocation) {
+        this->isHostVisibleEventPoolAllocation = !(isEventPoolDeviceAllocationFlagSet());
         NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, neoDevice->getDeviceBitfield()};
         allocationProperties.alignment = eventAlignment;
 
@@ -113,6 +112,7 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
             }
         }
     } else {
+        this->isHostVisibleEventPoolAllocation = true;
         NEO::AllocationProperties allocationProperties{*rootDeviceIndices.begin(), this->eventPoolSize, allocationType, systemMemoryBitfield};
         allocationProperties.alignment = eventAlignment;
 

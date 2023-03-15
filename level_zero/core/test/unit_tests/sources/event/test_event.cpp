@@ -1003,6 +1003,59 @@ TEST_F(EventPoolCreateMultiDevice, GivenContextCreatedWithAllDriverDevicesWhenOp
     driverHandle->setMemoryManager(originalMemoryManager);
 }
 
+TEST_F(EventPoolCreateMultiDevice, GivenIPCEventPoolCreatedWithMultiDeviceThenHostVisibleIsSetInEventPoolDuringOpenIPCEventHandle) {
+    uint32_t numEvents = 1;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    std::vector<ze_device_handle_t> devices;
+    devices.push_back(driverHandle->devices[0]->toHandle());
+    devices.push_back(driverHandle->devices[1]->toHandle());
+    NEO::MockDevice *neoDevice = static_cast<NEO::MockDevice *>(driverHandle->devices[0]->getNEODevice());
+    auto originalMemoryManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *mockMemoryManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(mockMemoryManager);
+
+    auto eventPool = whiteboxCast(EventPool::create(driverHandle.get(), context, 2, devices.data(), &eventPoolDesc, result));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    result = eventPool->getIpcHandle(&ipcHandle);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
+    EXPECT_TRUE(ipcHandleData.isHostVisibleEventPoolAllocation);
+
+    auto prevMemoryManager = driverHandle->getMemoryManager();
+    auto currMemoryManager = new MultiDeviceEventPoolOpenIpcHandleMemoryManager(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(currMemoryManager);
+    currMemoryManager->maxCalls = 4;
+
+    ze_event_pool_handle_t ipcEventPoolHandle = {};
+    result = context->openEventPoolIpcHandle(ipcHandle, &ipcEventPoolHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    ASSERT_NE(nullptr, ipcEventPoolHandle);
+
+    auto ipcEventPool = whiteboxCast(EventPool::fromHandle(ipcEventPoolHandle));
+    EXPECT_EQ(ipcEventPool->isHostVisibleEventPoolAllocation, eventPool->isHostVisibleEventPoolAllocation);
+    EXPECT_TRUE(ipcEventPool->isHostVisibleEventPoolAllocation);
+
+    ipcEventPool->closeIpcHandle();
+
+    driverHandle->setMemoryManager(prevMemoryManager);
+    delete currMemoryManager;
+
+    result = eventPool->destroy();
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    delete mockMemoryManager;
+    driverHandle->setMemoryManager(originalMemoryManager);
+}
+
 TEST_F(EventPoolCreateMultiDevice, GivenContextCreatedWithAllDriverDevicesWhenOpeningIpcEventPoolUsingContextThenExpectNumDevicesSameForEventPoolOpenedAsCreate) {
     uint32_t numEvents = 1;
     ze_event_pool_desc_t eventPoolDesc = {
