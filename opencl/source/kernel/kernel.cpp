@@ -949,7 +949,7 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
 
     bool disableL3 = false;
     bool forceNonAuxMode = false;
-    bool isAuxTranslationKernel = (AuxTranslationDirection::None != auxTranslationDirection);
+    const bool isAuxTranslationKernel = (AuxTranslationDirection::None != auxTranslationDirection);
     auto &rootDeviceEnvironment = getDevice().getRootDeviceEnvironment();
     auto &clGfxCoreHelper = rootDeviceEnvironment.getHelper<ClGfxCoreHelper>();
 
@@ -963,8 +963,8 @@ cl_int Kernel::setArgSvmAlloc(uint32_t argIndex, void *svmPtr, GraphicsAllocatio
         forceNonAuxMode = true;
     }
 
-    bool argWasUncacheable = kernelArgInfo.isStatelessUncacheable;
-    bool argIsUncacheable = svmAlloc ? svmAlloc->isUncacheable() : false;
+    const bool argWasUncacheable = kernelArgInfo.isStatelessUncacheable;
+    const bool argIsUncacheable = svmAlloc ? svmAlloc->isUncacheable() : false;
     statelessUncacheableArgsCount += (argIsUncacheable ? 1 : 0) - (argWasUncacheable ? 1 : 0);
 
     void *ptrToPatch = patchBufferOffset(argAsPtr, svmPtr, svmAlloc);
