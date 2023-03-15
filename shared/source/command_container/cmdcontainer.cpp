@@ -95,11 +95,10 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
                                                                                    alignedSize - cmdBufferReservedSize, this, gfxCoreHelper.getBatchBufferEndSize());
         secondaryCommandStreamForImmediateCmdList->replaceGraphicsAllocation(cmdBufferAllocationHost);
         cmdBufferAllocations.push_back(cmdBufferAllocationHost);
+        addToResidencyContainer(cmdBufferAllocationHost);
     }
 
-    if (!getFlushTaskUsedForImmediate()) {
-        addToResidencyContainer(cmdBufferAllocation);
-    }
+    addToResidencyContainer(cmdBufferAllocation);
     if (requireHeaps) {
         size_t heapSize = 65536u;
         if (DebugManager.flags.ForceDefaultHeapSize.get() != -1) {

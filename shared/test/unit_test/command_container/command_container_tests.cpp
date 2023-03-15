@@ -372,6 +372,14 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddNullPtrToResidenc
     EXPECT_EQ(cmdContainer.getResidencyContainer().size(), size);
 }
 
+TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenCmdBuffersAreAddedToResidencyContainer) {
+    CommandContainer cmdContainer;
+    EXPECT_EQ(cmdContainer.getResidencyContainer().size(), 0u);
+    cmdContainer.initialize(pDevice, nullptr, false, true);
+    EXPECT_EQ(cmdContainer.getResidencyContainer().size(), 2u);
+    EXPECT_EQ(cmdContainer.getResidencyContainer().size(), cmdContainer.getCmdBufferAllocations().size());
+}
+
 TEST_F(CommandContainerTest, givenCommandContainerWhenWantToAddAlreadyAddedAllocationAndDuplicatesRemovedThenExpectedSizeIsReturned) {
     CommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true, false);
