@@ -207,11 +207,11 @@ TEST_F(CompilerProductHelperFixture, givenHwInfoWithIndependentForwardProgressTh
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsIndependentForwardProgress = true;
-    auto extensions = compilerProductHelper.getExtensions(hwInfo);
+    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_khr_subgroups")));
 
     hwInfo.capabilityTable.supportsIndependentForwardProgress = false;
-    extensions = compilerProductHelper.getExtensions(hwInfo);
+    extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_subgroups")));
 }
 
@@ -220,10 +220,10 @@ TEST_F(CompilerProductHelperFixture, givenHwInfoWithFloatAtomicsThenReportsClExt
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsFloatAtomics = true;
-    auto extensions = compilerProductHelper.getExtensions(hwInfo);
+    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 
     hwInfo.capabilityTable.supportsFloatAtomics = false;
-    extensions = compilerProductHelper.getExtensions(hwInfo);
+    extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 }

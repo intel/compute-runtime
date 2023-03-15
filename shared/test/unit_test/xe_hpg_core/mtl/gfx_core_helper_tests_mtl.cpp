@@ -33,7 +33,7 @@ MTLTEST_F(GfxCoreHelperTestMtl, givenVariousMtlReleasesWhenGetExtensionsIsCalled
 
     for (auto gmdRelease : gmdReleases) {
         hwInfo.ipVersion.release = gmdRelease;
-        auto extensions = compilerProductHelper.getExtensions(hwInfo);
+        auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
 
         EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
         EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));

@@ -34,7 +34,7 @@ bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithStatefulAccessPref
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::string CompilerProductHelperHw<gfxProduct>::getExtensions(const HardwareInfo &hwInfo) const {
+std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const HardwareInfo &hwInfo) const {
     std::string extensions = "cl_khr_byte_addressable_store "
                              "cl_khr_device_uuid "
                              "cl_khr_fp16 "

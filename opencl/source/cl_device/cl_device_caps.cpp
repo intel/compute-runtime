@@ -87,7 +87,7 @@ void ClDevice::initializeCaps() {
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto &sharedDeviceInfo = getSharedDeviceInfo();
     deviceExtensions.clear();
-    deviceExtensions.append(compilerProductHelper.getExtensions(hwInfo));
+    deviceExtensions.append(compilerProductHelper.getDeviceExtensions(hwInfo));
 
     driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
 

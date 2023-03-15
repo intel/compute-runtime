@@ -39,7 +39,7 @@ bool requiresAdditionalExtensions(const std::string &compileOptions) {
 }
 void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::string &options, std::string &internalOptions) {
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    std::string extensionsList = compilerProductHelper->getExtensions(hwInfo);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo);
 
     if (requiresAdditionalExtensions(options)) {
         extensionsList += "cl_khr_3d_image_writes ";
