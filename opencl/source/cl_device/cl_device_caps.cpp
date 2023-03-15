@@ -49,14 +49,12 @@ void ClDevice::setupFp64Flags() {
     auto &hwInfo = getHardwareInfo();
 
     if (DebugManager.flags.OverrideDefaultFP64Settings.get() == 1) {
-        deviceExtensions += "cl_khr_fp64 ";
         deviceInfo.singleFpConfig = static_cast<cl_device_fp_config>(CL_FP_CORRECTLY_ROUNDED_DIVIDE_SQRT);
         deviceInfo.doubleFpConfig = defaultFpFlags;
         deviceInfo.nativeVectorWidthDouble = 1;
         deviceInfo.preferredVectorWidthDouble = 1;
     } else if (DebugManager.flags.OverrideDefaultFP64Settings.get() == -1) {
         if (hwInfo.capabilityTable.ftrSupportsFP64) {
-            deviceExtensions += "cl_khr_fp64 ";
             deviceInfo.doubleFpConfig = defaultFpFlags;
             deviceInfo.nativeVectorWidthDouble = 1;
             deviceInfo.preferredVectorWidthDouble = 1;
@@ -89,7 +87,7 @@ void ClDevice::initializeCaps() {
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     auto &sharedDeviceInfo = getSharedDeviceInfo();
     deviceExtensions.clear();
-    deviceExtensions.append(deviceExtensionsList);
+    deviceExtensions.append(compilerProductHelper.getExtensions(hwInfo));
 
     driverVersion = TOSTR(NEO_OCL_DRIVER_VERSION);
 
@@ -159,10 +157,6 @@ void ClDevice::initializeCaps() {
 
         // calculate a maximum number of subgroups in a workgroup (for the required SIMD size)
         deviceInfo.maxNumOfSubGroups = static_cast<uint32_t>(sharedDeviceInfo.maxWorkGroupSize / simdSizeUsed);
-
-        if (deviceInfo.independentForwardProgress) {
-            deviceExtensions += "cl_khr_subgroups ";
-        }
     }
 
     if (enabledClVersion >= 20) {
@@ -219,7 +213,6 @@ void ClDevice::initializeCaps() {
         deviceExtensions += "cl_khr_pci_bus_info ";
     }
 
-    deviceExtensions += compilerProductHelper.getExtensions(hwInfo);
     deviceInfo.deviceExtensions = deviceExtensions.c_str();
 
     std::vector<std::string> exposedBuiltinKernelsVector;

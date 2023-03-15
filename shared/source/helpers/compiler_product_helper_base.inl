@@ -35,7 +35,51 @@ bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithStatefulAccessPref
 
 template <PRODUCT_FAMILY gfxProduct>
 std::string CompilerProductHelperHw<gfxProduct>::getExtensions(const HardwareInfo &hwInfo) const {
-    std::string extensions = "";
+    std::string extensions = "cl_khr_byte_addressable_store "
+                             "cl_khr_device_uuid "
+                             "cl_khr_fp16 "
+                             "cl_khr_global_int32_base_atomics "
+                             "cl_khr_global_int32_extended_atomics "
+                             "cl_khr_icd "
+                             "cl_khr_local_int32_base_atomics "
+                             "cl_khr_local_int32_extended_atomics "
+                             "cl_intel_command_queue_families "
+                             "cl_intel_subgroups "
+                             "cl_intel_required_subgroup_size "
+                             "cl_intel_subgroups_short "
+                             "cl_khr_spir "
+                             "cl_intel_accelerator "
+                             "cl_intel_driver_diagnostics "
+                             "cl_khr_priority_hints "
+                             "cl_khr_throttle_hints "
+                             "cl_khr_create_command_queue "
+                             "cl_intel_subgroups_char "
+                             "cl_intel_subgroups_long "
+                             "cl_khr_il_program "
+                             "cl_intel_mem_force_host_memory "
+                             "cl_khr_subgroup_extended_types "
+                             "cl_khr_subgroup_non_uniform_vote "
+                             "cl_khr_subgroup_ballot "
+                             "cl_khr_subgroup_non_uniform_arithmetic "
+                             "cl_khr_subgroup_shuffle "
+                             "cl_khr_subgroup_shuffle_relative "
+                             "cl_khr_subgroup_clustered_reduce "
+                             "cl_intel_device_attribute_query "
+                             "cl_khr_suggested_local_work_size "
+                             "cl_intel_split_work_group_barrier ";
+
+    auto supportsFp64 = hwInfo.capabilityTable.ftrSupportsFP64;
+    if (DebugManager.flags.OverrideDefaultFP64Settings.get() != -1) {
+        supportsFp64 = DebugManager.flags.OverrideDefaultFP64Settings.get();
+    }
+    if (supportsFp64) {
+        extensions += "cl_khr_fp64 ";
+    }
+
+    if (hwInfo.capabilityTable.supportsIndependentForwardProgress) {
+        extensions += "cl_khr_subgroups ";
+    }
+
     auto enabledClVersion = hwInfo.capabilityTable.clVersionSupport;
     auto ocl21FeaturesEnabled = hwInfo.capabilityTable.supportsOcl21Features;
     if (DebugManager.flags.ForceOCLVersion.get() != 0) {
@@ -45,14 +89,8 @@ std::string CompilerProductHelperHw<gfxProduct>::getExtensions(const HardwareInf
     if (DebugManager.flags.ForceOCL21FeaturesSupport.get() != -1) {
         ocl21FeaturesEnabled = DebugManager.flags.ForceOCL21FeaturesSupport.get();
     }
-    auto supportsVme = hwInfo.capabilityTable.supportsVme;
-    auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;
-
     if (ocl21FeaturesEnabled) {
 
-        if (supportsVme) {
-            extensions += "cl_intel_spirv_device_side_avc_motion_estimation ";
-        }
         if (hwInfo.capabilityTable.supportsMediaBlock) {
             extensions += "cl_intel_spirv_media_block_io ";
         }
@@ -65,7 +103,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getExtensions(const HardwareInf
         }
     }
 
-    if (enabledClVersion >= 20) {
+    if (hwInfo.capabilityTable.supportsFloatAtomics) {
         extensions += "cl_ext_float_atomics ";
     }
 
@@ -75,14 +113,20 @@ std::string CompilerProductHelperHw<gfxProduct>::getExtensions(const HardwareInf
     if (DebugManager.flags.EnablePackedYuv.get() && hwInfo.capabilityTable.supportsImages) {
         extensions += "cl_intel_packed_yuv ";
     }
+
+    auto supportsVme = hwInfo.capabilityTable.supportsVme;
     if (DebugManager.flags.EnableIntelVme.get() != -1) {
         supportsVme = !!DebugManager.flags.EnableIntelVme.get();
     }
 
     if (supportsVme) {
         extensions += "cl_intel_motion_estimation cl_intel_device_side_avc_motion_estimation ";
+        if (ocl21FeaturesEnabled) {
+            extensions += "cl_intel_spirv_device_side_avc_motion_estimation ";
+        }
     }
 
+    auto supportsAdvancedVme = hwInfo.capabilityTable.supportsVme;
     if (DebugManager.flags.EnableIntelAdvancedVme.get() != -1) {
         supportsAdvancedVme = !!DebugManager.flags.EnableIntelAdvancedVme.get();
     }

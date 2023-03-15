@@ -8,6 +8,7 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -199,4 +200,30 @@ HWTEST2_F(CompilerProductHelperFixture, givenCachePolicyWithoutCorrespondingBuil
 
     EXPECT_EQ(nullptr, compilerProductHelper.getCachingPolicyOptions(false));
     EXPECT_EQ(nullptr, compilerProductHelper.getCachingPolicyOptions(true));
+}
+
+TEST_F(CompilerProductHelperFixture, givenHwInfoWithIndependentForwardProgressThenReportsClKhrSubgroupExtension) {
+
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.supportsIndependentForwardProgress = true;
+    auto extensions = compilerProductHelper.getExtensions(hwInfo);
+    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_khr_subgroups")));
+
+    hwInfo.capabilityTable.supportsIndependentForwardProgress = false;
+    extensions = compilerProductHelper.getExtensions(hwInfo);
+    EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_subgroups")));
+}
+
+TEST_F(CompilerProductHelperFixture, givenHwInfoWithFloatAtomicsThenReportsClExtFloatAtomicsExtension) {
+
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto hwInfo = *defaultHwInfo;
+    hwInfo.capabilityTable.supportsFloatAtomics = true;
+    auto extensions = compilerProductHelper.getExtensions(hwInfo);
+    EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
+
+    hwInfo.capabilityTable.supportsFloatAtomics = false;
+    extensions = compilerProductHelper.getExtensions(hwInfo);
+    EXPECT_FALSE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 }

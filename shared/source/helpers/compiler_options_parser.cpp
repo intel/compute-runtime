@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 
 #include "shared/source/compiler_interface/compiler_options.h"
 #include "shared/source/compiler_interface/oclc_extensions.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
 
 #include <cstdint>
@@ -37,7 +38,9 @@ bool requiresAdditionalExtensions(const std::string &compileOptions) {
     return (getMajorVersion(compileOptions) == 2);
 }
 void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::string &options, std::string &internalOptions) {
-    std::string extensionsList = getExtensionsList(hwInfo);
+    auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
+    std::string extensionsList = compilerProductHelper->getExtensions(hwInfo);
+
     if (requiresAdditionalExtensions(options)) {
         extensionsList += "cl_khr_3d_image_writes ";
     }
