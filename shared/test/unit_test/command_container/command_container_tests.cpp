@@ -32,7 +32,7 @@ class MyMockCommandContainer : public CommandContainer {
   public:
     using CommandContainer::allocationIndirectHeaps;
     using CommandContainer::dirtyHeaps;
-    using CommandContainer::getTotalCmdBufferSize;
+    using CommandContainer::getAlignedCmdBufferSize;
     using CommandContainer::immediateReusableAllocationList;
     using CommandContainer::secondaryCommandStreamForImmediateCmdList;
 };
@@ -631,7 +631,7 @@ TEST_F(CommandContainerTest, whenResettingCommandContainerThenStoredCmdBuffersAr
     ASSERT_NE(nullptr, stream);
 
     auto buffer = stream->getSpace(0);
-    const size_t cmdBufSize = CommandContainer::defaultListCmdBufferSize;
+    const size_t cmdBufSize = alignUp<size_t>(CommandContainer::totalCmdBufferSize, MemoryConstants::pageSize64k) - CommandContainer::cmdBufferReservedSize;
 
     EXPECT_EQ(cmdContainer->getCmdBufferAllocations()[0]->getUnderlyingBuffer(), buffer);
     EXPECT_EQ(cmdBufSize, stream->getMaxAvailableSpace());
@@ -861,14 +861,14 @@ TEST_F(CommandContainerTest, GivenCmdContainerAndDebugFlagWhenContainerIsInitial
     DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.set(0);
     MyMockCommandContainer cmdContainer;
     cmdContainer.initialize(pDevice, nullptr, true, false);
-    size_t alignedSize = alignUp<size_t>(cmdContainer.getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
+    size_t alignedSize = alignUp<size_t>(cmdContainer.getAlignedCmdBufferSize(), MemoryConstants::pageSize64k);
     EXPECT_EQ(cmdContainer.getCommandStream()->getMaxAvailableSpace(), alignedSize - MyMockCommandContainer::cmdBufferReservedSize);
 
     auto newSizeInKB = 512;
     DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.set(newSizeInKB);
     MyMockCommandContainer cmdContainer2;
     cmdContainer2.initialize(pDevice, nullptr, true, false);
-    alignedSize = alignUp<size_t>(cmdContainer.getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
+    alignedSize = alignUp<size_t>(cmdContainer.getAlignedCmdBufferSize(), MemoryConstants::pageSize64k);
     EXPECT_EQ(cmdContainer2.getCommandStream()->getMaxAvailableSpace(), alignedSize - MyMockCommandContainer::cmdBufferReservedSize);
 }
 

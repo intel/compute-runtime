@@ -68,7 +68,8 @@ CommandContainer::CommandContainer(uint32_t maxNumAggregatedIdds) : CommandConta
 CommandContainer::ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusableAllocationList, bool requireHeaps, bool createSecondaryCmdBufferInHostMem) {
     this->device = device;
     this->reusableAllocationList = reusableAllocationList;
-    size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
+    size_t alignedSize = getAlignedCmdBufferSize();
+    size_t usableSize = getMaxUsableSpace();
 
     auto cmdBufferAllocation = this->obtainNextCommandBufferAllocation();
 
@@ -80,7 +81,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
     commandStream = std::make_unique<LinearStream>(cmdBufferAllocation->getUnderlyingBuffer(),
-                                                   alignedSize - cmdBufferReservedSize, this, gfxCoreHelper.getBatchBufferEndSize());
+                                                   usableSize, this, gfxCoreHelper.getBatchBufferEndSize());
 
     commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
 
@@ -92,7 +93,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
             return ErrorCode::OUT_OF_DEVICE_MEMORY;
         }
         secondaryCommandStreamForImmediateCmdList = std::make_unique<LinearStream>(cmdBufferAllocationHost->getUnderlyingBuffer(),
-                                                                                   alignedSize - cmdBufferReservedSize, this, gfxCoreHelper.getBatchBufferEndSize());
+                                                                                   usableSize, this, gfxCoreHelper.getBatchBufferEndSize());
         secondaryCommandStreamForImmediateCmdList->replaceGraphicsAllocation(cmdBufferAllocationHost);
         cmdBufferAllocations.push_back(cmdBufferAllocationHost);
         addToResidencyContainer(cmdBufferAllocationHost);
@@ -172,14 +173,7 @@ void CommandContainer::reset() {
     this->handleCmdBufferAllocations(1u);
     cmdBufferAllocations.erase(cmdBufferAllocations.begin() + 1, cmdBufferAllocations.end());
 
-    auto cmdlistCmdBufferSize = defaultListCmdBufferSize;
-    if (DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.get() > 0) {
-        cmdlistCmdBufferSize = static_cast<size_t>(DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.get()) * MemoryConstants::kiloByte;
-    }
-
-    commandStream->replaceBuffer(cmdBufferAllocations[0]->getUnderlyingBuffer(), cmdlistCmdBufferSize);
-    commandStream->replaceGraphicsAllocation(cmdBufferAllocations[0]);
-    addToResidencyContainer(commandStream->getGraphicsAllocation());
+    setCmdBuffer(cmdBufferAllocations[0]);
 
     for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
         if (indirectHeaps[i] != nullptr) {
@@ -200,13 +194,13 @@ void CommandContainer::reset() {
     lastSentUseGlobalAtomics = false;
 }
 
-size_t CommandContainer::getTotalCmdBufferSize() {
+size_t CommandContainer::getAlignedCmdBufferSize() const {
     auto totalCommandBufferSize = totalCmdBufferSize;
     if (DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.get() > 0) {
         totalCommandBufferSize = static_cast<size_t>(DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.get()) * MemoryConstants::kiloByte;
         totalCommandBufferSize += cmdBufferReservedSize;
     }
-    return totalCommandBufferSize;
+    return alignUp<size_t>(totalCommandBufferSize, MemoryConstants::pageSize64k);
 }
 
 void *CommandContainer::getHeapSpaceAllowGrow(HeapType heapType,
@@ -302,7 +296,7 @@ GraphicsAllocation *CommandContainer::obtainNextCommandBufferAllocation(bool for
     forceHostMemory &= this->useSecondaryCommandStream;
     GraphicsAllocation *cmdBufferAllocation = nullptr;
     if (this->reusableAllocationList) {
-        size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
+        size_t alignedSize = getAlignedCmdBufferSize();
         cmdBufferAllocation = this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, nullptr, AllocationType::COMMAND_BUFFER).release();
     }
     if (!cmdBufferAllocation) {
@@ -410,7 +404,7 @@ GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer() {
 
 GraphicsAllocation *CommandContainer::reuseExistingCmdBuffer(bool forceHostMemory) {
     forceHostMemory &= this->useSecondaryCommandStream;
-    size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
+    size_t alignedSize = getAlignedCmdBufferSize();
     auto cmdBufferAllocation = this->immediateReusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::COMMAND_BUFFER).release();
     if (!cmdBufferAllocation) {
         this->reusableAllocationList->detachAllocation(alignedSize, nullptr, forceHostMemory, this->immediateCmdListCsr, AllocationType::COMMAND_BUFFER).release();
@@ -428,8 +422,7 @@ void CommandContainer::addCurrentCommandBufferToReusableAllocationList() {
 }
 
 void CommandContainer::setCmdBuffer(GraphicsAllocation *cmdBuffer) {
-    size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
-    commandStream->replaceBuffer(cmdBuffer->getUnderlyingBuffer(), alignedSize - cmdBufferReservedSize);
+    commandStream->replaceBuffer(cmdBuffer->getUnderlyingBuffer(), getMaxUsableSpace());
     commandStream->replaceGraphicsAllocation(cmdBuffer);
 
     if (!getFlushTaskUsedForImmediate()) {
@@ -442,7 +435,7 @@ GraphicsAllocation *CommandContainer::allocateCommandBuffer() {
 }
 
 GraphicsAllocation *CommandContainer::allocateCommandBuffer(bool forceHostMemory) {
-    size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
+    size_t alignedSize = getAlignedCmdBufferSize();
     AllocationProperties properties{device->getRootDeviceIndex(),
                                     true /* allocateMemory*/,
                                     alignedSize,
@@ -485,7 +478,7 @@ void CommandContainer::fillReusableAllocationLists() {
     }
 
     constexpr size_t heapSize = 65536u;
-    size_t alignedSize = alignUp<size_t>(this->getTotalCmdBufferSize(), MemoryConstants::pageSize64k);
+    size_t alignedSize = getAlignedCmdBufferSize();
     for (auto i = 0u; i < amountToFill; i++) {
         for (auto heapType = 0u; heapType < IndirectHeap::Type::NUM_TYPES; heapType++) {
             if (skipHeapAllocationCreation(static_cast<HeapType>(heapType))) {

@@ -188,7 +188,10 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool doubleSbaWa = false;
 
   protected:
-    size_t getTotalCmdBufferSize();
+    size_t getAlignedCmdBufferSize() const;
+    size_t getMaxUsableSpace() const {
+        return getAlignedCmdBufferSize() - cmdBufferReservedSize;
+    }
     IndirectHeap *getHeapWithRequiredSize(HeapType heapType, size_t sizeRequired, size_t alignment, bool allowGrow);
     void createAndAssignNewHeap(HeapType heapType, size_t size);
     IndirectHeap *initIndirectHeapReservation(ReservedIndirectHeap *indirectHeapReservation, size_t size, size_t alignment, HeapType heapType);
