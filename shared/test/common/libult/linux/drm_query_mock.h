@@ -28,6 +28,11 @@ class DrmQueryMock : public DrmMock {
         contextDebugSupported,
     };
 
+    void getPrelimEuDebug(int &prelimEuDebug) override {
+        prelimEuDebug = prelimEuDebugValue;
+    }
+    int prelimEuDebugValue = 0;
+
     static constexpr uint32_t maxEngineCount{9};
     ContextEnginesLoadBalance<maxEngineCount> receivedContextEnginesLoadBalance{};
     ContextParamEngines<1 + maxEngineCount> receivedContextParamEngines{};

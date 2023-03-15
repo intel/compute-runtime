@@ -195,5 +195,65 @@ TEST_F(L0DebuggerWindowsTest, givenDebuggerL0NotifyModuleDestroyCalledAndModuleD
     EXPECT_TRUE(hasSubstr(testing::internal::GetCapturedStderr(), std::string("KM_ESCAPE_EUDBG_UMD_MODULE_DESTROY_NOTIFY: Failed - Status:")));
 }
 
+TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachAvailableWhenInitializingDriverThenSuccessIsReturned) {
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
+
+    WddmEuDebugInterfaceMock *wddm = new WddmEuDebugInterfaceMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    wddm->callBaseDestroyAllocations = false;
+    wddm->callBaseMapGpuVa = false;
+    wddm->callBaseWaitFromCpu = false;
+
+    auto osInterface = new OSInterface();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
+    wddm->init();
+    executionEnvironment->memoryManager.reset(new MockWddmMemoryManager(*executionEnvironment));
+
+    auto neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+
+    driverHandle->enableProgramDebugging = NEO::DebuggingMode::Enabled;
+    wddm->debugAttachAvailable = true;
+
+    ze_result_t result = driverHandle->initialize(std::move(devices));
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+TEST_F(L0DebuggerWindowsTest, givenProgramDebuggingEnabledAndDebugAttachNotAvailableWhenInitializingDriverThenErrorIsReturned) {
+    auto executionEnvironment = new NEO::ExecutionEnvironment();
+    executionEnvironment->prepareRootDeviceEnvironments(1);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
+
+    WddmEuDebugInterfaceMock *wddm = new WddmEuDebugInterfaceMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    wddm->callBaseDestroyAllocations = false;
+    wddm->callBaseMapGpuVa = false;
+    wddm->callBaseWaitFromCpu = false;
+
+    auto osInterface = new OSInterface();
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface.reset(osInterface);
+    executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(wddm));
+    wddm->init();
+    executionEnvironment->memoryManager.reset(new MockWddmMemoryManager(*executionEnvironment));
+
+    auto neoDevice = NEO::MockDevice::create<NEO::MockDevice>(executionEnvironment, 0u);
+    NEO::DeviceVector devices;
+    devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
+    auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
+
+    driverHandle->enableProgramDebugging = NEO::DebuggingMode::Enabled;
+    wddm->debugAttachAvailable = false;
+
+    ze_result_t result = driverHandle->initialize(std::move(devices));
+    EXPECT_EQ(ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE, result);
+}
+
 } // namespace ult
 } // namespace L0

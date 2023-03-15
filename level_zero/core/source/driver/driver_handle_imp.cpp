@@ -17,6 +17,7 @@
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/unified_memory_manager.h"
+#include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_library.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
@@ -221,6 +222,11 @@ ze_result_t DriverHandleImp::initialize(std::vector<std::unique_ptr<NEO::Device>
 
         auto device = Device::create(this, pNeoDevice, false, &returnValue);
         this->devices.push_back(device);
+
+        auto osInterface = device->getNEODevice()->getRootDeviceEnvironment().osInterface.get();
+        if (osInterface && !osInterface->isDebugAttachAvailable() && enableProgramDebugging != NEO::DebuggingMode::Disabled) {
+            return ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+        }
 
         multiOsContextDriver |= device->isImplicitScalingCapable();
         if (returnValue != ZE_RESULT_SUCCESS) {

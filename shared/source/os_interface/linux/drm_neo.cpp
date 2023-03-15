@@ -824,7 +824,9 @@ bool Drm::sysmanQueryEngineInfo() {
 }
 
 bool Drm::isDebugAttachAvailable() {
-    return ioctlHelper->isDebugAttachAvailable();
+    int prelimEnableEuDebug = 0;
+    getPrelimEuDebug(prelimEnableEuDebug);
+    return (prelimEnableEuDebug == 1) && ioctlHelper->isDebugAttachAvailable();
 }
 
 int getMaxGpuFrequencyOfDevice(Drm &drm, std::string &sysFsPciPath, int &maxGpuFrequency) {
@@ -966,6 +968,20 @@ void Drm::getPrelimVersion(std::string &prelimVersion) {
     } else {
         ifs >> prelimVersion;
     }
+    ifs.close();
+}
+
+void Drm::getPrelimEuDebug(int &prelimEuDebug) {
+    prelimEuDebug = 0;
+    std::string sysFsPciPath = getSysFsPciPath();
+    std::string prelimEuDebugPath = sysFsPciPath + "/prelim_enable_eu_debug";
+
+    std::ifstream ifs(prelimEuDebugPath.c_str(), std::ifstream::in);
+
+    if (!ifs.fail()) {
+        ifs >> prelimEuDebug;
+    }
+
     ifs.close();
 }
 
