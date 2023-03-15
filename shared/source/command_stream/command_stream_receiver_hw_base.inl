@@ -241,11 +241,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushBcsTask(LinearStream &c
                             streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, this->getNumClients(), (submitCSR || dispatchBcsFlags.hasStallingCmds),
                             dispatchBcsFlags.hasRelaxedOrderingDependencies};
 
-    streamToSubmit.getGraphicsAllocation()->updateTaskCount(this->taskCount + 1, this->osContext->getContextId());
-    streamToSubmit.getGraphicsAllocation()->updateResidencyTaskCount(this->taskCount + 1, this->osContext->getContextId());
+    updateStreamTaskCount(streamToSubmit, taskCount + 1);
 
     auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());
     if (submissionStatus != SubmissionStatus::SUCCESS) {
+        updateStreamTaskCount(streamToSubmit, taskCount);
         CompletionStamp completionStamp = {CompletionStamp::getTaskCountFromSubmissionStatusError(submissionStatus)};
         return completionStamp;
     }
@@ -723,13 +723,14 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
                             dispatchFlags.requiresCoherency, dispatchFlags.lowPriority, dispatchFlags.throttle, dispatchFlags.sliceCount,
                             streamToSubmit.getUsed(), &streamToSubmit, bbEndLocation, this->getNumClients(), (submitCSR || dispatchFlags.hasStallingCmds || hasStallingCmdsOnTaskStream),
                             dispatchFlags.hasRelaxedOrderingDependencies};
-    streamToSubmit.getGraphicsAllocation()->updateTaskCount(this->taskCount + 1, this->osContext->getContextId());
-    streamToSubmit.getGraphicsAllocation()->updateResidencyTaskCount(this->taskCount + 1, this->osContext->getContextId());
+
+    updateStreamTaskCount(streamToSubmit, taskCount + 1);
 
     if (submitCSR || submitTask) {
         if (this->dispatchMode == DispatchMode::ImmediateDispatch) {
             auto submissionStatus = flushHandler(batchBuffer, this->getResidencyAllocations());
             if (submissionStatus != SubmissionStatus::SUCCESS) {
+                updateStreamTaskCount(streamToSubmit, taskCount);
                 CompletionStamp completionStamp = {CompletionStamp::getTaskCountFromSubmissionStatusError(submissionStatus)};
                 return completionStamp;
             }
@@ -1329,11 +1330,11 @@ TaskCountType CommandStreamReceiverHw<GfxFamily>::flushBcsTask(const BlitPropert
     BatchBuffer batchBuffer{commandStream.getGraphicsAllocation(), commandStreamStart, 0, taskStartAddress, nullptr, false, false, QueueThrottle::MEDIUM, QueueSliceCount::defaultSliceCount,
                             commandStream.getUsed(), &commandStream, endingCmdPtr, this->getNumClients(), hasStallingCmds, isRelaxedOrderingDispatch};
 
-    commandStream.getGraphicsAllocation()->updateTaskCount(newTaskCount, this->osContext->getContextId());
-    commandStream.getGraphicsAllocation()->updateResidencyTaskCount(newTaskCount, this->osContext->getContextId());
+    updateStreamTaskCount(commandStream, newTaskCount);
 
     auto flushSubmissionStatus = flush(batchBuffer, getResidencyAllocations());
     if (flushSubmissionStatus != SubmissionStatus::SUCCESS) {
+        updateStreamTaskCount(commandStream, taskCount);
         return CompletionStamp::getTaskCountFromSubmissionStatusError(flushSubmissionStatus);
     }
     makeSurfacePackNonResident(getResidencyAllocations(), true);
@@ -1447,7 +1448,9 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream
 
     this->latestSentTaskCount = taskCount + 1;
     auto submissionStatus = flushHandler(batchBuffer, getResidencyAllocations());
-    taskCount++;
+    if (submissionStatus == SubmissionStatus::SUCCESS) {
+        taskCount++;
+    }
     return submissionStatus;
 }
 
@@ -1741,6 +1744,12 @@ inline void CommandStreamReceiverHw<GfxFamily>::handleStateBaseAddressStateTrans
         }
         this->streamProperties.stateBaseAddress.setPropertyGlobalAtomics(globalAtomics, false);
     }
+}
+
+template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::updateStreamTaskCount(LinearStream &stream, TaskCountType newTaskCount) {
+    stream.getGraphicsAllocation()->updateTaskCount(newTaskCount, this->osContext->getContextId());
+    stream.getGraphicsAllocation()->updateResidencyTaskCount(newTaskCount, this->osContext->getContextId());
 }
 
 } // namespace NEO

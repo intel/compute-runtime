@@ -392,7 +392,7 @@ HWTEST_F(CommandStreamReceiverTest, givenFailingFlushSubmissionsAndNoGpuHangWhen
     EXPECT_EQ(WaitStatus::NotReady, waitStatus);
 }
 
-HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaititingForTaskCountThenGpuHangIsReturned) {
+HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaitingForTaskCountThenGpuHangIsReturned) {
     auto driverModelMock = std::make_unique<MockDriverModel>();
     driverModelMock->isGpuHangDetectedToReturn = true;
 
@@ -411,6 +411,32 @@ HWTEST_F(CommandStreamReceiverTest, givenGpuHangWhenWaititingForTaskCountThenGpu
     const auto waitStatus = csr.waitForTaskCount(taskCountToWait);
     EXPECT_EQ(WaitStatus::GpuHang, waitStatus);
     EXPECT_TRUE(csr.downloadAllocationCalled);
+}
+
+HWTEST_F(CommandStreamReceiverTest, givenFlushUnsuccessWhenWaitingForTaskCountThenNotReadyIsReturned) {
+    auto &csr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    csr.activePartitions = 1;
+
+    constexpr auto taskCountToWait = 1;
+    csr.flushReturnValue = SubmissionStatus::FAILED;
+    auto waitStatus = csr.waitForTaskCount(taskCountToWait);
+    EXPECT_EQ(WaitStatus::NotReady, waitStatus);
+
+    csr.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+    waitStatus = csr.waitForTaskCount(taskCountToWait);
+    EXPECT_EQ(WaitStatus::NotReady, waitStatus);
+
+    csr.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
+    waitStatus = csr.waitForTaskCount(taskCountToWait);
+    EXPECT_EQ(WaitStatus::NotReady, waitStatus);
+
+    csr.flushReturnValue = SubmissionStatus::UNSUPPORTED;
+    waitStatus = csr.waitForTaskCount(taskCountToWait);
+    EXPECT_EQ(WaitStatus::NotReady, waitStatus);
+
+    csr.flushReturnValue = SubmissionStatus::DEVICE_UNINITIALIZED;
+    waitStatus = csr.waitForTaskCount(taskCountToWait);
+    EXPECT_EQ(WaitStatus::NotReady, waitStatus);
 }
 
 HWTEST_F(CommandStreamReceiverTest, whenDownloadTagAllocationThenDonwloadOnlyIfTagAllocationWasFlushed) {
@@ -2707,6 +2733,32 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFailedFailureOnFlushWhenFlushingTaskT
                                                            *pDevice);
 
     EXPECT_EQ(CompletionStamp::failed, completionStamp.taskCount);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenUnsuccessOnFlushWhenFlushingSmallTaskThenTaskCountIsNotIncreased) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &stream = commandStreamReceiver.getCS(4096u);
+
+    commandStreamReceiver.taskCount = 1u;
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::FAILED;
+    commandStreamReceiver.flushSmallTask(stream, stream.getUsed());
+    EXPECT_EQ(1u, commandStreamReceiver.taskCount);
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
+    commandStreamReceiver.flushSmallTask(stream, stream.getUsed());
+    EXPECT_EQ(1u, commandStreamReceiver.taskCount);
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
+    commandStreamReceiver.flushSmallTask(stream, stream.getUsed());
+    EXPECT_EQ(1u, commandStreamReceiver.taskCount);
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::UNSUPPORTED;
+    commandStreamReceiver.flushSmallTask(stream, stream.getUsed());
+    EXPECT_EQ(1u, commandStreamReceiver.taskCount);
+
+    commandStreamReceiver.flushReturnValue = SubmissionStatus::DEVICE_UNINITIALIZED;
+    commandStreamReceiver.flushSmallTask(stream, stream.getUsed());
+    EXPECT_EQ(1u, commandStreamReceiver.taskCount);
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenFlushingMiDWThenErrorIsPropagated) {

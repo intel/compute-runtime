@@ -126,7 +126,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
     TaskCountType completionValue = 0u;
     uint64_t completionFenceGpuAddress = 0u;
     if (this->isCompletionFenceSupported()) {
-        completionValue = ++completionFenceValue;
+        completionValue = completionFenceValue + 1;
         completionFenceGpuAddress = this->completionFenceAllocation->getGpuAddress() + TagAllocationLayout::completionFenceOffset;
     }
 
@@ -153,6 +153,10 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
                 completionFenceGpuAddress += this->postSyncOffset;
             }
         }
+    }
+
+    if (this->isCompletionFenceSupported() && ret) {
+        completionFenceValue++;
     }
 
     return ret;

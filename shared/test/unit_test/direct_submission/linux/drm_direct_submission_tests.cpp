@@ -399,6 +399,32 @@ HWTEST_F(DrmDirectSubmissionTest, givenNoCompletionFenceSupportAndExecFailureWhe
     ringBuffer->getBufferObjectToModify(0) = initialBO;
 }
 
+HWTEST_F(DrmDirectSubmissionTest, givenCompletionFenceSupportAndExecFailureWhenSubmittingThenCompletionFenceValueIsNotIncreased) {
+    uint64_t gpuAddress = 0x1000;
+    size_t size = 0x1000;
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.EnableDrmCompletionFence.set(1);
+
+    auto &commandStreamReceiver = *device->getDefaultEngine().commandStreamReceiver;
+    auto drm = executionEnvironment.rootDeviceEnvironments[0]->osInterface->getDriverModel()->as<Drm>();
+
+    MockDrmDirectSubmission<FamilyType, RenderDispatcher<FamilyType>> drmDirectSubmission(commandStreamReceiver);
+    drmDirectSubmission.completionFenceAllocation = commandStreamReceiver.getTagAllocation();
+    EXPECT_TRUE(drmDirectSubmission.allocateResources());
+    auto ringBuffer = static_cast<DrmAllocation *>(drmDirectSubmission.ringBuffers[drmDirectSubmission.currentRingBuffer].ringBuffer);
+    auto initialBO = ringBuffer->getBufferObjectToModify(0);
+
+    MockBufferObject mockBO(drm);
+    ringBuffer->getBufferObjectToModify(0) = &mockBO;
+
+    mockBO.execReturnValue = 1;
+    drmDirectSubmission.completionFenceValue = 1u;
+    EXPECT_FALSE(drmDirectSubmission.submit(gpuAddress, size));
+    EXPECT_EQ(1u, drmDirectSubmission.completionFenceValue);
+
+    ringBuffer->getBufferObjectToModify(0) = initialBO;
+}
+
 HWTEST_F(DrmDirectSubmissionTest, givenTile0AndCompletionFenceSupportWhenSubmittingThenCompletionAddressAndValueArePassedToExec) {
     uint64_t gpuAddress = 0x1000;
     size_t size = 0x1000;

@@ -430,7 +430,9 @@ WaitStatus CommandStreamReceiver::baseWaitFunction(volatile TagAddressType *poll
 
     TaskCountType latestSentTaskCount = this->latestFlushedTaskCount;
     if (latestSentTaskCount < taskCountToWait) {
-        this->flushTagUpdate();
+        if (this->flushTagUpdate() != NEO::SubmissionStatus::SUCCESS) {
+            return WaitStatus::NotReady;
+        }
     }
     volatile TagAddressType *partitionAddress = pollAddress;
 

@@ -191,6 +191,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void handleFrontEndStateTransition(const DispatchFlags &dispatchFlags);
     void handlePipelineSelectStateTransition(const DispatchFlags &dispatchFlags);
     void handleStateBaseAddressStateTransition(const DispatchFlags &dispatchFlags, bool &isStateBaseAddressDirty);
+    void updateStreamTaskCount(LinearStream &stream, TaskCountType newTaskCount);
 
     bool bcsRelaxedOrderingAllowed(const BlitPropertiesContainer &blitPropertiesContainer, bool hasStallingCmds) const;
 
