@@ -8,20 +8,17 @@
 #pragma once
 #include "shared/source/command_stream/csr_deps.h"
 #include "shared/source/gmm_helper/gmm_lib.h"
+#include "shared/source/helpers/aux_translation.h"
 #include "shared/source/helpers/blit_properties_container.h"
+#include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/vec.h"
 
 #include <cstdint>
-
-namespace BlitterConstants {
-enum class BlitDirection : uint32_t;
-}
 
 namespace NEO {
 struct TimestampPacketDependencies;
 class TagNodeBase;
 class TimestampPacketContainer;
-enum class AuxTranslationDirection : uint32_t;
 class GraphicsAllocation;
 class CommandStreamReceiver;
 
@@ -50,9 +47,9 @@ struct BlitProperties {
 
     TagNodeBase *outputTimestampPacket = nullptr;
     TagNodeBase *multiRootDeviceEventSync = nullptr;
-    BlitterConstants::BlitDirection blitDirection;
+    BlitterConstants::BlitDirection blitDirection = BlitterConstants::BlitDirection::BufferToHostPtr;
     CsrDependencies csrDependencies;
-    AuxTranslationDirection auxTranslationDirection;
+    AuxTranslationDirection auxTranslationDirection = AuxTranslationDirection::None;
 
     GraphicsAllocation *dstAllocation = nullptr;
     GraphicsAllocation *srcAllocation = nullptr;
