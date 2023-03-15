@@ -405,6 +405,8 @@ class CommandStreamReceiver {
         return globalStatelessHeap.get();
     }
 
+    bool isRecyclingTagForHeapStorageRequired() const { return heapStorageRequiresRecyclingTag; }
+
   protected:
     void cleanupResources();
     void printDeviceIndex();

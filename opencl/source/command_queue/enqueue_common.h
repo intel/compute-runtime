@@ -1487,11 +1487,13 @@ bool CommandQueueHw<GfxFamily>::isBlitAuxTranslationRequired(const MultiDispatch
 
 template <typename GfxFamily>
 bool CommandQueueHw<GfxFamily>::relaxedOrderingForGpgpuAllowed(uint32_t numWaitEvents) const {
-    if (DebugManager.flags.DirectSubmissionRelaxedOrdering.get() != 1) {
+    auto &gpgpuCsr = getGpgpuCommandStreamReceiver();
+
+    if ((DebugManager.flags.DirectSubmissionRelaxedOrdering.get() != 1) || gpgpuCsr.isRecyclingTagForHeapStorageRequired()) {
         return false;
     }
 
-    return RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(getGpgpuCommandStreamReceiver(), numWaitEvents);
+    return RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(gpgpuCsr, numWaitEvents);
 }
 
 } // namespace NEO

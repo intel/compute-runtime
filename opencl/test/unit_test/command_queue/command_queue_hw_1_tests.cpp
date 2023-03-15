@@ -1236,6 +1236,7 @@ HWTEST_F(CommandQueueHwTest, givenRelaxedOrderingEnabledWhenCheckingIfAllowedByC
     MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
 
     auto &ultCsr = mockCmdQueueHw.getUltCommandStreamReceiver();
+    ultCsr.heapStorageRequiresRecyclingTag = false;
 
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
     directSubmission->relaxedOrderingEnabled = true;
@@ -1256,4 +1257,8 @@ HWTEST_F(CommandQueueHwTest, givenRelaxedOrderingEnabledWhenCheckingIfAllowedByC
 
     EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(0));
     EXPECT_TRUE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(1));
+
+    ultCsr.heapStorageRequiresRecyclingTag = true;
+    EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(0));
+    EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(1));
 }
