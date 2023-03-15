@@ -38,8 +38,8 @@ TEST(DeviceWithDebugSessionTest, GivenSlicesEnabledWithEarlierSlicesDisabledThen
     hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 32;
     hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
     hwInfo.gtSystemInfo.MaxSlicesSupported = 2;
-    for (int i = 0; i < GT_MAX_SLICE; i++) {
-        hwInfo.gtSystemInfo.SliceInfo[i].Enabled = false;
+    for (auto &sliceInfo : hwInfo.gtSystemInfo.SliceInfo) {
+        sliceInfo.Enabled = false;
     }
     hwInfo.gtSystemInfo.SliceInfo[2].Enabled = true;
     hwInfo.gtSystemInfo.SliceInfo[3].Enabled = true;

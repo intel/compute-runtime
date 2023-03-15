@@ -647,8 +647,8 @@ DG2TEST_F(ProductHelperTestDg2, givenEnabledSliceInNonStandardConfigWhenComputeU
     HardwareInfo &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
     testSysInfo.IsDynamicallyPopulated = true;
-    for (int i = 0; i < GT_MAX_SLICE; i++) {
-        testSysInfo.SliceInfo[i].Enabled = false;
+    for (auto &sliceInfo : testSysInfo.SliceInfo) {
+        sliceInfo.Enabled = false;
     }
     testSysInfo.SliceInfo[2].Enabled = true;
     testSysInfo.SliceInfo[3].Enabled = true;
@@ -667,8 +667,8 @@ DG2TEST_F(ProductHelperTestDg2, givenNotEnabledSliceWhenComputeUnitsUsedForScrat
     HardwareInfo &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
     GT_SYSTEM_INFO &testSysInfo = hwInfo.gtSystemInfo;
     testSysInfo.IsDynamicallyPopulated = true;
-    for (int i = 0; i < GT_MAX_SLICE; i++) {
-        testSysInfo.SliceInfo[i].Enabled = false;
+    for (auto &sliceInfo : testSysInfo.SliceInfo) {
+        sliceInfo.Enabled = false;
     }
 
     auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();

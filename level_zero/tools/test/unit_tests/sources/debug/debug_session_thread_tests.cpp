@@ -187,14 +187,11 @@ TEST(DebugSession, givenAllThreadsWithLowSliceDisabledWhenGettingSingleThreadsTh
     auto hwInfo = *NEO::defaultHwInfo.get();
     hwInfo.gtSystemInfo.MaxSlicesSupported = 2;
     hwInfo.gtSystemInfo.IsDynamicallyPopulated = true;
-    hwInfo.gtSystemInfo.SliceInfo[0].Enabled = false;
-    hwInfo.gtSystemInfo.SliceInfo[1].Enabled = false;
+    for (auto &sliceInfo : hwInfo.gtSystemInfo.SliceInfo) {
+        sliceInfo.Enabled = false;
+    }
     hwInfo.gtSystemInfo.SliceInfo[2].Enabled = true;
     hwInfo.gtSystemInfo.SliceInfo[3].Enabled = true;
-    hwInfo.gtSystemInfo.SliceInfo[4].Enabled = false;
-    hwInfo.gtSystemInfo.SliceInfo[5].Enabled = false;
-    hwInfo.gtSystemInfo.SliceInfo[6].Enabled = false;
-    hwInfo.gtSystemInfo.SliceInfo[7].Enabled = false;
 
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());

@@ -1475,12 +1475,13 @@ HWTEST_F(GfxCoreHelperTest, WhenIsDynamicallyPopulatedIsTrueThenGetHighestEnable
     hwInfo.gtSystemInfo.MaxSlicesSupported = 1;
     hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 4;
 
-    for (int i = 0; i < GT_MAX_SLICE; i++) {
-        hwInfo.gtSystemInfo.SliceInfo[i].Enabled = false;
-        for (unsigned int dssID = 0; dssID < GT_MAX_DUALSUBSLICE_PER_SLICE; dssID++) {
-            hwInfo.gtSystemInfo.SliceInfo[i].DSSInfo[dssID].Enabled = false;
+    for (auto &sliceInfo : hwInfo.gtSystemInfo.SliceInfo) {
+        sliceInfo.Enabled = false;
+        for (auto &dssInfo : sliceInfo.DSSInfo) {
+            dssInfo.Enabled = false;
         }
     }
+
     hwInfo.gtSystemInfo.SliceInfo[3].Enabled = true;
     hwInfo.gtSystemInfo.SliceInfo[3].DSSInfo[0].Enabled = true;
     hwInfo.gtSystemInfo.SliceInfo[3].DSSInfo[1].Enabled = true;
