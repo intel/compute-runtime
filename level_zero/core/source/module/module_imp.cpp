@@ -610,9 +610,12 @@ ze_result_t ModuleImp::initialize(const ze_module_desc_t *desc, NEO::Device *neo
     kernelImmDatas.reserve(this->translationUnit->programInfo.kernelInfos.size());
     for (auto &ki : this->translationUnit->programInfo.kernelInfos) {
         std::unique_ptr<KernelImmutableData> kernelImmData{new KernelImmutableData(this->device)};
-        kernelImmData->initialize(ki, device, device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
-                                  this->translationUnit->globalConstBuffer, this->translationUnit->globalVarBuffer,
-                                  this->type == ModuleType::Builtin);
+        result = kernelImmData->initialize(ki, device, device->getNEODevice()->getDeviceInfo().computeUnitsUsedForScratch,
+                                           this->translationUnit->globalConstBuffer, this->translationUnit->globalVarBuffer,
+                                           this->type == ModuleType::Builtin);
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
         kernelImmDatas.push_back(std::move(kernelImmData));
     }
 

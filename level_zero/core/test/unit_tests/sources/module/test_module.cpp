@@ -3787,5 +3787,28 @@ HWTEST_F(ModuleWithZebinTest, givenZebinWithKernelCallingExternalFunctionThenUpd
     ASSERT_NE(nullptr, kernImmData);
     EXPECT_EQ(zebin.barrierCount, kernImmData->getDescriptor().kernelAttributes.barrierCount);
 }
+
+using ModuleKernelImmDatasTest = Test<ModuleFixture>;
+TEST_F(ModuleKernelImmDatasTest, givenDeviceOOMWhenMemoryManagerFailsToAllocateMemoryThenReturnInformativeErrorToTheCaller) {
+
+    auto zebinData = std::make_unique<ZebinTestData::ZebinWithL0TestCommonModule>(device->getHwInfo());
+    const auto &src = zebinData->storage;
+
+    ze_module_desc_t moduleDesc = {};
+    moduleDesc.format = ZE_MODULE_FORMAT_NATIVE;
+    moduleDesc.pInputModule = reinterpret_cast<const uint8_t *>(src.data());
+    moduleDesc.inputSize = src.size();
+
+    ModuleBuildLog *moduleBuildLog = nullptr;
+    auto mockMemoryManager = static_cast<NEO::MockMemoryManager *>(neoDevice->getMemoryManager());
+    mockMemoryManager->isMockHostMemoryManager = true;
+    mockMemoryManager->forceFailureInPrimaryAllocation = true;
+
+    auto module = std::make_unique<Module>(device, moduleBuildLog, ModuleType::User);
+    ASSERT_NE(nullptr, module.get());
+
+    auto result = module->initialize(&moduleDesc, neoDevice);
+    EXPECT_EQ(result, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
+};
 } // namespace ult
 } // namespace L0

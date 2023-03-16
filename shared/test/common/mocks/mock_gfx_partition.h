@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -48,6 +48,10 @@ class MockGfxPartition : public GfxPartition {
         }
         heapAllocateIndex = heapIndex;
         return mockGpuVa;
+    }
+
+    uint64_t heapGetLimit(HeapIndex heapIndex) {
+        return getHeap(heapIndex).getLimit();
     }
 
     void heapFree(HeapIndex heapIndex, uint64_t ptr, size_t size) override {

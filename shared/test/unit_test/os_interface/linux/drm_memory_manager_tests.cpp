@@ -4364,6 +4364,34 @@ TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenAllocateInDevicePoolIs
     EXPECT_EQ(MemoryManager::AllocationStatus::RetryInNonDevicePool, status);
 }
 
+TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenDeviceHeapIsDepletedThenNullptrReturnedAndStatusIsError) {
+    constexpr size_t reservedCpuAddressRangeSize = is64bit ? (6 * 4 * GB) : 0;
+
+    auto hwInfo = defaultHwInfo.get();
+    auto executionEnvironment = MockExecutionEnvironment{hwInfo};
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
+    auto drm = Drm::create(nullptr, *executionEnvironment.rootDeviceEnvironments[0]);
+    executionEnvironment.rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
+    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
+
+    auto mockGfxPartition = std::make_unique<MockGfxPartition>();
+    mockGfxPartition->init(hwInfo->capabilityTable.gpuAddressSpace, reservedCpuAddressRangeSize, 0, 1);
+
+    auto status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.size = MemoryConstants::pageSize + mockGfxPartition->heapGetLimit(NEO::HeapIndex::HEAP_INTERNAL_DEVICE_MEMORY);
+    allocData.flags.useSystemMemory = false;
+    allocData.flags.allocateMemory = true;
+    allocData.type = AllocationType::KERNEL_ISA;
+
+    auto memoryManager = TestedDrmMemoryManager{true, false, false, executionEnvironment};
+    memoryManager.overrideGfxPartition(mockGfxPartition.release());
+    auto allocation = memoryManager.allocateGraphicsMemoryInDevicePool(allocData, status);
+
+    EXPECT_EQ(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Error, status);
+}
+
 TEST(DrmMemoryManagerSimpleTest, givenDrmMemoryManagerWhenAllocateInLocalDeviceMemoryIsCalledThenNullptrAndStatusRetryIsReturned) {
     MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
     executionEnvironment.rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();

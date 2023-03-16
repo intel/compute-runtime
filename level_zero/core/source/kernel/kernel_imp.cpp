@@ -64,10 +64,9 @@ KernelImmutableData::~KernelImmutableData() {
     dynamicStateHeapTemplate.reset();
 }
 
-void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device,
-                                     uint32_t computeUnitsUsedForSratch,
-                                     NEO::GraphicsAllocation *globalConstBuffer,
-                                     NEO::GraphicsAllocation *globalVarBuffer, bool internalKernel) {
+ze_result_t KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device, uint32_t computeUnitsUsedForSratch,
+                                            NEO::GraphicsAllocation *globalConstBuffer, NEO::GraphicsAllocation *globalVarBuffer,
+                                            bool internalKernel) {
 
     UNRECOVERABLE_IF(kernelInfo == nullptr);
     this->kernelInfo = kernelInfo;
@@ -84,7 +83,9 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
 
     auto allocation = memoryManager->allocateGraphicsMemoryWithProperties(
         {neoDevice->getRootDeviceIndex(), kernelIsaSize, allocType, neoDevice->getDeviceBitfield()});
-    UNRECOVERABLE_IF(allocation == nullptr);
+    if (!allocation) {
+        return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
+    }
 
     isaGraphicsAllocation.reset(allocation);
 
@@ -152,6 +153,8 @@ void KernelImmutableData::initialize(NEO::KernelInfo *kernelInfo, Device *device
     } else if (nullptr != globalVarBuffer) {
         this->residencyContainer.push_back(globalVarBuffer);
     }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 void KernelImmutableData::createRelocatedDebugData(NEO::GraphicsAllocation *globalConstBuffer,
