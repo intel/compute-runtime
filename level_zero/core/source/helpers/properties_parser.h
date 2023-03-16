@@ -107,11 +107,6 @@ inline ze_result_t prepareL0StructuresLookupTable(StructuresLookupTable &lookupT
             lookupTable.areImageProperties = true;
             lookupTable.imageProperties.isPlanarExtension = true;
             lookupTable.imageProperties.planeIndex = imageViewDesc->planeIndex;
-        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC) {
-            const ze_image_view_planar_ext_desc_t *imageViewDesc = reinterpret_cast<const ze_image_view_planar_ext_desc_t *>(extendedDesc);
-            lookupTable.areImageProperties = true;
-            lookupTable.imageProperties.isPlanarExtension = true;
-            lookupTable.imageProperties.planeIndex = imageViewDesc->planeIndex;
         } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
             const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
                 reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);
