@@ -88,7 +88,7 @@ TEST_F(WddmTests, whenftrEuDebugIsFalseThenDebuggingEnabledReturnsFalse) {
 }
 
 TEST_F(WddmTests, whenProgramDebugIsEnabledAndCreatingContextWithInternalEngineThenDebuggableContextReturnsFalse) {
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     wddm->init();
     OsContextWin osContext(*wddm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::EngineType::ENGINE_RCS, EngineUsage::Internal}));
     osContext.ensureContextInitialized();
@@ -181,7 +181,7 @@ TEST_F(WddmTests, GivengtSystemInfoSliceInfoHasEnabledSlicesAtHigherIndicesThenE
                                                          &hwInfo->gtSystemInfo,
                                                          hwInfo->capabilityTable.gpuAddressSpace));
 
-    wddm->rootDeviceEnvironment.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Enabled);
+    wddm->rootDeviceEnvironment.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
     EXPECT_TRUE(wddm->init());
     const auto &topologyMap = wddm->getTopologyMap();
     EXPECT_EQ(topologyMap.size(), 1u);
@@ -206,7 +206,7 @@ TEST_F(WddmTests, GivenProperTopologyDataAndDebugFlagsEnabledWhenInitializingWdd
                                                          &hwInfo->gtSystemInfo,
                                                          hwInfo->capabilityTable.gpuAddressSpace));
 
-    wddm->rootDeviceEnvironment.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Enabled);
+    wddm->rootDeviceEnvironment.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
     EXPECT_TRUE(wddm->init());
     const auto &topologyMap = wddm->getTopologyMap();
     EXPECT_EQ(topologyMap.size(), 1u);
@@ -227,7 +227,7 @@ TEST_F(WddmTests, GivenNoSubsliceEnabledAndDebugFlagsEnabledWhenInitializingWddm
                                                          &hwInfo->gtSystemInfo,
                                                          hwInfo->capabilityTable.gpuAddressSpace));
 
-    wddm->rootDeviceEnvironment.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Enabled);
+    wddm->rootDeviceEnvironment.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
     EXPECT_FALSE(wddm->init());
     const auto &topologyMap = wddm->getTopologyMap();
     EXPECT_TRUE(topologyMap.empty());

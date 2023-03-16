@@ -367,7 +367,7 @@ TEST_F(DrmBufferObjectTest, givenDeleterWhenBufferObjectIsCreatedAndDeletedThenC
 
 TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoCreatedThenBindInfoIsInitializedToOsContextCount) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
-    device->getRootDeviceEnvironment().executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Enabled);
+    device->getRootDeviceEnvironment().executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
     device->getExecutionEnvironment()->calculateMaxOsContextCount();
     DrmMock drm(*(device->getExecutionEnvironment()->rootDeviceEnvironments[0].get()));
     EXPECT_TRUE(drm.isPerContextVMRequired());
@@ -385,7 +385,7 @@ TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoCreatedThenBindInfoIsInitia
 
 TEST(DrmBufferObject, givenDrmIoctlReturnsErrorNotSupportedThenBufferObjectReturnsError) {
     auto executionEnvironment = new ExecutionEnvironment;
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -412,7 +412,7 @@ TEST(DrmBufferObject, givenDrmIoctlReturnsErrorNotSupportedThenBufferObjectRetur
 
 TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoBoundAndUnboundThenCorrectBindInfoIsUpdated) {
     auto executionEnvironment = new ExecutionEnvironment;
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -455,7 +455,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPr
     DebugManager.flags.PrintBOBindingResult.set(true);
 
     auto executionEnvironment = new ExecutionEnvironment;
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();
@@ -508,7 +508,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
     DebugManager.flags.PrintBOBindingResult.set(true);
 
     auto executionEnvironment = new ExecutionEnvironment;
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();

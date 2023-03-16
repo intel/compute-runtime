@@ -46,8 +46,24 @@ class Debugger {
 
 enum class DebuggingMode : uint32_t {
     Disabled,
-    Enabled
+    Online,
+    Offline
 };
+
+inline DebuggingMode getDebuggingMode(uint32_t programDebugging) {
+    switch (programDebugging) {
+    case 1: {
+        return DebuggingMode::Online;
+    }
+    case 2: {
+        return DebuggingMode::Offline;
+    }
+    case 0:
+    default: {
+        return DebuggingMode::Disabled;
+    }
+    }
+}
 
 static_assert(std::is_standard_layout<Debugger::SbaAddresses>::value);
 } // namespace NEO

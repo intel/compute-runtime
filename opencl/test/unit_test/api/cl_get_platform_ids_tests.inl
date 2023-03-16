@@ -155,7 +155,32 @@ TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnabledProgramDebug
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    ASSERT_NE(nullptr, platformsImpl);
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    EXPECT_TRUE(executionEnvironment->isDebuggingEnabled());
+
+    platformsImpl->clear();
+}
+
+TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndEnableProgramDebuggingWithValue2WhenGettingPlatformIdsThenDebuggingEnabledIsSetInExecutionEnvironment) {
+    DebugManagerStateRestore stateRestore;
+    NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(1);
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.levelZeroSupported = true;
+
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    cl_int retVal = CL_SUCCESS;
+    cl_platform_id platformRet = nullptr;
+    cl_uint numPlatforms = 0;
+
+    platformsImpl->clear();
+
+    retVal = clGetPlatformIDs(1, &platformRet, &numPlatforms);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
     auto executionEnvironment = platform()->peekExecutionEnvironment();
     EXPECT_TRUE(executionEnvironment->isDebuggingEnabled());
 
@@ -182,7 +207,32 @@ TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnabledProgramDebuggingW
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    ASSERT_NE(nullptr, platformsImpl);
+    auto executionEnvironment = platform()->peekExecutionEnvironment();
+    EXPECT_FALSE(executionEnvironment->isDebuggingEnabled());
+
+    platformsImpl->clear();
+}
+
+TEST(clGetPlatformIDsTest, givenNoExperimentalSupportAndEnableProgramDebuggingWithValue2WhenGettingPlatformIdsThenDebuggingEnabledIsNotSetInExecutionEnvironment) {
+    DebugManagerStateRestore stateRestore;
+    NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.set(0);
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.capabilityTable.levelZeroSupported = true;
+
+    VariableBackup<uint32_t> mockGetenvCalledBackup(&IoFunctions::mockGetenvCalled, 0);
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"ZET_ENABLE_PROGRAM_DEBUGGING", "2"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+
+    cl_int retVal = CL_SUCCESS;
+    cl_platform_id platformRet = nullptr;
+    cl_uint numPlatforms = 0;
+
+    platformsImpl->clear();
+
+    retVal = clGetPlatformIDs(1, &platformRet, &numPlatforms);
+
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
     auto executionEnvironment = platform()->peekExecutionEnvironment();
     EXPECT_FALSE(executionEnvironment->isDebuggingEnabled());
 
@@ -209,7 +259,6 @@ TEST(clGetPlatformIDsTest, givenEnabledExperimentalSupportAndZeroProgramDebuggin
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
-    ASSERT_NE(nullptr, platformsImpl);
     auto executionEnvironment = platform()->peekExecutionEnvironment();
     EXPECT_FALSE(executionEnvironment->isDebuggingEnabled());
 

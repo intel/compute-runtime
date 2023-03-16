@@ -36,7 +36,7 @@ struct L0DebuggerLinuxFixture {
         auto executionEnvironment = new NEO::ExecutionEnvironment();
         auto mockBuiltIns = new NEO::MockBuiltins();
         executionEnvironment->prepareRootDeviceEnvironments(1);
-        executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+        executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
         executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
         executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(hwInfo ? hwInfo : defaultHwInfo.get());
         executionEnvironment->initializeMemoryManager();
@@ -50,7 +50,7 @@ struct L0DebuggerLinuxFixture {
         NEO::DeviceVector devices;
         devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
         driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-        driverHandle->enableProgramDebugging = NEO::DebuggingMode::Enabled;
+        driverHandle->enableProgramDebugging = NEO::DebuggingMode::Online;
 
         driverHandle->initialize(std::move(devices));
         device = driverHandle->devices[0];
@@ -122,7 +122,7 @@ TEST_F(L0DebuggerLinuxTest, givenLinuxOSWhenL0DebuggerIsCreatedAddressModeIsNotS
 TEST(L0DebuggerLinux, givenVmBindAndPerContextVmEnabledInDrmWhenInitializingDebuggingInOsThenRegisterResourceClassesIsCalled) {
     auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
 
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();
     auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -141,7 +141,7 @@ TEST(L0DebuggerLinux, givenVmBindAndPerContextVmEnabledInDrmWhenInitializingDebu
 TEST(L0DebuggerLinux, givenVmBindNotAvailableInDrmWhenInitializingDebuggingInOsThenRegisterResourceClassesIsNotCalled) {
     auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
 
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();
     auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -160,7 +160,7 @@ TEST(L0DebuggerLinux, givenVmBindNotAvailableInDrmWhenInitializingDebuggingInOsT
 TEST(L0DebuggerLinux, givenPerContextVmNotEnabledWhenInitializingDebuggingInOsThenRegisterResourceClassesIsNotCalled) {
     auto executionEnvironment = std::make_unique<NEO::MockExecutionEnvironment>();
 
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();
     auto drmMock = new DrmMockResources(*executionEnvironment->rootDeviceEnvironments[0]);
@@ -311,7 +311,7 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledWhenCommandQueuesAreCreatedAn
 HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndDebugAttachAvailableWhenInitializingDriverThenSuccessIsReturned) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();
@@ -324,7 +324,7 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndDebugAttachAvailableWhenIn
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-    driverHandle->enableProgramDebugging = NEO::DebuggingMode::Enabled;
+    driverHandle->enableProgramDebugging = NEO::DebuggingMode::Online;
 
     drmMock->allowDebugAttach = true;
 
@@ -335,7 +335,7 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndDebugAttachAvailableWhenIn
 HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndDebugAttachNotAvailableWhenInitializingDriverThenErrorIsReturned) {
     auto executionEnvironment = new NEO::ExecutionEnvironment();
     executionEnvironment->prepareRootDeviceEnvironments(1);
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(defaultHwInfo.get());
     executionEnvironment->initializeMemoryManager();
     auto osInterface = new OSInterface();
@@ -348,7 +348,7 @@ HWTEST_F(L0DebuggerLinuxTest, givenDebuggingEnabledAndDebugAttachNotAvailableWhe
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-    driverHandle->enableProgramDebugging = NEO::DebuggingMode::Enabled;
+    driverHandle->enableProgramDebugging = NEO::DebuggingMode::Online;
 
     drmMock->allowDebugAttach = false;
 
@@ -461,7 +461,7 @@ HWTEST_F(L0DebuggerLinuxMultitileTest, givenSubDeviceFilteredByAffinityMaskWhenC
     executionEnvironment->prepareRootDeviceEnvironments(1);
     executionEnvironment->parseAffinityMask();
 
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(mockBuiltIns);
     executionEnvironment->rootDeviceEnvironments[0]->setHwInfoAndInitHelpers(&hwInfo);
     executionEnvironment->initializeMemoryManager();
@@ -475,7 +475,7 @@ HWTEST_F(L0DebuggerLinuxMultitileTest, givenSubDeviceFilteredByAffinityMaskWhenC
     NEO::DeviceVector devices;
     devices.push_back(std::unique_ptr<NEO::Device>(neoDevice));
     auto driverHandle = std::make_unique<Mock<L0::DriverHandleImp>>();
-    driverHandle->enableProgramDebugging = NEO::DebuggingMode::Enabled;
+    driverHandle->enableProgramDebugging = NEO::DebuggingMode::Online;
 
     driverHandle->initialize(std::move(devices));
     auto device = driverHandle->devices[0];

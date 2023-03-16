@@ -496,7 +496,7 @@ TEST_F(IoctlHelperPrelimFixture, whenCreateDrmContextIsCalledThenIoctlIsCalledOn
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWhenCreatingContextThenCooperativeFlagIsPassedToCreateDrmContextOnlyIfCCSEnginesArePresent) {
-    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
     drm->contextDebugSupported = true;
     drm->callBaseCreateDrmContext = false;
 

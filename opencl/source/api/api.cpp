@@ -89,10 +89,9 @@ cl_int CL_API_CALL clGetPlatformIDs(cl_uint numEntries,
 
             NEO::EnvironmentVariableReader envReader;
             if (NEO::DebugManager.flags.ExperimentalEnableL0DebuggerForOpenCL.get()) {
-                auto programDebugging = envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", 0);
-                if (programDebugging != 0) {
-                    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Enabled);
-                }
+                const auto programDebugging = envReader.getSetting("ZET_ENABLE_PROGRAM_DEBUGGING", 0);
+                const auto dbgMode = NEO::getDebuggingMode(programDebugging);
+                executionEnvironment->setDebuggingMode(dbgMode);
             }
             if (envReader.getSetting("NEO_FP64_EMULATION", false)) {
                 executionEnvironment->setFP64EmulationEnabled();
