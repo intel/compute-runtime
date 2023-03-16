@@ -158,6 +158,7 @@ TEST_F(CommandContainerTest, givenCommandContainerWhenInitializeThenEverythingIs
     EXPECT_NE(cmdContainer.getHeapHelper(), nullptr);
     EXPECT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
     EXPECT_NE(cmdContainer.getCommandStream(), nullptr);
+    EXPECT_EQ(0u, cmdContainer.currentLinearStreamStartOffsetRef());
 
     for (uint32_t i = 0; i < HeapType::NUM_TYPES; i++) {
         auto heapType = static_cast<HeapType>(i);
@@ -431,7 +432,7 @@ HWTEST_F(CommandContainerTest, givenNotEnoughSpaceInSSHWhenGettingHeapWithRequir
     cmdContainer->getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, sizeof(RENDER_SURFACE_STATE), 0);
 
     EXPECT_EQ(4 * MemoryConstants::pageSize, heap->getUsed());
-    EXPECT_EQ(cmdContainer->sshAllocations.size(), 1u);
+    EXPECT_EQ(cmdContainer->getSshAllocations().size(), 1u);
 }
 
 TEST_F(CommandContainerTest, givenAvailableSpaceWhenGetHeapWithRequiredSizeAndAlignmentCalledThenExistingAllocationIsReturned) {

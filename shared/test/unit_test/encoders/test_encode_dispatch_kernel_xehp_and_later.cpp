@@ -396,9 +396,9 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenCleanHeapsWhenDispatc
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    cmdContainer->slmSize = 1;
+    cmdContainer->slmSizeRef() = 1;
     cmdContainer->setDirtyStateForAllHeaps(false);
-    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSize;
+    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSizeRef();
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -439,7 +439,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
         DebugManager.flags.ForceBtpPrefetchMode.set(-1);
         cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-        cmdContainer->l1CachePolicyData = &l1CachePolicyData;
+        cmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
 
         bool requiresUncachedMocs = false;
         EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -473,7 +473,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
         DebugManager.flags.ForceBtpPrefetchMode.set(0);
         cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-        cmdContainer->l1CachePolicyData = &l1CachePolicyData;
+        cmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
 
         bool requiresUncachedMocs = false;
         EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -498,7 +498,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
         DebugManager.flags.ForceBtpPrefetchMode.set(1);
         cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-        cmdContainer->l1CachePolicyData = &l1CachePolicyData;
+        cmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
 
         bool requiresUncachedMocs = false;
         EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -1371,7 +1371,7 @@ HWTEST2_F(CommandEncodeStatesTest,
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
     bool dpasModeRequired = true;
-    cmdContainer->lastPipelineSelectModeRequired = false;
+    cmdContainer->lastPipelineSelectModeRequiredRef() = false;
 
     dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = dpasModeRequired;
 
@@ -1402,7 +1402,7 @@ HWTEST2_F(CommandEncodeStatesTest,
 
     bool dpasModeRequired = true;
     DebugManager.flags.OverrideSystolicPipelineSelect.set(!dpasModeRequired);
-    cmdContainer->lastPipelineSelectModeRequired = false;
+    cmdContainer->lastPipelineSelectModeRequiredRef() = false;
     dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = dpasModeRequired;
 
     bool requiresUncachedMocs = false;
@@ -1429,7 +1429,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest,
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
     bool dpasModeRequired = true;
-    cmdContainer->lastPipelineSelectModeRequired = dpasModeRequired;
+    cmdContainer->lastPipelineSelectModeRequiredRef() = dpasModeRequired;
     dispatchInterface->kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = dpasModeRequired;
 
     bool requiresUncachedMocs = false;

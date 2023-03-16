@@ -52,7 +52,7 @@ class CommandEncodeStatesFixture : public DeviceFixture {
             false,                                    // useGlobalAtomics
             false,                                    // multiOsContextCapable
             false,                                    // isRcs
-            container->doubleSbaWa};                  // doubleSbaWa
+            container->doubleSbaWaRef()};             // doubleSbaWa
         return args;
     }
 

@@ -164,10 +164,10 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
     this->dynamicHeapRequired = NEO::EncodeDispatchKernel<GfxFamily>::isDshNeeded(device->getDeviceInfo());
     this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
-    this->commandContainer.doubleSbaWa = this->doubleSbaWa;
+    this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
     this->defaultMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
     this->l1CachePolicyData.init(productHelper);
-    this->commandContainer.l1CachePolicyData = &this->l1CachePolicyData;
+    this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;
     this->cmdListHeapAddressModel = L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment);
     this->requiredStreamState.initSupport(rootDeviceEnvironment);
     this->finalStreamState.initSupport(rootDeviceEnvironment);
@@ -210,7 +210,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     if (!this->pipelineSelectStateTracking) {
         // allow systolic support set in container when tracking disabled
         // setting systolic support allows dispatching untracked command in legacy mode
-        commandContainer.systolicModeSupport = this->systolicModeSupport;
+        commandContainer.systolicModeSupportRef() = this->systolicModeSupport;
     }
 
     ze_result_t returnType = parseErrorCode(returnValue);
@@ -247,7 +247,7 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeCommandListImmed
     }
 
     if (this->isCopyOnly() && !this->isSyncModeQueue && !this->isTbxMode) {
-        this->commandContainer.currentLinearStreamStartOffset = this->commandContainer.getCommandStream()->getUsed();
+        this->commandContainer.currentLinearStreamStartOffsetRef() = this->commandContainer.getCommandStream()->getUsed();
         this->handlePostSubmissionState();
     } else {
         const auto synchronizationResult = cmdQImmediate->synchronize(std::numeric_limits<uint64_t>::max());

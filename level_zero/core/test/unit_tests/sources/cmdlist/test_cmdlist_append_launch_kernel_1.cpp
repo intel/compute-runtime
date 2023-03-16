@@ -744,7 +744,7 @@ HWTEST_F(CommandListAppendLaunchKernel, givenCommandListWhenResetCalledThenState
     ASSERT_EQ(commandListControl->getPrintfKernelContainer().size(),
               commandList->getPrintfKernelContainer().size());
     ASSERT_EQ(commandListControl->getCmdContainer().getCommandStream()->getUsed(), commandList->getCmdContainer().getCommandStream()->getUsed());
-    ASSERT_EQ(commandListControl->getCmdContainer().slmSize, commandList->getCmdContainer().slmSize);
+    ASSERT_EQ(commandListControl->getCmdContainer().slmSizeRef(), commandList->getCmdContainer().slmSizeRef());
 
     for (uint32_t i = 0; i < NEO::HeapType::NUM_TYPES; i++) {
         auto heapType = static_cast<NEO::HeapType>(i);

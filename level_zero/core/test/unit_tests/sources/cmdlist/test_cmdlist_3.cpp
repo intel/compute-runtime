@@ -289,7 +289,7 @@ HWTEST2_F(CommandListCreate,
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->getCmdContainer();
-    commandContainer.slmSize = 0;
+    commandContainer.slmSizeRef() = 0;
 
     void *srcBuffer = reinterpret_cast<void *>(0x1234);
     void *dstBuffer = reinterpret_cast<void *>(0x2345);
@@ -346,7 +346,7 @@ HWTEST2_F(CommandListCreate,
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->getCmdContainer();
-    commandContainer.slmSize = 0;
+    commandContainer.slmSizeRef() = 0;
 
     void *srcBuffer = nullptr;
     void *dstBuffer = nullptr;
@@ -410,7 +410,7 @@ HWTEST2_F(CommandListCreate,
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->getCmdContainer();
-    commandContainer.slmSize = 0;
+    commandContainer.slmSizeRef() = 0;
 
     void *dstBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -466,7 +466,7 @@ HWTEST2_F(CommandListCreate,
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->getCmdContainer();
-    commandContainer.slmSize = 0;
+    commandContainer.slmSizeRef() = 0;
 
     void *dstBuffer = nullptr;
     ze_device_mem_alloc_desc_t deviceDesc = {};
@@ -523,7 +523,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingHostMemoryWithS
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->getCmdContainer();
-    commandContainer.slmSize = 0;
+    commandContainer.slmSizeRef() = 0;
 
     void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -578,7 +578,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->getCmdContainer();
-    commandContainer.slmSize = 0;
+    commandContainer.slmSizeRef() = 0;
 
     void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};
@@ -637,7 +637,7 @@ HWTEST2_F(CommandListCreate, givenCommandListWhenMemoryFillHavingEventsWithDevic
     ze_result_t result = ZE_RESULT_SUCCESS;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, result));
     auto &commandContainer = commandList->getCmdContainer();
-    commandContainer.slmSize = 0;
+    commandContainer.slmSizeRef() = 0;
 
     void *dstBuffer = nullptr;
     ze_host_mem_alloc_desc_t hostDesc = {};

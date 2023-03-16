@@ -84,14 +84,14 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredThen
         for (const auto &deviceId : pvcXlDeviceIds) {
             hwInfo->platform.usDeviceID = deviceId;
             hwInfo->platform.usRevId = testInput.revId;
-            cmdContainer->systolicModeSupport = productHelper.isSystolicModeConfigurable(*hwInfo);
-            cmdContainer->lastPipelineSelectModeRequired = false;
+            cmdContainer->systolicModeSupportRef() = productHelper.isSystolicModeConfigurable(*hwInfo);
+            cmdContainer->lastPipelineSelectModeRequiredRef() = false;
 
             EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
             dispatchArgs.preemptionMode = NEO::PreemptionMode::Initial;
 
             EncodeDispatchKernel<FamilyType>::encode(*cmdContainer.get(), dispatchArgs, nullptr);
-            EXPECT_EQ(testInput.expectedValue, cmdContainer->lastPipelineSelectModeRequired);
+            EXPECT_EQ(testInput.expectedValue, cmdContainer->lastPipelineSelectModeRequiredRef());
         }
     }
 }
@@ -119,7 +119,7 @@ PVCTEST_F(EncodeKernelPvcTest, givenRevisionBAndAboveWhenSpecialModeRequiredAndA
         for (const auto &deviceId : pvcXlDeviceIds) {
             hwInfo->platform.usDeviceID = deviceId;
             hwInfo->platform.usRevId = testInput.revId;
-            cmdContainer->systolicModeSupport = productHelper.isSystolicModeConfigurable(*hwInfo);
+            cmdContainer->systolicModeSupportRef() = productHelper.isSystolicModeConfigurable(*hwInfo);
             EncodeComputeMode<FamilyType>::adjustPipelineSelect(*cmdContainer.get(), dispatchInterface->kernelDescriptor);
             GenCmdList commands;
             CmdParse<FamilyType>::parseCommandBuffer(commands, ptrOffset(cmdContainer->getCommandStream()->getCpuBase(), 0), cmdContainer->getCommandStream()->getUsed());

@@ -103,7 +103,7 @@ void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container
 
     PipelineSelectArgs pipelineSelectArgs;
     pipelineSelectArgs.systolicPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
-    pipelineSelectArgs.systolicPipelineSelectSupport = container.systolicModeSupport;
+    pipelineSelectArgs.systolicPipelineSelectSupport = container.systolicModeSupportRef();
 
     PreambleHelper<Family>::programPipelineSelect(container.getCommandStream(),
                                                   pipelineSelectArgs,

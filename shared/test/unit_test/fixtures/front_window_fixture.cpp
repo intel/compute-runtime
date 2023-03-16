@@ -40,7 +40,7 @@ void BindlessCommandEncodeStatesFixture::setUp() {
     this->l1CachePolicyData.init(productHelper);
 
     cmdContainer = std::make_unique<CommandContainer>();
-    cmdContainer->l1CachePolicyData = &l1CachePolicyData;
+    cmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
 }
 
 void BindlessCommandEncodeStatesFixture::tearDown() {

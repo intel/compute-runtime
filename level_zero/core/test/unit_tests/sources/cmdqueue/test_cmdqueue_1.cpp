@@ -1157,8 +1157,8 @@ HWTEST2_F(ExecuteCommandListTests, givenExecuteCommandListWhenItReturnsThenConta
     NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
     NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
 
-    commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation1);
-    commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation2);
+    commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation1);
+    commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation2);
 
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
@@ -1215,8 +1215,8 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndScratchW
     NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
     NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
 
-    commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation1);
-    commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation2);
+    commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation1);
+    commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation2);
 
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 
@@ -1241,8 +1241,8 @@ HWTEST2_F(CommandQueueDestroy, givenCommandQueueAndCommandListWithSshAndPrivateS
     NEO::GraphicsAllocation graphicsAllocation1(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
     NEO::GraphicsAllocation graphicsAllocation2(0, NEO::AllocationType::BUFFER, alloc, 0u, 0u, 1u, MemoryPool::System4KBPages, 1u);
 
-    commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation1);
-    commandList->commandContainer.sshAllocations.push_back(&graphicsAllocation2);
+    commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation1);
+    commandList->commandContainer.getSshAllocations().push_back(&graphicsAllocation2);
 
     commandQueue->executeCommandLists(1, &commandListHandle, nullptr, false);
 

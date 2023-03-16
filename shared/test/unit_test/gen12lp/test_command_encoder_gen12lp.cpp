@@ -170,7 +170,7 @@ GEN12LPTEST_F(CommandEncodeStatesTest, givenGen12LpPlatformWhenAdjustPipelineSel
 
     auto &cmdStream = *cmdContainer->getCommandStream();
 
-    cmdContainer->systolicModeSupport = false;
+    cmdContainer->systolicModeSupportRef() = false;
     descriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode = true;
     auto sizeUsed = cmdStream.getUsed();
     void *ptr = ptrOffset(cmdStream.getCpuBase(), (barrierSize + sizeUsed));
@@ -186,7 +186,7 @@ GEN12LPTEST_F(CommandEncodeStatesTest, givenGen12LpPlatformWhenAdjustPipelineSel
     EXPECT_EQ(true, pipelineSelectCmd->getMediaSamplerDopClockGateEnable());
     EXPECT_EQ(false, pipelineSelectCmd->getSpecialModeEnable());
 
-    cmdContainer->systolicModeSupport = true;
+    cmdContainer->systolicModeSupportRef() = true;
     sizeUsed = cmdStream.getUsed();
     ptr = ptrOffset(cmdStream.getCpuBase(), (barrierSize + sizeUsed));
 

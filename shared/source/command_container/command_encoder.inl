@@ -547,7 +547,7 @@ void EncodeSurfaceState<Family>::encodeImplicitScalingParams(const EncodeSurface
 template <typename Family>
 void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &container, IndirectHeap *childDsh, uint32_t &iddOffset) {
 
-    if (container.nextIddInBlock == container.getNumIddPerBlock()) {
+    if (container.nextIddInBlockRef() == container.getNumIddPerBlock()) {
         if (ApiSpecificConfig::getBindlessConfiguration()) {
             container.getDevice()->getBindlessHeapsHelper()->getHeap(BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH)->align(EncodeStates<Family>::alignInterfaceDescriptorData);
             container.setIddBlock(container.getDevice()->getBindlessHeapsHelper()->getSpaceInHeap(sizeof(INTERFACE_DESCRIPTOR_DATA) * container.getNumIddPerBlock(), BindlessHeapsHelper::BindlesHeapType::GLOBAL_DSH));
@@ -563,12 +563,13 @@ void *EncodeDispatchKernel<Family>::getInterfaceDescriptor(CommandContainer &con
             }
             container.setIddBlock(heapPointer);
         }
-        container.nextIddInBlock = 0;
+        container.nextIddInBlockRef() = 0;
     }
 
-    iddOffset = container.nextIddInBlock;
+    iddOffset = container.nextIddInBlockRef();
     auto interfaceDescriptorData = static_cast<INTERFACE_DESCRIPTOR_DATA *>(container.getIddBlock());
-    return &interfaceDescriptorData[container.nextIddInBlock++];
+    container.nextIddInBlockRef()++;
+    return &interfaceDescriptorData[iddOffset];
 }
 
 template <typename Family>

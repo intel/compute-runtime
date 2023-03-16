@@ -179,15 +179,14 @@ class CommandContainer : public NonCopyableOrMovableClass {
         stateBaseAddressTracking = value;
     }
 
-    HeapContainer sshAllocations;
-    uint64_t currentLinearStreamStartOffset = 0u;
-    uint32_t slmSize = std::numeric_limits<uint32_t>::max();
-    uint32_t nextIddInBlock = 0;
-    L1CachePolicy *l1CachePolicyData = nullptr;
-    bool lastPipelineSelectModeRequired = false;
-    bool lastSentUseGlobalAtomics = false;
-    bool systolicModeSupport = false;
-    bool doubleSbaWa = false;
+    bool &systolicModeSupportRef() { return systolicModeSupport; }
+    bool &lastPipelineSelectModeRequiredRef() { return lastPipelineSelectModeRequired; }
+    L1CachePolicy *&l1CachePolicyDataRef() { return l1CachePolicyData; }
+    bool &doubleSbaWaRef() { return doubleSbaWa; }
+    uint32_t &slmSizeRef() { return slmSize; }
+    uint32_t &nextIddInBlockRef() { return nextIddInBlock; }
+    HeapContainer &getSshAllocations() { return sshAllocations; }
+    uint64_t &currentLinearStreamStartOffsetRef() { return currentLinearStreamStartOffset; }
 
   protected:
     size_t getAlignedCmdBufferSize() const;
@@ -202,33 +201,39 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
     std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];
-    HeapReserveData dynamicStateHeapReserveData;
-    HeapReserveData surfaceStateHeapReserveData;
 
     CmdBufferContainer cmdBufferAllocations;
     ResidencyContainer residencyContainer;
     std::vector<GraphicsAllocation *> deallocationContainer;
+    HeapContainer sshAllocations;
+
+    HeapReserveData dynamicStateHeapReserveData;
+    HeapReserveData surfaceStateHeapReserveData;
 
     std::unique_ptr<HeapHelper> heapHelper;
     std::unique_ptr<LinearStream> commandStream;
     std::unique_ptr<LinearStream> secondaryCommandStreamForImmediateCmdList;
+    std::unique_ptr<AllocationsList> immediateReusableAllocationList;
 
     uint64_t instructionHeapBaseAddress = 0u;
     uint64_t indirectObjectHeapBaseAddress = 0u;
+    uint64_t currentLinearStreamStartOffset = 0u;
 
     void *iddBlock = nullptr;
     Device *device = nullptr;
     AllocationsList *reusableAllocationList = nullptr;
-    std::unique_ptr<AllocationsList> immediateReusableAllocationList;
     size_t reservedSshSize = 0;
     CommandStreamReceiver *immediateCmdListCsr = nullptr;
     IndirectHeap *sharedSshCsrHeap = nullptr;
     IndirectHeap *sharedDshCsrHeap = nullptr;
     size_t defaultSshSize = 0;
+    L1CachePolicy *l1CachePolicyData = nullptr;
 
     uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
     uint32_t numIddsPerBlock = 64;
     HeapAddressModel heapAddressModel = HeapAddressModel::PrivateHeaps;
+    uint32_t slmSize = std::numeric_limits<uint32_t>::max();
+    uint32_t nextIddInBlock = 0;
 
     bool isFlushTaskUsedForImmediate = false;
     bool isHandleFenceCompletionRequired = false;
@@ -236,6 +241,10 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool useSecondaryCommandStream = false;
     bool indirectHeapInLocalMemory = false;
     bool stateBaseAddressTracking = false;
+    bool lastPipelineSelectModeRequired = false;
+    bool lastSentUseGlobalAtomics = false;
+    bool systolicModeSupport = false;
+    bool doubleSbaWa = false;
 };
 
 } // namespace NEO

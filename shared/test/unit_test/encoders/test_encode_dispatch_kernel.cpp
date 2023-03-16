@@ -507,7 +507,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDe
         DebugManager.flags.ForceBtpPrefetchMode.set(-1);
         cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-        cmdContainer->l1CachePolicyData = &l1CachePolicyData;
+        cmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
 
         bool requiresUncachedMocs = false;
         EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -540,7 +540,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDe
         DebugManager.flags.ForceBtpPrefetchMode.set(0);
         cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-        cmdContainer->l1CachePolicyData = &l1CachePolicyData;
+        cmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
 
         bool requiresUncachedMocs = false;
         EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -568,7 +568,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDe
         DebugManager.flags.ForceBtpPrefetchMode.set(1);
         cmdContainer.reset(new MyMockCommandContainer());
         cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
-        cmdContainer->l1CachePolicyData = &l1CachePolicyData;
+        cmdContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
 
         bool requiresUncachedMocs = false;
         EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -597,9 +597,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotCha
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    cmdContainer->slmSize = 1;
+    cmdContainer->slmSizeRef() = 1;
     cmdContainer->setDirtyStateForAllHeaps(false);
-    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSize;
+    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSizeRef();
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -616,9 +616,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotCha
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmNotChangedAndUncachedMocsRequestedThenSBAIsProgrammedAndMocsAreSet) {
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    cmdContainer->slmSize = 1;
+    cmdContainer->slmSizeRef() = 1;
     cmdContainer->setDirtyStateForAllHeaps(false);
-    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSize;
+    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSizeRef();
 
     bool requiresUncachedMocs = true;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -643,9 +643,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenDirtyHeapsAndSlmNotCha
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    cmdContainer->slmSize = 1;
+    cmdContainer->slmSizeRef() = 1;
     cmdContainer->setDirtyStateForAllHeaps(true);
-    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSize;
+    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSizeRef();
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -666,9 +666,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenDirtyHeapsWhenDispatch
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    cmdContainer->slmSize = 1;
+    cmdContainer->slmSizeRef() = 1;
     cmdContainer->setDirtyStateForAllHeaps(true);
-    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSize;
+    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSizeRef();
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -707,9 +707,9 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmChange
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
 
     cmdContainer->setDirtyStateForAllHeaps(false);
-    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSize + 1;
+    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSizeRef() + 1;
 
-    auto slmSizeBefore = cmdContainer->slmSize;
+    auto slmSizeBefore = cmdContainer->slmSizeRef();
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -721,7 +721,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenCleanHeapsAndSlmChange
 
     auto itorPC = find<PIPE_CONTROL *>(commands.begin(), commands.end());
     ASSERT_NE(itorPC, commands.end());
-    EXPECT_EQ(slmSizeBefore + 1, cmdContainer->slmSize);
+    EXPECT_EQ(slmSizeBefore + 1, cmdContainer->slmSizeRef());
 }
 
 HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenDispatchKernelThenMediaInterfaceDescriptorEncoded) {
@@ -734,7 +734,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenD
 
     cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE)->align(EncodeStates<FamilyType>::alignInterfaceDescriptorData);
     cmdContainer->setIddBlock(cmdContainer->getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, sizeof(INTERFACE_DESCRIPTOR_DATA) * cmdContainer->getNumIddPerBlock()));
-    cmdContainer->nextIddInBlock = 0;
+    cmdContainer->nextIddInBlockRef() = 0;
 
     bool requiresUncachedMocs = false;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
@@ -760,7 +760,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNextIddInBlockZeroWhenD
 
     cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE)->align(EncodeStates<FamilyType>::alignInterfaceDescriptorData);
     cmdContainer->setIddBlock(cmdContainer->getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, sizeof(INTERFACE_DESCRIPTOR_DATA) * cmdContainer->getNumIddPerBlock()));
-    cmdContainer->nextIddInBlock = cmdContainer->getNumIddPerBlock();
+    cmdContainer->nextIddInBlockRef() = cmdContainer->getNumIddPerBlock();
 
     // ensure heap has no available space left so that it will be reallocated and set to dirty
     auto heap = cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE);
@@ -840,7 +840,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, giveNumSamplersOneAndNextID
 
     cmdContainer->getIndirectHeap(HeapType::DYNAMIC_STATE)->align(EncodeStates<FamilyType>::alignInterfaceDescriptorData);
     cmdContainer->setIddBlock(cmdContainer->getHeapSpaceAllowGrow(HeapType::DYNAMIC_STATE, sizeof(INTERFACE_DESCRIPTOR_DATA) * cmdContainer->getNumIddPerBlock()));
-    cmdContainer->nextIddInBlock = cmdContainer->getNumIddPerBlock();
+    cmdContainer->nextIddInBlockRef() = cmdContainer->getNumIddPerBlock();
 
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
@@ -1275,7 +1275,7 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindles
     auto commandContainer = std::make_unique<CommandContainer>();
     commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     commandContainer->setDirtyStateForAllHeaps(false);
-    commandContainer->l1CachePolicyData = &l1CachePolicyData;
+    commandContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
 
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
@@ -1313,7 +1313,7 @@ HWTEST2_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindle
     auto commandContainer = std::make_unique<CommandContainer>();
     commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     commandContainer->setDirtyStateForAllHeaps(false);
-    commandContainer->l1CachePolicyData = &l1CachePolicyData;
+    commandContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
                                                                                                                          pDevice->getRootDeviceIndex(),
@@ -1353,7 +1353,7 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindfulKernelWhenBindles
     auto commandContainer = std::make_unique<CommandContainer>();
     commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     commandContainer->setDirtyStateForAllHeaps(false);
-    commandContainer->l1CachePolicyData = &l1CachePolicyData;
+    commandContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
                                                                                                                          pDevice->getRootDeviceIndex(),
@@ -1390,7 +1390,7 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessModeEnabledWhenD
     auto commandContainer = std::make_unique<CommandContainer>();
     commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     commandContainer->setDirtyStateForAllHeaps(false);
-    commandContainer->l1CachePolicyData = &l1CachePolicyData;
+    commandContainer->l1CachePolicyDataRef() = &l1CachePolicyData;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
                                                                                                                          pDevice->getNumGenericSubDevices() > 1,
                                                                                                                          pDevice->getRootDeviceIndex(),

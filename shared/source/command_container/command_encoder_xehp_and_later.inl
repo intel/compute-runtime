@@ -66,8 +66,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
     }
 
     bool systolicModeRequired = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
-    if (container.systolicModeSupport && (container.lastPipelineSelectModeRequired != systolicModeRequired)) {
-        container.lastPipelineSelectModeRequired = systolicModeRequired;
+    if (container.systolicModeSupportRef() && (container.lastPipelineSelectModeRequiredRef() != systolicModeRequired)) {
+        container.lastPipelineSelectModeRequiredRef() = systolicModeRequired;
         EncodeComputeMode<Family>::adjustPipelineSelect(container, kernelDescriptor);
     }
 
@@ -230,8 +230,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
         auto gmmHelper = container.getDevice()->getGmmHelper();
         uint32_t statelessMocsIndex =
             args.requiresUncachedMocs ? (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1) : (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
-        auto l1CachePolicy = container.l1CachePolicyData->getL1CacheValue(false);
-        auto l1CachePolicyDebuggerActive = container.l1CachePolicyData->getL1CacheValue(true);
+        auto l1CachePolicy = container.l1CachePolicyDataRef()->getL1CacheValue(false);
+        auto l1CachePolicyDebuggerActive = container.l1CachePolicyDataRef()->getL1CacheValue(true);
 
         EncodeStateBaseAddressArgs<Family> encodeStateBaseAddressArgs = {
             &container,                  // container
@@ -243,7 +243,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             args.useGlobalAtomics,       // useGlobalAtomics
             args.partitionCount > 1,     // multiOsContextCapable
             args.isRcs,                  // isRcs
-            container.doubleSbaWa};      // doubleSbaWa
+            container.doubleSbaWaRef()}; // doubleSbaWa
         EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
         container.setDirtyStateForAllHeaps(false);
     }
@@ -630,7 +630,7 @@ void EncodeComputeMode<Family>::adjustPipelineSelect(CommandContainer &container
 
     PipelineSelectArgs pipelineSelectArgs;
     pipelineSelectArgs.systolicPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
-    pipelineSelectArgs.systolicPipelineSelectSupport = container.systolicModeSupport;
+    pipelineSelectArgs.systolicPipelineSelectSupport = container.systolicModeSupportRef();
 
     PreambleHelper<Family>::programPipelineSelect(container.getCommandStream(),
                                                   pipelineSelectArgs,

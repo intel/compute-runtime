@@ -503,9 +503,9 @@ XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenDefaultSettingForFenceWhenKern
 XE_HPC_CORETEST_F(EncodeKernelXeHpcCoreTest, givenCleanHeapsAndSlmNotChangedAndUncachedMocsRequestedThenSBAIsProgrammedAndMocsAreSet) {
     uint32_t dims[] = {2, 1, 1};
     std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
-    cmdContainer->slmSize = 1;
+    cmdContainer->slmSizeRef() = 1;
     cmdContainer->setDirtyStateForAllHeaps(false);
-    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSize;
+    dispatchInterface->getSlmTotalSizeResult = cmdContainer->slmSizeRef();
 
     bool requiresUncachedMocs = true;
     EncodeDispatchKernelArgs dispatchArgs = createDefaultDispatchKernelArgs(pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);

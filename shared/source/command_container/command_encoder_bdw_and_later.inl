@@ -192,7 +192,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
 
     auto slmSizeNew = args.dispatchInterface->getSlmTotalSize();
     bool dirtyHeaps = container.isAnyHeapDirty();
-    bool flush = container.slmSize != slmSizeNew || dirtyHeaps || args.requiresUncachedMocs;
+    bool flush = container.slmSizeRef() != slmSizeNew || dirtyHeaps || args.requiresUncachedMocs;
 
     if (flush) {
         PipeControlArgs syncArgs;
@@ -207,8 +207,8 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
             auto gmmHelper = container.getDevice()->getGmmHelper();
             uint32_t statelessMocsIndex =
                 args.requiresUncachedMocs ? (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER_CACHELINE_MISALIGNED) >> 1) : (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
-            auto l1CachePolicy = container.l1CachePolicyData->getL1CacheValue(false);
-            auto l1CachePolicyDebuggerActive = container.l1CachePolicyData->getL1CacheValue(true);
+            auto l1CachePolicy = container.l1CachePolicyDataRef()->getL1CacheValue(false);
+            auto l1CachePolicyDebuggerActive = container.l1CachePolicyDataRef()->getL1CacheValue(true);
             EncodeStateBaseAddressArgs<Family> encodeStateBaseAddressArgs = {
                 &container,                  // container
                 sba,                         // sbaCmd
@@ -219,15 +219,15 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 false,                       // useGlobalAtomics
                 false,                       // multiOsContextCapable
                 args.isRcs,                  // isRcs
-                container.doubleSbaWa};      // doubleSbaWa
+                container.doubleSbaWaRef()}; // doubleSbaWa
             EncodeStateBaseAddress<Family>::encode(encodeStateBaseAddressArgs);
             container.setDirtyStateForAllHeaps(false);
             args.requiresUncachedMocs = false;
         }
 
-        if (container.slmSize != slmSizeNew) {
+        if (container.slmSizeRef() != slmSizeNew) {
             EncodeL3State<Family>::encode(container, slmSizeNew != 0u);
-            container.slmSize = slmSizeNew;
+            container.slmSizeRef() = slmSizeNew;
         }
     }
 

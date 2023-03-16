@@ -20,10 +20,10 @@ void CommandEncodeStatesFixture::setUp() {
     cmdContainer->setDirtyStateForAllHeaps(false);
     const auto &hwInfo = pDevice->getHardwareInfo();
     auto &productHelper = pDevice->getProductHelper();
-    cmdContainer->systolicModeSupport = productHelper.isSystolicModeConfigurable(hwInfo);
-    cmdContainer->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
+    cmdContainer->systolicModeSupportRef() = productHelper.isSystolicModeConfigurable(hwInfo);
+    cmdContainer->doubleSbaWaRef() = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
     this->l1CachePolicyData.init(productHelper);
-    cmdContainer->l1CachePolicyData = &this->l1CachePolicyData;
+    cmdContainer->l1CachePolicyDataRef() = &this->l1CachePolicyData;
 }
 
 void CommandEncodeStatesFixture::tearDown() {

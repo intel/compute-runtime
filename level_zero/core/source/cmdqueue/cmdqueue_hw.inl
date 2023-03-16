@@ -550,7 +550,7 @@ void CommandQueueHw<gfxCoreFamily>::setupCmdListsAndContextParams(
                     if (commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE) != nullptr) {
                         heapContainer.push_back(commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation());
                     }
-                    for (auto &element : commandContainer.sshAllocations) {
+                    for (auto &element : commandContainer.getSshAllocations()) {
                         heapContainer.push_back(element);
                     }
                 }
@@ -905,7 +905,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandLis
         auto allocation = cmdBufferAllocations[iter];
         uint64_t startOffset = allocation->getGpuAddress();
         if (isCommandListImmediate && (iter == (cmdBufferCount - 1))) {
-            startOffset = ptrOffset(allocation->getGpuAddress(), commandContainer.currentLinearStreamStartOffset);
+            startOffset = ptrOffset(allocation->getGpuAddress(), commandContainer.currentLinearStreamStartOffsetRef());
         }
         NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(&cmdStream, startOffset, true, false, false);
         if (returnPointsSize > 0) {
