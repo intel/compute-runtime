@@ -5164,6 +5164,39 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocati
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenMultipleHandlesUpdateSubAllocationInformation) {
+    MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
+    AllocationData allocData;
+    allocData.allFlags = 0;
+    allocData.size = 18 * MemoryConstants::pageSize64k;
+    allocData.flags.allocateMemory = true;
+    allocData.type = AllocationType::BUFFER;
+    allocData.storageInfo.memoryBanks = maxNBitValue(MemoryBanks::getBankForLocalMemory(3));
+    allocData.storageInfo.multiStorage = true;
+    allocData.rootDeviceIndex = rootDeviceIndex;
+
+    auto allocation = memoryManager->allocateGraphicsMemoryInDevicePool(allocData, status);
+    ASSERT_NE(nullptr, allocation);
+    EXPECT_EQ(MemoryManager::AllocationStatus::Success, status);
+    EXPECT_EQ(MemoryPool::LocalMemory, allocation->getMemoryPool());
+    EXPECT_NE(0u, allocation->getGpuAddress());
+    EXPECT_EQ(EngineLimits::maxHandleCount, allocation->getNumGmms());
+
+    auto drmAllocation = static_cast<DrmAllocation *>(allocation);
+    auto &bos = drmAllocation->getBOs();
+    EXPECT_TRUE(allocation->isSubAllocSet);
+    auto boAddress = drmAllocation->getGpuAddress();
+    for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
+        auto bo = bos[handleId];
+        ASSERT_NE(nullptr, bo);
+        auto boSize = allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation();
+        EXPECT_EQ(boAddress, allocation->subAllocBase[handleId]);
+        EXPECT_EQ(boSize, allocation->subAllocSize[handleId]);
+        boAddress += boSize;
+    }
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenAllocationWithKernelIsaWhenAllocationInDevicePoolAndDeviceBitfieldWithHolesThenCorrectAllocationCreated) {
     MemoryManager::AllocationStatus status = MemoryManager::AllocationStatus::Success;
     AllocationData allocData;

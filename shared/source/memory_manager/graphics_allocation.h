@@ -280,6 +280,9 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     constexpr static TaskCountType objectAlwaysResident = std::numeric_limits<TaskCountType>::max() - 1;
     std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
     bool isShareableHostMemory = false;
+    bool isSubAllocSet = false;
+    StackVec<size_t, EngineLimits::maxHandleCount> subAllocSize;
+    StackVec<uint64_t, EngineLimits::maxHandleCount> subAllocBase;
 
   protected:
     struct UsageInfo {

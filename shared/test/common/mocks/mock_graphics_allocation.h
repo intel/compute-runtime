@@ -23,11 +23,14 @@ class MockGraphicsAllocation : public MemoryAllocation {
     using MemoryAllocation::aubInfo;
     using MemoryAllocation::cpuPtr;
     using MemoryAllocation::gpuAddress;
+    using MemoryAllocation::isSubAllocSet;
     using MemoryAllocation::MemoryAllocation;
     using MemoryAllocation::memoryPool;
     using MemoryAllocation::objectNotResident;
     using MemoryAllocation::objectNotUsed;
     using MemoryAllocation::size;
+    using MemoryAllocation::subAllocBase;
+    using MemoryAllocation::subAllocSize;
     using MemoryAllocation::usageInfos;
 
     MockGraphicsAllocation()

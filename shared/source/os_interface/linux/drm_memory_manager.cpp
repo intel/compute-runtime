@@ -1845,6 +1845,9 @@ bool DrmMemoryManager::createDrmAllocation(Drm *drm, DrmAllocation *allocation, 
             return false;
         }
         allocation->getBufferObjectToModify(currentBank + iterationOffset) = bos[handleId];
+        allocation->isSubAllocSet = true;
+        allocation->subAllocSize[handleId] = static_cast<size_t>(boSize);
+        allocation->subAllocBase[handleId] = static_cast<uint64_t>(boAddress);
         if (storageInfo.multiStorage) {
             boAddress += boSize;
         }

@@ -2558,6 +2558,147 @@ TEST_F(MemoryExportImportTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+struct SingleSubAllocMockGraphicsAllocation : public NEO::MockGraphicsAllocation {
+    using NEO::MockGraphicsAllocation::MockGraphicsAllocation;
+
+    uint32_t getNumHandles() override {
+        return 1;
+    }
+};
+TEST_F(MemoryExportImportTest,
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndGetSingleSubAllocation) {
+
+    char buffer[256];
+    auto alloc = new SingleSubAllocMockGraphicsAllocation(&buffer, sizeof(buffer));
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_memory_sub_allocations_exp_properties_t subAllocationDesc{};
+    uint32_t numberOfSubAllocations = 0;
+    subAllocationDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES;
+    subAllocationDesc.pCount = &numberOfSubAllocations;
+    memoryProperties.pNext = &subAllocationDesc;
+
+    alloc->subAllocSize[0] = MemoryConstants::pageSize64k;
+    alloc->subAllocBase[0] = 0;
+    alloc->isSubAllocSet = true;
+    ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
+
+    ze_result_t result = context->handleAllocationExtensions(alloc, type, &subAllocationDesc, driverHandle.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, numberOfSubAllocations);
+    std::vector<ze_sub_allocation_t> subAllocationMemAllocProperties(1);
+    subAllocationDesc.pSubAllocations = subAllocationMemAllocProperties.data();
+    result = context->handleAllocationExtensions(alloc, type, &subAllocationDesc, driverHandle.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, numberOfSubAllocations);
+    EXPECT_EQ(alloc->subAllocSize[0], subAllocationMemAllocProperties[0].size);
+    EXPECT_EQ(alloc->subAllocBase[0], reinterpret_cast<uint64_t>(subAllocationMemAllocProperties[0].base));
+    delete alloc;
+}
+
+struct SubAllocMockGraphicsAllocation : public NEO::MockGraphicsAllocation {
+    using NEO::MockGraphicsAllocation::MockGraphicsAllocation;
+
+    uint32_t getNumHandles() override {
+        return 4;
+    }
+};
+TEST_F(MemoryExportImportTest,
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndGetSubAllocations) {
+
+    char buffer[256];
+    auto alloc = new SubAllocMockGraphicsAllocation(&buffer, sizeof(buffer));
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_memory_sub_allocations_exp_properties_t subAllocationDesc{};
+    uint32_t numberOfSubAllocations = 0;
+    subAllocationDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES;
+    subAllocationDesc.pCount = &numberOfSubAllocations;
+    memoryProperties.pNext = &subAllocationDesc;
+
+    uint64_t baseAddress = 0;
+    size_t size = MemoryConstants::pageSize64k;
+
+    for (uint32_t i = 0; i < alloc->getNumHandles(); i++) {
+        alloc->subAllocSize[i] = size;
+        alloc->subAllocBase[i] = baseAddress;
+        baseAddress += size;
+    }
+    alloc->isSubAllocSet = true;
+    ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
+
+    ze_result_t result = context->handleAllocationExtensions(alloc, type, &subAllocationDesc, driverHandle.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(4u, numberOfSubAllocations);
+    std::vector<ze_sub_allocation_t> subAllocationMemAllocProperties(4);
+    subAllocationDesc.pSubAllocations = subAllocationMemAllocProperties.data();
+    result = context->handleAllocationExtensions(alloc, type, &subAllocationDesc, driverHandle.get());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(4u, numberOfSubAllocations);
+
+    for (uint32_t i = 0; i < numberOfSubAllocations; i++) {
+        EXPECT_EQ(alloc->subAllocSize[i], subAllocationMemAllocProperties[i].size);
+        EXPECT_EQ(alloc->subAllocBase[i], reinterpret_cast<uint64_t>(subAllocationMemAllocProperties[i].base));
+    }
+    delete alloc;
+}
+
+TEST_F(MemoryExportImportTest,
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndUnsetFlagAndGetReturnError) {
+
+    char buffer[256];
+    auto alloc = new SubAllocMockGraphicsAllocation(&buffer, sizeof(buffer));
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_memory_sub_allocations_exp_properties_t subAllocationDesc{};
+    uint32_t numberOfSubAllocations = 0;
+    subAllocationDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES;
+    subAllocationDesc.pCount = &numberOfSubAllocations;
+    memoryProperties.pNext = &subAllocationDesc;
+
+    uint64_t baseAddress = 0;
+    size_t size = MemoryConstants::pageSize64k;
+
+    for (uint32_t i = 0; i < alloc->getNumHandles(); i++) {
+        alloc->subAllocSize[i] = size;
+        alloc->subAllocBase[i] = baseAddress;
+        baseAddress += size;
+    }
+    alloc->isSubAllocSet = false;
+    ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
+
+    ze_result_t result = context->handleAllocationExtensions(alloc, type, &subAllocationDesc, driverHandle.get());
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION, result);
+    delete alloc;
+}
+
+TEST_F(MemoryExportImportTest,
+       givenCallToMemAllocPropertiesWithExtendedExportPropertiesAndNullPCountAndGetReturnError) {
+
+    char buffer[256];
+    auto alloc = new SubAllocMockGraphicsAllocation(&buffer, sizeof(buffer));
+
+    ze_memory_allocation_properties_t memoryProperties = {};
+    ze_memory_sub_allocations_exp_properties_t subAllocationDesc{};
+    subAllocationDesc.stype = ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES;
+    memoryProperties.pNext = &subAllocationDesc;
+
+    uint64_t baseAddress = 0;
+    size_t size = MemoryConstants::pageSize64k;
+
+    for (uint32_t i = 0; i < alloc->getNumHandles(); i++) {
+        alloc->subAllocSize[i] = size;
+        alloc->subAllocBase[i] = baseAddress;
+        baseAddress += size;
+    }
+    alloc->isSubAllocSet = true;
+    ze_memory_type_t type = ZE_MEMORY_TYPE_DEVICE;
+
+    ze_result_t result = context->handleAllocationExtensions(alloc, type, &subAllocationDesc, driverHandle.get());
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_NULL_POINTER, result);
+    delete alloc;
+}
+
 TEST_F(MemoryExportImportTest,
        givenCallToDeviceAllocWithExtendedImportDescriptorAndNonSupportedFlagThenUnsupportedEnumerationIsReturned) {
     size_t size = 10;

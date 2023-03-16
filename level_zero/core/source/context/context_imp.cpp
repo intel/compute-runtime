@@ -678,6 +678,26 @@ ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *allo
                 return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
             }
             exportStructure->handle = reinterpret_cast<void *>(handle);
+        } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES) {
+            if (alloc->isSubAllocSet) {
+                ze_memory_sub_allocations_exp_properties_t *extendedSubAllocProperties =
+                    reinterpret_cast<ze_memory_sub_allocations_exp_properties_t *>(extendedProperties);
+                if (extendedSubAllocProperties->pCount) {
+                    *extendedSubAllocProperties->pCount = alloc->getNumHandles();
+                } else {
+                    // pCount cannot be nullptr
+                    return ZE_RESULT_ERROR_INVALID_NULL_POINTER;
+                }
+                if (extendedSubAllocProperties->pSubAllocations) {
+                    for (uint32_t i = 0; i < *extendedSubAllocProperties->pCount; i++) {
+                        extendedSubAllocProperties->pSubAllocations[i].base = reinterpret_cast<void *>(alloc->subAllocBase[i]);
+                        extendedSubAllocProperties->pSubAllocations[i].size = alloc->subAllocSize[i];
+                    }
+                    // If pSubAllocations nullptr, then user getting Count first and calling second time
+                }
+                return ZE_RESULT_SUCCESS;
+            }
+            return ZE_RESULT_ERROR_UNSUPPORTED_ENUMERATION;
         } else {
             return ZE_RESULT_ERROR_INVALID_ENUMERATION;
         }
