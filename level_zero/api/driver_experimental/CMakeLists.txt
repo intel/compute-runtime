@@ -1,10 +1,7 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
 
-set(L0_EXTENDED_DRIVER_EXPERIMENTAL_EXTENSIONS_API
-)
-
-set_property(GLOBAL PROPERTY L0_EXTENDED_DRIVER_EXPERIMENTAL_EXTENSIONS_API ${L0_EXTENDED_DRIVER_EXPERIMENTAL_EXTENSIONS_API})
+add_subdirectories()

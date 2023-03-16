@@ -346,7 +346,7 @@ if(BUILD_WITH_L0)
                              ${COMPUTE_RUNTIME_DEFINITIONS}
   )
 
-  add_subdirectory_unique(api)
+  hide_subdir(api)
   add_subdirectory_unique(source)
 
   set(L0_RELEASE_LIB_NAME "${TARGET_NAME_L0}_lib")
@@ -363,16 +363,12 @@ if(BUILD_WITH_L0)
     add_library(${LIB_NAME} OBJECT
                 ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     )
-
+    add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/api "${NEO_BUILD_DIR}/${LIB_NAME}/api")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/core/source "${NEO_BUILD_DIR}/${LIB_NAME}/core/source")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/experimental${BRANCH_DIR_SUFFIX}source "${NEO_BUILD_DIR}/${LIB_NAME}/experimental${BRANCH_DIR_SUFFIX}source")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/experimental/source/tracing "${NEO_BUILD_DIR}/${LIB_NAME}/experimental/tracing")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/source "${NEO_BUILD_DIR}/${LIB_NAME}tools/source")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/sysman/source "${NEO_BUILD_DIR}/${LIB_NAME}sysman/source")
-
-    append_sources_from_properties(L0_API_SOURCES L0_API)
-
-    target_sources(${LIB_NAME} PRIVATE ${L0_API_SOURCES})
 
     if(${MOCKABLE})
       get_property(COMPUTE_RUNTIME_DEFINITIONS
