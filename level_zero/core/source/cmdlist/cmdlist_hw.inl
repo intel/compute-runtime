@@ -172,7 +172,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->cmdListHeapAddressModel = L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment);
     this->requiredStreamState.initSupport(rootDeviceEnvironment);
     this->finalStreamState.initSupport(rootDeviceEnvironment);
-    this->commandContainer.setKeepCurrentStateHeap(this->stateBaseAddressTracking);
+    this->commandContainer.setStateBaseAddressTracking(this->stateBaseAddressTracking);
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
@@ -202,7 +202,11 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
         createSecondaryCmdBufferInHostMem &= !!NEO::DebugManager.flags.DirectSubmissionFlatRingBuffer.get();
     }
 
-    auto returnValue = commandContainer.initialize(deviceImp->getActiveDevice(), deviceImp->allocationsForReuse.get(), !isCopyOnly(), createSecondaryCmdBufferInHostMem);
+    auto returnValue = commandContainer.initialize(deviceImp->getActiveDevice(),
+                                                   deviceImp->allocationsForReuse.get(),
+                                                   NEO::EncodeStates<GfxFamily>::getSshHeapSize(),
+                                                   !isCopyOnly(),
+                                                   createSecondaryCmdBufferInHostMem);
     if (!this->pipelineSelectStateTracking) {
         // allow systolic support set in container when tracking disabled
         // setting systolic support allows dispatching untracked command in legacy mode

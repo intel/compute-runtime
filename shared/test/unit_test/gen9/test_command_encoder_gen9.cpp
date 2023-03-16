@@ -9,6 +9,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/helpers/blit_commands_helper.h"
+#include "shared/source/indirect_heap/heap_size.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -23,7 +24,7 @@ using CommandEncoderTest = Test<DeviceFixture>;
 
 GEN9TEST_F(CommandEncoderTest, WhenProgrammingThenLoadRegisterImmIsUsed) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     EncodeL3State<FamilyType>::encode(cmdContainer, false);
 
     GenCmdList commands;
@@ -36,7 +37,7 @@ GEN9TEST_F(CommandEncoderTest, WhenProgrammingThenLoadRegisterImmIsUsed) {
 
 GEN9TEST_F(CommandEncoderTest, givenNoSlmThenCorrectMmioIsSet) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     EncodeL3State<FamilyType>::encode(cmdContainer, false);
 
     GenCmdList commands;
@@ -54,7 +55,7 @@ GEN9TEST_F(CommandEncoderTest, givenNoSlmThenCorrectMmioIsSet) {
 
 GEN9TEST_F(CommandEncoderTest, givenSlmThenCorrectMmioIsSet) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     EncodeL3State<FamilyType>::encode(cmdContainer, true);
 
     GenCmdList commands;

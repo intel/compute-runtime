@@ -579,4 +579,10 @@ template <typename Family>
 size_t EncodeDispatchKernel<Family>::additionalSizeRequiredDsh(uint32_t iddCount) {
     return iddCount * sizeof(typename Family::INTERFACE_DESCRIPTOR_DATA);
 }
+
+template <typename Family>
+size_t EncodeStates<Family>::getSshHeapSize() {
+    return 64 * KB;
+}
+
 } // namespace NEO

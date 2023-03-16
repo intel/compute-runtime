@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/gen9/hw_cmds.h"
 #include "shared/source/helpers/register_offsets.h"
+#include "shared/source/indirect_heap/heap_size.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -26,7 +27,7 @@ GEN9TEST_F(CommandEncoderMathTestGen9, WhenAppendsAGreaterThanThenPredicateCorre
     using MI_MATH_ALU_INST_INLINE = typename FamilyType::MI_MATH_ALU_INST_INLINE;
 
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
     EncodeMathMMIO<FamilyType>::encodeGreaterThanPredicate(cmdContainer, 0xDEADBEEFCAF0u, 17u);
 

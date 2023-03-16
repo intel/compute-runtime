@@ -8,6 +8,7 @@
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/device/device.h"
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/source_level_debugger/source_level_debugger.h"
@@ -704,7 +705,7 @@ TEST(SourceLevelDebugger, whenCaptureSBACalledThenNoCommandsAreAddedToStream) {
     MockSourceLevelDebugger debugger;
 
     CommandContainer container;
-    container.initialize(device.get(), nullptr, true, false);
+    container.initialize(device.get(), nullptr, HeapSize::defaultHeapSize, true, false);
 
     NEO::Debugger::SbaAddresses sbaAddresses = {};
     debugger.captureStateBaseAddress(*container.getCommandStream(), sbaAddresses, false);

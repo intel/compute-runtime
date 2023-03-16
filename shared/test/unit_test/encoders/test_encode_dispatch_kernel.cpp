@@ -506,7 +506,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDe
     {
         DebugManager.flags.ForceBtpPrefetchMode.set(-1);
         cmdContainer.reset(new MyMockCommandContainer());
-        cmdContainer->initialize(pDevice, nullptr, true, false);
+        cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
         cmdContainer->l1CachePolicyData = &l1CachePolicyData;
 
         bool requiresUncachedMocs = false;
@@ -539,7 +539,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDe
     {
         DebugManager.flags.ForceBtpPrefetchMode.set(0);
         cmdContainer.reset(new MyMockCommandContainer());
-        cmdContainer->initialize(pDevice, nullptr, true, false);
+        cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
         cmdContainer->l1CachePolicyData = &l1CachePolicyData;
 
         bool requiresUncachedMocs = false;
@@ -567,7 +567,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeDe
     {
         DebugManager.flags.ForceBtpPrefetchMode.set(1);
         cmdContainer.reset(new MyMockCommandContainer());
-        cmdContainer->initialize(pDevice, nullptr, true, false);
+        cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
         cmdContainer->l1CachePolicyData = &l1CachePolicyData;
 
         bool requiresUncachedMocs = false;
@@ -1273,7 +1273,7 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindles
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
     auto commandContainer = std::make_unique<CommandContainer>();
-    commandContainer->initialize(pDevice, nullptr, true, false);
+    commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     commandContainer->setDirtyStateForAllHeaps(false);
     commandContainer->l1CachePolicyData = &l1CachePolicyData;
 
@@ -1311,7 +1311,7 @@ HWTEST2_F(BindlessCommandEncodeStatesContainerTest, givenBindlessKernelAndBindle
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
     auto commandContainer = std::make_unique<CommandContainer>();
-    commandContainer->initialize(pDevice, nullptr, true, false);
+    commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     commandContainer->setDirtyStateForAllHeaps(false);
     commandContainer->l1CachePolicyData = &l1CachePolicyData;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
@@ -1351,7 +1351,7 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindfulKernelWhenBindles
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
     auto commandContainer = std::make_unique<CommandContainer>();
-    commandContainer->initialize(pDevice, nullptr, true, false);
+    commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     commandContainer->setDirtyStateForAllHeaps(false);
     commandContainer->l1CachePolicyData = &l1CachePolicyData;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
@@ -1388,7 +1388,7 @@ HWTEST_F(BindlessCommandEncodeStatesContainerTest, givenBindlessModeEnabledWhenD
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.UseBindlessMode.set(1);
     auto commandContainer = std::make_unique<CommandContainer>();
-    commandContainer->initialize(pDevice, nullptr, true, false);
+    commandContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     commandContainer->setDirtyStateForAllHeaps(false);
     commandContainer->l1CachePolicyData = &l1CachePolicyData;
     pDevice->getExecutionEnvironment()->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->createBindlessHeapsHelper(pDevice->getMemoryManager(),
@@ -1430,7 +1430,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, givenGlobalBindlessHeapsWhenDispatchin
     }
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(1);
-    cmdContainer->initialize(pDevice, nullptr, true, false);
+    cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     cmdContainer->setDirtyStateForAllHeaps(false);
     using SAMPLER_BORDER_COLOR_STATE = typename FamilyType::SAMPLER_BORDER_COLOR_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
@@ -1481,7 +1481,7 @@ HWTEST_F(BindlessCommandEncodeStatesTest, givenGlobalBindlessHeapsWhenDispatchin
 HWTEST_F(BindlessCommandEncodeStatesTest, givenBindlessModeDisabledelWithSamplerThenGlobalDshIsNotResidnecyContainer) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseBindlessMode.set(0);
-    cmdContainer->initialize(pDevice, nullptr, true, false);
+    cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     using SAMPLER_STATE = typename FamilyType::SAMPLER_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename FamilyType::INTERFACE_DESCRIPTOR_DATA;
     uint32_t numSamplers = 1;

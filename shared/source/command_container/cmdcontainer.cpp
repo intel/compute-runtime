@@ -65,11 +65,14 @@ CommandContainer::CommandContainer(uint32_t maxNumAggregatedIdds) : CommandConta
     numIddsPerBlock = maxNumAggregatedIdds;
 }
 
-CommandContainer::ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusableAllocationList, bool requireHeaps, bool createSecondaryCmdBufferInHostMem) {
+CommandContainer::ErrorCode CommandContainer::initialize(Device *device, AllocationsList *reusableAllocationList, size_t defaultSshSize, bool requireHeaps, bool createSecondaryCmdBufferInHostMem) {
     this->device = device;
     this->reusableAllocationList = reusableAllocationList;
-    size_t alignedSize = getAlignedCmdBufferSize();
     size_t usableSize = getMaxUsableSpace();
+    this->defaultSshSize = HeapSize::defaultHeapSize;
+    if (this->stateBaseAddressTracking) {
+        this->defaultSshSize = defaultSshSize;
+    }
 
     auto cmdBufferAllocation = this->obtainNextCommandBufferAllocation();
 
@@ -101,10 +104,6 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
 
     addToResidencyContainer(cmdBufferAllocation);
     if (requireHeaps) {
-        size_t heapSize = 65536u;
-        if (DebugManager.flags.ForceDefaultHeapSize.get() != -1) {
-            heapSize = DebugManager.flags.ForceDefaultHeapSize.get() * MemoryConstants::kiloByte;
-        }
         heapHelper = std::unique_ptr<HeapHelper>(new HeapHelper(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u));
 
         for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
@@ -112,9 +111,10 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
                 continue;
             }
 
+            size_t heapSize = getHeapSize(static_cast<HeapType>(i));
             allocationIndirectHeaps[i] = heapHelper->getHeapAllocation(i,
                                                                        heapSize,
-                                                                       alignedSize,
+                                                                       defaultHeapAllocationAlignment,
                                                                        device->getRootDeviceIndex());
             if (!allocationIndirectHeaps[i]) {
                 return ErrorCode::OUT_OF_DEVICE_MEMORY;
@@ -177,7 +177,7 @@ void CommandContainer::reset() {
 
     for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
         if (indirectHeaps[i] != nullptr) {
-            if (i == IndirectHeap::Type::INDIRECT_OBJECT || !this->keepCurrentStateHeap) {
+            if (i == IndirectHeap::Type::INDIRECT_OBJECT || !this->stateBaseAddressTracking) {
                 indirectHeaps[i]->replaceBuffer(indirectHeaps[i]->getCpuBase(),
                                                 indirectHeaps[i]->getMaxAvailableSpace());
                 if (i == IndirectHeap::Type::SURFACE_STATE) {
@@ -200,7 +200,7 @@ size_t CommandContainer::getAlignedCmdBufferSize() const {
         totalCommandBufferSize = static_cast<size_t>(DebugManager.flags.OverrideCmdListCmdBufferSizeInKb.get()) * MemoryConstants::kiloByte;
         totalCommandBufferSize += cmdBufferReservedSize;
     }
-    return alignUp<size_t>(totalCommandBufferSize, MemoryConstants::pageSize64k);
+    return alignUp<size_t>(totalCommandBufferSize, defaultCmdBufferAllocationAlignment);
 }
 
 void *CommandContainer::getHeapSpaceAllowGrow(HeapType heapType,
@@ -226,7 +226,7 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSize(HeapType heapType, size_
         UNRECOVERABLE_IF(indirectHeap->getAvailableSpace() < sizeRequested);
     } else {
         if (indirectHeap->getAvailableSpace() < sizeRequested) {
-            size_t newSize = indirectHeap->getUsed() + indirectHeap->getAvailableSpace();
+            size_t newSize = indirectHeap->getMaxAvailableSpace();
             if (allowGrow) {
                 newSize = std::max(newSize, indirectHeap->getAvailableSpace() + sizeRequested);
             }
@@ -250,7 +250,7 @@ IndirectHeap *CommandContainer::getHeapWithRequiredSize(HeapType heapType, size_
 void CommandContainer::createAndAssignNewHeap(HeapType heapType, size_t size) {
     auto indirectHeap = getIndirectHeap(heapType);
     auto oldAlloc = getIndirectHeapAllocation(heapType);
-    auto newAlloc = getHeapHelper()->getHeapAllocation(heapType, size, MemoryConstants::pageSize, device->getRootDeviceIndex());
+    auto newAlloc = getHeapHelper()->getHeapAllocation(heapType, size, defaultHeapAllocationAlignment, device->getRootDeviceIndex());
     UNRECOVERABLE_IF(!oldAlloc);
     UNRECOVERABLE_IF(!newAlloc);
     auto oldBase = indirectHeap->getHeapGpuBase();
@@ -330,7 +330,7 @@ void CommandContainer::prepareBindfulSsh() {
             constexpr size_t heapSize = MemoryConstants::pageSize64k;
             allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE] = heapHelper->getHeapAllocation(IndirectHeap::Type::SURFACE_STATE,
                                                                                                        heapSize,
-                                                                                                       MemoryConstants::pageSize64k,
+                                                                                                       defaultHeapAllocationAlignment,
                                                                                                        device->getRootDeviceIndex());
             UNRECOVERABLE_IF(!allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE]);
             residencyContainer.push_back(allocationIndirectHeaps[IndirectHeap::Type::SURFACE_STATE]);
@@ -477,17 +477,15 @@ void CommandContainer::fillReusableAllocationLists() {
         return;
     }
 
-    constexpr size_t heapSize = 65536u;
-    size_t alignedSize = getAlignedCmdBufferSize();
     for (auto i = 0u; i < amountToFill; i++) {
         for (auto heapType = 0u; heapType < IndirectHeap::Type::NUM_TYPES; heapType++) {
             if (skipHeapAllocationCreation(static_cast<HeapType>(heapType))) {
                 continue;
             }
-
+            size_t heapSize = getHeapSize(static_cast<HeapType>(heapType));
             auto heapToReuse = heapHelper->getHeapAllocation(heapType,
                                                              heapSize,
-                                                             alignedSize,
+                                                             defaultHeapAllocationAlignment,
                                                              device->getRootDeviceIndex());
             if (heapToReuse != nullptr) {
                 this->immediateCmdListCsr->makeResident(*heapToReuse);
@@ -530,6 +528,14 @@ bool CommandContainer::skipHeapAllocationCreation(HeapType heapType) {
                         (!hardwareInfo.capabilityTable.supportsImages && IndirectHeap::Type::DYNAMIC_STATE == heapType) ||
                         (this->heapAddressModel != HeapAddressModel::PrivateHeaps);
     return skipCreation;
+}
+
+size_t CommandContainer::getHeapSize(HeapType heapType) {
+    size_t defaultHeapSize = HeapSize::defaultHeapSize;
+    if (HeapType::SURFACE_STATE == heapType) {
+        defaultHeapSize = this->defaultSshSize;
+    }
+    return HeapSize::getDefaultHeapSize(defaultHeapSize);
 }
 
 } // namespace NEO

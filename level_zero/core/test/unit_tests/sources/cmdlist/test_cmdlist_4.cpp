@@ -6,9 +6,12 @@
  */
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/command_container/cmdcontainer.h"
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/helpers/definitions/command_encoder_args.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_command_encoder.h"
@@ -1272,6 +1275,32 @@ HWTEST2_F(HostPointerManagerCommandListTest, givenDebugModeToRegisterAllHostPoin
 
     auto result = hostDriverHandle->releaseImportedPointer(testPtr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+}
+
+HWTEST2_F(CommandListCreate, givenStateBaseAddressTrackingStateWhenCommandListCreatedThenPlatformSurfaceHeapSizeUsed, IsAtLeastSkl) {
+    DebugManagerStateRestore restorer;
+
+    ze_result_t returnValue;
+    {
+        DebugManager.flags.EnableStateBaseAddressTracking.set(0);
+
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+        auto &commandContainer = commandList->getCmdContainer();
+        auto sshSize = commandContainer.getIndirectHeap(NEO::IndirectHeapType::SURFACE_STATE)->getMaxAvailableSpace();
+        EXPECT_EQ(NEO::HeapSize::defaultHeapSize, sshSize);
+    }
+    {
+        DebugManager.flags.EnableStateBaseAddressTracking.set(1);
+
+        std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+        ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+        auto &commandContainer = commandList->getCmdContainer();
+        auto sshSize = commandContainer.getIndirectHeap(NEO::IndirectHeapType::SURFACE_STATE)->getMaxAvailableSpace();
+        EXPECT_EQ(NEO::EncodeStates<FamilyType>::getSshHeapSize(), sshSize);
+    }
 }
 
 } // namespace ult

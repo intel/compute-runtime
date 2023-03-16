@@ -70,6 +70,8 @@ class CommandContainer : public NonCopyableOrMovableClass {
                                                     CSRequirements::csOverfetchSize;
     static constexpr size_t totalCmdBufferSize = defaultListCmdBufferSize + cmdBufferReservedSize;
     static constexpr size_t startingResidencyContainerSize = 128;
+    static constexpr size_t defaultCmdBufferAllocationAlignment = MemoryConstants::pageSize64k;
+    static constexpr size_t defaultHeapAllocationAlignment = MemoryConstants::pageSize64k;
 
     CommandContainer();
 
@@ -100,7 +102,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
 
     void *getHeapSpaceAllowGrow(HeapType heapType, size_t size);
 
-    ErrorCode initialize(Device *device, AllocationsList *reusableAllocationList, bool requireHeaps, bool createSecondaryCmdBufferInHostMem);
+    ErrorCode initialize(Device *device, AllocationsList *reusableAllocationList, size_t defaultSshSize, bool requireHeaps, bool createSecondaryCmdBufferInHostMem);
 
     void prepareBindfulSsh();
 
@@ -173,8 +175,8 @@ class CommandContainer : public NonCopyableOrMovableClass {
         return indirectHeapInLocalMemory;
     }
 
-    void setKeepCurrentStateHeap(bool value) {
-        keepCurrentStateHeap = value;
+    void setStateBaseAddressTracking(bool value) {
+        stateBaseAddressTracking = value;
     }
 
     HeapContainer sshAllocations;
@@ -196,6 +198,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     void createAndAssignNewHeap(HeapType heapType, size_t size);
     IndirectHeap *initIndirectHeapReservation(ReservedIndirectHeap *indirectHeapReservation, size_t size, size_t alignment, HeapType heapType);
     inline bool skipHeapAllocationCreation(HeapType heapType);
+    size_t getHeapSize(HeapType heapType);
 
     GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
     std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];
@@ -221,6 +224,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     CommandStreamReceiver *immediateCmdListCsr = nullptr;
     IndirectHeap *sharedSshCsrHeap = nullptr;
     IndirectHeap *sharedDshCsrHeap = nullptr;
+    size_t defaultSshSize = 0;
 
     uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
     uint32_t numIddsPerBlock = 64;
@@ -231,7 +235,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool heapSharingEnabled = false;
     bool useSecondaryCommandStream = false;
     bool indirectHeapInLocalMemory = false;
-    bool keepCurrentStateHeap = false;
+    bool stateBaseAddressTracking = false;
 };
 
 } // namespace NEO

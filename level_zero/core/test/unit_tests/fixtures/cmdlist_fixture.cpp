@@ -148,6 +148,7 @@ void CmdListStateComputeModeStateFixture::setUp() {
 void CommandListStateBaseAddressFixture::setUp() {
     DebugManager.flags.EnableStateBaseAddressTracking.set(1);
     DebugManager.flags.ForceL1Caching.set(0);
+    DebugManager.flags.ForceDefaultHeapSize.set(64);
 
     ModuleMutableCommandListFixture::setUp();
 

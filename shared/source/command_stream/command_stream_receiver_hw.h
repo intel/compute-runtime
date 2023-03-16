@@ -177,7 +177,6 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     void setClearSlmWorkAroundParameter(PipeControlArgs &args);
     void addPipeControlBeforeStateSip(LinearStream &commandStream, Device &device);
     void addPipeControlBefore3dState(LinearStream &commandStream, DispatchFlags &dispatchFlags);
-    size_t getSshHeapSize();
     bool are4GbHeapsAvailable() const;
 
     uint64_t getScratchPatchAddress();

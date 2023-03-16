@@ -622,7 +622,7 @@ IndirectHeap &CommandStreamReceiver::getIndirectHeap(IndirectHeap::Type heapType
 void CommandStreamReceiver::allocateHeapMemory(IndirectHeap::Type heapType,
                                                size_t minRequiredSize, IndirectHeap *&indirectHeap) {
     size_t reservedSize = 0;
-    auto finalHeapSize = getDefaultHeapSize();
+    auto finalHeapSize = HeapSize::getDefaultHeapSize(HeapSize::defaultHeapSize);
     if (IndirectHeap::Type::SURFACE_STATE == heapType) {
         finalHeapSize = defaultSshSize;
     }

@@ -7,6 +7,7 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/indirect_heap/heap_size.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -18,7 +19,7 @@ using EncodeBatchBufferStartOrEndTest = Test<DeviceFixture>;
 
 HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBEndThenCommandIsAdded) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferEnd(cmdContainer);
 
     GenCmdList commands;
@@ -31,7 +32,7 @@ HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBEndTh
 
 HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBStartThenCommandIsAdded) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferStart(cmdContainer.getCommandStream(), 0, true, false, false);
 
     GenCmdList commands;
@@ -44,7 +45,7 @@ HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBStart
 
 HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBStartWithSecondLevelParameterThenCommandIsProgrammedCorrectly) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferStart(cmdContainer.getCommandStream(), 0, true, false, false);
 
     GenCmdList commands;
@@ -61,7 +62,7 @@ HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBStart
 
 HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBStartWithFirstLevelParameterThenCommandIsProgrammedCorrectly) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferStart(cmdContainer.getCommandStream(), 0, false, false, false);
 
     GenCmdList commands;
@@ -78,7 +79,7 @@ HWTEST_F(EncodeBatchBufferStartOrEndTest, givenCommandContainerWhenEncodeBBStart
 
 HWTEST_F(EncodeBatchBufferStartOrEndTest, givenGpuAddressWhenEncodeBBStartThenAddressIsProgrammedCorrectly) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
     uint64_t gpuAddress = 12 * MemoryConstants::pageSize;
     EncodeBatchBufferStartOrEnd<FamilyType>::programBatchBufferStart(cmdContainer.getCommandStream(), gpuAddress, false, false, false);
@@ -99,7 +100,7 @@ using EncodeNoopTest = Test<DeviceFixture>;
 
 HWTEST_F(EncodeNoopTest, WhenAligningLinearStreamToCacheLineSizeThenItIsAlignedCorrectly) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     auto commandStream = cmdContainer.getCommandStream();
 
     EncodeNoop<FamilyType>::alignToCacheLine(*commandStream);
@@ -112,7 +113,7 @@ HWTEST_F(EncodeNoopTest, WhenAligningLinearStreamToCacheLineSizeThenItIsAlignedC
 
 HWTEST_F(EncodeNoopTest, WhenEmittingNoopsThenExpectCorrectNumberOfBytesNooped) {
     CommandContainer cmdContainer;
-    cmdContainer.initialize(pDevice, nullptr, true, false);
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     auto commandStream = cmdContainer.getCommandStream();
 
     size_t usedBefore = commandStream->getUsed();

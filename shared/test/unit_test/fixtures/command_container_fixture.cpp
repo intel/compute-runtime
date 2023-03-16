@@ -7,6 +7,7 @@
 
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 
+#include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -15,7 +16,7 @@ namespace NEO {
 void CommandEncodeStatesFixture::setUp() {
     DeviceFixture::setUp();
     cmdContainer = std::make_unique<MyMockCommandContainer>();
-    cmdContainer->initialize(pDevice, nullptr, true, false);
+    cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     cmdContainer->setDirtyStateForAllHeaps(false);
     const auto &hwInfo = pDevice->getHardwareInfo();
     auto &productHelper = pDevice->getProductHelper();

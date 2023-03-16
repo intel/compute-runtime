@@ -252,3 +252,13 @@ HWTEST_F(CommandEncoderTests, givenDcFlushNotRequiredWhenGettingDcFlushValueThen
     bool helperValue = MemorySynchronizationCommands<FamilyType>::getDcFlushEnable(requiredFlag, rootDeviceEnvironment);
     EXPECT_FALSE(helperValue);
 }
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncoderTests, givenXeHpPlatformsWhenGettingDefaultSshSizeThenExpectTwoMegabytes) {
+    constexpr size_t expectedSize = 2 * MemoryConstants::megaByte;
+    EXPECT_EQ(expectedSize, EncodeStates<FamilyType>::getSshHeapSize());
+}
+
+HWCMDTEST_F(IGFX_GEN8_CORE, CommandEncoderTests, givenPreXeHpPlatformsWhenGettingDefaultSshSizeThenExpectSixtyFourKilobytes) {
+    constexpr size_t expectedSize = 64 * MemoryConstants::kiloByte;
+    EXPECT_EQ(expectedSize, EncodeStates<FamilyType>::getSshHeapSize());
+}

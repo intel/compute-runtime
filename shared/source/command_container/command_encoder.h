@@ -167,6 +167,7 @@ struct EncodeStates {
                                      const void *fnDynamicStateHeap,
                                      BindlessHeapsHelper *bindlessHeapHelper,
                                      const RootDeviceEnvironment &rootDeviceEnvironment);
+    static size_t getSshHeapSize();
 };
 
 template <typename GfxFamily>

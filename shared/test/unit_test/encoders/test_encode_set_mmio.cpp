@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/command_container/command_encoder.h"
+#include "shared/source/indirect_heap/heap_size.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -18,7 +19,7 @@ class CommandSetMMIOFixture : public DeviceFixture {
     void setUp() {
         DeviceFixture::setUp();
         cmdContainer = std::make_unique<CommandContainer>();
-        cmdContainer->initialize(pDevice, nullptr, true, false);
+        cmdContainer->initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
     }
     void tearDown() {
         cmdContainer.reset();

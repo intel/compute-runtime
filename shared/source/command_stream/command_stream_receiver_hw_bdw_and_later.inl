@@ -12,11 +12,6 @@
 namespace NEO {
 
 template <typename GfxFamily>
-size_t CommandStreamReceiverHw<GfxFamily>::getSshHeapSize() {
-    return getDefaultHeapSize();
-}
-
-template <typename GfxFamily>
 bool CommandStreamReceiverHw<GfxFamily>::are4GbHeapsAvailable() const { return true; }
 
 template <typename GfxFamily>

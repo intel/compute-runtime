@@ -10,6 +10,7 @@
 #include "shared/source/helpers/blit_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/indirect_heap/heap_size.h"
 #include "shared/source/memory_manager/allocation_properties.h"
 #include "shared/source/os_interface/device_factory.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -638,7 +639,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenNotChangedSurfaceStateWhenCapt
     debugger->sbaTrackingGpuVa.address = 0x45670000;
 
     NEO::CommandContainer container;
-    container.initialize(pDevice, nullptr, true, false);
+    container.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
     NEO::Debugger::SbaAddresses sba = {};
     sba.SurfaceStateBaseAddress = 0x123456000;
@@ -661,7 +662,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCaptur
     debugger->sbaTrackingGpuVa.address = 0x45670000;
     {
         NEO::CommandContainer container;
-        container.initialize(pDevice, nullptr, true, false);
+        container.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
         NEO::Debugger::SbaAddresses sba = {};
         sba.SurfaceStateBaseAddress = 0x123456000;
@@ -674,7 +675,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCaptur
 
     {
         NEO::CommandContainer container;
-        container.initialize(pDevice, nullptr, true, false);
+        container.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
         NEO::Debugger::SbaAddresses sba = {};
         sba.GeneralStateBaseAddress = 0x123456000;
@@ -687,7 +688,7 @@ HWTEST2_P(L0DebuggerSimpleParameterizedTest, givenChangedBaseAddressesWhenCaptur
 
     {
         NEO::CommandContainer container;
-        container.initialize(pDevice, nullptr, true, false);
+        container.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
 
         NEO::Debugger::SbaAddresses sba = {};
         sba.BindlessSurfaceStateBaseAddress = 0x123456000;
