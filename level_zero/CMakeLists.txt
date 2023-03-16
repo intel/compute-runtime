@@ -227,16 +227,12 @@ if(BUILD_WITH_L0)
               ${NEO_SHARED_DIRECTORY}/utilities/cpuintrinsics.cpp
               ${NEO_SHARED_DIRECTORY}/utilities/debug_settings_reader_creator.cpp
               ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
-  )
-
-  target_sources(${TARGET_NAME_L0}
-                 PRIVATE
-                 ${NEO_SHARED_DIRECTORY}/built_ins/sip_init.cpp
-                 ${NEO_SHARED_DIRECTORY}/dll/create_deferred_deleter.cpp
-                 ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_${DRIVER_MODEL}.cpp
-                 ${NEO_SHARED_DIRECTORY}/dll/create_tbx_sockets.cpp
-                 ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp
-                 ${NEO_SHARED_DIRECTORY}/dll/source_level_debugger_dll.cpp
+              ${NEO_SHARED_DIRECTORY}/built_ins/sip_init.cpp
+              ${NEO_SHARED_DIRECTORY}/dll/create_deferred_deleter.cpp
+              ${NEO_SHARED_DIRECTORY}/dll/create_memory_manager_${DRIVER_MODEL}.cpp
+              ${NEO_SHARED_DIRECTORY}/dll/create_tbx_sockets.cpp
+              ${NEO_SHARED_DIRECTORY}/dll/get_devices.cpp
+              ${NEO_SHARED_DIRECTORY}/dll/source_level_debugger_dll.cpp
   )
   if(DEFINED AUB_STREAM_PROJECT_NAME)
     target_sources(${TARGET_NAME_L0}
@@ -252,6 +248,9 @@ if(BUILD_WITH_L0)
   endif()
 
   if(WIN32)
+    target_include_directories(${TARGET_NAME_L0} PUBLIC
+                               ${L0_ROOT_DIR}/core/source/os_interface/windows
+    )
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
                    ${NEO_SHARED_DIRECTORY}/dll/wddm/create_gdi.cpp
@@ -262,6 +261,7 @@ if(BUILD_WITH_L0)
                    ${NEO_SHARED_DIRECTORY}/dll/windows/os_interface.cpp
                    ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory_base.cpp
                    ${NEO_SHARED_DIRECTORY}/gmm_helper/windows/gmm_memory.cpp
+                   ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/sys_calls.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_interface_win.cpp
                    ${NEO_SHARED_DIRECTORY}/os_interface/windows/os_memory_virtual_alloc.cpp
@@ -274,7 +274,17 @@ if(BUILD_WITH_L0)
       message(STATUS "Setting L0 Resource Info")
       target_sources(${TARGET_NAME_L0} PRIVATE ${L0_DLL_RC_FILE})
     endif()
+    set_target_properties(${TARGET_NAME_L0} PROPERTIES
+                          DEBUG_OUTPUT_NAME "${TARGET_NAME_L0}${NEO_BITS}"
+                          RELEASE_OUTPUT_NAME "${TARGET_NAME_L0}${NEO_BITS}"
+                          RELEASEINTERNAL_OUTPUT_NAME "${TARGET_NAME_L0}${NEO_BITS}"
+                          OUTPUT_NAME "${TARGET_NAME_L0}${NEO_BITS}"
+    )
+    add_dependencies(${TARGET_NAME_L0} ${GMM_TARGET_NAME})
   else()
+    target_include_directories(${TARGET_NAME_L0} PUBLIC
+                               ${L0_ROOT_DIR}/core/source/os_interface/linux
+    )
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
                    ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
@@ -336,36 +346,6 @@ if(BUILD_WITH_L0)
                              ${COMPUTE_RUNTIME_DEFINITIONS}
   )
 
-  if(UNIX)
-    target_include_directories(${TARGET_NAME_L0} PUBLIC
-                               ${L0_ROOT_DIR}/core/source/os_interface/linux
-    )
-    target_include_directories(${TARGET_NAME_L0} PRIVATE
-                               ${NEO_SHARED_DIRECTORY}/dll/devices${BRANCH_DIR_SUFFIX}
-    )
-  else()
-    target_include_directories(${TARGET_NAME_L0} PUBLIC
-                               ${L0_ROOT_DIR}/core/source/os_interface/windows
-    )
-
-    if(CMAKE_SIZEOF_VOID_P EQUAL 4)
-      set(L0_BITNESS_SUFIX 32)
-    elseif(CMAKE_SIZEOF_VOID_P EQUAL 8)
-      set(L0_BITNESS_SUFIX 64)
-    endif()
-
-    set_target_properties(${TARGET_NAME_L0} PROPERTIES
-                          DEBUG_OUTPUT_NAME "${TARGET_NAME_L0}${L0_BITNESS_SUFIX}"
-                          RELEASE_OUTPUT_NAME "${TARGET_NAME_L0}${L0_BITNESS_SUFIX}"
-                          RELEASEINTERNAL_OUTPUT_NAME "${TARGET_NAME_L0}${L0_BITNESS_SUFIX}"
-                          OUTPUT_NAME "${TARGET_NAME_L0}${L0_BITNESS_SUFIX}"
-    )
-    add_dependencies(${TARGET_NAME_L0} ${GMM_TARGET_NAME})
-    target_sources(${TARGET_NAME_L0} PRIVATE
-                   ${NEO_SHARED_DIRECTORY}/os_interface/windows/gmm_interface_win.cpp
-    )
-  endif()
-
   add_subdirectory_unique(api)
   add_subdirectory_unique(source)
 
@@ -381,7 +361,7 @@ if(BUILD_WITH_L0)
   function(generate_l0_lib LIB_NAME MOCKABLE)
     set(L0_STATIC_LIB_NAME ${LIB_NAME})
     add_library(${LIB_NAME} OBJECT
-                ${L0_RUNTIME_SOURCES}
+                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
     )
 
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/core/source "${NEO_BUILD_DIR}/${LIB_NAME}/core/source")
@@ -390,28 +370,9 @@ if(BUILD_WITH_L0)
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/tools/source "${NEO_BUILD_DIR}/${LIB_NAME}tools/source")
     add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/sysman/source "${NEO_BUILD_DIR}/${LIB_NAME}sysman/source")
 
-    append_sources_from_properties(L0_RUNTIME_SOURCES
-                                   L0_API
-                                   L0_SOURCES_LINUX
-                                   L0_SOURCES_WINDOWS
-                                   L0_SRCS_CACHE_RESERVATION
-                                   L0_SRCS_COMPILER_INTERFACE
-                                   L0_SRCS_DRIVER
-                                   L0_SRCS_OCLOC_SHARED
-    )
-    if(WIN32)
-      append_sources_from_properties(L0_RUNTIME_SOURCES
-                                     L0_SRCS_CACHE_RESERVATION_WINDOWS
-                                     L0_SRCS_DEBUGGER_WINDOWS
-      )
-    else()
-      append_sources_from_properties(L0_RUNTIME_SOURCES
-                                     L0_SRCS_CACHE_RESERVATION_LINUX
-                                     L0_SRCS_DEBUGGER_LINUX
-      )
-    endif()
+    append_sources_from_properties(L0_API_SOURCES L0_API)
 
-    target_sources(${LIB_NAME} PRIVATE ${L0_RUNTIME_SOURCES})
+    target_sources(${LIB_NAME} PRIVATE ${L0_API_SOURCES})
 
     if(${MOCKABLE})
       get_property(COMPUTE_RUNTIME_DEFINITIONS
@@ -449,16 +410,6 @@ if(BUILD_WITH_L0)
 
     if(WIN32 OR NOT DISABLE_WDDM_LINUX)
       target_include_directories(${LIB_NAME} PUBLIC ${WDK_INCLUDE_PATHS})
-    endif()
-
-    if(WIN32)
-      target_include_directories(${LIB_NAME} PUBLIC
-                                 ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/windows
-      )
-    else()
-      target_include_directories(${LIB_NAME} PUBLIC
-                                 ${CMAKE_CURRENT_SOURCE_DIR}/os_interface/linux
-      )
     endif()
 
     create_project_source_tree(${LIB_NAME})
