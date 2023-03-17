@@ -356,7 +356,7 @@ TEST(DrmPrelimTest, givenProgramDebuggingAndContextDebugAvailableAndCCSEnginesWh
     EXPECT_EQ(0u, drm->passedContextDebugId);
 
     if (executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 0) {
-        EXPECT_EQ(4u, drm->receivedContextParamRequestCount);
+        EXPECT_EQ(3u, drm->receivedContextParamRequestCount);
         EXPECT_EQ(1u, drm->context.receivedContextCreateExtSetParamRunaloneCount);
     } else {
         EXPECT_EQ(3u, drm->receivedContextParamRequestCount);

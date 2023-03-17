@@ -49,21 +49,26 @@ bool OsContextLinux::initializeContext() {
     for (auto deviceIndex = 0u; deviceIndex < deviceBitfield.size(); deviceIndex++) {
         if (deviceBitfield.test(deviceIndex)) {
             auto drmVmId = drm.getVirtualMemoryAddressSpace(deviceIndex);
+
+            if (drm.isPerContextVMRequired()) {
+                drmVmId = deviceIndex;
+                [[maybe_unused]] auto ret = drm.createDrmVirtualMemory(drmVmId);
+                DEBUG_BREAK_IF(drmVmId == 0);
+                DEBUG_BREAK_IF(ret != 0);
+                if (ret != 0) {
+                    return false;
+                }
+
+                UNRECOVERABLE_IF(this->drmVmIds.size() <= deviceIndex);
+                this->drmVmIds[deviceIndex] = drmVmId;
+            }
+
             auto drmContextId = drm.getIoctlHelper()->createDrmContext(drm, *this, drmVmId, deviceIndex);
             if (drmContextId < 0) {
                 return false;
             }
 
             this->drmContextIds.push_back(drmContextId);
-
-            if (drm.isPerContextVMRequired()) {
-                [[maybe_unused]] auto ret = drm.queryVmId(drmContextId, drmVmId);
-                DEBUG_BREAK_IF(drmVmId == 0);
-                DEBUG_BREAK_IF(ret != 0);
-
-                UNRECOVERABLE_IF(this->drmVmIds.size() <= deviceIndex);
-                this->drmVmIds[deviceIndex] = drmVmId;
-            }
         }
     }
     return true;

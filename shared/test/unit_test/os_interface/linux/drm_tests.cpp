@@ -681,7 +681,7 @@ TEST(DrmTest, givenDrmWithPerContextVMRequiredWhenCreatingOsContextsThenImplicit
     osContext2.ensureContextInitialized();
 }
 
-TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPerContextIsQueriedAndStored) {
+TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsThenExplicitVmIsCreated) {
     MockExecutionEnvironment executionEnvironment{};
     auto &rootEnv = *executionEnvironment.rootDeviceEnvironments[0];
     rootEnv.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
@@ -698,10 +698,32 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsThenImplicitVmIdPer
     auto &drmVmIds = osContext.getDrmVmIds();
     EXPECT_EQ(4u, drmVmIds.size());
 
-    EXPECT_EQ(20u, drmVmIds[0]);
+    EXPECT_NE(20u, drmVmIds[0]);
+
+    EXPECT_EQ(1, drmMock.ioctlCount.gemVmCreate);
+    EXPECT_EQ(0u, drmMock.receivedGemVmControl.vmId);
+    EXPECT_EQ(drmMock.latestCreatedVmId, drmVmIds[0]);
+    EXPECT_EQ(1, drmMock.createDrmVmCalled);
 }
 
-TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenImplicitVmIdPerContextIsQueriedAndStoredAtSubDeviceIndex) {
+TEST(DrmTest, givenPerContextVMRequiredWhenVmIdCreationFailsThenContextInitializationReturnsFalse) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootEnv = *executionEnvironment.rootDeviceEnvironments[0];
+
+    DrmMock drmMock(rootEnv);
+    drmMock.setPerContextVMRequired(true);
+
+    drmMock.storedRetValForVmCreate = -1;
+
+    OsContextLinux osContext(drmMock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    drmMock.createDrmVmCalled = 0;
+    auto status = osContext.ensureContextInitialized();
+    EXPECT_EQ(1, drmMock.createDrmVmCalled);
+
+    EXPECT_FALSE(status);
+}
+
+TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenVmIdPerContextIsCreateddAndStoredAtSubDeviceIndex) {
     MockExecutionEnvironment executionEnvironment{};
     auto &rootEnv = *executionEnvironment.rootDeviceEnvironments[0];
     rootEnv.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
@@ -719,13 +741,13 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextForSubDeviceThenImpl
     auto &drmVmIds = osContext.getDrmVmIds();
     EXPECT_EQ(4u, drmVmIds.size());
 
-    EXPECT_EQ(4u, drmVmIds[3]);
+    EXPECT_EQ(drmMock.latestCreatedVmId, drmVmIds[3]);
 
     EXPECT_EQ(0u, drmVmIds[0]);
     EXPECT_EQ(0u, drmVmIds[2]);
 }
 
-TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsForRootDeviceThenImplicitVmIdsPerContextAreQueriedAndStoredAtSubDeviceIndices) {
+TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsForRootDeviceThenVmIdsPerContextAreCreatedAndStoredAtSubDeviceIndices) {
     MockExecutionEnvironment executionEnvironment{};
     auto &rootEnv = *executionEnvironment.rootDeviceEnvironments[0];
     rootEnv.executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);
@@ -743,8 +765,8 @@ TEST(DrmTest, givenPerContextVMRequiredWhenCreatingOsContextsForRootDeviceThenIm
     auto &drmVmIds = osContext.getDrmVmIds();
     EXPECT_EQ(4u, drmVmIds.size());
 
-    EXPECT_EQ(4u, drmVmIds[0]);
-    EXPECT_EQ(4u, drmVmIds[1]);
+    EXPECT_EQ(drmMock.latestCreatedVmId - 1, drmVmIds[0]);
+    EXPECT_EQ(drmMock.latestCreatedVmId, drmVmIds[1]);
 
     EXPECT_EQ(0u, drmVmIds[2]);
 }

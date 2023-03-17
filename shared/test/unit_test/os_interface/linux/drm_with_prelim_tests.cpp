@@ -509,7 +509,6 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWh
     if (executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 0) {
         EXPECT_TRUE(drm->capturedCooperativeContextRequest);
     } else {
-        EXPECT_FALSE(drm->capturedCooperativeContextRequest);
     }
 
     OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Cooperative}));
@@ -517,6 +516,32 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWh
 
     EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
     EXPECT_TRUE(drm->capturedCooperativeContextRequest);
+}
+
+TEST(IoctlHelperPrelimTest, givenProgramDebuggingAndContextDebugSupportedWhenInitializingContextThenVmIsCreatedWithAllNecessaryFlags) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+
+    auto drm = std::make_unique<DrmPrelimMock>(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->ioctlHelper = std::make_unique<IoctlHelperPrelim20>(*drm);
+    drm->contextDebugSupported = true;
+    drm->callBaseCreateDrmContext = false;
+    drm->bindAvailable = true;
+    drm->setPerContextVMRequired(true);
+
+    executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo()->platform.eProductFamily = defaultHwInfo->platform.eProductFamily;
+
+    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    osContext.ensureContextInitialized();
+
+    EXPECT_FALSE(drm->receivedGemVmControl.flags & PRELIM_I915_VM_CREATE_FLAGS_DISABLE_SCRATCH);
+    EXPECT_TRUE(drm->receivedGemVmControl.flags & PRELIM_I915_VM_CREATE_FLAGS_USE_VM_BIND);
+    if (drm->hasPageFaultSupport()) {
+        EXPECT_TRUE(drm->receivedGemVmControl.flags & PRELIM_I915_VM_CREATE_FLAGS_ENABLE_PAGE_FAULT);
+    } else {
+        EXPECT_FALSE(drm->receivedGemVmControl.flags & PRELIM_I915_VM_CREATE_FLAGS_ENABLE_PAGE_FAULT);
+    }
+    EXPECT_EQ(1, drm->createDrmVmCalled);
 }
 
 TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInitializatedThenIpVersionIsSet) {

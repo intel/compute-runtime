@@ -107,7 +107,7 @@ class Drm : public DriverModel {
         return adapterBDF;
     }
     int queryAdapterBDF();
-    int createDrmVirtualMemory(uint32_t &drmVmId);
+    MOCKABLE_VIRTUAL int createDrmVirtualMemory(uint32_t &drmVmId);
     void destroyDrmVirtualMemory(uint32_t drmVmId);
     MOCKABLE_VIRTUAL int createDrmContext(uint32_t drmVmId, bool isDirectSubmissionRequested, bool isCooperativeContextRequested);
     void destroyDrmContext(uint32_t drmContextId);

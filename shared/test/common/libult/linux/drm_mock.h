@@ -121,6 +121,11 @@ class DrmMock : public Drm {
         return 0;
     }
 
+    int createDrmVirtualMemory(uint32_t &drmVmId) override {
+        createDrmVmCalled++;
+        return Drm::createDrmVirtualMemory(drmVmId);
+    }
+
     bool isVmBindAvailable() override {
         if (callBaseIsVmBindAvailable) {
             return Drm::isVmBindAvailable();
@@ -201,6 +206,7 @@ class DrmMock : public Drm {
     GemContextParam receivedContextParamRequest = {};
     uint64_t receivedRecoverableContextValue = std::numeric_limits<uint64_t>::max();
     uint64_t requestSetVmId = std::numeric_limits<uint64_t>::max();
+    int createDrmVmCalled = 0;
 
     bool queryPageFaultSupportCalled = false;
 

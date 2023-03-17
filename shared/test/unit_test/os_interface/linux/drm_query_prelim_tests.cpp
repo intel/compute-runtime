@@ -427,6 +427,23 @@ TEST(DrmBufferObjectTestPrelim, givenPageFaultSupportedWhenVmBindIsAvailableThen
     }
 }
 
+TEST(DrmBufferObjectTestPrelim, givenContextWhenQueryingVmIdThenIoctlIsCalled) {
+    auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
+    executionEnvironment->rootDeviceEnvironments[0]->initGmm();
+    executionEnvironment->initializeMemoryManager();
+    DrmQueryMock drm{*executionEnvironment->rootDeviceEnvironments[0]};
+    BufferObjectMock bo(&drm, 3, 1, 0, 1);
+    OsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    osContext.ensureContextInitialized();
+
+    uint32_t vmId = 0;
+    drm.storedRetValForVmId = 10;
+    drm.queryVmId(0, vmId);
+
+    EXPECT_EQ(static_cast<uint64_t>(I915_CONTEXT_PARAM_VM), drm.receivedContextParamRequest.param);
+    EXPECT_EQ(static_cast<uint32_t>(drm.storedRetValForVmId), vmId);
+}
+
 TEST(DrmBufferObjectTestPrelim, givenBufferObjectMarkedForCaptureWhenBindingThenCaptureFlagIsSet) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->rootDeviceEnvironments[0]->initGmm();

@@ -392,8 +392,10 @@ TEST(DrmBufferObject, givenDrmIoctlReturnsErrorNotSupportedThenBufferObjectRetur
     executionEnvironment->calculateMaxOsContextCount();
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
 
-    DrmMockReturnErrorNotSupported *drm = new DrmMockReturnErrorNotSupported(*executionEnvironment->rootDeviceEnvironments[0]);
-
+    DrmMock *drm = new DrmMock(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->execBufferResult = -1;
+    drm->errnoRetVal = EOPNOTSUPP;
+    drm->baseErrno = false;
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
 
@@ -463,6 +465,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPr
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
 
     auto drm = new DrmMockToSucceedBindBufferObject(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->latestCreatedVmId = 1;
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
@@ -484,15 +487,18 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindSucceedsThenPr
     EXPECT_TRUE(bo.bindInfo[contextId][0]);
 
     std::string bindOutput = testing::internal::GetCapturedStdout();
-    EXPECT_STREQ(bindOutput.c_str(), "bind BO-0 to VM 0, drmVmId = 1, range: 0 - 0, size: 0, result: 0\n");
-
+    std::stringstream expected;
+    expected << "bind BO-0 to VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: 0\n";
+    EXPECT_STREQ(bindOutput.c_str(), expected.str().c_str()) << bindOutput;
+    expected.str("");
     testing::internal::CaptureStdout();
 
     bo.unbind(osContext, 0);
     EXPECT_FALSE(bo.bindInfo[contextId][0]);
 
     std::string unbindOutput = testing::internal::GetCapturedStdout();
-    EXPECT_STREQ(unbindOutput.c_str(), "unbind BO-0 from VM 0, drmVmId = 1, range: 0 - 0, size: 0, result: 0\n");
+    expected << "unbind BO-0 from VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: 0\n";
+    EXPECT_STREQ(unbindOutput.c_str(), expected.str().c_str()) << unbindOutput;
 }
 
 TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrintDebugInformationAboutBOBindingResultWithErrno) {
@@ -516,6 +522,7 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
     executionEnvironment->rootDeviceEnvironments[0]->osInterface = std::make_unique<OSInterface>();
 
     auto drm = new DrmMockToFailBindBufferObject(*executionEnvironment->rootDeviceEnvironments[0]);
+    drm->latestCreatedVmId = 1;
 
     executionEnvironment->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(drm));
     executionEnvironment->rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*drm, 0u);
@@ -537,8 +544,10 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
     EXPECT_FALSE(bo.bindInfo[contextId][0]);
 
     std::string bindOutput = testing::internal::GetCapturedStderr();
-    EXPECT_TRUE(hasSubstr(bindOutput, "bind BO-0 to VM 0, drmVmId = 1, range: 0 - 0, size: 0, result: -1, errno: 22"));
-
+    std::stringstream expected;
+    expected << "bind BO-0 to VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: -1, errno: 22\n";
+    EXPECT_TRUE(hasSubstr(expected.str(), expected.str())) << bindOutput;
+    expected.str("");
     testing::internal::CaptureStderr();
     bo.bindInfo[contextId][0] = true;
 
@@ -546,7 +555,8 @@ TEST(DrmBufferObject, givenPrintBOBindingResultWhenBOBindAndUnbindFailsThenPrint
     EXPECT_TRUE(bo.bindInfo[contextId][0]);
 
     std::string unbindOutput = testing::internal::GetCapturedStderr();
-    EXPECT_TRUE(hasSubstr(unbindOutput, "unbind BO-0 from VM 0, drmVmId = 1, range: 0 - 0, size: 0, result: -1, errno: 22"));
+    expected << "unbind BO-0 from VM 0, drmVmId = " << drm->latestCreatedVmId << ", range: 0 - 0, size: 0, result: -1, errno: 22";
+    EXPECT_TRUE(hasSubstr(unbindOutput, expected.str())) << unbindOutput;
 }
 
 TEST(DrmBufferObject, whenBindExtHandleAddedThenItIsStored) {
