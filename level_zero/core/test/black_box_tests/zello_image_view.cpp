@@ -109,6 +109,8 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExp(context, device, &imageViewDescPlaneY, srcImg, &planeYImageView));
+
+    planeYdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExt(context, device, &imageViewDescPlaneY, srcImg, &planeYImageView));
 
@@ -133,6 +135,8 @@ void testAppendImageViewNV12Copy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExp(context, device, &imageViewDescPlaneUV, srcImg, &planeUVImageView));
+
+    planeUVdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExt(context, device, &imageViewDescPlaneUV, srcImg, &planeUVImageView));
 
@@ -358,6 +362,8 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExp(context, device, &imageViewDescPlaneY, srcImg, &planeYImageView));
+
+    planeYdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExt(context, device, &imageViewDescPlaneY, srcImg, &planeYImageView));
 
@@ -382,6 +388,8 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExp(context, device, &imageViewDescPlaneU, srcImg, &planeUImageView));
+
+    planeUdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExt(context, device, &imageViewDescPlaneU, srcImg, &planeUImageView));
 
@@ -406,6 +414,8 @@ void testAppendImageViewRGBPCopy(ze_context_handle_t &context, ze_device_handle_
 
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExp(context, device, &imageViewDescPlaneV, srcImg, &planeVImageView));
+
+    planeVdesc.stype = ZE_STRUCTURE_TYPE_IMAGE_VIEW_PLANAR_EXT_DESC;
     SUCCESS_OR_TERMINATE(
         zeImageViewCreateExt(context, device, &imageViewDescPlaneV, srcImg, &planeVImageView));
 
