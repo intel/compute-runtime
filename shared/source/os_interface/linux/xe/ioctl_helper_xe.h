@@ -92,6 +92,7 @@ class IoctlHelperXe : public IoctlHelper {
     std::string getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const override;
     std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const override;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
+    bool isWaitBeforeBindRequired(bool bind) const override;
 
     std::vector<uint8_t> xeRebuildi915Topology(std::vector<uint8_t> *geomDss, std::vector<uint8_t> *computeDss, std::vector<uint8_t> *euDss);
 

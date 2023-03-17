@@ -708,6 +708,11 @@ bool IoctlHelperPrelim20::getFabricLatency(uint32_t fabricId, uint32_t &latency,
     bandwidth = info.bandwidth;
     return true;
 }
+
+bool IoctlHelperPrelim20::isWaitBeforeBindRequired(bool bind) const {
+    return bind;
+}
+
 bool IoctlHelperPrelim20::queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret) {
     QueryItem queryItem{};
     queryItem.queryId = PRELIM_DRM_I915_QUERY_HW_IP_VERSION;

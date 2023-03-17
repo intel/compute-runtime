@@ -1177,21 +1177,15 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool bindOp) {
     }
     if (found != -1) {
         uint32_t extraBindFlag = 0;
-        uint64_t waitfence = 0ull;
         struct drm_xe_sync sync[1] = {};
         sync[0].flags = DRM_XE_SYNC_USER_FENCE | DRM_XE_SYNC_SIGNAL;
         extraBindFlag = XE_VM_BIND_FLAG_ASYNC;
+        auto xeBindExtUserFence = reinterpret_cast<xe_fake_ext_user_fence *>(vmBindParams.extensions);
+        UNRECOVERABLE_IF(!xeBindExtUserFence);
+        UNRECOVERABLE_IF(xeBindExtUserFence->tag != VMBIND_FENCE_TAG);
+        sync[0].addr = xeBindExtUserFence->addr;
+        sync[0].timeline_value = xeBindExtUserFence->value;
 
-        if (bindOp) {
-            auto xeBindExtUserFence = reinterpret_cast<xe_fake_ext_user_fence *>(vmBindParams.extensions);
-            UNRECOVERABLE_IF(!xeBindExtUserFence);
-            UNRECOVERABLE_IF(xeBindExtUserFence->tag != VMBIND_FENCE_TAG);
-            sync[0].addr = xeBindExtUserFence->addr;
-            sync[0].timeline_value = xeBindExtUserFence->value;
-        } else {
-            sync[0].addr = castToUint64(&waitfence);
-            sync[0].timeline_value = USER_FENCE_VALUE | vmBindParams.handle;
-        }
         struct drm_xe_vm_bind bind = {};
         bind.vm_id = vmBindParams.vmId;
         bind.num_binds = 1;
@@ -1209,7 +1203,6 @@ int IoctlHelperXe::xeVmBind(const VmBindParams &vmBindParams, bool bindOp) {
         }
         if (!bindOp) {
             bind.bind.op = XE_VM_BIND_OP_UNMAP;
-            bind.bind.obj = bindInfo[found].handle;
             bind.bind.obj = 0;
             if (bindInfo[found].handle & XE_USERPTR_FAKE_FLAG) {
                 bind.bind.obj_offset = bindInfo[found].userptr;
@@ -1368,6 +1361,10 @@ IoctlHelperXe::xeFindMatchingEngine(uint16_t engineClass, uint16_t engineInstanc
 
 bool IoctlHelperXe::getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) {
     return false;
+}
+
+bool IoctlHelperXe::isWaitBeforeBindRequired(bool bind) const {
+    return true;
 }
 
 static uint32_t getVectorGetMax(std::vector<uint8_t> *data) {

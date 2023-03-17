@@ -36,6 +36,16 @@ TEST(IoctlHelperXeTest, givenXeDrmVersionsWhenGettingIoctlHelperThenValidIoctlHe
     EXPECT_NE(nullptr, xeIoctlHelper);
 }
 
+TEST(IoctlHelperXeTest, whenChangingBufferBindingThenWaitIsNeededAlways) {
+    MockExecutionEnvironment executionEnvironment{};
+    std::unique_ptr<Drm> drm{Drm::create(std::make_unique<HwDeviceIdDrm>(0, ""), *executionEnvironment.rootDeviceEnvironments[0])};
+
+    IoctlHelperXe ioctlHelper{*drm};
+
+    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(true));
+    EXPECT_TRUE(ioctlHelper.isWaitBeforeBindRequired(false));
+}
+
 TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsReturned) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     DrmMock drm{*executionEnvironment->rootDeviceEnvironments[0]};

@@ -239,4 +239,8 @@ std::string IoctlHelperUpstream::getIoctlString(DrmIoctl ioctlRequest) const {
 bool IoctlHelperUpstream::getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) {
     return false;
 }
+
+bool IoctlHelperUpstream::isWaitBeforeBindRequired(bool bind) const {
+    return false;
+}
 } // namespace NEO

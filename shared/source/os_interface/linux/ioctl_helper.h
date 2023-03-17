@@ -137,6 +137,7 @@ class IoctlHelper {
     virtual std::string getFileForMaxGpuFrequencyOfSubDevice(int subDeviceId) const;
     virtual std::string getFileForMaxMemoryFrequencyOfSubDevice(int subDeviceId) const;
     virtual bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) = 0;
+    virtual bool isWaitBeforeBindRequired(bool bind) const = 0;
 
     uint32_t getFlagsForPrimeHandleToFd() const;
 
@@ -194,6 +195,7 @@ class IoctlHelperUpstream : public IoctlHelper {
     std::string getDrmParamString(DrmParam param) const override;
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
+    bool isWaitBeforeBindRequired(bool bind) const override;
 };
 
 template <PRODUCT_FAMILY gfxProduct>
@@ -261,6 +263,7 @@ class IoctlHelperPrelim20 : public IoctlHelper {
     std::string getIoctlString(DrmIoctl ioctlRequest) const override;
     bool checkIfIoctlReinvokeRequired(int error, DrmIoctl ioctlRequest) const override;
     bool getFabricLatency(uint32_t fabricId, uint32_t &latency, uint32_t &bandwidth) override;
+    bool isWaitBeforeBindRequired(bool bind) const override;
 
   protected:
     bool queryHwIpVersion(EngineClassInstance &engineInfo, HardwareIpVersion &ipVersion, int &ret);
