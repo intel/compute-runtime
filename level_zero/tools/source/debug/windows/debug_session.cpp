@@ -153,7 +153,7 @@ ze_result_t DebugSessionWindows::readAndHandleEvent(uint64_t timeoutMs) {
 
     union {
         READ_EVENT_PARAMS_BUFFER eventParamsBuffer;
-        uint8_t rawBytes[2 * READ_EVENT_PARAMS_BUFFER_MIN_SIZE_BYTES] = {0};
+        uint8_t rawBytes[8 * READ_EVENT_PARAMS_BUFFER_MIN_SIZE_BYTES] = {0};
     } eventParamsBuffer;
 
     escapeInfo.KmEuDbgL0EscapeInfo.EscapeActionType = DBGUMD_ACTION_READ_EVENT;
