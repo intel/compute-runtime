@@ -7,10 +7,9 @@
 
 #pragma once
 #include "level_zero/core/test/unit_tests/mock.h"
+#include "level_zero/tools/source/sysman/pci/pci_imp.h"
 #include "level_zero/tools/source/sysman/pci/windows/os_pci_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_kmd_sys_manager.h"
-
-#include "sysman/pci/pci_imp.h"
 
 namespace L0 {
 namespace ult {

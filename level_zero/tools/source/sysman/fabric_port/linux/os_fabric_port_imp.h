@@ -8,9 +8,9 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "sysman/fabric_port/fabric_port_imp.h"
-#include "sysman/fabric_port/os_fabric_port.h"
-#include "sysman/linux/fs_access.h"
+#include "level_zero/tools/source/sysman/fabric_port/fabric_port_imp.h"
+#include "level_zero/tools/source/sysman/fabric_port/os_fabric_port.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 
 namespace L0 {
 

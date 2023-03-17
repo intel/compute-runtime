@@ -5,7 +5,7 @@
  *
  */
 
-#include "sysman/engine/windows/os_engine_imp.h"
+#include "level_zero/tools/source/sysman/engine/windows/os_engine_imp.h"
 
 #include "level_zero/tools/source/sysman/windows/kmd_sys.h"
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"

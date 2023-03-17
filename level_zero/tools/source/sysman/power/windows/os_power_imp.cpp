@@ -5,7 +5,7 @@
  *
  */
 
-#include "sysman/power/windows/os_power_imp.h"
+#include "level_zero/tools/source/sysman/power/windows/os_power_imp.h"
 
 #include "level_zero/tools/source/sysman/sysman_const.h"
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"

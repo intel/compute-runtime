@@ -7,9 +7,10 @@
 
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
+#include "level_zero/tools/source/sysman/linux/nl_api/iaf_nl_api.h"
+
 #include "gmock/gmock.h"
 #include "mock_nl_api_prelim.h"
-#include "sysman/linux/nl_api/iaf_nl_api.h"
 
 #include <limits>
 #include <netlink/handlers.h>

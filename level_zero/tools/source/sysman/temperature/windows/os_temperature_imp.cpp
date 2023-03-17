@@ -5,7 +5,7 @@
  *
  */
 
-#include "sysman/temperature/windows/os_temperature_imp.h"
+#include "level_zero/tools/source/sysman/temperature/windows/os_temperature_imp.h"
 
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 

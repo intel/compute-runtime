@@ -8,9 +8,8 @@
 #pragma once
 #include "level_zero/core/test/unit_tests/mock.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
+#include "level_zero/tools/source/sysman/memory/memory_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_kmd_sys_manager.h"
-
-#include "sysman/memory/memory_imp.h"
 
 namespace L0 {
 namespace ult {

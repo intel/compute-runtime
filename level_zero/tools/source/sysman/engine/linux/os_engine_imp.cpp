@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,7 +11,7 @@
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915.h"
 
-#include "sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 

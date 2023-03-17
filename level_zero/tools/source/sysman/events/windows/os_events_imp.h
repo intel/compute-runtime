@@ -12,8 +12,6 @@
 #include "level_zero/tools/source/sysman/events/os_events.h"
 #include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
-#include "sysman/windows/os_sysman_imp.h"
-
 namespace L0 {
 class KmdSysManager;
 

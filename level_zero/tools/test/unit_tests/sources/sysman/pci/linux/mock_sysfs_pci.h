@@ -8,8 +8,7 @@
 #pragma once
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/pci/linux/os_pci_imp.h"
-
-#include "sysman/pci/pci_imp.h"
+#include "level_zero/tools/source/sysman/pci/pci_imp.h"
 
 namespace L0 {
 namespace ult {

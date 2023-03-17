@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "sysman/frequency/frequency_imp.h"
-#include "sysman/frequency/os_frequency.h"
-#include "sysman/linux/fs_access.h"
+#include "level_zero/tools/source/sysman/frequency/frequency_imp.h"
+#include "level_zero/tools/source/sysman/frequency/os_frequency.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 
 namespace L0 {
 

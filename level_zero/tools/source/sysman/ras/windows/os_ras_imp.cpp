@@ -1,11 +1,11 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
-#include "sysman/ras/os_ras.h"
+#include "level_zero/tools/source/sysman/ras/os_ras.h"
 
 namespace L0 {
 

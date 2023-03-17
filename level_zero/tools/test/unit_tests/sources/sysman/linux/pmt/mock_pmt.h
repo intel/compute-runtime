@@ -7,7 +7,7 @@
 
 #pragma once
 
-#include "sysman/linux/pmt/pmt.h"
+#include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 
 namespace L0 {
 namespace ult {

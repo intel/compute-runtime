@@ -15,12 +15,11 @@
 #include "level_zero/core/source/driver/driver.h"
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/firmware_util/mock_fw_util_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_procfs_access_fixture.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysfs_access_fixture.h"
-
-#include "sysman/linux/os_sysman_imp.h"
 
 extern bool sysmanUltsEnable;
 

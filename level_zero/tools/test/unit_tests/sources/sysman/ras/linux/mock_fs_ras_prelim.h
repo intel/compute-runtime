@@ -7,13 +7,12 @@
 
 #pragma once
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/linux/pmu/pmu_imp.h"
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp_prelim.h"
-
-#include "sysman/linux/fs_access.h"
-#include "sysman/linux/os_sysman_imp.h"
-#include "sysman/ras/ras.h"
-#include "sysman/ras/ras_imp.h"
+#include "level_zero/tools/source/sysman/ras/ras.h"
+#include "level_zero/tools/source/sysman/ras/ras_imp.h"
 
 using namespace NEO;
 namespace L0 {

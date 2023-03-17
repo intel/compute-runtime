@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,8 +9,8 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/sys_calls.h"
 
-#include "sysman/linux/os_sysman_imp.h"
-#include "sysman/pci/os_pci.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/pci/os_pci.h"
 
 namespace L0 {
 

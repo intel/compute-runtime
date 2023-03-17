@@ -9,7 +9,7 @@
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
 
-#include "sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
 #include <cmath>
 

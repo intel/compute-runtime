@@ -11,9 +11,8 @@
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
 
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/scheduler/linux/os_scheduler_imp.h"
-
-#include "sysman/linux/fs_access.h"
 
 namespace L0 {
 namespace ult {

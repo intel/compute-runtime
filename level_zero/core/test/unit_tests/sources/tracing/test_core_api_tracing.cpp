@@ -5,7 +5,8 @@
  *
  */
 
-#include "test/unit_tests/mocks/mock_cmdlist.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
+
 #include "test_api_tracing_common.h"
 
 namespace L0 {

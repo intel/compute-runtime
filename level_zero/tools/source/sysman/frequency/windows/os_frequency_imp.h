@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "sysman/frequency/os_frequency.h"
-#include "sysman/windows/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/frequency/os_frequency.h"
+#include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
 #define KMD_BIT_RANGE(endbit, startbit) ((endbit) - (startbit) + 1)
 

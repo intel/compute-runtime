@@ -8,9 +8,8 @@
 #pragma once
 
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/sysman.h"
-
-#include "sysman/linux/os_sysman_imp.h"
 
 using namespace NEO;
 

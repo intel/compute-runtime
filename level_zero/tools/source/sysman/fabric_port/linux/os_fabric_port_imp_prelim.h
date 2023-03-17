@@ -8,9 +8,10 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
+#include "level_zero/tools/source/sysman/fabric_port/fabric_port_imp.h"
+#include "level_zero/tools/source/sysman/fabric_port/os_fabric_port.h"
+
 #include "fabric_device_access.h"
-#include "sysman/fabric_port/fabric_port_imp.h"
-#include "sysman/fabric_port/os_fabric_port.h"
 
 #include <vector>
 

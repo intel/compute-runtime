@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,8 @@
 
 #pragma once
 #include "level_zero/core/test/unit_tests/mock.h"
+#include "level_zero/tools/source/sysman/frequency/windows/os_frequency_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/windows/mock_kmd_sys_manager.h"
-
-#include "sysman/frequency/windows/os_frequency_imp.h"
 
 namespace L0 {
 namespace ult {

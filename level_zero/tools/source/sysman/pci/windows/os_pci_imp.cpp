@@ -5,7 +5,7 @@
  *
  */
 
-#include "sysman/pci/windows/os_pci_imp.h"
+#include "level_zero/tools/source/sysman/pci/windows/os_pci_imp.h"
 
 #include "shared/source/memory_manager/memory_manager.h"
 

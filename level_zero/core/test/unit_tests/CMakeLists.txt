@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2020-2022 Intel Corporation
+# Copyright (C) 2020-2023 Intel Corporation
 #
 # SPDX-License-Identifier: MIT
 #
@@ -51,30 +51,10 @@ target_compile_definitions(${TARGET_NAME} PRIVATE $<TARGET_PROPERTY:${L0_MOCKABL
 target_include_directories(${TARGET_NAME}
                            BEFORE
                            PRIVATE
-                           $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/core
-                           $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/tools
-                           $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/../../../../instrumentation/inc/common/instrumentation/api/
-                           $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/core/os_interface
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/includes${BRANCH_DIR_SUFFIX}
                            ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/unit_tests
 )
-
-if(UNIX)
-  target_include_directories(${TARGET_NAME}
-                             BEFORE
-                             PRIVATE
-                             $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/core/os_interface/linux
-                             $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/tools/linux
-  )
-else()
-  target_include_directories(${TARGET_NAME}
-                             BEFORE
-                             PRIVATE
-                             $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/core/os_interface/windows
-                             $<TARGET_PROPERTY:${TARGET_NAME_L0},SOURCE_DIR>/tools/windows
-  )
-endif()
 
 if(WIN32)
   target_link_libraries(${TARGET_NAME} dbghelp)

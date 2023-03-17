@@ -5,7 +5,7 @@
  *
  */
 
-#include "sysman/fan/windows/os_fan_imp.h"
+#include "level_zero/tools/source/sysman/fan/windows/os_fan_imp.h"
 
 #include "level_zero/tools/source/sysman/windows/kmd_sys_manager.h"
 

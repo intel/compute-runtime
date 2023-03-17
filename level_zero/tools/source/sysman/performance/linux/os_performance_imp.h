@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "sysman/linux/os_sysman_imp.h"
-#include "sysman/performance/os_performance.h"
-#include "sysman/performance/performance_imp.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/performance/os_performance.h"
+#include "level_zero/tools/source/sysman/performance/performance_imp.h"
 
 namespace L0 {
 

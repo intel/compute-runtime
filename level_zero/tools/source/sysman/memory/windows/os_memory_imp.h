@@ -8,10 +8,9 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
+#include "level_zero/tools/source/sysman/memory/os_memory.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
-
-#include "sysman/memory/os_memory.h"
-#include "sysman/windows/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
 #include <pdh.h>
 

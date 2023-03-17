@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "sysman/diagnostics/os_diagnostics.h"
-#include "sysman/windows/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/diagnostics/os_diagnostics.h"
+#include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
 namespace L0 {
 class WddmDiagnosticsImp : public OsDiagnostics {

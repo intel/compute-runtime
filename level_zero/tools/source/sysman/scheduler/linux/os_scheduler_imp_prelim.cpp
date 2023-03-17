@@ -10,9 +10,8 @@
 #include "shared/source/os_interface/linux/i915_prelim.h"
 
 #include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/scheduler/linux/os_scheduler_imp.h"
-
-#include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 

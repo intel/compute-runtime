@@ -8,12 +8,11 @@
 #pragma once
 #include "shared/source/helpers/string.h"
 
+#include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/power/linux/os_power_imp_prelim.h"
+#include "level_zero/tools/source/sysman/power/power_imp.h"
+#include "level_zero/tools/source/sysman/sysman_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
-
-#include "sysman/linux/pmt/pmt.h"
-#include "sysman/power/power_imp.h"
-#include "sysman/sysman_imp.h"
 
 extern bool sysmanUltsEnable;
 

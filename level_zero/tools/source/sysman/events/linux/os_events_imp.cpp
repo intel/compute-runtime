@@ -10,11 +10,10 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/utilities/directory.h"
 
+#include "level_zero/tools/source/sysman/events/events_imp.h"
 #include "level_zero/tools/source/sysman/linux/os_sysman_driver_imp.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp_prelim.h"
-
-#include "sysman/events/events_imp.h"
-#include "sysman/linux/os_sysman_imp.h"
 
 #include <sys/stat.h>
 

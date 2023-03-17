@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "sysman/firmware/firmware_imp.h"
-#include "sysman/firmware/os_firmware.h"
-#include "sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/firmware/firmware_imp.h"
+#include "level_zero/tools/source/sysman/firmware/os_firmware.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 class FirmwareUtil;

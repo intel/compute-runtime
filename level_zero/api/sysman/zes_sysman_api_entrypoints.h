@@ -11,8 +11,7 @@
 #include "level_zero/sysman/source/sysman_device.h"
 #include "level_zero/sysman/source/sysman_driver.h"
 #include "level_zero/sysman/source/sysman_driver_handle.h"
-
-#include "sysman/sysman.h"
+#include "level_zero/tools/source/sysman/sysman.h"
 
 namespace L0 {
 ze_result_t zesInit(

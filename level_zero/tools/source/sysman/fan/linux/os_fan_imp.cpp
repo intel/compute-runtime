@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,8 @@
 
 #include "level_zero/tools/source/sysman/fan/linux/os_fan_imp.h"
 
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
-
-#include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,9 +7,9 @@
 
 #pragma once
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/tools/source/sysman/linux/nl_api/iaf_nl_api.h"
 
 #include "gmock/gmock.h"
-#include "sysman/linux/nl_api/iaf_nl_api.h"
 
 #include <sstream>
 

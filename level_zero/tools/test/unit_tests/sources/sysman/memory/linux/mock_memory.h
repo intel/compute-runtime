@@ -10,10 +10,9 @@
 #include "shared/source/os_interface/linux/memory_info.h"
 
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/memory/linux/os_memory_imp.h"
 #include "level_zero/tools/source/sysman/memory/memory_imp.h"
-
-#include "sysman/linux/os_sysman_imp.h"
 
 using namespace NEO;
 constexpr uint64_t probedSizeRegionZero = 8 * GB;

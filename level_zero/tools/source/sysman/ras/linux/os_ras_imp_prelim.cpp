@@ -9,7 +9,7 @@
 
 #include "shared/source/helpers/string.h"
 
-#include "sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 

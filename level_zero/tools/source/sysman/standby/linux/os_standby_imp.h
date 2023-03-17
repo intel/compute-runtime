@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "sysman/linux/os_sysman_imp.h"
-#include "sysman/standby/os_standby.h"
-#include "sysman/standby/standby_imp.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/standby/os_standby.h"
+#include "level_zero/tools/source/sysman/standby/standby_imp.h"
 
 namespace L0 {
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,8 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/zes_api.h"
-
-#include "sysman/linux/fs_access.h"
 
 #include <vector>
 

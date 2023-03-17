@@ -9,7 +9,7 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 
-#include "sysman/memory/os_memory.h"
+#include "level_zero/tools/source/sysman/memory/os_memory.h"
 
 #include <map>
 

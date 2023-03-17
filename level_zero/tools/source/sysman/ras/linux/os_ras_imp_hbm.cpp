@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp_prelim.h"
-
-#include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 

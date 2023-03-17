@@ -18,8 +18,6 @@
 #include "level_zero/tools/source/sysman/firmware_util/firmware_util.h"
 #include "level_zero/tools/source/sysman/linux/fs_access.h"
 
-#include "sysman/firmware_util/firmware_util.h"
-
 namespace L0 {
 
 const std::string LinuxSysmanImp::deviceDir("device");

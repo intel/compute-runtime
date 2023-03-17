@@ -81,7 +81,6 @@ if(DEFINED AUB_STREAM_PROJECT_NAME)
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_configuration/aub_tests
                              ${NEO_SOURCE_DIR}/shared/test/common/helpers/includes${BRANCH_DIR_SUFFIX}
                              ${NEO_SHARED_TEST_DIRECTORY}/common/test_macros/header${BRANCH_DIR_SUFFIX}
-                             ${NEO_SOURCE_DIR}/level_zero/core/test/unit_tests
                              ${ENGINE_NODE_DIR}
                              ${CIF_BASE_DIR}
                              ${NEO__GMM_INCLUDE_DIR}

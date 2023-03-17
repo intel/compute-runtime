@@ -5,7 +5,7 @@
  *
  */
 
-#include "sysman/memory/windows/os_memory_imp.h"
+#include "level_zero/tools/source/sysman/memory/windows/os_memory_imp.h"
 
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 

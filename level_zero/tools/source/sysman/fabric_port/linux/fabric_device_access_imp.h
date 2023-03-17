@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,9 +8,9 @@
 #pragma once
 
 #include "level_zero/tools/source/sysman/linux/nl_api/iaf_nl_api.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
 #include "fabric_device_access.h"
-#include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 

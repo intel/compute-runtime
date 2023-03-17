@@ -6,11 +6,10 @@
  */
 
 #pragma once
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
 #include "level_zero/tools/source/sysman/performance/linux/os_performance_imp_prelim.h"
-
-#include "sysman/linux/fs_access.h"
-#include "sysman/performance/performance.h"
-#include "sysman/performance/performance_imp.h"
+#include "level_zero/tools/source/sysman/performance/performance.h"
+#include "level_zero/tools/source/sysman/performance/performance_imp.h"
 
 namespace L0 {
 namespace ult {

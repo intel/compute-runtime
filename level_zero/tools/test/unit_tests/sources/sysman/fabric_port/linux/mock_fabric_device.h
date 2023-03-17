@@ -7,11 +7,11 @@
 
 #pragma once
 #include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/tools/source/sysman/fabric_port/fabric_port.h"
+#include "level_zero/tools/source/sysman/linux/fs_access.h"
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 
 #include "gmock/gmock.h"
-#include "sysman/fabric_port/fabric_port.h"
-#include "sysman/linux/fs_access.h"
-#include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 namespace ult {

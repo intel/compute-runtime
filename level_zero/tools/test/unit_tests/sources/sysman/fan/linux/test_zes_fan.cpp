@@ -1,14 +1,13 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
 
+#include "level_zero/tools/source/sysman/fan/fan_imp.h"
 #include "level_zero/tools/source/sysman/fan/linux/os_fan_imp.h"
 #include "level_zero/tools/test/unit_tests/sources/sysman/linux/mock_sysman_fixture.h"
-
-#include "sysman/fan/fan_imp.h"
 
 extern bool sysmanUltsEnable;
 

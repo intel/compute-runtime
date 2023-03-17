@@ -200,16 +200,9 @@ if(BUILD_WITH_L0)
   else()
     include_directories(${LevelZero_INCLUDE_DIRS})
   endif()
-  include_directories(${NEO_SOURCE_DIR}/level_zero/api/experimental${BRANCH_DIR_SUFFIX})
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/gfx_core_helpers${BRANCH_DIR_SUFFIX})
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdlist/cmdlist_extended${BRANCH_DIR_SUFFIX})
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/core/source/cmdqueue/cmdqueue_extended${BRANCH_DIR_SUFFIX})
-  include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
   include_directories(ddi${BRANCH_DIR_SUFFIX})
-  include_directories(tools/source)
-  include_directories(sysman/source)
-  include_directories(experimental${BRANCH_DIR_SUFFIX}source)
-  include_directories(experimental/source/tracing)
 
   # Create our shared library/DLL
   configure_file(ze_intel_gpu_version.h.in ${NEO_BUILD_DIR}/ze_intel_gpu_version.h)
@@ -248,9 +241,6 @@ if(BUILD_WITH_L0)
   endif()
 
   if(WIN32)
-    target_include_directories(${TARGET_NAME_L0} PUBLIC
-                               ${L0_ROOT_DIR}/core/source/os_interface/windows
-    )
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
                    ${NEO_SHARED_DIRECTORY}/dll/wddm/create_gdi.cpp
@@ -282,9 +272,6 @@ if(BUILD_WITH_L0)
     )
     add_dependencies(${TARGET_NAME_L0} ${GMM_TARGET_NAME})
   else()
-    target_include_directories(${TARGET_NAME_L0} PUBLIC
-                               ${L0_ROOT_DIR}/core/source/os_interface/linux
-    )
     target_sources(${TARGET_NAME_L0}
                    PRIVATE
                    ${NEO_SHARED_DIRECTORY}/os_interface/linux/sys_calls_linux.cpp
@@ -328,8 +315,6 @@ if(BUILD_WITH_L0)
                    $<TARGET_OBJECTS:${BUILTINS_BINARIES_BINDLESS_LIB_NAME}>
     )
   endif()
-
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/source/inc)
 
   target_compile_definitions(${TARGET_NAME_L0}
                              PUBLIC

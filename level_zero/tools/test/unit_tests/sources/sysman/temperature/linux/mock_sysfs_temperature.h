@@ -6,10 +6,9 @@
  */
 
 #pragma once
+#include "level_zero/tools/source/sysman/linux/pmt/pmt.h"
 #include "level_zero/tools/source/sysman/temperature/linux/os_temperature_imp.h"
-
-#include "sysman/linux/pmt/pmt.h"
-#include "sysman/temperature/temperature_imp.h"
+#include "level_zero/tools/source/sysman/temperature/temperature_imp.h"
 
 namespace L0 {
 namespace ult {

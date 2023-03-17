@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,8 +8,8 @@
 #pragma once
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
-#include "sysman/fan/os_fan.h"
-#include "sysman/windows/os_sysman_imp.h"
+#include "level_zero/tools/source/sysman/fan/os_fan.h"
+#include "level_zero/tools/source/sysman/windows/os_sysman_imp.h"
 
 namespace L0 {
 

@@ -5,10 +5,9 @@
  *
  */
 
+#include "level_zero/tools/source/sysman/linux/os_sysman_imp.h"
 #include "level_zero/tools/source/sysman/ras/linux/os_ras_imp_prelim.h"
 #include "level_zero/tools/source/sysman/sysman_imp.h"
-
-#include "sysman/linux/os_sysman_imp.h"
 
 namespace L0 {
 static const std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToListOfEventsUncorrectable = {

@@ -9,9 +9,8 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 
+#include "level_zero/tools/source/sysman/engine/os_engine.h"
 #include "level_zero/tools/source/sysman/sysman_const.h"
-
-#include "sysman/engine/os_engine.h"
 
 #include <unistd.h>
 

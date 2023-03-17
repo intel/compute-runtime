@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,7 +7,7 @@
 
 #include "mock_nl_api_prelim.h"
 
-#include "sysman/linux/nl_api/iaf_nl_api.h"
+#include "level_zero/tools/source/sysman/linux/nl_api/iaf_nl_api.h"
 
 namespace L0 {
 namespace ult {
