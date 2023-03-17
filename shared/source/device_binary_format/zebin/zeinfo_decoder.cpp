@@ -1205,6 +1205,10 @@ DecodeError populateKernelPayloadArgument(NEO::KernelDescriptor &dst, const Kern
         dst.kernelAttributes.flags.usesPrintf = true;
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.printfSurfaceAddress);
 
+    case Types::Kernel::ArgTypeAssertBuffer:
+        dst.kernelAttributes.flags.usesAssert = true;
+        return populateArgPointerStateless(dst.payloadMappings.implicitArgs.assertBufferAddress);
+
     case Types::Kernel::ArgTypeSyncBuffer:
         dst.kernelAttributes.flags.usesSyncBuffer = true;
         return populateArgPointerStateless(dst.payloadMappings.implicitArgs.syncBufferAddress);

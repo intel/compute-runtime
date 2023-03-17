@@ -4886,6 +4886,26 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypePrintfBufferWhenOffsetAndSizeIsV
     EXPECT_EQ(8U, printfSurfaceAddress.pointerSize);
 }
 
+TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeAssertBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {
+    ConstStringRef zeinfo = R"===(
+        kernels:
+            - name : some_kernel
+              execution_env:
+                simd_size: 32
+              payload_arguments:
+                - arg_type: assert_buffer
+                  offset: 32
+                  size: 8
+)===";
+    auto err = decodeZeInfoKernelEntry(zeinfo);
+    EXPECT_EQ(NEO::DecodeError::Success, err);
+    EXPECT_TRUE(errors.empty()) << errors;
+    EXPECT_TRUE(warnings.empty()) << warnings;
+    const auto assertBufferAddress = kernelDescriptor->payloadMappings.implicitArgs.assertBufferAddress;
+    ASSERT_EQ(32U, assertBufferAddress.stateless);
+    EXPECT_EQ(8U, assertBufferAddress.pointerSize);
+}
+
 TEST_F(decodeZeInfoKernelEntryTest, GivenArgTypeSyncBufferWhenOffsetAndSizeIsValidThenPopulatesKernelDescriptor) {
     ConstStringRef zeinfo = R"===(
         kernels:
