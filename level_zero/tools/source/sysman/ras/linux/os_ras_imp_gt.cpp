@@ -20,20 +20,20 @@ static const std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToL
     {ZES_RAS_ERROR_CAT_PROGRAMMING_ERRORS,
      {"eu-attention"}},
     {ZES_RAS_ERROR_CAT_NON_COMPUTE_ERRORS,
-     {"soc-fatal-mdfi-east", "soc-fatal-mdfi-south", "soc-fatal-mdfi-west",
-      "soc-fatal-psf-0", "soc-fatal-psf-1", "soc-fatal-psf-2", "soc-fatal-psf-csc-0",
+     {"soc-fatal-psf-0", "soc-fatal-psf-1", "soc-fatal-psf-2", "soc-fatal-psf-csc-0",
       "soc-fatal-psf-csc-1", "soc-fatal-psf-csc-2", "soc-fatal-punit",
       "sgunit-fatal", "soc-nonfatal-punit", "sgunit-fatal", "sgunit-nonfatal", "gsc-nonfatal-mia-shutdown",
       "gsc-nonfatal-aon-parity", "gsc-nonfatal-rom-parity", "gsc-nonfatal-fuse-crc-check",
       "gsc-nonfatal-selfmbist", "gsc-nonfatal-fuse-pull", "gsc-nonfatal-sram-ecc", "gsc-nonfatal-glitch-det",
       "gsc-nonfatal-ucode-parity", "gsc-nonfatal-mia-int", "gsc-nonfatal-wdg-timeout"}},
     {ZES_RAS_ERROR_CAT_COMPUTE_ERRORS,
-     {"fatal-fpu", "fatal-l3-fabric", "fatal-eu-grf", "fatal-sampler", "fatal-slm",
+     {"fatal-fpu", "fatal-eu-grf", "fatal-sampler", "fatal-slm",
       "fatal-guc", "fatal-eu-ic", "fatal-subslice"}},
     {ZES_RAS_ERROR_CAT_DRIVER_ERRORS,
      {"driver-object-migration", "driver-engine-other", "driver-ggtt",
       "driver-gt-interrupt", "driver-gt-other", "driver-guc-communication",
-      "driver-rps"}}};
+      "driver-rps"}},
+    {ZES_RAS_ERROR_CAT_L3FABRIC_ERRORS, {"soc-fatal-mdfi-east", "soc-fatal-mdfi-south", "soc-fatal-mdfi-west", "fatal-l3-fabric", "soc-fatal-cd0-mdfi"}}};
 
 static const std::map<zes_ras_error_cat_t, std::vector<std::string>> categoryToListOfEventsCorrectable = {
     {ZES_RAS_ERROR_CAT_CACHE_ERRORS,
