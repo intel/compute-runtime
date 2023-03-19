@@ -7,6 +7,7 @@
 
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_gmm_resource_info.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/helpers/cl_memory_properties_helpers.h"
@@ -114,3 +115,62 @@ INSTANTIATE_TEST_CASE_P(
     PackedYuvImageTests,
     PackedYuvImageTest,
     testing::ValuesIn(packedYuvChannels));
+
+class PackedYUVImageTest : public testing::Test {
+  protected:
+    void SetUp() override {
+        imageFormat.image_channel_data_type = CL_UNORM_INT8;
+        imageFormat.image_channel_order = CL_YUYV_INTEL;
+
+        imageDesc.mem_object = NULL;
+        imageDesc.image_array_size = 0;
+        imageDesc.image_depth = 1;
+        imageDesc.image_height = 4 * 4;     // Valid values multiple of 4
+        imageDesc.image_width = imageWidth; // Valid values multiple of 4
+
+        imageDesc.image_row_pitch = 0;
+        imageDesc.image_slice_pitch = 0;
+        imageDesc.image_type = CL_MEM_OBJECT_IMAGE2D;
+        imageDesc.num_mip_levels = 0;
+        imageDesc.num_samples = 0;
+
+        flags = CL_MEM_HOST_NO_ACCESS;
+    }
+
+    void validateImageWithFlags(cl_mem_flags flags) {
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(
+            flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        retVal = Image::validate(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+                                 surfaceFormat, &imageDesc, nullptr);
+    }
+
+    Image *createImageWithFlags(cl_mem_flags flags) {
+        auto surfaceFormat = Image::getSurfaceFormatFromTable(
+            flags, &imageFormat, context.getDevice(0)->getHardwareInfo().capabilityTable.supportsOcl21Features);
+        return Image::create(&context, ClMemoryPropertiesHelper::createMemoryProperties(flags, 0, 0, &context.getDevice(0)->getDevice()),
+                             flags, 0, surfaceFormat, &imageDesc, nullptr, retVal);
+    }
+
+    const uint32_t imageWidth = 4 * 4;
+    cl_int retVal = CL_SUCCESS;
+    MockContext context;
+    cl_image_format imageFormat;
+    cl_image_desc imageDesc;
+    cl_mem_flags flags;
+};
+
+TEST_F(PackedYUVImageTest, GivenImageViewWhenYUYVIsPassedThenSuccessIsReturned) {
+    std::unique_ptr<Image> image{createImageWithFlags(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL)};
+
+    ASSERT_NE(nullptr, image);
+
+    imageFormat.image_channel_order = CL_RGBA;
+    imageDesc.image_width = imageWidth / 2; // YUYV image view to RGBA reads two pixel in one read Y0 U0 Y1 V0
+    imageDesc.mem_object = image.get();
+
+    std::unique_ptr<Image> imageRGBAFromYUYV{createImageWithFlags(CL_MEM_READ_WRITE)};
+
+    ASSERT_NE(nullptr, imageRGBAFromYUYV);
+
+    EXPECT_EQ(imageRGBAFromYUYV->getImageDesc().image_width, imageDesc.image_width);
+}

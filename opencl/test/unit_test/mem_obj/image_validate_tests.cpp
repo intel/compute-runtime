@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -759,7 +759,7 @@ INSTANTIATE_TEST_CASE_P(
 using ValidParentImageFormatTest = ::testing::TestWithParam<std::tuple<uint32_t, uint32_t>>;
 
 cl_channel_order allChannelOrders[] = {CL_R, CL_A, CL_RG, CL_RA, CL_RGB, CL_RGBA, CL_BGRA, CL_ARGB, CL_INTENSITY, CL_LUMINANCE, CL_Rx, CL_RGx, CL_RGBx, CL_DEPTH, CL_DEPTH_STENCIL, CL_sRGB,
-                                       CL_sRGBx, CL_sRGBA, CL_sBGRA, CL_ABGR, CL_NV12_INTEL};
+                                       CL_sRGBx, CL_sRGBA, CL_sBGRA, CL_ABGR, CL_NV12_INTEL, CL_YUYV_INTEL};
 
 struct NullImage : public Image {
     using Image::imageDesc;
@@ -817,7 +817,8 @@ std::tuple<uint32_t, uint32_t> imageFromImageValidChannelOrderPairs[] = {
     std::make_tuple(CL_DEPTH, 0),
     std::make_tuple(CL_DEPTH_STENCIL, 0),
     std::make_tuple(CL_ABGR, 0),
-    std::make_tuple(CL_NV12_INTEL, 0)};
+    std::make_tuple(CL_NV12_INTEL, 0),
+    std::make_tuple(CL_YUYV_INTEL, CL_RGBA)};
 
 INSTANTIATE_TEST_CASE_P(
     ValidParentImageFormatTests,
@@ -890,6 +891,86 @@ TEST(ImageValidatorTest, givenInvalidImage2dSizesWithoutParentObjectWhenValidate
 
     descriptor.image_height = 0;
     descriptor.image_width = 1;
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, Image::validate(&context, {}, &surfaceFormat, &descriptor, dummyPtr));
+};
+TEST(ImageValidatorTest, givenPackedYUVImage2dAsParentImageWhenValidateImageZeroSizedThenReturnsSuccess) {
+    NullImage image;
+    cl_image_desc descriptor;
+    MockContext context;
+    REQUIRE_IMAGES_OR_SKIP(&context);
+
+    void *dummyPtr = reinterpret_cast<void *>(0x17);
+    ClSurfaceFormatInfo surfaceFormat = {};
+    surfaceFormat.OCLImageFormat.image_channel_order = CL_RGBA;
+    image.imageFormat.image_channel_order = CL_YUYV_INTEL;
+
+    descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
+    descriptor.image_height = 0;
+    descriptor.image_width = 0;
+    descriptor.image_row_pitch = 0;
+    descriptor.mem_object = &image;
+
+    EXPECT_EQ(CL_SUCCESS, Image::validate(&context, {}, &surfaceFormat, &descriptor, dummyPtr));
+};
+TEST(ImageValidatorTest, givenPackedYUVImage2dAsParentImageWhenValidateImageTwoChannelsThenReturnsFailure) {
+    NullImage image;
+    cl_image_desc descriptor;
+    MockContext context;
+    REQUIRE_IMAGES_OR_SKIP(&context);
+
+    void *dummyPtr = reinterpret_cast<void *>(0x17);
+    ClSurfaceFormatInfo surfaceFormat = {};
+    surfaceFormat.OCLImageFormat.image_channel_order = CL_RG;
+    image.imageFormat.image_channel_order = CL_YUYV_INTEL;
+
+    descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
+    descriptor.image_height = 0;
+    descriptor.image_width = 0;
+    descriptor.image_row_pitch = 0;
+    descriptor.mem_object = &image;
+
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, Image::validate(&context, {}, &surfaceFormat, &descriptor, dummyPtr));
+};
+TEST(ImageValidatorTest, givenPackedYUVImage2dAsParentImageWhenValidateImageInvalidSizeThenReturnsFailure) {
+    NullImage image;
+    cl_image_desc descriptor;
+    MockContext context;
+    REQUIRE_IMAGES_OR_SKIP(&context);
+
+    void *dummyPtr = reinterpret_cast<void *>(0x17);
+    ClSurfaceFormatInfo surfaceFormat = {};
+    image.imageDesc.image_width = 4u;
+    image.imageDesc.image_height = 4u;
+    surfaceFormat.OCLImageFormat.image_channel_order = CL_RGBA;
+    image.imageFormat.image_channel_order = CL_YUYV_INTEL;
+
+    descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
+    descriptor.image_height = 4;
+    descriptor.image_width = 1;
+    descriptor.image_row_pitch = 0;
+    descriptor.mem_object = &image;
+
+    EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, Image::validate(&context, {}, &surfaceFormat, &descriptor, dummyPtr));
+};
+TEST(ImageValidatorTest, givenPackedYUVImage2dAsParentImageWhenValidateImageInvalidSizeAndChannelsThenReturnsFailure) {
+    NullImage image;
+    cl_image_desc descriptor;
+    MockContext context;
+    REQUIRE_IMAGES_OR_SKIP(&context);
+
+    void *dummyPtr = reinterpret_cast<void *>(0x17);
+    ClSurfaceFormatInfo surfaceFormat = {};
+    image.imageDesc.image_width = 4u;
+    image.imageDesc.image_height = 4u;
+    surfaceFormat.OCLImageFormat.image_channel_order = CL_RG;
+    image.imageFormat.image_channel_order = CL_YUYV_INTEL;
+
+    descriptor.image_type = CL_MEM_OBJECT_IMAGE2D;
+    descriptor.image_height = 4;
+    descriptor.image_width = 1;
+    descriptor.image_row_pitch = 0;
+    descriptor.mem_object = &image;
+
     EXPECT_EQ(CL_INVALID_IMAGE_DESCRIPTOR, Image::validate(&context, {}, &surfaceFormat, &descriptor, dummyPtr));
 };
 TEST(ImageValidatorTest, givenNV12Image2dAsParentImageWhenValidateImageZeroSizedThenReturnsSuccess) {

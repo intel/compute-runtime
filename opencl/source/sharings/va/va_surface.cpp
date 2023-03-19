@@ -63,6 +63,9 @@ VAStatus VASurface::getSurfaceDescription(SharedSurfaceInfo &surfaceInfo, VAShar
             return VA_STATUS_ERROR_INVALID_PARAMETER;
         }
 
+        surfaceInfo.imagePitch = vaDrmPrimeSurfaceDesc.layers[0].pitch[0];
+        surfaceInfo.imageOffset = vaDrmPrimeSurfaceDesc.layers[0].offset[0];
+
         if (surfaceInfo.plane == 1) {
             surfaceInfo.imageOffset = vaDrmPrimeSurfaceDesc.layers[1].offset[0];
             surfaceInfo.imagePitch = vaDrmPrimeSurfaceDesc.layers[1].pitch[0];
@@ -151,7 +154,13 @@ void VASurface::applyPlaneSettings(SharedSurfaceInfo &sharedSurfaceInfo, cl_uint
 }
 
 void VASurface::applyPackedOptions(SharedSurfaceInfo &sharedSurfaceInfo) {
-    sharedSurfaceInfo.channelOrder = CL_YUYV_INTEL;
+    if (sharedSurfaceInfo.imageFourcc == VA_FOURCC_Y210) {
+        sharedSurfaceInfo.channelType = CL_UNORM_INT16;
+        sharedSurfaceInfo.channelOrder = CL_RGBA;
+    } else {
+        sharedSurfaceInfo.channelType = CL_UNORM_INT8;
+        sharedSurfaceInfo.channelOrder = CL_YUYV_INTEL;
+    }
     sharedSurfaceInfo.imgInfo.surfaceFormat = &VASurface::getExtendedSurfaceFormatInfo(sharedSurfaceInfo.imageFourcc)->surfaceFormat;
 }
 
@@ -240,6 +249,8 @@ bool VASurface::validate(cl_mem_flags flags, cl_uint plane) {
     case CL_MEM_READ_ONLY:
     case CL_MEM_WRITE_ONLY:
     case CL_MEM_READ_WRITE:
+    case CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL:
+    case CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL:
         break;
     default:
         return false;

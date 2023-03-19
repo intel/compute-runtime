@@ -411,12 +411,17 @@ cl_int Image::validate(Context *context,
                 return CL_INVALID_VALUE;
             }
         }
-        if (parentImage && !isNV12Image(&parentImage->getImageFormat())) { // Image 2d from image 2d
+        if (parentImage && (!isNV12Image(&parentImage->getImageFormat()) && !isPackedYuvImage(&parentImage->getImageFormat()))) { // Image 2d from image 2d
             if (!parentImage->hasSameDescriptor(*imageDesc) || !parentImage->hasValidParentImageFormat(surfaceFormat->OCLImageFormat)) {
                 return CL_INVALID_IMAGE_FORMAT_DESCRIPTOR;
             }
         }
-        if (!(parentImage && isNV12Image(&parentImage->getImageFormat())) &&
+        if (parentImage && isPackedYuvImage(&parentImage->getImageFormat())) {
+            if (!parentImage->hasValidParentImageFormat(surfaceFormat->OCLImageFormat) || imageDesc->image_width != parentImage->getImageDesc().image_width / 2) {
+                return CL_INVALID_IMAGE_DESCRIPTOR;
+            }
+        }
+        if (!((parentImage && isNV12Image(&parentImage->getImageFormat())) || (parentImage && isPackedYuvImage(&parentImage->getImageFormat()))) &&
             (imageDesc->image_width == 0 || imageDesc->image_height == 0)) {
             return CL_INVALID_IMAGE_DESCRIPTOR;
         }
@@ -1116,22 +1121,26 @@ void Image::setImageProperties(Image *image, const cl_image_desc &imageDesc, con
 }
 
 void Image::adjustImagePropertiesFromParentImage(size_t &width, size_t &height, size_t &depth, ImageInfo &imageInfo, cl_image_desc &descriptor, Image *parentImage) {
-
-    width = parentImage->getImageDesc().image_width;
-    height = parentImage->getImageDesc().image_height;
-    depth = 1;
-    if (isNV12Image(&parentImage->getImageFormat())) {
-        if (descriptor.image_depth == 1) { // UV Plane
-            width /= 2;
-            height /= 2;
-            imageInfo.plane = GMM_PLANE_U;
-        } else {
-            imageInfo.plane = GMM_PLANE_Y;
+    if (isPackedYuvImage(&parentImage->getImageFormat())) {
+        width = parentImage->getImageDesc().image_width / 2;
+        height = parentImage->getImageDesc().image_height;
+    } else {
+        width = parentImage->getImageDesc().image_width;
+        height = parentImage->getImageDesc().image_height;
+        depth = 1;
+        if (isNV12Image(&parentImage->getImageFormat())) {
+            if (descriptor.image_depth == 1) { // UV Plane
+                width /= 2;
+                height /= 2;
+                imageInfo.plane = GMM_PLANE_U;
+            } else {
+                imageInfo.plane = GMM_PLANE_Y;
+            }
         }
-    }
 
-    imageInfo.surfaceFormat = &parentImage->surfaceFormatInfo.surfaceFormat;
-    descriptor = parentImage->getImageDesc();
+        imageInfo.surfaceFormat = &parentImage->surfaceFormatInfo.surfaceFormat;
+        descriptor = parentImage->getImageDesc();
+    }
 }
 
 void Image::setAllocationInfoFromParentBuffer(CreateMemObj::AllocationInfo &allocationInfo, const void *&hostPtr, void *&hostPtrToSet,
@@ -1607,6 +1616,8 @@ bool Image::hasValidParentImageFormat(const cl_image_format &imageFormat) const 
         return imageFormat.image_channel_order == CL_RGBx;
     case CL_R:
         return imageFormat.image_channel_order == CL_DEPTH;
+    case CL_YUYV_INTEL:
+        return imageFormat.image_channel_order == CL_RGBA;
     default:
         return false;
     }

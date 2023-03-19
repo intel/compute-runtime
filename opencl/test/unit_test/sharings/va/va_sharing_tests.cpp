@@ -598,12 +598,19 @@ TEST_F(VaSharingTests, givenValidSurfaceWithPlaneSetWhenApplyPlaneSettingsThenPr
 }
 
 TEST_F(VaSharingTests, givenValidPackedFormatWhenApplyPackedOptionsThenSurfaceFormatIsSet) {
-    SharedSurfaceInfo surfaceInfo{};
-    surfaceInfo.imageFourcc = VA_FOURCC_YUY2;
+    SharedSurfaceInfo surfaceInfoYUY2{};
+    surfaceInfoYUY2.imageFourcc = VA_FOURCC_YUY2;
 
-    VASurface::applyPackedOptions(surfaceInfo);
+    VASurface::applyPackedOptions(surfaceInfoYUY2);
 
-    EXPECT_EQ(surfaceInfo.imgInfo.surfaceFormat->GMMSurfaceFormat, GMM_FORMAT_YCRCB_NORMAL);
+    EXPECT_EQ(surfaceInfoYUY2.imgInfo.surfaceFormat->GMMSurfaceFormat, GMM_FORMAT_YCRCB_NORMAL);
+
+    SharedSurfaceInfo surfaceInfoY210{};
+    surfaceInfoY210.imageFourcc = VA_FOURCC_Y210;
+
+    VASurface::applyPackedOptions(surfaceInfoY210);
+
+    EXPECT_EQ(surfaceInfoY210.imgInfo.surfaceFormat->GMMSurfaceFormat, GMM_FORMAT_Y210);
 }
 
 TEST_F(VaSharingTests, givenInvalidPlaneWhenVaSurfaceIsCreatedAndNotRGBPThenUnrecoverableIsCalled) {
@@ -1294,10 +1301,12 @@ TEST(VaSurface, givenValidPlaneAndFlagsWhenValidatingInputsThenTrueIsReturned) {
         EXPECT_TRUE(VASurface::validate(CL_MEM_READ_ONLY, plane));
         EXPECT_TRUE(VASurface::validate(CL_MEM_WRITE_ONLY, plane));
         EXPECT_TRUE(VASurface::validate(CL_MEM_READ_WRITE, plane));
+        EXPECT_TRUE(VASurface::validate(CL_MEM_READ_ONLY | CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL, plane));
+        EXPECT_TRUE(VASurface::validate(CL_MEM_ACCESS_FLAGS_UNRESTRICTED_INTEL, plane));
     }
 }
 
-TEST(VaSurface, givenInValidPlaneOrFlagsWhenValidatingInputsThenTrueIsReturned) {
+TEST(VaSurface, givenInvalidPlaneOrFlagsWhenValidatingInputsThenTrueIsReturned) {
     cl_uint plane = 2;
     EXPECT_FALSE(VASurface::validate(CL_MEM_READ_ONLY, plane));
     EXPECT_FALSE(VASurface::validate(CL_MEM_USE_HOST_PTR, 0));
