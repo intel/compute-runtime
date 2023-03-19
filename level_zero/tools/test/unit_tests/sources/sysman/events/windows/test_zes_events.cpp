@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -67,7 +67,7 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
     }
 };
 
-TEST_F(SysmanEventsFixture, DISABLED_GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterTimingOutWithNoEvent) {
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterTimingOutWithNoEvent) {
     init(true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
@@ -80,7 +80,7 @@ TEST_F(SysmanEventsFixture, DISABLED_GivenValidDeviceHandleWhenListeningForReset
     delete[] pDeviceEvents;
 }
 
-TEST_F(SysmanEventsFixture, DISABLED_GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterReceivingEventOnInfiniteWait) {
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterReceivingEventOnInfiniteWait) {
     init(true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
@@ -96,7 +96,7 @@ TEST_F(SysmanEventsFixture, DISABLED_GivenValidDeviceHandleWhenListeningForReset
     delete[] pDeviceEvents;
 }
 
-TEST_F(SysmanEventsFixture, DISABLED_GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterReceivingEventOnInfiniteWaitMultipleTimes) {
+TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterReceivingEventOnInfiniteWaitMultipleTimes) {
     init(true);
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_DETACH));
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
