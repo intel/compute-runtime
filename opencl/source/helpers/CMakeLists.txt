@@ -30,7 +30,6 @@ set(RUNTIME_SRCS_HELPERS_BASE
     ${CMAKE_CURRENT_SOURCE_DIR}/enqueue_properties.h
     ${CMAKE_CURRENT_SOURCE_DIR}/error_mappers.h
     ${CMAKE_CURRENT_SOURCE_DIR}/get_info_status_mapper.h
-    ${CMAKE_CURRENT_SOURCE_DIR}/gl_helper.h
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_types_converter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/gmm_types_converter.h
     ${CMAKE_CURRENT_SOURCE_DIR}/hardware_commands_helper.h
@@ -62,7 +61,14 @@ if(SUPPORT_PVC_AND_LATER)
   list(APPEND RUNTIME_SRCS_HELPERS_BASE ${CMAKE_CURRENT_SOURCE_DIR}/cl_gfx_core_helper_pvc_and_later.inl)
 endif()
 
+set(RUNTIME_SRCS_HELPERS_WINDOWS
+    ${CMAKE_CURRENT_SOURCE_DIR}/windows/gl_helper.h
+)
+
 target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_HELPERS_BASE})
+if(WIN32)
+  target_sources(${NEO_STATIC_LIB_NAME} PRIVATE ${RUNTIME_SRCS_HELPERS_WINDOWS})
+endif()
 
 set_property(GLOBAL PROPERTY RUNTIME_SRCS_HELPERS_BASE ${RUNTIME_SRCS_HELPERS_BASE})
 

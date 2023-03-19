@@ -41,6 +41,8 @@
 
 using namespace NEO;
 
+bool MockGLSharingFunctions::SharingEnabled = false;
+
 class glSharingTests : public ::testing::Test {
   public:
     void SetUp() override {

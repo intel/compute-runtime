@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/utilities/api_intercept.h"
 
 #include "opencl/source/api/api.h"
@@ -25,6 +26,7 @@
 #include "opencl/source/sharings/gl/gl_buffer.h"
 #include "opencl/source/sharings/gl/gl_sync_event.h"
 #include "opencl/source/sharings/gl/gl_texture.h"
+#include "opencl/source/sharings/gl/windows/gl_sharing_windows.h"
 #include "opencl/source/tracing/tracing_notify.h"
 #include "opencl/source/utilities/cl_logger.h"
 
@@ -315,8 +317,8 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
                    fileLoggerInstance().getInput(paramValueSizeRet, 0));
     GetInfoHelper info(paramValue, paramValueSize, paramValueSizeRet);
 
-    uint32_t glHglrcHandle = 0;
-    uint32_t glHdcHandle = 0;
+    uint32_t GLHGLRCHandle = 0;
+    uint32_t GLHDCHandle = 0;
     uint32_t propertyType = 0;
     uint32_t propertyValue = 0;
     Platform *platform = nullptr;
@@ -330,23 +332,22 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
                 platform = castToObject<Platform>(reinterpret_cast<cl_platform_id>(properties[1]));
             } break;
             case CL_GL_CONTEXT_KHR:
-                glHglrcHandle = propertyValue;
+                GLHGLRCHandle = propertyValue;
                 break;
             case CL_WGL_HDC_KHR:
-                glHdcHandle = propertyValue;
+                GLHDCHandle = propertyValue;
                 break;
             }
             properties += 2;
         }
     }
 
-    auto glSharing = GLSharingFunctions::create();
-
-    if ((glHglrcHandle == 0) || glSharing->isGlHdcHandleMissing(glHdcHandle)) {
+    if ((GLHDCHandle == 0) || (GLHGLRCHandle == 0)) {
         retVal = CL_INVALID_GL_SHAREGROUP_REFERENCE_KHR;
         return retVal;
     }
 
+    auto glSharing = std::make_unique<GLSharingFunctionsWindows>();
     glSharing->initGLFunctions();
     if (glSharing->isOpenGlSharingSupported() == false) {
         retVal = CL_INVALID_CONTEXT;
@@ -361,7 +362,7 @@ cl_int CL_API_CALL clGetGLContextInfoKHR(const cl_context_properties *properties
         ClDevice *deviceToReturn = nullptr;
         for (auto i = 0u; i < platform->getNumDevices(); i++) {
             auto device = platform->getClDevice(i);
-            if (glSharing->isHandleCompatible(*device->getRootDeviceEnvironment().osInterface->getDriverModel(), glHglrcHandle)) {
+            if (device->getRootDeviceEnvironment().osInterface->getDriverModel()->as<Wddm>()->verifyAdapterLuid(glSharing->getAdapterLuid(reinterpret_cast<GLContext>(static_cast<uintptr_t>(GLHGLRCHandle))))) {
                 deviceToReturn = device;
                 break;
             }

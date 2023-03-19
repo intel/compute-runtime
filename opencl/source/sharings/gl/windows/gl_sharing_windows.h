@@ -57,8 +57,6 @@ class GLSharingFunctionsWindows : public GLSharingFunctions {
 
     GLboolean initGLFunctions() override;
     bool isOpenGlSharingSupported() override;
-    bool isHandleCompatible(const DriverModel &driverModel, uint32_t handle) const override;
-    bool isGlHdcHandleMissing(uint32_t handle) const override { return handle == 0u; }
     static bool isGlSharingEnabled();
 
     // Arb sync event

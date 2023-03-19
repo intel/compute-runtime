@@ -44,17 +44,17 @@ struct IntelGlTracingTest : public api_tests {
     }
 
   protected:
-    static void callback(cl_function_id fid, cl_callback_data *callbackData, void *userData) {
-        ASSERT_NE(nullptr, userData);
-        IntelGlTracingTest *base = reinterpret_cast<IntelGlTracingTest *>(userData);
-        base->vcallback(fid, callbackData, nullptr);
+    static void callback(cl_function_id fid, cl_callback_data *callback_data, void *user_data) {
+        ASSERT_NE(nullptr, user_data);
+        IntelGlTracingTest *base = (IntelGlTracingTest *)user_data;
+        base->vcallback(fid, callback_data, nullptr);
     }
 
-    virtual void vcallback(cl_function_id fid, cl_callback_data *callbackData, void *userData) {
+    virtual void vcallback(cl_function_id fid, cl_callback_data *callback_data, void *user_data) {
         if (fid == functionId) {
-            if (callbackData->site == CL_CALLBACK_SITE_ENTER) {
+            if (callback_data->site == CL_CALLBACK_SITE_ENTER) {
                 ++enterCount;
-            } else if (callbackData->site == CL_CALLBACK_SITE_EXIT) {
+            } else if (callback_data->site == CL_CALLBACK_SITE_EXIT) {
                 ++exitCount;
             }
         }

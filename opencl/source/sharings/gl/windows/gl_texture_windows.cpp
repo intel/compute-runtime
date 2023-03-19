@@ -267,8 +267,4 @@ void GlTexture::releaseResource(MemObj *memObject, uint32_t rootDeviceIndex) {
     }
 }
 
-void GlTexture::resolveGraphicsAllocationChange(osHandle currentSharedHandle, UpdateData *updateData) {
-    GlSharing::resolveGraphicsAllocationChange(currentSharedHandle, updateData);
-}
-
 } // namespace NEO

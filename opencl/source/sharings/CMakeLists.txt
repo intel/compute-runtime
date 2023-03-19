@@ -17,10 +17,6 @@ target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PRIVATE
                            ${THIRD_PARTY_DIR}
 )
 
-if(UNIX AND NOT DISABLE_WDDM_LINUX)
-  target_include_directories(${SHARINGS_ENABLE_LIB_NAME} PUBLIC ${WDK_INCLUDE_PATHS})
-endif()
-
 set(RUNTIME_SRCS_SHARINGS
     ${CMAKE_CURRENT_SOURCE_DIR}/sharing.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/sharing.h

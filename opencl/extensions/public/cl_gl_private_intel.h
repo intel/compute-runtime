@@ -8,9 +8,8 @@
 #ifndef OPENCL_SHARED_RESOURCE
 #define OPENCL_SHARED_RESOURCE
 
-#include "shared/source/gmm_helper/gmm_lib.h"
-
 #include "GL/gl.h"
+#include "GmmLib.h"
 #include "third_party/opencl_headers/CL/cl_gl.h"
 
 // Used for creating CL resources from GL resources
@@ -65,32 +64,36 @@ typedef struct _tagCLGLBufferInfo {
 #ifdef _WIN32
 // Used for creating GL sync objects from CL events
 typedef struct _tagCLGLSyncInfo {
-    char *eventName{};
-    HANDLE event{};
-    char *submissionEventName{};
-    HANDLE submissionEvent{};
-    D3DKMT_HANDLE clientSynchronizationObject{};
-    D3DKMT_HANDLE serverSynchronizationObject{};
-    D3DKMT_HANDLE submissionSynchronizationObject{};
-    D3DKMT_HANDLE hContextToBlock{};
-    bool waitCalled{};
-} CL_GL_SYNC_INFO, *PCL_GL_SYNC_INFO;
 
-#else
-typedef struct _tagCLGLSyncInfo {
-    char *eventName{};
-    HANDLE event{};
-    char *submissionEventName{};
-    HANDLE submissionEvent{};
-    bool waitCalled{};
+    _tagCLGLSyncInfo()
+        : eventName(NULL),
+          event((HANDLE)0),
+          submissionEventName(NULL),
+          submissionEvent((HANDLE)0),
+          clientSynchronizationObject((D3DKMT_HANDLE)0),
+          serverSynchronizationObject((D3DKMT_HANDLE)0),
+          submissionSynchronizationObject((D3DKMT_HANDLE)0),
+          hContextToBlock((D3DKMT_HANDLE)0),
+          waitCalled(false) {
+    }
+
+    char *eventName;
+    HANDLE event;
+    char *submissionEventName;
+    HANDLE submissionEvent;
+    D3DKMT_HANDLE clientSynchronizationObject;
+    D3DKMT_HANDLE serverSynchronizationObject;
+    D3DKMT_HANDLE submissionSynchronizationObject;
+    D3DKMT_HANDLE hContextToBlock;
+    bool waitCalled;
 } CL_GL_SYNC_INFO, *PCL_GL_SYNC_INFO;
-#endif
 
 // Used for creating CL events from GL sync objects
 typedef struct _tagGLCLSyncInfo {
     __GLsync *syncName;
     GLvoid *pSync;
 } GL_CL_SYNC_INFO, *PGL_CL_SYNC_INFO;
+#endif
 
 typedef int(__stdcall *pfn_clRetainEvent)(struct _cl_event *event);
 typedef int(__stdcall *pfn_clReleaseEvent)(struct _cl_event *event);
