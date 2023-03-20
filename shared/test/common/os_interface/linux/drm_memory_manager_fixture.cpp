@@ -13,12 +13,11 @@
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
 #include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
 #include "hw_cmds_default.h"
 
 namespace NEO {
-
-extern std::vector<void *> mmapVector;
 
 void DrmMemoryManagerBasic::SetUp() {
     for (auto i = 0u; i < numRootDevices; i++) {
@@ -103,7 +102,7 @@ void DrmMemoryManagerFixture::tearDown() {
     mock->testIoctls();
     executionEnvironment->decRefInternal();
     MemoryManagementFixture::tearDown();
-    mmapVector.clear();
+    SysCalls::mmapVector.clear();
 }
 
 void DrmMemoryManagerWithLocalMemoryFixture::setUp() {

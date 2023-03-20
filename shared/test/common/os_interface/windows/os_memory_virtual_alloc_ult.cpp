@@ -11,12 +11,16 @@
 
 namespace NEO {
 
+namespace SysCalls {
+extern bool mmapAllowExtendedPointers;
+}
+
 BOOL WINAPI ULTVirtualFree(LPVOID ptr, SIZE_T size, DWORD flags) {
     return 1;
 }
 
 LPVOID WINAPI ULTVirtualAlloc(LPVOID inPtr, SIZE_T size, DWORD flags, DWORD type) {
-    if (castToUint64(inPtr) > maxNBitValue(48)) {
+    if (castToUint64(inPtr) > maxNBitValue(48) && SysCalls::mmapAllowExtendedPointers) {
         return inPtr;
     }
     return reinterpret_cast<LPVOID>(virtualAllocAddress);

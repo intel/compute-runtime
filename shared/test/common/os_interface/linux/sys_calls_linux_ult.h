@@ -10,6 +10,7 @@
 #include <iostream>
 #include <poll.h>
 #include <sys/stat.h>
+#include <vector>
 
 namespace NEO {
 namespace SysCalls {
@@ -29,5 +30,12 @@ extern int passedFileDescriptorFlagsToSet;
 extern int getFileDescriptorFlagsCalled;
 extern int setFileDescriptorFlagsCalled;
 extern uint32_t closeFuncCalled;
+
+extern std::vector<void *> mmapVector;
+extern std::vector<void *> mmapCapturedExtendedPointers;
+extern bool mmapCaptureExtendedPointers;
+extern bool mmapAllowExtendedPointers;
+extern uint32_t mmapFuncCalled;
+extern uint32_t munmapFuncCalled;
 } // namespace SysCalls
 } // namespace NEO

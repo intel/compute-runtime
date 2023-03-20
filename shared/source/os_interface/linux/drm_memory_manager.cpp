@@ -370,7 +370,7 @@ DrmAllocation *DrmMemoryManager::allocateGraphicsMemoryWithAlignmentImpl(const A
     }
 
     auto drmAllocation = createAllocWithAlignment(allocationData, cSize, mmapAlignment, alignedStorageSize, alignedGpuAddress);
-    if (drmAllocation != nullptr) {
+    if (drmAllocation != nullptr && gpuReservationAddress) {
         drmAllocation->setReservedAddressRange(reinterpret_cast<void *>(gpuReservationAddress), alignedVirtualAddressRangeSize);
     }
 
@@ -1977,7 +1977,18 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
 
     if (useBooMmap) {
         auto totalSizeToAlloc = alignedSize + alignment;
-        auto cpuPointer = this->mmapFunction(0, totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        uint64_t preferredAddress = 0;
+        auto gfxPartition = getGfxPartition(allocationData.rootDeviceIndex);
+        if (allocationData.flags.isUSMHostAllocation && gfxPartition->getHeapLimit(HeapIndex::HEAP_EXTENDED) > 0u) {
+
+            preferredAddress = acquireGpuRange(totalSizeToAlloc, allocationData.rootDeviceIndex, HeapIndex::HEAP_EXTENDED);
+        }
+
+        auto cpuPointer = this->mmapFunction(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, PROT_NONE, MAP_SHARED | MAP_ANONYMOUS, -1, 0);
+        if (castToUint64(cpuPointer) != preferredAddress) {
+            releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
+            preferredAddress = 0;
+        }
 
         auto cpuBasePointer = cpuPointer;
         cpuPointer = alignUp(cpuPointer, alignment);
@@ -1987,6 +1998,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
                                                                                                        reinterpret_cast<uintptr_t>(cpuPointer), alignedSize, 0u, maxOsContextCount, -1));
 
         if (!bo) {
+            releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
             this->munmapFunction(cpuBasePointer, totalSizeToAlloc);
             return nullptr;
         }
@@ -1995,6 +2007,7 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         auto ioctlHelper = drm.getIoctlHelper();
         uint64_t mmapOffsetWb = ioctlHelper->getDrmParamValue(DrmParam::MmapOffsetWb);
         if (!retrieveMmapOffsetForBufferObject(allocationData.rootDeviceIndex, *bo, mmapOffsetWb, offset)) {
+            releaseGpuRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc, allocationData.rootDeviceIndex);
             this->munmapFunction(cpuPointer, size);
             return nullptr;
         }
@@ -2015,7 +2028,11 @@ DrmAllocation *DrmMemoryManager::createAllocWithAlignment(const AllocationData &
         }
         [[maybe_unused]] int retCode = this->munmapFunction(ptrOffset(cpuPointer, alignedSize), alignment - pointerDiff);
         DEBUG_BREAK_IF(retCode != 0);
-        allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSize);
+        if (preferredAddress) {
+            allocation->setReservedAddressRange(reinterpret_cast<void *>(preferredAddress), totalSizeToAlloc);
+        } else {
+            allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), alignedSize);
+        }
         if (!allocation->setCacheRegion(&drm, static_cast<CacheRegion>(allocationData.cacheRegion))) {
             if (pointerDiff == 0) {
                 allocation->registerMemoryToUnmap(cpuBasePointer, totalSizeToAlloc, this->munmapFunction);

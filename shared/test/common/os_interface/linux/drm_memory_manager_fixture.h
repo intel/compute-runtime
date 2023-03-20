@@ -22,8 +22,6 @@ class MockDevice;
 class TestedDrmMemoryManager;
 struct UltHwConfig;
 
-extern std::vector<void *> mmapVector;
-
 class DrmMemoryManagerBasic : public ::testing::Test {
   public:
     DrmMemoryManagerBasic() : executionEnvironment(defaultHwInfo.get(), false, numRootDevices){};

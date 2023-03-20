@@ -26,7 +26,6 @@
 #include <system_error>
 
 namespace NEO {
-std::vector<void *> mmapVector(64);
 namespace SysCalls {
 uint32_t closeFuncCalled = 0u;
 int closeFuncArgPassed = 0;
@@ -41,13 +40,18 @@ int setErrno = 0;
 int fstatFuncRetVal = 0;
 uint32_t preadFuncCalled = 0u;
 uint32_t pwriteFuncCalled = 0u;
-uint32_t mmapFuncCalled = 0u;
-uint32_t munmapFuncCalled = 0u;
 bool isInvalidAILTest = false;
 const char *drmVersion = "i915";
 int passedFileDescriptorFlagsToSet = 0;
 int getFileDescriptorFlagsCalled = 0;
 int setFileDescriptorFlagsCalled = 0;
+
+std::vector<void *> mmapVector(64);
+std::vector<void *> mmapCapturedExtendedPointers(64);
+bool mmapCaptureExtendedPointers = false;
+bool mmapAllowExtendedPointers = false;
+uint32_t mmapFuncCalled = 0u;
+uint32_t munmapFuncCalled = 0u;
 
 int (*sysCallsOpen)(const char *pathname, int flags) = nullptr;
 ssize_t (*sysCallsPread)(int fd, void *buf, size_t count, off_t offset) = nullptr;
@@ -191,6 +195,14 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
 
 void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) noexcept {
     mmapFuncCalled++;
+    if (reinterpret_cast<uint64_t>(addr) > maxNBitValue(48)) {
+        if (mmapCaptureExtendedPointers) {
+            mmapCapturedExtendedPointers.push_back(addr);
+        }
+        if (!mmapAllowExtendedPointers) {
+            addr = nullptr;
+        }
+    }
     if (addr) {
         return addr;
     }

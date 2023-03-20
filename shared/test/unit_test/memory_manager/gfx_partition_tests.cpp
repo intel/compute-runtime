@@ -10,11 +10,18 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/os_interface/os_memory.h"
 #include "shared/source/utilities/cpu_info.h"
+#include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
 
 #include "gtest/gtest.h"
 
 #include <mutex>
+
+namespace NEO {
+namespace SysCalls {
+extern bool mmapAllowExtendedPointers;
+}
+} // namespace NEO
 
 static std::string mockCpuFlags;
 static void mockGetCpuFlagsFunc(std::string &cpuFlags) { cpuFlags = mockCpuFlags; }
@@ -855,6 +862,7 @@ TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapE
     {
         // 57 bit CPU VA, la57 flag is present
         CpuInfoOverrideVirtualAddressSizeAndFlags overrideCpuInfo(57, "la57");
+        VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, true);
 
         MockGfxPartition gfxPartition;
         EXPECT_TRUE(gfxPartition.init(maxNBitValue(57), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices));
