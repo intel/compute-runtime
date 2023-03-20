@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1689,7 +1689,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     // Verify that if flush occurs on another queue then our kernel is not flushed to CSR
-    uint32_t taskCount = 11;
+    TaskCountType taskCount = 11;
     gtpinNotifyPreFlushTask(nullptr);
     EXPECT_EQ(1u, kernelExecQueue.size());
     EXPECT_FALSE(kernelExecQueue[0].isTaskCountValid);
@@ -1707,7 +1707,7 @@ TEST_F(GTPinTests, givenInitializedGTPinInterfaceWhenKernelIsCreatedThenAllKerne
     EXPECT_EQ(taskCount, kernelExecQueue[0].taskCount);
 
     // Verify that if previous task was completed then it does not affect our kernel
-    uint32_t taskCompleted = taskCount - 1;
+    TaskCountType taskCompleted = taskCount - 1;
     int prevCount4 = CommandBufferCompleteCallbackCount;
     gtpinNotifyTaskCompletion(taskCompleted);
     EXPECT_EQ(1u, kernelExecQueue.size());
@@ -2219,7 +2219,7 @@ TEST(GTPinOfflineTests, givenGtPinInDisabledStateWhenCallbacksFromEnqueuePathAre
     ASSERT_FALSE(gtpinIsGTPinInitialized());
     auto dummyKernel = reinterpret_cast<cl_kernel>(0x1000);
     auto dummyQueue = reinterpret_cast<void *>(0x1000);
-    uint32_t dummyCompletedTask = 0u;
+    TaskCountType dummyCompletedTask = 0u;
 
     //now call gtpin function with dummy data, this must not crash
     gtpinNotifyKernelSubmit(dummyKernel, dummyQueue);

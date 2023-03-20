@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -118,7 +118,7 @@ TEST_F(KernelSubstituteTest, givenKernelWithUsedKernelAllocationWhenSubstituteKe
     kernel.kernelInfo.createKernelAllocation(memoryManager);
     auto firstAllocation = kernel.kernelInfo.kernelAllocation;
 
-    uint32_t notReadyTaskCount = *commandStreamReceiver.getTagAddress() + 1u;
+    TaskCountType notReadyTaskCount = *commandStreamReceiver.getTagAddress() + 1u;
 
     firstAllocation->updateTaskCount(notReadyTaskCount, commandStreamReceiver.getOsContext().getContextId());
 

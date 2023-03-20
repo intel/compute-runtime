@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -134,7 +134,7 @@ struct UltCommandStreamReceiverTest
     }
 
     DispatchFlags flushTaskFlags = {};
-    uint32_t taskLevel = 42;
+    TaskCountType taskLevel = 42;
     LinearStream commandStream;
     IndirectHeap dsh = {nullptr};
     IndirectHeap ioh = {nullptr};
@@ -145,8 +145,8 @@ struct UltCommandStreamReceiverTest
     void *iohBuffer = nullptr;
     void *sshBuffer = nullptr;
 
-    uint32_t latestSentDcFlushTaskCount;
-    uint32_t latestSentNonDcFlushTaskCount;
-    uint32_t dcFlushRequiredTaskCount;
+    TaskCountType latestSentDcFlushTaskCount;
+    TaskCountType latestSentNonDcFlushTaskCount;
+    TaskCountType dcFlushRequiredTaskCount;
 };
 } // namespace NEO

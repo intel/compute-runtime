@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ template <typename Family>
 class MyCsr : public UltCommandStreamReceiver<Family> {
   public:
     MyCsr(const ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<Family>(const_cast<ExecutionEnvironment &>(executionEnvironment)) {}
-    MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+    MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, TaskCountType taskCountToWait));
 };
 
 void CL_CALLBACK emptyDestructorCallback(cl_mem memObj, void *userData) {
@@ -63,7 +63,7 @@ class MemObjDestructionTest : public ::testing::TestWithParam<bool> {
         *device->getDefaultEngine().commandStreamReceiver->getTagAddress() = taskCountReady;
     }
 
-    constexpr static uint32_t taskCountReady = 3u;
+    constexpr static TaskCountType taskCountReady = 3u;
     ExecutionEnvironment *executionEnvironment;
     std::unique_ptr<MockDevice> device;
     uint32_t contextId = 0;
@@ -136,11 +136,11 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
     *mockCsr0->getTagAddress() = 0;
     *mockCsr1->getTagAddress() = 0;
 
-    auto waitForCompletionWithTimeoutMock0 = [&mockCsr0](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool {
+    auto waitForCompletionWithTimeoutMock0 = [&mockCsr0](bool enableTimeout, int64_t timeoutMs, TaskCountType taskCountToWait) -> bool {
         *mockCsr0->getTagAddress() = taskCountReady;
         return true;
     };
-    auto waitForCompletionWithTimeoutMock1 = [&mockCsr1](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool {
+    auto waitForCompletionWithTimeoutMock1 = [&mockCsr1](bool enableTimeout, int64_t timeoutMs, TaskCountType taskCountToWait) -> bool {
         *mockCsr1->getTagAddress() = taskCountReady;
         return true;
     };
@@ -188,7 +188,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
 
     bool desired = true;
 
-    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, TaskCountType taskCountToWait) -> bool { return desired; };
 
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));
@@ -230,7 +230,7 @@ HWTEST_P(MemObjAsyncDestructionTest, givenUsedMemObjWithAsyncDestructionsEnabled
 
     bool desired = true;
 
-    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, TaskCountType taskCountToWait) -> bool { return desired; };
     auto osContextId = mockCsr->getOsContext().getContextId();
 
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
@@ -265,7 +265,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
 
     bool desired = true;
 
-    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, TaskCountType taskCountToWait) -> bool { return desired; };
     auto osContextId = mockCsr->getOsContext().getContextId();
 
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
@@ -292,7 +292,7 @@ HWTEST_P(MemObjSyncDestructionTest, givenMemObjWithDestructableAllocationWhenAsy
 
     bool desired = true;
 
-    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait) -> bool { return desired; };
+    auto waitForCompletionWithTimeoutMock = [=](bool enableTimeout, int64_t timeoutMs, TaskCountType taskCountToWait) -> bool { return desired; };
 
     ON_CALL(*mockCsr, waitForCompletionWithTimeout(::testing::_, ::testing::_, ::testing::_))
         .WillByDefault(::testing::Invoke(waitForCompletionWithTimeoutMock));

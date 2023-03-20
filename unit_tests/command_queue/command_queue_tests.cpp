@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -137,7 +137,7 @@ struct GetTagTest : public DeviceFixture,
 };
 
 TEST_F(GetTagTest, shouldReturnValue) {
-    uint32_t tagValue = 0xdeadbeef;
+    TagAddressType tagValue = 0xdeadbeef;
     *pTagMemory = tagValue;
     EXPECT_EQ(tagValue, pCmdQ->getHwTag());
 }
@@ -747,7 +747,7 @@ struct WaitForQueueCompletionTests : public ::testing::Test {
     template <typename Family>
     struct MyCmdQueue : public CommandQueueHw<Family> {
         MyCmdQueue(Context *context, Device *device) : CommandQueueHw<Family>(context, device, nullptr){};
-        void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+        void waitUntilComplete(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
             requestedUseQuickKmdSleep = useQuickKmdSleep;
             waitUntilCompleteCounter++;
         }

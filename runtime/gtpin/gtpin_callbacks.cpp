@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -148,7 +148,7 @@ void gtpinNotifyPreFlushTask(void *pCmdQueue) {
     }
 }
 
-void gtpinNotifyFlushTask(uint32_t flushedTaskCount) {
+void gtpinNotifyFlushTask(TaskCountType flushedTaskCount) {
     if (isGTPinInitialized) {
         std::unique_lock<SpinLock> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();
@@ -164,7 +164,7 @@ void gtpinNotifyFlushTask(uint32_t flushedTaskCount) {
     }
 }
 
-void gtpinNotifyTaskCompletion(uint32_t completedTaskCount) {
+void gtpinNotifyTaskCompletion(TaskCountType completedTaskCount) {
     if (isGTPinInitialized) {
         std::unique_lock<SpinLock> lock{kernelExecQueueLock};
         size_t numElems = kernelExecQueue.size();

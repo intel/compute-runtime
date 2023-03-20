@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ class ScratchSpaceController {
     virtual void setRequiredScratchSpace(void *sshBaseAddress,
                                          uint32_t requiredPerThreadScratchSize,
                                          uint32_t requiredPerThreadPrivateScratchSize,
-                                         uint32_t currentTaskCount,
+                                         TaskCountType currentTaskCount,
                                          uint32_t deviceIdx,
                                          bool &stateBaseAddressDirty,
                                          bool &vfeStateDirty) = 0;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -44,8 +44,7 @@ HWTEST_F(EnqueueKernelTest, givenCsrInBatchingModeWhenFinishIsCalledThenBatchesS
         threads.push_back(std::thread(function));
     }
 
-    auto currentTaskCount = 0;
-
+    int64_t currentTaskCount = 0;
     startEnqueueProcess = true;
 
     //call a flush while other threads enqueue, we can't drop anything

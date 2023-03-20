@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -196,7 +196,7 @@ HWTEST_F(CommandQueueHwTest, givenMapCommandWhenZeroStateCommandIsSubmittedThenT
     EXPECT_NE(nullptr, pHwQ->virtualEvent);
     pHwQ->virtualEvent->setStatus(CL_COMPLETE);
 
-    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), pHwQ->latestTaskCountWaited);
+    EXPECT_EQ(std::numeric_limits<TaskCountType>::max(), pHwQ->latestTaskCountWaited);
     buffer->decRefInternal();
 }
 
@@ -1060,8 +1060,8 @@ HWTEST_F(CommandQueueHwTest, givenBlockedInOrderCmdQueueAndAsynchronouslyComplet
 
     auto event = new Event(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, 10, 0);
 
-    uint32_t virtualEventTaskLevel = 77;
-    uint32_t virtualEventTaskCount = 80;
+    TaskCountType virtualEventTaskLevel = 77;
+    TaskCountType virtualEventTaskCount = 80;
     auto virtualEvent = new Event(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, virtualEventTaskLevel, virtualEventTaskCount);
 
     cl_event blockedEvent = event;
@@ -1140,7 +1140,7 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
     class MockEventWithSetCompleteOnUpdate : public Event {
       public:
         MockEventWithSetCompleteOnUpdate(CommandQueue *cmdQueue, cl_command_type cmdType,
-                                         uint32_t taskLevel, uint32_t taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
+                                         TaskCountType taskLevel, TaskCountType taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
         }
         void updateExecutionStatus() override {
             setStatus(CL_COMPLETE);
@@ -1149,8 +1149,8 @@ HWTEST_F(OOQueueHwTest, givenBlockedOutOfOrderCmdQueueAndAsynchronouslyCompleted
 
     Event event(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, 10, 0);
 
-    uint32_t virtualEventTaskLevel = 77;
-    uint32_t virtualEventTaskCount = 80;
+    TaskCountType virtualEventTaskLevel = 77;
+    TaskCountType virtualEventTaskCount = 80;
     MockEventWithSetCompleteOnUpdate virtualEvent(cmdQHw, CL_COMMAND_NDRANGE_KERNEL, virtualEventTaskLevel, virtualEventTaskCount);
 
     cl_event blockedEvent = &event;

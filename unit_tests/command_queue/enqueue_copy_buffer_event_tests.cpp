@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -56,11 +56,11 @@ TEST_F(EnqueueCopyBuffer, eventShouldBeReturned) {
 }
 
 TEST_F(EnqueueCopyBuffer, eventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1) {
-    uint32_t taskLevelCmdQ = 17;
+    TaskCountType taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
-    uint32_t taskLevelEvent1 = 8;
-    uint32_t taskLevelEvent2 = 19;
+    TaskCountType taskLevelEvent1 = 8;
+    TaskCountType taskLevelEvent2 = 19;
     Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 4);
     Event event2(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 10);
 

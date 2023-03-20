@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -51,7 +51,7 @@ TEST_F(DeviceTest, getSupportedClVersion) {
 TEST_F(DeviceTest, givenDeviceWhenEngineIsCreatedThenSetInitialValueForTag) {
     for (auto &engine : pDevice->engines) {
         auto tagAddress = engine.commandStreamReceiver->getTagAddress();
-        ASSERT_NE(nullptr, const_cast<uint32_t *>(tagAddress));
+        ASSERT_NE(nullptr, const_cast<TagAddressType *>(tagAddress));
         EXPECT_EQ(initialHardwareTag, *tagAddress);
     }
 }

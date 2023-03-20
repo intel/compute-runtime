@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -327,7 +327,7 @@ class CommandQueueHw : public CommandQueue {
                                       TimestampPacketContainer *previousTimestampPacketNodes,
                                       EventsRequest &eventsRequest,
                                       EventBuilder &eventBuilder,
-                                      uint32_t taskLevel,
+                                      TaskCountType taskLevel,
                                       PrintfHandler *printfHandler);
 
     template <uint32_t commandType>
@@ -350,7 +350,7 @@ class CommandQueueHw : public CommandQueue {
                                                 TimestampPacketContainer *previousTimestampPacketNodes,
                                                 EventsRequest &eventsRequest,
                                                 EventBuilder &eventBuilder,
-                                                uint32_t taskLevel);
+                                                TaskCountType taskLevel);
     void processDispatchForCacheFlush(Surface **surfaces,
                                       size_t numSurfaces,
                                       LinearStream *commandStream,
@@ -410,8 +410,8 @@ class CommandQueueHw : public CommandQueue {
     }
 
   private:
-    bool isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
-    void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) override;
+    bool isTaskLevelUpdateRequired(const TaskCountType &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType);
+    void obtainTaskLevelAndBlockedStatus(TaskCountType &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) override;
     void forceDispatchScheduler(NEO::MultiDispatchInfo &multiDispatchInfo);
     static void computeOffsetsValueForRectCommands(size_t *bufferOffset,
                                                    size_t *hostOffset,

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -21,7 +21,7 @@ void DeviceFixture::SetUpImpl(const NEO::HardwareInfo *hardwareInfo) {
 
     auto &commandStreamReceiver = pDevice->getGpgpuCommandStreamReceiver();
     pTagMemory = commandStreamReceiver.getTagAddress();
-    ASSERT_NE(nullptr, const_cast<uint32_t *>(pTagMemory));
+    ASSERT_NE(nullptr, const_cast<TagAddressType *>(pTagMemory));
 }
 
 void DeviceFixture::TearDown() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -54,7 +54,7 @@ struct DeferrableAllocationDeletionTest : ::testing::Test {
     MockMemoryManager *memoryManager = nullptr;
     std::unique_ptr<MockDevice> device;
     uint32_t defaultOsContextId = 0;
-    volatile uint32_t *hwTag = nullptr;
+    volatile TagAddressType *hwTag = nullptr;
 };
 
 TEST_F(DeferrableAllocationDeletionTest, givenDeferrableAllocationWhenApplyThenWaitForEachTaskCount) {

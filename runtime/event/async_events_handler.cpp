@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,7 +36,7 @@ void AsyncEventsHandler::registerEvent(Event *event) {
 }
 
 Event *AsyncEventsHandler::processList() {
-    uint32_t lowestTaskCount = Event::eventNotReady;
+    TaskCountType lowestTaskCount = Event::eventNotReady;
     Event *sleepCandidate = nullptr;
     pendingList.clear();
 

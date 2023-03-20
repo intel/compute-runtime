@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -96,7 +96,7 @@ HWTEST_F(ImageUnmapTest, givenImageWhenUnmapMemObjIsCalledWithMemUseHostPtrAndWi
     image.reset(ImageHelper<ImageUseHostPtr<Image3dDefaults>>::create(&context));
 
     MockEvent<UserEvent> mockEvent(&context);
-    mockEvent.setStatus(Event::eventNotReady);
+    mockEvent.setStatus(std::numeric_limits<int>::max());
     cl_event clEvent = &mockEvent;
     commandQueue->enqueueUnmapMemObject(image.get(), nullptr, 1, &clEvent, nullptr);
     EXPECT_EQ(0u, commandQueue->finishCalled);

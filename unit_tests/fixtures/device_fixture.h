@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,7 +19,7 @@ struct DeviceFixture {
     MockDevice *createWithUsDeviceId(unsigned short usDeviceId);
 
     MockDevice *pDevice = nullptr;
-    volatile uint32_t *pTagMemory = nullptr;
+    volatile TagAddressType *pTagMemory = nullptr;
     HardwareInfo hardwareInfo = {};
     PLATFORM platformHelper = {};
 };

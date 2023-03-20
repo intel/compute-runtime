@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -932,13 +932,13 @@ HWTEST_F(BcsBufferTests, givenBlockingEnqueueWhenUsingBcsThenCallWait) {
       public:
         using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
 
-        void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) override {
+        void waitForTaskCountAndCleanAllocationList(TaskCountType requiredTaskCount, uint32_t allocationUsage) override {
             EXPECT_TRUE(gpgpuCsr->getTemporaryAllocations().peekIsEmpty());
             EXPECT_EQ(*this->getTagAddress(), requiredTaskCount);
             waitForTaskCountAndCleanAllocationListCalled++;
         }
 
-        uint32_t waitForTaskCountAndCleanAllocationListCalled = 0;
+        TaskCountType waitForTaskCountAndCleanAllocationListCalled = 0;
         CommandStreamReceiver *gpgpuCsr = nullptr;
     };
 

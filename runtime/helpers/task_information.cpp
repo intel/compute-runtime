@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,7 @@ CommandMapUnmap::CommandMapUnmap(MapOperationType operationType, MemObj &memObj,
     memObj.incRefInternal();
 }
 
-CompletionStamp &CommandMapUnmap::submit(uint32_t taskLevel, bool terminated) {
+CompletionStamp &CommandMapUnmap::submit(TaskCountType taskLevel, bool terminated) {
     if (terminated) {
         memObj.decRefInternal();
         return completionStamp;
@@ -99,7 +99,7 @@ CommandComputeKernel::~CommandComputeKernel() {
     kernel->decRefInternal();
 }
 
-CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminated) {
+CompletionStamp &CommandComputeKernel::submit(TaskCountType taskLevel, bool terminated) {
     if (terminated) {
         for (auto surface : surfaces) {
             delete surface;
@@ -138,7 +138,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     makeTimestampPacketsResident();
 
     if (executionModelKernel) {
-        uint32_t taskCount = commandStreamReceiver.peekTaskCount() + 1;
+        TaskCountType taskCount = commandStreamReceiver.peekTaskCount() + 1;
         devQueue->setupExecutionModelDispatch(*ssh, *dsh, kernel, kernelCount, taskCount, timestamp);
 
         BuiltIns &builtIns = *this->kernel->getDevice().getExecutionEnvironment()->getBuiltIns();
@@ -213,7 +213,7 @@ CompletionStamp &CommandComputeKernel::submit(uint32_t taskLevel, bool terminate
     return completionStamp;
 }
 
-CompletionStamp &CommandMarker::submit(uint32_t taskLevel, bool terminated) {
+CompletionStamp &CommandMarker::submit(TaskCountType taskLevel, bool terminated) {
     if (terminated) {
         return completionStamp;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,8 +15,8 @@ using namespace NEO;
 
 bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
                                           bool quickKmdSleepRequest,
-                                          uint32_t currentHwTag,
-                                          uint32_t taskCountToWait,
+                                          TagAddressType currentHwTag,
+                                          TaskCountType taskCountToWait,
                                           FlushStamp flushStampToWait,
                                           bool forcePowerSavingMode) {
     if (flushStampToWait == 0) {

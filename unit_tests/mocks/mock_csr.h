@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -78,7 +78,7 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
         processEvictionCalled = true;
     }
 
-    void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) override {
+    void waitForTaskCountAndCleanAllocationList(TaskCountType requiredTaskCount, uint32_t allocationUsage) override {
         waitForTaskCountRequiredTaskCount = requiredTaskCount;
         BaseUltCsrClass::waitForTaskCountAndCleanAllocationList(requiredTaskCount, allocationUsage);
     }
@@ -88,7 +88,7 @@ class MockCsrBase : public UltCommandStreamReceiver<GfxFamily> {
     int32_t *executionStamp;
     int32_t flushTaskStamp;
     bool processEvictionCalled = false;
-    uint32_t waitForTaskCountRequiredTaskCount = 0;
+    TaskCountType waitForTaskCountRequiredTaskCount = 0;
 };
 
 template <typename GfxFamily>
@@ -124,7 +124,7 @@ class MockCsr : public MockCsrBase<GfxFamily> {
         const IndirectHeap &dsh,
         const IndirectHeap &ioh,
         const IndirectHeap &ssh,
-        uint32_t taskLevel,
+        TaskCountType taskLevel,
         DispatchFlags &dispatchFlags,
         Device &device) override {
         this->flushTaskStamp = *this->executionStamp;
@@ -147,7 +147,7 @@ class MockCsr : public MockCsrBase<GfxFamily> {
     bool peekMediaVfeStateDirty() const { return mediaVfeStateDirty; }
 
     bool slmUsedInLastFlushTask = false;
-    uint32_t lastTaskLevelToFlushTask = 0;
+    TaskCountType lastTaskLevelToFlushTask = 0;
 };
 
 template <typename GfxFamily>
@@ -191,7 +191,7 @@ class MockCsrHw2 : public CommandStreamReceiverHw<GfxFamily> {
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap &dsh, const IndirectHeap &ioh,
-                              const IndirectHeap &ssh, uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+                              const IndirectHeap &ssh, TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         passedDispatchFlags = dispatchFlags;
 
         recordedCommandBuffer = std::unique_ptr<CommandBuffer>(new CommandBuffer(device));
@@ -247,7 +247,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     ~MockCommandStreamReceiver() {
     }
 
-    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
+    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, TaskCountType taskCountToWait) override {
         waitForCompletionWithTimeoutCalled++;
         return true;
     }
@@ -259,7 +259,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         const IndirectHeap &dsh,
         const IndirectHeap &ioh,
         const IndirectHeap &ssh,
-        uint32_t taskLevel,
+        TaskCountType taskLevel,
         DispatchFlags &dispatchFlags,
         Device &device) override;
 
@@ -269,7 +269,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
         }
     }
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
+    void waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
     }
 
     void blitBuffer(const BlitProperties &blitProperites) override{};

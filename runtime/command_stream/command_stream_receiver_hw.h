@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -34,7 +34,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
-                              uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
+                              TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override;
 
     void flushBatchedSubmissions() override;
 
@@ -55,7 +55,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
     size_t getCmdSizeForMediaSampler(bool mediaSamplerRequired) const;
     void programComputeMode(LinearStream &csr, DispatchFlags &dispatchFlags);
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
+    void waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
     const HardwareInfo &peekHwInfo() const { return *executionEnvironment.getHardwareInfo(); }
 
     void collectStateBaseAddresPatchInfo(

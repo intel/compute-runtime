@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -41,7 +41,7 @@ GraphicsAllocation::GraphicsAllocation(AllocationType allocationType, void *cpuP
 
 GraphicsAllocation::~GraphicsAllocation() = default;
 
-void GraphicsAllocation::updateTaskCount(uint32_t newTaskCount, uint32_t contextId) {
+void GraphicsAllocation::updateTaskCount(TaskCountType newTaskCount, uint32_t contextId) {
     if (usageInfos[contextId].taskCount == objectNotUsed) {
         registeredContextsNum++;
     }
@@ -66,6 +66,6 @@ uint32_t GraphicsAllocation::getUsedPageSize() const {
     }
 }
 
-constexpr uint32_t GraphicsAllocation::objectNotUsed;
-constexpr uint32_t GraphicsAllocation::objectNotResident;
+constexpr TaskCountType GraphicsAllocation::objectNotUsed;
+constexpr TaskCountType GraphicsAllocation::objectNotResident;
 } // namespace NEO

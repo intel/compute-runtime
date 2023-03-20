@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -20,7 +20,7 @@ CompletionStamp MockCommandStreamReceiver::flushTask(
     const IndirectHeap &dsh,
     const IndirectHeap &ioh,
     const IndirectHeap &ssh,
-    uint32_t taskLevel,
+    TaskCountType taskLevel,
     DispatchFlags &dispatchFlags,
     Device &device) {
     ++taskCount;

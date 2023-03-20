@@ -1,9 +1,11 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
  */
+
+#include "runtime/command_stream/task_count_helper.h"
 
 #include "CL/cl.h"
 
@@ -27,10 +29,10 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
 void gtpinNotifyPreFlushTask(void *pCmdQueue) {
 }
 
-void gtpinNotifyFlushTask(uint32_t flushedTaskCount) {
+void gtpinNotifyFlushTask(TaskCountType flushedTaskCount) {
 }
 
-void gtpinNotifyTaskCompletion(uint32_t completedTaskCount) {
+void gtpinNotifyTaskCompletion(TaskCountType completedTaskCount) {
 }
 
 void gtpinNotifyMakeResident(void *pKernel, void *pCommandStreamReceiver) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -59,11 +59,11 @@ TEST_F(EnqueueWriteBufferTypeTest, eventShouldBeReturned) {
 }
 
 TEST_F(EnqueueWriteBufferTypeTest, eventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1) {
-    uint32_t taskLevelCmdQ = 17;
+    TaskCountType taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
-    uint32_t taskLevelEvent1 = 8;
-    uint32_t taskLevelEvent2 = 19;
+    TaskCountType taskLevelEvent1 = 8;
+    TaskCountType taskLevelEvent2 = 19;
     Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 4);
     Event event2(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 10);
 
@@ -103,11 +103,11 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBuffe
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
     cl_int retVal = CL_SUCCESS;
-    uint32_t taskLevelCmdQ = 17;
+    TaskCountType taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
-    uint32_t taskLevelEvent1 = 8;
-    uint32_t taskLevelEvent2 = 19;
+    TaskCountType taskLevelEvent1 = 8;
+    TaskCountType taskLevelEvent2 = 19;
     Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 4);
     Event event2(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 10);
 
@@ -145,7 +145,7 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBuffe
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
     cl_int retVal = CL_SUCCESS;
-    uint32_t taskLevelCmdQ = 17;
+    TaskCountType taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
     Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, Event::eventNotReady, 4);
@@ -185,7 +185,7 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndForcedCpuCopyOnWriteBuffe
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
     cl_int retVal = CL_SUCCESS;
-    uint32_t taskLevelCmdQ = 17;
+    TaskCountType taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
     cl_bool blockingRead = CL_TRUE;
@@ -218,11 +218,11 @@ TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndForcedCpuCopyOnWriteBu
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(true);
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     cl_int retVal = CL_SUCCESS;
-    uint32_t taskLevelCmdQ = 17;
+    TaskCountType taskLevelCmdQ = 17;
     pCmdOOQ->taskLevel = taskLevelCmdQ;
 
-    uint32_t taskLevelEvent1 = 8;
-    uint32_t taskLevelEvent2 = 19;
+    TaskCountType taskLevelEvent1 = 8;
+    TaskCountType taskLevelEvent2 = 19;
     Event event1(pCmdOOQ.get(), CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 4);
     Event event2(pCmdOOQ.get(), CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 10);
 
@@ -259,11 +259,11 @@ TEST_F(EnqueueWriteBufferTypeTest, givenInOrderQueueAndDisabledSupportCpuCopiesA
     DebugManagerStateRestore dbgRestore;
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(false);
     cl_int retVal = CL_SUCCESS;
-    uint32_t taskLevelCmdQ = 17;
+    TaskCountType taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
-    uint32_t taskLevelEvent1 = 8;
-    uint32_t taskLevelEvent2 = 19;
+    TaskCountType taskLevelEvent1 = 8;
+    TaskCountType taskLevelEvent2 = 19;
     Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 4);
     Event event2(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 10);
 
@@ -301,11 +301,11 @@ TEST_F(EnqueueWriteBufferTypeTest, givenOutOfOrderQueueAndDisabledSupportCpuCopi
     DebugManager.flags.DoCpuCopyOnWriteBuffer.set(false);
     std::unique_ptr<CommandQueue> pCmdOOQ(createCommandQueue(pDevice, CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE));
     cl_int retVal = CL_SUCCESS;
-    uint32_t taskLevelCmdQ = 17;
+    TaskCountType taskLevelCmdQ = 17;
     pCmdOOQ->taskLevel = taskLevelCmdQ;
 
-    uint32_t taskLevelEvent1 = 8;
-    uint32_t taskLevelEvent2 = 19;
+    TaskCountType taskLevelEvent1 = 8;
+    TaskCountType taskLevelEvent2 = 19;
     Event event1(pCmdOOQ.get(), CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 4);
     Event event2(pCmdOOQ.get(), CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 10);
 

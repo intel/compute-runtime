@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,6 +11,7 @@
 #include "runtime/command_stream/csr_definitions.h"
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/command_stream/submissions_aggregator.h"
+#include "runtime/command_stream/task_count_helper.h"
 #include "runtime/command_stream/thread_arbitration_policy.h"
 #include "runtime/helpers/address_patch.h"
 #include "runtime/helpers/blit_commands_helper.h"
@@ -69,7 +70,7 @@ class CommandStreamReceiver {
 
     virtual CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                                       const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
-                                      uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
+                                      TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) = 0;
 
     virtual void flushBatchedSubmissions() = 0;
 
@@ -89,7 +90,7 @@ class CommandStreamReceiver {
 
     virtual GmmPageTableMngr *createPageTableManager() { return nullptr; }
 
-    MOCKABLE_VIRTUAL void waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage);
+    MOCKABLE_VIRTUAL void waitForTaskCountAndCleanAllocationList(TaskCountType requiredTaskCount, uint32_t allocationUsage);
 
     LinearStream &getCS(size_t minRequiredSize = 1024u);
     OSInterface *getOSInterface() const { return osInterface; };
@@ -98,18 +99,18 @@ class CommandStreamReceiver {
     GraphicsAllocation *getTagAllocation() const {
         return tagAllocation;
     }
-    volatile uint32_t *getTagAddress() const { return tagAddress; }
+    volatile TagAddressType *getTagAddress() const { return tagAddress; }
 
     virtual bool waitForFlushStamp(FlushStamp &flushStampToWait) { return true; };
 
-    uint32_t peekTaskCount() const { return taskCount; }
+    TaskCountType peekTaskCount() const { return taskCount; }
 
-    uint32_t peekTaskLevel() const { return taskLevel; }
+    TaskCountType peekTaskLevel() const { return taskLevel; }
     FlushStamp obtainCurrentFlushStamp() const;
 
-    uint32_t peekLatestSentTaskCount() const { return latestSentTaskCount; }
+    TaskCountType peekLatestSentTaskCount() const { return latestSentTaskCount; }
 
-    uint32_t peekLatestFlushedTaskCount() const { return latestFlushedTaskCount; }
+    TaskCountType peekLatestFlushedTaskCount() const { return latestFlushedTaskCount; }
 
     void enableNTo1SubmissionModel() { this->nTo1SubmissionModelEnabled = true; }
     bool isNTo1SubmissionModelEnabled() const { return this->nTo1SubmissionModelEnabled; }
@@ -125,8 +126,8 @@ class CommandStreamReceiver {
     void requestThreadArbitrationPolicy(uint32_t requiredPolicy) { this->requiredThreadArbitrationPolicy = requiredPolicy; }
     void requestStallingPipeControlOnNextFlush() { stallingPipeControlOnNextFlushRequired = true; }
 
-    virtual void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) = 0;
-    MOCKABLE_VIRTUAL bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait);
+    virtual void waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) = 0;
+    MOCKABLE_VIRTUAL bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, TaskCountType taskCountToWait);
 
     void setSamplerCacheFlushRequired(SamplerCacheFlushState value) { this->samplerCacheFlushRequired = value; }
 
@@ -173,7 +174,7 @@ class CommandStreamReceiver {
     }
     bool isMultiOsContextCapable() const;
 
-    void setLatestSentTaskCount(uint32_t latestSentTaskCount) {
+    void setLatestSentTaskCount(TaskCountType latestSentTaskCount) {
         this->latestSentTaskCount = latestSentTaskCount;
     }
 
@@ -204,7 +205,7 @@ class CommandStreamReceiver {
 
     LinearStream commandStream;
 
-    volatile uint32_t *tagAddress = nullptr;
+    volatile TagAddressType *tagAddress = nullptr;
 
     GraphicsAllocation *tagAllocation = nullptr;
     GraphicsAllocation *preemptionAllocation = nullptr;
@@ -214,9 +215,9 @@ class CommandStreamReceiver {
     IndirectHeap *indirectHeap[IndirectHeap::NUM_TYPES];
 
     // current taskLevel.  Used for determining if a PIPE_CONTROL is needed.
-    std::atomic<uint32_t> taskLevel{0};
-    std::atomic<uint32_t> latestSentTaskCount{0};
-    std::atomic<uint32_t> latestFlushedTaskCount{0};
+    std::atomic<TaskCountType> taskLevel{0};
+    std::atomic<TaskCountType> latestSentTaskCount{0};
+    std::atomic<TaskCountType> latestFlushedTaskCount{0};
 
     OsContext *osContext = nullptr;
     DispatchMode dispatchMode = DispatchMode::ImmediateDispatch;
@@ -226,7 +227,7 @@ class CommandStreamReceiver {
 
     uint32_t deviceIndex = 0u;
     // taskCount - # of tasks submitted
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
     uint32_t lastSentL3Config = 0;
     uint32_t latestSentStatelessMocsConfig = 0;
     uint32_t lastSentNumGrfRequired = GrfConfig::DefaultGrfNumber;

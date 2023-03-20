@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -1474,7 +1474,7 @@ class UltCommandStreamReceiverForDispatchFlags : public UltCommandStreamReceiver
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
-                              uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+                              TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         savedDispatchFlags = dispatchFlags;
         return BaseClass::flushTask(commandStream, commandStreamStart,
                                     dsh, ioh, ssh, taskLevel, dispatchFlags, device);

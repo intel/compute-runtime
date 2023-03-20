@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -30,14 +30,14 @@
 
 namespace NEO {
 
-const cl_uint Event::eventNotReady = 0xFFFFFFF0;
+const TaskCountType Event::eventNotReady = std::numeric_limits<TaskCountType>::max() - 0xf;
 
 Event::Event(
     Context *ctx,
     CommandQueue *cmdQueue,
     cl_command_type cmdType,
-    uint32_t taskLevel,
-    uint32_t taskCount)
+    TaskCountType taskLevel,
+    TaskCountType taskCount)
     : taskLevel(taskLevel),
       currentCmdQVirtualEvent(false),
       cmdToSubmit(nullptr),
@@ -91,8 +91,8 @@ Event::Event(
 Event::Event(
     CommandQueue *cmdQueue,
     cl_command_type cmdType,
-    uint32_t taskLevel,
-    uint32_t taskCount)
+    TaskCountType taskLevel,
+    TaskCountType taskCount)
     : Event(nullptr, cmdQueue, cmdType, taskLevel, taskCount) {
 }
 
@@ -220,11 +220,11 @@ cl_int Event::getEventProfilingInfo(cl_profiling_info paramName,
     return retVal;
 } // namespace NEO
 
-uint32_t Event::getCompletionStamp() const {
+TaskCountType Event::getCompletionStamp() const {
     return this->taskCount;
 }
 
-void Event::updateCompletionStamp(uint32_t taskCount, uint32_t tasklevel, FlushStamp flushStamp) {
+void Event::updateCompletionStamp(TaskCountType taskCount, TaskCountType tasklevel, FlushStamp flushStamp) {
     this->taskCount = taskCount;
     this->taskLevel = tasklevel;
     this->flushStamp->setStamp(flushStamp);
@@ -397,7 +397,7 @@ void Event::unblockEventsBlockedByThis(int32_t transitionStatus) {
     (void)status;
     DEBUG_BREAK_IF(!(isStatusCompleted(status) || (peekIsSubmitted(status))));
 
-    uint32_t taskLevelToPropagate = Event::eventNotReady;
+    TaskCountType taskLevelToPropagate = Event::eventNotReady;
 
     if (isStatusCompletedByTermination(transitionStatus) == false) {
         //if we are event on top of the tree , obtain taskLevel from CSR
@@ -556,11 +556,11 @@ cl_int Event::waitForEvents(cl_uint numEvents,
     return CL_SUCCESS;
 }
 
-uint32_t Event::getTaskLevel() {
+TaskCountType Event::getTaskLevel() {
     return taskLevel;
 }
 
-inline void Event::unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus) {
+inline void Event::unblockEventBy(Event &event, TaskCountType taskLevel, int32_t transitionStatus) {
     int32_t numEventsBlockingThis = --parentCount;
     DEBUG_BREAK_IF(numEventsBlockingThis < 0);
 

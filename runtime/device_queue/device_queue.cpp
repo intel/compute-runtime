@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -144,7 +144,7 @@ void DeviceQueue::initDeviceQueue() {
     igilEventPool->m_size = caps.maxOnDeviceEvents;
 }
 
-void DeviceQueue::setupExecutionModelDispatch(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentCount, uint32_t taskCount, TagNode<HwTimeStamps> *hwTimeStamp) {
+void DeviceQueue::setupExecutionModelDispatch(IndirectHeap &surfaceStateHeap, IndirectHeap &dynamicStateHeap, Kernel *parentKernel, uint32_t parentCount, TaskCountType taskCount, TagNode<HwTimeStamps> *hwTimeStamp) {
     setupIndirectState(surfaceStateHeap, dynamicStateHeap, parentKernel, parentCount);
     addExecutionModelCleanUpSection(parentKernel, hwTimeStamp, taskCount);
 }
@@ -153,7 +153,7 @@ void DeviceQueue::setupIndirectState(IndirectHeap &surfaceStateHeap, IndirectHea
     return;
 }
 
-void DeviceQueue::addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint32_t taskCount) {
+void DeviceQueue::addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, TaskCountType taskCount) {
     return;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,7 +26,7 @@ HWTEST_F(BarrierTest, givenCsrWithHigherLevelThenCommandQueueWhenEnqueueBarrierI
     commandStreamReceiver.taskLevel = originalCSRLevel;
     pCmdQ->taskLevel = originalCSRLevel;
 
-    uint32_t originalTaskCount = 15;
+    TaskCountType originalTaskCount = 15;
     commandStreamReceiver.taskCount = originalTaskCount;
 
     auto &csrCommandStream = commandStreamReceiver.commandStream;

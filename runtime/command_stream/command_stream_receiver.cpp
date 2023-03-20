@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,6 +13,7 @@
 #include "runtime/command_stream/experimental_command_buffer.h"
 #include "runtime/command_stream/preemption.h"
 #include "runtime/command_stream/scratch_space_controller.h"
+#include "runtime/command_stream/task_count_helper.h"
 #include "runtime/context/context.h"
 #include "runtime/device/device.h"
 #include "runtime/event/event.h"
@@ -109,7 +110,7 @@ void CommandStreamReceiver::makeResidentHostPtrAllocation(GraphicsAllocation *gf
     }
 }
 
-void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(uint32_t requiredTaskCount, uint32_t allocationUsage) {
+void CommandStreamReceiver::waitForTaskCountAndCleanAllocationList(TaskCountType requiredTaskCount, uint32_t allocationUsage) {
     auto address = getTagAddress();
     if (address) {
         while (*address < requiredTaskCount)
@@ -186,11 +187,11 @@ void CommandStreamReceiver::cleanupResources() {
     }
 }
 
-bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
+bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, TaskCountType taskCountToWait) {
     std::chrono::high_resolution_clock::time_point time1, time2;
     int64_t timeDiff = 0;
 
-    uint32_t latestSentTaskCount = this->latestFlushedTaskCount;
+    TaskCountType latestSentTaskCount = this->latestFlushedTaskCount;
     if (latestSentTaskCount < taskCountToWait) {
         this->flushBatchedSubmissions();
     }
@@ -217,7 +218,7 @@ bool CommandStreamReceiver::waitForCompletionWithTimeout(bool enableTimeout, int
 void CommandStreamReceiver::setTagAllocation(GraphicsAllocation *allocation) {
     this->tagAllocation = allocation;
     UNRECOVERABLE_IF(allocation == nullptr);
-    this->tagAddress = reinterpret_cast<uint32_t *>(allocation->getUnderlyingBuffer());
+    this->tagAddress = reinterpret_cast<TagAddressType *>(allocation->getUnderlyingBuffer());
 }
 
 FlushStamp CommandStreamReceiver::obtainCurrentFlushStamp() const {

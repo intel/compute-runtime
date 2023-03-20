@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,7 +14,7 @@
 namespace NEO {
 InternalAllocationStorage::InternalAllocationStorage(CommandStreamReceiver &commandStreamReceiver) : commandStreamReceiver(commandStreamReceiver){};
 void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage) {
-    uint32_t taskCount = gfxAllocation->getTaskCount(commandStreamReceiver.getOsContext().getContextId());
+    TaskCountType taskCount = gfxAllocation->getTaskCount(commandStreamReceiver.getOsContext().getContextId());
 
     if (allocationUsage == REUSABLE_ALLOCATION) {
         taskCount = commandStreamReceiver.peekTaskCount();
@@ -22,7 +22,7 @@ void InternalAllocationStorage::storeAllocation(std::unique_ptr<GraphicsAllocati
 
     storeAllocationWithTaskCount(std::move(gfxAllocation), allocationUsage, taskCount);
 }
-void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, uint32_t taskCount) {
+void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation> gfxAllocation, uint32_t allocationUsage, TaskCountType taskCount) {
     if (allocationUsage == REUSABLE_ALLOCATION) {
         if (DebugManager.flags.DisableResourceRecycling.get()) {
             commandStreamReceiver.getMemoryManager()->freeGraphicsMemory(gfxAllocation.release());
@@ -34,11 +34,11 @@ void InternalAllocationStorage::storeAllocationWithTaskCount(std::unique_ptr<Gra
     allocationsList.pushTailOne(*gfxAllocation.release());
 }
 
-void InternalAllocationStorage::cleanAllocationList(uint32_t waitTaskCount, uint32_t allocationUsage) {
+void InternalAllocationStorage::cleanAllocationList(TaskCountType waitTaskCount, uint32_t allocationUsage) {
     freeAllocationsList(waitTaskCount, (allocationUsage == TEMPORARY_ALLOCATION) ? temporaryAllocations : allocationsForReuse);
 }
 
-void InternalAllocationStorage::freeAllocationsList(uint32_t waitTaskCount, AllocationsList &allocationsList) {
+void InternalAllocationStorage::freeAllocationsList(TaskCountType waitTaskCount, AllocationsList &allocationsList) {
     auto memoryManager = commandStreamReceiver.getMemoryManager();
     GraphicsAllocation *curr = allocationsList.detachNodes();
 
@@ -65,7 +65,7 @@ std::unique_ptr<GraphicsAllocation> InternalAllocationStorage::obtainReusableAll
 
 struct ReusableAllocationRequirements {
     size_t requiredMinimalSize;
-    volatile uint32_t *csrTagAddress;
+    volatile TagAddressType *csrTagAddress;
     GraphicsAllocation::AllocationType allocationType;
     uint32_t contextId;
 };

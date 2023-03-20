@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -62,7 +62,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     MOCKABLE_VIRTUAL void submitBatchBuffer(uint64_t batchBufferGpuAddress, const void *batchBuffer, size_t batchBufferSize, uint32_t memoryBank, uint64_t entryBits);
     void pollForCompletion() override;
     void pollForCompletionImpl() override;
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
+    void waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) override;
 
     uint32_t getDumpHandle();
     MOCKABLE_VIRTUAL void addContextToken(uint32_t dumpHandle);
@@ -109,7 +109,7 @@ class AUBCommandStreamReceiverHw : public CommandStreamReceiverSimulatedHw<GfxFa
     bool dumpAubNonWritable = false;
     ExternalAllocationsContainer externalAllocations;
 
-    uint32_t pollForCompletionTaskCount = 0u;
+    TaskCountType pollForCompletionTaskCount = 0;
     SpinLock pollForCompletionLock;
 };
 } // namespace NEO

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2017-2019 Intel Corporation
+ * Copyright (C) 2017-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,7 +22,7 @@ class UserEvent : public Event {
 
     void updateExecutionStatus() override;
 
-    uint32_t getTaskLevel() override;
+    TaskCountType getTaskLevel() override;
 
     bool isInitialEventStatus() const;
 };
@@ -39,6 +39,6 @@ class VirtualEvent : public Event {
 
     void updateExecutionStatus() override;
 
-    uint32_t getTaskLevel() override;
+    TaskCountType getTaskLevel() override;
 };
 } // namespace NEO

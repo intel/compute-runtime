@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -102,7 +102,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenEmptyQueue) {
     MockContext ctx(pDevice);
     CommandQueueHw<FamilyType> commandQueue(&ctx, pDevice, 0);
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
     taskLevel = taskCount;
     commandQueue.taskCount = taskCount;
     commandQueue.taskLevel = taskCount;
@@ -125,7 +125,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenNonDcFlushWithIni
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     size_t GWS = 1;
 
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
     taskLevel = taskCount;
     commandQueue.taskCount = taskCount;
     commandQueue.taskLevel = taskCount;
@@ -159,7 +159,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenDcFlush) {
     auto buffer = Buffer::create(&ctx, CL_MEM_USE_HOST_PTR, sizeof(tempBuffer), tempBuffer, retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
     taskLevel = taskCount;
     commandQueue.taskCount = taskCount;
     commandQueue.taskLevel = taskCount;
@@ -235,7 +235,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, TrackSentTagsWhenEventIsQueried) {
     auto buffer = Buffer::create(&ctx, CL_MEM_USE_HOST_PTR, sizeof(tempBuffer), tempBuffer, retVal);
     EXPECT_EQ(retVal, CL_SUCCESS);
 
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
     taskLevel = taskCount;
     commandQueue.taskCount = taskCount;
     commandQueue.taskLevel = taskCount;
@@ -268,7 +268,7 @@ HWTEST_F(CommandStreamReceiverFlushTaskTests, GivenNonBlockingMapWhenFinishIsCal
 
     AlignedBuffer mockBuffer;
 
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
     taskLevel = taskCount;
     commandQueue.taskCount = taskCount;
     commandQueue.taskLevel = taskCount;
@@ -451,7 +451,7 @@ struct MockScratchController : public ScratchSpaceController {
     void setRequiredScratchSpace(void *sshBaseAddress,
                                  uint32_t requiredPerThreadScratchSize,
                                  uint32_t requiredPerThreadPrivateScratchSize,
-                                 uint32_t currentTaskCount,
+                                 TaskCountType currentTaskCount,
                                  uint32_t deviceIdx,
                                  bool &stateBaseAddressDirty,
                                  bool &vfeStateDirty) override {

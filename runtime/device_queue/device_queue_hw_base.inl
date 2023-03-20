@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -99,7 +99,7 @@ void DeviceQueueHw<GfxFamily>::initPipeControl(PIPE_CONTROL *pc) {
 }
 
 template <typename GfxFamily>
-void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, uint32_t taskCount) {
+void DeviceQueueHw<GfxFamily>::addExecutionModelCleanUpSection(Kernel *parentKernel, TagNode<HwTimeStamps> *hwTimeStamp, TaskCountType taskCount) {
     // CleanUp Section
     auto offset = slbCS.getUsed();
     auto alignmentSize = alignUp(offset, MemoryConstants::pageSize) - offset;

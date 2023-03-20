@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2019 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ struct GTPinKernelExec {
     cl_mem gtpinResource;
     CommandQueue *pCommandQueue;
     gtpin::command_buffer_handle_t commandBuffer;
-    uint32_t taskCount;
+    TaskCountType taskCount;
     bool isTaskCountValid;
     bool isResourceResident;
 
