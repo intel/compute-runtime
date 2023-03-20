@@ -157,13 +157,7 @@ HWTEST_F(MemoryhManagerMultiContextResourceTests, givenAllocationUsedByManyOsCon
     EXPECT_TRUE(nonDefaultOsContext->isLowPriority());
 
     auto graphicsAllocation = memoryManager->allocateGraphicsMemoryWithProperties(MockAllocationProperties{device->getRootDeviceIndex(), MemoryConstants::pageSize});
-
-    auto &productHelper = device->getProductHelper();
-    if (productHelper.isMultiContextResourceDeferDeletionSupported()) {
-        multiContextDestructor->expectClearQueueTillFirstFailure();
-    } else {
-        multiContextDestructor->expectDrainBlockingValue(false);
-    }
+    multiContextDestructor->expectDrainBlockingValue(false);
 
     nonDefaultCsr->taskCount = *nonDefaultCsr->getTagAddress();
     nonDefaultCsr->latestFlushedTaskCount = *nonDefaultCsr->getTagAddress();

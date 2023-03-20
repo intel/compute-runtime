@@ -198,7 +198,6 @@ class ProductHelper {
     virtual void fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport) const = 0;
     virtual uint32_t getDefaultRevisionId() const = 0;
 
-    virtual bool isMultiContextResourceDeferDeletionSupported() const = 0;
     virtual bool isFusedEuDisabledForDpas(bool kernelHasDpasInstructions, const uint32_t *lws, const uint32_t *groupCount, const HardwareInfo &hwInfo) const = 0;
     virtual bool isCalculationForDisablingEuFusionWithDpasNeeded(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getNumberOfPartsInTileForConcurrentKernel() const = 0;

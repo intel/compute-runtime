@@ -96,7 +96,7 @@ void *DeferredDeleter::run(void *arg) {
         }
         lock.unlock();
         // Delete items placed into deferred delete queue
-        self->clearQueue(false);
+        self->clearQueue();
         lock.lock();
         // Check whether working thread should be stopped
     } while (!self->shouldStop());
@@ -105,33 +105,21 @@ void *DeferredDeleter::run(void *arg) {
 }
 
 void DeferredDeleter::drain(bool blocking) {
-    clearQueue(false);
+    clearQueue();
     if (blocking) {
         while (!areElementsReleased())
             ;
     }
 }
 
-void DeferredDeleter::clearQueueTillFirstFailure() {
-    if (numClients > 0) {
-        return;
-    }
-    clearQueue(true);
-}
-
-void DeferredDeleter::clearQueue(bool breakOnFailure) {
+void DeferredDeleter::clearQueue() {
     do {
         auto deletion = queue.removeFrontOne();
         if (deletion) {
             if (deletion->apply()) {
                 elementsToRelease--;
             } else {
-                if (breakOnFailure) {
-                    queue.pushFrontOne(*deletion.release());
-                    break;
-                } else {
-                    queue.pushTailOne(*deletion.release());
-                }
+                queue.pushTailOne(*deletion.release());
             }
         }
     } while (!queue.peekIsEmpty());

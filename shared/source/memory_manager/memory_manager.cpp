@@ -263,15 +263,8 @@ void MemoryManager::freeGraphicsMemory(GraphicsAllocation *gfxAllocation, bool i
 void MemoryManager::checkGpuUsageAndDestroyGraphicsAllocations(GraphicsAllocation *gfxAllocation) {
     if (gfxAllocation->isUsed()) {
         if (gfxAllocation->isUsedByManyOsContexts()) {
-            int index = gfxAllocation->getRootDeviceIndex();
             multiContextResourceDestructor->deferDeletion(new DeferrableAllocationDeletion{*this, *gfxAllocation});
-            auto &productHelper = executionEnvironment.rootDeviceEnvironments[index]->getHelper<ProductHelper>();
-            if (productHelper.isMultiContextResourceDeferDeletionSupported()) {
-                multiContextResourceDestructor->clearQueueTillFirstFailure();
-            } else {
-                multiContextResourceDestructor->drain(false);
-            }
-
+            multiContextResourceDestructor->drain(false);
             return;
         }
         for (auto &engine : getRegisteredEngines()) {
@@ -1013,10 +1006,6 @@ OsContext *MemoryManager::getDefaultEngineContext(uint32_t rootDeviceIndex, Devi
         defaultContext = registeredEngines[defaultEngineIndex[rootDeviceIndex]].osContext;
     }
     return defaultContext;
-}
-
-void MemoryManager::commonCleanup() {
-    multiContextResourceDestructor->drain(false);
 }
 
 bool MemoryTransferHelper::transferMemoryToAllocation(bool useBlitter, const Device &device, GraphicsAllocation *dstAllocation, size_t dstOffset, const void *srcMemory, size_t srcSize) {

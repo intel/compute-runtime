@@ -727,11 +727,6 @@ uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(AllocationType allocation
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isMultiContextResourceDeferDeletionSupported() const {
-    return false;
-}
-
-template <PRODUCT_FAMILY gfxProduct>
 bool ProductHelperHw<gfxProduct>::isFusedEuDisabledForDpas(bool kernelHasDpasInstructions, const uint32_t *lws, const uint32_t *groupCount, const HardwareInfo &hwInfo) const {
     return false;
 }
@@ -758,5 +753,4 @@ bool ProductHelperHw<gfxProduct>::isLinearStoragePreferred(bool isSharedContext,
     }
     return false;
 }
-
 } // namespace NEO

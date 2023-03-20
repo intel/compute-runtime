@@ -677,10 +677,6 @@ HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsBufferPoolAllocatorS
     EXPECT_FALSE(productHelper->isBufferPoolAllocatorSupported());
 }
 
-HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsMultiContextResourceDeferDeletionSupportedThenReturnFalse) {
-    EXPECT_FALSE(productHelper->isMultiContextResourceDeferDeletionSupported());
-}
-
 HWTEST_F(ProductHelperTest, givenProductHelperWhenCheckingIsUnlockingLockedPtrNecessaryThenReturnFalse) {
     EXPECT_FALSE(productHelper->isUnlockingLockedPtrNecessary(pInHwInfo));
 }

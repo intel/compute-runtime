@@ -153,7 +153,6 @@ class ProductHelperHw : public ProductHelper {
     void fillStateBaseAddressPropertiesSupportStructure(StateBaseAddressPropertiesSupport &propertiesSupport) const override;
     uint32_t getDefaultRevisionId() const override;
 
-    bool isMultiContextResourceDeferDeletionSupported() const override;
     bool isFusedEuDisabledForDpas(bool kernelHasDpasInstructions, const uint32_t *lws, const uint32_t *groupCount, const HardwareInfo &hwInfo) const override;
     bool isCalculationForDisablingEuFusionWithDpasNeeded(const HardwareInfo &hwInfo) const override;
     bool is48bResourceNeededForRayTracing() const override;
