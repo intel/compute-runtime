@@ -55,5 +55,10 @@ ze_result_t SysmanDevice::frequencyGet(zes_device_handle_t hDevice, uint32_t *pC
     return pSysmanDevice->frequencyGet(pCount, phFrequency);
 }
 
+ze_result_t SysmanDevice::schedulerGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_sched_handle_t *phScheduler) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->schedulerGet(pCount, phScheduler);
+}
+
 } // namespace Sysman
 } // namespace L0

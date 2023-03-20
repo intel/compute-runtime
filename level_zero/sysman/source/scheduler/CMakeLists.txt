@@ -1,0 +1,17 @@
+#
+# Copyright (C) 2020-2023 Intel Corporation
+#
+# SPDX-License-Identifier: MIT
+#
+
+target_sources(${L0_STATIC_LIB_NAME}
+               PRIVATE
+               ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/os_scheduler.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/scheduler.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_imp.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/scheduler_imp.h
+)
+
+add_subdirectories()

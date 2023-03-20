@@ -14,6 +14,7 @@
 #include "level_zero/sysman/source/frequency/frequency.h"
 #include "level_zero/sysman/source/memory/memory.h"
 #include "level_zero/sysman/source/power/power.h"
+#include "level_zero/sysman/source/scheduler/scheduler.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
@@ -38,8 +39,12 @@ struct SysmanDevice : _ze_device_handle_t {
 
     static ze_result_t engineGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_engine_handle_t *phEngine);
     virtual ze_result_t engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine) = 0;
+
     static ze_result_t frequencyGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_freq_handle_t *phFrequency);
     virtual ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) = 0;
+
+    static ze_result_t schedulerGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_sched_handle_t *phScheduler);
+    virtual ze_result_t schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler) = 0;
 };
 
 } // namespace Sysman

@@ -9,14 +9,15 @@
 #include "shared/source/helpers/non_copyable_or_moveable.h"
 
 #include "level_zero/api/sysman/zes_handles_struct.h"
-#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
+#include <map>
 #include <mutex>
 #include <string>
 #include <vector>
 
 namespace L0 {
+namespace Sysman {
 struct OsSysman;
 class Scheduler : _zes_sched_handle_t {
   public:
@@ -39,16 +40,16 @@ class Scheduler : _zes_sched_handle_t {
 struct SchedulerHandleContext : NEO::NonCopyableOrMovableClass {
     SchedulerHandleContext(OsSysman *pOsSysman);
     ~SchedulerHandleContext();
-    void init(std::vector<ze_device_handle_t> &deviceHandles);
+    void init(uint32_t subDeviceCount);
     ze_result_t schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler);
 
     OsSysman *pOsSysman = nullptr;
-    std::vector<std::unique_ptr<Scheduler>> handleList = {};
-    ze_device_handle_t hCoreDevice = nullptr;
+    std::vector<Scheduler *> handleList = {};
 
   private:
-    void createHandle(zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines, ze_device_handle_t deviceHandle);
+    void createHandle(zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines, ze_bool_t onSubDevice, uint32_t subDeviceId);
     std::once_flag initSchedulerOnce;
 };
 
+} // namespace Sysman
 } // namespace L0
