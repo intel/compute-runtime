@@ -48,59 +48,95 @@ ze_result_t zesDeviceEnumSchedulers(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_sched_handle_t *phScheduler) {
-    return L0::SysmanDevice::schedulerGet(hDevice, pCount, phScheduler);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::schedulerGet(hDevice, pCount, phScheduler);
+    } else {
+        return L0::Sysman::SysmanDevice::schedulerGet(hDevice, pCount, phScheduler);
+    }
 }
 
 ze_result_t zesSchedulerGetProperties(
     zes_sched_handle_t hScheduler,
     zes_sched_properties_t *pProperties) {
-    return L0::Scheduler::fromHandle(hScheduler)->schedulerGetProperties(pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::Scheduler::fromHandle(hScheduler)->schedulerGetProperties(pProperties);
+    } else {
+        return L0::Sysman::Scheduler::fromHandle(hScheduler)->schedulerGetProperties(pProperties);
+    }
 }
 
 ze_result_t zesSchedulerGetCurrentMode(
     zes_sched_handle_t hScheduler,
     zes_sched_mode_t *pMode) {
-    return L0::Scheduler::fromHandle(hScheduler)->getCurrentMode(pMode);
+    if (L0::sysmanInitFromCore) {
+        return L0::Scheduler::fromHandle(hScheduler)->getCurrentMode(pMode);
+    } else {
+        return L0::Sysman::Scheduler::fromHandle(hScheduler)->getCurrentMode(pMode);
+    }
 }
 
 ze_result_t zesSchedulerGetTimeoutModeProperties(
     zes_sched_handle_t hScheduler,
     ze_bool_t getDefaults,
     zes_sched_timeout_properties_t *pConfig) {
-    return L0::Scheduler::fromHandle(hScheduler)->getTimeoutModeProperties(getDefaults, pConfig);
+    if (L0::sysmanInitFromCore) {
+        return L0::Scheduler::fromHandle(hScheduler)->getTimeoutModeProperties(getDefaults, pConfig);
+    } else {
+        return L0::Sysman::Scheduler::fromHandle(hScheduler)->getTimeoutModeProperties(getDefaults, pConfig);
+    }
 }
 
 ze_result_t zesSchedulerGetTimesliceModeProperties(
     zes_sched_handle_t hScheduler,
     ze_bool_t getDefaults,
     zes_sched_timeslice_properties_t *pConfig) {
-    return L0::Scheduler::fromHandle(hScheduler)->getTimesliceModeProperties(getDefaults, pConfig);
+    if (L0::sysmanInitFromCore) {
+        return L0::Scheduler::fromHandle(hScheduler)->getTimesliceModeProperties(getDefaults, pConfig);
+    } else {
+        return L0::Sysman::Scheduler::fromHandle(hScheduler)->getTimesliceModeProperties(getDefaults, pConfig);
+    }
 }
 
 ze_result_t zesSchedulerSetTimeoutMode(
     zes_sched_handle_t hScheduler,
     zes_sched_timeout_properties_t *pProperties,
     ze_bool_t *pNeedReload) {
-    return L0::Scheduler::fromHandle(hScheduler)->setTimeoutMode(pProperties, pNeedReload);
+    if (L0::sysmanInitFromCore) {
+        return L0::Scheduler::fromHandle(hScheduler)->setTimeoutMode(pProperties, pNeedReload);
+    } else {
+        return L0::Sysman::Scheduler::fromHandle(hScheduler)->setTimeoutMode(pProperties, pNeedReload);
+    }
 }
 
 ze_result_t zesSchedulerSetTimesliceMode(
     zes_sched_handle_t hScheduler,
     zes_sched_timeslice_properties_t *pProperties,
     ze_bool_t *pNeedReload) {
-    return L0::Scheduler::fromHandle(hScheduler)->setTimesliceMode(pProperties, pNeedReload);
+    if (L0::sysmanInitFromCore) {
+        return L0::Scheduler::fromHandle(hScheduler)->setTimesliceMode(pProperties, pNeedReload);
+    } else {
+        return L0::Sysman::Scheduler::fromHandle(hScheduler)->setTimesliceMode(pProperties, pNeedReload);
+    }
 }
 
 ze_result_t zesSchedulerSetExclusiveMode(
     zes_sched_handle_t hScheduler,
     ze_bool_t *pNeedReload) {
-    return L0::Scheduler::fromHandle(hScheduler)->setExclusiveMode(pNeedReload);
+    if (L0::sysmanInitFromCore) {
+        return L0::Scheduler::fromHandle(hScheduler)->setExclusiveMode(pNeedReload);
+    } else {
+        return L0::Sysman::Scheduler::fromHandle(hScheduler)->setExclusiveMode(pNeedReload);
+    }
 }
 
 ze_result_t zesSchedulerSetComputeUnitDebugMode(
     zes_sched_handle_t hScheduler,
     ze_bool_t *pNeedReload) {
-    return L0::Scheduler::fromHandle(hScheduler)->setComputeUnitDebugMode(pNeedReload);
+    if (L0::sysmanInitFromCore) {
+        return L0::Scheduler::fromHandle(hScheduler)->setComputeUnitDebugMode(pNeedReload);
+    } else {
+        return L0::Sysman::Scheduler::fromHandle(hScheduler)->setComputeUnitDebugMode(pNeedReload);
+    }
 }
 
 ze_result_t zesDeviceProcessesGetState(
