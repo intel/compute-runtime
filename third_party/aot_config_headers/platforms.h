@@ -48,10 +48,10 @@ enum PRODUCT_CONFIG : uint32_t {
     PVC_XT_B0 = 0x030f0005,
     PVC_XT_B1 = 0x030f0006,
     PVC_XT_C0 = 0x030f0007,
-    XE_LPG_MD_A0 = 0x03118000,
-    XE_LPG_MD_B0 = 0x03118004,
-    XE_LPG_LG_A0 = 0x0311c000,
-    XE_LPG_LG_B0 = 0x0311c004,
+    MTL_M_A0 = 0x03118000,
+    MTL_M_B0 = 0x03118004,
+    MTL_P_A0 = 0x0311c000,
+    MTL_P_B0 = 0x0311c004,
     CONFIG_MAX_PLATFORM,
 };
 
@@ -112,11 +112,14 @@ inline const std::map<std::string, RELEASE> releaseAcronyms = {
 #ifdef SUPPORT_XE_HP_CORE
     {"xe-hp", XE_HP_RELEASE},
 #endif
-#ifdef SUPPORT_XE_HPG_CORE
+#if defined(SUPPORT_XE_HPG_CORE) && defined(SUPPORT_DG2)
     {"xe-hpg", XE_HPG_RELEASE},
 #endif
 #ifdef SUPPORT_XE_HPC_CORE
     {"xe-hpc", XE_HPC_RELEASE},
+#endif
+#if defined(SUPPORT_XE_HPG_CORE) && defined(SUPPORT_MTL)
+    {"xe-lpg", XE_LPG_RELEASE},
 #endif
 };
 
@@ -184,6 +187,11 @@ inline const std::map<std::string, AOT::PRODUCT_CONFIG> deviceAcronyms = {
 #ifdef SUPPORT_PVC
     {"pvc-sdv", PVC_XL_A0P},
     {"pvc", PVC_XT_C0},
+#endif
+#ifdef SUPPORT_MTL
+    {"mtl-s", MTL_M_B0},
+    {"mtl-m", MTL_M_B0},
+    {"mtl-p", MTL_P_B0},
 #endif
 };
 } // namespace AOT

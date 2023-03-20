@@ -152,7 +152,7 @@ const HardwareInfo MtlHwConfig::hwInfo = {
     &MTL::workaroundTable,
     &MtlHwConfig::gtSystemInfo,
     MTL::capabilityTable,
-    AOT::XE_LPG_MD_A0};
+    AOT::MTL_M_A0};
 
 GT_SYSTEM_INFO MtlHwConfig::gtSystemInfo = {0};
 void MtlHwConfig::setupHardwareInfo(HardwareInfo *hwInfo, bool setupFeatureTableAndWorkaroundTable, const CompilerProductHelper &compilerProductHelper) {

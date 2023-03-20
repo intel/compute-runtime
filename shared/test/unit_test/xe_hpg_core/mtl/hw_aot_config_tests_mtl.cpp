@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,7 +16,7 @@ INSTANTIATE_TEST_CASE_P(ProductConfigHwInfoMtlTests,
 
 INSTANTIATE_TEST_CASE_P(ProductConfigHwInfoMtlTests,
                         ProductConfigHwInfoBadRevisionTests,
-                        ::testing::Combine(::testing::Values(AOT::XE_LPG_MD_A0, AOT::XE_LPG_LG_A0),
+                        ::testing::Combine(::testing::Values(AOT::MTL_M_A0, AOT::MTL_P_A0),
                                            ::testing::Values(IGFX_METEORLAKE)));
 
 } // namespace NEO

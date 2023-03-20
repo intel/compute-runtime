@@ -18,5 +18,24 @@ using ProductConfigHelperMtlTests = ::testing::Test;
 MTLTEST_F(ProductConfigHelperMtlTests, givenXeLpgReleaseWhenSearchForDeviceAcronymThenObjectIsFound) {
     auto productConfigHelper = std::make_unique<ProductConfigHelper>();
     auto aotInfos = productConfigHelper->getDeviceAotInfo();
-    EXPECT_FALSE(std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(AOT::XE_LPG_RELEASE)));
+    EXPECT_TRUE(std::any_of(aotInfos.begin(), aotInfos.end(), ProductConfigHelper::findDeviceAcronymForRelease(AOT::XE_LPG_RELEASE)));
+}
+
+MTLTEST_F(ProductConfigHelperMtlTests, givenVariousVariantsOfXeLpgAcronymsWhenGetReleaseThenCorrectValueIsReturned) {
+    std::vector<std::string> acronymsVariants = {"xe_lpg_core", "xe_lpg", "xelpg", "XeLpg"};
+    for (auto &acronym : acronymsVariants) {
+        ProductConfigHelper::adjustDeviceName(acronym);
+        auto ret = ProductConfigHelper::getReleaseForAcronym(acronym);
+        EXPECT_EQ(ret, AOT::XE_LPG_RELEASE);
+    }
+}
+
+MTLTEST_F(ProductConfigHelperMtlTests, givenMtlConfigsWhenSearchForDeviceAcronymsThenObjectIsFound) {
+    auto productConfigHelper = std::make_unique<ProductConfigHelper>();
+    std::vector<AOT::PRODUCT_CONFIG> mtlConfigs = {AOT::MTL_M_B0, AOT::MTL_P_B0};
+    auto deviceAcronyms = productConfigHelper->getDeviceAcronyms();
+    for (const auto &config : mtlConfigs) {
+        auto acronym = productConfigHelper->getAcronymForProductConfig(config);
+        EXPECT_NE(std::find(deviceAcronyms.begin(), deviceAcronyms.end(), acronym), deviceAcronyms.end());
+    }
 }

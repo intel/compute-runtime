@@ -47,18 +47,18 @@ AOT::PRODUCT_CONFIG ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(cons
     case 70:
         switch (hwInfo.ipVersion.revision) {
         case 0:
-            return AOT::XE_LPG_MD_A0;
+            return AOT::MTL_M_A0;
         case 4:
-            return AOT::XE_LPG_MD_B0;
+            return AOT::MTL_M_B0;
         default:
             return AOT::UNKNOWN_ISA;
         }
     case 71:
         switch (hwInfo.ipVersion.revision) {
         case 0:
-            return AOT::XE_LPG_LG_A0;
+            return AOT::MTL_P_A0;
         case 4:
-            return AOT::XE_LPG_LG_B0;
+            return AOT::MTL_P_B0;
         default:
             return AOT::UNKNOWN_ISA;
         }
@@ -80,7 +80,7 @@ uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo 
 
 template <>
 std::pair<bool, bool> ProductHelperHw<gfxProduct>::isPipeControlPriorToNonPipelinedStateCommandsWARequired(const HardwareInfo &hwInfo, bool isRcs) const {
-    auto isBasicWARequired = getProductConfigFromHwInfo(hwInfo) == AOT::XE_LPG_MD_A0 || getProductConfigFromHwInfo(hwInfo) == AOT::XE_LPG_LG_A0;
+    auto isBasicWARequired = getProductConfigFromHwInfo(hwInfo) == AOT::MTL_M_A0 || getProductConfigFromHwInfo(hwInfo) == AOT::MTL_P_A0;
     auto isExtendedWARequired = false;
 
     return {isBasicWARequired, isExtendedWARequired};
@@ -123,7 +123,7 @@ uint64_t ProductHelperHw<gfxProduct>::overridePatIndex(AllocationType allocation
 template <>
 int ProductHelperHw<gfxProduct>::getProductMaxPreferredSlmSize(const HardwareInfo &hwInfo, int preferredEnumValue) const {
     using PREFERRED_SLM_ALLOCATION_SIZE = typename XeHpgCoreFamily::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
-    if (getProductConfigFromHwInfo(hwInfo) == AOT::XE_LPG_MD_A0 || getProductConfigFromHwInfo(hwInfo) == AOT::XE_LPG_LG_A0) {
+    if (getProductConfigFromHwInfo(hwInfo) == AOT::MTL_M_A0 || getProductConfigFromHwInfo(hwInfo) == AOT::MTL_P_A0) {
         return static_cast<int>(PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K);
     } else {
         return preferredEnumValue;

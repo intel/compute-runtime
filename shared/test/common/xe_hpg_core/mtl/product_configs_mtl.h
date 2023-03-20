@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,8 +10,8 @@
 
 namespace AOT_MTL {
 inline constexpr AOT::PRODUCT_CONFIG productConfigs[] = {
-    AOT::XE_LPG_MD_A0,
-    AOT::XE_LPG_MD_B0,
-    AOT::XE_LPG_LG_A0,
-    AOT::XE_LPG_LG_B0};
+    AOT::MTL_M_A0,
+    AOT::MTL_M_B0,
+    AOT::MTL_P_A0,
+    AOT::MTL_P_B0};
 }

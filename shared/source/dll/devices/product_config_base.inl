@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,10 +19,10 @@ DEVICE_CONFIG(PVC_XT_C0, PvcHwConfig, pvcXtDeviceIds, XE_FAMILY, XE_HPC_RELEASE)
 
 #ifdef SUPPORT_XE_HPG_CORE
 #ifdef SUPPORT_MTL
-DEVICE_CONFIG(XE_LPG_MD_A0, MtlHwConfig, mtlDeviceIds, XE_FAMILY, XE_LPG_RELEASE)
-DEVICE_CONFIG(XE_LPG_MD_B0, MtlHwConfig, mtlDeviceIds, XE_FAMILY, XE_LPG_RELEASE)
-DEVICE_CONFIG(XE_LPG_LG_A0, MtlHwConfig, mtlDeviceIds, XE_FAMILY, XE_LPG_RELEASE)
-DEVICE_CONFIG(XE_LPG_LG_B0, MtlHwConfig, mtlDeviceIds, XE_FAMILY, XE_LPG_RELEASE)
+DEVICE_CONFIG(MTL_M_A0, MtlHwConfig, mtlDeviceIds, XE_FAMILY, XE_LPG_RELEASE)
+DEVICE_CONFIG(MTL_M_B0, MtlHwConfig, mtlDeviceIds, XE_FAMILY, XE_LPG_RELEASE)
+DEVICE_CONFIG(MTL_P_A0, MtlHwConfig, mtlDeviceIds, XE_FAMILY, XE_LPG_RELEASE)
+DEVICE_CONFIG(MTL_P_B0, MtlHwConfig, mtlDeviceIds, XE_FAMILY, XE_LPG_RELEASE)
 #endif
 #ifdef SUPPORT_DG2
 DEVICE_CONFIG(DG2_G10_A0, Dg2HwConfig, dg2G10DeviceIds, XE_FAMILY, XE_HPG_RELEASE)
