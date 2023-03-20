@@ -187,7 +187,7 @@ HWTEST2_F(CommandListCreate, givenGetAlignedAllocationCalledWithInvalidPtrThenNu
     size_t cmdListHostPtrSize = MemoryConstants::pageSize;
     void *cmdListHostBuffer = reinterpret_cast<void *>(0x1234);
     AlignedAllocationData outData = {};
-    outData = commandList->getAlignedAllocation(device, cmdListHostBuffer, cmdListHostPtrSize, false);
+    outData = commandList->getAlignedAllocationData(device, cmdListHostBuffer, cmdListHostPtrSize, false);
     EXPECT_EQ(nullptr, outData.alloc);
 }
 
@@ -254,7 +254,7 @@ HWTEST2_F(CommandListCreate,
     void *baseAddress = alignDown(startMemory, MemoryConstants::pageSize);
     size_t expectedOffset = ptrDiff(startMemory, baseAddress);
 
-    AlignedAllocationData outData = commandList->getAlignedAllocation(device, startMemory, cmdListHostPtrSize, false);
+    AlignedAllocationData outData = commandList->getAlignedAllocationData(device, startMemory, cmdListHostPtrSize, false);
     ASSERT_NE(nullptr, outData.alloc);
     auto firstAlloc = outData.alloc;
     auto expectedGpuAddress = static_cast<uintptr_t>(alignDown(outData.alloc->getGpuAddress(), MemoryConstants::pageSize));
@@ -269,7 +269,7 @@ HWTEST2_F(CommandListCreate,
     expectedGpuAddress = ptrOffset(expectedGpuAddress, alignedOffset);
     EXPECT_EQ(outData.offset + offset, expectedOffset);
 
-    outData = commandList->getAlignedAllocation(device, offsetMemory, 4u, false);
+    outData = commandList->getAlignedAllocationData(device, offsetMemory, 4u, false);
     ASSERT_NE(nullptr, outData.alloc);
     EXPECT_EQ(firstAlloc, outData.alloc);
     EXPECT_EQ(startMemory, outData.alloc->getUnderlyingBuffer());
@@ -1473,8 +1473,8 @@ HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenInternalMemWithinDiffe
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::Copy, 0u);
     auto buffer = std::make_unique<uint8_t>(0x100);
 
-    auto outData1 = commandList->getAlignedAllocation(device, buffer.get(), 0x100, true);
-    auto outData2 = commandList->getAlignedAllocation(device, &buffer.get()[5], 0x1, true);
+    auto outData1 = commandList->getAlignedAllocationData(device, buffer.get(), 0x100, true);
+    auto outData2 = commandList->getAlignedAllocationData(device, &buffer.get()[5], 0x1, true);
     EXPECT_NE(outData1.alloc, outData2.alloc);
     driverHandle->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
     driverHandle->getMemoryManager()->freeGraphicsMemory(outData2.alloc);
@@ -1487,8 +1487,8 @@ HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenExternalMemWithinDiffe
     commandList->initialize(myDevice.get(), NEO::EngineGroupType::Copy, 0u);
     auto buffer = std::make_unique<uint8_t>(0x100);
 
-    auto outData1 = commandList->getAlignedAllocation(device, buffer.get(), 0x100, true);
-    auto outData2 = commandList->getAlignedAllocation(device, &buffer.get()[5], 0x1, true);
+    auto outData1 = commandList->getAlignedAllocationData(device, buffer.get(), 0x100, true);
+    auto outData2 = commandList->getAlignedAllocationData(device, &buffer.get()[5], 0x1, true);
     EXPECT_EQ(outData1.alloc, outData2.alloc);
     driverHandle->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
     commandList->hostPtrMap.clear();

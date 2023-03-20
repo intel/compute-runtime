@@ -201,10 +201,8 @@ struct CommandListCoreFamily : CommandListImp {
                                                       uint64_t srcOffset,
                                                       uint64_t size);
 
-    MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlitRegion(NEO::GraphicsAllocation *srcAlloc,
-                                                            NEO::GraphicsAllocation *dstAlloc,
-                                                            size_t srcOffset,
-                                                            size_t dstOffset,
+    MOCKABLE_VIRTUAL ze_result_t appendMemoryCopyBlitRegion(AlignedAllocationData *srcAllocationData,
+                                                            AlignedAllocationData *dstAllocationData,
                                                             ze_copy_region_t srcRegion,
                                                             ze_copy_region_t dstRegion, const Vec3<size_t> &copySize,
                                                             size_t srcRowPitch, size_t srcSlicePitch,
@@ -285,8 +283,9 @@ struct CommandListCoreFamily : CommandListImp {
     void appendMultiTileBarrier(NEO::Device &neoDevice);
     size_t estimateBufferSizeMultiTileBarrier(const NEO::RootDeviceEnvironment &rootDeviceEnvironment);
     uint64_t getInputBufferSize(NEO::ImageType imageType, uint64_t bytesPerPixel, const ze_image_region_t *region);
-    MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocation(Device *device, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
+    MOCKABLE_VIRTUAL AlignedAllocationData getAlignedAllocationData(Device *device, const void *buffer, uint64_t bufferSize, bool hostCopyAllowed);
     size_t getAllocationOffsetForAppendBlitFill(void *ptr, NEO::GraphicsAllocation &gpuAllocation);
+    uint32_t getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData);
     void addFlushRequiredCommand(bool flushOperationRequired, Event *signalEvent);
     void handlePostSubmissionState();
 

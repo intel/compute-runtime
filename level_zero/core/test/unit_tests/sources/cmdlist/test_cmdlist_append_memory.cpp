@@ -93,6 +93,212 @@ HWTEST2_F(AppendMemoryCopy, givenCommandListAndAlignedHostPointersWhenBlitMemory
     EXPECT_EQ(cmdList.dstBlitCopyRegionOffset, 0u);
 }
 
+HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndDestinationPtrOffsetWhenMemoryCopyRegionToSameUsmHostAllocationThenDestinationBlitCopyRegionHasOffset, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+
+    constexpr size_t allocSize = 4096;
+    void *buffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, allocSize, &buffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t offset = 64u;
+    void *srcPtr = buffer;
+    void *dstPtr = ptrOffset(buffer, offset);
+    ze_copy_region_t dstRegion = {0, 0, 0, 8, 4, 0};
+    ze_copy_region_t srcRegion = {0, 0, 0, 8, 4, 0};
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+
+    auto &cmdContainer = cmdList.getCmdContainer();
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_NE(genCmdList.end(), itor);
+
+    auto bltCmd = genCmdCast<XY_COPY_BLT *>(*itor);
+    EXPECT_EQ(bltCmd->getSourceBaseAddress(), reinterpret_cast<uintptr_t>(srcPtr));
+    EXPECT_EQ(bltCmd->getDestinationBaseAddress(), reinterpret_cast<uintptr_t>(dstPtr));
+
+    context->freeMem(buffer);
+}
+
+HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndSourcePtrOffsetWhenMemoryCopyRegionToSameUsmHostAllocationThenSourceBlitCopyRegionHasOffset, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+
+    constexpr size_t allocSize = 4096;
+    void *buffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    auto result = context->allocHostMem(&hostDesc, allocSize, allocSize, &buffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t offset = 64u;
+    void *srcPtr = ptrOffset(buffer, offset);
+    void *dstPtr = buffer;
+    ze_copy_region_t dstRegion = {0, 0, 0, 8, 4, 0};
+    ze_copy_region_t srcRegion = {0, 0, 0, 8, 4, 0};
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+
+    auto &cmdContainer = cmdList.getCmdContainer();
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_NE(genCmdList.end(), itor);
+
+    auto bltCmd = genCmdCast<XY_COPY_BLT *>(*itor);
+    EXPECT_EQ(bltCmd->getSourceBaseAddress(), reinterpret_cast<uintptr_t>(srcPtr));
+    EXPECT_EQ(bltCmd->getDestinationBaseAddress(), reinterpret_cast<uintptr_t>(dstPtr));
+
+    context->freeMem(buffer);
+}
+
+HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndDestinationPtrOffsetWhenMemoryCopyRegionToSameUsmSharedAllocationThenDestinationBlitCopyRegionHasOffset, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+
+    constexpr size_t allocSize = 4096;
+    void *buffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, allocSize, allocSize, &buffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t offset = 64u;
+    void *srcPtr = buffer;
+    void *dstPtr = ptrOffset(buffer, offset);
+    ze_copy_region_t dstRegion = {0, 0, 0, 8, 4, 0};
+    ze_copy_region_t srcRegion = {0, 0, 0, 8, 4, 0};
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+
+    auto &cmdContainer = cmdList.getCmdContainer();
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_NE(genCmdList.end(), itor);
+
+    auto bltCmd = genCmdCast<XY_COPY_BLT *>(*itor);
+    EXPECT_EQ(bltCmd->getSourceBaseAddress(), reinterpret_cast<uintptr_t>(srcPtr));
+    EXPECT_EQ(bltCmd->getDestinationBaseAddress(), reinterpret_cast<uintptr_t>(dstPtr));
+
+    context->freeMem(buffer);
+}
+
+HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndSourcePtrOffsetWhenMemoryCopyRegionToSameUsmSharedAllocationThenSourceBlitCopyRegionHasOffset, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+
+    constexpr size_t allocSize = 4096;
+    void *buffer = nullptr;
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocSharedMem(device->toHandle(), &deviceDesc, &hostDesc, allocSize, allocSize, &buffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t offset = 64u;
+    void *srcPtr = ptrOffset(buffer, offset);
+    void *dstPtr = buffer;
+    ze_copy_region_t dstRegion = {0, 0, 0, 8, 4, 0};
+    ze_copy_region_t srcRegion = {0, 0, 0, 8, 4, 0};
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+
+    auto &cmdContainer = cmdList.getCmdContainer();
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_NE(genCmdList.end(), itor);
+
+    auto bltCmd = genCmdCast<XY_COPY_BLT *>(*itor);
+    EXPECT_EQ(bltCmd->getSourceBaseAddress(), reinterpret_cast<uintptr_t>(srcPtr));
+    EXPECT_EQ(bltCmd->getDestinationBaseAddress(), reinterpret_cast<uintptr_t>(dstPtr));
+
+    context->freeMem(buffer);
+}
+
+HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndDestinationPtrOffsetWhenMemoryCopyRegionToSameUsmDeviceAllocationThenDestinationBlitCopyRegionHasOffset, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+
+    constexpr size_t allocSize = 4096;
+    void *buffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, allocSize, allocSize, &buffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t offset = 64u;
+    void *srcPtr = buffer;
+    void *dstPtr = ptrOffset(buffer, offset);
+    ze_copy_region_t dstRegion = {0, 0, 0, 8, 4, 0};
+    ze_copy_region_t srcRegion = {0, 0, 0, 8, 4, 0};
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+
+    auto &cmdContainer = cmdList.getCmdContainer();
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_NE(genCmdList.end(), itor);
+
+    auto bltCmd = genCmdCast<XY_COPY_BLT *>(*itor);
+    EXPECT_EQ(bltCmd->getSourceBaseAddress(), reinterpret_cast<uintptr_t>(srcPtr));
+    EXPECT_EQ(bltCmd->getDestinationBaseAddress(), reinterpret_cast<uintptr_t>(dstPtr));
+
+    context->freeMem(buffer);
+}
+
+HWTEST2_F(AppendMemoryCopy, givenCopyCommandListAndSourcePtrOffsetWhenMemoryCopyRegionToSameUsmDeviceAllocationThenSourceBlitCopyRegionHasOffset, IsAtLeastSkl) {
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using XY_COPY_BLT = typename GfxFamily::XY_COPY_BLT;
+
+    MockAppendMemoryCopy<gfxCoreFamily> cmdList;
+    cmdList.initialize(device, NEO::EngineGroupType::Copy, 0u);
+
+    constexpr size_t allocSize = 4096;
+    void *buffer = nullptr;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = context->allocDeviceMem(device->toHandle(), &deviceDesc, allocSize, allocSize, &buffer);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    uint32_t offset = 64u;
+    void *srcPtr = ptrOffset(buffer, offset);
+    void *dstPtr = buffer;
+    ze_copy_region_t dstRegion = {0, 0, 0, 8, 4, 0};
+    ze_copy_region_t srcRegion = {0, 0, 0, 8, 4, 0};
+    cmdList.appendMemoryCopyRegion(dstPtr, &dstRegion, 0, 0, srcPtr, &srcRegion, 0, 0, nullptr, 0, nullptr, false);
+
+    auto &cmdContainer = cmdList.getCmdContainer();
+    GenCmdList genCmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        genCmdList, ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), 0), cmdContainer.getCommandStream()->getUsed()));
+    auto itor = find<XY_COPY_BLT *>(genCmdList.begin(), genCmdList.end());
+    ASSERT_NE(genCmdList.end(), itor);
+
+    auto bltCmd = genCmdCast<XY_COPY_BLT *>(*itor);
+    EXPECT_EQ(bltCmd->getSourceBaseAddress(), reinterpret_cast<uintptr_t>(srcPtr));
+    EXPECT_EQ(bltCmd->getDestinationBaseAddress(), reinterpret_cast<uintptr_t>(dstPtr));
+
+    context->freeMem(buffer);
+}
+
 HWTEST2_F(AppendMemoryCopy, givenCommandListAndHostPointersWhenMemoryCopyRegionCalledThenPipeControlWithDcFlushAdded, IsAtLeastSkl) {
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 

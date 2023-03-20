@@ -65,7 +65,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::finalStreamState;
     using BaseClass::flags;
     using BaseClass::frontEndStateTracking;
-    using BaseClass::getAlignedAllocation;
+    using BaseClass::getAlignedAllocationData;
     using BaseClass::getAllocationFromHostPtrMap;
     using BaseClass::getDcFlushRequired;
     using BaseClass::getHostPtrAlloc;
@@ -502,8 +502,8 @@ class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
                       uint64_t srcOffset,
                       uint64_t size));
 
-    AlignedAllocationData getAlignedAllocation(L0::Device *device, const void *buffer, uint64_t bufferSize, bool allowHostCopy) override {
-        return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocation(device, buffer, bufferSize, allowHostCopy);
+    AlignedAllocationData getAlignedAllocationData(L0::Device *device, const void *buffer, uint64_t bufferSize, bool allowHostCopy) override {
+        return L0::CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocationData(device, buffer, bufferSize, allowHostCopy);
     }
 
     ze_result_t appendMemoryCopyKernel2d(AlignedAllocationData *dstAlignedAllocation, AlignedAllocationData *srcAlignedAllocation,
@@ -529,10 +529,8 @@ class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
         return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyKernel3d(dstAlignedAllocation, srcAlignedAllocation, builtin, dstRegion, dstPitch, dstSlicePitch, dstOffset, srcRegion, srcPitch, srcSlicePitch, srcOffset, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
     }
 
-    ze_result_t appendMemoryCopyBlitRegion(NEO::GraphicsAllocation *srcAllocation,
-                                           NEO::GraphicsAllocation *dstAllocation,
-                                           size_t srcOffset,
-                                           size_t dstOffset,
+    ze_result_t appendMemoryCopyBlitRegion(AlignedAllocationData *srcAllocationData,
+                                           AlignedAllocationData *dstAllocationData,
                                            ze_copy_region_t srcRegion,
                                            ze_copy_region_t dstRegion, const Vec3<size_t> &copySize,
                                            size_t srcRowPitch, size_t srcSlicePitch,
@@ -540,9 +538,9 @@ class MockAppendMemoryCopy : public CommandListCoreFamily<gfxCoreFamily> {
                                            const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                            L0::Event *signalEvent,
                                            uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) override {
-        srcBlitCopyRegionOffset = srcOffset;
-        dstBlitCopyRegionOffset = dstOffset;
-        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(srcAllocation, dstAllocation, srcOffset, dstOffset, srcRegion, dstRegion, copySize, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, srcSize, dstSize, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+        srcBlitCopyRegionOffset = srcAllocationData->offset;
+        dstBlitCopyRegionOffset = dstAllocationData->offset;
+        return L0::CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(srcAllocationData, dstAllocationData, srcRegion, dstRegion, copySize, srcRowPitch, srcSlicePitch, dstRowPitch, dstSlicePitch, srcSize, dstSize, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
     }
     uintptr_t srcAlignedPtr;
     uintptr_t dstAlignedPtr;

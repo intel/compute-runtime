@@ -528,7 +528,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
 
     uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, bytesPerPixel, pDstRegion);
 
-    auto allocationStruct = getAlignedAllocation(this->device, srcPtr, bufferSize, true);
+    auto allocationStruct = getAlignedAllocationData(this->device, srcPtr, bufferSize, true);
     if (allocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -671,7 +671,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
 
     uint64_t bufferSize = getInputBufferSize(image->getImageInfo().imgDesc.imageType, bytesPerPixel, pSrcRegion);
 
-    auto allocationStruct = getAlignedAllocation(this->device, dstPtr, bufferSize, false);
+    auto allocationStruct = getAlignedAllocationData(this->device, dstPtr, bufferSize, false);
     if (allocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -1073,10 +1073,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlit(uintptr_t
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(NEO::GraphicsAllocation *srcAlloc,
-                                                                             NEO::GraphicsAllocation *dstAlloc,
-                                                                             size_t srcOffset,
-                                                                             size_t dstOffset,
+ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(AlignedAllocationData *srcAllocationData,
+                                                                             AlignedAllocationData *dstAllocationData,
                                                                              ze_copy_region_t srcRegion,
                                                                              ze_copy_region_t dstRegion, const Vec3<size_t> &copySize,
                                                                              size_t srcRowPitch, size_t srcSlicePitch,
@@ -1084,19 +1082,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(NEO
                                                                              const Vec3<size_t> &srcSize, const Vec3<size_t> &dstSize,
                                                                              Event *signalEvent,
                                                                              uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents, bool relaxedOrderingDispatch) {
-    dstRegion.originX += static_cast<uint32_t>(dstOffset);
-    srcRegion.originX += static_cast<uint32_t>(srcOffset);
+    srcRegion.originX += getRegionOffsetForAppendMemoryCopyBlitRegion(srcAllocationData);
+    dstRegion.originX += getRegionOffsetForAppendMemoryCopyBlitRegion(dstAllocationData);
+
     uint32_t bytesPerPixel = NEO::BlitCommandsHelper<GfxFamily>::getAvailableBytesPerPixel(copySize.x, srcRegion.originX, dstRegion.originX, srcSize.x, dstSize.x);
     Vec3<size_t> srcPtrOffset = {srcRegion.originX / bytesPerPixel, srcRegion.originY, srcRegion.originZ};
     Vec3<size_t> dstPtrOffset = {dstRegion.originX / bytesPerPixel, dstRegion.originY, dstRegion.originZ};
     auto clearColorAllocation = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getClearColorAllocation();
 
     Vec3<size_t> copySizeModified = {copySize.x / bytesPerPixel, copySize.y, copySize.z};
-    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAlloc, srcAlloc,
+    auto blitProperties = NEO::BlitProperties::constructPropertiesForCopy(dstAllocationData->alloc, srcAllocationData->alloc,
                                                                           dstPtrOffset, srcPtrOffset, copySizeModified, srcRowPitch, srcSlicePitch,
                                                                           dstRowPitch, dstSlicePitch, clearColorAllocation);
-    commandContainer.addToResidencyContainer(dstAlloc);
-    commandContainer.addToResidencyContainer(srcAlloc);
+    commandContainer.addToResidencyContainer(dstAllocationData->alloc);
+    commandContainer.addToResidencyContainer(srcAllocationData->alloc);
     commandContainer.addToResidencyContainer(clearColorAllocation);
     blitProperties.bytesPerPixel = bytesPerPixel;
     blitProperties.srcSize = srcSize;
@@ -1106,8 +1105,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyBlitRegion(NEO
     if (ret) {
         return ret;
     }
-
-    NEO::BlitPropertiesContainer blitPropertiesContainer{blitProperties};
 
     appendEventForProfiling(signalEvent, true);
     auto &rootDeviceEnvironment = device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[device->getRootDeviceIndex()];
@@ -1252,8 +1249,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopy(void *dstptr,
 
     DEBUG_BREAK_IF(size != leftSize + middleSizeBytes + rightSize);
 
-    auto dstAllocationStruct = getAlignedAllocation(this->device, dstptr, size, false);
-    auto srcAllocationStruct = getAlignedAllocation(this->device, srcptr, size, true);
+    auto dstAllocationStruct = getAlignedAllocationData(this->device, dstptr, size, false);
+    auto srcAllocationStruct = getAlignedAllocationData(this->device, srcptr, size, true);
 
     if (dstAllocationStruct.alloc == nullptr || srcAllocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
@@ -1398,11 +1395,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     size_t dstSize = this->getTotalSizeForCopyRegion(dstRegion, dstPitch, dstSlicePitch);
     size_t srcSize = this->getTotalSizeForCopyRegion(srcRegion, srcPitch, srcSlicePitch);
 
-    auto dstAllocationStruct = getAlignedAllocation(this->device, dstPtr, dstSize, false);
-    auto srcAllocationStruct = getAlignedAllocation(this->device, srcPtr, srcSize, true);
-
-    dstSize += dstAllocationStruct.offset;
-    srcSize += srcAllocationStruct.offset;
+    auto dstAllocationStruct = getAlignedAllocationData(this->device, dstPtr, dstSize, false);
+    auto srcAllocationStruct = getAlignedAllocationData(this->device, srcPtr, srcSize, true);
 
     Vec3<size_t> srcSize3 = {srcPitch ? srcPitch : srcRegion->width + srcRegion->originX,
                              srcSlicePitch ? srcSlicePitch / srcPitch : srcRegion->height + srcRegion->originY,
@@ -1421,18 +1415,21 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryCopyRegion(void *d
     }
 
     ze_result_t result = ZE_RESULT_SUCCESS;
-    if (srcRegion->depth > 1) {
-        result = isCopyOnly() ? appendMemoryCopyBlitRegion(srcAllocationStruct.alloc, dstAllocationStruct.alloc, srcAllocationStruct.offset, dstAllocationStruct.offset, *srcRegion, *dstRegion, {srcRegion->width, srcRegion->height, srcRegion->depth},
-                                                           srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize3, dstSize3, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch)
-                              : this->appendMemoryCopyKernel3d(&dstAllocationStruct, &srcAllocationStruct,
-                                                               Builtin::CopyBufferRectBytes3d, dstRegion, dstPitch, dstSlicePitch, dstAllocationStruct.offset,
-                                                               srcRegion, srcPitch, srcSlicePitch, srcAllocationStruct.offset, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+    if (isCopyOnly()) {
+        result = appendMemoryCopyBlitRegion(&srcAllocationStruct, &dstAllocationStruct, *srcRegion, *dstRegion,
+                                            {srcRegion->width, srcRegion->height, srcRegion->depth},
+                                            srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize3, dstSize3,
+                                            signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+    } else if (srcRegion->depth > 1) {
+        result = this->appendMemoryCopyKernel3d(&dstAllocationStruct, &srcAllocationStruct, Builtin::CopyBufferRectBytes3d,
+                                                dstRegion, dstPitch, dstSlicePitch, dstAllocationStruct.offset,
+                                                srcRegion, srcPitch, srcSlicePitch, srcAllocationStruct.offset,
+                                                signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
     } else {
-        result = isCopyOnly() ? appendMemoryCopyBlitRegion(srcAllocationStruct.alloc, dstAllocationStruct.alloc, srcAllocationStruct.offset, dstAllocationStruct.offset, *srcRegion, *dstRegion, {srcRegion->width, srcRegion->height, srcRegion->depth},
-                                                           srcPitch, srcSlicePitch, dstPitch, dstSlicePitch, srcSize3, dstSize3, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch)
-                              : this->appendMemoryCopyKernel2d(&dstAllocationStruct, &srcAllocationStruct,
-                                                               Builtin::CopyBufferRectBytes2d, dstRegion, dstPitch, dstAllocationStruct.offset,
-                                                               srcRegion, srcPitch, srcAllocationStruct.offset, signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
+        result = this->appendMemoryCopyKernel2d(&dstAllocationStruct, &srcAllocationStruct, Builtin::CopyBufferRectBytes2d,
+                                                dstRegion, dstPitch, dstAllocationStruct.offset,
+                                                srcRegion, srcPitch, srcAllocationStruct.offset,
+                                                signalEvent, numWaitEvents, phWaitEvents, relaxedOrderingDispatch);
     }
 
     if (result) {
@@ -1680,7 +1677,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendMemoryFill(void *ptr,
         }
     }
 
-    auto dstAllocation = this->getAlignedAllocation(this->device, ptr, size, false);
+    auto dstAllocation = this->getAlignedAllocationData(this->device, ptr, size, false);
     if (dstAllocation.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -1937,10 +1934,10 @@ inline uint64_t CommandListCoreFamily<gfxCoreFamily>::getInputBufferSize(NEO::Im
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocation(Device *device,
-                                                                                        const void *buffer,
-                                                                                        uint64_t bufferSize,
-                                                                                        bool hostCopyAllowed) {
+inline AlignedAllocationData CommandListCoreFamily<gfxCoreFamily>::getAlignedAllocationData(Device *device,
+                                                                                            const void *buffer,
+                                                                                            uint64_t bufferSize,
+                                                                                            bool hostCopyAllowed) {
     NEO::SvmAllocationData *allocData = nullptr;
     void *ptr = const_cast<void *>(buffer);
     bool srcAllocFound = device->getDriverHandle()->findAllocationDataForRange(ptr,
@@ -2012,6 +2009,13 @@ inline size_t CommandListCoreFamily<gfxCoreFamily>::getAllocationOffsetForAppend
         offset = castToUint64(ptr) - gpuAllocation.getGpuAddress();
     }
     return offset;
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+inline uint32_t CommandListCoreFamily<gfxCoreFamily>::getRegionOffsetForAppendMemoryCopyBlitRegion(AlignedAllocationData *allocationData) {
+    uint64_t ptr = allocationData->alignedAllocationPtr + allocationData->offset;
+    uint64_t allocPtr = allocationData->alloc->getGpuAddress();
+    return static_cast<uint32_t>(ptr - allocPtr);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -2263,7 +2267,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteGlobalTimestamp(
 
     appendSignalEventPostWalker(signalEvent);
 
-    auto allocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(uint64_t), false);
+    auto allocationStruct = getAlignedAllocationData(this->device, dstptr, sizeof(uint64_t), false);
     if (allocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -2286,7 +2290,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
     const size_t *pOffsets, ze_event_handle_t hSignalEvent,
     uint32_t numWaitEvents, ze_event_handle_t *phWaitEvents) {
 
-    auto dstPtrAllocationStruct = getAlignedAllocation(this->device, dstptr, sizeof(ze_kernel_timestamp_result_t) * numEvents, false);
+    auto dstPtrAllocationStruct = getAlignedAllocationData(this->device, dstptr, sizeof(ze_kernel_timestamp_result_t) * numEvents, false);
     if (dstPtrAllocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -2333,7 +2337,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendQueryKernelTimestamps(
         builtinKernel = device->getBuiltinFunctionsLib()->getFunction(Builtin::QueryKernelTimestamps);
         builtinKernel->setArgumentValue(2u, sizeof(uint32_t), &useOnlyGlobalTimestamps);
     } else {
-        auto pOffsetAllocationStruct = getAlignedAllocation(this->device, pOffsets, sizeof(size_t) * numEvents, false);
+        auto pOffsetAllocationStruct = getAlignedAllocationData(this->device, pOffsets, sizeof(size_t) * numEvents, false);
         if (pOffsetAllocationStruct.alloc == nullptr) {
             return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
         }
@@ -2855,7 +2859,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWaitOnMemory(void *desc,
         signalEvent = Event::fromHandle(signalEventHandle);
     }
 
-    auto srcAllocationStruct = getAlignedAllocation(this->device, ptr, sizeof(uint32_t), true);
+    auto srcAllocationStruct = getAlignedAllocationData(this->device, ptr, sizeof(uint32_t), true);
     if (srcAllocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
@@ -2891,7 +2895,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendWriteToMemory(void *desc
     auto descriptor = reinterpret_cast<zex_write_to_mem_desc_t *>(desc);
 
     size_t bufSize = sizeof(uint64_t);
-    auto dstAllocationStruct = getAlignedAllocation(this->device, ptr, bufSize, false);
+    auto dstAllocationStruct = getAlignedAllocationData(this->device, ptr, bufSize, false);
     if (dstAllocationStruct.alloc == nullptr) {
         return ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY;
     }
