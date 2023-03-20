@@ -78,18 +78,18 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     };
 
     static const cl_ulong objectMagic = 0x80134213A43C981ALL;
-    static const cl_uint eventNotReady;
+    static const TaskCountType eventNotReady;
 
     Event(CommandQueue *cmdQueue, cl_command_type cmdType,
-          uint32_t taskLevel, uint32_t taskCount);
+          TaskCountType taskLevel, TaskCountType taskCount);
 
     Event(const Event &) = delete;
     Event &operator=(const Event &) = delete;
 
     ~Event() override;
 
-    uint32_t getCompletionStamp(void) const;
-    void updateCompletionStamp(uint32_t taskCount, uint32_t tasklevel, FlushStamp flushStamp);
+    TaskCountType getCompletionStamp(void) const;
+    void updateCompletionStamp(TaskCountType taskCount, TaskCountType tasklevel, FlushStamp flushStamp);
     cl_ulong getDelta(cl_ulong startTime,
                       cl_ulong endTime);
     void setCPUProfilingPath(bool isCPUPath) { this->profilingCpuPath = isCPUPath; }
@@ -122,7 +122,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     TagNode<HwPerfCounter> *getHwPerfCounterNode();
 
     std::unique_ptr<FlushStampTracker> flushStamp;
-    std::atomic<uint32_t> taskLevel;
+    std::atomic<TaskCountType> taskLevel;
 
     void addChild(Event &e);
 
@@ -226,7 +226,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return cmdType;
     }
 
-    virtual uint32_t getTaskLevel();
+    virtual TaskCountType getTaskLevel();
 
     cl_int peekExecutionStatus() const {
         return executionStatus;
@@ -241,15 +241,15 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
         return (peekNumEventsBlockingThis() > 0);
     }
 
-    virtual void unblockEventBy(Event &event, uint32_t taskLevel, int32_t transitionStatus);
+    virtual void unblockEventBy(Event &event, TaskCountType taskLevel, int32_t transitionStatus);
 
-    void updateTaskCount(uint32_t taskCount) {
+    void updateTaskCount(TaskCountType taskCount) {
         if (taskCount == Event::eventNotReady) {
             DEBUG_BREAK_IF(true);
             return;
         }
 
-        uint32_t prevTaskCount = this->taskCount.exchange(taskCount);
+        TaskCountType prevTaskCount = this->taskCount.exchange(taskCount);
         if ((prevTaskCount != Event::eventNotReady) && (prevTaskCount > taskCount)) {
             this->taskCount = prevTaskCount;
             DEBUG_BREAK_IF(true);
@@ -267,7 +267,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
     virtual void updateExecutionStatus();
     void tryFlushEvent();
 
-    uint32_t peekTaskCount() const {
+    TaskCountType peekTaskCount() const {
         return this->taskCount;
     }
 
@@ -299,7 +299,7 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
   protected:
     Event(Context *ctx, CommandQueue *cmdQueue, cl_command_type cmdType,
-          uint32_t taskLevel, uint32_t taskCount);
+          TaskCountType taskLevel, TaskCountType taskCount);
 
     ECallbackTarget translateToCallbackTarget(cl_int execStatus) {
         switch (execStatus) {
@@ -374,6 +374,6 @@ class Event : public BaseObject<_cl_event>, public IDNode<Event> {
 
   private:
     // can be accessed only with updateTaskCount
-    std::atomic<uint32_t> taskCount;
+    std::atomic<TaskCountType> taskCount;
 };
 } // namespace NEO

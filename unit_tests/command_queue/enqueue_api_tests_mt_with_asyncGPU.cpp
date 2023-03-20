@@ -32,10 +32,10 @@ HWTEST_F(AsyncGPUoperations, MapBufferAfterWriteBuffer) {
     auto bufferMemory = srcBuffer->getCpuAddress();
     EXPECT_NE(nullptr, bufferMemory);
     EXPECT_EQ(false, srcBuffer->isMemObjZeroCopy());
-    int currentTag = pCmdQ->getHwTag();
+    int currentTag = (int)pCmdQ->getHwTag();
     EXPECT_GT(currentTag, -1);
     auto tagAddress = pCmdQ->getHwTagAddress();
-    EXPECT_NE(nullptr, const_cast<uint32_t *>(tagAddress));
+    EXPECT_NE(nullptr, const_cast<TagAddressType *>(tagAddress));
     volatile int sleepTime = 10000;
     std::atomic<bool> ThreadStarted(false);
 

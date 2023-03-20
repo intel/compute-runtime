@@ -168,7 +168,7 @@ void CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
     auto blockQueue = false;
-    auto taskLevel = 0u;
+    TaskCountType taskLevel = 0u;
     obtainTaskLevelAndBlockedStatus(taskLevel, numEventsInWaitList, eventWaitList, blockQueue, commandType);
     bool blitEnqueue = blitEnqueueAllowed(blockQueue, commandType);
 
@@ -483,7 +483,7 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(DeviceQueueHw<GfxFamily> *d
     auto parentKernel = multiDispatchInfo.peekParentKernel();
     size_t minSizeSSHForEM = HardwareCommandsHelper<GfxFamily>::getSizeRequiredForExecutionModel(IndirectHeap::SURFACE_STATE, *parentKernel);
 
-    uint32_t taskCount = getGpgpuCommandStreamReceiver().peekTaskCount() + 1;
+    TaskCountType taskCount = getGpgpuCommandStreamReceiver().peekTaskCount() + 1;
     devQueueHw->setupExecutionModelDispatch(getIndirectHeap(IndirectHeap::SURFACE_STATE, minSizeSSHForEM),
                                             *devQueueHw->getIndirectHeap(IndirectHeap::DYNAMIC_STATE),
                                             parentKernel,
@@ -523,7 +523,7 @@ void CommandQueueHw<GfxFamily>::processDeviceEnqueue(DeviceQueueHw<GfxFamily> *d
 }
 
 template <typename GfxFamily>
-void CommandQueueHw<GfxFamily>::obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) {
+void CommandQueueHw<GfxFamily>::obtainTaskLevelAndBlockedStatus(TaskCountType &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType) {
     auto isQueueBlockedStatus = isQueueBlocked();
     taskLevel = getTaskLevelFromWaitList(this->taskLevel, numEventsInWaitList, eventWaitList);
     blockQueueStatus = (taskLevel == Event::eventNotReady) || isQueueBlockedStatus;
@@ -536,7 +536,7 @@ void CommandQueueHw<GfxFamily>::obtainTaskLevelAndBlockedStatus(unsigned int &ta
 }
 
 template <typename GfxFamily>
-bool CommandQueueHw<GfxFamily>::isTaskLevelUpdateRequired(const uint32_t &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType) {
+bool CommandQueueHw<GfxFamily>::isTaskLevelUpdateRequired(const TaskCountType &taskLevel, const cl_event *eventWaitList, const cl_uint &numEventsInWaitList, unsigned int commandType) {
     bool updateTaskLevel = true;
     //if we are blocked by user event then no update
     if (taskLevel == Event::eventNotReady) {
@@ -577,7 +577,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueNonBlocked(
     TimestampPacketContainer *previousTimestampPacketNodes,
     EventsRequest &eventsRequest,
     EventBuilder &eventBuilder,
-    uint32_t taskLevel,
+    TaskCountType taskLevel,
     PrintfHandler *printfHandler) {
 
     UNRECOVERABLE_IF(multiDispatchInfo.empty());
@@ -806,7 +806,7 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     TimestampPacketContainer *previousTimestampPacketNodes,
     EventsRequest &eventsRequest,
     EventBuilder &eventBuilder,
-    uint32_t taskLevel) {
+    TaskCountType taskLevel) {
 
     if (timestampPacketContainer) {
         timestampPacketContainer->makeResident(getGpgpuCommandStreamReceiver());

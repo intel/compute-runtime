@@ -362,7 +362,7 @@ HWTEST_F(BcsTests, givenBltSizeWithLeftoverWhenDispatchedThenProgramAllRequiredC
     auto buffer = clUniquePtr<Buffer>(Buffer::create(context.get(), CL_MEM_READ_WRITE, static_cast<size_t>(bltSize), nullptr, retVal));
     void *hostPtr = reinterpret_cast<void *>(0x12340000);
 
-    uint32_t newTaskCount = 19;
+    TaskCountType newTaskCount = 19;
     csr.taskCount = newTaskCount - 1;
     EXPECT_EQ(0u, csr.recursiveLockCounter.load());
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
@@ -497,7 +497,7 @@ HWTEST_F(BcsTests, givenBufferWhenBlitCalledThenFlushCommandBuffer) {
     size_t commandStreamOffset = 4;
     commandStream.getSpace(commandStreamOffset);
 
-    uint32_t newTaskCount = 17;
+    TaskCountType newTaskCount = 17;
     csr.taskCount = newTaskCount - 1;
 
     auto blitProperties = BlitProperties::constructPropertiesForReadWriteBuffer(BlitterConstants::BlitDirection::HostPtrToBuffer,
@@ -523,7 +523,7 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
       public:
         using UltCommandStreamReceiver<FamilyType>::UltCommandStreamReceiver;
 
-        void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait,
+        void waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait,
                                                    bool useQuickKmdSleep, bool forcePowerSavingMode) override {
             waitForTaskCountWithKmdNotifyFallbackCalled++;
             taskCountToWaitPassed = taskCountToWait;
@@ -532,11 +532,11 @@ HWTEST_F(BcsTests, whenBlitFromHostPtrCalledThenCallWaitWithKmdFallback) {
             forcePowerSavingModePassed = forcePowerSavingMode;
         }
 
-        uint32_t taskCountToWaitPassed = 0;
+        TaskCountType taskCountToWaitPassed = 0;
         FlushStamp flushStampToWaitPassed = 0;
         bool useQuickKmdSleepPassed = false;
         bool forcePowerSavingModePassed = false;
-        uint32_t waitForTaskCountWithKmdNotifyFallbackCalled = 0;
+        TaskCountType waitForTaskCountWithKmdNotifyFallbackCalled = 0;
     };
 
     auto myMockCsr = std::make_unique<::testing::NiceMock<MyMockCsr>>(*pDevice->getExecutionEnvironment());

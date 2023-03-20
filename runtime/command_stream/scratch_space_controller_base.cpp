@@ -24,7 +24,7 @@ ScratchSpaceControllerBase::ScratchSpaceControllerBase(ExecutionEnvironment &env
 void ScratchSpaceControllerBase::setRequiredScratchSpace(void *sshBaseAddress,
                                                          uint32_t requiredPerThreadScratchSize,
                                                          uint32_t requiredPerThreadPrivateScratchSize,
-                                                         uint32_t currentTaskCount,
+                                                         TaskCountType currentTaskCount,
                                                          uint32_t contextId,
                                                          bool &stateBaseAddressDirty,
                                                          bool &vfeStateDirty) {

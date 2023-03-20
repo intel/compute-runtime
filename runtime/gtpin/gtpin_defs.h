@@ -18,7 +18,7 @@ struct GTPinKernelExec {
     cl_mem gtpinResource;
     CommandQueue *pCommandQueue;
     gtpin::command_buffer_handle_t commandBuffer;
-    uint32_t taskCount;
+    TaskCountType taskCount;
     bool isTaskCountValid;
     bool isResourceResident;
 

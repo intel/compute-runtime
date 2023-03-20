@@ -302,7 +302,7 @@ TEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEven
     DebugManager.flags.EnableAsyncEventsHandler.set(false);
     cl_event mapEventReturned = nullptr;
     cl_event unmapEventReturned = nullptr;
-    uint32_t tagHW = 0;
+    TagAddressType tagHW = 0;
     auto mapFlags = CL_MAP_WRITE;
     const size_t origin[3] = {0, 0, 0};
     const size_t region[3] = {1, 1, 1};
@@ -323,7 +323,7 @@ TEST_F(EnqueueMapImageTest, givenNonReadOnlyMapWithOutEventWhenMappedThenSetEven
         }
     };
 
-    uint32_t taskCount = commandStreamReceiver.peekTaskCount();
+    TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(1u, taskCount);
 
     // enqueue something that can be finished...
@@ -430,7 +430,7 @@ HWTEST_F(EnqueueMapImageTest, MapImageEventProperties) {
     const size_t region[3] = {1, 1, 1};
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
-    uint32_t forceTaskCount = 100;
+    TaskCountType forceTaskCount = 100;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.taskCount = forceTaskCount;
@@ -476,7 +476,7 @@ HWTEST_F(EnqueueMapImageTest, givenZeroCopyImageWhenItIsMappedAndReturnsEventThe
     const size_t region[3] = {1, 1, 1};
     size_t imageRowPitch = 0;
     size_t imageSlicePitch = 0;
-    uint32_t forceTaskCount = 100;
+    TaskCountType forceTaskCount = 100;
 
     auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
     commandStreamReceiver.taskCount = forceTaskCount;
@@ -686,7 +686,7 @@ TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingMapWith2DImageIs
     class MockEventWithSetCompleteOnUpdate : public Event {
       public:
         MockEventWithSetCompleteOnUpdate(CommandQueue *cmdQueue, cl_command_type cmdType,
-                                         uint32_t taskLevel, uint32_t taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
+                                         TaskCountType taskLevel, TaskCountType taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
         }
         void updateExecutionStatus() override {
             setStatus(CL_COMPLETE);
@@ -728,7 +728,7 @@ TEST_F(EnqueueMapImageTest, givenBlockedCommandQueueWhenBlockingMapWith1DImageIs
     class MockEventWithSetCompleteOnUpdate : public Event {
       public:
         MockEventWithSetCompleteOnUpdate(CommandQueue *cmdQueue, cl_command_type cmdType,
-                                         uint32_t taskLevel, uint32_t taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
+                                         TaskCountType taskLevel, TaskCountType taskCount) : Event(cmdQueue, cmdType, taskLevel, taskCount) {
         }
         void updateExecutionStatus() override {
             setStatus(CL_COMPLETE);

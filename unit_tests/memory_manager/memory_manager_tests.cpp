@@ -192,7 +192,7 @@ TEST_F(MemoryAllocatorTest, allocateGraphics) {
 
     ASSERT_NE(nullptr, allocation);
     // initial taskCount must be -1. if not, we may kill allocation before it will be used
-    EXPECT_EQ((uint32_t)-1, allocation->getTaskCount(csr->getOsContext().getContextId()));
+    EXPECT_EQ((TaskCountType)-1, allocation->getTaskCount(csr->getOsContext().getContextId()));
     // We know we want graphics memory to be page aligned
     EXPECT_EQ(0u, reinterpret_cast<uintptr_t>(allocation->getUnderlyingBuffer()) & (alignment - 1));
     EXPECT_EQ(Sharing::nonSharedResource, allocation->peekSharedHandle());
@@ -1276,7 +1276,7 @@ TEST_F(MemoryManagerWithCsrTest, GivenAllocationsInHostPtrManagerReadyForCleanin
     auto fragment4 = hostPtrManager->getFragment(alignUp(cpuPtr2, MemoryConstants::pageSize));
     EXPECT_NE(nullptr, fragment4);
 
-    uint32_t taskCountReady = 1;
+    TaskCountType taskCountReady = 1;
     auto storage = csr->getInternalAllocationStorage();
     storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation1), TEMPORARY_ALLOCATION, taskCountReady);
     storage->storeAllocationWithTaskCount(std::unique_ptr<GraphicsAllocation>(graphicsAllocation2), TEMPORARY_ALLOCATION, taskCountReady);

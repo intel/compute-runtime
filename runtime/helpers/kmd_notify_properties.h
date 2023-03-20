@@ -27,7 +27,7 @@ struct KmdNotifyProperties {
 
 namespace KmdNotifyConstants {
 constexpr int64_t timeoutInMicrosecondsForDisconnectedAcLine = 10000;
-constexpr uint32_t minimumTaskCountDiffToCheckAcLine = 10;
+constexpr int64_t minimumTaskCountDiffToCheckAcLine = 10;
 } // namespace KmdNotifyConstants
 
 class KmdNotifyHelper {
@@ -38,8 +38,8 @@ class KmdNotifyHelper {
 
     bool obtainTimeoutParams(int64_t &timeoutValueOutput,
                              bool quickKmdSleepRequest,
-                             uint32_t currentHwTag,
-                             uint32_t taskCountToWait,
+                             TagAddressType currentHwTag,
+                             TaskCountType taskCountToWait,
                              FlushStamp flushStampToWait,
                              bool forcePowerSavingMode);
 

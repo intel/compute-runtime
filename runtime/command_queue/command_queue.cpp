@@ -117,22 +117,22 @@ CommandStreamReceiver *CommandQueue::getBcsCommandStreamReceiver() const {
     return nullptr;
 }
 
-uint32_t CommandQueue::getHwTag() const {
-    uint32_t tag = *getHwTagAddress();
+TagAddressType CommandQueue::getHwTag() const {
+    TagAddressType tag = *getHwTagAddress();
     return tag;
 }
 
-volatile uint32_t *CommandQueue::getHwTagAddress() const {
+volatile TagAddressType *CommandQueue::getHwTagAddress() const {
     return getGpgpuCommandStreamReceiver().getTagAddress();
 }
 
-bool CommandQueue::isCompleted(uint32_t taskCount) const {
-    uint32_t tag = getHwTag();
+bool CommandQueue::isCompleted(TaskCountType taskCount) const {
+    TagAddressType tag = getHwTag();
     DEBUG_BREAK_IF(tag == Event::eventNotReady);
     return tag >= taskCount;
 }
 
-void CommandQueue::waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
+void CommandQueue::waitUntilComplete(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) {
     WAIT_ENTER()
 
     DBG_LOG(LogTaskCounts, __FUNCTION__, "Waiting for taskCount:", taskCountToWait);
@@ -198,12 +198,12 @@ cl_int CommandQueue::getCommandQueueInfo(cl_command_queue_info paramName,
     return getQueueInfo<CommandQueue>(this, paramName, paramValueSize, paramValue, paramValueSizeRet);
 }
 
-uint32_t CommandQueue::getTaskLevelFromWaitList(uint32_t taskLevel,
+TaskCountType CommandQueue::getTaskLevelFromWaitList(TaskCountType taskLevel,
                                                 cl_uint numEventsInWaitList,
                                                 const cl_event *eventWaitList) {
     for (auto iEvent = 0u; iEvent < numEventsInWaitList; ++iEvent) {
         auto pEvent = (Event *)(eventWaitList[iEvent]);
-        uint32_t eventTaskLevel = pEvent->taskLevel;
+        TaskCountType eventTaskLevel = pEvent->taskLevel;
         taskLevel = std::max(taskLevel, eventTaskLevel);
     }
     return taskLevel;

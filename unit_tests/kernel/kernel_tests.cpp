@@ -485,7 +485,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         return flushStamp->peekStamp();
     }
 
-    void waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
+    void waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool quickKmdSleep, bool forcePowerSavingMode) override {
     }
     void blitBuffer(const BlitProperties &blitProperites) override{};
 
@@ -495,7 +495,7 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         const IndirectHeap &dsh,
         const IndirectHeap &ioh,
         const IndirectHeap &ssh,
-        uint32_t taskLevel,
+        TaskCountType taskLevel,
         DispatchFlags &dispatchFlags,
         Device &device) override {
         CompletionStamp cs = {};

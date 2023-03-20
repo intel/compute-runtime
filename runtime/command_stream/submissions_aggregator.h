@@ -9,6 +9,7 @@
 #include "runtime/command_stream/linear_stream.h"
 #include "runtime/helpers/properties_helper.h"
 #include "runtime/memory_manager/residency_container.h"
+#include "runtime/command_stream/task_count_helper.h"
 #include "runtime/utilities/idlist.h"
 #include "runtime/utilities/stackvec.h"
 
@@ -49,7 +50,7 @@ struct CommandBuffer : public IDNode<CommandBuffer> {
     BatchBuffer batchBuffer;
     void *batchBufferEndLocation = nullptr;
     uint32_t inspectionId = 0;
-    uint32_t taskCount = 0u;
+    TaskCountType taskCount = 0;
     void *pipeControlThatMayBeErasedLocation = nullptr;
     void *epiloguePipeControlLocation = nullptr;
     std::unique_ptr<FlushStampTracker> flushStamp;

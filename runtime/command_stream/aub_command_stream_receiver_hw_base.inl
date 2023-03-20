@@ -584,7 +584,7 @@ void AUBCommandStreamReceiverHw<GfxFamily>::pollForCompletionImpl() {
 }
 
 template <typename GfxFamily>
-inline void AUBCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
+inline void AUBCommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
     CommandStreamReceiverSimulatedHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(taskCountToWait, flushStampToWait, useQuickKmdSleep, forcePowerSavingMode);
     pollForCompletion();
 }

@@ -25,7 +25,7 @@ HWTEST_F(MarkerTest, CS_EQ_CQ_ShouldntAddPipeControl) {
     commandStreamReceiver.taskLevel = originalCSRLevel;
     pCmdQ->taskLevel = originalCSRLevel;
 
-    uint32_t originalTaskCount = 15;
+    TaskCountType originalTaskCount = 15;
     commandStreamReceiver.taskCount = originalTaskCount;
 
     cl_uint numEventsInWaitList = 0;

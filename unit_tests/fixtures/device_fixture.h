@@ -19,7 +19,7 @@ struct DeviceFixture {
     MockDevice *createWithUsDeviceId(unsigned short usDeviceId);
 
     MockDevice *pDevice = nullptr;
-    volatile uint32_t *pTagMemory = nullptr;
+    volatile TagAddressType *pTagMemory = nullptr;
     HardwareInfo hardwareInfo = {};
     PLATFORM platformHelper = {};
 };

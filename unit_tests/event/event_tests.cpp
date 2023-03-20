@@ -92,7 +92,7 @@ TEST(Event_, testGetTaskLevel) {
       public:
         TempEvent() : Event(nullptr, CL_COMMAND_NDRANGE_KERNEL, 5, 7){};
 
-        uint32_t getTaskLevel() override {
+        TaskCountType getTaskLevel() override {
             return Event::getTaskLevel();
         }
     };
@@ -242,8 +242,8 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_sizeReturned) {
 }
 
 TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returns_CL_SUBMITTED_HW_LT_Event) {
-    uint32_t tagHW = 4;
-    uint32_t taskCount = 5;
+    TagAddressType tagHW = 4;
+    TaskCountType taskCount = 5;
     *pTagMemory = tagHW;
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, taskCount);
@@ -258,8 +258,8 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returns_CL_SUBM
 }
 
 TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returns_CL_COMPLETE_HW_EQ_Event) {
-    uint32_t tagHW = 5;
-    uint32_t taskCount = 5;
+    TagAddressType tagHW = 5;
+    TaskCountType taskCount = 5;
     *pTagMemory = tagHW;
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, taskCount);
@@ -274,8 +274,8 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returns_CL_COMP
 }
 
 TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returns_CL_SUBMITTED_HW_GT_Event) {
-    uint32_t tagHW = 6;
-    uint32_t taskCount = 5;
+    TaskCountType tagHW = 6;
+    TaskCountType taskCount = 5;
     *pTagMemory = tagHW;
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, taskCount);
@@ -300,7 +300,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_COMMAND_EXECUTION_STATUS_returnsSetStatu
 }
 
 TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_new_Event) {
-    uint32_t tagEvent = 5;
+    TagAddressType tagEvent = 5;
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
     cl_uint refCount = 0;
@@ -314,7 +314,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_new_Event) {
 }
 
 TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_Retain_Event) {
-    uint32_t tagEvent = 5;
+    TagAddressType tagEvent = 5;
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
     event.retain();
@@ -331,7 +331,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_Retain_Event) {
 }
 
 TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_Retain_Release_Event) {
-    uint32_t tagEvent = 5;
+    TagAddressType tagEvent = 5;
 
     Event *pEvent = new Event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
     ASSERT_NE(nullptr, pEvent);
@@ -355,7 +355,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_REFERENCE_COUNT_Retain_Release_Event) {
 }
 
 TEST_F(EventTest, GetEventInfo_CL_EVENT_CONTEXT) {
-    uint32_t tagEvent = 5;
+    TagAddressType tagEvent = 5;
 
     Event *pEvent = new Event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
     ASSERT_NE(nullptr, pEvent);
@@ -373,7 +373,7 @@ TEST_F(EventTest, GetEventInfo_CL_EVENT_CONTEXT) {
 }
 
 TEST_F(EventTest, GetEventInfo_InvalidParam) {
-    uint32_t tagEvent = 5;
+    TagAddressType tagEvent = 5;
 
     Event event(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, 3, tagEvent);
     cl_int eventStatus = -1;
@@ -909,7 +909,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenCommandSubmittedThenLockCSROccurs) {
       public:
         using Event::submitCommand;
         MockEvent(CommandQueue *cmdQueue, cl_command_type cmdType,
-                  uint32_t taskLevel, uint32_t taskCount) : Event(cmdQueue, cmdType,
+                  TaskCountType taskLevel, TaskCountType taskCount) : Event(cmdQueue, cmdType,
                                                                   taskLevel, taskCount) {}
     };
 
@@ -941,7 +941,7 @@ HWTEST_F(EventTest, givenVirtualEventWhenSubmitCommandEventNotReadyAndEventWitho
       public:
         using Event::submitCommand;
         MockEvent(CommandQueue *cmdQueue, cl_command_type cmdType,
-                  uint32_t taskLevel, uint32_t taskCount) : Event(cmdQueue, cmdType,
+                  TaskCountType taskLevel, TaskCountType taskCount) : Event(cmdQueue, cmdType,
                                                                   taskLevel, taskCount) {}
     };
 
@@ -1393,7 +1393,7 @@ TEST_F(EventTest, addChildForEventCompleted) {
 HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWaitingFunction) {
     struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
         MyCsr(const ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<FamilyType>(const_cast<ExecutionEnvironment &>(executionEnvironment)) {}
-        MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+        MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, TaskCountType taskCountToWait));
     };
     HardwareInfo localHwInfo = pDevice->getHardwareInfo();
     localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;
@@ -1420,7 +1420,7 @@ HWTEST_F(EventTest, givenQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWa
 HWTEST_F(EventTest, givenNonQuickKmdSleepRequestWhenWaitIsCalledThenPassRequestToWaitingFunction) {
     struct MyCsr : public UltCommandStreamReceiver<FamilyType> {
         MyCsr(const ExecutionEnvironment &executionEnvironment) : UltCommandStreamReceiver<FamilyType>(const_cast<ExecutionEnvironment &>(executionEnvironment)) {}
-        MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, uint32_t taskCountToWait));
+        MOCK_METHOD3(waitForCompletionWithTimeout, bool(bool enableTimeout, int64_t timeoutMs, TaskCountType taskCountToWait));
     };
     HardwareInfo localHwInfo = pDevice->getHardwareInfo();
     localHwInfo.capabilityTable.kmdNotifyProperties.enableKmdNotify = true;

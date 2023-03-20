@@ -98,7 +98,7 @@ struct EnqueueHandlerWithAubSubCaptureTests : public EnqueueHandlerTest {
       public:
         MockCmdQWithAubSubCapture(Context *context, Device *device) : CommandQueueHw<FamilyType>(context, device, nullptr) {}
 
-        void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+        void waitUntilComplete(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
             waitUntilCompleteCalled = true;
             CommandQueueHw<FamilyType>::waitUntilComplete(taskCountToWait, flushStampToWait, useQuickKmdSleep);
         }
@@ -510,7 +510,7 @@ struct EnqueueHandlerTestBasic : public ::testing::Test {
     }
 
     MockInternalAllocationStorage *mockInternalAllocationStorage = nullptr;
-    const uint32_t initialTaskCount = 100;
+    const TaskCountType initialTaskCount = 100;
     std::unique_ptr<MockDevice> device;
     std::unique_ptr<MockContext> context;
 };

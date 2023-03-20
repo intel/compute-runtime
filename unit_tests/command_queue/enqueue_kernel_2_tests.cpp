@@ -669,7 +669,7 @@ struct EnqueueAuxKernelTests : public EnqueueKernelTest {
             dispatchAuxTranslationInputs.emplace_back(lastKernel, multiDispatchInfo.size(), memObjsForAuxTranslation, auxTranslationDirection);
         }
 
-        void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
+        void waitUntilComplete(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep) override {
             waitCalled++;
             CommandQueueHw<FamilyType>::waitUntilComplete(taskCountToWait, flushStampToWait, useQuickKmdSleep);
         }

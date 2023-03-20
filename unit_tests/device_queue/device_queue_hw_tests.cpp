@@ -297,7 +297,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, cleanupSection) {
     auto commandsSize = mockDeviceQueueHw->getMinimumSlbSize() + mockDeviceQueueHw->getWaCommandsSize();
     auto igilCmdQueue = reinterpret_cast<IGIL_CommandQueue *>(mockDeviceQueueHw->getQueueBuffer()->getUnderlyingBuffer());
     MockParentKernel *mockParentKernel = MockParentKernel::create(*pContext);
-    uint32_t taskCount = 7;
+    TaskCountType taskCount = 7;
 
     mockDeviceQueueHw->buildSlbDummyCommands();
     mockDeviceQueueHw->addExecutionModelCleanUpSection(mockParentKernel, nullptr, taskCount);
@@ -351,7 +351,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, DeviceQueueSlb, AddEMCleanupSectionWithProfiling) {
     auto commandsSize = mockDeviceQueueHw->getMinimumSlbSize() + mockDeviceQueueHw->getWaCommandsSize();
     auto igilCmdQueue = reinterpret_cast<IGIL_CommandQueue *>(mockDeviceQueueHw->getQueueBuffer()->getUnderlyingBuffer());
     MockParentKernel *mockParentKernel = MockParentKernel::create(*pContext);
-    uint32_t taskCount = 7;
+    TaskCountType taskCount = 7;
 
     auto hwTimeStamp = pCommandQueue->getGpgpuCommandStreamReceiver().getEventTsAllocator()->getTag();
     mockDeviceQueueHw->buildSlbDummyCommands();
@@ -669,7 +669,7 @@ HWCMDTEST_F(IGFX_GEN8_CORE, TheSimplestDeviceQueueFixture, addExecutionModelClea
     std::unique_ptr<MockDeviceQueueWithMediaStateClearRegistering> mockDeviceQueueHw(new MockDeviceQueueWithMediaStateClearRegistering(&context, device.get(), deviceQueueProperties::minimumProperties[0]));
 
     std::unique_ptr<MockParentKernel> mockParentKernel(MockParentKernel::create(context));
-    uint32_t taskCount = 7;
+    TaskCountType taskCount = 7;
     mockDeviceQueueHw->buildSlbDummyCommands();
 
     EXPECT_FALSE(mockDeviceQueueHw->addMediaStateClearCmdsCalled);

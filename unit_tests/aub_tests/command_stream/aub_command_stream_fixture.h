@@ -100,7 +100,7 @@ class AUBCommandStreamFixture : public CommandStreamFixture {
         return graphicsAllocation;
     }
     CommandStreamReceiver *pCommandStreamReceiver = nullptr;
-    volatile uint32_t *pTagMemory = nullptr;
+    volatile TagAddressType *pTagMemory = nullptr;
 
   private:
     CommandQueue *commandQueue = nullptr;

@@ -15,8 +15,8 @@ using namespace NEO;
 
 bool KmdNotifyHelper::obtainTimeoutParams(int64_t &timeoutValueOutput,
                                           bool quickKmdSleepRequest,
-                                          uint32_t currentHwTag,
-                                          uint32_t taskCountToWait,
+                                          TagAddressType currentHwTag,
+                                          TaskCountType taskCountToWait,
                                           FlushStamp flushStampToWait,
                                           bool forcePowerSavingMode) {
     if (flushStampToWait == 0) {

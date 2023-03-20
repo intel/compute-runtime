@@ -382,7 +382,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForTaskCountWithKm
         using CommandStreamReceiver::latestFlushedTaskCount;
         using TbxCommandStreamReceiverHw<FamilyType>::TbxCommandStreamReceiverHw;
         void downloadAllocation(GraphicsAllocation &gfxAllocation) override {
-            *reinterpret_cast<uint32_t *>(CommandStreamReceiver::getTagAllocation()->getUnderlyingBuffer()) = this->latestFlushedTaskCount;
+            *reinterpret_cast<TaskCountType *>(CommandStreamReceiver::getTagAllocation()->getUnderlyingBuffer()) = this->latestFlushedTaskCount;
             downloadedAllocations.insert(&gfxAllocation);
         }
         std::set<GraphicsAllocation *> downloadedAllocations;
@@ -390,7 +390,7 @@ HWTEST_F(TbxCommandSteamSimpleTest, givenTbxCsrWhenCallingWaitForTaskCountWithKm
 
     MockTbxCsr tbxCsr{*pDevice->executionEnvironment};
     MockOsContext osContext(0, 1, aub_stream::ENGINE_RCS, PreemptionMode::Disabled, false);
-    uint32_t tag = 0u;
+    TagAddressType tag = 0u;
     tbxCsr.setupContext(osContext);
     tbxCsr.setTagAllocation(pDevice->getMemoryManager()->allocateGraphicsMemoryWithProperties(MockAllocationProperties{false, sizeof(tag)}, &tag));
     tbxCsr.latestFlushedTaskCount = 1u;

@@ -39,11 +39,11 @@ TEST_F(EventTests, eventShouldBeReturned) {
 }
 
 TEST_F(EventTests, eventReturnedShouldBeMaxOfInputEventsAndCmdQPlus1) {
-    uint32_t taskLevelCmdQ = 17;
+    TaskCountType taskLevelCmdQ = 17;
     pCmdQ->taskLevel = taskLevelCmdQ;
 
-    uint32_t taskLevelEvent1 = 8;
-    uint32_t taskLevelEvent2 = 19;
+    TaskCountType taskLevelEvent1 = 8;
+    TaskCountType taskLevelEvent2 = 19;
     Event event1(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent1, 15);
     Event event2(pCmdQ, CL_COMMAND_NDRANGE_KERNEL, taskLevelEvent2, 16);
 
@@ -83,7 +83,7 @@ TEST_F(EventTests, eventWaitShouldntSendPC) {
     retVal = Event::waitForEvents(1, &event);
     EXPECT_EQ(CL_SUCCESS, retVal);
     //we expect event is completed
-    uint32_t taskCountOfEvent = pEvent->peekTaskCount();
+    TaskCountType taskCountOfEvent = pEvent->peekTaskCount();
     EXPECT_LE(taskCountOfEvent, pCmdQ->getHwTag());
     // no more tasks after WFE, no need to write PC
     EXPECT_EQ(pEvent->taskLevel + 1, csr.peekTaskLevel());

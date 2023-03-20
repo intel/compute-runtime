@@ -6,6 +6,7 @@
  */
 
 #include "CL/cl.h"
+#include "runtime/command_stream/task_count_helper.h"
 
 #include <cstdint>
 
@@ -27,10 +28,10 @@ void gtpinNotifyKernelSubmit(cl_kernel kernel, void *pCmdQueue) {
 void gtpinNotifyPreFlushTask(void *pCmdQueue) {
 }
 
-void gtpinNotifyFlushTask(uint32_t flushedTaskCount) {
+void gtpinNotifyFlushTask(TaskCountType flushedTaskCount) {
 }
 
-void gtpinNotifyTaskCompletion(uint32_t completedTaskCount) {
+void gtpinNotifyTaskCompletion(TaskCountType completedTaskCount) {
 }
 
 void gtpinNotifyMakeResident(void *pKernel, void *pCommandStreamReceiver) {

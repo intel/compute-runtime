@@ -98,7 +98,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
 
     CompletionStamp flushTask(LinearStream &commandStream, size_t commandStreamStart,
                               const IndirectHeap &dsh, const IndirectHeap &ioh, const IndirectHeap &ssh,
-                              uint32_t taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
+                              TaskCountType taskLevel, DispatchFlags &dispatchFlags, Device &device) override {
         this->lastFlushedCommandStream = &commandStream;
         return BaseClass::flushTask(commandStream, commandStreamStart, dsh, ioh, ssh, taskLevel, dispatchFlags, device);
     }
@@ -108,7 +108,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     }
     void setPreemptionAllocation(GraphicsAllocation *allocation) { this->preemptionAllocation = allocation; }
 
-    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) override {
+    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, TaskCountType taskCountToWait) override {
         latestWaitForCompletionWithTimeoutTaskCount.store(taskCountToWait);
         return BaseClass::waitForCompletionWithTimeout(enableTimeout, timeoutMicroseconds, taskCountToWait);
     }
@@ -177,8 +177,8 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool initProgrammingFlagsCalled = false;
     LinearStream *lastFlushedCommandStream = nullptr;
     BatchBuffer latestFlushedBatchBuffer = {};
-    uint32_t latestSentTaskCountValueDuringFlush = 0;
+    TaskCountType latestSentTaskCountValueDuringFlush = 0;
     uint32_t blitBufferCalled = 0;
-    std::atomic<uint32_t> latestWaitForCompletionWithTimeoutTaskCount{0};
+    std::atomic<TaskCountType> latestWaitForCompletionWithTimeoutTaskCount{0};
 };
 } // namespace NEO

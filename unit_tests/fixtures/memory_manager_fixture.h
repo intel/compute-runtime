@@ -21,8 +21,8 @@ class MemoryManagerWithCsrFixture {
     MockMemoryManager *memoryManager;
     ExecutionEnvironment executionEnvironment;
     MockCommandStreamReceiver *csr;
-    uint32_t taskCount = 0;
-    uint32_t currentGpuTag = initialHardwareTag;
+    TaskCountType taskCount = 0;
+    TagAddressType currentGpuTag = initialHardwareTag;
 
     ~MemoryManagerWithCsrFixture() = default;
 

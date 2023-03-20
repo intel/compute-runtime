@@ -22,7 +22,7 @@ class UserEvent : public Event {
 
     void updateExecutionStatus() override;
 
-    uint32_t getTaskLevel() override;
+    TaskCountType getTaskLevel() override;
 
     bool isInitialEventStatus() const;
 };
@@ -39,6 +39,6 @@ class VirtualEvent : public Event {
 
     void updateExecutionStatus() override;
 
-    uint32_t getTaskLevel() override;
+    TaskCountType getTaskLevel() override;
 };
 } // namespace NEO

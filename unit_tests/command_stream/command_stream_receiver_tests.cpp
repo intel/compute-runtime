@@ -108,7 +108,7 @@ TEST_F(CommandStreamReceiverTest, makeResident_setsBufferResidencyFlag) {
 }
 
 TEST_F(CommandStreamReceiverTest, commandStreamReceiverFromDeviceHasATagValue) {
-    EXPECT_NE(nullptr, const_cast<uint32_t *>(commandStreamReceiver->getTagAddress()));
+    EXPECT_NE(nullptr, const_cast<TagAddressType *>(commandStreamReceiver->getTagAddress()));
 }
 
 TEST_F(CommandStreamReceiverTest, GetCommandStreamReturnsValidObject) {

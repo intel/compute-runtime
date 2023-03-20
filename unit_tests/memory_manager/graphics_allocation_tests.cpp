@@ -74,7 +74,7 @@ TEST(GraphicsAllocationTest, whenTwoContextsUpdatedTaskCountAndOneOfThemUnregist
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedResidencyTaskCountToNonDefaultValueThenAllocationIsResident) {
     MockGraphicsAllocation graphicsAllocation;
     EXPECT_FALSE(graphicsAllocation.isResident(0u));
-    uint32_t residencyTaskCount = 1u;
+    TaskCountType residencyTaskCount = 1u;
     graphicsAllocation.updateResidencyTaskCount(residencyTaskCount, 0u);
     EXPECT_EQ(residencyTaskCount, graphicsAllocation.getResidencyTaskCount(0u));
     EXPECT_TRUE(graphicsAllocation.isResident(0u));

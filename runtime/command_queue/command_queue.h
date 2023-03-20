@@ -11,6 +11,7 @@
 #include "runtime/helpers/dispatch_info.h"
 #include "runtime/helpers/engine_control.h"
 #include "runtime/helpers/task_information.h"
+#include "runtime/command_stream/task_count_helper.h"
 
 #include <atomic>
 #include <cstdint>
@@ -320,17 +321,17 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
                                size_t paramValueSize, void *paramValue,
                                size_t *paramValueSizeRet);
 
-    uint32_t getHwTag() const;
+    TagAddressType getHwTag() const;
 
-    volatile uint32_t *getHwTagAddress() const;
+    volatile TagAddressType *getHwTagAddress() const;
 
-    bool isCompleted(uint32_t taskCount) const;
+    bool isCompleted(TaskCountType taskCount) const;
 
     MOCKABLE_VIRTUAL bool isQueueBlocked();
 
-    MOCKABLE_VIRTUAL void waitUntilComplete(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep);
+    MOCKABLE_VIRTUAL void waitUntilComplete(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep);
 
-    static uint32_t getTaskLevelFromWaitList(uint32_t taskLevel,
+    static TaskCountType getTaskLevelFromWaitList(TaskCountType taskLevel,
                                              cl_uint numEventsInWaitList,
                                              const cl_event *eventWaitList);
 
@@ -407,14 +408,14 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     bool isMultiEngineQueue() const { return this->multiEngineQueue; }
 
     // taskCount of last task
-    uint32_t taskCount = 0;
+    TaskCountType taskCount = 0;
 
     // current taskLevel. Used for determining if a PIPE_CONTROL is needed.
-    uint32_t taskLevel = 0;
+    TaskCountType taskLevel = 0;
 
     std::unique_ptr<FlushStampTracker> flushStamp;
 
-    std::atomic<uint32_t> latestTaskCountWaited{std::numeric_limits<uint32_t>::max()};
+    std::atomic<TaskCountType> latestTaskCountWaited{std::numeric_limits<TaskCountType>::max()};
 
     // virtual event that holds last Enqueue information
     Event *virtualEvent = nullptr;
@@ -428,7 +429,7 @@ class CommandQueue : public BaseObject<_cl_command_queue> {
     void *enqueueMapMemObject(TransferProperties &transferProperties, EventsRequest &eventsRequest, cl_int &errcodeRet);
     cl_int enqueueUnmapMemObject(TransferProperties &transferProperties, EventsRequest &eventsRequest);
 
-    virtual void obtainTaskLevelAndBlockedStatus(unsigned int &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType){};
+    virtual void obtainTaskLevelAndBlockedStatus(TaskCountType &taskLevel, cl_uint &numEventsInWaitList, const cl_event *&eventWaitList, bool &blockQueueStatus, unsigned int commandType){};
     bool isBlockedCommandStreamRequired(uint32_t commandType, const EventsRequest &eventsRequest, bool blockedQueue) const;
 
     MOCKABLE_VIRTUAL void obtainNewTimestampPacketNodes(size_t numberOfNodes, TimestampPacketContainer &previousNodes, bool clearAllDependencies);

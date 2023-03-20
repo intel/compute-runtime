@@ -286,7 +286,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingReadOnlyMapBufferOnZeroCopyBufferWh
     EXPECT_NE(nullptr, buffer);
 
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
-    uint32_t taskCount = commandStreamReceiver.peekTaskCount();
+    TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(0u, taskCount);
 
     // enqueue something that can be finished...
@@ -449,7 +449,7 @@ TEST_F(EnqueueMapBufferTest, givenReadOnlyBufferWhenMappedOnGpuThenSetValidEvent
 
 TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThenEventIsSignaledAsCompleted) {
     cl_event eventReturned = nullptr;
-    uint32_t tagHW = 0;
+    TagAddressType tagHW = 0;
     *pTagMemory = tagHW;
     MockKernelWithInternals kernel(*pDevice);
     size_t GWS = 1;
@@ -464,7 +464,7 @@ TEST_F(EnqueueMapBufferTest, givenNonBlockingMapBufferAfterL3IsAlreadyFlushedThe
     EXPECT_NE(nullptr, buffer);
 
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
-    uint32_t taskCount = commandStreamReceiver.peekTaskCount();
+    TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(0u, taskCount);
 
     // enqueue something that map buffer needs to wait for
@@ -545,7 +545,7 @@ TEST_F(EnqueueMapBufferTest, GivenBufferThatIsNotZeroCopyWhenNonBlockingMapIsCal
     EXPECT_EQ(retVal, CL_SUCCESS);
 
     auto &commandStreamReceiver = pCmdQ->getGpgpuCommandStreamReceiver();
-    uint32_t taskCount = commandStreamReceiver.peekTaskCount();
+    TaskCountType taskCount = commandStreamReceiver.peekTaskCount();
     EXPECT_EQ(1u, taskCount);
 
     auto ptrResult = clEnqueueMapBuffer(

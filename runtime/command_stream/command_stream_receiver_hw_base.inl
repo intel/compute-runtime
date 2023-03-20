@@ -133,7 +133,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     const IndirectHeap &dsh,
     const IndirectHeap &ioh,
     const IndirectHeap &ssh,
-    uint32_t taskLevel,
+    TaskCountType taskLevel,
     DispatchFlags &dispatchFlags,
     Device &device) {
     typedef typename GfxFamily::MI_BATCH_BUFFER_START MI_BATCH_BUFFER_START;
@@ -325,7 +325,7 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
         }
     }
 
-    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskLevel", (uint32_t)this->taskLevel);
+    DBG_LOG(LogTaskCounts, __FUNCTION__, "Line: ", __LINE__, "this->taskLevel", (TaskCountType)this->taskLevel);
 
     if (device.getWaTable()->waSamplerCacheFlushBetweenRedescribedSurfaceReads) {
         if (this->samplerCacheFlushRequired != SamplerCacheFlushState::samplerCacheFlushNotRequired) {
@@ -621,7 +621,7 @@ inline void CommandStreamReceiverHw<GfxFamily>::emitNoop(LinearStream &commandSt
 }
 
 template <typename GfxFamily>
-inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(uint32_t taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
+inline void CommandStreamReceiverHw<GfxFamily>::waitForTaskCountWithKmdNotifyFallback(TaskCountType taskCountToWait, FlushStamp flushStampToWait, bool useQuickKmdSleep, bool forcePowerSavingMode) {
     int64_t waitTimeout = 0;
     bool enableTimeout = kmdNotifyHelper->obtainTimeoutParams(waitTimeout, useQuickKmdSleep, *getTagAddress(), taskCountToWait, flushStampToWait, forcePowerSavingMode);
 

@@ -9,6 +9,7 @@
 
 #include "core/helpers/ptr_math.h"
 #include "runtime/helpers/debug_helpers.h"
+#include "runtime/command_stream/task_count_helper.h"
 #include "runtime/memory_manager/host_ptr_defines.h"
 #include "runtime/memory_manager/memory_pool.h"
 #include "runtime/utilities/idlist.h"
@@ -152,17 +153,17 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     bool isUsed() const { return registeredContextsNum > 0; }
     bool isUsedByManyOsContexts() const { return registeredContextsNum > 1u; }
     bool isUsedByOsContext(uint32_t contextId) const { return objectNotUsed != getTaskCount(contextId); }
-    void updateTaskCount(uint32_t newTaskCount, uint32_t contextId);
-    uint32_t getTaskCount(uint32_t contextId) const { return usageInfos[contextId].taskCount; }
+    void updateTaskCount(TaskCountType newTaskCount, uint32_t contextId);
+    TaskCountType getTaskCount(uint32_t contextId) const { return usageInfos[contextId].taskCount; }
     void releaseUsageInOsContext(uint32_t contextId) { updateTaskCount(objectNotUsed, contextId); }
     uint32_t getInspectionId(uint32_t contextId) const { return usageInfos[contextId].inspectionId; }
     void setInspectionId(uint32_t newInspectionId, uint32_t contextId) { usageInfos[contextId].inspectionId = newInspectionId; }
 
     bool isResident(uint32_t contextId) const { return GraphicsAllocation::objectNotResident != getResidencyTaskCount(contextId); }
-    void updateResidencyTaskCount(uint32_t newTaskCount, uint32_t contextId) { usageInfos[contextId].residencyTaskCount = newTaskCount; }
-    uint32_t getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
+    void updateResidencyTaskCount(TaskCountType newTaskCount, uint32_t contextId) { usageInfos[contextId].residencyTaskCount = newTaskCount; }
+    TaskCountType getResidencyTaskCount(uint32_t contextId) const { return usageInfos[contextId].residencyTaskCount; }
     void releaseResidencyInOsContext(uint32_t contextId) { updateResidencyTaskCount(objectNotResident, contextId); }
-    bool isResidencyTaskCountBelow(uint32_t taskCount, uint32_t contextId) const { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
+    bool isResidencyTaskCountBelow(TaskCountType taskCount, uint32_t contextId) const { return !isResident(contextId) || getResidencyTaskCount(contextId) < taskCount; }
 
     virtual std::string getAllocationInfoString() const;
     virtual uint64_t peekInternalHandle(MemoryManager *memoryManager) { return 0llu; }
@@ -206,12 +207,12 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     StorageInfo storageInfo = {};
 
   protected:
-    constexpr static uint32_t objectNotResident = std::numeric_limits<uint32_t>::max();
-    constexpr static uint32_t objectNotUsed = std::numeric_limits<uint32_t>::max();
+    constexpr static TaskCountType objectNotResident = std::numeric_limits<TaskCountType>::max();
+    constexpr static TaskCountType objectNotUsed = std::numeric_limits<TaskCountType>::max();
 
     struct UsageInfo {
-        uint32_t taskCount = objectNotUsed;
-        uint32_t residencyTaskCount = objectNotResident;
+        TaskCountType taskCount = objectNotUsed;
+        TaskCountType residencyTaskCount = objectNotResident;
         uint32_t inspectionId = 0u;
     };
     struct AubInfo {

@@ -71,7 +71,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         return this->tagAllocation;
     }
 
-    void setLatestSentTaskCount(uint32_t latestSentTaskCount) {
+    void setLatestSentTaskCount(TaskCountType latestSentTaskCount) {
         this->latestSentTaskCount = latestSentTaskCount;
     }
 
@@ -111,7 +111,7 @@ struct MockAubCsr : public AUBCommandStreamReceiverHw<GfxFamily> {
         AUBCommandStreamReceiverHw<GfxFamily>::expectMemoryNotEqual(gfxAddress, srcAddress, length);
         expectMemoryNotEqualCalled = true;
     }
-    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, uint32_t taskCountToWait) {
+    bool waitForCompletionWithTimeout(bool enableTimeout, int64_t timeoutMicroseconds, TaskCountType taskCountToWait) {
         return true;
     }
     void addAubComment(const char *message) {
