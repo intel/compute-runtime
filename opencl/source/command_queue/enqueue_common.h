@@ -224,6 +224,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     auto commandStreamStart = commandStream.getUsed();
 
     if (canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
+        UNRECOVERABLE_IF(relaxedOrderingForGpgpuAllowed(1)); // IOQ has >=1 dependencies
         PipeControlArgs args;
         args.csStallOnly = true;
         MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(commandStream, args);

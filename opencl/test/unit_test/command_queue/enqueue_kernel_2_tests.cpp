@@ -1069,6 +1069,7 @@ struct RelaxedOrderingEnqueueKernelTests : public EnqueueKernelTest {
 
         DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
         DebugManager.flags.UpdateTaskCountFromWait.set(1);
+        DebugManager.flags.CsrDispatchMode.set(static_cast<int32_t>(DispatchMode::ImmediateDispatch));
 
         ultHwConfig.csrBaseCallDirectSubmissionAvailable = true;
 
@@ -1099,7 +1100,6 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDe
     MockKernelWithInternals mockKernel(*pClDevice);
 
     mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &outEvent);
-    mockCmdQueueHw.flush();
 
     EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasStallingCmds);
     EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
@@ -1107,7 +1107,6 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDe
     auto cmdsOffset = mockCmdQueueHw.getCS(0).getUsed();
 
     mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 1, &outEvent, nullptr);
-    mockCmdQueueHw.flush();
 
     EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasStallingCmds);
     EXPECT_TRUE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
@@ -1126,12 +1125,32 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDe
     EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(++lrrCmd, 0, compareAddress, 1, CompareOperation::Equal, true));
 
     mockCmdQueueHw.enqueueBarrierWithWaitList(1, &outEvent, nullptr);
-    mockCmdQueueHw.flush();
 
     EXPECT_TRUE(ultCsr.recordedDispatchFlags.hasStallingCmds);
     EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
 
     clReleaseEvent(outEvent);
+}
+
+HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenPipeControlForIoqDependencyResolvingEnabledWhenDispatchingRelaxedOrderingThenThrow, IsAtLeastXeHpcCore) {
+    DebugManager.flags.ResolveDependenciesViaPipeControls.set(1);
+
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
+    ultCsr.directSubmission.reset(directSubmission);
+    ultCsr.registerClient();
+    ultCsr.registerClient();
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+
+    MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
+
+    // First dispatch without dependencies
+    mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
+
+    EXPECT_ANY_THROW(mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr));
 }
 
 HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueWithPipeControlWhenSendingBbThenMarkAsStallingDispatch, IsAtLeastXeHpcCore) {
@@ -1149,16 +1168,13 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueWithPipeControlWhenSend
 
     // warmup
     mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    mockCmdQueueHw.flush();
 
     mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    mockCmdQueueHw.flush();
 
     EXPECT_FALSE(ultCsr.latestFlushedBatchBuffer.hasStallingCmds);
 
     ultCsr.heapStorageRequiresRecyclingTag = true;
     mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
-    mockCmdQueueHw.flush();
 
     EXPECT_TRUE(ultCsr.latestFlushedBatchBuffer.hasStallingCmds);
 }
