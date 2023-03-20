@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,9 +36,13 @@ struct ImplicitArgs {
     uint32_t groupCountX;
     uint32_t groupCountY;
     uint32_t groupCountZ;
-    uint32_t reserved;
+    uint32_t padding0;
+    uint64_t rtGlobalBufferPtr;
+    uint8_t reserved[24];
 };
+
 static_assert((sizeof(ImplicitArgs) & 31) == 0, "Implicit args size need to be aligned to 32");
+static_assert(sizeof(ImplicitArgs) == 128);
 static_assert(std::is_pod<ImplicitArgs>::value);
 
 inline constexpr const char *implicitArgsRelocationSymbolName = "__INTEL_PATCH_CROSS_THREAD_OFFSET_OFF_R0";

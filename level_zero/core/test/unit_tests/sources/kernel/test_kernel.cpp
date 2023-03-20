@@ -21,6 +21,7 @@
 #include "shared/test/common/device_binary_format/patchtokens_tests.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
@@ -924,11 +925,18 @@ TEST_F(KernelImmutableDataTests, givenModuleWithPrivateMemoryBiggerThanGlobalMem
     EXPECT_EQ(nullptr, kernel->getPrivateMemoryGraphicsAllocation());
 }
 
-TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitialized) {
-    static_cast<OsAgnosticMemoryManager *>(device->getNEODevice()->getMemoryManager())->turnOnFakingBigAllocations();
-
+TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitializedAndPatchedInImplicitArgsBuffer) {
+    auto &hwInfo = *neoDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    hwInfo.gtSystemInfo.IsDynamicallyPopulated = false;
+    hwInfo.gtSystemInfo.SliceCount = 1;
+    hwInfo.gtSystemInfo.MaxSlicesSupported = 1;
+    hwInfo.gtSystemInfo.SubSliceCount = 1;
+    hwInfo.gtSystemInfo.MaxSubSlicesSupported = 1;
+    hwInfo.gtSystemInfo.DualSubSliceCount = 1;
+    hwInfo.gtSystemInfo.MaxDualSubSlicesSupported = 1;
     KernelDescriptor mockDescriptor = {};
     mockDescriptor.kernelAttributes.flags.hasRTCalls = true;
+    mockDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
     mockDescriptor.kernelMetadata.kernelName = "rt_test";
     for (auto i = 0u; i < 3u; i++) {
         mockDescriptor.kernelAttributes.requiredWorkgroupSize[i] = 0;
@@ -963,6 +971,9 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitialized
 
     auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(NEO::RayTracingHelper::maxBvhLevels);
     EXPECT_NE(nullptr, rtDispatchGlobals);
+    auto implicitArgs = kernel->getImplicitArgs();
+    ASSERT_NE(nullptr, implicitArgs);
+    EXPECT_EQ_VAL(implicitArgs->rtGlobalBufferPtr, rtDispatchGlobals->rtDispatchGlobalsArray->getGpuAddressToPatch());
 }
 
 TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndPatchTokenPointerSizeIsZeroThenRayTracingIsInitialized) {
@@ -1002,9 +1013,8 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndPatchTokenPointerSizeIsZ
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_NE(nullptr, module->getDevice()->getNEODevice()->getRTMemoryBackedBuffer());
 
-    // Application is expected to allocate its own RTDispatchGlobals manually in this case.
     auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(NEO::RayTracingHelper::maxBvhLevels);
-    EXPECT_EQ(nullptr, rtDispatchGlobals);
+    EXPECT_NE(nullptr, rtDispatchGlobals);
 }
 
 HWTEST2_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndNoRTDispatchGlobalsIsAllocatedThenRayTracingIsNotInitialized, IsAtLeastXeHpgCore) {

@@ -1253,7 +1253,7 @@ ze_result_t ModuleImp::performDynamicLink(uint32_t numModules,
                 nameToKernelDescriptor[kd.kernelMetadata.kernelName] = &kd;
             }
         }
-        auto error = NEO::resolveBarrierCount(externalFunctionInfos, kernelDependencies, extFuncDependencies, nameToKernelDescriptor);
+        auto error = NEO::resolveExternalDependencies(externalFunctionInfos, kernelDependencies, extFuncDependencies, nameToKernelDescriptor);
         if (error != NEO::RESOLVE_SUCCESS) {
             return ZE_RESULT_ERROR_MODULE_LINK_FAILURE;
         }

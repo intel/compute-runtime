@@ -1523,6 +1523,7 @@ kernels:
         has_multi_scratch_spaces : true
         has_no_stateless_write : true
         has_stack_calls : true
+        has_rtcalls : true
         require_disable_eufusion : true
         has_sample : true
         hw_preemption_mode : 2
@@ -1571,6 +1572,7 @@ kernels:
     EXPECT_TRUE(execEnv.hasMultiScratchSpaces);
     EXPECT_TRUE(execEnv.hasNoStatelessWrite);
     EXPECT_TRUE(execEnv.hasStackCalls);
+    EXPECT_TRUE(execEnv.hasRTCalls);
     EXPECT_TRUE(execEnv.hasSample);
     EXPECT_EQ(2, execEnv.hwPreemptionMode);
     EXPECT_EQ(32, execEnv.inlineDataPayloadSize);
@@ -3073,6 +3075,7 @@ functions:
         grf_count: 128
         simd_size: 8
         barrier_count: 1
+        has_rtcalls: true
 )===";
 
     uint8_t kernelIsa[8]{0U};
@@ -3097,6 +3100,7 @@ functions:
     EXPECT_EQ(128U, funInfo.numGrfRequired);
     EXPECT_EQ(8U, funInfo.simdSize);
     EXPECT_EQ(1U, funInfo.barrierCount);
+    EXPECT_EQ(true, funInfo.hasRTCalls);
 }
 
 TEST(DecodeSingleDeviceBinaryZebin, GivenValidZeInfoAndInvalidExternalFunctionsMetadataThenFail) {
@@ -3230,6 +3234,7 @@ TEST_F(decodeZeInfoKernelEntryTest, GivenMinimalExecutionEnvThenPopulateKernelDe
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.requiresSubgroupIndependentForwardProgress, Defaults::subgroupIndependentForwardProgress);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.useGlobalAtomics, Defaults::hasGlobalAtomics);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.useStackCalls, Defaults::hasStackCalls);
+    EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.hasRTCalls, Defaults::hasRTCalls);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages, Defaults::hasFenceForImageAccess);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode, Defaults::hasDpas);
     EXPECT_EQ(kernelDescriptor.kernelAttributes.flags.hasSample, Defaults::hasSample);

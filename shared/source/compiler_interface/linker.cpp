@@ -633,7 +633,7 @@ bool Linker::resolveExternalFunctions(const KernelDescriptorsT &kernelDescriptor
         nameToKernelDescriptor[kd->kernelMetadata.kernelName] = kd;
     }
 
-    auto error = NEO::resolveBarrierCount(externalFunctionsPtrs, kernelDependenciesPtrs, functionDependenciesPtrs, nameToKernelDescriptor);
+    auto error = NEO::resolveExternalDependencies(externalFunctionsPtrs, kernelDependenciesPtrs, functionDependenciesPtrs, nameToKernelDescriptor);
     return (error == RESOLVE_SUCCESS) ? true : false;
 }
 

@@ -270,11 +270,12 @@ DecodeError populateExternalFunctionsMetadata(NEO::ProgramInfo &dst, NEO::Yaml::
     }
 
     if (isValid) {
-        NEO::ExternalFunctionInfo extFunInfo;
+        NEO::ExternalFunctionInfo extFunInfo{};
         extFunInfo.functionName = functionName.str();
         extFunInfo.barrierCount = static_cast<uint8_t>(execEnv.barrierCount);
         extFunInfo.numGrfRequired = static_cast<uint16_t>(execEnv.grfCount);
         extFunInfo.simdSize = static_cast<uint8_t>(execEnv.simdSize);
+        extFunInfo.hasRTCalls = execEnv.hasRTCalls;
         dst.externalFunctions.push_back(extFunInfo);
         return DecodeError::Success;
     } else {
@@ -610,6 +611,8 @@ DecodeError readZeInfoExecutionEnvironment(const Yaml::YamlParser &parser, const
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hasNoStatelessWrite, context, outErrReason);
         } else if (Tags::Kernel::ExecutionEnv::hasStackCalls == key) {
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hasStackCalls, context, outErrReason);
+        } else if (Tags::Kernel::ExecutionEnv::hasRTCalls == key) {
+            validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hasRTCalls, context, outErrReason);
         } else if (Tags::Kernel::ExecutionEnv::hwPreemptionMode == key) {
             validExecEnv &= readZeInfoValueChecked(parser, execEnvMetadataNd, outExecEnv.hwPreemptionMode, context, outErrReason);
         } else if (Tags::Kernel::ExecutionEnv::inlineDataPayloadSize == key) {
@@ -664,6 +667,7 @@ void populateKernelExecutionEnvironment(KernelDescriptor &dst, const KernelExecu
     dst.kernelAttributes.flags.requiresDisabledEUFusion = execEnv.requireDisableEUFusion;
     dst.kernelAttributes.flags.useGlobalAtomics = execEnv.hasGlobalAtomics;
     dst.kernelAttributes.flags.useStackCalls = execEnv.hasStackCalls;
+    dst.kernelAttributes.flags.hasRTCalls = execEnv.hasRTCalls;
     dst.kernelAttributes.flags.usesFencesForReadWriteImages = execEnv.hasFenceForImageAccess;
     dst.kernelAttributes.flags.usesSystolicPipelineSelectMode = execEnv.hasDpas;
     dst.kernelAttributes.flags.usesStatelessWrites = (false == execEnv.hasNoStatelessWrite);

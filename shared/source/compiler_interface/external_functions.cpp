@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,8 +12,8 @@
 #include <algorithm>
 namespace NEO {
 
-uint32_t resolveBarrierCount(const ExternalFunctionInfosT &externalFunctionInfos, const KernelDependenciesT &kernelDependencies,
-                             const FunctionDependenciesT &funcDependencies, const KernelDescriptorMapT &nameToKernelDescriptor) {
+uint32_t resolveExternalDependencies(const ExternalFunctionInfosT &externalFunctionInfos, const KernelDependenciesT &kernelDependencies,
+                                     const FunctionDependenciesT &funcDependencies, const KernelDescriptorMapT &nameToKernelDescriptor) {
     FuncNameToIdMapT funcNameToId;
     for (size_t i = 0U; i < externalFunctionInfos.size(); i++) {
         auto &extFuncInfo = externalFunctionInfos[i];
@@ -64,6 +64,7 @@ uint32_t resolveExtFuncDependencies(const ExternalFunctionInfosT &externalFuncti
         for (auto callerId : calledBy[calleeId]) {
             auto caller = externalFunctionInfos[callerId];
             caller->barrierCount = std::max(caller->barrierCount, callee->barrierCount);
+            caller->hasRTCalls |= callee->hasRTCalls;
         }
     }
     return RESOLVE_SUCCESS;
@@ -76,9 +77,10 @@ uint32_t resolveKernelDependencies(const ExternalFunctionInfosT &externalFunctio
         } else if (nameToKernelDescriptor.count(kernelDep->kernelName) == 0) {
             return ERROR_KERNEL_DESCRIPTOR_MISSING;
         }
-        const auto functionBarrierCount = externalFunctionInfos.at(funcNameToId.at(kernelDep->usedFuncName))->barrierCount;
-        auto &kernelBarrierCount = nameToKernelDescriptor.at(kernelDep->kernelName)->kernelAttributes.barrierCount;
-        kernelBarrierCount = std::max(kernelBarrierCount, functionBarrierCount);
+        auto &kernelAttributes = nameToKernelDescriptor.at(kernelDep->kernelName)->kernelAttributes;
+        const auto &externalFunctionInfo = *externalFunctionInfos.at(funcNameToId.at(kernelDep->usedFuncName));
+        kernelAttributes.barrierCount = std::max(externalFunctionInfo.barrierCount, kernelAttributes.barrierCount);
+        kernelAttributes.flags.hasRTCalls |= externalFunctionInfo.hasRTCalls;
     }
     return RESOLVE_SUCCESS;
 }

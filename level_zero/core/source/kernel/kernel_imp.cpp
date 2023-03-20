@@ -954,27 +954,28 @@ ze_result_t KernelImp::initialize(const ze_kernel_desc_t *desc) {
     if (this->usesRayTracing()) {
         uint32_t bvhLevels = NEO::RayTracingHelper::maxBvhLevels;
         auto arg = this->getImmutableData()->getDescriptor().payloadMappings.implicitArgs.rtDispatchGlobals;
-        if (arg.pointerSize == 0) {
-            // application is allocating its own RTDispatchGlobals manually
-            neoDevice->initializeRayTracing(0);
-        } else {
-            neoDevice->initializeRayTracing(bvhLevels);
-            auto rtDispatchGlobalsInfo = neoDevice->getRTDispatchGlobals(bvhLevels);
-            if (rtDispatchGlobalsInfo == nullptr) {
-                return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
-            }
+        neoDevice->initializeRayTracing(bvhLevels);
 
-            for (auto rtStack : rtDispatchGlobalsInfo->rtStacks) {
-                this->residencyContainer.push_back(rtStack);
-            }
+        auto rtDispatchGlobalsInfo = neoDevice->getRTDispatchGlobals(bvhLevels);
+        if (rtDispatchGlobalsInfo == nullptr) {
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
 
-            auto address = rtDispatchGlobalsInfo->rtDispatchGlobalsArray->getGpuAddressToPatch();
+        for (auto rtStack : rtDispatchGlobalsInfo->rtStacks) {
+            this->residencyContainer.push_back(rtStack);
+        }
+
+        auto address = rtDispatchGlobalsInfo->rtDispatchGlobalsArray->getGpuAddressToPatch();
+        if (NEO::isValidOffset(arg.stateless)) {
             NEO::patchPointer(ArrayRef<uint8_t>(crossThreadData.get(), crossThreadDataSize),
                               arg,
                               static_cast<uintptr_t>(address));
-
-            this->residencyContainer.push_back(rtDispatchGlobalsInfo->rtDispatchGlobalsArray);
         }
+        if (this->pImplicitArgs) {
+            pImplicitArgs->rtGlobalBufferPtr = address;
+        }
+
+        this->residencyContainer.push_back(rtDispatchGlobalsInfo->rtDispatchGlobalsArray);
         this->residencyContainer.push_back(neoDevice->getRTMemoryBackedBuffer());
     }
     this->midThreadPreemptionDisallowedForRayTracingKernels = productHelper.isMidThreadPreemptionDisallowedForRayTracingKernels();

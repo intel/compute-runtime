@@ -27,6 +27,7 @@ struct ExternalFunctionInfo {
     uint8_t barrierCount = 0U;
     uint16_t numGrfRequired = 0U;
     uint8_t simdSize = 0U;
+    bool hasRTCalls = false;
 };
 
 struct ExternalFunctionUsageKernel {
@@ -59,8 +60,8 @@ class DependencyResolver {
     const std::vector<std::vector<size_t>> &graph;
 };
 
-uint32_t resolveBarrierCount(const ExternalFunctionInfosT &externalFunctionInfos, const KernelDependenciesT &kernelDependencies,
-                             const FunctionDependenciesT &funcDependencies, const KernelDescriptorMapT &nameToKernelDescriptor);
+uint32_t resolveExternalDependencies(const ExternalFunctionInfosT &externalFunctionInfos, const KernelDependenciesT &kernelDependencies,
+                                     const FunctionDependenciesT &funcDependencies, const KernelDescriptorMapT &nameToKernelDescriptor);
 
 uint32_t getExtFuncDependencies(const FuncNameToIdMapT &funcNameToId, const FunctionDependenciesT &funcDependencies, size_t numExternalFuncs,
                                 DependenciesT &outDependencies, CalledByT &outCalledBy);
