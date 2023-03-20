@@ -70,6 +70,7 @@ struct DirectSubmissionInputParams : NonCopyableClass {
     GraphicsAllocation *workPartitionAllocation = nullptr;
     GraphicsAllocation *completionFenceAllocation = nullptr;
     const uint32_t rootDeviceIndex;
+    bool isUpdateTagFromWaitEnabled = false;
 };
 
 template <typename GfxFamily, typename Dispatcher>

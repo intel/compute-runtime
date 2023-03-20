@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -26,6 +26,7 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::handleCompletionFence;
     using BaseClass::handleResidency;
     using BaseClass::isCompleted;
+    using BaseClass::isRelaxedOrderingEnabled;
     using BaseClass::miMemFenceRequired;
     using BaseClass::osContextWin;
     using BaseClass::ringBuffers;

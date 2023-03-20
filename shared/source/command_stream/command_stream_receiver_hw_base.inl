@@ -1456,7 +1456,7 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushHandler(BatchBu
 }
 
 template <typename GfxFamily>
-inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() {
+inline bool CommandStreamReceiverHw<GfxFamily>::isUpdateTagFromWaitEnabled() const {
     auto &gfxCoreHelper = getGfxCoreHelper();
     auto enabled = gfxCoreHelper.isUpdateTaskCountFromWaitSupported();
     enabled &= this->isAnyDirectSubmissionEnabled();

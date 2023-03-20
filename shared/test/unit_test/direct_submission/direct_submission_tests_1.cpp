@@ -134,8 +134,8 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithoutCompletionFenceAlloca
     EXPECT_EQ(nullptr, directSubmission.completionFenceAllocation);
 
     size_t expectedAllocationsCnt = 3;
-    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    if (gfxCoreHelper.isRelaxedOrderingSupported()) {
+
+    if (directSubmission.isRelaxedOrderingEnabled()) {
         expectedAllocationsCnt += 2;
     }
 
@@ -166,8 +166,7 @@ HWTEST_F(DirectSubmissionTest, givenDirectSubmissionWithCompletionFenceAllocatio
     EXPECT_EQ(&completionFenceAllocation, directSubmission.completionFenceAllocation);
 
     size_t expectedAllocationsCnt = 4;
-    auto &gfxCoreHelper = pDevice->getGfxCoreHelper();
-    if (gfxCoreHelper.isRelaxedOrderingSupported()) {
+    if (directSubmission.isRelaxedOrderingEnabled()) {
         expectedAllocationsCnt += 2;
     }
 

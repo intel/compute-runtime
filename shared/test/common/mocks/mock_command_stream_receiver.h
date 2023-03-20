@@ -71,7 +71,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
 
     SubmissionStatus flushTagUpdate() override { return SubmissionStatus::SUCCESS; };
     void updateTagFromWait() override{};
-    bool isUpdateTagFromWaitEnabled() override { return false; };
+    bool isUpdateTagFromWaitEnabled() const override { return false; };
 
     bool isMultiOsContextCapable() const override { return multiOsContextCapable; }
 
