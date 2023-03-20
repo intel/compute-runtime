@@ -26,6 +26,8 @@
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
+#include "test_traits_common.h"
+
 #include <memory>
 
 using namespace NEO;
@@ -520,7 +522,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenForceBtpPrefetchModeD
     }
 }
 
-HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNotDefaultThenStateComputeModeCommandAdded) {
+HWTEST2_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNotDefaultThenStateComputeModeCommandAdded, IsAtLeastGen12lp) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.ForceGrfNumProgrammingWithScm.set(1);
 

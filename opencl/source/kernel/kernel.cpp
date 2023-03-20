@@ -2252,11 +2252,14 @@ bool Kernel::areMultipleSubDevicesInContext() const {
 }
 
 void Kernel::reconfigureKernel() {
-    auto &kernelDescriptor = kernelInfo.kernelDescriptor;
+    const auto &kernelDescriptor = kernelInfo.kernelDescriptor;
     if (kernelDescriptor.kernelAttributes.numGrfRequired == GrfConfig::LargeGrfNumber &&
         kernelDescriptor.kernelAttributes.simdSize != 32) {
-        maxKernelWorkGroupSize >>= 1;
+        this->maxKernelWorkGroupSize >>= 1;
     }
+    const auto &gfxCoreHelper = getDevice().getGfxCoreHelper();
+    this->maxKernelWorkGroupSize = gfxCoreHelper.adjustMaxWorkGroupSize(kernelDescriptor.kernelAttributes.numGrfRequired, kernelDescriptor.kernelAttributes.simdSize, this->maxKernelWorkGroupSize);
+
     this->containsStatelessWrites = kernelDescriptor.kernelAttributes.flags.usesStatelessWrites;
     this->systolicPipelineSelectMode = kernelDescriptor.kernelAttributes.flags.usesSystolicPipelineSelectMode;
 }
