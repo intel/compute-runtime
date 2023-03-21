@@ -1123,7 +1123,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenSpecialPipelineSelectModeCha
     size_t size = commandStreamReceiver.getCmdSizeForPipelineSelect();
 
     size_t expectedSize = sizeof(PIPELINE_SELECT);
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierlPriorToPipelineSelectWaRequired(pDevice->getRootDeviceEnvironment())) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(pDevice->getRootDeviceEnvironment())) {
         expectedSize += sizeof(PIPE_CONTROL);
     }
     EXPECT_EQ(expectedSize, size);
@@ -1151,7 +1151,7 @@ HWTEST2_F(CommandStreamReceiverFlushTaskTests, givenCsrWhenPreambleSentThenRequi
     auto difference = mediaSamplerConfigChangedSize - mediaSamplerConfigNotChangedSize;
 
     size_t expectedDifference = sizeof(PIPELINE_SELECT);
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierlPriorToPipelineSelectWaRequired(pDevice->getRootDeviceEnvironment())) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(pDevice->getRootDeviceEnvironment())) {
         expectedDifference += sizeof(PIPE_CONTROL);
     }
 

@@ -242,7 +242,7 @@ GEN12LPTEST_F(Gen12LpCoherencyRequirements, givenCoherencyRequirementWithoutShar
     };
 
     flushTask(false);
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierlPriorToPipelineSelectWaRequired(device->getRootDeviceEnvironment())) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(device->getRootDeviceEnvironment())) {
         findCmd(true, false, true); // first time
     } else {
         findCmd(true, false, false); // first time

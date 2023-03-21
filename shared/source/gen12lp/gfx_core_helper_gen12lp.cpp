@@ -184,7 +184,7 @@ bool MemorySynchronizationCommands<Family>::isBarrierWaRequired(const RootDevice
 }
 
 template <>
-bool MemorySynchronizationCommands<Family>::isBarrierlPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
+bool MemorySynchronizationCommands<Family>::isBarrierPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return MemorySynchronizationCommands<Family>::isBarrierWaRequired(rootDeviceEnvironment);
 }
 

@@ -548,7 +548,7 @@ bool GfxCoreHelperHw<GfxFamily>::useSystemMemoryPlacementForISA(const HardwareIn
 }
 
 template <typename GfxFamily>
-bool MemorySynchronizationCommands<GfxFamily>::isBarrierlPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
+bool MemorySynchronizationCommands<GfxFamily>::isBarrierPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
     return false;
 }
 

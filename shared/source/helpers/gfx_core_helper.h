@@ -442,7 +442,7 @@ struct MemorySynchronizationCommands {
     static size_t getSizeForFullCacheFlush();
 
     static bool isBarrierWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
-    static bool isBarrierlPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
+    static bool isBarrierPriorToPipelineSelectWaRequired(const RootDeviceEnvironment &rootDeviceEnvironment);
     static void setBarrierExtraProperties(void *barrierCmd, PipeControlArgs &args);
 };
 

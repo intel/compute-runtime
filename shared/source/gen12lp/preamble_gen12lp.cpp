@@ -38,7 +38,7 @@ void PreambleHelper<Family>::programPipelineSelect(LinearStream *pCommandStream,
 
     using PIPELINE_SELECT = typename Family::PIPELINE_SELECT;
 
-    if (MemorySynchronizationCommands<Family>::isBarrierlPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
+    if (MemorySynchronizationCommands<Family>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
         PipeControlArgs args;
         args.renderTargetCacheFlushEnable = true;
         MemorySynchronizationCommands<Family>::addSingleBarrier(*pCommandStream, args);

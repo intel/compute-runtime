@@ -164,7 +164,7 @@ GEN12LPTEST_F(CommandEncodeStatesTest, givenGen12LpPlatformWhenAdjustPipelineSel
     using PIPELINE_SELECT = typename FamilyType::PIPELINE_SELECT;
 
     size_t barrierSize = 0;
-    if (MemorySynchronizationCommands<FamilyType>::isBarrierlPriorToPipelineSelectWaRequired(pDevice->getRootDeviceEnvironment())) {
+    if (MemorySynchronizationCommands<FamilyType>::isBarrierPriorToPipelineSelectWaRequired(pDevice->getRootDeviceEnvironment())) {
         barrierSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
     }
 

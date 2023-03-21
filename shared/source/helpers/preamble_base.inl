@@ -58,7 +58,7 @@ size_t PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(const RootDeviceEn
     size_t size = 0;
     using PIPELINE_SELECT = typename GfxFamily::PIPELINE_SELECT;
     size += sizeof(PIPELINE_SELECT);
-    if (MemorySynchronizationCommands<GfxFamily>::isBarrierlPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
+    if (MemorySynchronizationCommands<GfxFamily>::isBarrierPriorToPipelineSelectWaRequired(rootDeviceEnvironment)) {
         size += sizeof(PIPE_CONTROL);
     }
     return size;
