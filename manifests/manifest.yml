@@ -24,10 +24,10 @@ components:
     revision: V0.8.6
     repository: https://github.com/intel/igsc.git
   infra:
-    branch: master
+    branch: releases/23.09
     dest_dir: infra
     fetch_tags: true
-    revision: v4719
+    revision: v4719.rel2309.1
     type: git
   internal:
     branch: master
