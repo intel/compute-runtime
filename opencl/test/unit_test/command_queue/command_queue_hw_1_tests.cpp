@@ -1258,6 +1258,10 @@ HWTEST_F(CommandQueueHwTest, givenRelaxedOrderingEnabledWhenCheckingIfAllowedByC
     EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(0));
     EXPECT_TRUE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(1));
 
+    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(-1);
+    EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(0));
+    EXPECT_TRUE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(1));
+
     ultCsr.heapStorageRequiresRecyclingTag = true;
     EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(0));
     EXPECT_FALSE(mockCmdQueueHw.relaxedOrderingForGpgpuAllowed(1));

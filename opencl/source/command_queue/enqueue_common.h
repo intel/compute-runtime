@@ -1490,7 +1490,7 @@ template <typename GfxFamily>
 bool CommandQueueHw<GfxFamily>::relaxedOrderingForGpgpuAllowed(uint32_t numWaitEvents) const {
     auto &gpgpuCsr = getGpgpuCommandStreamReceiver();
 
-    if ((DebugManager.flags.DirectSubmissionRelaxedOrdering.get() != 1) || gpgpuCsr.isRecyclingTagForHeapStorageRequired()) {
+    if ((DebugManager.flags.DirectSubmissionRelaxedOrdering.get() == 0) || gpgpuCsr.isRecyclingTagForHeapStorageRequired()) {
         return false;
     }
 
