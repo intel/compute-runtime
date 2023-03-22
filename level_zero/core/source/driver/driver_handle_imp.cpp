@@ -26,6 +26,7 @@
 #include "level_zero/core/source/driver/driver_imp.h"
 #include "level_zero/core/source/driver/host_pointer_manager.h"
 #include "level_zero/core/source/fabric/fabric.h"
+#include "level_zero/core/source/image/image.h"
 
 #include "driver_version_l0.h"
 
@@ -556,6 +557,47 @@ void *DriverHandleImp::importFdHandles(NEO::Device *neoDevice, ze_ipc_memory_fla
     }
 
     return reinterpret_cast<void *>(alloc->getGpuAddress());
+}
+
+bool DriverHandleImp::isRemoteImageNeeded(Image *image, Device *device) {
+    return (image->getAllocation()->getRootDeviceIndex() != device->getRootDeviceIndex());
+}
+
+ze_result_t DriverHandleImp::getPeerImage(Device *device, Image *image, Image **peerImage) {
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+    auto imageAllocPtr = reinterpret_cast<const void *>(image->getAllocation()->getGpuAddress());
+
+    std::unique_lock<NEO::SpinLock> lock(deviceImp->peerImageAllocationsMutex);
+
+    if (deviceImp->peerImageAllocations.find(imageAllocPtr) != deviceImp->peerImageAllocations.end()) {
+        *peerImage = deviceImp->peerImageAllocations[imageAllocPtr];
+    } else {
+        uint64_t handle = 0;
+
+        int ret = image->getAllocation()->peekInternalHandle(this->getMemoryManager(), handle);
+        if (ret < 0) {
+            return ZE_RESULT_ERROR_OUT_OF_HOST_MEMORY;
+        }
+
+        ze_image_desc_t desc = image->getImageDesc();
+        ze_external_memory_import_fd_t externalMemoryImportDesc = {};
+
+        externalMemoryImportDesc.stype = ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_IMPORT_FD;
+        externalMemoryImportDesc.fd = static_cast<int>(handle);
+        externalMemoryImportDesc.flags = ZE_EXTERNAL_MEMORY_TYPE_FLAG_DMA_BUF;
+        externalMemoryImportDesc.pNext = nullptr;
+        desc.pNext = &externalMemoryImportDesc;
+
+        auto productFamily = device->getNEODevice()->getHardwareInfo().platform.eProductFamily;
+        ze_result_t result = Image::create(productFamily, device, &desc, peerImage);
+
+        if (result != ZE_RESULT_SUCCESS) {
+            return result;
+        }
+        deviceImp->peerImageAllocations.insert(std::make_pair(imageAllocPtr, *peerImage));
+    }
+
+    return ZE_RESULT_SUCCESS;
 }
 
 NEO::GraphicsAllocation *DriverHandleImp::getPeerAllocation(Device *device,

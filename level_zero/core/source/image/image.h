@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,6 +28,7 @@ struct Image : _ze_image_handle_t {
 
     virtual ~Image() = default;
     virtual ze_result_t destroy() = 0;
+    virtual ze_result_t destroyPeerImages(const void *ptr, Device *device) = 0;
 
     static ze_result_t create(uint32_t productFamily, Device *device, const ze_image_desc_t *desc, Image **pImage);
 

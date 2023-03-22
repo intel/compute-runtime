@@ -12,6 +12,8 @@
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/core/source/device/device_imp.h"
+#include "level_zero/core/source/driver/driver_handle_imp.h"
 
 #include "igfxfmid.h"
 
@@ -26,7 +28,29 @@ ImageImp::~ImageImp() {
 }
 
 ze_result_t ImageImp::destroy() {
+    if (this->getAllocation() && this->device) {
+        auto imageAllocPtr = reinterpret_cast<const void *>(this->getAllocation()->getGpuAddress());
+        DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(this->device->getDriverHandle());
+
+        for (auto peerDevice : driverHandle->devices) {
+            this->destroyPeerImages(imageAllocPtr, peerDevice);
+        }
+    }
+
     delete this;
+    return ZE_RESULT_SUCCESS;
+}
+
+ze_result_t ImageImp::destroyPeerImages(const void *ptr, Device *device) {
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(device);
+
+    std::unique_lock<NEO::SpinLock> lock(deviceImp->peerImageAllocationsMutex);
+
+    if (deviceImp->peerImageAllocations.find(ptr) != deviceImp->peerImageAllocations.end()) {
+        delete deviceImp->peerImageAllocations[ptr];
+        deviceImp->peerImageAllocations.erase(ptr);
+    }
+
     return ZE_RESULT_SUCCESS;
 }
 

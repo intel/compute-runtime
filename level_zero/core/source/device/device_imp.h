@@ -133,6 +133,8 @@ struct DeviceImp : public Device {
 
     NEO::SVMAllocsManager::MapBasedAllocationTracker peerAllocations;
     NEO::SpinLock peerAllocationsMutex;
+    std::unordered_map<const void *, L0::Image *> peerImageAllocations;
+    NEO::SpinLock peerImageAllocationsMutex;
     std::map<NEO::SvmAllocationData *, NEO::MemAdviseFlags> memAdviseSharedAllocations;
     std::unique_ptr<NEO::AllocationsList> allocationsForReuse;
     std::unique_ptr<NEO::DriverInfo> driverInfo;

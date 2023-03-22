@@ -536,6 +536,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
     auto slicePitch =
         image->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : pDstRegion->height * rowPitch;
 
+    DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    if (driverHandle->isRemoteImageNeeded(image, device)) {
+        L0::Image *peerImage = nullptr;
+
+        ze_result_t ret = driverHandle->getPeerImage(device, image, &peerImage);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
+        image = peerImage;
+    }
+
     if (isCopyOnly()) {
         return appendCopyImageBlit(allocationStruct.alloc, image->getAllocation(),
                                    {0, 0, 0}, {pDstRegion->originX, pDstRegion->originY, pDstRegion->originZ}, rowPitch, slicePitch,
@@ -569,7 +580,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyFromMemory(ze_i
 
     builtinKernel->setArgBufferWithAlloc(0u, allocationStruct.alignedAllocationPtr,
                                          allocationStruct.alloc);
-    builtinKernel->setArgRedescribedImage(1u, hDstImage);
+    builtinKernel->setArgRedescribedImage(1u, image->toHandle());
     builtinKernel->setArgumentValue(2u, sizeof(size_t), &allocationStruct.offset);
 
     uint32_t origin[] = {
@@ -668,6 +679,17 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
     auto slicePitch =
         (image->getImageInfo().imgDesc.imageType == NEO::ImageType::Image1DArray ? 1 : pSrcRegion->height) * rowPitch;
 
+    DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    if (driverHandle->isRemoteImageNeeded(image, device)) {
+        L0::Image *peerImage = nullptr;
+
+        ze_result_t ret = driverHandle->getPeerImage(device, image, &peerImage);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
+        image = peerImage;
+    }
+
     if (isCopyOnly()) {
         return appendCopyImageBlit(image->getAllocation(), allocationStruct.alloc,
                                    {pSrcRegion->originX, pSrcRegion->originY, pSrcRegion->originZ}, {0, 0, 0}, rowPitch, slicePitch,
@@ -700,7 +722,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyToMemory(void *
         break;
     }
 
-    builtinKernel->setArgRedescribedImage(0u, hSrcImage);
+    builtinKernel->setArgRedescribedImage(0u, image->toHandle());
     builtinKernel->setArgBufferWithAlloc(1u, allocationStruct.alignedAllocationPtr,
                                          allocationStruct.alloc);
 
@@ -812,6 +834,27 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
         event = Event::fromHandle(hEvent);
     }
 
+    DriverHandleImp *driverHandle = static_cast<DriverHandleImp *>(device->getDriverHandle());
+    if (driverHandle->isRemoteImageNeeded(dstImage, device)) {
+        L0::Image *peerImage = nullptr;
+
+        ze_result_t ret = driverHandle->getPeerImage(device, dstImage, &peerImage);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
+        dstImage = peerImage;
+    }
+
+    if (driverHandle->isRemoteImageNeeded(srcImage, device)) {
+        L0::Image *peerImage = nullptr;
+
+        ze_result_t ret = driverHandle->getPeerImage(device, srcImage, &peerImage);
+        if (ret != ZE_RESULT_SUCCESS) {
+            return ret;
+        }
+        srcImage = peerImage;
+    }
+
     if (isCopyOnly()) {
         auto bytesPerPixel = static_cast<uint32_t>(srcImage->getImageInfo().surfaceFormat->ImageElementSizeInBytes);
 
@@ -863,8 +906,8 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendImageCopyRegion(ze_image
     ze_group_count_t kernelArgs{srcRegion.width / groupSizeX, srcRegion.height / groupSizeY,
                                 srcRegion.depth / groupSizeZ};
 
-    kernel->setArgRedescribedImage(0, hSrcImage);
-    kernel->setArgRedescribedImage(1, hDstImage);
+    kernel->setArgRedescribedImage(0, srcImage->toHandle());
+    kernel->setArgRedescribedImage(1, dstImage->toHandle());
     kernel->setArgumentValue(2, sizeof(srcOffset), &srcOffset);
     kernel->setArgumentValue(3, sizeof(dstOffset), &dstOffset);
 

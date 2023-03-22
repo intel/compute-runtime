@@ -4946,5 +4946,316 @@ TEST_F(MemAllocMultiSubDeviceTestsEnabledImplicitScaling, GivenImplicitScalingDi
     EXPECT_EQ(res, ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY);
 }
 
+class ExportImportMockGraphicsAllocation : public NEO::MemoryAllocation {
+  public:
+    ExportImportMockGraphicsAllocation() : NEO::MemoryAllocation(0, AllocationType::BUFFER, nullptr, 0u, 0, MemoryPool::MemoryNull, MemoryManager::maxOsContextCount, 0llu) {}
+
+    int peekInternalHandle(NEO::MemoryManager *memoryManager, uint64_t &handle) override {
+        return -1;
+    }
+};
+
+class MockSharedHandleMemoryManager : public MockMemoryManager {
+  public:
+    using MockMemoryManager::MockMemoryManager;
+
+    GraphicsAllocation *createGraphicsAllocationFromSharedHandle(osHandle handle, const AllocationProperties &properties, bool requireSpecificBitness, bool isHostIpcAllocation, bool reuseSharedAllocation) override {
+        if (failOnCreateGraphicsAllocationFromSharedHandle) {
+            return nullptr;
+        }
+
+        return MockMemoryManager::createGraphicsAllocationFromSharedHandle(handle, properties, requireSpecificBitness, isHostIpcAllocation, reuseSharedAllocation);
+    }
+
+    GraphicsAllocation *allocateGraphicsMemoryWithProperties(const AllocationProperties &properties) override {
+        if (failPeekInternalHandle) {
+            return new ExportImportMockGraphicsAllocation();
+        }
+        return MockMemoryManager::allocateGraphicsMemoryWithProperties(properties);
+    }
+
+    bool failOnCreateGraphicsAllocationFromSharedHandle = false;
+    bool failPeekInternalHandle = false;
+};
+
+struct MultipleDevicePeerImageTest : public ::testing::Test {
+    void SetUp() override {
+        DebugManagerStateRestore restorer;
+
+        DebugManager.flags.CreateMultipleSubDevices.set(numSubDevices);
+        VariableBackup<bool> mockDeviceFlagBackup(&MockDevice::createSingleDevice, false);
+
+        std::vector<std::unique_ptr<NEO::Device>> devices;
+        NEO::ExecutionEnvironment *executionEnvironment = new NEO::ExecutionEnvironment();
+        executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            executionEnvironment->rootDeviceEnvironments[i]->setHwInfoAndInitHelpers(NEO::defaultHwInfo.get());
+            executionEnvironment->rootDeviceEnvironments[i]->initGmm();
+        }
+
+        auto &gfxCoreHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<GfxCoreHelper>();
+        bool enableLocalMemory = gfxCoreHelper.getEnableLocalMemory(*defaultHwInfo);
+        bool aubUsage = (testMode == TestMode::AubTests) || (testMode == TestMode::AubTestsWithTbx);
+        deviceFactoryMemoryManager = new MockSharedHandleMemoryManager(false, enableLocalMemory, aubUsage, *executionEnvironment);
+        executionEnvironment->memoryManager.reset(deviceFactoryMemoryManager);
+        deviceFactory = std::make_unique<UltDeviceFactory>(numRootDevices, numSubDevices, *executionEnvironment);
+
+        for (auto i = 0u; i < executionEnvironment->rootDeviceEnvironments.size(); i++) {
+            devices.push_back(std::unique_ptr<NEO::Device>(deviceFactory->rootDevices[i]));
+        }
+        driverHandle = std::make_unique<DriverHandleImp>();
+        driverHandle->initialize(std::move(devices));
+
+        context = std::make_unique<ContextShareableMock>(driverHandle.get());
+        EXPECT_NE(context, nullptr);
+        for (auto i = 0u; i < numRootDevices; i++) {
+            auto device = driverHandle->devices[i];
+            context->getDevices().insert(std::make_pair(device->getRootDeviceIndex(), device->toHandle()));
+            auto neoDevice = device->getNEODevice();
+            context->rootDeviceIndices.push_back(neoDevice->getRootDeviceIndex());
+            context->deviceBitfields.insert({neoDevice->getRootDeviceIndex(), neoDevice->getDeviceBitfield()});
+        }
+        context->rootDeviceIndices.remove_duplicates();
+    }
+
+    void TearDown() override {}
+
+    NEO::MemoryManager *deviceFactoryMemoryManager = nullptr;
+
+    NEO::SVMAllocsManager *prevSvmAllocsManager = nullptr;
+    NEO::SVMAllocsManager *currSvmAllocsManager = nullptr;
+    std::unique_ptr<DriverHandleImp> driverHandle;
+
+    std::unique_ptr<UltDeviceFactory> deviceFactory;
+    std::unique_ptr<ContextShareableMock> context;
+
+    const uint32_t numRootDevices = 2u;
+    const uint32_t numSubDevices = 2u;
+};
+
+using ImageSupport = IsWithinProducts<IGFX_SKYLAKE, IGFX_TIGERLAKE_LP>;
+
+HWTEST2_F(MultipleDevicePeerImageTest,
+          whenisRemoteImageNeededIsCalledWithDifferentCombinationsOfInputsThenExpectedOutputIsReturned,
+          ImageSupport) {
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_image_desc_t zeDesc = {};
+    zeDesc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    zeDesc.arraylevels = 1u;
+    zeDesc.depth = 1u;
+    zeDesc.height = 1u;
+    zeDesc.width = 1u;
+    zeDesc.miplevels = 1u;
+    zeDesc.type = ZE_IMAGE_TYPE_2DARRAY;
+    zeDesc.flags = ZE_IMAGE_FLAG_BIAS_UNCACHED;
+
+    zeDesc.format = {ZE_IMAGE_FORMAT_LAYOUT_32,
+                     ZE_IMAGE_FORMAT_TYPE_UINT,
+                     ZE_IMAGE_FORMAT_SWIZZLE_R,
+                     ZE_IMAGE_FORMAT_SWIZZLE_G,
+                     ZE_IMAGE_FORMAT_SWIZZLE_B,
+                     ZE_IMAGE_FORMAT_SWIZZLE_A};
+
+    L0::Image *image0;
+    auto result = Image::create(productFamily, device0, &zeDesc, &image0);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    L0::Image *image1;
+    result = Image::create(productFamily, device1, &zeDesc, &image1);
+    EXPECT_EQ(result, ZE_RESULT_SUCCESS);
+
+    bool isNeeded = driverHandle->isRemoteImageNeeded(image0, device0);
+    EXPECT_FALSE(isNeeded);
+
+    isNeeded = driverHandle->isRemoteImageNeeded(image1, device0);
+    EXPECT_TRUE(isNeeded);
+
+    isNeeded = driverHandle->isRemoteImageNeeded(image0, device1);
+    EXPECT_TRUE(isNeeded);
+
+    isNeeded = driverHandle->isRemoteImageNeeded(image1, device1);
+    EXPECT_FALSE(isNeeded);
+
+    result = image0->destroy();
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    result = image1->destroy();
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(MultipleDevicePeerImageTest,
+          givenRemoteImageAllocationsPassedToAppendImageCopyCallsUsingDevice0ThenSuccessIsReturned,
+          ImageSupport) {
+    const ze_command_queue_desc_t queueDesc = {};
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+
+    L0::Image *image0Src;
+    L0::Image *image0Dst;
+    auto result = Image::create(productFamily, device0, &desc, &image0Src);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = Image::create(productFamily, device0, &desc, &image0Dst);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::Image *image1Src;
+    L0::Image *image1Dst;
+    result = Image::create(productFamily, device1, &desc, &image1Src);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = Image::create(productFamily, device1, &desc, &image1Dst);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    device0->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device0,
+                                                                               &queueDesc,
+                                                                               false,
+                                                                               NEO::EngineGroupType::Copy,
+                                                                               returnValue));
+    ASSERT_NE(nullptr, commandList0);
+
+    result = commandList0->appendImageCopy(image0Dst->toHandle(), image1Src->toHandle(), nullptr, 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = commandList0->appendImageCopy(image1Dst->toHandle(), image0Src->toHandle(), nullptr, 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = commandList0->appendImageCopyToMemory(dstPtr, image1Src->toHandle(), nullptr, nullptr, 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = image0Src->destroy();
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    result = image0Dst->destroy();
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    result = image1Src->destroy();
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    result = image1Dst->destroy();
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(MultipleDevicePeerImageTest,
+          givenRemoteImageAllocationsPassedToAppendImageCopyCallsUsingDevice0WithFailingSharedHandleAllocationsThenErrorIsReturned,
+          ImageSupport) {
+    MockSharedHandleMemoryManager *fixtureMemoryManager = static_cast<MockSharedHandleMemoryManager *>(deviceFactoryMemoryManager);
+    fixtureMemoryManager->failOnCreateGraphicsAllocationFromSharedHandle = true;
+
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+    void *srcPtr = reinterpret_cast<void *>(0x1234);
+    void *dstPtr = reinterpret_cast<void *>(0x2345);
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+
+    L0::Image *image0Src;
+    L0::Image *image0Dst;
+    auto result = Image::create(productFamily, device0, &desc, &image0Src);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = Image::create(productFamily, device0, &desc, &image0Dst);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::Image *image1Src;
+    L0::Image *image1Dst;
+    result = Image::create(productFamily, device1, &desc, &image1Src);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = Image::create(productFamily, device1, &desc, &image1Dst);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    device0->getNEODevice()->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.blitterOperationsSupported = true;
+    const ze_command_queue_desc_t queueDesc = {};
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList0(CommandList::createImmediate(productFamily,
+                                                                               device0,
+                                                                               &queueDesc,
+                                                                               false,
+                                                                               NEO::EngineGroupType::Copy,
+                                                                               returnValue));
+    ASSERT_NE(nullptr, commandList0);
+
+    result = commandList0->appendImageCopy(image0Dst->toHandle(), image1Src->toHandle(), nullptr, 0, nullptr, false);
+    EXPECT_NE(ZE_RESULT_SUCCESS, result);
+    result = commandList0->appendImageCopy(image1Dst->toHandle(), image0Src->toHandle(), nullptr, 0, nullptr, false);
+    EXPECT_NE(ZE_RESULT_SUCCESS, result);
+    result = commandList0->appendImageCopyFromMemory(image1Dst->toHandle(), srcPtr, nullptr, nullptr, 0, nullptr, false);
+    EXPECT_NE(ZE_RESULT_SUCCESS, result);
+    result = commandList0->appendImageCopyToMemory(dstPtr, image1Src->toHandle(), nullptr, nullptr, 0, nullptr, false);
+    EXPECT_NE(ZE_RESULT_SUCCESS, result);
+
+    result = image0Src->destroy();
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    result = image0Dst->destroy();
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    result = image1Src->destroy();
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+    result = image1Dst->destroy();
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
+HWTEST2_F(MultipleDevicePeerImageTest,
+          givenPeekInternalHandleFailsThenGetPeerImageReturnsNullptr,
+          ImageSupport) {
+    MockSharedHandleMemoryManager *fixtureMemoryManager = static_cast<MockSharedHandleMemoryManager *>(deviceFactoryMemoryManager);
+    fixtureMemoryManager->failPeekInternalHandle = true;
+
+    L0::Device *device0 = driverHandle->devices[0];
+    L0::Device *device1 = driverHandle->devices[1];
+
+    ze_image_desc_t desc = {};
+    desc.stype = ZE_STRUCTURE_TYPE_IMAGE_DESC;
+    desc.type = ZE_IMAGE_TYPE_3D;
+    desc.format.layout = ZE_IMAGE_FORMAT_LAYOUT_8_8_8_8;
+    desc.format.type = ZE_IMAGE_FORMAT_TYPE_UINT;
+    desc.width = 11;
+    desc.height = 13;
+    desc.depth = 17;
+
+    desc.format.x = ZE_IMAGE_FORMAT_SWIZZLE_A;
+    desc.format.y = ZE_IMAGE_FORMAT_SWIZZLE_0;
+    desc.format.z = ZE_IMAGE_FORMAT_SWIZZLE_1;
+    desc.format.w = ZE_IMAGE_FORMAT_SWIZZLE_X;
+
+    L0::Image *image;
+    auto result = Image::create(productFamily, device1, &desc, &image);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    L0::Image *peerImage = nullptr;
+    result = driverHandle->getPeerImage(device0, image, &peerImage);
+    EXPECT_NE(result, ZE_RESULT_SUCCESS);
+    EXPECT_EQ(peerImage, nullptr);
+
+    result = image->destroy();
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+}
+
 } // namespace ult
 } // namespace L0

@@ -21,6 +21,7 @@ namespace L0 {
 class HostPointerManager;
 struct FabricVertex;
 struct FabricEdge;
+struct Image;
 
 struct DriverHandleImp : public DriverHandle {
     ~DriverHandleImp() override;
@@ -70,6 +71,7 @@ struct DriverHandleImp : public DriverHandle {
                                                              size_t size,
                                                              uint32_t rootDeviceIndex,
                                                              uintptr_t *gpuAddress) override;
+    ze_result_t getPeerImage(Device *device, L0::Image *image, L0::Image **peerImage);
     NEO::GraphicsAllocation *getPeerAllocation(Device *device,
                                                NEO::SvmAllocationData *allocData,
                                                void *basePtr,
@@ -79,6 +81,7 @@ struct DriverHandleImp : public DriverHandle {
     void createHostPointerManager();
     void sortNeoDevices(std::vector<std::unique_ptr<NEO::Device>> &neoDevices);
 
+    bool isRemoteImageNeeded(Image *image, Device *device);
     bool isRemoteResourceNeeded(void *ptr,
                                 NEO::GraphicsAllocation *alloc,
                                 NEO::SvmAllocationData *allocData,

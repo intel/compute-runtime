@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2021 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,6 +15,7 @@ namespace L0 {
 
 struct ImageImp : public Image {
     ze_result_t destroy() override;
+    ze_result_t destroyPeerImages(const void *ptr, Device *device) override;
 
     virtual ze_result_t initialize(Device *device, const ze_image_desc_t *desc) = 0;
 
