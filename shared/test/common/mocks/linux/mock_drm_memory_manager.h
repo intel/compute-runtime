@@ -6,9 +6,9 @@
  */
 
 #pragma once
-#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/os_interface/linux/drm_gem_close_worker.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
@@ -19,30 +19,6 @@ extern off_t lseekReturn;
 extern std::atomic<int> lseekCalledCount;
 extern std::atomic<int> closeInputFd;
 extern std::atomic<int> closeCalledCount;
-extern std::vector<void *> mmapVector;
-
-inline void *mmapMock(void *addr, size_t length, int prot, int flags, int fd, off_t offset) noexcept {
-    if (addr) {
-        return addr;
-    }
-    void *ptr = nullptr;
-    if (length > 0) {
-        ptr = alignedMalloc(length, MemoryConstants::pageSize64k);
-        mmapVector.push_back(ptr);
-    }
-    return ptr;
-}
-
-inline int munmapMock(void *addr, size_t length) noexcept {
-    if (length > 0) {
-        auto ptrIt = std::find(mmapVector.begin(), mmapVector.end(), addr);
-        if (ptrIt != mmapVector.end()) {
-            mmapVector.erase(ptrIt);
-            alignedFree(addr);
-        }
-    }
-    return 0;
-}
 
 inline off_t lseekMock(int fd, off_t offset, int whence) noexcept {
     lseekCalledCount++;

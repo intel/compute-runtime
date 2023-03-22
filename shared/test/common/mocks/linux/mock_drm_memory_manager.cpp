@@ -23,14 +23,13 @@ off_t lseekReturn = 4096u;
 std::atomic<int> lseekCalledCount(0);
 std::atomic<int> closeInputFd(0);
 std::atomic<int> closeCalledCount(0);
-std::vector<void *> mmapVector(64);
 
 TestedDrmMemoryManager::TestedDrmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(gemCloseWorkerMode::gemCloseWorkerInactive,
                                                                                                                  false,
                                                                                                                  false,
                                                                                                                  executionEnvironment) {
-    this->mmapFunction = &mmapMock;
-    this->munmapFunction = &munmapMock;
+    this->mmapFunction = SysCalls::mmap;
+    this->munmapFunction = SysCalls::munmap;
     this->lseekFunction = &lseekMock;
     this->closeFunction = &closeMock;
     lseekReturn = 4096;
@@ -48,8 +47,8 @@ TestedDrmMemoryManager::TestedDrmMemoryManager(bool enableLocalMemory,
                                                                                                                  allowForcePin,
                                                                                                                  validateHostPtrMemory,
                                                                                                                  executionEnvironment) {
-    this->mmapFunction = &mmapMock;
-    this->munmapFunction = &munmapMock;
+    this->mmapFunction = SysCalls::mmap;
+    this->munmapFunction = SysCalls::munmap;
     this->lseekFunction = &lseekMock;
     this->closeFunction = &closeMock;
     lseekReturn = 4096;

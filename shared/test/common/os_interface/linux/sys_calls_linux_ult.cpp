@@ -7,6 +7,7 @@
 
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
 
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_wrappers.h"
 #include "shared/source/os_interface/linux/i915.h"
@@ -25,6 +26,7 @@
 #include <system_error>
 
 namespace NEO {
+std::vector<void *> mmapVector(64);
 namespace SysCalls {
 uint32_t closeFuncCalled = 0u;
 int closeFuncArgPassed = 0;
@@ -187,13 +189,29 @@ ssize_t pwrite(int fd, const void *buf, size_t count, off_t offset) {
     return 0;
 }
 
-void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) {
+void *mmap(void *addr, size_t size, int prot, int flags, int fd, off_t off) noexcept {
     mmapFuncCalled++;
-    return 0;
+    if (addr) {
+        return addr;
+    }
+    void *ptr = nullptr;
+    if (size > 0) {
+        ptr = alignedMalloc(size, MemoryConstants::pageSize64k);
+        if (!ptr) {
+            return reinterpret_cast<void *>(0x1000);
+        }
+        mmapVector.push_back(ptr);
+    }
+    return ptr;
 }
 
-int munmap(void *addr, size_t size) {
+int munmap(void *addr, size_t size) noexcept {
     munmapFuncCalled++;
+    auto ptrIt = std::find(mmapVector.begin(), mmapVector.end(), addr);
+    if (ptrIt != mmapVector.end()) {
+        mmapVector.erase(ptrIt);
+        alignedFree(addr);
+    }
     return 0;
 }
 

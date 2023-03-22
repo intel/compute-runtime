@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -609,12 +609,12 @@ TEST_P(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsNotPresentWhenIn
     verifyHeaps(0x800000000000, 0x1000000000000, 0x7FFFFFFFFFFF, gpuAddressSpace == 57);
 }
 
-TEST_P(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenInitializingGfxPartitionThenReserve48bitSpaceForDriverAllocations) {
+TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenInitializingGfxPartitionThenReserve48bitSpaceForDriverAllocations) {
     if (is32bit) {
         GTEST_SKIP();
     }
 
-    auto gpuAddressSpace = GetParam();
+    auto gpuAddressSpace = 48;
 
     // 57 bit CPU VA, la57 flag is present  - reserve high or low CPU address range depending of memory maps
     CpuInfoOverrideVirtualAddressSizeAndFlags overrideCpuInfo(57, "la57");
@@ -802,12 +802,12 @@ TEST_P(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     EXPECT_FALSE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1));
 }
 
-TEST_P(GfxPartitionOn57bTest, given57bitCpuAddressWidthWhenInitializingMultipleGfxPartitionsThenReserve48bitSpaceForDriverAllocationsOnlyOnce) {
+TEST_F(GfxPartitionOn57bTest, given48bitGpuAddressSpaceAnd57bitCpuAddressWidthWhenInitializingMultipleGfxPartitionsThenReserveSpaceForSvmHeapOnlyOnce) {
     if (is32bit) {
         GTEST_SKIP();
     }
 
-    auto gpuAddressSpace = GetParam();
+    auto gpuAddressSpace = 48;
 
     // 57 bit CPU VA, la57 is present - reserve high or low CPU address range depending of memory maps
     CpuInfoOverrideVirtualAddressSizeAndFlags overrideCpuInfo(57, "la57");
@@ -823,7 +823,26 @@ TEST_P(GfxPartitionOn57bTest, given57bitCpuAddressWidthWhenInitializingMultipleG
     EXPECT_EQ(1u, static_cast<MockOsMemory *>(gfxPartitions[0]->osMemory.get())->getReserveCount());
 }
 
-INSTANTIATE_TEST_SUITE_P(GfxPartitionOn57bTest, GfxPartitionOn57bTest, ::testing::Values(48, 57));
+TEST_F(GfxPartitionOn57bTest, given57bitGpuAddressSpaceAnd57bitCpuAddressWidthWhenInitializingMultipleGfxPartitionsThenReserveSpaceForSvmHeapAndExtendedHeapsPerGfxPartition) {
+    if (is32bit) {
+        GTEST_SKIP();
+    }
+
+    auto gpuAddressSpace = 57;
+
+    // 57 bit CPU VA, la57 is present - reserve high or low CPU address range depending of memory maps
+    CpuInfoOverrideVirtualAddressSizeAndFlags overrideCpuInfo(57, "la57");
+
+    OSMemory::ReservedCpuAddressRange reservedCpuAddressRange;
+    std::vector<std::unique_ptr<MockGfxPartition>> gfxPartitions;
+    for (int i = 0; i < 10; ++i) {
+        gfxPartitions.push_back(std::make_unique<MockGfxPartition>(reservedCpuAddressRange));
+        gfxPartitions[i]->osMemory.reset(new MockOsMemory);
+        EXPECT_TRUE(gfxPartitions[i]->init(maxNBitValue(gpuAddressSpace), 0, i, 10));
+    }
+
+    EXPECT_EQ(11u, static_cast<MockOsMemory *>(gfxPartitions[0]->osMemory.get())->getReserveCount());
+}
 
 TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapExtendedIsSplitted) {
     if (is32bit) {
@@ -840,11 +859,10 @@ TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapE
         MockGfxPartition gfxPartition;
         EXPECT_TRUE(gfxPartition.init(maxNBitValue(57), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices));
 
-        auto heapExtendedTotalSize = maxNBitValue(48) + 1;
-        auto heapExtendedSize = alignDown(heapExtendedTotalSize / numRootDevices, GfxPartition::heapGranularity);
+        auto heapExtendedSize = 1024 * MemoryConstants::gigaByte;
 
         EXPECT_EQ(heapExtendedSize, gfxPartition.getHeapSize(HeapIndex::HEAP_EXTENDED));
-        EXPECT_EQ(maxNBitValue(56) + 1 + rootDeviceIndex * heapExtendedSize, gfxPartition.getHeapBase(HeapIndex::HEAP_EXTENDED));
+        EXPECT_LT(maxNBitValue(48), gfxPartition.getHeapBase(HeapIndex::HEAP_EXTENDED));
     }
 
     {

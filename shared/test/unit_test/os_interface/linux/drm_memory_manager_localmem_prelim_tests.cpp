@@ -970,8 +970,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenAlignmentAndSizeWhenMmapRetur
     EXPECT_EQ(3u, munmapCalledCount);
     munmapCalledCount = 0u;
 
-    memoryManager->mmapFunction = &mmapMock;
-    memoryManager->munmapFunction = &munmapMock;
+    memoryManager->mmapFunction = SysCalls::mmap;
+    memoryManager->munmapFunction = SysCalls::munmap;
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenAlignmentAndSizeWhenMmapReturnsAlignedThenCreateAllocWithAlignmentUnmapOneUnalignedPart) {
@@ -1012,8 +1012,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenAlignmentAndSizeWhenMmapRetur
     EXPECT_EQ(2u, munmapCalledCount);
     munmapCalledCount = 0u;
 
-    memoryManager->mmapFunction = &mmapMock;
-    memoryManager->munmapFunction = &munmapMock;
+    memoryManager->mmapFunction = SysCalls::mmap;
+    memoryManager->munmapFunction = SysCalls::munmap;
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenInvalidCacheRegionWhenMmapReturnsUnalignedPointerThenReleaseUnalignedPartsEarly) {
@@ -1052,8 +1052,8 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenInvalidCacheRegionWhenMmapRet
     EXPECT_EQ(2u, munmapCalledCount);
     munmapCalledCount = 0u;
 
-    memoryManager->mmapFunction = &mmapMock;
-    memoryManager->munmapFunction = &munmapMock;
+    memoryManager->mmapFunction = SysCalls::mmap;
+    memoryManager->munmapFunction = SysCalls::munmap;
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenMemoryInfoAndFailedMmapOffsetWhenAllocateWithAlignmentThenNullptr) {

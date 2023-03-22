@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2021 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #include "shared/source/os_interface/linux/os_memory_linux.h"
 
 #include "shared/source/os_interface/linux/os_inc.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include <cinttypes>
 #include <fstream>
@@ -28,11 +29,11 @@ void OSMemoryLinux::osReleaseCpuAddressRange(void *reservedCpuAddressRange, size
 }
 
 void *OSMemoryLinux::mmapWrapper(void *addr, size_t size, int prot, int flags, int fd, off_t off) {
-    return mmap(addr, size, prot, flags, fd, off);
+    return SysCalls::mmap(addr, size, prot, flags, fd, off);
 }
 
 int OSMemoryLinux::munmapWrapper(void *addr, size_t size) {
-    return munmap(addr, size);
+    return SysCalls::munmap(addr, size);
 }
 
 void OSMemoryLinux::getMemoryMaps(MemoryMaps &memoryMaps) {

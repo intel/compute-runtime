@@ -35,7 +35,7 @@ enum class HeapIndex : uint32_t {
 
 class GfxPartition {
   public:
-    GfxPartition(OSMemory::ReservedCpuAddressRange &sharedReservedCpuAddressRange);
+    GfxPartition(OSMemory::ReservedCpuAddressRange &reservedCpuAddressRangeForHeapSvm);
     MOCKABLE_VIRTUAL ~GfxPartition();
 
     bool init(uint64_t gpuAddressSpace, size_t cpuAddressRangeSizeToReserve, uint32_t rootDeviceIndex, size_t numRootDevices) {
@@ -125,8 +125,8 @@ class GfxPartition {
 
     std::array<Heap, static_cast<uint32_t>(HeapIndex::TOTAL_HEAPS)> heaps;
 
-    OSMemory::ReservedCpuAddressRange &reservedCpuAddressRange;
+    OSMemory::ReservedCpuAddressRange &reservedCpuAddressRangeForHeapSvm;
+    OSMemory::ReservedCpuAddressRange reservedCpuAddressRangeForHeapExtended{};
     std::unique_ptr<OSMemory> osMemory;
 };
-
 } // namespace NEO
