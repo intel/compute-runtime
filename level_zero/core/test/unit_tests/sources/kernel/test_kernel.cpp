@@ -1440,7 +1440,7 @@ TEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
     ASSERT_NE(0U, maxSubgroupSize);
     EXPECT_EQ(maxSubgroupSize, kernelProperties.maxSubgroupSize);
 
-    uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getDevice()->getNEODevice()->getDeviceInfo().maxWorkGroupSize);
+    uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getMaxGroupSize(this->kernel->getKernelDescriptor()));
     uint32_t maxNumSubgroups = maxKernelWorkGroupSize / maxSubgroupSize;
     EXPECT_EQ(maxNumSubgroups, kernelProperties.maxNumSubgroups);
 
@@ -1456,6 +1456,42 @@ TEST_F(KernelPropertiesTests, givenValidKernelThenPropertiesAreRetrieved) {
                         sizeof(kernelProperties.uuid.kid)));
     EXPECT_EQ(0, memcmp(&kernelProperties.uuid.mid, &zeroMid,
                         sizeof(kernelProperties.uuid.mid)));
+}
+
+using KernelMaxNumSubgroupsTests = Test<ModuleImmutableDataFixture>;
+
+HWTEST2_F(KernelMaxNumSubgroupsTests, givenLargeGrfAndSimdSmallerThan32WhenCalculatingMaxWorkGroupSizeThenMaxNumSubgroupsReturnHalfOfDeviceDefault, IsWithinXeGfxFamily) {
+    std::unique_ptr<MockImmutableData> mockKernelImmData = std::make_unique<MockImmutableData>(0u);
+
+    auto kernelDescriptor = mockKernelImmData->kernelDescriptor;
+    kernelDescriptor->kernelAttributes.simdSize = 16;
+    kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::LargeGrfNumber;
+
+    createModuleFromMockBinary(0u, false, mockKernelImmData.get());
+
+    auto mockKernel = std::make_unique<MockKernel>(this->module.get());
+
+    ze_kernel_desc_t kernelDesc{ZE_STRUCTURE_TYPE_KERNEL_DESC};
+    mockKernel->initialize(&kernelDesc);
+
+    ze_kernel_properties_t kernelProperties = {};
+    kernelProperties.maxSubgroupSize = std::numeric_limits<uint32_t>::max();
+    kernelProperties.maxNumSubgroups = std::numeric_limits<uint32_t>::max();
+
+    ze_kernel_properties_t kernelPropertiesBefore = {};
+    kernelPropertiesBefore = kernelProperties;
+
+    ze_result_t res = mockKernel->getProperties(&kernelProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    uint32_t maxSubgroupSize = mockKernel->getKernelDescriptor().kernelAttributes.simdSize;
+    ASSERT_NE(0U, maxSubgroupSize);
+    EXPECT_EQ(maxSubgroupSize, kernelProperties.maxSubgroupSize);
+
+    uint32_t maxKernelWorkGroupSize = static_cast<uint32_t>(this->module->getMaxGroupSize(mockKernel->getKernelDescriptor()));
+    uint32_t maxNumSubgroups = maxKernelWorkGroupSize / maxSubgroupSize;
+    EXPECT_EQ(maxNumSubgroups, kernelProperties.maxNumSubgroups);
+    EXPECT_EQ(static_cast<uint32_t>(this->module->getDevice()->getNEODevice()->getDeviceInfo().maxWorkGroupSize) / maxSubgroupSize, maxNumSubgroups * 2);
 }
 
 TEST_F(KernelPropertiesTests, whenPassingPreferredGroupSizeStructToGetPropertiesThenPreferredMultipleIsReturned) {
