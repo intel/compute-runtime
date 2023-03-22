@@ -17,6 +17,7 @@
 #include "level_zero/tools/source/debug/debug_handlers.h"
 #include "level_zero/tools/source/debug/windows/debug_session.h"
 #include "level_zero/tools/test/unit_tests/sources/debug/debug_session_common.h"
+#include "level_zero/tools/test/unit_tests/sources/debug/mock_debug_session.h"
 
 #include "common/StateSaveAreaHeader.h"
 
@@ -164,6 +165,7 @@ struct DebugApiWindowsFixture : public DeviceFixture {
     WddmEuDebugInterfaceMock *mockWddm = nullptr;
 };
 
+extern CreateDebugSessionHelperFunc createDebugSessionFunc;
 using DebugApiWindowsAttentionTest = Test<DebugApiWindowsFixture>;
 
 TEST_F(DebugApiWindowsAttentionTest, GivenEuAttentionEventForThreadsWhenHandlingEventThenNewlyStoppedThreadsSaved) {
@@ -475,6 +477,28 @@ TEST_F(DebugApiWindowsTest, givenDebugAttachIsNotAvailableWhenGetDebugProperties
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(0u, debugProperties.flags);
+}
+
+TEST_F(DebugApiWindowsTest, givenInvalidTopologyDebugAttachCalledThenUnsupportedErrorIsReturned) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(NEO::defaultHwInfo.get(), 0));
+    auto mockWddm = new WddmEuDebugInterfaceMock(*neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(new NEO::OSInterface);
+    neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface->setDriverModel(std::unique_ptr<DriverModel>(mockWddm));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+    ze_result_t result = ZE_RESULT_SUCCESS;
+
+    VariableBackup<CreateDebugSessionHelperFunc> mockCreateDebugSessionBackup(&L0::ult::createDebugSessionFunc, [](const zet_debug_config_t &config, L0::Device *device, int debugFd, void *params) -> DebugSession * {
+        auto session = new DebugSessionMock(config, device);
+        session->topologyMap.erase(0);
+        return session;
+    });
+
+    auto session = DebugSession::create(config, &deviceImp, result, true);
+    EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, result);
+    EXPECT_EQ(nullptr, session);
 }
 
 TEST_F(DebugApiWindowsTest, givenSubDeviceWhenDebugAttachCalledThenUnsupportedErrorIsReturned) {

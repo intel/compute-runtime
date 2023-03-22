@@ -140,11 +140,7 @@ bool Wddm::init() {
         gmmMemory.reset(GmmMemory::create(rootDeviceEnvironment.getGmmClientContext()));
     }
 
-    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
-        if (!buildTopologyMapping()) {
-            return false;
-        }
-    }
+    buildTopologyMapping();
 
     return configureDeviceAddressSpace();
 }
@@ -160,9 +156,7 @@ void Wddm::setPlatformSupportEvictIfNecessaryFlag(const ProductHelper &productHe
 }
 
 bool Wddm::buildTopologyMapping() {
-    auto hwInfo = rootDeviceEnvironment.getHardwareInfo();
 
-    UNRECOVERABLE_IF(hwInfo->gtSystemInfo.MultiTileArchInfo.TileCount > 1);
     TopologyMapping mapping;
     if (!translateTopologyInfo(mapping)) {
         PRINT_DEBUGGER_ERROR_LOG("translateTopologyInfo Failed\n", "");

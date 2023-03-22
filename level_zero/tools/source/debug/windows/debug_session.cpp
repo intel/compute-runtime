@@ -35,6 +35,13 @@ DebugSession *DebugSession::create(const zet_debug_config_t &config, Device *dev
 
     auto debugSession = createDebugSessionHelper(config, device, 0, nullptr);
     debugSession->setAttachMode(isRootAttach);
+    if (debugSession->getTopologyMap().count(0) == 0) {
+        result = ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        PRINT_DEBUGGER_ERROR_LOG("Topology map not valid, debug session cannot be created\n");
+        delete debugSession;
+        debugSession = nullptr;
+        return debugSession;
+    }
     result = debugSession->initialize();
     if (result != ZE_RESULT_SUCCESS) {
         debugSession->closeConnection();
