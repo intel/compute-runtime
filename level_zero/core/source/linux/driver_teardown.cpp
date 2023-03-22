@@ -5,18 +5,30 @@
  *
  */
 
-#include "level_zero/core/source/driver/driver_handle_imp.h"
-#include "level_zero/sysman/source/sysman_driver_handle_imp.h"
+#include "shared/source/os_interface/os_library.h"
 
-using namespace L0;
+#include "level_zero/core/source/global_teardown.h"
+
+#include <memory>
+
+namespace L0 {
+
+ze_result_t setDriverTeardownHandleInLoader(std::string loaderLibraryName) {
+    ze_result_t result = ZE_RESULT_ERROR_DEPENDENCY_UNAVAILABLE;
+    std::unique_ptr<NEO::OsLibrary> loaderLibrary = std::unique_ptr<NEO::OsLibrary>{NEO::OsLibrary::load(loaderLibraryName.c_str())};
+    if (loaderLibrary) {
+        zelSetDriverTeardown_fn setDriverTeardown = reinterpret_cast<zelSetDriverTeardown_fn>(loaderLibrary->getProcAddress("zelSetDriverTeardown"));
+        if (setDriverTeardown) {
+            result = setDriverTeardown();
+        }
+    }
+    return result;
+}
+
+} // namespace L0
 
 void __attribute__((destructor)) driverHandleDestructor() {
-    if (GlobalDriver != nullptr) {
-        delete GlobalDriver;
-        GlobalDriver = nullptr;
-    }
-    if (Sysman::GlobalSysmanDriver != nullptr) {
-        delete Sysman::GlobalSysmanDriver;
-        Sysman::GlobalSysmanDriver = nullptr;
-    }
+    std::string loaderLibraryName = "lib" + L0::loaderLibraryFilename + ".so.1";
+    L0::setDriverTeardownHandleInLoader(loaderLibraryName);
+    L0::globalDriverTeardown();
 }

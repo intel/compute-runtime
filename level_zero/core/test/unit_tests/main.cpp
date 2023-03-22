@@ -173,6 +173,25 @@ int main(int argc, char **argv) {
         sysmanUltsEnable = (strcmp(sysmanUltsEnableEnv, "1") == 0);
     }
 
+#if defined(__linux__)
+    if (getenv("NEO_L0_TEST_SELF_EXEC") == nullptr) {
+        std::string wd = getRunPath(argv[0]);
+        char *ldLibraryPath = getenv("LD_LIBRARY_PATH");
+
+        if (ldLibraryPath == nullptr) {
+            setenv("LD_LIBRARY_PATH", wd.c_str(), 1);
+        } else {
+            std::string ldLibraryPathConcat = wd + ":" + std::string(ldLibraryPath);
+            setenv("LD_LIBRARY_PATH", ldLibraryPathConcat.c_str(), 1);
+        }
+
+        setenv("NEO_L0_TEST_SELF_EXEC", wd.c_str(), 1);
+        execv(argv[0], argv);
+        printf("FATAL ERROR: cannot self-exec test: %s!, errno: %d\n", argv[0], errno);
+        return -1;
+    }
+#endif
+
     applyWorkarounds();
 
     testing::InitGoogleMock(&argc, argv);
