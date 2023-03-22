@@ -141,15 +141,15 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteEnabledWhenEstimatingStr
     MockKernelWithInternals kernel2(*device);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel->mockKernel, kernel2.mockKernel}));
     auto mockCmdQHw = std::make_unique<MockCommandQueueHw<FamilyType>>(context, device.get(), nullptr);
-
-    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = false;
     const auto &hwInfo = device->getHardwareInfo();
     const auto &productHelper = device->getProductHelper();
-    const bool isResolveDependenciesByPipeControlsEnabled = productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, mockCmdQHw->isOOQEnabled());
+    const bool isResolveDependenciesByPipeControlsEnabled = productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, mockCmdQHw->isOOQEnabled(), mockCmdQHw->taskCount, mockCmdQHw->getGpgpuCommandStreamReceiver());
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(*mockCmdQHw, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0, false, false, isResolveDependenciesByPipeControlsEnabled, nullptr);
     auto sizeWithDisabled = mockCmdQHw->requestedCmdStreamSize;
 
-    device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
+    csr.timestampPacketWriteEnabled = true;
 
     MockTimestampPacketContainer timestamp1(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 1);
     MockTimestampPacketContainer timestamp2(*device->getGpgpuCommandStreamReceiver().getTimestampPacketAllocator(), 2);

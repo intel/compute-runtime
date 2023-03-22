@@ -114,7 +114,7 @@ class ProductHelperHw : public ProductHelper {
     uint32_t getNumberOfPartsInTileForConcurrentKernel() const override;
     bool isPlatformQuerySupported() const override;
     bool isNonBlockingGpuSubmissionSupported() const override;
-    bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const override;
+    bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const override;
     bool isMidThreadPreemptionDisallowedForRayTracingKernels() const override;
     bool isBufferPoolAllocatorSupported() const override;
     uint64_t overridePatIndex(AllocationType allocationType, uint64_t patIndex) const override;

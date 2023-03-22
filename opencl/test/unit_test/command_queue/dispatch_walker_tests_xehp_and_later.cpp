@@ -557,7 +557,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
     MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel1.mockKernel, kernel2.mockKernel}));
     const auto &hwInfo = device->getHardwareInfo();
     const auto &productHelper = device->getProductHelper();
-    const bool isResolveDependenciesByPipeControlsEnabled = productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, cmdQ.isOOQEnabled());
+    const bool isResolveDependenciesByPipeControlsEnabled = productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, cmdQ.isOOQEnabled(), cmdQ.taskCount, cmdQ.getGpgpuCommandStreamReceiver());
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
     getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0, false, false, isResolveDependenciesByPipeControlsEnabled, nullptr);

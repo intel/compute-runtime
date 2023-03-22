@@ -228,7 +228,7 @@ HWTEST_F(TimestampPacketTests, givenWaitlistWhenEnqueueingBarrierThenProgramNonS
 
     auto it = hwParser.cmdList.begin();
 
-    if (device->getProductHelper().isResolveDependenciesByPipeControlsSupported(device->getHardwareInfo(), false)) {
+    if (device->getProductHelper().isResolveDependenciesByPipeControlsSupported(device->getHardwareInfo(), false, cmdQ.taskCount, cmdQ.getGpgpuCommandStreamReceiver())) {
         EXPECT_NE(nullptr, genCmdCast<PIPE_CONTROL *>(*it));
     } else {
         EXPECT_NE(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));

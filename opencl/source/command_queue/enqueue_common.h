@@ -192,7 +192,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
     if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = this->peekLatestSentEnqueueOperation() == EnqueueProperties::Operation::GpuKernel &&
-                                                                   productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, this->isOOQEnabled());
+                                                                   productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, this->isOOQEnabled(), this->taskCount, computeCommandStreamReceiver);
         if (false == clearDependenciesForSubCapture) {
             if (false == canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies) {
                 eventsRequest.fillCsrDependenciesForTimestampPacketContainer(csrDeps, computeCommandStreamReceiver, CsrDependencies::DependenciesType::OnCsr);

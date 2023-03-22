@@ -6,12 +6,13 @@
  */
 
 #pragma once
+#include "shared/source/command_stream/task_count_helper.h"
+
 #include <igfxfmid.h>
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
-
 namespace AOT {
 enum PRODUCT_CONFIG : uint32_t;
 }
@@ -21,6 +22,8 @@ enum class ProductFamily : uint32_t;
 }
 
 namespace NEO {
+
+class CommandStreamReceiver;
 class Device;
 enum class LocalMemoryAccessMode;
 struct FrontEndPropertiesSupport;
@@ -159,7 +162,7 @@ class ProductHelper {
     virtual bool isStatefulAddressingModeSupported() const = 0;
     virtual bool isPlatformQuerySupported() const = 0;
     virtual bool isNonBlockingGpuSubmissionSupported() const = 0;
-    virtual bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const = 0;
+    virtual bool isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const = 0;
     virtual bool isMidThreadPreemptionDisallowedForRayTracingKernels() const = 0;
     virtual bool isBufferPoolAllocatorSupported() const = 0;
     virtual uint64_t overridePatIndex(AllocationType allocationType, uint64_t patIndex) const = 0;

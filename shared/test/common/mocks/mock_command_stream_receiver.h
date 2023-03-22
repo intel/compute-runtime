@@ -41,6 +41,7 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     using CommandStreamReceiver::latestFlushedTaskCount;
     using CommandStreamReceiver::latestSentTaskCount;
     using CommandStreamReceiver::newResources;
+    using CommandStreamReceiver::numClients;
     using CommandStreamReceiver::osContext;
     using CommandStreamReceiver::ownershipMutex;
     using CommandStreamReceiver::postSyncWriteOffset;

@@ -549,7 +549,7 @@ bool ProductHelperHw<gfxProduct>::isNonBlockingGpuSubmissionSupported() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ) const {
+bool ProductHelperHw<gfxProduct>::isResolveDependenciesByPipeControlsSupported(const HardwareInfo &hwInfo, bool isOOQ, TaskCountType queueTaskCount, const CommandStreamReceiver &queueCsr) const {
     constexpr bool enabled = false;
     if (DebugManager.flags.ResolveDependenciesViaPipeControls.get() != -1) {
         return DebugManager.flags.ResolveDependenciesViaPipeControls.get() == 1;
