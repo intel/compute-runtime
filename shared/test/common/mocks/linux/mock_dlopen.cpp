@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,8 @@ void *dlopen(const char *filename, int flags) {
 
     dlopenError = -1;
     if (filename == nullptr ||
-        strcmp(filename, "libtest_dynamic_lib.so") == 0) {
+        (strcmp(filename, "libtest_dynamic_lib.so") == 0) ||
+        (strcmp(filename, "libtest_l0_loader_lib.so") == 0)) {
         return dlopenFunc(filename, flags);
     }
     if (filename[0] == '_') {
