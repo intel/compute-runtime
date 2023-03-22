@@ -6,6 +6,7 @@
 
 target_sources(neo_shared_tests PRIVATE
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
+               ${CMAKE_CURRENT_SOURCE_DIR}/addressing_mode_helper_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/aligned_memory_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/app_resource_tests.cpp
                ${CMAKE_CURRENT_SOURCE_DIR}/array_count_tests.cpp
