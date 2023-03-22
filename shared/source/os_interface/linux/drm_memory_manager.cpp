@@ -560,6 +560,9 @@ void DrmMemoryManager::unMapPhysicalToVirtualMemory(GraphicsAllocation *physical
     auto bufferObjects = drmAllocation->getBOs();
     for (auto bufferObject : bufferObjects) {
         if (bufferObject) {
+            for (auto drmIterator = 0u; drmIterator < osContext->getDeviceBitfield().size(); drmIterator++) {
+                bufferObject->unbind(osContext, drmIterator);
+            }
             auto address = bufferObject->peekAddress();
             uint64_t offset = address - gpuRange;
             bufferObject->setAddress(offset);
