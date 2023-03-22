@@ -24,6 +24,7 @@ TEST_F(AUBHelloWorldL0, whenAppendMemoryCopyIsCalledThenMemoryIsProperlyCopied) 
     uint8_t val = 255;
 
     NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::HOST_UNIFIED_MEMORY,
+                                                                           1,
                                                                            context->rootDeviceIndices,
                                                                            context->deviceBitfields);
 
