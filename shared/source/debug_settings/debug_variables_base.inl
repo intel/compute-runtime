@@ -523,4 +523,4 @@ DECLARE_DEBUG_VARIABLE(int32_t, EnableSetPair, -1, "Use SET_PAIR to pair two buf
 DECLARE_DEBUG_VARIABLE(bool, BinaryCacheTrace, false, "enable cl_cache to produce .trace files with information about hash computation")
 
 /* WORKAROUND FLAGS */
-DECLARE_DEBUG_VARIABLE(int32_t, ForceDummyBlitWa, 0, "-1: default, 0: disabled, 1: enabled, Forces a workaround with dummy blits, driver adds an extra blit before command MI_ARB_CHECK on bcs")
+DECLARE_DEBUG_VARIABLE(int32_t, ForceDummyBlitWa, -1, "-1: default, 0: disabled, 1: enabled, Forces a workaround with dummy blits, driver adds an extra blit before command MI_ARB_CHECK on bcs")

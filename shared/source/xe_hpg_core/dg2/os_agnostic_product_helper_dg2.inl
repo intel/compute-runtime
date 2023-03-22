@@ -256,6 +256,6 @@ bool ProductHelperHw<gfxProduct>::isCalculationForDisablingEuFusionWithDpasNeede
 }
 template <>
 bool ProductHelperHw<gfxProduct>::isDummyBlitWaRequired() const {
-    return true;
+    return false;
 }
 } // namespace NEO
