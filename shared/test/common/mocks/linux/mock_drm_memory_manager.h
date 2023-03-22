@@ -20,16 +20,8 @@ extern std::atomic<int> lseekCalledCount;
 extern std::atomic<int> closeInputFd;
 extern std::atomic<int> closeCalledCount;
 extern std::vector<void *> mmapVector;
-extern std::vector<void *> mmapCapturedExtendedPointers;
-extern bool captureExtendedPointers;
 
 inline void *mmapMock(void *addr, size_t length, int prot, int flags, int fd, off_t offset) noexcept {
-    if (reinterpret_cast<uint64_t>(addr) > maxNBitValue(48)) {
-        if (captureExtendedPointers) {
-            mmapCapturedExtendedPointers.push_back(addr);
-        }
-        addr = nullptr;
-    }
     if (addr) {
         return addr;
     }

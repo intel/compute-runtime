@@ -6184,30 +6184,3 @@ TEST_F(DrmMemoryManagerWithExplicitExpectationsTest, givenDrmMemoryManagerWhenGp
     EXPECT_GT(memoryManager->getGfxPartition(1)->getHeapLimit(HeapIndex::HEAP_STANDARD), gmmHelper->decanonize(addressRange.address));
     memoryManager->freeGpuAddress(addressRange, 1);
 }
-
-TEST_F(DrmMemoryManagerTest, given57bAddressSpaceWhenAllocatingHostUSMThenAddressFromExtendedHeapIsTaken) {
-    if (defaultHwInfo->capabilityTable.gpuAddressSpace < maxNBitValue(57)) {
-        GTEST_SKIP();
-    }
-    captureExtendedPointers = true;
-    mmapCapturedExtendedPointers.clear();
-    std::vector<MemoryRegion> regionInfo(1);
-    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
-
-    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
-    drm.memoryInfo.reset(new MemoryInfo(regionInfo, drm));
-    AllocationProperties allocationProperties(mockRootDeviceIndex, MemoryConstants::cacheLineSize, AllocationType::SVM_CPU, {});
-    allocationProperties.flags.isUSMHostAllocation = true;
-    auto hostUSM = memoryManager->allocateGraphicsMemoryInPreferredPool(allocationProperties, nullptr);
-    captureExtendedPointers = false;
-    EXPECT_NE(nullptr, hostUSM);
-
-    EXPECT_EQ(1u, mmapCapturedExtendedPointers.size());
-    auto gpuAddress = reinterpret_cast<uint64_t>(mmapCapturedExtendedPointers[0]);
-    mmapCapturedExtendedPointers.clear();
-    auto gmmHelper = memoryManager->getGmmHelper(mockRootDeviceIndex);
-    EXPECT_LE(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
-    EXPECT_GT(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
-
-    memoryManager->freeGraphicsMemory(hostUSM);
-}

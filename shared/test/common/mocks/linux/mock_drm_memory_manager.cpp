@@ -24,8 +24,6 @@ std::atomic<int> lseekCalledCount(0);
 std::atomic<int> closeInputFd(0);
 std::atomic<int> closeCalledCount(0);
 std::vector<void *> mmapVector(64);
-std::vector<void *> mmapCapturedExtendedPointers(64);
-bool captureExtendedPointers = false;
 
 TestedDrmMemoryManager::TestedDrmMemoryManager(ExecutionEnvironment &executionEnvironment) : MemoryManagerCreate(gemCloseWorkerMode::gemCloseWorkerInactive,
                                                                                                                  false,
