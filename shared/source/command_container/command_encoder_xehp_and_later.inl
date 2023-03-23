@@ -121,7 +121,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                 ssh = container.getHeapWithRequiredSizeAndAlignment(HeapType::SURFACE_STATE, args.dispatchInterface->getSurfaceStateHeapDataSize(), BINDING_TABLE_STATE::SURFACESTATEPOINTER_ALIGN_SIZE);
             }
             bindingTablePointer = static_cast<uint32_t>(EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(
-                *ssh, bindingTableStateCount,
+                *ssh,
                 args.dispatchInterface->getSurfaceStateHeapData(),
                 args.dispatchInterface->getSurfaceStateHeapDataSize(), bindingTableStateCount,
                 kernelDescriptor.payloadMappings.bindingTable.tableOffset));

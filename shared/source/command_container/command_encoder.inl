@@ -461,17 +461,13 @@ void EncodeSurfaceState<Family>::getSshAlignedPointer(uintptr_t &ptr, size_t &of
 // Returned binding table pointer is relative to given heap (which is assumed to be the Surface state base addess)
 // as required by the INTERFACE_DESCRIPTOR_DATA.
 template <typename Family>
-size_t EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, size_t bindingTableCount,
+size_t EncodeSurfaceState<Family>::pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap,
                                                                     const void *srcKernelSsh, size_t srcKernelSshSize,
                                                                     size_t numberOfBindingTableStates, size_t offsetOfBindingTable) {
     using BINDING_TABLE_STATE = typename Family::BINDING_TABLE_STATE;
     using INTERFACE_DESCRIPTOR_DATA = typename Family::INTERFACE_DESCRIPTOR_DATA;
     using RENDER_SURFACE_STATE = typename Family::RENDER_SURFACE_STATE;
 
-    if (bindingTableCount == 0) {
-        // according to compiler, kernel does not reference BTIs to stateful surfaces, so there's nothing to patch
-        return 0;
-    }
     size_t sshSize = srcKernelSshSize;
     DEBUG_BREAK_IF(srcKernelSsh == nullptr);
 

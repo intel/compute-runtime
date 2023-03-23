@@ -44,7 +44,7 @@ struct EncodeSurfaceState {
     static bool doBindingTablePrefetch();
     static bool isBindingTablePrefetchPreferred();
 
-    static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap, size_t bindingTableCount,
+    static size_t pushBindingTableAndSurfaceStates(IndirectHeap &dstHeap,
                                                    const void *srcKernelSsh, size_t srcKernelSshSize,
                                                    size_t numberOfBindingTableStates, size_t offsetOfBindingTable);
 

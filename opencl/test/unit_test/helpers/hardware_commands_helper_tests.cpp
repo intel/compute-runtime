@@ -864,9 +864,10 @@ HWTEST_F(HardwareCommandsTest, givenNoBTEntriesInKernelDescriptorAndGTPinInitial
 
     constexpr auto mockSshSize{256u};
     constexpr auto mockBTOffset{32u};
-    auto mockSsh = new char[mockSshSize]{0};
+    auto mockSsh = std::make_unique<char[]>(mockSshSize);
     ASSERT_EQ(CL_SUCCESS, pKernel->initialize());
-    pKernel->resizeSurfaceStateHeap(mockSsh, mockSshSize, 1u, mockBTOffset);
+    pKernel->resizeSurfaceStateHeap(mockSsh.get(), mockSshSize, 1u, mockBTOffset);
+    mockSsh.release();
 
     CommandQueueHw<FamilyType> cmdQ(nullptr, pClDevice, 0, false);
     auto &ssh = cmdQ.getIndirectHeap(IndirectHeap::Type::SURFACE_STATE, 8192);
