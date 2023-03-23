@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,8 +27,5 @@ class FanImp : public Fan, NEO::NonCopyableOrMovableClass {
 
     OsFan *pOsFan = nullptr;
     void init();
-
-  private:
-    zes_fan_properties_t properties = {};
 };
 } // namespace L0

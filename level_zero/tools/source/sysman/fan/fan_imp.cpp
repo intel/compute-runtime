@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -19,8 +19,7 @@ FanImp::FanImp(OsSysman *pOsSysman) {
 }
 
 ze_result_t FanImp::fanGetProperties(zes_fan_properties_t *pProperties) {
-    *pProperties = properties;
-    return ZE_RESULT_SUCCESS;
+    return pOsFan->getProperties(pProperties);
 }
 
 ze_result_t FanImp::fanGetConfig(zes_fan_config_t *pConfig) {
@@ -45,7 +44,6 @@ ze_result_t FanImp::fanGetState(zes_fan_speed_units_t units, int32_t *pSpeed) {
 
 void FanImp::init() {
     if (pOsFan->isFanModuleSupported()) {
-        pOsFan->getProperties(&properties);
         this->initSuccess = true;
     }
 }

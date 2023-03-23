@@ -125,6 +125,21 @@ ze_result_t WddmFanImp::setFixedSpeedMode(const zes_fan_speed_t *pSpeed) {
 }
 
 ze_result_t WddmFanImp::setSpeedTableMode(const zes_fan_speed_table_t *pSpeedTable) {
+
+    KmdSysman::RequestProperty singleRequest;
+    KmdSysman::ResponseProperty singleResponse;
+    singleRequest.commandId = KmdSysman::Command::Get;
+    singleRequest.componentId = KmdSysman::Component::FanComponent;
+    singleRequest.requestId = KmdSysman::Requests::Fans::MaxFanControlPointsSupported;
+    uint32_t FanPoints = 2;
+
+    if (pKmdSysManager->requestSingle(singleRequest, singleResponse) == ZE_RESULT_SUCCESS) {
+        if (singleResponse.returnCode == KmdSysman::Success) {
+            memcpy_s(&FanPoints, sizeof(uint32_t), singleResponse.dataBuffer, sizeof(uint32_t));
+        }
+        maxPoints = static_cast<int32_t>(FanPoints);
+    }
+
     if (pSpeedTable->numPoints == 0 || pSpeedTable->numPoints > maxPoints) {
         return ZE_RESULT_ERROR_INVALID_ARGUMENT;
     }
