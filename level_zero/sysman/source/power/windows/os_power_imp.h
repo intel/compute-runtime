@@ -29,6 +29,9 @@ class WddmPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
     WddmPowerImp(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId);
     WddmPowerImp() = default;
     ~WddmPowerImp() override = default;
+
+  protected:
+    KmdSysManager *pKmdSysManager = nullptr;
 };
 
 } // namespace Sysman
