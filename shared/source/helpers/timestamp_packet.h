@@ -130,6 +130,13 @@ struct TimestampPacketHelper {
     }
 
     template <typename GfxFamily>
+    static void nonStallingContextEndNodeSignal(LinearStream &cmdStream, const TagNodeBase &timestampPacketNode, bool multiTileOperation) {
+        uint64_t contextEndAddress = getContextEndGpuAddress(timestampPacketNode);
+
+        NEO::EncodeStoreMemory<GfxFamily>::programStoreDataImm(cmdStream, contextEndAddress, 0, 0, false, multiTileOperation);
+    }
+
+    template <typename GfxFamily>
     static void programCsrDependenciesForForMultiRootDeviceSyncContainer(LinearStream &cmdStream, const CsrDependencies &csrDependencies) {
         for (auto timestampPacketContainer : csrDependencies.multiRootTimeStampSyncContainer) {
             for (auto &node : timestampPacketContainer->peekNodes()) {

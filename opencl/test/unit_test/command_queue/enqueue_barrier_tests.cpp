@@ -5,9 +5,11 @@
  *
  */
 
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/command_stream_receiver.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -292,6 +294,10 @@ HWTEST_F(BarrierTest, givenEmptyCommandStreamAndBlockedBarrierCommandWhenUserEve
 
     // Consume all memory except what is needed for this enqueue
     size_t barrierCmdStreamSize = NEO::EnqueueOperation<FamilyType>::getSizeRequiredCS(CL_COMMAND_BARRIER, false, false, *pCmdQ, nullptr, {});
+    if (pDevice->getUltCommandStreamReceiver<FamilyType>().peekTimestampPacketWriteEnabled()) {
+        barrierCmdStreamSize += EncodeStoreMemory<FamilyType>::getStoreDataImmSize();
+    }
+
     commandStream.getSpace(commandStream.getMaxAvailableSpace() - barrierCmdStreamSize);
 
     // now trigger event

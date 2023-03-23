@@ -675,6 +675,8 @@ HWTEST_TEMPLATED_F(BcsBufferTests, givenPipeControlRequestWhenDispatchingBlitEnq
 }
 
 HWTEST_TEMPLATED_F(BcsBufferTests, givenBarrierWhenReleasingMultipleBlockedEnqueuesThenProgramBarrierOnce) {
+    DebugManager.flags.OptimizeIoqBarriersHandling.set(0);
+
     using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
 
     auto cmdQ = clUniquePtr(new MockCommandQueueHw<FamilyType>(bcsMockContext.get(), device.get(), nullptr));

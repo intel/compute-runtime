@@ -187,6 +187,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     const auto &hwInfo = this->getDevice().getHardwareInfo();
     auto &productHelper = getDevice().getProductHelper();
     bool canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = false;
+    bool isNonStallingIoqBarrier = (CL_COMMAND_BARRIER == commandType) && !isOOQEnabled() && (DebugManager.flags.OptimizeIoqBarriersHandling.get() != 0);
+    bool isNonStallingIoqBarrierWithDependencies = isNonStallingIoqBarrier && (eventsRequest.numEventsInWaitList > 0);
 
     if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
         canUsePipeControlInsteadOfSemaphoresForOnCsrDependencies = this->peekLatestSentEnqueueOperation() == EnqueueProperties::Operation::GpuKernel &&
@@ -200,7 +202,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         auto allocator = computeCommandStreamReceiver.getTimestampPacketAllocator();
 
         size_t nodesCount = 0u;
-        if (isCacheFlushCommand(commandType) || isMarkerWithPostSyncWrite) {
+        if (isCacheFlushCommand(commandType) || isMarkerWithPostSyncWrite || isNonStallingIoqBarrierWithDependencies) {
             nodesCount = 1;
         } else if (!multiDispatchInfo.empty()) {
             nodesCount = estimateTimestampPacketNodesCount(multiDispatchInfo);
@@ -257,7 +259,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
     } else if (isCacheFlushCommand(commandType)) {
         processDispatchForCacheFlush(surfacesForResidency, numSurfaceForResidency, &commandStream, csrDeps);
     } else if (computeCommandStreamReceiver.peekTimestampPacketWriteEnabled()) {
-        if (CL_COMMAND_BARRIER == commandType) {
+        if (CL_COMMAND_BARRIER == commandType && !isNonStallingIoqBarrier) {
             setStallingCommandsOnNextFlush(true);
             this->splitBarrierRequired = true;
         }
@@ -278,6 +280,10 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
 
         if (flushDependenciesForNonKernelCommand) {
             TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps, false);
+        }
+
+        if (isNonStallingIoqBarrierWithDependencies) {
+            TimestampPacketHelper::nonStallingContextEndNodeSignal<GfxFamily>(commandStream, *this->timestampPacketContainer->peekNodes()[0], getGpgpuCommandStreamReceiver().isMultiTileOperationEnabled());
         }
 
         if (isMarkerWithPostSyncWrite) {

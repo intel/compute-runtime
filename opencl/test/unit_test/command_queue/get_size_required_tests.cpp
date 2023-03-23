@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/built_ins.h"
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/command_queue/command_queue_hw.h"
@@ -99,9 +100,10 @@ HWTEST_F(GetSizeRequiredTest, WhenEnqueuingBarrierThenHeapsAndCommandBufferAreNo
 
     size_t expectedStreamSize = 0;
     if (pCmdQ->getGpgpuCommandStreamReceiver().peekTimestampPacketWriteEnabled()) {
-        expectedStreamSize = alignUp(MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(
-                                         pDevice->getRootDeviceEnvironment(), false),
-                                     MemoryConstants::cacheLineSize);
+        auto unalignedSize = MemorySynchronizationCommands<FamilyType>::getSizeForBarrierWithPostSyncOperation(pDevice->getRootDeviceEnvironment(), false) +
+                             EncodeStoreMemory<FamilyType>::getStoreDataImmSize() +
+                             sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
+        expectedStreamSize = alignUp(unalignedSize, MemoryConstants::cacheLineSize);
     }
 
     EXPECT_EQ(expectedStreamSize, commandStream.getUsed() - usedBeforeCS);

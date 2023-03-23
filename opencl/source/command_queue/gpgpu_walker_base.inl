@@ -237,6 +237,10 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
     }
     expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
 
+    if ((CL_COMMAND_BARRIER == eventType) && !commandQueue.isOOQEnabled() && eventsInWaitlist) {
+        expectedSizeCS += EncodeStoreMemory<GfxFamily>::getStoreDataImmSize();
+    }
+
     return expectedSizeCS;
 }
 
@@ -255,6 +259,7 @@ size_t EnqueueOperation<GfxFamily>::getSizeRequiredCSNonKernel(bool reserveProfi
     if (reserveProfilingCmdsSpace) {
         size += 2 * MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false) + 4 * sizeof(typename GfxFamily::MI_STORE_REGISTER_MEM);
     }
+
     return size;
 }
 

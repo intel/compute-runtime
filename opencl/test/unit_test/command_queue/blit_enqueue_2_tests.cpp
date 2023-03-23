@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -246,7 +246,34 @@ HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenImmediateDi
     EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
 }
 
-HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushNotRequiredWhenDoingBcsCopyAfterBarrierThenSubmitToGpgpu) {
+HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushNotRequiredWhenDoingBcsCopyAfterBarrierThenDontSubmitToGpgpu) {
+    auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
+    EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
+
+    DebugManager.flags.ForceGpgpuSubmissionForBcsEnqueue.set(-1);
+
+    mockCommandQueue->overrideIsCacheFlushForBcsRequired.enabled = true;
+    mockCommandQueue->overrideIsCacheFlushForBcsRequired.returnValue = false;
+
+    auto buffer = createBuffer(1, false);
+    buffer->forceDisallowCPUCopy = true;
+    int hostPtr = 0;
+
+    EXPECT_EQ(0u, gpgpuCsr->peekTaskCount());
+    commandQueue->enqueueKernel(mockKernel->mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
+
+    commandQueue->enqueueBarrierWithWaitList(0, nullptr, nullptr);
+    EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
+
+    commandQueue->enqueueWriteBuffer(buffer.get(), false, 0, 1, &hostPtr, nullptr, 0, nullptr, nullptr);
+    EXPECT_EQ(EnqueueProperties::Operation::Blit, mockCommandQueue->latestSentEnqueueType);
+    EXPECT_EQ(1u, gpgpuCsr->peekTaskCount());
+}
+
+HWTEST_TEMPLATED_F(BlitEnqueueWithDisabledGpgpuSubmissionTests, givenCacheFlushNotRequiredAndDebugFlagSetWhenDoingBcsCopyAfterBarrierThenSubmitToGpgpu) {
+    DebugManager.flags.OptimizeIoqBarriersHandling.set(0);
+
     auto mockCommandQueue = static_cast<MockCommandQueueHw<FamilyType> *>(commandQueue.get());
     EXPECT_EQ(EnqueueProperties::Operation::None, mockCommandQueue->latestSentEnqueueType);
 

@@ -178,7 +178,78 @@ HWTEST_F(TimestampPacketTests, givenWithWaitlistAndEventWhenMarkerProfilingEnabl
     clReleaseEvent(event);
 }
 
-HWTEST_F(TimestampPacketTests, whenEnqueueingBarrierThenRequestPipeControlOnCsrFlush) {
+HWTEST_F(TimestampPacketTests, whenEnqueueingBarrierThenDontRequestPipeControlOnCsrFlush) {
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
+    EXPECT_FALSE(cmdQ.isStallingCommandsOnNextFlushRequired());
+
+    MockKernelWithInternals mockKernel(*device, context);
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr); // obtain first TimestampPackets<uint32_t>
+
+    TimestampPacketContainer cmdQNodes;
+    cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ.timestampPacketContainer);
+
+    cmdQ.enqueueBarrierWithWaitList(0, nullptr, nullptr);
+
+    EXPECT_EQ(cmdQ.timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // dont obtain new node
+    EXPECT_EQ(1u, cmdQ.timestampPacketContainer->peekNodes().size());
+
+    EXPECT_FALSE(cmdQ.isStallingCommandsOnNextFlushRequired());
+}
+
+HWTEST_F(TimestampPacketTests, givenWaitlistWhenEnqueueingBarrierThenProgramNonStallingBarrier) {
+    using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
+    csr.timestampPacketWriteEnabled = true;
+
+    MockKernelWithInternals mockKernel(*device, context);
+
+    MockCommandQueueHw<FamilyType> cmdQ(context, device.get(), nullptr);
+
+    cl_event outEvent;
+    cmdQ.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &outEvent);
+    auto &cmdStream = cmdQ.getCS(0);
+    size_t offset = cmdStream.getUsed();
+
+    TimestampPacketContainer cmdQNodes;
+    cmdQNodes.assignAndIncrementNodesRefCounts(*cmdQ.timestampPacketContainer);
+
+    cmdQ.enqueueBarrierWithWaitList(1, &outEvent, nullptr);
+
+    EXPECT_NE(cmdQ.timestampPacketContainer->peekNodes().at(0), cmdQNodes.peekNodes().at(0)); // obtain new node
+
+    HardwareParse hwParser;
+    hwParser.parseCommands<FamilyType>(cmdStream, offset);
+
+    auto it = hwParser.cmdList.begin();
+
+    if (device->getProductHelper().isResolveDependenciesByPipeControlsSupported(device->getHardwareInfo(), false)) {
+        EXPECT_NE(nullptr, genCmdCast<PIPE_CONTROL *>(*it));
+    } else {
+        EXPECT_NE(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*it));
+        EXPECT_NE(nullptr, genCmdCast<MI_SEMAPHORE_WAIT *>(*(++it)));
+    }
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(*(++it));
+    ASSERT_NE(nullptr, sdiCmd);
+
+    auto expectedGpuVa = TimestampPacketHelper::getContextEndGpuAddress(*cmdQ.timestampPacketContainer->peekNodes()[0]);
+
+    EXPECT_EQ(expectedGpuVa, sdiCmd->getAddress());
+    EXPECT_EQ(0u, sdiCmd->getStoreQword());
+    EXPECT_EQ(0u, sdiCmd->getDataDword0());
+
+    clReleaseEvent(outEvent);
+}
+
+HWTEST_F(TimestampPacketTests, givenDebugFlagSetWhenEnqueueingBarrierThenRequestPipeControlOnCsrFlush) {
+    DebugManager.flags.OptimizeIoqBarriersHandling.set(0);
+
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
 
@@ -211,7 +282,7 @@ HWTEST_F(TimestampPacketTests, givenTimestampPacketWriteDisabledWhenEnqueueingBa
     EXPECT_FALSE(cmdQ.isStallingCommandsOnNextFlushRequired());
 }
 
-HWTEST_F(TimestampPacketTests, givenBlockedQueueWhenEnqueueingBarrierThenRequestPipeControlOnCsrFlush) {
+HWTEST_F(TimestampPacketTests, givenBlockedQueueWhenEnqueueingBarrierThenDontRequestPipeControlOnCsrFlush) {
     auto &csr = device->getUltCommandStreamReceiver<FamilyType>();
     csr.timestampPacketWriteEnabled = true;
 
@@ -220,7 +291,7 @@ HWTEST_F(TimestampPacketTests, givenBlockedQueueWhenEnqueueingBarrierThenRequest
     auto userEvent = makeReleaseable<UserEvent>();
     cl_event waitlist[] = {userEvent.get()};
     cmdQ.enqueueBarrierWithWaitList(1, waitlist, nullptr);
-    EXPECT_TRUE(cmdQ.isStallingCommandsOnNextFlushRequired());
+    EXPECT_FALSE(cmdQ.isStallingCommandsOnNextFlushRequired());
     userEvent->setStatus(CL_COMPLETE);
 }
 
