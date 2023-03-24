@@ -189,7 +189,7 @@ cl_int Program::createProgramFromBinary(
             this->isSpirV = NEO::isSpirVBitcode(ArrayRef<const uint8_t>(reinterpret_cast<const uint8_t *>(this->irBinary.get()), this->irBinarySize));
             this->options = singleDeviceBinary.buildOptions.str();
             if (singleDeviceBinary.format == NEO::DeviceBinaryFormat::Zebin) {
-                this->options += " " + NEO::CompilerOptions::allowZebin.str();
+                this->options += " " + NEO::CompilerOptions::enableZebin.str();
             }
 
             this->buildInfos[rootDeviceIndex].debugData = makeCopy(reinterpret_cast<const char *>(singleDeviceBinary.debugData.begin()), singleDeviceBinary.debugData.size());
@@ -486,9 +486,9 @@ void Program::disableZebinIfVmeEnabled(std::string &options, std::string &intern
     }
 
     if (containsVme(options, vmeOptions) || containsVme(sourceCode, vmeEnabledExtensions)) {
-        auto pos = options.find(CompilerOptions::allowZebin.str());
+        auto pos = options.find(CompilerOptions::enableZebin.str());
         if (pos != std::string::npos) {
-            options.erase(pos, pos + CompilerOptions::allowZebin.length());
+            options.erase(pos, pos + CompilerOptions::enableZebin.length());
         }
         internalOptions += " " + CompilerOptions::disableZebin.str();
     }

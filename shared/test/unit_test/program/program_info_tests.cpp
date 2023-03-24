@@ -69,12 +69,12 @@ TEST(RequiresRebuildWithPatchtokens, givenLegacyDebuggerAttachedAndZebinaryForma
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     device->getRootDeviceEnvironmentRef().debugger.reset(new MockActiveSourceLevelDebugger);
-    std::string options{NEO::CompilerOptions::allowZebin};
+    std::string options{NEO::CompilerOptions::enableZebin};
     bool isBuiltIn{false};
 
     bool rebuildRequired = isRebuiltToPatchtokensRequired(device.get(), ArrayRef<const uint8_t>::fromAny(zebin.storage.data(), zebin.storage.size()), options, isBuiltIn, false);
     EXPECT_TRUE(rebuildRequired);
-    EXPECT_FALSE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::allowZebin));
+    EXPECT_FALSE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::enableZebin));
     EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::disableZebin));
 }
 
@@ -83,18 +83,18 @@ TEST(RequiresRebuildWithPatchtokens, givenNoLegacyDebuggerAttachedOrNonZebinaryF
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
 
     device->getRootDeviceEnvironmentRef().debugger.reset(new MockActiveSourceLevelDebugger);
-    std::string options{NEO::CompilerOptions::allowZebin};
+    std::string options{NEO::CompilerOptions::enableZebin};
     bool isBuiltIn{true};
 
     bool rebuildRequired = isRebuiltToPatchtokensRequired(device.get(), ArrayRef<const uint8_t>::fromAny(zebin.storage.data(), zebin.storage.size()), options, isBuiltIn, false);
     EXPECT_FALSE(rebuildRequired);
-    EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::allowZebin));
+    EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::enableZebin));
 
     isBuiltIn = false;
     device->getRootDeviceEnvironmentRef().debugger.reset(nullptr);
     rebuildRequired = isRebuiltToPatchtokensRequired(device.get(), ArrayRef<const uint8_t>::fromAny(zebin.storage.data(), zebin.storage.size()), options, isBuiltIn, false);
     EXPECT_FALSE(rebuildRequired);
-    EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::allowZebin));
+    EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::enableZebin));
 
     device->getRootDeviceEnvironmentRef().debugger.reset(new MockActiveSourceLevelDebugger);
     for (auto idx = 0; idx < 4; idx++) {
@@ -102,26 +102,26 @@ TEST(RequiresRebuildWithPatchtokens, givenNoLegacyDebuggerAttachedOrNonZebinaryF
     } // broken header - zebinary format will not be detected
     rebuildRequired = isRebuiltToPatchtokensRequired(device.get(), ArrayRef<const uint8_t>::fromAny(zebin.storage.data(), zebin.storage.size()), options, isBuiltIn, false);
     EXPECT_FALSE(rebuildRequired);
-    EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::allowZebin));
+    EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::enableZebin));
 }
 
 TEST(RequiresRebuildWithPatchtokens, givenVmeUsedWhenIsRebuiltToPatchtokensRequiredThenReturnFalse) {
     ZebinTestData::ValidEmptyProgram<> zebin;
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     device->getRootDeviceEnvironmentRef().debugger.reset(nullptr);
-    std::string options{NEO::CompilerOptions::allowZebin};
+    std::string options{NEO::CompilerOptions::enableZebin};
     bool isBuiltIn = false;
 
     {
         bool isVmeUsed = false;
         bool rebuildRequired = isRebuiltToPatchtokensRequired(device.get(), ArrayRef<const uint8_t>::fromAny(zebin.storage.data(), zebin.storage.size()), options, isBuiltIn, isVmeUsed);
         EXPECT_FALSE(rebuildRequired);
-        EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::allowZebin));
+        EXPECT_TRUE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::enableZebin));
     }
     {
         bool isVmeUsed = true;
         bool rebuildRequired = isRebuiltToPatchtokensRequired(device.get(), ArrayRef<const uint8_t>::fromAny(zebin.storage.data(), zebin.storage.size()), options, isBuiltIn, isVmeUsed);
         EXPECT_TRUE(rebuildRequired);
-        EXPECT_FALSE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::allowZebin));
+        EXPECT_FALSE(NEO::CompilerOptions::contains(options, NEO::CompilerOptions::enableZebin));
     }
 }

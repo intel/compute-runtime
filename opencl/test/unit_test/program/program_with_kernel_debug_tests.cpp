@@ -70,7 +70,7 @@ HWTEST_F(ZebinFallbackToPatchtokensLegacyDebugger, WhenCreatingProgramFromNonBui
     EXPECT_FALSE(program->isCreatedFromBinary);
 
     EXPECT_TRUE(program->requiresRebuild);
-    EXPECT_FALSE(CompilerOptions::contains(program->options, CompilerOptions::allowZebin));
+    EXPECT_FALSE(CompilerOptions::contains(program->options, CompilerOptions::enableZebin));
 }
 
 HWTEST_F(ZebinFallbackToPatchtokensLegacyDebugger, WhenCreatingProgramFromNonBuiltinZeBinaryWithoutSpirvDataIncludedAndLegacyDebuggerAttachedThenErrorIsReturned) {
