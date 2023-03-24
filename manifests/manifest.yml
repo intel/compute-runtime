@@ -15,7 +15,7 @@ components:
     dest_dir: igc
     type: git
     branch: igc
-    revision: igc-1.0.13463.3
+    revision: igc-1.0.13463.14
     repository: https://github.com/intel/intelgraphicscompiler
   igsc:
     dest_dir: igsc
@@ -24,7 +24,7 @@ components:
     revision: V0.8.6
     repository: https://github.com/intel/igsc.git
   infra:
-    branch: releases/23.09
+    branch: master
     dest_dir: infra
     fetch_tags: true
     revision: v4719.rel2309.1
@@ -38,7 +38,7 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 2028-607
+    revision: 2028-614
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf
