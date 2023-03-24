@@ -971,10 +971,9 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
           givenCommandListAndEventWithSignalScopeWhenImmediateProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForThreeSeparateKernelsAndL3FlushWithPostSyncAddedOnce,
           IsXeHpOrXeHpgCore) {
-    auto &l0GfxCoreHelper = input.device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     arg.expectedPacketsInUse = 4;
     arg.expectedKernelCount = 3;
-    arg.expectedWalkerPostSyncOp = l0GfxCoreHelper.multiTileCapablePlatform() ? 3 : 1;
+    arg.expectedWalkerPostSyncOp = input.device->isImplicitScalingCapable() ? 3 : 1;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = false;
 
@@ -1014,10 +1013,9 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterMultiPacket,
           givenCommandListAndEventWithSignalScopeWhenImmediateProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForSingleSeparateKernelAndL3FlushWithPostSyncAddedOnce,
           IsXeHpOrXeHpgCore) {
-    auto &l0GfxCoreHelper = input.device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 1;
-    arg.expectedWalkerPostSyncOp = l0GfxCoreHelper.multiTileCapablePlatform() ? 3 : 1;
+    arg.expectedWalkerPostSyncOp = input.device->isImplicitScalingCapable() ? 3 : 1;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = false;
 
@@ -1163,10 +1161,9 @@ HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
 HWTEST2_F(AppendMemoryCopyXeHpAndLaterSinglePacket,
           givenCommandListAndEventWithSignalScopeWhenImmediateProvidedByComputeWalkerPostSyncPassedToMemoryCopyThenAppendProfilingCalledForSingleSeparateKernelAndL3FlushWithPostSyncAddedOnce,
           IsXeHpOrXeHpgCore) {
-    auto &l0GfxCoreHelper = input.device->getNEODevice()->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
     arg.expectedPacketsInUse = 2;
     arg.expectedKernelCount = 1;
-    arg.expectedWalkerPostSyncOp = l0GfxCoreHelper.multiTileCapablePlatform() ? 3 : 1;
+    arg.expectedWalkerPostSyncOp = input.device->isImplicitScalingCapable() ? 3 : 1;
     arg.expectedPostSyncPipeControls = 1;
     arg.postSyncAddressZero = false;
 

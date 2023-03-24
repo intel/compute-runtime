@@ -408,6 +408,42 @@ TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndIsH
     driverHandle->setMemoryManager(curMemoryManager);
 }
 
+TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenIsImplicitScalingCapableReturnedInHandle) {
+    uint32_t numEvents = 2;
+    ze_event_pool_desc_t eventPoolDesc = {
+        ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
+        nullptr,
+        ZE_EVENT_POOL_FLAG_IPC,
+        numEvents};
+
+    auto deviceHandle = device->toHandle();
+    ze_result_t result = ZE_RESULT_SUCCESS;
+    auto curMemoryManager = driverHandle->getMemoryManager();
+    MemoryManagerEventPoolIpcMock *mockMemoryManager = new MemoryManagerEventPoolIpcMock(*neoDevice->executionEnvironment);
+    driverHandle->setMemoryManager(mockMemoryManager);
+    auto eventPool = EventPool::create(driverHandle.get(), context, 1, &deviceHandle, &eventPoolDesc, result);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, eventPool);
+
+    ze_ipc_event_pool_handle_t ipcHandle = {};
+    ze_result_t res = eventPool->getIpcHandle(&ipcHandle);
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+
+    auto &ipcHandleData = *reinterpret_cast<IpcEventPoolData *>(ipcHandle.data);
+    constexpr uint64_t expectedHandle = static_cast<uint64_t>(-1);
+    EXPECT_NE(expectedHandle, ipcHandleData.handle);
+
+    EXPECT_EQ(ipcHandleData.numEvents, 2u);
+    EXPECT_EQ(ipcHandleData.numDevices, 1u);
+    EXPECT_EQ(ipcHandleData.isImplicitScalingCapable, device->isImplicitScalingCapable());
+    EXPECT_EQ(ipcHandleData.isImplicitScalingCapable, eventPool->isImplicitScalingCapableFlagSet());
+
+    res = eventPool->destroy();
+    EXPECT_EQ(res, ZE_RESULT_SUCCESS);
+    delete mockMemoryManager;
+    driverHandle->setMemoryManager(curMemoryManager);
+}
+
 TEST_F(EventPoolIPCHandleTests, whenGettingIpcHandleForEventPoolThenHandleAndNumDevicesReturnedInHandle) {
     uint32_t numEvents = 4;
     ze_event_pool_desc_t eventPoolDesc = {
@@ -1285,7 +1321,7 @@ TEST_F(EventCreate, givenEventWhenSignaledAndResetFromTheHostThenCorrectDataAndO
     auto event = std::unique_ptr<L0::Event>(l0GfxCoreHelper.createEvent(eventPool.get(), &eventDesc, device));
     ASSERT_NE(nullptr, event);
 
-    if (l0GfxCoreHelper.multiTileCapablePlatform()) {
+    if (eventPool->isImplicitScalingCapableFlagSet()) {
         EXPECT_TRUE(event->isUsingContextEndOffset());
     } else {
         EXPECT_FALSE(event->isUsingContextEndOffset());
@@ -1349,9 +1385,7 @@ HWTEST2_F(EventCreate, givenPlatformSupportMultTileWhenDebugKeyIsSetToNotUseCont
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.set(0);
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-
-    bool useContextEndOffset = l0GfxCoreHelper.multiTileCapablePlatform();
-    EXPECT_TRUE(useContextEndOffset);
+    EXPECT_TRUE(l0GfxCoreHelper.multiTileCapablePlatform());
 
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,
@@ -1387,8 +1421,7 @@ HWTEST2_F(EventCreate, givenPlatformNotSupportsMultTileWhenDebugKeyIsSetToUseCon
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.set(1);
     auto &l0GfxCoreHelper = getHelper<L0GfxCoreHelper>();
-    bool useContextEndOffset = l0GfxCoreHelper.multiTileCapablePlatform();
-    EXPECT_FALSE(useContextEndOffset);
+    EXPECT_FALSE(l0GfxCoreHelper.multiTileCapablePlatform());
 
     ze_event_pool_desc_t eventPoolDesc = {
         ZE_STRUCTURE_TYPE_EVENT_POOL_DESC,

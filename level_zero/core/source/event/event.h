@@ -49,6 +49,7 @@ struct IpcEventPoolData {
     uint32_t numDevices = 0;
     bool isDeviceEventPoolAllocation = false;
     bool isHostVisibleEventPoolAllocation = false;
+    bool isImplicitScalingCapable = false;
 };
 #pragma pack()
 static_assert(sizeof(IpcEventPoolData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcEventPoolData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
@@ -299,6 +300,10 @@ struct EventPool : _ze_event_pool_handle_t {
         return isImportedIpcPool;
     }
 
+    bool isImplicitScalingCapableFlagSet() const {
+        return isImplicitScalingCapable;
+    }
+
   protected:
     EventPool() = default;
     EventPool(size_t numEvents) : numEvents(numEvents) {}
@@ -323,6 +328,7 @@ struct EventPool : _ze_event_pool_handle_t {
     bool isHostVisibleEventPoolAllocation = false;
     bool isImportedIpcPool = false;
     bool isShareableEventMemory = false;
+    bool isImplicitScalingCapable = false;
 };
 
 } // namespace L0

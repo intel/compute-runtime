@@ -31,7 +31,6 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
         event->setEventTimestampFlag(true);
     }
     auto &hwInfo = neoDevice->getHardwareInfo();
-    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
 
     event->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
 
@@ -51,7 +50,7 @@ Event *Event::create(EventPool *eventPool, const ze_event_desc_t *desc, Device *
     event->kernelEventCompletionData =
         std::make_unique<KernelEventCompletionData<TagSizeT>[]>(event->maxKernelCount);
 
-    bool useContextEndOffset = l0GfxCoreHelper.multiTileCapablePlatform();
+    bool useContextEndOffset = eventPool->isImplicitScalingCapableFlagSet();
     int32_t overrideUseContextEndOffset = NEO::DebugManager.flags.UseContextEndOffsetForEventCompletion.get();
     if (overrideUseContextEndOffset != -1) {
         useContextEndOffset = !!overrideUseContextEndOffset;

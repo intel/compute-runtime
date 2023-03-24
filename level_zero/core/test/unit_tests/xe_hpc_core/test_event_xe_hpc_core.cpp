@@ -62,8 +62,11 @@ HWTEST2_F(EventPoolIPCHandleHpcCoreTests, whenGettingIpcHandleForEventPoolWithDe
     EXPECT_NE(expectedHandle, ipcHandleData.handle);
     EXPECT_EQ(numEvents, ipcHandleData.numEvents);
     EXPECT_EQ(0u, ipcHandleData.rootDeviceIndex);
+    EXPECT_EQ(1u, ipcHandleData.numDevices);
     EXPECT_TRUE(ipcHandleData.isDeviceEventPoolAllocation);
     EXPECT_TRUE(ipcHandleData.isHostVisibleEventPoolAllocation);
+    EXPECT_EQ(ipcHandleData.isImplicitScalingCapable, device->isImplicitScalingCapable());
+    EXPECT_EQ(ipcHandleData.isImplicitScalingCapable, eventPool->isImplicitScalingCapableFlagSet());
 
     res = eventPool->destroy();
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);

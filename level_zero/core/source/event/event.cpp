@@ -72,6 +72,8 @@ ze_result_t EventPool::initialize(DriverHandle *driver, Context *context, uint32
         if (maxRootDeviceIndex < eventDevice->getNEODevice()->getRootDeviceIndex()) {
             maxRootDeviceIndex = eventDevice->getNEODevice()->getRootDeviceIndex();
         }
+
+        isImplicitScalingCapable |= eventDevice->isImplicitScalingCapable();
     }
     rootDeviceIndices.remove_duplicates();
 
@@ -223,6 +225,7 @@ ze_result_t EventPool::getIpcHandle(ze_ipc_event_pool_handle_t *ipcHandle) {
     poolData.rootDeviceIndex = this->getDevice()->getRootDeviceIndex();
     poolData.isDeviceEventPoolAllocation = this->isDeviceEventPoolAllocation;
     poolData.isHostVisibleEventPoolAllocation = this->isHostVisibleEventPoolAllocation;
+    poolData.isImplicitScalingCapable = this->isImplicitScalingCapable;
     poolData.maxEventPackets = this->getEventMaxPackets();
     poolData.numDevices = static_cast<uint32_t>(this->devices.size());
 
@@ -239,6 +242,7 @@ ze_result_t EventPool::openEventPoolIpcHandle(const ze_ipc_event_pool_handle_t &
     auto eventPool = std::make_unique<EventPool>(&desc);
     eventPool->isDeviceEventPoolAllocation = poolData.isDeviceEventPoolAllocation;
     eventPool->isHostVisibleEventPoolAllocation = poolData.isHostVisibleEventPoolAllocation;
+    eventPool->isImplicitScalingCapable = poolData.isImplicitScalingCapable;
     ze_device_handle_t *deviceHandlesUsed = deviceHandles;
 
     UNRECOVERABLE_IF(numDevices == 0);
