@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,14 @@
 
 #pragma once
 #include "level_zero/api/sysman/zes_handles_struct.h"
-#include "level_zero/core/source/device/device.h"
+#include "level_zero/sysman/source/sysman_device.h"
 #include <level_zero/zes_api.h>
 
 #include <mutex>
 #include <vector>
 
 namespace L0 {
+namespace Sysman {
 
 struct OsSysman;
 
@@ -36,7 +37,7 @@ struct RasHandleContext {
     RasHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     MOCKABLE_VIRTUAL ~RasHandleContext();
 
-    MOCKABLE_VIRTUAL void init(std::vector<ze_device_handle_t> &deviceHandles);
+    MOCKABLE_VIRTUAL void init(uint32_t subDeviceCount);
     void releaseRasHandles();
 
     ze_result_t rasGet(uint32_t *pCount, zes_ras_handle_t *phRas);
@@ -53,4 +54,5 @@ struct RasHandleContext {
     bool rasInitDone = false;
 };
 
+} // namespace Sysman
 } // namespace L0

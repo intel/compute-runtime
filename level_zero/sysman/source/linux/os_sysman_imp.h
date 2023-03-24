@@ -8,6 +8,7 @@
 #pragma once
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/non_copyable_or_moveable.h"
+#include "shared/source/os_interface/linux/sys_calls.h"
 
 #include "level_zero/sysman/source/linux/hw_device_id_linux.h"
 #include "level_zero/sysman/source/os_sysman.h"
@@ -43,16 +44,31 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     SysmanDeviceImp *getSysmanDeviceImp();
     uint32_t getSubDeviceCount() override;
     std::string getPciCardBusDirectoryPath(std::string realPciPath);
+    static std::string getPciRootPortDirectoryPath(std::string realPciPath);
     PlatformMonitoringTech *getPlatformMonitoringTechAccess(uint32_t subDeviceId);
     PRODUCT_FAMILY getProductFamily() const { return pParentSysmanDeviceImp->getProductFamily(); }
     SysmanHwDeviceIdDrm *getSysmanHwDeviceId();
     NEO::Drm *getDrm();
     void releasePmtObject();
+    void releaseSysmanDeviceResources();
+    ze_result_t reInitSysmanDeviceResources();
+    MOCKABLE_VIRTUAL void getPidFdsForOpenDevice(ProcfsAccess *, SysfsAccess *, const ::pid_t, std::vector<int> &);
+    MOCKABLE_VIRTUAL ze_result_t osWarmReset();
+    MOCKABLE_VIRTUAL ze_result_t osColdReset();
+    ze_result_t gpuProcessCleanup();
+    std::string getAddressFromPath(std::string &rootPortPath);
+    decltype(&NEO::SysCalls::open) openFunction = NEO::SysCalls::open;
+    decltype(&NEO::SysCalls::close) closeFunction = NEO::SysCalls::close;
+    decltype(&NEO::SysCalls::pread) preadFunction = NEO::SysCalls::pread;
+    decltype(&NEO::SysCalls::pwrite) pwriteFunction = NEO::SysCalls::pwrite;
     ze_result_t createPmtHandles();
-
+    SysmanDeviceImp *getParentSysmanDeviceImp() { return pParentSysmanDeviceImp; }
+    std::string &getPciRootPath();
     std::string devicePciBdf = "";
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t rootDeviceIndex;
+    bool diagnosticsReset = false;
+    std::string gtDevicePath;
 
   protected:
     FsAccess *pFsAccess = nullptr;
@@ -62,6 +78,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     uint32_t subDeviceCount = 0;
     FirmwareUtil *pFwUtilInterface = nullptr;
     PmuInterface *pPmuInterface = nullptr;
+    std::string rootPath;
     void releaseFwUtilInterface();
 
   private:
@@ -69,6 +86,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     SysmanDeviceImp *pParentSysmanDeviceImp = nullptr;
     static const std::string deviceDir;
     void createFwUtilInterface();
+    void clearHPIE(int fd);
 };
 
 } // namespace Sysman

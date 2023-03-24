@@ -60,9 +60,38 @@ ze_result_t SysmanDevice::schedulerGet(zes_device_handle_t hDevice, uint32_t *pC
     return pSysmanDevice->schedulerGet(pCount, phScheduler);
 }
 
+ze_result_t SysmanDevice::rasGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_ras_handle_t *phRas) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->rasGet(pCount, phRas);
+}
+
+ze_result_t SysmanDevice::diagnosticsGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_diag_handle_t *phDiagnostics) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->diagnosticsGet(pCount, phDiagnostics);
+}
+
 ze_result_t SysmanDevice::firmwareGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_firmware_handle_t *phFirmware) {
     auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
     return pSysmanDevice->firmwareGet(pCount, phFirmware);
+}
+
+ze_result_t SysmanDevice::deviceGetProperties(zes_device_handle_t hDevice, zes_device_properties_t *pProperties) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->deviceGetProperties(pProperties);
+}
+
+ze_result_t SysmanDevice::processesGetState(zes_device_handle_t hDevice, uint32_t *pCount, zes_process_state_t *pProcesses) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->processesGetState(pCount, pProcesses);
+}
+
+ze_result_t SysmanDevice::deviceReset(zes_device_handle_t hDevice, ze_bool_t force) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->deviceReset(force);
+}
+ze_result_t SysmanDevice::deviceGetState(zes_device_handle_t hDevice, zes_device_state_t *pState) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->deviceGetState(pState);
 }
 
 } // namespace Sysman

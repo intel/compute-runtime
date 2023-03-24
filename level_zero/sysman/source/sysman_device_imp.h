@@ -41,20 +41,28 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     NEO::ExecutionEnvironment *getExecutionEnvironment() const { return executionEnvironment; }
     uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }
 
+    GlobalOperations *pGlobalOperations = nullptr;
     FabricPortHandleContext *pFabricPortHandleContext = nullptr;
     MemoryHandleContext *pMemoryHandleContext = nullptr;
     EngineHandleContext *pEngineHandleContext = nullptr;
     SchedulerHandleContext *pSchedulerHandleContext = nullptr;
     FirmwareHandleContext *pFirmwareHandleContext = nullptr;
+    RasHandleContext *pRasHandleContext = nullptr;
+    DiagnosticsHandleContext *pDiagnosticsHandleContext = nullptr;
+    FrequencyHandleContext *pFrequencyHandleContext = nullptr;
 
     ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) override;
     ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) override;
     ze_result_t engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine) override;
     ze_result_t schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler) override;
-
-    FrequencyHandleContext *pFrequencyHandleContext = nullptr;
     ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) override;
     ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) override;
+    ze_result_t rasGet(uint32_t *pCount, zes_ras_handle_t *phRas) override;
+    ze_result_t diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phFirmware) override;
+    ze_result_t deviceGetProperties(zes_device_properties_t *pProperties) override;
+    ze_result_t processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) override;
+    ze_result_t deviceReset(ze_bool_t force) override;
+    ze_result_t deviceGetState(zes_device_state_t *pState) override;
 
   private:
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;

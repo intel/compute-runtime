@@ -35,13 +35,21 @@ ze_result_t zesDeviceGet(
 ze_result_t zesDeviceGetProperties(
     zes_device_handle_t hDevice,
     zes_device_properties_t *pProperties) {
-    return L0::SysmanDevice::deviceGetProperties(hDevice, pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::deviceGetProperties(hDevice, pProperties);
+    } else {
+        return L0::Sysman::SysmanDevice::deviceGetProperties(hDevice, pProperties);
+    }
 }
 
 ze_result_t zesDeviceGetState(
     zes_device_handle_t hDevice,
     zes_device_state_t *pState) {
-    return L0::SysmanDevice::deviceGetState(hDevice, pState);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::deviceGetState(hDevice, pState);
+    } else {
+        return L0::Sysman::SysmanDevice::deviceGetState(hDevice, pState);
+    }
 }
 
 ze_result_t zesDeviceEnumSchedulers(
@@ -143,13 +151,21 @@ ze_result_t zesDeviceProcessesGetState(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_process_state_t *pProcesses) {
-    return L0::SysmanDevice::processesGetState(hDevice, pCount, pProcesses);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::processesGetState(hDevice, pCount, pProcesses);
+    } else {
+        return L0::Sysman::SysmanDevice::processesGetState(hDevice, pCount, pProcesses);
+    }
 }
 
 ze_result_t zesDeviceReset(
     zes_device_handle_t hDevice,
     ze_bool_t force) {
-    return L0::SysmanDevice::deviceReset(hDevice, force);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::deviceReset(hDevice, force);
+    } else {
+        return L0::Sysman::SysmanDevice::deviceReset(hDevice, force);
+    }
 }
 
 ze_result_t zesDevicePciGetProperties(
