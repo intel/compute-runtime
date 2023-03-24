@@ -86,6 +86,7 @@ class DirectSubmissionHw {
     bool startRingBuffer();
 
     MOCKABLE_VIRTUAL bool dispatchCommandBuffer(BatchBuffer &batchBuffer, FlushStampTracker &flushStamp);
+    uint32_t getDispatchErrorCode();
 
     static std::unique_ptr<DirectSubmissionHw<GfxFamily, Dispatcher>> create(const DirectSubmissionInputParams &inputParams);
 
@@ -219,6 +220,7 @@ class DirectSubmissionHw {
     uint32_t currentRelaxedOrderingQueueSize = 0;
     DirectSubmissionSfenceMode sfenceMode = DirectSubmissionSfenceMode::BeforeAndAfterSemaphore;
     volatile uint32_t reserved = 0u;
+    uint32_t dispatchErrorCode = 0;
 
     bool ringStart = false;
     bool disableCpuCacheFlush = true;

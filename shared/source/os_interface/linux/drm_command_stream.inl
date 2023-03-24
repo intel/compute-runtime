@@ -130,7 +130,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
         this->startControllingDirectSubmissions();
         bool ret = this->directSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
         if (ret == false) {
-            return SubmissionStatus::FAILED;
+            return Drm::getSubmissionStatusFromReturnCode(this->directSubmission->getDispatchErrorCode());
         }
         return SubmissionStatus::SUCCESS;
     }
@@ -138,7 +138,7 @@ SubmissionStatus DrmCommandStreamReceiver<GfxFamily>::flush(BatchBuffer &batchBu
         this->startControllingDirectSubmissions();
         bool ret = this->blitterDirectSubmission->dispatchCommandBuffer(batchBuffer, *this->flushStamp.get());
         if (ret == false) {
-            return SubmissionStatus::FAILED;
+            return Drm::getSubmissionStatusFromReturnCode(this->blitterDirectSubmission->getDispatchErrorCode());
         }
         return SubmissionStatus::SUCCESS;
     }

@@ -10,6 +10,8 @@
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/test/common/test_macros/mock_method_macros.h"
 
+#include <optional>
+
 namespace NEO {
 
 class MockBufferObjectHandleWrapper : public BufferObjectHandleWrapper {
@@ -34,11 +36,15 @@ class MockBufferObject : public BufferObject {
         TaskCountType completionValue = 0;
     };
 
+    std::optional<int> execReturnValue;
     std::vector<ExecParams> passedExecParams{};
     MockBufferObject(Drm *drm) : BufferObject(drm, CommonConstants::unsupportedPatIndex, 0, 0, 1) {
     }
     int exec(uint32_t used, size_t startOffset, unsigned int flags, bool requiresCoherency, OsContext *osContext, uint32_t vmHandleId, uint32_t drmContextId,
              BufferObject *const residency[], size_t residencyCount, ExecObject *execObjectsStorage, uint64_t completionGpuAddress, TaskCountType completionValue) override {
+        if (execReturnValue) {
+            return *execReturnValue;
+        }
         passedExecParams.push_back({completionGpuAddress, completionValue});
         return BufferObject::exec(used, startOffset, flags, requiresCoherency, osContext, vmHandleId, drmContextId,
                                   residency, residencyCount, execObjectsStorage, completionGpuAddress, completionValue);

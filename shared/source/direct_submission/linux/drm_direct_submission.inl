@@ -120,7 +120,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
     auto currentBase = this->ringCommandStream.getGraphicsAllocation()->getGpuAddress();
     auto offset = ptrDiff(gpuAddress, currentBase);
 
-    bool ret = false;
+    bool ret = true;
     uint32_t drmContextId = 0u;
 
     TaskCountType completionValue = 0u;
@@ -132,18 +132,22 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
 
     for (auto drmIterator = 0u; drmIterator < osContextLinux->getDeviceBitfield().size(); drmIterator++) {
         if (osContextLinux->getDeviceBitfield().test(drmIterator)) {
-            ret |= !!bb->exec(static_cast<uint32_t>(size),
-                              offset,
-                              execFlags,
-                              false,
-                              &this->osContext,
-                              drmIterator,
-                              drmContextIds[drmContextId],
-                              nullptr,
-                              0,
-                              &execObject,
-                              completionFenceGpuAddress,
-                              completionValue);
+            uint32_t errorCode = bb->exec(static_cast<uint32_t>(size),
+                                          offset,
+                                          execFlags,
+                                          false,
+                                          &this->osContext,
+                                          drmIterator,
+                                          drmContextIds[drmContextId],
+                                          nullptr,
+                                          0,
+                                          &execObject,
+                                          completionFenceGpuAddress,
+                                          completionValue);
+            if (errorCode != 0) {
+                this->dispatchErrorCode = errorCode;
+                ret = false;
+            }
             drmContextId++;
             if (completionFenceGpuAddress) {
                 completionFenceGpuAddress += this->postSyncOffset;
@@ -151,7 +155,7 @@ bool DrmDirectSubmission<GfxFamily, Dispatcher>::submit(uint64_t gpuAddress, siz
         }
     }
 
-    return !ret;
+    return ret;
 }
 
 template <typename GfxFamily, typename Dispatcher>

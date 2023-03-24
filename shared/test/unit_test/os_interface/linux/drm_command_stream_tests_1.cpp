@@ -790,6 +790,10 @@ struct MockDrmDirectSubmissionDispatchCommandBuffer : public DrmDirectSubmission
 
     ADDMETHOD_NOBASE(dispatchCommandBuffer, bool, false,
                      (BatchBuffer & batchBuffer, FlushStampTracker &flushStamp));
+
+    void setDispatchErrorCode(uint32_t errorCode) {
+        this->dispatchErrorCode = errorCode;
+    }
 };
 
 template <typename GfxFamily>
@@ -800,6 +804,10 @@ struct MockDrmBlitterDirectSubmissionDispatchCommandBuffer : public DrmDirectSub
 
     ADDMETHOD_NOBASE(dispatchCommandBuffer, bool, false,
                      (BatchBuffer & batchBuffer, FlushStampTracker &flushStamp));
+
+    void setDispatchErrorCode(uint32_t errorCode) {
+        this->dispatchErrorCode = errorCode;
+    }
 };
 
 HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionFailsThenFlushReturnsError) {
@@ -808,6 +816,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionFa
     testedCsr->directSubmission = std::make_unique<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType>>(*device->getDefaultEngine().commandStreamReceiver);
     auto directSubmission = testedCsr->directSubmission.get();
     static_cast<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType> *>(directSubmission)->dispatchCommandBufferResult = false;
+    static_cast<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType> *>(directSubmission)->setDispatchErrorCode(ENXIO);
 
     auto &cs = csr->getCS();
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
@@ -819,7 +828,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamDirectSubmissionTest, givenDirectSubmissionFa
 
     auto res = csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_GT(static_cast<MockDrmDirectSubmissionDispatchCommandBuffer<FamilyType> *>(directSubmission)->dispatchCommandBufferCalled, 0u);
-    EXPECT_EQ(NEO::SubmissionStatus::FAILED, res);
+    EXPECT_NE(NEO::SubmissionStatus::SUCCESS, res);
 }
 
 HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenBlitterDirectSubmissionFailsThenFlushReturnsError) {
@@ -828,6 +837,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenBlitterDire
     testedCsr->blitterDirectSubmission = std::make_unique<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType>>(*csr);
     auto blitterDirectSubmission = testedCsr->blitterDirectSubmission.get();
     static_cast<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType> *>(blitterDirectSubmission)->dispatchCommandBufferResult = false;
+    static_cast<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType> *>(blitterDirectSubmission)->setDispatchErrorCode(ENXIO);
 
     auto &cs = csr->getCS();
     CommandStreamReceiverHw<FamilyType>::addBatchBufferEnd(cs, nullptr);
@@ -839,7 +849,7 @@ HWTEST_TEMPLATED_F(DrmCommandStreamBlitterDirectSubmissionTest, givenBlitterDire
 
     auto res = csr->flush(batchBuffer, csr->getResidencyAllocations());
     EXPECT_GT(static_cast<MockDrmBlitterDirectSubmissionDispatchCommandBuffer<FamilyType> *>(blitterDirectSubmission)->dispatchCommandBufferCalled, 0u);
-    EXPECT_EQ(NEO::SubmissionStatus::FAILED, res);
+    EXPECT_NE(NEO::SubmissionStatus::SUCCESS, res);
 }
 
 template <typename GfxFamily>

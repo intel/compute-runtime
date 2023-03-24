@@ -1151,4 +1151,9 @@ size_t DirectSubmissionHw<GfxFamily, Dispatcher>::getSizeSystemMemoryFenceAddres
     return EncodeMemoryFence<GfxFamily>::getSystemMemoryFenceSize();
 }
 
+template <typename GfxFamily, typename Dispatcher>
+uint32_t DirectSubmissionHw<GfxFamily, Dispatcher>::getDispatchErrorCode() {
+    return dispatchErrorCode;
+}
+
 } // namespace NEO
