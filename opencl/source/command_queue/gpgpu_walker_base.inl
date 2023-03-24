@@ -166,11 +166,9 @@ size_t GpgpuWalkerHelper<GfxFamily>::getSizeForWaDisableRccRhwoOptimization(cons
 }
 
 template <typename GfxFamily>
-size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, bool isMarkerWithProfiling, bool eventsInWaitlist, cl_event *outEvent) {
+size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, const CsrDependencies &csrDeps, bool reserveProfilingCmdsSpace, bool reservePerfCounters, bool blitEnqueue, CommandQueue &commandQueue, const MultiDispatchInfo &multiDispatchInfo, bool isMarkerWithProfiling, bool eventsInWaitlist, bool resolveDependenciesByPipecontrol, cl_event *outEvent) {
     size_t expectedSizeCS = 0;
-    auto &hwInfo = commandQueue.getDevice().getHardwareInfo();
     auto &gfxCoreHelper = commandQueue.getDevice().getGfxCoreHelper();
-    auto &productHelper = commandQueue.getDevice().getProductHelper();
 
     auto &commandQueueHw = static_cast<CommandQueueHw<GfxFamily> &>(commandQueue);
     auto &rootDeviceEnvironment = commandQueue.getDevice().getRootDeviceEnvironment();
@@ -201,7 +199,7 @@ size_t EnqueueOperation<GfxFamily>::getTotalSizeRequiredCS(uint32_t eventType, c
         // add relaxed ordering cond_bb_start
         expectedSizeCS += TimestampPacketHelper::getRequiredCmdStreamSize<GfxFamily>(csrDeps, relaxedOrderingEnabled);
         expectedSizeCS += EnqueueOperation<GfxFamily>::getSizeRequiredForTimestampPacketWrite();
-        if (productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, commandQueue.isOOQEnabled())) {
+        if (resolveDependenciesByPipecontrol) {
             expectedSizeCS += MemorySynchronizationCommands<GfxFamily>::getSizeForSingleBarrier(false);
         }
         if (isMarkerWithProfiling) {

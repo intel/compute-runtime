@@ -767,7 +767,7 @@ HWTEST_F(DispatchWalkerTest, givenBlockedEnqueueWhenObtainingCommandStreamThenAl
     EventsRequest eventsRequest(0, nullptr, nullptr);
     auto cmdStream = mockCmdQ.template obtainCommandStream<CL_COMMAND_NDRANGE_KERNEL>(csrDependencies, false, true,
                                                                                       multiDispatchInfo, eventsRequest, blockedKernelData,
-                                                                                      nullptr, 0u, false);
+                                                                                      nullptr, 0u, false, false);
 
     EXPECT_EQ(expectedSizeCS, cmdStream->getMaxAvailableSpace());
     EXPECT_EQ(expectedSizeCSAllocation, cmdStream->getGraphicsAllocation()->getUnderlyingBufferSize());

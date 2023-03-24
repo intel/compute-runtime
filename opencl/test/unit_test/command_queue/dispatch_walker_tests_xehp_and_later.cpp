@@ -555,19 +555,21 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenTimestamp
     MockKernelWithInternals kernel1(*device);
     MockKernelWithInternals kernel2(*device);
     MockMultiDispatchInfo multiDispatchInfo(device.get(), std::vector<Kernel *>({kernel1.mockKernel, kernel2.mockKernel}));
+    const auto &hwInfo = device->getHardwareInfo();
+    const auto &productHelper = device->getProductHelper();
+    const bool isResolveDependenciesByPipeControlsEnabled = productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, cmdQ.isOOQEnabled());
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = false;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0, false, false, nullptr);
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0, false, false, isResolveDependenciesByPipeControlsEnabled, nullptr);
     size_t sizeWithDisabled = cmdQ.requestedCmdStreamSize;
 
     device->getUltCommandStreamReceiver<FamilyType>().timestampPacketWriteEnabled = true;
-    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0, false, false, nullptr);
+    getCommandStream<FamilyType, CL_COMMAND_NDRANGE_KERNEL>(cmdQ, CsrDependencies(), false, false, false, multiDispatchInfo, nullptr, 0, false, false, isResolveDependenciesByPipeControlsEnabled, nullptr);
     size_t sizeWithEnabled = cmdQ.requestedCmdStreamSize;
 
     size_t additionalSize = 0u;
-    const auto &hwInfo = device->getHardwareInfo();
-    const auto &productHelper = device->getProductHelper();
-    if (productHelper.isResolveDependenciesByPipeControlsSupported(hwInfo, cmdQ.isOOQEnabled())) {
+
+    if (isResolveDependenciesByPipeControlsEnabled) {
         additionalSize = MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
     }
 
@@ -669,7 +671,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenAutoLocal
     EXPECT_EQ((uint32_t)(expectedKernelStartOffset), idd.getKernelStartPointer());
 
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, CsrDependencies(), false, false,
-                                                                               false, *cmdQ.get(), multiDispatchInfo, false, false, nullptr);
+                                                                               false, *cmdQ.get(), multiDispatchInfo, false, false, false, nullptr);
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
     EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
@@ -738,7 +740,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterDispatchWalkerBasicTest, givenPassInlin
     EXPECT_EQ((uint32_t)(expectedKernelStartOffset), idd.getKernelStartPointer());
 
     auto expectedSizeCS = EnqueueOperation<FamilyType>::getTotalSizeRequiredCS(CL_COMMAND_NDRANGE_KERNEL, CsrDependencies(), false, false,
-                                                                               false, *cmdQ.get(), multiDispatchInfo, false, false, nullptr);
+                                                                               false, *cmdQ.get(), multiDispatchInfo, false, false, false, nullptr);
     expectedSizeCS += sizeof(typename FamilyType::MI_BATCH_BUFFER_END);
     expectedSizeCS = alignUp(expectedSizeCS, MemoryConstants::cacheLineSize);
     EXPECT_GE(expectedSizeCS, usedAfterCS - usedBeforeCS);
