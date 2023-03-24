@@ -1083,9 +1083,9 @@ struct RelaxedOrderingEnqueueKernelTests : public EnqueueKernelTest {
 };
 
 HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDependenciesThenUseConditionalBbStarts, IsAtLeastXeHpcCore) {
+    DebugManager.flags.OptimizeIoqBarriersHandling.set(0);
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
     using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
-    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
 
     auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
     auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
@@ -1126,8 +1126,57 @@ HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenEnqueueKernelWhenProgrammingDe
 
     mockCmdQueueHw.enqueueBarrierWithWaitList(1, &outEvent, nullptr);
 
+    // OptimizeIoqBarriersHandling disabled by debug flag
     EXPECT_TRUE(ultCsr.recordedDispatchFlags.hasStallingCmds);
     EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
+
+    clReleaseEvent(outEvent);
+}
+
+HWTEST2_F(RelaxedOrderingEnqueueKernelTests, givenBarrierWithDependenciesWhenFlushingThenAllowForRelaxedOrdering, IsAtLeastXeHpcCore) {
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+    using MI_STORE_DATA_IMM = typename FamilyType::MI_STORE_DATA_IMM;
+
+    auto &ultCsr = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto directSubmission = new MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>>(ultCsr);
+    ultCsr.directSubmission.reset(directSubmission);
+    ultCsr.registerClient();
+    ultCsr.registerClient();
+
+    MockCommandQueueHw<FamilyType> mockCmdQueueHw{context, pClDevice, nullptr};
+
+    cl_event outEvent;
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+
+    mockCmdQueueHw.enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, &outEvent);
+
+    auto &cmdStream = mockCmdQueueHw.getCS(0);
+    auto cmdsOffset = cmdStream.getUsed();
+
+    mockCmdQueueHw.enqueueBarrierWithWaitList(1, &outEvent, nullptr);
+
+    EXPECT_FALSE(ultCsr.recordedDispatchFlags.hasStallingCmds);
+    EXPECT_TRUE(ultCsr.recordedDispatchFlags.hasRelaxedOrderingDependencies);
+
+    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(ptrOffset(cmdStream.getCpuBase(), cmdsOffset));
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0);
+
+    lrrCmd++;
+    EXPECT_EQ(lrrCmd->getSourceRegisterAddress(), CS_GPR_R4 + 4);
+    EXPECT_EQ(lrrCmd->getDestinationRegisterAddress(), CS_GPR_R0 + 4);
+
+    auto eventNode = castToObject<Event>(outEvent)->getTimestampPacketNodes()->peekNodes()[0];
+    auto compareAddress = eventNode->getGpuAddress() + eventNode->getContextEndOffset();
+
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(++lrrCmd, 0, compareAddress, 1, CompareOperation::Equal, true));
+
+    auto conditionalBbStart2 = reinterpret_cast<void *>(ptrOffset(lrrCmd, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart()));
+    EXPECT_TRUE(RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(conditionalBbStart2, 0, compareAddress, 1, CompareOperation::Equal, true));
+
+    auto sdiCmd = genCmdCast<MI_STORE_DATA_IMM *>(ptrOffset(conditionalBbStart2, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart()));
+    EXPECT_NE(nullptr, sdiCmd);
 
     clReleaseEvent(outEvent);
 }

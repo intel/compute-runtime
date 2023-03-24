@@ -279,7 +279,15 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
         }
 
         if (flushDependenciesForNonKernelCommand) {
-            TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps, false);
+            if (isNonStallingIoqBarrierWithDependencies) {
+                relaxedOrderingEnabled = relaxedOrderingForGpgpuAllowed(static_cast<uint32_t>(csrDeps.timestampPacketContainer.size()));
+            }
+
+            if (relaxedOrderingEnabled) {
+                RelaxedOrderingHelper::encodeRegistersBeforeDependencyCheckers<GfxFamily>(commandStream);
+            }
+
+            TimestampPacketHelper::programCsrDependenciesForTimestampPacketContainer<GfxFamily>(commandStream, csrDeps, relaxedOrderingEnabled);
         }
 
         if (isNonStallingIoqBarrierWithDependencies) {
@@ -357,7 +365,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueHandler(Surface **surfacesForResidency,
                 eventBuilder,
                 taskLevel,
                 csrDeps,
-                nullptr);
+                nullptr,
+                relaxedOrderingEnabled);
         } else {
             UNRECOVERABLE_IF(enqueueProperties.operation != EnqueueProperties::Operation::EnqueueWithoutSubmission);
 
@@ -1061,7 +1070,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
     EventBuilder &eventBuilder,
     TaskCountType taskLevel,
     CsrDependencies &csrDeps,
-    CommandStreamReceiver *bcsCsr) {
+    CommandStreamReceiver *bcsCsr,
+    bool hasRelaxedOrderingDependencies) {
 
     CompletionStamp completionStamp = {this->taskCount, this->taskLevel, this->flushStamp->peekStamp()};
     bool flushGpgpuCsr = true;
@@ -1122,8 +1132,8 @@ CompletionStamp CommandQueueHw<GfxFamily>::enqueueCommandWithoutKernel(
             context->containsMultipleSubDevices(rootDeviceIndex),                // areMultipleSubDevicesInContext
             false,                                                               // memoryMigrationRequired
             false,                                                               // textureCacheFlush
-            true,                                                                // hasStallingCmds
-            false,                                                               // hasRelaxedOrderingDependencies
+            !hasRelaxedOrderingDependencies,                                     // hasStallingCmds
+            hasRelaxedOrderingDependencies,                                      // hasRelaxedOrderingDependencies
             stateCacheInvalidationNeeded,                                        // stateCacheInvalidation
             isStallingCommandsOnNextFlushRequired());                            // isStallingCommandsOnNextFlushRequired
 
@@ -1401,7 +1411,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     if (!blockQueue) {
         completionStamp = enqueueCommandWithoutKernel(nullptr, 0, gpgpuCommandStream, gpgpuCommandStreamStart, blocking,
                                                       enqueueProperties, timestampPacketDependencies, eventsRequest,
-                                                      eventBuilder, taskLevel, csrDeps, &bcsCsr);
+                                                      eventBuilder, taskLevel, csrDeps, &bcsCsr, false);
         if (completionStamp.taskCount > CompletionStamp::notReady) {
             return CommandQueue::getErrorCodeFromTaskCount(completionStamp.taskCount);
         }

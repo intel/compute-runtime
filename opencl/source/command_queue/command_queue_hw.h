@@ -407,7 +407,8 @@ class CommandQueueHw : public CommandQueue {
                                                 EventBuilder &eventBuilder,
                                                 TaskCountType taskLevel,
                                                 CsrDependencies &csrDeps,
-                                                CommandStreamReceiver *bcsCsr);
+                                                CommandStreamReceiver *bcsCsr,
+                                                bool hasRelaxedOrderingDependencies);
     void processDispatchForCacheFlush(Surface **surfaces,
                                       size_t numSurfaces,
                                       LinearStream *commandStream,
