@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
+#include "level_zero/sysman/source/global_operations/global_operations_imp.h"
 #include "level_zero/sysman/source/os_sysman.h"
 
 #include <vector>
@@ -28,18 +29,24 @@ SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment
     pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);
     pSchedulerHandleContext = new SchedulerHandleContext(pOsSysman);
     pFirmwareHandleContext = new FirmwareHandleContext(pOsSysman);
+    pRasHandleContext = new RasHandleContext(pOsSysman);
+    pDiagnosticsHandleContext = new DiagnosticsHandleContext(pOsSysman);
+    pGlobalOperations = new GlobalOperationsImp(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
-    executionEnvironment->decRefInternal();
-    freeResource(pSchedulerHandleContext);
-    freeResource(pPowerHandleContext);
-    freeResource(pEngineHandleContext);
-    freeResource(pFabricPortHandleContext);
-    freeResource(pMemoryHandleContext);
-    freeResource(pFrequencyHandleContext);
+    freeResource(pGlobalOperations);
+    freeResource(pDiagnosticsHandleContext);
+    freeResource(pRasHandleContext);
     freeResource(pFirmwareHandleContext);
+    freeResource(pSchedulerHandleContext);
+    freeResource(pFrequencyHandleContext);
+    freeResource(pEngineHandleContext);
+    freeResource(pPowerHandleContext);
+    freeResource(pMemoryHandleContext);
+    freeResource(pFabricPortHandleContext);
     freeResource(pOsSysman);
+    executionEnvironment->decRefInternal();
 }
 
 ze_result_t SysmanDeviceImp::init() {
@@ -48,6 +55,22 @@ ze_result_t SysmanDeviceImp::init() {
         return result;
     }
     return result;
+}
+
+ze_result_t SysmanDeviceImp::deviceGetProperties(zes_device_properties_t *pProperties) {
+    return pGlobalOperations->deviceGetProperties(pProperties);
+}
+
+ze_result_t SysmanDeviceImp::processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) {
+    return pGlobalOperations->processesGetState(pCount, pProcesses);
+}
+
+ze_result_t SysmanDeviceImp::deviceReset(ze_bool_t force) {
+    return pGlobalOperations->reset(force);
+}
+
+ze_result_t SysmanDeviceImp::deviceGetState(zes_device_state_t *pState) {
+    return pGlobalOperations->deviceGetState(pState);
 }
 
 ze_result_t SysmanDeviceImp::fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) {
@@ -78,8 +101,16 @@ ze_result_t SysmanDeviceImp::schedulerGet(uint32_t *pCount, zes_sched_handle_t *
     return pSchedulerHandleContext->schedulerGet(pCount, phScheduler);
 }
 
+ze_result_t SysmanDeviceImp::rasGet(uint32_t *pCount, zes_ras_handle_t *phRas) {
+    return pRasHandleContext->rasGet(pCount, phRas);
+}
+
 ze_result_t SysmanDeviceImp::firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) {
     return pFirmwareHandleContext->firmwareGet(pCount, phFirmware);
+}
+
+ze_result_t SysmanDeviceImp::diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics) {
+    return pDiagnosticsHandleContext->diagnosticsGet(pCount, phDiagnostics);
 }
 
 } // namespace Sysman

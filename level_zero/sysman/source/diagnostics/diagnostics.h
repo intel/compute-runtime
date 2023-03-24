@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2023 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,6 +14,7 @@
 #include <vector>
 
 namespace L0 {
+namespace Sysman {
 
 struct OsSysman;
 
@@ -51,4 +52,5 @@ struct DiagnosticsHandleContext {
     bool diagnosticsInitDone = false;
 };
 
+} // namespace Sysman
 } // namespace L0

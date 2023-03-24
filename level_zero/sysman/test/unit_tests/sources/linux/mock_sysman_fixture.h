@@ -36,6 +36,7 @@ class PublicLinuxSysmanImp : public L0::Sysman::LinuxSysmanImp {
     using LinuxSysmanImp::pPmuInterface;
     using LinuxSysmanImp::pProcfsAccess;
     using LinuxSysmanImp::pSysfsAccess;
+    using LinuxSysmanImp::rootPath;
 };
 
 class SysmanDeviceFixture : public ::testing::Test {

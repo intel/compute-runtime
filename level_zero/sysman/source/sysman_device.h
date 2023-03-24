@@ -9,12 +9,15 @@
 #include "shared/source/execution_environment/execution_environment.h"
 
 #include "level_zero/core/source/device/device.h"
+#include "level_zero/sysman/source/diagnostics/diagnostics.h"
 #include "level_zero/sysman/source/engine/engine.h"
 #include "level_zero/sysman/source/fabric_port/fabric_port.h"
 #include "level_zero/sysman/source/firmware/firmware.h"
 #include "level_zero/sysman/source/frequency/frequency.h"
+#include "level_zero/sysman/source/global_operations/global_operations.h"
 #include "level_zero/sysman/source/memory/memory.h"
 #include "level_zero/sysman/source/power/power.h"
+#include "level_zero/sysman/source/ras/ras.h"
 #include "level_zero/sysman/source/scheduler/scheduler.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
@@ -35,6 +38,7 @@ struct SysmanDevice : _ze_device_handle_t {
     virtual ze_result_t powerGetCardDomain(zes_pwr_handle_t *phPower) = 0;
     static ze_result_t fabricPortGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_fabric_port_handle_t *phPort);
     virtual ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) = 0;
+
     static ze_result_t memoryGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_mem_handle_t *phMemory);
     virtual ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) = 0;
 
@@ -49,6 +53,24 @@ struct SysmanDevice : _ze_device_handle_t {
 
     static ze_result_t firmwareGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_firmware_handle_t *phFirmware);
     virtual ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) = 0;
+
+    static ze_result_t diagnosticsGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_diag_handle_t *phDiagnostics);
+    virtual ze_result_t diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics) = 0;
+
+    static ze_result_t rasGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_ras_handle_t *phRas);
+    virtual ze_result_t rasGet(uint32_t *pCount, zes_ras_handle_t *phRas) = 0;
+
+    static ze_result_t deviceReset(zes_device_handle_t hDevice, ze_bool_t force);
+    virtual ze_result_t deviceReset(ze_bool_t force) = 0;
+
+    static ze_result_t deviceGetProperties(zes_device_handle_t hDevice, zes_device_properties_t *pProperties);
+    virtual ze_result_t deviceGetProperties(zes_device_properties_t *pProperties) = 0;
+
+    static ze_result_t deviceGetState(zes_device_handle_t hDevice, zes_device_state_t *pState);
+    virtual ze_result_t deviceGetState(zes_device_state_t *pState) = 0;
+
+    static ze_result_t processesGetState(zes_device_handle_t hDevice, uint32_t *pCount, zes_process_state_t *pProcesses);
+    virtual ze_result_t processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) = 0;
 };
 
 } // namespace Sysman
