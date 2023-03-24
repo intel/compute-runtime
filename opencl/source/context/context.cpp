@@ -51,11 +51,9 @@ Context::Context(
 
 Context::~Context() {
     gtpinNotifyContextDestroy((cl_context)this);
-
     if (multiRootDeviceTimestampPacketAllocator.get() != nullptr) {
         multiRootDeviceTimestampPacketAllocator.reset();
     }
-
     if (smallBufferPoolAllocator.isAggregatedSmallBuffersEnabled(this)) {
         smallBufferPoolAllocator.releaseSmallBufferPool();
     }
@@ -504,87 +502,24 @@ bool Context::BufferPoolAllocator::isAggregatedSmallBuffersEnabled(Context *cont
            (isSupportedForSingleDeviceContexts && context->isSingleDeviceContext());
 }
 
-Context::BufferPoolAllocator::BufferPool::BufferPool(Context *context) : memoryManager(context->memoryManager) {
+void Context::BufferPoolAllocator::initAggregatedSmallBuffers(Context *context) {
     static constexpr cl_mem_flags flags{};
     [[maybe_unused]] cl_int errcodeRet{};
     Buffer::AdditionalBufferCreateArgs bufferCreateArgs{};
     bufferCreateArgs.doNotProvidePerformanceHints = true;
     bufferCreateArgs.makeAllocationLockable = true;
-    mainStorage.reset(Buffer::create(context,
-                                     flags,
-                                     BufferPoolAllocator::aggregatedSmallBuffersPoolSize,
-                                     nullptr,
-                                     bufferCreateArgs,
-                                     errcodeRet));
-    if (mainStorage) {
-        chunkAllocator.reset(new HeapAllocator(BufferPoolAllocator::startingOffset,
-                                               BufferPoolAllocator::aggregatedSmallBuffersPoolSize,
-                                               BufferPoolAllocator::chunkAlignment));
+    this->mainStorage = Buffer::create(context,
+                                       flags,
+                                       BufferPoolAllocator::aggregatedSmallBuffersPoolSize,
+                                       nullptr,
+                                       bufferCreateArgs,
+                                       errcodeRet);
+    if (this->mainStorage) {
+        this->chunkAllocator.reset(new HeapAllocator(BufferPoolAllocator::startingOffset,
+                                                     BufferPoolAllocator::aggregatedSmallBuffersPoolSize,
+                                                     BufferPoolAllocator::chunkAlignment));
         context->decRefInternal();
     }
-}
-
-Context::BufferPoolAllocator::BufferPool::BufferPool(BufferPool &&bufferPool) : memoryManager(bufferPool.memoryManager),
-                                                                                mainStorage(std::move(bufferPool.mainStorage)),
-                                                                                chunkAllocator(std::move(bufferPool.chunkAllocator)) {}
-
-Buffer *Context::BufferPoolAllocator::BufferPool::allocate(const MemoryProperties &memoryProperties,
-                                                           cl_mem_flags flags,
-                                                           cl_mem_flags_intel flagsIntel,
-                                                           size_t requestedSize,
-                                                           void *hostPtr,
-                                                           cl_int &errcodeRet) {
-    cl_buffer_region bufferRegion{};
-    size_t actualSize = requestedSize;
-    bufferRegion.origin = static_cast<size_t>(chunkAllocator->allocate(actualSize));
-    if (bufferRegion.origin == 0) {
-        return nullptr;
-    }
-    bufferRegion.origin -= BufferPoolAllocator::startingOffset;
-    bufferRegion.size = requestedSize;
-    auto bufferFromPool = mainStorage->createSubBuffer(flags, flagsIntel, &bufferRegion, errcodeRet);
-    bufferFromPool->createFunction = mainStorage->createFunction;
-    bufferFromPool->setSizeInPoolAllocator(actualSize);
-    return bufferFromPool;
-}
-
-bool Context::BufferPoolAllocator::BufferPool::isPoolBuffer(const MemObj *buffer) const {
-    return mainStorage.get() == buffer;
-}
-
-bool Context::BufferPoolAllocator::BufferPool::drain() {
-    for (auto allocation : mainStorage->getMultiGraphicsAllocation().getGraphicsAllocations()) {
-        if (memoryManager->allocInUse(*allocation)) {
-            return false;
-        }
-    }
-
-    chunkAllocator.reset(new HeapAllocator(BufferPoolAllocator::startingOffset,
-                                           BufferPoolAllocator::aggregatedSmallBuffersPoolSize,
-                                           BufferPoolAllocator::chunkAlignment));
-    return true;
-}
-
-void Context::BufferPoolAllocator::addNewBufferPool() {
-    Context::BufferPoolAllocator::BufferPool bufferPool(context);
-    if (bufferPool.mainStorage) {
-        bufferPools.push_back(std::move(bufferPool));
-    }
-}
-
-void Context::BufferPoolAllocator::initAggregatedSmallBuffers(Context *context) {
-    this->context = context;
-    addNewBufferPool();
-}
-
-bool Context::BufferPoolAllocator::isPoolBuffer(const MemObj *buffer) const {
-    for (auto &bufferPool : bufferPools) {
-        if (bufferPool.isPoolBuffer(buffer)) {
-            return true;
-        }
-    }
-
-    return false;
 }
 
 Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryProperties &memoryProperties,
@@ -594,52 +529,45 @@ Buffer *Context::BufferPoolAllocator::allocateBufferFromPool(const MemoryPropert
                                                              void *hostPtr,
                                                              cl_int &errcodeRet) {
     errcodeRet = CL_MEM_OBJECT_ALLOCATION_FAILURE;
-    if (bufferPools.empty() ||
-        !isSizeWithinThreshold(requestedSize) ||
-        !flagsAllowBufferFromPool(flags, flagsIntel)) {
-        return nullptr;
-    }
-
-    auto lock = std::unique_lock<std::mutex>(mutex);
-    auto bufferFromPool = allocateFromPools(memoryProperties, flags, flagsIntel, requestedSize, hostPtr, errcodeRet);
-    if (bufferFromPool != nullptr) {
+    if (this->mainStorage &&
+        this->isSizeWithinThreshold(requestedSize) &&
+        this->flagsAllowBufferFromPool(flags, flagsIntel)) {
+        auto lock = std::unique_lock<std::mutex>(this->mutex);
+        cl_buffer_region bufferRegion{};
+        size_t actualSize = requestedSize;
+        bufferRegion.origin = static_cast<size_t>(this->chunkAllocator->allocate(actualSize));
+        if (bufferRegion.origin == 0) {
+            return nullptr;
+        }
+        bufferRegion.origin -= BufferPoolAllocator::startingOffset;
+        bufferRegion.size = requestedSize;
+        auto bufferFromPool = this->mainStorage->createSubBuffer(flags, flagsIntel, &bufferRegion, errcodeRet);
+        bufferFromPool->createFunction = this->mainStorage->createFunction;
+        bufferFromPool->setSizeInPoolAllocator(actualSize);
         return bufferFromPool;
     }
-
-    drainOrAddNewBufferPool();
-    return allocateFromPools(memoryProperties, flags, flagsIntel, requestedSize, hostPtr, errcodeRet);
-}
-
-void Context::BufferPoolAllocator::releaseSmallBufferPool() {
-    bufferPools.clear();
-}
-
-void Context::BufferPoolAllocator::drainOrAddNewBufferPool() {
-    for (auto &bufferPool : bufferPools) {
-        if (bufferPool.drain()) {
-            return;
-        }
-    }
-
-    addNewBufferPool();
-}
-
-Buffer *Context::BufferPoolAllocator::allocateFromPools(const MemoryProperties &memoryProperties,
-                                                        cl_mem_flags flags,
-                                                        cl_mem_flags_intel flagsIntel,
-                                                        size_t requestedSize,
-                                                        void *hostPtr,
-                                                        cl_int &errcodeRet) {
-    for (auto &bufferPool : bufferPools) {
-        auto bufferFromPool = bufferPool.allocate(memoryProperties, flags, flagsIntel, requestedSize, hostPtr, errcodeRet);
-        if (bufferFromPool != nullptr) {
-            return bufferFromPool;
-        }
-    }
-
     return nullptr;
 }
 
+bool Context::BufferPoolAllocator::isPoolBuffer(const MemObj *buffer) const {
+    return buffer != nullptr && this->mainStorage == buffer;
+}
+
+void Context::BufferPoolAllocator::tryFreeFromPoolBuffer(MemObj *possiblePoolBuffer, size_t offset, size_t size) {
+    if (this->isPoolBuffer(possiblePoolBuffer)) {
+        auto lock = std::unique_lock<std::mutex>(this->mutex);
+        DEBUG_BREAK_IF(!this->mainStorage);
+        DEBUG_BREAK_IF(size == 0);
+        auto internalBufferAddress = offset + BufferPoolAllocator::startingOffset;
+        this->chunkAllocator->free(internalBufferAddress, size);
+    }
+}
+
+void Context::BufferPoolAllocator::releaseSmallBufferPool() {
+    DEBUG_BREAK_IF(!this->mainStorage);
+    delete this->mainStorage;
+    this->mainStorage = nullptr;
+}
 TagAllocatorBase *Context::getMultiRootDeviceTimestampPacketAllocator() {
     return multiRootDeviceTimestampPacketAllocator.get();
 }
