@@ -8,22 +8,22 @@ components:
   gmmlib:
     dest_dir: gmmlib
     type: git
-    branch: master
     asset_name: gmmlib
+    branch: master
     revision: intel-gmmlib-22.3.0
     repository: https://github.com/intel/gmmlib.git
   igc:
     dest_dir: igc
     type: git
-    branch: master
     asset_name: igc
+    branch: master
     revision: ff9817102b82444f38263f9828a3e11996d235ce
     repository: https://github.com/intel/intelgraphicscompiler
   igsc:
     dest_dir: igsc
     type: git
-    branch: master
     asset_name: igsc
+    branch: master
     revision: V0.8.7
     repository: https://github.com/intel/igsc.git
   infra:
@@ -56,22 +56,22 @@ components:
   libva:
     dest_dir: libva
     type: git
-    branch: master
     asset_name: libva
+    branch: master
     revision: 2.2.0
     repository: https://github.com/intel/libva.git
   metrics-discovery:
     dest_dir: metrics/discovery
     type: git
-    branch: master
     asset_name: metrics-discovery
+    branch: master
     revision: metrics-discovery-1.12.163
     repository: https://github.com/intel/metrics-discovery.git
   metrics-library:
     dest_dir: metrics/library
     type: git
-    branch: master
     asset_name: metrics-library
+    branch: master
     revision: metrics-library-1.0.122
     repository: https://github.com/intel/metrics-library.git
   wdk:
