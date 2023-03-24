@@ -60,24 +60,49 @@ class Context : public BaseObject<_cl_context> {
                                        size_t size,
                                        void *hostPtr,
                                        cl_int &errcodeRet);
-        void tryFreeFromPoolBuffer(MemObj *possiblePoolBuffer, size_t offset, size_t size);
+
         void releaseSmallBufferPool();
-
         bool isAggregatedSmallBuffersEnabled(Context *context) const;
-
         void initAggregatedSmallBuffers(Context *context);
-
         bool isPoolBuffer(const MemObj *buffer) const;
-
         bool flagsAllowBufferFromPool(const cl_mem_flags &flags, const cl_mem_flags_intel &flagsIntel) const;
+        void tryFreeFromPoolBuffer(MemObj *possiblePoolBuffer, size_t offset, size_t size);
 
       protected:
+        Buffer *allocateFromPools(const MemoryProperties &memoryProperties,
+                                  cl_mem_flags flags,
+                                  cl_mem_flags_intel flagsIntel,
+                                  size_t size,
+                                  void *hostPtr,
+                                  cl_int &errcodeRet);
+
         inline bool isSizeWithinThreshold(size_t size) const {
             return BufferPoolAllocator::smallBufferThreshold >= size;
         }
-        Buffer *mainStorage{nullptr};
-        std::unique_ptr<HeapAllocator> chunkAllocator;
+
+        void drain();
+        void addNewBufferPool();
+
+        struct BufferPool {
+            BufferPool(Context *context);
+            BufferPool(BufferPool &&bufferPool);
+            bool isPoolBuffer(const MemObj *buffer) const;
+            void tryFreeFromPoolBuffer(MemObj *possiblePoolBuffer, size_t offset, size_t size);
+            Buffer *allocate(const MemoryProperties &memoryProperties,
+                             cl_mem_flags flags,
+                             cl_mem_flags_intel flagsIntel,
+                             size_t size,
+                             void *hostPtr,
+                             cl_int &errcodeRet);
+            void drain();
+            MemoryManager *memoryManager{nullptr};
+            std::unique_ptr<Buffer> mainStorage;
+            std::unique_ptr<HeapAllocator> chunkAllocator;
+            std::vector<std::pair<uint64_t, size_t>> chunksToFree;
+        };
+        Context *context{nullptr};
         std::mutex mutex;
+        std::vector<BufferPool> bufferPools;
     };
     static const cl_ulong objectMagic = 0xA4234321DC002130LL;
 
@@ -221,7 +246,7 @@ class Context : public BaseObject<_cl_context> {
 
     static Platform *getPlatformFromProperties(const cl_context_properties *properties, cl_int &errcode);
     BufferPoolAllocator &getBufferPoolAllocator() {
-        return this->smallBufferPoolAllocator;
+        return smallBufferPoolAllocator;
     }
     TagAllocatorBase *getMultiRootDeviceTimestampPacketAllocator();
     std::unique_lock<std::mutex> obtainOwnershipForMultiRootDeviceAllocator();
