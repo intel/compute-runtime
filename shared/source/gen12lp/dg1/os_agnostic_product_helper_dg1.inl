@@ -43,11 +43,6 @@ bool ProductHelperHw<gfxProduct>::pipeControlWARequired(const HardwareInfo &hwIn
 }
 
 template <>
-uint64_t ProductHelperHw<gfxProduct>::getHostMemCapabilitiesValue() const {
-    return UNIFIED_SHARED_MEMORY_ACCESS;
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::imagePitchAlignmentWARequired(const HardwareInfo &hwInfo) const {
     return GfxCoreHelper::isWorkaroundRequired(REVISION_A0, REVISION_B, hwInfo, *this);
 }

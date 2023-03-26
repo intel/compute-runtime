@@ -12,7 +12,6 @@
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/test/unit_test/fixtures/cl_device_fixture.h"
-#include "opencl/test/unit_test/fixtures/device_info_fixture.h"
 #include "opencl/test/unit_test/mocks/mock_cl_device.h"
 
 using namespace NEO;
@@ -32,19 +31,4 @@ DG1TEST_F(Dg1ClDeviceCaps, givenDg1hpWhenInitializeCapsThenVmeIsNotSupported) {
 
     EXPECT_FALSE(pClDevice->getDeviceInfo().vmeAvcSupportsTextureSampler);
     EXPECT_FALSE(pDevice->getDeviceInfo().vmeAvcSupportsPreemption);
-}
-
-DG1TEST_F(GetDeviceInfoMemCapabilitiesTest, GivenValidParametersWhenGetDeviceInfoIsCalledForDg1ThenClSuccessIsReturned) {
-
-    std::vector<TestParams> params = {
-        {CL_DEVICE_HOST_MEM_CAPABILITIES_INTEL,
-         CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL},
-        {CL_DEVICE_DEVICE_MEM_CAPABILITIES_INTEL,
-         (CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL)},
-        {CL_DEVICE_SINGLE_DEVICE_SHARED_MEM_CAPABILITIES_INTEL,
-         (CL_UNIFIED_SHARED_MEMORY_ACCESS_INTEL | CL_UNIFIED_SHARED_MEMORY_ATOMIC_ACCESS_INTEL)},
-        {CL_DEVICE_CROSS_DEVICE_SHARED_MEM_CAPABILITIES_INTEL, 0},
-        {CL_DEVICE_SHARED_SYSTEM_MEM_CAPABILITIES_INTEL, 0}};
-
-    check(params);
 }
