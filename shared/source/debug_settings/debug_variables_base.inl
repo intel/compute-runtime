@@ -207,6 +207,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, OverrideTimestampEvents, -1, "-1: default (based
 DECLARE_DEBUG_VARIABLE(int32_t, ForcePreParserEnabledForMiArbCheck, -1, "-1: default , 0: PreParser disabled, 1: PreParser enabled")
 DECLARE_DEBUG_VARIABLE(int32_t, BatchBufferStartPrepatchingWaEnabled, -1, "-1: default , 0: disabled, 1: enabled. WA applies valid VA pointing to 'self' instead of 0x0. This mitigates incorrect VA preparsing.")
 DECLARE_DEBUG_VARIABLE(int32_t, SetVmAdviseAtomicAttribute, -1, "-1: default - atomic system, 0: atomic none, 1: atomic device, 2: atomic system)")
+DECLARE_DEBUG_VARIABLE(int32_t, SetVmAdvisePreferredLocation, -1, "-1: default - none, 0: system, 1: device memory. Set preferred location for kmd-migrated shared allocation")
 DECLARE_DEBUG_VARIABLE(int32_t, ReadBackCommandBufferAllocation, -1, "Read command buffer allocation back on the host side. -1: default, 0 - disabled, 1 - local memory only, 2 - local and system memory")
 DECLARE_DEBUG_VARIABLE(int32_t, UseContextEndOffsetForEventCompletion, -1, "Use Context End or Context Start for event completion signalling. -1: default: platform dependent, 0 - Use Context Start, 1 - Use Context End")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceWddmLowPriorityContextValue, -1, "Force scheduling priority value during Wddm low priority context creation. -1 - default.")

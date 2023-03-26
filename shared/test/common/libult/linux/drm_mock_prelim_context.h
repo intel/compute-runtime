@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -75,6 +75,7 @@ struct UserFenceVmBindExt {
 struct VmAdvise {
     uint32_t handle{0};
     uint32_t flags{0};
+    MemoryClassInstance memoryRegions{0};
 };
 
 struct UuidVmBindExt {
@@ -179,4 +180,5 @@ uint64_t getMemoryRegionsParamFlag();
 uint32_t getVmAdviseNoneFlag();
 uint32_t getVmAdviseDeviceFlag();
 uint32_t getVmAdviseSystemFlag();
+uint32_t getPreferredLocationAdvise();
 }; // namespace DrmPrelimHelper

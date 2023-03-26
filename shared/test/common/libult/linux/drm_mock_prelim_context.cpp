@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -228,7 +228,7 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::GemVmAdvise: {
         const auto req = reinterpret_cast<prelim_drm_i915_gem_vm_advise *>(arg);
-        receivedVmAdvise = VmAdvise{req->handle, req->attribute};
+        receivedVmAdvise = VmAdvise{req->handle, req->attribute, {req->region.memory_class, req->region.memory_instance}};
         return vmAdviseReturn;
     } break;
     case DrmIoctl::UuidRegister: {
@@ -571,4 +571,8 @@ uint32_t DrmPrelimHelper::getVmAdviseDeviceFlag() {
 
 uint32_t DrmPrelimHelper::getVmAdviseSystemFlag() {
     return PRELIM_I915_VM_ADVISE_ATOMIC_SYSTEM;
+}
+
+uint32_t DrmPrelimHelper::getPreferredLocationAdvise() {
+    return PRELIM_I915_VM_ADVISE_PREFERRED_LOCATION;
 }
