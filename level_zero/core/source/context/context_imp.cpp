@@ -273,22 +273,17 @@ ze_result_t ContextImp::allocSharedMem(ze_device_handle_t hDevice,
     bool relaxedSizeAllowed = NEO::DebugManager.flags.AllowUnrestrictedSize.get();
     bool rayTracingAllocation = false;
 
-    const ze_base_desc_t *extendedDesc = static_cast<const ze_base_desc_t *>(deviceDesc->pNext);
-    bool isDeviceMemAllocDescStypeValid = (deviceDesc->stype == ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC) ? true : false;
-
-    if (isDeviceMemAllocDescStypeValid) {
-        while (extendedDesc) {
-            if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
-                const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
-                    reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);
-                if (!(relaxedLimitsDesc->flags & ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE)) {
-                    return ZE_RESULT_ERROR_INVALID_ARGUMENT;
-                }
-                relaxedSizeAllowed = true;
-            } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC) {
-                rayTracingAllocation = true;
+    if (deviceDesc->pNext) {
+        const ze_base_desc_t *extendedDesc = reinterpret_cast<const ze_base_desc_t *>(deviceDesc->pNext);
+        if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC) {
+            const ze_relaxed_allocation_limits_exp_desc_t *relaxedLimitsDesc =
+                reinterpret_cast<const ze_relaxed_allocation_limits_exp_desc_t *>(extendedDesc);
+            if (!(relaxedLimitsDesc->flags & ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE)) {
+                return ZE_RESULT_ERROR_INVALID_ARGUMENT;
             }
-            extendedDesc = static_cast<const ze_base_desc_t *>(extendedDesc->pNext);
+            relaxedSizeAllowed = true;
+        } else if (extendedDesc->stype == ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC) {
+            rayTracingAllocation = true;
         }
     }
 

@@ -901,7 +901,6 @@ TEST_F(MemoryTest, givenProductWith48bForRTWhenAllocatingSharedMemoryAsRayTracin
     ze_raytracing_mem_alloc_ext_desc_t rtDesc = {};
 
     rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
-    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     deviceDesc.pNext = &rtDesc;
 
     auto mockProductHelper = std::make_unique<MockProductHelper>();
@@ -940,7 +939,6 @@ TEST_F(MemoryTest, givenProductWithNon48bForRTWhenAllocatingSharedMemoryAsRayTra
     ze_host_mem_alloc_desc_t hostDesc = {};
     ze_raytracing_mem_alloc_ext_desc_t rtDesc = {};
 
-    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
     rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
     deviceDesc.pNext = &rtDesc;
 
@@ -1973,36 +1971,6 @@ TEST_F(MemoryRelaxedSizeTests,
 }
 
 TEST_F(MemoryRelaxedSizeTests,
-       givenCallToDeviceAllocAsRayTracingAllocationWithLargerThanAllowedSizeAndRelaxedFlagThenAllocationIsMade) {
-    if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
-        GTEST_SKIP();
-    }
-    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
-
-    ze_raytracing_mem_alloc_ext_desc_t rtDesc = {};
-    rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
-    deviceDesc.pNext = &rtDesc;
-
-    ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
-    relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC;
-    relaxedSizeDesc.flags = ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE;
-    rtDesc.pNext = &relaxedSizeDesc;
-    ze_result_t result = context->allocDeviceMem(device->toHandle(),
-                                                 &deviceDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(MemoryRelaxedSizeTests,
        givenCallToDeviceAllocWithLargerThanAllowedSizeAndDebugFlagThenAllocationIsMade) {
     if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
         GTEST_SKIP();
@@ -2132,38 +2100,6 @@ TEST_F(MemoryRelaxedSizeTests,
     relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC;
     relaxedSizeDesc.flags = ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE;
     deviceDesc.pNext = &relaxedSizeDesc;
-    ze_host_mem_alloc_desc_t hostDesc = {};
-    ze_result_t result = context->allocSharedMem(device->toHandle(),
-                                                 &deviceDesc,
-                                                 &hostDesc,
-                                                 size, alignment, &ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, ptr);
-
-    result = context->freeMem(ptr);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-}
-
-TEST_F(MemoryRelaxedSizeTests,
-       givenCallToSharedAllocAsRayTracingAllocationWithLargerThanAllowedSizeAndRelaxedFlagThenAllocationIsMade) {
-    if (device->getNEODevice()->areSharedSystemAllocationsAllowed()) {
-        GTEST_SKIP();
-    }
-    size_t size = device->getNEODevice()->getDeviceInfo().maxMemAllocSize + 1;
-    size_t alignment = 1u;
-    void *ptr = nullptr;
-
-    ze_device_mem_alloc_desc_t deviceDesc = {};
-    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
-
-    ze_raytracing_mem_alloc_ext_desc_t rtDesc = {};
-    rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
-    deviceDesc.pNext = &rtDesc;
-
-    ze_relaxed_allocation_limits_exp_desc_t relaxedSizeDesc = {};
-    relaxedSizeDesc.stype = ZE_STRUCTURE_TYPE_RELAXED_ALLOCATION_LIMITS_EXP_DESC;
-    relaxedSizeDesc.flags = ZE_RELAXED_ALLOCATION_LIMITS_EXP_FLAG_MAX_SIZE;
-    rtDesc.pNext = &relaxedSizeDesc;
     ze_host_mem_alloc_desc_t hostDesc = {};
     ze_result_t result = context->allocSharedMem(device->toHandle(),
                                                  &deviceDesc,
