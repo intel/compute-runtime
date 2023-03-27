@@ -64,6 +64,12 @@ lint:
     - HSD
     - GSD
 
+  commit_message:
+    signed_off:
+      validate: mail
+      skip_mails:
+        - compute-runtime-validation@intel.com
+
   commit_message_subject:
     types:
       - feature
