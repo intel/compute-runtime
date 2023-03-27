@@ -118,16 +118,19 @@ ze_result_t LinuxFabricDeviceImp::performSweep() {
 
     result = forceSweep();
     if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): forceSweep() failed and returning error:0x%x \n", __FUNCTION__, result);
         return result;
     }
     result = routingQuery(start, end);
     if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): routingQuery() failed from %d to %d and returning error:0x%x \n", __FUNCTION__, start, end, result);
         return result;
     }
     while (end < start) {
         uint32_t newStart;
         result = routingQuery(newStart, end);
         if (ZE_RESULT_SUCCESS != result) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): routingQuery() failed from %d to %d and returning error:0x%x \n", __FUNCTION__, newStart, end, result);
             return result;
         }
     }
@@ -175,6 +178,7 @@ ze_result_t LinuxFabricDeviceImp::enable(const zes_fabric_port_id_t portId) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     result = pFabricDeviceAccess->enable(portId);
     if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FabricDeviceAccess->enable() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
         return result;
     }
     return performSweep();
@@ -184,6 +188,7 @@ ze_result_t LinuxFabricDeviceImp::disable(const zes_fabric_port_id_t portId) {
     ze_result_t result = ZE_RESULT_SUCCESS;
     result = pFabricDeviceAccess->disable(portId);
     if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FabricDeviceAccess->disable() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
         return result;
     }
     return performSweep();
@@ -193,6 +198,7 @@ ze_result_t LinuxFabricDeviceImp::enableUsage(const zes_fabric_port_id_t portId)
     ze_result_t result = ZE_RESULT_SUCCESS;
     result = pFabricDeviceAccess->enableUsage(portId);
     if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FabricDeviceAccess->enableUsage() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
         return result;
     }
     return performSweep();
@@ -202,6 +208,7 @@ ze_result_t LinuxFabricDeviceImp::disableUsage(const zes_fabric_port_id_t portId
     ze_result_t result = ZE_RESULT_SUCCESS;
     result = pFabricDeviceAccess->disableUsage(portId);
     if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): FabricDeviceAccess->disableUsage() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
         return result;
     }
     return performSweep();
@@ -235,11 +242,13 @@ ze_result_t LinuxFabricPortImp::getConfig(zes_fabric_port_config_t *pConfig) {
     bool enabled = false;
     result = pLinuxFabricDeviceImp->getPortEnabledState(portId, enabled);
     if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): LinuxFabricDeviceImp->getPortEnabledState() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
         return result;
     }
     pConfig->enabled = enabled == true;
     result = pLinuxFabricDeviceImp->getPortBeaconState(portId, enabled);
     if (ZE_RESULT_SUCCESS != result) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): LinuxFabricDeviceImp->getPortBeaconState() failed for portnumber : %d and returning error:0x%x \n", __FUNCTION__, portId.portNumber, result);
         return result;
     }
     pConfig->beaconing = enabled == true;
