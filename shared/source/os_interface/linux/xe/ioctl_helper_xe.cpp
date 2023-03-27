@@ -1018,7 +1018,6 @@ int IoctlHelperXe::ioctl(DrmIoctl request, void *arg) {
         ret = IoctlHelper::ioctl(request, &args);
         d->vmId = ret ? 0 : args.vm_id;
         xeVmId = d->vmId;
-        printf("VM: 0x%llx\n", args.reserved[0]); // Don't remove for now
         xeLog(" -> IoctlHelperXe::ioctl GemVmCreate vmid=0x%x r=%d\n", d->vmId, ret);
 
     } break;
