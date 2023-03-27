@@ -10,6 +10,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/device/device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/pipe_control_args.h"
 #include "shared/source/helpers/preamble.h"
@@ -37,13 +38,19 @@ void PreemptionHelper::programCsrBaseAddressCmd(LinearStream &preambleCmdStream,
 }
 
 template <typename GfxFamily>
-void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper) {
+void PreemptionHelper::programStateSip(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper, OsContext *context) {
     using STATE_SIP = typename GfxFamily::STATE_SIP;
     bool debuggingEnabled = device.getDebugger() != nullptr || device.isDebuggerActive();
     bool isMidThreadPreemption = device.getPreemptionMode() == PreemptionMode::MidThread;
 
     if (isMidThreadPreemption || debuggingEnabled) {
-        auto sipAllocation = SipKernel::getSipKernel(device).getSipAllocation();
+        GraphicsAllocation *sipAllocation{nullptr};
+
+        if (device.getExecutionEnvironment()->getDebuggingMode() == NEO::DebuggingMode::Offline) {
+            sipAllocation = SipKernel::getBindlessDebugSipKernel(device, context).getSipAllocation();
+        } else {
+            sipAllocation = SipKernel::getSipKernel(device).getSipAllocation();
+        }
 
         programStateSipCmd<GfxFamily>(preambleCmdStream, sipAllocation, logicalStateHelper);
     }

@@ -8,6 +8,8 @@
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/command_stream/preemption.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
+#include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_debugger.h"
 #include "shared/test/common/mocks/mock_device.h"
@@ -25,7 +27,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, whenProgramStateSipIsC
     EXPECT_EQ(0U, requiredSize);
 
     LinearStream cmdStream{nullptr, 0};
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr, nullptr);
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
 
@@ -118,10 +120,44 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenDebuggerUsedWhenP
     uint64_t buffer[bufferSize];
 
     LinearStream cmdStream{buffer, bufferSize * sizeof(uint64_t)};
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr, nullptr);
     EXPECT_EQ(sizeof(STATE_SIP), cmdStream.getUsed());
 
     auto sipAllocation = SipKernel::getSipKernel(*device).getSipAllocation();
+    auto sipCommand = genCmdCast<STATE_SIP *>(cmdStream.getCpuBase());
+    auto sipAddress = sipCommand->getSystemInstructionPointer();
+
+    EXPECT_EQ(sipAllocation->getGpuAddressToPatch(), sipAddress);
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebuggerWhenProgrammingStateSipWithContextThenStateSipIsAdded) {
+    using STATE_SIP = typename FamilyType::STATE_SIP;
+    auto executionEnvironment = device->getExecutionEnvironment();
+    auto builtIns = new NEO::MockBuiltins();
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+    executionEnvironment->rootDeviceEnvironments[0]->debugger.reset(new MockDebugger);
+    device->executionEnvironment->setDebuggingMode(DebuggingMode::Offline);
+    device->setPreemptionMode(MidThread);
+
+    const uint32_t contextId = 0u;
+    std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+                                                           device->getRootDeviceIndex(), contextId,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::MidThread, device->getDeviceBitfield())));
+    osContext->setDefaultContext(true);
+
+    auto csr = device->createCommandStreamReceiver();
+    csr->setupContext(*osContext);
+
+    const size_t bufferSize = 128;
+    uint64_t buffer[bufferSize];
+
+    LinearStream cmdStream{buffer, bufferSize * sizeof(uint64_t)};
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr, osContext.get());
+    EXPECT_EQ(sizeof(STATE_SIP), cmdStream.getUsed());
+
+    auto contextSipKernel = builtIns->perContextSipKernels.first[contextId].get();
+    auto sipAllocation = contextSipKernel->getSipAllocation();
+
     auto sipCommand = genCmdCast<STATE_SIP *>(cmdStream.getCpuBase());
     auto sipAddress = sipCommand->getSystemInstructionPointer();
 

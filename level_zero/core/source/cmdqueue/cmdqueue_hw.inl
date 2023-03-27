@@ -810,7 +810,7 @@ void CommandQueueHw<gfxCoreFamily>::programStateSip(bool isStateSipRequired, NEO
         return;
     }
     NEO::Device *neoDevice = this->device->getNEODevice();
-    NEO::PreemptionHelper::programStateSip<GfxFamily>(cmdStream, *neoDevice, this->csr->getLogicalStateHelper());
+    NEO::PreemptionHelper::programStateSip<GfxFamily>(cmdStream, *neoDevice, this->csr->getLogicalStateHelper(), &this->csr->getOsContext());
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>

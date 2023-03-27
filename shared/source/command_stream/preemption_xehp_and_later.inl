@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@ void PreemptionHelper::programCsrBaseAddress<GfxFamily>(LinearStream &preambleCm
 }
 
 template <>
-void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper) {
+void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper, OsContext *context) {
     using STATE_SIP = typename GfxFamily::STATE_SIP;
     using MI_LOAD_REGISTER_IMM = typename GfxFamily::MI_LOAD_REGISTER_IMM;
 
@@ -19,7 +19,13 @@ void PreemptionHelper::programStateSip<GfxFamily>(LinearStream &preambleCmdStrea
 
     if (debuggingEnabled) {
         auto &gfxCoreHelper = device.getGfxCoreHelper();
-        auto sipAllocation = SipKernel::getSipKernel(device).getSipAllocation();
+
+        GraphicsAllocation *sipAllocation{nullptr};
+        if (device.getExecutionEnvironment()->getDebuggingMode() == NEO::DebuggingMode::Offline) {
+            sipAllocation = SipKernel::getBindlessDebugSipKernel(device, context).getSipAllocation();
+        } else {
+            sipAllocation = SipKernel::getSipKernel(device).getSipAllocation();
+        }
 
         if (gfxCoreHelper.isSipWANeeded(hwInfo)) {
             auto mmio = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(preambleCmdStream.getSpace(sizeof(MI_LOAD_REGISTER_IMM)));

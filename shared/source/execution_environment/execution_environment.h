@@ -38,7 +38,8 @@ class ExecutionEnvironment : public ReferenceTrackedObject<ExecutionEnvironment>
     void setDebuggingMode(DebuggingMode debuggingMode) {
         debuggingEnabledMode = debuggingMode;
     }
-    bool isDebuggingEnabled() { return debuggingEnabledMode != DebuggingMode::Disabled; }
+    DebuggingMode getDebuggingMode() const { return debuggingEnabledMode; }
+    bool isDebuggingEnabled() const { return debuggingEnabledMode != DebuggingMode::Disabled; }
     void setMetricsEnabled(bool value) {
         this->metricsEnabled = value;
     }

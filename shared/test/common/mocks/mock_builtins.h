@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -17,6 +17,8 @@
 namespace NEO {
 class MockBuiltins : public BuiltIns {
   public:
+    using BuiltIns::perContextSipKernels;
+
     const SipKernel &getSipKernel(SipKernelType type, Device &device) override {
         if (sipKernelsOverride.find(type) != sipKernelsOverride.end()) {
             return *sipKernelsOverride[type];

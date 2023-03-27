@@ -34,7 +34,7 @@ GEN8TEST_F(Gen8PreemptionTests, whenProgramStateSipIsCalledThenNoCmdsAreProgramm
     EXPECT_EQ(0U, requiredSize);
 
     LinearStream cmdStream{nullptr, 0};
-    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr);
+    PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr, nullptr);
     EXPECT_EQ(0U, cmdStream.getUsed());
 }
 

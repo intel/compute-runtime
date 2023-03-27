@@ -8,9 +8,12 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
+#include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/helpers/variable_backup.h"
+#include "shared/test/common/mocks/mock_builtins.h"
 #include "shared/test/common/mocks/mock_device.h"
 #include "shared/test/common/mocks/mock_io_functions.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
@@ -288,6 +291,28 @@ TEST_F(RawBinarySipTest, givenRawBinaryFileWhenGettingBindlessDebugSipThenSipIsL
     EXPECT_NE(0u, header.size());
 }
 
+TEST_F(RawBinarySipTest, givenRawBinaryFileWhenGettingBindlessDebugSipWithContextThenSipIsLoadedFromFile) {
+    auto executionEnvironment = pDevice->getExecutionEnvironment();
+    const uint32_t contextId = 0u;
+    std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+                                                           pDevice->getRootDeviceIndex(), contextId,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, pDevice->getDeviceBitfield())));
+    osContext->setDefaultContext(true);
+
+    auto sipAllocation = NEO::SipKernel::getBindlessDebugSipKernel(*pDevice, osContext.get()).getSipAllocation();
+
+    uint32_t sipIndex = static_cast<uint32_t>(SipKernelType::DbgBindless);
+    auto sipKernel = pDevice->getRootDeviceEnvironment().sipKernels[sipIndex].get();
+    ASSERT_NE(nullptr, sipKernel);
+    auto storedAllocation = sipKernel->getSipAllocation();
+
+    EXPECT_NE(nullptr, storedAllocation);
+    EXPECT_EQ(storedAllocation, sipAllocation);
+
+    auto header = SipKernel::getSipKernel(*pDevice).getStateSaveAreaHeader();
+    EXPECT_NE(0u, header.size());
+}
+
 struct HexadecimalHeaderSipKernel : public SipKernel {
     using SipKernel::getSipKernelImpl;
     using SipKernel::initHexadecimalArraySipKernel;
@@ -430,4 +455,89 @@ TEST(DebugBindlessSip, givenBindlessDebugSipIsRequestedThenCorrectSipKernelIsRet
     EXPECT_EQ(SipKernelType::DbgBindless, sipKernel.getType());
 
     EXPECT_FALSE(sipKernel.getStateSaveAreaHeader().empty());
+}
+
+TEST(DebugBindlessSip, givenContextWhenBindlessDebugSipIsRequestedThenCorrectSipKernelIsReturned) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto executionEnvironment = mockDevice->getExecutionEnvironment();
+    auto builtIns = new NEO::MockBuiltins();
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+
+    const uint32_t contextId = 0u;
+    std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+                                                           mockDevice->getRootDeviceIndex(), contextId,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, mockDevice->getDeviceBitfield())));
+    osContext->setDefaultContext(true);
+
+    auto csr = mockDevice->createCommandStreamReceiver();
+    csr->setupContext(*osContext);
+
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto &sipKernel = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice, &csr->getOsContext());
+    EXPECT_NE(nullptr, &sipKernel);
+
+    auto contextSip = builtIns->perContextSipKernels.first[contextId].get();
+
+    EXPECT_NE(nullptr, contextSip);
+    EXPECT_EQ(SipKernelType::DbgBindless, contextSip->getType());
+    EXPECT_NE(nullptr, contextSip->getSipAllocation());
+    EXPECT_FALSE(contextSip->getStateSaveAreaHeader().empty());
+}
+
+TEST(DebugBindlessSip, givenFailingSipAllocationWhenBindlessDebugSipWithContextIsRequestedThenSipAllocationInSipKernelIsNull) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto executionEnvironment = mockDevice->getExecutionEnvironment();
+
+    auto mockMemoryManager = new MockMemoryManager();
+    mockMemoryManager->isMockHostMemoryManager = true;
+    mockMemoryManager->forceFailureInPrimaryAllocation = true;
+    executionEnvironment->memoryManager.reset(mockMemoryManager);
+
+    auto builtIns = new NEO::MockBuiltins();
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+
+    const uint32_t contextId = 0u;
+    std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+                                                           mockDevice->getRootDeviceIndex(), contextId,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, mockDevice->getDeviceBitfield())));
+    osContext->setDefaultContext(true);
+
+    auto csr = mockDevice->createCommandStreamReceiver();
+    csr->setupContext(*osContext);
+
+    EXPECT_NE(nullptr, mockDevice);
+
+    auto &sipKernel = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice, &csr->getOsContext());
+    EXPECT_NE(nullptr, &sipKernel);
+
+    auto contextSip = builtIns->perContextSipKernels.first[contextId].get();
+
+    EXPECT_NE(nullptr, contextSip);
+    EXPECT_EQ(SipKernelType::DbgBindless, contextSip->getType());
+    EXPECT_EQ(nullptr, contextSip->getSipAllocation());
+    EXPECT_FALSE(contextSip->getStateSaveAreaHeader().empty());
+}
+
+TEST(DebugBindlessSip, givenCorrectSipKernelWhenReleasingAllocationManuallyThenFreeGraphicsMemoryIsSkippedOnDestruction) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto executionEnvironment = mockDevice->getExecutionEnvironment();
+    auto builtIns = new NEO::MockBuiltins();
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+
+    const uint32_t contextId = 0u;
+    std::unique_ptr<OsContext> osContext(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+                                                           mockDevice->getRootDeviceIndex(), contextId,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, mockDevice->getDeviceBitfield())));
+    osContext->setDefaultContext(true);
+
+    auto csr = mockDevice->createCommandStreamReceiver();
+    csr->setupContext(*osContext);
+
+    EXPECT_NE(nullptr, mockDevice);
+
+    [[maybe_unused]] auto &sipKernel = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice, &csr->getOsContext());
+
+    mockDevice->getMemoryManager()->freeGraphicsMemory(builtIns->perContextSipKernels.first[contextId].get()->getSipAllocation());
+    builtIns->perContextSipKernels.first[contextId].reset(nullptr);
 }

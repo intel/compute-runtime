@@ -111,8 +111,12 @@ SipKernelType SipKernel::getSipKernelType(Device &device, bool debuggingEnabled)
     return gfxCoreHelper.getSipKernelType(debuggingEnabled);
 }
 
-bool SipKernel::initBuiltinsSipKernel(SipKernelType type, Device &device) {
-    device.getBuiltIns()->getSipKernel(type, device);
+bool SipKernel::initBuiltinsSipKernel(SipKernelType type, Device &device, OsContext *context) {
+    if (context) {
+        device.getBuiltIns()->getSipKernel(device, context);
+    } else {
+        device.getBuiltIns()->getSipKernel(type, device);
+    }
     return true;
 }
 
@@ -236,7 +240,7 @@ void SipKernel::selectSipClassType(std::string &fileName, const GfxCoreHelper &g
     }
 }
 
-bool SipKernel::initSipKernelImpl(SipKernelType type, Device &device) {
+bool SipKernel::initSipKernelImpl(SipKernelType type, Device &device, OsContext *context) {
     std::string fileName = DebugManager.flags.LoadBinarySipFromFile.get();
     SipKernel::selectSipClassType(fileName, device.getGfxCoreHelper());
 
@@ -246,7 +250,7 @@ bool SipKernel::initSipKernelImpl(SipKernelType type, Device &device) {
     case SipClassType::HexadecimalHeaderFile:
         return SipKernel::initHexadecimalArraySipKernel(type, device);
     default:
-        return SipKernel::initBuiltinsSipKernel(type, device);
+        return SipKernel::initBuiltinsSipKernel(type, device, context);
     }
 }
 
@@ -264,13 +268,25 @@ const SipKernel &SipKernel::getSipKernelImpl(Device &device) {
 
 const SipKernel &SipKernel::getBindlessDebugSipKernel(Device &device) {
     auto debugSipType = SipKernelType::DbgBindless;
-    SipKernel::initSipKernelImpl(debugSipType, device);
+    SipKernel::initSipKernelImpl(debugSipType, device, nullptr);
 
     switch (SipKernel::classType) {
     case SipClassType::RawBinaryFromFile:
         return *device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(debugSipType)].get();
     default:
         return device.getBuiltIns()->getSipKernel(debugSipType, device);
+    }
+}
+
+const SipKernel &SipKernel::getBindlessDebugSipKernel(Device &device, OsContext *context) {
+    auto debugSipType = SipKernelType::DbgBindless;
+    SipKernel::initSipKernelImpl(debugSipType, device, context);
+
+    switch (SipKernel::classType) {
+    case SipClassType::RawBinaryFromFile:
+        return *device.getRootDeviceEnvironment().sipKernels[static_cast<uint32_t>(debugSipType)].get();
+    default:
+        return device.getBuiltIns()->getSipKernel(device, context);
     }
 }
 

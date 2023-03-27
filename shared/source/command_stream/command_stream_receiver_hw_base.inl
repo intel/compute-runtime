@@ -1082,7 +1082,7 @@ template <typename GfxFamily>
 inline void CommandStreamReceiverHw<GfxFamily>::programStateSip(LinearStream &cmdStream, Device &device) {
     bool debuggingEnabled = device.getDebugger() != nullptr;
     if (!this->isStateSipSent || debuggingEnabled) {
-        PreemptionHelper::programStateSip<GfxFamily>(cmdStream, device, logicalStateHelper.get());
+        PreemptionHelper::programStateSip<GfxFamily>(cmdStream, device, logicalStateHelper.get(), this->osContext);
         this->isStateSipSent = true;
     }
 }

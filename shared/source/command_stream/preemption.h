@@ -19,6 +19,7 @@ class GraphicsAllocation;
 struct KernelDescriptor;
 class LogicalStateHelper;
 struct RuntimeCapabilityTable;
+class OsContext;
 
 struct PreemptionFlags {
     PreemptionFlags() {
@@ -58,7 +59,7 @@ class PreemptionHelper {
     static void programCsrBaseAddress(LinearStream &preambleCmdStream, Device &device, const GraphicsAllocation *preemptionCsr, LogicalStateHelper *logicalStateHelper);
 
     template <typename GfxFamily>
-    static void programStateSip(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper);
+    static void programStateSip(LinearStream &preambleCmdStream, Device &device, LogicalStateHelper *logicalStateHelper, OsContext *context);
 
     template <typename GfxFamily>
     static void programStateSipEndWa(LinearStream &cmdStream, const RootDeviceEnvironment &rootDeviceEnvironment);

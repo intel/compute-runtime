@@ -25,6 +25,7 @@ typedef std::vector<char> BuiltinResourceT;
 class Device;
 class SipKernel;
 class MemoryManager;
+class OsContext;
 
 inline constexpr ConstStringRef mediaKernelsBuildOptionsList[] = {
     "-D cl_intel_device_side_advanced_vme_enable",
@@ -154,6 +155,7 @@ class BuiltIns {
     virtual ~BuiltIns();
 
     MOCKABLE_VIRTUAL const SipKernel &getSipKernel(SipKernelType type, Device &device);
+    MOCKABLE_VIRTUAL const SipKernel &getSipKernel(Device &device, OsContext *context);
     MOCKABLE_VIRTUAL void freeSipKernels(MemoryManager *memoryManager);
 
     BuiltinsLib &getBuiltinsLib() {
@@ -174,6 +176,9 @@ class BuiltIns {
     std::pair<std::unique_ptr<SipKernel>, std::once_flag> sipKernels[static_cast<uint32_t>(SipKernelType::COUNT)];
 
     std::unique_ptr<BuiltinsLib> builtinsLib;
+
+    using ContextId = uint32_t;
+    std::pair<std::unordered_map<ContextId, std::unique_ptr<SipKernel>>, std::once_flag> perContextSipKernels;
 
     bool enableCacheing = true;
 };

@@ -18,6 +18,7 @@ class Device;
 class GraphicsAllocation;
 class MemoryManager;
 class GfxCoreHelper;
+class OsContext;
 
 struct RootDeviceEnvironment;
 
@@ -43,6 +44,7 @@ class SipKernel {
 
     static const SipKernel &getSipKernel(Device &device);
     static const SipKernel &getBindlessDebugSipKernel(Device &device);
+    static const SipKernel &getBindlessDebugSipKernel(Device &device, OsContext *context);
     static SipKernelType getSipKernelType(Device &device);
     static SipKernelType getSipKernelType(Device &device, bool debuggingEnable);
     static SipClassType classType;
@@ -55,10 +57,10 @@ class SipKernel {
     };
 
   protected:
-    static bool initSipKernelImpl(SipKernelType type, Device &device);
+    static bool initSipKernelImpl(SipKernelType type, Device &device, OsContext *context);
     static const SipKernel &getSipKernelImpl(Device &device);
 
-    static bool initBuiltinsSipKernel(SipKernelType type, Device &device);
+    static bool initBuiltinsSipKernel(SipKernelType type, Device &device, OsContext *context);
     static bool initRawBinaryFromFileKernel(SipKernelType type, Device &device, std::string &fileName);
     static std::vector<char> readStateSaveAreaHeaderFromFile(const std::string &fileName);
     static std::string createHeaderFilename(const std::string &filename);

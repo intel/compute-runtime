@@ -140,7 +140,7 @@ bool SipKernel::initSipKernel(SipKernelType type, Device &device) {
         MockSipData::mockSipKernel->mockSipMemoryAllocation->clearUsageInfo();
         return MockSipData::returned;
     } else {
-        return SipKernel::initSipKernelImpl(type, device);
+        return SipKernel::initSipKernelImpl(type, device, nullptr);
     }
 }
 

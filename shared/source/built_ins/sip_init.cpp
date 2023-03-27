@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -10,7 +10,7 @@
 namespace NEO {
 
 bool SipKernel::initSipKernel(SipKernelType type, Device &device) {
-    return SipKernel::initSipKernelImpl(type, device);
+    return SipKernel::initSipKernelImpl(type, device, nullptr);
 }
 
 const SipKernel &SipKernel::getSipKernel(Device &device) {
