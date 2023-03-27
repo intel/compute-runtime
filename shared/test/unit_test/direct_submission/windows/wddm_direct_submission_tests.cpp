@@ -62,8 +62,9 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenDirectIsInitializedAndStartedThe
     EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffers[1].ringBuffer);
     EXPECT_NE(nullptr, wddmDirectSubmission->semaphores);
 
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t expectedAllocationsCnt = 3;
-    if (wddmDirectSubmission->isRelaxedOrderingEnabled()) {
+    if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
 
@@ -98,8 +99,9 @@ HWTEST_F(WddmDirectSubmissionNoPreemptionTest, givenWddmWhenDirectIsInitializedA
     EXPECT_NE(nullptr, wddmDirectSubmission->ringBuffers[1].ringBuffer);
     EXPECT_NE(nullptr, wddmDirectSubmission->semaphores);
 
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t expectedAllocationsCnt = 3;
-    if (wddmDirectSubmission->isRelaxedOrderingEnabled()) {
+    if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
 
@@ -140,9 +142,9 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesThenExpectRin
 
     bool ret = wddmDirectSubmission.allocateResources();
     EXPECT_TRUE(ret);
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t expectedAllocationsCnt = 3;
-    if (wddmDirectSubmission.isRelaxedOrderingEnabled()) {
+    if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
 
@@ -184,9 +186,9 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenAllocateOsResourcesResidencyFail
 
     bool ret = wddmDirectSubmission.allocateResources();
     EXPECT_FALSE(ret);
-
+    auto &gfxCoreHelper = device->getGfxCoreHelper();
     size_t expectedAllocationsCnt = 3;
-    if (wddmDirectSubmission.isRelaxedOrderingEnabled()) {
+    if (gfxCoreHelper.isRelaxedOrderingSupported()) {
         expectedAllocationsCnt += 2;
     }
 

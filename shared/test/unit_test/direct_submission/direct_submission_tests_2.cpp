@@ -1017,7 +1017,6 @@ HWTEST_F(DirectSubmissionDispatchBufferTest, givenDebugFlagSetWhenStoppingRingbu
 struct DirectSubmissionRelaxedOrderingTests : public DirectSubmissionDispatchBufferTest {
     void SetUp() override {
         DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-        DebugManager.flags.UpdateTaskCountFromWait.set(3);
         DirectSubmissionDispatchBufferTest::SetUp();
     }
 
@@ -2705,24 +2704,4 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNumClientsWhenAskingIfRelax
     ultCsr->registerClient();
     EXPECT_EQ(4u, ultCsr->getNumClients());
     EXPECT_TRUE(NEO::RelaxedOrderingHelper::isRelaxedOrderingDispatchAllowed(*ultCsr, 1));
-}
-
-HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenUpdateTagFromWaitDisabledWhenCreatingDirectSubmissionThenDisableRelaxedOrdering, IsAtLeastXeHpcCore) {
-    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(-1);
-    auto csr = pDevice->getDefaultEngine().commandStreamReceiver;
-
-    DebugManager.flags.UpdateTaskCountFromWait.set(0);
-    {
-        MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*csr);
-
-        EXPECT_FALSE(directSubmission.isRelaxedOrderingEnabled());
-    }
-
-    DebugManager.flags.DirectSubmissionRelaxedOrdering.set(1);
-    {
-
-        MockDirectSubmissionHw<FamilyType, RenderDispatcher<FamilyType>> directSubmission(*csr);
-
-        EXPECT_TRUE(directSubmission.isRelaxedOrderingEnabled());
-    }
 }

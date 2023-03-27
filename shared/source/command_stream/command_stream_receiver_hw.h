@@ -105,7 +105,7 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
                                     size_t commandStreamStartTask);
     SubmissionStatus flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
 
-    bool isUpdateTagFromWaitEnabled() const override;
+    bool isUpdateTagFromWaitEnabled() override;
     void updateTagFromWait() override;
 
     bool isMultiOsContextCapable() const override;

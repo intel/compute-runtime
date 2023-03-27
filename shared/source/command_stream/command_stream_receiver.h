@@ -250,7 +250,7 @@ class CommandStreamReceiver {
 
     virtual SubmissionStatus flushTagUpdate() = 0;
     virtual void updateTagFromWait() = 0;
-    virtual bool isUpdateTagFromWaitEnabled() const = 0;
+    virtual bool isUpdateTagFromWaitEnabled() = 0;
 
     ScratchSpaceController *getScratchSpaceController() const {
         return scratchSpaceController.get();
@@ -269,7 +269,7 @@ class CommandStreamReceiver {
 
     void startControllingDirectSubmissions();
 
-    bool isAnyDirectSubmissionEnabled() const {
+    bool isAnyDirectSubmissionEnabled() {
         return this->isDirectSubmissionEnabled() || isBlitterDirectSubmissionEnabled();
     }
 

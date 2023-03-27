@@ -26,7 +26,6 @@ struct MockWddmDirectSubmission : public WddmDirectSubmission<GfxFamily, Dispatc
     using BaseClass::handleCompletionFence;
     using BaseClass::handleResidency;
     using BaseClass::isCompleted;
-    using BaseClass::isRelaxedOrderingEnabled;
     using BaseClass::miMemFenceRequired;
     using BaseClass::osContextWin;
     using BaseClass::ringBuffers;

@@ -85,7 +85,7 @@ DirectSubmissionHw<GfxFamily, Dispatcher>::DirectSubmissionHw(const DirectSubmis
 
     dcFlushRequired = MemorySynchronizationCommands<GfxFamily>::getDcFlushEnable(true, inputParams.rootDeviceEnvironment);
     auto &gfxCoreHelper = inputParams.rootDeviceEnvironment.getHelper<GfxCoreHelper>();
-    relaxedOrderingEnabled = gfxCoreHelper.isRelaxedOrderingSupported() && inputParams.isUpdateTagFromWaitEnabled;
+    relaxedOrderingEnabled = gfxCoreHelper.isRelaxedOrderingSupported();
 
     this->currentRelaxedOrderingQueueSize = RelaxedOrderingHelper::queueSizeMultiplier;
 

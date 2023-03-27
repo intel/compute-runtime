@@ -16,7 +16,6 @@ DirectSubmissionInputParams::DirectSubmissionInputParams(const CommandStreamRece
     globalFenceAllocation = commandStreamReceiver.getGlobalFenceAllocation();
     workPartitionAllocation = commandStreamReceiver.getWorkPartitionAllocation();
     completionFenceAllocation = commandStreamReceiver.getTagAllocation();
-    isUpdateTagFromWaitEnabled = commandStreamReceiver.isUpdateTagFromWaitEnabled();
 }
 
 } // namespace NEO
