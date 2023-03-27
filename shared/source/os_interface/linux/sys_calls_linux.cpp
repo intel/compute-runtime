@@ -93,6 +93,10 @@ ssize_t read(int fd, void *buf, size_t count) {
     return ::read(fd, buf, count);
 }
 
+ssize_t write(int fd, void *buf, size_t count) {
+    return ::write(fd, buf, count);
+}
+
 int fcntl(int fd, int cmd) {
     return ::fcntl(fd, cmd);
 }
@@ -102,6 +106,10 @@ int fcntl(int fd, int cmd, int arg) {
 
 char *realpath(const char *path, char *buf) {
     return ::realpath(path, buf);
+}
+
+int pipe(int pipeFd[2]) {
+    return ::pipe(pipeFd);
 }
 
 } // namespace SysCalls

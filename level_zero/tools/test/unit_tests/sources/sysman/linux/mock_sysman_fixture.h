@@ -180,7 +180,7 @@ class UdevLibMock : public UdevLib {
   public:
     UdevLibMock() = default;
 
-    ADDMETHOD_NOBASE(registerEventsFromSubsystemAndGetFd, int, 5, (std::vector<std::string> & subsystemList));
+    ADDMETHOD_NOBASE(registerEventsFromSubsystemAndGetFd, int, mockFd, (std::vector<std::string> & subsystemList));
     ADDMETHOD_NOBASE(getEventGenerationSourceDevice, dev_t, 0, (void *dev));
     ADDMETHOD_NOBASE(getEventType, const char *, "change", (void *dev));
     ADDMETHOD_NOBASE(getEventPropertyValue, const char *, "MOCK", (void *dev, const char *key));

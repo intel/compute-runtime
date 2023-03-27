@@ -276,7 +276,9 @@ class PublicLinuxEventsImp : public L0::LinuxEventsImp {
 class PublicLinuxEventsUtil : public L0::LinuxEventsUtil {
   public:
     PublicLinuxEventsUtil() : LinuxEventsUtil() {}
+    using LinuxEventsUtil::deviceEventsMap;
     using LinuxEventsUtil::listenSystemEvents;
+    using LinuxEventsUtil::pipeFd;
     using LinuxEventsUtil::pUdevLib;
 };
 

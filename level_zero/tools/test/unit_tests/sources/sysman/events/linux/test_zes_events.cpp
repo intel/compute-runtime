@@ -17,6 +17,8 @@ namespace ult {
 
 constexpr uint32_t mockHandleCount = 2u;
 constexpr int drmDeviceFd = 0;
+constexpr int mockReadPipeFd = 8;
+constexpr int mockWritePipeFd = 9;
 class SysmanEventsFixture : public SysmanDeviceFixture {
   protected:
     std::unique_ptr<MockEventsFsAccess> pFsAccess;
@@ -106,7 +108,17 @@ TEST_F(SysmanEventsFixture, whenRegisteringInvalidEventsThenErrorIsReturned) {
 }
 
 TEST_F(SysmanEventsFixture, GivenValidSysmanHandleWhenEventsAreClearedThenDeviceListenReturnsNoEvents) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
@@ -143,8 +155,18 @@ TEST_F(SysmanEventsFixture, GivenValidSysmanHandleWhenEventsAreClearedThenDevice
 }
 
 TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsFailureWhenlisteningForResetRequiredEventThenDeviceListenReturnsNoEvents) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
-        return -1;
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
         buf->st_rdev = 0;
@@ -178,6 +200,178 @@ TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsFailureWhenlisteningForRes
     L0::osSysmanDriverDestructor();
 }
 
+TEST_F(SysmanEventsFixture, GivenPipeSystemCallReturnsFailureWhenlisteningForResetRequiredEventThenDeviceListenReturnsResetRequiredEvent) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        return -1;
+    });
+
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return drmDeviceFd;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
+        buf->st_rdev = 0;
+        return 0;
+    });
+
+    // Step 1: Initialize a mocked udev lib object for this test case
+    auto pUdevLibLocal = new UdevLibMock();
+    int a = 0;
+    void *ptr = &a; // Initialize a void pointer with dummy data
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
+    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
+    pUdevLibLocal->getEventPropertyValueResult = "1";
+
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
+
+    // Step 4: Call APIs for validation
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED, pDeviceEvents[0]);
+
+    // Step 5: Cleanup
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+    L0::osSysmanDriverDestructor();
+    delete pMockFwInterface;
+}
+
+TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsOnAllFdsWhenlisteningForResetRequiredEventThenDeviceListenReturnsResetRequiredEvent) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            pollFd[i].revents = POLLIN;
+        }
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return drmDeviceFd;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
+        buf->st_rdev = 0;
+        return 0;
+    });
+
+    // Step 1: Initialize a mocked udev lib object for this test case
+    auto pUdevLibLocal = new UdevLibMock();
+    int a = 0;
+    void *ptr = &a; // Initialize a void pointer with dummy data
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
+    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
+    pUdevLibLocal->getEventPropertyValueResult = "1";
+
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
+
+    // Step 4: Call APIs for validation
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(1u, numDeviceEvents);
+    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED, pDeviceEvents[0]);
+
+    // Step 5: Cleanup
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+    L0::osSysmanDriverDestructor();
+    delete pMockFwInterface;
+}
+
+TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsOnPipeFdWhenlisteningForResetRequiredEventThenEventListenAPIReturnsOnTimeout) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockReadPipeFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return drmDeviceFd;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
+        buf->st_rdev = 0;
+        return 0;
+    });
+
+    // Step 1: Initialize a mocked udev lib object for this test case
+    auto pUdevLibLocal = new UdevLibMock();
+    int a = 0;
+    void *ptr = &a; // Initialize a void pointer with dummy data
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
+    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
+    pUdevLibLocal->getEventPropertyValueResult = "1";
+
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
+
+    // Step 4: Call APIs for validation
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+
+    // Step 5: Cleanup
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+    L0::osSysmanDriverDestructor();
+    delete pMockFwInterface;
+}
+
 TEST_F(SysmanEventsFixture, GivenValidSysmanHandleWhenDeviceEventListenIsInvokedThenVerifyEventListenReturnsFalse) {
     zes_event_type_flags_t events;
     EXPECT_FALSE(pSysmanDeviceImp->deviceEventListen(events, 1000u));
@@ -209,6 +403,11 @@ TEST_F(SysmanEventsFixture, GivenLibUdevNotFoundWhenListeningForEventsThenEventL
 }
 
 TEST_F(SysmanEventsFixture, GivenNoEventsAreRegisteredWhenListeningForEventsThenVerifyListenSystemEventsReturnsFalse) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return -1;
     });
@@ -239,7 +438,7 @@ TEST_F(SysmanEventsFixture, GivenNoEventsAreRegisteredWhenListeningForEventsThen
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), 0));
 
     zes_event_type_flags_t pEvents;
-    std::vector<zes_event_type_flags_t> registeredEvents;
+    std::vector<zes_event_type_flags_t> registeredEvents(1);
     zes_device_handle_t *phDevices = new zes_device_handle_t[1];
     phDevices[0] = device->toHandle();
     EXPECT_FALSE(pLinuxEventsImp->listenSystemEvents(&pEvents, 1u, registeredEvents, phDevices, 1000u));
@@ -304,7 +503,17 @@ TEST_F(SysmanEventsFixture,
     auto pMockFwInterface = new MockEventsFwInterface;
     pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
 
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -348,7 +557,17 @@ TEST_F(SysmanEventsFixture,
 
 TEST_F(SysmanEventsFixture,
        GivenValidDeviceHandleAndListeningForEventsWhenNoEventIsRegisteredThenVerifyNoEventsAreReturned) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
@@ -383,7 +602,17 @@ TEST_F(SysmanEventsFixture,
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleAndListeningEventsWhenNullEventTypeIsReceivedThenEventListenAPIReturnsNoEvent) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -430,7 +659,17 @@ TEST_F(SysmanEventsFixture,
     auto pMockFwInterface = new MockEventsFwInterface;
     pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
 
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -475,7 +714,17 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
     auto pMockFwInterface = new MockEventsFwInterface;
     pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
 
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -518,8 +767,146 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
     delete pMockFwInterface;
 }
 
-TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenEventRegisterIsCalledThenSuccessIsReturned) {
+TEST_F(SysmanEventsFixture, GivenFstatSystemCallFailsWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterTimeout) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
+        return drmDeviceFd;
+    });
+    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
+        return -1;
+    });
+
+    // Step 1: Initialize a mocked udev lib object for this test case
+    auto pUdevLibLocal = new UdevLibMock();
+    int a = 0;
+    void *ptr = &a; // Initialize a void pointer with dummy data
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
+    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
+    pUdevLibLocal->getEventPropertyValueResult = "1";
+
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
+
+    // Step 4: Call APIs for validation
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+
+    // Step 5: Cleanup
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+    L0::osSysmanDriverDestructor();
+    delete pMockFwInterface;
+}
+
+TEST_F(SysmanDeviceFixture, GivenValidDeviceHandleWhenEventRegisterIsCalledThenSuccessIsReturned) {
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    auto pLinuxEventsImp = new PublicLinuxEventsUtil();
+    auto pLinuxEventsUtilOld = pPublicLinuxSysmanDriverImp->pLinuxEventsUtil;
+    VariableBackup<L0::LinuxEventsUtil *> eventsUtilBackup(&pPublicLinuxSysmanDriverImp->pLinuxEventsUtil);
+    pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsImp;
+
+    pLinuxEventsImp->pipeFd[0] = mockReadPipeFd;
+    pLinuxEventsImp->pipeFd[1] = mockWritePipeFd;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+
+    pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsUtilOld;
+    L0::osSysmanDriverDestructor();
+    delete pLinuxEventsImp;
+}
+
+TEST_F(SysmanEventsFixture, GivenEventsAreRegisteredWhenEventRegisterWithNoEventsIsCalledAgainThenSuccessIsReturned) {
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    auto pLinuxEventsImp = new PublicLinuxEventsUtil();
+    auto pLinuxEventsUtilOld = pPublicLinuxSysmanDriverImp->pLinuxEventsUtil;
+    VariableBackup<L0::LinuxEventsUtil *> eventsUtilBackup(&pPublicLinuxSysmanDriverImp->pLinuxEventsUtil);
+    pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsImp;
+
+    pLinuxEventsImp->pipeFd[0] = mockReadPipeFd;
+    pLinuxEventsImp->pipeFd[1] = mockWritePipeFd;
+    std::map<SysmanDeviceImp *, zes_event_type_flags_t> deviceEventsMap = {{pLinuxSysmanImp->getSysmanDeviceImp(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_TEMP_THRESHOLD2}};
+
+    pLinuxEventsImp->deviceEventsMap = deviceEventsMap;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), 0));
+
+    pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsUtilOld;
+    L0::osSysmanDriverDestructor();
+    delete pLinuxEventsImp;
+}
+
+TEST_F(SysmanEventsFixture, GivenEventsAreRegisteredWhenEventRegisterIsCalledAgainThenSuccessIsReturned) {
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    auto pLinuxEventsImp = new PublicLinuxEventsUtil();
+    auto pLinuxEventsUtilOld = pPublicLinuxSysmanDriverImp->pLinuxEventsUtil;
+    VariableBackup<L0::LinuxEventsUtil *> eventsUtilBackup(&pPublicLinuxSysmanDriverImp->pLinuxEventsUtil);
+    pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsImp;
+
+    pLinuxEventsImp->pipeFd[0] = mockReadPipeFd;
+    pLinuxEventsImp->pipeFd[1] = mockWritePipeFd;
+    std::map<SysmanDeviceImp *, zes_event_type_flags_t> deviceEventsMap = {{pLinuxSysmanImp->getSysmanDeviceImp(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED | ZES_EVENT_TYPE_FLAG_TEMP_THRESHOLD2}};
+
+    pLinuxEventsImp->deviceEventsMap = deviceEventsMap;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+
+    pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsUtilOld;
+    L0::osSysmanDriverDestructor();
+    delete pLinuxEventsImp;
+}
+
+TEST_F(SysmanEventsFixture, GivenWriteSystemCallReturnsFailureWhenEventRegisterIsCalledThenSuccessIsReturned) {
+    VariableBackup<decltype(SysCalls::sysCallsWrite)> mockWrite(&SysCalls::sysCallsWrite, [](int fd, void *buf, size_t count) -> ssize_t {
+        return -1;
+    });
+
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    auto pLinuxEventsImp = new PublicLinuxEventsUtil();
+    auto pLinuxEventsUtilOld = pPublicLinuxSysmanDriverImp->pLinuxEventsUtil;
+    VariableBackup<L0::LinuxEventsUtil *> eventsUtilBackup(&pPublicLinuxSysmanDriverImp->pLinuxEventsUtil);
+    pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsImp;
+
+    pLinuxEventsImp->pipeFd[0] = mockReadPipeFd;
+    pLinuxEventsImp->pipeFd[1] = mockWritePipeFd;
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
+
+    pPublicLinuxSysmanDriverImp->pLinuxEventsUtil = pLinuxEventsUtilOld;
+    L0::osSysmanDriverDestructor();
+    delete pLinuxEventsImp;
 }
 
 TEST_F(SysmanEventsFixture,
@@ -528,7 +915,17 @@ TEST_F(SysmanEventsFixture,
     auto pMockFwInterface = new MockEventsFwInterface;
     pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
 
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -576,7 +973,17 @@ TEST_F(SysmanEventsFixture,
     auto pMockFwInterface = new MockEventsFwInterface;
     pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
 
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -625,7 +1032,17 @@ TEST_F(SysmanEventsFixture,
     auto pMockFwInterface = new MockEventsFwInterface;
     pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
 
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -673,7 +1090,17 @@ HWTEST2_F(SysmanEventsFixture,
     auto pMockFwInterface = new MockEventsFwInterface;
     pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
 
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -702,7 +1129,17 @@ HWTEST2_F(SysmanEventsFixture,
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -747,7 +1184,17 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEv
 
 TEST_F(SysmanEventsFixture,
        GivenValidDeviceWhenListeningForDeviceDetachEventsAndDrmEventReceivedButRemoveEventNotReceivedThenEventListenAPIWaitForTimeout) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -790,7 +1237,17 @@ TEST_F(SysmanEventsFixture,
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -835,7 +1292,17 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
 
 TEST_F(SysmanEventsFixture,
        GivenValidDeviceWhenListeningForDeviceAttachEventsAndDrmEventReceivedButAddEventNotReceivedThenEventListenAPIWaitForTimeout) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -878,7 +1345,17 @@ TEST_F(SysmanEventsFixture,
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEventsThenEventListenExAPIReturnsAfterReceivingEventWithinTimeout) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -922,7 +1399,17 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
 }
 
 TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForMemHealthEventsThenEventListenAPIReturnsAfterReceivingEventWithinTimeout) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -966,7 +1453,17 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForMemHealthEvent
 
 TEST_F(SysmanEventsFixture,
        GivenValidDeviceHandleWhenListeningForMemHealthEventsAndIfUeventReceivedWithWrongPropertyValueThenEventListenAPIReturnsWithinTimeout) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -1009,7 +1506,17 @@ TEST_F(SysmanEventsFixture,
 
 TEST_F(SysmanEventsFixture,
        GivenValidDeviceHandleWhenListeningForMemHealthEventsAndDrmEventReceivedButChangeEventNotReceivedThenEventListenAPIReturnsWithinTimeout) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
@@ -1053,7 +1560,17 @@ TEST_F(SysmanEventsFixture,
 
 TEST_F(SysmanEventsFixture,
        GivenValidDeviceHandleWhenListeningForMemHealthEventsAndIfUeventReceivedWithNullPropertyValueThenEventListenAPIReturnsWithinTimeout) {
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
         return 1;
     });
     VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {

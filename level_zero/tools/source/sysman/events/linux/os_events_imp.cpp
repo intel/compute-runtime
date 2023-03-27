@@ -98,9 +98,19 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
         this->init();
     });
 
+    zes_event_type_flags_t prevRegisteredEvents = 0;
+    if (deviceEventsMap.find(pSysmanDevice) != deviceEventsMap.end()) {
+        prevRegisteredEvents = deviceEventsMap[pSysmanDevice];
+    }
+
+    eventsMutex.lock();
     if (!events) {
         // If user is trying to register events with empty events argument, then clear all the registered events
-        deviceEventsMap.emplace(pSysmanDevice, events);
+        if (deviceEventsMap.find(pSysmanDevice) != deviceEventsMap.end()) {
+            deviceEventsMap[pSysmanDevice] = events;
+        } else {
+            deviceEventsMap.emplace(pSysmanDevice, events);
+        }
     } else {
         zes_event_type_flags_t registeredEvents = 0;
         // supportedEventMask --> this mask checks for events that supported currently
@@ -114,6 +124,16 @@ void LinuxEventsUtil::eventRegister(zes_event_type_flags_t events, SysmanDeviceI
         registeredEvents |= (events & supportedEventMask);
         deviceEventsMap.emplace(pSysmanDevice, registeredEvents);
     }
+
+    // Write to Pipe only if eventregister() is called during listen and previously registered events are modified.
+    if ((pipeFd[1] != -1) && (prevRegisteredEvents != deviceEventsMap[pSysmanDevice])) {
+        uint8_t value = 0x00;
+        if (NEO::SysCalls::write(pipeFd[1], &value, 1) < 0) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                                  "%s", "Write to Pipe failed\n");
+        }
+    }
+    eventsMutex.unlock();
 }
 
 void LinuxEventsUtil::init() {
@@ -125,9 +145,11 @@ ze_result_t LinuxEventsUtil::eventsListen(uint64_t timeout, uint32_t count, zes_
     std::vector<zes_event_type_flags_t> registeredEvents(count);
     for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
         auto device = static_cast<SysmanDeviceImp *>(L0::SysmanDevice::fromHandle(phDevices[devIndex]));
+        eventsMutex.lock();
         if (deviceEventsMap.find(device) != deviceEventsMap.end()) {
             registeredEvents[devIndex] = deviceEventsMap[device];
         }
+        eventsMutex.unlock();
         if (registeredEvents[devIndex]) {
             if ((registeredEvents[devIndex] & ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS) || (registeredEvents[devIndex] & ZES_EVENT_TYPE_FLAG_RAS_UNCORRECTABLE_ERRORS)) {
                 if (checkRasEvent(pEvents[devIndex], device, registeredEvents[devIndex])) {
@@ -206,13 +228,67 @@ bool LinuxEventsUtil::checkIfMemHealthChanged(void *dev, zes_event_type_flags_t 
     return false;
 }
 
+void LinuxEventsUtil::getDevIndexToDevNumMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::multimap<uint32_t, dev_t> &mapOfDevIndexToDevNum) {
+    for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
+        auto device = static_cast<SysmanDeviceImp *>(L0::SysmanDevice::fromHandle(phDevices[devIndex]));
+        registeredEvents[devIndex] = deviceEventsMap[device];
+        if (!registeredEvents[devIndex]) {
+            continue;
+        } else {
+            auto pDrm = &static_cast<L0::LinuxSysmanImp *>(device->deviceGetOsInterface())->getDrm();
+            struct stat drmStat = {};
+            if (NEO::SysCalls::fstat(pDrm->getFileDescriptor(), &drmStat) < 0) {
+                NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                                      "%s", "Retrieving drm stat failed for fd %d\n", pDrm->getFileDescriptor());
+                continue;
+            }
+            mapOfDevIndexToDevNum.insert({devIndex, drmStat.st_rdev});
+            mapOfDevIndexToDevNum.insert({devIndex, drmStat.st_rdev - 127});
+        }
+    }
+}
+
+bool LinuxEventsUtil::checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, std::multimap<uint32_t, dev_t> mapOfDevIndexToDevNum, zes_event_type_flags_t *pEvents, void *dev) {
+    dev_t devnum = pUdevLib->getEventGenerationSourceDevice(dev);
+    for (auto it = mapOfDevIndexToDevNum.begin(); it != mapOfDevIndexToDevNum.end(); it++) {
+        if (it->second == devnum) {
+            auto eventTypePtr = pUdevLib->getEventType(dev);
+            if (eventTypePtr != nullptr) {
+                action = std::string(eventTypePtr);
+                if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) {
+                    if (checkDeviceDetachEvent(pEvents[it->first])) {
+                        return true;
+                    }
+                }
+                if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH) {
+                    if (checkDeviceAttachEvent(pEvents[it->first])) {
+                        return true;
+                    }
+                }
+                if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
+                    if (isResetRequired(dev, pEvents[it->first])) {
+                        return true;
+                    }
+                }
+                if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
+                    if (checkIfMemHealthChanged(dev, pEvents[it->first])) {
+                        return true;
+                    }
+                }
+            }
+            break;
+        }
+    }
+    return false;
+}
+
 bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout) {
     std::call_once(initEventsOnce, [this]() {
         this->init();
     });
 
     bool retval = false;
-    struct pollfd pfd;
+    struct pollfd pfd[2];
     std::vector<std::string> subsystemList;
     std::multimap<uint32_t, dev_t> mapOfDevIndexToDevNum;
 
@@ -223,24 +299,39 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
     }
 
     subsystemList.push_back("drm");
-    pfd.fd = pUdevLib->registerEventsFromSubsystemAndGetFd(subsystemList);
-    pfd.events = POLLIN;
+    pfd[0].fd = pUdevLib->registerEventsFromSubsystemAndGetFd(subsystemList);
+    pfd[0].events = POLLIN;
+    pfd[0].revents = 0;
+
+    eventsMutex.lock();
+    if (NEO::SysCalls::pipe(pipeFd) < 0) {
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr,
+                              "%s", "Creation of pipe failed\n");
+    }
+
+    pfd[1].fd = pipeFd[0];
+    pfd[1].events = POLLIN;
+    pfd[1].revents = 0;
 
     auto start = L0::steadyClock::now();
     std::chrono::duration<double, std::milli> timeElapsed;
-    while (NEO::SysCalls::poll(&pfd, 1, static_cast<int>(timeout)) > 0) {
-        mapOfDevIndexToDevNum.clear();
-        for (uint32_t devIndex = 0; devIndex < count; devIndex++) {
-            auto device = static_cast<SysmanDeviceImp *>(L0::SysmanDevice::fromHandle(phDevices[devIndex]));
-            registeredEvents[devIndex] = deviceEventsMap[device];
-            if (!registeredEvents[devIndex]) {
-                continue;
-            } else {
-                auto pDrm = &static_cast<L0::LinuxSysmanImp *>(device->deviceGetOsInterface())->getDrm();
-                struct stat drmStat = {};
-                NEO::SysCalls::fstat(pDrm->getFileDescriptor(), &drmStat);
-                mapOfDevIndexToDevNum.insert({devIndex, drmStat.st_rdev});
-                mapOfDevIndexToDevNum.insert({devIndex, drmStat.st_rdev - 127});
+
+    getDevIndexToDevNumMap(registeredEvents, count, phDevices, mapOfDevIndexToDevNum);
+    eventsMutex.unlock();
+    while (NEO::SysCalls::poll(pfd, 2, static_cast<int>(timeout)) > 0) {
+        bool eventReceived = false;
+        for (auto i = 0; i < 2; i++) {
+            if (pfd[i].revents != 0) {
+                if (pfd[i].fd == pipeFd[0]) {
+                    eventsMutex.lock();
+                    uint8_t dummy;
+                    NEO::SysCalls::read(pipeFd[0], &dummy, 1);
+                    mapOfDevIndexToDevNum.clear();
+                    getDevIndexToDevNumMap(registeredEvents, count, phDevices, mapOfDevIndexToDevNum);
+                    eventsMutex.unlock();
+                } else {
+                    eventReceived = true;
+                }
             }
         }
 
@@ -248,7 +339,16 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
             break;
         }
 
-        dev_t devnum;
+        if (!eventReceived) {
+            timeElapsed = L0::steadyClock::now() - start;
+            if (timeout > timeElapsed.count()) {
+                timeout = timeout - timeElapsed.count();
+                continue;
+            } else {
+                break;
+            }
+        }
+
         void *dev = nullptr;
         dev = pUdevLib->allocateDeviceToReceiveData();
         if (dev == nullptr) {
@@ -261,37 +361,7 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
             }
         }
 
-        devnum = pUdevLib->getEventGenerationSourceDevice(dev);
-        for (auto it = mapOfDevIndexToDevNum.begin(); it != mapOfDevIndexToDevNum.end(); it++) {
-            if (it->second == devnum) {
-                auto eventTypePtr = pUdevLib->getEventType(dev);
-                if (eventTypePtr != nullptr) {
-                    action = std::string(eventTypePtr);
-                    if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_DEVICE_DETACH) {
-                        if (checkDeviceDetachEvent(pEvents[it->first])) {
-                            retval = true;
-                        }
-                    }
-                    if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH) {
-                        if (checkDeviceAttachEvent(pEvents[it->first])) {
-                            retval = true;
-                        }
-                    }
-                    if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED) {
-                        if (isResetRequired(dev, pEvents[it->first])) {
-                            retval = true;
-                        }
-                    }
-                    if (registeredEvents[it->first] & ZES_EVENT_TYPE_FLAG_MEM_HEALTH) {
-                        if (checkIfMemHealthChanged(dev, pEvents[it->first])) {
-                            retval = true;
-                        }
-                    }
-                }
-                break;
-            }
-        }
-
+        retval = checkDeviceEvents(registeredEvents, mapOfDevIndexToDevNum, pEvents, dev);
         pUdevLib->dropDeviceReference(dev);
         if (retval) {
             break;
@@ -304,6 +374,15 @@ bool LinuxEventsUtil::listenSystemEvents(zes_event_type_flags_t *pEvents, uint32
             break;
         }
     }
+
+    eventsMutex.lock();
+    for (uint8_t i = 0; i < 2; i++) {
+        if (pipeFd[i] != -1) {
+            NEO::SysCalls::close(pipeFd[i]);
+            pipeFd[i] = -1;
+        }
+    }
+    eventsMutex.unlock();
     return retval;
 }
 
