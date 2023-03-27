@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -28,7 +28,7 @@ class SchedulerImp : public Scheduler, NEO::NonCopyableOrMovableClass {
     ze_result_t setComputeUnitDebugMode(ze_bool_t *pNeedReload) override;
 
     SchedulerImp() = default;
-    OsScheduler *pOsScheduler = nullptr;
+    std::unique_ptr<OsScheduler> pOsScheduler;
     SchedulerImp(OsSysman *pOsSysman, zes_engine_type_flag_t type, std::vector<std::string> &listOfEngines, ze_device_handle_t deviceHandle);
     ~SchedulerImp() override;
 

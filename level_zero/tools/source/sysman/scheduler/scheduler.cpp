@@ -18,14 +18,11 @@ SchedulerHandleContext::SchedulerHandleContext(OsSysman *pOsSysman) {
 }
 
 SchedulerHandleContext::~SchedulerHandleContext() {
-    for (Scheduler *pScheduler : handleList) {
-        delete pScheduler;
-    }
     handleList.clear();
 }
 void SchedulerHandleContext::createHandle(zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines, ze_device_handle_t deviceHandle) {
-    Scheduler *pScheduler = new SchedulerImp(pOsSysman, engineType, listOfEngines, deviceHandle);
-    handleList.push_back(pScheduler);
+    std::unique_ptr<Scheduler> pScheduler = std::make_unique<SchedulerImp>(pOsSysman, engineType, listOfEngines, deviceHandle);
+    handleList.push_back(std::move(pScheduler));
 }
 
 void SchedulerHandleContext::init(std::vector<ze_device_handle_t> &deviceHandles) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -60,11 +60,6 @@ SchedulerImp::SchedulerImp(OsSysman *pOsSysman, zes_engine_type_flag_t engineTyp
     init();
 };
 
-SchedulerImp::~SchedulerImp() {
-    if (nullptr != pOsScheduler) {
-        delete pOsScheduler;
-        pOsScheduler = nullptr;
-    }
-}
+SchedulerImp::~SchedulerImp() = default;
 
 } // namespace L0

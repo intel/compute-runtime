@@ -69,10 +69,6 @@ class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
         pSysfsAccess->setFileProperties(dummy, enableEuDebug, true, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
         pSysfsAccess->write(enableEuDebug, 0);
 
-        // delete handles created in initial SysmanDeviceHandleContext::init() call
-        for (auto handle : pSysmanDeviceImp->pSchedulerHandleContext->handleList) {
-            delete handle;
-        }
         pSysmanDeviceImp->pSchedulerHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
 
@@ -125,7 +121,7 @@ class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
 
     void setComputeUnitDebugModeMock(zes_sched_handle_t hScheduler) {
         auto pSchedulerImp = static_cast<SchedulerImp *>(Scheduler::fromHandle(hScheduler));
-        auto pOsScheduler = static_cast<PublicLinuxSchedulerImp *>(pSchedulerImp->pOsScheduler);
+        auto pOsScheduler = static_cast<PublicLinuxSchedulerImp *>((pSchedulerImp->pOsScheduler).get());
 
         EXPECT_EQ(ZE_RESULT_SUCCESS, pOsScheduler->setExclusiveModeImp());
         uint64_t val = 1;
@@ -184,7 +180,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 TEST_F(SysmanDeviceSchedulerFixture, GivenSomeInvalidSchedulerModeWhenCheckingForCurrentModeThenAPIReportUnknownMode) {
     auto handles = getSchedHandles(handleComponentCount);
     auto pSchedulerImp = static_cast<SchedulerImp *>(Scheduler::fromHandle(handles[0]));
-    auto pOsScheduler = static_cast<PublicLinuxSchedulerImp *>(pSchedulerImp->pOsScheduler);
+    auto pOsScheduler = static_cast<PublicLinuxSchedulerImp *>((pSchedulerImp->pOsScheduler).get());
     uint64_t timeslice = 0, timeout = 0, heartbeat = 3000;
     pOsScheduler->setPreemptTimeout(timeout);
     pOsScheduler->setTimesliceDuration(timeslice);
@@ -624,7 +620,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenHeartBeatIntervalFileNotPresentWhenSet
 
     auto handles = getSchedHandles(handleComponentCount);
     auto pSchedulerImp = static_cast<SchedulerImp *>(Scheduler::fromHandle(handles[0]));
-    auto pOsScheduler = static_cast<PublicLinuxSchedulerImp *>(pSchedulerImp->pOsScheduler);
+    auto pOsScheduler = static_cast<PublicLinuxSchedulerImp *>((pSchedulerImp->pOsScheduler).get());
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsScheduler->setHeartbeatInterval(2000));
 }
 
@@ -838,7 +834,7 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenEuDebugNodeWriteFailsWhenCallingzesSch
 TEST_F(SysmanDeviceSchedulerFixture, GivenNodeRequiredToEnableEuDebugNotPresentWhenCheckingForDebugModeThenCallReturnsFalse) {
     auto handles = getSchedHandles(handleComponentCount);
     auto pSchedulerImp = static_cast<SchedulerImp *>(Scheduler::fromHandle(handles[0]));
-    auto pOsScheduler = static_cast<PublicLinuxSchedulerImp *>(pSchedulerImp->pOsScheduler);
+    auto pOsScheduler = static_cast<PublicLinuxSchedulerImp *>((pSchedulerImp->pOsScheduler).get());
     std::string dummy;
     pSysfsAccess->setFileProperties(dummy, enableEuDebug, false, S_IRUSR | S_IRGRP | S_IROTH | S_IWUSR);
     EXPECT_FALSE(pOsScheduler->isComputeUnitDebugModeEnabled());
@@ -956,10 +952,8 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidObjectsOfClassSchedulerImpAndSchedulerHandleContextThenDuringObjectReleaseCheckDestructorBranches) {
     for (auto &handle : pSysmanDeviceImp->pSchedulerHandleContext->handleList) {
-        auto pSchedulerImp = static_cast<SchedulerImp *>(handle);
-        delete pSchedulerImp->pOsScheduler;
+        auto pSchedulerImp = static_cast<SchedulerImp *>(handle.get());
         pSchedulerImp->pOsScheduler = nullptr;
-        delete handle;
         handle = nullptr;
     }
 }
@@ -994,11 +988,6 @@ class SysmanMultiDeviceSchedulerFixture : public SysmanMultiDeviceFixture {
         pOriginalDrm = pLinuxSysmanImp->pDrm;
         pLinuxSysmanImp->pDrm = pDrm.get();
 
-        // delete handles created in initial SysmanDeviceHandleContext::init() call
-        for (auto handle : pSysmanDeviceImp->pSchedulerHandleContext->handleList) {
-            delete handle;
-        }
-
         pSysmanDeviceImp->pSchedulerHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
 
@@ -1031,7 +1020,7 @@ class SysmanMultiDeviceSchedulerFixture : public SysmanMultiDeviceFixture {
 TEST_F(SysmanMultiDeviceSchedulerFixture, GivenValidSchedulerHandleContextWhenInitializingForIncorrectDistanceInfoVerifyInvalidEngineTypeIsNotReturned) {
     auto pSchedulerHandleContextTest = std::make_unique<SchedulerHandleContext>(pOsSysman);
     pSchedulerHandleContextTest->init(deviceHandles);
-    for (auto handle : pSchedulerHandleContextTest->handleList) {
+    for (auto &handle : pSchedulerHandleContextTest->handleList) {
         zes_sched_properties_t properties = {};
         ze_result_t result = zesSchedulerGetProperties(handle->toHandle(), &properties);
         EXPECT_EQ(ZE_RESULT_SUCCESS, result);
