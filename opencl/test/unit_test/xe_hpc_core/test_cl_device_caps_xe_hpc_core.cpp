@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -18,7 +18,7 @@ using namespace NEO;
 
 using XeHpcCoreClDeviceCaps = Test<ClDeviceFixture>;
 
-XE_HPC_CORETEST_F(XeHpcCoreClDeviceCaps, givenXeHpcCoreWhenCheckExtensionsThenDeviceDoesNotReportClKhrSubgroupsExtension) {
+XE_HPC_CORETEST_F(XeHpcCoreClDeviceCaps, givenXeHpcCoreWhenCheckExtensionsThenDeviceDoesReportClKhrSubgroupsExtension) {
     const auto &caps = pClDevice->getDeviceInfo();
 
     EXPECT_TRUE(hasSubstr(caps.deviceExtensions, std::string("cl_khr_subgroups")));
