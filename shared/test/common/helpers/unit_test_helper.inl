@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
@@ -111,6 +112,31 @@ bool UnitTestHelper<GfxFamily>::expectNullDsh(const DeviceInfo &deviceInfo) {
         return !deviceInfo.imageSupport;
     }
     return true;
+}
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::findStateCacheFlushPipeControl(LinearStream &csrStream) {
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parsePipeControl = true;
+    hwParserCsr.parseCommands<GfxFamily>(csrStream, 0);
+    hwParserCsr.findHardwareCommands<GfxFamily>();
+
+    bool stateCacheFlushFound = false;
+    auto itorPipeControl = hwParserCsr.pipeControlList.begin();
+    while (itorPipeControl != hwParserCsr.pipeControlList.end()) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*itorPipeControl);
+
+        if (pipeControl->getRenderTargetCacheFlushEnable() &&
+            pipeControl->getStateCacheInvalidationEnable() &&
+            pipeControl->getTextureCacheInvalidationEnable()) {
+            stateCacheFlushFound = true;
+            break;
+        }
+        itorPipeControl++;
+    }
+    return stateCacheFlushFound;
 }
 
 } // namespace NEO

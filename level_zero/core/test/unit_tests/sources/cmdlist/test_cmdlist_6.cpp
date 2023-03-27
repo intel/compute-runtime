@@ -2275,5 +2275,31 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     EXPECT_EQ(scratchAllocation->getGpuAddress(), scratchSurfaceState->getSurfaceBaseAddress());
 }
 
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenCommandListNotUsingPrivateSurfaceHeapWhenCommandListDestroyedThenCsrDoesNotDispatchStateCacheFlush,
+          IsAtLeastSkl) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = csr.commandStream;
+
+    ze_result_t returnValue;
+    L0::ult::CommandList *cmdListObject = whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue));
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    cmdListObject->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    returnValue = cmdListObject->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto cmdListHandle = cmdListObject->toHandle();
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    returnValue = cmdListObject->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_EQ(0u, csrStream.getUsed());
+}
+
 } // namespace ult
 } // namespace L0

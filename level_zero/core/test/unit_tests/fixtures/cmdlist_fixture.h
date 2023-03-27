@@ -79,6 +79,7 @@ struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
     std::unique_ptr<L0::ult::CommandList> commandList;
     std::unique_ptr<L0::ult::CommandList> commandListImmediate;
     std::unique_ptr<ModuleImmutableDataFixture::MockKernel> kernel;
+    std::unique_ptr<VariableBackup<HardwareInfo>> backupHwInfo;
     L0::ult::CommandQueue *commandQueue;
     NEO::EngineGroupType engineGroupType;
 

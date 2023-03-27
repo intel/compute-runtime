@@ -2777,10 +2777,10 @@ HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenFlushing
 
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_MEMORY;
 
-    EXPECT_EQ(SubmissionStatus::OUT_OF_MEMORY, commandStreamReceiver.flushPipeControl());
+    EXPECT_EQ(SubmissionStatus::OUT_OF_MEMORY, commandStreamReceiver.flushPipeControl(false));
 
     commandStreamReceiver.flushReturnValue = SubmissionStatus::OUT_OF_HOST_MEMORY;
-    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, commandStreamReceiver.flushPipeControl());
+    EXPECT_EQ(SubmissionStatus::OUT_OF_HOST_MEMORY, commandStreamReceiver.flushPipeControl(false));
 }
 
 HWTEST_F(CommandStreamReceiverHwTest, givenOutOfMemoryFailureOnFlushWhenFlushingTagUpdateThenErrorIsPropagated) {
@@ -3096,4 +3096,20 @@ HWTEST2_F(CommandStreamReceiverHwTest,
     hwParserCsr.findHardwareCommands<FamilyType>();
     auto scmCmd = hwParserCsr.getCommand<STATE_COMPUTE_MODE>();
     EXPECT_NE(nullptr, scmCmd);
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenFlushPipeControlWhenFlushWithoutStateCacheFlushThenExpectNoStateCacheFlushFlagsSet) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.flushPipeControl(false);
+
+    EXPECT_FALSE(UnitTestHelper<FamilyType>::findStateCacheFlushPipeControl(commandStreamReceiver.commandStream));
+}
+
+HWTEST_F(CommandStreamReceiverHwTest, givenFlushPipeControlWhenFlushWithStateCacheFlushThenExpectStateCacheFlushFlagsSet) {
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.sendRenderStateCacheFlush();
+
+    EXPECT_TRUE(UnitTestHelper<FamilyType>::findStateCacheFlushPipeControl(commandStreamReceiver.commandStream));
 }

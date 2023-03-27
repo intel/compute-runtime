@@ -75,6 +75,10 @@ bool isCcs(aub_stream::EngineType engineType) {
     return engineType >= aub_stream::ENGINE_CCS && engineType <= aub_stream::ENGINE_CCS3;
 }
 
+bool isComputeEngine(aub_stream::EngineType engineType) {
+    return isCcs(engineType) || engineType == aub_stream::ENGINE_RCS || engineType == aub_stream::ENGINE_CCCS;
+}
+
 bool isBcs(aub_stream::EngineType engineType) {
     return engineType == aub_stream::ENGINE_BCS || (engineType >= aub_stream::ENGINE_BCS1 && engineType <= aub_stream::ENGINE_BCS8);
 }

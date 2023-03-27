@@ -567,6 +567,10 @@ class CommandStreamReceiverMock : public CommandStreamReceiver {
         return cs;
     }
 
+    SubmissionStatus sendRenderStateCacheFlush() override {
+        return SubmissionStatus::SUCCESS;
+    }
+
     bool flushBatchedSubmissions() override { return true; }
 
     CommandStreamReceiverType getType() const override {

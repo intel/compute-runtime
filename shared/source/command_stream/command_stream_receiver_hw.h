@@ -100,10 +100,11 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
 
     SubmissionStatus flushTagUpdate() override;
     SubmissionStatus flushMiFlushDW();
-    SubmissionStatus flushPipeControl();
+    SubmissionStatus flushPipeControl(bool stateCacheFlush);
     SubmissionStatus flushSmallTask(LinearStream &commandStreamTask,
                                     size_t commandStreamStartTask);
     SubmissionStatus flushHandler(BatchBuffer &batchBuffer, ResidencyContainer &allocationsForResidency);
+    SubmissionStatus sendRenderStateCacheFlush() override;
 
     bool isUpdateTagFromWaitEnabled() override;
     void updateTagFromWait() override;

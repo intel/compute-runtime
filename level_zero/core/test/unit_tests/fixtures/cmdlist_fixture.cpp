@@ -113,6 +113,8 @@ void ModuleMutableCommandListFixture::setUpImpl() {
 }
 
 void ModuleMutableCommandListFixture::setUp(uint32_t revision) {
+    backupHwInfo = std::make_unique<VariableBackup<HardwareInfo>>(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
     if (revision != 0) {
         DebugManager.flags.OverrideRevision.set(revision);
     }

@@ -93,6 +93,8 @@ struct UnitTestHelper {
     static bool getSystolicFlagValueFromPipelineSelectCommand(const typename GfxFamily::PIPELINE_SELECT &pipelineSelectCmd);
     static size_t getAdditionalDshSize(uint32_t iddCount);
     static bool expectNullDsh(const DeviceInfo &deviceInfo);
+
+    static bool findStateCacheFlushPipeControl(LinearStream &csrStream);
 };
 
 } // namespace NEO

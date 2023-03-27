@@ -149,3 +149,34 @@ TEST(EngineNodeHelperTest, givenLinkCopyEnginesAndInternalUsageEnabledWhenGettin
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, isInternalUsage));
     EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS3, EngineHelpers::getBcsEngineType(rootDeviceEnvironment, deviceBitfield, selectorCopyEngine, isInternalUsage));
 }
+
+TEST(EngineNodeHelperTest, givenAllEnginesWhenCheckingEngineIsComputeCapableThenReturnTrueOnlyForCompute) {
+    struct EngineProperties {
+        aub_stream::EngineType engineType;
+        bool isCompute;
+    };
+
+    const EngineProperties engines[] = {
+        {aub_stream::ENGINE_RCS, true},
+        {aub_stream::ENGINE_CCS, true},
+        {aub_stream::ENGINE_CCS1, true},
+        {aub_stream::ENGINE_CCS2, true},
+        {aub_stream::ENGINE_CCS3, true},
+        {aub_stream::ENGINE_CCCS, true},
+
+        {aub_stream::ENGINE_BCS, false},
+        {aub_stream::ENGINE_BCS1, false},
+        {aub_stream::ENGINE_BCS2, false},
+        {aub_stream::ENGINE_BCS3, false},
+        {aub_stream::ENGINE_BCS4, false},
+        {aub_stream::ENGINE_BCS5, false},
+        {aub_stream::ENGINE_BCS6, false},
+        {aub_stream::ENGINE_BCS7, false},
+        {aub_stream::ENGINE_BCS8, false}};
+
+    const size_t numEngines = sizeof(engines) / sizeof(EngineProperties);
+
+    for (size_t i = 0; i < numEngines; i++) {
+        EXPECT_EQ(engines[i].isCompute, EngineHelpers::isComputeEngine(engines[i].engineType));
+    }
+}

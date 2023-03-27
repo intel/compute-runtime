@@ -2558,5 +2558,31 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     ASSERT_EQ(0u, sbaCmds.size());
 }
 
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
+          givenCommandListUsingPrivateSurfaceHeapWhenCommandListDestroyedThenCsrDispatchesStateCacheFlush,
+          IsAtLeastSkl) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = csr.commandStream;
+
+    ze_result_t returnValue;
+    L0::ult::CommandList *cmdListObject = whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue));
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    cmdListObject->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    returnValue = cmdListObject->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto cmdListHandle = cmdListObject->toHandle();
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    returnValue = cmdListObject->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::findStateCacheFlushPipeControl(csrStream));
+}
+
 } // namespace ult
 } // namespace L0

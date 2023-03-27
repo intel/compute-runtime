@@ -114,6 +114,10 @@ class MockCommandStreamReceiver : public CommandStreamReceiver {
     CompletionStamp flushBcsTask(LinearStream &commandStreamTask, size_t commandStreamTaskStart,
                                  const DispatchBcsFlags &dispatchBcsFlags, const HardwareInfo &hwInfo) override;
 
+    SubmissionStatus sendRenderStateCacheFlush() override {
+        return SubmissionStatus::SUCCESS;
+    }
+
     bool flushBatchedSubmissions() override {
         if (flushBatchedSubmissionsCallCounter) {
             (*flushBatchedSubmissionsCallCounter)++;

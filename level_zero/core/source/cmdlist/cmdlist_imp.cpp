@@ -11,10 +11,13 @@
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/wait_status.h"
 #include "shared/source/device/device.h"
+#include "shared/source/helpers/engine_control.h"
 #include "shared/source/helpers/engine_node_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/logical_state_helper.h"
 #include "shared/source/indirect_heap/indirect_heap.h"
+#include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 
 #include "level_zero/core/source/cmdqueue/cmdqueue.h"
@@ -44,6 +47,27 @@ ze_result_t CommandListImp::destroy() {
         auto timeoutMicroseconds = NEO::TimeoutControls::maxTimeout;
         this->csr->waitForCompletionWithTimeout(NEO::WaitParams{false, false, timeoutMicroseconds}, this->csr->peekTaskCount());
     }
+
+    if (this->cmdListType == CommandListType::TYPE_REGULAR &&
+        !isCopyOnly() &&
+        this->stateBaseAddressTracking &&
+        this->cmdListHeapAddressModel == NEO::HeapAddressModel::PrivateHeaps) {
+
+        auto memoryManager = device->getNEODevice()->getMemoryManager();
+
+        auto heapAllocation = this->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation();
+        for (auto &engine : memoryManager->getRegisteredEngines()) {
+            if (NEO::EngineHelpers::isComputeEngine(engine.getEngineType())) {
+                auto contextId = engine.osContext->getContextId();
+
+                if (heapAllocation->isUsedByOsContext(contextId)) {
+                    engine.commandStreamReceiver->sendRenderStateCacheFlush();
+                    engine.commandStreamReceiver->waitForCompletionWithTimeout(NEO::WaitParams{false, false, NEO::TimeoutControls::maxTimeout}, engine.commandStreamReceiver->peekTaskCount());
+                }
+            }
+        }
+    }
+
     delete this;
     return ZE_RESULT_SUCCESS;
 }

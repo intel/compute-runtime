@@ -1365,7 +1365,7 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushTagUpdate() {
         if (EngineHelpers::isBcs(this->osContext->getEngineType())) {
             return this->flushMiFlushDW();
         } else {
-            return this->flushPipeControl();
+            return this->flushPipeControl(false);
         }
     }
     return SubmissionStatus::DEVICE_UNINITIALIZED;
@@ -1393,13 +1393,19 @@ inline SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushMiFlushDW() {
 }
 
 template <typename GfxFamily>
-SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl() {
+SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushPipeControl(bool stateCacheFlush) {
     auto lock = obtainUniqueOwnership();
 
     PipeControlArgs args;
     args.dcFlushEnable = this->dcFlushSupport;
     args.notifyEnable = isUsedNotifyEnableForPostSync();
     args.workloadPartitionOffset = isMultiTileOperationEnabled();
+
+    if (stateCacheFlush) {
+        args.textureCacheInvalidationEnable = true;
+        args.renderTargetCacheFlushEnable = true;
+        args.stateCacheInvalidationEnable = true;
+    }
 
     auto dispatchSize = MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(peekRootDeviceEnvironment(), args.tlbInvalidation) + this->getCmdSizeForPrologue();
 
@@ -1452,6 +1458,11 @@ SubmissionStatus CommandStreamReceiverHw<GfxFamily>::flushSmallTask(LinearStream
         taskCount++;
     }
     return submissionStatus;
+}
+
+template <typename GfxFamily>
+SubmissionStatus CommandStreamReceiverHw<GfxFamily>::sendRenderStateCacheFlush() {
+    return this->flushPipeControl(true);
 }
 
 template <typename GfxFamily>
