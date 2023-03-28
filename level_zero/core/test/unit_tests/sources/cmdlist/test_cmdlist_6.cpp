@@ -2277,7 +2277,7 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
 
 HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
           givenCommandListNotUsingPrivateSurfaceHeapWhenCommandListDestroyedThenCsrDoesNotDispatchStateCacheFlush,
-          IsAtLeastSkl) {
+          IsAtLeastXeHpCore) {
     auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
     auto &csrStream = csr.commandStream;
 
@@ -2299,6 +2299,18 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_EQ(0u, csrStream.getUsed());
+}
+
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenCommandListUsingGlobalHeapsWhenCommandListCreatedThenNoStateHeapAllocationsCreated,
+          IsAtLeastXeHpCore) {
+    auto &container = commandList->getCmdContainer();
+
+    auto ssh = container.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+    EXPECT_EQ(nullptr, ssh);
+
+    auto dsh = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
+    EXPECT_EQ(nullptr, dsh);
 }
 
 } // namespace ult

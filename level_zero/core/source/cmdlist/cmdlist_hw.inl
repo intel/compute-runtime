@@ -169,6 +169,7 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->l1CachePolicyData.init(productHelper);
     this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;
     this->cmdListHeapAddressModel = L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment);
+    this->commandContainer.setHeapAddressModel(this->cmdListHeapAddressModel);
     this->requiredStreamState.initSupport(rootDeviceEnvironment);
     this->finalStreamState.initSupport(rootDeviceEnvironment);
     this->commandContainer.setStateBaseAddressTracking(this->stateBaseAddressTracking);
