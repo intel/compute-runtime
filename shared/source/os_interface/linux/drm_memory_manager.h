@@ -140,6 +140,8 @@ class DrmMemoryManager : public MemoryManager {
     bool allocationTypeForCompletionFence(AllocationType allocationType);
     bool makeAllocationResident(GraphicsAllocation *allocation);
 
+    inline std::unique_ptr<Gmm> makeGmmIfSingleHandle(const AllocationData &allocationData, size_t sizeAligned);
+    inline std::unique_ptr<DrmAllocation> makeDrmAllocation(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm, uint64_t gpuAddress, size_t sizeAligned);
     Drm &getDrm(uint32_t rootDeviceIndex) const;
     uint32_t getRootDeviceIndex(const Drm *drm);
     BufferObject *createRootDeviceBufferObject(uint32_t rootDeviceIndex);

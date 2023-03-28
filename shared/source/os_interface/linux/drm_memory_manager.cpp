@@ -1541,6 +1541,16 @@ void fillGmmsInAllocation(GmmHelper *gmmHelper, DrmAllocation *allocation, const
     }
 }
 
+inline uint64_t getCanonizedHeapAllocationAddress(HeapIndex heap, GmmHelper *gmmHelper, GfxPartition *gfxPartition, size_t &sizeAllocated, bool packed) {
+    size_t alignment = 0;
+
+    if (DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get() != -1) {
+        alignment = static_cast<size_t>(DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
+    }
+    auto address = gfxPartition->heapAllocateWithCustomAlignment(heap, sizeAllocated, alignment);
+    return gmmHelper->canonize(address);
+}
+
 AllocationStatus getGpuAddress(const AlignmentSelector &alignmentSelector, HeapAssigner &heapAssigner, const HardwareInfo &hwInfo,
                                GfxPartition *gfxPartition, const AllocationData &allocationData, size_t &sizeAllocated,
                                GmmHelper *gmmHelper, uint64_t &gpuAddress) {
@@ -1555,16 +1565,10 @@ AllocationStatus getGpuAddress(const AlignmentSelector &alignmentSelector, HeapA
     case AllocationType::KERNEL_ISA:
     case AllocationType::KERNEL_ISA_INTERNAL:
     case AllocationType::INTERNAL_HEAP:
-    case AllocationType::DEBUG_MODULE_AREA: {
-        auto heap = heapAssigner.get32BitHeapIndex(allocType, true, hwInfo, allocationData.flags.use32BitFrontWindow);
-        size_t alignment = 0;
-
-        if (DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get() != -1) {
-            alignment = static_cast<size_t>(DebugManager.flags.ExperimentalEnableCustomLocalMemoryAlignment.get());
-        }
-
-        gpuAddress = gmmHelper->canonize(gfxPartition->heapAllocateWithCustomAlignment(heap, sizeAllocated, alignment));
-    } break;
+    case AllocationType::DEBUG_MODULE_AREA:
+        gpuAddress = getCanonizedHeapAllocationAddress(heapAssigner.get32BitHeapIndex(allocType, true, hwInfo, allocationData.flags.use32BitFrontWindow),
+                                                       gmmHelper, gfxPartition, sizeAllocated, false);
+        break;
     case AllocationType::WRITE_COMBINED:
         sizeAllocated = 0;
         break;
@@ -1604,29 +1608,29 @@ void DrmMemoryManager::cleanupBeforeReturn(const AllocationData &allocationData,
     gfxPartition->freeGpuAddressRange(gmmHelper->decanonize(gpuAddress), sizeAllocated);
 }
 
-GraphicsAllocation *DrmMemoryManager::allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
-
-    std::unique_ptr<Gmm> gmm;
-    size_t sizeAligned = 0;
-    auto numHandles = allocationData.storageInfo.getNumBanks();
-    bool createSingleHandle = 1 == numHandles;
-    auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
-
-    sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
-    if (createSingleHandle) {
-        auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
-        gmm = std::make_unique<Gmm>(gmmHelper,
-                                    nullptr,
-                                    sizeAligned,
-                                    0u,
-                                    CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper),
-                                    allocationData.flags.preferCompressed,
-                                    allocationData.storageInfo,
-                                    true);
+inline std::unique_ptr<Gmm> DrmMemoryManager::makeGmmIfSingleHandle(const AllocationData &allocationData, size_t sizeAligned) {
+    if (1 != allocationData.storageInfo.getNumBanks()) {
+        return nullptr;
     }
+    auto gmmHelper = this->getGmmHelper(allocationData.rootDeviceIndex);
+    auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
+    return std::make_unique<Gmm>(gmmHelper,
+                                 nullptr,
+                                 sizeAligned,
+                                 0u,
+                                 CacheSettingsHelper::getGmmUsageType(allocationData.type, allocationData.flags.uncacheable, productHelper),
+                                 allocationData.flags.preferCompressed,
+                                 allocationData.storageInfo,
+                                 true);
+}
 
-    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, numHandles, allocationData.type, nullptr, nullptr, 0u, sizeAligned, MemoryPool::LocalMemory);
-    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(allocation.get());
+inline std::unique_ptr<DrmAllocation> DrmMemoryManager::makeDrmAllocation(const AllocationData &allocationData, std::unique_ptr<Gmm> gmm, uint64_t gpuAddress, size_t sizeAligned) {
+    auto gmmHelper = this->getGmmHelper(allocationData.rootDeviceIndex);
+    bool createSingleHandle = (1 == allocationData.storageInfo.getNumBanks());
+
+    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, allocationData.storageInfo.getNumBanks(),
+                                                      allocationData.type, nullptr, nullptr, gmmHelper->canonize(gpuAddress),
+                                                      sizeAligned, MemoryPool::LocalMemory);
 
     if (createSingleHandle) {
         allocation->setDefaultGmm(gmm.release());
@@ -1641,6 +1645,17 @@ GraphicsAllocation *DrmMemoryManager::allocatePhysicalLocalDeviceMemory(const Al
     allocation->storageInfo = allocationData.storageInfo;
     allocation->setFlushL3Required(allocationData.flags.flushL3);
     allocation->setUncacheable(allocationData.flags.uncacheable);
+
+    return allocation;
+}
+
+GraphicsAllocation *DrmMemoryManager::allocatePhysicalLocalDeviceMemory(const AllocationData &allocationData, AllocationStatus &status) {
+
+    size_t sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
+    auto gmm = this->makeGmmIfSingleHandle(allocationData, sizeAligned);
+
+    auto allocation = this->makeDrmAllocation(allocationData, std::move(gmm), 0u, sizeAligned);
+    auto *drmAllocation = static_cast<DrmAllocation *>(allocation.get());
 
     if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), 0u, maxOsContextCount)) {
         for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
@@ -1683,8 +1698,6 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
 
     std::unique_ptr<Gmm> gmm;
     size_t sizeAligned = 0;
-    auto numHandles = allocationData.storageInfo.getNumBanks();
-    bool createSingleHandle = 1 == numHandles;
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
 
     if (allocationData.type == AllocationType::IMAGE) {
@@ -1698,17 +1711,7 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         } else {
             sizeAligned = alignUp(allocationData.size, MemoryConstants::pageSize64k);
         }
-        if (createSingleHandle) {
-            auto &productHelper = gmmHelper->getRootDeviceEnvironment().getHelper<ProductHelper>();
-            gmm = std::make_unique<Gmm>(gmmHelper,
-                                        nullptr,
-                                        sizeAligned,
-                                        0u,
-                                        CacheSettingsHelper::getGmmUsageType(allocationData.type, !!allocationData.flags.uncacheable, productHelper),
-                                        allocationData.flags.preferCompressed,
-                                        allocationData.storageInfo,
-                                        true);
-        }
+        gmm = this->makeGmmIfSingleHandle(allocationData, sizeAligned);
     }
 
     auto sizeAllocated = sizeAligned;
@@ -1720,25 +1723,10 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryInDevicePool(const A
         return nullptr;
     }
 
-    auto canonizedGpuAddress = gmmHelper->canonize(gpuAddress);
-    auto allocation = std::make_unique<DrmAllocation>(allocationData.rootDeviceIndex, numHandles, allocationData.type, nullptr, nullptr, canonizedGpuAddress, sizeAligned, MemoryPool::LocalMemory);
-    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(allocation.get());
-    GraphicsAllocation *graphicsAllocation = static_cast<GraphicsAllocation *>(allocation.get());
-
-    if (createSingleHandle) {
-        allocation->setDefaultGmm(gmm.release());
-    } else if (allocationData.storageInfo.multiStorage) {
-        createColouredGmms(gmmHelper,
-                           *allocation,
-                           allocationData.storageInfo,
-                           allocationData.flags.preferCompressed);
-    } else {
-        fillGmmsInAllocation(gmmHelper, allocation.get(), allocationData.storageInfo);
-    }
-    allocation->storageInfo = allocationData.storageInfo;
-    allocation->setFlushL3Required(allocationData.flags.flushL3);
-    allocation->setUncacheable(allocationData.flags.uncacheable);
+    auto allocation = makeDrmAllocation(allocationData, std::move(gmm), gpuAddress, sizeAligned);
     allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), sizeAllocated);
+    auto *drmAllocation = static_cast<DrmAllocation *>(allocation.get());
+    auto *graphicsAllocation = static_cast<GraphicsAllocation *>(allocation.get());
 
     if (!createDrmAllocation(&getDrm(allocationData.rootDeviceIndex), allocation.get(), gpuAddress, maxOsContextCount)) {
         for (auto handleId = 0u; handleId < allocationData.storageInfo.getNumBanks(); handleId++) {
