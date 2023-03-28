@@ -14,7 +14,7 @@
 #include <vector>
 
 namespace L0 {
-
+namespace Sysman {
 struct OsSysman;
 
 class Firmware : _zes_firmware_handle_t {
@@ -51,4 +51,5 @@ struct FirmwareHandleContext {
     bool firmwareInitDone = false;
 };
 
+} // namespace Sysman
 } // namespace L0

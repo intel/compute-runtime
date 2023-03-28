@@ -11,6 +11,7 @@
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/sysman/source/engine/engine.h"
 #include "level_zero/sysman/source/fabric_port/fabric_port.h"
+#include "level_zero/sysman/source/firmware/firmware.h"
 #include "level_zero/sysman/source/frequency/frequency.h"
 #include "level_zero/sysman/source/memory/memory.h"
 #include "level_zero/sysman/source/power/power.h"
@@ -45,6 +46,9 @@ struct SysmanDevice : _ze_device_handle_t {
 
     static ze_result_t schedulerGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_sched_handle_t *phScheduler);
     virtual ze_result_t schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler) = 0;
+
+    static ze_result_t firmwareGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_firmware_handle_t *phFirmware);
+    virtual ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) = 0;
 };
 
 } // namespace Sysman

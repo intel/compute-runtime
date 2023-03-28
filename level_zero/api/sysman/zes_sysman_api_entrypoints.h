@@ -528,20 +528,32 @@ ze_result_t zesDeviceEnumFirmwares(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_firmware_handle_t *phFirmware) {
-    return L0::SysmanDevice::firmwareGet(hDevice, pCount, phFirmware);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::firmwareGet(hDevice, pCount, phFirmware);
+    } else {
+        return L0::Sysman::SysmanDevice::firmwareGet(hDevice, pCount, phFirmware);
+    }
 }
 
 ze_result_t zesFirmwareGetProperties(
     zes_firmware_handle_t hFirmware,
     zes_firmware_properties_t *pProperties) {
-    return L0::Firmware::fromHandle(hFirmware)->firmwareGetProperties(pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::Firmware::fromHandle(hFirmware)->firmwareGetProperties(pProperties);
+    } else {
+        return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareGetProperties(pProperties);
+    }
 }
 
 ze_result_t zesFirmwareFlash(
     zes_firmware_handle_t hFirmware,
     void *pImage,
     uint32_t size) {
-    return L0::Firmware::fromHandle(hFirmware)->firmwareFlash(pImage, size);
+    if (L0::sysmanInitFromCore) {
+        return L0::Firmware::fromHandle(hFirmware)->firmwareFlash(pImage, size);
+    } else {
+        return L0::Sysman::Firmware::fromHandle(hFirmware)->firmwareFlash(pImage, size);
+    }
 }
 
 ze_result_t zesDeviceEnumMemoryModules(
