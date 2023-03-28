@@ -88,12 +88,6 @@ bool WddmDirectSubmission<GfxFamily, Dispatcher>::handleResidency() {
 
 template <typename GfxFamily, typename Dispatcher>
 void WddmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
-    if (this->ringStart) {
-        if (this->ringBuffers[this->currentRingBuffer].completionFence != 0) {
-            MonitoredFence &currentFence = osContextWin->getResidencyController().getMonitoredFence();
-            handleCompletionFence(this->ringBuffers[this->currentRingBuffer].completionFence, currentFence);
-        }
-    }
 }
 
 template <typename GfxFamily, typename Dispatcher>

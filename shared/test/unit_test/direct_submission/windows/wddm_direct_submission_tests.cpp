@@ -338,7 +338,7 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
     EXPECT_EQ(0u, wddm->waitFromCpuResult.called);
 }
 
-HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWaitFenceUpdateThenExpectWaitCalled) {
+HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWaitFenceUpdateThenExpectWaitNotCalled) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
 
     DebugManagerStateRestore restorer;
@@ -370,8 +370,8 @@ HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenSwitchingRingBufferStartedAndWai
     uint64_t actualGpuVa = gmmHelper->canonize(bbStart->getBatchBufferStartAddress());
     EXPECT_EQ(wddmDirectSubmission.ringBuffers[1u].ringBuffer->getGpuAddress(), actualGpuVa);
 
-    EXPECT_EQ(1u, wddm->waitFromCpuResult.called);
-    EXPECT_EQ(expectedWaitFence, wddm->waitFromCpuResult.uint64ParamPassed);
+    EXPECT_EQ(0u, wddm->waitFromCpuResult.called);
+    EXPECT_NE(expectedWaitFence, wddm->waitFromCpuResult.uint64ParamPassed);
 }
 
 HWTEST_F(WddmDirectSubmissionTest, givenWddmWhenUpdatingTagValueThenExpectcompletionFenceUpdated) {

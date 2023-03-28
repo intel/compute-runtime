@@ -219,12 +219,6 @@ void DrmDirectSubmission<GfxFamily, Dispatcher>::handleSwitchRingBuffers() {
             this->ringBuffers[this->previousRingBuffer].completionFence = this->currentTagData.tagValue;
         }
     }
-
-    if (this->ringStart) {
-        if (this->ringBuffers[this->currentRingBuffer].completionFence != 0) {
-            this->wait(static_cast<uint32_t>(this->ringBuffers[this->currentRingBuffer].completionFence));
-        }
-    }
 }
 
 template <typename GfxFamily, typename Dispatcher>
