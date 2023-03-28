@@ -84,7 +84,7 @@ static void reserveRangeWithMemoryMapsParse(OSMemory *osMemory, OSMemory::Reserv
 static void reserveHigh48BitRangeWithMemoryMapsParse(OSMemory *osMemory, OSMemory::ReservedCpuAddressRange &reservedCpuAddressRange) {
     constexpr uint64_t high48BitAreaBase = maxNBitValue(47) + 1; // 0x800000000000
     constexpr uint64_t high48BitAreaTop = maxNBitValue(48);      // 0xFFFFFFFFFFFF
-    uint64_t reservationSize = 1024 * MemoryConstants::gigaByte; // 1 TB
+    uint64_t reservationSize = MemoryConstants::teraByte;
     reserveRangeWithMemoryMapsParse(osMemory, reservedCpuAddressRange, high48BitAreaBase, high48BitAreaTop, reservationSize);
 }
 
@@ -367,7 +367,7 @@ bool GfxPartition::initAdditionalRange(uint32_t cpuVirtualAddressSize, uint64_t 
         }
 
         if (gpuAddressSpace == maxNBitValue(57)) {
-            uint64_t heapExtendedSize = 1024 * MemoryConstants::gigaByte; // 1 TB
+            uint64_t heapExtendedSize = MemoryConstants::teraByte;
             reserve57BitRangeWithMemoryMapsParse(osMemory.get(), reservedCpuAddressRangeForHeapExtended, heapExtendedSize);
             if (reservedCpuAddressRangeForHeapExtended.alignedPtr) {
                 heapInit(HeapIndex::HEAP_EXTENDED, castToUint64(reservedCpuAddressRangeForHeapExtended.alignedPtr), heapExtendedSize);

@@ -619,7 +619,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     // 57 bit CPU VA, la57 flag is present  - reserve high or low CPU address range depending of memory maps
     CpuInfoOverrideVirtualAddressSizeAndFlags overrideCpuInfo(57, "la57");
 
-    constexpr uint64_t reservedHighSize = 1024 * MemoryConstants::gigaByte; // 1 TB
+    constexpr uint64_t reservedHighSize = MemoryConstants::teraByte;
 
     // Success on first reserve
     resetGfxPartition();
@@ -701,7 +701,7 @@ TEST_F(GfxPartitionOn57bTest, given57bitCpuAddressWidthAndLa57IsPresentWhenIniti
     EXPECT_TRUE(gfxPartition->init(maxNBitValue(gpuAddressSpace), 0, 0, 1));
     EXPECT_EQ(0u, mockOsMemory->freeCounter);
     EXPECT_EQ(1u, mockOsMemory->reservationSizes.size());
-    EXPECT_EQ(1024 * MemoryConstants::gigaByte, mockOsMemory->reservationSizes[0]);
+    EXPECT_EQ(MemoryConstants::teraByte, mockOsMemory->reservationSizes[0]);
     EXPECT_EQ(reinterpret_cast<void *>(maxNBitValue(47) + 1), mockOsMemory->validReturnAddress);
     EXPECT_TRUE(mockOsMemory->getMemoryMapsCalled);
     verifyReservedHeaps(0x800000000000, 0x800000000000 + reservedHighSize, gpuAddressSpace);
@@ -859,7 +859,7 @@ TEST(GfxPartitionTest, givenGpuAddressSpaceIs57BitAndSeveralRootDevicesThenHeapE
         MockGfxPartition gfxPartition;
         EXPECT_TRUE(gfxPartition.init(maxNBitValue(57), reservedCpuAddressRangeSize, rootDeviceIndex, numRootDevices));
 
-        auto heapExtendedSize = 1024 * MemoryConstants::gigaByte;
+        auto heapExtendedSize = MemoryConstants::teraByte;
 
         EXPECT_EQ(heapExtendedSize, gfxPartition.getHeapSize(HeapIndex::HEAP_EXTENDED));
         EXPECT_LT(maxNBitValue(48), gfxPartition.getHeapBase(HeapIndex::HEAP_EXTENDED));
