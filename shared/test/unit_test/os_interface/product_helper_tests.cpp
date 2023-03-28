@@ -433,18 +433,24 @@ HWTEST_F(ProductHelperTest, givenLockableAllocationWhenGettingIsBlitCopyRequired
 
     DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
+    EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation, true));
     DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
+    EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation, true));
 
     DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
+    EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation, true));
     pInHwInfo.capabilityTable.blitterOperationsSupported = false;
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
+    EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation, true));
 
     graphicsAllocation.overrideMemoryPool(MemoryPool::System64KBPages);
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
+    EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation, true));
     pInHwInfo.capabilityTable.blitterOperationsSupported = true;
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
+    EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation, true));
 }
 
 HWTEST_F(ProductHelperTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequiredForLocalMemoryThenCorrectValuesAreReturned) {
@@ -473,18 +479,24 @@ HWTEST_F(ProductHelperTest, givenNotLockableAllocationWhenGettingIsBlitCopyRequi
 
     DebugManager.flags.ForceLocalMemoryAccessMode.set(0);
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
+    EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation, true));
     DebugManager.flags.ForceLocalMemoryAccessMode.set(1);
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
+    EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation, true));
 
     DebugManager.flags.ForceLocalMemoryAccessMode.set(3);
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
+    EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation, true));
     hwInfo.capabilityTable.blitterOperationsSupported = false;
     EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
+    EXPECT_TRUE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation, true));
 
     graphicsAllocation.overrideMemoryPool(MemoryPool::System64KBPages);
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
+    EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation, true));
     hwInfo.capabilityTable.blitterOperationsSupported = true;
     EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation));
+    EXPECT_FALSE(productHelper->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, graphicsAllocation, true));
 }
 
 HWTEST2_F(ProductHelperTest, givenProductHelperWhenGettingIsBlitCopyRequiredForLocalMemoryThenFalseIsReturned, IsAtMostGen11) {

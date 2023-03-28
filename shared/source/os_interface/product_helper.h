@@ -149,6 +149,7 @@ class ProductHelper {
     virtual bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitSplitEnqueueWARequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const = 0;
+    virtual bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation, bool lockingSucceeded) const = 0;
     virtual bool isInitDeviceWithFirstSubmissionRequired(const HardwareInfo &hwInfo) const = 0;
     virtual bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const = 0;

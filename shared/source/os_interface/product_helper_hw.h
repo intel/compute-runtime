@@ -101,6 +101,7 @@ class ProductHelperHw : public ProductHelper {
     bool allowMemoryPrefetch(const HardwareInfo &hwInfo) const override;
     bool isBcsReportWaRequired(const HardwareInfo &hwInfo) const override;
     bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const override;
+    bool isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation, bool lockingSucceeded) const override;
     bool isImplicitScalingSupported(const HardwareInfo &hwInfo) const override;
     bool isCpuCopyNecessary(const void *ptr, MemoryManager *memoryManager) const override;
     bool isUnlockingLockedPtrNecessary(const HardwareInfo &hwInfo) const override;
