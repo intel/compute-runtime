@@ -45,6 +45,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     MemoryHandleContext *pMemoryHandleContext = nullptr;
     EngineHandleContext *pEngineHandleContext = nullptr;
     SchedulerHandleContext *pSchedulerHandleContext = nullptr;
+    FirmwareHandleContext *pFirmwareHandleContext = nullptr;
 
     ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) override;
     ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) override;
@@ -53,6 +54,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
 
     FrequencyHandleContext *pFrequencyHandleContext = nullptr;
     ze_result_t frequencyGet(uint32_t *pCount, zes_freq_handle_t *phFrequency) override;
+    ze_result_t firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) override;
 
   private:
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;

@@ -27,6 +27,7 @@ SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment
     pEngineHandleContext = new EngineHandleContext(pOsSysman);
     pFrequencyHandleContext = new FrequencyHandleContext(pOsSysman);
     pSchedulerHandleContext = new SchedulerHandleContext(pOsSysman);
+    pFirmwareHandleContext = new FirmwareHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
@@ -37,6 +38,7 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pFabricPortHandleContext);
     freeResource(pMemoryHandleContext);
     freeResource(pFrequencyHandleContext);
+    freeResource(pFirmwareHandleContext);
     freeResource(pOsSysman);
 }
 
@@ -74,6 +76,10 @@ ze_result_t SysmanDeviceImp::frequencyGet(uint32_t *pCount, zes_freq_handle_t *p
 
 ze_result_t SysmanDeviceImp::schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler) {
     return pSchedulerHandleContext->schedulerGet(pCount, phScheduler);
+}
+
+ze_result_t SysmanDeviceImp::firmwareGet(uint32_t *pCount, zes_firmware_handle_t *phFirmware) {
+    return pFirmwareHandleContext->firmwareGet(pCount, phFirmware);
 }
 
 } // namespace Sysman
