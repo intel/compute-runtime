@@ -1252,7 +1252,8 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
     DEBUG_BREAK_IF(copyEngines.size() == 0);
     TakeOwnershipWrapper<CommandQueueHw<GfxFamily>> queueOwnership(*this);
 
-    if (isOOQEnabled() && isStallingCommandsOnNextFlushRequired()) {
+    if (isOOQEnabled() && (isStallingCommandsOnNextFlushRequired() || this->splitBarrierRequired)) {
+        this->setStallingCommandsOnNextFlush(true);
         NullSurface s;
         Surface *surfaces[] = {&s};
         BuiltinOpParams params{};
@@ -1277,9 +1278,6 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlitSplit(MultiDispatchInfo &dispatchIn
     auto remainingSize = size;
 
     for (size_t i = 0; i < copyEngines.size(); i++) {
-        if (isOOQEnabled() && this->splitBarrierRequired) {
-            this->setStallingCommandsOnNextFlush(true);
-        }
         auto localSize = remainingSize / (copyEngines.size() - i);
         auto localParams = dispatchInfo.peekBuiltinOpParams();
         localParams.size.x = localSize;
