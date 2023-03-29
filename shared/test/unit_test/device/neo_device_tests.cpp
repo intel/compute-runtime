@@ -38,6 +38,38 @@ TEST(DeviceBlitterTest, whenBlitterOperationsSupportIsDisabledThenNoInternalCopy
     EXPECT_EQ(nullptr, factory.rootDevices[0]->getInternalCopyEngine());
 }
 
+TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexZeroWhenGetInternalCopyEngineIsCalledThenInternalMainCopyEngineIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceBCSForInternalCopyEngine.set(0);
+
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+
+    UltDeviceFactory factory{1, 0};
+    factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS, EngineUsage::Internal});
+    auto engine = factory.rootDevices[0]->getInternalCopyEngine();
+    EXPECT_NE(nullptr, engine);
+
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS, engine->getEngineType());
+    EXPECT_EQ(EngineUsage::Internal, engine->getEngineUsage());
+}
+
+TEST(DeviceBlitterTest, givenForceBCSForInternalCopyEngineToIndexOneWhenGetInternalLinkCopyEngineIsCalledThenInternalLinkCopyEngineOneIsReturned) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.ForceBCSForInternalCopyEngine.set(1);
+
+    VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
+    defaultHwInfo->capabilityTable.blitterOperationsSupported = true;
+
+    UltDeviceFactory factory{1, 0};
+    factory.rootDevices[0]->createEngine(0, {aub_stream::EngineType::ENGINE_BCS1, EngineUsage::Internal});
+    auto engine = factory.rootDevices[0]->getInternalCopyEngine();
+    EXPECT_NE(nullptr, engine);
+
+    EXPECT_EQ(aub_stream::EngineType::ENGINE_BCS1, engine->getEngineType());
+    EXPECT_EQ(EngineUsage::Internal, engine->getEngineUsage());
+}
+
 TEST(DeviceBlitterTest, givenBlitterOperationsDisabledWhenCreatingBlitterEngineThenAbort) {
     VariableBackup<HardwareInfo> backupHwInfo(defaultHwInfo.get());
     defaultHwInfo->capabilityTable.blitterOperationsSupported = false;

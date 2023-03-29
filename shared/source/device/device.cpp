@@ -661,8 +661,15 @@ EngineControl *Device::getInternalCopyEngine() {
     if (!getHardwareInfo().capabilityTable.blitterOperationsSupported) {
         return nullptr;
     }
+
+    auto expectedEngine = aub_stream::ENGINE_BCS;
+
+    if (DebugManager.flags.ForceBCSForInternalCopyEngine.get() != -1) {
+        expectedEngine = EngineHelpers::mapBcsIndexToEngineType(DebugManager.flags.ForceBCSForInternalCopyEngine.get(), true);
+    }
+
     for (auto &engine : allEngines) {
-        if (engine.osContext->getEngineType() == aub_stream::ENGINE_BCS &&
+        if (engine.osContext->getEngineType() == expectedEngine &&
             engine.osContext->isInternalEngine()) {
             return &engine;
         }
