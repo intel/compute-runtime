@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -14,18 +14,12 @@
 
 namespace L0 {
 
-MemoryHandleContext::~MemoryHandleContext() {
-    for (Memory *pMemory : handleList) {
-        delete pMemory;
-    }
-}
+MemoryHandleContext::~MemoryHandleContext() = default;
 
 void MemoryHandleContext::createHandle(ze_device_handle_t deviceHandle) {
-    Memory *pMemory = new MemoryImp(pOsSysman, deviceHandle);
+    std::unique_ptr<Memory> pMemory = std::make_unique<MemoryImp>(pOsSysman, deviceHandle);
     if (pMemory->initSuccess == true) {
-        handleList.push_back(pMemory);
-    } else {
-        delete pMemory;
+        handleList.push_back(std::move(pMemory));
     }
 }
 

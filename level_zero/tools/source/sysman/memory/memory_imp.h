@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -25,7 +25,7 @@ class MemoryImp : public Memory, NEO::NonCopyableOrMovableClass {
 
     MemoryImp() = default;
     void init();
-    OsMemory *pOsMemory = nullptr;
+    std::unique_ptr<OsMemory> pOsMemory;
 
   private:
     zes_mem_properties_t memoryProperties = {};

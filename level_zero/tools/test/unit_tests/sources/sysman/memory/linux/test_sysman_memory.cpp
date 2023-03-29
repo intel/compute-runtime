@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -31,10 +31,6 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         pMemoryManager->localMemorySupported[0] = false;
         device->getDriverHandle()->setMemoryManager(pMemoryManager);
 
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
-
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
         std::vector<ze_device_handle_t> deviceHandles;
@@ -63,10 +59,6 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
 
     void setLocalSupportedAndReinit(bool supported) {
         pMemoryManager->localMemorySupported[0] = supported;
-
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
@@ -176,11 +168,10 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingMemoryPropert
     ze_device_properties_t deviceProperties = {};
     ze_bool_t isSubDevice = deviceProperties.flags & ZE_DEVICE_PROPERTY_FLAG_SUBDEVICE;
     Device::fromHandle(device)->getProperties(&deviceProperties);
-    LinuxMemoryImp *pLinuxMemoryImp = new LinuxMemoryImp(pOsSysman, isSubDevice, deviceProperties.subdeviceId);
+    std::unique_ptr<LinuxMemoryImp> pLinuxMemoryImp = std::make_unique<LinuxMemoryImp>(pOsSysman, isSubDevice, deviceProperties.subdeviceId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxMemoryImp->getProperties(&properties));
     EXPECT_EQ(properties.subdeviceId, deviceProperties.subdeviceId);
     EXPECT_EQ(properties.onSubdevice, isSubDevice);
-    delete pLinuxMemoryImp;
 }
 
 } // namespace ult

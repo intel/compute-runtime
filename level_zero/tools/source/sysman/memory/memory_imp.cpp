@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -39,10 +39,6 @@ MemoryImp::MemoryImp(OsSysman *pOsSysman, ze_device_handle_t handle) {
     init();
 }
 
-MemoryImp::~MemoryImp() {
-    if (nullptr != pOsMemory) {
-        delete pOsMemory;
-    }
-}
+MemoryImp::~MemoryImp() = default;
 
 } // namespace L0

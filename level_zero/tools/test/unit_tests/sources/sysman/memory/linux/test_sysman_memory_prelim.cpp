@@ -62,9 +62,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
         pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperPrelim20>(*pDrm));
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
+
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
         // We received a device handle. Check for subdevices in this device
@@ -114,10 +112,6 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
 
     void setLocalSupportedAndReinit(bool supported) {
         pMemoryManager->localMemorySupported[0] = supported;
-
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
@@ -812,10 +806,6 @@ class SysmanMultiDeviceMemoryFixture : public SysmanMultiDeviceFixture {
         pLinuxSysmanImp = static_cast<PublicLinuxSysmanImp *>(pOsSysman);
         pLinuxSysmanImp->pDrm = pDrm;
 
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
-
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         // We received a device handle. Check for subdevices in this device
         Device::fromHandle(device->toHandle())->getSubDevices(&subDeviceCount, nullptr);
@@ -848,10 +838,6 @@ class SysmanMultiDeviceMemoryFixture : public SysmanMultiDeviceFixture {
 
     void setLocalSupportedAndReinit(bool supported) {
         pMemoryManager->localMemorySupported[0] = supported;
-
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;

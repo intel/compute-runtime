@@ -32,10 +32,6 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
 
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
-
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;
         std::vector<ze_device_handle_t> deviceHandles;
@@ -60,10 +56,6 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
 
     void setLocalSupportedAndReinit(bool supported) {
         pMemoryManager->localMemorySupported[0] = supported;
-
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         uint32_t subDeviceCount = 0;

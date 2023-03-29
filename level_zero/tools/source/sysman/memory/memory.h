@@ -40,7 +40,7 @@ struct MemoryHandleContext {
 
     OsSysman *pOsSysman = nullptr;
     bool isLmemSupported = false;
-    std::vector<Memory *> handleList = {};
+    std::vector<std::unique_ptr<Memory>> handleList = {};
 
   private:
     void createHandle(ze_device_handle_t deviceHandle);

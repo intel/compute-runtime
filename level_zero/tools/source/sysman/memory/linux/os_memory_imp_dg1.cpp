@@ -63,9 +63,9 @@ ze_result_t LinuxMemoryImp::getState(zes_mem_state_t *pState) {
     return ZE_RESULT_SUCCESS;
 }
 
-OsMemory *OsMemory::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
-    LinuxMemoryImp *pLinuxMemoryImp = new LinuxMemoryImp(pOsSysman, onSubdevice, subdeviceId);
-    return static_cast<OsMemory *>(pLinuxMemoryImp);
+std::unique_ptr<OsMemory> OsMemory::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
+    std::unique_ptr<LinuxMemoryImp> pLinuxMemoryImp = std::make_unique<LinuxMemoryImp>(pOsSysman, onSubdevice, subdeviceId);
+    return pLinuxMemoryImp;
 }
 
 } // namespace L0
