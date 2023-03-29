@@ -72,7 +72,7 @@ components:
     type: git
     asset_name: metrics-library
     branch: master
-    revision: metrics-library-1.0.122
+    revision: metrics-library-1.0.133
     repository: https://github.com/intel/metrics-library.git
   wdk:
     dest_dir: wdk

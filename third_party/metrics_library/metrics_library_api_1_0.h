@@ -1,6 +1,6 @@
 /*========================== begin_copyright_notice ============================
 
-Copyright (C) 2020-2022 Intel Corporation
+Copyright (C) 2020-2023 Intel Corporation
 
 SPDX-License-Identifier: MIT
 
@@ -27,13 +27,13 @@ namespace MetricsLibraryApi
 //////////////////////////////////////////////////////////////////////////
 /// @brief Metrics Library handles.
 //////////////////////////////////////////////////////////////////////////
-#define METRICS_LIBRARY_HANDLE(Object)  typedef struct Object##Handle_1_0                                       \
-                                        {                                                                       \
-                                            void* data;                                                         \
-                                            Object##Handle_1_0( void )          { data = nullptr; }             \
-                                            Object##Handle_1_0( void* handle )  { data = handle; }              \
-                                            bool IsValid( void ) const      { return data != nullptr; }         \
-                                        } Object##Handle_1_0;
+#define METRICS_LIBRARY_HANDLE( Object ) typedef struct Object##Handle_1_0                                   \
+                                         {                                                                   \
+                                             void* data;                                                     \
+                                             Object##Handle_1_0( void )          { data = nullptr; }         \
+                                             Object##Handle_1_0( void* handle )  { data = handle; }          \
+                                             bool IsValid( void ) const          { return data != nullptr; } \
+                                         } Object##Handle_1_0;
 
 METRICS_LIBRARY_HANDLE( Client )
 METRICS_LIBRARY_HANDLE( ClientMemory )
@@ -737,6 +737,6 @@ using ContextDeleteFunction_1_0 = StatusCode ( ML_STDCALL* ) ( const ContextHand
 //////////////////////////////////////////////////////////////////////////
 #define METRICS_LIBRARY_MAJOR_NUMBER 1
 #define METRICS_LIBRARY_MINOR_NUMBER 0
-#define METRICS_LIBRARY_BUILD_NUMBER 122
+#define METRICS_LIBRARY_BUILD_NUMBER 133
 
 } // namespace MetricsLibraryApi
