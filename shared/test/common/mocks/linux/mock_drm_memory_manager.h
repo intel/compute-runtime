@@ -56,6 +56,7 @@ class TestedDrmMemoryManager : public MemoryManagerCreate<DrmMemoryManager> {
     using DrmMemoryManager::createAllocWithAlignmentFromUserptr;
     using DrmMemoryManager::createGraphicsAllocation;
     using DrmMemoryManager::createMultiHostAllocation;
+    using DrmMemoryManager::createSharedUnifiedMemoryAllocation;
     using DrmMemoryManager::eraseSharedBoHandleWrapper;
     using DrmMemoryManager::eraseSharedBufferObject;
     using DrmMemoryManager::getDefaultDrmContextId;

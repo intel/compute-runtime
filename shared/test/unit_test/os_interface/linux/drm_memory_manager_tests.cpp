@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
+#include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
@@ -6463,4 +6464,111 @@ TEST_F(DrmMemoryManagerTest, given48bAddressSpaceCpuAnd57bGpuWhenAllocatingHostU
 
     EXPECT_NE(hostUSM->getGpuAddress(), gpuAddress);
     memoryManager->freeGraphicsMemory(hostUSM);
+}
+
+TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuWhenAllocatingSharedUSMThenAddressFromExtendedHeapIsPassedAsHintAndSetAsGpuAddressAndReservedAddress) {
+    if (defaultHwInfo->capabilityTable.gpuAddressSpace < maxNBitValue(57)) {
+        GTEST_SKIP();
+    }
+
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateSharedAllocationsInHeapExtended.set(true);
+    VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
+    VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, true);
+    SysCalls::mmapCapturedExtendedPointers.clear();
+    std::vector<MemoryRegion> regionInfo(1);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    drm.memoryInfo.reset(new MemoryInfo(regionInfo, drm));
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::cacheLineSize;
+    allocationData.rootDeviceIndex = mockRootDeviceIndex;
+    allocationData.alignment = MemoryConstants::pageSize;
+    allocationData.useMmapObject = true;
+
+    auto sharedUSM = memoryManager->createSharedUnifiedMemoryAllocation(allocationData);
+    EXPECT_NE(nullptr, sharedUSM);
+
+    EXPECT_EQ(2u, SysCalls::mmapCapturedExtendedPointers.size());
+    auto gpuAddress = reinterpret_cast<uint64_t>(SysCalls::mmapCapturedExtendedPointers[0]);
+    SysCalls::mmapCapturedExtendedPointers.clear();
+    auto gmmHelper = memoryManager->getGmmHelper(mockRootDeviceIndex);
+    EXPECT_LE(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
+    EXPECT_GT(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
+
+    EXPECT_EQ(sharedUSM->getGpuAddress(), gpuAddress);
+    EXPECT_EQ(sharedUSM->getReservedAddressPtr(), reinterpret_cast<void *>(gpuAddress));
+    memoryManager->freeGraphicsMemory(sharedUSM);
+}
+
+TEST_F(DrmMemoryManagerTest, given48bAddressSpaceCpuAnd57bGpuWhenAllocatingSharedUSMThenAddressFromExtendedHeapIsPassedAsHintAndThenIgnored) {
+    if (defaultHwInfo->capabilityTable.gpuAddressSpace < maxNBitValue(57)) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateSharedAllocationsInHeapExtended.set(true);
+    VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
+    VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, false);
+    SysCalls::mmapCapturedExtendedPointers.clear();
+    std::vector<MemoryRegion> regionInfo(1);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    drm.memoryInfo.reset(new MemoryInfo(regionInfo, drm));
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::cacheLineSize;
+    allocationData.rootDeviceIndex = mockRootDeviceIndex;
+    allocationData.alignment = MemoryConstants::pageSize;
+    allocationData.useMmapObject = true;
+
+    auto sharedUSM = memoryManager->createSharedUnifiedMemoryAllocation(allocationData);
+    EXPECT_NE(nullptr, sharedUSM);
+
+    EXPECT_EQ(1u, SysCalls::mmapCapturedExtendedPointers.size());
+    auto gpuAddress = reinterpret_cast<uint64_t>(SysCalls::mmapCapturedExtendedPointers[0]);
+    SysCalls::mmapCapturedExtendedPointers.clear();
+    auto gmmHelper = memoryManager->getGmmHelper(mockRootDeviceIndex);
+    EXPECT_LE(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapBase(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
+    EXPECT_GT(memoryManager->getGfxPartition(mockRootDeviceIndex)->getHeapLimit(HeapIndex::HEAP_EXTENDED), gmmHelper->decanonize(gpuAddress));
+
+    EXPECT_NE(sharedUSM->getGpuAddress(), gpuAddress);
+    memoryManager->freeGraphicsMemory(sharedUSM);
+}
+
+TEST_F(DrmMemoryManagerTest, given57bAddressSpaceCpuAndGpuWhenAllocating48bResourceSharedUSMThenAddressFromExtendedHeapIsNotUsed) {
+    if (defaultHwInfo->capabilityTable.gpuAddressSpace < maxNBitValue(57)) {
+        GTEST_SKIP();
+    }
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllocateSharedAllocationsInHeapExtended.set(true);
+    VariableBackup<bool> backupCaptureExtendedPointers(&SysCalls::mmapCaptureExtendedPointers, true);
+    VariableBackup<bool> backupAllowExtendedPointers(&SysCalls::mmapAllowExtendedPointers, true);
+    SysCalls::mmapCapturedExtendedPointers.clear();
+    std::vector<MemoryRegion> regionInfo(1);
+    regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 0};
+
+    auto &drm = static_cast<DrmMockCustom &>(memoryManager->getDrm(mockRootDeviceIndex));
+    drm.memoryInfo.reset(new MemoryInfo(regionInfo, drm));
+    drm.ioctlHelper = std::make_unique<MockIoctlHelper>(drm);
+
+    AllocationData allocationData{};
+    allocationData.size = MemoryConstants::cacheLineSize;
+    allocationData.rootDeviceIndex = mockRootDeviceIndex;
+    allocationData.alignment = MemoryConstants::pageSize;
+    allocationData.useMmapObject = true;
+    allocationData.flags.resource48Bit = true;
+
+    auto sharedUSM = memoryManager->createSharedUnifiedMemoryAllocation(allocationData);
+    EXPECT_NE(nullptr, sharedUSM);
+
+    EXPECT_EQ(0u, SysCalls::mmapCapturedExtendedPointers.size());
+
+    EXPECT_LT(sharedUSM->getGpuAddress(), maxNBitValue(48));
+    EXPECT_EQ(sharedUSM->getReservedAddressPtr(), nullptr);
+    memoryManager->freeGraphicsMemory(sharedUSM);
 }
