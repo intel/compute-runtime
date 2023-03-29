@@ -22,6 +22,7 @@
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/variable_backup.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_ioctl_helper.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/os_interface/linux/sys_calls_linux_ult.h"
@@ -1414,21 +1415,6 @@ TEST(DrmWrapperTest, WhenGettingChipsetIdParamValueThenIoctlHelperIsNotNeeded) {
 TEST(DrmWrapperTest, WhenGettingRevisionParamValueThenIoctlHelperIsNotNeeded) {
     EXPECT_EQ(getDrmParamValue(DrmParam::ParamRevision, nullptr), static_cast<int>(I915_PARAM_REVISION));
 }
-
-class MockIoctlHelper : public IoctlHelperPrelim20 {
-  public:
-    using IoctlHelperPrelim20::IoctlHelperPrelim20;
-    unsigned int getIoctlRequestValue(DrmIoctl ioctlRequest) const override {
-        return ioctlRequestValue;
-    };
-
-    int getDrmParamValue(DrmParam drmParam) const override {
-        return drmParamValue;
-    }
-
-    unsigned int ioctlRequestValue = 1234u;
-    int drmParamValue = 1234;
-};
 
 TEST(DrmWrapperTest, whenGettingDrmParamOrIoctlRequestValueThenUseIoctlHelperWhenAvailable) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
