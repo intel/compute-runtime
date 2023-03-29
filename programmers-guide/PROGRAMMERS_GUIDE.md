@@ -16,3 +16,4 @@ This document provides the architectural design followed in the Intel(R) Graphic
 ### [Immediate Commandlist](IMMEDIATE_COMMANDLIST.md)
 ### [System Memory Allocations in Level Zero](SYSTEM_MEMORY_ALLOCATIONS.md)
 ### [Module Symbols and Linking in Level Zero](MODULE_SYMBOL_SUPPORT.md)
+### [Allocations greater than 4GB](ALLOCATIONS_GREATER_THAN_4GB.md)
