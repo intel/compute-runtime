@@ -138,11 +138,7 @@ HWTEST2_F(StreamPropertiesTests, whenSettingStateComputeModePropertiesThenCorrec
             for (auto largeGrf : ::testing::Bool()) {
                 for (auto threadArbitrationPolicy : threadArbitrationPolicyValues) {
                     properties.stateComputeMode.setPropertiesAll(requiresCoherency, largeGrf ? 256 : 128, threadArbitrationPolicy, preemptionMode);
-                    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
-                        EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
-                    } else {
-                        EXPECT_EQ(-1, properties.stateComputeMode.largeGrfMode.value);
-                    }
+                    EXPECT_EQ(largeGrf, properties.stateComputeMode.largeGrfMode.value);
                     if (scmPropertiesSupport.coherencyRequired) {
                         EXPECT_EQ(requiresCoherency, properties.stateComputeMode.isCoherencyRequired.value);
                     } else {
