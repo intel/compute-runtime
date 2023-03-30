@@ -168,34 +168,19 @@ struct MockEventsFsAccess : public FsAccess {
 };
 
 struct MockEventsSysfsAccess : public SysfsAccess {
-
-    bool mockSymLinkFailure = false;
-    bool mockReadMemHealthDegraded = false;
-    bool mockReadCurrMemHealth = false;
+    ze_result_t getRealPathResult = ZE_RESULT_SUCCESS;
 
     ze_result_t getRealPath(const std::string file, std::string &val) override {
-        if (file.compare("device/") == 0) {
-            val = "/sys/devices/pci0000:00/0000:00:02.0";
-        } else {
-            return ZE_RESULT_ERROR_NOT_AVAILABLE;
-        }
-        return ZE_RESULT_SUCCESS;
+        val = "/sys/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0";
+        return getRealPathResult;
     }
 
     ze_result_t readSymLink(const std::string file, std::string &val) override {
-
-        if (mockSymLinkFailure == true) {
-            return getValStringSymLinkFailure(file, val);
-        }
 
         if (file.compare(deviceDir) == 0) {
             val = "/sys/devices/pci0000:00/0000:00:01.0/0000:01:00.0/0000:02:01.0/0000:03:00.0";
             return ZE_RESULT_SUCCESS;
         }
-        return ZE_RESULT_ERROR_NOT_AVAILABLE;
-    }
-
-    ze_result_t getValStringSymLinkFailure(const std::string file, std::string &val) {
         return ZE_RESULT_ERROR_NOT_AVAILABLE;
     }
 
@@ -211,6 +196,32 @@ struct MockEventsSysfsAccess : public SysfsAccess {
     }
 
     MockEventsSysfsAccess() = default;
+};
+
+class EventsUdevLibMock : public UdevLib {
+  public:
+    EventsUdevLibMock() = default;
+    std::string eventPropertyValueTypeResult = "PORT_CHANGE";
+    std::string eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/i915.iaf.0";
+
+    const char *getEventPropertyValue(void *dev, const char *key) override {
+        if (strcmp(key, "TYPE") == 0) {
+            if (!eventPropertyValueTypeResult.empty()) {
+                return eventPropertyValueTypeResult.c_str();
+            } else {
+                return nullptr;
+            }
+        } else if (strcmp(key, "DEVPATH") == 0) {
+            return eventPropertyValueDevPathResult.c_str();
+        }
+        return "1";
+    }
+
+    ADDMETHOD_NOBASE(registerEventsFromSubsystemAndGetFd, int, 0, (std::vector<std::string> & subsystemList));
+    ADDMETHOD_NOBASE(getEventGenerationSourceDevice, dev_t, 0, (void *dev));
+    ADDMETHOD_NOBASE(getEventType, const char *, "change", (void *dev));
+    ADDMETHOD_NOBASE(allocateDeviceToReceiveData, void *, (void *)(0x12345678), ());
+    ADDMETHOD_NOBASE_VOIDRETURN(dropDeviceReference, (void *dev));
 };
 
 struct MockEventsFwInterface : public FirmwareUtil {

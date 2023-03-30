@@ -1070,6 +1070,9 @@ void testSysmanListenEvents(ze_driver_handle_t driver, std::vector<ze_device_han
                 if (pEvents[index] & ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS) {
                     std::cout << "Device " << index << "got RAS CORRECTABLE event" << std::endl;
                 }
+                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH) {
+                    std::cout << "Device " << index << " got Fabric Health event" << std::endl;
+                }
             }
         }
     }
@@ -1098,6 +1101,9 @@ void testSysmanListenEventsEx(ze_driver_handle_t driver, std::vector<ze_device_h
                 }
                 if (pEvents[index] & ZES_EVENT_TYPE_FLAG_RAS_CORRECTABLE_ERRORS) {
                     std::cout << "Device " << index << "got RAS CORRECTABLE event" << std::endl;
+                }
+                if (pEvents[index] & ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH) {
+                    std::cout << "Device " << index << " got Fabric Health event" << std::endl;
                 }
             }
         }

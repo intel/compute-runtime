@@ -12,6 +12,11 @@
 
 namespace L0 {
 
+struct DeviceInfo {
+    std::string devicePath = {};
+    dev_t deviceNum = 0;
+};
+
 class LinuxEventsImp : public OsEvents, NEO::NonCopyableOrMovableClass {
   public:
     bool eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) override;
@@ -42,6 +47,7 @@ class LinuxEventsUtil {
     bool checkDeviceDetachEvent(zes_event_type_flags_t &pEvent);
     bool checkDeviceAttachEvent(zes_event_type_flags_t &pEvent);
     bool checkIfMemHealthChanged(void *dev, zes_event_type_flags_t &pEvent);
+    bool checkIfFabricPortStatusChanged(void *dev, zes_event_type_flags_t &pEvent);
     bool listenSystemEvents(zes_event_type_flags_t *pEvents, uint32_t count, std::vector<zes_event_type_flags_t> &registeredEvents, zes_device_handle_t *phDevices, uint64_t timeout);
 
   private:
@@ -52,8 +58,8 @@ class LinuxEventsUtil {
     static const std::string unbind;
     static const std::string bind;
     static bool checkRasEventOccured(Ras *rasHandle);
-    void getDevIndexToDevNumMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::multimap<uint32_t, dev_t> &mapOfDevIndexToDevNum);
-    bool checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, std::multimap<uint32_t, dev_t> mapOfDevIndexToDevNum, zes_event_type_flags_t *pEvents, void *dev);
+    void getDevIndexToDevInfoMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, DeviceInfo> &mapOfDevIndexToDevInfo);
+    bool checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, std::map<uint32_t, DeviceInfo> mapOfDevIndexToDevInfo, zes_event_type_flags_t *pEvents, void *dev);
     std::once_flag initEventsOnce;
     std::mutex eventsMutex;
     void init();
