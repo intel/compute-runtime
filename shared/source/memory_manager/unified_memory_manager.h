@@ -114,16 +114,13 @@ class SVMAllocsManager {
 
     struct UnifiedMemoryProperties {
         UnifiedMemoryProperties(InternalMemoryType memoryType,
-                                size_t alignment,
                                 const RootDeviceIndicesContainer &rootDeviceIndices,
                                 const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields) : memoryType(memoryType),
-                                                                                                alignment(alignment),
                                                                                                 rootDeviceIndices(rootDeviceIndices),
                                                                                                 subdeviceBitfields(subdeviceBitfields){};
         InternalMemoryType memoryType = InternalMemoryType::NOT_SPECIFIED;
         MemoryProperties allocationFlags;
         Device *device = nullptr;
-        size_t alignment;
         const RootDeviceIndicesContainer &rootDeviceIndices;
         const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields;
     };

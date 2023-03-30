@@ -181,7 +181,7 @@ void *SVMAllocsManager::createSVMAlloc(size_t size, const SvmAllocationPropertie
     if (!memoryManager->isLocalMemorySupported(*rootDeviceIndices.begin())) {
         return createZeroCopySvmAllocation(size, svmProperties, rootDeviceIndices, subdeviceBitfields);
     } else {
-        UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::NOT_SPECIFIED, 1, rootDeviceIndices, subdeviceBitfields);
+        UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::NOT_SPECIFIED, rootDeviceIndices, subdeviceBitfields);
         return createUnifiedAllocationWithDeviceStorage(size, svmProperties, unifiedMemoryProperties);
     }
 }
@@ -241,8 +241,8 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
                                ? memoryProperties.device->getRootDeviceIndex()
                                : *memoryProperties.rootDeviceIndices.begin();
     DeviceBitfield deviceBitfield = memoryProperties.subdeviceBitfields.at(rootDeviceIndex);
-    size_t pageSizeForAlignment = alignUp<size_t>(memoryProperties.alignment, MemoryConstants::pageSize64k);
-    size_t alignedSize = alignUp<size_t>(size, MemoryConstants::pageSize64k);
+    size_t pageSizeForAlignment = MemoryConstants::pageSize64k;
+    size_t alignedSize = alignUp<size_t>(size, pageSizeForAlignment);
 
     auto externalPtr = reinterpret_cast<void *>(memoryProperties.allocationFlags.hostptr);
     bool useExternalHostPtrForCpu = externalPtr != nullptr;
@@ -268,7 +268,6 @@ void *SVMAllocsManager::createUnifiedMemoryAllocation(size_t size,
                                                  false,
                                                  multiStorageAllocation,
                                                  deviceBitfield};
-    unifiedMemoryProperties.alignment = pageSizeForAlignment;
     unifiedMemoryProperties.flags.isUSMDeviceAllocation = false;
     unifiedMemoryProperties.flags.shareable = memoryProperties.allocationFlags.flags.shareable;
     unifiedMemoryProperties.cacheRegion = MemoryPropertiesHelper::getCacheRegion(memoryProperties.allocationFlags);
