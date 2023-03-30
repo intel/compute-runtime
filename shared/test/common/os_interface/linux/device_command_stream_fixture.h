@@ -93,7 +93,6 @@ class DrmMockCustom : public Drm {
     using Drm::bindAvailable;
     using Drm::cacheInfo;
     using Drm::completionFenceSupported;
-    using Drm::ioctlHelper;
     using Drm::memoryInfo;
     using Drm::setupIoctlHelper;
 
