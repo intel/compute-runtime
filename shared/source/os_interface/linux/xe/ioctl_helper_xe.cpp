@@ -459,6 +459,10 @@ uint32_t IoctlHelperXe::getPreferredLocationAdvise() {
     return 0;
 }
 
+std::optional<MemoryClassInstance> IoctlHelperXe::getPreferredLocationRegion(uint32_t boIndex) {
+    return std::nullopt;
+}
+
 bool IoctlHelperXe::setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) {
     xeLog(" -> IoctlHelperXe::%s\n", __FUNCTION__);
     return false;

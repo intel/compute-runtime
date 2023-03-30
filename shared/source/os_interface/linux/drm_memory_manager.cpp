@@ -2172,20 +2172,8 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
             return nullptr;
         }
 
-        if (DebugManager.flags.SetVmAdvisePreferredLocation.get() != -1) {
-            MemoryClassInstance region{};
-            auto preferredLocation = DebugManager.flags.SetVmAdvisePreferredLocation.get();
-            switch (preferredLocation) {
-            case 0:
-                region.memoryClass = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassSystem);
-                region.memoryInstance = 0;
-                break;
-            case 1:
-            default:
-                region.memoryClass = ioctlHelper->getDrmParamValue(DrmParam::MemoryClassDevice);
-                region.memoryInstance = handleId;
-                break;
-            }
+        std::optional<MemoryClassInstance> region = ioctlHelper->getPreferredLocationRegion(handleId);
+        if (region != std::nullopt) {
             [[maybe_unused]] auto success = ioctlHelper->setVmBoAdvise(bo->peekHandle(), ioctlHelper->getPreferredLocationAdvise(), &region);
             DEBUG_BREAK_IF(!success);
         }

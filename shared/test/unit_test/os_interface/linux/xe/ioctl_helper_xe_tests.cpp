@@ -84,6 +84,8 @@ TEST(IoctlHelperXeTest, givenIoctlHelperXeWhenCallingAnyMethodThenDummyValueIsRe
 
     EXPECT_EQ(0u, xeIoctlHelper->getPreferredLocationAdvise());
 
+    EXPECT_EQ(std::nullopt, xeIoctlHelper->getPreferredLocationRegion(0));
+
     EXPECT_FALSE(xeIoctlHelper->setVmBoAdvise(0, 0, nullptr));
 
     EXPECT_FALSE(xeIoctlHelper->setVmPrefetch(0, 0, 0, 0));

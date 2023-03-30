@@ -212,6 +212,24 @@ uint32_t IoctlHelperPrelim20::getPreferredLocationAdvise() {
     return PRELIM_I915_VM_ADVISE_PREFERRED_LOCATION;
 }
 
+std::optional<MemoryClassInstance> IoctlHelperPrelim20::getPreferredLocationRegion(uint32_t boIndex) {
+    MemoryClassInstance region{};
+    switch (NEO::DebugManager.flags.SetVmAdvisePreferredLocation.get()) {
+    case 0:
+        region.memoryClass = getDrmParamValue(DrmParam::MemoryClassSystem);
+        region.memoryInstance = 0;
+        break;
+    case 1:
+    default:
+        region.memoryClass = getDrmParamValue(DrmParam::MemoryClassDevice);
+        region.memoryInstance = boIndex;
+        break;
+    case 2:
+        return std::nullopt;
+    }
+    return region;
+}
+
 bool IoctlHelperPrelim20::setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) {
     prelim_drm_i915_gem_vm_advise vmAdvise{};
 
