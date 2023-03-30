@@ -228,7 +228,16 @@ int DrmMockPrelimContext::handlePrelimRequest(DrmIoctl request, void *arg) {
     } break;
     case DrmIoctl::GemVmAdvise: {
         const auto req = reinterpret_cast<prelim_drm_i915_gem_vm_advise *>(arg);
-        receivedVmAdvise = VmAdvise{req->handle, req->attribute, {req->region.memory_class, req->region.memory_instance}};
+        switch (req->attribute) {
+        case PRELIM_I915_VM_ADVISE_ATOMIC_NONE:
+        case PRELIM_I915_VM_ADVISE_ATOMIC_SYSTEM:
+        case PRELIM_I915_VM_ADVISE_ATOMIC_DEVICE:
+            receivedVmAdvise[0] = VmAdvise{req->handle, req->attribute};
+            break;
+        case PRELIM_I915_VM_ADVISE_PREFERRED_LOCATION:
+            receivedVmAdvise[1] = VmAdvise{req->handle, req->attribute, {req->region.memory_class, req->region.memory_instance}};
+            break;
+        }
         return vmAdviseReturn;
     } break;
     case DrmIoctl::UuidRegister: {

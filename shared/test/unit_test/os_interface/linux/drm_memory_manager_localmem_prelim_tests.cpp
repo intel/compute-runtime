@@ -520,7 +520,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateS
     const auto &createExt = mock->context.receivedCreateGemExt.value();
     EXPECT_EQ(1u, createExt.handle);
 
-    const auto &vmAdvise = mock->context.receivedVmAdvise.value();
+    const auto &vmAdvise = mock->context.receivedVmAdvise[0].value();
     EXPECT_EQ(static_cast<DrmAllocation *>(allocation)->getBO()->peekHandle(), static_cast<int>(vmAdvise.handle));
     EXPECT_EQ(DrmPrelimHelper::getVmAdviseSystemFlag(), vmAdvise.flags);
 
@@ -561,7 +561,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseAtomicAttributeWhe
         auto allocation = unifiedMemoryManager.getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
         ASSERT_NE(allocation, nullptr);
 
-        const auto &vmAdvise = mock->context.receivedVmAdvise.value();
+        const auto &vmAdvise = mock->context.receivedVmAdvise[0].value();
         EXPECT_EQ(static_cast<DrmAllocation *>(allocation)->getBO()->peekHandle(), static_cast<int>(vmAdvise.handle));
 
         switch (atomicAdvise) {
@@ -598,7 +598,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseDevicePreferredLoc
     SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, rootDeviceIndices, deviceBitfields);
     unifiedMemoryProperties.device = device.get();
 
-    for (auto preferredLocation : {0, 1, 2}) {
+    for (auto preferredLocation : {-1, 0, 1, 2}) {
         DebugManager.flags.SetVmAdvisePreferredLocation.set(preferredLocation);
 
         auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
@@ -607,21 +607,24 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenSetVmAdviseDevicePreferredLoc
         auto allocation = unifiedMemoryManager.getSVMAlloc(ptr)->gpuAllocations.getDefaultGraphicsAllocation();
         ASSERT_NE(allocation, nullptr);
 
-        const auto &vmAdvise = mock->context.receivedVmAdvise.value();
-        EXPECT_EQ(static_cast<DrmAllocation *>(allocation)->getBO()->peekHandle(), static_cast<int>(vmAdvise.handle));
+        if (mock->context.receivedVmAdvise[1] != std::nullopt) {
 
-        EXPECT_EQ(DrmPrelimHelper::getPreferredLocationAdvise(), vmAdvise.flags);
+            const auto &vmAdvise = mock->context.receivedVmAdvise[1].value();
+            EXPECT_EQ(static_cast<DrmAllocation *>(allocation)->getBO()->peekHandle(), static_cast<int>(vmAdvise.handle));
 
-        switch (preferredLocation) {
-        case 0:
-            EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, vmAdvise.memoryRegions.memoryClass);
-            EXPECT_EQ(0u, vmAdvise.memoryRegions.memoryInstance);
-            break;
-        case 1:
-        default:
-            EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, vmAdvise.memoryRegions.memoryClass);
-            EXPECT_EQ(0u, vmAdvise.memoryRegions.memoryInstance);
-            break;
+            EXPECT_EQ(DrmPrelimHelper::getPreferredLocationAdvise(), vmAdvise.flags);
+
+            switch (preferredLocation) {
+            case 0:
+                EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, vmAdvise.memoryRegions.memoryClass);
+                EXPECT_EQ(0u, vmAdvise.memoryRegions.memoryInstance);
+                break;
+            case 1:
+            default:
+                EXPECT_EQ(drm_i915_gem_memory_class::I915_MEMORY_CLASS_DEVICE, vmAdvise.memoryRegions.memoryClass);
+                EXPECT_EQ(0u, vmAdvise.memoryRegions.memoryInstance);
+                break;
+            }
         }
 
         unifiedMemoryManager.freeSVMAlloc(ptr);
@@ -741,7 +744,7 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenVmAdviseIoctlFailsThenCreateSh
     auto ptr = unifiedMemoryManager.createSharedUnifiedMemoryAllocation(MemoryConstants::pageSize64k, unifiedMemoryProperties, nullptr);
 
     EXPECT_EQ(ptr, nullptr);
-    EXPECT_TRUE(mock->context.receivedVmAdvise);
+    EXPECT_TRUE(mock->context.receivedVmAdvise[0]);
 }
 
 TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationSetWhenCreateSharedUnifiedMemoryAllocationFailsThenNullptrReturned) {

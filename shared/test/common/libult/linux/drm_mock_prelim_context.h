@@ -127,7 +127,7 @@ struct DrmMockPrelimContext {
     size_t waitUserFenceCalled{0};
     std::optional<WaitUserFence> receivedWaitUserFence{};
 
-    std::optional<VmAdvise> receivedVmAdvise{};
+    std::optional<VmAdvise> receivedVmAdvise[2]{};
     int vmAdviseReturn{0};
 
     int mmapOffsetReturn{0};

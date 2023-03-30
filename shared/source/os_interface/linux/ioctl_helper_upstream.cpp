@@ -86,6 +86,10 @@ uint32_t IoctlHelperUpstream::getPreferredLocationAdvise() {
     return 0;
 }
 
+std::optional<MemoryClassInstance> IoctlHelperUpstream::getPreferredLocationRegion(uint32_t boIndex) {
+    return std::nullopt;
+}
+
 bool IoctlHelperUpstream::setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) {
     return true;
 }

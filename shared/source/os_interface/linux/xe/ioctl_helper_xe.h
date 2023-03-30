@@ -51,6 +51,7 @@ class IoctlHelperXe : public IoctlHelper {
                       uint64_t value, uint32_t dataWidth, int64_t timeout, uint16_t flags) override;
     uint32_t getAtomicAdvise(bool isNonAtomic) override;
     uint32_t getPreferredLocationAdvise() override;
+    std::optional<MemoryClassInstance> getPreferredLocationRegion(uint32_t boIndex) override;
     bool setVmBoAdvise(int32_t handle, uint32_t attribute, void *region) override;
     bool setVmPrefetch(uint64_t start, uint64_t length, uint32_t region, uint32_t vmId) override;
     uint32_t getDirectSubmissionFlag() override;
