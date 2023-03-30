@@ -9,6 +9,7 @@
 
 #include "shared/source/built_ins/sip.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/os_interface.h"
@@ -266,6 +267,57 @@ void TbxImmediateCommandListFixture::setEvent() {
         memcpy(completionAddress, &signaledValue, sizeof(EventFieldType));
         completionAddress = ptrOffset(completionAddress, event->getSinglePacketSize());
     }
+}
+
+void RayTracingCmdListFixture::setUp() {
+    ModuleMutableCommandListFixture::setUp();
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.hasRTCalls = true;
+
+    const uint32_t bvhLevels = NEO::RayTracingHelper::maxBvhLevels;
+    device->getNEODevice()->initializeRayTracing(bvhLevels);
+
+    rtAllocation = device->getNEODevice()->getRTMemoryBackedBuffer();
+    rtAllocationAddress = rtAllocation->getGpuAddress();
+}
+
+void CommandListAppendLaunchRayTracingKernelFixture::setUp() {
+    ModuleFixture::setUp();
+
+    ze_context_handle_t hContext;
+    ze_context_desc_t desc = {ZE_STRUCTURE_TYPE_CONTEXT_DESC, nullptr, 0};
+    ze_result_t res = device->getDriverHandle()->createContext(&desc, 0u, nullptr, &hContext);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    contextImp = static_cast<ContextImp *>(Context::fromHandle(hContext));
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    auto result = contextImp->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &allocSrc);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    buffer1 = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(allocSrc)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, buffer1);
+    result = contextImp->allocDeviceMem(device->toHandle(), &deviceDesc, 16384u, 4096u, &allocDst);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+    buffer2 = device->getDriverHandle()->getSvmAllocsManager()->getSVMAllocs()->get(allocDst)->gpuAllocations.getGraphicsAllocation(device->getRootDeviceIndex());
+    ASSERT_NE(nullptr, buffer2);
+
+    ze_result_t returnValue;
+    commandList = whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    ASSERT_NE(commandList->getCmdContainer().getCommandStream(), nullptr);
+
+    dispatchKernelArguments.groupCountX = 1u;
+    dispatchKernelArguments.groupCountY = 2u;
+    dispatchKernelArguments.groupCountZ = 3u;
+
+    createKernel();
+}
+
+void CommandListAppendLaunchRayTracingKernelFixture::tearDown() {
+    contextImp->freeMem(allocSrc);
+    contextImp->freeMem(allocDst);
+    commandList->destroy();
+    contextImp->destroy();
+
+    ModuleFixture::tearDown();
 }
 
 } // namespace ult

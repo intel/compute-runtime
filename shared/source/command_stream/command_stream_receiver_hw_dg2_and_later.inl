@@ -68,4 +68,22 @@ inline void CommandStreamReceiverHw<GfxFamily>::addPipeControlBefore3dState(Line
     }
 }
 
+template <>
+void CommandStreamReceiverHw<Family>::dispatchRayTracingStateCommand(LinearStream &cmdStream, Device &device) {
+    auto &hwInfo = peekHwInfo();
+    auto &productHelper = getProductHelper();
+    const auto &[isBasicWARequired, isExtendedWARequired] = productHelper.isPipeControlPriorToNonPipelinedStateCommandsWARequired(hwInfo, isRcs());
+    std::ignore = isBasicWARequired;
+
+    if (isExtendedWARequired) {
+        PipeControlArgs args;
+        args.dcFlushEnable = this->dcFlushSupport;
+
+        EncodeWA<Family>::addPipeControlPriorToNonPipelinedStateCommand(cmdStream, args, this->peekRootDeviceEnvironment(), isRcs());
+    }
+
+    EncodeEnableRayTracing<Family>::programEnableRayTracing(cmdStream, device.getRTMemoryBackedBuffer()->getGpuAddress());
+    this->setBtdCommandDirty(false);
+}
+
 } // namespace NEO

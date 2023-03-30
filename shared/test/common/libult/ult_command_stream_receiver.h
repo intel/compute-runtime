@@ -260,6 +260,14 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         return (it->first->getTaskCount(osContext->getContextId()) == taskCount);
     }
 
+    bool isMadeResident(GraphicsAllocation *graphicsAllocation, uint32_t residentCount) const {
+        auto it = makeResidentAllocations.find(graphicsAllocation);
+        if (it == makeResidentAllocations.end()) {
+            return false;
+        }
+        return it->second == residentCount;
+    }
+
     std::map<GraphicsAllocation *, uint32_t> makeResidentAllocations;
     bool storeMakeResidentAllocations = false;
 

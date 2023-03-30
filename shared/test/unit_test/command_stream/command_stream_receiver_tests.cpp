@@ -3113,3 +3113,119 @@ HWTEST_F(CommandStreamReceiverHwTest, givenFlushPipeControlWhenFlushWithStateCac
 
     EXPECT_TRUE(UnitTestHelper<FamilyType>::findStateCacheFlushPipeControl(commandStreamReceiver.commandStream));
 }
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenRayTracingAllocationPresentWhenFlushingTaskThenDispatchBtdStateCommandOnceAndResidentAlways,
+          IsAtLeastXeHpCore) {
+    using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;
+    using _3DSTATE_BTD_BODY = typename FamilyType::_3DSTATE_BTD_BODY;
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+    commandStreamReceiver.storeMakeResidentAllocations = true;
+
+    EXPECT_FALSE(commandStreamReceiver.isRayTracingStateProgramingNeeded(*pDevice));
+
+    pDevice->initializeRayTracing(8);
+
+    auto rtAllocation = pDevice->getRTMemoryBackedBuffer();
+    auto rtAllocationAddress = rtAllocation->getGpuAddress();
+
+    EXPECT_TRUE(commandStreamReceiver.isRayTracingStateProgramingNeeded(*pDevice));
+
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    &ssh,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+
+    HardwareParse hwParserCsr;
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, 0);
+    auto btdStateCmd = hwParserCsr.getCommand<_3DSTATE_BTD>();
+    ASSERT_NE(nullptr, btdStateCmd);
+
+    auto &btdStateBody = btdStateCmd->getBtdStateBody();
+    EXPECT_EQ(rtAllocationAddress, btdStateBody.getMemoryBackedBufferBasePointer());
+
+    uint32_t residentCount = 1;
+    commandStreamReceiver.isMadeResident(rtAllocation, residentCount);
+
+    EXPECT_FALSE(commandStreamReceiver.isRayTracingStateProgramingNeeded(*pDevice));
+
+    size_t usedSize = commandStreamReceiver.commandStream.getUsed();
+
+    commandStreamReceiver.flushTask(commandStream,
+                                    0,
+                                    &dsh,
+                                    &ioh,
+                                    &ssh,
+                                    taskLevel,
+                                    flushTaskFlags,
+                                    *pDevice);
+
+    hwParserCsr.tearDown();
+    hwParserCsr.parseCommands<FamilyType>(commandStreamReceiver.commandStream, usedSize);
+    btdStateCmd = hwParserCsr.getCommand<_3DSTATE_BTD>();
+    EXPECT_EQ(nullptr, btdStateCmd);
+
+    residentCount++;
+    commandStreamReceiver.isMadeResident(rtAllocation, residentCount);
+}
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenPlatformNotSupportingRayTracingWhenDispatchingCommandThenNothingDispatched,
+          IsAtMostGen12lp) {
+    pDevice->initializeRayTracing(8);
+
+    constexpr size_t size = 64;
+    uint8_t buffer[size];
+    LinearStream cmdStream(buffer, size);
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    EXPECT_EQ(0u, commandStreamReceiver.getCmdSizeForPerDssBackedBuffer(pDevice->getHardwareInfo()));
+
+    commandStreamReceiver.dispatchRayTracingStateCommand(cmdStream, *pDevice);
+    EXPECT_EQ(0u, cmdStream.getUsed());
+}
+
+using RayTracingForcedWaPlatform = IsAnyProducts<IGFX_DG2, IGFX_PVC>;
+
+HWTEST2_F(CommandStreamReceiverHwTest,
+          givenPlatformSupportingRayTracingWhenForcedPipeControlPriorBtdStateCommandThenPipeControlDispatched,
+          RayTracingForcedWaPlatform) {
+    using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.ProgramExtendedPipeControlPriorToNonPipelinedStateCommand.set(1);
+
+    pDevice->initializeRayTracing(8);
+
+    constexpr size_t size = 256;
+    uint8_t buffer[size];
+    LinearStream cmdStream(buffer, size);
+
+    auto &commandStreamReceiver = pDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    commandStreamReceiver.dispatchRayTracingStateCommand(cmdStream, *pDevice);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        cmdStream.getCpuBase(),
+        cmdStream.getUsed()));
+
+    ASSERT_EQ(2u, cmdList.size());
+
+    auto itCmd = cmdList.begin();
+
+    auto cmdPipeControl = genCmdCast<PIPE_CONTROL *>(*itCmd);
+    EXPECT_NE(nullptr, cmdPipeControl);
+
+    itCmd++;
+    auto cmdBtdState = genCmdCast<_3DSTATE_BTD *>(*itCmd);
+    EXPECT_NE(nullptr, cmdBtdState);
+}

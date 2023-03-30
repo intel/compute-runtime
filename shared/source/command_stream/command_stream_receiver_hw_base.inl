@@ -442,6 +442,9 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
     programMediaSampler(commandStreamCSR, dispatchFlags);
     addPipeControlBefore3dState(commandStreamCSR, dispatchFlags);
     programPerDssBackedBuffer(commandStreamCSR, device, dispatchFlags);
+    if (isRayTracingStateProgramingNeeded(device)) {
+        dispatchRayTracingStateCommand(commandStreamCSR, device);
+    }
 
     stateBaseAddressDirty |= ((GSBAFor32BitProgrammed ^ dispatchFlags.gsba32BitRequired) && force32BitAllocations);
 
@@ -661,6 +664,11 @@ CompletionStamp CommandStreamReceiverHw<GfxFamily>::flushTask(
 
     if (kernelArgsBufferAllocation) {
         makeResident(*kernelArgsBufferAllocation);
+    }
+
+    auto rtBuffer = device.getRTMemoryBackedBuffer();
+    if (rtBuffer) {
+        makeResident(*rtBuffer);
     }
 
     if (logicalStateHelper) {
@@ -990,7 +998,7 @@ size_t CommandStreamReceiverHw<GfxFamily>::getRequiredCmdStreamSize(const Dispat
     size += getCmdSizeForMediaSampler(dispatchFlags.pipelineSelectArgs.mediaSamplerRequired);
     size += getCmdSizeForPipelineSelect();
     size += getCmdSizeForPreemption(dispatchFlags);
-    if (dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) {
+    if ((dispatchFlags.usePerDssBackedBuffer && !isPerDssBackedBufferSent) || isRayTracingStateProgramingNeeded(device)) {
         size += getCmdSizeForPerDssBackedBuffer(device.getHardwareInfo());
     }
     size += getCmdSizeForEpilogue(dispatchFlags);

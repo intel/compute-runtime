@@ -154,6 +154,8 @@ class CommandStreamReceiverHw : public CommandStreamReceiver {
         return iohState;
     }
 
+    void dispatchRayTracingStateCommand(LinearStream &cmdStream, Device &device);
+
   protected:
     void programPreemption(LinearStream &csr, DispatchFlags &dispatchFlags);
     void programL3(LinearStream &csr, uint32_t &newL3Config);

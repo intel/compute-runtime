@@ -1060,5 +1060,9 @@ void CommandStreamReceiver::createGlobalStatelessHeap() {
     }
 }
 
+bool CommandStreamReceiver::isRayTracingStateProgramingNeeded(Device &device) const {
+    return device.getRTMemoryBackedBuffer() && getBtdCommandDirty();
+}
+
 std::function<void()> CommandStreamReceiver::debugConfirmationFunction = []() { std::cin.get(); };
 } // namespace NEO

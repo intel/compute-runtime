@@ -116,6 +116,10 @@ size_t CommandStreamReceiverHw<GfxFamily>::getCmdSizeForPerDssBackedBuffer(const
 }
 
 template <typename GfxFamily>
+void CommandStreamReceiverHw<GfxFamily>::dispatchRayTracingStateCommand(LinearStream &cmdStream, Device &device) {
+}
+
+template <typename GfxFamily>
 void CommandStreamReceiverHw<GfxFamily>::collectStateBaseAddresIohPatchInfo(uint64_t commandBufferAddress, uint64_t commandOffset, const LinearStream &ioh) {
     using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
 

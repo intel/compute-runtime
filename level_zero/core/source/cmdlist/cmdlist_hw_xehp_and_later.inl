@@ -145,6 +145,14 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
+    KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
+    if (kernelImp->usesRayTracing()) {
+        NEO::GraphicsAllocation *memoryBackedBuffer = device->getNEODevice()->getRTMemoryBackedBuffer();
+        if (memoryBackedBuffer == nullptr) {
+            return ZE_RESULT_ERROR_UNINITIALIZED;
+        }
+    }
+
     NEO::IndirectHeap *ssh = nullptr;
     NEO::IndirectHeap *dsh = nullptr;
 
@@ -271,7 +279,6 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
         }
     }
 
-    KernelImp *kernelImp = static_cast<KernelImp *>(kernel);
     bool uncachedMocsKernel = isKernelUncachedMocsRequired(kernelImp->getKernelRequiresUncachedMocs());
     this->requiresQueueUncachedMocs |= kernelImp->getKernelRequiresQueueUncachedMocs();
 
@@ -372,13 +379,9 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(K
     }
 
     if (kernelImp->usesRayTracing()) {
-        NEO::GraphicsAllocation *memoryBackedBuffer = device->getNEODevice()->getRTMemoryBackedBuffer();
-        if (memoryBackedBuffer == nullptr) {
-            return ZE_RESULT_ERROR_UNINITIALIZED;
-        } else {
-            NEO::LinearStream *linearStream = commandContainer.getCommandStream();
-            NEO::EncodeEnableRayTracing<GfxFamily>::programEnableRayTracing(*linearStream, memoryBackedBuffer->getGpuAddress());
-        }
+        NEO::PipeControlArgs args{};
+        args.stateCacheInvalidationEnable = true;
+        NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
     }
 
     if (NEO::PauseOnGpuProperties::pauseModeAllowed(NEO::DebugManager.flags.PauseOnEnqueue.get(), neoDevice->debugExecutionCounter.load(), NEO::PauseOnGpuProperties::PauseMode::BeforeWorkload)) {

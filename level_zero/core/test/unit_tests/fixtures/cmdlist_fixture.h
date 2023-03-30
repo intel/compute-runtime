@@ -246,5 +246,26 @@ struct TbxImmediateCommandListFixture : public ModuleMutableCommandListFixture {
     std::unique_ptr<Event> event;
 };
 
+struct RayTracingCmdListFixture : public ModuleMutableCommandListFixture {
+    void setUp();
+
+    uint64_t rtAllocationAddress = 0;
+    NEO::GraphicsAllocation *rtAllocation = nullptr;
+};
+
+struct CommandListAppendLaunchRayTracingKernelFixture : ModuleFixture {
+    void setUp();
+    void tearDown();
+
+    ContextImp *contextImp = nullptr;
+    WhiteBox<::L0::CommandList> *commandList = nullptr;
+
+    ze_group_count_t dispatchKernelArguments;
+
+    void *allocSrc, *allocDst;
+    NEO::GraphicsAllocation *buffer1 = nullptr;
+    NEO::GraphicsAllocation *buffer2 = nullptr;
+};
+
 } // namespace ult
 } // namespace L0

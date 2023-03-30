@@ -95,6 +95,7 @@ struct CommandQueueHw : public CommandQueueImp {
         bool isDirectSubmissionEnabled{};
         bool isDispatchTaskCountPostSyncRequired{};
         bool hasIndirectAccess{};
+        bool rtDispatchRequired = false;
     };
 
     ze_result_t validateCommandListsParams(CommandListExecutionContext &ctx,
@@ -144,6 +145,8 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void makeSipIsaResidentIfSipKernelUsed(CommandListExecutionContext &ctx);
     inline void makeDebugSurfaceResidentIfNEODebuggerActive(bool isNEODebuggerActive);
     inline void makeCsrTagAllocationResident();
+    inline void makeRayTracingBufferResident(NEO::GraphicsAllocation *rtBuffer);
+
     inline void programActivePartitionConfig(bool isProgramActivePartitionConfigRequired, NEO::LinearStream &commandStream);
     inline void encodeKernelArgsBufferAndMakeItResident();
     inline void writeCsrStreamInlineIfLogicalStateHelperAvailable(NEO::LinearStream &commandStream);

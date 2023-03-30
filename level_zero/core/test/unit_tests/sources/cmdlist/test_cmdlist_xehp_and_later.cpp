@@ -14,14 +14,13 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
+#include "shared/test/common/libult/ult_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_command_encoder.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/cmdlist/cmdlist_hw.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
-#include "level_zero/core/test/unit_tests/fixtures/module_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
@@ -1533,6 +1532,304 @@ HWTEST2_F(MultiTileCopyCommandListSignalAllEventPacketForCompactEventTest, given
 
 HWTEST2_F(MultiTileCopyCommandListSignalAllEventPacketForCompactEventTest, givenSignalPacketsImmediateEventWhenAppendResetEventThenAllPacketResetDispatchNotNeeded, IsAtLeastXeHpCore) {
     testAppendResetEvent<gfxCoreFamily>(0);
+}
+
+using RayTracingMatcher = IsAtLeastXeHpCore;
+
+using CommandListAppendLaunchRayTracingKernelTest = Test<CommandListAppendLaunchRayTracingKernelFixture>;
+
+HWTEST2_F(CommandListAppendLaunchRayTracingKernelTest, givenKernelUsingRayTracingWhenAppendLaunchKernelIsCalledThenSuccessIsReturned, RayTracingMatcher) {
+    Mock<::L0::Kernel> kernel;
+    auto pMockModule = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    kernel.module = pMockModule.get();
+
+    kernel.setGroupSize(4, 1, 1);
+    ze_group_count_t groupCount{8, 1, 1};
+    auto pCommandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    auto result = pCommandList->initialize(device, NEO::EngineGroupType::Compute, 0);
+    ASSERT_EQ(ZE_RESULT_SUCCESS, result);
+
+    kernel.immutableData.kernelDescriptor->kernelAttributes.flags.hasRTCalls = true;
+
+    neoDevice->rtMemoryBackedBuffer = nullptr;
+    CmdListKernelLaunchParams launchParams = {};
+    result = pCommandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_NE(ZE_RESULT_SUCCESS, result);
+
+    neoDevice->rtMemoryBackedBuffer = buffer1;
+    result = pCommandList->appendLaunchKernel(kernel.toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    neoDevice->rtMemoryBackedBuffer = nullptr;
+}
+
+using RayTracingCmdListTest = Test<RayTracingCmdListFixture>;
+
+template <typename FamilyType>
+void findStateCacheFlushPipeControlAfterWalker(LinearStream &cmdStream, size_t offset, size_t size) {
+    using PIPE_CONTROL = typename FamilyType::PIPE_CONTROL;
+    using COMPUTE_WALKER = typename FamilyType::COMPUTE_WALKER;
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream.getCpuBase(), offset),
+        size));
+
+    auto walkerIt = find<COMPUTE_WALKER *>(cmdList.begin(), cmdList.end());
+    ASSERT_NE(cmdList.end(), walkerIt);
+
+    auto pcItorList = findAll<PIPE_CONTROL *>(walkerIt, cmdList.end());
+
+    bool stateCacheFlushFound = false;
+    for (auto &cmdIt : pcItorList) {
+        auto pipeControl = reinterpret_cast<PIPE_CONTROL *>(*cmdIt);
+
+        if (pipeControl->getStateCacheInvalidationEnable()) {
+            stateCacheFlushFound = true;
+            break;
+        }
+    }
+
+    EXPECT_TRUE(stateCacheFlushFound);
+}
+
+template <typename FamilyType>
+void find3dBtdCommand(LinearStream &cmdStream, size_t offset, size_t size, uint64_t gpuVa, bool expectToFind) {
+    using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;
+    using _3DSTATE_BTD_BODY = typename FamilyType::_3DSTATE_BTD_BODY;
+
+    bool btdCommandFound = false;
+    size_t btdStateCmdCount = 0;
+    if (expectToFind) {
+        btdStateCmdCount = 1;
+    }
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdStream.getCpuBase(), offset),
+        size));
+
+    auto btdStateCmdList = findAll<_3DSTATE_BTD *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(btdStateCmdCount, btdStateCmdList.size());
+
+    if (btdStateCmdCount > 0) {
+        auto btdStateCmd = reinterpret_cast<_3DSTATE_BTD *>(*btdStateCmdList[0]);
+        auto &btdStateBody = btdStateCmd->getBtdStateBody();
+        EXPECT_EQ(gpuVa, btdStateBody.getMemoryBackedBufferBasePointer());
+
+        btdCommandFound = true;
+    }
+
+    EXPECT_EQ(expectToFind, btdCommandFound);
+}
+
+HWTEST2_F(RayTracingCmdListTest,
+          givenRayTracingKernelWhenRegularCmdListExecutedAndRegularExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker,
+          RayTracingMatcher) {
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->storeMakeResidentAllocations = true;
+
+    auto &containerRegular = commandList->getCmdContainer();
+    auto &cmdStreamRegular = *containerRegular.getCommandStream();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    size_t regularSizeBefore = cmdStreamRegular.getUsed();
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    size_t regularSizeAfter = cmdStreamRegular.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    findStateCacheFlushPipeControlAfterWalker<FamilyType>(cmdStreamRegular, regularSizeBefore, regularSizeAfter - regularSizeBefore);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    size_t queueSizeBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueSizeAfter = cmdQueueStream.getUsed();
+
+    // find 3D BTD command - first time use
+    find3dBtdCommand<FamilyType>(cmdQueueStream, queueSizeBefore, queueSizeAfter - queueSizeBefore, rtAllocationAddress, true);
+
+    uint32_t residentCount = 1;
+    ultCsr->isMadeResident(rtAllocation, residentCount);
+
+    queueSizeBefore = cmdQueueStream.getUsed();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    queueSizeAfter = cmdQueueStream.getUsed();
+
+    // no find - subsequent dispatch
+    find3dBtdCommand<FamilyType>(cmdQueueStream, queueSizeBefore, queueSizeAfter - queueSizeBefore, rtAllocationAddress, false);
+
+    residentCount++;
+    ultCsr->isMadeResident(rtAllocation, residentCount);
+}
+
+HWTEST2_F(RayTracingCmdListTest,
+          givenRayTracingKernelWhenRegularCmdListExecutedAndImmediateExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker,
+          RayTracingMatcher) {
+    using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;
+    using _3DSTATE_BTD_BODY = typename FamilyType::_3DSTATE_BTD_BODY;
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->storeMakeResidentAllocations = true;
+
+    auto &containerRegular = commandList->getCmdContainer();
+    auto &cmdStreamRegular = *containerRegular.getCommandStream();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    size_t regularSizeBefore = cmdStreamRegular.getUsed();
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    size_t regularSizeAfter = cmdStreamRegular.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    findStateCacheFlushPipeControlAfterWalker<FamilyType>(cmdStreamRegular, regularSizeBefore, regularSizeAfter - regularSizeBefore);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    size_t queueSizeBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueSizeAfter = cmdQueueStream.getUsed();
+
+    find3dBtdCommand<FamilyType>(cmdQueueStream, queueSizeBefore, queueSizeAfter - queueSizeBefore, rtAllocationAddress, true);
+
+    uint32_t residentCount = 1;
+    ultCsr->isMadeResident(rtAllocation, residentCount);
+
+    auto &containerImmediate = commandListImmediate->getCmdContainer();
+    auto &cmdStreamImmediate = *containerImmediate.getCommandStream();
+
+    auto &csrStream = ultCsr->commandStream;
+
+    size_t immediateSizeBefore = cmdStreamImmediate.getUsed();
+    size_t csrBefore = csrStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t csrAfter = csrStream.getUsed();
+    size_t immediateSizeAfter = cmdStreamImmediate.getUsed();
+
+    findStateCacheFlushPipeControlAfterWalker<FamilyType>(cmdStreamImmediate, immediateSizeBefore, immediateSizeAfter - immediateSizeBefore);
+
+    find3dBtdCommand<FamilyType>(csrStream, csrBefore, csrAfter - csrBefore, rtAllocationAddress, false);
+
+    residentCount++;
+    ultCsr->isMadeResident(rtAllocation, residentCount);
+}
+
+HWTEST2_F(RayTracingCmdListTest,
+          givenRayTracingKernelWhenImmediateCmdListExecutedAndImmediateExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker,
+          RayTracingMatcher) {
+    using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;
+    using _3DSTATE_BTD_BODY = typename FamilyType::_3DSTATE_BTD_BODY;
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->storeMakeResidentAllocations = true;
+
+    auto &containerImmediate = commandListImmediate->getCmdContainer();
+    auto &cmdStreamImmediate = *containerImmediate.getCommandStream();
+
+    auto &csrStream = ultCsr->commandStream;
+
+    size_t immediateSizeBefore = cmdStreamImmediate.getUsed();
+    size_t csrBefore = csrStream.getUsed();
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t csrAfter = csrStream.getUsed();
+    size_t immediateSizeAfter = cmdStreamImmediate.getUsed();
+
+    findStateCacheFlushPipeControlAfterWalker<FamilyType>(cmdStreamImmediate, immediateSizeBefore, immediateSizeAfter - immediateSizeBefore);
+
+    find3dBtdCommand<FamilyType>(csrStream, csrBefore, csrAfter - csrBefore, rtAllocationAddress, true);
+
+    uint32_t residentCount = 1;
+    ultCsr->isMadeResident(rtAllocation, residentCount);
+
+    immediateSizeBefore = cmdStreamImmediate.getUsed();
+    csrBefore = csrStream.getUsed();
+    result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    csrAfter = csrStream.getUsed();
+    immediateSizeAfter = cmdStreamImmediate.getUsed();
+
+    findStateCacheFlushPipeControlAfterWalker<FamilyType>(cmdStreamImmediate, immediateSizeBefore, immediateSizeAfter - immediateSizeBefore);
+
+    find3dBtdCommand<FamilyType>(csrStream, csrBefore, csrAfter - csrBefore, rtAllocationAddress, false);
+
+    residentCount++;
+    ultCsr->isMadeResident(rtAllocation, residentCount);
+}
+
+HWTEST2_F(RayTracingCmdListTest,
+          givenRayTracingKernelWhenImmediateCmdListExecutedAndRegularExecutedAgainThenDispatch3dBtdCommandOnceMakeResidentTwiceAndPipeControlWithStateCacheFlushAfterWalker,
+          RayTracingMatcher) {
+    using _3DSTATE_BTD = typename FamilyType::_3DSTATE_BTD;
+    using _3DSTATE_BTD_BODY = typename FamilyType::_3DSTATE_BTD_BODY;
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->storeMakeResidentAllocations = true;
+
+    auto &containerImmediate = commandListImmediate->getCmdContainer();
+    auto &cmdStreamImmediate = *containerImmediate.getCommandStream();
+
+    auto &csrStream = ultCsr->commandStream;
+
+    size_t immediateSizeBefore = cmdStreamImmediate.getUsed();
+    size_t csrBefore = csrStream.getUsed();
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandListImmediate->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t csrAfter = csrStream.getUsed();
+    size_t immediateSizeAfter = cmdStreamImmediate.getUsed();
+
+    findStateCacheFlushPipeControlAfterWalker<FamilyType>(cmdStreamImmediate, immediateSizeBefore, immediateSizeAfter - immediateSizeBefore);
+
+    find3dBtdCommand<FamilyType>(csrStream, csrBefore, csrAfter - csrBefore, rtAllocationAddress, true);
+
+    uint32_t residentCount = 1;
+    ultCsr->isMadeResident(rtAllocation, residentCount);
+
+    auto &containerRegular = commandList->getCmdContainer();
+    auto &cmdStreamRegular = *containerRegular.getCommandStream();
+
+    size_t regularSizeBefore = cmdStreamRegular.getUsed();
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    size_t regularSizeAfter = cmdStreamRegular.getUsed();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    findStateCacheFlushPipeControlAfterWalker<FamilyType>(cmdStreamRegular, regularSizeBefore, regularSizeAfter - regularSizeBefore);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+
+    size_t queueSizeBefore = cmdQueueStream.getUsed();
+    ze_command_list_handle_t cmdListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    size_t queueSizeAfter = cmdQueueStream.getUsed();
+
+    find3dBtdCommand<FamilyType>(cmdQueueStream, queueSizeBefore, queueSizeAfter - queueSizeBefore, rtAllocationAddress, false);
+
+    residentCount++;
+    ultCsr->isMadeResident(rtAllocation, residentCount);
 }
 
 } // namespace ult

@@ -967,13 +967,27 @@ TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueThenRayTracingIsInitialized
 
     auto result = kernel->initialize(&kernelDesc);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_NE(nullptr, module->getDevice()->getNEODevice()->getRTMemoryBackedBuffer());
+    auto rtMemoryBackedBuffer = module->getDevice()->getNEODevice()->getRTMemoryBackedBuffer();
+    EXPECT_NE(nullptr, rtMemoryBackedBuffer);
 
     auto rtDispatchGlobals = neoDevice->getRTDispatchGlobals(NEO::RayTracingHelper::maxBvhLevels);
     EXPECT_NE(nullptr, rtDispatchGlobals);
     auto implicitArgs = kernel->getImplicitArgs();
     ASSERT_NE(nullptr, implicitArgs);
     EXPECT_EQ_VAL(implicitArgs->rtGlobalBufferPtr, rtDispatchGlobals->rtDispatchGlobalsArray->getGpuAddressToPatch());
+
+    auto &residencyContainer = kernel->getResidencyContainer();
+
+    auto found = std::find(residencyContainer.begin(), residencyContainer.end(), rtMemoryBackedBuffer);
+    EXPECT_EQ(residencyContainer.end(), found);
+
+    found = std::find(residencyContainer.begin(), residencyContainer.end(), rtDispatchGlobals->rtDispatchGlobalsArray);
+    EXPECT_NE(residencyContainer.end(), found);
+
+    for (auto &rtStack : rtDispatchGlobals->rtStacks) {
+        found = std::find(residencyContainer.begin(), residencyContainer.end(), rtStack);
+        EXPECT_NE(residencyContainer.end(), found);
+    }
 }
 
 TEST_F(KernelImmutableDataTests, whenHasRTCallsIsTrueAndPatchTokenPointerSizeIsZeroThenRayTracingIsInitialized) {

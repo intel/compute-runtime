@@ -168,6 +168,10 @@ class CommandStreamReceiver {
     void setStateComputeModeDirty(bool dirty) { stateComputeModeDirty = dirty; }
     bool getStateComputeModeDirty() const { return stateComputeModeDirty; }
 
+    void setBtdCommandDirty(bool dirty) { btdCommandDirty = dirty; }
+    bool getBtdCommandDirty() const { return btdCommandDirty; }
+    bool isRayTracingStateProgramingNeeded(Device &device) const;
+
     void setRequiredScratchSizes(uint32_t newRequiredScratchSize, uint32_t newRequiredPrivateScratchSize);
     GraphicsAllocation *getScratchAllocation();
     GraphicsAllocation *getDebugSurfaceAllocation() const { return debugSurface; }
@@ -514,6 +518,7 @@ class CommandStreamReceiver {
     bool heapStorageRequiresRecyclingTag = false;
     bool mediaVfeStateDirty = true;
     bool stateComputeModeDirty = true;
+    bool btdCommandDirty = true;
     bool lastVmeSubslicesConfig = false;
     bool timestampPacketWriteEnabled = false;
     bool staticWorkPartitioningEnabled = false;

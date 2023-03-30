@@ -73,6 +73,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
         this->clientId = this->csr->registerClient();
     }
 
+    auto neoDevice = device->getNEODevice();
     auto ctx = CommandListExecutionContext{phCommandLists,
                                            numCommandLists,
                                            csr->getPreemptionMode(),
@@ -95,7 +96,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     }
 
     if (NEO::DebugManager.flags.PauseOnEnqueue.get() != -1) {
-        this->device->getNEODevice()->debugExecutionCounter++;
+        neoDevice->debugExecutionCounter++;
     }
 
     return ret;
@@ -125,8 +126,10 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     linearStreamSizeEstimate += this->computePreemptionSize(ctx, phCommandLists, numCommandLists);
     linearStreamSizeEstimate += this->computeDebuggerCmdsSize(ctx);
 
+    auto neoDevice = this->device->getNEODevice();
+
     if (ctx.isDispatchTaskCountPostSyncRequired) {
-        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(this->device->getNEODevice()->getRootDeviceEnvironment(), false);
+        linearStreamSizeEstimate += NEO::MemorySynchronizationCommands<GfxFamily>::getSizeForBarrierWithPostSyncOperation(neoDevice->getRootDeviceEnvironment(), false);
     }
 
     NEO::LinearStream child(nullptr);
@@ -162,12 +165,18 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->makePreemptionAllocationResidentForModeMidThread(ctx.isDevicePreemptionModeMidThread);
     this->makeSipIsaResidentIfSipKernelUsed(ctx);
     this->makeDebugSurfaceResidentIfNEODebuggerActive(ctx.isNEODebuggerActive(this->device));
+    this->makeRayTracingBufferResident(neoDevice->getRTMemoryBackedBuffer());
 
     this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, child);
     this->encodeKernelArgsBufferAndMakeItResident();
 
     bool shouldProgramVfe = this->csr->getLogicalStateHelper() && ctx.frontEndStateDirty;
     this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, child, csrStateProperties);
+
+    if (ctx.rtDispatchRequired) {
+        auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
+        csrHw->dispatchRayTracingStateCommand(child, *neoDevice);
+    }
 
     this->writeCsrStreamInlineIfLogicalStateHelperAvailable(child);
 
@@ -461,6 +470,7 @@ CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::CommandListExecution
 
     constexpr size_t residencyContainerSpaceForPreemption = 2;
     constexpr size_t residencyContainerSpaceForTagWrite = 1;
+    constexpr size_t residencyContainerSpaceForBtdAllocation = 1;
 
     for (auto i = 0u; i < numCommandLists; i++) {
         auto commandList = CommandList::fromHandle(phCommandLists[i]);
@@ -495,6 +505,9 @@ CommandQueueHw<gfxCoreFamily>::CommandListExecutionContext::CommandListExecution
         this->spaceForResidency += residencyContainerSpaceForPreemption;
     }
     this->spaceForResidency += residencyContainerSpaceForTagWrite;
+    if (device->getNEODevice()->getRTMemoryBackedBuffer()) {
+        this->spaceForResidency += residencyContainerSpaceForBtdAllocation;
+    }
 
     if (this->isMigrationRequested && device->getDriverHandle()->getMemoryManager()->getPageFaultManager() == nullptr) {
         this->isMigrationRequested = false;
@@ -705,6 +718,12 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
 
     if (ctx.gsbaStateDirty && !this->stateBaseAddressTracking) {
         linearStreamSizeEstimate += estimateStateBaseAddressCmdSize();
+    }
+
+    if (csr->isRayTracingStateProgramingNeeded(*device->getNEODevice())) {
+        ctx.rtDispatchRequired = true;
+        auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
+        linearStreamSizeEstimate += csrHw->getCmdSizeForPerDssBackedBuffer(this->device->getHwInfo());
     }
 
     return linearStreamSizeEstimate;
@@ -1060,6 +1079,13 @@ void CommandQueueHw<gfxCoreFamily>::dispatchTaskCountPostSyncRegular(
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::makeCsrTagAllocationResident() {
     this->csr->makeResident(*this->csr->getTagAllocation());
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandQueueHw<gfxCoreFamily>::makeRayTracingBufferResident(NEO::GraphicsAllocation *rtBuffer) {
+    if (rtBuffer) {
+        this->csr->makeResident(*rtBuffer);
+    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
