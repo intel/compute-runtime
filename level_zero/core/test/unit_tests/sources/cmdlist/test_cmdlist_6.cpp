@@ -2312,6 +2312,27 @@ HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
     auto dsh = container.getIndirectHeap(NEO::HeapType::DYNAMIC_STATE);
     EXPECT_EQ(nullptr, dsh);
 }
+HWTEST2_F(CommandListStateBaseAddressGlobalStatelessTest,
+          givenKernelUsingStatefulAccessWhenAppendingKernelOnGlobalStatelessThenExpectError,
+          IsAtLeastXeHpCore) {
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs.resize(1);
+
+    auto ptrArg = ArgDescriptor(ArgDescriptor::ArgTPointer);
+    ptrArg.as<ArgDescPointer>().bindless = 0x40;
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[0] = ptrArg;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    auto result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+
+    ptrArg.as<ArgDescPointer>().bindless = undefined<CrossThreadDataOffset>;
+    ptrArg.as<ArgDescPointer>().bindful = 0x40;
+    mockKernelImmData->kernelDescriptor->payloadMappings.explicitArgs[0] = ptrArg;
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, result);
+}
 
 } // namespace ult
 } // namespace L0
