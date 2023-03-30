@@ -485,17 +485,12 @@ bool ProductHelperHw<gfxProduct>::isBlitSplitEnqueueWARequired(const HardwareInf
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation, bool lockingSucceeded) const {
+bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const {
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     return allocation.isAllocatedInLocalMemoryPool() &&
            (productHelper.getLocalMemoryAccessMode(hwInfo) == LocalMemoryAccessMode::CpuAccessDisallowed ||
             !allocation.isAllocationLockable());
-}
-
-template <PRODUCT_FAMILY gfxProduct>
-bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const {
-    return this->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, allocation, false);
 }
 
 template <PRODUCT_FAMILY gfxProduct>

@@ -141,7 +141,7 @@ bool ProductHelperHw<gfxProduct>::isBcsReportWaRequired(const HardwareInfo &hwIn
 }
 
 template <>
-bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation, bool lockingSucceeded) const {
+bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const {
     if (!allocation.isAllocatedInLocalMemoryPool()) {
         return false;
     }
@@ -152,7 +152,7 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDev
         return true;
     }
 
-    if (!allocation.isAllocationLockable() && !lockingSucceeded) {
+    if (!allocation.isAllocationLockable()) {
         return true;
     }
 
@@ -164,11 +164,6 @@ bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDev
     }
 
     return false;
-}
-
-template <>
-bool ProductHelperHw<gfxProduct>::isBlitCopyRequiredForLocalMemory(const RootDeviceEnvironment &rootDeviceEnvironment, const GraphicsAllocation &allocation) const {
-    return this->isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, allocation, false);
 }
 
 template <>
