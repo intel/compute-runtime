@@ -208,7 +208,7 @@ bool testKernelTimestampHostQuery(int argc, char *argv[],
     ze_kernel_timestamp_result_t kernelTsResults;
     SUCCESS_OR_TERMINATE(zeEventQueryKernelTimestamp(kernelTsEvent, &kernelTsResults));
 
-    ze_device_properties_t devProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES};
+    ze_device_properties_t devProperties = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2};
     SUCCESS_OR_TERMINATE(zeDeviceGetProperties(device, &devProperties));
 
     uint64_t timerResolution = devProperties.timerResolution;
