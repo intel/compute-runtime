@@ -511,6 +511,7 @@ TEST_F(DebugApiLinuxTest, WhenCallingResumeThenProperIoctlsAreCalled) {
     ze_device_thread_t thread = {};
 
     sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->reportAsStopped();
 
     auto result = L0::DebugApiHandlers::debugResume(session, thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -535,6 +536,7 @@ TEST_F(DebugApiLinuxTest, GivenStoppedThreadWhenCallingResumeThenStoppedThreadsA
 
     ze_device_thread_t thread = {};
     sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->reportAsStopped();
 
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -5394,6 +5396,7 @@ TEST_F(DebugApiLinuxTest, GivenStoppedAndRunningThreadWhenCheckStoppedThreadsAnd
     EuThread::ThreadId thread1 = {0, 0, 0, 0, 1};
     const auto memoryHandle = 1u;
     sessionMock->allThreads[thread.packed]->stopThread(memoryHandle);
+    sessionMock->allThreads[thread.packed]->reportAsStopped();
 
     std::vector<EuThread::ThreadId> threads;
     threads.push_back(thread);
@@ -5456,6 +5459,7 @@ TEST_F(DebugApiLinuxTest, GivenNoAttentionBitsWhenMultipleThreadsPassedToCheckSt
 
     sessionMock->allThreads[thread.packed]->verifyStopped(1);
     sessionMock->allThreads[thread.packed]->stopThread(memoryHandle);
+    sessionMock->allThreads[thread.packed]->reportAsStopped();
     sessionMock->stoppedThreads[thread.packed] = 1;  // previously stopped
     sessionMock->stoppedThreads[thread1.packed] = 3; // newly stopped
     sessionMock->stoppedThreads[thread2.packed] = 3; // newly stopped
@@ -5554,7 +5558,7 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
     auto handler = new MockIoctlHandler;
     sessionMock->ioctlHandler.reset(handler);
     ze_device_thread_t thread = {0, 0, 0, 0};
-    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+    sessionMock->ensureThreadStopped(thread);
 
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -5576,7 +5580,7 @@ TEST_F(DebugApiLinuxTest, GivenResumeWARequiredWhenCallingResumeThenWaIsAppliedT
     }
 
     thread = {0, 0, 4, 0};
-    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+    sessionMock->ensureThreadStopped(thread);
 
     result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -5608,6 +5612,7 @@ TEST_F(DebugApiLinuxTest, GivenSliceALLWhenCallingResumeThenSliceIdIsNotRemapped
         ze_device_thread_t singleThread = thread;
         singleThread.slice = i;
         sessionMock->allThreads[EuThread::ThreadId(0, singleThread)]->stopThread(1u);
+        sessionMock->allThreads[EuThread::ThreadId(0, singleThread)]->reportAsStopped();
     }
 
     auto result = sessionMock->resume(thread);
@@ -5631,6 +5636,7 @@ TEST_F(DebugApiLinuxTest, GivenErrorFromIoctlWhenCallingResumeThenErrorUnknownIs
 
     ze_device_thread_t thread = {};
     sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->reportAsStopped();
 
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
@@ -7440,6 +7446,8 @@ TEST_F(DebugApiLinuxMultitileTest, GivenMultitileDeviceWhenCallingResumeThenThre
 
     sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
     sessionMock->allThreads[EuThread::ThreadId(1, thread)]->stopThread(1u);
+    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->reportAsStopped();
+    sessionMock->allThreads[EuThread::ThreadId(1, thread)]->reportAsStopped();
 
     ze_device_thread_t allSlices = {UINT32_MAX, 0, 0, 0};
     auto result = L0::DebugApiHandlers::debugResume(session, allSlices);

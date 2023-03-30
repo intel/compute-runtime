@@ -138,6 +138,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSession::allThreads;
     using L0::DebugSession::debugArea;
 
+    using L0::DebugSessionImp::apiEvents;
     using L0::DebugSessionImp::applyResumeWa;
     using L0::DebugSessionImp::calculateThreadSlotOffset;
     using L0::DebugSessionImp::checkTriggerEventsForAttention;
@@ -212,10 +213,6 @@ struct MockDebugSession : public L0::DebugSessionImp {
     void attachTile() override { attachTileCalled = true; };
     void detachTile() override { detachTileCalled = true; };
     void cleanRootSessionAfterDetach(uint32_t deviceIndex) override { cleanRootSessionDeviceIndices.push_back(deviceIndex); };
-
-    ze_result_t readEvent(uint64_t timeout, zet_debug_event_t *event) override {
-        return ZE_RESULT_SUCCESS;
-    }
 
     ze_result_t readMemory(ze_device_thread_t thread, const zet_debug_memory_space_desc_t *desc, size_t size, void *buffer) override {
         return readMemoryResult;
@@ -308,7 +305,8 @@ struct MockDebugSession : public L0::DebugSessionImp {
     bool readModuleDebugArea() override { return true; }
 
     void enqueueApiEvent(zet_debug_event_t &debugEvent) override {
-        events.push_back(debugEvent);
+        apiEvents.push(debugEvent);
+        apiEventCondition.notify_all();
     }
 
     bool isForceExceptionOrForceExternalHaltOnlyExceptionReason(uint32_t *cr0) override {
@@ -463,7 +461,6 @@ struct MockDebugSession : public L0::DebugSessionImp {
     uint32_t checkStoppedThreadsAndGenerateEventsCallCount = 0;
 
     bool skipReadSystemRoutineIdent = true;
-    std::vector<zet_debug_event_t> events;
     std::vector<uint32_t> interruptedDevices;
     std::vector<uint32_t> resumedDevices;
     std::vector<std::vector<EuThread::ThreadId>> resumedThreads;

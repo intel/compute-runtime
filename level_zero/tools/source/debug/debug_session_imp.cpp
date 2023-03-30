@@ -380,6 +380,9 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
         if (allThreads[threadId]->isRunning()) {
             continue;
         }
+        if (!allThreads[threadId]->isReportedAsStopped()) {
+            continue;
+        }
         allThreadsRunning = false;
         resumeThreads.emplace_back(ze_device_thread_t{static_cast<uint32_t>(threadId.slice), static_cast<uint32_t>(threadId.subslice), static_cast<uint32_t>(threadId.eu), static_cast<uint32_t>(threadId.thread)});
         resumeThreadIds.push_back(threadId);
@@ -837,7 +840,6 @@ void DebugSessionImp::generateEventsForStoppedThreads(const std::vector<EuThread
     zet_debug_event_t debugEvent = {};
     for (auto &threadID : threadIds) {
         ze_device_thread_t thread = convertToApi(threadID);
-        allThreads[threadID]->reportAsStopped();
 
         debugEvent.type = ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED;
         debugEvent.info.thread.thread = thread;
@@ -862,7 +864,16 @@ ze_result_t DebugSessionImp::readEvent(uint64_t timeout, zet_debug_event_t *outp
         }
 
         if (apiEvents.size() > 0) {
-            *outputEvent = apiEvents.front();
+            zet_debug_event_t temp = apiEvents.front();
+
+            if (temp.type == ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED) {
+
+                if (isSingleThread(temp.info.thread.thread)) {
+                    auto threadID = convertToThreadId(temp.info.thread.thread);
+                    allThreads[threadID]->reportAsStopped();
+                }
+            }
+            *outputEvent = temp;
             apiEvents.pop();
             return ZE_RESULT_SUCCESS;
         }

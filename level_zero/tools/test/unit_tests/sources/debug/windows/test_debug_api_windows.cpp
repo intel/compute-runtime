@@ -1876,6 +1876,7 @@ TEST_F(DebugApiWindowsTest, GivenResumeImpCalledThenBitmaskIsCorrect) {
 
     ze_device_thread_t thread = {0, 0, 0, 0};
     session->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+    session->allThreads[EuThread::ThreadId(0, thread)]->reportAsStopped();
 
     auto result = session->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);

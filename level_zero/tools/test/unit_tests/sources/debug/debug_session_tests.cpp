@@ -198,10 +198,10 @@ TEST(DebugSessionTest, givenInterruptRequestWhenInterruptImpFailsInSendInterrupt
     sessionMock->sendInterrupts();
     EXPECT_EQ(1u, sessionMock->interruptImpCalled);
 
-    EXPECT_EQ(1u, sessionMock->events.size());
+    EXPECT_EQ(1u, sessionMock->apiEvents.size());
 
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->events[0].type);
-    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->events[0].info.thread.thread));
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->apiEvents.front().type);
+    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->apiEvents.front().info.thread.thread));
 
     EXPECT_EQ(0u, sessionMock->pendingInterrupts.size());
 }
@@ -264,9 +264,9 @@ TEST(DebugSessionTest, givenPreviouslyStoppedThreadAndPendingInterruptWhenHandli
     sessionMock->checkTriggerEventsForAttention();
     sessionMock->generateEventsAndResumeStoppedThreads();
 
-    EXPECT_EQ(1u, sessionMock->events.size());
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->events[0].type);
-    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->events[0].info.thread.thread));
+    EXPECT_EQ(1u, sessionMock->apiEvents.size());
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->apiEvents.front().type);
+    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->apiEvents.front().info.thread.thread));
 }
 
 TEST(DebugSessionTest, givenStoppedThreadWhenAddingNewlyStoppedThenThreadIsNotAdded) {
@@ -308,7 +308,7 @@ TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWithForceException
     EXPECT_FALSE(sessionMock->allThreads[thread]->isReportedAsStopped());
 }
 
-TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWhenGeneratingEventsFromStoppedThreadsThenThreadIsReportedAsStopped) {
+TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWhenGeneratingEventsFromStoppedThreadsThenThreadIsReportedAsStoppedAfterReadingEvent) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
     auto hwInfo = *NEO::defaultHwInfo.get();
@@ -330,10 +330,14 @@ TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWhenGeneratingEven
     EXPECT_FALSE(sessionMock->allThreads[thread]->isReportedAsStopped());
 
     sessionMock->generateEventsAndResumeStoppedThreads();
-    EXPECT_TRUE(sessionMock->allThreads[thread]->isReportedAsStopped());
+    EXPECT_FALSE(sessionMock->allThreads[thread]->isReportedAsStopped());
 
-    EXPECT_EQ(1u, sessionMock->events.size());
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED, sessionMock->events[0].type);
+    EXPECT_EQ(1u, sessionMock->apiEvents.size());
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED, sessionMock->apiEvents.front().type);
+
+    zet_debug_event_t outputEvent;
+    sessionMock->readEvent(0, &outputEvent);
+    EXPECT_TRUE(sessionMock->allThreads[thread]->isReportedAsStopped());
 }
 
 TEST(DebugSessionTest, givenNoStoppedThreadWhenAddingNewlyStoppedThenThreadIsNotAdded) {
@@ -394,13 +398,14 @@ TEST(DebugSessionTest, givenTriggerEventsWhenGenerateEventsAndResumeCalledThenEv
 
     sessionMock->generateEventsAndResumeStoppedThreads();
 
-    EXPECT_EQ(2u, sessionMock->events.size());
+    EXPECT_EQ(2u, sessionMock->apiEvents.size());
 
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED, sessionMock->events[0].type);
-    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->events[0].info.thread.thread));
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED, sessionMock->apiEvents.front().type);
+    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->apiEvents.front().info.thread.thread));
 
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED, sessionMock->events[1].type);
-    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread2, sessionMock->events[1].info.thread.thread));
+    sessionMock->apiEvents.pop();
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED, sessionMock->apiEvents.front().type);
+    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread2, sessionMock->apiEvents.front().info.thread.thread));
 
     EXPECT_EQ(1u, sessionMock->resumeAccidentallyStoppedCalled);
     EXPECT_EQ(0u, sessionMock->pendingInterrupts.size());
@@ -427,10 +432,10 @@ TEST(DebugSessionTest, givenPendingInterruptAfterTimeoutWhenGenerateEventsAndRes
 
     sessionMock->generateEventsAndResumeStoppedThreads();
 
-    EXPECT_EQ(1u, sessionMock->events.size());
+    EXPECT_EQ(1u, sessionMock->apiEvents.size());
 
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->events[0].type);
-    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->events[0].info.thread.thread));
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->apiEvents.front().type);
+    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->apiEvents.front().info.thread.thread));
 
     EXPECT_EQ(0u, sessionMock->pendingInterrupts.size());
     EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
@@ -458,7 +463,7 @@ TEST(DebugSessionTest, givenPendingInterruptBeforeTimeoutWhenGenerateEventsAndRe
 
     sessionMock->generateEventsAndResumeStoppedThreads();
 
-    EXPECT_EQ(0u, sessionMock->events.size());
+    EXPECT_EQ(0u, sessionMock->apiEvents.size());
     EXPECT_EQ(1u, sessionMock->pendingInterrupts.size());
     EXPECT_FALSE(sessionMock->triggerEvents);
     EXPECT_TRUE(sessionMock->interruptSent);
@@ -499,13 +504,13 @@ TEST(DebugSessionTest, givenPendingInterruptsWhenGeneratingEventsThenStoppedEven
 
     sessionMock->generateEventsForPendingInterrupts();
 
-    EXPECT_EQ(2u, sessionMock->events.size());
+    EXPECT_EQ(2u, sessionMock->apiEvents.size());
 
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->events[0].type);
-    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->events[0].info.thread.thread));
-
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED, sessionMock->events[1].type);
-    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread2, sessionMock->events[1].info.thread.thread));
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->apiEvents.front().type);
+    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->apiEvents.front().info.thread.thread));
+    sessionMock->apiEvents.pop();
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED, sessionMock->apiEvents.front().type);
+    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread2, sessionMock->apiEvents.front().info.thread.thread));
 
     EXPECT_EQ(0u, sessionMock->pendingInterrupts.size());
 }
@@ -674,6 +679,7 @@ TEST(DebugSessionTest, givenSomeThreadsRunningWhenResumeCalledThenOnlyStoppedThr
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
         EuThread::ThreadId thread(0, 0, 0, 0, i);
         sessionMock->allThreads[thread]->stopThread(1u);
+        sessionMock->allThreads[thread]->reportAsStopped();
     }
 
     EuThread::ThreadId euthread(0, 0, 0, 0, 3);
@@ -690,6 +696,46 @@ TEST(DebugSessionTest, givenSomeThreadsRunningWhenResumeCalledThenOnlyStoppedThr
     }
 }
 
+TEST(DebugSessionTest, givenStoppedThreadsWhenResumeAllCalledThenOnlyReportedStoppedThreadsAreResumed) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    hwInfo.gtSystemInfo.EUCount = 8;
+    hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+        // set reportAsStopped threads from EU0
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        sessionMock->allThreads[thread]->stopThread(1u);
+        sessionMock->allThreads[thread]->reportAsStopped();
+
+        // stop threads from EU1, but do not report as stopped
+        EuThread::ThreadId thread1(0, 0, 0, 1, i);
+        sessionMock->allThreads[thread1]->stopThread(1u); // do not report as stopped
+    }
+
+    ze_device_thread_t threadAll = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    auto result = sessionMock->resume(threadAll);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    // only threads from EU0 resumed
+    EXPECT_EQ(hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount, sessionMock->resumeThreadCount);
+
+    for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        EXPECT_TRUE(sessionMock->allThreads[thread]->isRunning());
+
+        EuThread::ThreadId thread1(0, 0, 0, 1, i);
+        EXPECT_FALSE(sessionMock->allThreads[thread1]->isRunning());
+    }
+}
+
 TEST(DebugSessionTest, givenStoppedThreadWhenResumeCalledThenStoppedThreadsAreCheckedSynchronously) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -703,6 +749,7 @@ TEST(DebugSessionTest, givenStoppedThreadWhenResumeCalledThenStoppedThreadsAreCh
     ze_device_thread_t apiThread = {0, 0, 0, 1};
     EuThread::ThreadId thread(0, apiThread);
     sessionMock->allThreads[thread]->stopThread(1u);
+    sessionMock->allThreads[thread]->reportAsStopped();
 
     auto result = sessionMock->resume(apiThread);
 
@@ -738,6 +785,7 @@ TEST(DebugSessionTest, givenErrorFromResumeImpWhenResumeCalledThenErrorReturned)
 
     ze_device_thread_t thread = {0, 0, 0, 1};
     sessionMock->allThreads[EuThread::ThreadId(0, thread)]->stopThread(1u);
+    sessionMock->allThreads[EuThread::ThreadId(0, thread)]->reportAsStopped();
 
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, result);
@@ -1047,6 +1095,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion1AndResumeWARequiredWhenCallingRes
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
     sessionMock->allThreads[threadId]->stopThread(1u);
+    sessionMock->allThreads[threadId]->reportAsStopped();
 
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -1091,6 +1140,7 @@ TEST(DebugSessionTest, GivenErrorFromReadRegisterWhenResumingThreadThenRegisterI
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
     sessionMock->allThreads[threadId]->stopThread(1u);
+    sessionMock->allThreads[threadId]->reportAsStopped();
 
     auto result = sessionMock->resume(thread);
 
@@ -1137,6 +1187,7 @@ TEST(DebugSessionTest, GivenErrorFromWriteRegisterWhenResumingThreadThenRegister
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
     sessionMock->allThreads[threadId]->stopThread(1u);
+    sessionMock->allThreads[threadId]->reportAsStopped();
 
     auto result = sessionMock->resume(thread);
 
@@ -1182,6 +1233,7 @@ TEST(DebugSessionTest, GivenNonBindlessSipVersion1AndResumeWARequiredWhenCalling
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
     sessionMock->allThreads[threadId]->stopThread(1u);
+    sessionMock->allThreads[threadId]->reportAsStopped();
 
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -1233,6 +1285,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenWritingResumeFailsThenErrorIs
     EuThread::ThreadId threadId(0, thread);
     sessionMock->allThreads[threadId]->verifyStopped(1);
     sessionMock->allThreads[threadId]->stopThread(1u);
+    sessionMock->allThreads[threadId]->reportAsStopped();
 
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_ERROR_UNKNOWN);
@@ -1274,6 +1327,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenResumingThreadThenCheckIfThre
     EuThread::ThreadId threadId(0, thread);
     sessionMock->allThreads[threadId]->verifyStopped(1);
     sessionMock->allThreads[threadId]->stopThread(1u);
+    sessionMock->allThreads[threadId]->reportAsStopped();
 
     auto result = sessionMock->resume(thread);
     EXPECT_EQ(result, ZE_RESULT_SUCCESS);
@@ -1283,6 +1337,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenResumingThreadThenCheckIfThre
 
     sessionMock->allThreads[threadId]->verifyStopped(3);
     sessionMock->allThreads[threadId]->stopThread(1u);
+    sessionMock->allThreads[threadId]->reportAsStopped();
 
     sessionMock->checkThreadIsResumedCalled = 0;
     result = sessionMock->resume(thread);
@@ -1325,6 +1380,9 @@ TEST_F(MultiTileDebugSessionTest, givenThreadsFromMultipleTilesWhenResumeCalledT
     sessionMock->allThreads[threadTile0]->stopThread(1u);
     sessionMock->allThreads[threadTile1]->stopThread(1u);
 
+    sessionMock->allThreads[threadTile0]->reportAsStopped();
+    sessionMock->allThreads[threadTile1]->reportAsStopped();
+
     ze_device_thread_t thread = {UINT32_MAX, 0, 0, 0};
 
     auto result = sessionMock->resume(thread);
@@ -1336,6 +1394,7 @@ TEST_F(MultiTileDebugSessionTest, givenThreadsFromMultipleTilesWhenResumeCalledT
     EXPECT_EQ(2u, sessionMock->resumeImpCalled);
 
     sessionMock->allThreads[threadTile1]->stopThread(1u);
+    sessionMock->allThreads[threadTile1]->reportAsStopped();
 
     result = sessionMock->resume(thread);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
@@ -1354,9 +1413,11 @@ TEST_F(MultiTileDebugSessionTest, givenThreadFromSingleTileWhenResumeCalledThenT
 
     EuThread::ThreadId threadTile0(0, 0, 0, 0, 0);
     sessionMock->allThreads[threadTile0]->stopThread(1u);
+    sessionMock->allThreads[threadTile0]->reportAsStopped();
 
     EuThread::ThreadId threadTile1(1, 0, 0, 0, 0);
     sessionMock->allThreads[threadTile1]->stopThread(1u);
+    sessionMock->allThreads[threadTile1]->reportAsStopped();
 
     ze_device_thread_t thread = {sliceCount, 0, 0, 0};
 
@@ -1428,6 +1489,8 @@ TEST_F(MultiTileDebugSessionTest, givenErrorFromResumeWithinDeviceWhenResumeCall
     EuThread::ThreadId threadTile1(1, 0, 0, 0, 0);
     sessionMock->allThreads[threadTile0]->stopThread(1u);
     sessionMock->allThreads[threadTile1]->stopThread(1u);
+    sessionMock->allThreads[threadTile0]->reportAsStopped();
+    sessionMock->allThreads[threadTile1]->reportAsStopped();
 
     ze_device_thread_t thread = {UINT32_MAX, 0, 0, 0};
 
@@ -1619,12 +1682,13 @@ TEST_F(MultiTileDebugSessionTest, givenTwoDevicesInRequestsWhenAllInterruptsRetu
     EXPECT_EQ(0u, sessionMock->expectedAttentionEvents);
     EXPECT_EQ(0u, sessionMock->pendingInterrupts.size());
 
-    EXPECT_EQ(2u, sessionMock->events.size());
+    EXPECT_EQ(2u, sessionMock->apiEvents.size());
 
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->events[0].type);
-    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->events[0].info.thread.thread));
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->events[1].type);
-    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread2, sessionMock->events[1].info.thread.thread));
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->apiEvents.front().type);
+    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->apiEvents.front().info.thread.thread));
+    sessionMock->apiEvents.pop();
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->apiEvents.front().type);
+    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread2, sessionMock->apiEvents.front().info.thread.thread));
 }
 
 TEST_F(MultiTileDebugSessionTest, givenAllSlicesInRequestWhenAllInterruptsReturnErrorThenAllInterruptRequestsGenerateUnavailableEvents) {
@@ -1655,10 +1719,10 @@ TEST_F(MultiTileDebugSessionTest, givenAllSlicesInRequestWhenAllInterruptsReturn
     EXPECT_EQ(0u, sessionMock->expectedAttentionEvents);
     EXPECT_EQ(0u, sessionMock->pendingInterrupts.size());
 
-    EXPECT_EQ(1u, sessionMock->events.size());
+    EXPECT_EQ(1u, sessionMock->apiEvents.size());
 
-    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->events[0].type);
-    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->events[0].info.thread.thread));
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE, sessionMock->apiEvents.front().type);
+    EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->apiEvents.front().info.thread.thread));
 }
 
 TEST_F(MultiTileDebugSessionTest, GivenMultitileDeviceWhenCallingAreRequestedThreadsStoppedThenCorrectValueIsReturned) {
