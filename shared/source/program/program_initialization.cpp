@@ -29,7 +29,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
     if (linkerInput != nullptr) {
         globalsAreExported = constant ? linkerInput->getTraits().exportsGlobalConstants : linkerInput->getTraits().exportsGlobalVariables;
     }
-
+    bool lockingSucceeded = false;
     if (globalsAreExported && (svmAllocManager != nullptr)) {
         RootDeviceIndicesContainer rootDeviceIndices;
         rootDeviceIndices.push_back(rootDeviceIndex);
@@ -45,6 +45,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         auto usmAlloc = svmAllocManager->getSVMAlloc(ptr);
         UNRECOVERABLE_IF(usmAlloc == nullptr);
         gpuAllocation = usmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
+        lockingSucceeded = device.getMemoryManager()->lockResource(gpuAllocation) != nullptr;
     } else {
         auto allocationType = constant ? AllocationType::CONSTANT_SURFACE : AllocationType::GLOBAL_SURFACE;
         gpuAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex,
@@ -64,9 +65,12 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
     bool isOnlyBssData = (totalSize == zeroInitSize);
     if (false == isOnlyBssData) {
         auto initSize = totalSize - zeroInitSize;
-        auto success = MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *gpuAllocation),
+        auto success = MemoryTransferHelper::transferMemoryToAllocation(productHelper.isBlitCopyRequiredForLocalMemory(rootDeviceEnvironment, *gpuAllocation, lockingSucceeded),
                                                                         device, gpuAllocation, 0, initData, initSize);
         UNRECOVERABLE_IF(!success);
+        if (lockingSucceeded) {
+            gpuAllocation->unlock();
+        }
     }
     return gpuAllocation;
 }
