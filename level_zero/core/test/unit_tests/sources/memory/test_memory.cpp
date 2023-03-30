@@ -930,6 +930,48 @@ TEST_F(MemoryTest, givenProductWith48bForRTWhenAllocatingSharedMemoryAsRayTracin
     std::swap(rootDeviceEnvironment.productHelper, productHelper);
 }
 
+TEST_F(MemoryTest, givenKmdMigrationsAndProductWith48bForRTWhenAllocatingSharedMemoryAsRayTracingThenAllocationAddressIsIn48Bits) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseKmdMigration.set(true);
+    DebugManager.flags.AllocateSharedAllocationsWithCpuAndGpuStorage.set(true);
+    size_t size = 10;
+    size_t alignment = 1u;
+    void *ptr = reinterpret_cast<void *>(0x1234);
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    ze_host_mem_alloc_desc_t hostDesc = {};
+    ze_raytracing_mem_alloc_ext_desc_t rtDesc = {};
+
+    rtDesc.stype = ZE_STRUCTURE_TYPE_RAYTRACING_MEM_ALLOC_EXT_DESC;
+    deviceDesc.pNext = &rtDesc;
+
+    auto mockProductHelper = std::make_unique<MockProductHelper>();
+    mockProductHelper->is48bResourceNeededForRayTracingResult = true;
+    std::unique_ptr<ProductHelper> productHelper = std::move(mockProductHelper);
+    auto &rootDeviceEnvironment = neoDevice->getRootDeviceEnvironmentRef();
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+    memoryManager->validateAllocateProperties = [](const AllocationProperties &properties) -> void {
+        EXPECT_TRUE(properties.flags.resource48Bit);
+    };
+
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+
+    ze_result_t result = context->allocSharedMem(device->toHandle(),
+                                                 &deviceDesc,
+                                                 &hostDesc,
+                                                 size, alignment, &ptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_NE(nullptr, ptr);
+
+    auto allocData = driverHandle->getSvmAllocsManager()->getSVMAlloc(ptr);
+    EXPECT_EQ(allocData->allocationFlagsProperty.hostptr & 0xffff000000000000, 0u);
+
+    result = context->freeMem(ptr);
+    ASSERT_EQ(result, ZE_RESULT_SUCCESS);
+
+    std::swap(rootDeviceEnvironment.productHelper, productHelper);
+}
+
 TEST_F(MemoryTest, givenProductWithNon48bForRTWhenAllocatingSharedMemoryAsRayTracingThenResourceIsNot48b) {
     size_t size = 10;
     size_t alignment = 1u;
