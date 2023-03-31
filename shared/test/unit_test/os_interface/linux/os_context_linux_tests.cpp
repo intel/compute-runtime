@@ -37,3 +37,41 @@ TEST(OSContextLinux, givenInitializeContextWhenContextCreateIoctlFailsThenContex
     EXPECT_EQ(false, osContext.ensureContextInitialized());
     delete pDrm;
 }
+
+TEST(OSContextLinux, givenOsContextLinuxWhenQueryingForOfflineDumpContextIdThenCorrectValueIsReturned) {
+    class OsContextLinuxMock : public OsContextLinux {
+      public:
+        using OsContextLinux::drmContextIds;
+
+        OsContextLinuxMock(Drm &drm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
+            : OsContextLinux(drm, rootDeviceIndex, contextId, engineDescriptor) {}
+    };
+
+    MockExecutionEnvironment executionEnvironment;
+    std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]));
+    executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
+    OsContextLinuxMock osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+
+    osContext.drmContextIds.clear();
+    osContext.drmContextIds.push_back(1u);
+    osContext.drmContextIds.push_back(3u);
+    osContext.drmContextIds.push_back(5u);
+
+    const auto processId = 0xABCEDF;
+    const uint64_t highBitsMask = 0xffffffff00000000;
+    const uint64_t lowBitsMask = 0x00000000ffffffff;
+
+    auto ctxId = osContext.getOfflineDumpContextId(0);
+    EXPECT_EQ(ctxId & lowBitsMask, static_cast<uint64_t>(1u));
+    EXPECT_EQ(ctxId & highBitsMask, static_cast<uint64_t>(processId) << 32);
+
+    ctxId = osContext.getOfflineDumpContextId(1);
+    EXPECT_EQ(ctxId & lowBitsMask, static_cast<uint64_t>(3u));
+    EXPECT_EQ(ctxId & highBitsMask, static_cast<uint64_t>(processId) << 32);
+
+    ctxId = osContext.getOfflineDumpContextId(2);
+    EXPECT_EQ(ctxId & lowBitsMask, static_cast<uint64_t>(5u));
+    EXPECT_EQ(ctxId & highBitsMask, static_cast<uint64_t>(processId) << 32);
+
+    EXPECT_EQ(0u, osContext.getOfflineDumpContextId(10));
+}

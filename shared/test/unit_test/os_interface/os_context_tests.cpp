@@ -81,6 +81,12 @@ TEST(OSContext, givenSetPowerHintThenGetPowerHintShowsTheSameValue) {
     delete pOsContext;
 }
 
+TEST(OSContext, givenOsContextWhenQueryingForOfflineDumpContextIdThenCorrectValueIsReturned) {
+    OsContext *osContext = OsContext::create(nullptr, 0, 0, EngineDescriptorHelper::getDefaultDescriptor());
+    EXPECT_EQ(0u, osContext->getOfflineDumpContextId(0));
+    delete osContext;
+}
+
 struct DeferredOsContextCreationTests : ::testing::Test {
     void SetUp() override {
         device = std::unique_ptr<MockDevice>{MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get())};

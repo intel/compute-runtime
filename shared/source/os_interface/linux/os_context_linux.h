@@ -50,6 +50,8 @@ class OsContextLinux : public OsContext {
         return contextHangDetected;
     }
 
+    uint64_t getOfflineDumpContextId(uint32_t deviceIndex) const override;
+
   protected:
     bool initializeContext() override;
 

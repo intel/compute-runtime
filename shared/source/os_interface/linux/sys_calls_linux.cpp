@@ -22,7 +22,8 @@ namespace NEO {
 namespace SysCalls {
 
 unsigned int getProcessId() {
-    return getpid();
+    static unsigned int pid = getpid();
+    return pid;
 }
 
 unsigned long getNumThreads() {

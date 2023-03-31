@@ -69,6 +69,11 @@ TEST_F(OsContextWinTest, givenReinitializeContextWhenContextIsNotInitThenContext
     EXPECT_NO_THROW(osContext->ensureContextInitialized());
 }
 
+TEST_F(OsContextWinTest, givenOsContextWinWhenQueryingForOfflineDumpContextIdThenCorrectValueIsReturned) {
+    osContext = std::make_unique<OsContextWin>(*osInterface->getDriverModel()->as<Wddm>(), 0, 0u, EngineDescriptorHelper::getDefaultDescriptor(engineTypeUsage, preemptionMode));
+    EXPECT_EQ(0u, osContext->getOfflineDumpContextId(0));
+}
+
 struct OsContextWinTestNoCleanup : public WddmTestWithMockGdiDllNoCleanup {
     void SetUp() override {
         WddmTestWithMockGdiDllNoCleanup::SetUp();

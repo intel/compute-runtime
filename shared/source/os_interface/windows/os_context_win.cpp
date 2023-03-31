@@ -77,6 +77,10 @@ uint32_t OsContextWin::getDeviceNodeMask() {
     return hwDeviceID->getAdapterNodeMask();
 }
 
+uint64_t OsContextWin::getOfflineDumpContextId(uint32_t deviceIndex) const {
+    return 0;
+}
+
 OsContextWin::~OsContextWin() {
     if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
         wddm.getWddmInterface()->destroyHwQueue(hardwareQueue.handle);

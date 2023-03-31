@@ -17,6 +17,7 @@
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/os_interface/sys_calls_common.h"
 
 namespace NEO {
 
@@ -93,6 +94,16 @@ void OsContextLinux::waitForPagingFence() {
 }
 
 void OsContextLinux::reInitializeContext() {}
+
+uint64_t OsContextLinux::getOfflineDumpContextId(uint32_t deviceIndex) const {
+    if (deviceIndex < drmContextIds.size()) {
+        const auto processId = SysCalls::getProcessId();
+        const auto drmContextId = drmContextIds[deviceIndex];
+        return static_cast<uint64_t>(processId) << 32 |
+               static_cast<uint64_t>(drmContextId);
+    }
+    return 0;
+}
 
 OsContextLinux::~OsContextLinux() {
     if (contextInitialized) {
