@@ -2641,6 +2641,47 @@ TEST(OfflineCompilerTest, givenOutputNoSuffixFlagAndNonEmptyOutputFileNameAndNon
     EXPECT_EQ("12345678", outputFileIt->second);
 }
 
+TEST(OfflineCompilerTest, givenOutputNoSuffixFlagAndOutputFileNameWithExtensionOutWhenWritingOutAllFilesThenBinaryFileDoesNotHaveExtensionBinAdded) {
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.uniqueHelper->interceptOutput = true;
+
+    mockOfflineCompiler.outputNoSuffix = true;
+    mockOfflineCompiler.outputFile = "some_output_filename.out";
+    mockOfflineCompiler.elfBinary = {49, 50, 51, 52, 53, 54, 55, 56}; // ASCII codes of "12345678"
+
+    mockOfflineCompiler.writeOutAllFiles();
+
+    const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("some_output_filename.out");
+    ASSERT_NE(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt);
+
+    mockOfflineCompiler.uniqueHelper->interceptedFiles.clear();
+    mockOfflineCompiler.outputFile = "some_output_filename.out1";
+    mockOfflineCompiler.writeOutAllFiles();
+
+    const auto outputFileIt2 = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("some_output_filename.out1.bin");
+    ASSERT_NE(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt2);
+}
+TEST(OfflineCompilerTest, givenOutputNoSuffixFlagAndOutputFileNameWithExtensionExeWhenWritingOutAllFilesThenBinaryFileDoesNotHaveExtensionBinAdded) {
+    MockOfflineCompiler mockOfflineCompiler{};
+    mockOfflineCompiler.uniqueHelper->interceptOutput = true;
+
+    mockOfflineCompiler.outputNoSuffix = true;
+    mockOfflineCompiler.outputFile = "some_output_filename.exe";
+    mockOfflineCompiler.elfBinary = {49, 50, 51, 52, 53, 54, 55, 56}; // ASCII codes of "12345678"
+
+    mockOfflineCompiler.writeOutAllFiles();
+
+    const auto outputFileIt = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("some_output_filename.exe");
+    ASSERT_NE(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt);
+
+    mockOfflineCompiler.uniqueHelper->interceptedFiles.clear();
+    mockOfflineCompiler.outputFile = "some_output_filename.exe1";
+    mockOfflineCompiler.writeOutAllFiles();
+
+    const auto outputFileIt2 = mockOfflineCompiler.uniqueHelper->interceptedFiles.find("some_output_filename.exe1.bin");
+    ASSERT_NE(mockOfflineCompiler.uniqueHelper->interceptedFiles.end(), outputFileIt2);
+}
+
 TEST(OfflineCompilerTest, givenInputFileNameAndOutputNoSuffixFlagAndEmptyOutputFileNameAndNonEmptyElfContentWhenWritingOutAllFilesThenFileWithTruncatedInputNameIsWritten) {
     MockOfflineCompiler mockOfflineCompiler{};
     mockOfflineCompiler.uniqueHelper->interceptOutput = true;

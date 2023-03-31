@@ -1158,7 +1158,22 @@ void OfflineCompiler::writeOutAllFiles() {
     if (!elfBinary.empty()) {
         std::string elfOutputFile;
         if (outputNoSuffix) {
-            elfOutputFile = generateFilePath(outputDirectory, fileBase, ".bin");
+            // temporary fix for backwards compatibility with oneAPI 2023.1 and older
+            // after adding ".bin" extension to name of binary output file
+            // if "-output filename" is passed with ".out" or ".exe" extension - do not append ".bin"
+            if (outputFile.empty()) {
+                elfOutputFile = generateFilePath(outputDirectory, fileBase, ".bin");
+            } else {
+                size_t extPos = fileBase.find_last_of(".", fileBase.size());
+                std::string fileExt = ".bin";
+                if (extPos != std::string::npos) {
+                    auto existingExt = fileBase.substr(extPos, fileBase.size());
+                    if (existingExt == ".out" || existingExt == ".exe") {
+                        fileExt = "";
+                    }
+                }
+                elfOutputFile = generateFilePath(outputDirectory, fileBase, fileExt.c_str());
+            }
         } else {
             elfOutputFile = generateFilePath(outputDirectory, fileBase, ".bin") + generateOptsSuffix();
         }
