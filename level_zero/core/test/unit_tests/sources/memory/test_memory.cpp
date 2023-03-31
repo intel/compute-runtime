@@ -1170,6 +1170,30 @@ TEST_F(ZexHostPointerTests, whenAllocatingSharedMemoryWithUseHostPtrFlagThenCrea
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 }
 
+TEST_F(MemoryTest, whenAllocatingDeviceMemoryThenAlignmentIsPassedCorrectly) {
+    const size_t size = 1;
+
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    deviceDesc.stype = ZE_STRUCTURE_TYPE_DEVICE_MEM_ALLOC_DESC;
+    deviceDesc.pNext = nullptr;
+
+    auto memoryManager = static_cast<MockMemoryManager *>(neoDevice->getMemoryManager());
+
+    size_t alignment = 8 * MemoryConstants::megaByte;
+    do {
+        alignment >>= 1;
+        memoryManager->validateAllocateProperties = [alignment](const AllocationProperties &properties) {
+            EXPECT_EQ(properties.alignment, alignUp<size_t>(alignment, MemoryConstants::pageSize64k));
+        };
+        void *ptr = nullptr;
+        ze_result_t result = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, alignment, &ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+        EXPECT_NE(nullptr, ptr);
+        result = context->freeMem(ptr);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    } while (alignment != 0);
+}
+
 TEST_F(MemoryTest, whenAllocatingSharedMemoryWithDeviceInitialPlacementBiasFlagThenFlagsAreSetupCorrectly) {
     size_t size = 10;
     size_t alignment = 1u;

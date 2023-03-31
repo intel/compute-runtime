@@ -1703,7 +1703,7 @@ HWTEST_F(EnqueueKernelTest, GivenForceMemoryPrefetchForKmdMigratedSharedAllocati
     DebugManager.flags.UseKmdMigration.set(true);
     DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
 
-    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, context->getRootDeviceIndices(), context->getDeviceBitfields());
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, 1, context->getRootDeviceIndices(), context->getDeviceBitfields());
     auto ptr = context->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, pCmdQ);
     EXPECT_NE(nullptr, ptr);
 
