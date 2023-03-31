@@ -591,85 +591,6 @@ HWTEST2_F(BlitTests, givenResourcesWithoutGmmsWhenAppendSurfaceTypeThenSurfaceTy
     EXPECT_EQ(bltCmd.getDestinationSurfaceType(), dstSurfaceType);
 }
 
-HWTEST2_F(BlitTests, givenGmmParamsWhenGetBlitAllocationPropertiesIsCalledThenCompressionFormatIsSet, IsXeHpCore) {
-    std::tuple<bool, bool, bool> params[]{
-        {false, false, false},
-        {false, true, true},
-        {true, false, true}};
-
-    for (auto &[mediaCompressed, renderCompressed, compressionExpected] : params) {
-        auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-        auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
-        auto &resInfo = resourceInfo->getResourceFlags()->Info;
-        resInfo.MediaCompressed = mediaCompressed;
-        resInfo.RenderCompressed = renderCompressed;
-        MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
-                                                 reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                                 MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-        mockAllocationSrc.setGmm(gmm.get(), 0);
-        BlitProperties properties = {};
-        properties.srcAllocation = &mockAllocationSrc;
-        uint32_t qPitch = static_cast<uint32_t>(properties.copySize.y);
-        GMM_TILE_TYPE tileType = GMM_NOT_TILED;
-        uint32_t mipTailLod = 0;
-        uint32_t compressionFormat = 0;
-        uint32_t compressionType = 0;
-        auto rowPitch = static_cast<uint32_t>(properties.srcRowPitch);
-        BlitCommandsHelper<FamilyType>::getBlitAllocationProperties(*properties.srcAllocation, rowPitch, qPitch, tileType, mipTailLod,
-                                                                    compressionFormat, compressionType, pDevice->getRootDeviceEnvironment(),
-                                                                    GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
-
-        if (compressionExpected) {
-            EXPECT_GT(compressionFormat, 0u);
-        } else {
-            EXPECT_EQ(compressionFormat, 0u);
-        }
-    }
-}
-
-HWTEST2_F(BlitTests, givenGmmParamsWhenGetBlitAllocationPropertiesIsCalledThenCompressionTypeIsSet, IsWithinXeGfxFamily) {
-    using COMPRESSION_TYPE = typename FamilyType::XY_BLOCK_COPY_BLT::COMPRESSION_TYPE;
-    constexpr uint32_t undefinedCompressionType = 0x888;
-    constexpr uint32_t mediaCompressionType = static_cast<uint32_t>(COMPRESSION_TYPE::COMPRESSION_TYPE_MEDIA_COMPRESSION);
-    constexpr uint32_t renderCompressionType = static_cast<uint32_t>(COMPRESSION_TYPE::COMPRESSION_TYPE_3D_COMPRESSION);
-
-    std::tuple<bool, bool, bool> params[]{
-        {false, false, false},
-        {false, true, true},
-        {true, false, true}};
-
-    for (auto &[mediaCompressed, renderCompressed, compressionExpected] : params) {
-        auto gmm = std::make_unique<MockGmm>(pDevice->getGmmHelper());
-        auto resourceInfo = static_cast<MockGmmResourceInfo *>(gmm->gmmResourceInfo.get());
-        auto &resInfo = resourceInfo->getResourceFlags()->Info;
-        resInfo.MediaCompressed = mediaCompressed;
-        resInfo.RenderCompressed = renderCompressed;
-        MockGraphicsAllocation mockAllocationSrc(0, AllocationType::INTERNAL_HOST_MEMORY,
-                                                 reinterpret_cast<void *>(0x1234), 0x1000, 0, sizeof(uint32_t),
-                                                 MemoryPool::System4KBPages, MemoryManager::maxOsContextCount);
-        mockAllocationSrc.setGmm(gmm.get(), 0);
-        BlitProperties properties = {};
-        properties.srcAllocation = &mockAllocationSrc;
-        uint32_t qPitch = static_cast<uint32_t>(properties.copySize.y);
-        GMM_TILE_TYPE tileType = GMM_NOT_TILED;
-        uint32_t mipTailLod = 0;
-        uint32_t compressionFormat = 0;
-        uint32_t compressionType = undefinedCompressionType;
-        auto rowPitch = static_cast<uint32_t>(properties.srcRowPitch);
-        BlitCommandsHelper<FamilyType>::getBlitAllocationProperties(*properties.srcAllocation, rowPitch, qPitch, tileType, mipTailLod,
-                                                                    compressionFormat, compressionType, pDevice->getRootDeviceEnvironment(),
-                                                                    GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
-
-        if (!compressionExpected) {
-            EXPECT_EQ(compressionType, undefinedCompressionType);
-        } else if (mediaCompressed) {
-            EXPECT_EQ(compressionType, mediaCompressionType);
-        } else {
-            EXPECT_EQ(compressionType, renderCompressionType);
-        }
-    }
-}
-
 HWTEST2_F(BlitTests, givenPlaneWhenGetBlitAllocationPropertiesIsCalledThenCompressionFormatIsProperlyAdjusted, CompressionParamsSupportedMatcher) {
     struct {
         uint8_t returnedCompressionFormat;
@@ -711,14 +632,12 @@ HWTEST2_F(BlitTests, givenPlaneWhenGetBlitAllocationPropertiesIsCalledThenCompre
     GMM_TILE_TYPE tileType = GMM_NOT_TILED;
     uint32_t mipTailLod = 0;
     uint32_t compressionFormat = 0;
-    uint32_t compressionType = 0;
     auto rowPitch = static_cast<uint32_t>(properties.srcRowPitch);
 
     for (auto &testInput : testInputs) {
         gmmClientContext->compressionFormatToReturn = testInput.returnedCompressionFormat;
         BlitCommandsHelper<FamilyType>::getBlitAllocationProperties(*properties.srcAllocation, rowPitch, qPitch, tileType, mipTailLod,
-                                                                    compressionFormat, compressionType,
-                                                                    pDevice->getRootDeviceEnvironment(), testInput.plane);
+                                                                    compressionFormat, pDevice->getRootDeviceEnvironment(), testInput.plane);
 
         EXPECT_EQ(testInput.expectedCompressionFormat, compressionFormat);
     }
@@ -962,7 +881,8 @@ HWTEST2_F(BlitTests, givenLinearResourceInfoWithNotZeroPitchWhenAppendImageComma
     EXPECT_NE(bltCmd.getSourcePitch(), gmm->gmmResourceInfo->getRenderPitch());
 }
 
-HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPropertiesAreSet, IsXeHpOrXeHpgCore) {
+HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPropertiesAreSet, IsXeHpgCore) {
+    using COMPRESSION_ENABLE = typename FamilyType::XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE;
     auto verifyCompressionFormat = [](bool mediaCompressed, bool renderCompressed, uint32_t compressionFormat) {
         if (mediaCompressed || renderCompressed) {
             EXPECT_GT(compressionFormat, 0u);
@@ -971,16 +891,16 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
         }
     };
 
-    auto verifyCompressionType = [](bool mediaCompressed, bool renderCompressed, uint32_t compressionType) {
-        using COMPRESSION_TYPE = typename FamilyType::XY_BLOCK_COPY_BLT::COMPRESSION_TYPE;
-        constexpr auto mediaCompressionType = static_cast<uint32_t>(COMPRESSION_TYPE::COMPRESSION_TYPE_MEDIA_COMPRESSION);
-        constexpr auto renderCompressionType = static_cast<uint32_t>(COMPRESSION_TYPE::COMPRESSION_TYPE_3D_COMPRESSION);
+    auto verifyControlSurfaceType = [](bool mediaCompressed, bool renderCompressed, uint32_t controlSurfaceType) {
+        using CONTROL_SURFACE_TYPE = typename FamilyType::XY_BLOCK_COPY_BLT::CONTROL_SURFACE_TYPE;
+        constexpr auto mediaControlSurfaceType = static_cast<uint32_t>(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_MEDIA);
+        constexpr auto renderControlSurfaceType = static_cast<uint32_t>(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_3D);
         if (mediaCompressed) {
-            EXPECT_EQ(compressionType, mediaCompressionType);
+            EXPECT_EQ(controlSurfaceType, mediaControlSurfaceType);
         } else if (renderCompressed) {
-            EXPECT_EQ(compressionType, renderCompressionType);
+            EXPECT_EQ(controlSurfaceType, renderControlSurfaceType);
         } else {
-            EXPECT_EQ(compressionType, 0u);
+            EXPECT_EQ(controlSurfaceType, 0u);
         }
     };
 
@@ -1019,14 +939,22 @@ HWTEST2_F(BlitTests, givenCompressionInfoWhenAppendImageCommandsThenCorrectPrope
             mockAllocationDst.setGmm(gmmDst.get(), 0);
             properties.dstAllocation = &mockAllocationDst;
             auto bltCmd = FamilyType::cmdInitXyBlockCopyBlt;
+            bltCmd.setDestinationCompressionEnable(COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+            bltCmd.setSourceCompressionEnable(COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
             BlitCommandsHelper<FamilyType>::appendBlitCommandsForImages(properties, bltCmd, pDevice->getRootDeviceEnvironment(),
                                                                         srcSlicePitch, dstSlicePitch);
 
             verifyCompressionFormat(mediaCompressedSrc, renderCompressedSrc, bltCmd.getSourceCompressionFormat());
             verifyCompressionFormat(mediaCompressedDst, renderCompressedDst, bltCmd.getDestinationCompressionFormat());
 
-            verifyCompressionType(mediaCompressedSrc, renderCompressedSrc, bltCmd.getSourceCompressionType());
-            verifyCompressionType(mediaCompressedDst, renderCompressedDst, bltCmd.getDestinationCompressionType());
+            verifyControlSurfaceType(mediaCompressedSrc, renderCompressedSrc, bltCmd.getSourceControlSurfaceType());
+            verifyControlSurfaceType(mediaCompressedDst, renderCompressedDst, bltCmd.getDestinationControlSurfaceType());
+            EXPECT_EQ(bltCmd.getSourceCompressionEnable(), COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+            if (mediaCompressedDst) {
+                EXPECT_EQ(bltCmd.getDestinationCompressionEnable(), COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+            } else {
+                EXPECT_EQ(bltCmd.getDestinationCompressionEnable(), COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_ENABLE);
+            }
         }
     }
 }

@@ -43,6 +43,35 @@ MemoryCompressionState CommandStreamReceiverHw<Family>::getMemoryCompressionStat
     return memoryCompressionState;
 }
 
+template <>
+void BlitCommandsHelper<Family>::adjustControlSurfaceType(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd) {
+    using CONTROL_SURFACE_TYPE = typename Family::XY_BLOCK_COPY_BLT::CONTROL_SURFACE_TYPE;
+    using COMPRESSION_ENABLE = typename Family::XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE;
+    auto srcAllocation = blitProperties.srcAllocation;
+
+    if (srcAllocation->getDefaultGmm()) {
+        auto gmmResourceInfo = srcAllocation->getDefaultGmm()->gmmResourceInfo.get();
+        auto resInfo = gmmResourceInfo->getResourceFlags()->Info;
+        if (resInfo.MediaCompressed) {
+            blitCmd.setSourceControlSurfaceType(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_MEDIA);
+        } else if (resInfo.RenderCompressed) {
+            blitCmd.setSourceControlSurfaceType(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_3D);
+        }
+    }
+
+    auto dstAllocation = blitProperties.dstAllocation;
+    if (dstAllocation->getDefaultGmm()) {
+        auto gmmResourceInfo = dstAllocation->getDefaultGmm()->gmmResourceInfo.get();
+        auto resInfo = gmmResourceInfo->getResourceFlags()->Info;
+        if (resInfo.MediaCompressed) {
+            blitCmd.setDestinationControlSurfaceType(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_MEDIA);
+            blitCmd.setDestinationCompressionEnable(COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
+        } else if (resInfo.RenderCompressed) {
+            blitCmd.setDestinationControlSurfaceType(CONTROL_SURFACE_TYPE::CONTROL_SURFACE_TYPE_3D);
+        }
+    }
+}
+
 template class CommandStreamReceiverHw<Family>;
 template struct BlitCommandsHelper<Family>;
 template void BlitCommandsHelper<Family>::appendColorDepth<typename Family::XY_BLOCK_COPY_BLT>(const BlitProperties &blitProperties, typename Family::XY_BLOCK_COPY_BLT &blitCmd);

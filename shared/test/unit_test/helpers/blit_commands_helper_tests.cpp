@@ -548,10 +548,9 @@ HWTEST2_F(BlitTests, givenGen9AndGetBlitAllocationPropertiesThenCorrectValuesAre
     auto expectedtileType = tileType;
     auto expectedMipTailLod = mipTailLod;
     auto compressionDetails = 0u;
-    auto compressionType = 0u;
 
     NEO::BlitCommandsHelper<FamilyType>::getBlitAllocationProperties(alloc, pitch, qPitch, tileType, mipTailLod, compressionDetails,
-                                                                     compressionType, pDevice->getRootDeviceEnvironment(),
+                                                                     pDevice->getRootDeviceEnvironment(),
                                                                      GMM_YUV_PLANE_ENUM::GMM_NO_PLANE);
 
     EXPECT_EQ(expectedPitch, pitch);

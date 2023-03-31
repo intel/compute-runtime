@@ -3351,7 +3351,7 @@ struct XY_BLOCK_COPY_BLT {
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t DestinationAuxiliarysurfacemode : BITFIELD_RANGE(18, 20);
             uint32_t DestinationMOCS : BITFIELD_RANGE(21, 27);
-            uint32_t DestinationCompressionType : BITFIELD_RANGE(28, 28);
+            uint32_t DestinationControlSurfaceType : BITFIELD_RANGE(28, 28);
             uint32_t DestinationCompressionEnable : BITFIELD_RANGE(29, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
 
@@ -3381,7 +3381,7 @@ struct XY_BLOCK_COPY_BLT {
             uint32_t SourcePitch : BITFIELD_RANGE(0, 17);
             uint32_t SourceAuxiliarysurfacemode : BITFIELD_RANGE(18, 20);
             uint32_t SourceMOCS : BITFIELD_RANGE(21, 27);
-            uint32_t SourceCompressionType : BITFIELD_RANGE(28, 28);
+            uint32_t SourceControlSurfaceType : BITFIELD_RANGE(28, 28);
             uint32_t SourceCompressionEnable : BITFIELD_RANGE(29, 29);
             uint32_t SourceTiling : BITFIELD_RANGE(30, 31);
 
@@ -3497,9 +3497,9 @@ struct XY_BLOCK_COPY_BLT {
         AUXILIARY_SURFACE_MODE_AUX_CCS_E = 5,
     };
 
-    enum COMPRESSION_TYPE {
-        COMPRESSION_TYPE_3D_COMPRESSION = 0,
-        COMPRESSION_TYPE_MEDIA_COMPRESSION = 1,
+    enum CONTROL_SURFACE_TYPE {
+        CONTROL_SURFACE_TYPE_3D = 0,
+        CONTROL_SURFACE_TYPE_MEDIA = 1,
     };
 
     enum COMPRESSION_ENABLE {
@@ -3619,12 +3619,12 @@ struct XY_BLOCK_COPY_BLT {
         return (TheStructure.Common.DestinationMOCS);
     }
 
-    inline void setDestinationCompressionType(const COMPRESSION_TYPE value) {
-        TheStructure.Common.DestinationCompressionType = value;
+    inline void setDestinationControlSurfaceType(const CONTROL_SURFACE_TYPE value) {
+        TheStructure.Common.DestinationControlSurfaceType = value;
     }
 
-    inline COMPRESSION_TYPE getDestinationCompressionType() const {
-        return static_cast<COMPRESSION_TYPE>(TheStructure.Common.DestinationCompressionType);
+    inline CONTROL_SURFACE_TYPE getDestinationControlSurfaceType() const {
+        return static_cast<CONTROL_SURFACE_TYPE>(TheStructure.Common.DestinationControlSurfaceType);
     }
 
     inline void setDestinationCompressionEnable(const COMPRESSION_ENABLE value) {
@@ -3747,12 +3747,12 @@ struct XY_BLOCK_COPY_BLT {
         return (TheStructure.Common.SourceMOCS);
     }
 
-    inline void setSourceCompressionType(const COMPRESSION_TYPE value) {
-        TheStructure.Common.SourceCompressionType = value;
+    inline void setSourceControlSurfaceType(const CONTROL_SURFACE_TYPE value) {
+        TheStructure.Common.SourceControlSurfaceType = value;
     }
 
-    inline COMPRESSION_TYPE getSourceCompressionType() const {
-        return static_cast<COMPRESSION_TYPE>(TheStructure.Common.SourceCompressionType);
+    inline CONTROL_SURFACE_TYPE getSourceControlSurfaceType() const {
+        return static_cast<CONTROL_SURFACE_TYPE>(TheStructure.Common.SourceControlSurfaceType);
     }
 
     inline void setSourceCompressionEnable(const COMPRESSION_ENABLE value) {
@@ -4089,7 +4089,7 @@ struct XY_FAST_COLOR_BLT {
             uint32_t DestinationPitch : BITFIELD_RANGE(0, 17);
             uint32_t DestinationAuxiliarysurfacemode : BITFIELD_RANGE(18, 20);
             uint32_t DestinationMOCS : BITFIELD_RANGE(21, 27);
-            uint32_t DestinationCompressionType : BITFIELD_RANGE(28, 28);
+            uint32_t DestinationControlSurfaceType : BITFIELD_RANGE(28, 28);
             uint32_t DestinationCompressionEnable : BITFIELD_RANGE(29, 29);
             uint32_t DestinationTiling : BITFIELD_RANGE(30, 31);
 
@@ -4190,9 +4190,9 @@ struct XY_FAST_COLOR_BLT {
         DESTINATION_CLEAR_VALUE_ENABLE_ENABLE = 1,
     };
 
-    enum DESTINATION_COMPRESSION_TYPE {
-        DESTINATION_COMPRESSION_TYPE_3D_COMPRESSION = 0,
-        DESTINATION_COMPRESSION_TYPE_MEDIA_COMPRESSION = 1,
+    enum DESTINATION_CONTROL_SURFACE_TYPE {
+        DESTINATION_CONTROL_SURFACE_TYPE_3D = 0,
+        DESTINATION_CONTROL_SURFACE_TYPE_MEDIA = 1,
     };
 
     enum DESTINATION_COMPRESSION_ENABLE {
@@ -4304,12 +4304,12 @@ struct XY_FAST_COLOR_BLT {
         return (TheStructure.Common.DestinationMOCS);
     }
 
-    inline void setDestinationCompressionType(const DESTINATION_COMPRESSION_TYPE value) {
-        TheStructure.Common.DestinationCompressionType = value;
+    inline void setDestinationControlSurfaceType(const DESTINATION_CONTROL_SURFACE_TYPE value) {
+        TheStructure.Common.DestinationControlSurfaceType = value;
     }
 
-    inline DESTINATION_COMPRESSION_TYPE getDestinationCompressionType() const {
-        return static_cast<DESTINATION_COMPRESSION_TYPE>(TheStructure.Common.DestinationCompressionType);
+    inline DESTINATION_CONTROL_SURFACE_TYPE getDestinationControlSurfaceType() const {
+        return static_cast<DESTINATION_CONTROL_SURFACE_TYPE>(TheStructure.Common.DestinationControlSurfaceType);
     }
 
     inline void setDestinationCompressionEnable(const DESTINATION_COMPRESSION_ENABLE value) {

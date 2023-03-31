@@ -76,8 +76,7 @@ void BlitCommandsHelper<GfxFamily>::appendSliceOffsets(const BlitProperties &bli
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::getBlitAllocationProperties(const GraphicsAllocation &allocation, uint32_t &pitch, uint32_t &qPitch,
                                                                 GMM_TILE_TYPE &tileType, uint32_t &mipTailLod, uint32_t &compressionDetails,
-                                                                uint32_t &compressionType, const RootDeviceEnvironment &rootDeviceEnvironment,
-                                                                GMM_YUV_PLANE_ENUM plane) {
+                                                                const RootDeviceEnvironment &rootDeviceEnvironment, GMM_YUV_PLANE_ENUM plane) {
 }
 
 template <typename GfxFamily>

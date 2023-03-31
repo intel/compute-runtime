@@ -545,4 +545,7 @@ size_t BlitCommandsHelper<GfxFamily>::getWaCmdsSize(const BlitPropertiesContaine
     return 0;
 }
 
+template <typename GfxFamily>
+void BlitCommandsHelper<GfxFamily>::adjustControlSurfaceType(const BlitProperties &blitProperties, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {}
+
 } // namespace NEO
