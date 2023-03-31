@@ -1055,6 +1055,8 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     uint64_t schedulerStartGpuAddress = schedulerAllocation.getGpuAddress();
     void *schedulerCmds = schedulerAllocation.getUnderlyingBuffer();
 
+    auto startPtr = schedulerCmds;
+
     // 1. Init section
     auto miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(schedulerCmds);
 
@@ -1400,6 +1402,10 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
     if (!RelaxedOrderingCommandsHelper::verifyBbStart<FamilyType>(bbStart, 0, true, false)) {
         return false;
     }
+
+    auto endCmd = ++bbStart;
+
+    EXPECT_EQ(RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::totalSize, ptrDiff(endCmd, startPtr));
 
     return true;
 }
