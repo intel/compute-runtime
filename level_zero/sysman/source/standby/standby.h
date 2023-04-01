@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2023 Intel Corporation
+ * Copyright (C) 2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -7,13 +7,14 @@
 
 #pragma once
 #include "level_zero/api/sysman/zes_handles_struct.h"
-#include "level_zero/core/source/device/device.h"
 #include <level_zero/zes_api.h>
 
+#include <memory>
 #include <mutex>
 #include <vector>
 
 namespace L0 {
+namespace Sysman {
 
 struct OsSysman;
 
@@ -36,7 +37,7 @@ struct StandbyHandleContext {
     StandbyHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~StandbyHandleContext();
 
-    ze_result_t init(std::vector<ze_device_handle_t> &deviceHandles);
+    ze_result_t init(uint32_t subDeviceCount);
 
     ze_result_t standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby);
 
@@ -44,8 +45,9 @@ struct StandbyHandleContext {
     std::vector<std::unique_ptr<Standby>> handleList = {};
 
   private:
-    void createHandle(ze_device_handle_t deviceHandle);
+    void createHandle(bool onSubdevice, uint32_t subDeviceId);
     std::once_flag initStandbyOnce;
 };
 
+} // namespace Sysman
 } // namespace L0

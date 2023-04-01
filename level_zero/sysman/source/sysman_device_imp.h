@@ -28,10 +28,6 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t init();
 
     OsSysman *pOsSysman = nullptr;
-    PowerHandleContext *pPowerHandleContext = nullptr;
-
-    ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) override;
-    ze_result_t powerGetCardDomain(zes_pwr_handle_t *phPower) override;
 
     const NEO::RootDeviceEnvironment &getRootDeviceEnvironment() const {
         return *executionEnvironment->rootDeviceEnvironments[rootDeviceIndex];
@@ -42,6 +38,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     uint32_t getRootDeviceIndex() const { return rootDeviceIndex; }
 
     GlobalOperations *pGlobalOperations = nullptr;
+    PowerHandleContext *pPowerHandleContext = nullptr;
     FabricPortHandleContext *pFabricPortHandleContext = nullptr;
     MemoryHandleContext *pMemoryHandleContext = nullptr;
     EngineHandleContext *pEngineHandleContext = nullptr;
@@ -50,7 +47,10 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     RasHandleContext *pRasHandleContext = nullptr;
     DiagnosticsHandleContext *pDiagnosticsHandleContext = nullptr;
     FrequencyHandleContext *pFrequencyHandleContext = nullptr;
+    StandbyHandleContext *pStandbyHandleContext = nullptr;
 
+    ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) override;
+    ze_result_t powerGetCardDomain(zes_pwr_handle_t *phPower) override;
     ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory) override;
     ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) override;
     ze_result_t engineGet(uint32_t *pCount, zes_engine_handle_t *phEngine) override;
@@ -63,6 +63,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) override;
     ze_result_t deviceReset(ze_bool_t force) override;
     ze_result_t deviceGetState(zes_device_state_t *pState) override;
+    ze_result_t standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby) override;
 
   private:
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;

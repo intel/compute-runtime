@@ -519,25 +519,41 @@ ze_result_t zesDeviceEnumStandbyDomains(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_standby_handle_t *phStandby) {
-    return L0::SysmanDevice::standbyGet(hDevice, pCount, phStandby);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::standbyGet(hDevice, pCount, phStandby);
+    } else {
+        return L0::Sysman::SysmanDevice::standbyGet(hDevice, pCount, phStandby);
+    }
 }
 
 ze_result_t zesStandbyGetProperties(
     zes_standby_handle_t hStandby,
     zes_standby_properties_t *pProperties) {
-    return L0::Standby::fromHandle(hStandby)->standbyGetProperties(pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::Standby::fromHandle(hStandby)->standbyGetProperties(pProperties);
+    } else {
+        return L0::Sysman::Standby::fromHandle(hStandby)->standbyGetProperties(pProperties);
+    }
 }
 
 ze_result_t zesStandbyGetMode(
     zes_standby_handle_t hStandby,
     zes_standby_promo_mode_t *pMode) {
-    return L0::Standby::fromHandle(hStandby)->standbyGetMode(pMode);
+    if (L0::sysmanInitFromCore) {
+        return L0::Standby::fromHandle(hStandby)->standbyGetMode(pMode);
+    } else {
+        return L0::Sysman::Standby::fromHandle(hStandby)->standbyGetMode(pMode);
+    }
 }
 
 ze_result_t zesStandbySetMode(
     zes_standby_handle_t hStandby,
     zes_standby_promo_mode_t mode) {
-    return L0::Standby::fromHandle(hStandby)->standbySetMode(mode);
+    if (L0::sysmanInitFromCore) {
+        return L0::Standby::fromHandle(hStandby)->standbySetMode(mode);
+    } else {
+        return L0::Sysman::Standby::fromHandle(hStandby)->standbySetMode(mode);
+    }
 }
 
 ze_result_t zesDeviceEnumFirmwares(
