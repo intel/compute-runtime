@@ -19,6 +19,7 @@
 #include "level_zero/sysman/source/power/power.h"
 #include "level_zero/sysman/source/ras/ras.h"
 #include "level_zero/sysman/source/scheduler/scheduler.h"
+#include "level_zero/sysman/source/standby/standby.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
@@ -71,6 +72,9 @@ struct SysmanDevice : _ze_device_handle_t {
 
     static ze_result_t processesGetState(zes_device_handle_t hDevice, uint32_t *pCount, zes_process_state_t *pProcesses);
     virtual ze_result_t processesGetState(uint32_t *pCount, zes_process_state_t *pProcesses) = 0;
+
+    static ze_result_t standbyGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_standby_handle_t *phStandby);
+    virtual ze_result_t standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby) = 0;
 };
 
 } // namespace Sysman

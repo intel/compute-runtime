@@ -32,6 +32,7 @@ SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment
     pRasHandleContext = new RasHandleContext(pOsSysman);
     pDiagnosticsHandleContext = new DiagnosticsHandleContext(pOsSysman);
     pGlobalOperations = new GlobalOperationsImp(pOsSysman);
+    pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
@@ -45,6 +46,7 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pPowerHandleContext);
     freeResource(pMemoryHandleContext);
     freeResource(pFabricPortHandleContext);
+    freeResource(pStandbyHandleContext);
     freeResource(pOsSysman);
     executionEnvironment->decRefInternal();
 }
@@ -111,6 +113,10 @@ ze_result_t SysmanDeviceImp::firmwareGet(uint32_t *pCount, zes_firmware_handle_t
 
 ze_result_t SysmanDeviceImp::diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics) {
     return pDiagnosticsHandleContext->diagnosticsGet(pCount, phDiagnostics);
+}
+
+ze_result_t SysmanDeviceImp::standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby) {
+    return pStandbyHandleContext->standbyGet(pCount, phStandby);
 }
 
 } // namespace Sysman
