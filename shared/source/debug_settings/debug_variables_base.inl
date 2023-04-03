@@ -229,8 +229,8 @@ DECLARE_DEBUG_VARIABLE(int32_t, NumberOfRegularContextsPerEngine, -1, "-1: defau
 DECLARE_DEBUG_VARIABLE(int32_t, EnableMultipleRegularContextForBcs, -1, "-1: default, 0: disabled, 1: Use NumberOfRegularContextsPerEngine to create multiple Regular contexts on the same engine")
 DECLARE_DEBUG_VARIABLE(int32_t, AppendAubStreamContextFlags, -1, "-1: default, >0: Append flags passed during HardwareContext creation.")
 DECLARE_DEBUG_VARIABLE(int32_t, DisableScratchPages, -1, "-1: default, 0: do not disable scratch pages during VM creations, 1: disable scratch pages during VM creations")
+DECLARE_DEBUG_VARIABLE(int32_t, OptimizeIoqBarriersHandling, -1, "-1: default, 0: disable, 1: enable. If enabled, dont dispatch stalling commands for IOQ. Instead, inherit TimestampPackets from previous enqueue.")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideEventSynchronizeTimeout, -1, "-1: default - user provided timeout value,  >0: timeout in nanoseconds")
-DECLARE_DEBUG_VARIABLE(int64_t, OptimizeIoqBarriersHandling, -1, "-1: default, 0: disable, 1: enable. If enabled, dont dispatch stalling commands for IOQ. Instead, inherit TimestampPackets from previous enqueue.")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")
