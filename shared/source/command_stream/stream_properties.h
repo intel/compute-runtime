@@ -23,6 +23,12 @@ struct StreamProperties {
         pipelineSelect.initSupport(rootDeviceEnvironment);
         stateBaseAddress.initSupport(rootDeviceEnvironment);
     }
+    void resetState() {
+        stateComputeMode.resetState();
+        frontEndState.resetState();
+        pipelineSelect.resetState();
+        stateBaseAddress.resetState();
+    }
 };
 
 } // namespace NEO

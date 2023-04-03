@@ -25,3 +25,6 @@ void StateComputeModeProperties::clearIsDirtyExtraPerContext() {
 }
 void StateComputeModeProperties::clearIsDirtyExtraPerKernel() {
 }
+
+void StateComputeModeProperties::resetStateExtra() {
+}

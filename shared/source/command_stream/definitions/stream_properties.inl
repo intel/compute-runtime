@@ -30,6 +30,7 @@ struct StateComputeModeProperties {
     StreamProperty devicePreemptionMode{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
+    void resetState();
 
     void setPropertiesAll(bool requiresCoherency, uint32_t numGrfRequired, int32_t threadArbitrationPolicy, PreemptionMode devicePreemptionMode);
     void setPropertiesGrfNumberThreadArbitration(uint32_t numGrfRequired, int32_t threadArbitrationPolicy);
@@ -45,6 +46,7 @@ struct StateComputeModeProperties {
     void clearIsDirtyExtraPerContext();
     void clearIsDirtyExtraPerKernel();
     bool isDirtyExtra() const;
+    void resetStateExtra();
 
     void setPropertiesExtraPerContext();
     void setPropertiesExtraPerKernel();
@@ -75,6 +77,7 @@ struct FrontEndProperties {
     StreamProperty singleSliceDispatchCcsMode{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
+    void resetState();
 
     void setPropertiesAll(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, int32_t engineInstancedDevice);
     void setPropertySingleSliceDispatchCcsMode(int32_t engineInstancedDevice);
@@ -103,6 +106,7 @@ struct PipelineSelectProperties {
     StreamProperty systolicMode{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
+    void resetState();
 
     void setPropertiesAll(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode);
     void setPropertiesModeSelectedMediaSamplerClockGate(bool modeSelected, bool mediaSamplerDopClockGate, bool clearDirtyState);
@@ -137,6 +141,7 @@ struct StateBaseAddressProperties {
     StreamProperty statelessMocs{};
 
     void initSupport(const RootDeviceEnvironment &rootDeviceEnvironment);
+    void resetState();
 
     void setPropertiesAll(bool globalAtomics, int32_t statelessMocs,
                           int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,

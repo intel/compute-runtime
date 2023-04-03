@@ -381,6 +381,39 @@ TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePr
     EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
 }
 
+TEST(StreamPropertiesTests, givenSetAllStateComputeModePropertiesWhenResetingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
+    MockStateComputeModeProperties scmProperties{};
+    scmProperties.propertiesSupportLoaded = true;
+    scmProperties.scmPropertiesSupport.coherencyRequired = true;
+    scmProperties.scmPropertiesSupport.largeGrfMode = true;
+    scmProperties.scmPropertiesSupport.threadArbitrationPolicy = true;
+    scmProperties.scmPropertiesSupport.devicePreemptionMode = true;
+
+    int32_t grfNumber = 128;
+    int32_t threadArbitration = 1;
+    PreemptionMode devicePreemptionMode = PreemptionMode::Initial;
+    bool coherency = false;
+    scmProperties.setPropertiesAll(coherency, static_cast<uint32_t>(grfNumber), threadArbitration, devicePreemptionMode);
+    EXPECT_TRUE(scmProperties.isDirty());
+    EXPECT_EQ(0, scmProperties.largeGrfMode.value);
+    EXPECT_EQ(threadArbitration, scmProperties.threadArbitrationPolicy.value);
+    EXPECT_EQ(0, scmProperties.isCoherencyRequired.value);
+    EXPECT_EQ(static_cast<int32_t>(devicePreemptionMode), scmProperties.devicePreemptionMode.value);
+
+    scmProperties.resetState();
+    EXPECT_FALSE(scmProperties.isDirty());
+    EXPECT_EQ(-1, scmProperties.largeGrfMode.value);
+    EXPECT_EQ(-1, scmProperties.threadArbitrationPolicy.value);
+    EXPECT_EQ(-1, scmProperties.isCoherencyRequired.value);
+    EXPECT_EQ(-1, scmProperties.devicePreemptionMode.value);
+
+    EXPECT_TRUE(scmProperties.propertiesSupportLoaded);
+    EXPECT_TRUE(scmProperties.scmPropertiesSupport.coherencyRequired);
+    EXPECT_TRUE(scmProperties.scmPropertiesSupport.largeGrfMode);
+    EXPECT_TRUE(scmProperties.scmPropertiesSupport.threadArbitrationPolicy);
+    EXPECT_TRUE(scmProperties.scmPropertiesSupport.devicePreemptionMode);
+}
+
 TEST(StreamPropertiesTests, givenGrfNumberAndThreadArbitrationStateComputeModePropertiesWhenCopyingPropertyAndCheckIfDirtyThenExpectCorrectState) {
     MockStateComputeModeProperties scmProperties{};
     scmProperties.propertiesSupportLoaded = true;
@@ -622,6 +655,39 @@ TEST(StreamPropertiesTests, givenComputeDispatchAllWalkerEnableAndDisableEuFusio
     EXPECT_EQ(1, fePropertiesCopy.computeDispatchAllWalkerEnable.value);
 }
 
+TEST(StreamPropertiesTests, givenSetAllFrontEndPropertiesWhenResetingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
+    MockFrontEndProperties feProperties{};
+    feProperties.propertiesSupportLoaded = true;
+    feProperties.frontEndPropertiesSupport.computeDispatchAllWalker = true;
+    feProperties.frontEndPropertiesSupport.disableEuFusion = true;
+    feProperties.frontEndPropertiesSupport.disableOverdispatch = true;
+    feProperties.frontEndPropertiesSupport.singleSliceDispatchCcsMode = true;
+
+    bool isCooperativeKernel = false;
+    bool disableEuFusion = true;
+    bool disableOverdispatch = true;
+    int32_t engineInstancedDevice = 3;
+    feProperties.setPropertiesAll(isCooperativeKernel, disableEuFusion, disableOverdispatch, engineInstancedDevice);
+    EXPECT_TRUE(feProperties.isDirty());
+    EXPECT_EQ(0, feProperties.computeDispatchAllWalkerEnable.value);
+    EXPECT_EQ(1, feProperties.disableEUFusion.value);
+    EXPECT_EQ(1, feProperties.disableOverdispatch.value);
+    EXPECT_EQ(3, feProperties.singleSliceDispatchCcsMode.value);
+
+    feProperties.resetState();
+    EXPECT_FALSE(feProperties.isDirty());
+    EXPECT_EQ(-1, feProperties.computeDispatchAllWalkerEnable.value);
+    EXPECT_EQ(-1, feProperties.disableEUFusion.value);
+    EXPECT_EQ(-1, feProperties.disableOverdispatch.value);
+    EXPECT_EQ(-1, feProperties.singleSliceDispatchCcsMode.value);
+
+    EXPECT_TRUE(feProperties.propertiesSupportLoaded);
+    EXPECT_TRUE(feProperties.frontEndPropertiesSupport.computeDispatchAllWalker);
+    EXPECT_TRUE(feProperties.frontEndPropertiesSupport.disableEuFusion);
+    EXPECT_TRUE(feProperties.frontEndPropertiesSupport.disableOverdispatch);
+    EXPECT_TRUE(feProperties.frontEndPropertiesSupport.singleSliceDispatchCcsMode);
+}
+
 TEST(StreamPropertiesTests, whenSettingPipelineSelectPropertiesThenCorrectValueIsSet) {
     MockExecutionEnvironment mockExecutionEnvironment{};
     auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
@@ -668,6 +734,32 @@ TEST(StreamPropertiesTests, givenModeSelectPipelineSelectPropertyWhenSettingChan
     pipeProperties.setPropertiesAll(changingState, constState, constState);
 
     EXPECT_TRUE(pipeProperties.isDirty());
+}
+
+TEST(StreamPropertiesTests, givenSetAllPipelineSelectPropertiesWhenResetingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
+    MockPipelineSelectProperties psProperties{};
+    psProperties.propertiesSupportLoaded = true;
+    psProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate = true;
+    psProperties.pipelineSelectPropertiesSupport.systolicMode = true;
+
+    bool modeSelected = false;
+    bool mediaSamplerDopClockGate = false;
+    bool systolicMode = true;
+    psProperties.setPropertiesAll(modeSelected, mediaSamplerDopClockGate, systolicMode);
+    EXPECT_TRUE(psProperties.isDirty());
+    EXPECT_EQ(0, psProperties.modeSelected.value);
+    EXPECT_EQ(0, psProperties.mediaSamplerDopClockGate.value);
+    EXPECT_EQ(1, psProperties.systolicMode.value);
+
+    psProperties.resetState();
+    EXPECT_FALSE(psProperties.isDirty());
+    EXPECT_EQ(-1, psProperties.modeSelected.value);
+    EXPECT_EQ(-1, psProperties.mediaSamplerDopClockGate.value);
+    EXPECT_EQ(-1, psProperties.systolicMode.value);
+
+    EXPECT_TRUE(psProperties.propertiesSupportLoaded);
+    EXPECT_TRUE(psProperties.pipelineSelectPropertiesSupport.mediaSamplerDopClockGate);
+    EXPECT_TRUE(psProperties.pipelineSelectPropertiesSupport.systolicMode);
 }
 
 TEST(StreamPropertiesTests, givenSystolicModePipelineSelectPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
@@ -1342,4 +1434,122 @@ TEST(StreamPropertiesTests, givenIndirectObjectBaseAddressStateBaseAddressProper
     EXPECT_TRUE(sbaProperties.isDirty());
     EXPECT_EQ(2, sbaProperties.indirectObjectBaseAddress.value);
     EXPECT_EQ(2u, sbaProperties.indirectObjectSize.value);
+}
+
+TEST(StreamPropertiesTests, givenSetAllStateBaseAddressPropertiesWhenResetingStateThenResetValuesAndDirtyKeepSupportFlagLoaded) {
+    MockStateBaseAddressProperties sbaProperties{};
+    sbaProperties.propertiesSupportLoaded = true;
+    sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics = true;
+    sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress = true;
+
+    bool globalAtomics = true;
+    int32_t statelessMocs = 1;
+    int64_t bindingTablePoolBaseAddress = 2;
+    size_t bindingTablePoolSize = 3;
+    int64_t surfaceStateBaseAddress = 4;
+    size_t surfaceStateSize = 5;
+    int64_t dynamicStateBaseAddress = 6;
+    size_t dynamicStateSize = 7;
+    int64_t indirectObjectBaseAddress = 8;
+    size_t indirectObjectSize = 9;
+
+    sbaProperties.setPropertiesAll(globalAtomics, statelessMocs,
+                                   bindingTablePoolBaseAddress, bindingTablePoolSize,
+                                   surfaceStateBaseAddress, surfaceStateSize,
+                                   dynamicStateBaseAddress, dynamicStateSize,
+                                   indirectObjectBaseAddress, indirectObjectSize);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(1, sbaProperties.globalAtomics.value);
+    EXPECT_EQ(1, sbaProperties.statelessMocs.value);
+    EXPECT_EQ(2, sbaProperties.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(3u, sbaProperties.bindingTablePoolSize.value);
+    EXPECT_EQ(4, sbaProperties.surfaceStateBaseAddress.value);
+    EXPECT_EQ(5u, sbaProperties.surfaceStateSize.value);
+    EXPECT_EQ(6, sbaProperties.dynamicStateBaseAddress.value);
+    EXPECT_EQ(7u, sbaProperties.dynamicStateSize.value);
+    EXPECT_EQ(8, sbaProperties.indirectObjectBaseAddress.value);
+    EXPECT_EQ(9u, sbaProperties.indirectObjectSize.value);
+
+    sbaProperties.resetState();
+    EXPECT_FALSE(sbaProperties.isDirty());
+    EXPECT_EQ(-1, sbaProperties.globalAtomics.value);
+    EXPECT_EQ(-1, sbaProperties.statelessMocs.value);
+    EXPECT_EQ(-1, sbaProperties.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(StreamPropertySizeT::initValue, sbaProperties.bindingTablePoolSize.value);
+    EXPECT_EQ(-1, sbaProperties.surfaceStateBaseAddress.value);
+    EXPECT_EQ(StreamPropertySizeT::initValue, sbaProperties.surfaceStateSize.value);
+    EXPECT_EQ(-1, sbaProperties.dynamicStateBaseAddress.value);
+    EXPECT_EQ(StreamPropertySizeT::initValue, sbaProperties.dynamicStateSize.value);
+    EXPECT_EQ(-1, sbaProperties.indirectObjectBaseAddress.value);
+    EXPECT_EQ(StreamPropertySizeT::initValue, sbaProperties.indirectObjectSize.value);
+
+    EXPECT_TRUE(sbaProperties.propertiesSupportLoaded);
+    EXPECT_TRUE(sbaProperties.stateBaseAddressPropertiesSupport.globalAtomics);
+    EXPECT_TRUE(sbaProperties.stateBaseAddressPropertiesSupport.bindingTablePoolBaseAddress);
+}
+
+TEST(StreamPropertiesTests, givenAllStreamPropertiesSetWhenAllStreamPropertiesResetStateThenAllValuesBringToInitValue) {
+    MockExecutionEnvironment executionEnvironment{};
+    auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
+
+    StreamProperties globalStreamProperties{};
+    globalStreamProperties.initSupport(rootDeviceEnvironment);
+
+    uint32_t grfNumber = 128;
+    int32_t threadArbitration = 1;
+    globalStreamProperties.stateComputeMode.setPropertiesAll(false, grfNumber, threadArbitration, PreemptionMode::Initial);
+
+    bool isCooperativeKernel = false;
+    bool disableEuFusion = true;
+    bool disableOverdispatch = true;
+    int32_t engineInstancedDevice = 3;
+    globalStreamProperties.frontEndState.setPropertiesAll(isCooperativeKernel, disableEuFusion, disableOverdispatch, engineInstancedDevice);
+
+    bool modeSelected = false;
+    bool mediaSamplerDopClockGate = false;
+    bool systolicMode = true;
+    globalStreamProperties.pipelineSelect.setPropertiesAll(modeSelected, mediaSamplerDopClockGate, systolicMode);
+
+    bool globalAtomics = true;
+    int32_t statelessMocs = 1;
+    int64_t bindingTablePoolBaseAddress = 2;
+    size_t bindingTablePoolSize = 3;
+    int64_t surfaceStateBaseAddress = 4;
+    size_t surfaceStateSize = 5;
+    int64_t dynamicStateBaseAddress = 6;
+    size_t dynamicStateSize = 7;
+    int64_t indirectObjectBaseAddress = 8;
+    size_t indirectObjectSize = 9;
+    globalStreamProperties.stateBaseAddress.setPropertiesAll(globalAtomics, statelessMocs,
+                                                             bindingTablePoolBaseAddress, bindingTablePoolSize,
+                                                             surfaceStateBaseAddress, surfaceStateSize,
+                                                             dynamicStateBaseAddress, dynamicStateSize,
+                                                             indirectObjectBaseAddress, indirectObjectSize);
+
+    globalStreamProperties.resetState();
+
+    EXPECT_EQ(-1, globalStreamProperties.stateComputeMode.largeGrfMode.value);
+    EXPECT_EQ(-1, globalStreamProperties.stateComputeMode.threadArbitrationPolicy.value);
+    EXPECT_EQ(-1, globalStreamProperties.stateComputeMode.isCoherencyRequired.value);
+    EXPECT_EQ(-1, globalStreamProperties.stateComputeMode.devicePreemptionMode.value);
+
+    EXPECT_EQ(-1, globalStreamProperties.frontEndState.computeDispatchAllWalkerEnable.value);
+    EXPECT_EQ(-1, globalStreamProperties.frontEndState.disableEUFusion.value);
+    EXPECT_EQ(-1, globalStreamProperties.frontEndState.disableOverdispatch.value);
+    EXPECT_EQ(-1, globalStreamProperties.frontEndState.singleSliceDispatchCcsMode.value);
+
+    EXPECT_EQ(-1, globalStreamProperties.pipelineSelect.modeSelected.value);
+    EXPECT_EQ(-1, globalStreamProperties.pipelineSelect.mediaSamplerDopClockGate.value);
+    EXPECT_EQ(-1, globalStreamProperties.pipelineSelect.systolicMode.value);
+
+    EXPECT_EQ(-1, globalStreamProperties.stateBaseAddress.globalAtomics.value);
+    EXPECT_EQ(-1, globalStreamProperties.stateBaseAddress.statelessMocs.value);
+    EXPECT_EQ(-1, globalStreamProperties.stateBaseAddress.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(StreamPropertySizeT::initValue, globalStreamProperties.stateBaseAddress.bindingTablePoolSize.value);
+    EXPECT_EQ(-1, globalStreamProperties.stateBaseAddress.surfaceStateBaseAddress.value);
+    EXPECT_EQ(StreamPropertySizeT::initValue, globalStreamProperties.stateBaseAddress.surfaceStateSize.value);
+    EXPECT_EQ(-1, globalStreamProperties.stateBaseAddress.dynamicStateBaseAddress.value);
+    EXPECT_EQ(StreamPropertySizeT::initValue, globalStreamProperties.stateBaseAddress.dynamicStateSize.value);
+    EXPECT_EQ(-1, globalStreamProperties.stateBaseAddress.indirectObjectBaseAddress.value);
+    EXPECT_EQ(StreamPropertySizeT::initValue, globalStreamProperties.stateBaseAddress.indirectObjectSize.value);
 }

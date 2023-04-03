@@ -132,6 +132,18 @@ void StateComputeModeProperties::initSupport(const RootDeviceEnvironment &rootDe
     this->propertiesSupportLoaded = true;
 }
 
+void StateComputeModeProperties::resetState() {
+    clearIsDirty();
+
+    this->isCoherencyRequired.value = StreamProperty::initValue;
+    this->largeGrfMode.value = StreamProperty::initValue;
+    this->zPassAsyncComputeThreadLimit.value = StreamProperty::initValue;
+    this->pixelAsyncComputeThreadLimit.value = StreamProperty::initValue;
+    this->threadArbitrationPolicy.value = StreamProperty::initValue;
+    this->devicePreemptionMode.value = StreamProperty::initValue;
+    resetStateExtra();
+}
+
 void StateComputeModeProperties::setPropertiesCoherencyDevicePreemption(bool requiresCoherency, PreemptionMode devicePreemptionMode, bool clearDirtyState) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
 
@@ -167,6 +179,15 @@ void FrontEndProperties::initSupport(const RootDeviceEnvironment &rootDeviceEnvi
     auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
     productHelper.fillFrontEndPropertiesSupportStructure(this->frontEndPropertiesSupport, hwInfo);
     this->propertiesSupportLoaded = true;
+}
+
+void FrontEndProperties::resetState() {
+    clearIsDirty();
+
+    this->computeDispatchAllWalkerEnable.value = StreamProperty::initValue;
+    this->disableEUFusion.value = StreamProperty::initValue;
+    this->disableOverdispatch.value = StreamProperty::initValue;
+    this->singleSliceDispatchCcsMode.value = StreamProperty::initValue;
 }
 
 void FrontEndProperties::setPropertiesAll(bool isCooperativeKernel, bool disableEuFusion, bool disableOverdispatch, int32_t engineInstancedDevice) {
@@ -270,6 +291,14 @@ void PipelineSelectProperties::initSupport(const RootDeviceEnvironment &rootDevi
     this->propertiesSupportLoaded = true;
 }
 
+void PipelineSelectProperties::resetState() {
+    clearIsDirty();
+
+    this->modeSelected.value = StreamProperty::initValue;
+    this->mediaSamplerDopClockGate.value = StreamProperty::initValue;
+    this->systolicMode.value = StreamProperty::initValue;
+}
+
 void PipelineSelectProperties::setPropertiesAll(bool modeSelected, bool mediaSamplerDopClockGate, bool systolicMode) {
     DEBUG_BREAK_IF(!this->propertiesSupportLoaded);
     clearIsDirty();
@@ -342,6 +371,25 @@ void StateBaseAddressProperties::initSupport(const RootDeviceEnvironment &rootDe
     auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
     productHelper.fillStateBaseAddressPropertiesSupportStructure(this->stateBaseAddressPropertiesSupport);
     this->propertiesSupportLoaded = true;
+}
+
+void StateBaseAddressProperties::resetState() {
+    clearIsDirty();
+
+    this->statelessMocs.value = StreamProperty::initValue;
+    this->globalAtomics.value = StreamProperty::initValue;
+
+    this->bindingTablePoolBaseAddress.value = StreamProperty::initValue;
+    this->bindingTablePoolSize.value = StreamProperty::initValue;
+
+    this->surfaceStateBaseAddress.value = StreamProperty::initValue;
+    this->surfaceStateSize.value = StreamProperty::initValue;
+
+    this->indirectObjectBaseAddress.value = StreamProperty::initValue;
+    this->indirectObjectSize.value = StreamProperty::initValue;
+
+    this->dynamicStateBaseAddress.value = StreamProperty::initValue;
+    this->dynamicStateSize.value = StreamProperty::initValue;
 }
 
 void StateBaseAddressProperties::setPropertiesBindingTableSurfaceState(int64_t bindingTablePoolBaseAddress, size_t bindingTablePoolSize,
