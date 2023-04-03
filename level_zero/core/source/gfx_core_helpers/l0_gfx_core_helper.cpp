@@ -103,6 +103,14 @@ NEO::HeapAddressModel L0GfxCoreHelper::getHeapAddressModel(const NEO::RootDevice
     return l0GfxCoreHelper.getPlatformHeapAddressModel();
 }
 
+bool L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary() {
+    bool defaultValue = false;
+    if (NEO::DebugManager.flags.DispatchCmdlistCmdBufferPrimary.get() != -1) {
+        return !!(NEO::DebugManager.flags.DispatchCmdlistCmdBufferPrimary.get());
+    }
+    return defaultValue;
+}
+
 } // namespace L0
 
 template <>

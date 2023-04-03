@@ -98,6 +98,7 @@ ze_result_t CommandQueueImp::initialize(bool copyOnly, bool isInternal) {
         auto &productHelper = rootDeviceEnvironment.getHelper<NEO::ProductHelper>();
         this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
         this->cmdListHeapAddressModel = L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment);
+        this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary();
     }
     return returnValue;
 }

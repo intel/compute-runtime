@@ -82,6 +82,7 @@ struct CommandQueue : _ze_command_queue_handle_t {
     bool stateComputeModeTracking = false;
     bool stateBaseAddressTracking = false;
     bool doubleSbaWa = false;
+    bool dispatchCmdListBatchBufferAsPrimary = false;
 };
 
 using CommandQueueAllocatorFn = CommandQueue *(*)(Device *device, NEO::CommandStreamReceiver *csr,

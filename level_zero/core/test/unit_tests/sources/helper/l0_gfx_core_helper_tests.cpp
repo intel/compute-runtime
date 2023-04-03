@@ -857,5 +857,17 @@ HWTEST2_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperWhenGettingSupportedNumGrfsTh
     EXPECT_EQ(expectedValues, l0GfxCoreHelper.getSupportedNumGrfs());
 }
 
+TEST_F(L0GfxCoreHelperTest, givenL0GfxCoreHelperUsingOverrideDebugKeyWhenGettingDispatchCmdListCmdBufferPrimaryThenUseDbgKeyValue) {
+    DebugManagerStateRestore restorer;
+
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(0);
+
+    EXPECT_FALSE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary());
+
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
+
+    EXPECT_TRUE(L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary());
+}
+
 } // namespace ult
 } // namespace L0

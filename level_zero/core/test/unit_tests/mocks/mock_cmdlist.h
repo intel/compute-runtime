@@ -59,6 +59,7 @@ struct WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>
     using BaseClass::currentIndirectObjectBaseAddress;
     using BaseClass::currentSurfaceStateBaseAddress;
     using BaseClass::device;
+    using BaseClass::dispatchCmdListBatchBufferAsPrimary;
     using BaseClass::doubleSbaWa;
     using BaseClass::engineGroupType;
     using BaseClass::estimateBufferSizeMultiTileBarrier;
@@ -210,6 +211,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::currentIndirectObjectBaseAddress;
     using BaseClass::currentSurfaceStateBaseAddress;
     using BaseClass::device;
+    using BaseClass::dispatchCmdListBatchBufferAsPrimary;
     using BaseClass::doubleSbaWa;
     using BaseClass::finalStreamState;
     using BaseClass::frontEndStateTracking;

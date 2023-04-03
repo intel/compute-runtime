@@ -366,6 +366,7 @@ struct CommandList : _ze_command_list_handle_t {
     UnifiedMemoryControls unifiedMemoryControls;
     NEO::PrefetchContext prefetchContext;
     NEO::L1CachePolicy l1CachePolicyData{};
+    NEO::EncodeDummyBlitWaArgs dummyBlitWa{};
 
     int64_t currentSurfaceStateBaseAddress = NEO::StreamProperty64::initValue;
     int64_t currentDynamicStateBaseAddress = NEO::StreamProperty64::initValue;
@@ -417,7 +418,7 @@ struct CommandList : _ze_command_list_handle_t {
     bool compactL3FlushEventPacket = false;
     bool dynamicHeapRequired = false;
     bool kernelWithAssertAppended = false;
-    NEO::EncodeDummyBlitWaArgs dummyBlitWa{};
+    bool dispatchCmdListBatchBufferAsPrimary = false;
 };
 
 using CommandListAllocatorFn = CommandList *(*)(uint32_t);

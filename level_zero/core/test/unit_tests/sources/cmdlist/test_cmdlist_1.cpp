@@ -2435,6 +2435,9 @@ TEST_F(CommandListCreate, givenCreatedCommandListWhenGettingTrackingFlagsThenDef
     auto expectedHeapAddressModel = l0GfxCoreHelper.getPlatformHeapAddressModel();
     EXPECT_EQ(expectedHeapAddressModel, commandList->getCmdListHeapAddressModel());
     EXPECT_EQ(expectedHeapAddressModel, commandList->getCmdContainer().getHeapAddressModel());
+
+    auto expectedDispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary();
+    EXPECT_EQ(expectedDispatchCmdListBatchBufferAsPrimary, commandList->dispatchCmdListBatchBufferAsPrimary);
 }
 
 } // namespace ult
