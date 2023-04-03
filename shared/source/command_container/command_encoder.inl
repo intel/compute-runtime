@@ -890,6 +890,18 @@ void EncodeBatchBufferStartOrEnd<Family>::programConditionalRegRegBatchBufferSta
 }
 
 template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programConditionalRegMemBatchBufferStart(LinearStream &commandStream, uint64_t startAddress, uint64_t compareAddress, uint32_t compareReg,
+                                                                                   CompareOperation compareOperation, bool indirect) {
+    EncodeSetMMIO<Family>::encodeMEM(commandStream, CS_GPR_R7, compareAddress);
+    LriHelper<Family>::program(&commandStream, CS_GPR_R7 + 4, 0, true);
+
+    EncodeSetMMIO<Family>::encodeREG(commandStream, CS_GPR_R8, compareReg);
+    LriHelper<Family>::program(&commandStream, CS_GPR_R8 + 4, 0, true);
+
+    programConditionalBatchBufferStartBase(commandStream, startAddress, AluRegisters::R_7, AluRegisters::R_8, compareOperation, indirect);
+}
+
+template <typename Family>
 void EncodeBatchBufferStartOrEnd<Family>::programConditionalBatchBufferStartBase(LinearStream &commandStream, uint64_t startAddress, AluRegisters regA, AluRegisters regB,
                                                                                  CompareOperation compareOperation, bool indirect) {
     EncodeAluHelper<Family, 4> aluHelper;

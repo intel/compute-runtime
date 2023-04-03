@@ -1024,7 +1024,7 @@ struct DirectSubmissionRelaxedOrderingTests : public DirectSubmissionDispatchBuf
     bool verifyDynamicSchedulerProgramming(LinearStream &cs, uint64_t schedulerAllocationGpuVa, uint64_t semaphoreGpuVa, uint32_t semaphoreValue, size_t offset, size_t &endOffset);
 
     template <typename FamilyType>
-    bool verifyStaticSchedulerProgramming(GraphicsAllocation &schedulerAllocation, uint64_t deferredTaskListVa, uint32_t expectedQueueSizeLimit, uint32_t miMathMocs);
+    bool verifyStaticSchedulerProgramming(GraphicsAllocation &schedulerAllocation, uint64_t deferredTaskListVa, uint64_t semaphoreGpuVa, uint32_t expectedQueueSizeLimit, uint32_t miMathMocs);
 
     template <typename FamilyType>
     bool verifyDummyBlt(typename FamilyType::XY_COLOR_BLT *cmd);
@@ -1042,7 +1042,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDummyBlt(typename FamilyType::X
 }
 
 template <typename FamilyType>
-bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(GraphicsAllocation &schedulerAllocation, uint64_t deferredTaskListVa, uint32_t expectedQueueSizeLimit, uint32_t miMathMocs) {
+bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(GraphicsAllocation &schedulerAllocation, uint64_t deferredTaskListVa, uint64_t semaphoreGpuVa, uint32_t expectedQueueSizeLimit, uint32_t miMathMocs) {
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
     using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
     using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
@@ -1064,13 +1064,21 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
         return false;
     }
 
-    miPredicate++;
-    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(miPredicate, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::semaphoreSectionJumpStart,
-                                                                                    CS_GPR_R1, 0, CompareOperation::Equal, false)) {
+    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(++miPredicate);
+
+    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(lrrCmd, CS_GPR_R0, CS_GPR_R9)) {
         return false;
     }
 
-    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(miPredicate, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart()));
+    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(++lrrCmd, CS_GPR_R0 + 4, CS_GPR_R9 + 4)) {
+        return false;
+    }
+
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(++lrrCmd, 0, CS_GPR_R1, 0, CompareOperation::Equal, true)) {
+        return false;
+    }
+
+    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(lrrCmd, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart()));
     if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R2, 0)) {
         return false;
     }
@@ -1197,14 +1205,21 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
         return false;
     }
 
-    cmds = ptrOffset(cmds, EncodeMathMMIO<FamilyType>::getCmdSizeForIncrementOrDecrement());
+    lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(ptrOffset(cmds, EncodeMathMMIO<FamilyType>::getCmdSizeForIncrementOrDecrement()));
 
-    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(cmds, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::semaphoreSectionJumpStart,
-                                                                                    CS_GPR_R1, 0, CompareOperation::Equal, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(lrrCmd, CS_GPR_R0, CS_GPR_R9)) {
         return false;
     }
 
-    lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(cmds, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart()));
+    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(++lrrCmd, CS_GPR_R0 + 4, CS_GPR_R9 + 4)) {
+        return false;
+    }
+
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalDataRegBbStart<FamilyType>(++lrrCmd, 0, CS_GPR_R1, 0, CompareOperation::Equal, true)) {
+        return false;
+    }
+
+    lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(lrrCmd, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart()));
     if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R7, 8)) {
         return false;
     }
@@ -1337,32 +1352,10 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
         return false;
     }
 
-    // 6. Jump to scheduler loop check section (dynamic scheduler)
-    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(ptrOffset(conditionalBbStartcmds, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart()));
+    // 6. Scheduler loop check section
+    lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(ptrOffset(conditionalBbStartcmds, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataRegBatchBufferStart()));
 
-    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(lrrCmd, CS_GPR_R0, CS_GPR_R9)) {
-        return false;
-    }
-
-    if (!RelaxedOrderingCommandsHelper::verifyLrr<FamilyType>(++lrrCmd, CS_GPR_R0 + 4, CS_GPR_R9 + 4)) {
-        return false;
-    }
-
-    bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(++lrrCmd);
-    if (!RelaxedOrderingCommandsHelper::verifyBbStart<FamilyType>(bbStart, 0, true, false)) {
-        return false;
-    }
-
-    // 7. Jump to Semaphore section (dynamic scheduler)
-    miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++bbStart);
-
-    if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
-        return false;
-    }
-
-    lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++miPredicate);
-
-    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::schedulerLoopCheckSectionSize))) {
+    if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R10, static_cast<uint32_t>(RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::semaphoreSectionSize))) {
         return false;
     }
 
@@ -1398,8 +1391,12 @@ bool DirectSubmissionRelaxedOrderingTests::verifyStaticSchedulerProgramming(Grap
         return false;
     }
 
-    bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(++miAluCmd);
-    if (!RelaxedOrderingCommandsHelper::verifyBbStart<FamilyType>(bbStart, 0, true, false)) {
+    if (!RelaxedOrderingCommandsHelper::verifyConditionalRegMemBbStart<FamilyType>(++miAluCmd, 0, semaphoreGpuVa, CS_GPR_R11, CompareOperation::GreaterOrEqual, true)) {
+        return false;
+    }
+
+    bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(ptrOffset(miAluCmd, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalRegMemBatchBufferStart()));
+    if (!RelaxedOrderingCommandsHelper::verifyBbStart<FamilyType>(bbStart, schedulerStartGpuAddress + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart, false, false)) {
         return false;
     }
 
@@ -1431,13 +1428,17 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDynamicSchedulerProgramming(Lin
 
             uint64_t schedulerStartAddress = cs.getGraphicsAllocation()->getGpuAddress() + ptrDiff(lriCmd, cs.getCpuBase());
 
-            uint64_t schedulerLoopCheckVa = schedulerStartAddress + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::schedulerLoopCheckSectionStart;
+            uint64_t semaphoreSectionVa = schedulerStartAddress + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::semaphoreSectionStart;
 
-            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R9, static_cast<uint32_t>(schedulerLoopCheckVa & 0xFFFF'FFFFULL))) {
+            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(lriCmd, CS_GPR_R11, semaphoreValue)) {
                 continue;
             }
 
-            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R9 + 4, static_cast<uint32_t>(schedulerLoopCheckVa >> 32))) {
+            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R9, static_cast<uint32_t>(semaphoreSectionVa & 0xFFFF'FFFFULL))) {
+                continue;
+            }
+
+            if (!RelaxedOrderingCommandsHelper::verifyLri<FamilyType>(++lriCmd, CS_GPR_R9 + 4, static_cast<uint32_t>(semaphoreSectionVa >> 32))) {
                 continue;
             }
 
@@ -1446,21 +1447,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDynamicSchedulerProgramming(Lin
                 continue;
             }
 
-            // 2. Scheduler loop check section
-
-            bbStart++;
-
-            if (!RelaxedOrderingCommandsHelper::verifyConditionalDataMemBbStart<FamilyType>(bbStart, schedulerStartAddress + RelaxedOrderingHelper::DynamicSchedulerSizeAndOffsetSection<FamilyType>::endSectionStart,
-                                                                                            semaphoreGpuVa, semaphoreValue, CompareOperation::GreaterOrEqual, false)) {
-                continue;
-            }
-
-            bbStart = reinterpret_cast<MI_BATCH_BUFFER_START *>(ptrOffset(bbStart, EncodeBatchBufferStartOrEnd<FamilyType>::getCmdSizeConditionalDataMemBatchBufferStart()));
-            if (!RelaxedOrderingCommandsHelper::verifyBbStart<FamilyType>(bbStart, schedulerAllocationGpuVa + RelaxedOrderingHelper::StaticSchedulerSizeAndOffsetSection<FamilyType>::loopStartSectionStart, false, false)) {
-                continue;
-            }
-
-            // 3. Semaphore section
+            // 2. Semaphore section
             auto miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++bbStart);
             if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
                 continue;
@@ -1473,7 +1460,7 @@ bool DirectSubmissionRelaxedOrderingTests::verifyDynamicSchedulerProgramming(Lin
                 continue;
             }
 
-            // 4. End section
+            // 3. End section
 
             miPredicate = reinterpret_cast<MI_SET_PREDICATE *>(++semaphore);
             if (!RelaxedOrderingCommandsHelper::verifyMiPredicate<FamilyType>(miPredicate, MiPredicateType::Disable)) {
@@ -1531,7 +1518,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenDebugFlagSetWhenDispatching
 
     EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
     EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
-                                                             directSubmission.deferredTasksListAllocation->getGpuAddress(), 123,
+                                                             directSubmission.deferredTasksListAllocation->getGpuAddress(), directSubmission.semaphoreGpuVa, 123,
                                                              pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER)));
 }
 
@@ -1545,7 +1532,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, givenNewNumberOfClientsWhenDispa
     EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
     EXPECT_EQ(RelaxedOrderingHelper::queueSizeMultiplier, directSubmission.currentRelaxedOrderingQueueSize);
     EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
-                                                             directSubmission.deferredTasksListAllocation->getGpuAddress(), RelaxedOrderingHelper::queueSizeMultiplier,
+                                                             directSubmission.deferredTasksListAllocation->getGpuAddress(), directSubmission.semaphoreGpuVa, RelaxedOrderingHelper::queueSizeMultiplier,
                                                              pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER)));
 
     const uint64_t expectedQueueSizeValueVa = directSubmission.relaxedOrderingSchedulerAllocation->getGpuAddress() +
@@ -1616,7 +1603,7 @@ HWTEST2_F(DirectSubmissionRelaxedOrderingTests, whenInitializingThenDispatchStat
 
         EXPECT_EQ(1u, directSubmission.dispatchStaticRelaxedOrderingSchedulerCalled);
         EXPECT_TRUE(verifyStaticSchedulerProgramming<FamilyType>(*directSubmission.relaxedOrderingSchedulerAllocation,
-                                                                 directSubmission.deferredTasksListAllocation->getGpuAddress(), RelaxedOrderingHelper::queueSizeMultiplier,
+                                                                 directSubmission.deferredTasksListAllocation->getGpuAddress(), directSubmission.semaphoreGpuVa, RelaxedOrderingHelper::queueSizeMultiplier,
                                                                  pDevice->getRootDeviceEnvironment().getGmmHelper()->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER)));
     }
 

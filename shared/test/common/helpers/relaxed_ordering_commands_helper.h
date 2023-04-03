@@ -278,5 +278,35 @@ bool verifyConditionalDataRegBbStart(void *cmds, uint64_t startAddress, uint32_t
     return verifyBaseConditionalBbStart<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
 }
 
+template <typename FamilyType>
+bool verifyConditionalRegMemBbStart(void *cmds, uint64_t startAddress, uint64_t compareAddress, uint32_t compareReg,
+                                    CompareOperation compareOperation, bool indirect) {
+    using MI_LOAD_REGISTER_MEM = typename FamilyType::MI_LOAD_REGISTER_MEM;
+    using MI_LOAD_REGISTER_IMM = typename FamilyType::MI_LOAD_REGISTER_IMM;
+    using MI_LOAD_REGISTER_REG = typename FamilyType::MI_LOAD_REGISTER_REG;
+
+    auto lrmCmd = reinterpret_cast<MI_LOAD_REGISTER_MEM *>(cmds);
+    if ((lrmCmd->getRegisterAddress() != CS_GPR_R7) || (lrmCmd->getMemoryAddress() != compareAddress)) {
+        return false;
+    }
+
+    auto lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrmCmd);
+    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R7 + 4, 0)) {
+        return false;
+    }
+
+    auto lrrCmd = reinterpret_cast<MI_LOAD_REGISTER_REG *>(++lriCmd);
+    if (!verifyLrr<FamilyType>(lrrCmd, CS_GPR_R8, compareReg)) {
+        return false;
+    }
+
+    lriCmd = reinterpret_cast<MI_LOAD_REGISTER_IMM *>(++lrrCmd);
+    if (!verifyLri<FamilyType>(lriCmd, CS_GPR_R8 + 4, 0)) {
+        return false;
+    }
+
+    return verifyBaseConditionalBbStart<FamilyType>(++lriCmd, compareOperation, startAddress, indirect, AluRegisters::R_7, AluRegisters::R_8);
+}
+
 } // namespace RelaxedOrderingCommandsHelper
 } // namespace NEO
