@@ -85,6 +85,12 @@ ze_result_t KmdSysManager::requestSingle(KmdSysman::RequestProperty &inputReques
             return ZE_RESULT_ERROR_INVALID_SIZE;
         }
 
+        if ((outputResponse.returnCode == KmdSysman::ReturnCodes::DomainServiceNotSupported) ||
+            (outputResponse.returnCode == KmdSysman::ReturnCodes::GetNotSupported) ||
+            (outputResponse.returnCode == KmdSysman::ReturnCodes::SetNotSupported)) {
+            return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
+        }
+
         return (outputResponse.returnCode == KmdSysman::KmdSysmanSuccess) ? ZE_RESULT_SUCCESS : ZE_RESULT_ERROR_NOT_AVAILABLE;
     } else if (status == STATUS_DEVICE_REMOVED) {
         return ZE_RESULT_ERROR_DEVICE_LOST;

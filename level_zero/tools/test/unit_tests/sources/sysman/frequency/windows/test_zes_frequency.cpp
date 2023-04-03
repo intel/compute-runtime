@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -234,9 +234,24 @@ TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingzesFreq
             EXPECT_DOUBLE_EQ(pKmdSysManager->mockMinFrequencyRange, limits.min);
             EXPECT_DOUBLE_EQ(pKmdSysManager->mockMaxFrequencyRange, limits.max);
         } else if (domainIndex == ZES_FREQ_DOMAIN_MEMORY) {
-            EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zesFrequencyGetRange(handle, &limits));
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyGetRange(handle, &limits));
         }
 
+        domainIndex++;
+    }
+}
+
+TEST_F(SysmanDeviceFrequencyFixture, GivenValidFrequencyHandleWhenCallingFrequencyGetRangeAndSetRangeThenUnsupportedErrorIsReturnedForMemoryDomain) {
+    auto handles = get_frequency_handles(frequencyHandleComponentCount);
+    uint32_t domainIndex = 0;
+    for (auto handle : handles) {
+        zes_freq_range_t limits;
+        if (domainIndex == ZES_FREQ_DOMAIN_MEMORY) {
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencyGetRange(handle, &limits));
+            limits.min = pKmdSysManager->mockResolvedFrequency[ZES_FREQ_DOMAIN_MEMORY];
+            limits.max = pKmdSysManager->mockResolvedFrequency[ZES_FREQ_DOMAIN_MEMORY];
+            EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, zesFrequencySetRange(handle, &limits));
+        }
         domainIndex++;
     }
 }

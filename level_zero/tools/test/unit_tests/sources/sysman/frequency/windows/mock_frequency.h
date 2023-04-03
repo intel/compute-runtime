@@ -191,7 +191,7 @@ struct Mock<FrequencyKmdSysManager> : public FrequencyKmdSysManager {
                 pResponse->outDataSize = 2 * sizeof(uint32_t);
             } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainHBM) {
                 pResponse->outDataSize = 0;
-                pResponse->outReturnCode = KmdSysman::KmdSysmanFail;
+                pResponse->outReturnCode = KmdSysman::ReturnCodes::DomainServiceNotSupported;
             }
         } break;
         case KmdSysman::Requests::Frequency::CurrentRequestedFrequency: {
@@ -297,12 +297,17 @@ struct Mock<FrequencyKmdSysManager> : public FrequencyKmdSysManager {
         }
         switch (pRequest->inRequestId) {
         case KmdSysman::Requests::Frequency::CurrentFrequencyRange: {
-            uint32_t *pMinFreq = reinterpret_cast<uint32_t *>(pBuffer);
-            uint32_t *pMaxFreq = reinterpret_cast<uint32_t *>(pBuffer + sizeof(uint32_t));
-            mockMinFrequencyRange = *pMinFreq;
-            mockMaxFrequencyRange = *pMaxFreq;
-            pResponse->outDataSize = 0;
-            pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            if (domain == KmdSysman::GeneralDomainsType::GeneralDomainDGPU) {
+                uint32_t *pMinFreq = reinterpret_cast<uint32_t *>(pBuffer);
+                uint32_t *pMaxFreq = reinterpret_cast<uint32_t *>(pBuffer + sizeof(uint32_t));
+                mockMinFrequencyRange = *pMinFreq;
+                mockMaxFrequencyRange = *pMaxFreq;
+                pResponse->outDataSize = 0;
+                pResponse->outReturnCode = KmdSysman::KmdSysmanSuccess;
+            } else if (domain == KmdSysman::GeneralDomainsType::GeneralDomainHBM) {
+                pResponse->outDataSize = 0;
+                pResponse->outReturnCode = KmdSysman::ReturnCodes::DomainServiceNotSupported;
+            }
         } break;
         case KmdSysman::Requests::Frequency::CurrentFixedMode: {
             uint32_t *pValue = reinterpret_cast<uint32_t *>(pBuffer);
