@@ -829,7 +829,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     EXPECT_FALSE(sbaProperties.globalAtomics.isDirty);
     EXPECT_FALSE(sbaProperties.statelessMocs.isDirty);
     EXPECT_TRUE(sbaProperties.bindingTablePoolBaseAddress.isDirty);
-    EXPECT_TRUE(sbaProperties.bindingTablePoolSize.isDirty);
+    EXPECT_FALSE(sbaProperties.bindingTablePoolSize.isDirty);
 
     EXPECT_EQ(1, sbaProperties.globalAtomics.value);
     EXPECT_EQ(1, sbaProperties.statelessMocs.value);
@@ -849,7 +849,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressSupportFlagStateWhenSettingProp
     EXPECT_EQ(2u, sbaProperties.bindingTablePoolSize.value);
 
     sbaProperties.setPropertiesAll(false, 0, 3, 3, -1, -1, -1, -1, -1, -1);
-    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_FALSE(sbaProperties.isDirty());
 
     EXPECT_EQ(0, sbaProperties.globalAtomics.value);
     EXPECT_EQ(0, sbaProperties.statelessMocs.value);
@@ -919,11 +919,11 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
     EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
 
     sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, -1, -1, -1, -1);
-    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(20u, sbaProperties.surfaceStateSize.value);
 
     EXPECT_FALSE(sbaProperties.surfaceStateBaseAddress.isDirty);
-    EXPECT_TRUE(sbaProperties.surfaceStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.surfaceStateSize.isDirty);
     EXPECT_FALSE(sbaProperties.dynamicStateBaseAddress.isDirty);
     EXPECT_FALSE(sbaProperties.dynamicStateSize.isDirty);
     EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
@@ -941,13 +941,13 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
     EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
 
     sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, 40, -1, -1);
-    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(40u, sbaProperties.dynamicStateSize.value);
 
     EXPECT_FALSE(sbaProperties.surfaceStateBaseAddress.isDirty);
     EXPECT_FALSE(sbaProperties.surfaceStateSize.isDirty);
     EXPECT_FALSE(sbaProperties.dynamicStateBaseAddress.isDirty);
-    EXPECT_TRUE(sbaProperties.dynamicStateSize.isDirty);
+    EXPECT_FALSE(sbaProperties.dynamicStateSize.isDirty);
     EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
     EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
 
@@ -963,7 +963,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
     EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
 
     sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, 40, 50, 60);
-    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(60u, sbaProperties.indirectObjectSize.value);
 
     EXPECT_FALSE(sbaProperties.surfaceStateBaseAddress.isDirty);
@@ -971,7 +971,7 @@ TEST(StreamPropertiesTests, givenStateBaseAddressCommonBaseAddressAndSizeWhenSet
     EXPECT_FALSE(sbaProperties.dynamicStateBaseAddress.isDirty);
     EXPECT_FALSE(sbaProperties.dynamicStateSize.isDirty);
     EXPECT_FALSE(sbaProperties.indirectObjectBaseAddress.isDirty);
-    EXPECT_TRUE(sbaProperties.indirectObjectSize.isDirty);
+    EXPECT_FALSE(sbaProperties.indirectObjectSize.isDirty);
 
     sbaProperties.setPropertiesAll(false, -1, -1, 10, 10, 20, 30, 40, 50, 60);
     EXPECT_FALSE(sbaProperties.isDirty());
@@ -1132,7 +1132,7 @@ TEST(StreamPropertiesTests, givenIndirectHeapAndStatelessMocsStateBaseAddressPro
     indirectObjectSize = 2;
     sbaProperties.setPropertiesIndirectState(indirectObjectBaseAddress, indirectObjectSize);
     sbaPropertiesCopy.copyPropertiesStatelessMocsIndirectState(sbaProperties);
-    EXPECT_TRUE(sbaPropertiesCopy.isDirty());
+    EXPECT_FALSE(sbaPropertiesCopy.isDirty());
     EXPECT_EQ(1, sbaPropertiesCopy.statelessMocs.value);
     EXPECT_EQ(2, sbaPropertiesCopy.indirectObjectBaseAddress.value);
     EXPECT_EQ(2u, sbaPropertiesCopy.indirectObjectSize.value);
@@ -1200,6 +1200,24 @@ TEST(StreamPropertiesTests, givenBindingTableAndSurfaceStateBaseAddressStateBase
     EXPECT_EQ(1u, sbaProperties.bindingTablePoolSize.value);
     EXPECT_EQ(1, sbaProperties.surfaceStateBaseAddress.value);
     EXPECT_EQ(1u, sbaProperties.surfaceStateSize.value);
+
+    surfaceStateSize = 2;
+    bindingTablePoolSize = 2;
+    sbaProperties.setPropertiesBindingTableSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
+    EXPECT_FALSE(sbaProperties.isDirty());
+    EXPECT_EQ(1, sbaProperties.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(2u, sbaProperties.bindingTablePoolSize.value);
+    EXPECT_EQ(1, sbaProperties.surfaceStateBaseAddress.value);
+    EXPECT_EQ(2u, sbaProperties.surfaceStateSize.value);
+
+    bindingTablePoolBaseAddress = 2;
+    surfaceStateBaseAddress = 2;
+    sbaProperties.setPropertiesBindingTableSurfaceState(bindingTablePoolBaseAddress, bindingTablePoolSize, surfaceStateBaseAddress, surfaceStateSize);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(2, sbaProperties.bindingTablePoolBaseAddress.value);
+    EXPECT_EQ(2u, sbaProperties.bindingTablePoolSize.value);
+    EXPECT_EQ(2, sbaProperties.surfaceStateBaseAddress.value);
+    EXPECT_EQ(2u, sbaProperties.surfaceStateSize.value);
 }
 
 TEST(StreamPropertiesTests, givenSurfaceStateBaseAddressStateBaseAddressPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
@@ -1230,6 +1248,18 @@ TEST(StreamPropertiesTests, givenSurfaceStateBaseAddressStateBaseAddressProperty
     EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(1, sbaProperties.surfaceStateBaseAddress.value);
     EXPECT_EQ(1u, sbaProperties.surfaceStateSize.value);
+
+    surfaceStateSize = 2;
+    sbaProperties.setPropertiesSurfaceState(surfaceStateBaseAddress, surfaceStateSize);
+    EXPECT_FALSE(sbaProperties.isDirty());
+    EXPECT_EQ(1, sbaProperties.surfaceStateBaseAddress.value);
+    EXPECT_EQ(2u, sbaProperties.surfaceStateSize.value);
+
+    surfaceStateBaseAddress = 2;
+    sbaProperties.setPropertiesSurfaceState(surfaceStateBaseAddress, surfaceStateSize);
+    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_EQ(2, sbaProperties.surfaceStateBaseAddress.value);
+    EXPECT_EQ(2u, sbaProperties.surfaceStateSize.value);
 }
 
 TEST(StreamPropertiesTests, givenDynamicStateBaseAddressStateBaseAddressPropertyWhenSettingPropertyAndCheckIfSupportedThenExpectCorrectState) {
@@ -1262,7 +1292,7 @@ TEST(StreamPropertiesTests, givenDynamicStateBaseAddressStateBaseAddressProperty
 
     dynamicStateSize = 2;
     sbaProperties.setPropertiesDynamicState(dynamicStateBaseAddress, dynamicStateSize);
-    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(1, sbaProperties.dynamicStateBaseAddress.value);
     EXPECT_EQ(2u, sbaProperties.dynamicStateSize.value);
 
@@ -1303,7 +1333,7 @@ TEST(StreamPropertiesTests, givenIndirectObjectBaseAddressStateBaseAddressProper
 
     indirectObjectSize = 2;
     sbaProperties.setPropertiesIndirectState(indirectObjectBaseAddress, indirectObjectSize);
-    EXPECT_TRUE(sbaProperties.isDirty());
+    EXPECT_FALSE(sbaProperties.isDirty());
     EXPECT_EQ(1, sbaProperties.indirectObjectBaseAddress.value);
     EXPECT_EQ(2u, sbaProperties.indirectObjectSize.value);
 

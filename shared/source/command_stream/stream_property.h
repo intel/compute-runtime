@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -12,23 +12,29 @@
 
 namespace NEO {
 
-template <typename Type>
+template <typename Type, bool fullStateProperty>
 struct StreamPropertyType {
     static constexpr Type initValue = static_cast<Type>(-1);
 
     Type value = initValue;
     bool isDirty = false;
     void set(Type newValue) {
-        if ((value != newValue) && (newValue != initValue)) {
-            value = newValue;
-            isDirty = true;
+        if constexpr (fullStateProperty) {
+            if ((value != newValue) && (newValue != initValue)) {
+                value = newValue;
+                isDirty = true;
+            }
+        } else {
+            if (newValue != initValue) {
+                value = newValue;
+            }
         }
     }
 };
 
-using StreamProperty32 = StreamPropertyType<int32_t>;
-using StreamProperty64 = StreamPropertyType<int64_t>;
-using StreamPropertySizeT = StreamPropertyType<size_t>;
+using StreamProperty32 = StreamPropertyType<int32_t, true>;
+using StreamProperty64 = StreamPropertyType<int64_t, true>;
+using StreamPropertySizeT = StreamPropertyType<size_t, false>;
 
 using StreamProperty = StreamProperty32;
 
