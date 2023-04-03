@@ -126,8 +126,8 @@ void *DebugSessionWindows::asyncThreadFunction(void *arg) {
 
     while (self->asyncThread.threadActive) {
         self->readAndHandleEvent(100);
-        self->sendInterrupts();
         self->generateEventsAndResumeStoppedThreads();
+        self->sendInterrupts();
     }
 
     PRINT_DEBUGGER_INFO_LOG("Debugger async thread closing\n", "");
@@ -264,7 +264,7 @@ ze_result_t DebugSessionWindows::handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU
 
     for (auto &threadId : threadsWithAttention) {
         PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
-        markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(threadId, memoryHandle);
+        addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle);
     }
 
     checkTriggerEventsForAttention();

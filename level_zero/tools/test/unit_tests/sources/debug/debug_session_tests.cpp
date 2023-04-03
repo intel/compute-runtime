@@ -223,11 +223,36 @@ TEST(DebugSessionTest, givenPendingInteruptWhenHandlingThreadWithAttentionThenPe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     sessionMock->sendInterrupts();
-    sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
 
     EXPECT_TRUE(sessionMock->allThreads[thread]->isStopped());
 
+    EXPECT_FALSE(sessionMock->pendingInterrupts[0].second);
+    EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
+
+    sessionMock->triggerEvents = true;
+
+    std::vector<EuThread::ThreadId> resumeThreads;
+    std::vector<EuThread::ThreadId> stoppedThreadsToReport;
+    std::vector<EuThread::ThreadId> interruptedThreads;
+
+    sessionMock->fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreadsToReport, interruptedThreads);
+    EXPECT_EQ(1u, interruptedThreads.size());
     EXPECT_TRUE(sessionMock->pendingInterrupts[0].second);
+
+    sessionMock->generateEventsForPendingInterrupts();
+
+    ASSERT_EQ(1u, sessionMock->apiEvents.size());
+
+    zet_debug_event_t debugEvent = {};
+    sessionMock->readEvent(0, &debugEvent);
+
+    EXPECT_EQ(ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED, debugEvent.type);
+    EXPECT_EQ(apiThread.thread, debugEvent.info.thread.thread.thread);
+    EXPECT_EQ(apiThread.eu, debugEvent.info.thread.thread.eu);
+    EXPECT_EQ(apiThread.subslice, debugEvent.info.thread.thread.subslice);
+    EXPECT_EQ(apiThread.slice, debugEvent.info.thread.thread.slice);
+
     EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
 }
 
@@ -253,7 +278,7 @@ TEST(DebugSessionTest, givenPreviouslyStoppedThreadAndPendingInterruptWhenHandli
     sessionMock->onlyForceException = false;
     sessionMock->allThreads[thread]->stopThread(1u);
 
-    sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
 
     EXPECT_TRUE(sessionMock->allThreads[thread]->isStopped());
 
@@ -269,6 +294,85 @@ TEST(DebugSessionTest, givenPreviouslyStoppedThreadAndPendingInterruptWhenHandli
     EXPECT_TRUE(DebugSession::areThreadsEqual(apiThread, sessionMock->apiEvents.front().info.thread.thread));
 }
 
+TEST(DebugSessionTest, givenThreadsStoppedOnBreakpointAndInterruptedWhenHandlingThreadsStateThenThreadsWithBreakpointExceptionsHaveDistinctEventsTriggered) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    sessionMock->callBaseIsForceExceptionOrForceExternalHaltOnlyExceptionReason = true;
+    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        sessionMock->stateSaveAreaHeader.resize(size);
+    }
+
+    auto *regdesc = &(reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data()))->regHeader.cr;
+    uint32_t cr0[8] = {0, 0, 0, 0, 0, 0, 0, 0};
+
+    ze_device_thread_t interruptThread = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    ze_device_thread_t bpThread = {0, 0, 0, 0};
+    EuThread::ThreadId threadWithBp(0, 0, 0, 0, 0);
+    EuThread::ThreadId threadWithFe(0, 0, 0, 0, 1);
+
+    auto result = sessionMock->interrupt(interruptThread);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    sessionMock->sendInterrupts();
+
+    cr0[1] = 1 << 15 | 1 << 31;
+    sessionMock->registersAccessHelper(sessionMock->allThreads[threadWithBp].get(), regdesc, 0, 1, cr0, true);
+
+    cr0[1] = 1 << 26;
+    sessionMock->registersAccessHelper(sessionMock->allThreads[threadWithFe].get(), regdesc, 0, 1, cr0, true);
+
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(threadWithBp, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(threadWithFe, 1u);
+
+    EXPECT_TRUE(sessionMock->allThreads[threadWithBp]->isStopped());
+    EXPECT_TRUE(sessionMock->allThreads[threadWithFe]->isStopped());
+
+    sessionMock->expectedAttentionEvents = 0;
+    sessionMock->checkTriggerEventsForAttention();
+
+    sessionMock->generateEventsAndResumeStoppedThreads();
+
+    EXPECT_EQ(2u, sessionMock->apiEvents.size());
+
+    uint32_t stoppedEvents = 0;
+    bool interruptEventFound = false;
+    bool bpThreadFound = false;
+    for (uint32_t i = 0; i < 2; i++) {
+
+        zet_debug_event_t outputEvent = {};
+        auto result = sessionMock->readEvent(0, &outputEvent);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        if (result == ZE_RESULT_SUCCESS) {
+            if (outputEvent.type == ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED) {
+                stoppedEvents++;
+                if (DebugSession::areThreadsEqual(interruptThread, outputEvent.info.thread.thread)) {
+                    interruptEventFound = true;
+                } else if (DebugSession::areThreadsEqual(bpThread, outputEvent.info.thread.thread)) {
+                    bpThreadFound = true;
+                }
+            }
+        }
+    }
+
+    EXPECT_EQ(2u, stoppedEvents);
+    EXPECT_TRUE(bpThreadFound);
+    EXPECT_TRUE(interruptEventFound);
+}
+
 TEST(DebugSessionTest, givenStoppedThreadWhenAddingNewlyStoppedThenThreadIsNotAdded) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
@@ -282,7 +386,7 @@ TEST(DebugSessionTest, givenStoppedThreadWhenAddingNewlyStoppedThenThreadIsNotAd
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
     sessionMock->allThreads[thread]->stopThread(1u);
 
-    sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
 
     EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
 }
@@ -302,7 +406,7 @@ TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWithForceException
     sessionMock->threadStopped = true;
     sessionMock->onlyForceException = true;
 
-    sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
 
     EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
     EXPECT_FALSE(sessionMock->allThreads[thread]->isReportedAsStopped());
@@ -324,7 +428,7 @@ TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWhenGeneratingEven
     sessionMock->onlyForceException = false;
     sessionMock->triggerEvents = true;
 
-    sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
 
     EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
     EXPECT_FALSE(sessionMock->allThreads[thread]->isReportedAsStopped());
@@ -352,7 +456,7 @@ TEST(DebugSessionTest, givenNoStoppedThreadWhenAddingNewlyStoppedThenThreadIsNot
     sessionMock->threadStopped = 0;
 
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
-    sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
 
     EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
 }
@@ -389,7 +493,7 @@ TEST(DebugSessionTest, givenTriggerEventsWhenGenerateEventsAndResumeCalledThenEv
     ze_device_thread_t apiThread2 = {0, 0, 1, 1};
     sessionMock->pendingInterrupts.push_back({apiThread, true});
 
-    sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(EuThread::ThreadId(0, apiThread2), 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(EuThread::ThreadId(0, apiThread2), 1u);
 
     sessionMock->triggerEvents = true;
     sessionMock->interruptSent = true;
@@ -481,7 +585,7 @@ TEST(DebugSessionTest, givenErrorFromReadSystemRoutineIdentWhenCheckingThreadSta
     sessionMock->readSystemRoutineIdentRetVal = false;
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
 
-    sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
 
     EXPECT_FALSE(sessionMock->allThreads[thread]->isStopped());
     EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
@@ -552,11 +656,12 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenFillingResumeAndStoppedThreadsFrom
     {
         std::vector<EuThread::ThreadId> resumeThreads;
         std::vector<EuThread::ThreadId> stoppedThreads;
+        std::vector<EuThread::ThreadId> interruptedThreads;
 
         sessionMock->allThreads[thread]->stopThread(1u);
         sessionMock->allThreads[thread2]->stopThread(1u);
 
-        sessionMock->fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads);
+        sessionMock->fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads, interruptedThreads);
         EXPECT_EQ(2u, resumeThreads.size());
         EXPECT_EQ(0u, stoppedThreads.size());
     }
@@ -569,11 +674,12 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenFillingResumeAndStoppedThreadsFrom
     {
         std::vector<EuThread::ThreadId> resumeThreads;
         std::vector<EuThread::ThreadId> stoppedThreads;
+        std::vector<EuThread::ThreadId> interruptedThreads;
 
         sessionMock->allThreads[thread]->stopThread(1u);
         sessionMock->allThreads[thread2]->stopThread(1u);
 
-        sessionMock->fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads);
+        sessionMock->fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads, interruptedThreads);
         EXPECT_EQ(0u, resumeThreads.size());
         EXPECT_EQ(2u, stoppedThreads.size());
     }
@@ -590,8 +696,9 @@ TEST(DebugSessionTest, givenNoThreadsStoppedWhenCallingfillResumeAndStoppedThrea
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
     std::vector<EuThread::ThreadId> resumeThreads;
     std::vector<EuThread::ThreadId> stoppedThreads;
+    std::vector<EuThread::ThreadId> interruptedThreads;
 
-    sessionMock->fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads);
+    sessionMock->fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreads, interruptedThreads);
 
     EXPECT_EQ(0u, sessionMock->readStateSaveAreaHeaderCalled);
 }

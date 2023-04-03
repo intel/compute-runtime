@@ -677,7 +677,7 @@ bool DebugSessionImp::readSystemRoutineIdent(EuThread *thread, uint64_t memoryHa
     return true;
 }
 
-void DebugSessionImp::markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle) {
+void DebugSessionImp::addThreadToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle) {
 
     SIP::sr_ident srMagic = {{0}};
     srMagic.count = 0;
@@ -702,24 +702,7 @@ void DebugSessionImp::markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttentio
         allThreads[threadId]->stopThread(memoryHandle);
     }
 
-    bool threadWasInterrupted = false;
-
-    for (auto &request : pendingInterrupts) {
-        ze_device_thread_t apiThread = convertToApi(threadId);
-
-        auto isInterrupted = checkSingleThreadWithinDeviceThread(apiThread, request.first);
-
-        if (isInterrupted) {
-            // mark pending interrupt as completed successfully only when new thread has been stopped
-            if (!wasStopped) {
-                request.second = true;
-            }
-            threadWasInterrupted = true;
-            allThreads[threadId]->reportAsStopped();
-        }
-    }
-
-    if (!threadWasInterrupted && !wasStopped) {
+    if (!wasStopped) {
         newlyStoppedThreads.push_back(threadId);
     }
 }
@@ -737,8 +720,9 @@ void DebugSessionImp::generateEventsAndResumeStoppedThreads() {
     if (triggerEvents) {
         std::vector<EuThread::ThreadId> resumeThreads;
         std::vector<EuThread::ThreadId> stoppedThreadsToReport;
+        std::vector<EuThread::ThreadId> interruptedThreads;
 
-        fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreadsToReport);
+        fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreadsToReport, interruptedThreads);
 
         resumeAccidentallyStoppedThreads(resumeThreads);
         generateEventsForPendingInterrupts();
@@ -756,7 +740,7 @@ bool DebugSessionImp::isForceExceptionOrForceExternalHaltOnlyExceptionReason(uin
     return (((cr0[1] & cr0ExceptionBitmask) & (~cr0ForcedExcpetionBitmask)) == 0);
 }
 
-void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<EuThread::ThreadId> &resumeThreads, std::vector<EuThread::ThreadId> &stoppedThreadsToReport) {
+void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<EuThread::ThreadId> &resumeThreads, std::vector<EuThread::ThreadId> &stoppedThreadsToReport, std::vector<EuThread::ThreadId> &interruptedThreads) {
 
     if (newlyStoppedThreads.empty()) {
         return;
@@ -770,8 +754,27 @@ void DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped(std::vector<Eu
             readRegistersImp(newlyStopped, ZET_DEBUG_REGSET_TYPE_CR_INTEL_GPU, 0, 1, reg.get());
 
             if (isForceExceptionOrForceExternalHaltOnlyExceptionReason(reg.get())) {
-                PRINT_DEBUGGER_THREAD_LOG("RESUME accidentally stopped thread = %s\n", allThreads[newlyStopped]->toString().c_str());
-                resumeThreads.push_back(newlyStopped);
+                bool threadWasInterrupted = false;
+
+                for (auto &request : pendingInterrupts) {
+                    ze_device_thread_t apiThread = convertToApi(newlyStopped);
+
+                    auto isInterrupted = checkSingleThreadWithinDeviceThread(apiThread, request.first);
+
+                    if (isInterrupted) {
+                        // mark pending interrupt as completed successfully
+                        request.second = true;
+                        threadWasInterrupted = true;
+                        allThreads[newlyStopped]->reportAsStopped();
+                    }
+                }
+
+                if (threadWasInterrupted) {
+                    interruptedThreads.push_back(newlyStopped);
+                } else {
+                    PRINT_DEBUGGER_THREAD_LOG("RESUME accidentally stopped thread = %s\n", allThreads[newlyStopped]->toString().c_str());
+                    resumeThreads.push_back(newlyStopped);
+                }
             } else {
                 PRINT_DEBUGGER_THREAD_LOG("Newly stopped thread = %s, exception bits = %#010" PRIx32 "\n", allThreads[newlyStopped]->toString().c_str(), reg[1]);
                 stoppedThreadsToReport.push_back(newlyStopped);

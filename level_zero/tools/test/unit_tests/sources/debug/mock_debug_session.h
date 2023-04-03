@@ -138,6 +138,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSession::allThreads;
     using L0::DebugSession::debugArea;
 
+    using L0::DebugSessionImp::addThreadToNewlyStoppedFromRaisedAttention;
     using L0::DebugSessionImp::apiEvents;
     using L0::DebugSessionImp::applyResumeWa;
     using L0::DebugSessionImp::calculateThreadSlotOffset;
@@ -148,7 +149,6 @@ struct MockDebugSession : public L0::DebugSessionImp {
     using L0::DebugSessionImp::generateEventsForStoppedThreads;
     using L0::DebugSessionImp::getRegisterSize;
     using L0::DebugSessionImp::getStateSaveAreaHeader;
-    using L0::DebugSessionImp::markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention;
     using L0::DebugSessionImp::newAttentionRaised;
     using L0::DebugSessionImp::readSbaRegisters;
     using L0::DebugSessionImp::registersAccessHelper;
@@ -310,6 +310,9 @@ struct MockDebugSession : public L0::DebugSessionImp {
     }
 
     bool isForceExceptionOrForceExternalHaltOnlyExceptionReason(uint32_t *cr0) override {
+        if (callBaseIsForceExceptionOrForceExternalHaltOnlyExceptionReason) {
+            return isForceExceptionOrForceExternalHaltOnlyExceptionReasonBase(cr0);
+        }
         return onlyForceException;
     }
 
@@ -437,6 +440,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     ze_result_t interruptImpResult = ZE_RESULT_SUCCESS;
     ze_result_t resumeImpResult = ZE_RESULT_SUCCESS;
     bool onlyForceException = true;
+    bool callBaseIsForceExceptionOrForceExternalHaltOnlyExceptionReason = false;
     bool threadStopped = true;
     int areRequestedThreadsStoppedReturnValue = -1;
     bool readSystemRoutineIdentRetVal = true;

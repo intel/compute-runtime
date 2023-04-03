@@ -5969,9 +5969,41 @@ TEST_F(DebugApiLinuxAttentionTest, GivenInterruptedThreadsWhenOnlySomeThreadsRai
 
     sessionMock->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
 
-    EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
+    EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
+    EXPECT_FALSE(sessionMock->pendingInterrupts[0].second);
+    EXPECT_FALSE(sessionMock->pendingInterrupts[1].second);
+
+    std::vector<EuThread::ThreadId> resumeThreads;
+    std::vector<EuThread::ThreadId> stoppedThreadsToReport;
+    std::vector<EuThread::ThreadId> interruptedThreads;
+
+    sessionMock->fillResumeAndStoppedThreadsFromNewlyStopped(resumeThreads, stoppedThreadsToReport, interruptedThreads);
+    EXPECT_EQ(1u, interruptedThreads.size());
     EXPECT_TRUE(sessionMock->pendingInterrupts[0].second);
     EXPECT_FALSE(sessionMock->pendingInterrupts[1].second);
+
+    sessionMock->generateEventsForPendingInterrupts();
+    // 2 pending interrupts
+    EXPECT_EQ(2u, sessionMock->apiEvents.size());
+
+    uint32_t stoppedEvents = 0;
+    uint32_t notAvailableEvents = 0;
+
+    for (uint32_t i = 0; i < 2u; i++) {
+        zet_debug_event_t outputEvent = {};
+        auto result = sessionMock->readEvent(0, &outputEvent);
+        EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+        if (result == ZE_RESULT_SUCCESS) {
+            if (outputEvent.type == ZET_DEBUG_EVENT_TYPE_THREAD_STOPPED) {
+                stoppedEvents++;
+            } else if (outputEvent.type == ZET_DEBUG_EVENT_TYPE_THREAD_UNAVAILABLE) {
+                notAvailableEvents++;
+            }
+        }
+    }
+    EXPECT_EQ(1u, stoppedEvents);
+    EXPECT_EQ(1u, notAvailableEvents);
 }
 
 TEST_F(DebugApiLinuxAttentionTest, GivenSentInterruptWhenHandlingAttEventThenAttBitsAreSynchronouslyScannedAgainAndAllNewThreadsChecked) {
@@ -6031,10 +6063,9 @@ TEST_F(DebugApiLinuxAttentionTest, GivenSentInterruptWhenHandlingAttEventThenAtt
 
     sessionMock->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
 
-    EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
-    EXPECT_TRUE(sessionMock->pendingInterrupts[0].second);
+    EXPECT_EQ(2u, sessionMock->newlyStoppedThreads.size());
     auto expectedThreadsToCheck = (hwInfo.capabilityTable.fusedEuEnabled && hwInfo.gtSystemInfo.MaxEuPerSubSlice != 8) ? 4u : 2u;
-    EXPECT_EQ(expectedThreadsToCheck, sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttentionCallCount);
+    EXPECT_EQ(expectedThreadsToCheck, sessionMock->addThreadToNewlyStoppedFromRaisedAttentionCallCount);
 }
 
 TEST_F(DebugApiLinuxAttentionTest, GivenSentInterruptWhenSynchronouslyScannedAttBitsAreAllZeroOrErrorWhileHandlingAttEventThenThreadsFromEventAreChecked) {
@@ -6094,10 +6125,9 @@ TEST_F(DebugApiLinuxAttentionTest, GivenSentInterruptWhenSynchronouslyScannedAtt
 
     sessionMock->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
 
-    EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
-    EXPECT_TRUE(sessionMock->pendingInterrupts[0].second);
+    EXPECT_EQ(2u, sessionMock->newlyStoppedThreads.size());
     auto expectedThreadsToCheck = hwInfo.capabilityTable.fusedEuEnabled ? 4u : 2u;
-    EXPECT_EQ(expectedThreadsToCheck, sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttentionCallCount);
+    EXPECT_EQ(expectedThreadsToCheck, sessionMock->addThreadToNewlyStoppedFromRaisedAttentionCallCount);
 
     sessionMock->stoppedThreads[threads[0].packed] = 3;
     sessionMock->stoppedThreads[threads[1].packed] = 3;
@@ -6106,14 +6136,13 @@ TEST_F(DebugApiLinuxAttentionTest, GivenSentInterruptWhenSynchronouslyScannedAtt
 
     sessionMock->newlyStoppedThreads.clear();
     sessionMock->pendingInterrupts[0].second = false;
-    sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttentionCallCount = 0;
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttentionCallCount = 0;
     handler->ioctlRetVal = -1;
 
     sessionMock->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
 
-    EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
-    EXPECT_TRUE(sessionMock->pendingInterrupts[0].second);
-    EXPECT_EQ(expectedThreadsToCheck, sessionMock->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttentionCallCount);
+    EXPECT_EQ(2u, sessionMock->newlyStoppedThreads.size());
+    EXPECT_EQ(expectedThreadsToCheck, sessionMock->addThreadToNewlyStoppedFromRaisedAttentionCallCount);
 }
 
 TEST_F(DebugApiLinuxAttentionTest, GivenInterruptedThreadsWhenAttentionEventReceivedThenEventsTriggeredAfterExpectedAttentionEventCount) {
@@ -6681,14 +6710,14 @@ TEST_F(DebugApiLinuxAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEvent
     auto handler = new MockIoctlHandler;
     session->ioctlHandler.reset(handler);
     session->returnTimeDiff = DebugSessionLinux::interruptTimeout * 10;
-
-    session->startAsyncThread();
+    session->synchronousInternalEventRead = true;
 
     ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
     auto result = session->interrupt(thread);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    session->startAsyncThread();
 
-    while (session->getInternalEventCounter == 0)
+    while (session->getInternalEventCounter < 2)
         ;
 
     session->closeAsyncThread();

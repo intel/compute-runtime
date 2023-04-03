@@ -263,7 +263,7 @@ TEST_F(DebugApiWindowsAttentionTest, GivenEuAttentionEventEmptyBitmaskWhenHandli
     EXPECT_FALSE(sessionMock->triggerEvents);
 }
 
-TEST_F(DebugApiWindowsAttentionTest, GivenInterruptedThreadsWhenOnlySomeThreadsRaisesAttentionThenPendingInterruptsAreMarked) {
+TEST_F(DebugApiWindowsAttentionTest, GivenInterruptedThreadsWithOnlySomeThreadsRaisingAttentionWhenHandlingEventThenInterruptedThreadsAreAddedToNewlyStopped) {
     zet_debug_config_t config = {};
     config.pid = 0x1234;
 
@@ -295,8 +295,8 @@ TEST_F(DebugApiWindowsAttentionTest, GivenInterruptedThreadsWhenOnlySomeThreadsR
     auto result = sessionMock->readAndHandleEvent(100);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
-    EXPECT_TRUE(sessionMock->pendingInterrupts[0].second);
+    EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
+    EXPECT_FALSE(sessionMock->pendingInterrupts[0].second);
     EXPECT_FALSE(sessionMock->pendingInterrupts[1].second);
 }
 

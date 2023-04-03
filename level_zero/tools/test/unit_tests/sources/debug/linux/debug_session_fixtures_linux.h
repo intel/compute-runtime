@@ -254,6 +254,8 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionImp::detachTile;
     using L0::DebugSessionImp::enqueueApiEvent;
     using L0::DebugSessionImp::expectedAttentionEvents;
+    using L0::DebugSessionImp::fillResumeAndStoppedThreadsFromNewlyStopped;
+    using L0::DebugSessionImp::generateEventsForPendingInterrupts;
     using L0::DebugSessionImp::interruptSent;
     using L0::DebugSessionImp::isValidGpuAddress;
     using L0::DebugSessionImp::newAttentionRaised;
@@ -456,9 +458,9 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         return DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, deviceIndex);
     }
 
-    void markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle) override {
-        markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttentionCallCount++;
-        return DebugSessionImp::markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(threadId, memoryHandle);
+    void addThreadToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle) override {
+        addThreadToNewlyStoppedFromRaisedAttentionCallCount++;
+        return DebugSessionImp::addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle);
     }
 
     TileDebugSessionLinux *createTileSession(const zet_debug_config_t &config, L0::Device *device, L0::DebugSessionImp *rootDebugSession) override;
@@ -480,7 +482,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     uint32_t interruptedDevice = std::numeric_limits<uint32_t>::max();
     uint32_t processPendingVmBindEventsCalled = 0;
     uint32_t checkStoppedThreadsAndGenerateEventsCallCount = 0;
-    uint32_t markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttentionCallCount = 0;
+    uint32_t addThreadToNewlyStoppedFromRaisedAttentionCallCount = 0;
 
     std::vector<uint32_t> resumedDevices;
     std::vector<std::vector<EuThread::ThreadId>> resumedThreads;

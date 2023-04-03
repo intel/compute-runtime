@@ -333,12 +333,12 @@ void *DebugSessionLinux::asyncThreadFunction(void *arg) {
 
         if (self->tileSessionsEnabled) {
             for (size_t tileIndex = 0; tileIndex < self->tileSessions.size(); tileIndex++) {
-                static_cast<TileDebugSessionLinux *>(self->tileSessions[tileIndex].first)->sendInterrupts();
                 static_cast<TileDebugSessionLinux *>(self->tileSessions[tileIndex].first)->generateEventsAndResumeStoppedThreads();
+                static_cast<TileDebugSessionLinux *>(self->tileSessions[tileIndex].first)->sendInterrupts();
             }
         } else {
-            self->sendInterrupts();
             self->generateEventsAndResumeStoppedThreads();
+            self->sendInterrupts();
         }
     }
 
@@ -1296,9 +1296,9 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
         PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
 
         if (tileSessionsEnabled) {
-            static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(threadId, vmHandle);
+            static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle);
         } else {
-            markPendingInterruptsOrAddToNewlyStoppedFromRaisedAttention(threadId, vmHandle);
+            addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle);
         }
     }
 

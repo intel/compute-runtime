@@ -1015,9 +1015,10 @@ TEST_F(TileAttachAsyncThreadTest, GivenInterruptedThreadsWhenNoAttentionEventIsR
     auto result = tileSessions[0]->interrupt(thread);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
+    rootSession->synchronousInternalEventRead = true;
     rootSession->startAsyncThread();
 
-    while (rootSession->getInternalEventCounter == 0)
+    while (rootSession->getInternalEventCounter < 2)
         ;
 
     rootSession->closeAsyncThread();
