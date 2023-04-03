@@ -52,9 +52,6 @@ class ZesFabricPortFixture : public SysmanDeviceFixture {
 
         pFabricPortHandleContext = pSysmanDeviceImp->pFabricPortHandleContext;
         if (nullptr != pFabricPortHandleContext->pFabricDevice) {
-            for (FabricPort *pFabricPort : pFabricPortHandleContext->handleList) {
-                delete pFabricPort;
-            }
             pFabricPortHandleContext->handleList.clear();
             delete pFabricPortHandleContext->pFabricDevice;
             pFabricPortHandleContext->pFabricDevice = nullptr;
@@ -93,9 +90,6 @@ TEST_F(ZesFabricPortFixture, GivenPortCountZeroAndValidHandlePtrWhenCallingZesFa
     uint32_t count = 0;
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumFabricPorts(device, &count, NULL));
     if (nullptr != pFabricPortHandleContext->pFabricDevice) {
-        for (FabricPort *pFabricPort : pFabricPortHandleContext->handleList) {
-            delete pFabricPort;
-        }
         pFabricPortHandleContext->handleList.clear();
     }
 

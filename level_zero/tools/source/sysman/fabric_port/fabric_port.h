@@ -11,6 +11,7 @@
 #include "level_zero/api/sysman/zes_handles_struct.h"
 #include <level_zero/zes_api.h>
 
+#include <memory>
 #include <mutex>
 #include <vector>
 
@@ -53,7 +54,7 @@ struct FabricPortHandleContext : NEO::NonCopyableOrMovableClass {
     ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort);
 
     FabricDevice *pFabricDevice = nullptr;
-    std::vector<FabricPort *> handleList = {};
+    std::vector<std::unique_ptr<FabricPort>> handleList = {};
 
   private:
     std::once_flag initFabricPortOnce;

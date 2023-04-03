@@ -66,8 +66,8 @@ OsFabricDevice *OsFabricDevice::create(OsSysman *pOsSysman) {
     return pWddmFabricDeviceImp;
 }
 
-OsFabricPort *OsFabricPort::create(OsFabricDevice *pOsFabricDevice, uint32_t portNum) {
-    WddmFabricPortImp *pWddmFabricPortImp = new WddmFabricPortImp(pOsFabricDevice, portNum);
+std::unique_ptr<OsFabricPort> OsFabricPort::create(OsFabricDevice *pOsFabricDevice, uint32_t portNum) {
+    std::unique_ptr<WddmFabricPortImp> pWddmFabricPortImp = std::make_unique<WddmFabricPortImp>(pOsFabricDevice, portNum);
     return pWddmFabricPortImp;
 }
 

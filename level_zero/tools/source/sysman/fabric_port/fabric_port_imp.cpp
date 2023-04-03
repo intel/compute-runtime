@@ -72,9 +72,6 @@ FabricPortImp::FabricPortImp(FabricDevice *pFabricDevice, uint32_t portNum) {
     init();
 }
 
-FabricPortImp::~FabricPortImp() {
-    delete pOsFabricPort;
-    pOsFabricPort = nullptr;
-}
+FabricPortImp::~FabricPortImp() = default;
 
 } // namespace L0

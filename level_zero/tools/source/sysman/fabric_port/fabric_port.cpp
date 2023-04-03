@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,9 +22,6 @@ FabricPortHandleContext::FabricPortHandleContext(OsSysman *pOsSysman) {
 
 FabricPortHandleContext::~FabricPortHandleContext() {
     UNRECOVERABLE_IF(nullptr == pFabricDevice);
-    for (FabricPort *pFabricPort : handleList) {
-        delete pFabricPort;
-    }
     handleList.clear();
     delete pFabricDevice;
     pFabricDevice = nullptr;
@@ -35,9 +32,9 @@ ze_result_t FabricPortHandleContext::init() {
     uint32_t numPorts = pFabricDevice->getNumPorts();
 
     for (uint32_t portNum = 0; portNum < numPorts; portNum++) {
-        FabricPort *pFabricPort = new FabricPortImp(pFabricDevice, portNum);
+        std::unique_ptr<FabricPort> pFabricPort = std::make_unique<FabricPortImp>(pFabricDevice, portNum);
         UNRECOVERABLE_IF(nullptr == pFabricPort);
-        handleList.push_back(pFabricPort);
+        handleList.push_back(std::move(pFabricPort));
     }
     return ZE_RESULT_SUCCESS;
 }
