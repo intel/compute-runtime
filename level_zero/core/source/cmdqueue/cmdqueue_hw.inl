@@ -28,6 +28,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/memory_manager/residency_container.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/source/unified_memory/unified_memory.h"
 #include "shared/source/utilities/software_tags_manager.h"
@@ -59,6 +60,14 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     bool performMigration) {
 
     auto lockCSR = this->csr->obtainUniqueOwnership();
+
+    if (NEO::DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get()) {
+        auto svmAllocMgr = device->getDriverHandle()->getSvmAllocsManager();
+        for (auto &allocation : svmAllocMgr->getSVMAllocs()->allocations) {
+            NEO::SvmAllocationData allocData = allocation.second;
+            svmAllocMgr->prefetchMemory(*device->getNEODevice(), *csr, allocData);
+        }
+    }
 
     if (this->clientId == CommandQueue::clientNotRegistered) {
         this->clientId = this->csr->registerClient();
