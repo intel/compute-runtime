@@ -2485,8 +2485,8 @@ kernels:
              zebin.data(), zebin.size());
     auto retVal = moduleTu.processUnpackedBinary();
     EXPECT_EQ(retVal, ZE_RESULT_SUCCESS);
-    EXPECT_EQ(AllocationType::BUFFER, moduleTu.globalConstBuffer->getAllocationType());
-    EXPECT_EQ(AllocationType::BUFFER, moduleTu.globalVarBuffer->getAllocationType());
+    EXPECT_EQ(AllocationType::CONSTANT_SURFACE, moduleTu.globalConstBuffer->getAllocationType());
+    EXPECT_EQ(AllocationType::GLOBAL_SURFACE, moduleTu.globalVarBuffer->getAllocationType());
 
     auto svmAllocsManager = device->getDriverHandle()->getSvmAllocsManager();
     auto globalConstBufferAllocType = svmAllocsManager->getSVMAlloc(reinterpret_cast<void *>(moduleTu.globalConstBuffer->getGpuAddress()))->memoryType;

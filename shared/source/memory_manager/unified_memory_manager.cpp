@@ -430,7 +430,6 @@ void SVMAllocsManager::removeSVMAlloc(const SvmAllocationData &svmAllocData) {
 }
 
 bool SVMAllocsManager::freeSVMAlloc(void *ptr, bool blocking) {
-
     if (SVMDeferFreeAllocs.allocations.size() > 0) {
         this->freeSVMAllocDeferImpl();
     }
@@ -516,7 +515,6 @@ void SVMAllocsManager::freeSVMAllocImpl(void *ptr, FreePolicyType policy, SvmAll
 }
 
 void SVMAllocsManager::freeSVMAllocDeferImpl() {
-
     std::vector<void *> freedPtr;
     for (auto iter = SVMDeferFreeAllocs.allocations.begin(); iter != SVMDeferFreeAllocs.allocations.end(); ++iter) {
         void *ptr = reinterpret_cast<void *>(iter->second.gpuAllocations.getDefaultGraphicsAllocation()->getGpuAddress());
@@ -764,7 +762,11 @@ AllocationType SVMAllocsManager::getGraphicsAllocationTypeAndCompressionPreferen
             if (CompressionSelector::allowStatelessCompression()) {
                 compressionEnabled = true;
             }
-            allocationType = AllocationType::BUFFER;
+            if (unifiedMemoryProperties.requestedAllocationType != AllocationType::UNKNOWN) {
+                allocationType = unifiedMemoryProperties.requestedAllocationType;
+            } else {
+                allocationType = AllocationType::BUFFER;
+            }
         }
     }
     return allocationType;

@@ -23,13 +23,13 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
                                            LinkerInput *const linkerInput, const void *initData) {
     bool globalsAreExported = false;
     GraphicsAllocation *gpuAllocation = nullptr;
-    auto rootDeviceIndex = device.getRootDeviceIndex();
-    auto deviceBitfield = device.getDeviceBitfield();
+    const auto rootDeviceIndex = device.getRootDeviceIndex();
+    const auto deviceBitfield = device.getDeviceBitfield();
 
     if (linkerInput != nullptr) {
         globalsAreExported = constant ? linkerInput->getTraits().exportsGlobalConstants : linkerInput->getTraits().exportsGlobalVariables;
     }
-
+    const auto allocationType = constant ? AllocationType::CONSTANT_SURFACE : AllocationType::GLOBAL_SURFACE;
     if (globalsAreExported && (svmAllocManager != nullptr)) {
         RootDeviceIndicesContainer rootDeviceIndices;
         rootDeviceIndices.push_back(rootDeviceIndex);
@@ -37,6 +37,7 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         subDeviceBitfields.insert({rootDeviceIndex, deviceBitfield});
         NEO::SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::DEVICE_UNIFIED_MEMORY, rootDeviceIndices, subDeviceBitfields);
         unifiedMemoryProperties.device = &device;
+        unifiedMemoryProperties.requestedAllocationType = allocationType;
         auto ptr = svmAllocManager->createUnifiedMemoryAllocation(totalSize, unifiedMemoryProperties);
         DEBUG_BREAK_IF(ptr == nullptr);
         if (ptr == nullptr) {
@@ -46,7 +47,6 @@ GraphicsAllocation *allocateGlobalsSurface(NEO::SVMAllocsManager *const svmAlloc
         UNRECOVERABLE_IF(usmAlloc == nullptr);
         gpuAllocation = usmAlloc->gpuAllocations.getGraphicsAllocation(rootDeviceIndex);
     } else {
-        auto allocationType = constant ? AllocationType::CONSTANT_SURFACE : AllocationType::GLOBAL_SURFACE;
         gpuAllocation = device.getMemoryManager()->allocateGraphicsMemoryWithProperties({rootDeviceIndex,
                                                                                          true, // allocateMemory
                                                                                          totalSize, allocationType,

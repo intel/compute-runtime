@@ -123,6 +123,7 @@ class SVMAllocsManager {
         Device *device = nullptr;
         const RootDeviceIndicesContainer &rootDeviceIndices;
         const std::map<uint32_t, DeviceBitfield> &subdeviceBitfields;
+        AllocationType requestedAllocationType = AllocationType::UNKNOWN;
     };
 
     struct SvmCacheAllocationInfo {
