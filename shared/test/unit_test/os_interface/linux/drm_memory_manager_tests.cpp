@@ -4548,14 +4548,20 @@ TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithMultipleBOsWhen
     EXPECT_TRUE(drmAllocation.bindBOsCalled);
     EXPECT_TRUE(drmAllocation.prefetchBOCalled);
 
-    ASSERT_EQ(2u, drmAllocation.vmHandleIdsReceived.size());
-    ASSERT_EQ(2u, drmAllocation.subDeviceIdsReceived.size());
+    ASSERT_EQ(4u, drmAllocation.vmHandleIdsReceived.size());
+    ASSERT_EQ(4u, drmAllocation.subDeviceIdsReceived.size());
 
     EXPECT_EQ(0u, drmAllocation.vmHandleIdsReceived[0]);
     EXPECT_EQ(0u, drmAllocation.subDeviceIdsReceived[0]);
 
     EXPECT_EQ(1u, drmAllocation.vmHandleIdsReceived[1]);
-    EXPECT_EQ(1u, drmAllocation.subDeviceIdsReceived[1]);
+    EXPECT_EQ(0u, drmAllocation.subDeviceIdsReceived[1]);
+
+    EXPECT_EQ(0u, drmAllocation.vmHandleIdsReceived[2]);
+    EXPECT_EQ(1u, drmAllocation.subDeviceIdsReceived[2]);
+
+    EXPECT_EQ(1u, drmAllocation.vmHandleIdsReceived[3]);
+    EXPECT_EQ(1u, drmAllocation.subDeviceIdsReceived[3]);
 }
 
 TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithMultipleBOsWhenSetMemPrefetchIsCalledWithASubDeviceThenPrefetchBOsToTheSubDevices) {
@@ -4644,14 +4650,20 @@ TEST_F(DrmMemoryManagerTest, givenContextWithAccessCountersAndKmdMigratedSharedA
     EXPECT_TRUE(drmAllocation.bindBOsCalled);
     EXPECT_TRUE(drmAllocation.prefetchBOCalled);
 
-    ASSERT_EQ(2u, drmAllocation.vmHandleIdsReceived.size());
-    ASSERT_EQ(2u, drmAllocation.subDeviceIdsReceived.size());
+    ASSERT_EQ(4u, drmAllocation.vmHandleIdsReceived.size());
+    ASSERT_EQ(4u, drmAllocation.subDeviceIdsReceived.size());
 
     EXPECT_EQ(0u, drmAllocation.vmHandleIdsReceived[0]);
     EXPECT_EQ(0u, drmAllocation.subDeviceIdsReceived[0]);
 
     EXPECT_EQ(1u, drmAllocation.vmHandleIdsReceived[1]);
-    EXPECT_EQ(1u, drmAllocation.subDeviceIdsReceived[1]);
+    EXPECT_EQ(0u, drmAllocation.subDeviceIdsReceived[1]);
+
+    EXPECT_EQ(0u, drmAllocation.vmHandleIdsReceived[2]);
+    EXPECT_EQ(1u, drmAllocation.subDeviceIdsReceived[2]);
+
+    EXPECT_EQ(1u, drmAllocation.vmHandleIdsReceived[3]);
+    EXPECT_EQ(1u, drmAllocation.subDeviceIdsReceived[3]);
 }
 
 TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithSingleBOWhenSetMemPrefetchIsCalledWithASubDeviceThenPrefetchBOToThisSubdevice) {
