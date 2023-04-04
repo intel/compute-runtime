@@ -44,7 +44,7 @@ class FabricPortImp : public FabricPort, NEO::NonCopyableOrMovableClass {
 
   protected:
     void init();
-    OsFabricPort *pOsFabricPort = nullptr;
+    std::unique_ptr<OsFabricPort> pOsFabricPort;
 };
 
 } // namespace Sysman

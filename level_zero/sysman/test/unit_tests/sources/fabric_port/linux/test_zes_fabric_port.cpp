@@ -24,9 +24,6 @@ class ZesFabricPortFixture : public SysmanDeviceFixture {
         device = pSysmanDevice;
         L0::Sysman::FabricPortHandleContext *pFabricPortHandleContext = pSysmanDeviceImp->pFabricPortHandleContext;
         if (nullptr != pFabricPortHandleContext->pFabricDevice) {
-            for (L0::Sysman::FabricPort *pFabricPort : pFabricPortHandleContext->handleList) {
-                delete pFabricPort;
-            }
             pFabricPortHandleContext->handleList.clear();
             delete pFabricPortHandleContext->pFabricDevice;
             pFabricPortHandleContext->pFabricDevice = nullptr;

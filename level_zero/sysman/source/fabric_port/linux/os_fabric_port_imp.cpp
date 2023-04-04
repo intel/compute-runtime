@@ -84,8 +84,8 @@ OsFabricDevice *OsFabricDevice::create(OsSysman *pOsSysman) {
     return pLinuxFabricDeviceImp;
 }
 
-OsFabricPort *OsFabricPort::create(OsFabricDevice *pOsFabricDevice, uint32_t portNum) {
-    LinuxFabricPortImp *pLinuxFabricPortImp = new LinuxFabricPortImp(pOsFabricDevice, portNum);
+std::unique_ptr<OsFabricPort> OsFabricPort::create(OsFabricDevice *pOsFabricDevice, uint32_t portNum) {
+    std::unique_ptr<LinuxFabricPortImp> pLinuxFabricPortImp = std::make_unique<LinuxFabricPortImp>(pOsFabricDevice, portNum);
     return pLinuxFabricPortImp;
 }
 
