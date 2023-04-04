@@ -26,6 +26,7 @@
 #include "shared/source/helpers/api_specific_config.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/kernel_helpers.h"
@@ -46,10 +47,10 @@
 
 #include "program_debug_data.h"
 
+#include <fstream>
 #include <list>
 #include <memory>
 #include <unordered_map>
-
 namespace L0 {
 
 namespace BuildOptions {
@@ -1314,6 +1315,19 @@ void ModuleImp::registerElfInDebuggerL0() {
         debugData.vIsa = reinterpret_cast<const char *>(translationUnit->debugData.get());
         debugData.vIsaSize = static_cast<uint32_t>(translationUnit->debugDataSize);
         this->debugElfHandle = debuggerL0->registerElf(&debugData);
+
+        if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_ELF) {
+            std::ofstream elfFile;
+            std::string name = "dumped_module";
+            std::string fileName = name + ".elf";
+
+            int suffix = 0;
+            while (fileExists(fileName)) {
+                fileName = name + "_" + std::to_string(suffix) + ".elf";
+                suffix++;
+            }
+            writeDataToFile(fileName.c_str(), debugData.vIsa, debugData.vIsaSize);
+        }
 
         StackVec<NEO::GraphicsAllocation *, 32> segmentAllocs;
         for (auto &kernImmData : kernelImmDatas) {
