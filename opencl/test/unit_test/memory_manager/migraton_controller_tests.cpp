@@ -148,7 +148,7 @@ HWTEST2_F(MigrationControllerTests, givenLockableBufferAllocationWithDefinedLoca
     EXPECT_EQ(0u, pCsr0->peekLatestFlushedTaskCount());
 }
 
-HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenHandlingMigrationToOtherCsrOnTheSameRootDeviceThenWaitOnCpuForTheFirstCsrCompletion, IsAtLeastGen12lp) {
+HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenHandlingMigrationToOtherCsrOnTheSameRootDeviceThenDontWaitOnCpuForTheFirstCsrCompletion, IsAtLeastGen12lp) {
     VariableBackup<decltype(MultiGraphicsAllocation::createMigrationSyncDataFunc)> createFuncBackup{&MultiGraphicsAllocation::createMigrationSyncDataFunc};
     MultiGraphicsAllocation::createMigrationSyncDataFunc = [](size_t size) -> MigrationSyncData * {
         return new MockMigrationSyncData(size);
@@ -169,6 +169,32 @@ HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhen
 
     EXPECT_EQ(0u, memoryManager->lockResourceCalled);
     EXPECT_EQ(0u, memoryManager->unlockResourceCalled);
+    EXPECT_EQ(0u, pCsr1->peekLatestFlushedTaskCount());
+    EXPECT_EQ(0u, pCsr0->peekLatestFlushedTaskCount());
+    EXPECT_EQ(0u, migrationSyncData->waitOnCpuCalled);
+}
+
+HWTEST2_F(MigrationControllerTests, givenMultiGraphicsAllocationUsedInOneCsrWhenHandlingMigrationToOtherCsrOnTheDifferentRootDevicesThenWaitOnCpuForTheFirstCsrCompletion, IsAtLeastGen12lp) {
+    VariableBackup<decltype(MultiGraphicsAllocation::createMigrationSyncDataFunc)> createFuncBackup{&MultiGraphicsAllocation::createMigrationSyncDataFunc};
+    MultiGraphicsAllocation::createMigrationSyncDataFunc = [](size_t size) -> MigrationSyncData * {
+        return new MockMigrationSyncData(size);
+    };
+
+    std::unique_ptr<Image> pImage(Image1dHelper<>::create(&context));
+
+    ASSERT_TRUE(pImage->getMultiGraphicsAllocation().requiresMigrations());
+
+    auto migrationSyncData = static_cast<MockMigrationSyncData *>(pImage->getMultiGraphicsAllocation().getMigrationSyncData());
+
+    EXPECT_EQ(0u, migrationSyncData->waitOnCpuCalled);
+
+    migrationSyncData->setCurrentLocation(1);
+    EXPECT_EQ(1u, migrationSyncData->getCurrentLocation());
+    MigrationController::handleMigration(context, *pCsr0, pImage.get());
+    EXPECT_EQ(0u, migrationSyncData->getCurrentLocation());
+
+    EXPECT_EQ(2u, memoryManager->lockResourceCalled);
+    EXPECT_EQ(2u, memoryManager->unlockResourceCalled);
     EXPECT_EQ(0u, pCsr1->peekLatestFlushedTaskCount());
     EXPECT_EQ(0u, pCsr0->peekLatestFlushedTaskCount());
     EXPECT_EQ(1u, migrationSyncData->waitOnCpuCalled);

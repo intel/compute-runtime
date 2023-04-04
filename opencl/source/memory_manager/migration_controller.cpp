@@ -22,10 +22,10 @@ void MigrationController::handleMigration(Context &context, CommandStreamReceive
     auto memoryManager = targetCsr.getMemoryManager();
     auto targetRootDeviceIndex = targetCsr.getRootDeviceIndex();
     auto migrationSyncData = memObj->getMultiGraphicsAllocation().getMigrationSyncData();
-    if (!migrationSyncData->isUsedByTheSameContext(targetCsr.getTagAddress())) {
-        migrationSyncData->waitOnCpu();
-    }
     if (migrationSyncData->getCurrentLocation() != targetRootDeviceIndex) {
+        if (!migrationSyncData->isUsedByTheSameContext(targetCsr.getTagAddress())) {
+            migrationSyncData->waitOnCpu();
+        }
         migrateMemory(context, *memoryManager, memObj, targetRootDeviceIndex);
     }
     migrationSyncData->signalUsage(targetCsr.getTagAddress(), targetCsr.peekTaskCount() + 1);
