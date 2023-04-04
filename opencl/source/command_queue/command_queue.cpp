@@ -1350,16 +1350,19 @@ void CommandQueue::clearLastBcsPackets() {
     }
 }
 
-void CommandQueue::migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpParams &operationParams, CommandStreamReceiver &csr) {
+bool CommandQueue::migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpParams &operationParams, CommandStreamReceiver &csr) {
+    bool migrationHandled = false;
     for (auto argMemObj : {operationParams.srcMemObj, operationParams.dstMemObj}) {
         if (argMemObj) {
             auto memObj = argMemObj->getHighestRootMemObj();
             auto migrateRequiredForArg = memObj->getMultiGraphicsAllocation().requiresMigrations();
             if (migrateRequiredForArg) {
                 MigrationController::handleMigration(*this->context, csr, memObj);
+                migrationHandled = true;
             }
         }
     }
+    return migrationHandled;
 }
 
 } // namespace NEO

@@ -1336,6 +1336,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     }
 
     auto blockQueue = false;
+    bool migratedMemory = false;
     TaskCountType taskLevel = 0u;
     obtainTaskLevelAndBlockedStatus(taskLevel, eventsRequest.numEventsInWaitList, eventsRequest.eventWaitList, blockQueue, cmdType);
     auto clearAllDependencies = queueDependenciesClearRequired();
@@ -1368,7 +1369,7 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
     processBarrierTimestampForBcsEngine(bcsCsr.getOsContext().getEngineType(), timestampPacketDependencies);
 
     if (!blockQueue && this->getContext().getRootDeviceIndices().size() > 1) {
-        migrateMultiGraphicsAllocationsIfRequired(multiDispatchInfo.peekBuiltinOpParams(), bcsCsr);
+        migratedMemory = migrateMultiGraphicsAllocationsIfRequired(multiDispatchInfo.peekBuiltinOpParams(), bcsCsr);
     }
 
     auto gpgpuSubmission = isGpgpuSubmissionForBcsRequired(blockQueue, timestampPacketDependencies);
@@ -1449,8 +1450,13 @@ cl_int CommandQueueHw<GfxFamily>::enqueueBlit(const MultiDispatchInfo &multiDisp
         commandStreamReceiverOwnership.unlock();
     }
     queueOwnership.unlock();
-    bcsCommandStreamReceiverOwnership.unlock();
 
+    if (migratedMemory) {
+        bcsCsr.flushBatchedSubmissions();
+        bcsCsr.flushTagUpdate();
+    }
+
+    bcsCommandStreamReceiverOwnership.unlock();
     if (blocking) {
         const auto waitStatus = waitForAllEngines(blockQueue, nullptr);
         if (waitStatus == WaitStatus::GpuHang) {

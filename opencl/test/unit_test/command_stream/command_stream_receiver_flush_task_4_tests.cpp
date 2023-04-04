@@ -915,11 +915,11 @@ struct BcsCrossDeviceMigrationTests : public ::testing::Test {
       public:
         MockCmdQToTestMigration(Context *context, ClDevice *device) : CommandQueueHw<FamilyType>(context, device, nullptr, false) {}
 
-        void migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpParams &operationParams, CommandStreamReceiver &csr) override {
+        bool migrateMultiGraphicsAllocationsIfRequired(const BuiltinOpParams &operationParams, CommandStreamReceiver &csr) override {
             migrateMultiGraphicsAllocationsIfRequiredCalled = true;
             migrateMultiGraphicsAllocationsReceivedOperationParams = operationParams;
             migrateMultiGraphicsAllocationsReceivedCsr = &csr;
-            CommandQueueHw<FamilyType>::migrateMultiGraphicsAllocationsIfRequired(operationParams, csr);
+            return CommandQueueHw<FamilyType>::migrateMultiGraphicsAllocationsIfRequired(operationParams, csr);
         }
 
         bool migrateMultiGraphicsAllocationsIfRequiredCalled = false;
@@ -979,6 +979,8 @@ HWTEST_F(BcsCrossDeviceMigrationTests, givenBufferWithMultiStorageWhenEnqueueRea
 
     char hostPtr[size]{};
 
+    auto bcsCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(cmdQueue->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS));
+    bcsCsr->flushTagUpdateCalled = false;
     retVal = cmdQueue->enqueueReadBuffer(buffer.get(), CL_FALSE, 0, size, hostPtr, nullptr, 0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -986,9 +988,9 @@ HWTEST_F(BcsCrossDeviceMigrationTests, givenBufferWithMultiStorageWhenEnqueueRea
 
     EXPECT_TRUE(cmdQueue->migrateMultiGraphicsAllocationsIfRequiredCalled);
 
-    auto bcsCsr = cmdQueue->getBcsCommandStreamReceiver(aub_stream::EngineType::ENGINE_BCS);
     EXPECT_EQ(bcsCsr, cmdQueue->migrateMultiGraphicsAllocationsReceivedCsr);
     EXPECT_EQ(targetRootDeviceIndex, bcsCsr->getRootDeviceIndex());
+    EXPECT_TRUE(bcsCsr->flushTagUpdateCalled);
 
     EXPECT_EQ(buffer.get(), cmdQueue->migrateMultiGraphicsAllocationsReceivedOperationParams.srcMemObj);
 }
