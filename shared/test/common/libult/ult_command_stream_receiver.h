@@ -382,6 +382,13 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
         pollForCompletionCalled++;
     }
 
+    SubmissionStatus sendRenderStateCacheFlush() override {
+        if (callBaseSendRenderStateCacheFlush) {
+            return BaseClass::sendRenderStateCacheFlush();
+        }
+        return *flushReturnValue;
+    }
+
     std::vector<std::string> aubCommentMessages;
 
     BatchBuffer latestFlushedBatchBuffer = {};
@@ -430,6 +437,7 @@ class UltCommandStreamReceiver : public CommandStreamReceiverHw<GfxFamily>, publ
     bool shouldFlushBatchedSubmissionsReturnSuccess = false;
     bool callBaseFillReusableAllocationsList = false;
     bool callBaseFlushBcsTask{true};
+    bool callBaseSendRenderStateCacheFlush = true;
 };
 
 } // namespace NEO

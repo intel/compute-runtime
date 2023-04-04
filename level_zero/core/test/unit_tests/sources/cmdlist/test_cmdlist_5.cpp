@@ -12,6 +12,7 @@
 #include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
+#include "shared/test/common/mocks/mock_os_context.h"
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/kernel/kernel_imp.h"
@@ -2582,6 +2583,81 @@ HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
     EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
 
     EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::findStateCacheFlushPipeControl(csrStream));
+}
+
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
+          givenCommandListUsingPrivateSurfaceHeapWhenOsContextNotInitializedAndCommandListDestroyedThenCsrDoNotDispatchesStateCacheFlush,
+          IsAtLeastSkl) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    EngineControl &engine = neoDevice->getDefaultEngine();
+    static_cast<NEO::MockOsContext *>(engine.osContext)->contextInitialized = false;
+    auto &csrStream = csr.commandStream;
+
+    ze_result_t returnValue;
+    L0::ult::CommandList *cmdListObject = whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue));
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    cmdListObject->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    returnValue = cmdListObject->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    returnValue = cmdListObject->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_EQ(0u, csrStream.getUsed());
+}
+
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
+          givenCommandListUsingPrivateSurfaceHeapWhenTaskCountZeroAndCommandListDestroyedThenCsrDoNotDispatchesStateCacheFlush,
+          IsAtLeastSkl) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = csr.commandStream;
+
+    ze_result_t returnValue;
+    L0::ult::CommandList *cmdListObject = whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue));
+
+    returnValue = cmdListObject->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    cmdListObject = whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue));
+
+    returnValue = cmdListObject->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_EQ(0u, csrStream.getUsed());
+}
+
+HWTEST2_F(CommandListStateBaseAddressPrivateHeapTest,
+          givenCommandListUsingPrivateSurfaceHeapWhenCommandListDestroyedAndCsrStateCacheFlushDispatchFailsThenWaitNotCalled,
+          IsAtLeastSkl) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+
+    ze_result_t returnValue;
+    L0::ult::CommandList *cmdListObject = whiteboxCast(CommandList::create(productFamily, device, engineGroupType, 0u, returnValue));
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    cmdListObject->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    returnValue = cmdListObject->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto cmdListHandle = cmdListObject->toHandle();
+    returnValue = commandQueue->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    csr.callBaseSendRenderStateCacheFlush = false;
+    csr.flushReturnValue = SubmissionStatus::DEVICE_UNINITIALIZED;
+    csr.waitForCompletionWithTimeoutTaskCountCalled = 0;
+
+    returnValue = cmdListObject->destroy();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_EQ(0u, csr.waitForCompletionWithTimeoutTaskCountCalled);
+
+    csr.callBaseSendRenderStateCacheFlush = true;
 }
 
 } // namespace ult

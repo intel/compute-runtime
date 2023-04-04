@@ -38,8 +38,11 @@ struct MemoryManagerCommandListCreateNegativeTest : public NEO::MockMemoryManage
     bool forceFailureInPrimaryAllocation = false;
 };
 
-struct CommandListCreateNegativeTest : public ::testing::Test {
-    void SetUp() override {
+template <int32_t stateBaseAddressTracking>
+struct CommandListCreateNegativeFixture {
+    void setUp() {
+        DebugManager.flags.EnableStateBaseAddressTracking.set(stateBaseAddressTracking);
+
         executionEnvironment = new NEO::ExecutionEnvironment();
         executionEnvironment->prepareRootDeviceEnvironments(numRootDevices);
         for (uint32_t i = 0; i < numRootDevices; i++) {
@@ -61,8 +64,10 @@ struct CommandListCreateNegativeTest : public ::testing::Test {
 
         device = driverHandle->devices[0];
     }
-    void TearDown() override {
+    void tearDown() {
     }
+
+    DebugManagerStateRestore restorer;
 
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     std::unique_ptr<Mock<L0::DriverHandleImp>> driverHandle;
@@ -72,12 +77,31 @@ struct CommandListCreateNegativeTest : public ::testing::Test {
     const uint32_t numRootDevices = 1u;
 };
 
+using CommandListCreateNegativeTest = Test<CommandListCreateNegativeFixture<0>>;
+
 TEST_F(CommandListCreateNegativeTest, whenDeviceAllocationFailsDuringCommandListCreateThenAppropriateValueIsReturned) {
     ze_result_t returnValue;
     memoryManager->forceFailureInPrimaryAllocation = true;
     std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
     EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
     ASSERT_EQ(nullptr, commandList);
+}
+
+using CommandListCreateNegativeStateBaseAddressTest = Test<CommandListCreateNegativeFixture<1>>;
+
+HWTEST2_F(CommandListCreateNegativeStateBaseAddressTest,
+          GivenStateBaseAddressTrackingWhenDeviceAllocationFailsDuringCommandListCreateThenCacheIsNotInvalidatedAndAppropriateValueIsReturned,
+          IsAtLeastSkl) {
+    auto &csr = neoDevice->getUltCommandStreamReceiver<FamilyType>();
+    auto &csrStream = csr.commandStream;
+
+    ze_result_t returnValue;
+    memoryManager->forceFailureInPrimaryAllocation = true;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::RenderCompute, 0u, returnValue));
+    EXPECT_EQ(ZE_RESULT_ERROR_OUT_OF_DEVICE_MEMORY, returnValue);
+    ASSERT_EQ(nullptr, commandList);
+
+    EXPECT_EQ(0u, csrStream.getUsed());
 }
 
 TEST_F(CommandListCreateNegativeTest, whenDeviceAllocationFailsDuringCommandListImmediateCreateThenAppropriateValueIsReturned) {

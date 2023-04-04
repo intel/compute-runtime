@@ -53,16 +53,21 @@ ze_result_t CommandListImp::destroy() {
         this->stateBaseAddressTracking &&
         this->cmdListHeapAddressModel == NEO::HeapAddressModel::PrivateHeaps) {
 
-        auto memoryManager = device->getNEODevice()->getMemoryManager();
+        auto surfaceStateHeap = this->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE);
+        if (surfaceStateHeap) {
+            auto heapAllocation = surfaceStateHeap->getGraphicsAllocation();
+            NEO::WaitParams defaultWaitParams{false, false, NEO::TimeoutControls::maxTimeout};
 
-        auto heapAllocation = this->commandContainer.getIndirectHeap(NEO::HeapType::SURFACE_STATE)->getGraphicsAllocation();
-        for (auto &engine : memoryManager->getRegisteredEngines()) {
-            if (NEO::EngineHelpers::isComputeEngine(engine.getEngineType())) {
-                auto contextId = engine.osContext->getContextId();
-
-                if (heapAllocation->isUsedByOsContext(contextId)) {
-                    engine.commandStreamReceiver->sendRenderStateCacheFlush();
-                    engine.commandStreamReceiver->waitForCompletionWithTimeout(NEO::WaitParams{false, false, NEO::TimeoutControls::maxTimeout}, engine.commandStreamReceiver->peekTaskCount());
+            auto &deviceEngines = device->getNEODevice()->getMemoryManager()->getRegisteredEngines();
+            for (auto &engine : deviceEngines) {
+                if (NEO::EngineHelpers::isComputeEngine(engine.getEngineType())) {
+                    auto contextId = engine.osContext->getContextId();
+                    if (heapAllocation->isUsedByOsContext(contextId) && engine.osContext->isInitialized() && heapAllocation->getTaskCount(contextId) > 0) {
+                        auto submissionStatus = engine.commandStreamReceiver->sendRenderStateCacheFlush();
+                        if (submissionStatus == NEO::SubmissionStatus::SUCCESS) {
+                            engine.commandStreamReceiver->waitForCompletionWithTimeout(defaultWaitParams, engine.commandStreamReceiver->peekTaskCount());
+                        }
+                    }
                 }
             }
         }
