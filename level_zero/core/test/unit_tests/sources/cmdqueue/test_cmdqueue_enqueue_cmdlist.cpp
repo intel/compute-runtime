@@ -44,9 +44,6 @@ struct CommandQueueExecuteCommandLists : public Test<DeviceFixture> {
     }
 
     void TearDown() override {
-        auto tagAddress = device->getNEODevice()->getDefaultEngine().commandStreamReceiver->getTagAddress();
-        *tagAddress = std::numeric_limits<TagAddressType>::max();
-
         for (auto i = 0u; i < numCommandLists; i++) {
             auto commandList = CommandList::fromHandle(commandLists[i]);
             commandList->destroy();
