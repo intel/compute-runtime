@@ -56,6 +56,8 @@
 #include "level_zero/tools/source/metrics/metric.h"
 #include "level_zero/tools/source/sysman/sysman.h"
 
+#include <algorithm>
+
 namespace NEO {
 bool releaseFP64Override();
 } // namespace NEO
@@ -921,7 +923,7 @@ ze_result_t DeviceImp::getCacheProperties(uint32_t *pCount, ze_device_cache_prop
     }
 
     const auto &hardwareInfo = this->getHwInfo();
-    uint32_t subDeviceCount = NEO::GfxCoreHelper::getSubDevicesCount(&hardwareInfo);
+    uint32_t subDeviceCount = std::max(this->numSubDevices, 1u);
     pCacheProperties[0].cacheSize = hardwareInfo.gtSystemInfo.L3CacheSizeInKb * subDeviceCount * KB;
     pCacheProperties[0].flags = 0;
 

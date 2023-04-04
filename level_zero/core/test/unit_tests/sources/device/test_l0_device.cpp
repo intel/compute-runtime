@@ -1056,27 +1056,36 @@ TEST_F(DeviceTest, givenDeviceCachePropertiesThenAllPropertiesAreAssigned) {
     EXPECT_NE(deviceCacheProperties.cacheSize, deviceCachePropertiesBefore.cacheSize);
 }
 
-TEST_F(DeviceTest, givenDeviceWithSubDevicesWhenQueriedForCacheSizeThenValueIsMultiplied) {
+using MultiSubDeviceCachePropertiesTest = Test<SingleRootMultiSubDeviceFixture>;
+TEST_F(MultiSubDeviceCachePropertiesTest, givenDeviceWithSubDevicesWhenQueriedForCacheSizeThenValueIsMultiplied) {
     ze_device_cache_properties_t deviceCacheProperties = {};
 
     auto rootDeviceIndex = device->getNEODevice()->getRootDeviceIndex();
     auto &hwInfo = *device->getNEODevice()->getExecutionEnvironment()->rootDeviceEnvironments[rootDeviceIndex]->getMutableHardwareInfo();
     auto singleRootDeviceCacheSize = hwInfo.gtSystemInfo.L3CacheSizeInKb * KB;
 
-    hwInfo.gtSystemInfo.L3BankCount = 0u;
-    hwInfo.gtSystemInfo.MultiTileArchInfo.IsValid = true;
-
     uint32_t count = 0;
     ze_result_t res = device->getCacheProperties(&count, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, res);
     EXPECT_EQ(count, 1u);
+    res = device->getCacheProperties(&count, &deviceCacheProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(deviceCacheProperties.cacheSize, singleRootDeviceCacheSize * numSubDevices);
 
-    for (uint32_t subDevicesCount : {1, 2, 3}) {
-        hwInfo.gtSystemInfo.MultiTileArchInfo.TileCount = subDevicesCount;
-        res = device->getCacheProperties(&count, &deviceCacheProperties);
-        EXPECT_EQ(ZE_RESULT_SUCCESS, res);
-        EXPECT_EQ(deviceCacheProperties.cacheSize, singleRootDeviceCacheSize * subDevicesCount);
-    }
+    uint32_t subDeviceCount = numSubDevices;
+    std::vector<ze_device_handle_t> subDevices0(subDeviceCount);
+    res = device->getSubDevices(&subDeviceCount, subDevices0.data());
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+
+    L0::Device *subDevice = Device::fromHandle(subDevices0[0]);
+    count = 0;
+    res = subDevice->getCacheProperties(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(count, 1u);
+    res = subDevice->getCacheProperties(&count, &deviceCacheProperties);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, res);
+    EXPECT_EQ(deviceCacheProperties.cacheSize, singleRootDeviceCacheSize);
 }
 
 TEST_F(DeviceTest, givenDevicePropertiesStructureWhenDevicePropertiesCalledThenAllPropertiesAreAssigned) {
