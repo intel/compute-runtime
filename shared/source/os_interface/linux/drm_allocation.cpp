@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -346,9 +346,13 @@ bool DrmAllocation::setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds) {
         for (uint8_t handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
             if (storageInfo.memoryBanks.test(handleId)) {
                 auto bo = this->getBOs()[handleId];
-                auto vmHandleId = subDeviceIds[handleId % subDeviceIds.size()];
-                auto subDeviceId = DebugManager.flags.CreateContextWithAccessCounters.get() > 0 ? vmHandleId : handleId;
-                success &= prefetchBO(bo, vmHandleId, subDeviceId);
+                auto subDeviceId = handleId;
+                if (DebugManager.flags.CreateContextWithAccessCounters.get() > 0) {
+                    subDeviceId = subDeviceIds[handleId % subDeviceIds.size()];
+                }
+                for (auto vmHandleId : subDeviceIds) {
+                    success &= prefetchBO(bo, vmHandleId, subDeviceId);
+                }
             }
         }
     } else {
