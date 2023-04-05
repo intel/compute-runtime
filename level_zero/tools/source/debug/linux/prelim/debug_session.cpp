@@ -1431,7 +1431,6 @@ int DebugSessionLinux::threadControl(const std::vector<EuThread::ThreadId> &thre
     auto euControlRetVal = ioctl(PRELIM_I915_DEBUG_IOCTL_EU_CONTROL, &euControl);
     if (euControlRetVal != 0) {
         PRINT_DEBUGGER_ERROR_LOG("PRELIM_I915_DEBUG_IOCTL_EU_CONTROL failed: retCode: %d errno = %d command = %d\n", euControlRetVal, errno, command);
-        DEBUG_BREAK_IF(true);
     } else {
         PRINT_DEBUGGER_INFO_LOG("PRELIM_I915_DEBUG_IOCTL_EU_CONTROL: seqno = %llu command = %u\n", (uint64_t)euControl.seqno, command);
     }
