@@ -933,7 +933,7 @@ void EncodeBatchBufferStartOrEnd<Family>::programConditionalBatchBufferStartBase
 }
 
 template <typename Family>
-void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(LinearStream *commandStream, uint64_t address, bool secondLevel, bool indirect, bool predicate) {
+void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(MI_BATCH_BUFFER_START *cmdBuffer, uint64_t address, bool secondLevel, bool indirect, bool predicate) {
     MI_BATCH_BUFFER_START cmd = Family::cmdInitBatchBufferStart;
     if (secondLevel) {
         cmd.setSecondLevelBatchBuffer(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER_SECOND_LEVEL_BATCH);
@@ -943,8 +943,12 @@ void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(LinearStream *
 
     appendBatchBufferStart(cmd, indirect, predicate);
 
-    auto buffer = commandStream->getSpaceForCmd<MI_BATCH_BUFFER_START>();
-    *buffer = cmd;
+    *cmdBuffer = cmd;
+}
+
+template <typename Family>
+void EncodeBatchBufferStartOrEnd<Family>::programBatchBufferStart(LinearStream *commandStream, uint64_t address, bool secondLevel, bool indirect, bool predicate) {
+    programBatchBufferStart(commandStream->getSpaceForCmd<MI_BATCH_BUFFER_START>(), address, secondLevel, indirect, predicate);
 }
 
 template <typename Family>

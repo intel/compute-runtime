@@ -432,6 +432,7 @@ struct EncodeBatchBufferStartOrEnd {
         return sizeof(MI_BATCH_BUFFER_END);
     }
 
+    static void programBatchBufferStart(MI_BATCH_BUFFER_START *cmdBuffer, uint64_t address, bool secondLevel, bool indirect, bool predicate);
     static void programBatchBufferStart(LinearStream *commandStream, uint64_t address, bool secondLevel, bool indirect, bool predicate);
     static void programBatchBufferEnd(CommandContainer &container);
     static void programBatchBufferEnd(LinearStream &commandStream);

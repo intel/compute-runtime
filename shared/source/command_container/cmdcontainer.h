@@ -72,6 +72,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     static constexpr size_t startingResidencyContainerSize = 128;
     static constexpr size_t defaultCmdBufferAllocationAlignment = MemoryConstants::pageSize64k;
     static constexpr size_t defaultHeapAllocationAlignment = MemoryConstants::pageSize64k;
+    static constexpr size_t minCmdBufferPtrAlign = 8;
 
     CommandContainer();
 
@@ -188,6 +189,20 @@ class CommandContainer : public NonCopyableOrMovableClass {
     HeapContainer &getSshAllocations() { return sshAllocations; }
     uint64_t &currentLinearStreamStartOffsetRef() { return currentLinearStreamStartOffset; }
 
+    void setUsingPrimaryBuffer(bool value) {
+        usingPrimaryBuffer = value;
+    }
+    bool isUsingPrimaryBuffer() const {
+        return usingPrimaryBuffer;
+    }
+    void *getEndCmdPtr() const {
+        return endCmdPtr;
+    }
+    size_t getEndAlignedSize() const {
+        return this->alignedPrimarySize;
+    }
+    void endAlignedPrimaryBuffer();
+
   protected:
     size_t getAlignedCmdBufferSize() const;
     size_t getMaxUsableSpace() const {
@@ -198,9 +213,9 @@ class CommandContainer : public NonCopyableOrMovableClass {
     IndirectHeap *initIndirectHeapReservation(ReservedIndirectHeap *indirectHeapReservation, size_t size, size_t alignment, HeapType heapType);
     inline bool skipHeapAllocationCreation(HeapType heapType);
     size_t getHeapSize(HeapType heapType);
+    void alignPrimaryEnding(void *endPtr, size_t exactUsedSize);
 
     GraphicsAllocation *allocationIndirectHeaps[HeapType::NUM_TYPES] = {};
-    std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];
 
     CmdBufferContainer cmdBufferAllocations;
     ResidencyContainer residencyContainer;
@@ -210,6 +225,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     HeapReserveData dynamicStateHeapReserveData;
     HeapReserveData surfaceStateHeapReserveData;
 
+    std::unique_ptr<IndirectHeap> indirectHeaps[HeapType::NUM_TYPES];
     std::unique_ptr<HeapHelper> heapHelper;
     std::unique_ptr<LinearStream> commandStream;
     std::unique_ptr<LinearStream> secondaryCommandStreamForImmediateCmdList;
@@ -228,6 +244,10 @@ class CommandContainer : public NonCopyableOrMovableClass {
     IndirectHeap *sharedDshCsrHeap = nullptr;
     size_t defaultSshSize = 0;
     L1CachePolicy *l1CachePolicyData = nullptr;
+    size_t selectedBbCmdSize = 0;
+    const void *bbEndReference = nullptr;
+    void *endCmdPtr = nullptr;
+    size_t alignedPrimarySize = 0;
 
     uint32_t dirtyHeaps = std::numeric_limits<uint32_t>::max();
     uint32_t numIddsPerBlock = 64;
@@ -245,6 +265,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     bool lastSentUseGlobalAtomics = false;
     bool systolicModeSupport = false;
     bool doubleSbaWa = false;
+    bool usingPrimaryBuffer = false;
 };
 
 } // namespace NEO

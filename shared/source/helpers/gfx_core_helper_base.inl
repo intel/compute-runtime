@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/aub_mem_dump/aub_mem_dump.h"
+#include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_container/encode_surface_state.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gmm_helper/gmm.h"
@@ -627,12 +628,26 @@ bool GfxCoreHelperHw<GfxFamily>::forceNonGpuCoherencyWA(bool requiresCoherency) 
 }
 template <typename GfxFamily>
 size_t GfxCoreHelperHw<GfxFamily>::getBatchBufferEndSize() const {
-    return sizeof(typename GfxFamily::MI_BATCH_BUFFER_END);
+    return EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferEndSize();
 }
 template <typename GfxFamily>
 const void *GfxCoreHelperHw<GfxFamily>::getBatchBufferEndReference() const {
     return reinterpret_cast<const void *>(&GfxFamily::cmdInitBatchBufferEnd);
 }
+
+template <typename GfxFamily>
+size_t GfxCoreHelperHw<GfxFamily>::getBatchBufferStartSize() const {
+    return EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize();
+}
+
+template <typename GfxFamily>
+void GfxCoreHelperHw<GfxFamily>::encodeBatchBufferStart(void *cmdBuffer, uint64_t address, bool secondLevel, bool indirect, bool predicate) const {
+    using MI_BATCH_BUFFER_START = typename GfxFamily::MI_BATCH_BUFFER_START;
+
+    MI_BATCH_BUFFER_START *bbBuffer = reinterpret_cast<MI_BATCH_BUFFER_START *>(cmdBuffer);
+    EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferStart(bbBuffer, address, secondLevel, indirect, predicate);
+}
+
 template <typename GfxFamily>
 bool GfxCoreHelperHw<GfxFamily>::isPlatformFlushTaskEnabled(const ProductHelper &productHelper) const {
     return productHelper.isFlushTaskAllowed();

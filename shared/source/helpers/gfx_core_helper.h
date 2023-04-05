@@ -162,6 +162,8 @@ class GfxCoreHelper {
     virtual bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const = 0;
     virtual size_t getBatchBufferEndSize() const = 0;
     virtual const void *getBatchBufferEndReference() const = 0;
+    virtual size_t getBatchBufferStartSize() const = 0;
+    virtual void encodeBatchBufferStart(void *cmdBuffer, uint64_t address, bool secondLevel, bool indirect, bool predicate) const = 0;
     virtual bool isPlatformFlushTaskEnabled(const NEO::ProductHelper &productHelper) const = 0;
     virtual uint32_t getMinimalScratchSpaceSize() const = 0;
     virtual bool copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const = 0;
@@ -378,6 +380,8 @@ class GfxCoreHelperHw : public GfxCoreHelper {
     bool platformSupportsImplicitScaling(const NEO::RootDeviceEnvironment &rootDeviceEnvironment) const override;
     size_t getBatchBufferEndSize() const override;
     const void *getBatchBufferEndReference() const override;
+    size_t getBatchBufferStartSize() const override;
+    void encodeBatchBufferStart(void *cmdBuffer, uint64_t address, bool secondLevel, bool indirect, bool predicate) const override;
     bool isPlatformFlushTaskEnabled(const NEO::ProductHelper &productHelper) const override;
     uint32_t getMinimalScratchSpaceSize() const override;
     bool copyThroughLockedPtrEnabled(const HardwareInfo &hwInfo, const ProductHelper &productHelper) const override;

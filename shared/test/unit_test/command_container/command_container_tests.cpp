@@ -13,6 +13,7 @@
 #include "shared/source/indirect_heap/indirect_heap.h"
 #include "shared/source/memory_manager/allocations_list.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/libult/ult_command_stream_receiver.h"
@@ -1653,4 +1654,90 @@ TEST_F(CommandContainerTest, givenCmdContainerSetToSbaTrackingWhenContainerIsIni
     cmdContainer->setStateBaseAddressTracking(true);
     cmdContainer->initialize(pDevice, nullptr, sshDefaultSize, true, false);
     EXPECT_EQ(2 * HeapSize::defaultHeapSize, cmdContainer->defaultSshSize);
+}
+
+HWTEST_F(CommandContainerTest,
+         givenCmdContainerUsingPrimaryBatchBufferWhenCloseAndAllocateNextCommandBufferCalledThenNewCmdBufferAllocationCreatedAndChainedWithOldCmdBuffer) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    CommandContainer cmdContainer;
+    cmdContainer.setUsingPrimaryBuffer(true);
+    EXPECT_TRUE(cmdContainer.isUsingPrimaryBuffer());
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+
+    ASSERT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
+    auto firstCmdBufferAllocation = cmdContainer.getCmdBufferAllocations()[0];
+
+    cmdContainer.closeAndAllocateNextCommandBuffer();
+
+    ASSERT_EQ(cmdContainer.getCmdBufferAllocations().size(), 2u);
+    auto chainedCmdBufferAllocation = cmdContainer.getCmdBufferAllocations()[1];
+    auto bbStartGpuAddress = chainedCmdBufferAllocation->getGpuAddress();
+
+    auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(firstCmdBufferAllocation->getUnderlyingBuffer());
+    ASSERT_NE(nullptr, bbStart);
+    EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+    size_t expectedEndSize = alignUp(sizeof(MI_BATCH_BUFFER_START), CommandContainer::minCmdBufferPtrAlign);
+    cmdContainer.endAlignedPrimaryBuffer();
+
+    void *endPtr = cmdContainer.getEndCmdPtr();
+    size_t alignedSize = cmdContainer.getEndAlignedSize();
+
+    EXPECT_EQ(chainedCmdBufferAllocation->getUnderlyingBuffer(), endPtr);
+    EXPECT_EQ(expectedEndSize, alignedSize);
+}
+
+HWTEST_F(CommandContainerTest,
+         givenCmdContainerUsingPrimaryBatchBufferWhenCloseAndAllocateMultipleCommandBuffersThenNewCmdBufferAllocationsCreatedAndChainedWithOldCmdBuffers) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    CommandContainer cmdContainer;
+    cmdContainer.setUsingPrimaryBuffer(true);
+    EXPECT_TRUE(cmdContainer.isUsingPrimaryBuffer());
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+
+    ASSERT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
+    auto firstCmdBufferAllocation = cmdContainer.getCmdBufferAllocations()[0];
+
+    size_t consumedSize = sizeof(int);
+    cmdContainer.getCommandStream()->getSpace(consumedSize);
+
+    cmdContainer.closeAndAllocateNextCommandBuffer();
+
+    ASSERT_EQ(cmdContainer.getCmdBufferAllocations().size(), 2u);
+    auto chainedCmdBufferAllocation = cmdContainer.getCmdBufferAllocations()[1];
+    auto bbStartGpuAddress = chainedCmdBufferAllocation->getGpuAddress();
+
+    auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(ptrOffset(firstCmdBufferAllocation->getUnderlyingBuffer(), consumedSize));
+    ASSERT_NE(nullptr, bbStart);
+    EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+    consumedSize *= 2;
+    cmdContainer.getCommandStream()->getSpace(consumedSize);
+    cmdContainer.closeAndAllocateNextCommandBuffer();
+
+    ASSERT_EQ(cmdContainer.getCmdBufferAllocations().size(), 3u);
+    auto closingCmdBufferAllocation = cmdContainer.getCmdBufferAllocations()[2];
+
+    bbStartGpuAddress = closingCmdBufferAllocation->getGpuAddress();
+
+    bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(ptrOffset(chainedCmdBufferAllocation->getUnderlyingBuffer(), consumedSize));
+    ASSERT_NE(nullptr, bbStart);
+    EXPECT_EQ(bbStartGpuAddress, bbStart->getBatchBufferStartAddress());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+    consumedSize = alignUp(sizeof(MI_BATCH_BUFFER_START), CommandContainer::minCmdBufferPtrAlign) - sizeof(MI_BATCH_BUFFER_START);
+    cmdContainer.getCommandStream()->getSpace(consumedSize);
+
+    size_t expectedEndSize = alignUp((sizeof(MI_BATCH_BUFFER_START) + consumedSize), CommandContainer::minCmdBufferPtrAlign);
+    cmdContainer.endAlignedPrimaryBuffer();
+
+    void *endPtr = cmdContainer.getEndCmdPtr();
+    size_t alignedSize = cmdContainer.getEndAlignedSize();
+
+    EXPECT_EQ(ptrOffset(closingCmdBufferAllocation->getUnderlyingBuffer(), consumedSize), endPtr);
+    EXPECT_EQ(expectedEndSize, alignedSize);
 }

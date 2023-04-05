@@ -83,8 +83,15 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
     cmdBufferAllocations.push_back(cmdBufferAllocation);
 
     auto &gfxCoreHelper = device->getGfxCoreHelper();
+    if (this->usingPrimaryBuffer) {
+        this->selectedBbCmdSize = gfxCoreHelper.getBatchBufferStartSize();
+    } else {
+        this->selectedBbCmdSize = gfxCoreHelper.getBatchBufferEndSize();
+        this->bbEndReference = gfxCoreHelper.getBatchBufferEndReference();
+    }
+
     commandStream = std::make_unique<LinearStream>(cmdBufferAllocation->getUnderlyingBuffer(),
-                                                   usableSize, this, gfxCoreHelper.getBatchBufferEndSize());
+                                                   usableSize, this, this->selectedBbCmdSize);
 
     commandStream->replaceGraphicsAllocation(cmdBufferAllocation);
 
@@ -96,7 +103,7 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
             return ErrorCode::OUT_OF_DEVICE_MEMORY;
         }
         secondaryCommandStreamForImmediateCmdList = std::make_unique<LinearStream>(cmdBufferAllocationHost->getUnderlyingBuffer(),
-                                                                                   usableSize, this, gfxCoreHelper.getBatchBufferEndSize());
+                                                                                   usableSize, this, this->selectedBbCmdSize);
         secondaryCommandStreamForImmediateCmdList->replaceGraphicsAllocation(cmdBufferAllocationHost);
         cmdBufferAllocations.push_back(cmdBufferAllocationHost);
         addToResidencyContainer(cmdBufferAllocationHost);
@@ -192,6 +199,7 @@ void CommandContainer::reset() {
     nextIddInBlock = this->getNumIddPerBlock();
     lastPipelineSelectModeRequired = false;
     lastSentUseGlobalAtomics = false;
+    endCmdPtr = nullptr;
 }
 
 size_t CommandContainer::getAlignedCmdBufferSize() const {
@@ -316,12 +324,32 @@ void CommandContainer::allocateNextCommandBuffer() {
 }
 
 void CommandContainer::closeAndAllocateNextCommandBuffer() {
-    auto &gfxCoreHelper = device->getGfxCoreHelper();
-    auto bbEndSize = gfxCoreHelper.getBatchBufferEndSize();
     auto ptr = commandStream->getSpace(0u);
-    memcpy_s(ptr, bbEndSize, gfxCoreHelper.getBatchBufferEndReference(), bbEndSize);
+    size_t usedSize = commandStream->getUsed();
     allocateNextCommandBuffer();
+    if (this->usingPrimaryBuffer) {
+        auto nextChainedBuffer = commandStream->getGraphicsAllocation();
+        auto &gfxCoreHelper = device->getGfxCoreHelper();
+        gfxCoreHelper.encodeBatchBufferStart(ptr, nextChainedBuffer->getGpuAddress(), false, false, false);
+        alignPrimaryEnding(ptr, usedSize);
+    } else {
+        memcpy_s(ptr, this->selectedBbCmdSize, this->bbEndReference, this->selectedBbCmdSize);
+    }
     currentLinearStreamStartOffset = 0u;
+}
+
+void CommandContainer::alignPrimaryEnding(void *endPtr, size_t exactUsedSize) {
+    exactUsedSize += this->selectedBbCmdSize;
+    this->alignedPrimarySize = alignUp(exactUsedSize, minCmdBufferPtrAlign);
+    if (this->alignedPrimarySize > exactUsedSize) {
+        endPtr = ptrOffset(endPtr, this->selectedBbCmdSize);
+        memset(endPtr, 0, this->alignedPrimarySize - exactUsedSize);
+    }
+}
+
+void CommandContainer::endAlignedPrimaryBuffer() {
+    this->endCmdPtr = commandStream->getSpace(0u);
+    alignPrimaryEnding(this->endCmdPtr, commandStream->getUsed());
 }
 
 void CommandContainer::prepareBindfulSsh() {
