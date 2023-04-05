@@ -25,11 +25,9 @@ EngineHandleContext::~EngineHandleContext() {
 }
 
 void EngineHandleContext::createHandle(zes_engine_group_t engineType, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubdevice) {
-    Engine *pEngine = new EngineImp(pOsSysman, engineType, engineInstance, subDeviceId, onSubdevice);
+    std::unique_ptr<Engine> pEngine = std::make_unique<EngineImp>(pOsSysman, engineType, engineInstance, subDeviceId, onSubdevice);
     if (pEngine->initSuccess == true) {
-        handleList.push_back(pEngine);
-    } else {
-        delete pEngine;
+        handleList.push_back(std::move(pEngine));
     }
 }
 
@@ -47,9 +45,6 @@ void EngineHandleContext::init(uint32_t subDeviceCount) {
 }
 
 void EngineHandleContext::releaseEngines() {
-    for (Engine *pEngine : handleList) {
-        delete pEngine;
-    }
     handleList.clear();
 }
 

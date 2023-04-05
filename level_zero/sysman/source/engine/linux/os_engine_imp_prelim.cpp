@@ -143,9 +143,9 @@ LinuxEngineImp::LinuxEngineImp(OsSysman *pOsSysman, zes_engine_group_t type, uin
     init();
 }
 
-OsEngine *OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) {
-    LinuxEngineImp *pLinuxEngineImp = new LinuxEngineImp(pOsSysman, type, engineInstance, subDeviceId, onSubDevice);
-    return static_cast<OsEngine *>(pLinuxEngineImp);
+std::unique_ptr<OsEngine> OsEngine::create(OsSysman *pOsSysman, zes_engine_group_t type, uint32_t engineInstance, uint32_t subDeviceId, ze_bool_t onSubDevice) {
+    std::unique_ptr<LinuxEngineImp> pLinuxEngineImp = std::make_unique<LinuxEngineImp>(pOsSysman, type, engineInstance, subDeviceId, onSubDevice);
+    return pLinuxEngineImp;
 }
 
 } // namespace Sysman

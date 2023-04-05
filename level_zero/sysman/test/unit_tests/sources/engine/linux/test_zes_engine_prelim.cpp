@@ -48,10 +48,6 @@ class ZesEngineFixture : public SysmanDeviceFixture {
         pOriginalPmuInterface = pLinuxSysmanImp->pPmuInterface;
         pLinuxSysmanImp->pPmuInterface = pPmuInterface.get();
 
-        for (auto handle : pSysmanDeviceImp->pEngineHandleContext->handleList) {
-            delete handle;
-        }
-
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
         pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
         device = pSysmanDevice;
@@ -185,8 +181,6 @@ TEST_F(ZesEngineFixture, GivenTestDiscreteDevicesAndValidEngineHandleWhenCalling
 
     auto pOsEngineTest2 = L0::Sysman::OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest2->getActivity(&stats));
-    delete pOsEngineTest1;
-    delete pOsEngineTest2;
 }
 
 TEST_F(ZesEngineFixture, GivenUnknownEngineTypeThengetEngineGroupFromTypeReturnsGroupAllEngineGroup) {
@@ -201,7 +195,6 @@ TEST_F(ZesEngineFixture, GivenTestIntegratedDevicesAndValidEngineHandleWhenCalli
 
     auto pOsEngineTest1 = L0::Sysman::OsEngine::create(pOsSysman, ZES_ENGINE_GROUP_RENDER_SINGLE, 0u, 0u, false);
     EXPECT_EQ(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE, pOsEngineTest1->getActivity(&stats));
-    delete pOsEngineTest1;
 }
 
 TEST_F(ZesEngineFixture, GivenValidEngineHandleWhenCallingZesEngineGetActivityAndPmuReadFailsThenVerifyEngineGetActivityReturnsFailure) {
@@ -245,10 +238,6 @@ TEST_F(ZesEngineFixture, GivenHandleQueryItemCalledWhenPmuInterfaceOpenFailsThen
 
     pFsAccess->mockReadVal = true;
 
-    for (auto handle : pSysmanDeviceImp->pEngineHandleContext->handleList) {
-        delete handle;
-    }
-
     pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
     pSysmanDeviceImp->pEngineHandleContext->init(pOsSysman->getSubDeviceCount());
     uint32_t count = 0;
@@ -270,9 +259,6 @@ TEST_F(ZesEngineFixture, GivenValidEngineHandleAndHandleCountZeroWhenCallingReIn
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEnumEngineGroups(device->toHandle(), &count, NULL));
     EXPECT_EQ(count, handleComponentCount);
 
-    for (auto handle : pSysmanDeviceImp->pEngineHandleContext->handleList) {
-        delete handle;
-    }
     pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
     pSysmanDeviceImp->pEngineHandleContext->init(pOsSysman->getSubDeviceCount());
 
@@ -312,10 +298,6 @@ class ZesEngineMultiFixture : public SysmanMultiDeviceFixture {
 
         pDrm->mockReadSysmanQueryEngineInfoMultiDevice = true;
         pSysfsAccess->mockReadSymLinkSuccess = true;
-
-        for (auto handle : pSysmanDeviceImp->pEngineHandleContext->handleList) {
-            delete handle;
-        }
 
         pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
         pSysmanDeviceImp->getRootDeviceEnvironment().getMutableHardwareInfo()->capabilityTable.isIntegratedDevice = true;
@@ -394,10 +376,6 @@ TEST_F(ZesEngineMultiFixture, GivenValidEngineHandlesWhenCallingZesEngineGetProp
 TEST_F(ZesEngineMultiFixture, GivenHandleQueryItemCalledWhenPmuInterfaceOpenFailsThenzesDeviceEnumEngineGroupsSucceedsAndHandleCountIsZero) {
 
     pFsAccess->mockReadVal = true;
-
-    for (auto handle : pSysmanDeviceImp->pEngineHandleContext->handleList) {
-        delete handle;
-    }
 
     pSysmanDeviceImp->pEngineHandleContext->handleList.clear();
     pSysmanDeviceImp->pEngineHandleContext->init(pOsSysman->getSubDeviceCount());

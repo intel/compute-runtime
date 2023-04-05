@@ -31,12 +31,7 @@ EngineImp::EngineImp(OsSysman *pOsSysman, zes_engine_group_t engineType, uint32_
     init();
 }
 
-EngineImp::~EngineImp() {
-    if (nullptr != pOsEngine) {
-        delete pOsEngine;
-        pOsEngine = nullptr;
-    }
-}
+EngineImp::~EngineImp() = default;
 
 } // namespace Sysman
 } // namespace L0
