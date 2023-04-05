@@ -6,7 +6,9 @@
  */
 
 #include "shared/source/helpers/file_io.h"
+#include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/test/common/helpers/test_files.h"
+#include "shared/test/common/mocks/mock_kernel_info.h"
 
 #include "opencl/source/context/context.h"
 
@@ -115,4 +117,33 @@ TEST_F(clCreateKernelsInProgramTests, GivenTooSmallOutputBufferWhenCreatingKerne
         nullptr);
     EXPECT_EQ(CL_INVALID_VALUE, retVal);
     EXPECT_EQ(nullptr, kernel);
+}
+
+TEST_F(clCreateKernelsInProgramTests, whenKernelCreationFailsOnClCreateKernelsInProgramAPICallThenPropagateTheErrorToAPICallAndReturnNullptrForEachKernel) {
+    const auto rootDeviceIndex = pDevice->getRootDeviceIndex();
+    auto &kernelInfoArray = pProgram->getKernelInfoArray(rootDeviceIndex);
+    kernelInfoArray.push_back(new MockKernelInfo());
+    kernelInfoArray.push_back(new MockKernelInfo());
+    auto kernelInfo1 = kernelInfoArray[0];
+    auto kernelInfo2 = kernelInfoArray[1];
+
+    auto &rootDeviceEnvironment = pDevice->getRootDeviceEnvironment();
+    auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
+
+    // Enforce CL_INVALID_KERNEL error for kernel created using kernelInfo2
+    // Kernel creation using kernelInfo1 should succeed.
+    auto minimalSimdSize = gfxCoreHelper.getMinimalSIMDSize();
+    kernelInfo1->kernelDescriptor.kernelAttributes.simdSize = minimalSimdSize;
+    kernelInfo2->kernelDescriptor.kernelAttributes.simdSize = minimalSimdSize - 1;
+
+    cl_kernel kernels[2];
+    cl_uint numKernels = 2;
+    retVal = clCreateKernelsInProgram(
+        pProgram,
+        numKernels,
+        kernels,
+        nullptr);
+    EXPECT_EQ(CL_INVALID_KERNEL, retVal);
+    EXPECT_EQ(nullptr, kernels[0]);
+    EXPECT_EQ(nullptr, kernels[1]);
 }

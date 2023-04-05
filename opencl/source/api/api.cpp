@@ -1835,7 +1835,17 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
                 kernels[i] = MultiDeviceKernel::create(
                     pProgram,
                     kernelInfos,
-                    nullptr);
+                    &retVal);
+                if (nullptr == kernels[i]) {
+                    UNRECOVERABLE_IF(CL_SUCCESS == retVal);
+                    for (unsigned int createdIdx = 0; createdIdx < i; ++createdIdx) {
+                        auto mDKernel = castToObject<MultiDeviceKernel>(kernels[createdIdx]);
+                        mDKernel->release();
+                        kernels[createdIdx] = nullptr;
+                    }
+                    TRACING_EXIT(ClCreateKernelsInProgram, &retVal);
+                    return retVal;
+                }
                 gtpinNotifyKernelCreate(kernels[i]);
             }
         }
