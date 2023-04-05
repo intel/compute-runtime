@@ -965,79 +965,12 @@ TEST_F(DeviceGetCapsTest, givenDefaultDeviceWhenQueriedForExtensionsWithVersionT
     EXPECT_FALSE(pClDevice->getDeviceInfo().extensionsWithVersion.empty());
 
     for (auto extensionWithVersion : pClDevice->getDeviceInfo().extensionsWithVersion) {
-        if (strcmp(extensionWithVersion.name, "cl_khr_integer_dot_product") == 0) {
-            EXPECT_EQ(CL_MAKE_VERSION(2u, 0, 0), extensionWithVersion.version);
-        } else {
-            EXPECT_EQ(CL_MAKE_VERSION(1u, 0, 0), extensionWithVersion.version);
-        }
+        EXPECT_EQ(CL_MAKE_VERSION(1u, 0u, 0u), extensionWithVersion.version);
         allExtensions += extensionWithVersion.name;
         allExtensions += " ";
     }
 
     EXPECT_STREQ(pClDevice->deviceExtensions.c_str(), allExtensions.c_str());
-}
-
-TEST_F(DeviceGetCapsTest, givenClDeviceWhenGetExtensionsVersionCalledThenCorrectVersionIsSet) {
-    UltClDeviceFactory deviceFactory{1, 0};
-    auto pClDevice = deviceFactory.rootDevices[0];
-    pClDevice->getDeviceInfo(CL_DEVICE_EXTENSIONS_WITH_VERSION, 0, nullptr, nullptr);
-    for (auto extensionWithVersion : pClDevice->getDeviceInfo().extensionsWithVersion) {
-        if (strcmp(extensionWithVersion.name, "cl_khr_integer_dot_product") == 0) {
-            EXPECT_EQ(CL_MAKE_VERSION(2u, 0, 0), pClDevice->getExtensionVersion(std::string(extensionWithVersion.name)));
-        } else {
-            EXPECT_EQ(CL_MAKE_VERSION(1u, 0, 0), pClDevice->getExtensionVersion(std::string(extensionWithVersion.name)));
-        }
-    }
-}
-
-TEST_F(DeviceGetCapsTest, givenClDeviceWhenCapsInitializedThenIntegerDotInput4xBitCapIsSet) {
-    UltClDeviceFactory deviceFactory{1, 0};
-    auto pClDevice = deviceFactory.rootDevices[0];
-    pClDevice->initializeCaps();
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR);
-}
-
-TEST_F(DeviceGetCapsTest, givenClDeviceWhenCapsInitializedThenIntegerDotInput4xBitPackedCapIsSet) {
-    UltClDeviceFactory deviceFactory{1, 0};
-    auto pClDevice = deviceFactory.rootDevices[0];
-    pClDevice->initializeCaps();
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotCapabilities & CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR);
-}
-
-TEST_F(DeviceGetCapsTest, givenClDeviceWhenCapsInitializedThenAllFieldsInIntegerDotAccPropertiesAreTrue) {
-    UltClDeviceFactory deviceFactory{1, 0};
-    auto pClDevice = deviceFactory.rootDevices[0];
-    pClDevice->initializeCaps();
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.accumulating_saturating_mixed_signedness_accelerated);
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.accumulating_saturating_signed_accelerated);
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.accumulating_saturating_unsigned_accelerated);
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.mixed_signedness_accelerated);
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.signed_accelerated);
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties8Bit.unsigned_accelerated);
-}
-
-TEST_F(DeviceGetCapsTest, givenClDeviceWhenCapsInitializedThenAllFieldsInIntegerDotAccPackedPropertiesAreTrue) {
-    UltClDeviceFactory deviceFactory{1, 0};
-    auto pClDevice = deviceFactory.rootDevices[0];
-    pClDevice->initializeCaps();
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.accumulating_saturating_mixed_signedness_accelerated);
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.accumulating_saturating_signed_accelerated);
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.accumulating_saturating_unsigned_accelerated);
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.mixed_signedness_accelerated);
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.signed_accelerated);
-    EXPECT_TRUE(pClDevice->deviceInfo.integerDotAccelerationProperties4x8BitPacked.unsigned_accelerated);
-}
-
-TEST_F(DeviceGetCapsTest, givenClDeviceWhenEnableIntegerDotExtensionEnalbedThenDotIntegerExtensionIsInExtensionString) {
-    UltClDeviceFactory deviceFactory{1, 0};
-    auto pClDevice = deviceFactory.rootDevices[0];
-    pClDevice->initializeCaps();
-    static const char *const supportedExtensions[] = {
-        "cl_khr_integer_dot_product "};
-    for (auto extension : supportedExtensions) {
-        auto foundOffset = pClDevice->deviceExtensions.find(extension);
-        EXPECT_TRUE(foundOffset != std::string::npos);
-    }
 }
 
 TEST_F(DeviceGetCapsTest, givenFp64SupportForcedWhenCheckingFp64SupportThenFp64IsCorrectlyReported) {

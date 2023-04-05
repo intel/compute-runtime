@@ -77,6 +77,7 @@ template<> struct Map<CL_DEVICE_MAX_WRITE_IMAGE_ARGS            > : public MapBa
 template<> struct Map<CL_DEVICE_PRINTF_BUFFER_SIZE              > : public MapBase<CL_DEVICE_PRINTF_BUFFER_SIZE,               size_t,       &DeviceInfo::printfBufferSize> {};
 template<> struct Map<CL_DEVICE_PROFILING_TIMER_RESOLUTION      > : public MapBase<CL_DEVICE_PROFILING_TIMER_RESOLUTION,       size_t,       &DeviceInfo::outProfilingTimerResolution> {};
 template<> struct Map<CL_DEVICE_VENDOR_ID                       > : public MapBase<CL_DEVICE_VENDOR_ID,                        uint32_t,     &DeviceInfo::vendorId> {};
+
 template<> struct Map<CL_DEVICE_ATOMIC_FENCE_CAPABILITIES                   > : public ClMapBase<CL_DEVICE_ATOMIC_FENCE_CAPABILITIES,                   uint64_t,                        &ClDeviceInfo::atomicFenceCapabilities> {};
 template<> struct Map<CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES                  > : public ClMapBase<CL_DEVICE_ATOMIC_MEMORY_CAPABILITIES,                  uint64_t,                        &ClDeviceInfo::atomicMemoryCapabilities> {};
 template<> struct Map<CL_DEVICE_AVAILABLE                                   > : public ClMapBase<CL_DEVICE_AVAILABLE,                                   uint32_t,                        &ClDeviceInfo::deviceAvailable> {};
@@ -174,10 +175,6 @@ template<> struct Map<CL_DEVICE_VERSION                                     > : 
 template<> struct Map<CL_DRIVER_VERSION                                     > : public ClMapBase<CL_DRIVER_VERSION,                                     const char *,                    &ClDeviceInfo::driverVersion> {};
 template<> struct Map<CL_DRIVER_UUID_KHR                                    > : public ClMapBase<CL_DRIVER_UUID_KHR,                                    const char *,                    &ClDeviceInfo::driverVersion> {};
 template<> struct Map<CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT     > : public ClMapBase<CL_DEVICE_WORK_GROUP_COLLECTIVE_FUNCTIONS_SUPPORT,     uint32_t,                        &ClDeviceInfo::workGroupCollectiveFunctionsSupport> {};
-template<> struct Map<CL_DEVICE_INTEGER_DOT_PRODUCT_CAPABILITIES_KHR                              > : public ClMapBase<CL_DEVICE_INTEGER_DOT_PRODUCT_CAPABILITIES_KHR,                              cl_device_integer_dot_product_capabilities_khr,                                   &ClDeviceInfo::integerDotCapabilities> {};
-template<> struct Map<CL_DEVICE_INTEGER_DOT_PRODUCT_ACCELERATION_PROPERTIES_4x8BIT_PACKED_KHR     > : public ClMapBase<CL_DEVICE_INTEGER_DOT_PRODUCT_ACCELERATION_PROPERTIES_4x8BIT_PACKED_KHR,     cl_device_integer_dot_product_acceleration_properties_khr,                        &ClDeviceInfo::integerDotAccelerationProperties4x8BitPacked> {};
-template<> struct Map<CL_DEVICE_INTEGER_DOT_PRODUCT_ACCELERATION_PROPERTIES_8BIT_KHR              > : public ClMapBase<CL_DEVICE_INTEGER_DOT_PRODUCT_ACCELERATION_PROPERTIES_8BIT_KHR,              cl_device_integer_dot_product_acceleration_properties_khr,                        &ClDeviceInfo::integerDotAccelerationProperties8Bit> {};
-
 // clang-format on
 
 } // namespace ClDeviceInfoTable
