@@ -35,11 +35,7 @@ MemoryImp::MemoryImp(OsSysman *pOsSysman, bool onSubdevice, uint32_t subDeviceId
     init();
 }
 
-MemoryImp::~MemoryImp() {
-    if (nullptr != pOsMemory) {
-        delete pOsMemory;
-    }
-}
+MemoryImp::~MemoryImp() = default;
 
 } // namespace Sysman
 } // namespace L0

@@ -20,9 +20,6 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     void SetUp() override {
         DebugManager.flags.EnableLocalMemory.set(1);
         SysmanDeviceFixture::SetUp();
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         device = pSysmanDeviceImp;
@@ -36,9 +33,6 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
     void setLocalSupportedAndReinit(bool supported) {
 
         DebugManager.flags.EnableLocalMemory.set(supported == true ? 1 : 0);
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         pSysmanDeviceImp->pMemoryHandleContext->init(pOsSysman->getSubDeviceCount());
@@ -136,11 +130,10 @@ TEST_F(SysmanMultiDeviceFixture, GivenValidDevicePointerWhenGettingMemoryPropert
     zes_mem_properties_t properties = {};
     ze_bool_t isSubdevice = pLinuxSysmanImp->getSubDeviceCount() == 0 ? false : true;
     auto subDeviceId = std::max(0u, pLinuxSysmanImp->getSubDeviceCount() - 1);
-    L0::Sysman::LinuxMemoryImp *pLinuxMemoryImp = new L0::Sysman::LinuxMemoryImp(pOsSysman, isSubdevice, subDeviceId);
+    std::unique_ptr<L0::Sysman::LinuxMemoryImp> pLinuxMemoryImp = std::make_unique<L0::Sysman::LinuxMemoryImp>(pOsSysman, isSubdevice, subDeviceId);
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxMemoryImp->getProperties(&properties));
     EXPECT_EQ(properties.subdeviceId, subDeviceId);
     EXPECT_EQ(properties.onSubdevice, isSubdevice);
-    delete pLinuxMemoryImp;
 }
 
 } // namespace ult

@@ -14,18 +14,12 @@
 namespace L0 {
 namespace Sysman {
 
-MemoryHandleContext::~MemoryHandleContext() {
-    for (Memory *pMemory : handleList) {
-        delete pMemory;
-    }
-}
+MemoryHandleContext::~MemoryHandleContext() = default;
 
 void MemoryHandleContext::createHandle(bool onSubdevice, uint32_t subDeviceId) {
-    Memory *pMemory = new MemoryImp(pOsSysman, onSubdevice, subDeviceId);
+    std::unique_ptr<Memory> pMemory = std::make_unique<MemoryImp>(pOsSysman, onSubdevice, subDeviceId);
     if (pMemory->initSuccess == true) {
-        handleList.push_back(pMemory);
-    } else {
-        delete pMemory;
+        handleList.push_back(std::move(pMemory));
     }
 }
 

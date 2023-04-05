@@ -9,6 +9,7 @@
 #include "level_zero/api/sysman/zes_handles_struct.h"
 #include <level_zero/zes_api.h>
 
+#include <memory>
 #include <mutex>
 #include <vector>
 
@@ -39,7 +40,7 @@ struct MemoryHandleContext {
     ze_result_t memoryGet(uint32_t *pCount, zes_mem_handle_t *phMemory);
 
     OsSysman *pOsSysman = nullptr;
-    std::vector<Memory *> handleList = {};
+    std::vector<std::unique_ptr<Memory>> handleList = {};
 
   private:
     void createHandle(bool onSubdevice, uint32_t subDeviceId);

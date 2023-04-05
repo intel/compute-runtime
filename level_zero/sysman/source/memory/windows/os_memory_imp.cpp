@@ -9,9 +9,9 @@
 
 namespace L0 {
 namespace Sysman {
-OsMemory *OsMemory::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
-    WddmMemoryImp *pWddmMemoryImp = new WddmMemoryImp(pOsSysman, onSubdevice, subdeviceId);
-    return static_cast<OsMemory *>(pWddmMemoryImp);
+std::unique_ptr<OsMemory> OsMemory::create(OsSysman *pOsSysman, ze_bool_t onSubdevice, uint32_t subdeviceId) {
+    std::unique_ptr<WddmMemoryImp> pWddmMemoryImp = std::make_unique<WddmMemoryImp>(pOsSysman, onSubdevice, subdeviceId);
+    return pWddmMemoryImp;
 }
 
 } // namespace Sysman

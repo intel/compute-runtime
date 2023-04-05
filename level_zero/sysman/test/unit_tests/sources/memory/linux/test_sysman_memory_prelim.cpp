@@ -52,9 +52,7 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
         pLinuxSysmanImp->pFsAccess = pFsAccess.get();
         pDrm->setMemoryType(INTEL_HWCONFIG_MEMORY_TYPE_HBM2e);
         pDrm->ioctlHelper = static_cast<std::unique_ptr<NEO::IoctlHelper>>(std::make_unique<IoctlHelperPrelim20>(*pDrm));
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
+
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         pmtMapOriginal = pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject;
         pLinuxSysmanImp->mapOfSubDeviceIdToPmtObject.clear();
@@ -85,10 +83,6 @@ class SysmanDeviceMemoryFixture : public SysmanDeviceFixture {
 
     void setLocalSupportedAndReinit(bool supported) {
         DebugManager.flags.EnableLocalMemory.set(supported == true ? 1 : 0);
-
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         pSysmanDeviceImp->pMemoryHandleContext->init(pOsSysman->getSubDeviceCount());
@@ -758,10 +752,6 @@ class SysmanMultiDeviceMemoryFixture : public SysmanMultiDeviceFixture {
         auto &osInterface = pSysmanDeviceImp->getRootDeviceEnvironment().osInterface;
         osInterface->setDriverModel(std::unique_ptr<MockMemoryNeoDrm>(pDrm));
 
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
-
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         device = pSysmanDeviceImp;
         getMemoryHandles(0);
@@ -774,10 +764,6 @@ class SysmanMultiDeviceMemoryFixture : public SysmanMultiDeviceFixture {
 
     void setLocalSupportedAndReinit(bool supported) {
         DebugManager.flags.EnableLocalMemory.set(supported == true ? 1 : 0);
-
-        for (auto handle : pSysmanDeviceImp->pMemoryHandleContext->handleList) {
-            delete handle;
-        }
 
         pSysmanDeviceImp->pMemoryHandleContext->handleList.clear();
         pSysmanDeviceImp->pMemoryHandleContext->init(pOsSysman->getSubDeviceCount());

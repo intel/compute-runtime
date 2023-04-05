@@ -26,7 +26,7 @@ class MemoryImp : public Memory, NEO::NonCopyableOrMovableClass {
 
     MemoryImp() = default;
     void init();
-    OsMemory *pOsMemory = nullptr;
+    std::unique_ptr<OsMemory> pOsMemory;
 
   private:
     zes_mem_properties_t memoryProperties = {};
