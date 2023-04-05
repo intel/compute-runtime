@@ -11,6 +11,7 @@
 #include "shared/source/command_stream/preemption.h"
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device/device_info.h"
+#include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/internal_allocation_storage.h"
 #include "shared/source/memory_manager/memory_manager.h"
@@ -188,6 +189,14 @@ void CommandList::synchronizeEventList(uint32_t numWaitEvents, ze_event_handle_t
     for (uint32_t i = 0; i < numWaitEvents; i++) {
         Event *event = Event::fromHandle(waitEventList[i]);
         event->hostSynchronize(std::numeric_limits<uint64_t>::max());
+    }
+}
+
+void CommandList::makeResidentDummyAllocation() {
+    if (isCopyOnly()) {
+        const auto &rootDeviceEnvironment = device->getNEODevice()->getRootDeviceEnvironment();
+        auto dummyAllocation = rootDeviceEnvironment.getDummyAllocation();
+        commandContainer.addToResidencyContainer(dummyAllocation);
     }
 }
 
