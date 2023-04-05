@@ -42,9 +42,9 @@ bool LinuxFanImp::isFanModuleSupported() {
 LinuxFanImp::LinuxFanImp(OsSysman *pOsSysman) {
 }
 
-OsFan *OsFan::create(OsSysman *pOsSysman) {
-    LinuxFanImp *pLinuxFanImp = new LinuxFanImp(pOsSysman);
-    return static_cast<OsFan *>(pLinuxFanImp);
+std::unique_ptr<OsFan> OsFan::create(OsSysman *pOsSysman) {
+    std::unique_ptr<LinuxFanImp> pLinuxFanImp = std::make_unique<LinuxFanImp>(pOsSysman);
+    return pLinuxFanImp;
 }
 
 } // namespace L0

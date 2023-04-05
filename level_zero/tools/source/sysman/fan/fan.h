@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -8,6 +8,7 @@
 #pragma once
 #include <level_zero/zes_api.h>
 
+#include <memory>
 #include <mutex>
 #include <vector>
 
@@ -42,7 +43,7 @@ struct FanHandleContext {
     ze_result_t fanGet(uint32_t *pCount, zes_fan_handle_t *phFan);
 
     OsSysman *pOsSysman = nullptr;
-    std::vector<Fan *> handleList = {};
+    std::vector<std::unique_ptr<Fan>> handleList = {};
 
   private:
     std::once_flag initFanOnce;

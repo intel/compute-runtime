@@ -48,11 +48,6 @@ void FanImp::init() {
     }
 }
 
-FanImp::~FanImp() {
-    if (nullptr != pOsFan) {
-        delete pOsFan;
-        pOsFan = nullptr;
-    }
-}
+FanImp::~FanImp() = default;
 
 } // namespace L0

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,10 +35,6 @@ class SysmanDeviceFanFixture : public SysmanDeviceFixture {
 
         pOriginalKmdSysManager = pWddmSysmanImp->pKmdSysManager;
         pWddmSysmanImp->pKmdSysManager = pKmdSysManager.get();
-
-        for (auto handle : pSysmanDeviceImp->pFanHandleContext->handleList) {
-            delete handle;
-        }
 
         pSysmanDeviceImp->pFanHandleContext->handleList.clear();
     }

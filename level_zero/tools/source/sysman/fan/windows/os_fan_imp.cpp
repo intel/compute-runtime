@@ -218,9 +218,9 @@ WddmFanImp::WddmFanImp(OsSysman *pOsSysman) {
     pKmdSysManager = &pWddmSysmanImp->getKmdSysManager();
 }
 
-OsFan *OsFan::create(OsSysman *pOsSysman) {
-    WddmFanImp *pWddmFanImp = new WddmFanImp(pOsSysman);
-    return static_cast<OsFan *>(pWddmFanImp);
+std::unique_ptr<OsFan> OsFan::create(OsSysman *pOsSysman) {
+    std::unique_ptr<WddmFanImp> pWddmFanImp = std::make_unique<WddmFanImp>(pOsSysman);
+    return pWddmFanImp;
 }
 
 } // namespace L0

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -13,18 +13,12 @@
 
 namespace L0 {
 
-FanHandleContext::~FanHandleContext() {
-    for (Fan *pFan : handleList) {
-        delete pFan;
-    }
-}
+FanHandleContext::~FanHandleContext() = default;
 
 void FanHandleContext::init() {
-    Fan *pFan = new FanImp(pOsSysman);
+    std::unique_ptr<Fan> pFan = std::make_unique<FanImp>(pOsSysman);
     if (pFan->initSuccess == true) {
-        handleList.push_back(pFan);
-    } else {
-        delete pFan;
+        handleList.push_back(std::move(pFan));
     }
 }
 
