@@ -795,19 +795,19 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWithIndirectAccessWhenExecuti
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
     auto commandQueue = new MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>(device, csr, &desc);
     commandQueue->initialize(false, false);
-    auto ctx = typename MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>::CommandListExecutionContext{nullptr,
-                                                                                                         0,
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    auto cmdListHandle = commandList->toHandle();
+    auto ctx = typename MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>::CommandListExecutionContext{&cmdListHandle,
+                                                                                                         1,
                                                                                                          csr->getPreemptionMode(),
                                                                                                          device,
                                                                                                          false,
                                                                                                          csr->isProgramActivePartitionConfigRequired(),
                                                                                                          false};
 
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     ctx.hasIndirectAccess = true;
     ctx.isDispatchTaskCountPostSyncRequired = false;
-    auto cmdListHandle = commandList.get()->toHandle();
     commandQueue->executeCommandListsRegular(ctx, 1, &cmdListHandle, nullptr);
     EXPECT_EQ(commandQueue->handleIndirectAllocationResidencyCalledTimes, 1u);
     commandQueue->destroy();
@@ -818,19 +818,20 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCtxWitNohIndirectAccessWhenExecu
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
     auto commandQueue = new MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>(device, csr, &desc);
     commandQueue->initialize(false, false);
-    auto ctx = typename MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>::CommandListExecutionContext{nullptr,
-                                                                                                         0,
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    auto cmdListHandle = commandList.get()->toHandle();
+
+    auto ctx = typename MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>::CommandListExecutionContext{&cmdListHandle,
+                                                                                                         1,
                                                                                                          csr->getPreemptionMode(),
                                                                                                          device,
                                                                                                          false,
                                                                                                          csr->isProgramActivePartitionConfigRequired(),
                                                                                                          false};
 
-    ze_result_t returnValue;
-    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
     ctx.hasIndirectAccess = false;
     ctx.isDispatchTaskCountPostSyncRequired = false;
-    auto cmdListHandle = commandList.get()->toHandle();
     commandQueue->executeCommandListsRegular(ctx, 1, &cmdListHandle, nullptr);
     EXPECT_EQ(commandQueue->handleIndirectAllocationResidencyCalledTimes, 0u);
     commandQueue->destroy();
@@ -844,8 +845,11 @@ HWTEST2_F(CommandQueueIndirectAllocations, givenCommandQueueWhenHandleIndirectAl
     auto csr = neoDevice->getDefaultEngine().commandStreamReceiver;
     auto commandQueue = new MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>(device, csr, &desc);
     commandQueue->initialize(false, false);
-    auto ctx = typename MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>::CommandListExecutionContext{nullptr,
-                                                                                                         0,
+    ze_result_t returnValue;
+    std::unique_ptr<L0::CommandList> commandList(CommandList::create(productFamily, device, NEO::EngineGroupType::Compute, 0u, returnValue));
+    auto cmdListHandle = commandList.get()->toHandle();
+    auto ctx = typename MockCommandQueueHandleIndirectAllocs<gfxCoreFamily>::CommandListExecutionContext{&cmdListHandle,
+                                                                                                         1,
                                                                                                          csr->getPreemptionMode(),
                                                                                                          device,
                                                                                                          false,

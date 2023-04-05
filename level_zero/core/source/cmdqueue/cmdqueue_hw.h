@@ -59,7 +59,7 @@ struct CommandQueueHw : public CommandQueueImp {
 
         CommandListExecutionContext() {}
 
-        CommandListExecutionContext(ze_command_list_handle_t *phCommandLists,
+        CommandListExecutionContext(ze_command_list_handle_t *commandListHandles,
                                     uint32_t numCommandLists,
                                     NEO::PreemptionMode contextPreemptionMode,
                                     Device *device,
@@ -72,6 +72,8 @@ struct CommandQueueHw : public CommandQueueImp {
         NEO::StreamProperties cmdListBeginState{};
         uint64_t scratchGsba = 0;
         size_t spaceForResidency = 0;
+        CommandList *firstCommandList = nullptr;
+        CommandList *lastCommandList = nullptr;
         NEO::PreemptionMode preemptionMode{};
         NEO::PreemptionMode statePreemption{};
         uint32_t perThreadScratchSpaceSize = 0;
@@ -104,24 +106,22 @@ struct CommandQueueHw : public CommandQueueImp {
                                            uint32_t numCommandLists);
     ze_result_t executeCommandListsRegular(CommandListExecutionContext &ctx,
                                            uint32_t numCommandLists,
-                                           ze_command_list_handle_t *phCommandLists,
+                                           ze_command_list_handle_t *commandListHandles,
                                            ze_fence_handle_t hFence);
     inline ze_result_t executeCommandListsCopyOnly(CommandListExecutionContext &ctx,
                                                    uint32_t numCommandLists,
                                                    ze_command_list_handle_t *phCommandLists,
                                                    ze_fence_handle_t hFence);
     inline size_t computeDebuggerCmdsSize(const CommandListExecutionContext &ctx);
-    inline size_t computePreemptionSize(CommandListExecutionContext &ctx,
-                                        ze_command_list_handle_t *phCommandLists,
-                                        uint32_t numCommandLists);
+    inline size_t computePreemptionSizeForCommandList(CommandListExecutionContext &ctx,
+                                                      CommandList *commandList);
     inline void setupCmdListsAndContextParams(CommandListExecutionContext &ctx,
                                               ze_command_list_handle_t *phCommandLists,
                                               uint32_t numCommandLists,
                                               ze_fence_handle_t hFence);
     MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const;
-    inline size_t estimateLinearStreamSizeInitial(CommandListExecutionContext &ctx,
-                                                  ze_command_list_handle_t *phCommandLists,
-                                                  uint32_t numCommandLists);
+    inline size_t estimateLinearStreamSizeInitial(CommandListExecutionContext &ctx);
+    inline size_t estimateCommandListSecondaryStart(CommandList *commandList);
     inline void setFrontEndStateProperties(CommandListExecutionContext &ctx);
     inline void handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx);
     inline size_t estimateLinearStreamSizeComplementary(CommandListExecutionContext &ctx,
@@ -161,8 +161,8 @@ struct CommandQueueHw : public CommandQueueImp {
                                                  CommandListExecutionContext &ctx,
                                                  NEO::LinearStream &commandStream,
                                                  NEO::StreamProperties &csrState);
-    inline void collectPrintfContentsFromAllCommandsLists(ze_command_list_handle_t *phCommandLists, uint32_t numCommandLists);
-    inline void migrateSharedAllocationsIfRequested(bool isMigrationRequested, ze_command_list_handle_t hCommandList);
+    inline void collectPrintfContentsFromCommandsList(CommandList *commandList);
+    inline void migrateSharedAllocationsIfRequested(bool isMigrationRequested, CommandList *commandList);
     inline void prefetchMemoryToDeviceAssociatedWithCmdList(CommandList *commandList);
     inline void programStateSipEndWA(bool isStateSipRequired, NEO::LinearStream &commandStream);
     inline void assignCsrTaskCountToFenceIfAvailable(ze_fence_handle_t hFence);
