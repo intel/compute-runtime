@@ -938,26 +938,42 @@ ze_result_t zesPerformanceFactorSetConfig(
 ze_result_t zesDeviceEccAvailable(
     zes_device_handle_t hDevice,
     ze_bool_t *pAvailable) {
-    return L0::SysmanDevice::deviceEccAvailable(hDevice, pAvailable);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::deviceEccAvailable(hDevice, pAvailable);
+    } else {
+        return L0::Sysman::SysmanDevice::deviceEccAvailable(hDevice, pAvailable);
+    }
 }
 
 ze_result_t zesDeviceEccConfigurable(
     zes_device_handle_t hDevice,
     ze_bool_t *pConfigurable) {
-    return L0::SysmanDevice::deviceEccConfigurable(hDevice, pConfigurable);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::deviceEccConfigurable(hDevice, pConfigurable);
+    } else {
+        return L0::Sysman::SysmanDevice::deviceEccConfigurable(hDevice, pConfigurable);
+    }
 }
 
 ze_result_t zesDeviceGetEccState(
     zes_device_handle_t hDevice,
     zes_device_ecc_properties_t *pState) {
-    return L0::SysmanDevice::deviceGetEccState(hDevice, pState);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::deviceGetEccState(hDevice, pState);
+    } else {
+        return L0::Sysman::SysmanDevice::deviceGetEccState(hDevice, pState);
+    }
 }
 
 ze_result_t zesDeviceSetEccState(
     zes_device_handle_t hDevice,
     const zes_device_ecc_desc_t *newState,
     zes_device_ecc_properties_t *pState) {
-    return L0::SysmanDevice::deviceSetEccState(hDevice, newState, pState);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::deviceSetEccState(hDevice, newState, pState);
+    } else {
+        return L0::Sysman::SysmanDevice::deviceSetEccState(hDevice, newState, pState);
+    }
 }
 
 ze_result_t zesOverclockGetDomainProperties(

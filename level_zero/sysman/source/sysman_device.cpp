@@ -99,5 +99,25 @@ ze_result_t SysmanDevice::standbyGet(zes_device_handle_t hDevice, uint32_t *pCou
     return pSysmanDevice->standbyGet(pCount, phStandby);
 }
 
+ze_result_t SysmanDevice::deviceEccAvailable(zes_device_handle_t hDevice, ze_bool_t *pAvailable) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->deviceEccAvailable(pAvailable);
+}
+
+ze_result_t SysmanDevice::deviceEccConfigurable(zes_device_handle_t hDevice, ze_bool_t *pConfigurable) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->deviceEccConfigurable(pConfigurable);
+}
+
+ze_result_t SysmanDevice::deviceGetEccState(zes_device_handle_t hDevice, zes_device_ecc_properties_t *pState) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->deviceGetEccState(pState);
+}
+
+ze_result_t SysmanDevice::deviceSetEccState(zes_device_handle_t hDevice, const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->deviceSetEccState(newState, pState);
+}
+
 } // namespace Sysman
 } // namespace L0

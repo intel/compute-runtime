@@ -48,6 +48,7 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     DiagnosticsHandleContext *pDiagnosticsHandleContext = nullptr;
     FrequencyHandleContext *pFrequencyHandleContext = nullptr;
     StandbyHandleContext *pStandbyHandleContext = nullptr;
+    Ecc *pEcc = nullptr;
 
     ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) override;
     ze_result_t powerGetCardDomain(zes_pwr_handle_t *phPower) override;
@@ -64,6 +65,10 @@ struct SysmanDeviceImp : SysmanDevice, NEO::NonCopyableOrMovableClass {
     ze_result_t deviceReset(ze_bool_t force) override;
     ze_result_t deviceGetState(zes_device_state_t *pState) override;
     ze_result_t standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby) override;
+    ze_result_t deviceEccAvailable(ze_bool_t *pAvailable) override;
+    ze_result_t deviceEccConfigurable(ze_bool_t *pConfigurable) override;
+    ze_result_t deviceGetEccState(zes_device_ecc_properties_t *pState) override;
+    ze_result_t deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) override;
 
   private:
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;

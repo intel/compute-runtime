@@ -10,6 +10,7 @@
 
 #include "level_zero/core/source/device/device.h"
 #include "level_zero/sysman/source/diagnostics/diagnostics.h"
+#include "level_zero/sysman/source/ecc/ecc.h"
 #include "level_zero/sysman/source/engine/engine.h"
 #include "level_zero/sysman/source/fabric_port/fabric_port.h"
 #include "level_zero/sysman/source/firmware/firmware.h"
@@ -35,8 +36,10 @@ struct SysmanDevice : _ze_device_handle_t {
 
     static ze_result_t powerGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_pwr_handle_t *phPower);
     virtual ze_result_t powerGet(uint32_t *pCount, zes_pwr_handle_t *phPower) = 0;
+
     static ze_result_t powerGetCardDomain(zes_device_handle_t hDevice, zes_pwr_handle_t *phPower);
     virtual ze_result_t powerGetCardDomain(zes_pwr_handle_t *phPower) = 0;
+
     static ze_result_t fabricPortGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_fabric_port_handle_t *phPort);
     virtual ze_result_t fabricPortGet(uint32_t *pCount, zes_fabric_port_handle_t *phPort) = 0;
 
@@ -75,6 +78,18 @@ struct SysmanDevice : _ze_device_handle_t {
 
     static ze_result_t standbyGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_standby_handle_t *phStandby);
     virtual ze_result_t standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby) = 0;
+
+    static ze_result_t deviceEccAvailable(zes_device_handle_t hDevice, ze_bool_t *pAvailable);
+    virtual ze_result_t deviceEccAvailable(ze_bool_t *pAvailable) = 0;
+
+    static ze_result_t deviceEccConfigurable(zes_device_handle_t hDevice, ze_bool_t *pConfigurable);
+    virtual ze_result_t deviceEccConfigurable(ze_bool_t *pConfigurable) = 0;
+
+    static ze_result_t deviceGetEccState(zes_device_handle_t hDevice, zes_device_ecc_properties_t *pState);
+    virtual ze_result_t deviceGetEccState(zes_device_ecc_properties_t *pState) = 0;
+
+    static ze_result_t deviceSetEccState(zes_device_handle_t hDevice, const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState);
+    virtual ze_result_t deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) = 0;
 };
 
 } // namespace Sysman

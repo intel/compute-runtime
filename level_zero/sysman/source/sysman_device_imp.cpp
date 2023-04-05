@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/debug_helpers.h"
 
+#include "level_zero/sysman/source/ecc/ecc_imp.h"
 #include "level_zero/sysman/source/global_operations/global_operations_imp.h"
 #include "level_zero/sysman/source/os_sysman.h"
 
@@ -33,6 +34,7 @@ SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment
     pDiagnosticsHandleContext = new DiagnosticsHandleContext(pOsSysman);
     pGlobalOperations = new GlobalOperationsImp(pOsSysman);
     pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
+    pEcc = new EccImp(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
@@ -47,6 +49,7 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pMemoryHandleContext);
     freeResource(pFabricPortHandleContext);
     freeResource(pStandbyHandleContext);
+    freeResource(pEcc);
     freeResource(pOsSysman);
     executionEnvironment->decRefInternal();
 }
@@ -113,6 +116,18 @@ ze_result_t SysmanDeviceImp::firmwareGet(uint32_t *pCount, zes_firmware_handle_t
 
 ze_result_t SysmanDeviceImp::diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics) {
     return pDiagnosticsHandleContext->diagnosticsGet(pCount, phDiagnostics);
+}
+ze_result_t SysmanDeviceImp::deviceEccAvailable(ze_bool_t *pAvailable) {
+    return pEcc->deviceEccAvailable(pAvailable);
+}
+ze_result_t SysmanDeviceImp::deviceEccConfigurable(ze_bool_t *pConfigurable) {
+    return pEcc->deviceEccConfigurable(pConfigurable);
+}
+ze_result_t SysmanDeviceImp::deviceGetEccState(zes_device_ecc_properties_t *pState) {
+    return pEcc->getEccState(pState);
+}
+ze_result_t SysmanDeviceImp::deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) {
+    return pEcc->setEccState(newState, pState);
 }
 
 ze_result_t SysmanDeviceImp::standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby) {
