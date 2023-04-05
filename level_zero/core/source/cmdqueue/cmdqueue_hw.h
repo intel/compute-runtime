@@ -96,6 +96,7 @@ struct CommandQueueHw : public CommandQueueImp {
         bool isDispatchTaskCountPostSyncRequired{};
         bool hasIndirectAccess{};
         bool rtDispatchRequired = false;
+        bool globalInit = false;
     };
 
     ze_result_t validateCommandListsParams(CommandListExecutionContext &ctx,
@@ -118,7 +119,7 @@ struct CommandQueueHw : public CommandQueueImp {
                                               uint32_t numCommandLists,
                                               ze_fence_handle_t hFence);
     MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const;
-    inline size_t estimateLinearStreamSizeInitial(const CommandListExecutionContext &ctx,
+    inline size_t estimateLinearStreamSizeInitial(CommandListExecutionContext &ctx,
                                                   ze_command_list_handle_t *phCommandLists,
                                                   uint32_t numCommandLists);
     inline void setFrontEndStateProperties(CommandListExecutionContext &ctx);
