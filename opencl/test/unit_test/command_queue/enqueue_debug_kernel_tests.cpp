@@ -50,7 +50,7 @@ class EnqueueDebugKernelFixture {
             multiDeviceKernel = MultiDeviceKernel::create(
                 static_cast<NEO::Program *>(program.get()),
                 MockKernel::toKernelInfoContainer(*program->getKernelInfo("kernel", 0), device->getRootDeviceIndex()),
-                &retVal);
+                retVal);
             debugKernel = multiDeviceKernel->getKernel(device->getRootDeviceIndex());
 
             ASSERT_EQ(CL_SUCCESS, retVal);

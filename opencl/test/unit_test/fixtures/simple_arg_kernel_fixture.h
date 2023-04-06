@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -111,7 +111,7 @@ class SimpleArgKernelFixture : public ProgramFixture {
             pProgram,
             pProgram->getKernelInfoForKernel("SimpleArg"),
             *pDevice,
-            &retVal);
+            retVal);
 
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -158,7 +158,7 @@ class SimpleArgNonUniformKernelFixture : public ProgramFixture {
             pProgram,
             pProgram->getKernelInfoForKernel("simpleNonUniform"),
             *device,
-            &retVal);
+            retVal);
         ASSERT_NE(nullptr, kernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
@@ -205,7 +205,7 @@ class SimpleKernelFixture : public ProgramFixture {
                     pProgram,
                     pProgram->getKernelInfoForKernel(kernelName.c_str()),
                     *device,
-                    &retVal));
+                    retVal));
                 ASSERT_NE(nullptr, kernels[i]);
                 ASSERT_EQ(CL_SUCCESS, retVal);
             }
@@ -255,7 +255,7 @@ class SimpleKernelStatelessFixture : public ProgramFixture {
             pProgram,
             pProgram->getKernelInfoForKernel("statelessKernel"),
             *device,
-            &retVal));
+            retVal));
         ASSERT_NE(nullptr, kernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
     }
@@ -294,7 +294,7 @@ class StatelessCopyKernelFixture : public ProgramFixture {
         multiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(
             pProgram,
             pProgram->getKernelInfosForKernel("StatelessCopyBuffer"),
-            &retVal));
+            retVal));
         kernel = static_cast<MockKernel *>(multiDeviceKernel->getKernel(device->getRootDeviceIndex()));
         ASSERT_NE(nullptr, kernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
@@ -335,7 +335,7 @@ class StatelessKernelWithIndirectAccessFixture : public ProgramFixture {
         multiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(
             pProgram,
             pProgram->getKernelInfosForKernel("testIndirect"),
-            &retVal));
+            retVal));
         ASSERT_NE(nullptr, multiDeviceKernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -381,7 +381,7 @@ class BindlessKernelFixture : public ProgramFixture {
             pProgram,
             pProgram->getKernelInfoForKernel(kernelName.c_str()),
             *deviceCl,
-            &retVal));
+            retVal));
         ASSERT_NE(nullptr, kernel);
         ASSERT_EQ(CL_SUCCESS, retVal);
     }

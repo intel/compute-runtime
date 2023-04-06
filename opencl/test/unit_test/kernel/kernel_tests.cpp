@@ -73,7 +73,7 @@ class KernelTests : public ProgramFromBinaryFixture {
             pProgram,
             pProgram->getKernelInfoForKernel(kernelName),
             *pClDevice,
-            &retVal);
+            retVal);
 
         ASSERT_EQ(CL_SUCCESS, retVal);
         ASSERT_NE(nullptr, kernel);
@@ -423,7 +423,7 @@ TEST_F(KernelFromBinaryTests, GivenKernelNumArgsWhenGettingInfoThenNumberOfKerne
         pProgram,
         kernelInfo,
         *pClDevice,
-        &retVal);
+        retVal);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
 
@@ -462,7 +462,7 @@ TEST_F(KernelFromBinaryTests, WhenRegularKernelIsCreatedThenItIsNotBuiltIn) {
         pProgram,
         kernelInfo,
         *pClDevice,
-        &retVal);
+        retVal);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, kernel);
@@ -3130,7 +3130,7 @@ TEST_F(KernelMultiRootDeviceTest, givenKernelWithPrivateSurfaceWhenInitializeThe
     MockProgram program(context.get(), false, context->getDevices());
 
     int32_t retVal = CL_INVALID_VALUE;
-    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(&program, kernelInfos, &retVal));
+    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(&program, kernelInfos, retVal));
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -3167,68 +3167,36 @@ TEST_F(KernelCreateTest, whenInitFailedThenReturnNull) {
     KernelInfo info{};
     info.kernelDescriptor.kernelAttributes.gpuPointerSize = 8;
 
-    auto ret = Kernel::create<MockKernel>(&mockProgram, info, mockProgram.mDevice, nullptr);
+    cl_int retVal{CL_SUCCESS};
+    auto ret = Kernel::create<MockKernel>(&mockProgram, info, mockProgram.mDevice, retVal);
     EXPECT_EQ(nullptr, ret);
+    EXPECT_NE(CL_SUCCESS, retVal);
 }
 
-TEST_F(KernelCreateTest, whenSlmSizeExceedsLocalMemorySizeThenDebugMsgErrIsPrintedAndOutOfResourcesIsReturned) {
-    struct MockKernel {
-        MockKernel(MockProgram *, const KernelInfo &, ClDevice &clDevice) {
-            deviceLocalMemSize = static_cast<uint32_t>(clDevice.getDevice().getDeviceInfo().localMemSize);
-        }
-        int initialize() { return 0; };
-        uint32_t getSlmTotalSize() const {
-            return deviceLocalMemSize - 10u;
-        };
-        uint32_t deviceLocalMemSize = 0u;
-    };
-    struct MockKernelExceedSLM {
-        MockKernelExceedSLM(MockProgram *, const KernelInfo &, ClDevice &clDevice) {
-            deviceLocalMemSize = static_cast<uint32_t>(clDevice.getDevice().getDeviceInfo().localMemSize);
-        }
-        int initialize() { return 0; };
-        uint32_t getSlmTotalSize() const {
-            return deviceLocalMemSize + 10u;
-        };
-        uint32_t deviceLocalMemSize = 0u;
-    };
-
+TEST(KernelInitializationTest, givenSlmSizeExceedingLocalMemorySizeWhenInitializingKernelThenDebugMsgErrIsPrintedAndOutOfResourcesIsReturned) {
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.PrintDebugMessages.set(true);
 
-    KernelInfo info{};
+    MockContext context;
+    MockProgram mockProgram(&context, false, context.getDevices());
+    auto clDevice = context.getDevice(0);
+    auto deviceLocalMemSize = static_cast<uint32_t>(clDevice->getDevice().getDeviceInfo().localMemSize);
+
+    MockKernelInfo mockKernelInfoExceedsSLM{};
+    mockKernelInfoExceedsSLM.kernelDescriptor.kernelAttributes.simdSize = 1u;
+
+    auto slmTotalSize = deviceLocalMemSize + 10u;
+    mockKernelInfoExceedsSLM.kernelDescriptor.kernelAttributes.slmInlineSize = slmTotalSize;
+    auto localMemSize = static_cast<uint32_t>(clDevice->getDevice().getDeviceInfo().localMemSize);
+
     cl_int retVal{};
-
     ::testing::internal::CaptureStderr();
-
-    auto localMemSize = static_cast<uint32_t>(mockProgram.mDevice.getDevice().getDeviceInfo().localMemSize);
-
-    std::unique_ptr<MockKernel> kernel0(Kernel::create<MockKernel>(&mockProgram, info, mockProgram.mDevice, &retVal));
-    EXPECT_NE(nullptr, kernel0.get());
-    EXPECT_NE(CL_OUT_OF_RESOURCES, retVal);
-
-    std::string output = testing::internal::GetCapturedStderr();
-    EXPECT_EQ(std::string(""), output);
-
-    ::testing::internal::CaptureStderr();
-
-    retVal = 0;
-
-    std::unique_ptr<MockKernelExceedSLM> kernel1(Kernel::create<MockKernelExceedSLM>(&mockProgram, info, mockProgram.mDevice, &retVal));
-    EXPECT_NE(nullptr, kernel1.get());
+    std::unique_ptr<MockKernel> kernelPtr(Kernel::create<MockKernel>(&mockProgram, mockKernelInfoExceedsSLM, *clDevice, retVal));
+    EXPECT_EQ(nullptr, kernelPtr.get());
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 
-    output = testing::internal::GetCapturedStderr();
-    const auto &slmTotalSize = localMemSize + 10u;
+    const auto &output = testing::internal::GetCapturedStderr();
     std::string expectedOutput = "Size of SLM (" + std::to_string(slmTotalSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
-    EXPECT_EQ(expectedOutput, output);
-
-    ::testing::internal::CaptureStderr();
-
-    std::unique_ptr<MockKernelExceedSLM> kernel2(Kernel::create<MockKernelExceedSLM>(&mockProgram, info, mockProgram.mDevice, nullptr));
-    EXPECT_NE(nullptr, kernel2.get());
-
-    output = testing::internal::GetCapturedStderr();
     EXPECT_EQ(expectedOutput, output);
 }
 
@@ -3243,7 +3211,7 @@ TEST(MultiDeviceKernelCreateTest, whenInitFailedThenReturnNullAndPropagateErrorC
     MockProgram program(&context, false, context.getDevices());
 
     int32_t retVal = CL_SUCCESS;
-    auto pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(&program, kernelInfos, &retVal);
+    auto pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(&program, kernelInfos, retVal);
 
     EXPECT_EQ(nullptr, pMultiDeviceKernel);
     EXPECT_EQ(CL_INVALID_KERNEL, retVal);

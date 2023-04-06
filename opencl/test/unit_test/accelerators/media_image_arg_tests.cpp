@@ -46,7 +46,7 @@ class MediaImageSetArgTest : public ClDeviceFixture,
         pKernelInfo->addArgImage(0, 0x40, iOpenCL::IMAGE_MEMORY_OBJECT_2D_MEDIA);
 
         int32_t retVal = CL_INVALID_PLATFORM;
-        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*static_cast<KernelInfo *>(pKernelInfo.get()), rootDeviceIndex), &retVal);
+        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*static_cast<KernelInfo *>(pKernelInfo.get()), rootDeviceIndex), retVal);
         pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, retVal);

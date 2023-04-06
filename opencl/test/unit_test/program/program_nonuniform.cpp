@@ -196,7 +196,7 @@ TEST_F(ProgramNonUniformTest, GivenCl21WhenExecutingKernelWithNonUniformThenEnqu
     auto pKernel = Kernel::create<MockKernel>(mockProgram,
                                               *pKernelInfo,
                                               *pPlatform->getClDevice(0),
-                                              &retVal);
+                                              retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
 
@@ -238,7 +238,7 @@ TEST_F(ProgramNonUniformTest, GivenCl20WhenExecutingKernelWithNonUniformThenEnqu
     auto pKernel = Kernel::create<MockKernel>(mockProgram,
                                               *pKernelInfo,
                                               *pPlatform->getClDevice(0),
-                                              &retVal);
+                                              retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
 
@@ -278,7 +278,7 @@ TEST_F(ProgramNonUniformTest, GivenCl12WhenExecutingKernelWithNonUniformThenInva
     auto pKernel = Kernel::create<MockKernel>(mockProgram,
                                               *pKernelInfo,
                                               *pPlatform->getClDevice(0),
-                                              &retVal);
+                                              retVal);
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
 

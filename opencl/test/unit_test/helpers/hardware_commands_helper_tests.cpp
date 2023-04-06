@@ -1234,7 +1234,8 @@ HWTEST_F(KernelCacheFlushTests, givenLocallyUncachedBufferWhenGettingAllocations
     DebugManager.flags.EnableCacheFlushAfterWalker.set(-1);
     DebugManager.flags.CreateMultipleSubDevices.set(2);
     auto context = std::make_unique<MockContext>();
-    auto kernel = std::unique_ptr<Kernel>(Kernel::create(pProgram, pProgram->getKernelInfoForKernel("CopyBuffer"), *context->getDevice(0), &retVal));
+    auto kernel = std::unique_ptr<Kernel>(Kernel::create(pProgram, pProgram->getKernelInfoForKernel("CopyBuffer"), *context->getDevice(0), retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
 
     cl_mem_properties_intel bufferPropertiesUncachedResource[] = {CL_MEM_FLAGS_INTEL, CL_MEM_LOCALLY_UNCACHED_RESOURCE, 0};
     auto bufferLocallyUncached = clCreateBufferWithPropertiesINTEL(context.get(), bufferPropertiesUncachedResource, 0, 1, nullptr, nullptr);

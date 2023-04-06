@@ -56,7 +56,7 @@ void KernelImageArgTest::SetUp() {
     context.reset(new MockContext(pClDevice));
     program = std::make_unique<MockProgram>(context.get(), false, toClDeviceVector(*pClDevice));
     int32_t retVal = CL_INVALID_VALUE;
-    pMultiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal));
+    pMultiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), retVal));
     pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
     ASSERT_EQ(CL_SUCCESS, retVal);
 

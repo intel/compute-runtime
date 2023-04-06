@@ -227,7 +227,7 @@ struct PerformanceHintEnqueueKernelTest : public PerformanceHintEnqueueTest,
         createProgramFromBinary(context, context->getDevices(), "CopyBuffer_simd32");
         retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
-        kernel = Kernel::create<MockKernel>(pProgram, pProgram->getKernelInfoForKernel("CopyBuffer"), *context->getDevice(0), &retVal);
+        kernel = Kernel::create<MockKernel>(pProgram, pProgram->getKernelInfoForKernel("CopyBuffer"), *context->getDevice(0), retVal);
 
         globalWorkGroupSize[0] = globalWorkGroupSize[1] = globalWorkGroupSize[2] = 1;
         rootDeviceIndex = context->getDevice(0)->getRootDeviceIndex();
@@ -268,7 +268,7 @@ struct PerformanceHintEnqueueKernelPrintfTest : public PerformanceHintEnqueueTes
         createProgramFromBinary(context, context->getDevices(), "printf");
         retVal = pProgram->build(pProgram->getDevices(), nullptr, false);
         ASSERT_EQ(CL_SUCCESS, retVal);
-        kernel = static_cast<KernelWhitebox *>(Kernel::create(pProgram, pProgram->getKernelInfoForKernel("test"), *context->getDevice(0), &retVal));
+        kernel = static_cast<KernelWhitebox *>(Kernel::create(pProgram, pProgram->getKernelInfoForKernel("test"), *context->getDevice(0), retVal));
         kernel->initializeLocalIdsCache();
 
         globalWorkGroupSize[0] = globalWorkGroupSize[1] = globalWorkGroupSize[2] = 1;

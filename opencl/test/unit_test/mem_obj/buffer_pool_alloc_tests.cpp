@@ -81,7 +81,7 @@ class AggregatedSmallBuffersKernelTest : public AggregatedSmallBuffersTestTempla
         pProgram.reset(new MockProgram(context.get(), false, toClDeviceVector(*device)));
 
         retVal = CL_INVALID_VALUE;
-        pMultiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(pProgram.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, device->getRootDeviceIndex()), &retVal));
+        pMultiDeviceKernel.reset(MultiDeviceKernel::create<MockKernel>(pProgram.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, device->getRootDeviceIndex()), retVal));
         pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(device->getRootDeviceIndex()));
         ASSERT_NE(pKernel, nullptr);
         ASSERT_EQ(retVal, CL_SUCCESS);

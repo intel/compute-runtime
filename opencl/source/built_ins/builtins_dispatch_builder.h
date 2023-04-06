@@ -93,7 +93,7 @@ class BuiltinDispatchInfoBuilder {
         KernelInfoContainer kernelInfos;
         kernelInfos.resize(rootDeviceIndex + 1);
         kernelInfos[rootDeviceIndex] = kernelInfo;
-        kernelDst = MultiDeviceKernel::create(prog.get(), kernelInfos, &err);
+        kernelDst = MultiDeviceKernel::create(prog.get(), kernelInfos, err);
         kernelDst->getKernel(rootDeviceIndex)->isBuiltIn = true;
         usedKernels.push_back(std::unique_ptr<MultiDeviceKernel>(kernelDst));
         grabKernels(std::forward<KernelsDescArgsT>(kernelsDesc)...);

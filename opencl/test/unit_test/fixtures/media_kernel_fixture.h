@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,7 +77,7 @@ struct MediaKernelFixture : public HelloWorldFixture<FactoryType>,
         pMultiDeviceVmeKernel = MultiDeviceKernel::create<MockKernel>(
             pProgram,
             pProgram->getKernelInfosForKernel("device_side_block_motion_estimate_intel"),
-            &retVal);
+            retVal);
 
         pVmeKernel = pMultiDeviceVmeKernel->getKernel(pDevice->getRootDeviceIndex());
         ASSERT_NE(nullptr, pVmeKernel);

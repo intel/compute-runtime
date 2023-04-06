@@ -111,7 +111,7 @@ struct MultiDeviceKernelArgBufferTest : public ::testing::Test {
 };
 TEST_F(MultiDeviceKernelArgBufferTest, GivenValidBufferWhenSettingKernelArgThenBufferAddressIsCorrect) {
     int32_t retVal = CL_INVALID_VALUE;
-    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, &retVal));
+    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, retVal));
 
     EXPECT_EQ(CL_SUCCESS, retVal);
     cl_mem val = pBuffer.get();
@@ -173,7 +173,7 @@ HWTEST_F(MultiDeviceKernelArgBufferTest, GivenSvmPtrStatefulWhenSettingKernelArg
     for (auto &kernelInfo : pKernelInfosStorage) {
         kernelInfo->argAsPtr(0).bindful = 0;
     }
-    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, &retVal));
+    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, retVal));
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -232,7 +232,7 @@ TEST_F(KernelArgBufferTest, GivenNullPtrWhenSettingKernelArgThenKernelArgIsNull)
 
 TEST_F(MultiDeviceKernelArgBufferTest, GivenNullPtrWhenSettingKernelArgThenKernelArgIsNull) {
     int32_t retVal = CL_INVALID_VALUE;
-    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, &retVal));
+    auto pMultiDeviceKernel = std::unique_ptr<MultiDeviceKernel>(MultiDeviceKernel::create<MockKernel>(pProgram.get(), kernelInfos, retVal));
 
     EXPECT_EQ(CL_SUCCESS, retVal);
 

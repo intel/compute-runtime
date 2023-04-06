@@ -186,11 +186,12 @@ TEST_F(KernelSubGroupInfoKhrTest, GivenNullDeviceWhenGettingSubGroupInfoFromSing
 }
 
 TEST_F(KernelSubGroupInfoKhrTest, GivenNullDeviceWhenGettingSubGroupInfoFromMultiDeviceKernelThenInvalidDeviceErrorIsReturned) {
-
+    cl_int retVal{CL_SUCCESS};
     MockUnrestrictiveContext context;
     auto mockProgram = std::make_unique<MockProgram>(&context, false, context.getDevices());
     std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(
-        MultiDeviceKernel::create<MockKernel>(mockProgram.get(), this->pMultiDeviceKernel->getKernelInfos(), nullptr));
+        MultiDeviceKernel::create<MockKernel>(mockProgram.get(), this->pMultiDeviceKernel->getKernelInfos(), retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
 
     retVal = clGetKernelSubGroupInfoKHR(
         pMultiDeviceKernel.get(),

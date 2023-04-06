@@ -35,7 +35,7 @@ class MultiDeviceKernel : public BaseObject<_cl_kernel> {
     Kernel *getDefaultKernel() const { return defaultKernel; }
 
     template <typename kernel_t = Kernel, typename program_t = Program, typename multi_device_kernel_t = MultiDeviceKernel>
-    static multi_device_kernel_t *create(program_t *program, const KernelInfoContainer &kernelInfos, cl_int *errcodeRet) {
+    static multi_device_kernel_t *create(program_t *program, const KernelInfoContainer &kernelInfos, cl_int &errcodeRet) {
         KernelVectorType kernels{};
         kernels.resize(program->getMaxRootDeviceIndex() + 1);
 

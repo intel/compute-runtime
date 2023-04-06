@@ -180,7 +180,8 @@ class DefaultGrfKernelFixture : public ProgramFixture {
             pProgram,
             pProgram->getKernelInfoForKernel("spill_test"),
             *device,
-            &retVal));
+            retVal));
+        ASSERT_EQ(CL_SUCCESS, retVal);
     }
 
     void tearDown() {

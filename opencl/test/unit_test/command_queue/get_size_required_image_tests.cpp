@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -121,8 +121,10 @@ HWTEST_F(GetSizeRequiredImageTest, WhenCopyingReadWriteImageThenHeapsAndCommandB
 
     std::unique_ptr<MockProgram> program(Program::createBuiltInFromSource<MockProgram>("CopyImageToImage3d", context, context->getDevices(), nullptr));
     program->build(program->getDevices(), nullptr, false);
-    std::unique_ptr<Kernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel("CopyImageToImage3d"), *context->getDevice(0), nullptr));
+    cl_int retVal{CL_SUCCESS};
+    std::unique_ptr<Kernel> kernel(Kernel::create<MockKernel>(program.get(), program->getKernelInfoForKernel("CopyImageToImage3d"), *context->getDevice(0), retVal));
 
+    EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_NE(nullptr, kernel);
     // This kernel does not operate on OpenCL 2.0 Read and Write images
     EXPECT_FALSE(kernel->getKernelInfo().kernelDescriptor.kernelAttributes.flags.usesFencesForReadWriteImages);
@@ -131,7 +133,7 @@ HWTEST_F(GetSizeRequiredImageTest, WhenCopyingReadWriteImageThenHeapsAndCommandB
     const_cast<KernelDescriptor &>(kernel->getKernelInfo().kernelDescriptor).kernelAttributes.flags.usesFencesForReadWriteImages = true;
 
     // Enqueue kernel that may require special WA DisableLSQCROPERFforOCL
-    auto retVal = EnqueueKernelHelper<>::enqueueKernel(pCmdQ, kernel.get());
+    retVal = EnqueueKernelHelper<>::enqueueKernel(pCmdQ, kernel.get());
     EXPECT_EQ(CL_SUCCESS, retVal);
 
     auto usedAfterCS = commandStream.getUsed();

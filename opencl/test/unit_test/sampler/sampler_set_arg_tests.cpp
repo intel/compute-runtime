@@ -49,7 +49,7 @@ class SamplerSetArgFixture : public ClDeviceFixture {
 
         program = std::make_unique<MockProgram>(toClDeviceVector(*pClDevice));
         retVal = CL_INVALID_VALUE;
-        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal);
+        pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(program.get(), MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), retVal);
         pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(rootDeviceIndex));
         ASSERT_NE(nullptr, pKernel);
         ASSERT_EQ(CL_SUCCESS, retVal);

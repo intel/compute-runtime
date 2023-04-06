@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -74,7 +74,7 @@ struct HelloWorldKernelFixture : public ProgramFixture {
         pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel, Program, MockMultiDeviceKernel>(
             pProgram,
             pProgram->getKernelInfosForKernel(pKernelName->c_str()),
-            &retVal);
+            retVal);
 
         pKernel = static_cast<MockKernel *>(pMultiDeviceKernel->getKernel(pDevice->getRootDeviceIndex()));
         EXPECT_NE(nullptr, pKernel);

@@ -91,7 +91,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
                                                 const void *argVal);
 
     template <typename kernel_t = Kernel, typename program_t = Program>
-    static kernel_t *create(program_t *program, const KernelInfo &kernelInfo, ClDevice &clDevice, cl_int *errcodeRet) {
+    static kernel_t *create(program_t *program, const KernelInfo &kernelInfo, ClDevice &clDevice, cl_int &errcodeRet) {
         cl_int retVal;
         kernel_t *pKernel = nullptr;
 
@@ -102,20 +102,7 @@ class Kernel : public ReferenceTrackedObject<Kernel> {
             delete pKernel;
             pKernel = nullptr;
         }
-
-        if (pKernel) {
-            auto localMemSize = static_cast<uint32_t>(clDevice.getDevice().getDeviceInfo().localMemSize);
-            auto slmTotalSize = pKernel->getSlmTotalSize();
-
-            if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
-                PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
-                retVal = CL_OUT_OF_RESOURCES;
-            }
-        }
-
-        if (errcodeRet) {
-            *errcodeRet = retVal;
-        }
+        errcodeRet = retVal;
 
         if (fileLoggerInstance().enabled()) {
             std::string source;

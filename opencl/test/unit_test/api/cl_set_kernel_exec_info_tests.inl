@@ -23,7 +23,9 @@ class KernelExecInfoFixture : public ApiFixture<> {
         pKernelInfo = std::make_unique<KernelInfo>();
         pKernelInfo->kernelDescriptor.kernelAttributes.simdSize = 1;
 
-        pMockMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), nullptr);
+        cl_int retVal{CL_SUCCESS};
+        pMockMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), retVal);
+        ASSERT_EQ(CL_SUCCESS, retVal);
         pMockKernel = static_cast<MockKernel *>(pMockMultiDeviceKernel->getKernel(testedRootDeviceIndex));
         ASSERT_NE(nullptr, pMockKernel);
         svmCapabilities = pDevice->getDeviceInfo().svmCapabilities;
@@ -75,8 +77,10 @@ TEST_F(clSetKernelExecInfoTests, GivenDeviceNotSupportingSvmWhenSettingKernelExe
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[ApiFixture::testedRootDeviceIndex]->getMutableHardwareInfo();
     VariableBackup<bool> ftrSvm{&hwInfo->capabilityTable.ftrSvm, false};
 
+    cl_int retVal{CL_SUCCESS};
     std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(MultiDeviceKernel::create<MockKernel>(
-        pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), nullptr));
+        pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
 
     uint32_t newPolicy = CL_KERNEL_EXEC_INFO_THREAD_ARBITRATION_POLICY_ROUND_ROBIN_INTEL;
     retVal = clSetKernelExecInfo(

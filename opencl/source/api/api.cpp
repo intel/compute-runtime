@@ -1788,7 +1788,7 @@ cl_kernel CL_API_CALL clCreateKernel(cl_program clProgram,
         kernel = MultiDeviceKernel::create(
             pProgram,
             kernelInfos,
-            &retVal);
+            retVal);
 
         DBG_LOG_INPUTS("kernel", kernel);
     } while (false);
@@ -1835,7 +1835,7 @@ cl_int CL_API_CALL clCreateKernelsInProgram(cl_program clProgram,
                 kernels[i] = MultiDeviceKernel::create(
                     pProgram,
                     kernelInfos,
-                    &retVal);
+                    retVal);
                 if (nullptr == kernels[i]) {
                     UNRECOVERABLE_IF(CL_SUCCESS == retVal);
                     for (unsigned int createdIdx = 0; createdIdx < i; ++createdIdx) {
@@ -5731,7 +5731,7 @@ cl_kernel CL_API_CALL clCloneKernel(cl_kernel sourceKernel,
     if (CL_SUCCESS == retVal) {
         pClonedMultiDeviceKernel = MultiDeviceKernel::create(pSourceMultiDeviceKernel->getProgram(),
                                                              pSourceMultiDeviceKernel->getKernelInfos(),
-                                                             &retVal);
+                                                             retVal);
         UNRECOVERABLE_IF((pClonedMultiDeviceKernel == nullptr) || (retVal != CL_SUCCESS));
 
         retVal = pClonedMultiDeviceKernel->cloneKernel(pSourceMultiDeviceKernel);

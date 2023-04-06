@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -183,7 +183,8 @@ XE_HPC_CORETEST_P(UmStatelessCompressionWithStatefulAccess, givenDeviceMemAllocW
     const KernelInfo *pKernelInfo = pProgram->getKernelInfo("StatefulCopyBuffer", rootDeviceIndex);
     ASSERT_NE(nullptr, pKernelInfo);
 
-    auto pMultiDeviceKernel = clUniquePtr(MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), &retVal));
+    auto pMultiDeviceKernel = clUniquePtr(MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex), retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pMultiDeviceKernel);
 
     retVal = clSetKernelArgSVMPointer(pMultiDeviceKernel.get(), 0, deviceMemAlloc);

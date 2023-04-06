@@ -1470,7 +1470,7 @@ TEST_F(PatchTokenTests, WhenBuildingProgramThenConstantKernelArgsAreAvailable) {
         pProgram,
         *pKernelInfo,
         *pClDevice,
-        &retVal);
+        retVal);
 
     ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
@@ -1511,8 +1511,9 @@ TEST_F(PatchTokenTests, GivenVmeKernelWhenBuildingKernelThenArgAvailable) {
         pProgram,
         *pKernelInfo,
         *pClDevice,
-        &retVal);
+        retVal);
 
+    EXPECT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pKernel);
 
     delete pKernel;

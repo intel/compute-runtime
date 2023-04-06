@@ -161,6 +161,13 @@ cl_int Kernel::initialize() {
     auto maxSimdSize = kernelInfo.getMaxSimdSize();
     const auto &heapInfo = kernelInfo.heapInfo;
 
+    auto localMemSize = static_cast<uint32_t>(clDevice.getDevice().getDeviceInfo().localMemSize);
+    auto slmTotalSize = this->getSlmTotalSize();
+    if (slmTotalSize > 0 && localMemSize < slmTotalSize) {
+        PRINT_DEBUG_STRING(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Size of SLM (%u) larger than available (%u)\n", slmTotalSize, localMemSize);
+        return CL_OUT_OF_RESOURCES;
+    }
+
     if (maxSimdSize != 1 && maxSimdSize < gfxCoreHelper.getMinimalSIMDSize()) {
         return CL_INVALID_KERNEL;
     }

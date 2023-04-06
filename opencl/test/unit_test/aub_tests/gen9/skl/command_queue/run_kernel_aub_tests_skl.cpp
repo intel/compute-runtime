@@ -54,7 +54,8 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
     auto pMultiDeviceKernel0 = MultiDeviceKernel::create<MockKernel>(
         pProgram,
         MockKernel::toKernelInfoContainer(*pKernelInfo0, rootDeviceIndex),
-        &retVal);
+        retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pMultiDeviceKernel0);
 
     const KernelInfo *pKernelInfo1 = pProgram->getKernelInfo("simple_kernel_1", rootDeviceIndex);
@@ -63,7 +64,8 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
     auto pMultiDeviceKernel1 = MultiDeviceKernel::create<MockKernel>(
         pProgram,
         MockKernel::toKernelInfoContainer(*pKernelInfo1, rootDeviceIndex),
-        &retVal);
+        retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pMultiDeviceKernel1);
 
     const KernelInfo *pKernelInfo2 = pProgram->getKernelInfo("simple_kernel_2", rootDeviceIndex);
@@ -72,7 +74,8 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenOoqExecutionThenExpectationsMet) {
     auto pMultiDeviceKernel2 = MultiDeviceKernel::create<MockKernel>(
         pProgram,
         MockKernel::toKernelInfoContainer(*pKernelInfo2, rootDeviceIndex),
-        &retVal);
+        retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(nullptr, pMultiDeviceKernel2);
 
     const cl_int numElems = 64;
@@ -277,7 +280,8 @@ SKLTEST_F(AUBRunKernelIntegrateTest, GivenDeviceSideVmeThenExpectationsMet) {
     auto *pMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(
         pProgram,
         MockKernel::toKernelInfoContainer(*pKernelInfo, rootDeviceIndex),
-        &retVal);
+        retVal);
+    ASSERT_EQ(CL_SUCCESS, retVal);
     ASSERT_NE(pMultiDeviceKernel, nullptr);
     auto pKernel = pMultiDeviceKernel->getKernel(rootDeviceIndex);
     EXPECT_EQ(true, pKernel->isVmeKernel());

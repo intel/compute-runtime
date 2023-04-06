@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,10 +22,13 @@ void BuiltInOp<EBuiltInOps::AuxTranslation>::resizeKernelInstances(size_t size) 
     convertToAuxKernel.reserve(size);
 
     for (size_t i = convertToNonAuxKernel.size(); i < size; i++) {
-        auto clonedNonAuxToAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), clDevice, nullptr);
+        cl_int retVal{CL_SUCCESS};
+        auto clonedNonAuxToAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), clDevice, retVal);
+        UNRECOVERABLE_IF(CL_SUCCESS != retVal);
         clonedNonAuxToAuxKernel->setAuxTranslationDirection(AuxTranslationDirection::NonAuxToAux);
 
-        auto clonedAuxToNonAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), clDevice, nullptr);
+        auto clonedAuxToNonAuxKernel = Kernel::create(baseKernel->getProgram(), baseKernel->getKernelInfo(), clDevice, retVal);
+        UNRECOVERABLE_IF(CL_SUCCESS != retVal);
         clonedAuxToNonAuxKernel->setAuxTranslationDirection(AuxTranslationDirection::AuxToNonAux);
 
         clonedNonAuxToAuxKernel->cloneKernel(baseKernel);

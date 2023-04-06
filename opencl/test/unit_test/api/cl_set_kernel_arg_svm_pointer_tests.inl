@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -33,7 +33,9 @@ class KernelArgSvmApiFixture : public ApiFixture<> {
         pKernelInfo->addArgBuffer(0, 0x30, sizeof(void *));
         pKernelInfo->setAddressQualifier(0, KernelArgMetadata::AddrGlobal);
 
-        pMockMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), nullptr);
+        cl_int retVal{CL_SUCCESS};
+        pMockMultiDeviceKernel = MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), retVal);
+        ASSERT_EQ(CL_SUCCESS, retVal);
         pMockKernel = static_cast<MockKernel *>(pMockMultiDeviceKernel->getKernel(testedRootDeviceIndex));
         ASSERT_NE(nullptr, pMockKernel);
         pMockKernel->setCrossThreadData(pCrossThreadData, sizeof(pCrossThreadData));
@@ -81,10 +83,12 @@ TEST_F(clSetKernelArgSVMPointerTests, GivenDeviceNotSupportingSvmWhenSettingKern
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[ApiFixture::testedRootDeviceIndex]->getMutableHardwareInfo();
     hwInfo->capabilityTable.ftrSvm = false;
 
+    cl_int retVal{CL_SUCCESS};
     std::unique_ptr<MultiDeviceKernel> pMultiDeviceKernel(
-        MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), nullptr));
+        MultiDeviceKernel::create<MockKernel>(pProgram, MockKernel::toKernelInfoContainer(*pKernelInfo, testedRootDeviceIndex), retVal));
+    ASSERT_EQ(CL_SUCCESS, retVal);
 
-    auto retVal = clSetKernelArgSVMPointer(
+    retVal = clSetKernelArgSVMPointer(
         pMultiDeviceKernel.get(), // cl_kernel kernel
         0,                        // cl_uint arg_index
         nullptr                   // const void *arg_value
