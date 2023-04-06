@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -57,6 +57,7 @@ TEST(DrmUuidTest, whenResourceClassIsUsedToIndexClassNamesThenCorrectNamesAreRet
     EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::ContextSaveArea)].first, "I915_UUID_L0_SIP_AREA");
     EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::ModuleHeapDebugArea)].first, "I915_UUID_L0_MODULE_AREA");
     EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::SbaTrackingBuffer)].first, "I915_UUID_L0_SBA_AREA");
+    EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::ContextID)].first, "I915_UUID_L0_CONTEXT_ID");
     EXPECT_STREQ(classNamesToUuid[static_cast<uint32_t>(DrmResourceClass::L0ZebinModule)].first, "L0_ZEBIN_MODULE");
 }
 

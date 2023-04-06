@@ -19,6 +19,7 @@
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/linux/mock_drm_command_stream_receiver.h"
 #include "shared/test/common/mocks/linux/mock_drm_memory_manager.h"
+#include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_allocation_properties.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_gfx_partition.h"
@@ -3920,6 +3921,143 @@ TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenIsaIsRegisteredTh
     EXPECT_EQ(sizeof(uint32_t), drm.registeredDataSize);
     uint32_t *data = reinterpret_cast<uint32_t *>(drm.registeredData);
     EXPECT_EQ(static_cast<uint32_t>(allocation.storageInfo.subDeviceBitfield.to_ulong()), *data);
+}
+
+TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSubDeviceBitfieldSetWhenSbaTrackingBufferIsRegisteredThenDeviceContextIdIsPassedAsPayload) {
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+        drm.classHandles.push_back(i);
+    }
+
+    drm.registeredClass = DrmResourceClass::MaxSize;
+
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(AllocationType::DEBUG_SBA_TRACKING_BUFFER, MemoryPool::LocalMemory);
+    allocation.storageInfo.tileInstanced = false;
+    allocation.storageInfo.subDeviceBitfield = 0b0010;
+    allocation.bufferObjects[0] = &bo;
+
+    MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    allocation.setOsContext(&osContext);
+
+    osContext.drmContextIds.clear();
+    osContext.drmContextIds.push_back(3u);
+    osContext.drmContextIds.push_back(5u);
+
+    const auto processId = 0xABCEDF;
+    uint64_t offlineDumpContextId = static_cast<uint64_t>(processId) << 32 | static_cast<uint64_t>(5u);
+
+    allocation.registerBOBindExtHandle(&drm);
+    EXPECT_EQ(2u, bo.bindExtHandles.size());
+
+    EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
+
+    uint64_t *data = reinterpret_cast<uint64_t *>(drm.registeredData);
+    EXPECT_EQ(offlineDumpContextId, *data);
+
+    allocation.freeRegisteredBOBindExtHandles(&drm);
+    EXPECT_EQ(2u, drm.unregisterCalledCount);
+}
+
+TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledAndSubDeviceBitfieldNotSetWhenSbaTrackingBufferIsRegisteredThenContextIdIsTakenFromDevice0AndPassedAsPayload) {
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+        drm.classHandles.push_back(i);
+    }
+
+    drm.registeredClass = DrmResourceClass::MaxSize;
+
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(AllocationType::DEBUG_SBA_TRACKING_BUFFER, MemoryPool::LocalMemory);
+    allocation.storageInfo.tileInstanced = false;
+    allocation.bufferObjects[0] = &bo;
+
+    MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    allocation.setOsContext(&osContext);
+
+    osContext.drmContextIds.clear();
+    osContext.drmContextIds.push_back(3u);
+    osContext.drmContextIds.push_back(5u);
+
+    const auto processId = 0xABCEDF;
+    uint64_t offlineDumpContextId = static_cast<uint64_t>(processId) << 32 | static_cast<uint64_t>(3u);
+
+    allocation.registerBOBindExtHandle(&drm);
+    EXPECT_EQ(2u, bo.bindExtHandles.size());
+
+    EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
+
+    uint64_t *data = reinterpret_cast<uint64_t *>(drm.registeredData);
+    EXPECT_EQ(offlineDumpContextId, *data);
+
+    allocation.freeRegisteredBOBindExtHandles(&drm);
+    EXPECT_EQ(2u, drm.unregisterCalledCount);
+}
+
+TEST_F(DrmAllocationTests, givenTwoBufferObjectsAndTileInstancedSbaAndSubDeviceBitfieldWhenSbaTrackingBufferIsRegisteredThenContextIdIsTakenFromBufferObjectIndexAndPassedAsPayload) {
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+        drm.classHandles.push_back(i);
+    }
+
+    drm.registeredClass = DrmResourceClass::MaxSize;
+
+    MockBufferObject bo0(&drm, 3, 0, 0, 1);
+    MockBufferObject bo1(&drm, 3, 0, 0, 1);
+
+    MockDrmAllocation allocation(AllocationType::DEBUG_SBA_TRACKING_BUFFER, MemoryPool::LocalMemory);
+    allocation.storageInfo.subDeviceBitfield = 0b0011;
+    allocation.storageInfo.tileInstanced = true;
+    allocation.bufferObjects[0] = &bo0;
+    allocation.bufferObjects[1] = &bo1;
+
+    MockOsContextLinux osContext(drm, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    allocation.setOsContext(&osContext);
+
+    osContext.drmContextIds.clear();
+    osContext.drmContextIds.push_back(3u);
+    osContext.drmContextIds.push_back(5u);
+
+    const auto processId = 0xABCEDF;
+    uint64_t offlineDumpContextIdBo1 = static_cast<uint64_t>(processId) << 32 | static_cast<uint64_t>(5u);
+
+    allocation.registerBOBindExtHandle(&drm);
+    EXPECT_EQ(2u, bo0.bindExtHandles.size());
+    EXPECT_EQ(2u, bo1.bindExtHandles.size());
+
+    EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo0.bindExtHandles[0]);
+    EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo1.bindExtHandles[0]);
+
+    uint64_t *dataBo1 = reinterpret_cast<uint64_t *>(drm.registeredData);
+    EXPECT_EQ(offlineDumpContextIdBo1, *dataBo1);
+
+    allocation.freeRegisteredBOBindExtHandles(&drm);
+    EXPECT_EQ(3u, drm.unregisterCalledCount);
+}
+
+TEST_F(DrmAllocationTests, givenResourceRegistrationEnabledWhenSbaTrackingBufferIsRegisteredWithoutOsContextThenHandleIsNotAddedToBO) {
+    DrmMockResources drm(*executionEnvironment->rootDeviceEnvironments[0]);
+
+    for (uint32_t i = 3; i < 3 + static_cast<uint32_t>(DrmResourceClass::MaxSize); i++) {
+        drm.classHandles.push_back(i);
+    }
+
+    drm.registeredClass = DrmResourceClass::MaxSize;
+
+    MockBufferObject bo(&drm, 3, 0, 0, 1);
+    MockDrmAllocation allocation(AllocationType::DEBUG_SBA_TRACKING_BUFFER, MemoryPool::LocalMemory);
+    allocation.bufferObjects[0] = &bo;
+
+    allocation.registerBOBindExtHandle(&drm);
+    EXPECT_EQ(1u, bo.bindExtHandles.size());
+
+    EXPECT_EQ(DrmMockResources::registerResourceReturnHandle, bo.bindExtHandles[0]);
+
+    allocation.freeRegisteredBOBindExtHandles(&drm);
+    EXPECT_EQ(1u, drm.unregisterCalledCount);
 }
 
 TEST_F(DrmAllocationTests, givenDrmAllocationWhenSetCacheRegionIsCalledForDefaultRegionThenReturnTrue) {

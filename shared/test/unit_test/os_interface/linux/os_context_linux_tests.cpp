@@ -9,6 +9,7 @@
 #include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/test/common/helpers/engine_descriptor_helper.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
+#include "shared/test/common/mocks/linux/mock_os_context_linux.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/os_interface/linux/device_command_stream_fixture.h"
 
@@ -39,18 +40,10 @@ TEST(OSContextLinux, givenInitializeContextWhenContextCreateIoctlFailsThenContex
 }
 
 TEST(OSContextLinux, givenOsContextLinuxWhenQueryingForOfflineDumpContextIdThenCorrectValueIsReturned) {
-    class OsContextLinuxMock : public OsContextLinux {
-      public:
-        using OsContextLinux::drmContextIds;
-
-        OsContextLinuxMock(Drm &drm, uint32_t rootDeviceIndex, uint32_t contextId, const EngineDescriptor &engineDescriptor)
-            : OsContextLinux(drm, rootDeviceIndex, contextId, engineDescriptor) {}
-    };
-
     MockExecutionEnvironment executionEnvironment;
     std::unique_ptr<DrmMockCustom> mock(new DrmMockCustom(*executionEnvironment.rootDeviceEnvironments[0]));
     executionEnvironment.rootDeviceEnvironments[0]->memoryOperationsInterface = DrmMemoryOperationsHandler::create(*mock.get(), 0u);
-    OsContextLinuxMock osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
+    MockOsContextLinux osContext(*mock, 0, 0u, EngineDescriptorHelper::getDefaultDescriptor());
 
     osContext.drmContextIds.clear();
     osContext.drmContextIds.push_back(1u);

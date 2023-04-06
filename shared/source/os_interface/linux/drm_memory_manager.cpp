@@ -499,7 +499,10 @@ GraphicsAllocation *DrmMemoryManager::allocateGraphicsMemoryWithGpuVa(const Allo
     }
 
     auto allocation = new DrmAllocation(allocationData.rootDeviceIndex, allocationData.type, bo.get(), res, bo->peekAddress(), alignedSize, MemoryPool::System4KBPages);
+    allocation->storageInfo = allocationData.storageInfo;
     allocation->setDriverAllocatedCpuPtr(res);
+    allocation->setOsContext(osContextLinux);
+
     bo.release();
 
     return allocation;

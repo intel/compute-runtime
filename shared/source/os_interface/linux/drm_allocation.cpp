@@ -8,12 +8,14 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 
 #include "shared/source/debug_settings/debug_settings_manager.h"
+#include "shared/source/helpers/basic_math.h"
 #include "shared/source/memory_manager/residency.h"
 #include "shared/source/os_interface/linux/cache_info.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
 #include "shared/source/os_interface/os_context.h"
 
 #include <sstream>
@@ -232,9 +234,11 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
             uint64_t gpuAddress = getGpuAddress();
             handle = drm->registerResource(resourceClass, &gpuAddress, sizeof(gpuAddress));
         }
+
         registeredBoBindHandles.push_back(handle);
 
         auto &bos = getBOs();
+        uint32_t boIndex = 0u;
 
         for (auto bo : bos) {
             if (bo) {
@@ -246,8 +250,25 @@ void DrmAllocation::registerBOBindExtHandle(Drm *drm) {
                     registeredBoBindHandles.push_back(cookieHandle);
                 }
 
+                if (resourceClass == DrmResourceClass::SbaTrackingBuffer && getOsContext()) {
+                    auto deviceIndex = [=]() -> uint32_t {
+                        if (storageInfo.tileInstanced == true) {
+                            return boIndex;
+                        }
+                        auto deviceBitfield = this->storageInfo.subDeviceBitfield;
+                        return deviceBitfield.any() ? static_cast<uint32_t>(Math::log2(static_cast<uint32_t>(deviceBitfield.to_ulong()))) : 0u;
+                    }();
+
+                    auto contextId = getOsContext()->getOfflineDumpContextId(deviceIndex);
+                    auto externalHandle = drm->registerResource(resourceClass, &contextId, sizeof(uint64_t));
+
+                    bo->addBindExtHandle(externalHandle);
+                    registeredBoBindHandles.push_back(externalHandle);
+                }
+
                 bo->requireImmediateBinding(true);
             }
+            boIndex++;
         }
     }
 }

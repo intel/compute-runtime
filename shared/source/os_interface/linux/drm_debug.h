@@ -19,6 +19,7 @@ enum class DrmResourceClass : uint32_t {
     ModuleHeapDebugArea,
     ContextSaveArea,
     SbaTrackingBuffer,
+    ContextID,
     L0ZebinModule,
     MaxSize
 };
@@ -61,6 +62,7 @@ inline const ClassNamesArray classNamesToUuid = {std::make_pair("I915_UUID_CLASS
                                                  std::make_pair("I915_UUID_L0_MODULE_AREA", "a411e82e-16c9-58b7-bfb5-b209b8601d5f"),
                                                  std::make_pair("I915_UUID_L0_SIP_AREA", "21fd6baf-f918-53cc-ba74-f09aaaea2dc0"),
                                                  std::make_pair("I915_UUID_L0_SBA_AREA", "ec45189d-97d3-58e2-80d1-ab52c72fdcc1"),
+                                                 std::make_pair("I915_UUID_L0_CONTEXT_ID", "31a8e011-de56-5db1-952b-b241262dc23a"),
                                                  std::make_pair("L0_ZEBIN_MODULE", "88d347c1-c79b-530a-b68f-e0db7d575e04")};
 
 constexpr auto uuidL0CommandQueueName = "L0_COMMAND_QUEUE";

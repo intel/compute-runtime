@@ -13,6 +13,7 @@
 #include "shared/source/os_interface/linux/drm_allocation.h"
 #include "shared/source/os_interface/linux/drm_buffer_object.h"
 #include "shared/source/os_interface/linux/drm_memory_manager.h"
+#include "shared/source/os_interface/linux/os_context_linux.h"
 
 namespace NEO {
 
@@ -49,6 +50,9 @@ DrmAllocation *DrmMemoryManager::createMultiHostAllocation(const AllocationData 
     allocation->setFlushL3Required(true);
     allocation->setUncacheable(true);
     allocation->setDriverAllocatedCpuPtr(cpuBasePointer);
+
+    auto osContextLinux = static_cast<OsContextLinux *>(allocationData.osContext);
+    allocation->setOsContext(osContextLinux);
 
     if (addressReserved) {
         allocation->setReservedAddressRange(reinterpret_cast<void *>(gpuAddress), sizePerTile);

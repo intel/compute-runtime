@@ -14,6 +14,7 @@ namespace NEO {
 class BufferObject;
 class OsContext;
 class Drm;
+class OsContextLinux;
 enum class CachePolicy : uint32_t;
 enum class CacheRegion : uint16_t;
 
@@ -110,6 +111,14 @@ class DrmAllocation : public GraphicsAllocation {
     size_t getMmapSize() { return this->mmapSize; }
     void setMmapSize(size_t size) { this->mmapSize = size; }
 
+    OsContextLinux *getOsContext() const {
+        return this->osContext;
+    }
+
+    void setOsContext(OsContextLinux *context) {
+        this->osContext = context;
+    }
+
     MOCKABLE_VIRTUAL int makeBOsResident(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
     MOCKABLE_VIRTUAL int bindBO(BufferObject *bo, OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
     MOCKABLE_VIRTUAL int bindBOs(OsContext *osContext, uint32_t vmHandleId, std::vector<BufferObject *> *bufferObjects, bool bind);
@@ -122,6 +131,7 @@ class DrmAllocation : public GraphicsAllocation {
     void registerMemoryToUnmap(void *pointer, size_t size, MemoryUnmapFunction unmapFunction);
 
   protected:
+    OsContextLinux *osContext = nullptr;
     BufferObjects bufferObjects{};
     StackVec<uint32_t, 1> registeredBoBindHandles;
     MemAdviseFlags enabledMemAdviseFlags{};
