@@ -182,6 +182,14 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     virtual void setNumHandles(uint32_t numHandles) {
     }
 
+    virtual uint64_t getHandleAddressBase(uint32_t handleIndex) {
+        return 0lu;
+    }
+
+    virtual size_t getHandleSize(uint32_t handleIndex) {
+        return 0lu;
+    }
+
     static bool isCpuAccessRequired(AllocationType allocationType) {
         return allocationType == AllocationType::COMMAND_BUFFER ||
                allocationType == AllocationType::CONSTANT_SURFACE ||
@@ -280,9 +288,6 @@ class GraphicsAllocation : public IDNode<GraphicsAllocation> {
     constexpr static TaskCountType objectAlwaysResident = std::numeric_limits<TaskCountType>::max() - 1;
     std::atomic<uint32_t> hostPtrTaskCountAssignment{0};
     bool isShareableHostMemory = false;
-    bool isSubAllocSet = false;
-    StackVec<size_t, EngineLimits::maxHandleCount> subAllocSize;
-    StackVec<uint64_t, EngineLimits::maxHandleCount> subAllocBase;
 
   protected:
     struct UsageInfo {

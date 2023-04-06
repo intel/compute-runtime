@@ -5270,14 +5270,13 @@ TEST_F(DrmMemoryManagerWithLocalMemoryAndExplicitExpectationsTest, givenMultiple
 
     auto drmAllocation = static_cast<DrmAllocation *>(allocation);
     auto &bos = drmAllocation->getBOs();
-    EXPECT_TRUE(allocation->isSubAllocSet);
     auto boAddress = drmAllocation->getGpuAddress();
     for (auto handleId = 0u; handleId < EngineLimits::maxHandleCount; handleId++) {
         auto bo = bos[handleId];
         ASSERT_NE(nullptr, bo);
         auto boSize = allocation->getGmm(handleId)->gmmResourceInfo->getSizeAllocation();
-        EXPECT_EQ(boAddress, allocation->subAllocBase[handleId]);
-        EXPECT_EQ(boSize, allocation->subAllocSize[handleId]);
+        EXPECT_EQ(boAddress, allocation->getHandleAddressBase(handleId));
+        EXPECT_EQ(boSize, allocation->getHandleSize(handleId));
         boAddress += boSize;
     }
     memoryManager->freeGraphicsMemory(allocation);

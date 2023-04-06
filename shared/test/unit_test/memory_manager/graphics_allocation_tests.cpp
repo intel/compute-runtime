@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,6 +38,13 @@ TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedTaskCountThenAllo
     graphicsAllocation.updateTaskCount(0u, 0u);
     EXPECT_TRUE(graphicsAllocation.isUsed());
 }
+
+TEST(GraphicsAllocationTest, givenGraphicsAllocationGetDefaultHandleAddressAndHandleSize) {
+    MockGraphicsAllocation graphicsAllocation;
+    EXPECT_EQ(0lu, graphicsAllocation.getHandleAddressBase(0));
+    EXPECT_EQ(0lu, graphicsAllocation.getHandleSize(0));
+}
+
 TEST(GraphicsAllocationTest, givenGraphicsAllocationWhenUpdatedTaskCountThenOnlyOneTaskCountIsUpdated) {
     MockGraphicsAllocation graphicsAllocation;
     graphicsAllocation.updateTaskCount(1u, 0u);

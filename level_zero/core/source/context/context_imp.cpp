@@ -679,7 +679,7 @@ ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *allo
             }
             exportStructure->handle = reinterpret_cast<void *>(handle);
         } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_MEMORY_SUB_ALLOCATIONS_EXP_PROPERTIES) {
-            if (alloc->isSubAllocSet) {
+            if (alloc->getNumHandles()) {
                 ze_memory_sub_allocations_exp_properties_t *extendedSubAllocProperties =
                     reinterpret_cast<ze_memory_sub_allocations_exp_properties_t *>(extendedProperties);
                 if (extendedSubAllocProperties->pCount) {
@@ -690,8 +690,8 @@ ze_result_t ContextImp::handleAllocationExtensions(NEO::GraphicsAllocation *allo
                 }
                 if (extendedSubAllocProperties->pSubAllocations) {
                     for (uint32_t i = 0; i < *extendedSubAllocProperties->pCount; i++) {
-                        extendedSubAllocProperties->pSubAllocations[i].base = reinterpret_cast<void *>(alloc->subAllocBase[i]);
-                        extendedSubAllocProperties->pSubAllocations[i].size = alloc->subAllocSize[i];
+                        extendedSubAllocProperties->pSubAllocations[i].base = reinterpret_cast<void *>(alloc->getHandleAddressBase(i));
+                        extendedSubAllocProperties->pSubAllocations[i].size = alloc->getHandleSize(i);
                     }
                     // If pSubAllocations nullptr, then user getting Count first and calling second time
                 }

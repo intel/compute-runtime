@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,6 +9,7 @@
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memadvise_flags.h"
 #include "shared/source/memory_manager/memory_manager.h"
+#include "shared/source/os_interface/linux/drm_buffer_object.h"
 
 namespace NEO {
 class BufferObject;
@@ -88,6 +89,14 @@ class DrmAllocation : public GraphicsAllocation {
 
     void setNumHandles(uint32_t numHandles) override {
         this->numHandles = numHandles;
+    }
+
+    uint64_t getHandleAddressBase(uint32_t handleIndex) override {
+        return bufferObjects[handleIndex]->peekAddress();
+    }
+
+    size_t getHandleSize(uint32_t handleIndex) override {
+        return bufferObjects[handleIndex]->peekSize();
     }
 
     int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) override;
