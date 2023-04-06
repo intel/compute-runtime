@@ -22,7 +22,7 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerTimeoutWhen
 
     DirectSubmissionControllerMock controller;
 
-    EXPECT_EQ(controller.timeout, 14);
+    EXPECT_EQ(controller.timeout.count(), 14);
 }
 
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllertimeoutDivisorWhenCreateObjectThentimeoutDivisorIsEqualWithDebugFlag) {
@@ -124,6 +124,87 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithStarted
     controller.directSubmissionControllingThread.reset();
 }
 
+TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerAndDivisorDisabledWhenIncreaseTimeoutEnabledThenTimeoutIsIncreased) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.DirectSubmissionControllerMaxTimeout.set(200'000);
+    DebugManager.flags.DirectSubmissionControllerDivisor.set(1);
+    MockExecutionEnvironment executionEnvironment;
+    executionEnvironment.prepareRootDeviceEnvironments(1);
+    executionEnvironment.initializeMemoryManager();
+
+    DeviceBitfield deviceBitfield(1);
+    MockCommandStreamReceiver csr(executionEnvironment, 0, deviceBitfield);
+    std::unique_ptr<OsContext> osContext(OsContext::create(nullptr, 0, 0,
+                                                           EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_CCS, EngineUsage::Regular},
+                                                                                                        PreemptionMode::ThreadGroup, deviceBitfield)));
+    csr.setupContext(*osContext.get());
+
+    DirectSubmissionControllerMock controller;
+    controller.keepControlling.store(false);
+    controller.directSubmissionControllingThread->join();
+    controller.directSubmissionControllingThread.reset();
+    controller.registerDirectSubmission(&csr);
+    {
+        csr.taskCount.store(1u);
+        controller.checkNewSubmissions();
+        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 1u);
+
+        auto previousTimestamp = controller.lastTerminateCpuTimestamp;
+        controller.cpuTimestamp += std::chrono::microseconds(5'000);
+        controller.checkNewSubmissions();
+        EXPECT_EQ(std::chrono::duration_cast<std::chrono::microseconds>(controller.lastTerminateCpuTimestamp - previousTimestamp).count(), 5'000);
+        EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 1u);
+        EXPECT_EQ(controller.timeout.count(), 5'000);
+        EXPECT_EQ(controller.maxTimeout.count(), 200'000);
+    }
+    {
+        csr.taskCount.store(2u);
+        controller.checkNewSubmissions();
+        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 2u);
+
+        auto previousTimestamp = controller.lastTerminateCpuTimestamp;
+        controller.cpuTimestamp += std::chrono::microseconds(5'500);
+        controller.checkNewSubmissions();
+        EXPECT_EQ(std::chrono::duration_cast<std::chrono::microseconds>(controller.lastTerminateCpuTimestamp - previousTimestamp).count(), 5'500);
+        EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 2u);
+        EXPECT_EQ(controller.timeout.count(), 8'250);
+    }
+    {
+        csr.taskCount.store(3u);
+        controller.checkNewSubmissions();
+        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 3u);
+
+        auto previousTimestamp = controller.lastTerminateCpuTimestamp;
+        controller.cpuTimestamp += controller.maxTimeout;
+        controller.checkNewSubmissions();
+        EXPECT_EQ(std::chrono::duration_cast<std::chrono::microseconds>(controller.lastTerminateCpuTimestamp - previousTimestamp).count(), controller.maxTimeout.count());
+        EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 3u);
+        EXPECT_EQ(controller.timeout.count(), controller.maxTimeout.count());
+    }
+    {
+        controller.timeout = std::chrono::microseconds(5'000);
+        csr.taskCount.store(4u);
+        controller.checkNewSubmissions();
+        EXPECT_FALSE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 4u);
+
+        auto previousTimestamp = controller.lastTerminateCpuTimestamp;
+        controller.cpuTimestamp += controller.maxTimeout * 2;
+        controller.checkNewSubmissions();
+        EXPECT_EQ(std::chrono::duration_cast<std::chrono::microseconds>(controller.lastTerminateCpuTimestamp - previousTimestamp).count(), controller.maxTimeout.count() * 2);
+        EXPECT_TRUE(controller.directSubmissions[&csr].isStopped);
+        EXPECT_EQ(controller.directSubmissions[&csr].taskCount, 4u);
+        EXPECT_EQ(controller.timeout.count(), 5'000);
+    }
+    controller.unregisterDirectSubmission(&csr);
+}
+
 TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWithNotStartedControllingWhenShuttingDownThenNoHang) {
     DirectSubmissionControllerMock controller;
     EXPECT_NE(controller.directSubmissionControllingThread.get(), nullptr);
@@ -176,22 +257,22 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     controller.directSubmissionControllingThread->join();
     controller.directSubmissionControllingThread.reset();
 
-    EXPECT_EQ(controller.timeout, 5000);
+    EXPECT_EQ(controller.timeout.count(), 5'000);
 
     controller.registerDirectSubmission(&csr);
-    EXPECT_EQ(controller.timeout, 5000);
+    EXPECT_EQ(controller.timeout.count(), 5'000);
 
     controller.registerDirectSubmission(&csr3);
-    EXPECT_EQ(controller.timeout, 5000);
+    EXPECT_EQ(controller.timeout.count(), 5'000);
 
     controller.registerDirectSubmission(&csr1);
-    EXPECT_EQ(controller.timeout, 5000);
+    EXPECT_EQ(controller.timeout.count(), 5'000);
 
     controller.registerDirectSubmission(&csr2);
-    EXPECT_EQ(controller.timeout, 5000);
+    EXPECT_EQ(controller.timeout.count(), 5'000);
 
     controller.registerDirectSubmission(&csr4);
-    EXPECT_EQ(controller.timeout, 5000);
+    EXPECT_EQ(controller.timeout.count(), 5'000);
 
     controller.unregisterDirectSubmission(&csr);
     controller.unregisterDirectSubmission(&csr1);
@@ -280,37 +361,37 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerWhenRegiste
     controller.directSubmissionControllingThread->join();
     controller.directSubmissionControllingThread.reset();
 
-    EXPECT_EQ(controller.timeout, 5000);
+    EXPECT_EQ(controller.timeout.count(), 5'000);
 
     controller.registerDirectSubmission(&csr);
-    EXPECT_EQ(controller.timeout, 5000);
+    EXPECT_EQ(controller.timeout.count(), 5'000);
 
     controller.registerDirectSubmission(&csr5);
-    EXPECT_EQ(controller.timeout, 5000);
+    EXPECT_EQ(controller.timeout.count(), 5'000);
 
     controller.registerDirectSubmission(&csr1);
-    EXPECT_EQ(controller.timeout, 1250);
+    EXPECT_EQ(controller.timeout.count(), 1'250);
 
     controller.registerDirectSubmission(&csr2);
-    EXPECT_EQ(controller.timeout, 312);
+    EXPECT_EQ(controller.timeout.count(), 312);
 
     controller.registerDirectSubmission(&csr4);
-    EXPECT_EQ(controller.timeout, 312);
+    EXPECT_EQ(controller.timeout.count(), 312);
 
     controller.registerDirectSubmission(&csr6);
-    EXPECT_EQ(controller.timeout, 312);
+    EXPECT_EQ(controller.timeout.count(), 312);
 
     controller.registerDirectSubmission(&csr7);
-    EXPECT_EQ(controller.timeout, 312);
+    EXPECT_EQ(controller.timeout.count(), 312);
 
     controller.registerDirectSubmission(&csr9);
-    EXPECT_EQ(controller.timeout, 312);
+    EXPECT_EQ(controller.timeout.count(), 312);
 
     controller.registerDirectSubmission(&csr8);
-    EXPECT_EQ(controller.timeout, 78);
+    EXPECT_EQ(controller.timeout.count(), 78);
 
     controller.registerDirectSubmission(&csr10);
-    EXPECT_EQ(controller.timeout, 78);
+    EXPECT_EQ(controller.timeout.count(), 78);
 
     controller.unregisterDirectSubmission(&csr);
     controller.unregisterDirectSubmission(&csr1);
@@ -363,22 +444,22 @@ TEST(DirectSubmissionControllerTests, givenDirectSubmissionControllerDirectSubmi
     controller.directSubmissionControllingThread->join();
     controller.directSubmissionControllingThread.reset();
 
-    EXPECT_EQ(controller.timeout, 5000);
+    EXPECT_EQ(controller.timeout.count(), 5'000);
 
     controller.registerDirectSubmission(&csr);
-    EXPECT_EQ(controller.timeout, 5000);
+    EXPECT_EQ(controller.timeout.count(), 5'000);
 
     controller.registerDirectSubmission(&csr3);
-    EXPECT_EQ(controller.timeout, 5000);
+    EXPECT_EQ(controller.timeout.count(), 5'000);
 
     controller.registerDirectSubmission(&csr1);
-    EXPECT_EQ(controller.timeout, 1000);
+    EXPECT_EQ(controller.timeout.count(), 1'000);
 
     controller.registerDirectSubmission(&csr2);
-    EXPECT_EQ(controller.timeout, 200);
+    EXPECT_EQ(controller.timeout.count(), 200);
 
     controller.registerDirectSubmission(&csr4);
-    EXPECT_EQ(controller.timeout, 200);
+    EXPECT_EQ(controller.timeout.count(), 200);
 
     controller.unregisterDirectSubmission(&csr);
     controller.unregisterDirectSubmission(&csr1);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019-2022 Intel Corporation
+ * Copyright (C) 2019-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -16,6 +16,8 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
     using DirectSubmissionController::directSubmissions;
     using DirectSubmissionController::directSubmissionsMutex;
     using DirectSubmissionController::keepControlling;
+    using DirectSubmissionController::lastTerminateCpuTimestamp;
+    using DirectSubmissionController::maxTimeout;
     using DirectSubmissionController::timeout;
     using DirectSubmissionController::timeoutDivisor;
 
@@ -24,6 +26,11 @@ struct DirectSubmissionControllerMock : public DirectSubmissionController {
         this->sleepCalled = true;
     }
 
+    SteadyClock::time_point getCpuTimestamp() override {
+        return cpuTimestamp;
+    }
+
+    SteadyClock::time_point cpuTimestamp{};
     bool sleepCalled = false;
 };
 } // namespace NEO

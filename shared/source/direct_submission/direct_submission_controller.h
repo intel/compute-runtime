@@ -12,6 +12,7 @@
 
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -21,8 +22,11 @@ class MemoryManager;
 class CommandStreamReceiver;
 class Thread;
 
+using SteadyClock = std::chrono::steady_clock;
+
 class DirectSubmissionController {
   public:
+    static constexpr size_t defaultTimeout = 5'000;
     DirectSubmissionController();
     virtual ~DirectSubmissionController();
 
@@ -42,8 +46,10 @@ class DirectSubmissionController {
     static void *controlDirectSubmissionsState(void *self);
     void checkNewSubmissions();
     MOCKABLE_VIRTUAL void sleep();
+    MOCKABLE_VIRTUAL SteadyClock::time_point getCpuTimestamp();
 
     void adjustTimeout(CommandStreamReceiver *csr);
+    void recalculateTimeout();
 
     uint32_t maxCcsCount = 1u;
     std::array<uint32_t, DeviceBitfield().size()> ccsCount = {};
@@ -54,7 +60,9 @@ class DirectSubmissionController {
     std::atomic_bool keepControlling = true;
     std::atomic_bool runControlling = false;
 
-    int timeout = 5000;
+    SteadyClock::time_point lastTerminateCpuTimestamp{};
+    std::chrono::microseconds maxTimeout{defaultTimeout};
+    std::chrono::microseconds timeout{defaultTimeout};
     int timeoutDivisor = 1;
 };
 } // namespace NEO

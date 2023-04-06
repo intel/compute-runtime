@@ -19,10 +19,13 @@ namespace NEO {
 
 DirectSubmissionController::DirectSubmissionController() {
     if (DebugManager.flags.DirectSubmissionControllerTimeout.get() != -1) {
-        timeout = DebugManager.flags.DirectSubmissionControllerTimeout.get();
+        timeout = std::chrono::microseconds{DebugManager.flags.DirectSubmissionControllerTimeout.get()};
     }
     if (DebugManager.flags.DirectSubmissionControllerDivisor.get() != -1) {
         timeoutDivisor = DebugManager.flags.DirectSubmissionControllerDivisor.get();
+    }
+    if (DebugManager.flags.DirectSubmissionControllerMaxTimeout.get() != -1) {
+        maxTimeout = std::chrono::microseconds{DebugManager.flags.DirectSubmissionControllerMaxTimeout.get()};
     }
 
     directSubmissionControllingThread = Thread::create(controlDirectSubmissionsState, reinterpret_cast<void *>(this));
@@ -74,7 +77,7 @@ void *DirectSubmissionController::controlDirectSubmissionsState(void *self) {
 
 void DirectSubmissionController::checkNewSubmissions() {
     std::lock_guard<std::mutex> lock(this->directSubmissionsMutex);
-
+    bool shouldRecalculateTimeout = false;
     for (auto &directSubmission : this->directSubmissions) {
         auto csr = directSubmission.first;
         auto &state = directSubmission.second;
@@ -87,16 +90,24 @@ void DirectSubmissionController::checkNewSubmissions() {
                 auto lock = csr->obtainUniqueOwnership();
                 csr->stopDirectSubmission();
                 state.isStopped = true;
+                shouldRecalculateTimeout = true;
             }
         } else {
             state.isStopped = false;
             state.taskCount = taskCount;
         }
     }
+    if (shouldRecalculateTimeout) {
+        this->recalculateTimeout();
+    }
 }
 
 void DirectSubmissionController::sleep() {
     std::this_thread::sleep_for(std::chrono::microseconds(this->timeout));
+}
+
+SteadyClock::time_point DirectSubmissionController::getCpuTimestamp() {
+    return SteadyClock::now();
 }
 
 void DirectSubmissionController::adjustTimeout(CommandStreamReceiver *csr) {
@@ -112,6 +123,18 @@ void DirectSubmissionController::adjustTimeout(CommandStreamReceiver *csr) {
             this->timeout /= this->timeoutDivisor;
         }
     }
+}
+
+void DirectSubmissionController::recalculateTimeout() {
+    const auto now = this->getCpuTimestamp();
+    const auto timeSinceLastTerminate = std::chrono::duration_cast<std::chrono::microseconds>(now - this->lastTerminateCpuTimestamp);
+    DEBUG_BREAK_IF(timeSinceLastTerminate.count() < 0);
+    if (timeSinceLastTerminate.count() > this->timeout.count() &&
+        timeSinceLastTerminate.count() <= this->maxTimeout.count()) {
+        const auto newTimeout = std::chrono::duration_cast<std::chrono::microseconds>(timeSinceLastTerminate * 1.5);
+        this->timeout = newTimeout.count() < this->maxTimeout.count() ? newTimeout : this->maxTimeout;
+    }
+    this->lastTerminateCpuTimestamp = now;
 }
 
 } // namespace NEO
