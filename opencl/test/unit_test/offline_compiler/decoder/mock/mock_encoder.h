@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -35,7 +35,7 @@ class MockEncoder : public BinaryEncoder {
     using BinaryEncoder::pathToDump;
 
     MockEncoder(bool suppressMessages = true) : MockEncoder("", "") {
-        argHelper->getPrinterRef() = MessagePrinter(suppressMessages);
+        argHelper->getPrinterRef().setSuppressMessages(suppressMessages);
     }
 
     MockEncoder(const std::string &dump, const std::string &elf)

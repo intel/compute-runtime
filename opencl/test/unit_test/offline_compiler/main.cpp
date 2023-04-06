@@ -44,6 +44,31 @@ std::string getRunPath() {
     return res;
 }
 
+void applyWorkarounds() {
+    {
+        std::ofstream f;
+        const std::string fileName("_tmp_");
+        f.open(fileName, std::ofstream::binary);
+        f.close();
+    }
+    {
+        std::mutex mtx;
+        std::unique_lock<std::mutex> stateLock(mtx);
+    }
+    {
+        std::stringstream ss("1");
+        int val;
+        ss >> val;
+    }
+    {
+        std::string res("abc");
+        res = res.substr(0, 2);
+    }
+
+    // intialize rand
+    srand(static_cast<unsigned int>(time(nullptr)));
+}
+
 int main(int argc, char **argv) {
     int retVal = 0;
     bool useDefaultListener = false;
@@ -57,6 +82,8 @@ int main(int argc, char **argv) {
     std::string devicePrefix("skl");
     std::string revId("0");
     std::string productConfig("");
+
+    applyWorkarounds();
 
 #if defined(__linux__)
     if (getenv("CLOC_SELFTEST") == nullptr) {

@@ -322,7 +322,7 @@ TEST(ZebinManipulatorTests, GivenInvalidSectionsInfoWhenCheckingIfIs64BitZebinTh
 template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits>
 struct ZebinDecoderFixture {
     ZebinDecoderFixture() : argHelper(filesMap), decoder(&argHelper) {
-        argHelper.messagePrinter = MessagePrinter(true);
+        argHelper.messagePrinter.setSuppressMessages(true);
     };
     void setUp() {}
     void tearDown() {}
@@ -469,7 +469,7 @@ TEST_F(ZebinDecoderTests, WhenPrintHelpIsCalledThenHelpIsPrinted) {
 template <NEO::Elf::ELF_IDENTIFIER_CLASS numBits>
 struct ZebinEncoderFixture {
     ZebinEncoderFixture() : argHelper(filesMap), encoder(&argHelper) {
-        argHelper.messagePrinter = MessagePrinter(true);
+        argHelper.messagePrinter.setSuppressMessages(true);
     };
     void setUp() {}
     void tearDown() {}

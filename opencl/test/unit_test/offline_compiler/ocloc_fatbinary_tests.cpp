@@ -307,7 +307,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenClosedRangeTooExtensiveWhenProdu
             GTEST_SKIP();
         }
 
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
         std::stringstream acronymsString;
         acronymsString << enabledAcronyms[0].str() << ":" << enabledAcronyms[1].str() << ":" << enabledAcronyms[2].str();
         auto target = acronymsString.str();
@@ -369,7 +369,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfProductsWhenFatBinar
         auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
         std::stringstream resString;
         std::vector<std::string> argv = {
             "ocloc",
@@ -406,7 +406,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoVersionsOfProductConfigsWhenF
         auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
         std::stringstream resString;
         std::vector<std::string> argv = {
             "ocloc",
@@ -440,7 +440,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsAcronymsWithoutDashesWhe
     auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
     EXPECT_EQ(got, expected);
 
-    oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
     std::stringstream resString;
     std::vector<std::string> argv = {
         "ocloc",
@@ -544,7 +544,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfReleasesWhenFatBinar
         auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
         std::stringstream resString;
         std::vector<std::string> argv = {
             "ocloc",
@@ -585,7 +585,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenTwoTargetsOfFamiliesWhenFatBinar
         auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
         std::stringstream resString;
         std::vector<std::string> argv = {
             "ocloc",
@@ -630,7 +630,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsClosedRangeWhenFatBinary
         auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
         std::stringstream resString;
         std::vector<std::string> argv = {
             "ocloc",
@@ -669,7 +669,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenProductsClosedRangeWithoutDashes
     auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
     EXPECT_EQ(got, expected);
 
-    oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
     std::stringstream resString;
     std::vector<std::string> argv = {
         "ocloc",
@@ -762,7 +762,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenFamiliesClosedRangeWhenFatBinary
         auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
         std::stringstream resString;
         std::vector<std::string> argv = {
             "ocloc",
@@ -796,7 +796,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromProductWhenFatBinar
         auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
         std::stringstream resString;
         std::vector<std::string> argv = {
             "ocloc",
@@ -832,7 +832,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromProductWithoutDashe
     auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
     EXPECT_EQ(got, expected);
 
-    oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
     std::stringstream resString;
     std::vector<std::string> argv = {
         "ocloc",
@@ -865,7 +865,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToProductWhenFatBinaryB
         auto got = NEO::getTargetProductsForFatbinary(acronymsTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
         std::stringstream resString;
         std::vector<std::string> argv = {
             "ocloc",
@@ -1013,7 +1013,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromReleaseWhenFatBinar
         auto got = NEO::getTargetProductsForFatbinary(releasesTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
         std::stringstream resString;
         std::vector<std::string> argv = {
             "ocloc",
@@ -1057,7 +1057,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToReleaseWhenFatBinaryB
         auto got = NEO::getTargetProductsForFatbinary(releasesTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
         std::stringstream resString;
         std::vector<std::string> argv = {
             "ocloc",
@@ -1243,7 +1243,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeFromFamilyWhenFatBinary
         auto got = NEO::getTargetProductsForFatbinary(familiesTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
         std::stringstream resString;
         std::vector<std::string> argv = {
             "ocloc",
@@ -1285,7 +1285,7 @@ TEST_F(OclocFatBinaryProductAcronymsTests, givenOpenRangeToFamilyWhenFatBinaryBu
         auto got = NEO::getTargetProductsForFatbinary(familiesTarget, oclocArgHelperWithoutInput.get());
         EXPECT_EQ(got, expected);
 
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
         std::stringstream resString;
         std::vector<std::string> argv = {
             "ocloc",
@@ -1323,7 +1323,7 @@ TEST_F(OclocFatBinaryTest, givenSpirvInputWhenFatBinaryIsRequestedThenArchiveCon
         "-device",
         devices};
 
-    mockArgHelper.getPrinterRef() = MessagePrinter{true};
+    mockArgHelper.getPrinterRef().setSuppressMessages(true);
     const auto buildResult = buildFatBinary(args, &mockArgHelper);
     ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
     ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
@@ -1426,7 +1426,7 @@ TEST_F(OclocFatBinaryTest, givenBitFlagsWhenBuildingFatbinaryThenFilesInArchiveH
             "-device",
             devices};
 
-        mockArgHelper.getPrinterRef() = MessagePrinter{true};
+        mockArgHelper.getPrinterRef().setSuppressMessages(true);
         const auto buildResult = buildFatBinary(args, &mockArgHelper);
         ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
         ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
@@ -1466,7 +1466,7 @@ TEST_F(OclocFatBinaryTest, givenOutputDirectoryFlagWhenBuildingFatbinaryThenArch
         "-device",
         devices};
 
-    mockArgHelper.getPrinterRef() = MessagePrinter{true};
+    mockArgHelper.getPrinterRef().setSuppressMessages(true);
     const auto buildResult = buildFatBinary(args, &mockArgHelper);
     ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
 
@@ -1491,7 +1491,7 @@ TEST_F(OclocFatBinaryTest, givenSpirvInputAndExcludeIrFlagWhenFatBinaryIsRequest
         "-device",
         devices};
 
-    mockArgHelper.getPrinterRef() = MessagePrinter{true};
+    mockArgHelper.getPrinterRef().setSuppressMessages(true);
     const auto buildResult = buildFatBinary(args, &mockArgHelper);
     ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
     ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
@@ -1530,7 +1530,7 @@ TEST_F(OclocFatBinaryTest, givenClInputFileWhenFatBinaryIsRequestedThenArchiveDo
         "-device",
         devices};
 
-    mockArgHelper.getPrinterRef() = MessagePrinter{true};
+    mockArgHelper.getPrinterRef().setSuppressMessages(true);
     const auto buildResult = buildFatBinary(args, &mockArgHelper);
     ASSERT_EQ(OclocErrorCode::SUCCESS, buildResult);
     ASSERT_EQ(1u, mockArgHelper.interceptedFiles.count(outputArchiveName));
@@ -1589,7 +1589,7 @@ TEST(OclocFatBinaryHelpersTest, givenPreviousCompilationErrorWhenBuildingFatbina
         gEnvironment->devicePrefix.c_str()};
 
     MockOfflineCompiler mockOfflineCompiler{};
-    mockOfflineCompiler.argHelper->getPrinterRef() = MessagePrinter{true};
+    mockOfflineCompiler.argHelper->getPrinterRef().setSuppressMessages(true);
     mockOfflineCompiler.initialize(argv.size(), argv);
 
     // We expect that nothing is done and error is returned.

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -38,7 +38,7 @@ class MockDecoder : public BinaryDecoder {
     using BinaryDecoder::programHeader;
 
     MockDecoder(bool suppressMessages = true) : MockDecoder("", "", "") {
-        argHelper->getPrinterRef() = MessagePrinter(suppressMessages);
+        argHelper->getPrinterRef().setSuppressMessages(suppressMessages);
     }
 
     MockDecoder(const std::string &file, const std::string &patch, const std::string &dump)

@@ -527,7 +527,7 @@ int BinaryDecoder::validateInput(const std::vector<std::string> &args) {
         } else if ("-ignore_isa_padding" == currArg) {
             ignoreIsaPadding = true;
         } else if ("-q" == currArg) {
-            argHelper->getPrinterRef() = MessagePrinter(true);
+            argHelper->getPrinterRef().setSuppressMessages(true);
             iga->setMessagePrinter(argHelper->getPrinterRef());
         } else {
             argHelper->printf("Unknown argument %s\n", currArg.c_str());

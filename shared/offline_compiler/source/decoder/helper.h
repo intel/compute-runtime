@@ -6,6 +6,8 @@
  */
 
 #pragma once
+#include "shared/source/helpers/non_copyable_or_moveable.h"
+
 #include "igfxfmid.h"
 
 #include <memory>
@@ -31,10 +33,10 @@ size_t findPos(const std::vector<std::string> &lines, const std::string &whatToF
 
 PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &deviceName);
 
-class MessagePrinter {
+class MessagePrinter : NEO::NonCopyableOrMovableClass {
   public:
-    MessagePrinter() = default;
-    MessagePrinter(bool suppressMessages) : suppressMessages(suppressMessages) {}
+    explicit MessagePrinter() = default;
+    explicit MessagePrinter(bool suppressMessages) : suppressMessages(suppressMessages) {}
 
     void printf(const char *message) {
         if (!suppressMessages) {
@@ -56,6 +58,9 @@ class MessagePrinter {
     }
 
     bool isSuppressed() const { return suppressMessages; }
+    void setSuppressMessages(bool suppress) {
+        suppressMessages = suppress;
+    }
 
   private:
     template <typename... Args>

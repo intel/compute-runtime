@@ -46,7 +46,7 @@ struct Output {
 class OclocArgHelper {
   protected:
     std::vector<Source> inputs, headers;
-    std::vector<Output *> outputs;
+    std::vector<std::unique_ptr<Output>> outputs;
     uint32_t *numOutputs = nullptr;
     char ***nameOutputs = nullptr;
     uint8_t ***dataOutputs = nullptr;
@@ -58,7 +58,7 @@ class OclocArgHelper {
     bool sourceFileExists(const std::string &filename) const;
 
     inline void addOutput(const std::string &filename, const void *data, const size_t &size) {
-        outputs.push_back(new Output(filename, data, size));
+        outputs.push_back(std::make_unique<Output>(filename, data, size));
     }
 
   public:

@@ -1071,7 +1071,7 @@ TEST_F(OfflineCompilerTests, givenDeviceIdHexValueWhenInitHwInfoThenItHasCorrect
     auto deviceId = deviceAotInfo[0].deviceIds->front();
     deviceString << "0x" << std::hex << deviceId;
 
-    mockOfflineCompiler.argHelper->getPrinterRef() = MessagePrinter{true};
+    mockOfflineCompiler.argHelper->getPrinterRef().setSuppressMessages(true);
     mockOfflineCompiler.initHardwareInfo(deviceString.str());
     EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usDeviceID, deviceId);
 }
@@ -1096,7 +1096,7 @@ TEST_F(OfflineCompilerTests, givenProperDeviceIdHexAsDeviceArgumentThenSuccessIs
         "-device",
         deviceString.str()};
 
-    oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{false};
+    oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(false);
     testing::internal::CaptureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     EXPECT_EQ(pOfflineCompiler->getHardwareInfo().platform.usDeviceID, deviceId);

@@ -61,7 +61,7 @@ ErrorCode validateInput(const std::vector<std::string> &args, IgaWrapper *iga, O
             outArguments.showHelp = true;
             return OclocErrorCode::SUCCESS;
         } else if ("-q" == currArg) {
-            argHelper->getPrinterRef() = MessagePrinter(true);
+            argHelper->getPrinterRef().setSuppressMessages(true);
             iga->setMessagePrinter(argHelper->getPrinterRef());
         } else if ("-skip-asm-translation" == currArg) {
             outArguments.skipIGAdisassembly = true;

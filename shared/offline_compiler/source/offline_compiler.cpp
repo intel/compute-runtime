@@ -716,7 +716,7 @@ int OfflineCompiler::parseCommandLine(size_t numArgs, const std::vector<std::str
         } else if ("-q" == currArg) {
             quiet = true;
         } else if ("-qq" == currArg) {
-            argHelper->getPrinterRef() = MessagePrinter(true);
+            argHelper->getPrinterRef().setSuppressMessages(true);
             quiet = true;
         } else if ("-spv_only" == currArg) {
             onlySpirV = true;

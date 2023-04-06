@@ -28,7 +28,7 @@ class OclocFatBinaryProductAcronymsTests : public OclocEnabledAcronyms {
   public:
     OclocFatBinaryProductAcronymsTests() {
         oclocArgHelperWithoutInput = std::make_unique<OclocArgHelper>();
-        oclocArgHelperWithoutInput->getPrinterRef() = MessagePrinter{true};
+        oclocArgHelperWithoutInput->getPrinterRef().setSuppressMessages(true);
 
         enabledProducts = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
         enabledProductsAcronyms = oclocArgHelperWithoutInput->productConfigHelper->getRepresentativeProductAcronyms();
@@ -66,7 +66,7 @@ struct OclocFatbinaryPerProductTests : public ::testing::TestWithParam<std::tupl
     void SetUp() override {
         std::tie(release, productFamily) = GetParam();
         argHelper = std::make_unique<OclocArgHelper>();
-        argHelper->getPrinterRef() = MessagePrinter{true};
+        argHelper->getPrinterRef().setSuppressMessages(true);
     }
 
     std::string release;

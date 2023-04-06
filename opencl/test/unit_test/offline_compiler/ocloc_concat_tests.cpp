@@ -89,7 +89,7 @@ TEST(OclocConcatTest, GivenErrorDuringDecodingArWhenConcatenatingThenErrorIsRetu
         {"fatBinary2.ar", "!<arch>\nfatBinary2Data"}};
     MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
     auto oclocConcat = MockOclocConcat(&mockArgHelper);
-    mockArgHelper.messagePrinter = new MessagePrinter(true);
+    mockArgHelper.messagePrinter.setSuppressMessages(true);
     oclocConcat.shouldFailDecodingAr = true;
     oclocConcat.fileNamesToConcat = {"fatBinary1.ar",
                                      "fatBinary2.ar"};
@@ -104,7 +104,7 @@ TEST(OclocConcatTest, GivenBinaryFileNonZebinWhenConcatenatingThenErrorIsReturne
         {"binary.bin", "NOT Zebin"}};
     MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
     auto oclocConcat = MockOclocConcat(&mockArgHelper);
-    mockArgHelper.messagePrinter = new MessagePrinter(true);
+    mockArgHelper.messagePrinter.setSuppressMessages(true);
     oclocConcat.fileNamesToConcat = {"binary.bin"};
     auto error = oclocConcat.concatenate();
     const auto output = mockArgHelper.messagePrinter.getLog().str();
@@ -120,7 +120,7 @@ TEST(OclocConcatTest, GivenZebinWithoutAOTProductConfigWhenConcatenatingThenErro
             {"zebin.bin", std::string(reinterpret_cast<const char *>(zebin->data()), zebin->size())}};
         MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
         auto oclocConcat = MockOclocConcat(&mockArgHelper);
-        mockArgHelper.messagePrinter = new MessagePrinter(true);
+        mockArgHelper.messagePrinter.setSuppressMessages(true);
         oclocConcat.fileNamesToConcat = {"zebin.bin"};
         auto error = oclocConcat.concatenate();
         const auto output = mockArgHelper.messagePrinter.getLog().str();
@@ -151,7 +151,7 @@ TEST(OclocConcatTest, GivenZebinWithAOTNoteAndFatBinaryWhenConcatenatingThenCorr
         {"fatBinary.ar", std::string(reinterpret_cast<const char *>(fatBinary.data()), fatBinary.size())}};
     MockOclocArgHelper mockArgHelper{mockArgHelperFilesMap};
     mockArgHelper.interceptOutput = true;
-    mockArgHelper.messagePrinter = new MessagePrinter(true);
+    mockArgHelper.messagePrinter.setSuppressMessages(true);
 
     auto oclocConcat = MockOclocConcat(&mockArgHelper);
     oclocConcat.fileNamesToConcat = {

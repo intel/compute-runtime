@@ -17,7 +17,7 @@
 TEST(OclocValidate, WhenFileArgIsMissingThenFail) {
     std::map<std::string, std::string> files;
     MockOclocArgHelper argHelper{files};
-    argHelper.getPrinterRef() = MessagePrinter(true);
+    argHelper.getPrinterRef().setSuppressMessages(true);
     int res = Ocloc::validate({}, &argHelper);
     EXPECT_EQ(-1, res);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
@@ -27,7 +27,7 @@ TEST(OclocValidate, WhenFileArgIsMissingThenFail) {
 TEST(OclocValidate, WhenInputFileIsMissingThenFail) {
     MockOclocArgHelper::FilesMap files;
     MockOclocArgHelper argHelper{files};
-    argHelper.getPrinterRef() = MessagePrinter(true);
+    argHelper.getPrinterRef().setSuppressMessages(true);
     int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     EXPECT_EQ(-1, res);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
@@ -37,7 +37,7 @@ TEST(OclocValidate, WhenInputFileIsMissingThenFail) {
 TEST(OclocValidate, WhenInputFileIsAvailableThenLogItsSize) {
     MockOclocArgHelper::FilesMap files{{"src.gen", "01234567"}};
     MockOclocArgHelper argHelper{files};
-    argHelper.getPrinterRef() = MessagePrinter(true);
+    argHelper.getPrinterRef().setSuppressMessages(true);
     int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     EXPECT_NE(0, res);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
@@ -47,7 +47,7 @@ TEST(OclocValidate, WhenInputFileIsAvailableThenLogItsSize) {
 TEST(OclocValidate, WhenInputFileIsNotZebinThenFail) {
     MockOclocArgHelper::FilesMap files{{"src.gen", "01234567"}};
     MockOclocArgHelper argHelper{files};
-    argHelper.getPrinterRef() = MessagePrinter(true);
+    argHelper.getPrinterRef().setSuppressMessages(true);
     int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     EXPECT_EQ(-2, res);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
@@ -59,7 +59,7 @@ TEST(OclocValidate, WhenInputIsValidZebinThenReturnSucceed) {
     MockOclocArgHelper::FilesMap files{{"src.gen", MockOclocArgHelper::FileData(reinterpret_cast<const char *>(zebin.storage.data()),
                                                                                 reinterpret_cast<const char *>(zebin.storage.data()) + zebin.storage.size())}};
     MockOclocArgHelper argHelper{files};
-    argHelper.getPrinterRef() = MessagePrinter(true);
+    argHelper.getPrinterRef().setSuppressMessages(true);
     int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_EQ(0, res) << oclocStdout;
@@ -70,7 +70,7 @@ TEST(OclocValidate, WhenInputIsValid32BitZebinThenReturnSucceed) {
     MockOclocArgHelper::FilesMap files{{"src.gen", MockOclocArgHelper::FileData(reinterpret_cast<const char *>(zebin.storage.data()),
                                                                                 reinterpret_cast<const char *>(zebin.storage.data()) + zebin.storage.size())}};
     MockOclocArgHelper argHelper{files};
-    argHelper.getPrinterRef() = MessagePrinter(true);
+    argHelper.getPrinterRef().setSuppressMessages(true);
     int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_EQ(0, res) << oclocStdout;
@@ -83,7 +83,7 @@ TEST(OclocValidate, WhenWarningsEmitedThenRedirectsThemToStdout) {
     MockOclocArgHelper::FilesMap files{{"src.gen", MockOclocArgHelper::FileData(reinterpret_cast<const char *>(zebin.storage.data()),
                                                                                 reinterpret_cast<const char *>(zebin.storage.data()) + zebin.storage.size())}};
     MockOclocArgHelper argHelper{files};
-    argHelper.getPrinterRef() = MessagePrinter(true);
+    argHelper.getPrinterRef().setSuppressMessages(true);
     int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_EQ(0, res) << oclocStdout;
@@ -98,7 +98,7 @@ TEST(OclocValidate, WhenErrorsEmitedThenRedirectsThemToStdout) {
     MockOclocArgHelper::FilesMap files{{"src.gen", MockOclocArgHelper::FileData(reinterpret_cast<const char *>(zebin.storage.data()),
                                                                                 reinterpret_cast<const char *>(zebin.storage.data()) + zebin.storage.size())}};
     MockOclocArgHelper argHelper{files};
-    argHelper.getPrinterRef() = MessagePrinter(true);
+    argHelper.getPrinterRef().setSuppressMessages(true);
     int res = Ocloc::validate({"-file", "src.gen"}, &argHelper);
     std::string oclocStdout = argHelper.getPrinterRef().getLog().str();
     EXPECT_EQ(static_cast<int>(NEO::DecodeError::InvalidBinary), res) << oclocStdout;
