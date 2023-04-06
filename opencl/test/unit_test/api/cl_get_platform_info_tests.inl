@@ -204,11 +204,7 @@ TEST_F(clGetPlatformInfoTests, WhenCheckingPlatformExtensionsWithVersionThenThey
 
     std::string allExtensions;
     for (size_t i = 0; i < extensionsCount; i++) {
-        if (strcmp(platformExtensionsWithVersion[i].name, "cl_khr_integer_dot_product") == 0) {
-            EXPECT_EQ(CL_MAKE_VERSION(2u, 0, 0), platformExtensionsWithVersion[i].version);
-        } else {
-            EXPECT_EQ(CL_MAKE_VERSION(1u, 0, 0), platformExtensionsWithVersion[i].version);
-        }
+        EXPECT_EQ(CL_MAKE_VERSION(1u, 0u, 0u), platformExtensionsWithVersion[i].version);
         allExtensions += platformExtensionsWithVersion[i].name;
         allExtensions += " ";
     }

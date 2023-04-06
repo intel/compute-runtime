@@ -142,9 +142,6 @@ struct ClDeviceInfo {
     cl_unified_shared_memory_capabilities_intel                                   crossDeviceSharedMemCapabilities;
     cl_unified_shared_memory_capabilities_intel                                   sharedSystemMemCapabilities;
     StackVec<uint32_t, 4>                                                         supportedThreadArbitrationPolicies;
-    cl_device_integer_dot_product_capabilities_khr                                integerDotCapabilities;
-    cl_device_integer_dot_product_acceleration_properties_khr                     integerDotAccelerationProperties8Bit;
-    cl_device_integer_dot_product_acceleration_properties_khr                     integerDotAccelerationProperties4x8BitPacked;
 };
 // clang-format on
 

@@ -405,22 +405,6 @@ void ClDevice::initializeCaps() {
     deviceInfo.crossDeviceSharedMemCapabilities = productHelper.getCrossDeviceSharedMemCapabilities();
     deviceInfo.sharedSystemMemCapabilities = productHelper.getSharedSystemMemCapabilities(&hwInfo);
 
-    deviceInfo.integerDotCapabilities = CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_KHR | CL_DEVICE_INTEGER_DOT_PRODUCT_INPUT_4x8BIT_PACKED_KHR;
-    deviceInfo.integerDotAccelerationProperties8Bit = {
-        CL_TRUE,  // signed_accelerated;
-        CL_TRUE,  // unsigned_accelerated;
-        CL_TRUE,  // mixed_signedness_accelerated;
-        CL_TRUE,  // accumulating_saturating_signed_accelerated;
-        CL_TRUE,  // accumulating_saturating_unsigned_accelerated;
-        CL_TRUE}; // accumulating_saturating_mixed_signedness_accelerated;
-    deviceInfo.integerDotAccelerationProperties4x8BitPacked = {
-        CL_TRUE,  // signed_accelerated;
-        CL_TRUE,  // unsigned_accelerated;
-        CL_TRUE,  // mixed_signedness_accelerated;
-        CL_TRUE,  // accumulating_saturating_signed_accelerated;
-        CL_TRUE,  // accumulating_saturating_unsigned_accelerated;
-        CL_TRUE}; // accumulating_saturating_mixed_signedness_accelerated;
-
     initializeOsSpecificCaps();
     getOpenclCFeaturesList(hwInfo, deviceInfo.openclCFeatures);
 }
@@ -432,7 +416,7 @@ void ClDevice::initializeExtensionsWithVersion() {
     deviceInfo.extensionsWithVersion.reserve(deviceExtensionsVector.size());
     for (auto deviceExtension : deviceExtensionsVector) {
         cl_name_version deviceExtensionWithVersion;
-        deviceExtensionWithVersion.version = getExtensionVersion(deviceExtension);
+        deviceExtensionWithVersion.version = CL_MAKE_VERSION(1, 0, 0);
         strcpy_s(deviceExtensionWithVersion.name, CL_NAME_VERSION_MAX_NAME_SIZE, deviceExtension.c_str());
         deviceInfo.extensionsWithVersion.push_back(deviceExtensionWithVersion);
     }
