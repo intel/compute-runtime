@@ -320,5 +320,11 @@ void CommandListAppendLaunchRayTracingKernelFixture::tearDown() {
     ModuleFixture::tearDown();
 }
 
+void PrimaryBatchBufferCmdListFixture::setUp() {
+    NEO::DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
+
+    ModuleMutableCommandListFixture::setUp();
+}
+
 } // namespace ult
 } // namespace L0

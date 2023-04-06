@@ -198,7 +198,7 @@ class CommandContainer : public NonCopyableOrMovableClass {
     void *getEndCmdPtr() const {
         return endCmdPtr;
     }
-    size_t getEndAlignedSize() const {
+    size_t getAlignedPrimarySize() const {
         return this->alignedPrimarySize;
     }
     void endAlignedPrimaryBuffer();

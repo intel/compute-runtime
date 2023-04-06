@@ -162,17 +162,20 @@ ze_result_t CommandListCoreFamily<gfxCoreFamily>::initialize(Device *device, NEO
     this->signalAllEventPackets = L0GfxCoreHelper::useSignalAllEventPackets(hwInfo);
     this->dynamicHeapRequired = NEO::EncodeDispatchKernel<GfxFamily>::isDshNeeded(device->getDeviceInfo());
     this->doubleSbaWa = productHelper.isAdditionalStateBaseAddressWARequired(hwInfo);
-    this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
     this->defaultMocsIndex = (gmmHelper->getMOCS(GMM_RESOURCE_USAGE_OCL_BUFFER) >> 1);
     this->l1CachePolicyData.init(productHelper);
-    this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;
     this->cmdListHeapAddressModel = L0GfxCoreHelper::getHeapAddressModel(rootDeviceEnvironment);
-    this->commandContainer.setHeapAddressModel(this->cmdListHeapAddressModel);
-    this->requiredStreamState.initSupport(rootDeviceEnvironment);
-    this->finalStreamState.initSupport(rootDeviceEnvironment);
-    this->commandContainer.setStateBaseAddressTracking(this->stateBaseAddressTracking);
     this->dummyBlitWa.rootDeviceEnvironment = &(device->getNEODevice()->getRootDeviceEnvironmentRef());
     this->dispatchCmdListBatchBufferAsPrimary = L0GfxCoreHelper::dispatchCmdListBatchBufferAsPrimary();
+
+    this->requiredStreamState.initSupport(rootDeviceEnvironment);
+    this->finalStreamState.initSupport(rootDeviceEnvironment);
+
+    this->commandContainer.doubleSbaWaRef() = this->doubleSbaWa;
+    this->commandContainer.l1CachePolicyDataRef() = &this->l1CachePolicyData;
+    this->commandContainer.setHeapAddressModel(this->cmdListHeapAddressModel);
+    this->commandContainer.setStateBaseAddressTracking(this->stateBaseAddressTracking);
+    this->commandContainer.setUsingPrimaryBuffer(this->dispatchCmdListBatchBufferAsPrimary);
 
     if (device->isImplicitScalingCapable() && !this->internalUsage && !isCopyOnly()) {
         this->partitionCount = static_cast<uint32_t>(this->device->getNEODevice()->getDeviceBitfield().count());
@@ -264,7 +267,11 @@ inline ze_result_t CommandListCoreFamily<gfxCoreFamily>::executeCommandListImmed
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::close() {
     commandContainer.removeDuplicatesFromResidencyContainer();
-    NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferEnd(commandContainer);
+    if (this->dispatchCmdListBatchBufferAsPrimary) {
+        commandContainer.endAlignedPrimaryBuffer();
+    } else {
+        NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::programBatchBufferEnd(commandContainer);
+    }
 
     return ZE_RESULT_SUCCESS;
 }

@@ -1421,5 +1421,103 @@ HWTEST2_F(CommandListCreate, givenPlatformNotSupportsSharedHeapsWhenImmediateCmd
     l0GfxCoreHelperBackup.release();
 }
 
+using PrimaryBatchBufferCmdListTest = Test<PrimaryBatchBufferCmdListFixture>;
+
+HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenAppendingKernelAndClosingCommandListThenExpectAlignedSpaceForBatchBufferStart) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    auto &cmdContainer = commandList->getCmdContainer();
+    auto &cmdListStream = *cmdContainer.getCommandStream();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    ze_result_t result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    size_t cmdListUsed = cmdListStream.getUsed();
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    size_t actualUse = cmdListUsed + sizeof(MI_BATCH_BUFFER_START);
+    size_t expectedAlignedSize = alignUp(actualUse, NEO::CommandContainer::minCmdBufferPtrAlign);
+
+    EXPECT_EQ(expectedAlignedSize, cmdContainer.getAlignedPrimarySize());
+    if (expectedAlignedSize > actualUse) {
+        size_t noopSize = expectedAlignedSize - actualUse;
+        ASSERT_LE(noopSize, NEO::CommandContainer::minCmdBufferPtrAlign);
+
+        uint8_t noopPadding[NEO::CommandContainer::minCmdBufferPtrAlign];
+        memset(noopPadding, 0, noopSize);
+
+        auto noopPtr = ptrOffset(cmdListStream.getSpace(0), sizeof(MI_BATCH_BUFFER_START));
+        EXPECT_EQ(0, memcmp(noopPadding, noopPtr, noopSize));
+    }
+
+    void *expectedEndPtr = ptrOffset(cmdListStream.getCpuBase(), cmdListUsed);
+    EXPECT_EQ(expectedEndPtr, cmdContainer.getEndCmdPtr());
+
+    result = commandList->reset();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    cmdListUsed = cmdListStream.getUsed();
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    expectedAlignedSize = alignUp(cmdListUsed + sizeof(MI_BATCH_BUFFER_START), NEO::CommandContainer::minCmdBufferPtrAlign);
+    EXPECT_EQ(expectedAlignedSize, cmdContainer.getAlignedPrimarySize());
+
+    expectedEndPtr = ptrOffset(cmdListStream.getCpuBase(), cmdListUsed);
+    EXPECT_EQ(expectedEndPtr, cmdContainer.getEndCmdPtr());
+}
+
+HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenCommandListHasMultipleCommandBuffersThenBuffersAreChainedAndAligned) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    auto &cmdContainer = commandList->getCmdContainer();
+    auto &cmdListStream = *cmdContainer.getCommandStream();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    ze_result_t result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto firstChainBufferAllocation = cmdListStream.getGraphicsAllocation();
+    cmdListStream.getSpace(cmdListStream.getAvailableSpace() - sizeof(MI_BATCH_BUFFER_START));
+    size_t firstCmdBufferUsed = cmdListStream.getUsed();
+    auto bbStartSpace = ptrOffset(cmdListStream.getCpuBase(), firstCmdBufferUsed);
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto secondChainBufferAllocation = cmdListStream.getGraphicsAllocation();
+    size_t secondCmdBufferUsed = cmdListStream.getUsed();
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    EXPECT_NE(firstChainBufferAllocation, secondChainBufferAllocation);
+    auto bbStartGpuAddress = secondChainBufferAllocation->getGpuAddress();
+    auto bbStartChainToSecond = genCmdCast<MI_BATCH_BUFFER_START *>(bbStartSpace);
+    ASSERT_NE(nullptr, bbStartChainToSecond);
+
+    EXPECT_EQ(bbStartGpuAddress, bbStartChainToSecond->getBatchBufferStartAddress());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStartChainToSecond->getSecondLevelBatchBuffer());
+
+    size_t expectedAlignedUse = alignUp(firstCmdBufferUsed + sizeof(MI_BATCH_BUFFER_START), NEO::CommandContainer::minCmdBufferPtrAlign);
+    EXPECT_EQ(expectedAlignedUse, cmdContainer.getAlignedPrimarySize());
+
+    void *expectedEndPtr = ptrOffset(cmdListStream.getCpuBase(), secondCmdBufferUsed);
+    EXPECT_EQ(expectedEndPtr, cmdContainer.getEndCmdPtr());
+}
+
 } // namespace ult
 } // namespace L0

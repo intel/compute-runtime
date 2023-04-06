@@ -114,11 +114,12 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
         heapHelper = std::unique_ptr<HeapHelper>(new HeapHelper(device->getMemoryManager(), device->getDefaultEngine().commandStreamReceiver->getInternalAllocationStorage(), device->getNumGenericSubDevices() > 1u));
 
         for (uint32_t i = 0; i < IndirectHeap::Type::NUM_TYPES; i++) {
-            if (skipHeapAllocationCreation(static_cast<HeapType>(i))) {
+            auto heapType = static_cast<HeapType>(i);
+            if (skipHeapAllocationCreation(heapType)) {
                 continue;
             }
 
-            size_t heapSize = getHeapSize(static_cast<HeapType>(i));
+            size_t heapSize = getHeapSize(heapType);
             allocationIndirectHeaps[i] = heapHelper->getHeapAllocation(i,
                                                                        heapSize,
                                                                        defaultHeapAllocationAlignment,
@@ -129,12 +130,12 @@ CommandContainer::ErrorCode CommandContainer::initialize(Device *device, Allocat
             residencyContainer.push_back(allocationIndirectHeaps[i]);
 
             bool requireInternalHeap = false;
-            if (IndirectHeap::Type::INDIRECT_OBJECT == i) {
+            if (IndirectHeap::Type::INDIRECT_OBJECT == heapType) {
                 requireInternalHeap = true;
                 indirectHeapInLocalMemory = allocationIndirectHeaps[i]->isAllocatedInLocalMemoryPool();
             }
             indirectHeaps[i] = std::make_unique<IndirectHeap>(allocationIndirectHeaps[i], requireInternalHeap);
-            if (i == IndirectHeap::Type::SURFACE_STATE) {
+            if (IndirectHeap::Type::SURFACE_STATE == heapType) {
                 indirectHeaps[i]->getSpace(reservedSshSize);
             }
         }
@@ -200,6 +201,7 @@ void CommandContainer::reset() {
     lastPipelineSelectModeRequired = false;
     lastSentUseGlobalAtomics = false;
     endCmdPtr = nullptr;
+    alignedPrimarySize = 0;
 }
 
 size_t CommandContainer::getAlignedCmdBufferSize() const {
@@ -340,10 +342,14 @@ void CommandContainer::closeAndAllocateNextCommandBuffer() {
 
 void CommandContainer::alignPrimaryEnding(void *endPtr, size_t exactUsedSize) {
     exactUsedSize += this->selectedBbCmdSize;
-    this->alignedPrimarySize = alignUp(exactUsedSize, minCmdBufferPtrAlign);
-    if (this->alignedPrimarySize > exactUsedSize) {
+    size_t alignedBufferSize = alignUp(exactUsedSize, minCmdBufferPtrAlign);
+    if (alignedBufferSize > exactUsedSize) {
         endPtr = ptrOffset(endPtr, this->selectedBbCmdSize);
-        memset(endPtr, 0, this->alignedPrimarySize - exactUsedSize);
+        memset(endPtr, 0, alignedBufferSize - exactUsedSize);
+    }
+
+    if (this->alignedPrimarySize == 0) {
+        this->alignedPrimarySize = alignedBufferSize;
     }
 }
 

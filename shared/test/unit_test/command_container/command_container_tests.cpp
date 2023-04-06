@@ -1683,7 +1683,7 @@ HWTEST_F(CommandContainerTest,
     cmdContainer.endAlignedPrimaryBuffer();
 
     void *endPtr = cmdContainer.getEndCmdPtr();
-    size_t alignedSize = cmdContainer.getEndAlignedSize();
+    size_t alignedSize = cmdContainer.getAlignedPrimarySize();
 
     EXPECT_EQ(chainedCmdBufferAllocation->getUnderlyingBuffer(), endPtr);
     EXPECT_EQ(expectedEndSize, alignedSize);
@@ -1703,6 +1703,7 @@ HWTEST_F(CommandContainerTest,
 
     size_t consumedSize = sizeof(int);
     cmdContainer.getCommandStream()->getSpace(consumedSize);
+    size_t expectedEndSize = alignUp(sizeof(MI_BATCH_BUFFER_START) + consumedSize, CommandContainer::minCmdBufferPtrAlign);
 
     cmdContainer.closeAndAllocateNextCommandBuffer();
 
@@ -1732,12 +1733,83 @@ HWTEST_F(CommandContainerTest,
     consumedSize = alignUp(sizeof(MI_BATCH_BUFFER_START), CommandContainer::minCmdBufferPtrAlign) - sizeof(MI_BATCH_BUFFER_START);
     cmdContainer.getCommandStream()->getSpace(consumedSize);
 
-    size_t expectedEndSize = alignUp((sizeof(MI_BATCH_BUFFER_START) + consumedSize), CommandContainer::minCmdBufferPtrAlign);
     cmdContainer.endAlignedPrimaryBuffer();
 
     void *endPtr = cmdContainer.getEndCmdPtr();
-    size_t alignedSize = cmdContainer.getEndAlignedSize();
+    size_t alignedSize = cmdContainer.getAlignedPrimarySize();
 
     EXPECT_EQ(ptrOffset(closingCmdBufferAllocation->getUnderlyingBuffer(), consumedSize), endPtr);
     EXPECT_EQ(expectedEndSize, alignedSize);
+}
+
+HWTEST_F(CommandContainerTest,
+         givenCmdContainerUsingPrimaryBatchBufferWhenEndingPrimaryBufferAndFirstChainInUseThenProvideFirstChainBufferAlignedSize) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    CommandContainer cmdContainer;
+    cmdContainer.setUsingPrimaryBuffer(true);
+    EXPECT_TRUE(cmdContainer.isUsingPrimaryBuffer());
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+
+    ASSERT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
+    auto firstCmdBufferAllocation = cmdContainer.getCmdBufferAllocations()[0];
+
+    size_t consumedSize = 20;
+    cmdContainer.getCommandStream()->getSpace(consumedSize);
+
+    size_t expectedEndSize = alignUp(sizeof(MI_BATCH_BUFFER_START) + consumedSize, CommandContainer::minCmdBufferPtrAlign);
+    void *expectedEndPtr = ptrOffset(firstCmdBufferAllocation->getUnderlyingBuffer(), consumedSize);
+
+    cmdContainer.endAlignedPrimaryBuffer();
+
+    void *endPtr = cmdContainer.getEndCmdPtr();
+    size_t alignedSize = cmdContainer.getAlignedPrimarySize();
+
+    EXPECT_EQ(expectedEndPtr, endPtr);
+    EXPECT_EQ(expectedEndSize, alignedSize);
+
+    cmdContainer.reset();
+    EXPECT_EQ(nullptr, cmdContainer.getEndCmdPtr());
+    EXPECT_EQ(0u, cmdContainer.getAlignedPrimarySize());
+}
+
+HWTEST_F(CommandContainerTest,
+         givenCmdContainerUsingPrimaryBatchBufferWhenEndingPrimaryBufferWhenSecondChainInUseThenProvideFirstChainBufferAlignedSize) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    CommandContainer cmdContainer;
+    cmdContainer.setUsingPrimaryBuffer(true);
+    EXPECT_TRUE(cmdContainer.isUsingPrimaryBuffer());
+    cmdContainer.initialize(pDevice, nullptr, HeapSize::defaultHeapSize, true, false);
+    ASSERT_EQ(cmdContainer.getCmdBufferAllocations().size(), 1u);
+
+    size_t consumedSize = 28;
+    cmdContainer.getCommandStream()->getSpace(consumedSize);
+    void *bbStartSpace = ptrOffset(cmdContainer.getCommandStream()->getCpuBase(), consumedSize);
+    size_t expectedEndSize = alignUp(sizeof(MI_BATCH_BUFFER_START) + consumedSize, CommandContainer::minCmdBufferPtrAlign);
+
+    cmdContainer.closeAndAllocateNextCommandBuffer();
+    ASSERT_EQ(cmdContainer.getCmdBufferAllocations().size(), 2u);
+    auto secondCmdBufferAllocation = cmdContainer.getCmdBufferAllocations()[1];
+
+    auto bbStart = genCmdCast<MI_BATCH_BUFFER_START *>(bbStartSpace);
+    ASSERT_NE(nullptr, bbStart);
+    EXPECT_EQ(secondCmdBufferAllocation->getGpuAddress(), bbStart->getBatchBufferStartAddress());
+    EXPECT_EQ(MI_BATCH_BUFFER_START::SECOND_LEVEL_BATCH_BUFFER::SECOND_LEVEL_BATCH_BUFFER_FIRST_LEVEL_BATCH, bbStart->getSecondLevelBatchBuffer());
+
+    consumedSize = 64;
+    cmdContainer.getCommandStream()->getSpace(consumedSize);
+
+    void *expectedEndPtr = ptrOffset(secondCmdBufferAllocation->getUnderlyingBuffer(), consumedSize);
+    cmdContainer.endAlignedPrimaryBuffer();
+
+    void *endPtr = cmdContainer.getEndCmdPtr();
+    size_t alignedSize = cmdContainer.getAlignedPrimarySize();
+
+    EXPECT_EQ(expectedEndPtr, endPtr);
+    EXPECT_EQ(expectedEndSize, alignedSize);
+
+    cmdContainer.reset();
+    EXPECT_EQ(nullptr, cmdContainer.getEndCmdPtr());
+    EXPECT_EQ(0u, cmdContainer.getAlignedPrimarySize());
 }

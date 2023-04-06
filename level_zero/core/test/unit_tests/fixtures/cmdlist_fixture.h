@@ -267,5 +267,9 @@ struct CommandListAppendLaunchRayTracingKernelFixture : ModuleFixture {
     NEO::GraphicsAllocation *buffer2 = nullptr;
 };
 
+struct PrimaryBatchBufferCmdListFixture : public ModuleMutableCommandListFixture {
+    void setUp();
+};
+
 } // namespace ult
 } // namespace L0
