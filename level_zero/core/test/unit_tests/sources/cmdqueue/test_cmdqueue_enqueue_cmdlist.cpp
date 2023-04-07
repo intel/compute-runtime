@@ -738,11 +738,13 @@ void CommandQueueExecuteCommandLists::twoCommandListCommandPreemptionTest(bool p
         EXPECT_EQ(disabledPreemptionRegisterData, lriCmd->getDataDword());
 
         // verify presence of sync PIPE_CONTROL just before LRI switching preemption
-        auto itorPipeControl = find<PIPE_CONTROL *>(itor, itorLri);
+        auto itorPipeControl = itorLri;
+        --itorPipeControl;
+        auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*itorPipeControl);
         if (commandQueue->preemptionCmdSyncProgramming) {
-            EXPECT_NE(itorPipeControl, itorLri);
+            EXPECT_NE(nullptr, pipeControlCmd);
         } else {
-            EXPECT_EQ(itorPipeControl, itorLri);
+            EXPECT_EQ(nullptr, pipeControlCmd);
         }
 
         itor = itorLri;
@@ -765,11 +767,13 @@ void CommandQueueExecuteCommandLists::twoCommandListCommandPreemptionTest(bool p
         EXPECT_EQ(threadGroupPreemptionRegisterData, lriCmd->getDataDword());
 
         // verify presence of sync PIPE_CONTROL just before LRI switching preemption
-        auto itorPipeControl = find<PIPE_CONTROL *>(itor, itorLri);
+        auto itorPipeControl = itorLri;
+        --itorPipeControl;
+        auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*itorPipeControl);
         if (commandQueue->preemptionCmdSyncProgramming) {
-            EXPECT_NE(itorPipeControl, itorLri);
+            EXPECT_NE(nullptr, pipeControlCmd);
         } else {
-            EXPECT_EQ(itorPipeControl, itorLri);
+            EXPECT_EQ(nullptr, pipeControlCmd);
         }
 
         itor = itorLri;
@@ -791,11 +795,13 @@ void CommandQueueExecuteCommandLists::twoCommandListCommandPreemptionTest(bool p
         EXPECT_EQ(disabledPreemptionRegisterData, lriCmd->getDataDword());
 
         // verify presence of sync PIPE_CONTROL just before LRI switching preemption
-        auto itorPipeControl = find<PIPE_CONTROL *>(itor, itorLri);
+        auto itorPipeControl = itorLri;
+        --itorPipeControl;
+        auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*itorPipeControl);
         if (commandQueue->preemptionCmdSyncProgramming) {
-            EXPECT_NE(itorPipeControl, itorLri);
+            EXPECT_NE(nullptr, pipeControlCmd);
         } else {
-            EXPECT_EQ(itorPipeControl, itorLri);
+            EXPECT_EQ(nullptr, pipeControlCmd);
         }
 
         itor = itorLri;
@@ -842,11 +848,13 @@ void CommandQueueExecuteCommandLists::twoCommandListCommandPreemptionTest(bool p
         EXPECT_EQ(threadGroupPreemptionRegisterData, lriCmd->getDataDword());
 
         // verify presence of sync PIPE_CONTROL just before LRI switching preemption
-        auto itorPipeControl = find<PIPE_CONTROL *>(itor, itorLri);
+        auto itorPipeControl = itorLri;
+        --itorPipeControl;
+        auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*itorPipeControl);
         if (commandQueue->preemptionCmdSyncProgramming) {
-            EXPECT_NE(itorPipeControl, itorLri);
+            EXPECT_NE(nullptr, pipeControlCmd);
         } else {
-            EXPECT_EQ(itorPipeControl, itorLri);
+            EXPECT_EQ(nullptr, pipeControlCmd);
         }
 
         itor = itorLri;
@@ -868,11 +876,13 @@ void CommandQueueExecuteCommandLists::twoCommandListCommandPreemptionTest(bool p
         EXPECT_EQ(disabledPreemptionRegisterData, lriCmd->getDataDword());
 
         // verify presence of sync PIPE_CONTROL just before LRI switching preemption
-        auto itorPipeControl = find<PIPE_CONTROL *>(itor, itorLri);
+        auto itorPipeControl = itorLri;
+        --itorPipeControl;
+        auto pipeControlCmd = genCmdCast<PIPE_CONTROL *>(*itorPipeControl);
         if (commandQueue->preemptionCmdSyncProgramming) {
-            EXPECT_NE(itorPipeControl, itorLri);
+            EXPECT_NE(nullptr, pipeControlCmd);
         } else {
-            EXPECT_EQ(itorPipeControl, itorLri);
+            EXPECT_EQ(nullptr, pipeControlCmd);
         }
 
         itor = itorLri;

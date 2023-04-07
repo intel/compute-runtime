@@ -168,7 +168,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         this->programCsrBaseAddressIfPreemptionModeInitial(ctx.isPreemptionModeInitial, child);
         this->programStateSip(ctx.stateSipRequired, child);
         this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, child);
-        bool shouldProgramVfe = this->csr->getLogicalStateHelper() && ctx.frontEndStateDirty;
+        bool shouldProgramVfe = (this->csr->getLogicalStateHelper() || !frontEndTrackingEnabled()) && ctx.frontEndStateDirty;
         this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, child, csrStateProperties);
 
         if (ctx.rtDispatchRequired) {
@@ -329,30 +329,30 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListFrontEndIfDirty(
     const NEO::StreamProperties &cmdListRequired,
     const NEO::StreamProperties &cmdListFinal) {
 
+    if (!frontEndTrackingEnabled()) {
+        return;
+    }
+
     bool shouldProgramVfe = ctx.frontEndStateDirty;
 
-    ctx.cmdListBeginState.frontEndState = {};
-
-    if (frontEndTrackingEnabled()) {
-        if (shouldProgramVfe) {
-            csrState.frontEndState.copyPropertiesAll(cmdListRequired.frontEndState);
-        } else {
-            csrState.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(cmdListRequired.frontEndState);
-        }
+    if (shouldProgramVfe) {
+        csrState.frontEndState.copyPropertiesAll(cmdListRequired.frontEndState);
         csrState.frontEndState.setPropertySingleSliceDispatchCcsMode(ctx.engineInstanced);
-
+    } else {
+        csrState.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(cmdListRequired.frontEndState);
         shouldProgramVfe |= csrState.frontEndState.isDirty();
     }
 
-    ctx.cmdListBeginState.frontEndState.copyPropertiesAll(csrState.frontEndState);
-    this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, cmdStream, csrState);
+    if (shouldProgramVfe) {
+        ctx.cmdListBeginState.frontEndState = {};
+        ctx.cmdListBeginState.frontEndState.copyPropertiesAll(csrState.frontEndState);
+        this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, cmdStream, csrState);
+    }
 
-    if (frontEndTrackingEnabled()) {
-        if (shouldProgramVfe) {
-            csrState.frontEndState.copyPropertiesAll(cmdListFinal.frontEndState);
-        } else {
-            csrState.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(cmdListFinal.frontEndState);
-        }
+    if (shouldProgramVfe) {
+        csrState.frontEndState.copyPropertiesAll(cmdListFinal.frontEndState);
+    } else {
+        csrState.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(cmdListFinal.frontEndState);
     }
 }
 
