@@ -537,6 +537,41 @@ TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledThenBoIsReturned) {
     memoryManager->freeGraphicsMemory(allocation);
 }
 
+TEST_F(DrmMemoryManagerTest, whenCreateInternalHandleIsCalledThenBoIsReturned) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+    mock->outputFd = 1337;
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+    uint64_t handle = 0;
+    int ret = allocation->createInternalHandle(this->memoryManager, 0u, handle);
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(handle, static_cast<uint64_t>(1337));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, whenCreateInternalHandleIsCalledThenClearInternalHandleThenSameHandleisReturned) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 2;
+    mock->outputFd = 1337;
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+    uint64_t handle = 0;
+    int ret = allocation->createInternalHandle(this->memoryManager, 0u, handle);
+    ASSERT_EQ(ret, 0);
+    allocation->clearInternalHandle(0u);
+    ret = allocation->createInternalHandle(this->memoryManager, 0u, handle);
+    ASSERT_EQ(ret, 0);
+    ASSERT_EQ(handle, static_cast<uint64_t>(1337));
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
 TEST_F(DrmMemoryManagerTest, whenPeekInternalHandleIsCalledAndObtainFdFromHandleFailsThenErrorIsReturned) {
     mock->ioctlExpected.gemUserptr = 1;
     mock->ioctlExpected.gemWait = 1;
@@ -575,6 +610,38 @@ TEST_F(DrmMemoryManagerTest, whenCallingPeekInternalHandleSeveralTimesThenSameHa
     ret = allocation->peekInternalHandle(this->memoryManager, handle1);
     ASSERT_EQ(ret, 0);
     ret = allocation->peekInternalHandle(this->memoryManager, handle2);
+    ASSERT_EQ(ret, 0);
+
+    ASSERT_EQ(handle0, expectedFd);
+    ASSERT_EQ(handle1, expectedFd);
+    ASSERT_EQ(handle2, expectedFd);
+
+    memoryManager->freeGraphicsMemory(allocation);
+}
+
+TEST_F(DrmMemoryManagerTest, whenCallingCreateInternalHandleSeveralTimesThenSameHandleIsReturned) {
+    mock->ioctlExpected.gemUserptr = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+    uint64_t expectedFd = 1337;
+    mock->outputFd = static_cast<int32_t>(expectedFd);
+    mock->incrementOutputFdAfterCall = true;
+    auto allocation = static_cast<DrmAllocation *>(this->memoryManager->allocateGraphicsMemoryWithProperties(createAllocationProperties(rootDeviceIndex, 10 * MemoryConstants::pageSize, true)));
+    ASSERT_NE(allocation->getBO(), nullptr);
+
+    EXPECT_EQ(mock->outputFd, static_cast<int32_t>(expectedFd));
+    uint64_t handle0 = 0;
+    int ret = allocation->createInternalHandle(this->memoryManager, 0u, handle0);
+    ASSERT_EQ(ret, 0);
+    EXPECT_NE(mock->outputFd, static_cast<int32_t>(expectedFd));
+
+    uint64_t handle1 = 0;
+    uint64_t handle2 = 0;
+
+    ret = allocation->createInternalHandle(this->memoryManager, 0u, handle1);
+    ASSERT_EQ(ret, 0);
+    ret = allocation->createInternalHandle(this->memoryManager, 0u, handle2);
     ASSERT_EQ(ret, 0);
 
     ASSERT_EQ(handle0, expectedFd);
@@ -853,6 +920,26 @@ TEST_F(DrmMemoryManagerTest, GivenAllocationWhenClosingSharedHandleThenSucceeds)
 
     memoryManager->closeSharedHandle(graphicsAllocation);
     EXPECT_EQ(Sharing::nonSharedResource, graphicsAllocation->peekSharedHandle());
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+TEST_F(DrmMemoryManagerTest, GivenAllocationWhenClosingInternalHandleThenSucceeds) {
+    mock->ioctlExpected.primeFdToHandle = 1;
+    mock->ioctlExpected.gemWait = 1;
+    mock->ioctlExpected.gemClose = 1;
+    mock->ioctlExpected.handleToPrimeFd = 1;
+
+    osHandle handle = 1u;
+    uint64_t handleVal = 1u;
+    this->mock->outputHandle = 2u;
+    size_t size = 4096u;
+    AllocationProperties properties(rootDeviceIndex, false, size, AllocationType::SHARED_BUFFER, false, {});
+
+    auto graphicsAllocation = memoryManager->createGraphicsAllocationFromSharedHandle(handle, properties, false, false, true);
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(this->memoryManager, 0u, handleVal));
+
+    memoryManager->closeInternalHandle(handleVal, 0u, graphicsAllocation);
 
     memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

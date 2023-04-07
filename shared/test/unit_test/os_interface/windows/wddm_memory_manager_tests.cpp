@@ -107,6 +107,14 @@ class MockAllocateGraphicsMemoryUsingKmdAndMapItToCpuVAWddm : public MemoryManag
 
         return true;
     }
+    NTSTATUS createInternalNTHandle(D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle, uint32_t rootDeviceIndex) override {
+        if (failCreateInternalNTHandle) {
+            return 1;
+        } else {
+            return WddmMemoryManager::createInternalNTHandle(resourceHandle, ntHandle, rootDeviceIndex);
+        }
+    }
+    bool failCreateInternalNTHandle = false;
 };
 
 class WddmMemoryManagerAllocPathTests : public ::testing::Test {
@@ -160,4 +168,56 @@ TEST_F(WddmMemoryManagerAllocPathTests, givenAllocateGraphicsMemoryUsingKmdAndMa
 
         memoryManager->freeGraphicsMemory(graphicsAllocation);
     }
+}
+
+TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationThenCreateInternalHandleSucceeds) {
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::SVM_CPU;
+    allocData.forceKMDAllocation = true;
+    allocData.makeGPUVaDifferentThanCPUPtr = true;
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
+
+    uint64_t handle = 0;
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+
+    memoryManager->closeInternalHandle(handle, 0u, graphicsAllocation);
+
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationThenCreateInternalHandleSucceedsAfterMultipleCallsToCreate) {
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::SVM_CPU;
+    allocData.forceKMDAllocation = true;
+    allocData.makeGPUVaDifferentThanCPUPtr = true;
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
+
+    uint64_t handle = 0;
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+
+    memoryManager->closeInternalHandle(handle, 0u, graphicsAllocation);
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
+}
+
+TEST_F(WddmMemoryManagerAllocPathTests, GivenValidAllocationWithFailingCreateInternalHandleThenErrorReturned) {
+    NEO::AllocationData allocData = {};
+    allocData.type = NEO::AllocationType::SVM_CPU;
+    allocData.forceKMDAllocation = true;
+    allocData.makeGPUVaDifferentThanCPUPtr = true;
+    auto graphicsAllocation = memoryManager->allocateGraphicsMemoryUsingKmdAndMapItToCpuVA(allocData, false);
+
+    uint64_t handle = 0;
+    EXPECT_EQ(0, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+
+    memoryManager->closeInternalHandle(handle, 0u, graphicsAllocation);
+
+    memoryManager->failCreateInternalNTHandle = true;
+    EXPECT_EQ(1, graphicsAllocation->createInternalHandle(memoryManager, 0u, handle));
+
+    memoryManager->freeGraphicsMemory(graphicsAllocation);
 }

@@ -27,6 +27,15 @@ struct IpcMemoryData {
 #pragma pack()
 static_assert(sizeof(IpcMemoryData) <= ZE_MAX_IPC_HANDLE_SIZE, "IpcMemoryData is bigger than ZE_MAX_IPC_HANDLE_SIZE");
 
+struct IpcHandleTracking {
+    uint64_t refcnt = 0;
+    NEO::GraphicsAllocation *alloc = nullptr;
+    uint32_t handleId = 0;
+    uint64_t handle = 0;
+    uint64_t ptr = 0;
+    struct IpcMemoryData ipcData = {};
+};
+
 struct ContextImp : Context {
     ContextImp(DriverHandle *driverHandle);
     ~ContextImp() override = default;
@@ -63,12 +72,15 @@ struct ContextImp : Context {
                                    void **pBase,
                                    size_t *pSize) override;
     ze_result_t closeIpcMemHandle(const void *ptr) override;
+    ze_result_t putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) override;
     ze_result_t getIpcMemHandle(const void *ptr,
                                 ze_ipc_mem_handle_t *pIpcHandle) override;
     ze_result_t openIpcMemHandle(ze_device_handle_t hDevice,
                                  const ze_ipc_mem_handle_t &handle,
                                  ze_ipc_memory_flags_t flags,
                                  void **ptr) override;
+    ze_result_t getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle) override;
+    ze_result_t getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64_t *pHandle) override;
 
     ze_result_t
     getIpcMemHandles(
@@ -171,12 +183,17 @@ struct ContextImp : Context {
         this->numDevices = static_cast<uint32_t>(this->deviceHandles.size());
     }
     NEO::VirtualMemoryReservation *findSupportedVirtualReservation(const void *ptr, size_t size);
+    std::map<uint64_t, IpcHandleTracking *> &getIPCHandleMap() { return this->ipcHandles; };
+    [[nodiscard]] std::unique_lock<std::mutex> lockIPCHandleMap() { return std::unique_lock<std::mutex>(this->ipcHandleMapMutex); };
 
   protected:
+    void setIPCHandleData(NEO::GraphicsAllocation *graphicsAllocation, uint64_t handle, IpcMemoryData &ipcData, uint64_t ptrAddress);
     bool isAllocationSuitableForCompression(const StructuresLookupTable &structuresLookupTable, Device &device, size_t allocSize);
     size_t getPageSizeRequired(size_t size);
 
     std::map<uint32_t, ze_device_handle_t> devices;
+    std::map<uint64_t, IpcHandleTracking *> ipcHandles;
+    std::mutex ipcHandleMapMutex;
     std::vector<ze_device_handle_t> deviceHandles;
     DriverHandleImp *driverHandle = nullptr;
     uint32_t numDevices = 0;

@@ -76,6 +76,8 @@ class WddmMemoryManager : public MemoryManager {
     void releaseDeviceSpecificMemResources(uint32_t rootDeviceIndex) override{};
     void createDeviceSpecificMemResources(uint32_t rootDeviceIndex) override{};
     void registerAllocationInOs(GraphicsAllocation *allocation) override;
+    void closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) override;
+    MOCKABLE_VIRTUAL NTSTATUS createInternalNTHandle(D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle, uint32_t rootDeviceIndex);
 
   protected:
     GraphicsAllocation *createGraphicsAllocation(OsHandleStorage &handleStorage, const AllocationData &allocationData) override;

@@ -1055,6 +1055,13 @@ GraphicsAllocation *DrmMemoryManager::createGraphicsAllocationFromSharedHandle(o
     return drmAllocation;
 }
 
+void DrmMemoryManager::closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) {
+    DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(graphicsAllocation);
+    drmAllocation->clearInternalHandle(handleId);
+    [[maybe_unused]] auto status = this->closeFunction(static_cast<int>(handle));
+    DEBUG_BREAK_IF(status != 0);
+}
+
 void DrmMemoryManager::closeSharedHandle(GraphicsAllocation *gfxAllocation) {
     DrmAllocation *drmAllocation = static_cast<DrmAllocation *>(gfxAllocation);
     if (drmAllocation->peekSharedHandle() != Sharing::nonSharedResource) {

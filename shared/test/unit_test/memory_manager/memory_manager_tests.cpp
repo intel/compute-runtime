@@ -28,6 +28,13 @@ TEST(MemoryManagerTest, WhenCallingHasPageFaultsEnabledThenReturnFalse) {
     EXPECT_FALSE(memoryManager.hasPageFaultsEnabled(device));
 }
 
+TEST(MemoryManagerTest, WhenCallingCloseInternalHandleWithOsAgnosticThenNoChanges) {
+    MockExecutionEnvironment executionEnvironment(defaultHwInfo.get());
+    OsAgnosticMemoryManager memoryManager(executionEnvironment);
+    uint64_t handle = 0u;
+    memoryManager.closeInternalHandle(handle, 0u, nullptr);
+}
+
 TEST(MemoryManagerTest, WhenCallingIsAllocationTypeToCaptureThenScratchAndPrivateTypesReturnTrue) {
     MockMemoryManager mockMemoryManager;
 
