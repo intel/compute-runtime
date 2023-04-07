@@ -1483,7 +1483,7 @@ HWTEST_F(DispatchWalkerTest, WhenKernelRequiresImplicitArgsThenIohRequiresMoreSp
         uint32_t grfSize = sizeof(typename FamilyType::GRF);
         auto size = kernelWithImplicitArgs.getCrossThreadDataSize() +
                     HardwareCommandsHelper<FamilyType>::getPerThreadDataSizeTotal(simdSize, grfSize, numChannels, Math::computeTotalElementsCount(localWorkgroupSize)) +
-                    ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernelWithImplicitArgs.getImplicitArgs(), kernelWithImplicitArgs.getDescriptor(), *defaultHwInfo);
+                    ImplicitArgsHelper::getSizeForImplicitArgsPatching(kernelWithImplicitArgs.getImplicitArgs(), kernelWithImplicitArgs.getDescriptor());
 
         size = alignUp(size, MemoryConstants::cacheLineSize);
         EXPECT_EQ(size, iohSizeWithImplicitArgs);

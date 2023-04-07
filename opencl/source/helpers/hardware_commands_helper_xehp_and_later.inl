@@ -76,8 +76,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
         pImplicitArgs->localIdTablePtr = indirectHeap.getGraphicsAllocation()->getGpuAddress() + offsetCrossThreadData;
 
         const auto &kernelDescriptor = kernel.getDescriptor();
-        const auto &hwInfo = kernel.getHardwareInfo();
-        auto sizeForImplicitArgsProgramming = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor, hwInfo);
+        auto sizeForImplicitArgsProgramming = ImplicitArgsHelper::getSizeForImplicitArgsPatching(pImplicitArgs, kernelDescriptor);
 
         auto sizeForLocalIdsProgramming = sizeForImplicitArgsProgramming - sizeof(ImplicitArgs);
         offsetCrossThreadData += sizeForLocalIdsProgramming;
@@ -98,7 +97,7 @@ size_t HardwareCommandsHelper<GfxFamily>::sendCrossThreadData(
             requiredWalkOrder,
             kernelDescriptor.kernelAttributes.simdSize);
 
-        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, hwInfo, std::make_pair(generationOfLocalIdsByRuntime, requiredWalkOrder));
+        ImplicitArgsHelper::patchImplicitArgs(ptrToPatchImplicitArgs, *pImplicitArgs, kernelDescriptor, std::make_pair(generationOfLocalIdsByRuntime, requiredWalkOrder));
     }
 
     using InlineData = typename GfxFamily::INLINE_DATA;
