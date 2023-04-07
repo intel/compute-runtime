@@ -85,6 +85,14 @@ struct MockWddmLinuxMemoryManager : NEO::WddmMemoryManager {
     using WddmMemoryManager::mapPhysicalToVirtualMemory;
     using WddmMemoryManager::unMapPhysicalToVirtualMemory;
     using WddmMemoryManager::WddmMemoryManager;
+    NTSTATUS createInternalNTHandle(D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle, uint32_t rootDeviceIndex) override {
+        if (failCreateInternalNTHandle) {
+            return 1;
+        } else {
+            return WddmMemoryManager::createInternalNTHandle(resourceHandle, ntHandle, rootDeviceIndex);
+        }
+    }
+    bool failCreateInternalNTHandle = false;
 };
 
 struct WddmLinuxMockHwDeviceIdWddm : public NEO::HwDeviceIdWddm {
@@ -673,6 +681,58 @@ TEST_F(WddmLinuxTest, givenAllocatePhysicalDeviceMemoryThenAllocationReturned) {
 
     auto alloc = memoryManager.allocatePhysicalDeviceMemory(allocData, status);
     ASSERT_NE(nullptr, alloc);
+    memoryManager.freeGraphicsMemoryImpl(alloc);
+}
+
+TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCloseInternalHandleThenSharedHandleClosed) {
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    osEnvironment->gdi->createAllocation2 = createAllocation2Mock;
+    osEnvironment->gdi->mapGpuVirtualAddress = mapGpuVirtualAddressMock;
+    osEnvironment->gdi->lock2 = lock2Mock;
+    osEnvironment->gdi->destroyAllocation2 = destroyAllocations2Mock;
+
+    MockWddmLinuxMemoryManager memoryManager{mockExecEnv};
+
+    NEO::AllocationData allocData = {};
+    NEO::MemoryManager::AllocationStatus status = NEO::MemoryManager::AllocationStatus::Error;
+    allocData.size = 3U;
+
+    auto alloc = memoryManager.allocatePhysicalDeviceMemory(allocData, status);
+    ASSERT_NE(nullptr, alloc);
+    uint64_t handle = 0;
+    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle));
+
+    memoryManager.closeInternalHandle(handle, 0u, alloc);
+
+    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle));
+
+    memoryManager.freeGraphicsMemoryImpl(alloc);
+}
+
+TEST_F(WddmLinuxTest, givenAllocatedMemoryAndCreateInternalHandleFailedThenEmpyHandleReturned) {
+    osEnvironment->gdi->reserveGpuVirtualAddress = reserveDeviceAddressSpaceMock;
+    osEnvironment->gdi->createAllocation2 = createAllocation2Mock;
+    osEnvironment->gdi->mapGpuVirtualAddress = mapGpuVirtualAddressMock;
+    osEnvironment->gdi->lock2 = lock2Mock;
+    osEnvironment->gdi->destroyAllocation2 = destroyAllocations2Mock;
+
+    MockWddmLinuxMemoryManager memoryManager{mockExecEnv};
+
+    NEO::AllocationData allocData = {};
+    NEO::MemoryManager::AllocationStatus status = NEO::MemoryManager::AllocationStatus::Error;
+    allocData.size = 3U;
+
+    auto alloc = memoryManager.allocatePhysicalDeviceMemory(allocData, status);
+    ASSERT_NE(nullptr, alloc);
+
+    uint64_t handle = 0;
+    EXPECT_EQ(0, alloc->createInternalHandle(&memoryManager, 0u, handle));
+
+    memoryManager.closeInternalHandle(handle, 0u, alloc);
+
+    memoryManager.failCreateInternalNTHandle = true;
+    EXPECT_EQ(1, alloc->createInternalHandle(&memoryManager, 0u, handle));
+
     memoryManager.freeGraphicsMemoryImpl(alloc);
 }
 

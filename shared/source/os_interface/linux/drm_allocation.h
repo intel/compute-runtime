@@ -94,6 +94,9 @@ class DrmAllocation : public GraphicsAllocation {
     uint64_t getHandleAddressBase(uint32_t handleIndex) override;
 
     size_t getHandleSize(uint32_t handleIndex) override;
+    int createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) override;
+
+    void clearInternalHandle(uint32_t handleId) override;
 
     int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) override;
 

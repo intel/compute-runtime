@@ -40,6 +40,14 @@ std::string DrmAllocation::getAllocationInfoString() const {
     return ss.str();
 }
 
+void DrmAllocation::clearInternalHandle(uint32_t handleId) {
+    handles[handleId] = std::numeric_limits<uint64_t>::max();
+}
+
+int DrmAllocation::createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) {
+    return peekInternalHandle(memoryManager, handleId, handle);
+}
+
 int DrmAllocation::peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) {
     return peekInternalHandle(memoryManager, 0u, handle);
 }

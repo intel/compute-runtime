@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2020-2022 Intel Corporation
+ * Copyright (C) 2020-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -77,6 +77,12 @@ ze_result_t zeMemGetIpcHandle(
     return L0::Context::fromHandle(hContext)->getIpcMemHandle(ptr, pIpcHandle);
 }
 
+ze_result_t zeMemPutIpcHandle(
+    ze_context_handle_t hContext,
+    ze_ipc_mem_handle_t ipcHandle) {
+    return L0::Context::fromHandle(hContext)->putIpcMemHandle(ipcHandle);
+}
+
 ze_result_t zeMemOpenIpcHandle(
     ze_context_handle_t hContext,
     ze_device_handle_t hDevice,
@@ -90,6 +96,14 @@ ze_result_t zeMemCloseIpcHandle(
     ze_context_handle_t hContext,
     const void *ptr) {
     return L0::Context::fromHandle(hContext)->closeIpcMemHandle(ptr);
+}
+
+ze_result_t zeMemGetIpcHandleFromFileDescriptorExp(ze_context_handle_t hContext, uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle) {
+    return L0::Context::fromHandle(hContext)->getIpcHandleFromFd(handle, pIpcHandle);
+}
+
+ze_result_t zeMemGetFileDescriptorFromIpcHandleExp(ze_context_handle_t hContext, ze_ipc_mem_handle_t ipcHandle, uint64_t *pHandle) {
+    return L0::Context::fromHandle(hContext)->getFdFromIpcHandle(ipcHandle, pHandle);
 }
 
 } // namespace L0
@@ -200,11 +214,39 @@ ZE_APIEXPORT ze_result_t ZE_APICALL zeMemOpenIpcHandle(
         pptr);
 }
 
+ZE_APIEXPORT ze_result_t ZE_APICALL zeMemPutIpcHandle(
+    ze_context_handle_t hContext,
+    ze_ipc_mem_handle_t ipcHandle) {
+    return L0::zeMemPutIpcHandle(
+        hContext,
+        ipcHandle);
+}
+
 ZE_APIEXPORT ze_result_t ZE_APICALL zeMemCloseIpcHandle(
     ze_context_handle_t hContext,
     const void *ptr) {
     return L0::zeMemCloseIpcHandle(
         hContext,
         ptr);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeMemGetIpcHandleFromFileDescriptorExp(
+    ze_context_handle_t hContext,
+    uint64_t handle,
+    ze_ipc_mem_handle_t *pIpcHandle) {
+    return L0::zeMemGetIpcHandleFromFileDescriptorExp(
+        hContext,
+        handle,
+        pIpcHandle);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zeMemGetFileDescriptorFromIpcHandleExp(
+    ze_context_handle_t hContext,
+    ze_ipc_mem_handle_t ipcHandle,
+    uint64_t *pHandle) {
+    return L0::zeMemGetFileDescriptorFromIpcHandleExp(
+        hContext,
+        ipcHandle,
+        pHandle);
 }
 }

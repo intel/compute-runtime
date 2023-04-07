@@ -71,7 +71,7 @@ struct ContextFdMock : public L0::ContextImp {
                                       ze_memory_allocation_properties_t *pMemAllocProperties,
                                       ze_device_handle_t *phDevice) override {
         ze_result_t res = ContextImp::getMemAllocProperties(ptr, pMemAllocProperties, phDevice);
-        if (ZE_RESULT_SUCCESS == res && pMemAllocProperties->pNext) {
+        if (ZE_RESULT_SUCCESS == res && pMemAllocProperties->pNext && !memPropTest) {
             ze_base_properties_t *baseProperties =
                 reinterpret_cast<ze_base_properties_t *>(pMemAllocProperties->pNext);
             if (baseProperties->stype == ZE_STRUCTURE_TYPE_EXTERNAL_MEMORY_EXPORT_FD) {
@@ -104,7 +104,7 @@ struct ContextFdMock : public L0::ContextImp {
     ze_result_t closeIpcMemHandle(const void *ptr) override {
         return ZE_RESULT_SUCCESS;
     }
-
+    bool memPropTest = false;
     DriverHandleGetFdMock *driverHandle = nullptr;
 };
 

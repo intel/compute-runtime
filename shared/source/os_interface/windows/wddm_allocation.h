@@ -72,6 +72,10 @@ class WddmAllocation : public GraphicsAllocation {
         handles[handleIndex] = handle;
     }
 
+    void clearInternalHandle(uint32_t handleId) override;
+
+    int createInternalHandle(MemoryManager *memoryManager, uint32_t handleId, uint64_t &handle) override;
+
     int peekInternalHandle(MemoryManager *memoryManager, uint64_t &handle) override {
         handle = ntSecureHandle;
         return handle == 0;

@@ -75,8 +75,11 @@ struct Context : _ze_context_handle_t {
                                            void **pBase,
                                            size_t *pSize) = 0;
     virtual ze_result_t closeIpcMemHandle(const void *ptr) = 0;
+    virtual ze_result_t putIpcMemHandle(ze_ipc_mem_handle_t ipcHandle) = 0;
     virtual ze_result_t getIpcMemHandle(const void *ptr,
                                         ze_ipc_mem_handle_t *pIpcHandle) = 0;
+    virtual ze_result_t getIpcHandleFromFd(uint64_t handle, ze_ipc_mem_handle_t *pIpcHandle) = 0;
+    virtual ze_result_t getFdFromIpcHandle(ze_ipc_mem_handle_t ipcHandle, uint64_t *pHandle) = 0;
     virtual ze_result_t
     getIpcMemHandles(
         const void *ptr,

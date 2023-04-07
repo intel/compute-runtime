@@ -212,6 +212,10 @@ GraphicsAllocation *WddmMemoryManager::allocateGraphicsMemoryUsingKmdAndMapItToC
     return wddmAllocation.release();
 }
 
+NTSTATUS WddmMemoryManager::createInternalNTHandle(D3DKMT_HANDLE *resourceHandle, HANDLE *ntHandle, uint32_t rootDeviceIndex) {
+    return getWddm(rootDeviceIndex).createNTHandle(resourceHandle, ntHandle);
+}
+
 GraphicsAllocation *WddmMemoryManager::allocateHugeGraphicsMemory(const AllocationData &allocationData, bool sharedVirtualAddress) {
     void *hostPtr = nullptr, *alignedPtr = nullptr;
     size_t alignedSize = 0;
@@ -586,6 +590,13 @@ void WddmMemoryManager::freeAssociatedResourceImpl(GraphicsAllocation &graphicsA
 
 void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation, bool isImportedAllocation) {
     return freeGraphicsMemoryImpl(gfxAllocation);
+}
+
+void WddmMemoryManager::closeInternalHandle(uint64_t &handle, uint32_t handleId, GraphicsAllocation *graphicsAllocation) {
+    WddmAllocation *wddmAllocation = static_cast<WddmAllocation *>(graphicsAllocation);
+    wddmAllocation->clearInternalHandle(handleId);
+    [[maybe_unused]] auto status = SysCalls::closeHandle(reinterpret_cast<void *>(reinterpret_cast<uintptr_t *>(handle)));
+    DEBUG_BREAK_IF(!status);
 }
 
 void WddmMemoryManager::freeGraphicsMemoryImpl(GraphicsAllocation *gfxAllocation) {

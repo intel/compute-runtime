@@ -239,6 +239,14 @@ TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsB
     EXPECT_EQ(0ull, handle);
 }
 
+TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenInternalHandleIsBeingObtainedOrCreatedThenZeroIsReturned) {
+    MockGraphicsAllocation graphicsAllocation;
+    uint64_t handle = 0;
+    graphicsAllocation.createInternalHandle(nullptr, 0u, handle);
+    EXPECT_EQ(0ull, handle);
+    graphicsAllocation.clearInternalHandle(0u);
+}
+
 TEST(GraphicsAllocationTest, givenDefaultGraphicsAllocationWhenGettingNumHandlesThenZeroIsReturned) {
     MockGraphicsAllocation graphicsAllocation;
     EXPECT_EQ(0u, graphicsAllocation.getNumHandles());
