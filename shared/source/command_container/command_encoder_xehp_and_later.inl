@@ -321,7 +321,7 @@ void EncodeDispatchKernel<Family>::encode(CommandContainer &container, EncodeDis
                                                           walkerCmd,
                                                           args.device->getDeviceBitfield(),
                                                           args.partitionCount,
-                                                          !container.getFlushTaskUsedForImmediate(),
+                                                          !(container.getFlushTaskUsedForImmediate() || container.isUsingPrimaryBuffer()),
                                                           !args.isKernelDispatchedFromImmediateCmdList,
                                                           false,
                                                           args.dcFlushEnable,

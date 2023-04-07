@@ -995,7 +995,8 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, WalkerThreadTestXeHPAndLater, WhenExecutionMaskNotZ
     EXPECT_FALSE(walkerCmd.getEmitInlineParameter());
 }
 
-struct CommandEncodeStatesImplicitScalingFixture : public CommandEncodeStatesFixture {
+template <bool flushTaskUsedForImmediate, bool usePrimaryBuffer>
+struct CommandEncodeStatesImplicitScalingFixtureT : public CommandEncodeStatesFixture {
     void setUp() {
         DebugManager.flags.CreateMultipleSubDevices.set(2);
         osLocalMemoryBackup = std::make_unique<VariableBackup<bool>>(&OSInterface::osEnableLocalMemory, true);
@@ -1003,6 +1004,9 @@ struct CommandEncodeStatesImplicitScalingFixture : public CommandEncodeStatesFix
         apiSupportBackup = std::make_unique<VariableBackup<bool>>(&ImplicitScaling::apiSupport, true);
 
         CommandEncodeStatesFixture::setUp();
+
+        cmdContainer->setUsingPrimaryBuffer(usePrimaryBuffer);
+        cmdContainer->setFlushTaskUsedForImmediate(flushTaskUsedForImmediate);
     }
 
     void tearDown() {
@@ -1015,6 +1019,7 @@ struct CommandEncodeStatesImplicitScalingFixture : public CommandEncodeStatesFix
     std::unique_ptr<VariableBackup<bool>> apiSupportBackup;
 };
 
+using CommandEncodeStatesImplicitScalingFixture = CommandEncodeStatesImplicitScalingFixtureT<false, false>;
 using CommandEncodeStatesImplicitScaling = Test<CommandEncodeStatesImplicitScalingFixture>;
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScaling,
@@ -1446,4 +1451,68 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest,
 
     auto itorCmd = find<PIPELINE_SELECT *>(commands.begin(), commands.end());
     EXPECT_EQ(itorCmd, commands.end());
+}
+
+template <bool flushTaskUsedForImmediate, bool usePrimaryBuffer>
+struct CommandEncodeStatesImplicitScalingPrimaryBufferFixture : public CommandEncodeStatesImplicitScalingFixtureT<flushTaskUsedForImmediate, usePrimaryBuffer> {
+    using BaseClass = CommandEncodeStatesImplicitScalingFixtureT<flushTaskUsedForImmediate, usePrimaryBuffer>;
+    void setUp() {
+        DebugManager.flags.UsePipeControlAfterPartitionedWalker.set(1);
+        BaseClass::setUp();
+    }
+
+    void tearDown() {
+        BaseClass::tearDown();
+    }
+
+    template <typename FamilyType>
+    void testBodyFindPrimaryBatchBuffer() {
+        using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+        constexpr bool expectPrimary = flushTaskUsedForImmediate || usePrimaryBuffer;
+
+        uint32_t dims[] = {16, 1, 1};
+        std::unique_ptr<MockDispatchKernelEncoder> dispatchInterface(new MockDispatchKernelEncoder());
+
+        bool requiresUncachedMocs = false;
+        uint64_t eventAddress = 0xFF112233000;
+        EncodeDispatchKernelArgs dispatchArgs = BaseClass::createDefaultDispatchKernelArgs(BaseClass::pDevice, dispatchInterface.get(), dims, requiresUncachedMocs);
+        dispatchArgs.eventAddress = eventAddress;
+        dispatchArgs.partitionCount = 2;
+
+        EncodeDispatchKernel<FamilyType>::encode(*BaseClass::cmdContainer.get(), dispatchArgs, nullptr);
+        size_t usedBuffer = BaseClass::cmdContainer->getCommandStream()->getUsed();
+        EXPECT_EQ(2u, dispatchArgs.partitionCount);
+
+        GenCmdList cmdList;
+        CmdParse<FamilyType>::parseCommandBuffer(
+            cmdList,
+            BaseClass::cmdContainer->getCommandStream()->getCpuBase(),
+            usedBuffer);
+
+        auto itBbStart = find<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+        ASSERT_NE(cmdList.end(), itBbStart);
+
+        auto bbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(*itBbStart);
+        EXPECT_EQ(expectPrimary, !static_cast<bool>(bbStartCmd->getSecondLevelBatchBuffer()));
+    }
+};
+
+using CommandEncodeStatesImplicitScalingFlushTaskTest = Test<CommandEncodeStatesImplicitScalingPrimaryBufferFixture<true, false>>;
+using CommandEncodeStatesImplicitScalingPrimaryBufferTest = Test<CommandEncodeStatesImplicitScalingPrimaryBufferFixture<false, true>>;
+using CommandEncodeStatesImplicitScalingSecondaryBufferTest = Test<CommandEncodeStatesImplicitScalingPrimaryBufferFixture<false, false>>;
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScalingFlushTaskTest,
+            givenDispatchImplicitScalingWithBbStartOverControlSectionWhenDispatchingFromFlushTaskContainerThenExpectPrimaryBatchBuffer) {
+    testBodyFindPrimaryBatchBuffer<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScalingPrimaryBufferTest,
+            givenDispatchImplicitScalingWithBbStartOverControlSectionWhenDispatchingAsPrimaryBufferContainerThenExpectPrimaryBatchBuffer) {
+    testBodyFindPrimaryBatchBuffer<FamilyType>();
+}
+
+HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesImplicitScalingSecondaryBufferTest,
+            givenDispatchImplicitScalingWithBbStartOverControlSectionWhenDispatchingAsSecondaryBufferContainerThenExpectSecondaryBatchBuffer) {
+    testBodyFindPrimaryBatchBuffer<FamilyType>();
 }
