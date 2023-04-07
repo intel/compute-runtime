@@ -3,26 +3,26 @@ components:
     branch: master
     dest_dir: aub_stream
     repository: https://github.com/intel/aubstream
-    revision: 192d584f728bfb355e30a2df87ebaf538445f485
+    revision: f3d48d13148542a14b21559d25ca13f2b112f0d2
     type: git
   gmmlib:
+    asset_name: gmmlib
     dest_dir: gmmlib
     type: git
-    asset_name: gmmlib
     branch: master
     revision: intel-gmmlib-22.3.0
     repository: https://github.com/intel/gmmlib.git
   igc:
+    asset_name: igc
     dest_dir: igc
     type: git
-    asset_name: igc
     branch: master
     revision: d23c0c00b469d6e55799e5dfd151737c2eaa607a
     repository: https://github.com/intel/intelgraphicscompiler
   igsc:
+    asset_name: igsc
     dest_dir: igsc
     type: git
-    asset_name: igsc
     branch: master
     revision: V0.8.7
     repository: https://github.com/intel/igsc.git
@@ -41,11 +41,11 @@ components:
     dest_dir: kernels_bin
     type: git
     branch: kernels_bin
-    revision: 2039-625
+    revision: 2046-627
   kmdaf:
     branch: kmdaf
     dest_dir: kmdaf
-    revision: aabe0b3ad02a9d40cc44046ddb4ee232382ba776
+    revision: d62f854554f512b9e3a5ee4bc1231c9a65abe1ff
     type: git
   level_zero:
     dest_dir: level_zero
@@ -54,23 +54,23 @@ components:
     revision: v1.9.9
     repository: https://github.com/oneapi-src/level-zero
   libva:
+    asset_name: libva
     dest_dir: libva
     type: git
-    asset_name: libva
     branch: master
     revision: 2.2.0
     repository: https://github.com/intel/libva.git
   metrics-discovery:
+    asset_name: metrics-discovery
     dest_dir: metrics/discovery
     type: git
-    asset_name: metrics-discovery
     branch: master
     revision: metrics-discovery-1.12.164
     repository: https://github.com/intel/metrics-discovery.git
   metrics-library:
+    asset_name: metrics-library
     dest_dir: metrics/library
     type: git
-    asset_name: metrics-library
     branch: master
     revision: metrics-library-1.0.133
     repository: https://github.com/intel/metrics-library.git
@@ -78,11 +78,11 @@ components:
     dest_dir: wdk
     type: git
     branch: wdk
-    revision: 42e0debbf60967df636a7eb2f0264861b4e5ed6a-2039
+    revision: b74884742b0b6a1333713313c53a45b62312869c-2046
   wsl:
     branch: wsl
     dest_dir: wsl
     revision: 56430997dac34ca0e9e18c177636234cac26ad54
     type: git
-converter: M-2039
+converter: M-2046
 version: '1'
