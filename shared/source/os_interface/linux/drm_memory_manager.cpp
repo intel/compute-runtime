@@ -2155,6 +2155,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
     BufferObjects bos{};
     auto currentAddress = cpuPointer;
     auto remainingSize = size;
+    auto remainingMemoryBanks = allocationData.storageInfo.memoryBanks;
     auto numHandles = GraphicsAllocation::getNumHandlesForKmdSharedAllocation(allocationData.storageInfo.getNumBanks());
 
     for (auto handleId = 0u; handleId < numHandles; handleId++) {
@@ -2165,7 +2166,8 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
             break;
         }
 
-        auto memoryBanks = DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.get() > 0 ? allocationData.storageInfo.memoryBanks : DeviceBitfield(1 << handleId);
+        auto memoryInstance = Math::getMinLsbSet(static_cast<uint32_t>(remainingMemoryBanks.to_ulong()));
+        auto memoryBanks = DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.get() > 0 ? allocationData.storageInfo.memoryBanks : DeviceBitfield(1 << memoryInstance);
         auto memRegions = createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memoryBanks);
 
         auto ret = memoryInfo->createGemExt(memRegions, currentSize, handle, {}, -1);
@@ -2186,7 +2188,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
             return nullptr;
         }
 
-        std::optional<MemoryClassInstance> region = ioctlHelper->getPreferredLocationRegion(handleId);
+        std::optional<MemoryClassInstance> region = ioctlHelper->getPreferredLocationRegion(memoryInstance);
         if (region != std::nullopt) {
             [[maybe_unused]] auto success = ioctlHelper->setVmBoAdvise(bo->peekHandle(), ioctlHelper->getPreferredLocationAdvise(), &region);
             DEBUG_BREAK_IF(!success);
@@ -2208,6 +2210,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
 
         currentAddress = reinterpret_cast<void *>(castToUint64(currentAddress) + currentSize);
         remainingSize -= currentSize;
+        remainingMemoryBanks.reset(memoryInstance);
     }
 
     auto gmmHelper = getGmmHelper(allocationData.rootDeviceIndex);
