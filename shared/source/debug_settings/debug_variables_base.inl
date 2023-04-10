@@ -199,6 +199,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, UseDrmVirtualEnginesForCcs, -1, "-1: default, 0:
 DECLARE_DEBUG_VARIABLE(int32_t, UseDrmVirtualEnginesForBcs, -1, "-1: default, 0: disable, 1: enable,  Combine all BCS nodes to single VE (per context)")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitEngineCountForVirtualBcs, -1, "-1: default, >0 Only use VirtualEngine with limited amount of engines, not max ")
 DECLARE_DEBUG_VARIABLE(int32_t, LimitEngineCountForVirtualCcs, -1, "-1: default, >0 Only use VirtualEngine with limited amount of engines, not max ")
+DECLARE_DEBUG_VARIABLE(int32_t, KMDSupportForCrossTileMigrationPolicy, -1, "-1: default, 0: no KMD support, 1: KMD support for cross-tile migrations of shared allocations")
 DECLARE_DEBUG_VARIABLE(int32_t, CreateContextWithAccessCounters, -1, "-1: default, 0: ignore, 1: create context with Access Counter programming")
 DECLARE_DEBUG_VARIABLE(int32_t, AccessCountersTrigger, -1, "-1: default - disabled, 0: disabled, >= 0: triggering thresholds")
 DECLARE_DEBUG_VARIABLE(int32_t, AccessCountersGranularity, -1, "-1: default - ACG_2MB, >= 0: granularites - 0: ACG_128K, 1: ACG_2M, 2: ACG_16M, 3: ACG_16M")

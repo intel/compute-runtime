@@ -4594,9 +4594,9 @@ TEST_F(DrmMemoryManagerTest, givenKmdMigratedSharedAllocationWithMultipleBOsWhen
     EXPECT_EQ(1u, drmAllocation.subDeviceIdsReceived[1]);
 }
 
-TEST_F(DrmMemoryManagerTest, givenContextWithAccessCountersAndKmdMigratedSharedAllocationWithMultipleBOsWhenSetMemPrefetchIsCalledWithASubDeviceThenPrefetchBOsToThisSubDevice) {
+TEST_F(DrmMemoryManagerTest, givenKMDSupportForCrossTileMigrationPolicyAndKmdMigratedSharedAllocationWithMultipleBOsWhenSetMemPrefetchIsCalledWithASubDeviceThenPrefetchBOsToThisSubDevice) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.CreateContextWithAccessCounters.set(1);
+    DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.set(1);
 
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     SubDeviceIdsVec subDeviceIds{0};
@@ -4627,9 +4627,9 @@ TEST_F(DrmMemoryManagerTest, givenContextWithAccessCountersAndKmdMigratedSharedA
     EXPECT_EQ(0u, drmAllocation.subDeviceIdsReceived[1]);
 }
 
-TEST_F(DrmMemoryManagerTest, givenContextWithAccessCountersAndKmdMigratedSharedAllocationWithMultipleBOsWhenSetMemPrefetchIsCalledWithSubDevicesThenPrefetchBOsToTheseSubDevices) {
+TEST_F(DrmMemoryManagerTest, givenKMDSupportForCrossTileMigrationPolicyAndKmdMigratedSharedAllocationWithMultipleBOsWhenSetMemPrefetchIsCalledWithSubDevicesThenPrefetchBOsToTheseSubDevices) {
     DebugManagerStateRestore restore;
-    DebugManager.flags.CreateContextWithAccessCounters.set(1);
+    DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.set(1);
 
     TestedDrmMemoryManager memoryManager(false, false, false, *executionEnvironment);
     SubDeviceIdsVec subDeviceIds{0, 1};

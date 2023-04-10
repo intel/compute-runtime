@@ -2136,7 +2136,7 @@ GraphicsAllocation *DrmMemoryManager::createSharedUnifiedMemoryAllocation(const 
             break;
         }
 
-        auto memoryBanks = DebugManager.flags.CreateContextWithAccessCounters.get() > 0 ? allocationData.storageInfo.memoryBanks : DeviceBitfield(1 << handleId);
+        auto memoryBanks = DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.get() > 0 ? allocationData.storageInfo.memoryBanks : DeviceBitfield(1 << handleId);
         auto memRegions = createMemoryRegionsForSharedAllocation(*pHwInfo, *memoryInfo, allocationData, memoryBanks);
 
         auto ret = memoryInfo->createGemExt(memRegions, currentSize, handle, {}, -1);
