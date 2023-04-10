@@ -11,11 +11,13 @@
 #include "shared/source/helpers/pause_on_gpu_properties.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/memory_manager/allocation_properties.h"
+#include "shared/source/memory_manager/unified_memory_manager.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/kernel_binary_helper.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/mocks/mock_csr.h"
+#include "shared/test/common/mocks/mock_memory_manager.h"
 #include "shared/test/common/mocks/mock_submissions_aggregator.h"
 
 #include "opencl/source/api/api.h"
@@ -1680,6 +1682,40 @@ HWTEST_F(EnqueueKernelTest, whenEnqueueKernelWithEngineHintsThenEpilogRequiredIs
 
     EXPECT_EQ(csr.recordedDispatchFlags.epilogueRequired, true);
     EXPECT_EQ(csr.recordedDispatchFlags.engineHints, 1u);
+}
+
+HWTEST_F(EnqueueKernelTest, GivenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenEnqueingKernelWithoutSharedAllocationsThenMemoryPrefetchIsNotCalled) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.UseKmdMigration.set(true);
+    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+    size_t gws[3] = {1, 1, 1};
+
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    auto memoryManager = static_cast<MockMemoryManager *>(context->getMemoryManager());
+    EXPECT_FALSE(memoryManager->setMemPrefetchCalled);
+}
+
+HWTEST_F(EnqueueKernelTest, GivenForceMemoryPrefetchForKmdMigratedSharedAllocationsWhenEnqueingKernelWithSharedAllocationsThenMemoryPrefetchIsCalled) {
+    DebugManagerStateRestore stateRestore;
+    DebugManager.flags.UseKmdMigration.set(true);
+    DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.set(true);
+
+    SVMAllocsManager::UnifiedMemoryProperties unifiedMemoryProperties(InternalMemoryType::SHARED_UNIFIED_MEMORY, context->getRootDeviceIndices(), context->getDeviceBitfields());
+    auto ptr = context->getSVMAllocsManager()->createSharedUnifiedMemoryAllocation(4096u, unifiedMemoryProperties, pCmdQ);
+    EXPECT_NE(nullptr, ptr);
+
+    MockKernelWithInternals mockKernel(*pClDevice);
+    size_t gws[3] = {1, 1, 1};
+
+    pCmdQ->enqueueKernel(mockKernel.mockKernel, 1, nullptr, gws, nullptr, 0, nullptr, nullptr);
+
+    auto memoryManager = static_cast<MockMemoryManager *>(context->getMemoryManager());
+    EXPECT_TRUE(memoryManager->setMemPrefetchCalled);
+
+    context->getSVMAllocsManager()->freeSVMAlloc(ptr);
 }
 
 struct PauseOnGpuTests : public EnqueueKernelTest {
