@@ -58,12 +58,7 @@ SchedulerImp::SchedulerImp(OsSysman *pOsSysman, zes_engine_type_flag_t engineTyp
     init();
 };
 
-SchedulerImp::~SchedulerImp() {
-    if (nullptr != pOsScheduler) {
-        delete pOsScheduler;
-        pOsScheduler = nullptr;
-    }
-}
+SchedulerImp::~SchedulerImp() = default;
 
 } // namespace Sysman
 } // namespace L0

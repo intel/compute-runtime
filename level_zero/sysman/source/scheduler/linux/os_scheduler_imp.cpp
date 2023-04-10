@@ -415,10 +415,10 @@ LinuxSchedulerImp::LinuxSchedulerImp(
     this->listOfEngines = listOfEngines;
 }
 
-OsScheduler *OsScheduler::create(
+std::unique_ptr<OsScheduler> OsScheduler::create(
     OsSysman *pOsSysman, zes_engine_type_flag_t type, std::vector<std::string> &listOfEngines, ze_bool_t isSubdevice, uint32_t subdeviceId) {
-    LinuxSchedulerImp *pLinuxSchedulerImp = new LinuxSchedulerImp(pOsSysman, type, listOfEngines, isSubdevice, subdeviceId);
-    return static_cast<OsScheduler *>(pLinuxSchedulerImp);
+    std::unique_ptr<LinuxSchedulerImp> pLinuxSchedulerImp = std::make_unique<LinuxSchedulerImp>(pOsSysman, type, listOfEngines, isSubdevice, subdeviceId);
+    return pLinuxSchedulerImp;
 }
 
 } // namespace Sysman

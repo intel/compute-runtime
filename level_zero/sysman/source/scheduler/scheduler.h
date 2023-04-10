@@ -44,7 +44,7 @@ struct SchedulerHandleContext : NEO::NonCopyableOrMovableClass {
     ze_result_t schedulerGet(uint32_t *pCount, zes_sched_handle_t *phScheduler);
 
     OsSysman *pOsSysman = nullptr;
-    std::vector<Scheduler *> handleList = {};
+    std::vector<std::unique_ptr<Scheduler>> handleList = {};
 
   private:
     void createHandle(zes_engine_type_flag_t engineType, std::vector<std::string> &listOfEngines, ze_bool_t onSubDevice, uint32_t subDeviceId);

@@ -55,10 +55,6 @@ class SysmanDeviceSchedulerFixture : public SysmanDeviceFixture {
                      pSysfsAccess->write(engineDir + "/" + engineName + "/" + heartbeatIntervalMilliSecs, heartbeatMilliSecs);
                  });
 
-        // delete handles created in initial SysmanDeviceHandleContext::init() call
-        for (auto handle : pSysmanDeviceImp->pSchedulerHandleContext->handleList) {
-            delete handle;
-        }
         pSysmanDeviceImp->pSchedulerHandleContext->handleList.clear();
         device = pSysmanDevice;
         getSchedHandles(0);
@@ -622,10 +618,8 @@ TEST_F(SysmanDeviceSchedulerFixture, GivenValidDeviceHandleWhenCallingzesSchedul
 
 TEST_F(SysmanDeviceSchedulerFixture, GivenValidObjectsOfClassSchedulerImpAndSchedulerHandleContextThenDuringObjectReleaseCheckDestructorBranches) {
     for (auto &handle : pSysmanDeviceImp->pSchedulerHandleContext->handleList) {
-        auto pSchedulerImp = static_cast<L0::Sysman::SchedulerImp *>(handle);
-        delete pSchedulerImp->pOsScheduler;
+        auto pSchedulerImp = static_cast<L0::Sysman::SchedulerImp *>(handle.get());
         pSchedulerImp->pOsScheduler = nullptr;
-        delete handle;
         handle = nullptr;
     }
 }

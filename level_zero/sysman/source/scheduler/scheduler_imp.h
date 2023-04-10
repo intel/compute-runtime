@@ -28,7 +28,7 @@ class SchedulerImp : public Scheduler, NEO::NonCopyableOrMovableClass {
     ze_result_t setComputeUnitDebugMode(ze_bool_t *pNeedReload) override;
 
     SchedulerImp() = default;
-    OsScheduler *pOsScheduler = nullptr;
+    std::unique_ptr<OsScheduler> pOsScheduler;
     SchedulerImp(OsSysman *pOsSysman, zes_engine_type_flag_t type, std::vector<std::string> &listOfEngines, ze_bool_t onSubDevice, uint32_t subDeviceId);
     ~SchedulerImp() override;
 
