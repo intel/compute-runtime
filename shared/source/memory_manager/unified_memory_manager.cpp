@@ -802,6 +802,14 @@ void SVMAllocsManager::prefetchMemory(Device &device, CommandStreamReceiver &com
     }
 }
 
+void SVMAllocsManager::prefetchSVMAllocs(Device &device, CommandStreamReceiver &commandStreamReceiver) {
+    std::shared_lock<std::shared_mutex> lock(mtx);
+    for (auto &allocation : this->SVMAllocs.allocations) {
+        NEO::SvmAllocationData allocData = allocation.second;
+        this->prefetchMemory(device, commandStreamReceiver, allocData);
+    }
+}
+
 std::unique_lock<std::mutex> SVMAllocsManager::obtainOwnership() {
     return std::unique_lock<std::mutex>(mtxForIndirectAccess);
 }

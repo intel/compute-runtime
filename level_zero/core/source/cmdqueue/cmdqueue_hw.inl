@@ -63,10 +63,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
 
     if (NEO::DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get()) {
         auto svmAllocMgr = device->getDriverHandle()->getSvmAllocsManager();
-        for (auto &allocation : svmAllocMgr->getSVMAllocs()->allocations) {
-            NEO::SvmAllocationData allocData = allocation.second;
-            svmAllocMgr->prefetchMemory(*device->getNEODevice(), *csr, allocData);
-        }
+        svmAllocMgr->prefetchSVMAllocs(*device->getNEODevice(), *csr);
     }
 
     if (this->clientId == CommandQueue::clientNotRegistered) {
