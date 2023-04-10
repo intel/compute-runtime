@@ -368,7 +368,7 @@ bool DrmAllocation::setMemPrefetch(Drm *drm, SubDeviceIdsVec &subDeviceIds) {
             if (storageInfo.memoryBanks.test(handleId)) {
                 auto bo = this->getBOs()[handleId];
                 auto subDeviceId = handleId;
-                if (DebugManager.flags.CreateContextWithAccessCounters.get() > 0) {
+                if (DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.get() > 0) {
                     subDeviceId = subDeviceIds[handleId % subDeviceIds.size()];
                 }
                 for (auto vmHandleId : subDeviceIds) {

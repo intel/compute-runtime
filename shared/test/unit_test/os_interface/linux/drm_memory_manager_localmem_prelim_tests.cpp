@@ -367,9 +367,9 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, whenCreateUnifiedMemoryAllocationW
     memoryManager->freeGraphicsMemory(allocation);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenCreateContextWithAccessCountersWhenCreateUnifiedMemoryAllocationWithMultiMemoryRegionsThenGemCreateExtIsUsedWithAllRegions) {
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKMDSupportForCrossTileMigrationPolicyWhenCreateUnifiedMemoryAllocationWithMultiMemoryRegionsThenGemCreateExtIsUsedWithAllRegions) {
     DebugManagerStateRestore restorer;
-    DebugManager.flags.CreateContextWithAccessCounters.set(1);
+    DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.set(1);
 
     std::vector<MemoryRegion> regionInfo(4);
     regionInfo[0].region = {drm_i915_gem_memory_class::I915_MEMORY_CLASS_SYSTEM, 1};
@@ -674,10 +674,10 @@ TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationAndUsmInitialP
     unifiedMemoryManager.freeSVMAlloc(ptr);
 }
 
-TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenUseKmdMigrationWithAccessCountersAndUsmInitialPlacementSetToGpuWhenCreateSharedUnifiedMemoryAllocationOnMultiTileArchitectureThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
+TEST_F(DrmMemoryManagerLocalMemoryPrelimTest, givenKMDSupportForCrossTileMigrationPolicyAndUsmInitialPlacementSetToGpuWhenCreateSharedUnifiedMemoryAllocationOnMultiTileArchitectureThenKmdMigratedAllocationIsCreatedWithCorrectRegionsOrder) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.UseKmdMigration.set(1);
-    DebugManager.flags.CreateContextWithAccessCounters.set(1);
+    DebugManager.flags.KMDSupportForCrossTileMigrationPolicy.set(1);
     DebugManager.flags.UsmInitialPlacement.set(1);
     RootDeviceIndicesContainer rootDeviceIndices = {mockRootDeviceIndex};
     std::map<uint32_t, DeviceBitfield> deviceBitfields{{mockRootDeviceIndex, mockDeviceBitfield}};
