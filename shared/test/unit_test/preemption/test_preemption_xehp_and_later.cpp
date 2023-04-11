@@ -155,7 +155,7 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, XeHPAndLaterPreemptionTests, GivenOfflineModeDebugg
     PreemptionHelper::programStateSip<FamilyType>(cmdStream, *device, nullptr, osContext.get());
     EXPECT_EQ(sizeof(STATE_SIP), cmdStream.getUsed());
 
-    auto contextSipKernel = builtIns->perContextSipKernels.first[contextId].get();
+    auto contextSipKernel = builtIns->perContextSipKernels[contextId].first.get();
     auto sipAllocation = contextSipKernel->getSipAllocation();
 
     auto sipCommand = genCmdCast<STATE_SIP *>(cmdStream.getCpuBase());

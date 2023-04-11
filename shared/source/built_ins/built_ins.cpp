@@ -93,11 +93,11 @@ const SipKernel &BuiltIns::getSipKernel(Device &device, OsContext *context) {
                                                              device, sipAllocation, 0, sipBinary.data(),
                                                              sipBinary.size());
         }
-        perContextSipKernels.first[contextId] = std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader));
+        perContextSipKernels[contextId].first = std::make_unique<SipKernel>(type, sipAllocation, std::move(stateSaveAreaHeader));
     };
-    std::call_once(perContextSipKernels.second, initializer);
+    std::call_once(perContextSipKernels[contextId].second, initializer);
 
-    return *perContextSipKernels.first[contextId];
+    return *perContextSipKernels[contextId].first;
 }
 
 void BuiltIns::freeSipKernels(MemoryManager *memoryManager) {
@@ -107,9 +107,10 @@ void BuiltIns::freeSipKernels(MemoryManager *memoryManager) {
         }
     }
 
-    for (const auto &ctxToSipKernelMap : perContextSipKernels.first) {
-        if (ctxToSipKernelMap.second.get()) {
-            memoryManager->freeGraphicsMemory(ctxToSipKernelMap.second->getSipAllocation());
+    for (const auto &pair : perContextSipKernels) {
+        const auto sipKernel = pair.second.first.get();
+        if (sipKernel) {
+            memoryManager->freeGraphicsMemory(sipKernel->getSipAllocation());
         }
     }
 }

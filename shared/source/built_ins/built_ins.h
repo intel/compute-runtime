@@ -178,7 +178,7 @@ class BuiltIns {
     std::unique_ptr<BuiltinsLib> builtinsLib;
 
     using ContextId = uint32_t;
-    std::pair<std::unordered_map<ContextId, std::unique_ptr<SipKernel>>, std::once_flag> perContextSipKernels;
+    std::unordered_map<ContextId, std::pair<std::unique_ptr<SipKernel>, std::once_flag>> perContextSipKernels;
 
     bool enableCacheing = true;
 };

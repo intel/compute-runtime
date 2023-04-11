@@ -8,6 +8,7 @@
 #include "shared/source/built_ins/built_ins.h"
 #include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/gfx_core_helper.h"
+#include "shared/source/memory_manager/memory_allocation.h"
 #include "shared/source/os_interface/os_context.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -477,12 +478,43 @@ TEST(DebugBindlessSip, givenContextWhenBindlessDebugSipIsRequestedThenCorrectSip
     auto &sipKernel = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice, &csr->getOsContext());
     EXPECT_NE(nullptr, &sipKernel);
 
-    auto contextSip = builtIns->perContextSipKernels.first[contextId].get();
+    auto contextSip = builtIns->perContextSipKernels[contextId].first.get();
 
     EXPECT_NE(nullptr, contextSip);
     EXPECT_EQ(SipKernelType::DbgBindless, contextSip->getType());
     EXPECT_NE(nullptr, contextSip->getSipAllocation());
     EXPECT_FALSE(contextSip->getStateSaveAreaHeader().empty());
+}
+
+TEST(DebugBindlessSip, givenTwoContextsWhenBindlessDebugSipIsRequestedThenEachSipKernelIsAssignedToADifferentContextId) {
+    auto mockDevice = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    auto executionEnvironment = mockDevice->getExecutionEnvironment();
+    auto builtIns = new NEO::MockBuiltins();
+    executionEnvironment->rootDeviceEnvironments[0]->builtins.reset(builtIns);
+
+    const uint32_t context0Id = 0u;
+    std::unique_ptr<OsContext> osContext0(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+                                                            mockDevice->getRootDeviceIndex(), context0Id,
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, mockDevice->getDeviceBitfield())));
+    osContext0->setDefaultContext(true);
+
+    const uint32_t context1Id = 1u;
+    std::unique_ptr<OsContext> osContext1(OsContext::create(executionEnvironment->rootDeviceEnvironments[0]->osInterface.get(),
+                                                            mockDevice->getRootDeviceIndex(), context1Id,
+                                                            EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_BCS, EngineUsage::Regular}, PreemptionMode::ThreadGroup, mockDevice->getDeviceBitfield())));
+    osContext1->setDefaultContext(true);
+
+    auto &sipKernel1 = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice, osContext1.get());
+    auto &sipKernel0 = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice, osContext0.get());
+    EXPECT_NE(sipKernel0.getSipAllocation(), sipKernel1.getSipAllocation());
+
+    auto context0SipKernel = builtIns->perContextSipKernels[context0Id].first.get();
+    auto context1SipKernel = builtIns->perContextSipKernels[context1Id].first.get();
+    EXPECT_NE(context0SipKernel, context1SipKernel);
+
+    const auto alloc0Id = static_cast<MemoryAllocation *>(context0SipKernel->getSipAllocation())->id;
+    const auto alloc1Id = static_cast<MemoryAllocation *>(context1SipKernel->getSipAllocation())->id;
+    EXPECT_NE(alloc0Id, alloc1Id);
 }
 
 TEST(DebugBindlessSip, givenFailingSipAllocationWhenBindlessDebugSipWithContextIsRequestedThenSipAllocationInSipKernelIsNull) {
@@ -511,7 +543,7 @@ TEST(DebugBindlessSip, givenFailingSipAllocationWhenBindlessDebugSipWithContextI
     auto &sipKernel = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice, &csr->getOsContext());
     EXPECT_NE(nullptr, &sipKernel);
 
-    auto contextSip = builtIns->perContextSipKernels.first[contextId].get();
+    auto contextSip = builtIns->perContextSipKernels[contextId].first.get();
 
     EXPECT_NE(nullptr, contextSip);
     EXPECT_EQ(SipKernelType::DbgBindless, contextSip->getType());
@@ -538,6 +570,6 @@ TEST(DebugBindlessSip, givenCorrectSipKernelWhenReleasingAllocationManuallyThenF
 
     [[maybe_unused]] auto &sipKernel = NEO::SipKernel::getBindlessDebugSipKernel(*mockDevice, &csr->getOsContext());
 
-    mockDevice->getMemoryManager()->freeGraphicsMemory(builtIns->perContextSipKernels.first[contextId].get()->getSipAllocation());
-    builtIns->perContextSipKernels.first[contextId].reset(nullptr);
+    mockDevice->getMemoryManager()->freeGraphicsMemory(builtIns->perContextSipKernels[contextId].first.get()->getSipAllocation());
+    builtIns->perContextSipKernels[contextId].first.reset(nullptr);
 }
