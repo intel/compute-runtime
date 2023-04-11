@@ -57,7 +57,9 @@ void MultiTileCommandListFixtureInit::setUp() {
     SingleRootMultiSubDeviceFixture::setUp();
 }
 
-void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool createInternal, bool createCopy) {
+void MultiTileCommandListFixtureInit::setUpParams(bool createImmediate, bool createInternal, bool createCopy, int32_t primaryBuffer) {
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(primaryBuffer);
+
     ze_result_t returnValue;
 
     NEO::EngineGroupType cmdListEngineType = createCopy ? NEO::EngineGroupType::Copy : NEO::EngineGroupType::RenderCompute;

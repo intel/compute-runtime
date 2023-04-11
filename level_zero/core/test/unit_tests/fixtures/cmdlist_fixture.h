@@ -34,7 +34,7 @@ class CommandListFixture : public DeviceFixture {
 
 struct MultiTileCommandListFixtureInit : public SingleRootMultiSubDeviceFixture {
     void setUp();
-    void setUpParams(bool createImmediate, bool createInternal, bool createCopy);
+    void setUpParams(bool createImmediate, bool createInternal, bool createCopy, int32_t primaryBuffer);
     inline void tearDown() {
         SingleRootMultiSubDeviceFixture::tearDown();
     }
@@ -46,11 +46,11 @@ struct MultiTileCommandListFixtureInit : public SingleRootMultiSubDeviceFixture 
     std::unique_ptr<VariableBackup<bool>> osLocalMemoryBackup;
 };
 
-template <bool createImmediate, bool createInternal, bool createCopy>
+template <bool createImmediate, bool createInternal, bool createCopy, int32_t primaryBuffer>
 struct MultiTileCommandListFixture : public MultiTileCommandListFixtureInit {
     void setUp() {
         MultiTileCommandListFixtureInit::setUp();
-        MultiTileCommandListFixtureInit::setUpParams(createImmediate, createInternal, createCopy);
+        MultiTileCommandListFixtureInit::setUpParams(createImmediate, createInternal, createCopy, primaryBuffer);
     }
 
     void tearDown() {

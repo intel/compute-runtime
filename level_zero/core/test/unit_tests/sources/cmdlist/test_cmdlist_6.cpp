@@ -27,7 +27,7 @@
 namespace L0 {
 namespace ult {
 
-using MultiTileImmediateCommandListTest = Test<MultiTileCommandListFixture<true, false, false>>;
+using MultiTileImmediateCommandListTest = Test<MultiTileCommandListFixture<true, false, false, -1>>;
 
 HWTEST2_F(MultiTileImmediateCommandListTest, GivenMultiTileDeviceWhenCreatingImmediateCommandListThenExpectPartitionCountMatchTileCount, IsWithinXeGfxFamily) {
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
@@ -38,7 +38,7 @@ HWTEST2_F(MultiTileImmediateCommandListTest, GivenMultiTileDeviceWhenCreatingImm
     EXPECT_EQ(2u, commandList->partitionCount);
 }
 
-using MultiTileImmediateInternalCommandListTest = Test<MultiTileCommandListFixture<true, true, false>>;
+using MultiTileImmediateInternalCommandListTest = Test<MultiTileCommandListFixture<true, true, false, -1>>;
 
 HWTEST2_F(MultiTileImmediateInternalCommandListTest, GivenMultiTileDeviceWhenCreatingInternalImmediateCommandListThenExpectPartitionCountEqualOne, IsWithinXeGfxFamily) {
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());
@@ -49,7 +49,7 @@ HWTEST2_F(MultiTileImmediateInternalCommandListTest, GivenMultiTileDeviceWhenCre
     EXPECT_EQ(1u, commandList->partitionCount);
 }
 
-using MultiTileCopyEngineCommandListTest = Test<MultiTileCommandListFixture<false, false, true>>;
+using MultiTileCopyEngineCommandListTest = Test<MultiTileCommandListFixture<false, false, true, -1>>;
 
 HWTEST2_F(MultiTileCopyEngineCommandListTest, GivenMultiTileDeviceWhenCreatingCopyEngineCommandListThenExpectPartitionCountEqualOne, IsWithinXeGfxFamily) {
     EXPECT_EQ(2u, device->getNEODevice()->getDeviceBitfield().count());

@@ -595,7 +595,7 @@ HWTEST_F(CommandListAppendWaitOnEvent, givenCommandBufferIsEmptyWhenAppendingWai
     EXPECT_EQ(1u, semaphoreWaitsFound);
 }
 
-using MultTileCommandListAppendWaitOnEvent = Test<MultiTileCommandListFixture<false, false, false>>;
+using MultTileCommandListAppendWaitOnEvent = Test<MultiTileCommandListFixture<false, false, false, -1>>;
 HWTEST2_F(MultTileCommandListAppendWaitOnEvent,
           GivenMultiTileCmdListWhenPartitionedEventUsedToWaitThenExpectProperGpuAddressAndSemaphoreCount, IsAtLeastXeHpCore) {
     using MI_SEMAPHORE_WAIT = typename FamilyType::MI_SEMAPHORE_WAIT;
