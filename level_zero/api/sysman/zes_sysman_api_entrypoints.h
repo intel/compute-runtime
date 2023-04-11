@@ -942,20 +942,32 @@ ze_result_t zesDeviceEnumDiagnosticTestSuites(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_diag_handle_t *phDiagnostics) {
-    return L0::SysmanDevice::diagnosticsGet(hDevice, pCount, phDiagnostics);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::diagnosticsGet(hDevice, pCount, phDiagnostics);
+    } else {
+        return L0::Sysman::SysmanDevice::diagnosticsGet(hDevice, pCount, phDiagnostics);
+    }
 }
 
 ze_result_t zesDiagnosticsGetProperties(
     zes_diag_handle_t hDiagnostics,
     zes_diag_properties_t *pProperties) {
-    return L0::Diagnostics::fromHandle(hDiagnostics)->diagnosticsGetProperties(pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::Diagnostics::fromHandle(hDiagnostics)->diagnosticsGetProperties(pProperties);
+    } else {
+        return L0::Sysman::Diagnostics::fromHandle(hDiagnostics)->diagnosticsGetProperties(pProperties);
+    }
 }
 
 ze_result_t zesDiagnosticsGetTests(
     zes_diag_handle_t hDiagnostics,
     uint32_t *pCount,
     zes_diag_test_t *pTests) {
-    return L0::Diagnostics::fromHandle(hDiagnostics)->diagnosticsGetTests(pCount, pTests);
+    if (L0::sysmanInitFromCore) {
+        return L0::Diagnostics::fromHandle(hDiagnostics)->diagnosticsGetTests(pCount, pTests);
+    } else {
+        return L0::Sysman::Diagnostics::fromHandle(hDiagnostics)->diagnosticsGetTests(pCount, pTests);
+    }
 }
 
 ze_result_t zesDiagnosticsRunTests(
@@ -963,7 +975,11 @@ ze_result_t zesDiagnosticsRunTests(
     uint32_t startIndex,
     uint32_t endIndex,
     zes_diag_result_t *pResult) {
-    return L0::Diagnostics::fromHandle(hDiagnostics)->diagnosticsRunTests(startIndex, endIndex, pResult);
+    if (L0::sysmanInitFromCore) {
+        return L0::Diagnostics::fromHandle(hDiagnostics)->diagnosticsRunTests(startIndex, endIndex, pResult);
+    } else {
+        return L0::Sysman::Diagnostics::fromHandle(hDiagnostics)->diagnosticsRunTests(startIndex, endIndex, pResult);
+    }
 }
 
 ze_result_t zesDeviceEnumPerformanceFactorDomains(

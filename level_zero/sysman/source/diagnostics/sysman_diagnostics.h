@@ -9,13 +9,13 @@
 #include "level_zero/api/sysman/zes_handles_struct.h"
 #include <level_zero/zes_api.h>
 
+#include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
 
 namespace L0 {
 namespace Sysman {
-
 struct OsSysman;
 
 class Diagnostics : _zes_diag_handle_t {
@@ -41,7 +41,7 @@ struct DiagnosticsHandleContext {
     ze_result_t diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics);
     std::vector<std::string> supportedDiagTests = {};
     OsSysman *pOsSysman = nullptr;
-    std::vector<Diagnostics *> handleList = {};
+    std::vector<std::unique_ptr<Diagnostics>> handleList = {};
     bool isDiagnosticsInitDone() {
         return diagnosticsInitDone;
     }

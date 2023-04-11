@@ -53,8 +53,8 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     SysmanHwDeviceIdDrm *getSysmanHwDeviceId();
     NEO::Drm *getDrm();
     void releasePmtObject();
-    void releaseSysmanDeviceResources();
-    ze_result_t reInitSysmanDeviceResources();
+    MOCKABLE_VIRTUAL void releaseSysmanDeviceResources();
+    MOCKABLE_VIRTUAL ze_result_t reInitSysmanDeviceResources();
     MOCKABLE_VIRTUAL void getPidFdsForOpenDevice(ProcfsAccess *, SysfsAccess *, const ::pid_t, std::vector<int> &);
     MOCKABLE_VIRTUAL ze_result_t osWarmReset();
     MOCKABLE_VIRTUAL ze_result_t osColdReset();
@@ -71,6 +71,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     uint32_t rootDeviceIndex;
     bool diagnosticsReset = false;
+    bool isMemoryDiagnostics = false;
     std::string gtDevicePath;
 
   protected:

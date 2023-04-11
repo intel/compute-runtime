@@ -9,21 +9,32 @@
 
 #include "shared/source/helpers/basic_math.h"
 
+#include "level_zero/sysman/source/diagnostics/sysman_diagnostics_imp.h"
+#include "level_zero/sysman/source/diagnostics/sysman_os_diagnostics.h"
+#include "level_zero/sysman/source/os_sysman.h"
+
 namespace L0 {
 namespace Sysman {
+class OsDiagnostics;
 
 DiagnosticsHandleContext::~DiagnosticsHandleContext() {
     releaseDiagnosticsHandles();
 }
 
 void DiagnosticsHandleContext::releaseDiagnosticsHandles() {
-    for (Diagnostics *pDiagnostics : handleList) {
-        delete pDiagnostics;
-    }
     handleList.clear();
 }
 
+void DiagnosticsHandleContext::createHandle(const std::string &diagTests) {
+    std::unique_ptr<Diagnostics> pDiagnostics = std::make_unique<DiagnosticsImp>(pOsSysman, diagTests);
+    handleList.push_back(std::move(pDiagnostics));
+}
+
 void DiagnosticsHandleContext::init() {
+    OsDiagnostics::getSupportedDiagTestsFromFW(pOsSysman, supportedDiagTests);
+    for (const std::string &diagTests : supportedDiagTests) {
+        createHandle(diagTests);
+    }
 }
 
 ze_result_t DiagnosticsHandleContext::diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics) {

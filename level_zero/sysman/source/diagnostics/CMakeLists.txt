@@ -9,7 +9,9 @@ target_sources(${L0_STATIC_LIB_NAME}
                ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt
                ${CMAKE_CURRENT_SOURCE_DIR}/sysman_diagnostics.h
                ${CMAKE_CURRENT_SOURCE_DIR}/sysman_diagnostics.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_diagnostics_imp.h
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_diagnostics_imp.cpp
+               ${CMAKE_CURRENT_SOURCE_DIR}/sysman_os_diagnostics.h
 )
 
 add_subdirectories()
-
