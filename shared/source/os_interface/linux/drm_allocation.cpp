@@ -367,4 +367,12 @@ void DrmAllocation::registerMemoryToUnmap(void *pointer, size_t size, DrmAllocat
     this->memoryToUnmap.push_back({pointer, size, unmapFunction});
 }
 
+uint64_t DrmAllocation::getHandleAddressBase(uint32_t handleIndex) {
+    return bufferObjects[handleIndex]->peekAddress();
+}
+
+size_t DrmAllocation::getHandleSize(uint32_t handleIndex) {
+    return bufferObjects[handleIndex]->peekSize();
+}
+
 } // namespace NEO
