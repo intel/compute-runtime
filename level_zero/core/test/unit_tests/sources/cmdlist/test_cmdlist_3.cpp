@@ -19,7 +19,7 @@
 #include "level_zero/core/source/event/event.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
-#include "level_zero/core/test/unit_tests/fixtures/device_fixture.h"
+#include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_event.h"
@@ -1516,6 +1516,181 @@ HWTEST2_F(CommandListCreate, givenGetAlignedAllocationWhenExternalMemWithinDiffe
     EXPECT_EQ(outData1.alloc, outData2.alloc);
     driverHandle->getMemoryManager()->freeGraphicsMemory(outData1.alloc);
     commandList->hostPtrMap.clear();
+}
+
+using FrontEndPrimaryBatchBufferCommandListTest = Test<FrontEndCommandListFixture<1>>;
+HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
+          givenFrontEndTrackingIsUsedWhenPropertyDisableEuFusionSupportedThenExpectFrontEndAddedToPatchlist,
+          IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
+    auto &productHelper = device->getProductHelper();
+    productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+
+    EXPECT_TRUE(commandList->frontEndStateTracking);
+
+    auto &cmdStream = *commandList->getCmdContainer().getCommandStream();
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    auto &commandsToPatch = commandList->commandsToPatch;
+    EXPECT_EQ(0u, commandsToPatch.size());
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledEUFusion = 1;
+
+    size_t usedBefore = cmdStream.getUsed();
+    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    if (fePropertiesSupport.disableEuFusion) {
+        ASSERT_EQ(1u, commandsToPatch.size());
+        CommandList::CommandToPatch &cfePatch = commandsToPatch[0];
+        EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfePatch.type);
+
+        void *expectedDestination = ptrOffset(cmdStream.getCpuBase(), usedBefore);
+        EXPECT_EQ(expectedDestination, cfePatch.pDestination);
+
+        auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
+        ASSERT_NE(nullptr, cfeCmd);
+        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(*cfeCmd));
+    } else {
+        EXPECT_EQ(0u, commandsToPatch.size());
+    }
+
+    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    if (fePropertiesSupport.disableEuFusion) {
+        EXPECT_EQ(1u, commandsToPatch.size());
+    } else {
+        EXPECT_EQ(0u, commandsToPatch.size());
+    }
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledEUFusion = 0;
+
+    usedBefore = cmdStream.getUsed();
+    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    if (fePropertiesSupport.disableEuFusion) {
+        ASSERT_EQ(2u, commandsToPatch.size());
+        CommandList::CommandToPatch &cfePatch = commandsToPatch[1];
+        EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfePatch.type);
+
+        void *expectedDestination = ptrOffset(cmdStream.getCpuBase(), usedBefore);
+        EXPECT_EQ(expectedDestination, cfePatch.pDestination);
+
+        auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
+        ASSERT_NE(nullptr, cfeCmd);
+        EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(*cfeCmd));
+    }
+
+    mockKernelImmData->kernelDescriptor->kernelAttributes.flags.requiresDisabledEUFusion = 1;
+
+    usedBefore = cmdStream.getUsed();
+    commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+
+    if (fePropertiesSupport.disableEuFusion) {
+        ASSERT_EQ(3u, commandsToPatch.size());
+        CommandList::CommandToPatch &cfePatch = commandsToPatch[2];
+        EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfePatch.type);
+
+        void *expectedDestination = ptrOffset(cmdStream.getCpuBase(), usedBefore);
+        EXPECT_EQ(expectedDestination, cfePatch.pDestination);
+
+        auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
+        ASSERT_NE(nullptr, cfeCmd);
+        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getDisableFusionStateFromFrontEndCommand(*cfeCmd));
+    } else {
+        EXPECT_EQ(0u, commandsToPatch.size());
+    }
+
+    if (fePropertiesSupport.disableEuFusion) {
+        commandList->reset();
+        EXPECT_EQ(0u, commandsToPatch.size());
+    }
+}
+HWTEST2_F(FrontEndPrimaryBatchBufferCommandListTest,
+          givenFrontEndTrackingCmdListIsExecutedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectFrontEndAddedToPatchlist,
+          IsAtLeastXeHpCore) {
+    using CFE_STATE = typename FamilyType::CFE_STATE;
+
+    NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
+    auto &productHelper = device->getProductHelper();
+    productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+
+    NEO::DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+
+    EXPECT_TRUE(commandList->frontEndStateTracking);
+    EXPECT_TRUE(commandQueue->frontEndStateTracking);
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+
+    ze_result_t result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &commandsToPatch = commandList->commandsToPatch;
+    EXPECT_EQ(0u, commandsToPatch.size());
+
+    result = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    if (fePropertiesSupport.computeDispatchAllWalker) {
+        ASSERT_EQ(1u, commandsToPatch.size());
+        CommandList::CommandToPatch &cfePatch = commandsToPatch[0];
+        EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfePatch.type);
+
+        auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
+        ASSERT_NE(nullptr, cfeCmd);
+        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*cfeCmd));
+    } else {
+        EXPECT_EQ(0u, commandsToPatch.size());
+    }
+
+    result = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    if (fePropertiesSupport.computeDispatchAllWalker) {
+        EXPECT_EQ(1u, commandsToPatch.size());
+    } else {
+        EXPECT_EQ(0u, commandsToPatch.size());
+    }
+
+    result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    if (fePropertiesSupport.computeDispatchAllWalker) {
+        ASSERT_EQ(2u, commandsToPatch.size());
+        CommandList::CommandToPatch &cfePatch = commandsToPatch[1];
+        EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfePatch.type);
+
+        auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
+        ASSERT_NE(nullptr, cfeCmd);
+        EXPECT_FALSE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*cfeCmd));
+    } else {
+        EXPECT_EQ(0u, commandsToPatch.size());
+    }
+
+    result = commandList->appendLaunchCooperativeKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    if (fePropertiesSupport.computeDispatchAllWalker) {
+        ASSERT_EQ(3u, commandsToPatch.size());
+        CommandList::CommandToPatch &cfePatch = commandsToPatch[2];
+        EXPECT_EQ(CommandList::CommandToPatch::FrontEndState, cfePatch.type);
+
+        auto cfeCmd = genCmdCast<CFE_STATE *>(cfePatch.pCommand);
+        ASSERT_NE(nullptr, cfeCmd);
+        EXPECT_TRUE(NEO::UnitTestHelper<FamilyType>::getComputeDispatchAllWalkerFromFrontEndCommand(*cfeCmd));
+    } else {
+        EXPECT_EQ(0u, commandsToPatch.size());
+    }
+
+    if (fePropertiesSupport.computeDispatchAllWalker) {
+        commandList->reset();
+        EXPECT_EQ(0u, commandsToPatch.size());
+    }
 }
 
 } // namespace ult

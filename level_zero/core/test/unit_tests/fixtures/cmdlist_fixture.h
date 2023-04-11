@@ -86,8 +86,18 @@ struct ModuleMutableCommandListFixture : public ModuleImmutableDataFixture {
     DebugManagerStateRestore restorer;
 };
 
-struct MultiReturnCommandListFixture : public ModuleMutableCommandListFixture {
-    void setUp();
+struct FrontEndCommandListFixtureInit : public ModuleMutableCommandListFixture {
+    void setUp() {
+        setUp(0);
+    }
+    void setUp(int32_t dispatchCmdBufferPrimary);
+};
+
+template <int32_t dispatchCmdBufferPrimary>
+struct FrontEndCommandListFixture : public FrontEndCommandListFixtureInit {
+    void setUp() {
+        FrontEndCommandListFixtureInit::setUp(dispatchCmdBufferPrimary);
+    }
 };
 
 struct CmdListPipelineSelectStateFixture : public ModuleMutableCommandListFixture {

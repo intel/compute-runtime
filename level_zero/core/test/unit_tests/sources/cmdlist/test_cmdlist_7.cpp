@@ -803,9 +803,9 @@ HWTEST2_F(CmdlistAppendLaunchKernelTests,
     commandList->cmdQImmediate = nullptr;
 }
 
-using MultiReturnCommandListTest = Test<MultiReturnCommandListFixture>;
+using FrontEndMultiReturnCommandListTest = Test<FrontEndCommandListFixture<0>>;
 
-HWTEST2_F(MultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyDisableEuFusionSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
+HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyDisableEuFusionSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     auto &productHelper = device->getProductHelper();
@@ -972,7 +972,7 @@ HWTEST2_F(MultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyDis
     }
 }
 
-HWTEST2_F(MultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
+HWTEST2_F(FrontEndMultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectReturnPointsAndBbEndProgramming, IsAtLeastSkl) {
     using MI_BATCH_BUFFER_END = typename FamilyType::MI_BATCH_BUFFER_END;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     auto &productHelper = device->getProductHelper();
@@ -1134,7 +1134,7 @@ HWTEST2_F(MultiReturnCommandListTest, givenFrontEndTrackingIsUsedWhenPropertyCom
     }
 }
 
-HWTEST2_F(MultiReturnCommandListTest,
+HWTEST2_F(FrontEndMultiReturnCommandListTest,
           givenFrontEndTrackingCmdListIsExecutedWhenPropertyDisableEuFusionSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastSkl) {
     using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
@@ -1384,7 +1384,7 @@ HWTEST2_F(MultiReturnCommandListTest,
     }
 }
 
-HWTEST2_F(MultiReturnCommandListTest,
+HWTEST2_F(FrontEndMultiReturnCommandListTest,
           givenFrontEndTrackingCmdListIsExecutedWhenPropertyComputeDispatchAllWalkerSupportedThenExpectFrontEndProgrammingInCmdQueue, IsAtLeastSkl) {
     using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
     using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
@@ -1635,7 +1635,7 @@ HWTEST2_F(MultiReturnCommandListTest,
     }
 }
 
-HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothRegularFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
+HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothRegularFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
     using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     auto &productHelper = device->getProductHelper();
@@ -1758,7 +1758,7 @@ HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsr
     EXPECT_EQ(0u, feStateCmds.size());
 }
 
-HWTEST2_F(MultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothImmediateFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
+HWTEST2_F(FrontEndMultiReturnCommandListTest, givenCmdQueueAndImmediateCmdListUseSameCsrWhenAppendingKernelOnBothImmediateFirstThenFrontEndStateIsNotChanged, IsAtLeastSkl) {
     using VFE_STATE_TYPE = typename FamilyType::VFE_STATE_TYPE;
     NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
     auto &productHelper = device->getProductHelper();

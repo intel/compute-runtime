@@ -134,7 +134,8 @@ void ModuleMutableCommandListFixture::tearDown() {
     ModuleImmutableDataFixture::tearDown();
 }
 
-void MultiReturnCommandListFixture::setUp() {
+void FrontEndCommandListFixtureInit::setUp(int32_t dispatchCmdBufferPrimary) {
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(dispatchCmdBufferPrimary);
     DebugManager.flags.EnableFrontEndTracking.set(1);
     DebugManager.flags.EnableFlushTaskSubmission.set(1);
     ModuleMutableCommandListFixture::setUp(REVISION_B);

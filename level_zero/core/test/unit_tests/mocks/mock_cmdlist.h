@@ -205,6 +205,7 @@ struct WhiteBox<::L0::CommandList> : public ::L0::CommandListImp {
     using BaseClass::cmdQImmediate;
     using BaseClass::commandContainer;
     using BaseClass::commandListPreemptionMode;
+    using BaseClass::commandsToPatch;
     using BaseClass::csr;
     using BaseClass::currentBindingTablePoolBaseAddress;
     using BaseClass::currentDynamicStateBaseAddress;
