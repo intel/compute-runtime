@@ -32,6 +32,7 @@ class WddmPowerImp : public OsPower, NEO::NonCopyableOrMovableClass {
 
   protected:
     KmdSysManager *pKmdSysManager = nullptr;
+    uint32_t powerLimitCount = 0;
 };
 
 } // namespace L0

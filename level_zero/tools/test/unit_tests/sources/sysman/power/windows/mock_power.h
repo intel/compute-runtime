@@ -12,6 +12,7 @@
 
 namespace L0 {
 namespace ult {
+constexpr uint32_t mockLimitCount = 3u;
 
 class PowerKmdSysManager : public Mock<MockKmdSysManager> {};
 
