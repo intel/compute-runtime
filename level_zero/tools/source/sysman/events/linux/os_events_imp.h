@@ -12,11 +12,6 @@
 
 namespace L0 {
 
-struct DeviceInfo {
-    std::string devicePath = {};
-    dev_t deviceNum = 0;
-};
-
 class LinuxEventsImp : public OsEvents, NEO::NonCopyableOrMovableClass {
   public:
     bool eventListen(zes_event_type_flags_t &pEvent, uint64_t timeout) override;
@@ -58,8 +53,8 @@ class LinuxEventsUtil {
     static const std::string unbind;
     static const std::string bind;
     static bool checkRasEventOccured(Ras *rasHandle);
-    void getDevIndexToDevInfoMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, DeviceInfo> &mapOfDevIndexToDevInfo);
-    bool checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, std::map<uint32_t, DeviceInfo> mapOfDevIndexToDevInfo, zes_event_type_flags_t *pEvents, void *dev);
+    void getDevIndexToDevPathMap(std::vector<zes_event_type_flags_t> &registeredEvents, uint32_t count, zes_device_handle_t *phDevices, std::map<uint32_t, std::string> &mapOfDevIndexToDevPath);
+    bool checkDeviceEvents(std::vector<zes_event_type_flags_t> &registeredEvents, std::map<uint32_t, std::string> mapOfDevIndexToDevPath, zes_event_type_flags_t *pEvents, void *dev);
     std::once_flag initEventsOnce;
     std::mutex eventsMutex;
     void init();

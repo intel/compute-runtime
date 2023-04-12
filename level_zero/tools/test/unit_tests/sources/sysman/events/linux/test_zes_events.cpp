@@ -16,7 +16,6 @@ namespace L0 {
 namespace ult {
 
 constexpr uint32_t mockHandleCount = 2u;
-constexpr int drmDeviceFd = 0;
 constexpr int mockReadPipeFd = 8;
 constexpr int mockWritePipeFd = 9;
 class SysmanEventsFixture : public SysmanDeviceFixture {
@@ -54,7 +53,7 @@ class SysmanEventsFixture : public SysmanDeviceFixture {
         pEventsImp = static_cast<L0::EventsImp *>(pSysmanDeviceImp->pEvents);
 
         // Assign pUdevLib library handle to LinuxEventImp object, so that udev library handle methods could be mocked
-        pLinuxSysmanImp->pUdevLib = new UdevLibMock();
+        pLinuxSysmanImp->pUdevLib = new EventsUdevLibMock();
         pLinuxEventsImp = new PublicLinuxEventsImp(pOsSysman);
         pEventsImp->pOsEvents = pLinuxEventsImp;
         pPmuInterface = std::make_unique<MockPmuInterfaceImpForEvents>(pLinuxSysmanImp);
@@ -121,17 +120,11 @@ TEST_F(SysmanEventsFixture, GivenValidSysmanHandleWhenEventsAreClearedThenDevice
         }
         return 1;
     });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 20;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -166,19 +159,13 @@ TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsFailureWhenlisteningForRes
                 pollFd[i].revents = POLLIN;
             }
         }
-        return 1;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
+        return -1;
     });
 
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 20;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -217,21 +204,12 @@ TEST_F(SysmanEventsFixture, GivenPipeSystemCallReturnsFailureWhenlisteningForRes
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -274,21 +252,12 @@ TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsOnAllFdsWhenlisteningForRe
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -333,21 +302,12 @@ TEST_F(SysmanEventsFixture, GivenPollSystemCallReturnsOnPipeFdWhenlisteningForRe
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -411,17 +371,11 @@ TEST_F(SysmanEventsFixture, GivenNoEventsAreRegisteredWhenListeningForEventsThen
     VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
         return -1;
     });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 20;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -498,7 +452,7 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForCurrentlyUnsup
 }
 
 TEST_F(SysmanEventsFixture,
-       GivenValidDeviceHandleAndListeningForEventsWhenEventGenerationSourceDeviceIsNotDrmAndAuxiliaryThenEventListenReturnFalse) {
+       GivenValidDeviceHandleAndListeningForEventsWhenEventGeneratedDevicePathIsNullThenEventListenReturnsAfterTimeout) {
     VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
     auto pMockFwInterface = new MockEventsFwInterface;
     pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
@@ -516,21 +470,13 @@ TEST_F(SysmanEventsFixture,
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 20;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
+    pUdevLibLocal->eventPropertyValueDevPathResult.clear();
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -570,17 +516,11 @@ TEST_F(SysmanEventsFixture,
         }
         return 1;
     });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 20;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -615,21 +555,12 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleAndListeningEventsWhenNullEven
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
     pUdevLibLocal->getEventTypeResult = nullptr;
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
@@ -672,19 +603,11 @@ TEST_F(SysmanEventsFixture,
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     pUdevLibLocal->allocateDeviceToReceiveDataResult = nullptr;
     pUdevLibLocal->getEventGenerationSourceDeviceResult = 10;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -727,21 +650,12 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -759,62 +673,6 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForResetRequiredE
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
     EXPECT_EQ(1u, numDeviceEvents);
     EXPECT_EQ(ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED, pDeviceEvents[0]);
-
-    // Step 5: Cleanup
-    delete[] phDevices;
-    delete[] pDeviceEvents;
-    L0::osSysmanDriverDestructor();
-    delete pMockFwInterface;
-}
-
-TEST_F(SysmanEventsFixture, GivenFstatSystemCallFailsWhenListeningForResetRequiredEventsThenEventListenAPIReturnsAfterTimeout) {
-    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
-    auto pMockFwInterface = new MockEventsFwInterface;
-    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
-
-    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
-        pipeFd[0] = mockReadPipeFd;
-        pipeFd[1] = mockWritePipeFd;
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
-        for (uint64_t i = 0; i < numberOfFds; i++) {
-            if (pollFd[i].fd == mockFd) {
-                pollFd[i].revents = POLLIN;
-            }
-        }
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        return -1;
-    });
-
-    // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
-    int a = 0;
-    void *ptr = &a; // Initialize a void pointer with dummy data
-    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
-
-    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
-    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
-    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
-
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
-    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
-
-    // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
-    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
-    phDevices[0] = device->toHandle();
-    uint32_t numDeviceEvents = 0;
-    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(0u, numDeviceEvents);
 
     // Step 5: Cleanup
     delete[] phDevices;
@@ -882,76 +740,12 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForFabricHealthEv
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 12345;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
     auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 12218;
-
-    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
-    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
-    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
-
-    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
-    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
-
-    // Step 4: Call APIs for validation
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH));
-    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
-    phDevices[0] = device->toHandle();
-    uint32_t numDeviceEvents = 0;
-    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
-    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
-    EXPECT_EQ(1u, numDeviceEvents);
-    EXPECT_EQ(ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH, pDeviceEvents[0]);
-
-    // Step 5: Cleanup
-    delete[] phDevices;
-    delete[] pDeviceEvents;
-    L0::osSysmanDriverDestructor();
-    delete pMockFwInterface;
-}
-
-TEST_F(SysmanEventsFixture, GivenFstatSystemCallFailsWhenListeningForFabricHealthEventsThenEventListenAPIReturnsAfterTimeout) {
-    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
-    auto pMockFwInterface = new MockEventsFwInterface;
-    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
-
-    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
-        pipeFd[0] = mockReadPipeFd;
-        pipeFd[1] = mockWritePipeFd;
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
-        for (uint64_t i = 0; i < numberOfFds; i++) {
-            if (pollFd[i].fd == mockFd) {
-                pollFd[i].revents = POLLIN;
-            }
-        }
-        return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        return -1;
-    });
-
-    // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new EventsUdevLibMock();
-    int a = 0;
-    void *ptr = &a; // Initialize a void pointer with dummy data
-    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 20;
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -994,13 +788,6 @@ TEST_F(SysmanEventsFixture, GivenImproperDevPathForUeventWhenListeningForFabricH
             }
         }
         return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
     });
 
     // Step 1: Initialize a mocked udev lib object for this test case
@@ -1052,13 +839,6 @@ TEST_F(SysmanEventsFixture, GivenInvalidEventTypeWhenListeningForFabricHealthEve
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
     auto pUdevLibLocal = new EventsUdevLibMock();
@@ -1109,15 +889,59 @@ TEST_F(SysmanEventsFixture, GivenRealPathSystemCallFailsWhenListeningForFabricHe
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     pSysfsAccess->getRealPathResult = ZE_RESULT_ERROR_NOT_AVAILABLE;
+
+    // Step 1: Initialize a mocked udev lib object for this test case
+    auto pUdevLibLocal = new EventsUdevLibMock();
+    int a = 0;
+    void *ptr = &a; // Initialize a void pointer with dummy data
+    pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
+    pUdevLibLocal->getEventGenerationSourceDeviceResult = 20;
+
+    auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
+    VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
+    GlobalOsSysmanDriver = static_cast<L0::OsSysmanDriver *>(pPublicLinuxSysmanDriverImp);
+
+    VariableBackup<L0::UdevLib *> udevBackup(&pPublicLinuxSysmanDriverImp->pUdevLib);
+    pPublicLinuxSysmanDriverImp->pUdevLib = pUdevLibLocal;
+
+    // Step 4: Call APIs for validation
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_FABRIC_PORT_HEALTH));
+    zes_device_handle_t *phDevices = new zes_device_handle_t[1];
+    phDevices[0] = device->toHandle();
+    uint32_t numDeviceEvents = 0;
+    zes_event_type_flags_t *pDeviceEvents = new zes_event_type_flags_t[1];
+    EXPECT_EQ(ZE_RESULT_SUCCESS, zesDriverEventListen(driverHandle->toHandle(), 1u, 1u, phDevices, &numDeviceEvents, pDeviceEvents));
+    EXPECT_EQ(0u, numDeviceEvents);
+
+    // Step 5: Cleanup
+    delete[] phDevices;
+    delete[] pDeviceEvents;
+    L0::osSysmanDriverDestructor();
+    delete pMockFwInterface;
+}
+
+TEST_F(SysmanEventsFixture, GivenRealPathSystemCallReturnsInvalidDeviceWhenListeningForFabricHealthEventsThenEventListenAPIReturnsAfterTimeout) {
+    VariableBackup<FirmwareUtil *> backupFwUtil(&pLinuxSysmanImp->pFwUtilInterface);
+    auto pMockFwInterface = new MockEventsFwInterface;
+    pLinuxSysmanImp->pFwUtilInterface = pMockFwInterface;
+
+    VariableBackup<decltype(SysCalls::sysCallsPipe)> mockPipe(&SysCalls::sysCallsPipe, [](int pipeFd[2]) -> int {
+        pipeFd[0] = mockReadPipeFd;
+        pipeFd[1] = mockWritePipeFd;
+        return 1;
+    });
+    VariableBackup<decltype(SysCalls::sysCallsPoll)> mockPoll(&SysCalls::sysCallsPoll, [](struct pollfd *pollFd, unsigned long int numberOfFds, int timeout) -> int {
+        for (uint64_t i = 0; i < numberOfFds; i++) {
+            if (pollFd[i].fd == mockFd) {
+                pollFd[i].revents = POLLIN;
+            }
+        }
+        return 1;
+    });
+
+    pSysfsAccess->realPath = "Invalid";
 
     // Step 1: Initialize a mocked udev lib object for this test case
     auto pUdevLibLocal = new EventsUdevLibMock();
@@ -1166,13 +990,6 @@ TEST_F(SysmanEventsFixture, GivenEventPropertyForTypeKeyIsNullPtrWhenListeningFo
             }
         }
         return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
     });
 
     // Step 1: Initialize a mocked udev lib object for this test case
@@ -1223,13 +1040,6 @@ TEST_F(SysmanEventsFixture, GivenEventPropertyForTypeKeyInvalidWhenListeningForF
             }
         }
         return 1;
-    });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
     });
 
     // Step 1: Initialize a mocked udev lib object for this test case
@@ -1327,20 +1137,12 @@ TEST_F(SysmanEventsFixture,
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
     pUdevLibLocal->getEventPropertyValueResult = "0";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
@@ -1385,22 +1187,13 @@ TEST_F(SysmanEventsFixture,
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
     pUdevLibLocal->getEventTypeResult = "add"; // In order to receive RESET_REQUIRED event type must be "change"
-    pUdevLibLocal->getEventPropertyValueResult = "1";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -1444,21 +1237,13 @@ TEST_F(SysmanEventsFixture,
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = nullptr;
+    pUdevLibLocal->getEventPropertyValueResult.clear();
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -1502,13 +1287,6 @@ HWTEST2_F(SysmanEventsFixture,
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 4: Call APIs for validation
     EXPECT_EQ(ZE_RESULT_SUCCESS, zesDeviceEventRegister(device->toHandle(), ZES_EVENT_TYPE_FLAG_DEVICE_RESET_REQUIRED));
@@ -1541,21 +1319,12 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceDetachEv
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
     pUdevLibLocal->getEventTypeResult = "remove";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
@@ -1596,21 +1365,12 @@ TEST_F(SysmanEventsFixture,
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
     pUdevLibLocal->getEventTypeResult = "change"; // ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH will be received only if EventType is "remove"
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
@@ -1649,21 +1409,12 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
     pUdevLibLocal->getEventTypeResult = "add";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
@@ -1704,21 +1455,12 @@ TEST_F(SysmanEventsFixture,
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
     pUdevLibLocal->getEventTypeResult = "change"; // ZES_EVENT_TYPE_FLAG_DEVICE_ATTACH will be received only if EventType is "add"
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
@@ -1757,21 +1499,12 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForDeviceAttachEv
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
     pUdevLibLocal->getEventTypeResult = "add";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
@@ -1811,21 +1544,12 @@ TEST_F(SysmanEventsFixture, GivenValidDeviceHandleWhenListeningForMemHealthEvent
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = "1";
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -1865,20 +1589,12 @@ TEST_F(SysmanEventsFixture,
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
     pUdevLibLocal->getEventPropertyValueResult = "0"; // getEventPropertyValue must return 1 in order to assure that MEM_HEALTH event is there
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
@@ -1918,22 +1634,13 @@ TEST_F(SysmanEventsFixture,
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventTypeResult = "add";        // In order to receive MEM_HEALTH event type must be "change"
-    pUdevLibLocal->getEventPropertyValueResult = "1"; // getEventPropertyValue must return 1 in order to assure that MEM_HEALTH event is there
+    pUdevLibLocal->getEventTypeResult = "add"; // In order to receive MEM_HEALTH event type must be "change"
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);
@@ -1972,21 +1679,13 @@ TEST_F(SysmanEventsFixture,
         }
         return 1;
     });
-    VariableBackup<decltype(SysCalls::sysCallsOpen)> mockOpen(&SysCalls::sysCallsOpen, [](const char *pathname, int flags) -> int {
-        return drmDeviceFd;
-    });
-    VariableBackup<decltype(NEO::SysCalls::sysCallsFstat)> mockFstat(&NEO::SysCalls::sysCallsFstat, [](int fd, struct stat *buf) -> int {
-        buf->st_rdev = 0;
-        return 0;
-    });
 
     // Step 1: Initialize a mocked udev lib object for this test case
-    auto pUdevLibLocal = new UdevLibMock();
+    auto pUdevLibLocal = new EventsUdevLibMock();
     int a = 0;
     void *ptr = &a; // Initialize a void pointer with dummy data
     pUdevLibLocal->allocateDeviceToReceiveDataResult = ptr;
-    pUdevLibLocal->getEventGenerationSourceDeviceResult = 0;
-    pUdevLibLocal->getEventPropertyValueResult = nullptr; // getEventPropertyValue must return 1 in order to assure that MEM_HEALTH event is there
+    pUdevLibLocal->getEventPropertyValueResult.clear(); // getEventPropertyValue must return 1 in order to assure that MEM_HEALTH event is there
 
     auto pPublicLinuxSysmanDriverImp = new PublicLinuxSysmanDriverImp();
     VariableBackup<L0::OsSysmanDriver *> driverBackup(&GlobalOsSysmanDriver);

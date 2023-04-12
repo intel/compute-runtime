@@ -169,9 +169,10 @@ struct MockEventsFsAccess : public FsAccess {
 
 struct MockEventsSysfsAccess : public SysfsAccess {
     ze_result_t getRealPathResult = ZE_RESULT_SUCCESS;
+    std::string realPath = "/sys/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0";
 
     ze_result_t getRealPath(const std::string file, std::string &val) override {
-        val = "/sys/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0";
+        val = realPath;
         return getRealPathResult;
     }
 
@@ -203,6 +204,7 @@ class EventsUdevLibMock : public UdevLib {
     EventsUdevLibMock() = default;
     std::string eventPropertyValueTypeResult = "PORT_CHANGE";
     std::string eventPropertyValueDevPathResult = "/devices/pci0000:97/0000:97:02.0/0000:98:00.0/0000:99:01.0/0000:9a:00.0/i915.iaf.0";
+    std::string getEventPropertyValueResult = "1";
 
     const char *getEventPropertyValue(void *dev, const char *key) override {
         if (strcmp(key, "TYPE") == 0) {
@@ -212,9 +214,14 @@ class EventsUdevLibMock : public UdevLib {
                 return nullptr;
             }
         } else if (strcmp(key, "DEVPATH") == 0) {
+            if (eventPropertyValueDevPathResult.empty()) {
+                return nullptr;
+            }
             return eventPropertyValueDevPathResult.c_str();
+        } else if (getEventPropertyValueResult.empty()) {
+            return nullptr;
         }
-        return "1";
+        return getEventPropertyValueResult.c_str();
     }
 
     ADDMETHOD_NOBASE(registerEventsFromSubsystemAndGetFd, int, 0, (std::vector<std::string> & subsystemList));
