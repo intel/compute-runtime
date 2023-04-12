@@ -36,6 +36,9 @@ size_t CommandListCoreFamily<gfxCoreFamily>::getReserveSshSize() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask, bool workloadPartition) {}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandListCoreFamily<gfxCoreFamily>::appendLaunchKernelWithParams(Kernel *kernel,
                                                                                const ze_group_count_t *threadGroupDimensions,
                                                                                Event *event,

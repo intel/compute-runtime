@@ -12,19 +12,13 @@
 #include "level_zero/core/source/cmdlist/cmdlist_hw_dg2_and_pvc.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.h"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_immediate.inl"
+#include "level_zero/core/source/cmdlist/cmdlist_hw_xe_hpc_and_later.inl"
 #include "level_zero/core/source/cmdlist/cmdlist_hw_xehp_and_later.inl"
 
 #include "cmdlist_extended.inl"
 #include "hw_cmds_xe_hpc_core_base.h"
 
 namespace L0 {
-template <>
-NEO::PipeControlArgs CommandListCoreFamily<IGFX_XE_HPC_CORE>::createBarrierFlags() {
-    NEO::PipeControlArgs args;
-    args.hdcPipelineFlush = true;
-    args.unTypedDataPortCacheFlush = true;
-    return args;
-}
 
 template <>
 ze_result_t CommandListCoreFamily<IGFX_XE_HPC_CORE>::appendMemoryPrefetch(const void *ptr, size_t size) {
@@ -58,16 +52,6 @@ ze_result_t CommandListCoreFamily<IGFX_XE_HPC_CORE>::appendMemoryPrefetch(const 
     NEO::EncodeMemoryPrefetch<GfxFamily>::programMemoryPrefetch(cmdStream, *gpuAlloc, static_cast<uint32_t>(size), offset, device->getNEODevice()->getRootDeviceEnvironment());
 
     return ZE_RESULT_SUCCESS;
-}
-
-template <>
-void CommandListCoreFamily<IGFX_XE_HPC_CORE>::applyMemoryRangesBarrier(uint32_t numRanges,
-                                                                       const size_t *pRangeSizes,
-                                                                       const void **pRanges) {
-    NEO::PipeControlArgs args;
-    args.hdcPipelineFlush = true;
-    args.unTypedDataPortCacheFlush = true;
-    NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(*commandContainer.getCommandStream(), args);
 }
 
 template struct CommandListCoreFamily<IGFX_XE_HPC_CORE>;

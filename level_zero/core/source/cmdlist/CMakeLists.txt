@@ -33,4 +33,11 @@ if(SUPPORT_XE_HPG_CORE OR SUPPORT_XE_HPC_CORE)
   )
 endif()
 
+if(SUPPORT_PVC_AND_LATER)
+  target_sources(${L0_STATIC_LIB_NAME}
+                 PRIVATE
+                 ${CMAKE_CURRENT_SOURCE_DIR}/cmdlist_hw_xe_hpc_and_later.inl
+  )
+endif()
+
 add_subdirectories()

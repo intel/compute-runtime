@@ -15,4 +15,7 @@ inline NEO::PreemptionMode CommandListCoreFamily<gfxCoreFamily>::obtainKernelPre
     return NEO::PreemptionMode::ThreadGroup;
 }
 
+template <GFXCORE_FAMILY gfxCoreFamily>
+void CommandListCoreFamily<gfxCoreFamily>::adjustWriteKernelTimestamp(uint64_t globalAddress, uint64_t contextAddress, bool maskLsb, uint32_t mask, bool workloadPartition) {}
+
 } // namespace L0
