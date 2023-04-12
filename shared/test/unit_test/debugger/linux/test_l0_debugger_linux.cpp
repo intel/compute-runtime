@@ -9,9 +9,12 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/kernel/debug_data.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/libult/linux/drm_mock.h"
 #include "shared/test/common/mocks/linux/mock_drm_allocation.h"
 #include "shared/test/common/mocks/mock_device.h"
+#include "shared/test/common/mocks/mock_l0_debugger.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include <algorithm>
@@ -81,4 +84,24 @@ TEST_F(L0DebuggerSharedLinuxTest, givenNoOSInterfaceThenRegisterElfAndLinkWithAl
     EXPECT_EQ(static_cast<size_t>(0u), drmMock->registeredDataSize);
     EXPECT_EQ(0u, isaAllocation.bufferObjects[0]->getBindExtHandles().size());
     neoDevice->getExecutionEnvironment()->rootDeviceEnvironments[0]->osInterface.reset(osInterfaceTmp);
+}
+
+struct SingleAddressSpaceLinuxFixture : public Test<NEO::DeviceFixture> {
+    void SetUp() override {
+        Test<NEO::DeviceFixture>::SetUp();
+    }
+
+    void TearDown() override {
+        Test<NEO::DeviceFixture>::TearDown();
+    }
+};
+
+HWTEST_F(SingleAddressSpaceLinuxFixture, givenDebuggingModeOfflineWhenDebuggerIsCreatedThenItHasCorrectSingleAddressSpaceValue) {
+    auto debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
+    EXPECT_FALSE(debugger->singleAddressSpaceSbaTracking);
+
+    pDevice->getExecutionEnvironment()->setDebuggingMode(DebuggingMode::Offline);
+
+    debugger = std::make_unique<MockDebuggerL0Hw<FamilyType>>(pDevice);
+    EXPECT_TRUE(debugger->singleAddressSpaceSbaTracking);
 }

@@ -24,7 +24,11 @@ DrmMock::DrmMock(int fd, RootDeviceEnvironment &rootDeviceEnvironment) : Drm(std
     sliceCountChangeSupported = true;
 
     if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
-        setPerContextVMRequired(true);
+        if (rootDeviceEnvironment.executionEnvironment.getDebuggingMode() == DebuggingMode::Offline) {
+            setPerContextVMRequired(false);
+        } else {
+            setPerContextVMRequired(true);
+        }
     }
 
     setupIoctlHelper(rootDeviceEnvironment.getHardwareInfo()->platform.eProductFamily);

@@ -104,10 +104,14 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
     drm->queryPageFaultSupport();
 
     if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
-        if (drm->isVmBindAvailable()) {
-            drm->setPerContextVMRequired(true);
+        if (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::Offline) {
+            drm->setPerContextVMRequired(false);
         } else {
-            printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Debugging not supported\n");
+            if (drm->isVmBindAvailable()) {
+                drm->setPerContextVMRequired(true);
+            } else {
+                printDebugString(DebugManager.flags.PrintDebugMessages.get(), stderr, "%s", "WARNING: Debugging not supported\n");
+            }
         }
     }
 

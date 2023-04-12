@@ -365,6 +365,13 @@ TEST_F(DrmBufferObjectTest, givenDeleterWhenBufferObjectIsCreatedAndDeletedThenC
     mock->ioctl_expected.reset();
 }
 
+TEST(DrmBufferObject, givenOfflineDebuggingModeWhenQueryingIsPerContextVMRequiredThenPerContextVMIsDisabled) {
+    auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
+    device->getRootDeviceEnvironment().executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Offline);
+    DrmMock drm(*(device->getExecutionEnvironment()->rootDeviceEnvironments[0].get()));
+    EXPECT_FALSE(drm.isPerContextVMRequired());
+}
+
 TEST(DrmBufferObject, givenPerContextVmRequiredWhenBoCreatedThenBindInfoIsInitializedToOsContextCount) {
     auto device = std::unique_ptr<MockDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(nullptr));
     device->getRootDeviceEnvironment().executionEnvironment.setDebuggingMode(NEO::DebuggingMode::Online);

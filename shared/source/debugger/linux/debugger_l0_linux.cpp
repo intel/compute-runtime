@@ -7,6 +7,7 @@
 
 #include "shared/source/debugger/debugger_l0.h"
 #include "shared/source/device/sub_device.h"
+#include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/helpers/basic_math.h"
 #include "shared/source/helpers/gfx_core_helper.h"
@@ -27,7 +28,11 @@ bool DebuggerL0::initDebuggingInOs(NEO::OSInterface *osInterface) {
 }
 
 void DebuggerL0::initSbaTrackingMode() {
-    singleAddressSpaceSbaTracking = false;
+    if (device->getExecutionEnvironment()->getDebuggingMode() == DebuggingMode::Offline) {
+        singleAddressSpaceSbaTracking = true;
+    } else {
+        singleAddressSpaceSbaTracking = false;
+    }
 }
 
 void DebuggerL0::registerAllocationType(GraphicsAllocation *allocation) {}

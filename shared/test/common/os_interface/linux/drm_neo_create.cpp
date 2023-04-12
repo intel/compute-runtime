@@ -48,8 +48,14 @@ Drm *Drm::create(std::unique_ptr<HwDeviceIdDrm> &&hwDeviceId, RootDeviceEnvironm
 
     drm->queryPageFaultSupport();
 
-    if (drm->isVmBindAvailable() && rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
-        drm->setPerContextVMRequired(true);
+    if (rootDeviceEnvironment.executionEnvironment.isDebuggingEnabled()) {
+        if (drm->getRootDeviceEnvironment().executionEnvironment.getDebuggingMode() == DebuggingMode::Offline) {
+            drm->setPerContextVMRequired(false);
+        } else {
+            if (drm->isVmBindAvailable()) {
+                drm->setPerContextVMRequired(true);
+            }
+        }
     }
 
     if (!drm->isPerContextVMRequired()) {
