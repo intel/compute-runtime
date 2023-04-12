@@ -45,7 +45,7 @@ class ProductHelperHw : public ProductHelper {
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
     bool overrideGfxPartitionLayoutForWsl() const override;
     uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const override;
-    AOT::PRODUCT_CONFIG getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const override;
+    uint32_t getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const override;
     uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     std::optional<aub_stream::ProductFamily> getAubStreamProductFamily() const override;

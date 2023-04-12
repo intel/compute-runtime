@@ -54,5 +54,9 @@ if(SUPPORT_DG2_AND_LATER)
   list(APPEND NEO_CORE_OS_INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_dg2_and_later.inl)
 endif()
 
+if(SUPPORT_MTL_AND_LATER)
+  list(APPEND NEO_CORE_OS_INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/product_helper_mtl_and_later.inl)
+endif()
+
 set_property(GLOBAL PROPERTY NEO_CORE_OS_INTERFACE ${NEO_CORE_OS_INTERFACE})
 add_subdirectories()

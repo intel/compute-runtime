@@ -13,9 +13,6 @@
 #include <optional>
 #include <string>
 #include <vector>
-namespace AOT {
-enum PRODUCT_CONFIG : uint32_t;
-}
 
 namespace aub_stream {
 enum class ProductFamily : uint32_t;
@@ -92,7 +89,7 @@ class ProductHelper {
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitterFullySupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
-    virtual AOT::PRODUCT_CONFIG getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const = 0;
+    virtual uint32_t getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;

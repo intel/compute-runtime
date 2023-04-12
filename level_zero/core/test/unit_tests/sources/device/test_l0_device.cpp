@@ -1255,7 +1255,7 @@ TEST_F(DeviceTest, givenDeviceIpVersionWhenGetDevicePropertiesThenCorrectResultI
     deviceProperties.pNext = &zeDeviceIpVersion;
 
     auto &productHelper = device->getProductHelper();
-    auto expectedIpVersion = static_cast<uint32_t>(productHelper.getProductConfigFromHwInfo(device->getHwInfo()));
+    auto expectedIpVersion = productHelper.getProductConfigFromHwInfo(device->getHwInfo());
 
     device->getProperties(&deviceProperties);
     EXPECT_NE(std::numeric_limits<uint32_t>::max(), zeDeviceIpVersion.ipVersion);

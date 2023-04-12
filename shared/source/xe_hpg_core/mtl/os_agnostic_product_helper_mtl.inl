@@ -42,32 +42,6 @@ uint32_t ProductHelperHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, 
 }
 
 template <>
-AOT::PRODUCT_CONFIG ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
-    switch (hwInfo.ipVersion.release) {
-    case 70:
-        switch (hwInfo.ipVersion.revision) {
-        case 0:
-            return AOT::MTL_M_A0;
-        case 4:
-            return AOT::MTL_M_B0;
-        default:
-            return AOT::UNKNOWN_ISA;
-        }
-    case 71:
-        switch (hwInfo.ipVersion.revision) {
-        case 0:
-            return AOT::MTL_P_A0;
-        case 4:
-            return AOT::MTL_P_B0;
-        default:
-            return AOT::UNKNOWN_ISA;
-        }
-    default:
-        return AOT::UNKNOWN_ISA;
-    }
-}
-
-template <>
 uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     switch (hwInfo.platform.usRevId) {
     case 0x0:

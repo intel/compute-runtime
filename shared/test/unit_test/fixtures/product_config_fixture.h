@@ -29,7 +29,7 @@ struct ProductConfigTest : public T {
 
     std::unique_ptr<NEO::ProductHelper> productHelper = nullptr;
     NEO::HardwareInfo hwInfo = {};
-    AOT::PRODUCT_CONFIG productConfig = AOT::UNKNOWN_ISA;
+    uint32_t productConfig = AOT::UNKNOWN_ISA;
 };
 
 struct ProductConfigHwInfoTests : public ProductConfigTest<::testing::TestWithParam<std::tuple<AOT::PRODUCT_CONFIG, PRODUCT_FAMILY>>> {

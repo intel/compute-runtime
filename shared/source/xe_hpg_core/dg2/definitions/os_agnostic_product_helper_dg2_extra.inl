@@ -7,7 +7,7 @@
 
 namespace NEO {
 template <>
-AOT::PRODUCT_CONFIG ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     if (DG2::isG10(hwInfo)) {
         switch (hwInfo.platform.usRevId) {
         case 0x0:

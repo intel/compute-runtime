@@ -18,7 +18,7 @@ uint32_t ProductHelperHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, 
 }
 
 template <>
-AOT::PRODUCT_CONFIG ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     return AOT::ADL_N;
 }
 

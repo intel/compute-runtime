@@ -14,7 +14,7 @@
 
 namespace NEO {
 template <>
-AOT::PRODUCT_CONFIG ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+uint32_t ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
     auto deviceId = hwInfo.platform.usDeviceID;
     bool isCfl = (std::find(cflDeviceIds.begin(), cflDeviceIds.end(), deviceId) != cflDeviceIds.end());
     bool isWhl = (std::find(whlDeviceIds.begin(), whlDeviceIds.end(), deviceId) != whlDeviceIds.end());
