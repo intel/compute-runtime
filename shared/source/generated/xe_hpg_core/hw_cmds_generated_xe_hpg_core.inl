@@ -3567,7 +3567,7 @@ struct XY_BLOCK_COPY_BLT {
         TheStructure.Common.SpecialModeofOperation = value;
     }
 
-    inline SPECIAL_MODE_OF_OPERATION getSpecialModeofOperation() const {
+    inline SPECIAL_MODE_OF_OPERATION getSpecialModeOfOperation() const {
         return static_cast<SPECIAL_MODE_OF_OPERATION>(TheStructure.Common.SpecialModeofOperation);
     }
 
@@ -4252,7 +4252,7 @@ struct XY_FAST_COLOR_BLT {
         TheStructure.Common.SpecialModeofOperation = value;
     }
 
-    inline SPECIAL_MODE_OF_OPERATION getSpecialModeofOperation() const {
+    inline SPECIAL_MODE_OF_OPERATION getSpecialModeOfOperation() const {
         return static_cast<SPECIAL_MODE_OF_OPERATION>(TheStructure.Common.SpecialModeofOperation);
     }
 

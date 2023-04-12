@@ -81,6 +81,7 @@ void BlitCommandsHelper<GfxFamily>::appendBlitCommandsBlockCopy(const BlitProper
 
     if (AuxTranslationDirection::AuxToNonAux == blitProperties.auxTranslationDirection) {
         blitCmd.setSpecialModeofOperation(XY_BLOCK_COPY_BLT::SPECIAL_MODE_OF_OPERATION::SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE);
+        UNRECOVERABLE_IF(blitCmd.getSourceTiling() != blitCmd.getDestinationTiling());
     } else if (AuxTranslationDirection::NonAuxToAux == blitProperties.auxTranslationDirection) {
         blitCmd.setSourceCompressionEnable(XY_BLOCK_COPY_BLT::COMPRESSION_ENABLE::COMPRESSION_ENABLE_COMPRESSION_DISABLE);
     }
@@ -213,6 +214,7 @@ void BlitCommandsHelper<GfxFamily>::appendSurfaceType(const BlitProperties &blit
 template <typename GfxFamily>
 void BlitCommandsHelper<GfxFamily>::appendTilingType(const GMM_TILE_TYPE srcTilingType, const GMM_TILE_TYPE dstTilingType, typename GfxFamily::XY_BLOCK_COPY_BLT &blitCmd) {
     using XY_BLOCK_COPY_BLT = typename GfxFamily::XY_BLOCK_COPY_BLT;
+    UNRECOVERABLE_IF((srcTilingType != dstTilingType) && blitCmd.getSpecialModeOfOperation() == XY_BLOCK_COPY_BLT::SPECIAL_MODE_OF_OPERATION::SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE);
     if (srcTilingType == GMM_TILED_4) {
         blitCmd.setSourceTiling(XY_BLOCK_COPY_BLT::TILING::TILING_TILE4);
     } else if (srcTilingType == GMM_TILED_64) {

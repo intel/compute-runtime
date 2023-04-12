@@ -243,7 +243,7 @@ XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenCompressedBufferWhenResolveBlitIsCal
     auto bltCmd = genCmdCast<XY_COPY_BLT *>(*(hwParser.cmdList.begin()));
     EXPECT_NE(nullptr, bltCmd);
 
-    EXPECT_EQ(XY_COPY_BLT::SPECIAL_MODE_OF_OPERATION::SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE, bltCmd->getSpecialModeofOperation());
+    EXPECT_EQ(XY_COPY_BLT::SPECIAL_MODE_OF_OPERATION::SPECIAL_MODE_OF_OPERATION_FULL_RESOLVE, bltCmd->getSpecialModeOfOperation());
 }
 
 XE_HP_CORE_TEST_F(BlitXE_HP_CORETests, givenCompressedBufferWhenNonAuxToAuxBlitIsCalledThenDontProgramSourceCompression) {
