@@ -9,6 +9,7 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 
@@ -38,5 +39,8 @@ void adjustHwInfoForTests(HardwareInfo &hwInfoForTests, uint32_t euPerSubSlice, 
     gtSystemInfo.MaxEuPerSubSlice = std::max(gtSystemInfo.MaxEuPerSubSlice, euPerSubSlice);
     gtSystemInfo.MaxSlicesSupported = std::max(gtSystemInfo.MaxSlicesSupported, gtSystemInfo.SliceCount);
     gtSystemInfo.MaxSubSlicesSupported = std::max(gtSystemInfo.MaxSubSlicesSupported, gtSystemInfo.SubSliceCount);
+
+    auto productHelper = ProductHelper::create(hwInfoForTests.platform.eProductFamily);
+    hwInfoForTests.ipVersion.value = productHelper->getProductConfigFromHwInfo(hwInfoForTests);
 }
 } // namespace NEO
