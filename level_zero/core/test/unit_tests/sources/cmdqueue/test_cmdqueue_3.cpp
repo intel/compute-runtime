@@ -23,6 +23,7 @@
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdlist.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_cmdqueue.h"
 #include "level_zero/core/test/unit_tests/mocks/mock_memory_manager.h"
+#include "level_zero/core/test/unit_tests/mocks/mock_module.h"
 
 namespace L0 {
 namespace ult {
@@ -998,6 +999,324 @@ HWTEST_F(CommandQueueTest, givenCommandQueueWhenPerformMigrationIsTrueAndAllocat
     commandQueue->makeResidentAndMigrate(true, container);
     EXPECT_EQ(mockPageFaultManager->moveAllocationToGpuDomainCalled, 0);
     commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueTest, givenBindlessEnabledWhenEstimateStateBaseAddressCmdSizeCalledThenReturnedSizeOfSBAAndPCAnd3DBindingTablePoolPool, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(1);
+    using GfxFamily = typename NEO::GfxFamilyMapper<gfxCoreFamily>::GfxFamily;
+    using STATE_BASE_ADDRESS = typename GfxFamily::STATE_BASE_ADDRESS;
+    using PIPE_CONTROL = typename GfxFamily::PIPE_CONTROL;
+    using _3DSTATE_BINDING_TABLE_POOL_ALLOC = typename GfxFamily::_3DSTATE_BINDING_TABLE_POOL_ALLOC;
+    ze_command_queue_desc_t desc = {};
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr.get(), &desc);
+    auto size = commandQueue->estimateStateBaseAddressCmdSize();
+    auto expectedSize = sizeof(STATE_BASE_ADDRESS) + sizeof(PIPE_CONTROL) + sizeof(_3DSTATE_BINDING_TABLE_POOL_ALLOC);
+    EXPECT_EQ(size, expectedSize);
+}
+
+HWTEST2_F(CommandQueueTest, givenBindlessDisabledWhenEstimateStateBaseAddressCmdSizeCalledThenZeroReturned, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.UseBindlessMode.set(0);
+    ze_command_queue_desc_t desc = {};
+    auto csr = std::unique_ptr<NEO::CommandStreamReceiver>(neoDevice->createCommandStreamReceiver());
+    auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr.get(), &desc);
+    auto size = commandQueue->estimateStateBaseAddressCmdSize();
+    auto expectedSize = 0u;
+    EXPECT_EQ(size, expectedSize);
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+size_t estimateAllCommmandLists(MockCommandQueueHw<gfxCoreFamily> *commandQueue, NEO::CommandStreamReceiver *csr, ze_command_list_handle_t *commandListHandles, size_t handlesSize, bool frontEndStateDirty) {
+    size_t estimatedSize = 0;
+    auto csrStateCopy = csr->getStreamProperties();
+    for (size_t i = 0; i < handlesSize; i++) {
+        auto cmdListPtr = CommandList::fromHandle(commandListHandles[i]);
+        auto requiredState = cmdListPtr->getRequiredStreamState();
+        auto finalState = cmdListPtr->getFinalStreamState();
+        estimatedSize += commandQueue->estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, -1, cmdListPtr, csrStateCopy, requiredState, finalState);
+    }
+    return estimatedSize;
+}
+
+HWTEST2_F(CommandQueueTest, whenExecuteCommandListsIsCalledThenCorrectSizeOfFrontEndCmdsIsCalculatedAndCorrectStateIsSet, IsAtLeastXeHpCore) {
+    DebugManagerStateRestore restorer;
+    DebugManager.flags.AllowMixingRegularAndCooperativeKernels.set(1);
+    DebugManager.flags.AllowPatchingVfeStateInCommandLists.set(1);
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    ASSERT_NE(nullptr, csr);
+
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
+    commandQueue->initialize(false, false);
+
+    Mock<::L0::Kernel> defaultKernel;
+    auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    defaultKernel.module = pMockModule1.get();
+
+    Mock<::L0::Kernel> cooperativeKernel;
+    auto pMockModule2 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    cooperativeKernel.module = pMockModule2.get();
+    cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
+    cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    cooperativeKernel.setGroupSize(1, 1, 1);
+
+    ze_group_count_t threadGroupDimensions{1, 1, 1};
+    auto commandListA = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListA->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+
+    CmdListKernelLaunchParams launchParams = {};
+    commandListA->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    auto commandListBB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListBB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+
+    launchParams.isCooperative = true;
+    commandListBB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListBB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    auto commandListAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListAB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+
+    launchParams.isCooperative = false;
+    commandListAB->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    launchParams.isCooperative = true;
+    commandListAB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    auto commandListBA = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListBA->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+    commandListBA->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    launchParams.isCooperative = false;
+    commandListBA->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    auto commandListBAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListBAB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+
+    launchParams.isCooperative = true;
+    commandListBAB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    launchParams.isCooperative = false;
+    commandListBAB->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    launchParams.isCooperative = true;
+    commandListBAB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    auto commandListAAB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListAAB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+
+    launchParams.isCooperative = false;
+    commandListAAB->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+    commandListAAB->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    launchParams.isCooperative = true;
+    commandListAAB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    auto commandListEmpty = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListEmpty->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+
+    size_t singleFrontEndCmdSize = commandQueue->estimateFrontEndCmdSize();
+
+    NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
+    auto &productHelper = device->getProductHelper();
+    productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    uint32_t expectedSingleFrontEndSizeNumber = fePropertiesSupport.computeDispatchAllWalker ? 1 : 0;
+    expectedSingleFrontEndSizeNumber = fePropertiesSupport.disableEuFusion ? 1 : expectedSingleFrontEndSizeNumber;
+
+    EXPECT_EQ(-1, csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value);
+    {
+        ze_command_list_handle_t commandLists[] = {commandListA->toHandle(), commandListAB->toHandle(), commandListBA->toHandle(), commandListA->toHandle()};
+        size_t commandListSize = sizeof(commandLists) / sizeof(ze_command_list_handle_t);
+
+        size_t calculatedSize = estimateAllCommmandLists<gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, false);
+        EXPECT_EQ(expectedSingleFrontEndSizeNumber * singleFrontEndCmdSize, calculatedSize);
+
+        calculatedSize = estimateAllCommmandLists<gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, true);
+        EXPECT_EQ(1 * singleFrontEndCmdSize, calculatedSize);
+        commandQueue->executeCommandLists(4, commandLists, nullptr, false);
+    }
+    int32_t expectedComputeDispatchAllWalkerEnable = fePropertiesSupport.computeDispatchAllWalker ? 0 : -1;
+    expectedSingleFrontEndSizeNumber = fePropertiesSupport.computeDispatchAllWalker ? 1 : 0;
+    EXPECT_EQ(expectedComputeDispatchAllWalkerEnable, csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value);
+    {
+        ze_command_list_handle_t commandLists[] = {commandListAAB->toHandle(), commandListBAB->toHandle(), commandListA->toHandle()};
+        size_t commandListSize = sizeof(commandLists) / sizeof(ze_command_list_handle_t);
+
+        size_t calculatedSize = estimateAllCommmandLists<gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, false);
+        EXPECT_EQ(expectedSingleFrontEndSizeNumber * singleFrontEndCmdSize, calculatedSize);
+
+        calculatedSize = estimateAllCommmandLists<gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, true);
+        EXPECT_EQ((expectedSingleFrontEndSizeNumber + 1) * singleFrontEndCmdSize, calculatedSize);
+        commandQueue->executeCommandLists(3, commandLists, nullptr, false);
+    }
+    EXPECT_EQ(expectedComputeDispatchAllWalkerEnable, csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value);
+    {
+        ze_command_list_handle_t commandLists[] = {commandListEmpty->toHandle(), commandListA->toHandle()};
+        size_t commandListSize = sizeof(commandLists) / sizeof(ze_command_list_handle_t);
+
+        size_t calculatedSize = estimateAllCommmandLists<gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, false);
+        EXPECT_EQ(0 * singleFrontEndCmdSize, calculatedSize);
+
+        calculatedSize = estimateAllCommmandLists<gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, true);
+        EXPECT_EQ(1 * singleFrontEndCmdSize, calculatedSize);
+    }
+    {
+        ze_command_list_handle_t commandLists[] = {commandListBB->toHandle()};
+        size_t commandListSize = sizeof(commandLists) / sizeof(ze_command_list_handle_t);
+
+        size_t calculatedSize = estimateAllCommmandLists<gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, false);
+        EXPECT_EQ(expectedSingleFrontEndSizeNumber * singleFrontEndCmdSize, calculatedSize);
+
+        calculatedSize = estimateAllCommmandLists<gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, true);
+        EXPECT_EQ(1 * singleFrontEndCmdSize, calculatedSize);
+        commandQueue->executeCommandLists(1, commandLists, nullptr, false);
+    }
+    expectedComputeDispatchAllWalkerEnable = fePropertiesSupport.computeDispatchAllWalker ? 1 : -1;
+    EXPECT_EQ(expectedComputeDispatchAllWalkerEnable, csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value);
+    {
+        ze_command_list_handle_t commandLists[] = {commandListA->toHandle()};
+        size_t commandListSize = sizeof(commandLists) / sizeof(ze_command_list_handle_t);
+
+        size_t calculatedSize = estimateAllCommmandLists<gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, false);
+        EXPECT_EQ(expectedSingleFrontEndSizeNumber * singleFrontEndCmdSize, calculatedSize);
+
+        calculatedSize = estimateAllCommmandLists<gfxCoreFamily>(commandQueue, csr, commandLists, commandListSize, true);
+        EXPECT_EQ(1 * singleFrontEndCmdSize, calculatedSize);
+        commandQueue->executeCommandLists(1, commandLists, nullptr, false);
+    }
+    expectedComputeDispatchAllWalkerEnable = fePropertiesSupport.computeDispatchAllWalker ? 0 : -1;
+    EXPECT_EQ(expectedComputeDispatchAllWalkerEnable, csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value);
+    commandQueue->destroy();
+}
+
+HWTEST2_F(CommandQueueTest, givenRegularKernelScheduledAsCooperativeWhenExecuteCommandListsIsCalledThenComputeDispatchAllWalkerEnableIsSet, IsAtLeastXeHpCore) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    ASSERT_NE(nullptr, csr);
+
+    auto commandQueue = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
+    commandQueue->initialize(false, false);
+
+    Mock<::L0::Kernel> defaultKernel;
+    auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    defaultKernel.module = pMockModule1.get();
+
+    ze_group_count_t threadGroupDimensions{1, 1, 1};
+    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandList->initialize(device, NEO::EngineGroupType::Compute, 0u);
+
+    CmdListKernelLaunchParams launchParams = {};
+    launchParams.isCooperative = true;
+    commandList->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    EXPECT_EQ(-1, csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value);
+
+    ze_command_list_handle_t commandLists[] = {commandList->toHandle()};
+    commandQueue->executeCommandLists(1, commandLists, nullptr, false);
+    NEO::FrontEndPropertiesSupport fePropertiesSupport = {};
+    auto &productHelper = device->getProductHelper();
+    productHelper.fillFrontEndPropertiesSupportStructure(fePropertiesSupport, device->getHwInfo());
+    int32_t expectedComputeDispatchAllWalkerEnableNumber = fePropertiesSupport.computeDispatchAllWalker ? 1 : -1;
+    EXPECT_EQ(expectedComputeDispatchAllWalkerEnableNumber, csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value);
+
+    commandQueue->destroy();
+}
+
+template <GFXCORE_FAMILY gfxCoreFamily>
+struct MockCommandQueueHwForEstimateFrontEndSize : MockCommandQueueHw<gfxCoreFamily> {
+    using Base = MockCommandQueueHw<gfxCoreFamily>;
+    using Base::Base;
+    size_t estimateFrontEndCmdSizeForMultipleCommandLists(bool &isFrontEndStateDirty, int32_t engineInstanced, ::L0::CommandList *commandList,
+                                                          NEO::StreamProperties &csrStateCopy,
+                                                          const NEO::StreamProperties &cmdListRequired,
+                                                          const NEO::StreamProperties &cmdListFinal) override {
+        estimateFrontEndCmdSizeCallCount++;
+        estimatedFrontEndCmdSize = Base::estimateFrontEndCmdSizeForMultipleCommandLists(isFrontEndStateDirty,
+                                                                                        engineInstanced,
+                                                                                        commandList,
+                                                                                        csrStateCopy,
+                                                                                        cmdListRequired,
+                                                                                        cmdListFinal);
+        return estimatedFrontEndCmdSize;
+    }
+    size_t estimatedFrontEndCmdSize = 0u;
+    size_t estimateFrontEndCmdSizeCallCount = 0u;
+};
+
+HWTEST2_F(CommandQueueTest, givenTwoCommandQueuesUsingOneCsrWhenExecuteCommandListsIsCalledThenCorrectSizeOfFrontEndCmdsIsCalculated, IsAtLeastXeHpCore) {
+    ze_command_queue_desc_t desc = {};
+    NEO::CommandStreamReceiver *csr = nullptr;
+    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
+    ASSERT_NE(nullptr, csr);
+
+    auto commandQueue1 = new MockCommandQueueHwForEstimateFrontEndSize<gfxCoreFamily>{device, csr, &desc};
+    commandQueue1->initialize(false, false);
+
+    auto commandQueue2 = new MockCommandQueueHwForEstimateFrontEndSize<gfxCoreFamily>{device, csr, &desc};
+    commandQueue2->initialize(false, false);
+
+    Mock<::L0::Kernel> defaultKernel;
+    auto pMockModule1 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    defaultKernel.module = pMockModule1.get();
+
+    Mock<::L0::Kernel> cooperativeKernel;
+    auto pMockModule2 = std::unique_ptr<Module>(new Mock<Module>(device, nullptr));
+    cooperativeKernel.module = pMockModule2.get();
+    cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.flags.usesSyncBuffer = true;
+    cooperativeKernel.immutableData.kernelDescriptor->kernelAttributes.numGrfRequired = GrfConfig::DefaultGrfNumber;
+    cooperativeKernel.setGroupSize(1, 1, 1);
+
+    ze_group_count_t threadGroupDimensions{1, 1, 1};
+    auto commandListA = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListA->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+
+    CmdListKernelLaunchParams launchParams = {};
+    commandListA->appendLaunchKernelWithParams(&defaultKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    auto commandListB = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
+    commandListB->initialize(device, NEO::EngineGroupType::CooperativeCompute, 0u);
+
+    launchParams.isCooperative = true;
+    commandListB->appendLaunchKernelWithParams(&cooperativeKernel, &threadGroupDimensions, nullptr, launchParams);
+
+    ze_command_list_handle_t commandListsA[] = {commandListA->toHandle()};
+    ze_command_list_handle_t commandListsB[] = {commandListB->toHandle()};
+
+    auto &productHelper = device->getProductHelper();
+    bool dispatchAllWalkerSupport = productHelper.isComputeDispatchAllWalkerEnableInCfeStateRequired(device->getHwInfo());
+
+    auto &currentStreamValue = csr->getStreamProperties().frontEndState.computeDispatchAllWalkerEnable.value;
+    EXPECT_EQ(-1, currentStreamValue);
+
+    int32_t expectedCurrentState = dispatchAllWalkerSupport ? 0 : -1;
+
+    commandQueue1->executeCommandLists(1, commandListsA, nullptr, false);
+    EXPECT_EQ(expectedCurrentState, currentStreamValue);
+
+    commandQueue2->executeCommandLists(1, commandListsA, nullptr, false);
+    EXPECT_EQ(expectedCurrentState, currentStreamValue);
+
+    commandQueue2->executeCommandLists(1, commandListsB, nullptr, false);
+    expectedCurrentState = expectedCurrentState != -1 ? 1 : -1;
+    EXPECT_EQ(expectedCurrentState, currentStreamValue);
+
+    commandQueue1->executeCommandLists(1, commandListsB, nullptr, false);
+    EXPECT_EQ(expectedCurrentState, currentStreamValue);
+
+    commandQueue2->executeCommandLists(1, commandListsA, nullptr, false);
+    expectedCurrentState = expectedCurrentState != -1 ? 0 : -1;
+    EXPECT_EQ(expectedCurrentState, currentStreamValue);
+
+    commandQueue1->executeCommandLists(1, commandListsB, nullptr, false);
+    expectedCurrentState = expectedCurrentState != -1 ? 1 : -1;
+    EXPECT_EQ(expectedCurrentState, currentStreamValue);
+
+    commandQueue1->destroy();
+    commandQueue2->destroy();
 }
 
 } // namespace ult
