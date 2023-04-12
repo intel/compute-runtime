@@ -42,3 +42,11 @@ HWTEST2_P(ProductConfigHwInfoTests, givenAotConfigWhenGetProductConfigThenCorrec
     auto ret = productHelper->getProductConfigFromHwInfo(hwInfo);
     EXPECT_EQ(ret, productConfig);
 }
+
+TEST(ProductConfigHwInfoTest, givenDefaultAotConfigWhenGetProductConfigThenSameValueIsReturned) {
+    MockExecutionEnvironment mockExecutionEnvironment{};
+    auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    auto hwInfo = *defaultHwInfo;
+    auto ret = productHelper.getProductConfigFromHwInfo(hwInfo);
+    EXPECT_EQ(ret, hwInfo.ipVersion.value);
+}

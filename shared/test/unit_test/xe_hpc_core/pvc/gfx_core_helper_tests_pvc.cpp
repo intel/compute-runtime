@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
+#include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 #include "shared/test/common/cmd_parse/hw_parse.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
@@ -33,6 +34,7 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenRevisionEnumAndPlatformFamilyTypeThenPrope
     const auto &productHelper = getHelper<ProductHelper>();
 
     for (auto stepping : steppings) {
+        hardwareInfo.platform.usDeviceID = pvcXlDeviceIds[0];
         hardwareInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(stepping, hardwareInfo);
 
         if (stepping == REVISION_A0) {
@@ -61,14 +63,14 @@ PVCTEST_F(GfxCoreHelperTestsPvc, givenRevisionEnumAndPlatformFamilyTypeThenPrope
 }
 
 PVCTEST_F(GfxCoreHelperTestsPvc, givenDefaultMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
-    EXPECT_EQ(NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(sizeof(typename FamilyType::MI_MEM_FENCE), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
 }
 
 PVCTEST_F(GfxCoreHelperTestsPvc, givenDebugMemorySynchronizationCommandsWhenGettingSizeForAdditionalSynchronizationThenCorrectValueIsReturned) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.DisablePipeControlPrecedingPostSyncCommand.set(1);
 
-    EXPECT_EQ(2 * NEO::EncodeSemaphore<FamilyType>::getSizeMiSemaphoreWait(), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
+    EXPECT_EQ(2 * sizeof(typename FamilyType::MI_MEM_FENCE), MemorySynchronizationCommands<XeHpcCoreFamily>::getSizeForAdditonalSynchronization(pDevice->getRootDeviceEnvironment()));
 }
 
 PVCTEST_F(GfxCoreHelperTestsPvc, givenRevisionIdWhenGetComputeUnitsUsedForScratchThenReturnValidValue) {
