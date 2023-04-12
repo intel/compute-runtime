@@ -71,7 +71,7 @@ struct CommandQueueHw : public CommandQueueImp {
 
         NEO::StreamProperties cmdListBeginState{};
         uint64_t scratchGsba = 0;
-        size_t spaceForResidency = 0;
+        size_t spaceForResidency = 10;
         CommandList *firstCommandList = nullptr;
         CommandList *lastCommandList = nullptr;
         NEO::PreemptionMode preemptionMode{};
@@ -122,6 +122,7 @@ struct CommandQueueHw : public CommandQueueImp {
     MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const;
     inline size_t estimateLinearStreamSizeInitial(CommandListExecutionContext &ctx);
     inline size_t estimateCommandListSecondaryStart(CommandList *commandList);
+    inline size_t estimateCommandListResidencySize(CommandList *commandList);
     inline void setFrontEndStateProperties(CommandListExecutionContext &ctx);
     inline void handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx);
     inline size_t estimateLinearStreamSizeComplementary(CommandListExecutionContext &ctx,
