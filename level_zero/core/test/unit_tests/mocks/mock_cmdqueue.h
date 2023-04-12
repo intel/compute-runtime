@@ -30,6 +30,7 @@ struct WhiteBox<::L0::CommandQueue> : public ::L0::CommandQueueImp {
     using BaseClass::device;
     using BaseClass::preemptionCmdSyncProgramming;
     using BaseClass::printfKernelContainer;
+    using BaseClass::startingCmdBuffer;
     using BaseClass::submitBatchBuffer;
     using BaseClass::synchronizeByPollingForTaskCount;
     using BaseClass::taskCount;
@@ -71,6 +72,7 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
     using BaseClass::commandStream;
     using BaseClass::prepareAndSubmitBatchBuffer;
     using BaseClass::printfKernelContainer;
+    using BaseClass::startingCmdBuffer;
     using L0::CommandQueue::activeSubDevices;
     using L0::CommandQueue::cmdListHeapAddressModel;
     using L0::CommandQueue::dispatchCmdListBatchBufferAsPrimary;
@@ -105,6 +107,9 @@ struct MockCommandQueueHw : public L0::CommandQueueHw<gfxCoreFamily> {
         residencyContainerSnapshot = residencyContainer;
         if (submitBatchBufferReturnValue.has_value()) {
             return *submitBatchBufferReturnValue;
+        }
+        if (this->startingCmdBuffer == nullptr) {
+            this->startingCmdBuffer = &this->commandStream;
         }
         return BaseClass::submitBatchBuffer(offset, residencyContainer, endingCmdPtr, isCooperative);
     }

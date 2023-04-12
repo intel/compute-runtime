@@ -650,6 +650,7 @@ HWTEST_F(CommandQueueCreate, givenContainerWithAllocationsWhenResidencyContainer
                                                           false,
                                                           false,
                                                           returnValue));
+    commandQueue->startingCmdBuffer = &commandQueue->commandStream;
     ResidencyContainer container;
     TaskCountType peekTaskCountBefore = commandQueue->csr->peekTaskCount();
     TaskCountType flushedTaskCountBefore = commandQueue->csr->peekLatestFlushedTaskCount();
@@ -676,6 +677,7 @@ HWTEST_F(CommandQueueCreate, givenCommandStreamReceiverFailsThenSubmitBatchBuffe
                                                           false,
                                                           false,
                                                           returnValue));
+    commandQueue->startingCmdBuffer = &commandQueue->commandStream;
     ResidencyContainer container;
     TaskCountType peekTaskCountBefore = commandQueue->csr->peekTaskCount();
     TaskCountType flushedTaskCountBefore = commandQueue->csr->peekLatestFlushedTaskCount();
@@ -701,6 +703,7 @@ HWTEST_F(CommandQueueCreate, givenOutOfMemoryThenSubmitBatchBufferReturnsOutOfMe
                                                           false,
                                                           false,
                                                           returnValue));
+    commandQueue->startingCmdBuffer = &commandQueue->commandStream;
     ResidencyContainer container;
     NEO::SubmissionStatus ret = commandQueue->submitBatchBuffer(0, container, nullptr, false);
     EXPECT_EQ(ret, NEO::SubmissionStatus::OUT_OF_MEMORY);

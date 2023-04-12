@@ -14,6 +14,7 @@
 #include "shared/test/common/test_macros/hw_test.h"
 
 #include "level_zero/core/source/builtin/builtin_functions_lib.h"
+#include "level_zero/core/source/device/device.h"
 #include "level_zero/core/source/gfx_core_helpers/l0_gfx_core_helper.h"
 #include "level_zero/core/source/image/image_hw.h"
 #include "level_zero/core/test/unit_tests/fixtures/cmdlist_fixture.h"
@@ -1530,6 +1531,113 @@ HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenCommandListHa
     EXPECT_EQ(expectedEndPtr, cmdContainer.getEndCmdPtr());
 }
 
+HWTEST_F(PrimaryBatchBufferCmdListTest, givenPrimaryBatchBufferWhenCopyCommandListAndQueueAreCreatedThenFirstDispatchCreatesGlobalInitPreambleAndLaterDispatchProvideCmdListBuffer) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    ze_result_t returnValue;
+    uint32_t count = 0u;
+    returnValue = device->getCommandQueueGroupProperties(&count, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    EXPECT_GT(count, 0u);
+
+    std::vector<ze_command_queue_group_properties_t> properties(count);
+    returnValue = device->getCommandQueueGroupProperties(&count, properties.data());
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    uint32_t ordinal = 0u;
+    for (ordinal = 0u; ordinal < count; ordinal++) {
+        if ((properties[ordinal].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY) &&
+            !(properties[ordinal].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE)) {
+            if (properties[ordinal].numQueues == 0) {
+                continue;
+            }
+            break;
+        }
+    }
+
+    if (ordinal == count) {
+        GTEST_SKIP();
+    }
+
+    void *dstPtr = nullptr;
+    void *srcPtr = nullptr;
+    const size_t size = 64;
+    ze_device_mem_alloc_desc_t deviceDesc = {};
+    returnValue = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 4u, &dstPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    returnValue = context->allocDeviceMem(device->toHandle(), &deviceDesc, size, 4u, &srcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    ze_command_queue_desc_t desc{};
+    desc.ordinal = ordinal;
+    desc.index = 0u;
+
+    ze_command_queue_handle_t commandQueueHandle;
+    returnValue = device->createCommandQueue(&desc, &commandQueueHandle);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    auto commandQueueCopy = static_cast<L0::ult::CommandQueue *>(L0::CommandQueue::fromHandle(commandQueueHandle));
+    ASSERT_NE(commandQueueCopy, nullptr);
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueueCopy->getCsr());
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    std::unique_ptr<L0::ult::CommandList> commandListCopy;
+    commandListCopy.reset(whiteboxCast(CommandList::create(productFamily, device, NEO::EngineGroupType::Copy, 0u, returnValue)));
+    ASSERT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto &cmdContainerCopy = commandListCopy->getCmdContainer();
+    auto &cmdListStream = *cmdContainerCopy.getCommandStream();
+    auto firstCmdBufferAllocation = cmdContainerCopy.getCmdBufferAllocations()[0];
+
+    returnValue = commandListCopy->appendMemoryCopy(dstPtr, srcPtr, size, nullptr, 0, nullptr, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    size_t firstCmdBufferUsed = cmdListStream.getUsed();
+    auto bbStartSpace = ptrOffset(cmdListStream.getCpuBase(), firstCmdBufferUsed);
+
+    returnValue = commandListCopy->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    EXPECT_EQ(bbStartSpace, cmdContainerCopy.getEndCmdPtr());
+    size_t expectedAlignedUse = alignUp(firstCmdBufferUsed + sizeof(MI_BATCH_BUFFER_START), NEO::CommandContainer::minCmdBufferPtrAlign);
+    EXPECT_EQ(expectedAlignedUse, cmdContainerCopy.getAlignedPrimarySize());
+
+    size_t blitterContextInitSize = ultCsr->getCmdsSizeForHardwareContext();
+
+    auto cmdListHandle = commandListCopy->toHandle();
+    returnValue = commandQueueCopy->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(bbStartSpace);
+    ASSERT_NE(nullptr, bbStartCmd);
+
+    auto &cmdQueueStream = commandQueueCopy->commandStream;
+    if (blitterContextInitSize > 0) {
+        EXPECT_EQ(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+    } else {
+        EXPECT_EQ(firstCmdBufferAllocation, ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+        EXPECT_EQ(cmdQueueStream.getGpuBase(), bbStartCmd->getBatchBufferStartAddress());
+    }
+    size_t queueSizeUsed = cmdQueueStream.getUsed();
+
+    returnValue = commandQueueCopy->executeCommandLists(1, &cmdListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+
+    bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(bbStartSpace);
+    ASSERT_NE(nullptr, bbStartCmd);
+
+    EXPECT_EQ(cmdQueueStream.getGpuBase() + queueSizeUsed, bbStartCmd->getBatchBufferStartAddress());
+
+    commandQueueCopy->destroy();
+    commandListCopy.reset(nullptr);
+
+    returnValue = context->freeMem(dstPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+    returnValue = context->freeMem(srcPtr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, returnValue);
+}
+
 using PrimaryBatchBufferPreamblelessCmdListTest = Test<PrimaryBatchBufferPreamblelessCmdListFixture>;
 
 HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
@@ -1590,6 +1698,214 @@ HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
 
     auto uncachedMocs = device->getMOCS(false, false) >> 1;
     EXPECT_EQ((uncachedMocs << 1), sbaCmd->getStatelessDataPortAccessMemoryObjectControlState());
+}
+
+HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
+          givenPrimaryBatchBufferWhenExecutingCommandWithoutPreambleThenUseCommandListBufferAsStartingBuffer,
+          IsAtLeastXeHpCore) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    ze_result_t result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto commandListHandle = commandList->toHandle();
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+    EXPECT_EQ(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+
+    size_t queueUsedSize = cmdQueueStream.getUsed();
+    auto gpuReturnAddress = cmdQueueStream.getGpuBase() + queueUsedSize;
+
+    result = commandQueue->executeCommandLists(1, &commandListHandle, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdContainer = commandList->getCmdContainer();
+    auto firstCmdBufferAllocation = cmdContainer.getCmdBufferAllocations()[0];
+    EXPECT_EQ(firstCmdBufferAllocation, ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+
+    auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(cmdContainer.getEndCmdPtr());
+    ASSERT_NE(nullptr, bbStartCmd);
+    EXPECT_EQ(gpuReturnAddress, bbStartCmd->getBatchBufferStartAddress());
+}
+
+HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
+          givenPrimaryBatchBufferWhenExecutingMultipleCommandListsAndEachWithoutPreambleThenUseCommandListBufferAsStartingBufferAndChainAllCommandLists,
+          IsAtLeastXeHpCore) {
+
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    ze_result_t result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_command_list_handle_t commandLists[] = {commandList->toHandle(),
+                                               commandList2->toHandle(),
+                                               commandList3->toHandle()};
+
+    result = commandQueue->executeCommandLists(1, commandLists, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+    EXPECT_EQ(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+
+    size_t queueUsedSize = cmdQueueStream.getUsed();
+    auto gpuReturnAddress = cmdQueueStream.getGpuBase() + queueUsedSize;
+
+    result = commandList2->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList2->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList3->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList3->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandQueue->executeCommandLists(3, commandLists, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueUsedSize),
+        cmdQueueStream.getUsed() - queueUsedSize));
+    auto cmdQueueBbStartCmds = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+    EXPECT_EQ(0u, cmdQueueBbStartCmds.size());
+
+    auto &cmdContainer1stCmdList = commandList->getCmdContainer();
+    auto dispatchCmdBufferAllocation = cmdContainer1stCmdList.getCmdBufferAllocations()[0];
+    EXPECT_EQ(dispatchCmdBufferAllocation, ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+
+    auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(cmdContainer1stCmdList.getEndCmdPtr());
+    ASSERT_NE(nullptr, bbStartCmd);
+
+    auto &cmdContainer2ndCmdList = commandList2->getCmdContainer();
+    auto secondCmdBufferAllocation = cmdContainer2ndCmdList.getCmdBufferAllocations()[0];
+    EXPECT_EQ(secondCmdBufferAllocation->getGpuAddress(), bbStartCmd->getBatchBufferStartAddress());
+
+    bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(cmdContainer2ndCmdList.getEndCmdPtr());
+    ASSERT_NE(nullptr, bbStartCmd);
+
+    auto &cmdContainer3rdCmdList = commandList3->getCmdContainer();
+    auto thirdCmdBufferAllocation = cmdContainer3rdCmdList.getCmdBufferAllocations()[0];
+    EXPECT_EQ(thirdCmdBufferAllocation->getGpuAddress(), bbStartCmd->getBatchBufferStartAddress());
+
+    bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(cmdContainer3rdCmdList.getEndCmdPtr());
+    ASSERT_NE(nullptr, bbStartCmd);
+    EXPECT_EQ(gpuReturnAddress, bbStartCmd->getBatchBufferStartAddress());
+}
+
+HWTEST2_F(PrimaryBatchBufferPreamblelessCmdListTest,
+          givenPrimaryBatchBufferWhenExecutingMultipleCommandListsAndSecondWithPreambleThenUseCommandListBufferAsStartingBufferAndChainFirstListToQueuePreambleAndAfterToSecondList,
+          IsAtLeastXeHpCore) {
+    using MI_BATCH_BUFFER_START = typename FamilyType::MI_BATCH_BUFFER_START;
+    using STATE_BASE_ADDRESS = typename FamilyType::STATE_BASE_ADDRESS;
+
+    auto ultCsr = static_cast<UltCommandStreamReceiver<FamilyType> *>(commandQueue->getCsr());
+    ultCsr->recordFlusheBatchBuffer = true;
+
+    ze_group_count_t groupCount{1, 1, 1};
+    CmdListKernelLaunchParams launchParams = {};
+    ze_result_t result = commandList->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    ze_command_list_handle_t commandLists[] = {commandList->toHandle(),
+                                               commandList2->toHandle(),
+                                               commandList3->toHandle()};
+
+    result = commandQueue->executeCommandLists(1, commandLists, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    auto &cmdQueueStream = commandQueue->commandStream;
+    EXPECT_EQ(cmdQueueStream.getGraphicsAllocation(), ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+
+    size_t queueUsedSize = cmdQueueStream.getUsed();
+    auto gpuReturnAddress = cmdQueueStream.getGpuBase() + queueUsedSize;
+
+    kernel->kernelRequiresUncachedMocsCount++;
+
+    result = commandList2->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList2->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList3->appendLaunchKernel(kernel->toHandle(), &groupCount, nullptr, 0, nullptr, launchParams, false);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandList3->close();
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    result = commandQueue->executeCommandLists(3, commandLists, nullptr, true);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    // 1st command list is preambleless
+    auto &cmdContainer1stCmdList = commandList->getCmdContainer();
+    auto dispatchCmdBufferAllocation = cmdContainer1stCmdList.getCmdBufferAllocations()[0];
+    EXPECT_EQ(dispatchCmdBufferAllocation, ultCsr->latestFlushedBatchBuffer.commandBufferAllocation);
+
+    auto bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(cmdContainer1stCmdList.getEndCmdPtr());
+    ASSERT_NE(nullptr, bbStartCmd);
+
+    // ending BB_START of 1st command list points to dynamic preamble - dirty stateless mocs SBA command
+    EXPECT_EQ(gpuReturnAddress, bbStartCmd->getBatchBufferStartAddress());
+
+    GenCmdList cmdList;
+    ASSERT_TRUE(FamilyType::PARSE::parseCommandBuffer(
+        cmdList,
+        ptrOffset(cmdQueueStream.getCpuBase(), queueUsedSize),
+        cmdQueueStream.getUsed() - queueUsedSize));
+    auto cmdQueueSbaDirtyCmds = findAll<STATE_BASE_ADDRESS *>(cmdList.begin(), cmdList.end());
+    ASSERT_TRUE(cmdQueueSbaDirtyCmds.size() >= 1u);
+
+    auto cmdQueueBbStartCmds = findAll<MI_BATCH_BUFFER_START *>(cmdList.begin(), cmdList.end());
+    ASSERT_EQ(1u, cmdQueueBbStartCmds.size());
+
+    auto chainFromPreambleToSecondBbStartCmd = reinterpret_cast<MI_BATCH_BUFFER_START *>(*cmdQueueBbStartCmds[0]);
+
+    auto &cmdContainer2ndCmdList = commandList2->getCmdContainer();
+    auto secondCmdBufferAllocation = cmdContainer2ndCmdList.getCmdBufferAllocations()[0];
+    EXPECT_EQ(secondCmdBufferAllocation->getGpuAddress(), chainFromPreambleToSecondBbStartCmd->getBatchBufferStartAddress());
+
+    bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(cmdContainer2ndCmdList.getEndCmdPtr());
+    ASSERT_NE(nullptr, bbStartCmd);
+
+    auto &cmdContainer3rdCmdList = commandList3->getCmdContainer();
+    auto thirdCmdBufferAllocation = cmdContainer3rdCmdList.getCmdBufferAllocations()[0];
+    EXPECT_EQ(thirdCmdBufferAllocation->getGpuAddress(), bbStartCmd->getBatchBufferStartAddress());
+
+    bbStartCmd = genCmdCast<MI_BATCH_BUFFER_START *>(cmdContainer3rdCmdList.getEndCmdPtr());
+    ASSERT_NE(nullptr, bbStartCmd);
+
+    size_t sbaSize = sizeof(STATE_BASE_ADDRESS) + NEO::MemorySynchronizationCommands<FamilyType>::getSizeForSingleBarrier(false);
+    if (commandQueue->doubleSbaWa) {
+        sbaSize += sizeof(STATE_BASE_ADDRESS);
+    }
+
+    gpuReturnAddress += sizeof(MI_BATCH_BUFFER_START) + sbaSize;
+    EXPECT_EQ(gpuReturnAddress, bbStartCmd->getBatchBufferStartAddress());
 }
 
 } // namespace ult

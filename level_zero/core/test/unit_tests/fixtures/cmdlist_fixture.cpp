@@ -334,7 +334,7 @@ void CommandListAppendLaunchRayTracingKernelFixture::tearDown() {
 }
 
 void PrimaryBatchBufferCmdListFixture::setUp() {
-    NEO::DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
+    DebugManager.flags.DispatchCmdlistCmdBufferPrimary.set(1);
 
     ModuleMutableCommandListFixture::setUp();
 }

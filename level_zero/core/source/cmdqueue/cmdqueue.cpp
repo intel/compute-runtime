@@ -124,9 +124,13 @@ NEO::SubmissionStatus CommandQueueImp::submitBatchBuffer(size_t offset, NEO::Res
                                                          bool isCooperative) {
     UNRECOVERABLE_IF(csr == nullptr);
 
-    NEO::BatchBuffer batchBuffer(commandStream.getGraphicsAllocation(), offset, 0, 0, nullptr, false, false,
+    NEO::BatchBuffer batchBuffer(this->startingCmdBuffer->getGraphicsAllocation(), offset, 0, 0, nullptr, false, false,
                                  NEO::QueueThrottle::HIGH, NEO::QueueSliceCount::defaultSliceCount,
-                                 commandStream.getUsed(), &commandStream, endingCmdPtr, csr->getNumClients(), false, false);
+                                 this->startingCmdBuffer->getUsed(), this->startingCmdBuffer, endingCmdPtr, csr->getNumClients(), false, false);
+
+    if (this->startingCmdBuffer != &this->commandStream) {
+        this->csr->makeResident(*this->commandStream.getGraphicsAllocation());
+    }
 
     commandStream.getGraphicsAllocation()->updateTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());
     commandStream.getGraphicsAllocation()->updateResidencyTaskCount(csr->peekTaskCount() + 1, csr->getOsContext().getContextId());

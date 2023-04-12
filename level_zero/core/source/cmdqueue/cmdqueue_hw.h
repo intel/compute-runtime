@@ -74,9 +74,13 @@ struct CommandQueueHw : public CommandQueueImp {
 
         NEO::StreamProperties cmdListBeginState{};
         uint64_t scratchGsba = 0;
+        uint64_t childGpuAddressPositionBeforeDynamicPreamble = 0;
+
         size_t spaceForResidency = 10;
         CommandList *firstCommandList = nullptr;
         CommandList *lastCommandList = nullptr;
+        void *currentPatchForChainedBbStart = nullptr;
+
         NEO::PreemptionMode preemptionMode{};
         NEO::PreemptionMode statePreemption{};
         uint32_t perThreadScratchSpaceSize = 0;
@@ -125,6 +129,7 @@ struct CommandQueueHw : public CommandQueueImp {
     MOCKABLE_VIRTUAL bool isDispatchTaskCountPostSyncRequired(ze_fence_handle_t hFence, bool containsAnyRegularCmdList) const;
     inline size_t estimateLinearStreamSizeInitial(CommandListExecutionContext &ctx);
     inline size_t estimateCommandListSecondaryStart(CommandList *commandList);
+    inline size_t estimateCommandListPrimaryStart(bool required);
     inline size_t estimateCommandListResidencySize(CommandList *commandList);
     inline void setFrontEndStateProperties(CommandListExecutionContext &ctx);
     inline void handleScratchSpaceAndUpdateGSBAStateDirtyFlag(CommandListExecutionContext &ctx);
@@ -157,8 +162,12 @@ struct CommandQueueHw : public CommandQueueImp {
     inline void programOneCmdListFrontEndIfDirty(CommandListExecutionContext &ctx,
                                                  NEO::LinearStream &commandStream,
                                                  CommandListRequiredStateChange &cmdListRequiredState);
-    inline void programOneCmdListBatchBufferStart(CommandList *commandList, NEO::LinearStream &commandStream);
     inline void programOneCmdListBatchBufferStart(CommandList *commandList, NEO::LinearStream &commandStream, CommandListExecutionContext &ctx);
+    inline void programOneCmdListBatchBufferStartPrimaryBatchBuffer(CommandList *commandList, NEO::LinearStream &commandStream, CommandListExecutionContext &ctx);
+    inline void programOneCmdListBatchBufferStartSecondaryBatchBuffer(CommandList *commandList, NEO::LinearStream &commandStream, CommandListExecutionContext &ctx);
+    inline void programLastCommandListReturnBbStart(
+        NEO::LinearStream &commandStream,
+        CommandListExecutionContext &ctx);
     inline void mergeOneCmdListPipelinedState(CommandList *commandList);
     inline void programFrontEndAndClearDirtyFlag(bool shouldFrontEndBeProgrammed,
                                                  CommandListExecutionContext &ctx,

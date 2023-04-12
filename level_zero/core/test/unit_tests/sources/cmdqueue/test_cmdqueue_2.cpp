@@ -1014,29 +1014,6 @@ HWTEST2_F(CommandQueueScratchTests, whenPatchCommandsIsCalledThenCommandsAreCorr
     }
 }
 
-HWTEST2_F(CommandQueueScratchTests, givenInvalidScratchAddressWhenPatchCommandsIsCalledThenAbortIsThrown, IsAtLeastXeHpCore) {
-    using CFE_STATE = typename FamilyType::CFE_STATE;
-
-    ze_command_queue_desc_t desc = {};
-    NEO::CommandStreamReceiver *csr = nullptr;
-    device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
-    auto commandQueue = std::make_unique<MockCommandQueueHw<gfxCoreFamily>>(device, csr, &desc);
-    auto commandList = std::make_unique<WhiteBox<::L0::CommandListCoreFamily<gfxCoreFamily>>>();
-
-    CFE_STATE destinationCfeState;
-    auto sourceCfeState = new CFE_STATE;
-    *sourceCfeState = FamilyType::cmdInitCfeState;
-
-    CommandList::CommandToPatch commandToPatch;
-    commandToPatch.pDestination = &destinationCfeState;
-    commandToPatch.pCommand = sourceCfeState;
-    commandToPatch.type = CommandList::CommandToPatch::CommandType::FrontEndState;
-    commandList->commandsToPatch.push_back(commandToPatch);
-
-    uint64_t invalidScratchAddress = 0u;
-    EXPECT_ANY_THROW(commandQueue->patchCommands(*commandList, invalidScratchAddress));
-}
-
 using IsWithinNotSupported = IsWithinGfxCore<IGFX_GEN9_CORE, IGFX_GEN12LP_CORE>;
 
 HWTEST2_F(CommandQueueScratchTests, givenCommandsToPatchToNotSupportedPlatformWhenPatchCommandsIsCalledThenAbortIsThrown, IsWithinNotSupported) {

@@ -187,7 +187,6 @@ void CommandQueueHw<gfxCoreFamily>::patchCommands(CommandList &commandList, uint
     for (auto &commandToPatch : commandsToPatch) {
         switch (commandToPatch.type) {
         case CommandList::CommandToPatch::FrontEndState: {
-            UNRECOVERABLE_IF(scratchAddress == 0u);
             uint32_t lowScratchAddress = uint32_t(0xFFFFFFFF & scratchAddress);
             CFE_STATE *cfeStateCmd = nullptr;
             cfeStateCmd = reinterpret_cast<CFE_STATE *>(commandToPatch.pCommand);
