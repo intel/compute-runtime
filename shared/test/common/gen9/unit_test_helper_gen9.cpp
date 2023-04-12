@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -27,16 +27,6 @@ uint32_t UnitTestHelper<Family>::getDebugModeRegisterOffset() {
 template <>
 uint32_t UnitTestHelper<Family>::getDebugModeRegisterValue() {
     return (1u << 6) | (1u << 22);
-}
-
-template <>
-uint32_t UnitTestHelper<Family>::getTdCtlRegisterOffset() {
-    return 0xe400;
-}
-
-template <>
-uint32_t UnitTestHelper<Family>::getTdCtlRegisterValue() {
-    return (1u << 7) | (1u << 4);
 }
 
 template struct UnitTestHelper<Family>;

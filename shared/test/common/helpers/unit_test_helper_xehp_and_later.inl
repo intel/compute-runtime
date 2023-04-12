@@ -15,6 +15,24 @@
 namespace NEO {
 
 template <typename GfxFamily>
+const uint32_t UnitTestHelper<GfxFamily>::smallestTestableSimdSize = 16;
+
+template <typename GfxFamily>
+uint32_t UnitTestHelper<GfxFamily>::getDebugModeRegisterOffset() {
+    return 0x20d8;
+}
+
+template <typename GfxFamily>
+uint32_t UnitTestHelper<GfxFamily>::getDebugModeRegisterValue() {
+    return (1u << 5) | (1u << 21);
+}
+
+template <typename GfxFamily>
+uint32_t UnitTestHelper<GfxFamily>::getTdCtlRegisterValue() {
+    return (1u << 7) | (1u << 4) | (1u << 2) | (1u << 0);
+}
+
+template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isL3ConfigProgrammable() {
     return false;
 };
@@ -73,15 +91,6 @@ auto UnitTestHelper<GfxFamily>::getCoherencyTypeSupported(COHERENCY_TYPE coheren
 }
 
 template <typename GfxFamily>
-inline bool UnitTestHelper<GfxFamily>::getPipeControlHdcPipelineFlush(const typename GfxFamily::PIPE_CONTROL &pipeControl) {
-    return pipeControl.getHdcPipelineFlush();
-}
-template <typename GfxFamily>
-inline void UnitTestHelper<GfxFamily>::setPipeControlHdcPipelineFlush(typename GfxFamily::PIPE_CONTROL &pipeControl, bool hdcPipelineFlush) {
-    pipeControl.setHdcPipelineFlush(hdcPipelineFlush);
-}
-
-template <typename GfxFamily>
 inline void UnitTestHelper<GfxFamily>::adjustKernelDescriptorForImplicitArgs(KernelDescriptor &kernelDescriptor) {
     kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs = true;
 }
@@ -103,22 +112,6 @@ std::vector<bool> UnitTestHelper<GfxFamily>::getProgrammedLargeGrfValues(Command
 template <typename GfxFamily>
 inline bool UnitTestHelper<GfxFamily>::getWorkloadPartitionForStoreRegisterMemCmd(typename GfxFamily::MI_STORE_REGISTER_MEM &storeRegisterMem) {
     return storeRegisterMem.getWorkloadPartitionIdOffsetEnable();
-}
-
-template <typename GfxFamily>
-GenCmdList::iterator UnitTestHelper<GfxFamily>::findMidThreadPreemptionAllocationCommand(GenCmdList::iterator begin, GenCmdList::iterator end) {
-    return end;
-}
-
-template <typename GfxFamily>
-std::vector<GenCmdList::iterator> UnitTestHelper<GfxFamily>::findAllMidThreadPreemptionAllocationCommand(GenCmdList::iterator begin, GenCmdList::iterator end) {
-    std::vector<GenCmdList::iterator> emptyList;
-    return emptyList;
-}
-
-template <typename GfxFamily>
-bool UnitTestHelper<GfxFamily>::getSystolicFlagValueFromPipelineSelectCommand(const typename GfxFamily::PIPELINE_SELECT &pipelineSelectCmd) {
-    return pipelineSelectCmd.getSystolicModeEnable();
 }
 
 template <typename GfxFamily>

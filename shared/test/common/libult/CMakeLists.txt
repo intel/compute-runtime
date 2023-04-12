@@ -137,6 +137,18 @@ if(TESTS_XEHP_AND_LATER)
   )
 endif()
 
+if(TESTS_XE_HPG_CORE OR TESTS_XE_HPC_CORE)
+  list(APPEND neo_libult_common_SRCS_LIB_ULT
+       ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper_xe_hpg_and_xe_hpc.inl
+  )
+endif()
+
+if(TESTS_PVC_AND_LATER)
+  list(APPEND neo_libult_common_SRCS_LIB_ULT
+       ${NEO_SHARED_TEST_DIRECTORY}/common/helpers/unit_test_helper_xe_hpc_and_later.inl
+  )
+endif()
+
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT ${neo_libult_common_SRCS_LIB_ULT})
 
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_ENABLE_TESTED_HW ${neo_libult_common_SRCS_ENABLE_TESTED_HW})

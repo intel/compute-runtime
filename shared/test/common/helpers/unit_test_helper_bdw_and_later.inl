@@ -5,15 +5,68 @@
  *
  */
 
+#include "shared/source/helpers/hw_info.h"
 #include "shared/source/kernel/kernel_descriptor.h"
+#include "shared/test/common/cmd_parse/gen_cmd_parse.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 
 namespace NEO {
 
 template <typename GfxFamily>
+uint64_t UnitTestHelper<GfxFamily>::getAtomicMemoryAddress(const typename GfxFamily::MI_ATOMIC &atomic) {
+    return atomic.getMemoryAddress() | ((static_cast<uint64_t>(atomic.getMemoryAddressHigh())) << 32);
+}
+
+template <typename GfxFamily>
+const uint32_t UnitTestHelper<GfxFamily>::smallestTestableSimdSize = 8;
+
+template <typename GfxFamily>
+uint32_t UnitTestHelper<GfxFamily>::getAppropriateThreadArbitrationPolicy(int32_t policy) {
+    return static_cast<uint32_t>(policy);
+}
+
+template <typename GfxFamily>
+void UnitTestHelper<GfxFamily>::setExtraMidThreadPreemptionFlag(HardwareInfo &hwInfo, bool value) {
+    hwInfo.featureTable.flags.ftrGpGpuMidThreadLevelPreempt = value;
+}
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::isAdditionalMiSemaphoreWaitRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    return false;
+}
+
+template <typename GfxFamily>
+uint32_t UnitTestHelper<GfxFamily>::getDebugModeRegisterValue() {
+    return (1u << 5) | (1u << 21);
+}
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::isAdditionalSynchronizationRequired() {
+    return false;
+}
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::requiresTimestampPacketsInSystemMemory(HardwareInfo &hwInfo) {
+    return true;
+}
+
+template <typename GfxFamily>
+const AuxTranslationMode UnitTestHelper<GfxFamily>::requiredAuxTranslationMode = AuxTranslationMode::Builtin;
+
+template <typename GfxFamily>
+uint32_t UnitTestHelper<GfxFamily>::getTdCtlRegisterValue() {
+    return (1u << 7) | (1u << 4);
+}
+
+template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::isL3ConfigProgrammable() {
     return true;
 };
+
+template <typename GfxFamily>
+bool UnitTestHelper<GfxFamily>::timestampRegisterHighAddress() {
+    return false;
+}
 
 template <typename GfxFamily>
 bool UnitTestHelper<GfxFamily>::evaluateDshUsage(size_t sizeBeforeEnqueue, size_t sizeAfterEnqueue, const KernelDescriptor *kernelDescriptor, uint32_t rootDeviceIndex) {

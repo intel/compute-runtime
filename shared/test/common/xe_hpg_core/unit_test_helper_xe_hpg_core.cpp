@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -9,39 +9,44 @@
 #include "shared/source/xe_hpg_core/hw_info.h"
 #include "shared/test/common/helpers/unit_test_helper.h"
 #include "shared/test/common/helpers/unit_test_helper.inl"
+#include "shared/test/common/helpers/unit_test_helper_xe_hpg_and_xe_hpc.inl"
 #include "shared/test/common/helpers/unit_test_helper_xehp_and_later.inl"
+
 using Family = NEO::XeHpgCoreFamily;
 
 namespace NEO {
+
 template <>
-const AuxTranslationMode UnitTestHelper<Family>::requiredAuxTranslationMode = AuxTranslationMode::Blit;
+uint64_t UnitTestHelper<Family>::getAtomicMemoryAddress(const typename Family::MI_ATOMIC &atomic) {
+    return atomic.getMemoryAddress() | ((static_cast<uint64_t>(atomic.getMemoryAddressHigh())) << 32);
+}
+
+template <>
+uint32_t UnitTestHelper<Family>::getAppropriateThreadArbitrationPolicy(int32_t policy) {
+    return static_cast<uint32_t>(policy);
+}
 
 template <>
 const bool UnitTestHelper<Family>::additionalMiFlushDwRequired = true;
 
 template <>
-uint32_t UnitTestHelper<Family>::getDebugModeRegisterOffset() {
-    return 0x20d8;
-}
-
-template <>
-uint32_t UnitTestHelper<Family>::getDebugModeRegisterValue() {
-    return (1u << 5) | (1u << 21);
-}
-
-template <>
-uint32_t UnitTestHelper<Family>::getTdCtlRegisterOffset() {
-    return 0xe400;
-}
-
-template <>
-uint32_t UnitTestHelper<Family>::getTdCtlRegisterValue() {
-    return (1u << 7) | (1u << 4) | (1u << 2) | (1u << 0);
-}
-
-template <>
 bool UnitTestHelper<Family>::getDisableFusionStateFromFrontEndCommand(const typename Family::VFE_STATE_TYPE &feCmd) {
     return feCmd.getFusedEuDispatch();
+}
+
+template <>
+bool UnitTestHelper<Family>::isAdditionalMiSemaphoreWaitRequired(const RootDeviceEnvironment &rootDeviceEnvironment) {
+    return false;
+}
+
+template <>
+bool UnitTestHelper<Family>::isAdditionalSynchronizationRequired() {
+    return false;
+}
+
+template <>
+bool UnitTestHelper<Family>::requiresTimestampPacketsInSystemMemory(HardwareInfo &hwInfo) {
+    return true;
 }
 
 template struct UnitTestHelper<Family>;
