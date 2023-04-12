@@ -25,7 +25,6 @@
 #include "shared/source/helpers/string.h"
 #include "shared/source/helpers/windows/gmm_callbacks.h"
 #include "shared/source/memory_manager/gfx_partition.h"
-#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/sys_calls_common.h"
 #include "shared/source/os_interface/windows/driver_info_windows.h"
@@ -953,22 +952,18 @@ bool Wddm::createContext(OsContextWin &osContext) {
     }
     createContext.hDevice = device;
 
-    NEO::EnvironmentVariableReader envReader;
-    bool sysmanDisableContextCreationFlag = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
-    if (!sysmanDisableContextCreationFlag) {
-        status = getGdi()->createContext(&createContext);
-        osContext.setWddmContextHandle(createContext.hContext);
+    status = getGdi()->createContext(&createContext);
+    osContext.setWddmContextHandle(createContext.hContext);
 
-        PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout,
-                           "\nCreated Wddm context. Status: :%lu, engine: %u, contextId: %u, deviceBitfield: %lu \n",
-                           status, osContext.getEngineType(), osContext.getContextId(), osContext.getDeviceBitfield().to_ulong());
+    PRINT_DEBUG_STRING(DebugManager.flags.PrintDebugMessages.get(), stdout,
+                       "\nCreated Wddm context. Status: :%lu, engine: %u, contextId: %u, deviceBitfield: %lu \n",
+                       status, osContext.getEngineType(), osContext.getContextId(), osContext.getDeviceBitfield().to_ulong());
 
-        if (status != STATUS_SUCCESS) {
-            return false;
-        }
-        if (osContext.isLowPriority()) {
-            return setLowPriorityContextParam(osContext.getWddmContextHandle());
-        }
+    if (status != STATUS_SUCCESS) {
+        return false;
+    }
+    if (osContext.isLowPriority()) {
+        return setLowPriorityContextParam(osContext.getWddmContextHandle());
     }
 
     return true;

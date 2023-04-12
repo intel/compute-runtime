@@ -94,12 +94,22 @@ TEST_F(WddmTests, whenProgramDebugIsEnabledAndCreatingContextWithInternalEngineT
     osContext.ensureContextInitialized();
     EXPECT_FALSE(osContext.isDebuggableContext());
 }
-TEST_F(WddmTests, WhenCreatingContextWithContextCreateDisabledFlagEnabledThenContextHandleIsNull) {
+
+TEST_F(WddmTests, WhenCallingInitializeContextWithContextCreateDisabledFlagEnabledThenContextHandleIsNull) {
     std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_L0_SYSMAN_NO_CONTEXT_MODE", "1"}};
     VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
     init();
     auto newContext = osContext.get();
-    EXPECT_TRUE(wddm->createContext(*newContext));
+    EXPECT_TRUE(newContext->ensureContextInitialized());
+    EXPECT_EQ(0u, newContext->getWddmContextHandle());
+}
+
+TEST_F(WddmTests, WhenCallingReInitializeContextWithContextCreateDisabledFlagEnabledThenContextHandleIsNull) {
+    std::unordered_map<std::string, std::string> mockableEnvs = {{"NEO_L0_SYSMAN_NO_CONTEXT_MODE", "1"}};
+    VariableBackup<std::unordered_map<std::string, std::string> *> mockableEnvValuesBackup(&IoFunctions::mockableEnvValues, &mockableEnvs);
+    init();
+    auto newContext = osContext.get();
+    newContext->reInitializeContext();
     EXPECT_EQ(0u, newContext->getWddmContextHandle());
 }
 

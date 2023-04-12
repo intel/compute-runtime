@@ -9,6 +9,7 @@
 
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/os_interface/debug_env_reader.h"
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/windows/wddm/wddm.h"
 #include "shared/source/os_interface/windows/wddm/wddm_interface.h"
@@ -30,28 +31,36 @@ OsContextWin::OsContextWin(Wddm &wddm, uint32_t rootDeviceIndex, uint32_t contex
 
 bool OsContextWin::initializeContext() {
 
-    if (wddm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
-        debuggableContext = wddm.getRootDeviceEnvironment().osInterface->isDebugAttachAvailable() && !isInternalEngine();
-    }
-    auto wddmInterface = wddm.getWddmInterface();
-    UNRECOVERABLE_IF(!wddm.createContext(*this));
+    NEO::EnvironmentVariableReader envReader;
+    bool disableContextCreationFlag = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
+    if (!disableContextCreationFlag) {
+        if (wddm.getRootDeviceEnvironment().executionEnvironment.isDebuggingEnabled()) {
+            debuggableContext = wddm.getRootDeviceEnvironment().osInterface->isDebugAttachAvailable() && !isInternalEngine();
+        }
+        auto wddmInterface = wddm.getWddmInterface();
+        UNRECOVERABLE_IF(!wddm.createContext(*this));
 
-    if (wddmInterface->hwQueuesSupported()) {
-        UNRECOVERABLE_IF(!wddmInterface->createHwQueue(*this));
-    }
-    UNRECOVERABLE_IF(!wddmInterface->createMonitoredFence(*this));
+        if (wddmInterface->hwQueuesSupported()) {
+            UNRECOVERABLE_IF(!wddmInterface->createHwQueue(*this));
+        }
+        UNRECOVERABLE_IF(!wddmInterface->createMonitoredFence(*this));
 
-    residencyController.registerCallback();
-    UNRECOVERABLE_IF(!residencyController.isInitialized());
+        residencyController.registerCallback();
+        UNRECOVERABLE_IF(!residencyController.isInitialized());
+    }
 
     return true;
 };
 
 void OsContextWin::reInitializeContext() {
-    if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
-        wddm.destroyContext(wddmContextHandle);
+    NEO::EnvironmentVariableReader envReader;
+    bool disableContextCreationFlag = envReader.getSetting("NEO_L0_SYSMAN_NO_CONTEXT_MODE", false);
+    if (!disableContextCreationFlag) {
+        if (contextInitialized && (false == this->wddm.skipResourceCleanup())) {
+            wddm.destroyContext(wddmContextHandle);
+        }
+        UNRECOVERABLE_IF(!wddm.createContext(*this));
     }
-    UNRECOVERABLE_IF(!wddm.createContext(*this));
 };
 
 void OsContextWin::getDeviceLuidArray(std::vector<uint8_t> &luidData, size_t arraySize) {
