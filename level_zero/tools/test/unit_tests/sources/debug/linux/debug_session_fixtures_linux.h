@@ -281,6 +281,8 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     using L0::DebugSessionLinux::eventsToAck;
     using L0::DebugSessionLinux::extractVaFromUuidString;
     using L0::DebugSessionLinux::fd;
+    using L0::DebugSessionLinux::getContextStateSaveAreaGpuVa;
+    using L0::DebugSessionLinux::getContextStateSaveAreaSize;
     using L0::DebugSessionLinux::getIsaInfoForAllInstances;
     using L0::DebugSessionLinux::getISAVMHandle;
     using L0::DebugSessionLinux::getRegisterSetProperties;
@@ -395,6 +397,7 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     }
 
     bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srIdent) override {
+        readSystemRoutineIdentCallCount++;
         srIdent.count = 0;
         if (stoppedThreads.size()) {
             auto entry = stoppedThreads.find(thread->getThreadId());
@@ -404,6 +407,19 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
             return true;
         }
         return L0::DebugSessionImp::readSystemRoutineIdent(thread, vmHandle, srIdent);
+    }
+
+    bool readSystemRoutineIdentFromMemory(EuThread *thread, const void *stateSaveArea, SIP::sr_ident &srIdent) override {
+        readSystemRoutineIdentFromMemoryCallCount++;
+        srIdent.count = 0;
+        if (stoppedThreads.size()) {
+            auto entry = stoppedThreads.find(thread->getThreadId());
+            if (entry != stoppedThreads.end()) {
+                srIdent.count = entry->second;
+            }
+            return true;
+        }
+        return L0::DebugSessionImp::readSystemRoutineIdentFromMemory(thread, stateSaveArea, srIdent);
     }
 
     bool writeResumeCommand(const std::vector<EuThread::ThreadId> &threadIds) override {
@@ -458,9 +474,9 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
         return DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(threads, memoryHandle, deviceIndex);
     }
 
-    void addThreadToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle) override {
+    void addThreadToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle, const void *stateSaveArea) override {
         addThreadToNewlyStoppedFromRaisedAttentionCallCount++;
-        return DebugSessionImp::addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle);
+        return DebugSessionImp::addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle, stateSaveArea);
     }
 
     TileDebugSessionLinux *createTileSession(const zet_debug_config_t &config, L0::Device *device, L0::DebugSessionImp *rootDebugSession) override;
@@ -483,6 +499,8 @@ struct MockDebugSessionLinux : public L0::DebugSessionLinux {
     uint32_t processPendingVmBindEventsCalled = 0;
     uint32_t checkStoppedThreadsAndGenerateEventsCallCount = 0;
     uint32_t addThreadToNewlyStoppedFromRaisedAttentionCallCount = 0;
+    uint32_t readSystemRoutineIdentCallCount = 0;
+    uint32_t readSystemRoutineIdentFromMemoryCallCount = 0;
 
     std::vector<uint32_t> resumedDevices;
     std::vector<std::vector<EuThread::ThreadId>> resumedThreads;
@@ -528,6 +546,7 @@ struct MockTileDebugSessionLinux : TileDebugSessionLinux {
     using TileDebugSessionLinux::cleanRootSessionAfterDetach;
     using TileDebugSessionLinux::getAllMemoryHandles;
     using TileDebugSessionLinux::getContextStateSaveAreaGpuVa;
+    using TileDebugSessionLinux::getContextStateSaveAreaSize;
     using TileDebugSessionLinux::getSbaBufferGpuVa;
     using TileDebugSessionLinux::isAttached;
     using TileDebugSessionLinux::modules;

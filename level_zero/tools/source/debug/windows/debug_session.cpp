@@ -253,18 +253,39 @@ ze_result_t DebugSessionWindows::handleEuAttentionBitsEvent(DBGUMD_READ_EVENT_EU
 
     PRINT_DEBUGGER_THREAD_LOG("ATTENTION received for thread count = %d\n", (int)threadsWithAttention.size());
 
-    uint64_t memoryHandle = DebugSessionWindows::invalidHandle;
-    {
-        std::unique_lock<std::mutex> lock(asyncThreadMutex);
-        if (allContexts.empty()) {
-            return ZE_RESULT_ERROR_UNINITIALIZED;
-        }
-        memoryHandle = *allContexts.begin();
-    }
+    if (threadsWithAttention.size() > 0) {
 
-    for (auto &threadId : threadsWithAttention) {
-        PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
-        addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle);
+        uint64_t memoryHandle = DebugSessionWindows::invalidHandle;
+        {
+            if (allContexts.empty()) {
+                return ZE_RESULT_ERROR_UNINITIALIZED;
+            }
+            memoryHandle = *allContexts.begin();
+        }
+
+        auto gpuVa = getContextStateSaveAreaGpuVa(memoryHandle);
+        auto stateSaveAreaSize = getContextStateSaveAreaSize(memoryHandle);
+
+        std::unique_ptr<char[]> stateSaveArea = nullptr;
+        auto stateSaveReadResult = ZE_RESULT_ERROR_UNKNOWN;
+
+        std::unique_lock<std::mutex> lock(threadStateMutex);
+
+        if (gpuVa != 0 && stateSaveAreaSize != 0) {
+            stateSaveArea = std::make_unique<char[]>(stateSaveAreaSize);
+            stateSaveReadResult = readGpuMemory(memoryHandle, stateSaveArea.get(), stateSaveAreaSize, gpuVa);
+        } else {
+            PRINT_DEBUGGER_ERROR_LOG("Context state save area bind info invalid\n", "");
+            DEBUG_BREAK_IF(true);
+        }
+
+        if (stateSaveReadResult == ZE_RESULT_SUCCESS) {
+
+            for (auto &threadId : threadsWithAttention) {
+                PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
+                addThreadToNewlyStoppedFromRaisedAttention(threadId, memoryHandle, stateSaveArea.get());
+            }
+        }
     }
 
     checkTriggerEventsForAttention();
@@ -293,6 +314,7 @@ ze_result_t DebugSessionWindows::handleAllocationDataEvent(uint32_t seqNo, DBGUM
         } else if (allocationDebugData->DataType == SIP_CONTEXT_SAVE_AREA) {
             DEBUG_BREAK_IF(stateSaveAreaCaptured && (registrationData.gpuVirtualAddress != this->stateSaveAreaVA.load()));
             stateSaveAreaVA.store(registrationData.gpuVirtualAddress);
+            stateSaveAreaSize.store(registrationData.size);
             stateSaveAreaCaptured = true;
         }
 

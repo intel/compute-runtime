@@ -6,8 +6,10 @@
  */
 
 #pragma once
+#include "shared/source/helpers/aligned_memory.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/os_interface/os_interface.h"
+#include "shared/test/common/mocks/mock_sip.h"
 
 #include "level_zero/core/source/device/device_imp.h"
 #include "level_zero/tools/source/debug/debug_session.h"
@@ -185,6 +187,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
         if (rootAttach) {
             createEuThreads();
         }
+        stateSaveAreaHeader = NEO::MockSipData::createStateSaveAreaHeader(2);
     }
 
     ~MockDebugSession() override {
@@ -288,7 +291,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
     ze_result_t writeGpuMemory(uint64_t memoryHandle, const char *input, size_t size, uint64_t gpuVa) override {
 
         if (gpuVa != 0 && gpuVa >= reinterpret_cast<uint64_t>(stateSaveAreaHeader.data()) &&
-            gpuVa <= reinterpret_cast<uint64_t>(stateSaveAreaHeader.data() + stateSaveAreaHeader.size())) {
+            ((gpuVa + size) <= reinterpret_cast<uint64_t>(stateSaveAreaHeader.data() + stateSaveAreaHeader.size()))) {
             [[maybe_unused]] auto offset = ptrDiff(gpuVa, reinterpret_cast<uint64_t>(stateSaveAreaHeader.data()));
             memcpy_s(reinterpret_cast<void *>(gpuVa), size, input, size);
         }
@@ -326,6 +329,14 @@ struct MockDebugSession : public L0::DebugSessionImp {
             return readSystemRoutineIdentRetVal;
         }
         return DebugSessionImp::readSystemRoutineIdent(thread, vmHandle, srMagic);
+    }
+
+    bool readSystemRoutineIdentFromMemory(EuThread *thread, const void *stateSaveArea, SIP::sr_ident &srMagic) override {
+        if (skipReadSystemRoutineIdent) {
+            srMagic.count = threadStopped ? 1 : 0;
+            return readSystemRoutineIdentRetVal;
+        }
+        return DebugSessionImp::readSystemRoutineIdentFromMemory(thread, stateSaveArea, srMagic);
     }
 
     bool areRequestedThreadsStopped(ze_device_thread_t thread) override {
@@ -409,11 +420,26 @@ struct MockDebugSession : public L0::DebugSessionImp {
     }
 
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
-        if (returnStateSaveAreaGpuVa) {
+        if (returnStateSaveAreaGpuVa && !this->stateSaveAreaHeader.empty()) {
             return reinterpret_cast<uint64_t>(this->stateSaveAreaHeader.data());
         }
         return 0;
     };
+
+    size_t getContextStateSaveAreaSize(uint64_t memoryHandle) override {
+        if (stateSaveAreaHeader.size()) {
+            auto header = getStateSaveAreaHeader();
+            auto stateSaveAreaSize = header->regHeader.num_slices *
+                                         header->regHeader.num_subslices_per_slice *
+                                         header->regHeader.num_eus_per_subslice *
+                                         header->regHeader.num_threads_per_eu *
+                                         header->regHeader.state_save_size +
+                                     header->versionHeader.size * 8 + header->regHeader.state_area_offset;
+
+            return alignUp(stateSaveAreaSize, MemoryConstants::pageSize);
+        }
+        return 0;
+    }
 
     int64_t getTimeDifferenceMilliseconds(std::chrono::high_resolution_clock::time_point time) override {
         if (returnTimeDiff != -1) {

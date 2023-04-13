@@ -223,7 +223,7 @@ TEST(DebugSessionTest, givenPendingInteruptWhenHandlingThreadWithAttentionThenPe
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     sessionMock->sendInterrupts();
-    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u, sessionMock->stateSaveAreaHeader.data());
 
     EXPECT_TRUE(sessionMock->allThreads[thread]->isStopped());
 
@@ -278,7 +278,7 @@ TEST(DebugSessionTest, givenPreviouslyStoppedThreadAndPendingInterruptWhenHandli
     sessionMock->onlyForceException = false;
     sessionMock->allThreads[thread]->stopThread(1u);
 
-    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u, sessionMock->stateSaveAreaHeader.data());
 
     EXPECT_TRUE(sessionMock->allThreads[thread]->isStopped());
 
@@ -305,7 +305,6 @@ TEST(DebugSessionTest, givenThreadsStoppedOnBreakpointAndInterruptedWhenHandling
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
     sessionMock->callBaseIsForceExceptionOrForceExternalHaltOnlyExceptionReason = true;
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
@@ -334,8 +333,8 @@ TEST(DebugSessionTest, givenThreadsStoppedOnBreakpointAndInterruptedWhenHandling
     cr0[1] = 1 << 26;
     sessionMock->registersAccessHelper(sessionMock->allThreads[threadWithFe].get(), regdesc, 0, 1, cr0, true);
 
-    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(threadWithBp, 1u);
-    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(threadWithFe, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(threadWithBp, 1u, sessionMock->stateSaveAreaHeader.data());
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(threadWithFe, 1u, sessionMock->stateSaveAreaHeader.data());
 
     EXPECT_TRUE(sessionMock->allThreads[threadWithBp]->isStopped());
     EXPECT_TRUE(sessionMock->allThreads[threadWithFe]->isStopped());
@@ -386,7 +385,7 @@ TEST(DebugSessionTest, givenStoppedThreadWhenAddingNewlyStoppedThenThreadIsNotAd
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
     sessionMock->allThreads[thread]->stopThread(1u);
 
-    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u, sessionMock->stateSaveAreaHeader.data());
 
     EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
 }
@@ -406,7 +405,7 @@ TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWithForceException
     sessionMock->threadStopped = true;
     sessionMock->onlyForceException = true;
 
-    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u, sessionMock->stateSaveAreaHeader.data());
 
     EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
     EXPECT_FALSE(sessionMock->allThreads[thread]->isReportedAsStopped());
@@ -428,7 +427,7 @@ TEST(DebugSessionTest, givenNoPendingInterruptAndStoppedThreadWhenGeneratingEven
     sessionMock->onlyForceException = false;
     sessionMock->triggerEvents = true;
 
-    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u, sessionMock->stateSaveAreaHeader.data());
 
     EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
     EXPECT_FALSE(sessionMock->allThreads[thread]->isReportedAsStopped());
@@ -456,9 +455,82 @@ TEST(DebugSessionTest, givenNoStoppedThreadWhenAddingNewlyStoppedThenThreadIsNot
     sessionMock->threadStopped = 0;
 
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
-    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u, sessionMock->stateSaveAreaHeader.data());
 
     EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
+}
+
+TEST(DebugSessionTest, givenStoppedThreadAndNoSrMagicWhenAddingNewlyStoppedThenThreadIsNotAddedToNewlyStopped) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    ASSERT_NE(nullptr, sessionMock);
+    sessionMock->skipCheckThreadIsResumed = false;
+    sessionMock->skipReadSystemRoutineIdent = false;
+
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        sessionMock->stateSaveAreaHeader.resize(size);
+    }
+
+    auto stateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    EuThread::ThreadId threadId(0, thread);
+
+    auto threadSlotOffset = sessionMock->calculateThreadSlotOffset(threadId);
+    auto srMagicOffset = threadSlotOffset + stateSaveAreaHeader->regHeader.sr_magic_offset;
+    SIP::sr_ident srMagic = {{0}};
+    sessionMock->writeGpuMemory(0, reinterpret_cast<char *>(&srMagic), sizeof(srMagic), reinterpret_cast<uint64_t>(stateSaveAreaHeader) + srMagicOffset);
+
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(threadId, 1u, sessionMock->stateSaveAreaHeader.data());
+
+    EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
+}
+
+TEST(DebugSessionTest, givenStoppedThreadAndValidSrMagicWhenAddingNewlyStoppedThenThreadIsAddedToNewlyStopped) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    ASSERT_NE(nullptr, sessionMock);
+    sessionMock->skipCheckThreadIsResumed = false;
+    sessionMock->skipReadSystemRoutineIdent = false;
+
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        sessionMock->stateSaveAreaHeader.resize(size);
+    }
+
+    auto stateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    EuThread::ThreadId threadId(0, thread);
+
+    auto threadSlotOffset = sessionMock->calculateThreadSlotOffset(threadId);
+    auto srMagicOffset = threadSlotOffset + stateSaveAreaHeader->regHeader.sr_magic_offset;
+    SIP::sr_ident srMagic;
+    srMagic.version.major = 2;
+    srMagic.version.minor = 0;
+    srMagic.count = 1;
+    sessionMock->writeGpuMemory(0, reinterpret_cast<char *>(&srMagic), sizeof(srMagic), reinterpret_cast<uint64_t>(stateSaveAreaHeader) + srMagicOffset);
+
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(threadId, 1u, sessionMock->stateSaveAreaHeader.data());
+
+    EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
 }
 
 TEST(DebugSessionTest, givenNoInterruptsSentWhenGenerateEventsAndResumeCalledThenTriggerEventsNotChanged) {
@@ -487,13 +559,12 @@ TEST(DebugSessionTest, givenTriggerEventsWhenGenerateEventsAndResumeCalledThenEv
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     ze_device_thread_t apiThread = {0, 0, 0, 1};
     ze_device_thread_t apiThread2 = {0, 0, 1, 1};
     sessionMock->pendingInterrupts.push_back({apiThread, true});
 
-    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(EuThread::ThreadId(0, apiThread2), 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(EuThread::ThreadId(0, apiThread2), 1u, sessionMock->stateSaveAreaHeader.data());
 
     sessionMock->triggerEvents = true;
     sessionMock->interruptSent = true;
@@ -525,7 +596,6 @@ TEST(DebugSessionTest, givenPendingInterruptAfterTimeoutWhenGenerateEventsAndRes
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     ze_device_thread_t apiThread = {0, 0, 0, 1};
     sessionMock->pendingInterrupts.push_back({apiThread, false});
@@ -556,7 +626,6 @@ TEST(DebugSessionTest, givenPendingInterruptBeforeTimeoutWhenGenerateEventsAndRe
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     ze_device_thread_t apiThread = {0, 0, 0, 1};
     sessionMock->pendingInterrupts.push_back({apiThread, false});
@@ -585,7 +654,7 @@ TEST(DebugSessionTest, givenErrorFromReadSystemRoutineIdentWhenCheckingThreadSta
     sessionMock->readSystemRoutineIdentRetVal = false;
     EuThread::ThreadId thread(0, 0, 0, 0, 0);
 
-    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u);
+    sessionMock->addThreadToNewlyStoppedFromRaisedAttention(thread, 1u, sessionMock->stateSaveAreaHeader.data());
 
     EXPECT_FALSE(sessionMock->allThreads[thread]->isStopped());
     EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
@@ -628,6 +697,9 @@ TEST(DebugSessionTest, givenEmptyStateSaveAreaWhenGetStateSaveAreaCalledThenRead
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    decltype(sessionMock->stateSaveAreaHeader) emptyHeader;
+    sessionMock->stateSaveAreaHeader.swap(emptyHeader);
+
     auto stateSaveArea = sessionMock->getStateSaveAreaHeader();
     EXPECT_EQ(nullptr, stateSaveArea);
     EXPECT_EQ(1u, sessionMock->readStateSaveAreaHeaderCalled);
@@ -649,7 +721,6 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenFillingResumeAndStoppedThreadsFrom
 
     sessionMock->newlyStoppedThreads.push_back(thread);
     sessionMock->newlyStoppedThreads.push_back(thread2);
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     sessionMock->onlyForceException = true;
 
@@ -723,7 +794,6 @@ TEST(DebugSessionTest, givenThreadsToResumeWhenResumeAccidentallyStoppedThreadsC
 
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     sessionMock->skipCheckThreadIsResumed = false;
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     EuThread::ThreadId thread = {0, 0, 0, 0, 1};
     EuThread::ThreadId thread2 = {0, 0, 0, 1, 1};
@@ -981,7 +1051,6 @@ TEST(DebugSessionTest, givenNullptrStateSaveAreaGpuVaWhenCallingCheckIsThreadRes
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
@@ -1003,7 +1072,6 @@ TEST(DebugSessionTest, whenCallingCheckThreadIsResumedWithoutSrMagicThenThreadIs
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
     sessionMock->skipReadSystemRoutineIdent = false;
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
@@ -1040,7 +1108,6 @@ TEST(DebugSessionTest, givenErrorFromReadSystemRoutineIdentWhenCallingCheckThrea
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
     sessionMock->readSystemRoutineIdentRetVal = false;
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
@@ -1069,7 +1136,6 @@ TEST(DebugSessionTest, givenSrMagicWithCounterLessThanlLastThreadCounterThenThre
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
@@ -1100,7 +1166,6 @@ TEST(DebugSessionTest, givenSrMagicWithCounterEqualToPrevousThenThreadHasNotBeen
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
@@ -1133,7 +1198,6 @@ TEST(DebugSessionTest, givenSrMagicWithCounterBiggerThanPreviousThenThreadIsResu
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
@@ -1166,7 +1230,6 @@ TEST(DebugSessionTest, givenSrMagicWithCounterOverflowingZeroThenThreadIsResumed
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->skipCheckThreadIsResumed = false;
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
@@ -1384,7 +1447,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenWritingResumeFailsThenErrorIs
     sessionMock->writeMemoryResult = ZE_RESULT_ERROR_UNKNOWN;
     sessionMock->writeRegistersResult = ZE_RESULT_ERROR_UNKNOWN;
     sessionMock->debugArea.reserved1 = 1u;
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
     sessionMock->skipWriteResumeCommand = false;
     sessionMock->skipCheckThreadIsResumed = false;
 
@@ -1427,7 +1490,7 @@ TEST(DebugSessionTest, GivenBindlessSipVersion2WhenResumingThreadThenCheckIfThre
     auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
     ASSERT_NE(nullptr, sessionMock);
     sessionMock->debugArea.reserved1 = 1u;
-    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
     sessionMock->skipCheckThreadIsResumed = false;
 
     ze_device_thread_t thread = {0, 0, 0, 0};
@@ -1922,8 +1985,6 @@ struct DebugSessionRegistersAccess {
 using DebugSessionRegistersAccessTest = Test<DebugSessionRegistersAccess>;
 
 TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRegdescIsReturned) {
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
-
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
 
     EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU), nullptr);
@@ -1942,46 +2003,49 @@ TEST_F(DebugSessionRegistersAccessTest, givenTypeToRegsetDescCalledThenCorrectRe
     EXPECT_NE(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU), nullptr);
 }
 
+TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreWhenTypeToRegsetDescCalledThennullptrReturned) {
+    decltype(session->stateSaveAreaHeader) emptyHeader;
+    session->stateSaveAreaHeader.swap(emptyHeader);
+
+    EXPECT_EQ(session->typeToRegsetDesc(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU), nullptr);
+}
+
 TEST_F(DebugSessionRegistersAccessTest, givenValidRegisterWhenGettingSizeThenCorrectSizeIsReturned) {
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
     auto pStateSaveAreaHeader = session->getStateSaveAreaHeader();
     EXPECT_EQ(pStateSaveAreaHeader->regHeader.grf.bytes, session->getRegisterSize(ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenInvalidRegisterWhenGettingSizeThenZeroSizeIsReturned) {
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
     EXPECT_EQ(0u, session->getRegisterSize(ZET_DEBUG_REGSET_TYPE_INVALID_INTEL_GPU));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenUnsupportedRegisterTypeWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), stoppedThread, 0x12345, 0, 1, nullptr));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenUnsupportedRegisterTypeWhenWriteRegistersCalledThenErrorInvalidArgumentIsReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), stoppedThread, 0x12345, 0, 1, nullptr));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenInvalidRegistersIndicesWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 128, 1, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 127, 2, nullptr));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenInvalidRegistersIndicesWhenWriteRegistersCalledThenErrorInvalidArgumentIsReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 128, 1, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 127, 2, nullptr));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenThreadAllWhenReadWriteRegistersCalledThenErrorNotAvailableIsReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     ze_device_thread_t threadAll = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
     EXPECT_EQ(ZE_RESULT_ERROR_NOT_AVAILABLE, zetDebugReadRegisters(session->toHandle(), threadAll, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, nullptr));
@@ -1990,28 +2054,28 @@ TEST_F(DebugSessionRegistersAccessTest, givenThreadAllWhenReadWriteRegistersCall
 
 TEST_F(DebugSessionRegistersAccessTest, givenNotReportedRegisterSetAndValidRegisterIndicesWhenReadRegistersCalledThenErrorInvalidArgumentIsReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
     // MME is not present
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, 0, 1, nullptr));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenNotReportedRegisterSetAndValidRegisterIndicesWhenWriteRegistersCalledThenErrorInvalidArgumentIsReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
     // MME is not present
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_MME_INTEL_GPU, 0, 1, nullptr));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenInvalidSbaRegistersIndicesWhenReadSbaRegistersCalledThenErrorInvalidArgumentIsReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 9, 1, nullptr));
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugReadRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 8, 2, nullptr));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenWriteSbaRegistersCalledThenErrorInvalidArgumentIsReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
+
     EXPECT_EQ(ZE_RESULT_ERROR_INVALID_ARGUMENT, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_SBA_INTEL_GPU, 0, 1, nullptr));
 }
 
@@ -2031,18 +2095,23 @@ TEST_F(DebugSessionRegistersAccessTest, givenNoneThreadsStoppedWhenWriteRegister
 
 TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreaWhenReadRegistersCalledThenErrorUnknownReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
+    decltype(session->stateSaveAreaHeader) empty;
+    session->stateSaveAreaHeader.swap(empty);
+
     char grf[32] = {0};
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugReadRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, grf));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreaWhenWriteRegistersCalledThenErrorUnknownReturned) {
     session->areRequestedThreadsStoppedReturnValue = 1;
+    decltype(session->stateSaveAreaHeader) empty;
+    session->stateSaveAreaHeader.swap(empty);
+
     char grf[32] = {0};
     EXPECT_EQ(ZE_RESULT_ERROR_UNKNOWN, zetDebugWriteRegisters(session->toHandle(), stoppedThread, ZET_DEBUG_REGSET_TYPE_GRF_INTEL_GPU, 0, 1, grf));
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreaGpuVaWhenRegistersAccessHelperCalledThenErrorUnknownReturned) {
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
@@ -2061,7 +2130,6 @@ TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreaGpuVaWhenRegistersAc
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenWriteGpuMemoryErrorWhenRegistersAccessHelperCalledForWriteThenErrorUnknownReturned) {
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
@@ -2080,7 +2148,6 @@ TEST_F(DebugSessionRegistersAccessTest, givenWriteGpuMemoryErrorWhenRegistersAcc
 }
 
 TEST_F(DebugSessionRegistersAccessTest, givenReadGpuMemoryErrorWhenRegistersAccessHelperCalledForReadThenErrorUnknownReturned) {
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
@@ -2112,7 +2179,6 @@ TEST_F(DebugSessionRegistersAccessTest, givenNoStateSaveAreaWhenReadRegisterCall
 
 TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenWritingResumeCommandThenCmdRegIsWritten) {
     const uint32_t resumeValue = 0;
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
@@ -2149,7 +2215,6 @@ TEST_F(DebugSessionRegistersAccessTest, GivenSipVersion2WhenWritingResumeCommand
 
 TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipVersion2WhenCallingResumeThenResumeInCmdRegisterIsWritten) {
     session->debugArea.reserved1 = 1u;
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
@@ -2175,7 +2240,6 @@ TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipVersion2WhenCallingResum
 }
 
 TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddressesAreReturned) {
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
@@ -2320,7 +2384,6 @@ TEST_F(DebugSessionRegistersAccessTest, WhenReadingSbaRegistersThenCorrectAddres
 
 TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipWhenCheckingMinimumSipVersionForSLMThenExpectedResultIsReturned) {
     session->debugArea.reserved1 = 1u;
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());
     auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
@@ -2345,7 +2408,6 @@ TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipWhenCheckingMinimumSipVe
 
 TEST_F(DebugSessionRegistersAccessTest, GivenBindlessSipWhenCheckingDifferentSipVersionsThenExpectedResultIsReturned) {
     session->debugArea.reserved1 = 1u;
-    session->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(2);
 
     {
         auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(session->stateSaveAreaHeader.data());

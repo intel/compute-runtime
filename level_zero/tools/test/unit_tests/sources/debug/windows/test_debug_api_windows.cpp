@@ -55,6 +55,7 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     using DebugSessionWindows::runEscape;
     using DebugSessionWindows::startAsyncThread;
     using DebugSessionWindows::stateSaveAreaCaptured;
+    using DebugSessionWindows::stateSaveAreaSize;
     using DebugSessionWindows::stateSaveAreaVA;
     using DebugSessionWindows::wddm;
     using DebugSessionWindows::writeGpuMemory;
@@ -119,6 +120,18 @@ struct MockDebugSessionWindows : DebugSessionWindows {
         }
         return L0::DebugSessionImp::readSystemRoutineIdent(thread, vmHandle, srIdent);
     }
+    bool readSystemRoutineIdentFromMemory(EuThread *thread, const void *stateSaveArea, SIP::sr_ident &srIdent) override {
+        readSystemRoutineIdentFromMemoryCallCount++;
+        srIdent.count = 0;
+        if (stoppedThreads.size()) {
+            auto entry = stoppedThreads.find(thread->getThreadId());
+            if (entry != stoppedThreads.end()) {
+                srIdent.count = entry->second;
+            }
+            return true;
+        }
+        return L0::DebugSessionImp::readSystemRoutineIdentFromMemory(thread, stateSaveArea, srIdent);
+    }
 
     ze_result_t resultInitialize = ZE_RESULT_FORCE_UINT32;
     ze_result_t resultReadAndHandleEvent = ZE_RESULT_FORCE_UINT32;
@@ -126,6 +139,8 @@ struct MockDebugSessionWindows : DebugSessionWindows {
     bool shouldEscapeReturnStatusNotSuccess = false;
     bool shouldEscapeCallFail = false;
     std::unordered_map<uint64_t, uint8_t> stoppedThreads;
+
+    uint32_t readSystemRoutineIdentFromMemoryCallCount = 0;
 };
 
 struct MockAsyncThreadDebugSessionWindows : public MockDebugSessionWindows {
@@ -192,6 +207,15 @@ TEST_F(DebugApiWindowsAttentionTest, GivenEuAttentionEventForThreadsWhenHandling
     }
     sessionMock->allContexts.insert(0x12345);
 
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
+    sessionMock->stateSaveAreaCaptured = true;
+    sessionMock->stateSaveAreaVA.store(reinterpret_cast<uint64_t>(sessionMock->stateSaveAreaHeader.data()));
+    sessionMock->stateSaveAreaSize.store(sessionMock->stateSaveAreaHeader.size());
+
+    mockWddm->srcReadBuffer = sessionMock->stateSaveAreaHeader.data();
+    mockWddm->srcReadBufferBaseAddress = sessionMock->stateSaveAreaVA.load();
+
     l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
     mockWddm->numEvents = 1;
     mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_EU_ATTN_BIT_SET;
@@ -202,7 +226,8 @@ TEST_F(DebugApiWindowsAttentionTest, GivenEuAttentionEventForThreadsWhenHandling
     auto result = sessionMock->readAndHandleEvent(100);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(threads.size(), sessionMock->newlyStoppedThreads.size());
+    auto expectedThreads = threads.size();
+    EXPECT_EQ(expectedThreads, sessionMock->newlyStoppedThreads.size());
 }
 
 TEST_F(DebugApiWindowsAttentionTest, GivenNoContextWhenHandlingAttentionEventThenErrorIsReturned) {
@@ -279,6 +304,15 @@ TEST_F(DebugApiWindowsAttentionTest, GivenInterruptedThreadsWithOnlySomeThreadsR
     sessionMock->stoppedThreads[threads[0].packed] = 1;
     sessionMock->allContexts.insert(0x12345);
 
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
+    sessionMock->stateSaveAreaCaptured = true;
+    sessionMock->stateSaveAreaVA.store(reinterpret_cast<uint64_t>(sessionMock->stateSaveAreaHeader.data()));
+    sessionMock->stateSaveAreaSize.store(sessionMock->stateSaveAreaHeader.size());
+
+    mockWddm->srcReadBuffer = sessionMock->stateSaveAreaHeader.data();
+    mockWddm->srcReadBufferBaseAddress = sessionMock->stateSaveAreaVA.load();
+
     l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
     ze_device_thread_t thread = {0, 0, 0, UINT32_MAX};
     ze_device_thread_t thread2 = {0, 0, 1, UINT32_MAX};
@@ -295,9 +329,59 @@ TEST_F(DebugApiWindowsAttentionTest, GivenInterruptedThreadsWithOnlySomeThreadsR
     auto result = sessionMock->readAndHandleEvent(100);
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(1u, sessionMock->newlyStoppedThreads.size());
+
+    auto expectedThreads = threads.size();
+    EXPECT_EQ(expectedThreads, sessionMock->newlyStoppedThreads.size());
     EXPECT_FALSE(sessionMock->pendingInterrupts[0].second);
     EXPECT_FALSE(sessionMock->pendingInterrupts[1].second);
+}
+
+TEST_F(DebugApiWindowsAttentionTest, GivenNoStateSaveAreaOrInvalidSizeWhenHandlingEuAttentionEventThenNewlyStoppedThreadsAreNotAdded) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+
+    std::unique_ptr<uint8_t[]> bitmask;
+    size_t bitmaskSize = 0;
+    auto &hwInfo = neoDevice->getHardwareInfo();
+    auto &l0GfxCoreHelper = neoDevice->getRootDeviceEnvironment().getHelper<L0GfxCoreHelper>();
+
+    std::vector<EuThread::ThreadId> threads{
+        {0, 0, 0, 0, 0}};
+
+    auto sessionMock = std::make_unique<MockDebugSessionWindows>(config, device);
+    sessionMock->stoppedThreads[threads[0].packed] = 1;
+    sessionMock->allContexts.insert(0x12345);
+
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(sessionMock->stateSaveAreaHeader, version, device);
+    sessionMock->stateSaveAreaCaptured = false;
+    sessionMock->stateSaveAreaVA.store(0);
+    sessionMock->stateSaveAreaSize.store(0);
+
+    mockWddm->srcReadBuffer = sessionMock->stateSaveAreaHeader.data();
+    mockWddm->srcReadBufferBaseAddress = sessionMock->stateSaveAreaVA.load();
+
+    l0GfxCoreHelper.getAttentionBitmaskForSingleThreads(threads, hwInfo, bitmask, bitmaskSize);
+
+    mockWddm->numEvents = 1;
+    mockWddm->eventQueue[0].readEventType = DBGUMD_READ_EVENT_EU_ATTN_BIT_SET;
+    copyBitmaskToEventParams(&mockWddm->eventQueue[0].eventParamsBuffer.eventParamsBuffer, bitmask, bitmaskSize);
+    sessionMock->wddm = mockWddm;
+    sessionMock->debugHandle = MockDebugSessionWindows::mockDebugHandle;
+
+    auto result = sessionMock->readAndHandleEvent(100);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
+    EXPECT_EQ(0u, sessionMock->readSystemRoutineIdentFromMemoryCallCount);
+
+    sessionMock->stateSaveAreaVA.store(0x80000000);
+    mockWddm->curEvent = 0;
+    result = sessionMock->readAndHandleEvent(100);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(0u, sessionMock->newlyStoppedThreads.size());
+    EXPECT_EQ(0u, sessionMock->readSystemRoutineIdentFromMemoryCallCount);
 }
 
 TEST_F(DebugApiWindowsAttentionTest, GivenThreadWhenReadingSystemRoutineIdentThenCorrectStateSaveAreaLocationIsRead) {

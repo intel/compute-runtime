@@ -66,6 +66,9 @@ struct DebugSessionWindows : DebugSessionImp {
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
         return this->stateSaveAreaVA.load();
     }
+    uint64_t getContextStateSaveAreaSize(uint64_t memoryHandle) override {
+        return this->stateSaveAreaSize.load();
+    }
     void readStateSaveAreaHeader() override;
 
     MOCKABLE_VIRTUAL ze_result_t readAndHandleEvent(uint64_t timeoutMs);
@@ -117,6 +120,7 @@ struct DebugSessionWindows : DebugSessionImp {
     uint64_t debugAreaVA;
     NEO::DebugAreaHeader debugArea;
     std::atomic<uint64_t> stateSaveAreaVA{0};
+    std::atomic<size_t> stateSaveAreaSize{0};
     bool stateSaveAreaCaptured = false;
 
     std::unordered_set<uint64_t> allContexts;

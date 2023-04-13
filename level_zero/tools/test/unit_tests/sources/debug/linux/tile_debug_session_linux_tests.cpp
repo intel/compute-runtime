@@ -65,6 +65,7 @@ TEST(TileDebugSessionLinuxTest, GivenTileDebugSessionWhenCallingFunctionsThenCal
     rootSession->clientHandleToConnection[rootSession->clientHandle]->vmToContextStateSaveAreaBindInfo[5] = cssaInfo;
 
     EXPECT_EQ(0x1234000u, session->getContextStateSaveAreaGpuVa(5));
+    EXPECT_EQ(0x400u, session->getContextStateSaveAreaSize(5));
 
     auto allVms = session->getAllMemoryHandles();
     EXPECT_EQ(0u, allVms.size());
@@ -760,7 +761,7 @@ TEST_F(TileAttachTest, givenInterruptSentWhenHandlingAttentionEventThenTriggerEv
 }
 
 TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedThreadsFromRaisedAttentionAreProcessed) {
-    // deubg attach both tiles
+    // debug attach both tiles
     rootSession->tileSessions[0].second = true;
     rootSession->tileSessions[1].second = true;
 
@@ -771,6 +772,15 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedT
     rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->contextsCreated[ctxHandle].vm = vmHandle;
     rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->lrcToContextHandle[lrcHandle] = ctxHandle;
     rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToTile[vmHandle] = 1;
+
+    SIP::version version = {2, 0, 0};
+    initStateSaveArea(rootSession->stateSaveAreaHeader, version, deviceImp);
+    DebugSessionLinux::BindInfo cssaInfo = {reinterpret_cast<uint64_t>(rootSession->stateSaveAreaHeader.data()), rootSession->stateSaveAreaHeader.size()};
+    rootSession->clientHandleToConnection[MockDebugSessionLinux::mockClientHandle]->vmToContextStateSaveAreaBindInfo[vmHandle] = cssaInfo;
+
+    auto handler = new MockIoctlHandler;
+    rootSession->ioctlHandler.reset(handler);
+    handler->setPreadMemory(rootSession->stateSaveAreaHeader.data(), rootSession->stateSaveAreaHeader.size(), reinterpret_cast<uint64_t>(rootSession->stateSaveAreaHeader.data()));
 
     uint8_t data[sizeof(prelim_drm_i915_debug_event_eu_attention) + 128];
 
@@ -804,7 +814,8 @@ TEST_F(TileAttachTest, givenStoppedThreadsWhenHandlingAttentionEventThenStoppedT
 
     rootSession->handleEvent(reinterpret_cast<prelim_drm_i915_debug_event *>(data));
 
-    EXPECT_EQ(1u, tileSessions[1]->newlyStoppedThreads.size());
+    auto expectedThreadsToCheck = hwInfo.capabilityTable.fusedEuEnabled ? 2u : 1u;
+    EXPECT_EQ(expectedThreadsToCheck, tileSessions[1]->newlyStoppedThreads.size());
     EXPECT_TRUE(tileSessions[1]->triggerEvents);
 }
 

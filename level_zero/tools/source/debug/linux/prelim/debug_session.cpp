@@ -1292,13 +1292,39 @@ void DebugSessionLinux::handleAttentionEvent(prelim_drm_i915_debug_event_eu_atte
 
     PRINT_DEBUGGER_THREAD_LOG("ATTENTION for tile = %d thread count = %d\n", tileIndex, (int)threadsWithAttention.size());
 
-    for (auto &threadId : threadsWithAttention) {
-        PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
+    if (threadsWithAttention.size() > 0) {
+        auto gpuVa = getContextStateSaveAreaGpuVa(vmHandle);
+        auto stateSaveAreaSize = getContextStateSaveAreaSize(vmHandle);
+
+        std::unique_ptr<char[]> stateSaveArea = nullptr;
+        auto stateSaveReadResult = ZE_RESULT_ERROR_UNKNOWN;
+
+        std::unique_lock<std::mutex> lock;
 
         if (tileSessionsEnabled) {
-            static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle);
+            lock = std::unique_lock<std::mutex>(static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->threadStateMutex);
         } else {
-            addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle);
+            lock = std::unique_lock<std::mutex>(threadStateMutex);
+        }
+
+        if (gpuVa != 0 && stateSaveAreaSize != 0) {
+            stateSaveArea = std::make_unique<char[]>(stateSaveAreaSize);
+            stateSaveReadResult = readGpuMemory(vmHandle, stateSaveArea.get(), stateSaveAreaSize, gpuVa);
+        } else {
+            PRINT_DEBUGGER_ERROR_LOG("Context state save area bind info invalid\n", "");
+            DEBUG_BREAK_IF(true);
+        }
+
+        if (stateSaveReadResult == ZE_RESULT_SUCCESS) {
+            for (auto &threadId : threadsWithAttention) {
+                PRINT_DEBUGGER_THREAD_LOG("ATTENTION event for thread: %s\n", EuThread::toString(threadId).c_str());
+
+                if (tileSessionsEnabled) {
+                    static_cast<TileDebugSessionLinux *>(tileSessions[tileIndex].first)->addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveArea.get());
+                } else {
+                    addThreadToNewlyStoppedFromRaisedAttention(threadId, vmHandle, stateSaveArea.get());
+                }
+            }
         }
     }
 
@@ -1466,6 +1492,12 @@ void DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(const std::vector<E
         [[maybe_unused]] auto attReadResult = threadControl(threads, deviceIndex, ThreadControlCmd::Stopped, bitmask, bitmaskSize);
         DEBUG_BREAK_IF(attReadResult != 0);
 
+        // error querying STOPPED threads - no threads available ( for example: threads have completed )
+        if (attReadResult != 0) {
+            PRINT_DEBUGGER_ERROR_LOG("checkStoppedThreadsAndGenerateEvents ATTENTION read failed: %d errno = %d \n", (int)attReadResult, DrmHelper::getErrno(connectedDevice));
+            return;
+        }
+
         threadsWithAttention = l0GfxCoreHelper.getThreadsFromAttentionBitmask(hwInfo, deviceIndex, bitmask.get(), bitmaskSize);
 
         if (threadsWithAttention.size() == 0) {
@@ -1489,6 +1521,8 @@ void DebugSessionLinux::checkStoppedThreadsAndGenerateEvents(const std::vector<E
                     stoppedThreadsToReport.push_back(threadId);
                 }
             }
+        } else {
+            break;
         }
     }
 
@@ -2000,6 +2034,20 @@ uint64_t DebugSessionLinux::getContextStateSaveAreaGpuVa(uint64_t memoryHandle) 
     }
 
     return bindInfo->second.gpuVa;
+}
+
+size_t DebugSessionLinux::getContextStateSaveAreaSize(uint64_t memoryHandle) {
+    std::lock_guard<std::mutex> lock(asyncThreadMutex);
+    if (clientHandleToConnection[clientHandle]->contextStateSaveAreaSize != 0) {
+        return clientHandleToConnection[clientHandle]->contextStateSaveAreaSize;
+    }
+
+    auto bindInfo = clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.find(memoryHandle);
+    if (bindInfo == clientHandleToConnection[clientHandle]->vmToContextStateSaveAreaBindInfo.end()) {
+        return 0;
+    }
+    clientHandleToConnection[clientHandle]->contextStateSaveAreaSize = static_cast<size_t>(bindInfo->second.size);
+    return clientHandleToConnection[clientHandle]->contextStateSaveAreaSize;
 }
 
 void TileDebugSessionLinux::readStateSaveAreaHeader() {

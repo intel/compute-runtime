@@ -165,6 +165,8 @@ struct DebugSessionLinux : DebugSessionImp {
         uint64_t contextStateSaveAreaGpuVa = 0;
         uint64_t stateBaseAreaGpuVa = 0;
 
+        size_t contextStateSaveAreaSize = 0;
+
         std::unordered_map<uint64_t, Module> uuidToModule;
     };
 
@@ -289,6 +291,7 @@ struct DebugSessionLinux : DebugSessionImp {
     MOCKABLE_VIRTUAL int threadControl(const std::vector<EuThread::ThreadId> &threads, uint32_t tile, ThreadControlCmd threadCmd, std::unique_ptr<uint8_t[]> &bitmask, size_t &bitmaskSize);
 
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override;
+    size_t getContextStateSaveAreaSize(uint64_t memoryHandle) override;
     virtual uint64_t getSbaBufferGpuVa(uint64_t memoryHandle);
     void printContextVms();
 
@@ -403,6 +406,10 @@ struct TileDebugSessionLinux : DebugSessionLinux {
 
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
         return rootDebugSession->getContextStateSaveAreaGpuVa(memoryHandle);
+    };
+
+    size_t getContextStateSaveAreaSize(uint64_t memoryHandle) override {
+        return rootDebugSession->getContextStateSaveAreaSize(memoryHandle);
     };
 
     void readStateSaveAreaHeader() override;

@@ -399,6 +399,7 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
     DEBUG_BREAK_IF(sipCommandResult != true);
 
     auto result = resumeImp(resumeThreadIds, deviceIndex);
+
     for (auto &threadID : resumeThreadIds) {
         while (checkThreadIsResumed(threadID) == false)
             ;
@@ -676,30 +677,47 @@ bool DebugSessionImp::readSystemRoutineIdent(EuThread *thread, uint64_t memoryHa
 
     return true;
 }
+bool DebugSessionImp::readSystemRoutineIdentFromMemory(EuThread *thread, const void *stateSaveArea, SIP::sr_ident &srIdent) {
+    auto stateSaveAreaHeader = getStateSaveAreaHeader();
+    auto threadSlotOffset = calculateThreadSlotOffset(thread->getThreadId());
+    auto srMagicOffset = threadSlotOffset + stateSaveAreaHeader->regHeader.sr_magic_offset;
+    auto threadSlot = ptrOffset(stateSaveArea, srMagicOffset);
+    memcpy_s(&srIdent, sizeof(SIP::sr_ident), threadSlot, sizeof(SIP::sr_ident));
 
-void DebugSessionImp::addThreadToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle) {
+    if (0 != strcmp(srIdent.magic, "srmagic")) {
+        PRINT_DEBUGGER_ERROR_LOG("readSystemRoutineIdentFromMemory - Failed to read srMagic for thread %s\n", EuThread::toString(thread->getThreadId()).c_str());
+        return false;
+    }
+
+    return true;
+}
+
+void DebugSessionImp::addThreadToNewlyStoppedFromRaisedAttention(EuThread::ThreadId threadId, uint64_t memoryHandle, const void *stateSaveArea) {
 
     SIP::sr_ident srMagic = {{0}};
     srMagic.count = 0;
 
+    DEBUG_BREAK_IF(stateSaveArea == nullptr);
+
     bool wasStopped = false;
     {
-        std::unique_lock<std::mutex> lock(threadStateMutex);
-
-        if (!readSystemRoutineIdent(allThreads[threadId].get(), memoryHandle, srMagic)) {
-            PRINT_DEBUGGER_ERROR_LOG("Failed to read SR IDENT\n", "");
-            return;
-        } else {
-            PRINT_DEBUGGER_INFO_LOG("SIP version == %d.%d.%d\n", (int)srMagic.version.major, (int)srMagic.version.minor, (int)srMagic.version.patch);
-        }
-
         wasStopped = allThreads[threadId]->isStopped();
 
-        if (!allThreads[threadId]->verifyStopped(srMagic.count)) {
-            return;
-        }
+        if (!wasStopped) {
 
-        allThreads[threadId]->stopThread(memoryHandle);
+            if (!readSystemRoutineIdentFromMemory(allThreads[threadId].get(), stateSaveArea, srMagic)) {
+                PRINT_DEBUGGER_ERROR_LOG("Failed to read SR IDENT\n", "");
+                return;
+            } else {
+                PRINT_DEBUGGER_INFO_LOG("SIP version == %d.%d.%d\n", (int)srMagic.version.major, (int)srMagic.version.minor, (int)srMagic.version.patch);
+            }
+
+            if (!allThreads[threadId]->verifyStopped(srMagic.count)) {
+                return;
+            }
+
+            allThreads[threadId]->stopThread(memoryHandle);
+        }
     }
 
     if (!wasStopped) {
