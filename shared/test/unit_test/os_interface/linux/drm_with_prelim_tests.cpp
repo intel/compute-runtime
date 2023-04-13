@@ -518,6 +518,37 @@ TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingAndContextDebugSupportedWh
     EXPECT_TRUE(drm->capturedCooperativeContextRequest);
 }
 
+TEST_F(IoctlHelperPrelimFixture, givenProgramDebuggingModeAndContextDebugSupportedAndRegularEngineUsageWhenCreatingContextThenCooperativeFlagIsNotPassedInOfflineDebuggingMode) {
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
+    drm->contextDebugSupported = true;
+    drm->callBaseCreateDrmContext = false;
+
+    OsContextLinux osContext(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    osContext.ensureContextInitialized();
+
+    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
+
+    if (executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo()->gtSystemInfo.CCSInfo.NumberOfCCSEnabled > 0) {
+        EXPECT_TRUE(drm->capturedCooperativeContextRequest);
+    } else {
+        EXPECT_FALSE(drm->capturedCooperativeContextRequest);
+    }
+
+    executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Offline);
+
+    OsContextLinux osContext2(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Regular}));
+    osContext2.ensureContextInitialized();
+
+    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
+    EXPECT_FALSE(drm->capturedCooperativeContextRequest);
+
+    OsContextLinux osContext3(*drm, 0, 5u, EngineDescriptorHelper::getDefaultDescriptor({aub_stream::ENGINE_RCS, EngineUsage::Cooperative}));
+    osContext3.ensureContextInitialized();
+
+    EXPECT_NE(static_cast<uint32_t>(-1), drm->passedContextDebugId);
+    EXPECT_TRUE(drm->capturedCooperativeContextRequest);
+}
+
 TEST(IoctlHelperPrelimTest, givenProgramDebuggingAndContextDebugSupportedWhenInitializingContextThenVmIsCreatedWithAllNecessaryFlags) {
     auto executionEnvironment = std::make_unique<MockExecutionEnvironment>();
     executionEnvironment->setDebuggingMode(NEO::DebuggingMode::Online);
