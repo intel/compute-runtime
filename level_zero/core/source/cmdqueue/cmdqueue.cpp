@@ -50,6 +50,7 @@ CommandQueueImp::CommandQueueImp(Device *device, NEO::CommandStreamReceiver *csr
     if (overrideUseKmdWaitFunction != -1) {
         useKmdWaitFunction = !!(overrideUseKmdWaitFunction);
     }
+    this->stateChanges.reserve(CommandQueueImp::defaultCommandListStateChangeListSize);
 }
 
 ze_result_t CommandQueueImp::destroy() {

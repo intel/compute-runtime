@@ -146,7 +146,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     this->makeCsrTagAllocationResident();
     this->encodeKernelArgsBufferAndMakeItResident();
 
-    auto &csrStateProperties = csr->getStreamProperties();
     if (ctx.globalInit) {
         this->getTagsManagerHeapsAndMakeThemResidentIfSWTagsEnabled(child);
         this->csr->programHardwareContext(child);
@@ -155,11 +154,14 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
             this->programPipelineSelectIfGpgpuDisabled(child);
         } else {
             // Setting systolic/pipeline select here for 1st command list is to preserve dispatch order of hw commands
-            auto &requiredStreamState = ctx.firstCommandList->getRequiredStreamState();
-            // Provide cmdlist required state as cmdlist final state, so csr state does not transition to final
-            // By preserving required state in csr - keeping csr state not dirty - it will not dispatch 1st command list pipeline select/systolic in main loop
-            // Csr state will transition to final of 1st command list in main loop
-            this->programOneCmdListPipelineSelect(ctx.firstCommandList, child, csrStateProperties, requiredStreamState, requiredStreamState);
+            if (this->stateChanges.size() > 0) {
+                auto &firstCmdListWithStateChange = this->stateChanges[0];
+                // check first required state change is for the first command list
+                if (firstCmdListWithStateChange.commandList == ctx.firstCommandList && firstCmdListWithStateChange.flags.propertyPsDirty) {
+                    this->programOneCmdListPipelineSelect(ctx.firstCommandList, child, firstCmdListWithStateChange);
+                    firstCmdListWithStateChange.flags.propertyPsDirty = false;
+                }
+            }
         }
         this->programCommandQueueDebugCmdsForSourceLevelOrL0DebuggerIfEnabled(ctx.isDebugEnabled, child);
         if (!this->stateBaseAddressTracking) {
@@ -169,7 +171,7 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
         this->programStateSip(ctx.stateSipRequired, child);
         this->programActivePartitionConfig(ctx.isProgramActivePartitionConfigRequired, child);
         bool shouldProgramVfe = (this->csr->getLogicalStateHelper() || !frontEndTrackingEnabled()) && ctx.frontEndStateDirty;
-        this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, child, csrStateProperties);
+        this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, child, csr->getStreamProperties());
 
         if (ctx.rtDispatchRequired) {
             auto csrHw = static_cast<NEO::CommandStreamReceiverHw<GfxFamily> *>(this->csr);
@@ -179,19 +181,21 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
 
     this->writeCsrStreamInlineIfLogicalStateHelperAvailable(child);
 
-    ctx.statePreemption = ctx.preemptionMode;
-
     for (auto i = 0u; i < numCommandLists; ++i) {
         auto commandList = CommandList::fromHandle(commandListHandles[i]);
-        auto &requiredStreamState = commandList->getRequiredStreamState();
-        auto &finalStreamState = commandList->getFinalStreamState();
 
-        this->updateOneCmdListPreemptionModeAndCtxStatePreemption(ctx, commandList->getCommandListPreemptionMode(), child);
+        if (this->stateChanges.size() > this->currentStateChangeIndex) {
+            auto &stateChange = this->stateChanges[this->currentStateChangeIndex];
+            if (stateChange.commandList == commandList) {
+                this->updateOneCmdListPreemptionModeAndCtxStatePreemption(child, stateChange);
+                this->programOneCmdListPipelineSelect(commandList, child, stateChange);
+                this->programOneCmdListFrontEndIfDirty(ctx, child, stateChange);
+                this->programRequiredStateComputeModeForCommandList(commandList, child, stateChange);
+                this->programRequiredStateBaseAddressForCommandList(ctx, child, commandList->getCmdListHeapAddressModel(), commandList->getCmdContainer().isIndirectHeapInLocalMemory(), stateChange);
 
-        this->programOneCmdListPipelineSelect(commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
-        this->programOneCmdListFrontEndIfDirty(ctx, child, csrStateProperties, requiredStreamState, finalStreamState);
-        this->programRequiredStateComputeModeForCommandList(commandList, child, csrStateProperties, requiredStreamState, finalStreamState);
-        this->programRequiredStateBaseAddressForCommandList(ctx, child, commandList->getCmdListHeapAddressModel(), commandList->getCmdContainer().isIndirectHeapInLocalMemory(), csrStateProperties, requiredStreamState, finalStreamState);
+                this->currentStateChangeIndex++;
+            }
+        }
 
         this->patchCommands(*commandList, this->csr->getScratchSpaceController()->getScratchPatchAddress());
         this->programOneCmdListBatchBufferStart(commandList, child, ctx);
@@ -222,7 +226,8 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsRegular(
     ze_result_t retVal = this->handleSubmissionAndCompletionResults(submitResult, completionResult);
 
     this->csr->getResidencyAllocations().clear();
-
+    this->stateChanges.clear();
+    this->currentStateChangeIndex = 0;
     return retVal;
 }
 
@@ -324,34 +329,19 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programOneCmdListFrontEndIfDirty(
     CommandListExecutionContext &ctx,
     NEO::LinearStream &cmdStream,
-    NEO::StreamProperties &csrState,
-    const NEO::StreamProperties &cmdListRequired,
-    const NEO::StreamProperties &cmdListFinal) {
+    CommandListRequiredStateChange &cmdListRequired) {
 
     if (!frontEndTrackingEnabled()) {
         return;
     }
 
-    bool shouldProgramVfe = ctx.frontEndStateDirty;
-
-    if (shouldProgramVfe) {
-        csrState.frontEndState.copyPropertiesAll(cmdListRequired.frontEndState);
-        csrState.frontEndState.setPropertySingleSliceDispatchCcsMode(ctx.engineInstanced);
-    } else {
-        csrState.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(cmdListRequired.frontEndState);
-        shouldProgramVfe |= csrState.frontEndState.isDirty();
+    if (cmdListRequired.flags.propertyFeDirty) {
+        this->programFrontEndAndClearDirtyFlag(cmdListRequired.flags.propertyFeDirty, ctx, cmdStream, cmdListRequired.requiredState);
     }
 
-    if (shouldProgramVfe) {
-        ctx.cmdListBeginState.frontEndState = {};
-        ctx.cmdListBeginState.frontEndState.copyPropertiesAll(csrState.frontEndState);
-        this->programFrontEndAndClearDirtyFlag(shouldProgramVfe, ctx, cmdStream, csrState);
-    }
-
-    if (shouldProgramVfe) {
-        csrState.frontEndState.copyPropertiesAll(cmdListFinal.frontEndState);
-    } else {
-        csrState.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(cmdListFinal.frontEndState);
+    if (cmdListRequired.flags.frontEndReturnPoint) {
+        ctx.cmdListBeginState.frontEndState.resetState();
+        ctx.cmdListBeginState.frontEndState.copyPropertiesAll(cmdListRequired.requiredState.frontEndState);
     }
 }
 
@@ -407,9 +397,12 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSize(bool isFrontEndDir
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandLists(
     bool &isFrontEndStateDirty, int32_t engineInstanced, CommandList *commandList,
-    NEO::StreamProperties &csrStateCopy,
+    NEO::StreamProperties &csrState,
     const NEO::StreamProperties &cmdListRequired,
-    const NEO::StreamProperties &cmdListFinal) {
+    const NEO::StreamProperties &cmdListFinal,
+    NEO::StreamProperties &requiredState,
+    bool &propertyDirty,
+    bool &frontEndReturnPoint) {
 
     if (!frontEndTrackingEnabled()) {
         return 0;
@@ -417,28 +410,38 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateFrontEndCmdSizeForMultipleCommandL
 
     auto singleFrontEndCmdSize = estimateFrontEndCmdSize();
     size_t estimatedSize = 0;
+    bool feCurrentDirty = isFrontEndStateDirty;
 
     if (isFrontEndStateDirty) {
-        csrStateCopy.frontEndState.copyPropertiesAll(cmdListRequired.frontEndState);
+        csrState.frontEndState.copyPropertiesAll(cmdListRequired.frontEndState);
+        csrState.frontEndState.setPropertySingleSliceDispatchCcsMode(engineInstanced);
     } else {
-        csrStateCopy.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(cmdListRequired.frontEndState);
+        csrState.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(cmdListRequired.frontEndState);
+        feCurrentDirty = csrState.frontEndState.isDirty();
     }
-    csrStateCopy.frontEndState.setPropertySingleSliceDispatchCcsMode(engineInstanced);
 
-    if (isFrontEndStateDirty || csrStateCopy.frontEndState.isDirty()) {
+    if (feCurrentDirty) {
         estimatedSize += singleFrontEndCmdSize;
+
+        propertyDirty = true;
     }
-    if (this->frontEndStateTracking) {
-        uint32_t frontEndChanges = commandList->getReturnPointsSize();
+
+    uint32_t frontEndChanges = commandList->getReturnPointsSize();
+    if (frontEndChanges > 0) {
         estimatedSize += (frontEndChanges * singleFrontEndCmdSize);
         estimatedSize += (frontEndChanges * NEO::EncodeBatchBufferStartOrEnd<GfxFamily>::getBatchBufferStartSize());
+        frontEndReturnPoint = true;
+    }
+
+    if (frontEndReturnPoint || propertyDirty) {
+        requiredState.frontEndState = csrState.frontEndState;
     }
 
     if (isFrontEndStateDirty) {
-        csrStateCopy.frontEndState.copyPropertiesAll(cmdListFinal.frontEndState);
+        csrState.frontEndState.copyPropertiesAll(cmdListFinal.frontEndState);
         isFrontEndStateDirty = false;
     } else {
-        csrStateCopy.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(cmdListFinal.frontEndState);
+        csrState.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(cmdListFinal.frontEndState);
     }
 
     return estimatedSize;
@@ -528,7 +531,8 @@ size_t CommandQueueHw<gfxCoreFamily>::computeDebuggerCmdsSize(const CommandListE
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::computePreemptionSizeForCommandList(
     CommandListExecutionContext &ctx,
-    CommandList *commandList) {
+    CommandList *commandList,
+    bool &dirtyState) {
 
     size_t preemptionSize = 0u;
 
@@ -540,6 +544,7 @@ size_t CommandQueueHw<gfxCoreFamily>::computePreemptionSizeForCommandList(
         }
         preemptionSize += NEO::PreemptionHelper::getRequiredCmdStreamSize<GfxFamily>(commandListPreemption, ctx.statePreemption);
         ctx.statePreemption = commandListPreemption;
+        dirtyState = true;
     }
 
     return preemptionSize;
@@ -711,29 +716,47 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateLinearStreamSizeComplementary(
     linearStreamSizeEstimate += estimateFrontEndCmdSize(ctx.frontEndStateDirty);
     linearStreamSizeEstimate += estimatePipelineSelectCmdSize();
 
-    auto streamPropertiesCopy = this->csr->getStreamProperties();
-    bool frontEndStateDirtyCopy = ctx.frontEndStateDirty;
-    bool gpgpuEnabledCopy = this->csr->getPreambleSetFlag();
-    bool baseAdresStateDirtyCopy = ctx.gsbaStateDirty;
-    bool scmStateDirtyCopy = this->csr->getStateComputeModeDirty();
+    auto &streamProperties = this->csr->getStreamProperties();
+    bool frontEndStateDirty = ctx.frontEndStateDirty;
+    bool gpgpuEnabled = this->csr->getPreambleSetFlag();
+    bool baseAdresStateDirty = ctx.gsbaStateDirty;
+    bool scmStateDirty = this->csr->getStateComputeModeDirty();
 
-    ctx.globalInit |= !gpgpuEnabledCopy;
-    ctx.globalInit |= scmStateDirtyCopy;
+    ctx.globalInit |= !gpgpuEnabled;
+    ctx.globalInit |= scmStateDirty;
 
     for (uint32_t i = 0; i < numCommandLists; i++) {
         auto cmdList = CommandList::fromHandle(phCommandLists[i]);
         auto &requiredStreamState = cmdList->getRequiredStreamState();
         auto &finalStreamState = cmdList->getFinalStreamState();
 
-        linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirtyCopy, ctx.engineInstanced, cmdList,
-                                                                                   streamPropertiesCopy, requiredStreamState, finalStreamState);
-        linearStreamSizeEstimate += estimatePipelineSelectCmdSizeForMultipleCommandLists(streamPropertiesCopy, requiredStreamState, finalStreamState, gpgpuEnabledCopy);
-        linearStreamSizeEstimate += estimateScmCmdSizeForMultipleCommandLists(streamPropertiesCopy, scmStateDirtyCopy, requiredStreamState, finalStreamState);
-        linearStreamSizeEstimate += estimateStateBaseAddressCmdSizeForMultipleCommandLists(baseAdresStateDirtyCopy, cmdList->getCmdListHeapAddressModel(), streamPropertiesCopy, requiredStreamState, finalStreamState);
-        linearStreamSizeEstimate += computePreemptionSizeForCommandList(ctx, cmdList);
+        NEO::StreamProperties stagingState{};
+
+        bool propertyFeDirty = false;
+        bool propertyPsDirty = false;
+        bool propertySbaDirty = false;
+        bool propertyScmDirty = false;
+        bool frontEndReturnPoint = false;
+        bool propertyPreemptionDirty = false;
+
+        linearStreamSizeEstimate += estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, ctx.engineInstanced, cmdList,
+                                                                                   streamProperties, requiredStreamState, finalStreamState,
+                                                                                   stagingState, propertyFeDirty, frontEndReturnPoint);
+        linearStreamSizeEstimate += estimatePipelineSelectCmdSizeForMultipleCommandLists(streamProperties, requiredStreamState, finalStreamState, gpgpuEnabled,
+                                                                                         stagingState, propertyPsDirty);
+        linearStreamSizeEstimate += estimateScmCmdSizeForMultipleCommandLists(streamProperties, scmStateDirty, requiredStreamState, finalStreamState,
+                                                                              stagingState, propertyScmDirty);
+        linearStreamSizeEstimate += estimateStateBaseAddressCmdSizeForMultipleCommandLists(baseAdresStateDirty, cmdList->getCmdListHeapAddressModel(), streamProperties, requiredStreamState, finalStreamState,
+                                                                                           stagingState, propertySbaDirty);
+        linearStreamSizeEstimate += computePreemptionSizeForCommandList(ctx, cmdList, propertyPreemptionDirty);
 
         linearStreamSizeEstimate += estimateCommandListSecondaryStart(cmdList);
         ctx.spaceForResidency += estimateCommandListResidencySize(cmdList);
+
+        if (propertyScmDirty || propertyFeDirty || propertyPsDirty || propertySbaDirty || frontEndReturnPoint || propertyPreemptionDirty) {
+            CommandListDirtyFlags dirtyFlags = {propertyScmDirty, propertyFeDirty, propertyPsDirty, propertySbaDirty, frontEndReturnPoint, propertyPreemptionDirty};
+            this->stateChanges.emplace_back(stagingState, cmdList, dirtyFlags, ctx.statePreemption);
+        }
     }
 
     if (ctx.gsbaStateDirty && !this->stateBaseAddressTracking) {
@@ -882,28 +905,25 @@ void CommandQueueHw<gfxCoreFamily>::programStateSipEndWA(bool isStateSipRequired
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::updateOneCmdListPreemptionModeAndCtxStatePreemption(
-    CommandListExecutionContext &ctx,
-    NEO::PreemptionMode commandListPreemption,
-    NEO::LinearStream &cmdStream) {
+    NEO::LinearStream &cmdStream,
+    CommandListRequiredStateChange &cmdListRequired) {
 
-    NEO::Device *neoDevice = this->device->getNEODevice();
-    if (ctx.statePreemption != commandListPreemption) {
+    if (cmdListRequired.flags.preemptionDirty) {
         if (NEO::DebugManager.flags.EnableSWTags.get()) {
+            NEO::Device *neoDevice = this->device->getNEODevice();
             neoDevice->getRootDeviceEnvironment().tagsManager->insertTag<GfxFamily, NEO::SWTags::PipeControlReasonTag>(
                 cmdStream,
                 *neoDevice,
                 "ComandList Preemption Mode update", 0u);
         }
-
         if (this->preemptionCmdSyncProgramming) {
             NEO::PipeControlArgs args;
             NEO::MemorySynchronizationCommands<GfxFamily>::addSingleBarrier(cmdStream, args);
         }
         NEO::PreemptionHelper::programCmdStream<GfxFamily>(cmdStream,
-                                                           commandListPreemption,
-                                                           ctx.statePreemption,
+                                                           cmdListRequired.newMode,
+                                                           NEO::PreemptionMode::Initial,
                                                            this->csr->getPreemptionAllocation());
-        ctx.statePreemption = commandListPreemption;
     }
 }
 
@@ -995,7 +1015,7 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListBatchBufferStart(CommandLis
             if (cmdBufferHasRestarts) {
                 while (returnPointIdx < returnPointsSize && allocation == returnPoints[returnPointIdx].currentCmdBuffer) {
                     auto scratchSpaceController = this->csr->getScratchSpaceController();
-                    ctx.cmdListBeginState.frontEndState.copyPropertiesAll(returnPoints[returnPointIdx].configSnapshot.frontEndState);
+                    ctx.cmdListBeginState.frontEndState.copyPropertiesComputeDispatchAllWalkerEnableDisableEuFusion(returnPoints[returnPointIdx].configSnapshot.frontEndState);
                     programFrontEnd(scratchSpaceController->getScratchPatchAddress(),
                                     scratchSpaceController->getPerThreadScratchSpaceSize(),
                                     cmdStream,
@@ -1220,52 +1240,51 @@ size_t CommandQueueHw<gfxCoreFamily>::estimatePipelineSelectCmdSize() {
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimatePipelineSelectCmdSizeForMultipleCommandLists(NEO::StreamProperties &csrStateCopy,
+size_t CommandQueueHw<gfxCoreFamily>::estimatePipelineSelectCmdSizeForMultipleCommandLists(NEO::StreamProperties &csrState,
                                                                                            const NEO::StreamProperties &cmdListRequired,
                                                                                            const NEO::StreamProperties &cmdListFinal,
-                                                                                           bool &gpgpuEnabled) {
+                                                                                           bool &gpgpuEnabled,
+                                                                                           NEO::StreamProperties &requiredState,
+                                                                                           bool &propertyDirty) {
     if (!this->pipelineSelectStateTracking) {
         return 0;
     }
 
     size_t estimatedSize = 0;
-
-    if (!gpgpuEnabled) {
-        csrStateCopy.pipelineSelect.copyPropertiesAll(cmdListRequired.pipelineSelect);
+    bool psCurrentDirty = !gpgpuEnabled;
+    if (psCurrentDirty) {
+        csrState.pipelineSelect.copyPropertiesAll(cmdListRequired.pipelineSelect);
     } else {
-        csrStateCopy.pipelineSelect.copyPropertiesSystolicMode(cmdListRequired.pipelineSelect);
+        csrState.pipelineSelect.copyPropertiesSystolicMode(cmdListRequired.pipelineSelect);
+        psCurrentDirty = csrState.pipelineSelect.isDirty();
     }
 
-    if (!gpgpuEnabled || csrStateCopy.pipelineSelect.isDirty()) {
+    if (psCurrentDirty) {
         estimatedSize += NEO::PreambleHelper<GfxFamily>::getCmdSizeForPipelineSelect(device->getNEODevice()->getRootDeviceEnvironment());
+
+        propertyDirty = true;
+        requiredState.pipelineSelect = csrState.pipelineSelect;
     }
 
     if (!gpgpuEnabled) {
-        csrStateCopy.pipelineSelect.copyPropertiesAll(cmdListFinal.pipelineSelect);
+        csrState.pipelineSelect.copyPropertiesAll(cmdListFinal.pipelineSelect);
         gpgpuEnabled = true;
     } else {
-        csrStateCopy.pipelineSelect.copyPropertiesSystolicMode(cmdListFinal.pipelineSelect);
+        csrState.pipelineSelect.copyPropertiesSystolicMode(cmdListFinal.pipelineSelect);
     }
 
     return estimatedSize;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programOneCmdListPipelineSelect(CommandList *commandList, NEO::LinearStream &commandStream, NEO::StreamProperties &csrState,
-                                                                    const NEO::StreamProperties &cmdListRequired, const NEO::StreamProperties &cmdListFinal) {
+void CommandQueueHw<gfxCoreFamily>::programOneCmdListPipelineSelect(CommandList *commandList, NEO::LinearStream &commandStream,
+                                                                    CommandListRequiredStateChange &cmdListRequired) {
     if (!this->pipelineSelectStateTracking) {
         return;
     }
 
-    bool preambleSet = csr->getPreambleSetFlag();
-    if (!preambleSet) {
-        csrState.pipelineSelect.copyPropertiesAll(cmdListRequired.pipelineSelect);
-    } else {
-        csrState.pipelineSelect.copyPropertiesSystolicMode(cmdListRequired.pipelineSelect);
-    }
-
-    if (!preambleSet || csrState.pipelineSelect.isDirty()) {
-        bool systolic = csrState.pipelineSelect.systolicMode.value == 1 ? true : false;
+    if (cmdListRequired.flags.propertyPsDirty) {
+        bool systolic = cmdListRequired.requiredState.pipelineSelect.systolicMode.value == 1;
         NEO::PipelineSelectArgs args = {
             systolic,
             false,
@@ -1275,42 +1294,42 @@ void CommandQueueHw<gfxCoreFamily>::programOneCmdListPipelineSelect(CommandList 
         NEO::PreambleHelper<GfxFamily>::programPipelineSelect(&commandStream, args, device->getNEODevice()->getRootDeviceEnvironment());
         csr->setPreambleSetFlag(true);
     }
-
-    if (!preambleSet) {
-        csrState.pipelineSelect.copyPropertiesAll(cmdListFinal.pipelineSelect);
-    } else {
-        csrState.pipelineSelect.copyPropertiesSystolicMode(cmdListFinal.pipelineSelect);
-    }
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
-size_t CommandQueueHw<gfxCoreFamily>::estimateScmCmdSizeForMultipleCommandLists(NEO::StreamProperties &csrStateCopy,
+size_t CommandQueueHw<gfxCoreFamily>::estimateScmCmdSizeForMultipleCommandLists(NEO::StreamProperties &csrState,
                                                                                 bool &scmStateDirty,
                                                                                 const NEO::StreamProperties &cmdListRequired,
-                                                                                const NEO::StreamProperties &cmdListFinal) {
+                                                                                const NEO::StreamProperties &cmdListFinal,
+                                                                                NEO::StreamProperties &requiredState,
+                                                                                bool &propertyDirty) {
     if (!this->stateComputeModeTracking) {
         return 0;
     }
 
     size_t estimatedSize = 0;
-
-    bool isRcs = this->getCsr()->isRcs();
-
+    bool scmCurrentDirty = scmStateDirty;
     if (scmStateDirty) {
-        csrStateCopy.stateComputeMode.copyPropertiesAll(cmdListRequired.stateComputeMode);
+        csrState.stateComputeMode.copyPropertiesAll(cmdListRequired.stateComputeMode);
     } else {
-        csrStateCopy.stateComputeMode.copyPropertiesGrfNumberThreadArbitration(cmdListRequired.stateComputeMode);
+        csrState.stateComputeMode.copyPropertiesGrfNumberThreadArbitration(cmdListRequired.stateComputeMode);
+        scmCurrentDirty = csrState.stateComputeMode.isDirty();
     }
 
-    if (csrStateCopy.stateComputeMode.isDirty()) {
+    if (scmCurrentDirty) {
+        bool isRcs = this->getCsr()->isRcs();
         estimatedSize = NEO::EncodeComputeMode<GfxFamily>::getCmdSizeForComputeMode(device->getNEODevice()->getRootDeviceEnvironment(), false, isRcs);
+
+        propertyDirty = true;
+        requiredState.stateComputeMode = csrState.stateComputeMode;
+        requiredState.pipelineSelect = csrState.pipelineSelect;
     }
 
     if (scmStateDirty) {
-        csrStateCopy.stateComputeMode.copyPropertiesAll(cmdListFinal.stateComputeMode);
+        csrState.stateComputeMode.copyPropertiesAll(cmdListFinal.stateComputeMode);
         scmStateDirty = false;
     } else {
-        csrStateCopy.stateComputeMode.copyPropertiesGrfNumberThreadArbitration(cmdListFinal.stateComputeMode);
+        csrState.stateComputeMode.copyPropertiesGrfNumberThreadArbitration(cmdListFinal.stateComputeMode);
     }
 
     return estimatedSize;
@@ -1319,37 +1338,22 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateScmCmdSizeForMultipleCommandLists(
 template <GFXCORE_FAMILY gfxCoreFamily>
 void CommandQueueHw<gfxCoreFamily>::programRequiredStateComputeModeForCommandList(CommandList *commandList,
                                                                                   NEO::LinearStream &commandStream,
-                                                                                  NEO::StreamProperties &csrState,
-                                                                                  const NEO::StreamProperties &cmdListRequired,
-                                                                                  const NEO::StreamProperties &cmdListFinal) {
+                                                                                  CommandListRequiredStateChange &cmdListRequired) {
     if (!this->stateComputeModeTracking) {
         return;
     }
 
-    bool scmCsrDirty = this->csr->getStateComputeModeDirty();
-    if (scmCsrDirty) {
-        csrState.stateComputeMode.copyPropertiesAll(cmdListRequired.stateComputeMode);
-    } else {
-        csrState.stateComputeMode.copyPropertiesGrfNumberThreadArbitration(cmdListRequired.stateComputeMode);
-    }
-
-    if (csrState.stateComputeMode.isDirty()) {
+    if (cmdListRequired.flags.propertyScmDirty) {
         NEO::PipelineSelectArgs pipelineSelectArgs = {
-            csrState.pipelineSelect.systolicMode.value == 1,
+            cmdListRequired.requiredState.pipelineSelect.systolicMode.value == 1,
             false,
             false,
             commandList->getSystolicModeSupport()};
 
         bool isRcs = this->getCsr()->isRcs();
-        NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(commandStream, csrState.stateComputeMode, pipelineSelectArgs,
+        NEO::EncodeComputeMode<GfxFamily>::programComputeModeCommandWithSynchronization(commandStream, cmdListRequired.requiredState.stateComputeMode, pipelineSelectArgs,
                                                                                         false, device->getNEODevice()->getRootDeviceEnvironment(), isRcs, this->getCsr()->getDcFlushSupport(), nullptr);
         this->csr->setStateComputeModeDirty(false);
-    }
-
-    if (scmCsrDirty) {
-        csrState.stateComputeMode.copyPropertiesAll(cmdListFinal.stateComputeMode);
-    } else {
-        csrState.stateComputeMode.copyPropertiesGrfNumberThreadArbitration(cmdListFinal.stateComputeMode);
     }
 }
 
@@ -1358,66 +1362,20 @@ void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForCommandLis
                                                                                   NEO::LinearStream &commandStream,
                                                                                   NEO::HeapAddressModel commandListHeapAddressModel,
                                                                                   bool indirectHeapInLocalMemory,
-                                                                                  NEO::StreamProperties &csrState,
-                                                                                  const NEO::StreamProperties &cmdListRequired,
-                                                                                  const NEO::StreamProperties &cmdListFinal) {
+                                                                                  CommandListRequiredStateChange &cmdListRequired) {
 
     if (!this->stateBaseAddressTracking) {
         return;
     }
-    if (commandListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
-        programRequiredStateBaseAddressForGlobalStatelessCommandList(ctx, commandStream, indirectHeapInLocalMemory, csrState, cmdListRequired, cmdListFinal);
-    } else {
-        programRequiredStateBaseAddressForPrivateHeapCommandList(ctx, commandStream, indirectHeapInLocalMemory, csrState, cmdListRequired, cmdListFinal);
-    }
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForGlobalStatelessCommandList(CommandListExecutionContext &ctx,
-                                                                                                 NEO::LinearStream &commandStream,
-                                                                                                 bool indirectHeapInLocalMemory,
-                                                                                                 NEO::StreamProperties &csrState,
-                                                                                                 const NEO::StreamProperties &cmdListRequired,
-                                                                                                 const NEO::StreamProperties &cmdListFinal) {
-    auto globalStatelessHeap = this->csr->getGlobalStatelessHeap();
-
-    csrState.stateBaseAddress.copyPropertiesStatelessMocsIndirectState(cmdListRequired.stateBaseAddress);
-    csrState.stateBaseAddress.setPropertiesSurfaceState(globalStatelessHeap->getHeapGpuBase(), globalStatelessHeap->getHeapSizeInPages());
-
-    if (ctx.gsbaStateDirty || csrState.stateBaseAddress.isDirty()) {
+    if (cmdListRequired.flags.propertySbaDirty) {
         programStateBaseAddress(ctx.scratchGsba,
                                 indirectHeapInLocalMemory,
                                 commandStream,
                                 ctx.cachedMOCSAllowed,
-                                &csrState);
+                                &cmdListRequired.requiredState);
 
         ctx.gsbaStateDirty = false;
     }
-
-    csrState.stateBaseAddress.copyPropertiesStatelessMocs(cmdListFinal.stateBaseAddress);
-}
-
-template <GFXCORE_FAMILY gfxCoreFamily>
-void CommandQueueHw<gfxCoreFamily>::programRequiredStateBaseAddressForPrivateHeapCommandList(CommandListExecutionContext &ctx,
-                                                                                             NEO::LinearStream &commandStream,
-                                                                                             bool indirectHeapInLocalMemory,
-                                                                                             NEO::StreamProperties &csrState,
-                                                                                             const NEO::StreamProperties &cmdListRequired,
-                                                                                             const NEO::StreamProperties &cmdListFinal) {
-
-    csrState.stateBaseAddress.copyPropertiesAll(cmdListRequired.stateBaseAddress);
-
-    if (ctx.gsbaStateDirty || csrState.stateBaseAddress.isDirty()) {
-        programStateBaseAddress(ctx.scratchGsba,
-                                indirectHeapInLocalMemory,
-                                commandStream,
-                                ctx.cachedMOCSAllowed,
-                                &csrState);
-
-        ctx.gsbaStateDirty = false;
-    }
-
-    csrState.stateBaseAddress.copyPropertiesAll(cmdListFinal.stateBaseAddress);
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
@@ -1446,9 +1404,11 @@ void CommandQueueHw<gfxCoreFamily>::updateBaseAddressState(CommandList *lastComm
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForMultipleCommandLists(bool &baseAddressStateDirty,
                                                                                              NEO::HeapAddressModel commandListHeapAddressModel,
-                                                                                             NEO::StreamProperties &csrStateCopy,
+                                                                                             NEO::StreamProperties &csrState,
                                                                                              const NEO::StreamProperties &cmdListRequired,
-                                                                                             const NEO::StreamProperties &cmdListFinal) {
+                                                                                             const NEO::StreamProperties &cmdListFinal,
+                                                                                             NEO::StreamProperties &requiredState,
+                                                                                             bool &propertyDirty) {
     if (!this->stateBaseAddressTracking) {
         return 0;
     }
@@ -1456,9 +1416,9 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForMultiple
     size_t estimatedSize = 0;
 
     if (commandListHeapAddressModel == NEO::HeapAddressModel::GlobalStateless) {
-        estimatedSize = estimateStateBaseAddressCmdSizeForGlobalStatelessCommandList(baseAddressStateDirty, csrStateCopy, cmdListRequired, cmdListFinal);
+        estimatedSize = estimateStateBaseAddressCmdSizeForGlobalStatelessCommandList(baseAddressStateDirty, csrState, cmdListRequired, cmdListFinal, requiredState, propertyDirty);
     } else {
-        estimatedSize = estimateStateBaseAddressCmdSizeForPrivateHeapCommandList(baseAddressStateDirty, csrStateCopy, cmdListRequired, cmdListFinal);
+        estimatedSize = estimateStateBaseAddressCmdSizeForPrivateHeapCommandList(baseAddressStateDirty, csrState, cmdListRequired, cmdListFinal, requiredState, propertyDirty);
     }
 
     return estimatedSize;
@@ -1466,39 +1426,59 @@ size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForMultiple
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForGlobalStatelessCommandList(bool &baseAddressStateDirty,
-                                                                                                   NEO::StreamProperties &csrStateCopy,
+                                                                                                   NEO::StreamProperties &csrState,
                                                                                                    const NEO::StreamProperties &cmdListRequired,
-                                                                                                   const NEO::StreamProperties &cmdListFinal) {
+                                                                                                   const NEO::StreamProperties &cmdListFinal,
+                                                                                                   NEO::StreamProperties &requiredState,
+                                                                                                   bool &propertyDirty) {
     auto globalStatelessHeap = this->csr->getGlobalStatelessHeap();
 
     size_t estimatedSize = 0;
 
-    csrStateCopy.stateBaseAddress.copyPropertiesStatelessMocsIndirectState(cmdListRequired.stateBaseAddress);
-    csrStateCopy.stateBaseAddress.setPropertiesSurfaceState(globalStatelessHeap->getHeapGpuBase(), globalStatelessHeap->getHeapSizeInPages());
-    if (baseAddressStateDirty || csrStateCopy.stateBaseAddress.isDirty()) {
-        bool useBtiCommand = csrStateCopy.stateBaseAddress.bindingTablePoolBaseAddress.value != NEO::StreamProperty64::initValue;
-        estimatedSize = estimateStateBaseAddressCmdDispatchSize(useBtiCommand);
-        baseAddressStateDirty = false;
+    if (baseAddressStateDirty) {
+        csrState.stateBaseAddress.copyPropertiesAll(cmdListRequired.stateBaseAddress);
+    } else {
+        csrState.stateBaseAddress.copyPropertiesStatelessMocs(cmdListFinal.stateBaseAddress);
     }
-    csrStateCopy.stateBaseAddress.copyPropertiesStatelessMocs(cmdListFinal.stateBaseAddress);
+    csrState.stateBaseAddress.setPropertiesSurfaceState(globalStatelessHeap->getHeapGpuBase(), globalStatelessHeap->getHeapSizeInPages());
+
+    if (baseAddressStateDirty || csrState.stateBaseAddress.isDirty()) {
+        bool useBtiCommand = csrState.stateBaseAddress.bindingTablePoolBaseAddress.value != NEO::StreamProperty64::initValue;
+        estimatedSize = estimateStateBaseAddressCmdDispatchSize(useBtiCommand);
+
+        propertyDirty = true;
+        requiredState.stateBaseAddress = csrState.stateBaseAddress;
+    }
+
+    if (baseAddressStateDirty) {
+        csrState.stateBaseAddress.copyPropertiesAll(cmdListFinal.stateBaseAddress);
+        baseAddressStateDirty = false;
+    } else {
+        csrState.stateBaseAddress.copyPropertiesStatelessMocs(cmdListFinal.stateBaseAddress);
+    }
 
     return estimatedSize;
 }
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 size_t CommandQueueHw<gfxCoreFamily>::estimateStateBaseAddressCmdSizeForPrivateHeapCommandList(bool &baseAddressStateDirty,
-                                                                                               NEO::StreamProperties &csrStateCopy,
+                                                                                               NEO::StreamProperties &csrState,
                                                                                                const NEO::StreamProperties &cmdListRequired,
-                                                                                               const NEO::StreamProperties &cmdListFinal) {
+                                                                                               const NEO::StreamProperties &cmdListFinal,
+                                                                                               NEO::StreamProperties &requiredState,
+                                                                                               bool &propertyDirty) {
     size_t estimatedSize = 0;
 
-    csrStateCopy.stateBaseAddress.copyPropertiesAll(cmdListRequired.stateBaseAddress);
-    if (baseAddressStateDirty || csrStateCopy.stateBaseAddress.isDirty()) {
-        bool useBtiCommand = csrStateCopy.stateBaseAddress.bindingTablePoolBaseAddress.value != NEO::StreamProperty64::initValue;
+    csrState.stateBaseAddress.copyPropertiesAll(cmdListRequired.stateBaseAddress);
+    if (baseAddressStateDirty || csrState.stateBaseAddress.isDirty()) {
+        bool useBtiCommand = csrState.stateBaseAddress.bindingTablePoolBaseAddress.value != NEO::StreamProperty64::initValue;
         estimatedSize = estimateStateBaseAddressCmdDispatchSize(useBtiCommand);
+
         baseAddressStateDirty = false;
+        propertyDirty = true;
+        requiredState.stateBaseAddress = csrState.stateBaseAddress;
     }
-    csrStateCopy.stateBaseAddress.copyPropertiesAll(cmdListFinal.stateBaseAddress);
+    csrState.stateBaseAddress.copyPropertiesAll(cmdListFinal.stateBaseAddress);
 
     return estimatedSize;
 }

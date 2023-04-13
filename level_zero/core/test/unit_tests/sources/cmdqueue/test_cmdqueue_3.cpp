@@ -1031,11 +1031,14 @@ template <GFXCORE_FAMILY gfxCoreFamily>
 size_t estimateAllCommmandLists(MockCommandQueueHw<gfxCoreFamily> *commandQueue, NEO::CommandStreamReceiver *csr, ze_command_list_handle_t *commandListHandles, size_t handlesSize, bool frontEndStateDirty) {
     size_t estimatedSize = 0;
     auto csrStateCopy = csr->getStreamProperties();
+    bool feDirty = false;
+    bool feRetPoint = false;
+    NEO::StreamProperties dummyProperties{};
     for (size_t i = 0; i < handlesSize; i++) {
         auto cmdListPtr = CommandList::fromHandle(commandListHandles[i]);
         auto requiredState = cmdListPtr->getRequiredStreamState();
         auto finalState = cmdListPtr->getFinalStreamState();
-        estimatedSize += commandQueue->estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, -1, cmdListPtr, csrStateCopy, requiredState, finalState);
+        estimatedSize += commandQueue->estimateFrontEndCmdSizeForMultipleCommandLists(frontEndStateDirty, -1, cmdListPtr, csrStateCopy, requiredState, finalState, dummyProperties, feDirty, feRetPoint);
     }
     return estimatedSize;
 }
@@ -1226,37 +1229,16 @@ HWTEST2_F(CommandQueueTest, givenRegularKernelScheduledAsCooperativeWhenExecuteC
     commandQueue->destroy();
 }
 
-template <GFXCORE_FAMILY gfxCoreFamily>
-struct MockCommandQueueHwForEstimateFrontEndSize : MockCommandQueueHw<gfxCoreFamily> {
-    using Base = MockCommandQueueHw<gfxCoreFamily>;
-    using Base::Base;
-    size_t estimateFrontEndCmdSizeForMultipleCommandLists(bool &isFrontEndStateDirty, int32_t engineInstanced, ::L0::CommandList *commandList,
-                                                          NEO::StreamProperties &csrStateCopy,
-                                                          const NEO::StreamProperties &cmdListRequired,
-                                                          const NEO::StreamProperties &cmdListFinal) override {
-        estimateFrontEndCmdSizeCallCount++;
-        estimatedFrontEndCmdSize = Base::estimateFrontEndCmdSizeForMultipleCommandLists(isFrontEndStateDirty,
-                                                                                        engineInstanced,
-                                                                                        commandList,
-                                                                                        csrStateCopy,
-                                                                                        cmdListRequired,
-                                                                                        cmdListFinal);
-        return estimatedFrontEndCmdSize;
-    }
-    size_t estimatedFrontEndCmdSize = 0u;
-    size_t estimateFrontEndCmdSizeCallCount = 0u;
-};
-
 HWTEST2_F(CommandQueueTest, givenTwoCommandQueuesUsingOneCsrWhenExecuteCommandListsIsCalledThenCorrectSizeOfFrontEndCmdsIsCalculated, IsAtLeastXeHpCore) {
     ze_command_queue_desc_t desc = {};
     NEO::CommandStreamReceiver *csr = nullptr;
     device->getCsrForOrdinalAndIndex(&csr, 0u, 0u);
     ASSERT_NE(nullptr, csr);
 
-    auto commandQueue1 = new MockCommandQueueHwForEstimateFrontEndSize<gfxCoreFamily>{device, csr, &desc};
+    auto commandQueue1 = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
     commandQueue1->initialize(false, false);
 
-    auto commandQueue2 = new MockCommandQueueHwForEstimateFrontEndSize<gfxCoreFamily>{device, csr, &desc};
+    auto commandQueue2 = new MockCommandQueueHw<gfxCoreFamily>{device, csr, &desc};
     commandQueue2->initialize(false, false);
 
     Mock<::L0::Kernel> defaultKernel;

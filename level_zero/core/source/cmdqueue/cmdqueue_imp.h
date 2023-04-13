@@ -9,6 +9,7 @@
 
 #include "shared/source/command_container/cmdcontainer.h"
 #include "shared/source/command_stream/linear_stream.h"
+#include "shared/source/command_stream/preemption_mode.h"
 #include "shared/source/command_stream/submission_status.h"
 #include "shared/source/command_stream/task_count_helper.h"
 #include "shared/source/command_stream/wait_status.h"
@@ -98,18 +99,46 @@ struct CommandQueueImp : public CommandQueue {
 
     void postSyncOperations(bool hangDetected);
 
+    static constexpr uint32_t defaultCommandListStateChangeListSize = 32;
+    struct CommandListDirtyFlags {
+        bool propertyScmDirty = false;
+        bool propertyFeDirty = false;
+        bool propertyPsDirty = false;
+        bool propertySbaDirty = false;
+        bool frontEndReturnPoint = false;
+        bool preemptionDirty = false;
+    };
+    struct CommandListRequiredStateChange {
+        CommandListRequiredStateChange() = default;
+        CommandListRequiredStateChange(NEO::StreamProperties &requiredState, CommandList *commandList,
+                                       CommandListDirtyFlags flags,
+                                       NEO::PreemptionMode newMode) : requiredState(requiredState),
+                                                                      commandList(commandList),
+                                                                      flags(flags),
+                                                                      newMode(newMode) {}
+        NEO::StreamProperties requiredState{};
+        CommandList *commandList = nullptr;
+        CommandListDirtyFlags flags;
+        NEO::PreemptionMode newMode = NEO::PreemptionMode::Initial;
+    };
+
+    using CommandListStateChangeList = std::vector<CommandListRequiredStateChange>;
+
     CommandBufferManager buffers;
+    NEO::LinearStream commandStream{};
     NEO::HeapContainer heapContainer;
     ze_command_queue_desc_t desc;
     std::vector<Kernel *> printfKernelContainer;
-    std::atomic<bool> cmdListWithAssertExecuted = false;
-
-    Device *device = nullptr;
-    NEO::CommandStreamReceiver *csr = nullptr;
-    NEO::LinearStream commandStream{};
+    CommandListStateChangeList stateChanges;
 
     std::atomic<TaskCountType> taskCount{0};
 
+    Device *device = nullptr;
+    NEO::CommandStreamReceiver *csr = nullptr;
+
+    uint32_t currentStateChangeIndex = 0;
+
+    std::atomic<bool> cmdListWithAssertExecuted = false;
     bool useKmdWaitFunction = false;
 };
 
