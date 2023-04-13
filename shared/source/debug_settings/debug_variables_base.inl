@@ -237,6 +237,7 @@ DECLARE_DEBUG_VARIABLE(int32_t, ExitOnSubmissionMode, 0, "Exit on X submission m
 DECLARE_DEBUG_VARIABLE(int32_t, ForceInOrderImmediateCmdListExecution, -1, "-1: default, 0: disabled, 1: all Immediate Command Lists are switched to in-order execution")
 DECLARE_DEBUG_VARIABLE(int64_t, OverrideEventSynchronizeTimeout, -1, "-1: default - user provided timeout value,  >0: timeout in nanoseconds")
 DECLARE_DEBUG_VARIABLE(int32_t, ForceTlbFlush, -1, "-1: default,  0: Tlb flush disabled, 1: Tlb Flush enabled")
+DECLARE_DEBUG_VARIABLE(int32_t, DebugSetMemoryDiagnosticsDelay, -1, "-1: default, >=0: delay time in minutes necessary for completion of Memory diagnostics")
 
 /*LOGGING FLAGS*/
 DECLARE_DEBUG_VARIABLE(int32_t, PrintDriverDiagnostics, -1, "prints driver diagnostics messages to standard output, value corresponds to hint level")

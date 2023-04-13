@@ -225,6 +225,7 @@ TEST_F(ZesDiagnosticsFixture, GivenValidDiagnosticsHandleWhenRunningDiagnosticsT
     pPublicLinuxDiagnosticsImp->pSysfsAccess = pMockSysfsAccess.get();
     pPublicLinuxDiagnosticsImp->pFwInterface = pMockDiagFwInterface.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp = pMockDiagLinuxSysmanImp.get();
+    pPublicLinuxDiagnosticsImp->osDiagType = "MEMORY_PPR";
     VariableBackup<ProcfsAccess *> backup(&pMockDiagLinuxSysmanImp->pProcfsAccess);
     pMockDiagLinuxSysmanImp->pProcfsAccess = pMockDiagProcfsAccess.get();
     pPublicLinuxDiagnosticsImp->pLinuxSysmanImp->pDevice = pLinuxSysmanImp->getDeviceHandle();
@@ -563,6 +564,32 @@ TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetfrom
     pLinuxSysmanImp->preadFunction = preadMockDiag;
     pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
     pLinuxSysmanImp->diagnosticsReset = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->osWarmReset());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerWhenCallingWarmResetfromHBMDiagnosticsThenCallSucceeds) {
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    pLinuxSysmanImp->openFunction = openMockDiag;
+    pLinuxSysmanImp->closeFunction = closeMockDiag;
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+    pLinuxSysmanImp->diagnosticsReset = true;
+    pLinuxSysmanImp->isMemoryDiagnostics = true;
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->osWarmReset());
+}
+
+TEST_F(ZesDiagnosticsFixture, GivenValidSysmanImpPointerAndDelayForPPRWhenCallingWarmResetfromHBMDiagnosticsThenCallSucceeds) {
+    DebugManagerStateRestore dbgRestore;
+    DebugManager.flags.DebugSetMemoryDiagnosticsDelay.set(7);
+    pLinuxSysmanImp->gtDevicePath = "/sys/devices/pci0000:89/0000:89:02.0/0000:8a:00.0/0000:8b:01.0/0000:8c:00.0";
+    pLinuxSysmanImp->openFunction = openMockDiag;
+    pLinuxSysmanImp->closeFunction = closeMockDiag;
+    pLinuxSysmanImp->preadFunction = preadMockDiag;
+    pLinuxSysmanImp->pwriteFunction = pwriteMockDiag;
+    pLinuxSysmanImp->diagnosticsReset = true;
+    pLinuxSysmanImp->isMemoryDiagnostics = true;
 
     EXPECT_EQ(ZE_RESULT_SUCCESS, pLinuxSysmanImp->osWarmReset());
 }

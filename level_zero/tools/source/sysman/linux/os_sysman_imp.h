@@ -84,6 +84,7 @@ class LinuxSysmanImp : public OsSysman, NEO::NonCopyableOrMovableClass {
     uint32_t rootDeviceIndex = 0u;
     NEO::ExecutionEnvironment *executionEnvironment = nullptr;
     bool diagnosticsReset = false;
+    bool isMemoryDiagnostics = false;
     Device *pDevice = nullptr;
     std::string gtDevicePath;
 

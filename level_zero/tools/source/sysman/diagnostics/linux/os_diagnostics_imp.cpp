@@ -93,17 +93,22 @@ ze_result_t LinuxDiagnosticsImp::osRunDiagTestsinFW(zes_diag_result_t *pResult) 
         return result;
     }
 
+    if (osDiagType == "MEMORY_PPR") {
+        pLinuxSysmanImp->isMemoryDiagnostics = true;
+    }
+
     if (*pResult == ZES_DIAG_RESULT_REBOOT_FOR_REPAIR) {
         result = pLinuxSysmanImp->osColdReset();
         if (result != ZE_RESULT_SUCCESS) {
             NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): osColdReset() failed and returning error:0x%x \n", __FUNCTION__, result);
             return result;
         }
-    }
-    result = pLinuxSysmanImp->osWarmReset(); // we need to at least do a Warm reset to bring the machine out of wedged state
-    if (result != ZE_RESULT_SUCCESS) {
-        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): osWarmReset() failed and returning error:0x%x \n", __FUNCTION__, result);
-        return result;
+    } else {
+        result = pLinuxSysmanImp->osWarmReset(); // we need to at least do a Warm reset to bring the machine out of wedged state
+        if (result != ZE_RESULT_SUCCESS) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "Error@ %s(): osWarmReset() failed and returning error:0x%x \n", __FUNCTION__, result);
+            return result;
+        }
     }
     return pLinuxSysmanImp->initDevice();
 }

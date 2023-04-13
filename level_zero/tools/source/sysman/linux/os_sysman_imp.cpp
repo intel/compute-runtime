@@ -339,6 +339,7 @@ void LinuxSysmanImp::reInitSysmanDeviceResources() {
         }
     }
     this->diagnosticsReset = false;
+    isMemoryDiagnostics = false;
     if (getSysmanDeviceImp()->pFirmwareHandleContext->isFirmwareInitDone()) {
         getSysmanDeviceImp()->pFirmwareHandleContext->init();
     }
@@ -411,7 +412,18 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     this->pwriteFunction(fd, &resetValue, 0x01, offset);
     NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds just to make sure the change is propagated.
     this->pwriteFunction(fd, &value, 0x01, offset);
-    NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds to make sure the change is propagated. before rescan is done.
+
+    if (isMemoryDiagnostics) {
+        int32_t delayDurationForPPR = 6; // Sleep for 6 minutes to allow PPR to complete.
+        if (NEO::DebugManager.flags.DebugSetMemoryDiagnosticsDelay.get() != -1) {
+            delayDurationForPPR = NEO::DebugManager.flags.DebugSetMemoryDiagnosticsDelay.get();
+        }
+        NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stdout,
+                              "Delay of %d mins introduced to allow HBM IFR to complete\n", delayDurationForPPR);
+        NEO::sleep(std::chrono::seconds(delayDurationForPPR * 60));
+    } else {
+        NEO::sleep(std::chrono::seconds(10)); // Sleep for 10 seconds to make sure writing to bridge control offset is propagated.
+    }
 
     result = pFsAccess->write(rootPortPath + '/' + "rescan", "1");
     if (ZE_RESULT_SUCCESS != result) {
