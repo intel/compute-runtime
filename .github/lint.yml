@@ -62,3 +62,26 @@ lint:
     - IGC
     - LOCI
     - HSD
+    - GSD
+
+  commit_message_subject:
+    types:
+      - feature
+      - fix
+      - refactor
+      - documentation
+      - build
+      - ci
+      - performance
+      - test
+    scope:
+      values:
+        - usm
+        - ulls
+        - ooos
+        - debugger
+        - zebin
+        - sysman
+        - ocl
+        - wa
+        - internal
