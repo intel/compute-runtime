@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/helpers/compiler_product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 
 namespace NEO {
 template <PRODUCT_FAMILY gfxProduct>
@@ -14,7 +15,11 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getNumThreadsPerEu() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
+bool CompilerProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
+    if (releaseHelper) {
+        return releaseHelper->isMatrixMultiplyAccumulateSupported();
+    }
+
     return true;
 }
 

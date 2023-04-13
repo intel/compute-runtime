@@ -18,6 +18,7 @@ namespace NEO {
 
 class CompilerProductHelper;
 struct HardwareInfo;
+class ReleaseHelper;
 
 using CompilerProductHelperCreateFunctionType = std::unique_ptr<CompilerProductHelper> (*)();
 extern CompilerProductHelperCreateFunctionType compilerProductHelperFactory[IGFX_MAX_PRODUCT];
@@ -36,7 +37,7 @@ class CompilerProductHelper {
     virtual bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isForceEmuInt32DivRemSPRequired() const = 0;
     virtual bool isStatelessToStatefulBufferOffsetSupported() const = 0;
-    virtual bool isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const = 0;
+    virtual bool isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const = 0;
     virtual bool isSplitMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isSubgroupLocalBlockIoSupported() const = 0;
@@ -51,7 +52,7 @@ class CompilerProductHelper {
     virtual const char *getCachingPolicyOptions(bool isDebuggerActive) const = 0;
     virtual uint64_t getHwInfoConfig(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getNumThreadsPerEu() const = 0;
-    virtual std::string getDeviceExtensions(const HardwareInfo &hwInfo) const = 0;
+    virtual std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const = 0;
 
     virtual ~CompilerProductHelper() = default;
 
@@ -70,7 +71,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     bool isMidThreadPreemptionSupported(const HardwareInfo &hwInfo) const override;
     bool isForceEmuInt32DivRemSPRequired() const override;
     bool isStatelessToStatefulBufferOffsetSupported() const override;
-    bool isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const override;
+    bool isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const override;
     bool isSplitMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const override;
     bool isBFloat16ConversionSupported(const HardwareInfo &hwInfo) const override;
     bool isSubgroupLocalBlockIoSupported() const override;
@@ -85,7 +86,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     const char *getCachingPolicyOptions(bool isDebuggerActive) const override;
     uint64_t getHwInfoConfig(const HardwareInfo &hwInfo) const override;
     uint32_t getNumThreadsPerEu() const override;
-    std::string getDeviceExtensions(const HardwareInfo &hwInfo) const override;
+    std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const override;
 
     ~CompilerProductHelperHw() override = default;
 

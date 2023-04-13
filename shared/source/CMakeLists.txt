@@ -142,6 +142,7 @@ append_sources_from_properties(CORE_SOURCES
                                NEO_CORE_UTILITIES
                                NEO_DEVICE_BINARY_FORMAT
                                NEO_UNIFIED_MEMORY
+                               NEO_CORE_RELEASE_HELPER
 )
 
 if(WIN32)

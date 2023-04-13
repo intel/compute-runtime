@@ -119,8 +119,9 @@ HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenBFloat16ConversionI
 
 HWTEST2_F(CompilerProductHelperFixture, GivenXeHpAndLaterThenMatrixMultiplyAccumulateIsSupported, IsAtLeastXeHpCore) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto releaseHelper = pDevice->getReleaseHelper();
 
-    EXPECT_TRUE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(pDevice->getHardwareInfo()));
+    EXPECT_TRUE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
 }
 
 HWTEST2_F(CompilerProductHelperFixture, GivenXeFamilyThenSplitMatrixMultiplyAccumulateIsSupported, IsWithinXeGfxFamily) {
@@ -143,8 +144,8 @@ HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpThenBFloat16ConversionIsNotS
 
 HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpThenMatrixMultiplyAccumulateIsNotSupported, IsAtMostGen12lp) {
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
-
-    EXPECT_FALSE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(pDevice->getHardwareInfo()));
+    auto releaseHelper = pDevice->getReleaseHelper();
+    EXPECT_FALSE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
 }
 
 HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetHwInfoRevisionIdThenCorrectValueIsSet, IsAtMostDg2) {
@@ -205,34 +206,36 @@ HWTEST2_F(CompilerProductHelperFixture, givenCachePolicyWithoutCorrespondingBuil
 TEST_F(CompilerProductHelperFixture, givenHwInfoWithIndependentForwardProgressThenReportsClKhrSubgroupExtension) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto *releaseHelper = getReleaseHelper();
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsIndependentForwardProgress = true;
-    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
+    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_khr_subgroups")));
 
     hwInfo.capabilityTable.supportsIndependentForwardProgress = false;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
+    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_khr_subgroups")));
 }
 
 TEST_F(CompilerProductHelperFixture, givenHwInfoWithCLVersionAtLeast20ThenReportsClExtFloatAtomicsExtension) {
 
     auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto *releaseHelper = getReleaseHelper();
     auto hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.clVersionSupport = 20;
-    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
+    auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 
     hwInfo.capabilityTable.clVersionSupport = 21;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
+    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 
     hwInfo.capabilityTable.clVersionSupport = 30;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
+    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_TRUE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 
     hwInfo.capabilityTable.clVersionSupport = 12;
-    extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
+    extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
     EXPECT_FALSE(hasSubstr(extensions, std::string("cl_ext_float_atomics")));
 }
 

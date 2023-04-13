@@ -10,6 +10,7 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/device_factory.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/mock_aub_center_fixture.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/gtest_helpers.h"
@@ -41,6 +42,7 @@ struct PlatformTest : public ::testing::Test {
 
         pPlatform.reset(new MockPlatform());
         compilerProductHelper = CompilerProductHelper::create(defaultHwInfo->platform.eProductFamily);
+        releaseHelper = ReleaseHelper::create(defaultHwInfo->ipVersion);
     }
     void TearDown() override {
         MockSipData::clearUseFlags();
@@ -48,6 +50,7 @@ struct PlatformTest : public ::testing::Test {
     std::unique_ptr<MockPlatform> pPlatform;
     std::unique_ptr<VariableBackup<bool>> backupSipInitType;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
+    std::unique_ptr<ReleaseHelper> releaseHelper;
 
     cl_int retVal = CL_SUCCESS;
 };
@@ -262,7 +265,7 @@ class PlatformFailingTest : public PlatformTest {
 
     VariableBackup<UltHwConfig> backup{&ultHwConfig};
     CommandStreamReceiverCreateFunc commandStreamReceiverCreateFunc;
-    const HardwareInfo *hwInfo;
+    const HardwareInfo *hwInfo{};
 };
 
 TEST_F(PlatformFailingTest, givenPlatformInitializationWhenIncorrectHwInfoThenInitializationFails) {
@@ -276,7 +279,7 @@ TEST_F(PlatformFailingTest, givenPlatformInitializationWhenIncorrectHwInfoThenIn
 TEST_F(PlatformTest, givenSupportingCl21WhenPlatformSupportsFp64ThenFillMatchingSubstringsAndMandatoryTrailingSpace) {
     const HardwareInfo *hwInfo;
     hwInfo = defaultHwInfo.get();
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(*hwInfo);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(*hwInfo, releaseHelper.get());
     OpenClCFeaturesContainer features;
     getOpenclCFeaturesList(*hwInfo, features, *compilerProductHelper.get());
 
@@ -315,7 +318,7 @@ TEST_F(PlatformTest, givenNotSupportingCl21WhenPlatformNotSupportFp64ThenNotFill
     testHwInfo.capabilityTable.clVersionSupport = 10;
     testHwInfo.capabilityTable.supportsOcl21Features = false;
 
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(testHwInfo);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(testHwInfo, releaseHelper.get());
     OpenClCFeaturesContainer features;
     getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get());
     if (testHwInfo.capabilityTable.supportsImages) {
@@ -333,7 +336,7 @@ TEST_F(PlatformTest, givenNotSupportingCl21WhenPlatformNotSupportFp64ThenNotFill
 TEST_F(PlatformTest, givenFtrSupportAtomicsWhenCreateExtentionsListThenGetMatchingSubstrings) {
     const HardwareInfo *hwInfo;
     hwInfo = defaultHwInfo.get();
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(*hwInfo);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(*hwInfo, releaseHelper.get());
     OpenClCFeaturesContainer features;
     getOpenclCFeaturesList(*hwInfo, features, *compilerProductHelper.get());
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
@@ -352,7 +355,7 @@ TEST_F(PlatformTest, givenSupportedMediaBlockAndClVersion21WhenCreateExtentionsL
     hwInfo.capabilityTable.supportsMediaBlock = true;
     hwInfo.capabilityTable.clVersionSupport = 21;
     hwInfo.capabilityTable.supportsOcl21Features = true;
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, releaseHelper.get());
     OpenClCFeaturesContainer features;
     getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get());
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
@@ -364,7 +367,7 @@ TEST_F(PlatformTest, givenNotSupportedMediaBlockAndClVersion21WhenCreateExtentio
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsMediaBlock = false;
     hwInfo.capabilityTable.clVersionSupport = 21;
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, releaseHelper.get());
     OpenClCFeaturesContainer features;
     getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get());
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
@@ -375,7 +378,7 @@ TEST_F(PlatformTest, givenNotSupportedMediaBlockAndClVersion21WhenCreateExtentio
 TEST_F(PlatformTest, givenSupportedImagesWhenCreateExtentionsListThenDeviceNotReportsKhr3DImageWritesExtension) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsImages = true;
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, releaseHelper.get());
     OpenClCFeaturesContainer features;
     getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get());
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);
@@ -386,7 +389,7 @@ TEST_F(PlatformTest, givenSupportedImagesWhenCreateExtentionsListThenDeviceNotRe
 TEST_F(PlatformTest, givenNotSupportedImagesWhenCreateExtentionsListThenDeviceNotReportsKhr3DImageWritesExtension) {
     HardwareInfo hwInfo = *defaultHwInfo;
     hwInfo.capabilityTable.supportsImages = false;
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, releaseHelper.get());
     OpenClCFeaturesContainer features;
     getOpenclCFeaturesList(*defaultHwInfo, features, *compilerProductHelper.get());
     std::string compilerExtensions = convertEnabledExtensionsToCompilerInternalOptions(extensionsList.c_str(), features);

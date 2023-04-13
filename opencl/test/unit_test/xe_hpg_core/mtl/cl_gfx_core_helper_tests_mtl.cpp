@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_mtl.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/variable_backup.h"
@@ -22,7 +23,7 @@ using ClGfxCoreHelperTestsMtl = Test<ClDeviceFixture>;
 
 MTLTEST_F(ClGfxCoreHelperTestsMtl, givenVariousMtlReleasesWhenGettingSupportedDeviceFeatureCapabilitiesThenReturnCorrectValue) {
     auto &hwInfo = *getRootDeviceEnvironment().getMutableHardwareInfo();
-    unsigned int releases[] = {70, 71, 72, 73};
+    unsigned int releases[] = {70, 71};
     hwInfo.ipVersion.architecture = 12;
 
     cl_device_feature_capabilities_intel expectedCapabilitiesIfNotLpg = CL_DEVICE_FEATURE_FLAG_DPAS_INTEL | CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
@@ -31,12 +32,7 @@ MTLTEST_F(ClGfxCoreHelperTestsMtl, givenVariousMtlReleasesWhenGettingSupportedDe
 
     for (auto release : releases) {
         hwInfo.ipVersion.release = release;
+        getMutableRootDeviceEnvironment().releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
         EXPECT_EQ(MTL::isLpg(hwInfo) ? expectedgCapabilitiesIfLpg : expectedCapabilitiesIfNotLpg, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(getRootDeviceEnvironment()));
-    }
-
-    hwInfo.ipVersion.architecture = 13;
-    for (auto gmdRelease : releases) {
-        hwInfo.ipVersion.release = gmdRelease;
-        EXPECT_EQ(expectedCapabilitiesIfNotLpg, clGfxCoreHelper.getSupportedDeviceFeatureCapabilities(getRootDeviceEnvironment()));
     }
 }

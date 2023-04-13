@@ -22,11 +22,6 @@ constexpr auto gfxProduct = IGFX_METEORLAKE;
 namespace NEO {
 
 template <>
-bool CompilerProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
-    return (MTL::isLpg(hwInfo) == false);
-}
-
-template <>
 bool CompilerProductHelperHw<gfxProduct>::isSplitMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
     return (MTL::isLpg(hwInfo) == false);
 }

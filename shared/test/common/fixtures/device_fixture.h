@@ -12,6 +12,7 @@
 namespace NEO {
 
 class MockDevice;
+class ReleaseHelper;
 
 struct DeviceFixture {
     void setUp();
@@ -28,6 +29,8 @@ struct DeviceFixture {
 
     template <typename HelperType>
     HelperType &getHelper() const;
+
+    const ReleaseHelper *getReleaseHelper();
 };
 
 } // namespace NEO

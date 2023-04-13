@@ -33,6 +33,7 @@
 #include "shared/source/os_interface/os_interface.h"
 #include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/source/utilities/software_tags_manager.h"
 
 namespace NEO {
@@ -159,6 +160,7 @@ void RootDeviceEnvironment::initHelpers() {
     initGfxCoreHelper();
     initApiGfxCoreHelper();
     initCompilerProductHelper();
+    initReleaseHelper();
 }
 
 void RootDeviceEnvironment::initGfxCoreHelper() {
@@ -176,6 +178,16 @@ void RootDeviceEnvironment::initCompilerProductHelper() {
     if (compilerProductHelper == nullptr) {
         compilerProductHelper = CompilerProductHelper::create(this->getHardwareInfo()->platform.eProductFamily);
     }
+}
+
+void RootDeviceEnvironment::initReleaseHelper() {
+    if (releaseHelper == nullptr) {
+        releaseHelper = ReleaseHelper::create(this->getHardwareInfo()->ipVersion);
+    }
+}
+
+ReleaseHelper *RootDeviceEnvironment::getReleaseHelper() const {
+    return releaseHelper.get();
 }
 
 BuiltIns *RootDeviceEnvironment::getBuiltIns() {

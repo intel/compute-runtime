@@ -61,6 +61,14 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/helpers/product_config_helper.h
     ${NEO_SHARED_DIRECTORY}/helpers${BRANCH_DIR_SUFFIX}product_config_helper_extra.cpp
     ${NEO_SHARED_DIRECTORY}/os_interface/os_library.h
+    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper.h
+    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper.cpp
+    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_base.inl
+    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1270.cpp
+    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_1271.cpp
+    ${NEO_SHARED_DIRECTORY}/release_helper${BRANCH_DIR_SUFFIX}enable_release_helper_xe.cpp
+    ${NEO_SHARED_DIRECTORY}/release_helper/release_helper_common_xe_lpg.inl
+    ${NEO_SHARED_DIRECTORY}/release_helper/definitions${BRANCH_DIR_SUFFIX}release_definitions.h
     ${NEO_SHARED_DIRECTORY}/sku_info/definitions${BRANCH_DIR_SUFFIX}sku_info.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/directory.h
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp

@@ -38,6 +38,7 @@ class GfxCoreHelper;
 class ApiGfxCoreHelper;
 class CompilerProductHelper;
 class GraphicsAllocation;
+class ReleaseHelper;
 
 struct AllocationProperties;
 struct HardwareInfo;
@@ -81,6 +82,8 @@ struct RootDeviceEnvironment {
     void initGfxCoreHelper();
     void initApiGfxCoreHelper();
     void initCompilerProductHelper();
+    void initReleaseHelper();
+    ReleaseHelper *getReleaseHelper() const;
     template <typename HelperType>
     HelperType &getHelper() const;
     const ProductHelper &getProductHelper() const;
@@ -102,6 +105,8 @@ struct RootDeviceEnvironment {
     std::unique_ptr<GfxCoreHelper> gfxCoreHelper;
     std::unique_ptr<ProductHelper> productHelper;
     std::unique_ptr<CompilerProductHelper> compilerProductHelper;
+    std::unique_ptr<ReleaseHelper> releaseHelper;
+
     std::unique_ptr<AssertHandler> assertHandler;
 
     ExecutionEnvironment &executionEnvironment;

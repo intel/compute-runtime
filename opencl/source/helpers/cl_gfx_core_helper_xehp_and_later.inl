@@ -25,9 +25,10 @@ cl_ulong ClGfxCoreHelperHw<GfxFamily>::getKernelPrivateMemSize(const KernelInfo 
 
 template <typename GfxFamily>
 cl_device_feature_capabilities_intel ClGfxCoreHelperHw<GfxFamily>::getSupportedDeviceFeatureCapabilities(const RootDeviceEnvironment &rootDeviceEnvironment) const {
-    auto &hwInfo = *rootDeviceEnvironment.getHardwareInfo();
+
+    auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
     auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
-    if (compilerProductHelper.isMatrixMultiplyAccumulateSupported(hwInfo)) {
+    if (compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper)) {
         return CL_DEVICE_FEATURE_FLAG_DPAS_INTEL | CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;
     }
     return CL_DEVICE_FEATURE_FLAG_DP4A_INTEL;

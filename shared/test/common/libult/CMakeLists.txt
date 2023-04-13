@@ -149,6 +149,12 @@ if(TESTS_PVC_AND_LATER)
   )
 endif()
 
+if(TESTS_XE_HPG_CORE)
+  list(APPEND neo_libult_common_SRCS_LIB_ULT
+       ${NEO_SHARED_DIRECTORY}/release_helper${BRANCH_DIR_SUFFIX}enable_release_helper_xe.cpp
+  )
+endif()
+
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_LIB_ULT ${neo_libult_common_SRCS_LIB_ULT})
 
 set_property(GLOBAL PROPERTY neo_libult_common_SRCS_ENABLE_TESTED_HW ${neo_libult_common_SRCS_ENABLE_TESTED_HW})

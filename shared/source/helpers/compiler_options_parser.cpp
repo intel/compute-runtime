@@ -11,6 +11,7 @@
 #include "shared/source/compiler_interface/oclc_extensions.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/release_helper/release_helper.h"
 
 #include <cstdint>
 #include <sstream>
@@ -39,7 +40,8 @@ bool requiresAdditionalExtensions(const std::string &compileOptions) {
 }
 void appendExtensionsToInternalOptions(const HardwareInfo &hwInfo, const std::string &options, std::string &internalOptions) {
     auto compilerProductHelper = CompilerProductHelper::create(hwInfo.platform.eProductFamily);
-    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo);
+    auto releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
+    std::string extensionsList = compilerProductHelper->getDeviceExtensions(hwInfo, releaseHelper.get());
 
     if (requiresAdditionalExtensions(options)) {
         extensionsList += "cl_khr_3d_image_writes ";

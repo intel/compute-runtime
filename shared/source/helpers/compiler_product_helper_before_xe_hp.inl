@@ -14,7 +14,7 @@ uint32_t CompilerProductHelperHw<gfxProduct>::getNumThreadsPerEu() const {
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-bool CompilerProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const HardwareInfo &hwInfo) const {
+bool CompilerProductHelperHw<gfxProduct>::isMatrixMultiplyAccumulateSupported(const ReleaseHelper *releaseHelper) const {
     return false;
 }
 

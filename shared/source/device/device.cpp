@@ -857,6 +857,10 @@ const CompilerProductHelper &Device::getCompilerProductHelper() const {
     return getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
 }
 
+const ReleaseHelper *Device::getReleaseHelper() const {
+    return getRootDeviceEnvironment().getReleaseHelper();
+}
+
 void Device::allocateRTDispatchGlobals(uint32_t maxBvhLevels) {
     UNRECOVERABLE_IF(rtDispatchGlobalsInfos.size() < maxBvhLevels + 1);
     UNRECOVERABLE_IF(rtDispatchGlobalsInfos[maxBvhLevels] != nullptr);

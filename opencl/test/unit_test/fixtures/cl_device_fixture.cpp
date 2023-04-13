@@ -50,6 +50,10 @@ const RootDeviceEnvironment &ClDeviceFixture::getRootDeviceEnvironment() const {
     return pClDevice->getRootDeviceEnvironment();
 }
 
+RootDeviceEnvironment &ClDeviceFixture::getMutableRootDeviceEnvironment() {
+    return pClDevice->getDevice().getRootDeviceEnvironmentRef();
+}
+
 template <typename HelperType>
 HelperType &ClDeviceFixture::getHelper() const {
     auto &helper = pClDevice->getRootDeviceEnvironment().getHelper<HelperType>();

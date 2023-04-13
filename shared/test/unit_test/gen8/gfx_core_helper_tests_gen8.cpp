@@ -62,5 +62,6 @@ GEN8TEST_F(MemorySynchronizatiopCommandsTestsGen8, WhenProgrammingCacheFlushThen
 using CompilerProductHelperTestGen8 = Test<DeviceFixture>;
 GEN8TEST_F(CompilerProductHelperTestGen8, givenHwInfosWhenIsMatrixMultiplyAccumulateSupportedThenReturnFalse) {
     auto &compilerProductHelper = getHelper<CompilerProductHelper>();
-    EXPECT_FALSE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(*defaultHwInfo));
+    auto releaseHelper = this->pDevice->getReleaseHelper();
+    EXPECT_FALSE(compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
 }

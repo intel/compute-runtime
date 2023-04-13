@@ -34,7 +34,7 @@ bool CompilerProductHelperHw<gfxProduct>::failBuildProgramWithStatefulAccessPref
 }
 
 template <PRODUCT_FAMILY gfxProduct>
-std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const HardwareInfo &hwInfo) const {
+std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const {
     std::string extensions = "cl_khr_byte_addressable_store "
                              "cl_khr_device_uuid "
                              "cl_khr_fp16 "
@@ -165,7 +165,7 @@ std::string CompilerProductHelperHw<gfxProduct>::getDeviceExtensions(const Hardw
         extensions += "cl_intel_subgroup_local_block_io ";
     }
 
-    if (isMatrixMultiplyAccumulateSupported(hwInfo)) {
+    if (isMatrixMultiplyAccumulateSupported(releaseHelper)) {
         extensions += "cl_intel_subgroup_matrix_multiply_accumulate ";
     }
 

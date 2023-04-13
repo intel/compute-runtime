@@ -9,6 +9,7 @@
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/os_interface/product_helper.h"
+#include "shared/source/release_helper/release_helper.h"
 #include "shared/test/common/fixtures/device_fixture.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/helpers/gfx_core_helper_tests.h"
@@ -33,11 +34,15 @@ MTLTEST_F(GfxCoreHelperTestMtl, givenVariousMtlReleasesWhenGetExtensionsIsCalled
 
     for (auto gmdRelease : gmdReleases) {
         hwInfo.ipVersion.release = gmdRelease;
-        auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo);
+
+        rootDeviceEnvironment.releaseHelper = ReleaseHelper::create(hwInfo.ipVersion);
+        auto releaseHelper = rootDeviceEnvironment.getReleaseHelper();
+
+        auto extensions = compilerProductHelper.getDeviceExtensions(hwInfo, releaseHelper);
 
         EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_matrix_multiply_accumulate")));
         EXPECT_EQ(!MTL::isLpg(hwInfo), hasSubstr(extensions, std::string("cl_intel_subgroup_split_matrix_multiply_accumulate")));
-        EXPECT_EQ(!MTL::isLpg(hwInfo), compilerProductHelper.isMatrixMultiplyAccumulateSupported(hwInfo));
+        EXPECT_EQ(!MTL::isLpg(hwInfo), compilerProductHelper.isMatrixMultiplyAccumulateSupported(releaseHelper));
         EXPECT_EQ(!MTL::isLpg(hwInfo), compilerProductHelper.isSplitMatrixMultiplyAccumulateSupported(hwInfo));
     }
 }

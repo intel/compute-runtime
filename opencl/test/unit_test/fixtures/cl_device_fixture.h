@@ -36,6 +36,7 @@ struct ClDeviceFixture {
     MockClExecutionEnvironment *pClExecutionEnvironment = nullptr;
 
     const RootDeviceEnvironment &getRootDeviceEnvironment() const;
+    RootDeviceEnvironment &getMutableRootDeviceEnvironment();
 };
 
 } // namespace NEO
