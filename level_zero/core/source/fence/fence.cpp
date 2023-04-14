@@ -12,6 +12,9 @@
 #include "level_zero/core/source/cmdqueue/cmdqueue_imp.h"
 
 namespace L0 {
+namespace FenceDefinition {
+static constexpr TaskCountType fenceNotReady = NEO::CompletionStamp::notReady;
+} // namespace FenceDefinition
 
 Fence *Fence::create(CommandQueueImp *cmdQueue, const ze_fence_desc_t *desc) {
     auto fence = new Fence(cmdQueue);
@@ -39,7 +42,7 @@ ze_result_t Fence::reset(bool signaled) {
     if (signaled) {
         taskCount = 0;
     } else {
-        taskCount = std::numeric_limits<uint32_t>::max();
+        taskCount = FenceDefinition::fenceNotReady;
     }
     return ZE_RESULT_SUCCESS;
 }
@@ -54,7 +57,7 @@ ze_result_t Fence::hostSynchronize(uint64_t timeout) {
         return ZE_RESULT_SUCCESS;
     }
 
-    if (std::numeric_limits<uint32_t>::max() == taskCount) {
+    if (FenceDefinition::fenceNotReady == taskCount) {
         return ZE_RESULT_NOT_READY;
     }
 

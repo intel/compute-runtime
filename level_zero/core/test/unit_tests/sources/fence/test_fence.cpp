@@ -6,6 +6,7 @@
  */
 
 #include "shared/source/built_ins/sip.h"
+#include "shared/source/helpers/completion_stamp.h"
 #include "shared/test/common/mocks/mock_command_stream_receiver.h"
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_driver_model.h"
@@ -341,12 +342,12 @@ TEST_F(FenceTest, givenFenceWhenResettingThenTaskCountIsReset) {
 
     auto fence = whiteboxCast(Fence::create(&cmdqueue, &desc));
     ASSERT_NE(fence, nullptr);
-    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), fence->taskCount);
+    EXPECT_EQ(NEO::CompletionStamp::notReady, fence->taskCount);
 
     fence->taskCount = 1;
     auto result = fence->reset(false);
     ASSERT_EQ(ZE_RESULT_SUCCESS, result);
-    EXPECT_EQ(std::numeric_limits<uint32_t>::max(), fence->taskCount);
+    EXPECT_EQ(NEO::CompletionStamp::notReady, fence->taskCount);
 
     delete fence;
 }
