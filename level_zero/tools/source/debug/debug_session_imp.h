@@ -76,6 +76,7 @@ struct DebugSessionImp : DebugSession {
     MOCKABLE_VIRTUAL bool writeResumeCommand(const std::vector<EuThread::ThreadId> &threadIds);
     void applyResumeWa(uint8_t *bitmask, size_t bitmaskSize);
     MOCKABLE_VIRTUAL bool checkThreadIsResumed(const EuThread::ThreadId &threadID);
+    MOCKABLE_VIRTUAL bool checkThreadIsResumed(const EuThread::ThreadId &threadID, const void *stateSaveArea);
 
     virtual ze_result_t resumeImp(const std::vector<EuThread::ThreadId> &threads, uint32_t deviceIndex) = 0;
     virtual ze_result_t interruptImp(uint32_t deviceIndex) = 0;

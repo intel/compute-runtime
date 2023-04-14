@@ -367,9 +367,10 @@ ze_result_t DebugSessionImp::interrupt(ze_device_thread_t thread) {
     return ZE_RESULT_SUCCESS;
 }
 
-DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t deviceIndex, ze_device_thread_t physicalThread) {
+DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t deviceIndex, ze_device_thread_t apiThread) {
     auto &hwInfo = connectedDevice->getHwInfo();
     bool allThreadsRunning = true;
+    auto physicalThread = convertToPhysicalWithinDevice(apiThread, deviceIndex);
     auto singleThreads = getSingleThreadsForDevice(deviceIndex, physicalThread, hwInfo);
     Error retVal = Error::Unknown;
     uint64_t memoryHandle = EuThread::invalidHandle;
@@ -400,13 +401,42 @@ DebugSessionImp::Error DebugSessionImp::resumeThreadsWithinDevice(uint32_t devic
 
     auto result = resumeImp(resumeThreadIds, deviceIndex);
 
-    for (auto &threadID : resumeThreadIds) {
-        while (checkThreadIsResumed(threadID) == false)
-            ;
+    // For resume(ALL) and multiple threads to resume - read whole state save area
+    // to avoid multiple calls to KMD
+    if (resumeThreadIds.size() > 1 && isThreadAll(apiThread)) {
 
-        allThreads[threadID]->resumeThread();
+        auto gpuVa = getContextStateSaveAreaGpuVa(memoryHandle);
+        auto stateSaveAreaSize = getContextStateSaveAreaSize(memoryHandle);
+
+        std::unique_ptr<char[]> stateSaveArea = nullptr;
+        auto stateSaveReadResult = ZE_RESULT_ERROR_UNKNOWN;
+
+        if (gpuVa != 0 && stateSaveAreaSize != 0) {
+            stateSaveArea = std::make_unique<char[]>(stateSaveAreaSize);
+            stateSaveReadResult = readGpuMemory(memoryHandle, stateSaveArea.get(), stateSaveAreaSize, gpuVa);
+        } else {
+            DEBUG_BREAK_IF(true);
+        }
+
+        for (auto &threadID : resumeThreadIds) {
+            if (stateSaveReadResult == ZE_RESULT_SUCCESS) {
+                while (checkThreadIsResumed(threadID, stateSaveArea.get()) == false) {
+                    // read state save area again to update sr counters
+                    stateSaveReadResult = readGpuMemory(allThreads[threadID]->getMemoryHandle(), stateSaveArea.get(), stateSaveAreaSize, gpuVa);
+                }
+            }
+            allThreads[threadID]->resumeThread();
+        }
+
+    } else {
+
+        for (auto &threadID : resumeThreadIds) {
+            while (checkThreadIsResumed(threadID) == false)
+                ;
+
+            allThreads[threadID]->resumeThread();
+        }
     }
-
     checkStoppedThreadsAndGenerateEvents(resumeThreadIds, memoryHandle, deviceIndex);
 
     if (sipCommandResult && result == ZE_RESULT_SUCCESS) {
@@ -506,6 +536,28 @@ bool DebugSessionImp::checkThreadIsResumed(const EuThread::ThreadId &threadID) {
     return resumed;
 }
 
+bool DebugSessionImp::checkThreadIsResumed(const EuThread::ThreadId &threadID, const void *stateSaveArea) {
+    auto stateSaveAreaHeader = getStateSaveAreaHeader();
+    bool resumed = true;
+
+    if (stateSaveAreaHeader->versionHeader.version.major >= 2u) {
+        SIP::sr_ident srMagic = {{0}};
+        const auto thread = allThreads[threadID].get();
+
+        if (!readSystemRoutineIdentFromMemory(thread, stateSaveArea, srMagic)) {
+            return resumed;
+        }
+
+        PRINT_DEBUGGER_THREAD_LOG("checkThreadIsResumed - Read counter for thread %s, counter == %d\n", EuThread::toString(threadID).c_str(), (int)srMagic.count);
+
+        // Counter greater than last one means thread was resumed
+        if (srMagic.count == thread->getLastCounter()) {
+            resumed = false;
+        }
+    }
+    return resumed;
+}
+
 ze_result_t DebugSessionImp::resume(ze_device_thread_t thread) {
 
     auto deviceCount = std::max(1u, connectedDevice->getNEODevice()->getNumSubDevices());
@@ -522,8 +574,8 @@ ze_result_t DebugSessionImp::resume(ze_device_thread_t thread) {
                 deviceIndex = getDeviceIndexFromApiThread(thread);
             }
         }
-        auto physicalThread = convertToPhysicalWithinDevice(thread, deviceIndex);
-        auto result = resumeThreadsWithinDevice(deviceIndex, physicalThread);
+
+        auto result = resumeThreadsWithinDevice(deviceIndex, thread);
 
         if (result == Error::ThreadsRunning) {
             retVal = ZE_RESULT_ERROR_NOT_AVAILABLE;
@@ -534,9 +586,7 @@ ze_result_t DebugSessionImp::resume(ze_device_thread_t thread) {
         bool allThreadsRunning = true;
 
         for (uint32_t deviceId = 0; deviceId < deviceCount; deviceId++) {
-
-            auto physicalThread = convertToPhysicalWithinDevice(thread, deviceId);
-            auto result = resumeThreadsWithinDevice(deviceId, physicalThread);
+            auto result = resumeThreadsWithinDevice(deviceId, thread);
 
             if (result == Error::ThreadsRunning) {
                 continue;

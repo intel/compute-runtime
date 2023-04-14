@@ -277,7 +277,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
         if (gpuVa != 0 && gpuVa >= reinterpret_cast<uint64_t>(stateSaveAreaHeader.data()) &&
-            gpuVa <= reinterpret_cast<uint64_t>(stateSaveAreaHeader.data() + stateSaveAreaHeader.size())) {
+            ((gpuVa + size) <= reinterpret_cast<uint64_t>(stateSaveAreaHeader.data() + stateSaveAreaHeader.size()))) {
             [[maybe_unused]] auto offset = ptrDiff(gpuVa, reinterpret_cast<uint64_t>(stateSaveAreaHeader.data()));
             memcpy_s(output, size, reinterpret_cast<void *>(gpuVa), size);
         }
@@ -418,6 +418,13 @@ struct MockDebugSession : public L0::DebugSessionImp {
         }
         return L0::DebugSessionImp::checkThreadIsResumed(threadID);
     }
+    bool checkThreadIsResumed(const EuThread::ThreadId &threadID, const void *stateSaveArea) override {
+        checkThreadIsResumedFromPassedSaveAreaCalled++;
+        if (skipCheckThreadIsResumed) {
+            return true;
+        }
+        return L0::DebugSessionImp::checkThreadIsResumed(threadID, stateSaveArea);
+    }
 
     uint64_t getContextStateSaveAreaGpuVa(uint64_t memoryHandle) override {
         if (returnStateSaveAreaGpuVa && !this->stateSaveAreaHeader.empty()) {
@@ -427,6 +434,9 @@ struct MockDebugSession : public L0::DebugSessionImp {
     };
 
     size_t getContextStateSaveAreaSize(uint64_t memoryHandle) override {
+        if (forceZeroStateSaveAreaSize) {
+            return 0;
+        }
         if (stateSaveAreaHeader.size()) {
             auto header = getStateSaveAreaHeader();
             auto stateSaveAreaSize = header->regHeader.num_slices *
@@ -438,6 +448,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
             return alignUp(stateSaveAreaSize, MemoryConstants::pageSize);
         }
+
         return 0;
     }
 
@@ -488,6 +499,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     bool skipCheckThreadIsResumed = true;
     uint32_t checkThreadIsResumedCalled = 0;
+    uint32_t checkThreadIsResumedFromPassedSaveAreaCalled = 0;
     uint32_t checkStoppedThreadsAndGenerateEventsCallCount = 0;
 
     bool skipReadSystemRoutineIdent = true;
@@ -501,6 +513,7 @@ struct MockDebugSession : public L0::DebugSessionImp {
 
     int returnTimeDiff = -1;
     bool returnStateSaveAreaGpuVa = true;
+    bool forceZeroStateSaveAreaSize = false;
 
     bool attachTileCalled = false;
     bool detachTileCalled = false;

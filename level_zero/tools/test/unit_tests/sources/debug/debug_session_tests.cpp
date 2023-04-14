@@ -886,6 +886,14 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenResumeAllCalledThenOnlyReportedSto
 
     auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
 
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        sessionMock->stateSaveAreaHeader.resize(size);
+    }
+
     for (uint32_t i = 0; i < hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount; i++) {
         // set reportAsStopped threads from EU0
         EuThread::ThreadId thread(0, 0, 0, 0, i);
@@ -910,6 +918,189 @@ TEST(DebugSessionTest, givenStoppedThreadsWhenResumeAllCalledThenOnlyReportedSto
 
         EuThread::ThreadId thread1(0, 0, 0, 1, i);
         EXPECT_FALSE(sessionMock->allThreads[thread1]->isRunning());
+    }
+}
+
+TEST(DebugSessionTest, givenMultipleStoppedThreadsWhenResumeAllCalledThenStateSaveAreaIsReadOnceAndUsedByAllThreads) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.gtSystemInfo.EUCount = 8;
+    hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+
+    {
+        auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
+        auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                    pStateSaveAreaHeader->regHeader.state_area_offset +
+                    pStateSaveAreaHeader->regHeader.state_save_size * 16;
+        sessionMock->stateSaveAreaHeader.resize(size);
+    }
+
+    auto threadCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+    for (uint32_t i = 0; i < threadCount; i++) {
+        // set reportAsStopped threads from EU0
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        sessionMock->allThreads[thread]->stopThread(1u);
+        sessionMock->allThreads[thread]->reportAsStopped();
+    }
+
+    ze_device_thread_t threadAll = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    auto result = sessionMock->resume(threadAll);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(threadCount, sessionMock->resumeThreadCount);
+
+    EXPECT_EQ(threadCount, sessionMock->checkThreadIsResumedFromPassedSaveAreaCalled);
+    EXPECT_EQ(0u, sessionMock->checkThreadIsResumedCalled);
+
+    for (uint32_t i = 0; i < threadCount; i++) {
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        EXPECT_TRUE(sessionMock->allThreads[thread]->isRunning());
+    }
+
+    // One thread stopped
+    threadCount = 1;
+    EuThread::ThreadId thread(0, 0, 0, 0, 0);
+    sessionMock->allThreads[thread]->stopThread(3u);
+    sessionMock->allThreads[thread]->reportAsStopped();
+    sessionMock->checkThreadIsResumedFromPassedSaveAreaCalled = 0;
+    sessionMock->resumeThreadCount = 0;
+    sessionMock->checkThreadIsResumedCalled = 0;
+
+    result = sessionMock->resume(threadAll);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(threadCount, sessionMock->resumeThreadCount);
+    EXPECT_EQ(0u, sessionMock->checkThreadIsResumedFromPassedSaveAreaCalled);
+    EXPECT_EQ(threadCount, sessionMock->checkThreadIsResumedCalled);
+}
+
+TEST(DebugSessionTest, givenMultipleStoppedThreadsWhenResumeAllCalledThenStateSaveAreaIsReadUntilThreadsConfirmedToBeResumed) {
+
+    class InternalMockDebugSession : public MockDebugSession {
+      public:
+        InternalMockDebugSession(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device) {}
+        ze_result_t readGpuMemory(uint64_t memoryHandle, char *output, size_t size, uint64_t gpuVa) override {
+            if (readCount == 0) {
+                skipCheckThreadIsResumed = true;
+            } else {
+                readCount--;
+            }
+            return MockDebugSession::readGpuMemory(memoryHandle, output, size, gpuVa);
+        }
+
+        int readCount = 0;
+    };
+
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.gtSystemInfo.EUCount = 8;
+    hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<InternalMockDebugSession>(config, &deviceImp);
+    auto pStateSaveAreaHeader = reinterpret_cast<SIP::StateSaveAreaHeader *>(sessionMock->stateSaveAreaHeader.data());
+    auto size = pStateSaveAreaHeader->versionHeader.size * 8 +
+                pStateSaveAreaHeader->regHeader.state_area_offset +
+                pStateSaveAreaHeader->regHeader.state_save_size * 16;
+    sessionMock->stateSaveAreaHeader.resize(size);
+
+    auto threadCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+    for (uint32_t i = 0; i < threadCount; i++) {
+        // set reportAsStopped threads from EU0
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        sessionMock->allThreads[thread]->stopThread(1u);
+        sessionMock->allThreads[thread]->reportAsStopped();
+        sessionMock->allThreads[thread]->verifyStopped(1);
+
+        auto threadSlotOffset = sessionMock->calculateThreadSlotOffset(thread);
+        auto srMagicOffset = threadSlotOffset + pStateSaveAreaHeader->regHeader.sr_magic_offset;
+        SIP::sr_ident srMagic;
+        srMagic.count = 1;
+        sessionMock->writeGpuMemory(0, reinterpret_cast<char *>(&srMagic), sizeof(srMagic), reinterpret_cast<uint64_t>(sessionMock->stateSaveAreaHeader.data()) + srMagicOffset);
+    }
+
+    sessionMock->skipCheckThreadIsResumed = false;
+    sessionMock->readCount = threadCount;
+
+    ze_device_thread_t threadAll = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    auto result = sessionMock->resume(threadAll);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(threadCount, sessionMock->resumeThreadCount);
+
+    // After threadCount reads, debug session sets skipCheckThreadIsResumed and treats
+    // threads as resumed
+    EXPECT_EQ(2 * threadCount, sessionMock->checkThreadIsResumedFromPassedSaveAreaCalled);
+    EXPECT_EQ(0u, sessionMock->checkThreadIsResumedCalled);
+
+    for (uint32_t i = 0; i < threadCount; i++) {
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        EXPECT_TRUE(sessionMock->allThreads[thread]->isRunning());
+    }
+}
+
+TEST(DebugSessionTest, givenMultipleStoppedThreadsAndInvalidStateSaveAreaWhenResumeAllCalledThenThreadsAreSwitchedToResumed) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+    hwInfo.gtSystemInfo.EUCount = 8;
+    hwInfo.gtSystemInfo.ThreadCount = 8 * hwInfo.gtSystemInfo.EUCount;
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    sessionMock->forceZeroStateSaveAreaSize = true;
+
+    auto threadCount = hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount;
+    for (uint32_t i = 0; i < threadCount; i++) {
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        sessionMock->allThreads[thread]->stopThread(1u);
+        sessionMock->allThreads[thread]->reportAsStopped();
+    }
+
+    ze_device_thread_t threadAll = {UINT32_MAX, UINT32_MAX, UINT32_MAX, UINT32_MAX};
+    auto result = sessionMock->resume(threadAll);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(threadCount, sessionMock->resumeThreadCount);
+
+    EXPECT_EQ(0u, sessionMock->checkThreadIsResumedFromPassedSaveAreaCalled);
+    EXPECT_EQ(0u, sessionMock->checkThreadIsResumedCalled);
+
+    for (uint32_t i = 0; i < threadCount; i++) {
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        EXPECT_TRUE(sessionMock->allThreads[thread]->isRunning());
+    }
+
+    sessionMock->stateSaveAreaHeader.resize(0);
+
+    for (uint32_t i = 0; i < threadCount; i++) {
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        sessionMock->allThreads[thread]->stopThread(1u);
+        sessionMock->allThreads[thread]->reportAsStopped();
+    }
+
+    result = sessionMock->resume(threadAll);
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(threadCount, sessionMock->resumeThreadCount);
+
+    EXPECT_EQ(0u, sessionMock->checkThreadIsResumedFromPassedSaveAreaCalled);
+    EXPECT_EQ(0u, sessionMock->checkThreadIsResumedCalled);
+
+    for (uint32_t i = 0; i < threadCount; i++) {
+        EuThread::ThreadId thread(0, 0, 0, 0, i);
+        EXPECT_TRUE(sessionMock->allThreads[thread]->isRunning());
     }
 }
 
@@ -1112,9 +1303,31 @@ TEST(DebugSessionTest, givenErrorFromReadSystemRoutineIdentWhenCallingCheckThrea
     ze_device_thread_t thread = {0, 0, 0, 0};
     EuThread::ThreadId threadId(0, thread);
     bool resumed = sessionMock->checkThreadIsResumed(threadId);
-
     EXPECT_TRUE(resumed);
-    EXPECT_EQ(1u, sessionMock->checkThreadIsResumedCalled);
+
+    resumed = sessionMock->checkThreadIsResumed(threadId, sessionMock->stateSaveAreaHeader.data());
+    EXPECT_TRUE(resumed);
+}
+
+TEST(DebugSessionTest, givenSipVersion1WhenCallingCheckThreadIsResumedWithSaveAreaThenThreadIsAssumedRunning) {
+    zet_debug_config_t config = {};
+    config.pid = 0x1234;
+    auto hwInfo = *NEO::defaultHwInfo.get();
+
+    NEO::MockDevice *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
+    Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
+
+    auto sessionMock = std::make_unique<MockDebugSession>(config, &deviceImp);
+    ASSERT_NE(nullptr, sessionMock);
+    sessionMock->skipCheckThreadIsResumed = false;
+    sessionMock->readSystemRoutineIdentRetVal = false;
+    sessionMock->stateSaveAreaHeader = MockSipData::createStateSaveAreaHeader(1);
+
+    ze_device_thread_t thread = {0, 0, 0, 0};
+    EuThread::ThreadId threadId(0, thread);
+
+    bool resumed = sessionMock->checkThreadIsResumed(threadId, sessionMock->stateSaveAreaHeader.data());
+    EXPECT_TRUE(resumed);
 }
 
 TEST(DebugSessionTest, givenSrMagicWithCounterLessThanlLastThreadCounterThenThreadHasBeenResumed) {
@@ -1122,6 +1335,10 @@ TEST(DebugSessionTest, givenSrMagicWithCounterLessThanlLastThreadCounterThenThre
       public:
         InternalMockDebugSession(const zet_debug_config_t &config, L0::Device *device) : MockDebugSession(config, device) {}
         bool readSystemRoutineIdent(EuThread *thread, uint64_t vmHandle, SIP::sr_ident &srMagic) override {
+            srMagic.count = 0;
+            return true;
+        }
+        bool readSystemRoutineIdentFromMemory(EuThread *thread, const void *stateSaveArea, SIP::sr_ident &srMagic) override {
             srMagic.count = 0;
             return true;
         }
@@ -1145,6 +1362,11 @@ TEST(DebugSessionTest, givenSrMagicWithCounterLessThanlLastThreadCounterThenThre
 
     EXPECT_TRUE(resumed);
     EXPECT_EQ(1u, sessionMock->checkThreadIsResumedCalled);
+
+    resumed = sessionMock->checkThreadIsResumed(threadId, sessionMock->stateSaveAreaHeader.data());
+
+    EXPECT_TRUE(resumed);
+    EXPECT_EQ(1u, sessionMock->checkThreadIsResumedFromPassedSaveAreaCalled);
 }
 
 TEST(DebugSessionTest, givenSrMagicWithCounterEqualToPrevousThenThreadHasNotBeenResumed) {
