@@ -704,31 +704,51 @@ ze_result_t zesDeviceEnumTemperatureSensors(
     zes_device_handle_t hDevice,
     uint32_t *pCount,
     zes_temp_handle_t *phTemperature) {
-    return L0::SysmanDevice::temperatureGet(hDevice, pCount, phTemperature);
+    if (L0::sysmanInitFromCore) {
+        return L0::SysmanDevice::temperatureGet(hDevice, pCount, phTemperature);
+    } else {
+        return L0::Sysman::SysmanDevice::temperatureGet(hDevice, pCount, phTemperature);
+    }
 }
 
 ze_result_t zesTemperatureGetProperties(
     zes_temp_handle_t hTemperature,
     zes_temp_properties_t *pProperties) {
-    return L0::Temperature::fromHandle(hTemperature)->temperatureGetProperties(pProperties);
+    if (L0::sysmanInitFromCore) {
+        return L0::Temperature::fromHandle(hTemperature)->temperatureGetProperties(pProperties);
+    } else {
+        return L0::Sysman::Temperature::fromHandle(hTemperature)->temperatureGetProperties(pProperties);
+    }
 }
 
 ze_result_t zesTemperatureGetConfig(
     zes_temp_handle_t hTemperature,
     zes_temp_config_t *pConfig) {
-    return L0::Temperature::fromHandle(hTemperature)->temperatureGetConfig(pConfig);
+    if (L0::sysmanInitFromCore) {
+        return L0::Temperature::fromHandle(hTemperature)->temperatureGetConfig(pConfig);
+    } else {
+        return L0::Sysman::Temperature::fromHandle(hTemperature)->temperatureGetConfig(pConfig);
+    }
 }
 
 ze_result_t zesTemperatureSetConfig(
     zes_temp_handle_t hTemperature,
     const zes_temp_config_t *pConfig) {
-    return L0::Temperature::fromHandle(hTemperature)->temperatureSetConfig(pConfig);
+    if (L0::sysmanInitFromCore) {
+        return L0::Temperature::fromHandle(hTemperature)->temperatureSetConfig(pConfig);
+    } else {
+        return L0::Sysman::Temperature::fromHandle(hTemperature)->temperatureSetConfig(pConfig);
+    }
 }
 
 ze_result_t zesTemperatureGetState(
     zes_temp_handle_t hTemperature,
     double *pTemperature) {
-    return L0::Temperature::fromHandle(hTemperature)->temperatureGetState(pTemperature);
+    if (L0::sysmanInitFromCore) {
+        return L0::Temperature::fromHandle(hTemperature)->temperatureGetState(pTemperature);
+    } else {
+        return L0::Sysman::Temperature::fromHandle(hTemperature)->temperatureGetState(pTemperature);
+    }
 }
 
 ze_result_t zesDeviceEnumPsus(

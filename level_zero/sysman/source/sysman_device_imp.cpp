@@ -35,6 +35,7 @@ SysmanDeviceImp::SysmanDeviceImp(NEO::ExecutionEnvironment *executionEnvironment
     pGlobalOperations = new GlobalOperationsImp(pOsSysman);
     pStandbyHandleContext = new StandbyHandleContext(pOsSysman);
     pEcc = new EccImp(pOsSysman);
+    pTempHandleContext = new TemperatureHandleContext(pOsSysman);
 }
 
 SysmanDeviceImp::~SysmanDeviceImp() {
@@ -50,6 +51,7 @@ SysmanDeviceImp::~SysmanDeviceImp() {
     freeResource(pFabricPortHandleContext);
     freeResource(pStandbyHandleContext);
     freeResource(pEcc);
+    freeResource(pTempHandleContext);
     freeResource(pOsSysman);
     executionEnvironment->decRefInternal();
 }
@@ -117,21 +119,29 @@ ze_result_t SysmanDeviceImp::firmwareGet(uint32_t *pCount, zes_firmware_handle_t
 ze_result_t SysmanDeviceImp::diagnosticsGet(uint32_t *pCount, zes_diag_handle_t *phDiagnostics) {
     return pDiagnosticsHandleContext->diagnosticsGet(pCount, phDiagnostics);
 }
+
 ze_result_t SysmanDeviceImp::deviceEccAvailable(ze_bool_t *pAvailable) {
     return pEcc->deviceEccAvailable(pAvailable);
 }
+
 ze_result_t SysmanDeviceImp::deviceEccConfigurable(ze_bool_t *pConfigurable) {
     return pEcc->deviceEccConfigurable(pConfigurable);
 }
+
 ze_result_t SysmanDeviceImp::deviceGetEccState(zes_device_ecc_properties_t *pState) {
     return pEcc->getEccState(pState);
 }
+
 ze_result_t SysmanDeviceImp::deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) {
     return pEcc->setEccState(newState, pState);
 }
 
 ze_result_t SysmanDeviceImp::standbyGet(uint32_t *pCount, zes_standby_handle_t *phStandby) {
     return pStandbyHandleContext->standbyGet(pCount, phStandby);
+}
+
+ze_result_t SysmanDeviceImp::temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) {
+    return pTempHandleContext->temperatureGet(pCount, phTemperature);
 }
 
 } // namespace Sysman

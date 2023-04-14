@@ -9,10 +9,12 @@
 #include "level_zero/api/sysman/zes_handles_struct.h"
 #include <level_zero/zes_api.h>
 
+#include <memory>
 #include <mutex>
 #include <vector>
 
 namespace L0 {
+namespace Sysman {
 
 struct OsSysman;
 class Temperature : _zes_temp_handle_t {
@@ -34,7 +36,7 @@ struct TemperatureHandleContext {
     TemperatureHandleContext(OsSysman *pOsSysman) : pOsSysman(pOsSysman){};
     ~TemperatureHandleContext();
 
-    void init(std::vector<ze_device_handle_t> &deviceHandles);
+    ze_result_t init(uint32_t subDeviceCount);
 
     ze_result_t temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature);
 
@@ -42,8 +44,9 @@ struct TemperatureHandleContext {
     std::vector<std::unique_ptr<Temperature>> handleList = {};
 
   private:
-    void createHandle(const ze_device_handle_t &deviceHandle, zes_temp_sensors_t type);
+    void createHandle(bool onSubdevice, uint32_t subDeviceId, zes_temp_sensors_t type);
     std::once_flag initTemperatureOnce;
 };
 
+} // namespace Sysman
 } // namespace L0

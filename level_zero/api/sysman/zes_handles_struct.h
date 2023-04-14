@@ -47,3 +47,7 @@ struct _zes_ras_handle_t {
 struct _zes_standby_handle_t {
     virtual ~_zes_standby_handle_t() = default;
 };
+
+struct _zes_temp_handle_t {
+    virtual ~_zes_temp_handle_t() = default;
+};

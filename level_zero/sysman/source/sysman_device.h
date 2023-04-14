@@ -21,6 +21,7 @@
 #include "level_zero/sysman/source/ras/ras.h"
 #include "level_zero/sysman/source/scheduler/scheduler.h"
 #include "level_zero/sysman/source/standby/standby.h"
+#include "level_zero/sysman/source/temperature/temperature.h"
 #include <level_zero/ze_api.h>
 #include <level_zero/zes_api.h>
 
@@ -90,6 +91,9 @@ struct SysmanDevice : _ze_device_handle_t {
 
     static ze_result_t deviceSetEccState(zes_device_handle_t hDevice, const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState);
     virtual ze_result_t deviceSetEccState(const zes_device_ecc_desc_t *newState, zes_device_ecc_properties_t *pState) = 0;
+
+    static ze_result_t temperatureGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_temp_handle_t *phTemperature);
+    virtual ze_result_t temperatureGet(uint32_t *pCount, zes_temp_handle_t *phTemperature) = 0;
 };
 
 } // namespace Sysman

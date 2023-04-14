@@ -119,5 +119,10 @@ ze_result_t SysmanDevice::deviceSetEccState(zes_device_handle_t hDevice, const z
     return pSysmanDevice->deviceSetEccState(newState, pState);
 }
 
+ze_result_t SysmanDevice::temperatureGet(zes_device_handle_t hDevice, uint32_t *pCount, zes_temp_handle_t *phTemperature) {
+    auto pSysmanDevice = L0::Sysman::SysmanDevice::fromHandle(hDevice);
+    return pSysmanDevice->temperatureGet(pCount, phTemperature);
+}
+
 } // namespace Sysman
 } // namespace L0
