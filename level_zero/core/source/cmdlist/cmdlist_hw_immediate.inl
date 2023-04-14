@@ -737,6 +737,7 @@ bool CommandListCoreFamilyImmediate<gfxCoreFamily>::preferCopyThroughLockedPtr(C
     }
     case HOST_NON_USM_TO_DEVICE_USM:
     case DEVICE_USM_TO_HOST_NON_USM:
+    case DEVICE_USM_TO_HOST_USM:
         cpuMemCopyEnabled = true;
         break;
     default:
@@ -960,14 +961,14 @@ size_t CommandListCoreFamilyImmediate<gfxCoreFamily>::getTransferThreshold(Trans
     case HOST_USM_TO_HOST_NON_USM:
         retVal = 500 * MemoryConstants::kiloByte;
         break;
-    case DEVICE_USM_TO_HOST_USM:
-        retVal = 0u;
-        break;
     case DEVICE_USM_TO_DEVICE_USM:
         retVal = 0u;
         break;
     case DEVICE_USM_TO_SHARED_USM:
         retVal = 0u;
+        break;
+    case DEVICE_USM_TO_HOST_USM:
+        retVal = 128u;
         break;
     case DEVICE_USM_TO_HOST_NON_USM:
         retVal = 1 * MemoryConstants::kiloByte;

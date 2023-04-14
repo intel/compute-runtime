@@ -2210,7 +2210,7 @@ HWTEST2_F(AppendMemoryLockedCopyTest, givenImmediateCommandListWhenGetTransferTh
     EXPECT_EQ(0u, cmdList.getTransferThreshold(HOST_USM_TO_SHARED_USM));
     EXPECT_EQ(500 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(HOST_USM_TO_HOST_NON_USM));
 
-    EXPECT_EQ(0u, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_USM));
+    EXPECT_EQ(128u, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_USM));
     EXPECT_EQ(0u, cmdList.getTransferThreshold(DEVICE_USM_TO_DEVICE_USM));
     EXPECT_EQ(0u, cmdList.getTransferThreshold(DEVICE_USM_TO_SHARED_USM));
     EXPECT_EQ(1 * MemoryConstants::kiloByte, cmdList.getTransferThreshold(DEVICE_USM_TO_HOST_NON_USM));
