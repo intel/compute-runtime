@@ -59,6 +59,11 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
     ze_fence_handle_t hFence,
     bool performMigration) {
 
+    auto ret = validateCommandListsParams(phCommandLists, numCommandLists);
+    if (ret != ZE_RESULT_SUCCESS) {
+        return ret;
+    }
+
     auto lockCSR = this->csr->obtainUniqueOwnership();
 
     if (NEO::DebugManager.flags.ForceMemoryPrefetchForKmdMigratedSharedAllocations.get()) {
@@ -78,11 +83,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandLists(
                                            NEO::Debugger::isDebugEnabled(internalUsage),
                                            csr->isProgramActivePartitionConfigRequired(),
                                            performMigration};
-
-    auto ret = validateCommandListsParams(ctx, phCommandLists, numCommandLists);
-    if (ret != ZE_RESULT_SUCCESS) {
-        return ret;
-    }
 
     this->device->activateMetricGroups();
 
@@ -288,7 +288,6 @@ ze_result_t CommandQueueHw<gfxCoreFamily>::executeCommandListsCopyOnly(
 
 template <GFXCORE_FAMILY gfxCoreFamily>
 ze_result_t CommandQueueHw<gfxCoreFamily>::validateCommandListsParams(
-    CommandListExecutionContext &ctx,
     ze_command_list_handle_t *phCommandLists,
     uint32_t numCommandLists) {
 
