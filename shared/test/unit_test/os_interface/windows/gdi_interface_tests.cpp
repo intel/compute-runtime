@@ -89,6 +89,8 @@ TEST(GdiInterface, GivenGdiLoggingSupportWhenLoggingEnabledAndLoggingToFileNotUs
     DebugManager.flags.LogGdiCalls.set(true);
     DebugManager.flags.LogGdiCallsToFile.set(false);
 
+    testing::internal::CaptureStdout();
+
     std::unique_ptr<Gdi> gdi = std::make_unique<Gdi>();
     EXPECT_EQ(0u, NEO::IoFunctions::mockFopenCalled);
 
@@ -98,5 +100,7 @@ TEST(GdiInterface, GivenGdiLoggingSupportWhenLoggingEnabledAndLoggingToFileNotUs
 
     gdi.reset(nullptr);
     EXPECT_EQ(0u, NEO::IoFunctions::mockFcloseCalled);
+
+    testing::internal::GetCapturedStdout();
 }
 #endif

@@ -3177,6 +3177,8 @@ TEST(KernelInitializationTest, givenSlmSizeExceedingLocalMemorySizeWhenInitializ
     DebugManagerStateRestore dbgRestorer;
     DebugManager.flags.PrintDebugMessages.set(true);
 
+    ::testing::internal::CaptureStderr();
+
     MockContext context;
     MockProgram mockProgram(&context, false, context.getDevices());
     auto clDevice = context.getDevice(0);
@@ -3189,13 +3191,15 @@ TEST(KernelInitializationTest, givenSlmSizeExceedingLocalMemorySizeWhenInitializ
     mockKernelInfoExceedsSLM.kernelDescriptor.kernelAttributes.slmInlineSize = slmTotalSize;
     auto localMemSize = static_cast<uint32_t>(clDevice->getDevice().getDeviceInfo().localMemSize);
 
+    std::string output = testing::internal::GetCapturedStderr();
+
     cl_int retVal{};
     ::testing::internal::CaptureStderr();
     std::unique_ptr<MockKernel> kernelPtr(Kernel::create<MockKernel>(&mockProgram, mockKernelInfoExceedsSLM, *clDevice, retVal));
     EXPECT_EQ(nullptr, kernelPtr.get());
     EXPECT_EQ(CL_OUT_OF_RESOURCES, retVal);
 
-    const auto &output = testing::internal::GetCapturedStderr();
+    output = testing::internal::GetCapturedStderr();
     std::string expectedOutput = "Size of SLM (" + std::to_string(slmTotalSize) + ") larger than available (" + std::to_string(localMemSize) + ")\n";
     EXPECT_EQ(expectedOutput, output);
 }
