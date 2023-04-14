@@ -65,6 +65,8 @@ set(CLOC_LIB_SRCS_LIB
     ${NEO_SHARED_DIRECTORY}/utilities/directory.h
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.cpp
     ${NEO_SHARED_DIRECTORY}/utilities/io_functions.h
+    ${NEO_SHARED_DIRECTORY}/utilities/logger.cpp
+    ${NEO_SHARED_DIRECTORY}/utilities/logger.h
     ${OCLOC_DIRECTORY}/source/default_cache_config.cpp
     ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.cpp
     ${OCLOC_DIRECTORY}/source/decoder/binary_decoder.h

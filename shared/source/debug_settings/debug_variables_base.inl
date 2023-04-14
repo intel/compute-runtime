@@ -245,6 +245,7 @@ DECLARE_DEBUG_VARIABLE(bool, DumpKernels, false, "Enables dumping kernels' progr
 DECLARE_DEBUG_VARIABLE(bool, DumpKernelArgs, false, "Enables dumping kernels args to binary files")
 DECLARE_DEBUG_VARIABLE(bool, LogApiCalls, false, "Enables logging api function calls, inputs and outputs to file")
 DECLARE_DEBUG_VARIABLE(bool, LogPatchTokens, false, "Enables logging patch tokens, inputs and outputs to file")
+DECLARE_DEBUG_VARIABLE(bool, LogZEInfo, false, "Enables logging ZE Info to file")
 DECLARE_DEBUG_VARIABLE(bool, LogTaskCounts, false, "Enables logging taskCounts and taskLevels to file")
 DECLARE_DEBUG_VARIABLE(bool, LogAlignedAllocations, false, "Logs alignedMalloc and alignedFree allocations")
 DECLARE_DEBUG_VARIABLE(bool, LogAllocationMemoryPool, false, "Logs memory pool for allocations")

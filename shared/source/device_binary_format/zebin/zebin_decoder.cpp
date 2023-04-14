@@ -17,6 +17,7 @@
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
+#include "shared/source/utilities/logger.h"
 
 #include "platforms.h"
 
@@ -374,6 +375,11 @@ DecodeError decodeZebin(ProgramInfo &dst, NEO::Elf::Elf<numBits> &elf, std::stri
 
     auto metadataSectionData = zebinSections.zeInfoSections[0]->data;
     ConstStringRef zeinfo(reinterpret_cast<const char *>(metadataSectionData.begin()), metadataSectionData.size());
+
+    std::string logStr("\n=== ZEInfo logging begin ===\n");
+    logStr.append(zeinfo.str());
+    logStr.append("=== ZEInfo logging end ===\n");
+    DBG_LOG(LogZEInfo, logStr.c_str());
     setKernelMiscInfoPosition(zeinfo, dst);
     if (std::string::npos != dst.kernelMiscInfoPos) {
         zeinfo = zeinfo.substr(static_cast<size_t>(0), dst.kernelMiscInfoPos);
