@@ -49,7 +49,6 @@ PVCTEST_F(PvcProductHelper, givenPVCRevId0WhenGettingThreadEuRatioForScratchThen
 
 PVCTEST_F(PvcProductHelper, givenPVCWithDifferentSteppingsThenImplicitScalingIsEnabledForBAndHigher) {
     auto hwInfo = *defaultHwInfo;
-    hwInfo.platform.usDeviceID = pvcXlDeviceIds[0];
 
     for (uint32_t stepping = 0; stepping < 0x10; stepping++) {
         auto hwRevIdFromStepping = productHelper->getHwRevIdFromStepping(stepping, hwInfo);

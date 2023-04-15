@@ -7,7 +7,6 @@
 
 #include "shared/source/aub_mem_dump/definitions/aub_services.h"
 #include "shared/source/command_stream/preemption_mode.h"
-#include "shared/source/gen9/cfl/device_ids_configs_cfl.h"
 #include "shared/source/gen9/hw_cmds_cfl.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
@@ -24,11 +23,11 @@ const PLATFORM CFL::platform = {
     PCH_UNKNOWN,
     IGFX_GEN9_CORE,
     IGFX_GEN9_CORE,
-    PLATFORM_NONE,   // default init
-    cflDeviceIds[0], // usDeviceID
-    9,               // usRevId. 0 sets the stepping to A0
-    0,               // usDeviceID_PCH
-    0,               // usRevId_PCH
+    PLATFORM_NONE, // default init
+    0,             // usDeviceID
+    9,             // usRevId. 0 sets the stepping to A0
+    0,             // usDeviceID_PCH
+    0,             // usRevId_PCH
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable CFL::capabilityTable{

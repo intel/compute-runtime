@@ -14,6 +14,7 @@
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
+#include "shared/test/unit_test/encoders/test_encode_dispatch_kernel_dg2_and_later.h"
 #include "shared/test/unit_test/fixtures/command_container_fixture.h"
 #include "shared/test/unit_test/mocks/mock_dispatch_kernel_encoder_interface.h"
 
@@ -96,4 +97,40 @@ HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTestPvcAndLater, givenCommandCon
 
     auto cmd = genCmdCast<STATE_COMPUTE_MODE *>(*itorCmd);
     EXPECT_EQ(productHelper.isGrfNumReportedWithScm(), cmd->getLargeGrfMode());
+}
+
+using CommandEncodeStatesTestHpc = Test<CommandEncodeStatesFixture>;
+HWTEST2_F(CommandEncodeStatesTestHpc, GivenVariousSlmTotalSizesAndSettingRevIDToDifferentValuesWhenSetAdditionalInfoIsCalledThenCorrectValuesAreSet, IsPVC) {
+    using PREFERRED_SLM_ALLOCATION_SIZE = typename FamilyType::INTERFACE_DESCRIPTOR_DATA::PREFERRED_SLM_ALLOCATION_SIZE;
+
+    const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTest = {
+        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_0K},
+        {16 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K},
+        {32 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32K},
+        {64 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64K},
+        {96 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K},
+        {128 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K},
+    };
+
+    const std::vector<PreferredSlmTestValues<FamilyType>> valuesToTestForPvcAStep = {
+        {0, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K},
+        {16 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_16K},
+        {32 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_32K},
+        {64 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_64K},
+        {96 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_96K},
+        {128 * KB, PREFERRED_SLM_ALLOCATION_SIZE::PREFERRED_SLM_ALLOCATION_SIZE_128K},
+    };
+
+    const std::array<REVID, 5> revs{REVISION_A0, REVISION_B, REVISION_C, REVISION_D, REVISION_K};
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    auto &productHelper = pDevice->getRootDeviceEnvironment().getProductHelper();
+
+    for (auto rev : revs) {
+        hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(rev, hwInfo);
+        if ((hwInfo.platform.eProductFamily == IGFX_PVC) && (rev == REVISION_A0)) {
+            verifyPreferredSlmValues<FamilyType>(valuesToTestForPvcAStep, pDevice->getRootDeviceEnvironment());
+        } else {
+            verifyPreferredSlmValues<FamilyType>(valuesToTest, pDevice->getRootDeviceEnvironment());
+        }
+    }
 }

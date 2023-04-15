@@ -288,7 +288,7 @@ PVCTEST_F(PvcMultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEvent
         csHwParser.parseCommands<FamilyType>(pCmdQ1->getCS(0));
         auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
 
-        EXPECT_EQ(2u, semaphores.size());
+        EXPECT_EQ(3u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
         EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());
@@ -316,7 +316,7 @@ PVCTEST_F(PvcMultiRootDeviceCommandStreamReceiverBufferTests, givenMultipleEvent
         csHwParser.parseCommands<FamilyType>(pCmdQ2->getCS(0));
         auto semaphores = findAll<MI_SEMAPHORE_WAIT *>(csHwParser.cmdList.begin(), csHwParser.cmdList.end());
 
-        EXPECT_EQ(2u, semaphores.size());
+        EXPECT_EQ(3u, semaphores.size());
 
         auto semaphoreCmd0 = genCmdCast<MI_SEMAPHORE_WAIT *>(*(semaphores[0]));
         EXPECT_EQ(1u, semaphoreCmd0->getSemaphoreDataDword());

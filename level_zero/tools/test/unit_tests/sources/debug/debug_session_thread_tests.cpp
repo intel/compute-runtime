@@ -490,10 +490,8 @@ TEST(DebugSession, givenDifferentThreadsWhenGettingPerThreadScratchOffsetThenCor
     NEO::Device *neoDevice(NEO::MockDevice::createWithNewExecutionEnvironment<NEO::MockDevice>(&hwInfo, 0));
     Mock<L0::DeviceImp> deviceImp(neoDevice, neoDevice->getExecutionEnvironment());
     auto debugSession = std::make_unique<DebugSessionMock>(zet_debug_config_t{0x1234}, &deviceImp);
-    auto &productHelper = neoDevice->getProductHelper();
 
-    const uint32_t multiplyFactor = productHelper.getThreadEuRatioForScratch(hwInfo) / 8u;
-    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount) * multiplyFactor;
+    const uint32_t numThreadsPerEu = (hwInfo.gtSystemInfo.ThreadCount / hwInfo.gtSystemInfo.EUCount);
     EuThread::ThreadId thread0Eu0 = {0, 0, 0, 0, 0};
     EuThread::ThreadId thread0Eu1 = {0, 0, 0, 1, 0};
     EuThread::ThreadId thread2Subslice1 = {0, 0, 1, 0, 2};

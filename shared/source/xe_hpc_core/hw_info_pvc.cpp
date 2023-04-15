@@ -12,7 +12,6 @@
 #include "shared/source/helpers/constants.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
-#include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 
 #include "aubstream/engine_node.h"
 #include "platforms.h"
@@ -26,11 +25,11 @@ const PLATFORM PVC::platform = {
     PCH_UNKNOWN,
     IGFX_XE_HPC_CORE,
     IGFX_XE_HPC_CORE,
-    PLATFORM_NONE,     // default init
-    pvcXtDeviceIds[0], // usDeviceID
-    3,                 // usRevId. 0 sets the stepping to A0
-    0,                 // usDeviceID_PCH
-    0,                 // usRevId_PCH
+    PLATFORM_NONE, // default init
+    0,             // usDeviceID
+    0,             // usRevId. 0 sets the stepping to A0
+    0,             // usDeviceID_PCH
+    0,             // usRevId_PCH
     GTTYPE_UNDEFINED};
 
 const RuntimeCapabilityTable PVC::capabilityTable{
