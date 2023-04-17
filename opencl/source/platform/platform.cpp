@@ -154,6 +154,10 @@ bool Platform::initialize(std::vector<std::unique_ptr<Device>> devices) {
 
     this->platformInfo->extensions = this->clDevices[0]->getDeviceInfo().deviceExtensions;
 
+    if (DebugManager.flags.OverridePlatformName.get() != "unk") {
+        this->platformInfo->name.assign(DebugManager.flags.OverridePlatformName.get().c_str());
+    }
+
     switch (this->clDevices[0]->getEnabledClVersion()) {
     case 30:
         this->platformInfo->version = "OpenCL 3.0 ";

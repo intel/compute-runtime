@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -15,7 +15,7 @@ struct PlatformInfo {
     std::vector<cl_name_version> extensionsWithVersion;
     std::string profile = "FULL_PROFILE";
     std::string version = "";
-    std::string name = "Intel(R) OpenCL HD Graphics";
+    std::string name = "Intel(R) OpenCL Graphics";
     std::string vendor = "Intel(R) Corporation";
     std::string extensions;
     std::string icdSuffixKhr = "INTEL";

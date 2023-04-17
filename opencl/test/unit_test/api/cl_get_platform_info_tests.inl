@@ -98,7 +98,27 @@ INSTANTIATE_TEST_CASE_P(OCLVersions,
 
 TEST_F(clGetPlatformInfoTests, GivenClPlatformNameWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {
     paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_NAME);
-    EXPECT_STREQ(paramValue, "Intel(R) OpenCL HD Graphics");
+    EXPECT_STREQ(paramValue, "Intel(R) OpenCL Graphics");
+}
+
+class clGetPlatformInfoOverridePlatformNameTests : public clGetPlatformInfoTests {
+  public:
+    void SetUp() override {
+        NEO::DebugManager.flags.OverridePlatformName.set(testPlatformName);
+        clGetPlatformInfoTests::SetUp();
+    }
+
+    void TearDown() override {
+        clGetPlatformInfoTests::TearDown();
+    }
+
+    DebugManagerStateRestore restorer;
+    const std::string testPlatformName = "test platform name";
+};
+
+TEST_F(clGetPlatformInfoOverridePlatformNameTests, givenDebugVariableOverridePlatformNameSpecifiedWhenGettingPlatformInfoStringThenPlatformNameIsTakenFromDebugVariable) {
+    paramValue = getPlatformInfoString(pPlatform, CL_PLATFORM_NAME);
+    EXPECT_STREQ(paramValue, testPlatformName.c_str());
 }
 
 TEST_F(clGetPlatformInfoTests, GivenClPlatformVendorWhenGettingPlatformInfoStringThenCorrectStringIsReturned) {
