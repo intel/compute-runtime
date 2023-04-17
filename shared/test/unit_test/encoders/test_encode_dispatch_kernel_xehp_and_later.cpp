@@ -534,7 +534,11 @@ HWTEST2_F(CommandEncodeStatesTest, givenDispatchInterfaceWhenNumRequiredGrfIsNot
     EXPECT_FALSE(streamProperties.stateComputeMode.isDirty());
 
     streamProperties.stateComputeMode.setPropertiesAll(false, 256, 0u, PreemptionMode::Disabled);
-    EXPECT_TRUE(streamProperties.stateComputeMode.isDirty());
+    if constexpr (TestTraits<gfxCoreFamily>::largeGrfModeInStateComputeModeSupported) {
+        EXPECT_TRUE(streamProperties.stateComputeMode.isDirty());
+    } else {
+        EXPECT_FALSE(streamProperties.stateComputeMode.isDirty());
+    }
 }
 
 HWCMDTEST_F(IGFX_XE_HP_CORE, CommandEncodeStatesTest, givenInlineDataRequiredWhenEncodingWalkerThenEmitInlineParameterIsSet) {
