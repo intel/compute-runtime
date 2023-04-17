@@ -17,6 +17,7 @@
 #include <fstream>
 #include <limits.h>
 #include <map>
+#include <optional>
 #include <vector>
 
 using namespace NEO;
@@ -150,6 +151,12 @@ class DrmMock : public Drm {
     uint32_t getBaseIoctlCalls() {
         return static_cast<uint32_t>(virtualMemoryIds.size());
     }
+    bool useVMBindImmediate() const override {
+        if (isVMBindImmediateSupported.has_value())
+            return *isVMBindImmediateSupported;
+        else
+            return Drm::useVMBindImmediate();
+    }
 
     static const int mockFd = 33;
 
@@ -193,6 +200,7 @@ class DrmMock : public Drm {
 
     bool capturedCooperativeContextRequest = false;
     bool incrementVmId = false;
+    std::optional<bool> isVMBindImmediateSupported{};
 
     uint32_t passedContextDebugId = std::numeric_limits<uint32_t>::max();
     std::vector<ResetStats> resetStatsToReturn{};

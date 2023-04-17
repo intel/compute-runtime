@@ -162,7 +162,7 @@ class Drm : public DriverModel {
     MOCKABLE_VIRTUAL bool isSetPairAvailable();
     MOCKABLE_VIRTUAL bool getSetPairAvailable() { return setPairAvailable; }
 
-    bool useVMBindImmediate() const;
+    MOCKABLE_VIRTUAL bool useVMBindImmediate() const;
 
     MOCKABLE_VIRTUAL bool isVmBindAvailable();
     MOCKABLE_VIRTUAL bool registerResourceClasses();
@@ -215,7 +215,8 @@ class Drm : public DriverModel {
     }
 
     void waitForBind(uint32_t vmHandleId);
-    uint64_t getNextFenceVal(uint32_t vmHandleId) { return ++fenceVal[vmHandleId]; }
+    uint64_t getNextFenceVal(uint32_t vmHandleId) { return fenceVal[vmHandleId] + 1; }
+    void incFenceVal(uint32_t vmHandleId) { fenceVal[vmHandleId]++; }
     uint64_t *getFenceAddr(uint32_t vmHandleId) { return &pagingFence[vmHandleId]; }
 
     int waitHandle(uint32_t waitHandle, int64_t timeout);
