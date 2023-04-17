@@ -7,6 +7,7 @@
 
 #include "opencl/test/unit_test/offline_compiler/ocloc_product_config_tests.h"
 
+#include "shared/offline_compiler/source/ocloc_error_code.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/os_library.h"
 
@@ -30,6 +31,16 @@ TEST_P(OclocProductConfigTests, GivenProductConfigValuesWhenInitHardwareInfoThen
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.eProductFamily, productFamily);
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usRevId, revId);
     EXPECT_EQ(mockOfflineCompiler->hwInfo.platform.usDeviceID, deviceId);
+}
+
+TEST_P(OclocProductConfigTests, givenProductConfigAsDeviceNameWhenInitHwInfoThenCorrectResultIsReturned) {
+    MockOfflineCompiler mockOfflineCompiler;
+    std::stringstream config;
+    config << aotConfig.value;
+    mockOfflineCompiler.deviceName = config.str();
+
+    EXPECT_EQ(OclocErrorCode::SUCCESS, mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName));
+    EXPECT_EQ(aotConfig.value, mockOfflineCompiler.deviceConfig);
 }
 
 } // namespace NEO

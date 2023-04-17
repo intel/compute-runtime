@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -95,7 +95,7 @@ PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &deviceName) {
 }
 
 void setProductFamilyForIga(const std::string &device, IgaWrapper *iga, OclocArgHelper *argHelper) {
-    auto productFamily = argHelper->productConfigHelper->getProductFamilyForAcronym(device);
+    auto productFamily = argHelper->productConfigHelper->getProductFamilyFromDeviceName(device);
     if (productFamily == IGFX_UNKNOWN) {
         productFamily = getProductFamilyFromDeviceName(device);
         if (productFamily != IGFX_UNKNOWN) {

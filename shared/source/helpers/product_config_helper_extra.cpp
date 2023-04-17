@@ -21,7 +21,7 @@ void ProductConfigHelper::initialize() {
     }
 }
 
-AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigForAcronym(const std::string &device) {
+AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigFromAcronym(const std::string &device) {
     auto it = std::find_if(AOT::deviceAcronyms.begin(), AOT::deviceAcronyms.end(), findMapAcronymWithoutDash(device));
     if (it == AOT::deviceAcronyms.end())
         return AOT::UNKNOWN_ISA;

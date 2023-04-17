@@ -35,11 +35,11 @@ bool DeviceFactory::prepareDeviceEnvironmentsForProductFamilyOverride(ExecutionE
     auto productFamily = DebugManager.flags.ProductFamilyOverride.get();
 
     auto configStr = productFamily;
+    auto productConfigHelper = std::make_unique<ProductConfigHelper>();
     ProductConfigHelper::adjustDeviceName(configStr);
-    auto productConfig = ProductConfigHelper::getProductConfigForAcronym(configStr);
+    auto productConfig = productConfigHelper->getProductConfigFromDeviceName(configStr);
 
     const HardwareInfo *hwInfoConst = getDefaultHwInfo();
-    auto productConfigHelper = std::make_unique<ProductConfigHelper>();
     DeviceAotInfo aotInfo{};
     auto productConfigFound = productConfigHelper->getDeviceAotInfoForProductConfig(productConfig, aotInfo);
     if (productConfigFound) {

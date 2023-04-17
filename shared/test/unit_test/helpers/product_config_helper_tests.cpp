@@ -16,38 +16,14 @@
 
 #include <algorithm>
 
-TEST_F(ProductConfigHelperTests, givenProductAcronymWhenHelperSearchForAMatchThenCorrespondingValueIsReturned) {
-    for (const auto &[acronym, value] : AOT::deviceAcronyms) {
-        EXPECT_EQ(ProductConfigHelper::getProductConfigForAcronym(acronym), value);
-    }
-}
-
-TEST_F(ProductConfigHelperTests, givenReleaseAcronymWhenHelperSearchForAMatchThenCorrespondingValueIsReturned) {
-    for (const auto &[acronym, value] : AOT::releaseAcronyms) {
-        EXPECT_EQ(ProductConfigHelper::getReleaseForAcronym(acronym), value);
-    }
-}
-
-TEST_F(ProductConfigHelperTests, givenFamilyAcronymWhenHelperSearchForAMatchThenCorrespondingValueIsReturned) {
-    for (const auto &[acronym, value] : AOT::familyAcronyms) {
-        EXPECT_EQ(ProductConfigHelper::getFamilyForAcronym(acronym), value);
-    }
-}
-
-TEST_F(ProductConfigHelperTests, givenUnknownAcronymWhenHelperSearchForAMatchThenUnknownEnumValueIsReturned) {
-    EXPECT_EQ(ProductConfigHelper::getProductConfigForAcronym("unk"), AOT::UNKNOWN_ISA);
-    EXPECT_EQ(ProductConfigHelper::getReleaseForAcronym("unk"), AOT::UNKNOWN_RELEASE);
-    EXPECT_EQ(ProductConfigHelper::getFamilyForAcronym("unk"), AOT::UNKNOWN_FAMILY);
-}
-
 TEST_F(ProductConfigHelperTests, givenFamilyEnumWhenHelperSearchForAMatchThenCorrespondingAcronymIsReturned) {
     for (const auto &[acronym, value] : AOT::familyAcronyms) {
-        EXPECT_EQ(ProductConfigHelper::getAcronymForAFamily(value), acronym);
+        EXPECT_EQ(ProductConfigHelper::getAcronymFromAFamily(value), acronym);
     }
 }
 
 TEST_F(ProductConfigHelperTests, givenUnknownFamilyEnumWhenHelperSearchForAMatchThenEmptyAcronymIsReturned) {
-    auto acronym = ProductConfigHelper::getAcronymForAFamily(AOT::UNKNOWN_FAMILY);
+    auto acronym = ProductConfigHelper::getAcronymFromAFamily(AOT::UNKNOWN_FAMILY);
     EXPECT_TRUE(acronym.empty());
 }
 
@@ -110,45 +86,6 @@ TEST_F(ProductConfigHelperTests, givenFamilyAcronymWhenAdjustDeviceNameThenNothi
     }
 }
 
-TEST_F(ProductConfigHelperTests, givenProductAcronymWhenRemoveDashesFromTheNameThenStillCorrectValueIsReturned) {
-    for (const auto &[acronym, value] : AOT::deviceAcronyms) {
-        std::string acronymCopy = acronym;
-
-        auto findDash = acronymCopy.find("-");
-        if (findDash != std::string::npos) {
-            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
-        }
-
-        EXPECT_EQ(ProductConfigHelper::getProductConfigForAcronym(acronymCopy), value);
-    }
-}
-
-TEST_F(ProductConfigHelperTests, givenReleaseAcronymWhenRemoveDashesFromTheNameThenStillCorrectValueIsReturned) {
-    for (const auto &[acronym, value] : AOT::releaseAcronyms) {
-        std::string acronymCopy = acronym;
-
-        auto findDash = acronymCopy.find("-");
-        if (findDash != std::string::npos) {
-            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
-        }
-
-        EXPECT_EQ(ProductConfigHelper::getReleaseForAcronym(acronymCopy), value);
-    }
-}
-
-TEST_F(ProductConfigHelperTests, givenFamilyAcronymWhenRemoveDashesFromTheNameThenStillCorrectValueIsReturned) {
-    for (const auto &[acronym, value] : AOT::familyAcronyms) {
-        std::string acronymCopy = acronym;
-
-        auto findDash = acronymCopy.find("-");
-        if (findDash != std::string::npos) {
-            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
-        }
-
-        EXPECT_EQ(ProductConfigHelper::getFamilyForAcronym(acronymCopy), value);
-    }
-}
-
 TEST_F(ProductConfigHelperTests, givenAcronymWithoutDashesWhenSearchMatchInSampleVectorThenCorrectValueIsReturned) {
     std::vector<NEO::ConstStringRef> sampleAcronyms = {"ab-cd", "abc-p", "abc"};
 
@@ -176,18 +113,18 @@ TEST_F(ProductConfigHelperTests, givenAcronymWithoutDashesWhenSearchMatchInSampl
 TEST_F(ProductConfigHelperTests, givenProductConfigValueWhenParseVersionThenCorrectValueIsReturned) {
     for (const auto &configMap : AOT::deviceAcronyms) {
         auto version = ProductConfigHelper::parseMajorMinorRevisionValue(configMap.second);
-        auto productConfig = ProductConfigHelper::getProductConfigForVersionValue(version);
+        auto productConfig = ProductConfigHelper::getProductConfigFromVersionValue(version);
         EXPECT_EQ(productConfig, configMap.second);
     }
 }
 
 TEST_F(ProductConfigHelperTests, givenIncorrectVersionValueWhenGetProductConfigThenUnknownIsaIsReturned) {
-    EXPECT_EQ(ProductConfigHelper::getProductConfigForVersionValue("9.1."), AOT::UNKNOWN_ISA);
-    EXPECT_EQ(ProductConfigHelper::getProductConfigForVersionValue("9.1.."), AOT::UNKNOWN_ISA);
-    EXPECT_EQ(ProductConfigHelper::getProductConfigForVersionValue(".1.2"), AOT::UNKNOWN_ISA);
-    EXPECT_EQ(ProductConfigHelper::getProductConfigForVersionValue("9.0.a"), AOT::UNKNOWN_ISA);
-    EXPECT_EQ(ProductConfigHelper::getProductConfigForVersionValue("9.a"), AOT::UNKNOWN_ISA);
-    EXPECT_EQ(ProductConfigHelper::getProductConfigForVersionValue("256.350"), AOT::UNKNOWN_ISA);
+    EXPECT_EQ(ProductConfigHelper::getProductConfigFromVersionValue("9.1."), AOT::UNKNOWN_ISA);
+    EXPECT_EQ(ProductConfigHelper::getProductConfigFromVersionValue("9.1.."), AOT::UNKNOWN_ISA);
+    EXPECT_EQ(ProductConfigHelper::getProductConfigFromVersionValue(".1.2"), AOT::UNKNOWN_ISA);
+    EXPECT_EQ(ProductConfigHelper::getProductConfigFromVersionValue("9.0.a"), AOT::UNKNOWN_ISA);
+    EXPECT_EQ(ProductConfigHelper::getProductConfigFromVersionValue("9.a"), AOT::UNKNOWN_ISA);
+    EXPECT_EQ(ProductConfigHelper::getProductConfigFromVersionValue("256.350"), AOT::UNKNOWN_ISA);
 }
 
 TEST_F(ProductConfigHelperTests, GivenDifferentAotConfigsInDeviceAotInfosWhenComparingThemThenFalseIsReturned) {
@@ -234,6 +171,42 @@ TEST_F(ProductConfigHelperTests, GivenDifferentHwInfoInDeviceAotInfosWhenCompari
     ASSERT_TRUE(lhs == rhs);
 }
 
+TEST_F(AotDeviceInfoTests, givenProductAcronymWhenHelperSearchForAMatchThenCorrespondingValueIsReturned) {
+    for (const auto &[acronym, value] : AOT::deviceAcronyms) {
+        EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronym), value);
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenProductIpVersionStringWhenHelperSearchForProductConfigThenCorrectValueIsReturned) {
+    for (const auto &deviceConfig : AOT::deviceAcronyms) {
+        std::stringstream ipVersion;
+        ipVersion << deviceConfig.second;
+        EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(ipVersion.str()), deviceConfig.second);
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenNotExistingProductIpVersionStringWhenHelperSearchForProductConfigThenCorrectValueIsReturned) {
+    EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName("1234"), AOT::UNKNOWN_ISA);
+}
+
+TEST_F(AotDeviceInfoTests, givenReleaseAcronymWhenHelperSearchForAMatchThenCorrespondingValueIsReturned) {
+    for (const auto &[acronym, value] : AOT::releaseAcronyms) {
+        EXPECT_EQ(productConfigHelper->getReleaseFromDeviceName(acronym), value);
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenFamilyAcronymWhenHelperSearchForAMatchThenCorrespondingValueIsReturned) {
+    for (const auto &[acronym, value] : AOT::familyAcronyms) {
+        EXPECT_EQ(productConfigHelper->getFamilyFromDeviceName(acronym), value);
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenUnknownAcronymWhenHelperSearchForAMatchThenUnknownEnumValueIsReturned) {
+    EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName("unk"), AOT::UNKNOWN_ISA);
+    EXPECT_EQ(productConfigHelper->getReleaseFromDeviceName("unk"), AOT::UNKNOWN_RELEASE);
+    EXPECT_EQ(productConfigHelper->getFamilyFromDeviceName("unk"), AOT::UNKNOWN_FAMILY);
+}
+
 TEST_F(AotDeviceInfoTests, givenProductOrAotConfigWhenParseMajorMinorRevisionValueThenCorrectStringIsReturned) {
     for (const auto &device : aotInfos) {
         auto productConfig = static_cast<AOT::PRODUCT_CONFIG>(device.aotConfig.value);
@@ -241,9 +214,48 @@ TEST_F(AotDeviceInfoTests, givenProductOrAotConfigWhenParseMajorMinorRevisionVal
         auto configStr1 = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
         EXPECT_STREQ(configStr0.c_str(), configStr1.c_str());
 
-        auto gotCofig = ProductConfigHelper::getProductConfigForVersionValue(configStr0);
+        auto gotCofig = ProductConfigHelper::getProductConfigFromVersionValue(configStr0);
 
         EXPECT_EQ(gotCofig, productConfig);
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenProductAcronymWhenRemoveDashesFromTheNameThenStillCorrectValueIsReturned) {
+    for (const auto &[acronym, value] : AOT::deviceAcronyms) {
+        std::string acronymCopy = acronym;
+
+        auto findDash = acronymCopy.find("-");
+        if (findDash != std::string::npos) {
+            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
+        }
+
+        EXPECT_EQ(productConfigHelper->getProductConfigFromDeviceName(acronymCopy), value);
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenReleaseAcronymWhenRemoveDashesFromTheNameThenStillCorrectValueIsReturned) {
+    for (const auto &[acronym, value] : AOT::releaseAcronyms) {
+        std::string acronymCopy = acronym;
+
+        auto findDash = acronymCopy.find("-");
+        if (findDash != std::string::npos) {
+            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
+        }
+
+        EXPECT_EQ(productConfigHelper->getReleaseFromDeviceName(acronymCopy), value);
+    }
+}
+
+TEST_F(AotDeviceInfoTests, givenFamilyAcronymWhenRemoveDashesFromTheNameThenStillCorrectValueIsReturned) {
+    for (const auto &[acronym, value] : AOT::familyAcronyms) {
+        std::string acronymCopy = acronym;
+
+        auto findDash = acronymCopy.find("-");
+        if (findDash != std::string::npos) {
+            acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
+        }
+
+        EXPECT_EQ(productConfigHelper->getFamilyFromDeviceName(acronymCopy), value);
     }
 }
 
@@ -276,7 +288,10 @@ TEST_F(AotDeviceInfoTests, givenProductConfigAcronymWhenCheckAllEnabledThenCorre
             acronymFound = std::any_of(enabledAcronyms.begin(), enabledAcronyms.end(), findAcronym(acronym));
 
             EXPECT_FALSE(acronymFound);
-            EXPECT_FALSE(productConfigHelper->isProductConfig(acronym));
+
+            auto config = productConfigHelper->getProductConfigFromDeviceName(acronym);
+            EXPECT_FALSE(productConfigHelper->isSupportedProductConfig(config));
+            EXPECT_EQ(config, AOT::UNKNOWN_ISA);
         }
     }
 }
@@ -311,7 +326,9 @@ TEST_F(AotDeviceInfoTests, givenReleaseAcronymWhenCheckAllEnabledThenCorrectValu
     releaseFound = std::any_of(enabledReleases.begin(), enabledReleases.end(), findAcronym(acronym));
 
     EXPECT_FALSE(releaseFound);
-    EXPECT_FALSE(productConfigHelper->isRelease(acronym));
+    auto release = productConfigHelper->getReleaseFromDeviceName(acronym);
+    EXPECT_FALSE(productConfigHelper->isSupportedRelease(release));
+    EXPECT_EQ(release, AOT::UNKNOWN_RELEASE);
 }
 
 TEST_F(AotDeviceInfoTests, givenFamilyAcronymWhenCheckAllEnabledThenCorrectValuesAreReturned) {
@@ -344,28 +361,44 @@ TEST_F(AotDeviceInfoTests, givenFamilyAcronymWhenCheckAllEnabledThenCorrectValue
     familyFound = std::any_of(enabledFamilies.begin(), enabledFamilies.end(), findAcronym(acronym));
 
     EXPECT_FALSE(familyFound);
-    EXPECT_FALSE(productConfigHelper->isFamily(acronym));
+    auto family = productConfigHelper->getFamilyFromDeviceName(acronym);
+    EXPECT_FALSE(productConfigHelper->isSupportedFamily(family));
+    EXPECT_EQ(family, AOT::UNKNOWN_FAMILY);
 }
 
 TEST_F(AotDeviceInfoTests, givenEnabledFamilyAcronymsWhenCheckIfIsFamilyThenTrueIsReturned) {
     auto enabledFamiliesAcronyms = productConfigHelper->getFamiliesAcronyms();
     for (const auto &acronym : enabledFamiliesAcronyms) {
-        EXPECT_TRUE(productConfigHelper->isFamily(acronym.str()));
+        auto family = productConfigHelper->getFamilyFromDeviceName(acronym.str());
+        EXPECT_TRUE(productConfigHelper->isSupportedFamily(family));
+        EXPECT_NE(family, AOT::UNKNOWN_FAMILY);
     }
 }
 
-TEST_F(AotDeviceInfoTests, givenEnabledReleaseAcronymsWhenCheckIfIsReleaseThenTrueIsReturned) {
+TEST_F(AotDeviceInfoTests, givenEnabledReleaseAcronymsWhenCheckIfIsSupportedReleaseThenTrueIsReturned) {
     auto enabledReleasesAcronyms = productConfigHelper->getReleasesAcronyms();
     for (const auto &acronym : enabledReleasesAcronyms) {
-        EXPECT_TRUE(productConfigHelper->isRelease(acronym.str()));
+        auto release = productConfigHelper->getReleaseFromDeviceName(acronym.str());
+        EXPECT_TRUE(productConfigHelper->isSupportedRelease(release));
+        EXPECT_NE(release, AOT::UNKNOWN_RELEASE);
     }
 }
 
-TEST_F(AotDeviceInfoTests, givenDisabledFamilyOrReleaseNameThenReturnsEmptyList) {
-    EXPECT_FALSE(productConfigHelper->isFamily(NEO::ConstStringRef("gen0").str()));
-    EXPECT_FALSE(productConfigHelper->isFamily(NEO::ConstStringRef("genX").str()));
-    EXPECT_FALSE(productConfigHelper->isRelease(NEO::ConstStringRef("gen0").str()));
-    EXPECT_FALSE(productConfigHelper->isRelease(NEO::ConstStringRef("genX").str()));
+TEST_F(AotDeviceInfoTests, givenDisabledFamilyOrReleaseWhenCheckIfSupportedThenFalseIsReturned) {
+    auto gen0Release = productConfigHelper->getReleaseFromDeviceName(NEO::ConstStringRef("gen0").str());
+    auto genXRelease = productConfigHelper->getReleaseFromDeviceName(NEO::ConstStringRef("genX").str());
+    auto gen0Family = productConfigHelper->getFamilyFromDeviceName(NEO::ConstStringRef("gen0").str());
+    auto genXFamily = productConfigHelper->getFamilyFromDeviceName(NEO::ConstStringRef("genX").str());
+
+    EXPECT_EQ(gen0Release, AOT::UNKNOWN_RELEASE);
+    EXPECT_EQ(genXRelease, AOT::UNKNOWN_RELEASE);
+    EXPECT_EQ(gen0Family, AOT::UNKNOWN_FAMILY);
+    EXPECT_EQ(genXFamily, AOT::UNKNOWN_FAMILY);
+
+    EXPECT_FALSE(productConfigHelper->isSupportedFamily(gen0Family));
+    EXPECT_FALSE(productConfigHelper->isSupportedFamily(genXFamily));
+    EXPECT_FALSE(productConfigHelper->isSupportedRelease(gen0Release));
+    EXPECT_FALSE(productConfigHelper->isSupportedRelease(genXRelease));
 }
 
 TEST_F(AotDeviceInfoTests, givenEnabledFamilyAcronymsWithoutDashesWhenCheckIfIsFamilyThenTrueIsReturned) {
@@ -377,7 +410,10 @@ TEST_F(AotDeviceInfoTests, givenEnabledFamilyAcronymsWithoutDashesWhenCheckIfIsF
         if (findDash != std::string::npos) {
             acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
         }
-        EXPECT_TRUE(productConfigHelper->isFamily(acronymCopy));
+
+        auto family = productConfigHelper->getFamilyFromDeviceName(acronymCopy);
+        EXPECT_TRUE(productConfigHelper->isSupportedFamily(family));
+        EXPECT_NE(family, AOT::UNKNOWN_FAMILY);
     }
 }
 
@@ -390,11 +426,14 @@ TEST_F(AotDeviceInfoTests, givenEnabledReleaseAcronymsWithoutDashesWhenCheckIfIs
         if (findDash != std::string::npos) {
             acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
         }
-        EXPECT_TRUE(productConfigHelper->isRelease(acronymCopy));
+
+        auto release = productConfigHelper->getReleaseFromDeviceName(acronymCopy);
+        EXPECT_TRUE(productConfigHelper->isSupportedRelease(release));
+        EXPECT_NE(release, AOT::UNKNOWN_RELEASE);
     }
 }
 
-TEST_F(AotDeviceInfoTests, givenEnabledProductAcronymsWithoutDashesWhenCheckIfIsReleaseThenTrueIsReturned) {
+TEST_F(AotDeviceInfoTests, givenEnabledProductAcronymsWithoutDashesWhenCheckIfIsSupportedConfigThenTrueIsReturned) {
     auto enabledProductsAcronyms = productConfigHelper->getAllProductAcronyms();
     for (const auto &acronym : enabledProductsAcronyms) {
         std::string acronymCopy = acronym.str();
@@ -403,7 +442,10 @@ TEST_F(AotDeviceInfoTests, givenEnabledProductAcronymsWithoutDashesWhenCheckIfIs
         if (findDash != std::string::npos) {
             acronymCopy.erase(std::remove(acronymCopy.begin(), acronymCopy.end(), '-'), acronymCopy.end());
         }
-        EXPECT_TRUE(productConfigHelper->isProductConfig(acronymCopy));
+
+        auto config = productConfigHelper->getProductConfigFromDeviceName(acronymCopy);
+        EXPECT_TRUE(productConfigHelper->isSupportedProductConfig(config));
+        EXPECT_NE(config, AOT::UNKNOWN_ISA);
     }
 }
 
@@ -414,9 +456,17 @@ TEST_F(AotDeviceInfoTests, givenDeprecatedAcronymsWhenSearchingPresenceInNewName
         std::string acronymCopy = acronym.str();
         ProductConfigHelper::adjustDeviceName(acronymCopy);
 
-        EXPECT_FALSE(productConfigHelper->isFamily(acronymCopy));
-        EXPECT_FALSE(productConfigHelper->isRelease(acronymCopy));
-        EXPECT_FALSE(productConfigHelper->isProductConfig(acronymCopy));
+        auto release = productConfigHelper->getReleaseFromDeviceName(acronymCopy);
+        auto family = productConfigHelper->getFamilyFromDeviceName(acronymCopy);
+        auto config = productConfigHelper->getProductConfigFromDeviceName(acronymCopy);
+
+        EXPECT_EQ(release, AOT::UNKNOWN_RELEASE);
+        EXPECT_EQ(family, AOT::UNKNOWN_FAMILY);
+        EXPECT_EQ(config, AOT::UNKNOWN_ISA);
+
+        EXPECT_FALSE(productConfigHelper->isSupportedFamily(family));
+        EXPECT_FALSE(productConfigHelper->isSupportedRelease(release));
+        EXPECT_FALSE(productConfigHelper->isSupportedProductConfig(config));
     }
 }
 
@@ -429,29 +479,35 @@ TEST_F(AotDeviceInfoTests, givenNotFullConfigWhenGetProductConfigThenUnknownIsaI
     majorString << aotConfig.architecture;
     auto major = majorString.str();
 
-    auto aotValue0 = ProductConfigHelper::getProductConfigForVersionValue(major);
+    auto aotValue0 = ProductConfigHelper::getProductConfigFromVersionValue(major);
     EXPECT_EQ(aotValue0, AOT::UNKNOWN_ISA);
 
     auto majorMinor = ProductConfigHelper::parseMajorMinorValue(aotConfig);
-    auto aotValue1 = ProductConfigHelper::getProductConfigForVersionValue(majorMinor);
+    auto aotValue1 = ProductConfigHelper::getProductConfigFromVersionValue(majorMinor);
     EXPECT_EQ(aotValue1, AOT::UNKNOWN_ISA);
 }
 
-TEST_F(AotDeviceInfoTests, givenEnabledProductsAcronymsAndVersionsWhenCheckIfProductConfigThenTrueIsReturned) {
+TEST_F(AotDeviceInfoTests, givenEnabledProductsAcronymsAndVersionsWhenCheckIfSupportedProductConfigThenTrueIsReturned) {
     for (const auto &product : aotInfos) {
         auto configStr = ProductConfigHelper::parseMajorMinorRevisionValue(product.aotConfig);
         EXPECT_FALSE(configStr.empty());
-        EXPECT_TRUE(productConfigHelper->isProductConfig(configStr));
+
+        auto config = productConfigHelper->getProductConfigFromDeviceName(configStr);
+        EXPECT_NE(config, AOT::UNKNOWN_ISA);
+        EXPECT_TRUE(productConfigHelper->isSupportedProductConfig(config));
 
         for (const auto &acronym : product.deviceAcronyms) {
-            EXPECT_TRUE(productConfigHelper->isProductConfig(acronym.str()));
+            config = productConfigHelper->getProductConfigFromDeviceName(acronym.str());
+            EXPECT_NE(config, AOT::UNKNOWN_ISA);
+            EXPECT_TRUE(productConfigHelper->isSupportedProductConfig(config));
         }
     }
 }
 
-TEST_F(AotDeviceInfoTests, givenUnknownIsaVersionWhenCheckIfProductConfigThenFalseIsReturned) {
+TEST_F(AotDeviceInfoTests, givenUnknownIsaVersionWhenGetProductConfigThenCorrectResultIsReturned) {
     auto configStr = ProductConfigHelper::parseMajorMinorRevisionValue(AOT::UNKNOWN_ISA);
-    EXPECT_FALSE(productConfigHelper->isProductConfig(configStr));
+    auto config = productConfigHelper->getProductConfigFromDeviceName(configStr);
+    EXPECT_EQ(config, AOT::UNKNOWN_ISA);
 }
 
 TEST_F(AotDeviceInfoTests, givenRepresentativeProductsAcronymsWhenSearchInAllProductAcronymsThenStringIsFound) {
@@ -516,11 +572,11 @@ TEST_F(AotDeviceInfoTests, givenUnknownIsaWhenGetDeviceAotInfoThenFalseIsReturne
 TEST_F(AotDeviceInfoTests, givenDeviceAcronymsOrProductConfigWhenGetProductFamilyThenCorrectResultIsReturned) {
     for (const auto &product : aotInfos) {
         auto config = ProductConfigHelper::parseMajorMinorRevisionValue(product.aotConfig);
-        auto productFamily = productConfigHelper->getProductFamilyForAcronym(config);
+        auto productFamily = productConfigHelper->getProductFamilyFromDeviceName(config);
         EXPECT_EQ(productFamily, product.hwInfo->platform.eProductFamily);
 
         for (const auto &acronym : product.deviceAcronyms) {
-            productFamily = productConfigHelper->getProductFamilyForAcronym(acronym.str());
+            productFamily = productConfigHelper->getProductFamilyFromDeviceName(acronym.str());
             EXPECT_EQ(productFamily, product.hwInfo->platform.eProductFamily);
         }
     }
@@ -536,7 +592,7 @@ TEST_F(AotDeviceInfoTests, givenDeviceIdWhenSearchForProductConfigAndDeviceAcron
     product.deviceAcronyms.insert(product.deviceAcronyms.begin(), NEO::ConstStringRef(tmpStr));
 
     for (const auto &deviceId : *product.deviceIds) {
-        auto config = productConfigHelper->getProductConfigForDeviceId(deviceId);
+        auto config = productConfigHelper->getProductConfigBasedOnDeviceId(deviceId);
         EXPECT_EQ(config, product.aotConfig.value);
         auto name = productConfigHelper->getAcronymForProductConfig(config);
         EXPECT_EQ(name, tmpStr);
@@ -554,7 +610,7 @@ TEST_F(AotDeviceInfoTests, givenDeviceIdWhenSearchForProductConfigAndRtlIdAcrony
     product.rtlIdAcronyms.insert(product.rtlIdAcronyms.begin(), NEO::ConstStringRef(tmpStr));
 
     for (const auto &deviceId : *product.deviceIds) {
-        auto config = productConfigHelper->getProductConfigForDeviceId(deviceId);
+        auto config = productConfigHelper->getProductConfigBasedOnDeviceId(deviceId);
         EXPECT_EQ(config, product.aotConfig.value);
         auto name = productConfigHelper->getAcronymForProductConfig(config);
         EXPECT_EQ(name, tmpStr);
@@ -564,7 +620,7 @@ TEST_F(AotDeviceInfoTests, givenDeviceIdWhenSearchForProductConfigAndRtlIdAcrony
 TEST_F(AotDeviceInfoTests, givenDeprecatedDeviceAcronymsWhenGetProductFamilyThenUnknownIsReturned) {
     auto deprecatedAcronyms = productConfigHelper->getDeprecatedAcronyms();
     for (const auto &acronym : deprecatedAcronyms) {
-        EXPECT_EQ(productConfigHelper->getProductFamilyForAcronym(acronym.str()), IGFX_UNKNOWN);
+        EXPECT_EQ(productConfigHelper->getProductFamilyFromDeviceName(acronym.str()), IGFX_UNKNOWN);
     }
 }
 
@@ -605,7 +661,7 @@ TEST_F(AotDeviceInfoTests, givenDeviceIdWhenThereAreNoAcronymsThenMajorMinorRevi
 
     for (auto &device : deviceAot) {
         for (const auto &deviceId : *device.deviceIds) {
-            auto config = productConfigHelper->getProductConfigForDeviceId(deviceId);
+            auto config = productConfigHelper->getProductConfigBasedOnDeviceId(deviceId);
             EXPECT_NE(config, AOT::UNKNOWN_ISA);
 
             device.deviceAcronyms.clear();
@@ -618,7 +674,7 @@ TEST_F(AotDeviceInfoTests, givenDeviceIdWhenThereAreNoAcronymsThenMajorMinorRevi
 }
 
 TEST_F(AotDeviceInfoTests, givenInvalidDeviceIdWhenSearchForProductConfigAndAcronymThenUnknownIsaIsReturned) {
-    auto config = productConfigHelper->getProductConfigForDeviceId(0x0);
+    auto config = productConfigHelper->getProductConfigBasedOnDeviceId(0x0);
     EXPECT_EQ(config, AOT::UNKNOWN_ISA);
     auto name = productConfigHelper->getAcronymForProductConfig(config);
     EXPECT_TRUE(name.empty());
@@ -638,6 +694,6 @@ TEST_F(AotDeviceInfoTests, givenDeviceIdsFromDevicesFileWhenGetProductConfigThen
     }
 
     for (const auto &deviceId : deviceIds) {
-        EXPECT_NE(productConfigHelper->getProductConfigForDeviceId(deviceId), AOT::UNKNOWN_ISA);
+        EXPECT_NE(productConfigHelper->getProductConfigBasedOnDeviceId(deviceId), AOT::UNKNOWN_ISA);
     }
 }

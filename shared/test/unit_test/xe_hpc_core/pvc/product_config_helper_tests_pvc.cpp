@@ -16,10 +16,11 @@ using namespace NEO;
 using ProductConfigHelperPvcTests = ::testing::Test;
 
 PVCTEST_F(ProductConfigHelperPvcTests, givenVariousVariantsOfXeHpcAcronymsWhenGetReleaseThenCorrectValueIsReturned) {
+    auto productConfigHelper = std::make_unique<ProductConfigHelper>();
     std::vector<std::string> acronymsVariants = {"xe_hpc_core", "xe_hpc", "xehpc", "XeHpc"};
     for (auto &acronym : acronymsVariants) {
         ProductConfigHelper::adjustDeviceName(acronym);
-        auto ret = ProductConfigHelper::getReleaseForAcronym(acronym);
+        auto ret = productConfigHelper->getReleaseFromDeviceName(acronym);
         EXPECT_EQ(ret, AOT::XE_HPC_RELEASE);
     }
 }

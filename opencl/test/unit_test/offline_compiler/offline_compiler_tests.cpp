@@ -524,7 +524,7 @@ TEST(MultiCommandWhiteboxTest, GivenInvalidArgsWhenInitializingThenErrorIsReturn
 }
 
 using MockOfflineCompilerTests = ::testing::Test;
-TEST_F(MockOfflineCompilerTests, givenProductConfigValueAndRevisionIdWhenInitHwInfoThenTheseValuesAreSet) {
+TEST_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenCorrectValueIsSet) {
     MockOfflineCompiler mockOfflineCompiler;
     auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
     if (allEnabledDeviceConfigs.empty()) {
@@ -539,13 +539,38 @@ TEST_F(MockOfflineCompilerTests, givenProductConfigValueAndRevisionIdWhenInitHwI
         }
     }
 
-    mockOfflineCompiler.revisionId = 0x3;
     mockOfflineCompiler.deviceName = ProductConfigHelper::parseMajorMinorRevisionValue(config);
     EXPECT_FALSE(mockOfflineCompiler.deviceName.empty());
 
     mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
-    EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, mockOfflineCompiler.revisionId);
     EXPECT_EQ(mockOfflineCompiler.deviceConfig, config);
+}
+
+TEST_F(MockOfflineCompilerTests, givenDeviceIdAndRevisionIdValueWhenInitHwInfoThenCorrectValuesAreSet) {
+    MockOfflineCompiler mockOfflineCompiler;
+    uint32_t deviceID = 0;
+    std::stringstream deviceIDStr;
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &deviceMapConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
+            deviceID = deviceMapConfig.deviceIds->front();
+            deviceIDStr << "0x" << std::hex << deviceID;
+            break;
+        }
+    }
+
+    mockOfflineCompiler.deviceName = deviceIDStr.str();
+    mockOfflineCompiler.revisionId = 0x0;
+
+    EXPECT_FALSE(mockOfflineCompiler.deviceName.empty());
+
+    mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName);
+    EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usDeviceID, deviceID);
+    EXPECT_EQ(mockOfflineCompiler.hwInfo.platform.usRevId, mockOfflineCompiler.revisionId);
 }
 
 TEST_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenBaseHardwareInfoValuesAreSet) {
@@ -722,6 +747,51 @@ HWTEST2_F(MockOfflineCompilerTests, givenProductConfigValueWhenInitHwInfoThenMax
     EXPECT_NE(mockOfflineCompiler.hwInfo.gtSystemInfo.MaxDualSubSlicesSupported, 0u);
 }
 
+TEST_F(MockOfflineCompilerTests, givenDeviceIpVersionWhenInitHwInfoThenCorrectResultsIsReturned) {
+    MockOfflineCompiler mockOfflineCompiler;
+    std::stringstream config;
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &deviceMapConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
+            config << deviceMapConfig.aotConfig.value;
+            mockOfflineCompiler.deviceName = config.str();
+            break;
+        }
+    }
+
+    EXPECT_EQ(OclocErrorCode::SUCCESS, mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName));
+}
+
+TEST_F(MockOfflineCompilerTests, givenTheSameProductConfigWhenDifferentDeviceFormParameterIsPassedThenSameResultsAreReturned) {
+    MockOfflineCompiler mockOfflineCompiler;
+    std::stringstream ipVersion;
+
+    auto &allEnabledDeviceConfigs = mockOfflineCompiler.argHelper->productConfigHelper->getDeviceAotInfo();
+    if (allEnabledDeviceConfigs.empty()) {
+        GTEST_SKIP();
+    }
+
+    for (const auto &deviceMapConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
+            ipVersion << deviceMapConfig.aotConfig.value;
+            mockOfflineCompiler.deviceName = ProductConfigHelper::parseMajorMinorRevisionValue(deviceMapConfig.aotConfig);
+            break;
+        }
+    }
+
+    EXPECT_EQ(OclocErrorCode::SUCCESS, mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName));
+    EXPECT_NE(AOT::UNKNOWN_ISA, mockOfflineCompiler.deviceConfig);
+    auto expectedConfig = mockOfflineCompiler.deviceConfig;
+
+    mockOfflineCompiler.deviceName = ipVersion.str();
+    EXPECT_EQ(OclocErrorCode::SUCCESS, mockOfflineCompiler.initHardwareInfo(mockOfflineCompiler.deviceName));
+    EXPECT_EQ(expectedConfig, mockOfflineCompiler.deviceConfig);
+}
+
 TEST_F(OfflineCompilerTests, GivenHelpOptionOnQueryThenSuccessIsReturned) {
     std::vector<std::string> argv = {
         "ocloc",
@@ -769,7 +839,7 @@ TEST_F(OfflineCompilerTests, givenFamilyAcronymWhenIdsCommandIsInvokeThenSuccess
     auto &supportedDevicesConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
     for (const auto &familyAcronym : enabledFamilies) {
         std::vector<std::string> expected{};
-        auto family = ProductConfigHelper::getFamilyForAcronym(familyAcronym.str());
+        auto family = oclocArgHelperWithoutInput->productConfigHelper->getFamilyFromDeviceName(familyAcronym.str());
         for (const auto &device : supportedDevicesConfigs) {
             if (device.family == family) {
                 auto config = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
@@ -803,7 +873,7 @@ TEST_F(OfflineCompilerTests, givenReleaseAcronymWhenIdsCommandIsInvokeThenSucces
     auto &supportedDevicesConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
     for (const auto &releaseAcronym : enabledReleases) {
         std::vector<std::string> expected{};
-        auto release = ProductConfigHelper::getReleaseForAcronym(releaseAcronym.str());
+        auto release = oclocArgHelperWithoutInput->productConfigHelper->getReleaseFromDeviceName(releaseAcronym.str());
         for (const auto &device : supportedDevicesConfigs) {
             if (device.release == release) {
                 auto config = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
@@ -837,7 +907,7 @@ TEST_F(OfflineCompilerTests, givenProductAcronymWhenIdsCommandIsInvokeThenSucces
     auto &supportedDevicesConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
     for (const auto &productAcronym : enabledProducts) {
         std::vector<std::string> expected{};
-        auto product = ProductConfigHelper::getProductConfigForAcronym(productAcronym.str());
+        auto product = ProductConfigHelper::getProductConfigFromAcronym(productAcronym.str());
         for (const auto &device : supportedDevicesConfigs) {
             if (device.aotConfig.value == product) {
                 auto config = ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig);
@@ -1125,7 +1195,7 @@ TEST_F(OfflineCompilerTests, givenIncorrectDeviceIdHexThenInvalidDeviceIsReturne
 
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_STREQ(output.c_str(), "Could not determine device target: 0x0\nError: Cannot get HW Info for device 0x0.\n");
+    EXPECT_STREQ(output.c_str(), "Could not determine device target: 0x0.\nError: Cannot get HW Info for device 0x0.\n");
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
@@ -1140,7 +1210,7 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWithMissingRevisionValueWhenIn
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_STREQ(output.c_str(), "Could not determine device target: 9.1.\nError: Cannot get HW Info for device 9.1..\n");
+    EXPECT_STREQ(output.c_str(), "Could not determine device target: 9.1..\nError: Cannot get HW Info for device 9.1..\n");
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
@@ -1155,7 +1225,7 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWithInvalidPatternThenInvalidD
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_STREQ(output.c_str(), "Could not determine device target: 9.1..\nError: Cannot get HW Info for device 9.1...\n");
+    EXPECT_STREQ(output.c_str(), "Could not determine device target: 9.1...\nError: Cannot get HW Info for device 9.1...\n");
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
@@ -1170,7 +1240,7 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWithMissingMajorValueWhenInval
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_STREQ(output.c_str(), "Could not determine device target: .1.2\nError: Cannot get HW Info for device .1.2.\n");
+    EXPECT_STREQ(output.c_str(), "Could not determine device target: .1.2.\nError: Cannot get HW Info for device .1.2.\n");
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
@@ -1185,7 +1255,7 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWhenInvalidRevisionValueIsPass
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_STREQ(output.c_str(), "Could not determine device target: 9.0.a\nError: Cannot get HW Info for device 9.0.a.\n");
+    EXPECT_STREQ(output.c_str(), "Could not determine device target: 9.0.a.\nError: Cannot get HW Info for device 9.0.a.\n");
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
@@ -1200,7 +1270,7 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWhenInvalidMinorValueIsPassedT
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_STREQ(output.c_str(), "Could not determine device target: 9.a\nError: Cannot get HW Info for device 9.a.\n");
+    EXPECT_STREQ(output.c_str(), "Could not determine device target: 9.a.\nError: Cannot get HW Info for device 9.a.\n");
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
@@ -1215,7 +1285,22 @@ TEST_F(OfflineCompilerTests, givenDeviceNumerationWhenPassedValuesAreOutOfRangeT
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_STREQ(output.c_str(), "Could not determine device target: 256.350\nError: Cannot get HW Info for device 256.350.\n");
+    EXPECT_STREQ(output.c_str(), "Could not determine device target: 256.350.\nError: Cannot get HW Info for device 256.350.\n");
+    EXPECT_EQ(CL_INVALID_DEVICE, retVal);
+}
+
+TEST_F(OfflineCompilerTests, givenDeviceIpVersionWhenPassedValueNotExistThenInvalidDeviceIsReturned) {
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        "1234"};
+    testing::internal::CaptureStdout();
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
+    auto output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(nullptr, pOfflineCompiler);
+    EXPECT_STREQ(output.c_str(), "Could not determine device target: 1234.\nError: Cannot get HW Info for device 1234.\n");
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
@@ -1251,7 +1336,7 @@ TEST_F(OfflineCompilerTests, givenIncorrectDeviceIdWithIncorrectHexPatternThenIn
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     auto output = testing::internal::GetCapturedStdout();
     EXPECT_EQ(nullptr, pOfflineCompiler);
-    EXPECT_STREQ(output.c_str(), "Error: Cannot get HW Info for device 0xnonexist.\n");
+    EXPECT_STREQ(output.c_str(), "Could not determine device target: 0xnonexist.\nError: Cannot get HW Info for device 0xnonexist.\n");
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
 
@@ -1837,6 +1922,48 @@ TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceConfigValueThenBuild
     delete pOfflineCompiler;
 }
 
+TEST_F(OfflineCompilerTests, GivenArgsWhenBuildingWithDeviceIpVersionValueThenBuildSucceeds) {
+    auto &allEnabledDeviceConfigs = oclocArgHelperWithoutInput->productConfigHelper->getDeviceAotInfo();
+    if (allEnabledDeviceConfigs.empty()) {
+        return;
+    }
+
+    std::stringstream ipVersion;
+    for (auto &deviceMapConfig : allEnabledDeviceConfigs) {
+        if (productFamily == deviceMapConfig.hwInfo->platform.eProductFamily) {
+            ipVersion << deviceMapConfig.aotConfig.value;
+            break;
+        }
+    }
+
+    std::vector<std::string> argv = {
+        "ocloc",
+        "-file",
+        clFiles + "copybuffer.cl",
+        "-device",
+        ipVersion.str(),
+        "--format",
+        "patchtokens"};
+
+    pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
+
+    EXPECT_NE(nullptr, pOfflineCompiler);
+    EXPECT_EQ(CL_SUCCESS, retVal);
+
+    testing::internal::CaptureStdout();
+    retVal = pOfflineCompiler->build();
+    std::string output = testing::internal::GetCapturedStdout();
+    EXPECT_EQ(CL_SUCCESS, retVal);
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "bc") || compilerOutputExists("copybuffer", "spv"));
+    EXPECT_FALSE(compilerOutputExists("copybuffer", "gen"));
+    EXPECT_TRUE(compilerOutputExists("copybuffer", "bin"));
+
+    std::string buildLog = pOfflineCompiler->getBuildLog();
+    EXPECT_STREQ(buildLog.c_str(), "");
+
+    delete pOfflineCompiler;
+}
+
 TEST_F(OfflineCompilerTests, GivenLlvmTextWhenBuildingThenBuildSucceeds) {
     std::vector<std::string> argv = {
         "ocloc",
@@ -2149,7 +2276,7 @@ TEST_F(OfflineCompilerTests, GivenNonexistantDeviceWhenCompilingThenInvalidDevic
     testing::internal::CaptureStdout();
     pOfflineCompiler = OfflineCompiler::create(argv.size(), argv, true, retVal, oclocArgHelperWithoutInput.get());
     std::string output = testing::internal::GetCapturedStdout();
-    EXPECT_STREQ(output.c_str(), "Error: Cannot get HW Info for device foobar.\n");
+    EXPECT_STREQ(output.c_str(), "Could not determine device target: foobar.\nError: Cannot get HW Info for device foobar.\n");
     EXPECT_EQ(nullptr, pOfflineCompiler);
     EXPECT_EQ(CL_INVALID_DEVICE, retVal);
 }
@@ -2347,7 +2474,7 @@ TEST(OfflineCompilerTest, GivenUnknownIsaConfigValueWhenInitHardwareInfoThenInva
     EXPECT_EQ(retVal, OclocErrorCode::INVALID_DEVICE);
 
     auto output = testing::internal::GetCapturedStdout();
-    resString << "Could not determine device target: " << deviceName << "\n";
+    resString << "Could not determine device target: " << deviceName << ".\n";
     EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 
@@ -2362,7 +2489,7 @@ TEST(OfflineCompilerTest, GivenUnsupportedDeviceConfigWhenInitHardwareInfoThenIn
     EXPECT_EQ(retVal, OclocErrorCode::INVALID_DEVICE);
 
     auto output = testing::internal::GetCapturedStdout();
-    resString << "Could not determine device target: " << deviceName << "\n";
+    resString << "Could not determine device target: " << deviceName << ".\n";
     EXPECT_STREQ(output.c_str(), resString.str().c_str());
 }
 

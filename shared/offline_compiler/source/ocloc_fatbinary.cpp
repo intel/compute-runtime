@@ -35,12 +35,14 @@ bool requestedFatBinary(const std::vector<std::string> &args, OclocArgHelper *he
             ConstStringRef deviceArg(args[argIndex + 1]);
             auto deviceName = deviceArg.str();
             ProductConfigHelper::adjustDeviceName(deviceName);
+            auto release = helper->productConfigHelper->getReleaseFromDeviceName(deviceName);
+            auto family = helper->productConfigHelper->getFamilyFromDeviceName(deviceName);
 
             auto retVal = deviceArg.contains("*");
             retVal |= deviceArg.contains(":");
             retVal |= deviceArg.contains(",");
-            retVal |= helper->productConfigHelper->isFamily(deviceName);
-            retVal |= helper->productConfigHelper->isRelease(deviceName);
+            retVal |= family != AOT::UNKNOWN_FAMILY;
+            retVal |= release != AOT::UNKNOWN_RELEASE;
 
             return retVal;
         }
@@ -86,19 +88,21 @@ void getProductsAcronymsForTarget<AOT::FAMILY>(std::vector<NEO::ConstStringRef> 
 }
 
 template <typename T>
-void getProductsForTargetRange(T targetFrom, T targetTo, std::vector<ConstStringRef> &out,
-                               OclocArgHelper *argHelper) {
+std::vector<ConstStringRef> getProductsForTargetRange(T targetFrom, T targetTo, OclocArgHelper *argHelper) {
+    std::vector<ConstStringRef> ret{};
     if (targetFrom > targetTo) {
         std::swap(targetFrom, targetTo);
     }
     while (targetFrom <= targetTo) {
-        getProductsAcronymsForTarget<T>(out, targetFrom, argHelper);
+        getProductsAcronymsForTarget<T>(ret, targetFrom, argHelper);
         targetFrom = static_cast<T>(static_cast<unsigned int>(targetFrom) + 1);
     }
+    return ret;
 }
 
-void getProductsForRange(unsigned int productFrom, unsigned int productTo, std::vector<ConstStringRef> &out,
-                         OclocArgHelper *argHelper) {
+std::vector<ConstStringRef> getProductsForRange(unsigned int productFrom, unsigned int productTo,
+                                                OclocArgHelper *argHelper) {
+    std::vector<ConstStringRef> ret = {};
     auto &allSuppportedProducts = argHelper->productConfigHelper->getDeviceAotInfo();
 
     for (const auto &device : allSuppportedProducts) {
@@ -107,12 +111,13 @@ void getProductsForRange(unsigned int productFrom, unsigned int productTo, std::
 
         if (validAcronym) {
             if (!device.deviceAcronyms.empty()) {
-                out.push_back(device.deviceAcronyms.front());
+                ret.push_back(device.deviceAcronyms.front());
             } else if (!device.rtlIdAcronyms.empty()) {
-                out.push_back(device.rtlIdAcronyms.front());
+                ret.push_back(device.rtlIdAcronyms.front());
             }
         }
     }
+    return ret;
 }
 
 std::vector<ConstStringRef> getProductForClosedRange(ConstStringRef rangeFrom, ConstStringRef rangeTo, OclocArgHelper *argHelper) {
@@ -123,30 +128,30 @@ std::vector<ConstStringRef> getProductForClosedRange(ConstStringRef rangeFrom, C
     ProductConfigHelper::adjustDeviceName(rangeToStr);
     ProductConfigHelper::adjustDeviceName(rangeFromStr);
 
-    if (argHelper->productConfigHelper->isFamily(rangeFromStr) && argHelper->productConfigHelper->isFamily(rangeToStr)) {
-        auto familyFrom = ProductConfigHelper::getFamilyForAcronym(rangeFromStr);
-        auto familyTo = ProductConfigHelper::getFamilyForAcronym(rangeToStr);
-        getProductsForTargetRange(familyFrom, familyTo, requestedProducts, argHelper);
-
-    } else if (argHelper->productConfigHelper->isRelease(rangeFromStr) && argHelper->productConfigHelper->isRelease(rangeToStr)) {
-        auto releaseFrom = ProductConfigHelper::getReleaseForAcronym(rangeFromStr);
-        auto releaseTo = ProductConfigHelper::getReleaseForAcronym(rangeToStr);
-        getProductsForTargetRange(releaseFrom, releaseTo, requestedProducts, argHelper);
-
-    } else if (argHelper->productConfigHelper->isProductConfig(rangeFromStr) && argHelper->productConfigHelper->isProductConfig(rangeToStr)) {
-        unsigned int productConfigFrom = ProductConfigHelper::getProductConfigForAcronym(rangeFromStr);
-        unsigned int productConfigTo = ProductConfigHelper::getProductConfigForAcronym(rangeToStr);
-        if (productConfigFrom > productConfigTo) {
-            std::swap(productConfigFrom, productConfigTo);
-        }
-        getProductsForRange(productConfigFrom, productConfigTo, requestedProducts, argHelper);
-    } else {
-        auto target = rangeFromStr + ":" + rangeToStr;
-        argHelper->printf("Failed to parse target : %s.\n", target.c_str());
-        return {};
+    auto familyFrom = argHelper->productConfigHelper->getFamilyFromDeviceName(rangeFromStr);
+    auto familyTo = argHelper->productConfigHelper->getFamilyFromDeviceName(rangeToStr);
+    if (familyFrom != AOT::UNKNOWN_FAMILY && familyTo != AOT::UNKNOWN_FAMILY) {
+        return getProductsForTargetRange(familyFrom, familyTo, argHelper);
     }
 
-    return requestedProducts;
+    auto releaseFrom = argHelper->productConfigHelper->getReleaseFromDeviceName(rangeFromStr);
+    auto releaseTo = argHelper->productConfigHelper->getReleaseFromDeviceName(rangeToStr);
+    if (releaseFrom != AOT::UNKNOWN_RELEASE && releaseTo != AOT::UNKNOWN_RELEASE) {
+        return getProductsForTargetRange(releaseFrom, releaseTo, argHelper);
+    }
+
+    auto prodConfigFrom = argHelper->productConfigHelper->getProductConfigFromDeviceName(rangeFromStr);
+    auto prodConfigTo = argHelper->productConfigHelper->getProductConfigFromDeviceName(rangeToStr);
+    if (prodConfigFrom != AOT::UNKNOWN_ISA && prodConfigTo != AOT::UNKNOWN_ISA) {
+        if (prodConfigFrom > prodConfigTo) {
+            std::swap(prodConfigFrom, prodConfigTo);
+        }
+        return getProductsForRange(prodConfigFrom, prodConfigTo, argHelper);
+    }
+
+    auto target = rangeFromStr + ":" + rangeToStr;
+    argHelper->printf("Failed to parse target : %s.\n", target.c_str());
+    return {};
 }
 
 std::vector<ConstStringRef> getProductForOpenRange(ConstStringRef openRange, OclocArgHelper *argHelper, bool rangeTo) {
@@ -154,41 +159,46 @@ std::vector<ConstStringRef> getProductForOpenRange(ConstStringRef openRange, Ocl
     auto openRangeStr = openRange.str();
     ProductConfigHelper::adjustDeviceName(openRangeStr);
 
-    if (argHelper->productConfigHelper->isFamily(openRangeStr)) {
-        auto family = ProductConfigHelper::getFamilyForAcronym(openRangeStr);
+    auto family = argHelper->productConfigHelper->getFamilyFromDeviceName(openRangeStr);
+    if (family != AOT::UNKNOWN_FAMILY) {
         if (rangeTo) {
             unsigned int familyFrom = AOT::UNKNOWN_FAMILY;
             ++familyFrom;
-            getProductsForTargetRange(static_cast<AOT::FAMILY>(familyFrom), family, requestedProducts, argHelper);
+            return getProductsForTargetRange(static_cast<AOT::FAMILY>(familyFrom), family, argHelper);
         } else {
             unsigned int familyTo = AOT::FAMILY_MAX;
             --familyTo;
-            getProductsForTargetRange(family, static_cast<AOT::FAMILY>(familyTo), requestedProducts, argHelper);
+            return getProductsForTargetRange(family, static_cast<AOT::FAMILY>(familyTo), argHelper);
         }
-    } else if (argHelper->productConfigHelper->isRelease(openRangeStr)) {
-        auto release = ProductConfigHelper::getReleaseForAcronym(openRangeStr);
+    }
+
+    auto release = argHelper->productConfigHelper->getReleaseFromDeviceName(openRangeStr);
+    if (release != AOT::UNKNOWN_RELEASE) {
         if (rangeTo) {
             unsigned int releaseFrom = AOT::UNKNOWN_FAMILY;
             ++releaseFrom;
-            getProductsForTargetRange(static_cast<AOT::RELEASE>(releaseFrom), release, requestedProducts, argHelper);
+            return getProductsForTargetRange(static_cast<AOT::RELEASE>(releaseFrom), release, argHelper);
         } else {
             unsigned int releaseTo = AOT::RELEASE_MAX;
             --releaseTo;
-            getProductsForTargetRange(release, static_cast<AOT::RELEASE>(releaseTo), requestedProducts, argHelper);
+            return getProductsForTargetRange(release, static_cast<AOT::RELEASE>(releaseTo), argHelper);
         }
-    } else if (argHelper->productConfigHelper->isProductConfig(openRangeStr)) {
-        auto product = ProductConfigHelper::getProductConfigForAcronym(openRangeStr);
+    }
+
+    auto product = argHelper->productConfigHelper->getProductConfigFromDeviceName(openRangeStr);
+    if (product != AOT::UNKNOWN_ISA) {
         if (rangeTo) {
             unsigned int productFrom = AOT::UNKNOWN_ISA;
             ++productFrom;
-            getProductsForRange(productFrom, static_cast<unsigned int>(product), requestedProducts, argHelper);
+            return getProductsForRange(productFrom, static_cast<unsigned int>(product), argHelper);
         } else {
             unsigned int productTo = AOT::CONFIG_MAX_PLATFORM;
             --productTo;
-            getProductsForRange(product, static_cast<AOT::PRODUCT_CONFIG>(productTo), requestedProducts, argHelper);
+            return getProductsForRange(product, static_cast<AOT::PRODUCT_CONFIG>(productTo), argHelper);
         }
     }
-    return requestedProducts;
+    argHelper->printf("Failed to parse target : %s.\n", openRangeStr.c_str());
+    return {};
 }
 
 std::vector<ConstStringRef> getProductForSpecificTarget(CompilerOptions::TokenizedString targets, OclocArgHelper *argHelper) {
@@ -197,18 +207,23 @@ std::vector<ConstStringRef> getProductForSpecificTarget(CompilerOptions::Tokeniz
         auto targetStr = target.str();
         ProductConfigHelper::adjustDeviceName(targetStr);
 
-        if (argHelper->productConfigHelper->isFamily(targetStr)) {
-            auto family = ProductConfigHelper::getFamilyForAcronym(targetStr);
+        auto family = argHelper->productConfigHelper->getFamilyFromDeviceName(targetStr);
+        if (family != AOT::UNKNOWN_FAMILY) {
             getProductsAcronymsForTarget(requestedConfigs, family, argHelper);
-        } else if (argHelper->productConfigHelper->isRelease(targetStr)) {
-            auto release = ProductConfigHelper::getReleaseForAcronym(targetStr);
-            getProductsAcronymsForTarget(requestedConfigs, release, argHelper);
-        } else if (argHelper->productConfigHelper->isProductConfig(targetStr)) {
-            requestedConfigs.push_back(target);
-        } else {
-            argHelper->printf("Failed to parse target : %s - invalid device:\n", target.str().c_str());
-            return {};
+            continue;
         }
+        auto release = argHelper->productConfigHelper->getReleaseFromDeviceName(targetStr);
+        if (release != AOT::UNKNOWN_RELEASE) {
+            getProductsAcronymsForTarget(requestedConfigs, release, argHelper);
+            continue;
+        }
+        auto product = argHelper->productConfigHelper->getProductConfigFromDeviceName(targetStr);
+        if (product != AOT::UNKNOWN_ISA) {
+            requestedConfigs.push_back(target);
+            continue;
+        }
+        argHelper->printf("Failed to parse target : %s - invalid device:\n", target.str().c_str());
+        return {};
     }
     return requestedConfigs;
 }
@@ -227,9 +242,7 @@ std::vector<ConstStringRef> getTargetProductsForFatbinary(ConstStringRef deviceA
             }
             if (range.size() == 1) {
                 bool rangeTo = (':' == sets[0][0]);
-
                 retVal = getProductForOpenRange(range[0], argHelper, rangeTo);
-
             } else {
                 retVal = getProductForClosedRange(range[0], range[1], argHelper);
             }
@@ -268,7 +281,7 @@ int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy
     if (product.find(".") != std::string::npos) {
         productConfig = product;
     } else {
-        productConfig = ProductConfigHelper::parseMajorMinorRevisionValue(ProductConfigHelper::getProductConfigForAcronym(product));
+        productConfig = ProductConfigHelper::parseMajorMinorRevisionValue(argHelper->productConfigHelper->getProductConfigFromDeviceName(product));
     }
 
     fatbinary.appendFileEntry(pointerSize + "." + productConfig, pCompiler->getPackedDeviceBinaryOutput());

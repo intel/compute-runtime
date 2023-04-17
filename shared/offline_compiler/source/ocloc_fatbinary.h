@@ -33,7 +33,7 @@ inline int buildFatBinary(int argc, const char *argv[], OclocArgHelper *argHelpe
 
 template <typename Target>
 void getProductsAcronymsForTarget(std::vector<NEO::ConstStringRef> &out, Target target, OclocArgHelper *argHelper);
-void getProductsForRange(unsigned int productFrom, unsigned int productTo, std::vector<ConstStringRef> &out, OclocArgHelper *argHelper);
+std::vector<NEO::ConstStringRef> getProductsForRange(unsigned int productFrom, unsigned int productTo, OclocArgHelper *argHelper);
 std::vector<ConstStringRef> getTargetProductsForFatbinary(ConstStringRef deviceArg, OclocArgHelper *argHelper);
 int buildFatBinaryForTarget(int retVal, const std::vector<std::string> &argsCopy, std::string pointerSize, Ar::ArEncoder &fatbinary,
                             OfflineCompiler *pCompiler, OclocArgHelper *argHelper, const std::string &deviceConfig);

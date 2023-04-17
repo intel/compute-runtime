@@ -51,7 +51,7 @@ void ProductConfigHelper::adjustDeviceName(std::string &device) {
     }
 }
 
-NEO::ConstStringRef ProductConfigHelper::getAcronymForAFamily(AOT::FAMILY family) {
+NEO::ConstStringRef ProductConfigHelper::getAcronymFromAFamily(AOT::FAMILY family) {
     for (const auto &[acronym, value] : AOT::familyAcronyms) {
         if (value == family) {
             return NEO::ConstStringRef(acronym);
@@ -60,21 +60,21 @@ NEO::ConstStringRef ProductConfigHelper::getAcronymForAFamily(AOT::FAMILY family
     return {};
 }
 
-AOT::RELEASE ProductConfigHelper::getReleaseForAcronym(const std::string &device) {
+AOT::RELEASE ProductConfigHelper::getReleaseFromDeviceName(const std::string &device) const {
     auto it = std::find_if(AOT::releaseAcronyms.begin(), AOT::releaseAcronyms.end(), findMapAcronymWithoutDash(device));
     if (it == AOT::releaseAcronyms.end())
         return AOT::UNKNOWN_RELEASE;
-    return it->second;
+    return isSupportedRelease(it->second) ? it->second : AOT::UNKNOWN_RELEASE;
 }
 
-AOT::FAMILY ProductConfigHelper::getFamilyForAcronym(const std::string &device) {
+AOT::FAMILY ProductConfigHelper::getFamilyFromDeviceName(const std::string &device) const {
     auto it = std::find_if(AOT::familyAcronyms.begin(), AOT::familyAcronyms.end(), findMapAcronymWithoutDash(device));
     if (it == AOT::familyAcronyms.end())
         return AOT::UNKNOWN_FAMILY;
-    return it->second;
+    return isSupportedFamily(it->second) ? it->second : AOT::UNKNOWN_FAMILY;
 }
 
-const std::string ProductConfigHelper::getAcronymForProductConfig(AOT::PRODUCT_CONFIG config) const {
+const std::string ProductConfigHelper::getAcronymForProductConfig(uint32_t config) const {
     auto it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findProductConfig(config));
     if (it == deviceAotInfo.end()) {
         return {};
@@ -87,7 +87,7 @@ const std::string ProductConfigHelper::getAcronymForProductConfig(AOT::PRODUCT_C
         return parseMajorMinorRevisionValue(it->aotConfig);
 }
 
-AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigForDeviceId(unsigned short deviceId) const {
+AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigBasedOnDeviceId(unsigned short deviceId) const {
     for (const auto &device : deviceAotInfo) {
         if (std::find(device.deviceIds->begin(), device.deviceIds->end(), deviceId) != device.deviceIds->end()) {
             return static_cast<AOT::PRODUCT_CONFIG>(device.aotConfig.value);
@@ -96,34 +96,41 @@ AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigForDeviceId(unsigned sh
     return AOT::UNKNOWN_ISA;
 }
 
-bool ProductConfigHelper::isRelease(const std::string &device) {
-    auto release = getReleaseForAcronym(device);
-    if (release == AOT::UNKNOWN_RELEASE) {
-        return false;
-    }
-    return std::any_of(deviceAotInfo.begin(), deviceAotInfo.end(), findRelease(release));
-}
-
-bool ProductConfigHelper::isFamily(const std::string &device) {
-    auto family = getFamilyForAcronym(device);
+bool ProductConfigHelper::isSupportedFamily(uint32_t family) const {
     if (family == AOT::UNKNOWN_FAMILY) {
         return false;
     }
     return std::any_of(deviceAotInfo.begin(), deviceAotInfo.end(), findFamily(family));
 }
 
-bool ProductConfigHelper::isProductConfig(const std::string &device) {
-    auto config = AOT::UNKNOWN_ISA;
-    if (device.find(".") != std::string::npos) {
-        config = getProductConfigForVersionValue(device);
-    } else {
-        config = getProductConfigForAcronym(device);
+bool ProductConfigHelper::isSupportedRelease(uint32_t release) const {
+    if (release == AOT::UNKNOWN_RELEASE) {
+        return false;
     }
+    return std::any_of(deviceAotInfo.begin(), deviceAotInfo.end(), findRelease(release));
+}
 
+bool ProductConfigHelper::isSupportedProductConfig(uint32_t config) const {
     if (config == AOT::UNKNOWN_ISA) {
         return false;
     }
     return std::any_of(deviceAotInfo.begin(), deviceAotInfo.end(), findProductConfig(config));
+}
+
+AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigFromDeviceName(const std::string &device) const {
+    uint32_t config = AOT::UNKNOWN_ISA;
+    if (device.find(".") != std::string::npos) {
+        config = getProductConfigFromVersionValue(device);
+    } else if (std::all_of(device.begin(), device.end(), (::isdigit))) {
+        config = static_cast<uint32_t>(std::stoul(device));
+    } else {
+        config = getProductConfigFromAcronym(device);
+    }
+    if (!isSupportedProductConfig(config)) {
+        return AOT::UNKNOWN_ISA;
+    }
+
+    return static_cast<AOT::PRODUCT_CONFIG>(config);
 }
 
 std::vector<NEO::ConstStringRef> ProductConfigHelper::getRepresentativeProductAcronyms() {
@@ -176,10 +183,10 @@ std::vector<NEO::ConstStringRef> ProductConfigHelper::getAllProductAcronyms() {
     return allSupportedAcronyms;
 }
 
-PRODUCT_FAMILY ProductConfigHelper::getProductFamilyForAcronym(const std::string &device) const {
+PRODUCT_FAMILY ProductConfigHelper::getProductFamilyFromDeviceName(const std::string &device) const {
     std::vector<DeviceAotInfo>::const_iterator it;
     if (device.find(".") != std::string::npos) {
-        it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findProductConfig(getProductConfigForVersionValue(device)));
+        it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findProductConfig(getProductConfigFromVersionValue(device)));
     } else {
         it = std::find_if(deviceAotInfo.begin(), deviceAotInfo.end(), findAcronym(device));
     }
@@ -236,7 +243,7 @@ int ProductConfigHelper::parseProductConfigFromString(const std::string &device,
     }
 }
 
-AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigForVersionValue(const std::string &device) {
+uint32_t ProductConfigHelper::getProductConfigFromVersionValue(const std::string &device) {
     auto majorPos = device.find(".");
     auto major = parseProductConfigFromString(device, 0, majorPos);
     if (major == ConfigStatus::MismatchedValue || majorPos == std::string::npos) {
@@ -260,5 +267,5 @@ AOT::PRODUCT_CONFIG ProductConfigHelper::getProductConfigForVersionValue(const s
     product.release = minor;
     product.revision = revision;
 
-    return static_cast<AOT::PRODUCT_CONFIG>(product.value);
+    return product.value;
 }

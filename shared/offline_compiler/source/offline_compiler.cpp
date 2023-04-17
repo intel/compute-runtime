@@ -154,22 +154,23 @@ int OfflineCompiler::queryAcronymIds(size_t numArgs, const std::vector<std::stri
     auto &enabledDevices = helper->productConfigHelper->getDeviceAotInfo();
     std::vector<std::string> matchedVersions{};
 
-    if (helper->productConfigHelper->isFamily(queryAcronym)) {
-        auto family = ProductConfigHelper::getFamilyForAcronym(queryAcronym);
+    auto family = helper->productConfigHelper->getFamilyFromDeviceName(queryAcronym);
+    auto release = helper->productConfigHelper->getReleaseFromDeviceName(queryAcronym);
+    auto product = helper->productConfigHelper->getProductConfigFromDeviceName(queryAcronym);
+
+    if (family != AOT::UNKNOWN_FAMILY) {
         for (const auto &device : enabledDevices) {
             if (device.family == family) {
                 matchedVersions.push_back(ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig));
             }
         }
-    } else if (helper->productConfigHelper->isRelease(queryAcronym)) {
-        auto release = ProductConfigHelper::getReleaseForAcronym(queryAcronym);
+    } else if (release != AOT::UNKNOWN_RELEASE) {
         for (const auto &device : enabledDevices) {
             if (device.release == release) {
                 matchedVersions.push_back(ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig));
             }
         }
-    } else if (helper->productConfigHelper->isProductConfig(queryAcronym)) {
-        auto product = ProductConfigHelper::getProductConfigForAcronym(queryAcronym);
+    } else if (product != AOT::UNKNOWN_ISA) {
         for (const auto &device : enabledDevices) {
             if (device.aotConfig.value == product) {
                 matchedVersions.push_back(ProductConfigHelper::parseMajorMinorRevisionValue(device.aotConfig));
@@ -461,34 +462,29 @@ bool OfflineCompiler::isArgumentDeviceId(const std::string &argument) const {
 }
 
 int OfflineCompiler::initHardwareInfoForProductConfig(std::string deviceName) {
-    AOT::PRODUCT_CONFIG productConfig = AOT::UNKNOWN_ISA;
+    uint32_t productConfig = AOT::UNKNOWN_ISA;
     ProductConfigHelper::adjustDeviceName(deviceName);
     uint32_t deviceID = 0;
 
-    if (deviceName.find(".") != std::string::npos) {
-        productConfig = argHelper->productConfigHelper->getProductConfigForVersionValue(deviceName);
-    } else if (isArgumentDeviceId(deviceName)) {
+    if (isArgumentDeviceId(deviceName)) {
         deviceID = std::stoi(deviceName, 0, 16);
-        productConfig = argHelper->productConfigHelper->getProductConfigForDeviceId(deviceID);
-    } else if (argHelper->productConfigHelper->isProductConfig(deviceName) && (revisionId == -1)) {
-        productConfig = ProductConfigHelper::getProductConfigForAcronym(deviceName);
-    } else {
+        productConfig = argHelper->productConfigHelper->getProductConfigBasedOnDeviceId(deviceID);
+    } else if (revisionId == -1) {
+        productConfig = argHelper->productConfigHelper->getProductConfigFromDeviceName(deviceName);
+    }
+    if (productConfig == AOT::UNKNOWN_ISA) {
+        argHelper->printf("Could not determine device target: %s.\n", deviceName.c_str());
         return INVALID_DEVICE;
     }
 
-    if (argHelper->getHwInfoForProductConfig(productConfig, hwInfo, hwInfoConfig, deviceID, revisionId, std::move(compilerProductHelper))) {
-        if (deviceID) {
-            auto product = argHelper->productConfigHelper->getAcronymForProductConfig(productConfig);
-            argHelper->printf("Auto-detected target based on %s device id: %s\n", deviceName.c_str(), product.c_str());
-        }
-        deviceConfig = productConfig;
-        productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
-        return SUCCESS;
-
-    } else {
-        argHelper->printf("Could not determine device target: %s\n", deviceName.c_str());
-        return INVALID_DEVICE;
+    argHelper->getHwInfoForProductConfig(productConfig, hwInfo, hwInfoConfig, deviceID, revisionId, std::move(compilerProductHelper));
+    if (deviceID) {
+        auto product = argHelper->productConfigHelper->getAcronymForProductConfig(productConfig);
+        argHelper->printf("Auto-detected target based on %s device id: %s\n", deviceName.c_str(), product.c_str());
     }
+    deviceConfig = productConfig;
+    productFamilyName = hardwarePrefix[hwInfo.platform.eProductFamily];
+    return SUCCESS;
 }
 
 int OfflineCompiler::initHardwareInfo(std::string deviceName) {

@@ -59,11 +59,9 @@ struct ProductConfigHelper {
     }
 
     static std::vector<NEO::ConstStringRef> getDeviceAcronyms();
-    static NEO::ConstStringRef getAcronymForAFamily(AOT::FAMILY family);
-    static AOT::PRODUCT_CONFIG getProductConfigForVersionValue(const std::string &device);
-    static AOT::PRODUCT_CONFIG getProductConfigForAcronym(const std::string &device);
-    static AOT::RELEASE getReleaseForAcronym(const std::string &device);
-    static AOT::FAMILY getFamilyForAcronym(const std::string &device);
+    static NEO::ConstStringRef getAcronymFromAFamily(AOT::FAMILY family);
+    static uint32_t getProductConfigFromVersionValue(const std::string &device);
+    static AOT::PRODUCT_CONFIG getProductConfigFromAcronym(const std::string &device);
 
     static bool compareConfigs(DeviceAotInfo deviceAotInfo0, DeviceAotInfo deviceAotInfo1);
 
@@ -106,9 +104,9 @@ struct ProductConfigHelper {
     }
 
     void initialize();
-    bool isFamily(const std::string &device);
-    bool isRelease(const std::string &device);
-    bool isProductConfig(const std::string &device);
+    bool isSupportedFamily(uint32_t family) const;
+    bool isSupportedRelease(uint32_t release) const;
+    bool isSupportedProductConfig(uint32_t config) const;
     bool getDeviceAotInfoForProductConfig(AOT::PRODUCT_CONFIG config, DeviceAotInfo &out) const;
 
     std::vector<DeviceAotInfo> &getDeviceAotInfo();
@@ -117,9 +115,12 @@ struct ProductConfigHelper {
     std::vector<NEO::ConstStringRef> getFamiliesAcronyms();
     std::vector<NEO::ConstStringRef> getDeprecatedAcronyms();
     std::vector<NEO::ConstStringRef> getAllProductAcronyms();
-    PRODUCT_FAMILY getProductFamilyForAcronym(const std::string &device) const;
-    AOT::PRODUCT_CONFIG getProductConfigForDeviceId(unsigned short deviceId) const;
-    const std::string getAcronymForProductConfig(AOT::PRODUCT_CONFIG config) const;
+    AOT::FAMILY getFamilyFromDeviceName(const std::string &device) const;
+    AOT::PRODUCT_CONFIG getProductConfigFromDeviceName(const std::string &device) const;
+    PRODUCT_FAMILY getProductFamilyFromDeviceName(const std::string &device) const;
+    AOT::PRODUCT_CONFIG getProductConfigBasedOnDeviceId(unsigned short deviceId) const;
+    AOT::RELEASE getReleaseFromDeviceName(const std::string &device) const;
+    const std::string getAcronymForProductConfig(uint32_t config) const;
 
   protected:
     std::vector<DeviceAotInfo> deviceAotInfo;

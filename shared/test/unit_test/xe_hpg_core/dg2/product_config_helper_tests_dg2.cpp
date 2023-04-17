@@ -31,10 +31,11 @@ using ProductConfigHelperDg2Tests = ::testing::Test;
 using ProductHelperTestDg2 = ProductHelperTest;
 
 DG2TEST_F(ProductConfigHelperDg2Tests, givenVariousVariantsOfXeHpgAcronymsWhenGetReleaseThenCorrectValueIsReturned) {
+    auto productConfigHelper = std::make_unique<ProductConfigHelper>();
     std::vector<std::string> acronymsVariants = {"xe_hpg_core", "xe_hpg", "xehpg", "XeHpg"};
     for (auto &acronym : acronymsVariants) {
         ProductConfigHelper::adjustDeviceName(acronym);
-        auto ret = ProductConfigHelper::getReleaseForAcronym(acronym);
+        auto ret = productConfigHelper->getReleaseFromDeviceName(acronym);
         EXPECT_EQ(ret, AOT::XE_HPG_RELEASE);
     }
 }

@@ -131,7 +131,7 @@ All supported acronyms: %s.
     void enforceFormat(std::string &format);
     HardwareInfo hwInfo;
 
-    AOT::PRODUCT_CONFIG deviceConfig = {};
+    uint32_t deviceConfig = {};
     std::string deviceName;
     std::string productFamilyName;
     std::string inputFile;

@@ -224,7 +224,7 @@ TEST(OclocApiTests, WhenGoodFamilyNameIsProvidedThenSuccessIsReturned) {
     std::string family("");
     for (const auto &config : allSupportedDeviceConfigs) {
         if (config.hwInfo->platform.eProductFamily == NEO::DEFAULT_PLATFORM::hwInfo.platform.eProductFamily) {
-            family = ProductConfigHelper::getAcronymForAFamily(config.family).str();
+            family = ProductConfigHelper::getAcronymFromAFamily(config.family).str();
             break;
         }
     }

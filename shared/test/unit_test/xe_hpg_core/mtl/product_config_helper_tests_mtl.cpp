@@ -22,10 +22,11 @@ MTLTEST_F(ProductConfigHelperMtlTests, givenXeLpgReleaseWhenSearchForDeviceAcron
 }
 
 MTLTEST_F(ProductConfigHelperMtlTests, givenVariousVariantsOfXeLpgAcronymsWhenGetReleaseThenCorrectValueIsReturned) {
+    auto productConfigHelper = std::make_unique<ProductConfigHelper>();
     std::vector<std::string> acronymsVariants = {"xe_lpg_core", "xe_lpg", "xelpg", "XeLpg"};
     for (auto &acronym : acronymsVariants) {
         ProductConfigHelper::adjustDeviceName(acronym);
-        auto ret = ProductConfigHelper::getReleaseForAcronym(acronym);
+        auto ret = productConfigHelper->getReleaseFromDeviceName(acronym);
         EXPECT_EQ(ret, AOT::XE_LPG_RELEASE);
     }
 }
