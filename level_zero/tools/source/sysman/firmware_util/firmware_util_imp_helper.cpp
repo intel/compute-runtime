@@ -18,7 +18,6 @@ const std::string fwIafPscUpdate = "igsc_iaf_psc_update";
 const std::string fwGfspMemoryErrors = "igsc_gfsp_memory_errors";
 const std::string fwGfspGetHealthIndicator = "igsc_gfsp_get_health_indicator";
 const std::string fwGfspCountTiles = "igsc_gfsp_count_tiles";
-const std::string fwDeviceIfrRunArrayScanTest = "igsc_ifr_run_array_scan_test";
 const std::string fwDeviceIfrRunMemPPRTest = "igsc_ifr_run_mem_ppr_test";
 const std::string fwEccConfigGet = "igsc_ecc_config_get";
 const std::string fwEccConfigSet = "igsc_ecc_config_set";
@@ -28,7 +27,6 @@ pIgscIafPscUpdate iafPscUpdate;
 pIgscGfspMemoryErrors gfspMemoryErrors;
 pIgscGfspCountTiles gfspCountTiles;
 pIgscGfspGetHealthIndicator gfspGetHealthIndicator;
-pIgscIfrRunArrayScanTest deviceIfrRunArrayScanTest;
 pIgscIfrRunMemPPRTest deviceIfrRunMemPPRTest;
 pIgscGetEccConfig getEccConfig;
 pIgscSetEccConfig setEccConfig;
@@ -177,14 +175,7 @@ ze_result_t FirmwareUtilImp::fwSupportedDiagTests(std::vector<std::string> &supp
     if (result != ZE_RESULT_SUCCESS) {
         return result;
     }
-    if (supportedTests == IGSC_IFR_SUPPORTED_TESTS_ARRAY_AND_SCAN) {
-        supportedDiagTests.push_back("ARRAY_AND_SCAN");
-    }
-    if (supportedTests == IGSC_IFR_SUPPORTED_TESTS_MEMORY_PPR) {
-        supportedDiagTests.push_back("MEMORY_PPR");
-    }
-    if (supportedTests == (IGSC_IFR_SUPPORTED_TESTS_ARRAY_AND_SCAN | IGSC_IFR_SUPPORTED_TESTS_MEMORY_PPR)) {
-        supportedDiagTests.push_back("ARRAY_AND_SCAN");
+    if (supportedTests & IGSC_IFR_SUPPORTED_TESTS_MEMORY_PPR) {
         supportedDiagTests.push_back("MEMORY_PPR");
     }
     return ZE_RESULT_SUCCESS;
@@ -193,36 +184,9 @@ ze_result_t FirmwareUtilImp::fwSupportedDiagTests(std::vector<std::string> &supp
 ze_result_t FirmwareUtilImp::fwRunDiagTests(std::string &osDiagType, zes_diag_result_t *pDiagResult) {
     const std::lock_guard<std::mutex> lock(this->fwLock);
     uint32_t status = 0;
-    uint32_t extendedStatus = 0;
     uint32_t pendingReset = 0;
     uint32_t errorCode = 0;
 
-    if (osDiagType.compare("ARRAY_AND_SCAN") == 0) {
-        int ret = deviceIfrRunArrayScanTest(&fwDeviceHandle, &status, &extendedStatus, &pendingReset, &errorCode);
-        if (ret) {
-            return ZE_RESULT_ERROR_UNINITIALIZED;
-        }
-        switch (extendedStatus) {
-        case IGSC_IFR_EXT_STS_PASSED:
-        case IGSC_IFR_EXT_STS_NO_REPAIR_NEEDED:
-            *pDiagResult = ZES_DIAG_RESULT_NO_ERRORS;
-            break;
-        case IGSC_IFR_EXT_STS_REPAIRED_ARRAY:
-        case IGSC_IFR_EXT_STS_REPAIRED_SUBSLICE:
-        case IGSC_IFR_EXT_STS_REPAIRED_ARRAY_SUBSLICE:
-            *pDiagResult = ZES_DIAG_RESULT_REBOOT_FOR_REPAIR;
-            break;
-        case IGSC_IFR_EXT_STS_REPAIR_NOT_SUPPORTED:
-        case IGSC_IFR_EXT_STS_NO_RESORCES:
-        case IGSC_IFR_EXT_STS_NON_SUBSLICE_IN_ARRAY:
-        case IGSC_IFR_EXT_STS_NON_SUBSLICE_IN_SCAN:
-            *pDiagResult = ZES_DIAG_RESULT_FAIL_CANT_REPAIR;
-            break;
-        case IGSC_IFR_EXT_STS_TEST_ERROR:
-            *pDiagResult = ZES_DIAG_RESULT_ABORT;
-            break;
-        }
-    }
     if (osDiagType.compare("MEMORY_PPR") == 0) {
         int ret = deviceIfrRunMemPPRTest(&fwDeviceHandle, &status, &pendingReset, &errorCode);
         if (ret) {
@@ -294,8 +258,6 @@ ze_result_t FirmwareUtilImp::getFwVersion(std::string fwType, std::string &firmw
 bool FirmwareUtilImp::loadEntryPointsExt() {
     bool ok = getSymbolAddr(fwDeviceIfrGetStatusExt, deviceIfrGetStatusExt);
     ok = ok && getSymbolAddr(fwDeviceIfrRunMemPPRTest, deviceIfrRunMemPPRTest);
-    ok = ok && getSymbolAddr(fwDeviceIfrRunArrayScanTest, deviceIfrRunArrayScanTest);
-
     return ok;
 }
 } // namespace L0

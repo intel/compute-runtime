@@ -68,12 +68,6 @@ typedef int (*pIgscGfspCountTiles)(struct igsc_device_handle *handle,
 typedef int (*pIgscGfspGetHealthIndicator)(struct igsc_device_handle *handle,
                                            uint8_t *healthIndicator);
 
-typedef int (*pIgscIfrRunArrayScanTest)(struct igsc_device_handle *handle,
-                                        uint32_t *status,
-                                        uint32_t *extendedStatus,
-                                        uint32_t *pendingReset,
-                                        uint32_t *errorCode);
-
 typedef int (*pIgscIfrRunMemPPRTest)(struct igsc_device_handle *handle,
                                      uint32_t *status,
                                      uint32_t *pendingReset,
@@ -104,7 +98,6 @@ extern pIgscIfrGetStatusExt deviceIfrGetStatusExt;
 extern pIgscIafPscUpdate iafPscUpdate;
 extern pIgscGfspMemoryErrors gfspMemoryErrors;
 extern pIgscGfspCountTiles gfspCountTiles;
-extern pIgscIfrRunArrayScanTest deviceIfrRunArrayScanTest;
 extern pIgscIfrRunMemPPRTest deviceIfrRunMemPPRTest;
 extern pIgscGetEccConfig getEccConfig;
 extern pIgscSetEccConfig setEccConfig;

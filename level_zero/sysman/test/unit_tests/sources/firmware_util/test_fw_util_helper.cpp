@@ -14,7 +14,6 @@
 namespace L0 {
 
 extern L0::Sysman::pIgscIfrGetStatusExt L0::Sysman::deviceIfrGetStatusExt;
-extern L0::Sysman::pIgscIfrRunArrayScanTest L0::Sysman::deviceIfrRunArrayScanTest;
 extern L0::Sysman::pIgscIfrRunMemPPRTest L0::Sysman::deviceIfrRunMemPPRTest;
 extern L0::Sysman::pIgscGetEccConfig getEccConfig;
 extern L0::Sysman::pIgscSetEccConfig setEccConfig;
@@ -24,10 +23,6 @@ constexpr static uint32_t mockMaxTileCount = 2;
 static int mockMemoryHealthIndicator = IGSC_HEALTH_INDICATOR_HEALTHY;
 
 int mockDeviceIfrGetStatusExt(struct igsc_device_handle *handle, uint32_t *supportedTests, uint32_t *hwCapabilities, uint32_t *ifrApplied, uint32_t *prevErrors, uint32_t *pendingReset) {
-    return 0;
-}
-
-int mockdeviceIfrRunArrayScanTest(struct igsc_device_handle *handle, uint32_t *status, uint32_t *extendedStatus, uint32_t *pendingReset, uint32_t *errorCode) {
     return 0;
 }
 
@@ -107,12 +102,7 @@ TEST(FwStatusExtTest, GivenStatusCallFailsWhenFirmwareUtilChecksIFRThenStatusCal
 TEST(FwRunDiagTest, GivenValidSupportedDiagnosticsTestsParamWhenFirmwareUtilSupportedTestsAreRequestedThenSupportedTestsAreRun) {
 
     VariableBackup<decltype(L0::Sysman::deviceIfrGetStatusExt)> mockDeviceIfrGetStatusExt(&L0::Sysman::deviceIfrGetStatusExt, [](struct igsc_device_handle *handle, uint32_t *supportedTests, uint32_t *hwCapabilities, uint32_t *ifrApplied, uint32_t *prevErrors, uint32_t *pendingReset) -> int {
-        *supportedTests = (IGSC_IFR_SUPPORTED_TESTS_ARRAY_AND_SCAN | IGSC_IFR_SUPPORTED_TESTS_MEMORY_PPR);
-        return 0;
-    });
-
-    VariableBackup<decltype(L0::Sysman::deviceIfrRunArrayScanTest)> mockdeviceIfrRunArrayScanTest(&L0::Sysman::deviceIfrRunArrayScanTest, [](struct igsc_device_handle *handle, uint32_t *status, uint32_t *extendedStatus, uint32_t *pendingReset, uint32_t *errorCode) -> int {
-        *extendedStatus = IGSC_IFR_EXT_STS_PASSED;
+        *supportedTests = (IGSC_IFR_SUPPORTED_TESTS_MEMORY_PPR);
         return 0;
     });
 
@@ -126,14 +116,10 @@ TEST(FwRunDiagTest, GivenValidSupportedDiagnosticsTestsParamWhenFirmwareUtilSupp
     pFwUtilImp->libraryHandle = static_cast<OsLibrary *>(new MockFwUtilOsLibrary());
     auto ret = pFwUtilImp->fwSupportedDiagTests(supportedDiagTests);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_STREQ("ARRAY_AND_SCAN", supportedDiagTests.at(0).c_str());
-    EXPECT_STREQ("MEMORY_PPR", supportedDiagTests.at(1).c_str());
+    EXPECT_STREQ("MEMORY_PPR", supportedDiagTests.at(0).c_str());
 
     zes_diag_result_t pDiagResult;
     ret = pFwUtilImp->fwRunDiagTests(supportedDiagTests[0], &pDiagResult);
-    EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
-    EXPECT_EQ(ZES_DIAG_RESULT_NO_ERRORS, pDiagResult);
-    ret = pFwUtilImp->fwRunDiagTests(supportedDiagTests[1], &pDiagResult);
     EXPECT_EQ(ZE_RESULT_SUCCESS, ret);
     EXPECT_EQ(ZES_DIAG_RESULT_NO_ERRORS, pDiagResult);
     delete pFwUtilImp->libraryHandle;
@@ -147,7 +133,6 @@ TEST(FwGetProcAddressTest, GivenValidFwUtilMethodNameWhenFirmwareUtilIsInitalize
         ~IFRmockOsLibrary() override = default;
         void *getProcAddress(const std::string &procName) override {
             ifrFuncMap["igsc_ifr_get_status_ext"] = reinterpret_cast<void *>(&mockDeviceIfrGetStatusExt);
-            ifrFuncMap["igsc_ifr_run_array_scan_test"] = reinterpret_cast<void *>(&mockdeviceIfrRunArrayScanTest);
             ifrFuncMap["igsc_ifr_run_mem_ppr_test"] = reinterpret_cast<void *>(&mockdeviceIfrRunMemPPRTest);
             auto it = ifrFuncMap.find(procName);
             if (ifrFuncMap.end() == it) {

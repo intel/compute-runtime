@@ -398,11 +398,7 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
-    if (diagnosticsReset) {
-        NEO::sleep(std::chrono::seconds(30)); // Sleep for 30seconds to make sure that the config spaces of all devices are saved correctly after IFR
-    } else {
-        NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly
-    }
+    NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds to make sure that the config spaces of all devices are saved correctly.
 
     clearHPIE(fd);
 
@@ -421,11 +417,7 @@ ze_result_t LinuxSysmanImp::osWarmReset() {
     if (ZE_RESULT_SUCCESS != result) {
         return result;
     }
-    if (diagnosticsReset) {
-        NEO::sleep(std::chrono::seconds(30)); // Sleep for 30seconds to make sure that the config spaces of all devices are saved correctly after IFR
-    } else {
-        NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
-    }
+    NEO::sleep(std::chrono::seconds(10)); // Sleep for 10seconds, allows the rescan to complete on all devices attached to the root port.
 
     int ret = this->closeFunction(fd);
     if (ret < 0) {
