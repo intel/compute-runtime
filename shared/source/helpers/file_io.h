@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2021 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,3 +22,4 @@ size_t writeDataToFile(
 
 bool fileExists(const std::string &fileName);
 bool fileExistsHasSize(const std::string &fileName);
+void dumpFileIncrement(const char *data, size_t dataSize, const std::string &filename, const std::string &extension);

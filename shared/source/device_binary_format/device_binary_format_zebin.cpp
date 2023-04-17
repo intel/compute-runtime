@@ -7,11 +7,13 @@
 
 #include "shared/source/compiler_interface/intermediate_representations.h"
 #include "shared/source/compiler_interface/linker.h"
+#include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf_decoder.h"
 #include "shared/source/device_binary_format/elf/elf_encoder.h"
 #include "shared/source/device_binary_format/zebin/zebin_decoder.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/program/kernel_info.h"
 #include "shared/source/program/program_info.h"
 
@@ -22,7 +24,9 @@ namespace NEO {
 template <Elf::ELF_IDENTIFIER_CLASS numBits>
 SingleDeviceBinary unpackSingleZebin(const ArrayRef<const uint8_t> archive, const ConstStringRef requestedProductAbbreviation, const TargetDevice &requestedTargetDevice,
                                      std::string &outErrReason, std::string &outWarning) {
-
+    if (1 == NEO::DebugManager.flags.DumpZEBin.get()) {
+        dumpFileIncrement(reinterpret_cast<const char *>(archive.begin()), archive.size(), "dumped_zebin_module", ".elf");
+    }
     auto elf = Elf::decodeElf<numBits>(archive, outErrReason, outWarning);
     if (nullptr == elf.elfFileHeader) {
         return {};

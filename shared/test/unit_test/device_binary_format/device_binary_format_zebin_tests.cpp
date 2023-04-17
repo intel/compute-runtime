@@ -8,10 +8,12 @@
 #include "shared/source/device_binary_format/device_binary_formats.h"
 #include "shared/source/device_binary_format/elf/elf.h"
 #include "shared/source/device_binary_format/zebin/zebin_elf.h"
+#include "shared/source/helpers/file_io.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/program/program_info.h"
+#include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/test_macros/test.h"
 
@@ -114,6 +116,34 @@ TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryAndMatchedWithRequestedTarget
     EXPECT_TRUE(unpackResult.buildOptions.empty());
     EXPECT_TRUE(unpackWarnings.empty());
     EXPECT_TRUE(unpackErrors.empty());
+}
+
+TEST(UnpackSingleDeviceBinaryZebin, givenDumpZEBinFlagSetWhenUnpackingZebinBinaryThenEachTimeZebinIsDumpedToFile) {
+    DebugManagerStateRestore dbgRestorer;
+    DebugManager.flags.DumpZEBin.set(true);
+
+    NEO::Elf::ElfFileHeader<NEO::Elf::EI_CLASS_64> zebin;
+    zebin.type = NEO::Zebin::Elf::ET_ZEBIN_EXE;
+    zebin.machine = static_cast<decltype(zebin.machine)>(IGFX_SKYLAKE);
+    NEO::TargetDevice targetDevice;
+    targetDevice.productFamily = static_cast<PRODUCT_FAMILY>(zebin.machine);
+    targetDevice.stepping = 0U;
+    targetDevice.maxPointerSizeInBytes = 8;
+
+    std::string unpackErrors;
+    std::string unpackWarnings;
+    std::string fileName = "dumped_zebin_module.elf";
+    std::string fileNameInc = "dumped_zebin_module_0.elf";
+    EXPECT_FALSE(fileExists(fileName));
+    EXPECT_FALSE(fileExists(fileNameInc));
+
+    NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_TRUE(fileExistsHasSize(fileName));
+    NEO::unpackSingleDeviceBinary<NEO::DeviceBinaryFormat::Zebin>(ArrayRef<const uint8_t>::fromAny(&zebin, 1U), "", targetDevice, unpackErrors, unpackWarnings);
+    EXPECT_TRUE(fileExistsHasSize(fileNameInc));
+
+    std::remove(fileName.c_str());
+    std::remove(fileNameInc.c_str());
 }
 
 TEST(UnpackSingleDeviceBinaryZebin, WhenValidBinaryForDifferentDeviceThenUnpackingFails) {

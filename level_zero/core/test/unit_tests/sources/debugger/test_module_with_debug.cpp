@@ -748,7 +748,7 @@ HWTEST_F(ModuleWithZebinAndL0DebuggerTest, GivenDumpElfFlagAndZebinWhenInitializ
     memcpy_s(moduleMock->translationUnit->unpackedDeviceBinary.get(), moduleMock->translationUnit->unpackedDeviceBinarySize,
              zebin.storage.data(), zebin.storage.size());
 
-    std::string fileName = "dumped_module.elf";
+    std::string fileName = "dumped_debug_module.elf";
     EXPECT_FALSE(fileExists(fileName));
 
     EXPECT_EQ(moduleMock->initialize(&moduleDesc, neoDevice), ZE_RESULT_SUCCESS);

@@ -47,7 +47,6 @@
 
 #include "program_debug_data.h"
 
-#include <fstream>
 #include <list>
 #include <memory>
 #include <unordered_map>
@@ -1317,16 +1316,7 @@ void ModuleImp::registerElfInDebuggerL0() {
         this->debugElfHandle = debuggerL0->registerElf(&debugData);
 
         if (NEO::DebugManager.flags.DebuggerLogBitmask.get() & NEO::DebugVariables::DEBUGGER_LOG_BITMASK::DUMP_ELF) {
-            std::ofstream elfFile;
-            std::string name = "dumped_module";
-            std::string fileName = name + ".elf";
-
-            int suffix = 0;
-            while (fileExists(fileName)) {
-                fileName = name + "_" + std::to_string(suffix) + ".elf";
-                suffix++;
-            }
-            writeDataToFile(fileName.c_str(), debugData.vIsa, debugData.vIsaSize);
+            dumpFileIncrement(debugData.vIsa, debugData.vIsaSize, "dumped_debug_module", ".elf");
         }
 
         StackVec<NEO::GraphicsAllocation *, 32> segmentAllocs;
