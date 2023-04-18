@@ -15,9 +15,24 @@
 #include "shared/source/helpers/compiler_product_helper_enable_subgroup_local_block_io.inl"
 #include "shared/source/helpers/compiler_product_helper_tgllp_and_later.inl"
 
+#include "platforms.h"
+
 namespace NEO {
 
-#include "shared/source/gen12lp/compiler_product_helper_rkl.inl"
+template <>
+uint64_t CompilerProductHelperHw<IGFX_ROCKETLAKE>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100020010;
+}
+template <>
+bool CompilerProductHelperHw<IGFX_ROCKETLAKE>::isForceEmuInt32DivRemSPRequired() const {
+    return true;
+}
+
+template <>
+uint32_t CompilerProductHelperHw<IGFX_ROCKETLAKE>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+    return AOT::RKL;
+}
+
 static EnableCompilerProductHelper<IGFX_ROCKETLAKE> enableCompilerProductHelperRKL;
 
 } // namespace NEO

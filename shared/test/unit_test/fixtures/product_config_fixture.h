@@ -7,10 +7,10 @@
 
 #pragma once
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
-#include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/test_base.h"
 
@@ -24,10 +24,10 @@ struct ProductConfigTest : public T {
     void SetUp() override {
         T::SetUp();
         hwInfo = *NEO::defaultHwInfo;
-        productHelper = NEO::ProductHelper::create(productFamily);
+        compilerProductHelper = NEO::CompilerProductHelper::create(productFamily);
     }
 
-    std::unique_ptr<NEO::ProductHelper> productHelper = nullptr;
+    std::unique_ptr<NEO::CompilerProductHelper> compilerProductHelper = nullptr;
     NEO::HardwareInfo hwInfo = {};
     uint32_t productConfig = AOT::UNKNOWN_ISA;
 };

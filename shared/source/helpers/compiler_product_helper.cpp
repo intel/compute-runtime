@@ -7,8 +7,17 @@
 
 #include "shared/source/helpers/compiler_product_helper.h"
 
+#include "shared/source/debug_settings/debug_settings_manager.h"
+
 namespace NEO {
 
 CompilerProductHelperCreateFunctionType compilerProductHelperFactory[IGFX_MAX_PRODUCT] = {};
+
+uint32_t CompilerProductHelper::getHwIpVersion(const HardwareInfo &hwInfo) const {
+    if (DebugManager.flags.OverrideHwIpVersion.get() != -1) {
+        return DebugManager.flags.OverrideHwIpVersion.get();
+    }
+    return getProductConfigFromHwInfo(hwInfo);
+}
 
 } // namespace NEO

@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/register_offsets.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
@@ -1143,8 +1144,8 @@ TEST(IoctlHelperXeTest, WhenSetupIpVersionIsCalledThenIpVersionIsCorrect) {
     auto xeIoctlHelper = std::make_unique<MockIoctlHelperXe>(drm);
 
     auto &hwInfo = *executionEnvironment->rootDeviceEnvironments[0]->getHardwareInfo();
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
-    auto config = productHelper.getHwIpVersion(hwInfo);
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
+    auto config = compilerProductHelper.getHwIpVersion(hwInfo);
 
     xeIoctlHelper->setupIpVersion();
     EXPECT_EQ(config, hwInfo.ipVersion.value);

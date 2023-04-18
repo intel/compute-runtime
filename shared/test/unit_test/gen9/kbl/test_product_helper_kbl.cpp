@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen9/kbl/device_ids_configs_kbl.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/hw_test.h"
@@ -99,19 +100,19 @@ KBLTEST_F(KblProductHelper, givenBoolWhenCallKblHardwareInfoSetupThenFeatureTabl
     }
 }
 
-KBLTEST_F(KblProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+KBLTEST_F(KblProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
 
     for (const auto &deviceId : amlDeviceIds) {
         pInHwInfo.platform.usDeviceID = deviceId;
-        EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::AML);
+        EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::AML);
     }
     for (const auto &deviceId : kblDeviceIds) {
         pInHwInfo.platform.usDeviceID = deviceId;
-        EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::KBL);
+        EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::KBL);
     }
 
     pInHwInfo.platform.usDeviceID = 0u;
-    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::UNKNOWN_ISA);
+    EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::UNKNOWN_ISA);
 }
 
 KBLTEST_F(KblProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

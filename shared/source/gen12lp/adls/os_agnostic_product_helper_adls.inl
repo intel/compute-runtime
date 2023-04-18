@@ -22,9 +22,9 @@ uint32_t ProductHelperHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, 
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
-    return AOT::ADL_S;
-}
+std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
+    return aub_stream::ProductFamily::Adls;
+};
 
 template <>
 uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
@@ -36,11 +36,6 @@ uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo 
     }
     return CommonConstants::invalidStepping;
 }
-
-template <>
-std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
-    return aub_stream::ProductFamily::Adls;
-};
 
 template <>
 bool ProductHelperHw<gfxProduct>::pipeControlWARequired(const HardwareInfo &hwInfo) const {

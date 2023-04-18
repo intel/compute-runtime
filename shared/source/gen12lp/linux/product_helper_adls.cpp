@@ -12,8 +12,6 @@
 #include "shared/source/os_interface/product_helper.inl"
 #include "shared/source/os_interface/product_helper_bdw_and_later.inl"
 
-#include "platforms.h"
-
 constexpr static auto gfxProduct = IGFX_ALDERLAKE_S;
 
 #include "shared/source/gen12lp/adls/os_agnostic_product_helper_adls.inl"

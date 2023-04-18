@@ -10,6 +10,7 @@
 #include "shared/source/debug_settings/debug_settings_manager.h"
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/constants.h"
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/ptr_math.h"
@@ -19,7 +20,6 @@
 #include "shared/source/os_interface/linux/i915.h"
 #include "shared/source/os_interface/linux/memory_info.h"
 #include "shared/source/os_interface/linux/os_context_linux.h"
-#include "shared/source/os_interface/product_helper.h"
 
 #include <fcntl.h>
 #include <sstream>
@@ -58,8 +58,8 @@ void IoctlHelper::fillExecObject(ExecObject &execObject, uint32_t handle, uint64
 void IoctlHelper::setupIpVersion() {
     auto &rootDeviceEnvironment = drm.getRootDeviceEnvironment();
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
-    hwInfo.ipVersion.value = productHelper.getHwIpVersion(hwInfo);
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
+    hwInfo.ipVersion.value = compilerProductHelper.getHwIpVersion(hwInfo);
 }
 
 void IoctlHelper::logExecObject(const ExecObject &execObject, std::stringstream &logger, size_t size) {

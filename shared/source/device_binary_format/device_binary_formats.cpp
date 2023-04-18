@@ -11,7 +11,6 @@
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
-#include "shared/source/os_interface/product_helper.h"
 
 namespace NEO {
 
@@ -24,13 +23,13 @@ std::vector<uint8_t> packDeviceBinary(const SingleDeviceBinary binary, std::stri
 
 TargetDevice getTargetDevice(const RootDeviceEnvironment &rootDeviceEnvironment) {
     auto hwInfo = *rootDeviceEnvironment.getHardwareInfo();
-    auto &productHelper = rootDeviceEnvironment.getHelper<ProductHelper>();
+    auto &compilerProductHelper = rootDeviceEnvironment.getHelper<CompilerProductHelper>();
     auto &gfxCoreHelper = rootDeviceEnvironment.getHelper<GfxCoreHelper>();
     TargetDevice targetDevice = {};
 
     targetDevice.coreFamily = hwInfo.platform.eRenderCoreFamily;
     targetDevice.productFamily = hwInfo.platform.eProductFamily;
-    targetDevice.aotConfig.value = productHelper.getHwIpVersion(hwInfo);
+    targetDevice.aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
     targetDevice.stepping = hwInfo.platform.usRevId;
     targetDevice.maxPointerSizeInBytes = sizeof(uintptr_t);
     targetDevice.grfSize = hwInfo.capabilityTable.grfSize;

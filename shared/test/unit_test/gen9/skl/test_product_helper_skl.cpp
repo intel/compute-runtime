@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen9/hw_cmds_skl.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -109,8 +110,8 @@ SKLTEST_F(SklProductHelper, givenBoolWhenCallSklHardwareInfoSetupThenFeatureTabl
     }
 }
 
-SKLTEST_F(SklProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
-    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::SKL);
+SKLTEST_F(SklProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+    EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::SKL);
 }
 
 SKLTEST_F(SklProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

@@ -10,7 +10,6 @@
 #include "shared/source/memory_manager/memory_manager.h"
 
 #include "aubstream/product_family.h"
-#include "os_agnostic_product_helper_dg2_extra.inl"
 
 namespace NEO {
 template <>

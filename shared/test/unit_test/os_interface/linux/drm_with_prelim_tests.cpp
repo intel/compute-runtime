@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/linux/engine_info.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
 #include "shared/source/os_interface/linux/ioctl_helper.h"
@@ -589,12 +590,12 @@ TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenInitializatedThenIpVersionI
 
 TEST_F(IoctlHelperPrelimFixture, givenIoctlHelperWhenFailOnInitializationThenIpVersionIsCorrect) {
     auto hwInfo = executionEnvironment->rootDeviceEnvironments[0]->getMutableHardwareInfo();
-    auto &productHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    auto &compilerProductHelper = executionEnvironment->rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     auto &ipVersion = hwInfo->ipVersion;
     ipVersion = {};
     drm->failRetHwIpVersion = true;
     drm->ioctlHelper->setupIpVersion();
-    auto config = productHelper.getHwIpVersion(*hwInfo);
+    auto config = compilerProductHelper.getHwIpVersion(*hwInfo);
     EXPECT_EQ(config, ipVersion.value);
 }
 

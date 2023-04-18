@@ -82,9 +82,8 @@ BDWTEST_F(BdwProductHelper, givenProductHelperStringThenAfterSetupResultingVmeIs
     EXPECT_FALSE(pInHwInfo.capabilityTable.supportsVme);
 }
 
-BDWTEST_F(BdwProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
-
-    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::BDW);
+BDWTEST_F(BdwProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+    EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::BDW);
 }
 
 BDWTEST_F(BdwProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

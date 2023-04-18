@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen9/hw_cmds_bxt.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -85,9 +86,9 @@ BXTTEST_F(BxtProductHelper, givenBoolWhenCallBxtHardwareInfoSetupThenFeatureTabl
     }
 }
 
-BXTTEST_F(BxtProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+BXTTEST_F(BxtProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
 
-    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::APL);
+    EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::APL);
 }
 
 BXTTEST_F(BxtProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

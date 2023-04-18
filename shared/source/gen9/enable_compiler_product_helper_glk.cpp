@@ -15,6 +15,8 @@
 #include "shared/source/helpers/compiler_product_helper_disable_split_matrix_multiply_accumulate.inl"
 #include "shared/source/helpers/compiler_product_helper_disable_subgroup_local_block_io.inl"
 
+#include "platforms.h"
+
 namespace NEO {
 template <>
 uint64_t CompilerProductHelperHw<IGFX_GEMINILAKE>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
@@ -24,6 +26,11 @@ uint64_t CompilerProductHelperHw<IGFX_GEMINILAKE>::getHwInfoConfig(const Hardwar
 template <>
 uint32_t CompilerProductHelperHw<IGFX_GEMINILAKE>::getNumThreadsPerEu() const {
     return 6;
+}
+
+template <>
+uint32_t CompilerProductHelperHw<IGFX_GEMINILAKE>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+    return AOT::GLK;
 }
 
 static EnableCompilerProductHelper<IGFX_GEMINILAKE> enableCompilerProductHelperGLK;

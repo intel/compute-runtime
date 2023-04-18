@@ -15,18 +15,47 @@
 #include "shared/source/helpers/compiler_product_helper_xe_hp_and_later.inl"
 #include "shared/source/helpers/compiler_product_helper_xe_hpc_and_later.inl"
 #include "shared/source/xe_hpc_core/hw_cmds.h"
+#include "shared/source/xe_hpc_core/pvc/device_ids_configs_pvc.h"
 
 #include "compiler_product_helper_pvc.inl"
-
+#include "platforms.h"
 namespace NEO {
 
-static EnableCompilerProductHelper<IGFX_PVC> enableCompilerProductHelperPVC;
-
+template <>
+uint32_t CompilerProductHelperHw<IGFX_PVC>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+    auto deviceId = hwInfo.platform.usDeviceID;
+    bool isPvcXl = (std::find(pvcXlDeviceIds.begin(), pvcXlDeviceIds.end(), deviceId) != pvcXlDeviceIds.end());
+    bool isPvcXt = (std::find(pvcXtDeviceIds.begin(), pvcXtDeviceIds.end(), deviceId) != pvcXtDeviceIds.end());
+    if (isPvcXl) {
+        switch (hwInfo.platform.usRevId & PVC::pvcSteppingBits) {
+        case 0x0:
+            return AOT::PVC_XL_A0;
+        default:
+        case 0x1:
+            return AOT::PVC_XL_A0P;
+        }
+    } else if (isPvcXt) {
+        switch (hwInfo.platform.usRevId & PVC::pvcSteppingBits) {
+        case 0x3:
+            return AOT::PVC_XT_A0;
+        case 0x5:
+            return AOT::PVC_XT_B0;
+        case 0x6:
+            return AOT::PVC_XT_B1;
+        default:
+        case 0x7:
+            return AOT::PVC_XT_C0;
+        }
+    }
+    return AOT::UNKNOWN_ISA;
+}
 template <>
 uint32_t CompilerProductHelperHw<IGFX_PVC>::matchRevisionIdWithProductConfig(HardwareIpVersion ipVersion, uint32_t revisionID) const {
     HardwareIpVersion pvcConfig = ipVersion;
     pvcConfig.revision = revisionID & PVC::pvcSteppingBits;
     return pvcConfig.value;
 }
+
+static EnableCompilerProductHelper<IGFX_PVC> enableCompilerProductHelperPVC;
 
 } // namespace NEO

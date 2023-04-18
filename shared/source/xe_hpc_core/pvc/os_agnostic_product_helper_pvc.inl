@@ -59,36 +59,6 @@ uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo 
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
-    uint32_t stepping = getSteppingFromHwRevId(hwInfo);
-    if (stepping == CommonConstants::invalidStepping) {
-        return AOT::UNKNOWN_ISA;
-    }
-
-    if (PVC::isXl(hwInfo)) {
-        switch (hwInfo.platform.usRevId) {
-        case 0x0:
-            return AOT::PVC_XL_A0;
-        default:
-        case 0x1:
-            return AOT::PVC_XL_A0P;
-        }
-    } else {
-        switch (hwInfo.platform.usRevId) {
-        case 0x3:
-            return AOT::PVC_XT_A0;
-        case 05:
-            return AOT::PVC_XT_B0;
-        case 06:
-            return AOT::PVC_XT_B1;
-        default:
-        case 07:
-            return AOT::PVC_XT_C0;
-        }
-    }
-}
-
-template <>
 bool ProductHelperHw<gfxProduct>::isDisableOverdispatchAvailable(const HardwareInfo &hwInfo) const {
     return getSteppingFromHwRevId(hwInfo) >= REVISION_B;
 }

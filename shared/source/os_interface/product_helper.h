@@ -90,7 +90,6 @@ class ProductHelper {
     virtual bool obtainBlitterPreference(const HardwareInfo &hwInfo) const = 0;
     virtual bool isBlitterFullySupported(const HardwareInfo &hwInfo) const = 0;
     virtual bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const = 0;
-    virtual uint32_t getHwIpVersion(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
     virtual uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const = 0;
@@ -215,6 +214,5 @@ class ProductHelper {
 
     virtual LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const = 0;
     virtual void fillScmPropertiesSupportStructureBase(StateComputeModePropertiesSupport &propertiesSupport) const = 0;
-    virtual uint32_t getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const = 0;
 };
 } // namespace NEO

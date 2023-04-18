@@ -60,10 +60,10 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToFindMatchingBinariesThenUnpackingFa
 TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenChooseItAsABestMatch) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
-    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
+    const auto &compilerProductHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::CompilerProductHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = productHelper.getHwIpVersion(hwInfo);
+    aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
 
     NEO::Ar::ArEncoder encoder;
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
@@ -102,10 +102,10 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenChooseItA
 TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenPackedTargetDeviceBinaryIsSet) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
-    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
+    const auto &compilerProductHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::CompilerProductHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = productHelper.getHwIpVersion(hwInfo);
+    aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
 
     NEO::Ar::ArEncoder encoder;
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
@@ -134,10 +134,10 @@ TEST(UnpackSingleDeviceBinaryAr, WhenBinaryWithProductConfigIsFoundThenPackedTar
 TEST(UnpackSingleDeviceBinaryAr, WhenMultipleBinariesMatchedThenChooseBestMatch) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
-    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
+    const auto &compilerProductHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::CompilerProductHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = productHelper.getHwIpVersion(hwInfo);
+    aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
 
     NEO::Ar::ArEncoder encoder;
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
@@ -152,7 +152,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenMultipleBinariesMatchedThenChooseBestMatch)
 
     NEO::TargetDevice target;
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.aotConfig.value = productHelper.getHwIpVersion(hwInfo);
+    target.aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
 
@@ -244,10 +244,10 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithProductConfigThenTry
     PatchTokensTestData::ValidEmptyProgram programTokensWrongTokenVersion;
 
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
-    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
+    const auto &compilerProductHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::CompilerProductHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = productHelper.getHwIpVersion(hwInfo);
+    aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
 
     std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
 
@@ -264,7 +264,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenFailedToUnpackMatchWithProductConfigThenTry
 
     NEO::TargetDevice target;
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.aotConfig.value = productHelper.getHwIpVersion(hwInfo);
+    target.aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
 
@@ -353,10 +353,10 @@ TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrWithProductFamil
 TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrWithProductConfigAvailableThenUseIr) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
-    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
+    const auto &compilerProductHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::CompilerProductHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = productHelper.getHwIpVersion(hwInfo);
+    aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
 
     std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
@@ -375,7 +375,7 @@ TEST(UnpackSingleDeviceBinaryAr, WhenDeviceBinaryNotMatchedButIrWithProductConfi
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
-    target.aotConfig.value = productHelper.getHwIpVersion(hwInfo);
+    target.aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
 
     auto arData = encoder.encode();
     std::string unpackErrors;
@@ -578,10 +578,10 @@ TEST(UnpackSingleDeviceBinaryAr, WhenCouldNotFindBinaryWithRightPointerSizeThenU
     NEO::Ar::ArEncoder encoder;
 
     NEO::MockExecutionEnvironment mockExecutionEnvironment{};
-    const auto &productHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::ProductHelper>();
+    const auto &compilerProductHelper = mockExecutionEnvironment.rootDeviceEnvironments[0]->getHelper<NEO::CompilerProductHelper>();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     NEO::HardwareIpVersion aotConfig = {0};
-    aotConfig.value = productHelper.getHwIpVersion(hwInfo);
+    aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
 
     std::string requiredProductConfig = ProductConfigHelper::parseMajorMinorRevisionValue(aotConfig);
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];

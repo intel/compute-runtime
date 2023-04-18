@@ -185,7 +185,7 @@ endif()
 
 if(SUPPORT_MTL_AND_LATER)
   list(APPEND NEO_CORE_HELPERS
-       ${CMAKE_CURRENT_SOURCE_DIR}/compiler_aot_config_mtl_and_later.inl
+       ${CMAKE_CURRENT_SOURCE_DIR}/compiler_product_helper_mtl_and_later.inl
   )
 endif()
 

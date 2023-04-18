@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/string.h"
 #include "shared/source/os_interface/linux/drm_neo.h"
 #include "shared/source/os_interface/linux/i915_prelim.h"
@@ -552,8 +553,8 @@ TEST_F(IoctlPrelimHelperTests, whenGettingPreferredLocationRegionThenReturnCorre
 
 TEST_F(IoctlPrelimHelperTests, WhenSetupIpVersionIsCalledThenIpVersionIsCorrect) {
     auto &hwInfo = *drm->getRootDeviceEnvironment().getHardwareInfo();
-    auto &productHelper = drm->getRootDeviceEnvironment().getHelper<ProductHelper>();
-    auto config = productHelper.getHwIpVersion(hwInfo);
+    auto &compilerProductHelper = drm->getRootDeviceEnvironment().getHelper<CompilerProductHelper>();
+    auto config = compilerProductHelper.getHwIpVersion(hwInfo);
 
     ioctlHelper.setupIpVersion();
     EXPECT_EQ(config, hwInfo.ipVersion.value);

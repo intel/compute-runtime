@@ -21,15 +21,27 @@ PVCTEST_F(ProductConfigTests, givenPvcXlDeviceIdWhenDifferentRevisionIsPassedThe
         hwInfo.platform.usDeviceID = deviceId;
 
         hwInfo.platform.usRevId = 0x0;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::PVC_XL_A0);
 
         hwInfo.platform.usRevId = 0x1;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::PVC_XL_A0P);
 
         hwInfo.platform.usRevId = 0x6;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
+        EXPECT_EQ(productConfig, AOT::PVC_XL_A0P);
+
+        hwInfo.platform.usRevId = 0x10;
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
+        EXPECT_EQ(productConfig, AOT::PVC_XL_A0);
+
+        hwInfo.platform.usRevId = 0x11;
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
+        EXPECT_EQ(productConfig, AOT::PVC_XL_A0P);
+
+        hwInfo.platform.usRevId = 0x16;
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::PVC_XL_A0P);
     }
 }
@@ -39,37 +51,83 @@ PVCTEST_F(ProductConfigTests, givenPvcXtDeviceIdWhenDifferentRevisionIsPassedThe
         hwInfo.platform.usDeviceID = deviceId;
 
         hwInfo.platform.usRevId = 0x3;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::PVC_XT_A0);
 
         hwInfo.platform.usRevId = 0x5;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::PVC_XT_B0);
 
         hwInfo.platform.usRevId = 0x6;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::PVC_XT_B1);
 
         hwInfo.platform.usRevId = 0x7;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
+        EXPECT_EQ(productConfig, AOT::PVC_XT_C0);
+
+        hwInfo.platform.usRevId = 0x13;
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
+        EXPECT_EQ(productConfig, AOT::PVC_XT_A0);
+
+        hwInfo.platform.usRevId = 0x15;
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
+        EXPECT_EQ(productConfig, AOT::PVC_XT_B0);
+
+        hwInfo.platform.usRevId = 0x16;
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
+        EXPECT_EQ(productConfig, AOT::PVC_XT_B1);
+
+        hwInfo.platform.usRevId = 0x17;
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::PVC_XT_C0);
     }
 }
 
 PVCTEST_F(ProductConfigTests, givenDefaultDeviceAndRevisionIdWhenGetProductConfigThenPvcXtC0ConfigIsReturned) {
-    hwInfo.platform.usRevId = 0x0;
-    hwInfo.platform.usDeviceID = 0x0;
+    hwInfo.platform.usRevId = 0;
+    hwInfo.platform.usDeviceID = defaultHwInfo->platform.usDeviceID;
 
-    productConfig = productHelper->getHwIpVersion(hwInfo);
+    productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
     EXPECT_EQ(productConfig, AOT::PVC_XT_C0);
 }
 
-PVCTEST_F(ProductConfigTests, givenInvalidRevisionIdWhenGetProductConfigThenUnknownIsaIsReturned) {
-    hwInfo.platform.usRevId = 0x2;
-    productConfig = productHelper->getHwIpVersion(hwInfo);
+PVCTEST_F(ProductConfigTests, givenInvalidRevisionIdForPvcXtWhenGetProductConfigThenLatestPvcXtIsReturned) {
+    for (const auto &deviceId : pvcXtDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+
+        hwInfo.platform.usRevId = 0x2;
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
+        EXPECT_EQ(productConfig, AOT::PVC_XT_C0);
+
+        hwInfo.platform.usRevId = 0x4;
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
+        EXPECT_EQ(productConfig, AOT::PVC_XT_C0);
+    }
+}
+
+PVCTEST_F(ProductConfigTests, givenInvalidRevisionIdForPvcXlWhenGetProductConfigThenLatestPvcXlIsReturned) {
+    for (const auto &deviceId : pvcXlDeviceIds) {
+        hwInfo.platform.usDeviceID = deviceId;
+
+        hwInfo.platform.usRevId = 0x2;
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
+        EXPECT_EQ(productConfig, AOT::PVC_XL_A0P);
+
+        hwInfo.platform.usRevId = 0x4;
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
+        EXPECT_EQ(productConfig, AOT::PVC_XL_A0P);
+    }
+}
+
+PVCTEST_F(ProductConfigTests, givenInvalidDeviceIdWhenGetProductConfigThenInvalidConfigIsReturned) {
+    hwInfo.platform.usDeviceID = 0;
+
+    hwInfo.platform.usRevId = 0x0;
+    productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
     EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
 
-    hwInfo.platform.usRevId = 0x4;
-    productConfig = productHelper->getHwIpVersion(hwInfo);
+    hwInfo.platform.usRevId = 0x3;
+    productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
     EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
 }

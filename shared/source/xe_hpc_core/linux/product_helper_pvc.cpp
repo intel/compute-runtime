@@ -21,8 +21,6 @@
 #include "shared/source/utilities/directory.h"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 
-#include "platforms.h"
-
 constexpr static auto gfxProduct = IGFX_PVC;
 
 namespace NEO {

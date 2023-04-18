@@ -15,10 +15,17 @@
 #include "shared/source/helpers/compiler_product_helper_disable_split_matrix_multiply_accumulate.inl"
 #include "shared/source/helpers/compiler_product_helper_enable_subgroup_local_block_io.inl"
 
+#include "platforms.h"
+
 namespace NEO {
 template <>
 uint64_t CompilerProductHelperHw<IGFX_ELKHARTLAKE>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
     return 0x100040008;
+}
+
+template <>
+uint32_t CompilerProductHelperHw<IGFX_ELKHARTLAKE>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+    return AOT::EHL;
 }
 
 static EnableCompilerProductHelper<IGFX_ELKHARTLAKE> enableCompilerProductHelperEHL;

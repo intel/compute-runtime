@@ -16,8 +16,14 @@
 #include "shared/source/helpers/compiler_product_helper_tgllp_and_later.inl"
 
 #include "compiler_product_helper_adlp.inl"
+#include "platforms.h"
 
 namespace NEO {
+
+template <>
+uint32_t CompilerProductHelperHw<IGFX_ALDERLAKE_P>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+    return AOT::ADL_P;
+}
 
 static EnableCompilerProductHelper<IGFX_ALDERLAKE_P> enableCompilerProductHelperADLP;
 

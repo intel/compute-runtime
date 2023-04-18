@@ -2290,10 +2290,10 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpRequir
 
 HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPackedTargetDeviceBinary) {
     PatchTokensTestData::ValidEmptyProgram programTokens;
-    auto &productHelper = device->getProductHelper();
+    auto &compilerProductHelper = device->getCompilerProductHelper();
     NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
     HardwareIpVersion aotConfig = {0};
-    aotConfig.value = productHelper.getHwIpVersion(hwInfo);
+    aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
 
     NEO::Ar::ArEncoder encoder;
     std::string requiredProduct = NEO::hardwarePrefix[productFamily];
@@ -2308,7 +2308,7 @@ HWTEST_F(ModuleTranslationUnitTest, WhenCreatingFromNativeBinaryThenSetsUpPacked
 
     NEO::TargetDevice target;
     target.coreFamily = static_cast<GFXCORE_FAMILY>(programTokens.header->Device);
-    target.aotConfig.value = productHelper.getHwIpVersion(hwInfo);
+    target.aotConfig.value = compilerProductHelper.getHwIpVersion(hwInfo);
     target.stepping = programTokens.header->SteppingId;
     target.maxPointerSizeInBytes = programTokens.header->GPUPointerSizeInBytes;
 

@@ -133,6 +133,7 @@ class ClDevice : public BaseObject<_cl_device_id> {
     Platform *getPlatform() const;
     const GfxCoreHelper &getGfxCoreHelper() const;
     const ProductHelper &getProductHelper() const;
+    const CompilerProductHelper &getCompilerProductHelper() const;
     const GTPinGfxCoreHelper &getGTPinGfxCoreHelper() const;
 
     std::unique_ptr<GTPinGfxCoreHelper> gtpinGfxCoreHelper;

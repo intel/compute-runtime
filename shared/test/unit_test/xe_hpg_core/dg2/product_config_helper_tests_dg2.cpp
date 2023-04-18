@@ -279,7 +279,7 @@ DG2TEST_F(ProductHelperTestDg2, givenDg2G10A0OrA1SteppingWhenAskingIfWAIsRequire
         for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
             hwInfo.platform.usRevId = productHelper->getHwRevIdFromStepping(revision, hwInfo);
             hwInfo.platform.usDeviceID = deviceId;
-            hwInfo.ipVersion.value = productHelper->getHwIpVersion(hwInfo);
+            hwInfo.ipVersion.value = compilerProductHelper->getHwIpVersion(hwInfo);
             if (hwInfo.ipVersion.value == AOT::UNKNOWN_ISA) {
                 continue;
             }
@@ -733,7 +733,7 @@ DG2TEST_F(ProductConfigTests, givenInvalidRevisionIdWhenDeviceIdIsDefaultThenUnk
     hwInfo.platform.usDeviceID = 0;
     hwInfo.platform.usRevId = CommonConstants::invalidRevisionID;
 
-    productConfig = productHelper->getHwIpVersion(hwInfo);
+    productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
     EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
 }
 
@@ -742,19 +742,19 @@ DG2TEST_F(ProductConfigTests, givenDg2G10DeviceIdWhenDifferentRevisionIsPassedTh
         hwInfo.platform.usDeviceID = deviceId;
 
         hwInfo.platform.usRevId = 0x0;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::DG2_G10_A0);
 
         hwInfo.platform.usRevId = 0x1;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::DG2_G10_A1);
 
         hwInfo.platform.usRevId = 0x4;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::DG2_G10_B0);
 
         hwInfo.platform.usRevId = 0x8;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::DG2_G10_C0);
     }
 }
@@ -764,7 +764,7 @@ DG2TEST_F(ProductConfigTests, givenDg2DeviceIdWhenIncorrectRevisionIsPassedThenC
         for (const auto &deviceId : *dg2) {
             hwInfo.platform.usDeviceID = deviceId;
             hwInfo.platform.usRevId = CommonConstants::invalidRevisionID;
-            productConfig = productHelper->getHwIpVersion(hwInfo);
+            productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
             EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
         }
     }
@@ -775,15 +775,15 @@ DG2TEST_F(ProductConfigTests, givenDg2G11DeviceIdWhenDifferentRevisionIsPassedTh
         hwInfo.platform.usDeviceID = deviceId;
 
         hwInfo.platform.usRevId = 0x0;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::DG2_G11_A0);
 
         hwInfo.platform.usRevId = 0x4;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::DG2_G11_B0);
 
         hwInfo.platform.usRevId = 0x5;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::DG2_G11_B1);
     }
 }
@@ -791,7 +791,7 @@ DG2TEST_F(ProductConfigTests, givenDg2G11DeviceIdWhenDifferentRevisionIsPassedTh
 DG2TEST_F(ProductConfigTests, givenDg2G12DeviceIdWhenGetProductConfigThenCorrectConfigIsReturned) {
     for (const auto &deviceId : dg2G12DeviceIds) {
         hwInfo.platform.usDeviceID = deviceId;
-        productConfig = productHelper->getHwIpVersion(hwInfo);
+        productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
         EXPECT_EQ(productConfig, AOT::DG2_G12_A0);
     }
 }
@@ -800,7 +800,7 @@ DG2TEST_F(ProductConfigTests, givenNotSetDeviceAndRevisionIdWhenGetProductConfig
     hwInfo.platform.usRevId = 0x0;
     hwInfo.platform.usDeviceID = 0x0;
 
-    productConfig = productHelper->getHwIpVersion(hwInfo);
+    productConfig = compilerProductHelper->getHwIpVersion(hwInfo);
     EXPECT_EQ(productConfig, AOT::UNKNOWN_ISA);
 }
 

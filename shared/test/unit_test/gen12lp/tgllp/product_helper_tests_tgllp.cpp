@@ -236,6 +236,6 @@ TGLLPTEST_F(TgllpProductHelper, givenTgllpWhenObtainingBlitterPreferenceThenRetu
     EXPECT_FALSE(productHelper->obtainBlitterPreference(pInHwInfo));
 }
 
-TGLLPTEST_F(TgllpProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
-    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::TGL);
+TGLLPTEST_F(TgllpProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+    EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::TGL);
 }

@@ -11,6 +11,7 @@
 #include "shared/source/device/device.h"
 #include "shared/source/device/device_info.h"
 #include "shared/source/execution_environment/root_device_environment.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/source/helpers/gfx_core_helper.h"
 #include "shared/source/helpers/hw_info.h"
@@ -259,8 +260,8 @@ cl_int ClDevice::getDeviceInfo(cl_device_info paramName,
             auto &clGfxCoreHelper = this->getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
             param.uint = clGfxCoreHelper.getDeviceIpVersion(getHardwareInfo());
         } else {
-            auto &productHelper = device.getProductHelper();
-            param.uint = static_cast<cl_version>(productHelper.getHwIpVersion(getHardwareInfo()));
+            auto &compilerProductHelper = device.getCompilerProductHelper();
+            param.uint = static_cast<cl_version>(compilerProductHelper.getHwIpVersion(getHardwareInfo()));
         }
         src = &param.uint;
         retSize = srcSize = sizeof(cl_version);

@@ -9,11 +9,6 @@
 
 namespace NEO {
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
-    return AOT::GLK;
-}
-
-template <>
 std::optional<aub_stream::ProductFamily> ProductHelperHw<gfxProduct>::getAubStreamProductFamily() const {
     return aub_stream::ProductFamily::Glk;
 };

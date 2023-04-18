@@ -12,8 +12,6 @@
 #include "shared/source/os_interface/product_helper_xehp_and_later.inl"
 #include "shared/source/xe_hpc_core/hw_cmds_pvc.h"
 
-#include "platforms.h"
-
 constexpr static auto gfxProduct = IGFX_PVC;
 
 #include "shared/source/xe_hpc_core/os_agnostic_product_helper_xe_hpc_core.inl"

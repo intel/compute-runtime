@@ -5,6 +5,7 @@
  *
  */
 
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/get_info.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/helpers/raii_gfx_core_helper.h"
@@ -1119,8 +1120,8 @@ struct DeviceAttributeQueryTest : public ::testing::TestWithParam<uint32_t /*cl_
                 auto &clGfxCoreHelper = device.getRootDeviceEnvironment().getHelper<ClGfxCoreHelper>();
                 EXPECT_EQ(clGfxCoreHelper.getDeviceIpVersion(hwInfo), *pDeviceIpVersion);
             } else {
-                auto &productHelper = device.getProductHelper();
-                EXPECT_EQ(static_cast<cl_version>(productHelper.getHwIpVersion(hwInfo)), *pDeviceIpVersion);
+                auto &compilerProductHelper = device.getCompilerProductHelper();
+                EXPECT_EQ(static_cast<cl_version>(compilerProductHelper.getHwIpVersion(hwInfo)), *pDeviceIpVersion);
             }
             EXPECT_EQ(sizeof(cl_version), sizeReturned);
             break;

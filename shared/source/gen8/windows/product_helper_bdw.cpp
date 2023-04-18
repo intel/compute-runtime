@@ -11,8 +11,6 @@
 #include "shared/source/os_interface/product_helper.inl"
 #include "shared/source/os_interface/product_helper_bdw_and_later.inl"
 
-#include "platforms.h"
-
 constexpr static auto gfxProduct = IGFX_BROADWELL;
 
 #include "shared/source/gen8/bdw/os_agnostic_product_helper_bdw.inl"

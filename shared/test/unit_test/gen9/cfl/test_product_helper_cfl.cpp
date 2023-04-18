@@ -9,6 +9,7 @@
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen9/cfl/device_ids_configs_cfl.h"
 #include "shared/source/gen9/hw_cmds_cfl.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -90,23 +91,23 @@ CFLTEST_F(CflProductHelper, givenBoolWhenCallCflHardwareInfoSetupThenFeatureTabl
     }
 }
 
-CFLTEST_F(CflProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+CFLTEST_F(CflProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
 
     for (const auto &deviceId : cflDeviceIds) {
         pInHwInfo.platform.usDeviceID = deviceId;
-        EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::CFL);
+        EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::CFL);
     }
     for (const auto &deviceId : cmlDeviceIds) {
         pInHwInfo.platform.usDeviceID = deviceId;
-        EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::CML);
+        EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::CML);
     }
     for (const auto &deviceId : whlDeviceIds) {
         pInHwInfo.platform.usDeviceID = deviceId;
-        EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::WHL);
+        EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::WHL);
     }
 
     pInHwInfo.platform.usDeviceID = 0u;
-    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::UNKNOWN_ISA);
+    EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::UNKNOWN_ISA);
 }
 
 CFLTEST_F(CflProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

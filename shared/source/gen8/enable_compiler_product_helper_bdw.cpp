@@ -15,9 +15,24 @@
 #include "shared/source/helpers/compiler_product_helper_disable_split_matrix_multiply_accumulate.inl"
 #include "shared/source/helpers/compiler_product_helper_disable_subgroup_local_block_io.inl"
 
-namespace NEO {
+#include "platforms.h"
 
-#include "shared/source/gen8/compiler_product_helper_bdw.inl"
+namespace NEO {
+template <>
+uint32_t CompilerProductHelperHw<IGFX_BROADWELL>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+    return AOT::BDW;
+}
+
+template <>
+bool CompilerProductHelperHw<IGFX_BROADWELL>::isStatelessToStatefulBufferOffsetSupported() const {
+    return false;
+}
+
+template <>
+uint64_t CompilerProductHelperHw<IGFX_BROADWELL>::getHwInfoConfig(const HardwareInfo &hwInfo) const {
+    return 0x100030008;
+}
+
 static EnableCompilerProductHelper<IGFX_BROADWELL> enableCompilerProductHelperBDW;
 
 } // namespace NEO

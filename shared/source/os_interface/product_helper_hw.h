@@ -44,7 +44,6 @@ class ProductHelperHw : public ProductHelper {
     bool isBlitterFullySupported(const HardwareInfo &hwInfo) const override;
     bool isPageTableManagerSupported(const HardwareInfo &hwInfo) const override;
     bool overrideGfxPartitionLayoutForWsl() const override;
-    uint32_t getHwIpVersion(const HardwareInfo &hwInfo) const override;
     uint32_t getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const override;
     uint32_t getSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
     uint32_t getAubStreamSteppingFromHwRevId(const HardwareInfo &hwInfo) const override;
@@ -169,7 +168,6 @@ class ProductHelperHw : public ProductHelper {
     void enableCompression(HardwareInfo *hwInfo) const;
     void enableBlitterOperationsSupport(HardwareInfo *hwInfo) const;
     bool getConcurrentAccessMemCapabilitiesSupported(UsmAccessCapabilities capability) const;
-    uint32_t getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const override;
     uint64_t getHostMemCapabilitiesValue() const;
     bool getHostMemCapabilitiesSupported(const HardwareInfo *hwInfo) const;
     LocalMemoryAccessMode getDefaultLocalMemoryAccessMode(const HardwareInfo &hwInfo) const override;

@@ -75,9 +75,9 @@ ADLSTEST_F(AdlsProductHelper, whenGettingAubstreamProductFamilyThenProperEnumVal
     EXPECT_EQ(aub_stream::ProductFamily::Adls, productHelper->getAubStreamProductFamily());
 }
 
-ADLSTEST_F(AdlsProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+ADLSTEST_F(AdlsProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
 
-    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::ADL_S);
+    EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::ADL_S);
 }
 
 ADLSTEST_F(AdlsProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

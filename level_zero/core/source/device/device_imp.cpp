@@ -867,8 +867,8 @@ ze_result_t DeviceImp::getProperties(ze_device_properties_t *pDeviceProperties) 
             } else if (extendedProperties->stype == ZE_STRUCTURE_TYPE_DEVICE_IP_VERSION_EXT) {
                 ze_device_ip_version_ext_t *zeDeviceIpVersion = reinterpret_cast<ze_device_ip_version_ext_t *>(extendedProperties);
                 NEO::Device *activeDevice = getActiveDevice();
-                auto &productHelper = activeDevice->getProductHelper();
-                zeDeviceIpVersion->ipVersion = productHelper.getHwIpVersion(hardwareInfo);
+                auto &compilerProductHelper = activeDevice->getCompilerProductHelper();
+                zeDeviceIpVersion->ipVersion = compilerProductHelper.getHwIpVersion(hardwareInfo);
             }
             extendedProperties = static_cast<ze_base_properties_t *>(extendedProperties->pNext);
         }
@@ -1077,6 +1077,10 @@ const L0GfxCoreHelper &DeviceImp::getL0GfxCoreHelper() {
 
 const NEO::ProductHelper &DeviceImp::getProductHelper() {
     return this->neoDevice->getProductHelper();
+}
+
+const NEO::CompilerProductHelper &DeviceImp::getCompilerProductHelper() {
+    return this->neoDevice->getCompilerProductHelper();
 }
 
 NEO::OSInterface &DeviceImp::getOsInterface() { return *neoDevice->getRootDeviceEnvironment().osInterface; }

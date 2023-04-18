@@ -8,6 +8,7 @@
 #include "shared/source/command_container/command_encoder.h"
 #include "shared/source/command_stream/linear_stream.h"
 #include "shared/source/command_stream/stream_properties.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/kernel/kernel_descriptor.h"
 #include "shared/source/release_helper/release_helper.h"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
@@ -63,6 +64,7 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0
     auto walkerCmd = FamilyType::cmdInitGpgpuWalker;
     MockExecutionEnvironment executionEnvironment{};
     auto &productHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<ProductHelper>();
+    auto &compilerProductHelper = executionEnvironment.rootDeviceEnvironments[0]->getHelper<CompilerProductHelper>();
     auto &rootDeviceEnvironment = *executionEnvironment.rootDeviceEnvironments[0];
     auto &hwInfo = *rootDeviceEnvironment.getMutableHardwareInfo();
 
@@ -72,7 +74,7 @@ DG2TEST_F(CommandEncodeDG2Test, whenProgramComputeWalkerThenApplyL3WAForDg2G10A0
         for (auto deviceId : {dg2G10DeviceIds[0], dg2G11DeviceIds[0], dg2G12DeviceIds[0]}) {
             hwInfo.platform.usRevId = productHelper.getHwRevIdFromStepping(revision, hwInfo);
             hwInfo.platform.usDeviceID = deviceId;
-            hwInfo.ipVersion = productHelper.getHwIpVersion(hwInfo);
+            hwInfo.ipVersion = compilerProductHelper.getHwIpVersion(hwInfo);
 
             if (hwInfo.ipVersion.value == AOT::UNKNOWN_ISA) {
                 continue;

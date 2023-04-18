@@ -60,6 +60,7 @@ struct Mock<Device> : public Device {
     ADDMETHOD_NOBASE_REFRETURN(getGfxCoreHelper, NEO::GfxCoreHelper &, ());
     ADDMETHOD_NOBASE_REFRETURN(getL0GfxCoreHelper, L0GfxCoreHelper &, ());
     ADDMETHOD_NOBASE_REFRETURN(getProductHelper, NEO::ProductHelper &, ());
+    ADDMETHOD_NOBASE_REFRETURN(getCompilerProductHelper, NEO::CompilerProductHelper &, ());
     ADDMETHOD_NOBASE(getBuiltinFunctionsLib, BuiltinFunctionsLib *, nullptr, ());
     ADDMETHOD_CONST_NOBASE(getMaxNumHwThreads, uint32_t, 16u, ());
     ADDMETHOD_NOBASE(activateMetricGroupsDeferred, ze_result_t, ZE_RESULT_SUCCESS, (uint32_t count, zet_metric_group_handle_t *phMetricGroups));

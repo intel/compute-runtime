@@ -56,8 +56,10 @@ class CompilerProductHelper {
     virtual std::string getDeviceExtensions(const HardwareInfo &hwInfo, const ReleaseHelper *releaseHelper) const = 0;
 
     virtual ~CompilerProductHelper() = default;
+    uint32_t getHwIpVersion(const HardwareInfo &hwInfo) const;
 
   protected:
+    virtual uint32_t getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const = 0;
     CompilerProductHelper() = default;
 };
 
@@ -93,6 +95,7 @@ class CompilerProductHelperHw : public CompilerProductHelper {
     ~CompilerProductHelperHw() override = default;
 
   protected:
+    uint32_t getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const override;
     CompilerProductHelperHw() = default;
 };
 

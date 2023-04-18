@@ -284,6 +284,10 @@ const ProductHelper &ClDevice::getProductHelper() const {
     return device.getProductHelper();
 }
 
+const CompilerProductHelper &ClDevice::getCompilerProductHelper() const {
+    return device.getCompilerProductHelper();
+}
+
 const GTPinGfxCoreHelper &ClDevice::getGTPinGfxCoreHelper() const {
     return *gtpinGfxCoreHelper;
 }

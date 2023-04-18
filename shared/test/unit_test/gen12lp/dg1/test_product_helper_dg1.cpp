@@ -133,8 +133,8 @@ DG1TEST_F(Dg1ProductHelper, whenOverrideGfxPartitionLayoutForWslThenReturnTrue) 
     EXPECT_TRUE(productHelper->overrideGfxPartitionLayoutForWsl());
 }
 
-DG1TEST_F(Dg1ProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
-    EXPECT_EQ(productHelper->getHwIpVersion(*defaultHwInfo), AOT::DG1);
+DG1TEST_F(Dg1ProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+    EXPECT_EQ(compilerProductHelper->getHwIpVersion(*defaultHwInfo), AOT::DG1);
 }
 
 DG1TEST_F(Dg1ProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

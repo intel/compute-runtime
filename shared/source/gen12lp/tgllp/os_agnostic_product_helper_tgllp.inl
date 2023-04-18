@@ -24,11 +24,6 @@ uint32_t ProductHelperHw<gfxProduct>::getHwRevIdFromStepping(uint32_t stepping, 
 }
 
 template <>
-uint32_t ProductHelperHw<gfxProduct>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
-    return AOT::TGL;
-}
-
-template <>
 uint32_t ProductHelperHw<gfxProduct>::getSteppingFromHwRevId(const HardwareInfo &hwInfo) const {
     switch (hwInfo.platform.usRevId) {
     case 0x0:

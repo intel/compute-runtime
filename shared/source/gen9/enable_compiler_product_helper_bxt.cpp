@@ -15,6 +15,8 @@
 #include "shared/source/helpers/compiler_product_helper_disable_split_matrix_multiply_accumulate.inl"
 #include "shared/source/helpers/compiler_product_helper_disable_subgroup_local_block_io.inl"
 
+#include "platforms.h"
+
 namespace NEO {
 
 template <>
@@ -25,6 +27,11 @@ uint64_t CompilerProductHelperHw<IGFX_BROXTON>::getHwInfoConfig(const HardwareIn
 template <>
 uint32_t CompilerProductHelperHw<IGFX_BROXTON>::getNumThreadsPerEu() const {
     return 6;
+}
+
+template <>
+uint32_t CompilerProductHelperHw<IGFX_BROXTON>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
+    return AOT::APL;
 }
 
 static EnableCompilerProductHelper<IGFX_BROXTON> enableCompilerProductHelperBXT;

@@ -14,8 +14,6 @@
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/os_interface/product_helper_hw.h"
 
-#include "platforms.h"
-
 namespace NEO {
 
 template <>
@@ -117,11 +115,6 @@ bool ProductHelperHw<IGFX_UNKNOWN>::isPageTableManagerSupported(const HardwareIn
 template <>
 uint32_t ProductHelperHw<IGFX_UNKNOWN>::getHwRevIdFromStepping(uint32_t stepping, const HardwareInfo &hwInfo) const {
     return CommonConstants::invalidStepping;
-}
-
-template <>
-uint32_t ProductHelperHw<IGFX_UNKNOWN>::getProductConfigFromHwInfo(const HardwareInfo &hwInfo) const {
-    return AOT::UNKNOWN_ISA;
 }
 
 template <>

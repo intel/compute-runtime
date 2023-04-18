@@ -8,6 +8,7 @@
 #include "shared/source/execution_environment/execution_environment.h"
 #include "shared/source/execution_environment/root_device_environment.h"
 #include "shared/source/gen11/hw_cmds_ehl.h"
+#include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/test/common/helpers/default_hw_info.h"
 #include "shared/test/common/test_macros/header/per_product_test_definitions.h"
@@ -65,9 +66,8 @@ EHLTEST_F(EhlProductHelper, givenBoolWhenCallEhlHardwareInfoSetupThenFeatureTabl
     }
 }
 
-EHLTEST_F(EhlProductHelper, givenProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
-
-    EXPECT_EQ(productHelper->getHwIpVersion(pInHwInfo), AOT::EHL);
+EHLTEST_F(EhlProductHelper, givenCompilerProductHelperWhenGetProductConfigThenCorrectMatchIsFound) {
+    EXPECT_EQ(compilerProductHelper->getHwIpVersion(pInHwInfo), AOT::EHL);
 }
 
 EHLTEST_F(EhlProductHelper, givenProductHelperWhenGettingEvictIfNecessaryFlagSupportedThenExpectTrue) {

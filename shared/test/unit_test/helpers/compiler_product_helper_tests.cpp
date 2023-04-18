@@ -149,12 +149,11 @@ HWTEST2_F(CompilerProductHelperFixture, GivenPreXeHpThenMatrixMultiplyAccumulate
 }
 
 HWTEST2_F(CompilerProductHelperFixture, givenAotConfigWhenSetHwInfoRevisionIdThenCorrectValueIsSet, IsAtMostDg2) {
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     auto hwInfo = *defaultHwInfo;
-    auto &productHelper = getHelper<ProductHelper>();
-    auto productConfig = productHelper.getHwIpVersion(*defaultHwInfo);
+    auto productConfig = compilerProductHelper.getHwIpVersion(*defaultHwInfo);
     HardwareIpVersion aotConfig = {0};
     aotConfig.value = productConfig;
-    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
     compilerProductHelper.setProductConfigForHwInfo(hwInfo, aotConfig);
     EXPECT_EQ(hwInfo.platform.usRevId, aotConfig.revision);
     EXPECT_EQ(hwInfo.ipVersion.value, aotConfig.value);
@@ -279,4 +278,14 @@ HWTEST2_F(CompilerProductHelperFixture, givenConfigWhenMatchConfigWithRevIdThenP
     EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, 0x0), config);
     EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, 0x1), config);
     EXPECT_EQ(compilerProductHelper.matchRevisionIdWithProductConfig(config, 0x4), config);
+}
+
+HWTEST_F(CompilerProductHelperFixture, givenProductHelperWhenGetAndOverrideHwIpVersionThenCorrectMatchIsFound) {
+    DebugManagerStateRestore stateRestore;
+    auto &compilerProductHelper = pDevice->getCompilerProductHelper();
+    auto &hwInfo = *pDevice->getRootDeviceEnvironment().getMutableHardwareInfo();
+    uint32_t config = 0x1234;
+    DebugManager.flags.OverrideHwIpVersion.set(config);
+    hwInfo.ipVersion.value = 0x5678;
+    EXPECT_EQ(compilerProductHelper.getHwIpVersion(hwInfo), config);
 }

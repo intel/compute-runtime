@@ -20,8 +20,6 @@
 #include "shared/source/os_interface/product_helper_xehp_and_later.inl"
 #include "shared/source/xe_hpg_core/hw_cmds_dg2.h"
 
-#include "platforms.h"
-
 constexpr static auto gfxProduct = IGFX_DG2;
 
 #include "shared/source/xe_hpg_core/dg2/os_agnostic_product_helper_dg2.inl"
