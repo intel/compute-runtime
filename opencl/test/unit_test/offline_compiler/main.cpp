@@ -8,7 +8,10 @@
 #include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/product_config_helper.h"
 #include "shared/source/os_interface/os_library.h"
+#include "shared/source/utilities/logger.h"
 #include "shared/test/common/helpers/custom_event_listener.h"
+#include "shared/test/common/helpers/gtest_helpers.h"
+#include "shared/test/common/helpers/memory_leak_listener.h"
 #include "shared/test/common/helpers/test_files.h"
 #include "shared/test/common/helpers/virtual_file_system_listener.h"
 #include "shared/test/common/libult/signal_utils.h"
@@ -63,8 +66,15 @@ void applyWorkarounds() {
     {
         std::string res("abc");
         res = res.substr(0, 2);
+        res += "abc";
     }
-
+    // Create FileLogger to prevent false memory leaks
+    {
+        NEO::fileLoggerInstance();
+    }
+    {
+        [[maybe_unused]] auto ret = std::regex_search("str", std::regex(std::string(".")));
+    }
     // intialize rand
     srand(static_cast<unsigned int>(time(nullptr)));
 }
@@ -186,6 +196,7 @@ int main(int argc, char **argv) {
         listeners.Release(defaultListener);
         listeners.Append(customEventListener);
     }
+    listeners.Append(new NEO::MemoryLeakListener);
     listeners.Append(new NEO::VirtualFileSystemListener);
 
     gEnvironment = reinterpret_cast<Environment *>(::testing::AddGlobalTestEnvironment(new Environment(devicePrefix, productConfig)));

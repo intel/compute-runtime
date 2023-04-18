@@ -1906,6 +1906,8 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsNotProvidedThenGenFileIsNotCreated
     EXPECT_TRUE(isSpvFile);
     EXPECT_FALSE(isGenFile);
     EXPECT_TRUE(isBinFile);
+
+    oclocFreeOutput(&numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
 }
 
 TEST_F(OfflineCompilerTests, WhenGenFileFlagIsProvidedThenGenFileIsCreated) {
@@ -1953,6 +1955,8 @@ TEST_F(OfflineCompilerTests, WhenGenFileFlagIsProvidedThenGenFileIsCreated) {
     EXPECT_TRUE(isSpvFile);
     EXPECT_TRUE(isGenFile);
     EXPECT_TRUE(isBinFile);
+
+    oclocFreeOutput(&numOutputs, &dataOutputs, &lenOutputs, &nameOutputs);
 }
 
 TEST_F(OfflineCompilerTests, WhenFclNotNeededThenDontLoadIt) {
@@ -2237,36 +2241,54 @@ TEST(OfflineCompilerTest, GivenCachedBinaryWhenBuildSourceCodeThenSuccessIsRetur
         gEnvironment->devicePrefix.c_str(),
         "-allow_caching"};
 
-    auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
-    ASSERT_NE(nullptr, mockOfflineCompiler);
-    mockOfflineCompiler->interceptCreatedDirs = true;
-    auto retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    {
+        auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+        ASSERT_NE(nullptr, mockOfflineCompiler);
+        mockOfflineCompiler->interceptCreatedDirs = true;
+        auto retVal = mockOfflineCompiler->initialize(argv.size(), argv);
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
-    auto cacheMock = new CompilerCacheMock();
-    mockOfflineCompiler->cache.reset(cacheMock);
-    cacheMock->numberOfLoadResult = 1u;
-    retVal = mockOfflineCompiler->buildSourceCode();
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, mockOfflineCompiler->genBinary);
-    EXPECT_NE(0u, static_cast<uint32_t>(mockOfflineCompiler->genBinarySize));
+        auto cacheMock = new CompilerCacheMock();
+        mockOfflineCompiler->cache.reset(cacheMock);
+        cacheMock->numberOfLoadResult = 1u;
+        retVal = mockOfflineCompiler->buildSourceCode();
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, mockOfflineCompiler->genBinary);
+        EXPECT_NE(0u, static_cast<uint32_t>(mockOfflineCompiler->genBinarySize));
+    }
 
-    cacheMock->numberOfLoadResult = 2u;
-    retVal = mockOfflineCompiler->buildSourceCode();
-    EXPECT_EQ(CL_SUCCESS, retVal);
+    {
+        auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+        ASSERT_NE(nullptr, mockOfflineCompiler);
+        mockOfflineCompiler->interceptCreatedDirs = true;
+        auto retVal = mockOfflineCompiler->initialize(argv.size(), argv);
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
-    argv.push_back("-options");
-    argv.push_back("-g");
-    retVal = mockOfflineCompiler->initialize(argv.size(), argv);
-    EXPECT_EQ(CL_SUCCESS, retVal);
+        auto cacheMock = new CompilerCacheMock();
+        mockOfflineCompiler->cache.reset(cacheMock);
+        cacheMock->numberOfLoadResult = 2u;
+        retVal = mockOfflineCompiler->buildSourceCode();
+        EXPECT_EQ(CL_SUCCESS, retVal);
 
-    cacheMock = new CompilerCacheMock();
-    mockOfflineCompiler->cache.reset(cacheMock);
-    cacheMock->numberOfLoadResult = 3u;
-    retVal = mockOfflineCompiler->buildSourceCode();
-    EXPECT_EQ(CL_SUCCESS, retVal);
-    EXPECT_NE(nullptr, mockOfflineCompiler->debugDataBinary);
-    EXPECT_NE(0u, static_cast<uint32_t>(mockOfflineCompiler->debugDataBinarySize));
+        EXPECT_NE(nullptr, mockOfflineCompiler->genBinary);
+        EXPECT_NE(0u, static_cast<uint32_t>(mockOfflineCompiler->genBinarySize));
+    }
+
+    {
+        auto mockOfflineCompiler = std::unique_ptr<MockOfflineCompiler>(new MockOfflineCompiler());
+        argv.push_back("-options");
+        argv.push_back("-g");
+        auto retVal = mockOfflineCompiler->initialize(argv.size(), argv);
+        EXPECT_EQ(CL_SUCCESS, retVal);
+
+        auto cacheMock = new CompilerCacheMock();
+        mockOfflineCompiler->cache.reset(cacheMock);
+        cacheMock->numberOfLoadResult = 3u;
+        retVal = mockOfflineCompiler->buildSourceCode();
+        EXPECT_EQ(CL_SUCCESS, retVal);
+        EXPECT_NE(nullptr, mockOfflineCompiler->debugDataBinary);
+        EXPECT_NE(0u, static_cast<uint32_t>(mockOfflineCompiler->debugDataBinarySize));
+    }
 }
 
 TEST(OfflineCompilerTest, GivenGenBinaryWhenGenerateElfBinaryThenElfIsLoaded) {

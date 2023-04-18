@@ -12,7 +12,7 @@
 #include "platforms.h"
 
 ProductConfigHelper::ProductConfigHelper() : deviceAotInfo({
-#define DEVICE_CONFIG(productConfig, hwConfig, deviceIds, family, release) {{AOT::productConfig}, &NEO::hwConfig::hwInfo, &NEO::deviceIds, AOT::family, AOT::release},
+#define DEVICE_CONFIG(productConfig, hwConfig, deviceIds, family, release) {{AOT::productConfig}, &NEO::hwConfig::hwInfo, &NEO::deviceIds, AOT::family, AOT::release, {}, {}},
 #include "product_config.inl"
 #undef DEVICE_CONFIG
                                              }) {

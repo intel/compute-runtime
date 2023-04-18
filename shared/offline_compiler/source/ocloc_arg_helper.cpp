@@ -46,7 +46,7 @@ void Source::toVectorOfStrings(std::vector<std::string> &lines, bool replaceTabs
 Output::Output(const std::string &name, const void *data, const size_t &size)
     : name(name), size(size) {
     this->data = new uint8_t[size];
-    memcpy_s(reinterpret_cast<void *>(this->data), this->size, data, size);
+    memcpy_s(this->data, this->size, data, size);
 };
 
 OclocArgHelper::OclocArgHelper(const uint32_t numSources, const uint8_t **dataSources,

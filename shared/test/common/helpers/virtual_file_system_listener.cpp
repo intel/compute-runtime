@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -11,10 +11,11 @@ namespace NEO {
 std::set<std::string> virtualFileList;
 
 void VirtualFileSystemListener::OnTestStart(const ::testing::TestInfo &testInfo) {
-    virtualFileList.clear();
 }
 
-void VirtualFileSystemListener::OnTestEnd(const ::testing::TestInfo &) {}
+void VirtualFileSystemListener::OnTestEnd(const ::testing::TestInfo &) {
+    virtualFileList.clear();
+}
 void VirtualFileSystemListener::OnTestProgramStart(const testing::UnitTest &) {}
 void VirtualFileSystemListener::OnTestIterationStart(const testing::UnitTest &, int) {}
 void VirtualFileSystemListener::OnEnvironmentsSetUpStart(const testing::UnitTest &) {}

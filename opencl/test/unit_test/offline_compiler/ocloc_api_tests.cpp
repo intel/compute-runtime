@@ -531,6 +531,8 @@ __kernel void k(){
     ASSERT_NE(nullptr, headerBSection);
     EXPECT_EQ(sourcesLen[0], sourceSection->data.size());
     EXPECT_STREQ(headerB, reinterpret_cast<const char *>(headerBSection->data.begin()));
+
+    oclocFreeOutput(&numOutputs, &outputs, &outputsLen, &ouputsNames);
 }
 
 TEST(OclocApiTests, GivenHelpParameterWhenDecodingThenHelpMsgIsPrintedAndSuccessIsReturned) {

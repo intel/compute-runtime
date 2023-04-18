@@ -339,6 +339,12 @@ int OfflineCompiler::buildSourceCode() {
                     return retVal;
             }
         }
+        delete[] irBinary;
+        delete[] genBinary;
+        irBinary = nullptr;
+        irBinarySize = 0;
+        genBinary = nullptr;
+        genBinarySize = 0;
     }
 
     UNRECOVERABLE_IF(!igcFacade->isInitialized());
