@@ -183,6 +183,14 @@ ze_result_t MetricEnumeration::openMetricsDiscovery() {
 
             subDeviceMetricEnumeraion.readGlobalSymbol(globalSymbolOaMaxBufferSize.data(), maximumOaBufferSize);
         }
+
+        pAdapter->OpenMetricsDevice(&pMetricsDevice);
+        if (pMetricsDevice == nullptr) {
+            NEO::printDebugString(NEO::DebugManager.flags.PrintDebugMessages.get(), stderr, "unable to open metrics device %u\n", 0);
+            cleanupMetricsDiscovery();
+            return ZE_RESULT_ERROR_NOT_AVAILABLE;
+        }
+
     } else {
         auto &deviceImp = *static_cast<DeviceImp *>(&metricSource.getDevice());
         const uint32_t subDeviceIndex = deviceImp.getPhysicalSubDeviceId();
@@ -216,7 +224,9 @@ ze_result_t MetricEnumeration::cleanupMetricsDiscovery() {
             for (size_t i = 0; i < deviceImp.numSubDevices; i++) {
                 deviceImp.subDevices[i]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().cleanupMetricsDiscovery();
             }
-        } else if (pMetricsDevice) {
+        }
+
+        if (pMetricsDevice) {
 
             // Close metrics device for one sub device or root device.
             pAdapter->CloseMetricsDevice(pMetricsDevice);
@@ -263,6 +273,7 @@ ze_result_t MetricEnumeration::cacheMetricInformation() {
         // Cache and aggregate all metric groups from all sub devices.
         for (uint32_t i = 0; i < metricGroupCount; i++) {
             auto metricGroupRootDevice = new OaMetricGroupImp();
+            metricGroupRootDevice->setMetricSource(&metricSource);
 
             for (auto subDevice : deviceImp.subDevices) {
                 MetricGroup *metricGroupSubDevice = subDevice->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>().getMetricEnumeration().getMetricGroupByIndex(i);
@@ -820,6 +831,46 @@ ze_result_t OaMetricGroupImp::calculateMetricValuesExp(const zet_metric_group_ca
                     result = ZE_RESULT_SUCCESS;
                 }
             }
+        }
+    }
+
+    return result;
+}
+
+ze_result_t OaMetricGroupImp::getMetricTimestampsExp(const ze_bool_t synchronizedWithHost,
+                                                     uint64_t *globalTimestamp,
+                                                     uint64_t *metricTimestamp) {
+    ze_result_t result;
+    OaMetricSourceImp *metricSource = getMetricSource();
+    const auto deviceImp = static_cast<DeviceImp *>(&metricSource->getMetricDeviceContext().getDevice());
+
+    uint64_t hostTimestamp;
+    uint64_t deviceTimestamp;
+
+    result = deviceImp->getGlobalTimestamps(&hostTimestamp, &deviceTimestamp);
+    if (result != ZE_RESULT_SUCCESS) {
+        *globalTimestamp = 0;
+        *metricTimestamp = 0;
+    } else {
+        if (synchronizedWithHost) {
+            *globalTimestamp = hostTimestamp;
+        } else {
+            *globalTimestamp = deviceTimestamp;
+        }
+
+        uint32_t cpuId;
+        MetricsDiscovery::ECompletionCode mdapiRetVal;
+        MetricsDiscovery::IMetricsDevice_1_5 *metricDevice;
+        metricDevice = getMetricSource()->getMetricEnumeration().getMetricDevice();
+
+        // MDAPI returns GPU timestamps in nanoseconds
+        mdapiRetVal = metricDevice->GetGpuCpuTimestamps(metricTimestamp, &hostTimestamp, &cpuId);
+        if (mdapiRetVal != MetricsDiscovery::CC_OK) {
+            *globalTimestamp = 0;
+            *metricTimestamp = 0;
+            result = ZE_RESULT_ERROR_NOT_AVAILABLE;
+        } else {
+            result = ZE_RESULT_SUCCESS;
         }
     }
 

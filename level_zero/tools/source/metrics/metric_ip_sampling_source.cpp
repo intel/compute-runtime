@@ -29,7 +29,7 @@ std::unique_ptr<IpSamplingMetricSourceImp> IpSamplingMetricSourceImp::create(con
 }
 
 IpSamplingMetricSourceImp::IpSamplingMetricSourceImp(const MetricDeviceContext &metricDeviceContext) : metricDeviceContext(metricDeviceContext) {
-    metricIPSamplingOsInterface = MetricIpSamplingOsInterface::create(metricDeviceContext.getDevice());
+    metricIPSamplingpOsInterface = MetricIpSamplingOsInterface::create(metricDeviceContext.getDevice());
 }
 
 ze_result_t IpSamplingMetricSourceImp::getTimerResolution(uint64_t &resolution) {
@@ -43,7 +43,7 @@ ze_result_t IpSamplingMetricSourceImp::getTimestampValidBits(uint64_t &validBits
 }
 
 void IpSamplingMetricSourceImp::enable() {
-    isEnabled = metricIPSamplingOsInterface->isDependencyAvailable();
+    isEnabled = metricIPSamplingpOsInterface->isDependencyAvailable();
 }
 
 bool IpSamplingMetricSourceImp::isAvailable() {
@@ -144,8 +144,8 @@ ze_result_t IpSamplingMetricSourceImp::appendMetricMemoryBarrier(CommandList &co
     return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
 }
 
-void IpSamplingMetricSourceImp::setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingOsInterface) {
-    this->metricIPSamplingOsInterface = std::move(metricIPSamplingOsInterface);
+void IpSamplingMetricSourceImp::setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingpOsInterface) {
+    this->metricIPSamplingpOsInterface = std::move(metricIPSamplingpOsInterface);
 }
 
 IpSamplingMetricGroupImp::IpSamplingMetricGroupImp(IpSamplingMetricSourceImp &metricSource,
@@ -254,6 +254,37 @@ ze_result_t IpSamplingMetricGroupImp::calculateMetricValuesExp(const zet_metric_
     }
 
     return result;
+}
+
+ze_result_t getDeviceTimestamps(DeviceImp *deviceImp, const ze_bool_t synchronizedWithHost,
+                                uint64_t *globalTimestamp, uint64_t *metricTimestamp) {
+
+    ze_result_t result;
+    uint64_t hostTimestamp;
+    uint64_t deviceTimestamp;
+
+    result = deviceImp->getGlobalTimestamps(&hostTimestamp, &deviceTimestamp);
+    if (result != ZE_RESULT_SUCCESS) {
+        *globalTimestamp = 0;
+        *metricTimestamp = 0;
+    } else {
+        if (synchronizedWithHost) {
+            *globalTimestamp = hostTimestamp;
+        } else {
+            *globalTimestamp = deviceTimestamp;
+        }
+        *metricTimestamp = deviceTimestamp;
+        result = ZE_RESULT_SUCCESS;
+    }
+
+    return result;
+}
+
+ze_result_t IpSamplingMetricGroupImp::getMetricTimestampsExp(const ze_bool_t synchronizedWithHost,
+                                                             uint64_t *globalTimestamp,
+                                                             uint64_t *metricTimestamp) {
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(&getMetricSource().getMetricDeviceContext().getDevice());
+    return getDeviceTimestamps(deviceImp, synchronizedWithHost, globalTimestamp, metricTimestamp);
 }
 
 ze_result_t IpSamplingMetricGroupImp::getCalculatedMetricCount(const size_t rawDataSize,
@@ -557,6 +588,13 @@ void MultiDeviceIpSamplingMetricGroupImp::closeSubDeviceStreamers(std::vector<Ip
     for (auto streamer : subDeviceStreamers) {
         streamer->close();
     }
+}
+
+ze_result_t MultiDeviceIpSamplingMetricGroupImp::getMetricTimestampsExp(const ze_bool_t synchronizedWithHost,
+                                                                        uint64_t *globalTimestamp,
+                                                                        uint64_t *metricTimestamp) {
+    DeviceImp *deviceImp = static_cast<DeviceImp *>(&subDeviceMetricGroup[0]->getMetricSource().getMetricDeviceContext().getDevice());
+    return getDeviceTimestamps(deviceImp, synchronizedWithHost, globalTimestamp, metricTimestamp);
 }
 
 std::unique_ptr<MultiDeviceIpSamplingMetricGroupImp> MultiDeviceIpSamplingMetricGroupImp::create(

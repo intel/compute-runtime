@@ -64,6 +64,16 @@ class MetricIpSamplingFixture : public MultiDeviceFixture,
     std::vector<L0::Device *> testDevices = {};
 };
 
+class MetricIpSamplingTimestampFixture : public DeviceFixture,
+                                         public ::testing::Test {
+  public:
+    void SetUp();
+    void TearDown();
+
+    DebugManagerStateRestore restorer;
+    std::vector<MockMetricIpSamplingOsInterface *> osInterfaceVector = {};
+};
+
 class MetricIpSamplingCalculateMetricsFixture : public MetricIpSamplingFixture {
   public:
     void addHeader(uint8_t *rawDataOut, size_t rawDataOutSize, uint8_t *rawDataIn, size_t rawDataInSize, uint32_t setIndex) {

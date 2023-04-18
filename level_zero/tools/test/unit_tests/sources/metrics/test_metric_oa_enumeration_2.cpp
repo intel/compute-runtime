@@ -170,8 +170,12 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
         .Times(subDeviceCount)
         .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(&mockDevice), Return(TCompletionCode::CC_OK)));
 
+    EXPECT_CALL(mockAdapter, OpenMetricsDevice(_))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(&mockDevice), Return(TCompletionCode::CC_OK)));
+
     EXPECT_CALL(mockAdapter, CloseMetricsDevice(_))
-        .Times(subDeviceCount)
+        .Times(subDeviceCount + 1)
         .WillRepeatedly(Return(TCompletionCode::CC_OK));
 
     setupDefaultMocksForMetricDevice(mockDevice);
@@ -308,6 +312,58 @@ TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesIsCa
     EXPECT_EQ(metricSource.loadDependencies(), true);
     EXPECT_EQ(metricSource.isInitialized(), true);
     EXPECT_EQ(mockMetricEnumeration->baseIsInitialized(), false);
+}
+
+TEST_F(MetricEnumerationMultiDeviceTest, givenRootDeviceWhenLoadDependenciesAndOpenAdapterOnRootDeviceFailsThenCLeanUpIsDone) {
+
+    // Use first root device.
+    auto &metricSource = devices[0]->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    auto &deviceImp = *static_cast<DeviceImp *>(devices[0]);
+    const uint32_t subDeviceCount = static_cast<uint32_t>(deviceImp.subDevices.size());
+    Mock<IAdapterGroup_1_9> mockAdapterGroup;
+    Mock<IAdapter_1_9> mockAdapter;
+    Mock<IMetricsDevice_1_5> mockDevice;
+
+    EXPECT_CALL(*mockMetricsLibrary, load())
+        .Times(1)
+        .WillOnce(Return(true));
+
+    EXPECT_CALL(*mockMetricEnumeration, loadMetricsDiscovery())
+        .Times(1)
+        .WillOnce(Return(ZE_RESULT_SUCCESS));
+
+    EXPECT_CALL(*Mock<MetricEnumeration>::g_mockApi, MockOpenAdapterGroup(_))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(&mockAdapterGroup), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(*mockMetricEnumeration, getMetricsAdapter())
+        .Times(1)
+        .WillOnce(Return(&mockAdapter));
+
+    EXPECT_CALL(mockAdapter, OpenMetricsSubDevice(_, _))
+        .Times(subDeviceCount)
+        .WillRepeatedly(DoAll(::testing::SetArgPointee<1>(&mockDevice), Return(TCompletionCode::CC_OK)));
+
+    EXPECT_CALL(mockAdapter, OpenMetricsDevice(_))
+        .Times(1)
+        .WillOnce(DoAll(::testing::SetArgPointee<0>(nullptr), Return(TCompletionCode::CC_ERROR_GENERAL)));
+
+    EXPECT_CALL(mockAdapter, CloseMetricsDevice(_))
+        .Times(subDeviceCount)
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    setupDefaultMocksForMetricDevice(mockDevice);
+
+    EXPECT_CALL(mockAdapterGroup, Close())
+        .Times(1)
+        .WillOnce(Return(TCompletionCode::CC_OK));
+
+    // Use root device.
+    devices[0]->getMetricDeviceContext().setSubDeviceIndex(0);
+    mockMetricsLibrary->initializationState = ZE_RESULT_SUCCESS;
+
+    EXPECT_EQ(metricSource.loadDependencies(), true);
+    EXPECT_EQ(mockMetricEnumeration->openMetricsDiscovery(), ZE_RESULT_ERROR_NOT_AVAILABLE);
 }
 
 TEST_F(MetricEnumerationMultiDeviceTest, givenIncorrectMetricsDiscoveryInterfaceVersionWhenZetGetMetricGroupIsCalledThenReturnsFail) {

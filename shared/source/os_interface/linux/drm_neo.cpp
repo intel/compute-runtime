@@ -817,7 +817,7 @@ int Drm::getTimestampFrequency(int &frequency) {
     return getParamIoctl(DrmParam::ParamCsTimestampFrequency, &frequency);
 }
 
-int Drm::getOATimestampFrequency(int &frequency) {
+int Drm::getOaTimestampFrequency(int &frequency) {
     frequency = 0;
     return getParamIoctl(DrmParam::ParamOATimestampFrequency, &frequency);
 }

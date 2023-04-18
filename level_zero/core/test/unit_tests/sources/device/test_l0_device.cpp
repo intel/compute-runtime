@@ -10,12 +10,10 @@
 #include "shared/source/helpers/bit_helpers.h"
 #include "shared/source/helpers/compiler_product_helper.h"
 #include "shared/source/helpers/gfx_core_helper.h"
-#include "shared/source/helpers/hw_info.h"
 #include "shared/source/helpers/preamble.h"
 #include "shared/source/helpers/ray_tracing_helper.h"
 #include "shared/source/os_interface/os_inc_base.h"
 #include "shared/source/os_interface/os_interface.h"
-#include "shared/source/os_interface/os_time.h"
 #include "shared/source/os_interface/product_helper.h"
 #include "shared/source/unified_memory/usm_memory_support.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
@@ -1517,39 +1515,6 @@ TEST_F(DeviceTest, whenGetGlobalTimestampIsCalledThenSuccessIsReturnedAndValuesS
     EXPECT_NE(0u, hostTs);
     EXPECT_NE(0u, deviceTs);
 }
-
-class FalseCpuGpuDeviceTime : public NEO::DeviceTime {
-  public:
-    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
-        return false;
-    }
-    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
-        return NEO::OSTime::getDeviceTimerResolution(hwInfo);
-    }
-    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
-        return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
-    }
-};
-
-class FalseCpuGpuTime : public NEO::OSTime {
-  public:
-    FalseCpuGpuTime() {
-        this->deviceTime = std::make_unique<FalseCpuGpuDeviceTime>();
-    }
-
-    bool getCpuTime(uint64_t *timeStamp) override {
-        return true;
-    };
-    double getHostTimerResolution() const override {
-        return 0;
-    }
-    uint64_t getCpuRawTimestamp() override {
-        return 0;
-    }
-    static std::unique_ptr<OSTime> create() {
-        return std::unique_ptr<OSTime>(new FalseCpuGpuTime());
-    }
-};
 
 struct GlobalTimestampTest : public ::testing::Test {
     void SetUp() override {

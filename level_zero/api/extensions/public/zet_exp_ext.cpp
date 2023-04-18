@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -22,6 +22,14 @@ ze_result_t zetMetricGroupCalculateMultipleMetricValuesExp(
     return L0::MetricGroup::fromHandle(hMetricGroup)->calculateMetricValuesExp(type, rawDataSize, pRawData, pSetCount, pTotalMetricValueCount, pMetricCounts, pMetricValues);
 }
 
+ze_result_t zetMetricGroupGetGlobalTimestampsExp(
+    zet_metric_group_handle_t hMetricGroup,
+    ze_bool_t synchronizedWithHost,
+    uint64_t *globalTimestamp,
+    uint64_t *metricTimestamp) {
+    return L0::MetricGroup::fromHandle(hMetricGroup)->getMetricTimestampsExp(synchronizedWithHost, globalTimestamp, metricTimestamp);
+}
+
 } // namespace L0
 
 extern "C" {
@@ -37,6 +45,14 @@ zetMetricGroupCalculateMultipleMetricValuesExp(
     uint32_t *pMetricCounts,
     zet_typed_value_t *pMetricValues) {
     return L0::zetMetricGroupCalculateMultipleMetricValuesExp(hMetricGroup, type, rawDataSize, pRawData, pSetCount, pTotalMetricValueCount, pMetricCounts, pMetricValues);
+}
+
+ZE_APIEXPORT ze_result_t ZE_APICALL zetMetricGroupGetGlobalTimestampsExp(
+    zet_metric_group_handle_t hMetricGroup,
+    ze_bool_t synchronizedWithHost,
+    uint64_t *globalTimestamp,
+    uint64_t *metricTimestamp) {
+    return L0::zetMetricGroupGetGlobalTimestampsExp(hMetricGroup, synchronizedWithHost, globalTimestamp, metricTimestamp);
 }
 
 } // extern "C"

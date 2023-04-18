@@ -916,7 +916,7 @@ TEST(DrmTest, givenPrintIoctlDebugFlagSetWhenGettingOATimestampFrequencyThenCapt
 
     testing::internal::CaptureStdout(); // start capturing
 
-    int ret = drm.getOATimestampFrequency(frequency);
+    int ret = drm.getOaTimestampFrequency(frequency);
     DebugManager.flags.PrintIoctlEntries.set(false);
     std::string outputString = testing::internal::GetCapturedStdout(); // stop capturing
 

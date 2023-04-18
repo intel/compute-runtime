@@ -35,6 +35,7 @@ struct MetricEnumeration {
     uint32_t getMaxOaBufferSize() const { return maximumOaBufferSize; }
     bool readGlobalSymbol(const char *name, uint32_t &symbolValue);
     bool readGlobalSymbol(const char *name, uint64_t &symbolValue);
+    MetricsDiscovery::IMetricsDevice_1_5 *getMetricDevice() { return pMetricsDevice; };
 
   protected:
     ze_result_t initialize();
@@ -92,6 +93,9 @@ struct OaMetricGroupImp : MetricGroup {
                                          const uint8_t *pRawData, uint32_t *pSetCount,
                                          uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
                                          zet_typed_value_t *pMetricValues) override;
+    ze_result_t getMetricTimestampsExp(const ze_bool_t synchronizedWithHost,
+                                       uint64_t *globalTimestamp,
+                                       uint64_t *metricTimestamp) override;
     ze_result_t initialize(const zet_metric_group_properties_t &sourceProperties,
                            MetricsDiscovery::IMetricSet_1_5 &metricSet,
                            MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
@@ -131,6 +135,8 @@ struct OaMetricGroupImp : MetricGroup {
                                MetricsDiscovery::IConcurrentGroup_1_5 &concurrentGroup,
                                const std::vector<Metric *> &metrics,
                                MetricSource &metricSource);
+    OaMetricSourceImp *getMetricSource() { return metricSource; }
+    void setMetricSource(OaMetricSourceImp *inputMetricSource) { metricSource = inputMetricSource; }
     static ze_result_t getProperties(const zet_metric_group_handle_t handle, zet_metric_group_properties_t *pProperties);
     uint32_t getRawReportSize();
     const MetricEnumeration &getMetricEnumeration() const;

@@ -25,9 +25,9 @@ class IpSamplingMetricSourceImp : public MetricSource {
     bool isAvailable() override;
     ze_result_t metricGroupGet(uint32_t *pCount, zet_metric_group_handle_t *phMetricGroups) override;
     ze_result_t appendMetricMemoryBarrier(CommandList &commandList) override;
-    void setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingOsInterface);
+    void setMetricOsInterface(std::unique_ptr<MetricIpSamplingOsInterface> &metricIPSamplingpOsInterface);
     static std::unique_ptr<IpSamplingMetricSourceImp> create(const MetricDeviceContext &metricDeviceContext);
-    MetricIpSamplingOsInterface *getMetricOsInterface() { return metricIPSamplingOsInterface.get(); }
+    MetricIpSamplingOsInterface *getMetricOsInterface() { return metricIPSamplingpOsInterface.get(); }
     IpSamplingMetricStreamerImp *pActiveStreamer = nullptr;
     const MetricDeviceContext &getMetricDeviceContext() const { return metricDeviceContext; }
     ze_result_t getTimerResolution(uint64_t &resolution) override;
@@ -38,7 +38,7 @@ class IpSamplingMetricSourceImp : public MetricSource {
     bool isEnabled = false;
 
     const MetricDeviceContext &metricDeviceContext;
-    std::unique_ptr<MetricIpSamplingOsInterface> metricIPSamplingOsInterface = nullptr;
+    std::unique_ptr<MetricIpSamplingOsInterface> metricIPSamplingpOsInterface = nullptr;
     std::unique_ptr<MetricGroup> cachedMetricGroup = nullptr;
 };
 
@@ -80,6 +80,9 @@ struct IpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
                                          const uint8_t *pRawData, uint32_t *pSetCount,
                                          uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
                                          zet_typed_value_t *pMetricValues) override;
+    ze_result_t getMetricTimestampsExp(const ze_bool_t synchronizedWithHost,
+                                       uint64_t *globalTimestamp,
+                                       uint64_t *metricTimestamp) override;
     zet_metric_group_handle_t getMetricGroupForSubDevice(const uint32_t subDeviceIndex) override;
     ze_result_t streamerOpen(
         zet_context_handle_t hContext,
@@ -121,6 +124,9 @@ struct MultiDeviceIpSamplingMetricGroupImp : public IpSamplingMetricGroupBase {
                                          const uint8_t *pRawData, uint32_t *pSetCount,
                                          uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
                                          zet_typed_value_t *pMetricValues) override;
+    ze_result_t getMetricTimestampsExp(const ze_bool_t synchronizedWithHost,
+                                       uint64_t *globalTimestamp,
+                                       uint64_t *metricTimestamp) override;
     zet_metric_group_handle_t getMetricGroupForSubDevice(const uint32_t subDeviceIndex) override;
     ze_result_t streamerOpen(
         zet_context_handle_t hContext,

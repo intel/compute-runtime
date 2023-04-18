@@ -624,7 +624,7 @@ TEST_F(MetricEnumerationTest, GivenValidMetricGroupWhenReadingFrequencyAndIntern
 
     mockOAOsInterface->getMetricsTimerResolutionReturn = ZE_RESULT_ERROR_UNKNOWN;
     mockOAOsInterface->getResolutionCallCount = 0;
-    mockOAOsInterface->failGetResolutionOnCall = 2; // getTimestampValidBits() also calls getTimestampValidBits()
+    mockOAOsInterface->failGetResolutionOnCall = 2; // getTimestampValidBits() also calls getTimerResolution()
 
     EXPECT_EQ(zetMetricGroupGetProperties(metricGroupHandle, &metricGroupProperties), ZE_RESULT_ERROR_UNKNOWN);
     EXPECT_EQ(metricGroupProperties.domain, 0u);
@@ -638,6 +638,157 @@ TEST_F(MetricEnumerationTest, GivenValidMetricGroupWhenReadingFrequencyAndIntern
 
     mockOAOsInterface->getMetricsTimerResolutionReturn = ZE_RESULT_SUCCESS;
     mockOAOsInterface->failGetResolutionOnCall = 0;
+}
+
+TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFrequencyThenValuesAreUpdated) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+
+    // One api: metric group handle.
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    MetricsDiscovery::TTypedValue_1_0 defaultMaxTimestamp = {};
+    defaultMaxTimestamp.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT64;
+    defaultMaxTimestamp.ValueUInt64 = UINT64_MAX;
+
+    openMetricsAdapter();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(1)
+        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    // Metric group count.
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    // Metric group handle.
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    ze_bool_t synchronizedWithHost = true;
+    uint64_t globalTimestamp = 0;
+    uint64_t metricTimestamp = 0;
+
+    EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroupHandle, synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_SUCCESS);
+    EXPECT_NE(globalTimestamp, 0UL);
+    EXPECT_NE(metricTimestamp, 0UL);
+
+    synchronizedWithHost = false;
+    globalTimestamp = 0;
+    metricTimestamp = 0;
+
+    EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroupHandle, synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_SUCCESS);
+    EXPECT_NE(globalTimestamp, 0UL);
+    EXPECT_NE(metricTimestamp, 0UL);
+}
+
+TEST_F(MetricEnumerationTest, GivenEnumerationIsSuccessfulWhenFailingToReadMetricsOrDeviceTimestampsThenValuesAreZero) {
+
+    // Metrics Discovery device.
+    metricsDeviceParams.ConcurrentGroupsCount = 1;
+
+    // Metrics Discovery concurrent group.
+    Mock<IConcurrentGroup_1_5> metricsConcurrentGroup;
+    TConcurrentGroupParams_1_0 metricsConcurrentGroupParams = {};
+    metricsConcurrentGroupParams.MetricSetsCount = 1;
+    metricsConcurrentGroupParams.SymbolName = "OA";
+    metricsConcurrentGroupParams.Description = "OA description";
+
+    // Metrics Discovery:: metric set.
+    Mock<MetricsDiscovery::IMetricSet_1_5> metricsSet;
+    MetricsDiscovery::TMetricSetParams_1_4 metricsSetParams = {};
+    metricsSetParams.ApiMask = MetricsDiscovery::API_TYPE_OCL;
+    metricsSetParams.MetricsCount = 0;
+    metricsSetParams.SymbolName = "Metric set name";
+    metricsSetParams.ShortName = "Metric set description";
+
+    // One api: metric group handle.
+    zet_metric_group_handle_t metricGroupHandle = {};
+
+    MetricsDiscovery::TTypedValue_1_0 defaultMaxTimestamp = {};
+    defaultMaxTimestamp.ValueType = MetricsDiscovery::TValueType::VALUE_TYPE_UINT64;
+    defaultMaxTimestamp.ValueUInt64 = UINT64_MAX;
+
+    openMetricsAdapter();
+
+    setupDefaultMocksForMetricDevice(metricsDevice);
+
+    EXPECT_CALL(metricsDevice, GetConcurrentGroup(_))
+        .Times(1)
+        .WillOnce(Return(&metricsConcurrentGroup));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetParams())
+        .Times(1)
+        .WillRepeatedly(Return(&metricsConcurrentGroupParams));
+
+    EXPECT_CALL(metricsConcurrentGroup, GetMetricSet(_))
+        .WillRepeatedly(Return(&metricsSet));
+
+    EXPECT_CALL(metricsSet, GetParams())
+        .WillRepeatedly(Return(&metricsSetParams));
+
+    EXPECT_CALL(metricsSet, SetApiFiltering(_))
+        .WillRepeatedly(Return(TCompletionCode::CC_OK));
+
+    // Metric group count.
+    uint32_t metricGroupCount = 0;
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    // Metric group handle.
+    EXPECT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, &metricGroupHandle), ZE_RESULT_SUCCESS);
+    EXPECT_EQ(metricGroupCount, 1u);
+    EXPECT_NE(metricGroupHandle, nullptr);
+
+    ze_bool_t synchronizedWithHost = true;
+    uint64_t globalTimestamp = 1;
+    uint64_t metricTimestamp = 1;
+    metricsDevice.forceGetGpuCpuTimestampsFail = true;
+
+    EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroupHandle, synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_ERROR_NOT_AVAILABLE);
+    EXPECT_EQ(globalTimestamp, 0UL);
+    EXPECT_EQ(metricTimestamp, 0UL);
+    metricsDevice.forceGetGpuCpuTimestampsFail = false;
+
+    globalTimestamp = 1;
+    metricTimestamp = 1;
+    neoDevice->setOSTime(new FalseCpuGpuTime());
+    EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroupHandle, synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_ERROR_DEVICE_LOST);
+    EXPECT_EQ(globalTimestamp, 0UL);
+    EXPECT_EQ(metricTimestamp, 0UL);
 }
 
 TEST_F(MetricEnumerationTest, givenValidArgumentsWhenZetMetricGetIsCalledThenReturnsCorrectMetric) {

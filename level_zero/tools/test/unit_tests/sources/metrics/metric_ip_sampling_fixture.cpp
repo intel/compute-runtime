@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 Intel Corporation
+ * Copyright (C) 2022-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -53,6 +53,25 @@ void MetricIpSamplingFixture::SetUp() {
 
 void MetricIpSamplingFixture::TearDown() {
     MultiDeviceFixture::tearDown();
+}
+
+void MetricIpSamplingTimestampFixture::SetUp() {
+    DeviceFixture::setUp();
+    auto mockMetricIpSamplingOsInterface = new MockMetricIpSamplingOsInterface();
+    osInterfaceVector.push_back(mockMetricIpSamplingOsInterface);
+    std::unique_ptr<MetricIpSamplingOsInterface> metricIpSamplingOsInterface = std::unique_ptr<MetricIpSamplingOsInterface>(mockMetricIpSamplingOsInterface);
+
+    auto &metricSource = device->getMetricDeviceContext().getMetricSource<IpSamplingMetricSourceImp>();
+    metricSource.setMetricOsInterface(metricIpSamplingOsInterface);
+
+    auto &metricOaSource = device->getMetricDeviceContext().getMetricSource<OaMetricSourceImp>();
+    metricOaSource.setInitializationState(ZE_RESULT_ERROR_UNSUPPORTED_FEATURE);
+
+    GlobalDriverHandle = static_cast<_ze_driver_handle_t *>(driverHandle.get());
+}
+
+void MetricIpSamplingTimestampFixture::TearDown() {
+    DeviceFixture::tearDown();
 }
 
 } // namespace ult

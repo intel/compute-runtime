@@ -41,8 +41,6 @@ class MetricSource {
     virtual ze_result_t getTimerResolution(uint64_t &resolution) = 0;
     virtual ze_result_t getTimestampValidBits(uint64_t &validBits) = 0;
     virtual ~MetricSource() = default;
-
-  private:
 };
 
 class MetricDeviceContext {
@@ -98,6 +96,10 @@ struct MetricGroup : _zet_metric_group_handle_t {
                                                  const uint8_t *pRawData, uint32_t *pSetCount,
                                                  uint32_t *pTotalMetricValueCount, uint32_t *pMetricCounts,
                                                  zet_typed_value_t *pMetricValues) = 0;
+    virtual ze_result_t getMetricTimestampsExp(const ze_bool_t synchronizedWithHost,
+                                               uint64_t *globalTimestamp,
+                                               uint64_t *metricTimestamp) = 0;
+
     static MetricGroup *fromHandle(zet_metric_group_handle_t handle) {
         return static_cast<MetricGroup *>(handle);
     }

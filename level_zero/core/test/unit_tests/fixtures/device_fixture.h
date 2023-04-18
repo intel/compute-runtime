@@ -8,6 +8,7 @@
 #pragma once
 
 #include "shared/source/helpers/hw_info.h"
+#include "shared/source/os_interface/os_time.h"
 #include "shared/test/common/helpers/debug_manager_state_restore.h"
 #include "shared/test/common/mocks/mock_device.h"
 
@@ -172,6 +173,39 @@ struct SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl : public MultiDevi
 template <uint32_t copyEngineCount, uint32_t implicitScalingArg>
 struct SingleRootMultiSubDeviceFixtureWithImplicitScaling : public SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl {
     SingleRootMultiSubDeviceFixtureWithImplicitScaling() : SingleRootMultiSubDeviceFixtureWithImplicitScalingImpl(copyEngineCount, implicitScalingArg){};
+};
+
+class FalseCpuGpuDeviceTime : public NEO::DeviceTime {
+  public:
+    bool getCpuGpuTime(TimeStampData *pGpuCpuTime, OSTime *osTime) override {
+        return false;
+    }
+    double getDynamicDeviceTimerResolution(HardwareInfo const &hwInfo) const override {
+        return NEO::OSTime::getDeviceTimerResolution(hwInfo);
+    }
+    uint64_t getDynamicDeviceTimerClock(HardwareInfo const &hwInfo) const override {
+        return static_cast<uint64_t>(1000000000.0 / OSTime::getDeviceTimerResolution(hwInfo));
+    }
+};
+
+class FalseCpuGpuTime : public NEO::OSTime {
+  public:
+    FalseCpuGpuTime() {
+        this->deviceTime = std::make_unique<FalseCpuGpuDeviceTime>();
+    }
+
+    bool getCpuTime(uint64_t *timeStamp) override {
+        return true;
+    };
+    double getHostTimerResolution() const override {
+        return 0;
+    }
+    uint64_t getCpuRawTimestamp() override {
+        return 0;
+    }
+    static std::unique_ptr<OSTime> create() {
+        return std::unique_ptr<OSTime>(new FalseCpuGpuTime());
+    }
 };
 
 } // namespace ult

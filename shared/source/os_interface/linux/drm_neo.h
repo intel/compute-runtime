@@ -97,7 +97,7 @@ class Drm : public DriverModel {
     int getEnabledPooledEu(int &enabled);
     int getMinEuInPool(int &minEUinPool);
     int getTimestampFrequency(int &frequency);
-    int getOATimestampFrequency(int &frequency);
+    int getOaTimestampFrequency(int &frequency);
 
     MOCKABLE_VIRTUAL int queryGttSize(uint64_t &gttSizeOutput);
     bool isPreemptionSupported() const { return preemptionSupported; }

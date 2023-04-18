@@ -228,6 +228,104 @@ TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulWhenReadingM
     }
 }
 
+TEST_F(MetricIpSamplingEnumerationTest, GivenEnumerationIsSuccessfulOnMulitDeviceWhenReadingMetricsTimestampThenResultIsSuccess) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, testDevices[0]->getMetricDeviceContext().enableMetricApi());
+
+    for (auto device : testDevices) {
+
+        ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
+        device->getProperties(&deviceProps);
+
+        uint32_t metricGroupCount = 0;
+        zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+        EXPECT_EQ(metricGroupCount, 1u);
+
+        std::vector<zet_metric_group_handle_t> metricGroups;
+        metricGroups.resize(metricGroupCount);
+
+        ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+        ASSERT_NE(metricGroups[0], nullptr);
+        ze_bool_t synchronizedWithHost = true;
+        uint64_t globalTimestamp = 0;
+        uint64_t metricTimestamp = 0;
+
+        EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroups[0], synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_SUCCESS);
+    }
+}
+
+using MetricIpSamplingTimestampTest = MetricIpSamplingTimestampFixture;
+
+TEST_F(MetricIpSamplingTimestampTest, GivenEnumerationIsSuccessfulWhenReadingMetricsFrequencyThenValuesAreUpdated) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
+
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
+    device->getProperties(&deviceProps);
+
+    uint32_t metricGroupCount = 0;
+    zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    std::vector<zet_metric_group_handle_t> metricGroups;
+    metricGroups.resize(metricGroupCount);
+
+    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+    ASSERT_NE(metricGroups[0], nullptr);
+
+    ze_bool_t synchronizedWithHost = true;
+    uint64_t globalTimestamp = 0;
+    uint64_t metricTimestamp = 0;
+
+    EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroups[0], synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_SUCCESS);
+    EXPECT_NE(globalTimestamp, 0UL);
+    EXPECT_NE(metricTimestamp, 0UL);
+
+    synchronizedWithHost = false;
+    globalTimestamp = 0;
+    metricTimestamp = 0;
+
+    EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroups[0], synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_SUCCESS);
+    EXPECT_NE(globalTimestamp, 0UL);
+    EXPECT_NE(metricTimestamp, 0UL);
+
+    DebugManager.flags.EnableImplicitScaling.set(1);
+    globalTimestamp = 0;
+    metricTimestamp = 0;
+
+    EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroups[0], synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_SUCCESS);
+    EXPECT_NE(globalTimestamp, 0UL);
+    EXPECT_NE(metricTimestamp, 0UL);
+}
+
+TEST_F(MetricIpSamplingTimestampTest, GivenGetCpuGpuTimeIsFalseWhenReadingMetricsFrequencyThenValuesAreZero) {
+
+    EXPECT_EQ(ZE_RESULT_SUCCESS, device->getMetricDeviceContext().enableMetricApi());
+
+    neoDevice->setOSTime(new FalseCpuGpuTime());
+
+    ze_device_properties_t deviceProps = {ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2, nullptr};
+    device->getProperties(&deviceProps);
+
+    uint32_t metricGroupCount = 0;
+    zetMetricGroupGet(device->toHandle(), &metricGroupCount, nullptr);
+    EXPECT_EQ(metricGroupCount, 1u);
+
+    std::vector<zet_metric_group_handle_t> metricGroups;
+    metricGroups.resize(metricGroupCount);
+
+    ASSERT_EQ(zetMetricGroupGet(device->toHandle(), &metricGroupCount, metricGroups.data()), ZE_RESULT_SUCCESS);
+    ASSERT_NE(metricGroups[0], nullptr);
+
+    ze_bool_t synchronizedWithHost = true;
+    uint64_t globalTimestamp = 1;
+    uint64_t metricTimestamp = 1;
+
+    EXPECT_EQ(L0::zetMetricGroupGetGlobalTimestampsExp(metricGroups[0], synchronizedWithHost, &globalTimestamp, &metricTimestamp), ZE_RESULT_ERROR_DEVICE_LOST);
+    EXPECT_EQ(globalTimestamp, 0UL);
+    EXPECT_EQ(metricTimestamp, 0UL);
+}
+
 using MetricIpSamplingCalculateMetricsTest = MetricIpSamplingCalculateMetricsFixture;
 
 TEST_F(MetricIpSamplingCalculateMetricsTest, GivenEnumerationIsSuccessfulWhenCalculateMultipleMetricValuesExpIsCalledThenValidDataIsReturned) {

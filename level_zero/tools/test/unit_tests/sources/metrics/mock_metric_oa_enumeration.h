@@ -112,6 +112,7 @@ class Mock<IMetricsDevice_1_5> : public IMetricsDevice_1_5 {
 
     MetricsDiscovery::TTypedValue_1_0 symbolValue = {};
     bool forceGetSymbolByNameFail = false;
+    bool forceGetGpuCpuTimestampsFail = false;
     TTypedValue_1_0 *GetGlobalSymbolValueByName(const char *name) override {
         bool found = false;
         if (forceGetSymbolByNameFail) {
@@ -133,7 +134,20 @@ class Mock<IMetricsDevice_1_5> : public IMetricsDevice_1_5 {
     }
 
     MOCK_METHOD(TCompletionCode, GetLastError, (), (override));
-    MOCK_METHOD(TCompletionCode, GetGpuCpuTimestamps, (uint64_t * gpuTimestampNs, uint64_t *cpuTimestampNs, uint32_t *cpuId), (override));
+
+    TCompletionCode GetGpuCpuTimestamps(uint64_t *gpuTimestampNs, uint64_t *cpuTimestampNs, uint32_t *cpuId) override {
+        if (forceGetGpuCpuTimestampsFail) {
+            *gpuTimestampNs = 0;
+            *cpuTimestampNs = 0;
+            *cpuId = 0;
+            return MetricsDiscovery::CC_ERROR_GENERAL;
+        }
+
+        *gpuTimestampNs += 10;
+        *cpuTimestampNs += 10;
+        *cpuId = 0;
+        return MetricsDiscovery::CC_OK;
+    }
 };
 
 template <>

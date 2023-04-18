@@ -104,7 +104,7 @@ ze_result_t MetricOALinuxImp::getMetricsTimerResolution(uint64_t &timerResolutio
 
     const auto drm = device.getOsInterface().getDriverModel()->as<NEO::Drm>();
     int32_t timestampFrequency;
-    int32_t ret = drm->getOATimestampFrequency(timestampFrequency);
+    int32_t ret = drm->getOaTimestampFrequency(timestampFrequency);
     if (ret < 0 || timestampFrequency == 0) {
         timerResolution = 0;
         result = ZE_RESULT_ERROR_UNKNOWN;

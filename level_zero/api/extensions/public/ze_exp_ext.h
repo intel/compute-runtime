@@ -56,6 +56,12 @@ ze_result_t zetMetricGroupCalculateMultipleMetricValuesExp(
     uint32_t *pMetricCounts,
     zet_typed_value_t *pMetricValues);
 
+ze_result_t zetMetricGroupGetGlobalTimestampsExp(
+    zet_metric_group_handle_t hMetricGroup,
+    ze_bool_t synchronizedWithHost,
+    uint64_t *globalTimestamp,
+    uint64_t *metricTimestamp);
+
 ze_result_t zeFabricVertexGetExp(
     ze_driver_handle_t hDriver,
     uint32_t *pCount,
