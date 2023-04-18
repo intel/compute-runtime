@@ -16,6 +16,10 @@ using namespace NEO;
 
 using AdlnUsDeviceIdTest = Test<DeviceFixture>;
 
+ADLNTEST_F(AdlnUsDeviceIdTest, givenAdlnThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 ADLNTEST_F(AdlnUsDeviceIdTest, givenAdlnWhenCheckFtrSupportsInteger64BitAtomicsThenReturnFalse) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsInteger64BitAtomics);
 }

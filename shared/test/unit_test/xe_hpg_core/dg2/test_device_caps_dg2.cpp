@@ -15,6 +15,10 @@ using namespace NEO;
 
 using Dg2UsDeviceIdTest = Test<DeviceFixture>;
 
+DG2TEST_F(Dg2UsDeviceIdTest, givenDg2ThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 DG2TEST_F(Dg2UsDeviceIdTest, givenDg2ProductWhenCheckBlitterOperationsSupportThenReturnFalse) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.blitterOperationsSupported);
 }

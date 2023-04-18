@@ -17,6 +17,10 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> SklDeviceCaps;
 
+SKLTEST_F(SklDeviceCaps, givenSklThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 SKLTEST_F(SklDeviceCaps, WhenCheckingProfilingTimerResolutionThenCorrectResolutionIsReturned) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_EQ(83u, caps.outProfilingTimerResolution);

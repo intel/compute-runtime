@@ -16,6 +16,10 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> CflDeviceCapsWindows;
 
+CFLTEST_F(CflDeviceCapsWindows, GivenCflWindowsThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 CFLTEST_F(CflDeviceCapsWindows, GivenWhenGettingKmdNotifyPropertiesThenItIsDisabled) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(0, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);

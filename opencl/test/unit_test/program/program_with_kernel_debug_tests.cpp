@@ -93,10 +93,6 @@ class ProgramWithKernelDebuggingFixture {
     void setUp() {
         pDevice = static_cast<MockDevice *>(&mockContext.getDevice(0)->getDevice());
 
-        if (!pDevice->getHardwareInfo().capabilityTable.debuggerSupported) {
-            GTEST_SKIP();
-        }
-
         std::string filename;
         std::string kernelOption(CompilerOptions::debugKernelEnable);
         KernelFilenameHelper::getKernelFilenameFromInternalOption(kernelOption, filename);
@@ -106,21 +102,21 @@ class ProgramWithKernelDebuggingFixture {
 
     void tearDown() {}
 
-    MockUnrestrictiveContext mockContext;
+    MockUnrestrictiveDebuggingSupportedContext mockContext;
     std::unique_ptr<MockDebugProgram> program = nullptr;
     MockDevice *pDevice = nullptr;
 };
 
 using ProgramWithKernelDebuggingTest = Test<ProgramWithKernelDebuggingFixture>;
 
-TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledThenInternalOptionsIncludeDebugFlag) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledThenInternalOptionsIncludeDebugFlag, HasSourceLevelDebuggerSupport) {
     cl_int retVal = program->compile(program->getDevices(), nullptr,
                                      0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(CompilerOptions::contains(program->compilerInterface->buildInternalOptions, CompilerOptions::debugKernelEnable));
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledThenInternalOptionsIncludeDashGFlag) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledThenInternalOptionsIncludeDashGFlag, HasSourceLevelDebuggerSupport) {
     cl_int retVal = program->compile(program->getDevices(), nullptr,
                                      0, nullptr, nullptr);
     EXPECT_EQ(CL_SUCCESS, retVal);
@@ -128,7 +124,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
     EXPECT_TRUE(hasSubstr(program->getOptions(), "-g"));
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhenProgramIsCompiledThenOptionsIncludeClOptDisableFlag) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhenProgramIsCompiledThenOptionsIncludeClOptDisableFlag, HasSourceLevelDebuggerSupport) {
     MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
     sourceLevelDebugger->isOptDisabled = true;
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
@@ -139,7 +135,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhen
     EXPECT_TRUE(hasSubstr(program->getOptions(), CompilerOptions::optDisable.data()));
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, GivenDebugVarDebuggerOptDisableZeroWhenOptDisableIsTrueFromDebuggerThenOptDisableIsNotAdded) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, GivenDebugVarDebuggerOptDisableZeroWhenOptDisableIsTrueFromDebuggerThenOptDisableIsNotAdded, HasSourceLevelDebuggerSupport) {
     DebugManagerStateRestore dgbRestorer;
     NEO::DebugManager.flags.DebuggerOptDisable.set(0);
 
@@ -153,7 +149,7 @@ TEST_F(ProgramWithKernelDebuggingTest, GivenDebugVarDebuggerOptDisableZeroWhenOp
     EXPECT_FALSE(hasSubstr(program->getOptions(), CompilerOptions::optDisable.data()));
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, GivenDebugVarDebuggerOptDisableOneWhenOptDisableIsFalseFromDebuggerThenOptDisableIsAdded) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, GivenDebugVarDebuggerOptDisableOneWhenOptDisableIsFalseFromDebuggerThenOptDisableIsAdded, HasSourceLevelDebuggerSupport) {
     DebugManagerStateRestore dgbRestorer;
     NEO::DebugManager.flags.DebuggerOptDisable.set(1);
 
@@ -167,7 +163,7 @@ TEST_F(ProgramWithKernelDebuggingTest, GivenDebugVarDebuggerOptDisableOneWhenOpt
     EXPECT_TRUE(hasSubstr(program->getOptions(), CompilerOptions::optDisable.data()));
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledThenOptionsStartsWithDashSFilename) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledThenOptionsStartsWithDashSFilename, HasSourceLevelDebuggerSupport) {
     MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
     sourceLevelDebugger->sourceCodeFilename = "debugFileName";
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
@@ -178,7 +174,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
     EXPECT_TRUE(startsWith(program->getOptions(), "-s \"debugFileName\""));
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledWithCmCOptionThenDashSFilenameIsNotPrepended) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompiledWithCmCOptionThenDashSFilenameIsNotPrepended, HasSourceLevelDebuggerSupport) {
     MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
     sourceLevelDebugger->sourceCodeFilename = "debugFileName";
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
@@ -191,19 +187,19 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsCompi
     EXPECT_TRUE(hasSubstr(program->getOptions(), CompilerOptions::optDisable.data()));
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenInternalOptionsIncludeDebugFlag) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenInternalOptionsIncludeDebugFlag, HasSourceLevelDebuggerSupport) {
     cl_int retVal = program->build(program->getDevices(), nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(CompilerOptions::contains(program->compilerInterface->buildInternalOptions, CompilerOptions::debugKernelEnable));
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenOptionsIncludeDashGFlag) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenOptionsIncludeDashGFlag, HasSourceLevelDebuggerSupport) {
     cl_int retVal = program->build(program->getDevices(), nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
     EXPECT_TRUE(hasSubstr(program->getOptions(), "-g"));
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhenProgramIsBuiltThenOptionsIncludeClOptDisableFlag) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhenProgramIsBuiltThenOptionsIncludeClOptDisableFlag, HasSourceLevelDebuggerSupport) {
     MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
     sourceLevelDebugger->isOptDisabled = true;
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
@@ -213,7 +209,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugAndOptDisabledWhen
     EXPECT_TRUE(hasSubstr(program->getOptions(), CompilerOptions::optDisable.data()));
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenOptionsStartsWithDashSFilename) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenOptionsStartsWithDashSFilename, HasSourceLevelDebuggerSupport) {
     MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
     sourceLevelDebugger->sourceCodeFilename = "debugFileName";
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
@@ -223,7 +219,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
     EXPECT_TRUE(startsWith(program->getOptions(), "-s \"debugFileName\""));
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltWithCmCOptionThenDashSFilenameIsNotPrepended) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltWithCmCOptionThenDashSFilenameIsNotPrepended, HasSourceLevelDebuggerSupport) {
     MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
     sourceLevelDebugger->sourceCodeFilename = "debugFileName";
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
@@ -234,7 +230,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
     EXPECT_FALSE(startsWith(program->getOptions(), "-s debugFileName"));
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinkedThenKernelDebugOptionsAreAppended) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinkedThenKernelDebugOptionsAreAppended, HasSourceLevelDebuggerSupport) {
     MockActiveSourceLevelDebugger *sourceLevelDebugger = new MockActiveSourceLevelDebugger;
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
 
@@ -253,7 +249,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
     EXPECT_EQ(static_cast<unsigned int>(mockContext.getRootDeviceIndices().size()), newProgram->appendKernelDebugOptionsCalled);
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenDebuggerIsNotifiedWithKernelDebugData) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuiltThenDebuggerIsNotifiedWithKernelDebugData, HasSourceLevelDebuggerSupport) {
     const size_t rootDeviceIndicesSize = mockContext.getRootDeviceIndices().size();
     std::vector<MockSourceLevelDebugger *> sourceLevelDebugger(rootDeviceIndicesSize, nullptr);
     size_t i = 0;
@@ -279,7 +275,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsBuilt
     }
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinkedThenDebuggerIsNotifiedWithKernelDebugData) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinkedThenDebuggerIsNotifiedWithKernelDebugData, HasSourceLevelDebuggerSupport) {
     const size_t rootDeviceIndicesSize = mockContext.getRootDeviceIndices().size();
     std::vector<MockSourceLevelDebugger *> sourceLevelDebugger(rootDeviceIndicesSize, nullptr);
     size_t i = 0;
@@ -311,7 +307,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenEnabledKernelDebugWhenProgramIsLinke
     }
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenGtpinInitializedWhenCreatingProgramFromBinaryThenDebugDataIsAvailable) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenGtpinInitializedWhenCreatingProgramFromBinaryThenDebugDataIsAvailable, HasSourceLevelDebuggerSupport) {
     bool gtpinInitializedBackup = NEO::isGTPinInitialized;
     NEO::isGTPinInitialized = true;
     auto retVal = program->build(program->getDevices(), CompilerOptions::debugKernelEnable.data(), false);
@@ -322,7 +318,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenGtpinInitializedWhenCreatingProgramF
     NEO::isGTPinInitialized = gtpinInitializedBackup;
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenGtpinNotInitializedWhenCreatingProgramFromBinaryThenDebugDataINullptr) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenGtpinNotInitializedWhenCreatingProgramFromBinaryThenDebugDataINullptr, HasSourceLevelDebuggerSupport) {
     bool gtpinInitializedBackup = NEO::isGTPinInitialized;
     NEO::isGTPinInitialized = false;
     program->kernelDebugEnabled = false;
@@ -334,7 +330,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenGtpinNotInitializedWhenCreatingProgr
     NEO::isGTPinInitialized = gtpinInitializedBackup;
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenKernelDebugEnabledWhenProgramIsBuiltThenDebugDataIsStored) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenKernelDebugEnabledWhenProgramIsBuiltThenDebugDataIsStored, HasSourceLevelDebuggerSupport) {
     auto retVal = program->build(program->getDevices(), nullptr, false);
     EXPECT_EQ(CL_SUCCESS, retVal);
 
@@ -343,7 +339,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenKernelDebugEnabledWhenProgramIsBuilt
     EXPECT_NE(0u, program->getDebugDataSize(pDevice->getRootDeviceIndex()));
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenProcessDebugDataIsCalledThenKernelInfosAreFilledWithDebugData) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenProcessDebugDataIsCalledThenKernelInfosAreFilledWithDebugData, HasSourceLevelDebuggerSupport) {
     iOpenCL::SProgramDebugDataHeaderIGC debugDataHeader{};
     debugDataHeader.NumberOfKernels = 1u;
 
@@ -381,7 +377,7 @@ TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithKernelDebugEnabledWhenPro
     EXPECT_NE(nullptr, receivedKernelInfo->debugData.vIsa);
 }
 
-TEST_F(ProgramWithKernelDebuggingTest, givenProgramWithNonZebinaryFormatAndKernelDebugEnabledWhenProgramIsBuiltThenProcessDebugDataIsCalledAndDebuggerNotified) {
+HWTEST2_F(ProgramWithKernelDebuggingTest, givenProgramWithNonZebinaryFormatAndKernelDebugEnabledWhenProgramIsBuiltThenProcessDebugDataIsCalledAndDebuggerNotified, HasSourceLevelDebuggerSupport) {
     MockSourceLevelDebugger *sourceLevelDebugger = new MockSourceLevelDebugger;
     pDevice->executionEnvironment->rootDeviceEnvironments[pDevice->getRootDeviceIndex()]->debugger.reset(sourceLevelDebugger);
     program->enableKernelDebug();

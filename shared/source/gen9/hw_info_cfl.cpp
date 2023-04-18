@@ -63,7 +63,7 @@ const RuntimeCapabilityTable CFL::capabilityTable{
     false,                                         // ftrRenderCompressedImages
     true,                                          // ftr64KBpages
     true,                                          // instrumentationEnabled
-    true,                                          // sourceLevelDebuggerSupported
+    false,                                         // sourceLevelDebuggerSupported
     true,                                          // supportsVme
     false,                                         // supportCacheFlushAfterWalker
     true,                                          // supportsImages

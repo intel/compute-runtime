@@ -16,6 +16,10 @@ using namespace NEO;
 
 using IcllpTest = Test<ClDeviceFixture>;
 
+ICLLPTEST_F(IcllpTest, givenIcllpThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 ICLLPTEST_F(IcllpTest, givenIcllpWhenSlmSizeIsRequiredThenReturnCorrectValue) {
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
 }

@@ -165,6 +165,20 @@ MockUnrestrictiveContext::MockUnrestrictiveContext() : MockContext(nullptr, null
     initializeWithDevices(ClDeviceVector{deviceIds, 3}, true);
 }
 
+MockUnrestrictiveDebuggingSupportedContext::MockUnrestrictiveDebuggingSupportedContext() : MockContext(nullptr, nullptr) {
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+    hwInfo.capabilityTable.debuggerSupported = true;
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+
+    ultClDeviceFactory = std::make_unique<UltClDeviceFactory>(1, 2, static_cast<ClExecutionEnvironment *>(executionEnvironment));
+
+    pRootDevice = ultClDeviceFactory->rootDevices[0];
+    pSubDevice0 = ultClDeviceFactory->subDevices[0];
+    pSubDevice1 = ultClDeviceFactory->subDevices[1];
+    cl_device_id deviceIds[] = {pRootDevice, pSubDevice0, pSubDevice1};
+    initializeWithDevices(ClDeviceVector{deviceIds, 3}, true);
+}
+
 MockUnrestrictiveContextMultiGPU::MockUnrestrictiveContextMultiGPU() : MockContext(nullptr, nullptr) {
     pRootDevice0 = ultClDeviceFactory.rootDevices[0];
     pSubDevice00 = ultClDeviceFactory.subDevices[0];

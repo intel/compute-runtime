@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2018-2022 Intel Corporation
+ * Copyright (C) 2018-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -36,6 +36,7 @@ struct DebuggerLibraryInterceptor {
     bool kernelDebugDataCalled = false;
     bool initCalled = false;
     bool deviceDestructionCalled = false;
+    bool loadCalled = false;
 
     int newDeviceRetVal = 0;
     int sourceCodeRetVal = 0;

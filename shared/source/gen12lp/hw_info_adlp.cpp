@@ -65,7 +65,7 @@ const RuntimeCapabilityTable ADLP::capabilityTable{
     false,                                          // ftrRenderCompressedImages
     true,                                           // instrumentationEnabled
     true,                                           // ftr64KBpages
-    true,                                           // sourceLevelDebuggerSupported
+    false,                                          // sourceLevelDebuggerSupported
     false,                                          // supportsVme
     false,                                          // supportCacheFlushAfterWalker
     true,                                           // supportsImages

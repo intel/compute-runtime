@@ -16,6 +16,10 @@ using namespace NEO;
 
 typedef Test<ClDeviceFixture> BxtDeviceCapsWindows;
 
+BXTTEST_F(BxtDeviceCapsWindows, GivenBxtWindowsThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 BXTTEST_F(BxtDeviceCapsWindows, GivenWhenGettingKmdNotifyPropertiesThenItIsDisabled) {
     EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.enableKmdNotify);
     EXPECT_EQ(0, pDevice->getHardwareInfo().capabilityTable.kmdNotifyProperties.delayKmdNotifyMicroseconds);

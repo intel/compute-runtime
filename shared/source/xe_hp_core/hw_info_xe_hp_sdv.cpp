@@ -64,7 +64,7 @@ const RuntimeCapabilityTable XE_HP_SDV::capabilityTable{
     false,                                                     // ftrRenderCompressedImages
     true,                                                      // ftr64KBpages
     true,                                                      // instrumentationEnabled
-    true,                                                      // sourceLevelDebuggerSupported
+    false,                                                     // sourceLevelDebuggerSupported
     false,                                                     // supportsVme
     true,                                                      // supportCacheFlushAfterWalker
     true,                                                      // supportsImages

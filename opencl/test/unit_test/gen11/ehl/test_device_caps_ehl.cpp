@@ -15,6 +15,10 @@ using namespace NEO;
 
 using EhlTest = Test<DeviceFixture>;
 
+EHLTEST_F(EhlTest, givenEhlThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 EHLTEST_F(EhlTest, givenEhlWhenSlmSizeIsRequiredThenReturnCorrectValue) {
     EXPECT_EQ(64u, pDevice->getHardwareInfo().capabilityTable.slmSize);
 }

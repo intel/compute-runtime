@@ -18,6 +18,7 @@
 #include "shared/test/common/mocks/mock_csr.h"
 #include "shared/test/common/mocks/mock_execution_environment.h"
 #include "shared/test/common/mocks/mock_memory_manager.h"
+#include "shared/test/common/test_macros/hw_test.h"
 #include "shared/test/common/test_macros/test.h"
 
 #include "opencl/source/platform/platform.h"
@@ -725,7 +726,9 @@ TEST(ProgramStringSectionTest, WhenConstStringBufferIsPresentThenUseItForLinking
     program.getKernelInfoArray(rootDeviceIndex).clear();
 }
 
-TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndStackCallsThenKernelRequiresImplicitArgs) {
+using ProgramImplicitArgsTest = ::testing::Test;
+
+TEST_F(ProgramImplicitArgsTest, givenImplicitRelocationAndStackCallsThenKernelRequiresImplicitArgs) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     auto rootDeviceIndex = device->getRootDeviceIndex();
     MockProgram program{nullptr, false, toClDeviceVector(*device)};
@@ -750,13 +753,14 @@ TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndStackCallsThenKernelRequ
     program.getKernelInfoArray(rootDeviceIndex).clear();
 }
 
-TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndEnabledDebuggerThenKernelRequiresImplicitArgs) {
-    if (!defaultHwInfo->capabilityTable.debuggerSupported) {
-        GTEST_SKIP();
-    }
+HWTEST2_F(ProgramImplicitArgsTest, givenImplicitRelocationAndEnabledDebuggerThenKernelRequiresImplicitArgs, HasSourceLevelDebuggerSupport) {
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
-    auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
+
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+    hwInfo.capabilityTable.debuggerSupported = true;
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+    auto device = std::make_unique<MockClDevice>(MockDevice::createWithExecutionEnvironment<MockDevice>(&hwInfo, executionEnvironment, 0u));
 
     EXPECT_NE(nullptr, device->getDebugger());
     auto rootDeviceIndex = device->getRootDeviceIndex();
@@ -782,7 +786,7 @@ TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndEnabledDebuggerThenKerne
     program.getKernelInfoArray(rootDeviceIndex).clear();
 }
 
-TEST(ProgramImplicitArgsTest, givenImplicitRelocationAndNoStackCallsAndDisabledDebuggerThenKernelDoesntRequireImplicitArgs) {
+TEST_F(ProgramImplicitArgsTest, givenImplicitRelocationAndNoStackCallsAndDisabledDebuggerThenKernelDoesntRequireImplicitArgs) {
     auto device = std::make_unique<MockClDevice>(MockDevice::createWithNewExecutionEnvironment<MockDevice>(defaultHwInfo.get()));
     EXPECT_EQ(nullptr, device->getDebugger());
     auto rootDeviceIndex = device->getRootDeviceIndex();

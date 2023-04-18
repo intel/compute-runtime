@@ -16,6 +16,10 @@ using namespace NEO;
 
 using GlkDeviceCaps = Test<DeviceFixture>;
 
+GLKTEST_F(GlkDeviceCaps, givenGlkThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 GLKTEST_F(GlkDeviceCaps, WhenCheckingProfilingTimerResolutionThenCorrectResolutionIsReturned) {
     const auto &caps = pDevice->getDeviceInfo();
     EXPECT_EQ(52u, caps.outProfilingTimerResolution);

@@ -13,6 +13,10 @@ using namespace NEO;
 
 using MtlUsDeviceIdTest = Test<DeviceFixture>;
 
+MTLTEST_F(MtlUsDeviceIdTest, givenMtlThenDebuggerIsNotSupported) {
+    EXPECT_FALSE(pDevice->getHardwareInfo().capabilityTable.debuggerSupported);
+}
+
 MTLTEST_F(MtlUsDeviceIdTest, givenMtlProductWhenCheckFp64SupportThenReturnFalse) {
     EXPECT_TRUE(pDevice->getHardwareInfo().capabilityTable.ftrSupportsFP64);
 }

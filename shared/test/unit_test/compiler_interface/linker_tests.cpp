@@ -22,6 +22,7 @@
 #include "shared/test/common/mocks/mock_graphics_allocation.h"
 #include "shared/test/common/mocks/mock_modules_zebin.h"
 #include "shared/test/common/mocks/ult_device_factory.h"
+#include "shared/test/common/test_macros/hw_test.h"
 
 #include "RelocationInfo.h"
 #include "gtest/gtest.h"
@@ -1987,10 +1988,9 @@ TEST(LinkerTests, givenImplicitArgRelocationAndStackCallsThenPatchRelocationWith
     EXPECT_TRUE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
-TEST(LinkerTests, givenImplicitArgRelocationAndEnabledDebuggerThenPatchRelocationWithSizeOfImplicitArgStructAndUpdateKernelDescriptor) {
-    if (!defaultHwInfo->capabilityTable.debuggerSupported) {
-        GTEST_SKIP();
-    }
+using LinkerDebuggingSupportedTests = ::testing::Test;
+
+HWTEST2_F(LinkerDebuggingSupportedTests, givenImplicitArgRelocationAndEnabledDebuggerThenPatchRelocationWithSizeOfImplicitArgStructAndUpdateKernelDescriptor, HasSourceLevelDebuggerSupport) {
     NEO::LinkerInput linkerInput;
 
     vISA::GenRelocEntry reloc = {};
@@ -2022,7 +2022,10 @@ TEST(LinkerTests, givenImplicitArgRelocationAndEnabledDebuggerThenPatchRelocatio
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
-    UltDeviceFactory deviceFactory{1, 0};
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+    hwInfo.capabilityTable.debuggerSupported = true;
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+    UltDeviceFactory deviceFactory{1, 0, *executionEnvironment};
     auto device = deviceFactory.rootDevices[0];
     EXPECT_NE(nullptr, device->getDebugger());
 
@@ -2149,10 +2152,7 @@ TEST(LinkerTests, givenNoImplicitArgRelocationAndStackCallsThenImplicitArgsAreNo
     EXPECT_FALSE(kernelDescriptor.kernelAttributes.flags.requiresImplicitArgs);
 }
 
-TEST(LinkerTests, givenNoImplicitArgRelocationAndEnabledDebuggerThenImplicitArgsAreNotRequired) {
-    if (!defaultHwInfo->capabilityTable.debuggerSupported) {
-        GTEST_SKIP();
-    }
+HWTEST2_F(LinkerDebuggingSupportedTests, givenNoImplicitArgRelocationAndEnabledDebuggerThenImplicitArgsAreNotRequired, HasSourceLevelDebuggerSupport) {
     NEO::LinkerInput linkerInput;
 
     NEO::Linker linker(linkerInput);
@@ -2173,7 +2173,10 @@ TEST(LinkerTests, givenNoImplicitArgRelocationAndEnabledDebuggerThenImplicitArgs
 
     DebugManagerStateRestore restorer;
     DebugManager.flags.EnableMockSourceLevelDebugger.set(1);
-    UltDeviceFactory deviceFactory{1, 0};
+    NEO::HardwareInfo hwInfo = *NEO::defaultHwInfo;
+    hwInfo.capabilityTable.debuggerSupported = true;
+    auto executionEnvironment = MockDevice::prepareExecutionEnvironment(&hwInfo, 0u);
+    UltDeviceFactory deviceFactory{1, 0, *executionEnvironment};
     auto device = deviceFactory.rootDevices[0];
     EXPECT_NE(nullptr, device->getDebugger());
 
