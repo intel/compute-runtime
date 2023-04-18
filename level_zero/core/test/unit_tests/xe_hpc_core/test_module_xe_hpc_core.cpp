@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2021-2022 Intel Corporation
+ * Copyright (C) 2021-2023 Intel Corporation
  *
  * SPDX-License-Identifier: MIT
  *
@@ -23,26 +23,30 @@ HWTEST2_F(KernelPropertyTest, givenKernelExtendedPropertiesStructureWhenKernelPr
     ze_result_t res = device->getKernelProperties(&kernelProperties);
     EXPECT_EQ(res, ZE_RESULT_SUCCESS);
 
-    EXPECT_TRUE(kernelExtendedProperties.fp16Flags & FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE);
-    EXPECT_TRUE(kernelExtendedProperties.fp16Flags & FP_ATOMIC_EXT_FLAG_GLOBAL_ADD);
-    EXPECT_TRUE(kernelExtendedProperties.fp16Flags & FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
-    EXPECT_FALSE(kernelExtendedProperties.fp16Flags & FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE);
-    EXPECT_FALSE(kernelExtendedProperties.fp16Flags & FP_ATOMIC_EXT_FLAG_LOCAL_ADD);
-    EXPECT_FALSE(kernelExtendedProperties.fp16Flags & FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX);
+    const auto &fp16Properties = kernelExtendedProperties.fp16Flags;
+    EXPECT_TRUE(fp16Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE);
+    EXPECT_TRUE(fp16Properties & FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE);
+    EXPECT_TRUE(fp16Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
+    EXPECT_TRUE(fp16Properties & FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX);
 
-    EXPECT_TRUE(kernelExtendedProperties.fp32Flags & FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE);
-    EXPECT_TRUE(kernelExtendedProperties.fp32Flags & FP_ATOMIC_EXT_FLAG_GLOBAL_ADD);
-    EXPECT_TRUE(kernelExtendedProperties.fp32Flags & FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
-    EXPECT_FALSE(kernelExtendedProperties.fp32Flags & FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE);
-    EXPECT_FALSE(kernelExtendedProperties.fp32Flags & FP_ATOMIC_EXT_FLAG_LOCAL_ADD);
-    EXPECT_FALSE(kernelExtendedProperties.fp32Flags & FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX);
+    EXPECT_FALSE(fp16Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_ADD);
+    EXPECT_FALSE(fp16Properties & FP_ATOMIC_EXT_FLAG_LOCAL_ADD);
 
-    EXPECT_TRUE(kernelExtendedProperties.fp64Flags & FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE);
-    EXPECT_TRUE(kernelExtendedProperties.fp64Flags & FP_ATOMIC_EXT_FLAG_GLOBAL_ADD);
-    EXPECT_TRUE(kernelExtendedProperties.fp64Flags & FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
-    EXPECT_FALSE(kernelExtendedProperties.fp64Flags & FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE);
-    EXPECT_FALSE(kernelExtendedProperties.fp64Flags & FP_ATOMIC_EXT_FLAG_LOCAL_ADD);
-    EXPECT_FALSE(kernelExtendedProperties.fp64Flags & FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX);
+    const auto &fp32Properties = kernelExtendedProperties.fp32Flags;
+    EXPECT_TRUE(fp32Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE);
+    EXPECT_TRUE(fp32Properties & FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE);
+    EXPECT_TRUE(fp32Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
+    EXPECT_TRUE(fp32Properties & FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX);
+    EXPECT_TRUE(fp32Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_ADD);
+    EXPECT_TRUE(fp32Properties & FP_ATOMIC_EXT_FLAG_LOCAL_ADD);
+
+    const auto &fp64Properties = kernelExtendedProperties.fp64Flags;
+    EXPECT_TRUE(fp64Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE);
+    EXPECT_TRUE(fp64Properties & FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE);
+    EXPECT_TRUE(fp64Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX);
+    EXPECT_TRUE(fp64Properties & FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX);
+    EXPECT_TRUE(fp64Properties & FP_ATOMIC_EXT_FLAG_GLOBAL_ADD);
+    EXPECT_TRUE(fp64Properties & FP_ATOMIC_EXT_FLAG_LOCAL_ADD);
 }
 
 } // namespace ult

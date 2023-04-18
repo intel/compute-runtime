@@ -23,7 +23,6 @@ namespace NEO {
 } // namespace NEO
 
 #include "shared/source/xe_hpg_core/mtl/os_agnostic_product_helper_mtl.inl"
-#include "shared/source/xe_hpg_core/os_agnostic_product_helper_xe_hpg_core.inl"
 
 namespace NEO {
 template <>

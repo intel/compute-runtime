@@ -14,6 +14,7 @@
 #include "shared/source/helpers/hw_mapper.h"
 #include "shared/source/helpers/local_memory_access_modes.h"
 #include "shared/source/helpers/preamble.h"
+#include "shared/source/kernel/kernel_properties.h"
 #include "shared/source/memory_manager/graphics_allocation.h"
 #include "shared/source/memory_manager/memory_manager.h"
 #include "shared/source/os_interface/product_helper.h"
@@ -34,9 +35,9 @@ int ProductHelperHw<gfxProduct>::configureHardwareCustom(HardwareInfo *hwInfo, O
 
 template <PRODUCT_FAMILY gfxProduct>
 void ProductHelperHw<gfxProduct>::getKernelExtendedProperties(uint32_t *fp16, uint32_t *fp32, uint32_t *fp64) const {
-    *fp16 = 0u;
-    *fp32 = 0u;
-    *fp64 = 0u;
+    *fp16 = (0u | FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX | FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX | FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE | FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE);
+    *fp32 = (0u | FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX | FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX | FP_ATOMIC_EXT_FLAG_GLOBAL_ADD | FP_ATOMIC_EXT_FLAG_LOCAL_ADD | FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE | FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE);
+    *fp64 = (0u | FP_ATOMIC_EXT_FLAG_GLOBAL_MIN_MAX | FP_ATOMIC_EXT_FLAG_LOCAL_MIN_MAX | FP_ATOMIC_EXT_FLAG_GLOBAL_ADD | FP_ATOMIC_EXT_FLAG_LOCAL_ADD | FP_ATOMIC_EXT_FLAG_GLOBAL_LOAD_STORE | FP_ATOMIC_EXT_FLAG_LOCAL_LOAD_STORE);
 }
 
 template <PRODUCT_FAMILY gfxProduct>
