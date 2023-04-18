@@ -1914,14 +1914,16 @@ TEST_F(TimestampDeviceEventCreate, givenTimestampDeviceEventThenAllocationsIsOfG
     EXPECT_EQ(NEO::AllocationType::GPU_TIMESTAMP_DEVICE_BUFFER, allocation->getAllocationType());
 }
 
-using EventQueryTimestampExpWithSubDevice = Test<MultiDeviceFixture>;
+using EventQueryTimestampExpWithRootDeviceAndSubDevices = Test<MultiDeviceFixture>;
 
-TEST_F(EventQueryTimestampExpWithSubDevice, givenEventWhenQuerytimestampExpWithSubDeviceThenReturnsCorrectValueReturned) {
+TEST_F(EventQueryTimestampExpWithRootDeviceAndSubDevices, givenEventWhenQuerytimestampExpWithRootDeviceAndSubDevicesThenReturnsCorrectValuesReturned) {
     DebugManagerStateRestore restorer;
     NEO::DebugManager.flags.SignalAllEventPackets.set(0);
 
     std::unique_ptr<L0::EventPool> eventPool;
-    std::unique_ptr<EventImp<uint32_t>> event;
+    std::unique_ptr<EventImp<uint32_t>> eventRoot;
+    std::unique_ptr<EventImp<uint32_t>> eventSub0;
+    std::unique_ptr<EventImp<uint32_t>> eventSub1;
     uint32_t deviceCount = 1;
     ze_device_handle_t rootDeviceHandle;
 
@@ -1946,16 +1948,14 @@ TEST_F(EventQueryTimestampExpWithSubDevice, givenEventWhenQuerytimestampExpWithS
     eventDesc.signal = 0;
     eventDesc.wait = 0;
 
-    auto subDeviceId = 0u;
-    auto subdevice = L0::Device::fromHandle(subDeviceHandle[subDeviceId]);
-    eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 1, &subDeviceHandle[0], &eventPoolDesc, result));
+    eventPool = std::unique_ptr<L0::EventPool>(L0::EventPool::create(driverHandle.get(), context, 1, &rootDeviceHandle, &eventPoolDesc, result));
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     ASSERT_NE(nullptr, eventPool);
-    event = std::unique_ptr<EventImp<uint32_t>>(static_cast<EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, subdevice)));
-    ASSERT_NE(nullptr, event);
+    eventRoot = std::unique_ptr<EventImp<uint32_t>>(static_cast<EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, L0::Device::fromHandle(rootDeviceHandle))));
+    ASSERT_NE(nullptr, eventRoot);
 
     typename MockTimestampPackets32::Packet packetData[2];
-    event->setPacketsInUse(2u);
+    eventRoot->setPacketsInUse(2u);
 
     packetData[0].contextStart = 1u;
     packetData[0].contextEnd = 2u;
@@ -1967,28 +1967,81 @@ TEST_F(EventQueryTimestampExpWithSubDevice, givenEventWhenQuerytimestampExpWithS
     packetData[1].globalStart = 7u;
     packetData[1].globalEnd = 8u;
 
-    event->hostAddress = packetData;
+    eventRoot->hostAddress = packetData;
 
     ze_kernel_timestamp_result_t results[2];
     uint32_t numPackets = 2;
 
     for (uint32_t packetId = 0; packetId < numPackets; packetId++) {
-        event->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, event->hostAddress);
-        event->hostAddress = ptrOffset(event->hostAddress, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+        eventRoot->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, eventRoot->hostAddress);
+        eventRoot->hostAddress = ptrOffset(eventRoot->hostAddress, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
     }
-    uint32_t pCount = 0;
-    result = event->queryTimestampsExp(subdevice, &pCount, nullptr);
 
+    uint32_t pCount = 0;
+    result = eventRoot->queryTimestampsExp(L0::Device::fromHandle(rootDeviceHandle), &pCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(2u, pCount);
+    result = eventRoot->queryTimestampsExp(L0::Device::fromHandle(rootDeviceHandle), &pCount, results);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    for (uint32_t i = 0; i < pCount; i++) {
+        EXPECT_EQ(packetData[i].contextStart, results[i].context.kernelStart);
+        EXPECT_EQ(packetData[i].contextEnd, results[i].context.kernelEnd);
+        EXPECT_EQ(packetData[i].globalStart, results[i].global.kernelStart);
+        EXPECT_EQ(packetData[i].globalEnd, results[i].global.kernelEnd);
+    }
+
+    auto subdevice = L0::Device::fromHandle(subDeviceHandle[0]);
+    eventSub0 = std::unique_ptr<EventImp<uint32_t>>(static_cast<EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, subdevice)));
+    ASSERT_NE(nullptr, eventSub0);
+
+    numPackets = 1;
+    eventSub0->setPacketsInUse(1u);
+    eventSub0->hostAddress = packetData;
+
+    for (uint32_t packetId = 0; packetId < numPackets; packetId++) {
+        eventSub0->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, eventSub0->hostAddress);
+        eventSub0->hostAddress = ptrOffset(eventSub0->hostAddress, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+    }
+
+    pCount = 0;
+    result = eventSub0->queryTimestampsExp(subdevice, &pCount, nullptr);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
     EXPECT_EQ(1u, pCount);
-    result = event->queryTimestampsExp(subdevice, &pCount, results);
+    result = eventSub0->queryTimestampsExp(subdevice, &pCount, results);
     EXPECT_EQ(ZE_RESULT_SUCCESS, result);
 
     for (uint32_t i = 0; i < pCount; i++) {
-        EXPECT_EQ(packetData[subDeviceId].contextStart, results[i].context.kernelStart);
-        EXPECT_EQ(packetData[subDeviceId].contextEnd, results[i].context.kernelEnd);
-        EXPECT_EQ(packetData[subDeviceId].globalStart, results[i].global.kernelStart);
-        EXPECT_EQ(packetData[subDeviceId].globalEnd, results[i].global.kernelEnd);
+        EXPECT_EQ(packetData[i].contextStart, results[i].context.kernelStart);
+        EXPECT_EQ(packetData[i].contextEnd, results[i].context.kernelEnd);
+        EXPECT_EQ(packetData[i].globalStart, results[i].global.kernelStart);
+        EXPECT_EQ(packetData[i].globalEnd, results[i].global.kernelEnd);
+    }
+
+    subdevice = L0::Device::fromHandle(subDeviceHandle[1]);
+    eventSub1 = std::unique_ptr<EventImp<uint32_t>>(static_cast<EventImp<uint32_t> *>(L0::Event::create<uint32_t>(eventPool.get(), &eventDesc, subdevice)));
+    ASSERT_NE(nullptr, eventSub1);
+
+    numPackets = 1;
+    eventSub1->setPacketsInUse(1u);
+    eventSub1->hostAddress = packetData;
+
+    for (uint32_t packetId = 0; packetId < numPackets; packetId++) {
+        eventSub1->kernelEventCompletionData[0].assignDataToAllTimestamps(packetId, eventSub1->hostAddress);
+        eventSub1->hostAddress = ptrOffset(eventSub1->hostAddress, NEO::TimestampPackets<uint32_t>::getSinglePacketSize());
+    }
+
+    pCount = 0;
+    result = eventSub1->queryTimestampsExp(subdevice, &pCount, nullptr);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+    EXPECT_EQ(1u, pCount);
+    result = eventSub1->queryTimestampsExp(subdevice, &pCount, results);
+    EXPECT_EQ(ZE_RESULT_SUCCESS, result);
+
+    for (uint32_t i = 0; i < pCount; i++) {
+        EXPECT_EQ(packetData[i].contextStart, results[i].context.kernelStart);
+        EXPECT_EQ(packetData[i].contextEnd, results[i].context.kernelEnd);
+        EXPECT_EQ(packetData[i].globalStart, results[i].global.kernelStart);
+        EXPECT_EQ(packetData[i].globalEnd, results[i].global.kernelEnd);
     }
 }
 

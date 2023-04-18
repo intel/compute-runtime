@@ -402,7 +402,6 @@ ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *cou
     uint32_t timestampPacket = 0;
     uint64_t globalStartTs, globalEndTs, contextStartTs, contextEndTs;
     globalStartTs = globalEndTs = contextStartTs = contextEndTs = Event::STATE_INITIAL;
-    auto deviceImp = static_cast<DeviceImp *>(device);
     bool isStaticPartitioning = true;
 
     if (NEO::DebugManager.flags.EnableStaticPartitioning.get() == 0) {
@@ -413,10 +412,7 @@ ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *cou
         return ZE_RESULT_ERROR_UNSUPPORTED_FEATURE;
     }
 
-    uint32_t numPacketsUsed = 1u;
-    if (!deviceImp->isSubdevice) {
-        numPacketsUsed = this->getPacketsInUse();
-    }
+    uint32_t numPacketsUsed = this->getPacketsInUse();
 
     if ((*count == 0) ||
         (*count > numPacketsUsed)) {
@@ -432,9 +428,6 @@ ze_result_t EventImp<TagSizeT>::queryTimestampsExp(Device *device, uint32_t *cou
         };
 
         auto packetId = i;
-        if (deviceImp->isSubdevice) {
-            packetId = static_cast<NEO::SubDevice *>(deviceImp->getNEODevice())->getSubDeviceIndex();
-        }
 
         globalStartTs = kernelEventCompletionData[timestampPacket].getGlobalStartValue(packetId);
         contextStartTs = kernelEventCompletionData[timestampPacket].getContextStartValue(packetId);
